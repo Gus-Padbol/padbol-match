@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd padbol-match-frontend && npm run build",
-  "outputDirectory": "padbol-match-frontend/build",
-  "devCommand": "cd padbol-match-frontend && npm start"
-}
