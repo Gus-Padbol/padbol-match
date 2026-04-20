@@ -5,12 +5,12 @@ import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) *
-      Math.cos(lat2 * Math.PI / 180) *
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -75,13 +75,14 @@ export default function TorneosPublicos({ onLogout }) {
     localStorage.removeItem('ultima_sede_pais');
     navigate('/sedes?from=explorar');
   };
+
   const [torneos, setTorneos] = useState([]);
   const [sedesMap, setSedesMap] = useState({});
   const [sedesList, setSedesList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
   const [userPos, setUserPos] = useState(null);
-  const [geoStatus, setGeoStatus] = useState('idle'); // idle | pending | granted | denied
+  const [geoStatus, setGeoStatus] = useState('idle');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -192,8 +193,7 @@ export default function TorneosPublicos({ onLogout }) {
     }
 
     if (!sid) {
-      line =
-        'No pudimos situarte ni leer una sede guardada. Mostrando todos los torneos.';
+      line = 'No pudimos situarte ni leer una sede guardada. Mostrando todos los torneos.';
     }
 
     return { focusSedeId: sid, contextLine: line, filterActive: Boolean(sid) };
@@ -214,6 +214,184 @@ export default function TorneosPublicos({ onLogout }) {
       return fa.localeCompare(fb);
     });
   }, [displayedTorneos]);
+
+  const listaTorneos = useMemo(() => {
+    if (loading) {
+      return <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>;
+    }
+    if (torneos.length === 0) {
+      return (
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '18px',
+            color: '#4b5563',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+          }}
+        >
+          No hay torneos disponibles.
+        </div>
+      );
+    }
+    if (displayedTorneos.length === 0) {
+      return (
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '18px',
+            color: '#4b5563',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+          }}
+        >
+          {nearMode && filterActive ? 'No hay torneos en esta sede por ahora.' : 'No hay torneos disponibles.'}
+          {nearMode && filterActive ? (
+            <div style={{ marginTop: '12px' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/torneos')}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: 'white',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Ver todos los torneos
+              </button>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+    return (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: '14px',
+        }}
+      >
+        {torneosOrdenados.map((t) => {
+          const sede = sedesMap[String(t.sede_id)];
+          const badge = estadoStyle[t.estado] || {
+            label: t.estado || 'Sin estado',
+            bg: '#e5e7eb',
+            color: '#374151',
+          };
+
+          return (
+            <div
+              key={t.id}
+              style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '14px',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: '#6b7280',
+                      fontWeight: 700,
+                      marginBottom: '4px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    {sede?.nombre || 'Club / sede'}
+                  </div>
+
+                  <h3 style={{ margin: 0, color: '#111827', lineHeight: 1.2 }}>{t.nombre || 'Sin nombre'}</h3>
+                </div>
+
+                <span
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    background: badge.bg,
+                    color: badge.color,
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {badge.label}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  marginTop: '10px',
+                  color: '#4b5563',
+                  fontSize: '14px',
+                  lineHeight: 1.5,
+                }}
+              >
+                <Row icon="📍" label={sede?.nombre || 'Sede no encontrada'} />
+                <Row
+                  icon="🗺️"
+                  label={
+                    <>
+                      {sede?.ciudad || '—'}
+                      {sede?.pais ? `, ${sede.pais}` : ''}
+                    </>
+                  }
+                />
+                <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
+                <Row icon="🏆" label={t.tipo_torneo || '—'} />
+                <Row icon="⭐" label={t.nivel_torneo || '—'} />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate(`/torneo/${t.id}/equipos`)}
+                style={{
+                  marginTop: '12px',
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: 'white',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Ver torneo
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }, [
+    loading,
+    torneos.length,
+    displayedTorneos.length,
+    torneosOrdenados,
+    nearMode,
+    filterActive,
+    isMobile,
+    sedesMap,
+    navigate,
+  ]);
 
   return (
     <div
@@ -245,10 +423,10 @@ export default function TorneosPublicos({ onLogout }) {
               ? 'Priorizamos torneos de la sede más cercana a tu ubicación o de tu última sede.'
               : 'Elige un torneo para ver sus detalles, inscribirte y formar o unirte a un equipo.'}
           </div>
-          {nearMode && contextLine && (
+          {nearMode && contextLine ? (
             <div style={{ fontSize: '13px', opacity: 0.88, lineHeight: 1.45 }}>{contextLine}</div>
-          )}
-          {nearMode && (
+          ) : null}
+          {nearMode ? (
             <button
               type="button"
               onClick={irACambiarSede}
@@ -268,170 +446,10 @@ export default function TorneosPublicos({ onLogout }) {
             >
               Cambiar ciudad / sede
             </button>
-          )}
+          ) : null}
         </div>
 
-        {loading ? (
-          <p style={{ color: 'white', textAlign: 'center' }}>Cargando...</p>
-        ) : torneos.length === 0 ? (
-          <div
-            style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '18px',
-              color: '#4b5563',
-              textAlign: 'center',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-            }}
-          >
-            No hay torneos disponibles.
-          </div>
-        ) : displayedTorneos.length === 0 ? (
-          <div
-            style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '18px',
-              color: '#4b5563',
-              textAlign: 'center',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-            }}
-          >
-            {nearMode && filterActive
-              ? 'No hay torneos en esta sede por ahora.'
-              : 'No hay torneos disponibles.'}
-            {nearMode && filterActive && (
-              <div style={{ marginTop: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => navigate('/torneos')}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                    color: 'white',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Ver todos los torneos
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-              gap: '14px',
-            }}
-          >
-            {torneosOrdenados.map((t) => {
-              const sede = sedesMap[String(t.sede_id)];
-              const badge = estadoStyle[t.estado] || {
-                label: t.estado || 'Sin estado',
-                bg: '#e5e7eb',
-                color: '#374151',
-              };
-
-              return (
-                <div
-                  key={t.id}
-                  style={{
-                    background: 'white',
-                    borderRadius: '16px',
-                    padding: '14px',
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: '10px',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: '#6b7280',
-                          fontWeight: 700,
-                          marginBottom: '4px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.03em',
-                        }}
-                      >
-                        {sede?.nombre || 'Club / sede'}
-                      </div>
-
-                      <h3 style={{ margin: 0, color: '#111827', lineHeight: 1.2 }}>
-                        {t.nombre || 'Sin nombre'}
-                      </h3>
-                    </div>
-
-                    <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        background: badge.bg,
-                        color: badge.color,
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {badge.label}
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: '10px',
-                      color: '#4b5563',
-                      fontSize: '14px',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <Row icon="📍" label={sede?.nombre || 'Sede no encontrada'} />
-                    <Row
-                      icon="🗺️"
-                      label={
-                        <>
-                          {sede?.ciudad || '—'}
-                          {sede?.pais ? `, ${sede.pais}` : ''}
-                        </>
-                      }
-                    />
-                    <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
-                    <Row icon="🏆" label={t.tipo_torneo || '—'} />
-                    <Row icon="⭐" label={t.nivel_torneo || '—'} />
-                  </div>
-
-                  <button
-                    onClick={() => navigate(`/torneo/${t.id}/equipos`)}
-                    style={{
-                      marginTop: '12px',
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                      color: 'white',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Ver torneo
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {listaTorneos}
       </div>
     </div>
   );
