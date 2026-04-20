@@ -1,0 +1,30 @@
+:root {
+  --pm-color-primary: #22c55e;
+  --pm-color-primary-dark: #16a34a;
+  --pm-color-secondary: #6366f1;
+  --pm-color-secondary-dark: #4f46e5;
+  --pm-gradient-start: #667eea;
+  --pm-gradient-end: #764ba2;
+  --pm-color-card: #ffffff;
+  --pm-color-success: #16a34a;
+  --pm-color-warning: #f59e0b;
+  --pm-color-error: #ef4444;
+  --pm-color-highlight: #d97706;
+  --pm-radius-card: 20px;
+  --pm-radius-button: 16px;
+  --pm-shadow-card: 0 8px 28px rgba(15, 23, 42, 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

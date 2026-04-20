@@ -1,0 +1,159 @@
+.reserva-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.reserva-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.reserva-card h1 {
+  text-align: center;
+  color: #d32f2f;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.reserva-horario-bloque {
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+.reserva-horario-bloque label {
+  margin-bottom: 10px;
+}
+
+.reserva-select-horario {
+  margin-top: 4px;
+}
+
+.reserva-canchas-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #7c3aed; /* violeta más moderno */
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.phone-field {
+  display: flex;
+  gap: 8px;
+}
+
+.phone-field select {
+  width: 110px;
+  flex-shrink: 0;
+  padding: 12px 6px;
+  border-radius: 10px;
+}
+
+.phone-field input {
+  flex: 1;
+  border-radius: 10px;
+}
+
+.phone-preview {
+  display: block;
+  margin-top: 6px;
+  color: #888;
+  font-size: 12px;
+}
+
+.precio-display {
+  font-size: 18px;
+  font-weight: bold;
+  color: #d32f2f;
+  margin: 0;
+}
+
+/* BOTONES GENERALES */
+button {
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: white;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+button[type="submit"]:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* MENSAJES */
+.success-message {
+  background: #4caf50;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.error-message {
+  background: #f44336;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* INPUT DATE (mejorado) */
+input[type="date"] {
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  opacity: 0.7;
+  cursor: pointer;
+}
