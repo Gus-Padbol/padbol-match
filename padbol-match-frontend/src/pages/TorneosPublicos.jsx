@@ -37,6 +37,15 @@ function formatFecha(str) {
   return `${parseInt(d, 10)} ${meses[parseInt(m, 10) - 1]} ${y}`;
 }
 
+function Row({ icon, label }) {
+  return (
+    <div style={{ fontSize: '14px', lineHeight: 1.5 }}>
+      {icon != null && icon !== '' ? <span style={{ marginRight: '6px' }}>{icon}</span> : null}
+      {label}
+    </div>
+  );
+}
+
 const estadoStyle = {
   abierto: { label: 'Abierto', bg: '#dcfce7', color: '#166534' },
   en_curso: { label: 'En curso', bg: '#fef3c7', color: '#92400e' },
@@ -387,11 +396,19 @@ export default function TorneosPublicos({ onLogout }) {
                       lineHeight: 1.5,
                     }}
                   >
-                    <div>📍 {sede?.nombre || 'Sede no encontrada'}</div>
-                    <div>🗺️ {sede?.ciudad || '—'}{sede?.pais ? `, ${sede.pais}` : ''}</div>
-                    <div>📅 {formatFecha(t.fecha_inicio)}</div>
-                    <div>🏆 {t.tipo_torneo || '—'}</div>
-                    <div>⭐ {t.nivel_torneo || '—'}</div>
+                    <Row icon="📍" label={sede?.nombre || 'Sede no encontrada'} />
+                    <Row
+                      icon="🗺️"
+                      label={
+                        <>
+                          {sede?.ciudad || '—'}
+                          {sede?.pais ? `, ${sede.pais}` : ''}
+                        </>
+                      }
+                    />
+                    <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
+                    <Row icon="🏆" label={t.tipo_torneo || '—'} />
+                    <Row icon="⭐" label={t.nivel_torneo || '—'} />
                   </div>
 
                   <button
