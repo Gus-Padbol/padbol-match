@@ -123,7 +123,7 @@ function MapEmbed({ direccion, ciudad, pais }) {
 }
 
 /* ─── Main component ──────────────────────────────────────────────────── */
-export default function SedePublica({ currentCliente }) {
+export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const [sede, setSede] = useState(null);

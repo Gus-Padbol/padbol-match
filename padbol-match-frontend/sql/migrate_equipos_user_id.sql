@@ -1,0 +1,3 @@
+-- OBSOLETO — NO EJECUTAR.
+-- El frontend/backend del proyecto asocia al creador con `equipos.creador_id`.
+-- Una versión antigua de este script podía renombrar/eliminar columnas de forma destructiva.

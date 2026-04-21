@@ -2,9 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppButton from '../components/AppButton';
 import { pageBackgroundStyle } from '../theme/uiStyles';
+import { useAuth } from '../context/AuthContext';
 
 export default function HomePublic() {
   const navigate = useNavigate();
+  const { session } = useAuth();
 
   const blockGap = 'clamp(18px, 2.2vw, 22px)';
   const headlineBand = 'min(100%, 128px)';
@@ -96,6 +98,26 @@ export default function HomePublic() {
             Explorar sedes
           </AppButton>
         </div>
+
+        {session?.user ? (
+          <button
+            type="button"
+            onClick={() => navigate('/hub')}
+            style={{
+              marginTop: '8px',
+              background: 'rgba(255,255,255,0.18)',
+              border: '1px solid rgba(255,255,255,0.35)',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '14px',
+              padding: '10px 18px',
+              borderRadius: '999px',
+              cursor: 'pointer',
+            }}
+          >
+            Mi panel
+          </button>
+        ) : null}
       </div>
     </div>
   );

@@ -1,8 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { AppScreenHeaderBack } from '../components/AppUnifiedHeader';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import { authLoginRedirectPath } from '../utils/authLoginRedirect';
+import { getDisplayName } from '../utils/displayName';
+import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 
 // Returns the correct price for a given sede + time slot.
 // Falls back to precio_por_reserva / precio_turno if no differentiated prices are configured.
@@ -79,17 +84,30 @@ function readPrimedSedeReserva() {
   }
 }
 
-export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padbol-backend.onrender.com' }) {
+export default function ReservaForm({
+  apiBaseUrl = 'https://padbol-backend.onrender.com',
+}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const { session, loading: authLoading, userProfile } = useAuth();
 
-  const requireAuth = () => {
-    if ((currentCliente?.email || '').trim()) return true;
-    const redirect = `${location.pathname}${location.search}`;
-    navigate(`/login?redirect=${encodeURIComponent(redirect)}`);
-    return false;
-  };
+  const hubHomePath = session?.user ? '/hub' : '/';
+
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    const nombreDb =
+      String(userProfile?.alias || '').trim() ||
+      nombreCompletoJugadorPerfil(userProfile) ||
+      String(userProfile?.nombre || '').trim();
+    return {
+      email: em,
+      nombre: nombreDb || getDisplayName(userProfile, session),
+      whatsapp: String(userProfile?.whatsapp || '').trim(),
+      telefono: String(userProfile?.whatsapp || '').trim(),
+    };
+  }, [session, userProfile]);
+  const [searchParams] = useSearchParams();
 
   const initialSedeId = searchParams.get('sedeId');
 
@@ -136,13 +154,6 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
   const [mpLoading, setMpLoading] = useState(false);
   /** Número local en pantalla resumen — controlado aparte de formData para no re-disparar efectos al escribir */
   const [whatsapp, setWhatsapp] = useState('');
-
-  useEffect(() => {
-    if (pantalla < 2) return;
-    if ((currentCliente?.email || '').trim()) return;
-    const redirect = `${location.pathname}${location.search}`;
-    navigate(`/login?redirect=${encodeURIComponent(redirect)}`, { replace: true });
-  }, [pantalla, currentCliente?.email, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (pantalla !== 4) return;
@@ -210,18 +221,13 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
     setCiudades(ciudadesDelPais);
     setSedesFiltradasPorCiudad(sedesDeLaCiudad);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
-    if (!(currentCliente?.email || '').trim()) {
-      const redirect = `${location.pathname}${location.search}`;
-      navigate(`/login?redirect=${encodeURIComponent(redirect)}`);
-      return;
-    }
     setPantalla(2);
     setFormData((prev) =>
       prev.fecha
         ? prev
         : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
     );
-  }, [sedes, initialSedeId, currentCliente?.email, location.pathname, location.search, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sedes, initialSedeId, location.pathname, location.search, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-load time slots when date is selected
   useEffect(() => {
@@ -265,7 +271,6 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
     const sede_id = parseInt(e.target.value);
     setFiltros(prev => ({ ...prev, sede_id }));
     if (sede_id) {
-      if (!requireAuth()) return;
       setPantalla(2);
       setError('');
     }
@@ -276,7 +281,6 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
       setError('Selecciona una sede');
       return;
     }
-    if (!requireAuth()) return;
     setPantalla(2);
     setError('');
   };
@@ -428,7 +432,6 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
   };
 
   const siguientePantalla3 = () => {
-    if (!requireAuth()) return;
     if (!formData.fecha || !formData.hora) {
       setError('Selecciona Fecha y Horario');
       return;
@@ -438,7 +441,6 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
   };
 
   const siguientePantalla4 = () => {
-    if (!requireAuth()) return;
     if (!formData.cancha) {
       setError('Selecciona una cancha');
       return;
@@ -475,13 +477,27 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
   };
 
   const handlePagarConMP = async () => {
-    if (!requireAuth()) return;
-    const usaWhatsappResumen = !perfilTelefonoValido(currentCliente);
+    if (authLoading) return;
+    if (!session?.user) {
+      navigate(`/auth?redirect=${encodeURIComponent(authLoginRedirectPath(location))}`);
+      return;
+    }
+    const sesEm = session.user.email;
+    const meta = session.user.user_metadata || {};
+    const ccEff =
+      currentCliente && String(currentCliente.email || '').trim()
+        ? currentCliente
+        : {
+            email: sesEm,
+            nombre: getDisplayName(userProfile, session),
+            whatsapp: meta.whatsapp || '',
+          };
+    const usaWhatsappResumen = !perfilTelefonoValido(ccEff);
     const formParaTel = usaWhatsappResumen ? { ...formData, numeroTel: whatsapp } : formData;
-    const { ok, whatsappCompleto } = telefonoPagoResuelto(currentCliente, formParaTel);
+    const { ok, whatsappCompleto } = telefonoPagoResuelto(ccEff, formParaTel);
     if (!ok) {
       setError(
-        clienteTieneTelefonoGuardado(currentCliente)
+        clienteTieneTelefonoGuardado(ccEff)
           ? 'El teléfono del perfil no es válido. Completá un número de contacto válido.'
           : `Ingresá un número de WhatsApp válido (al menos ${MIN_DIGITOS_TELEFONO} dígitos).`
       );
@@ -499,8 +515,8 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
       fecha: formData.fecha,
       hora: formData.hora,
       cancha: parseInt(formData.cancha),
-      nombre: currentCliente.nombre,
-      email: currentCliente.email,
+      nombre: ccEff.nombre,
+      email: ccEff.email,
       whatsapp: whatsappCompleto,
       nivel: 'Principiante',
       precio,
@@ -544,7 +560,7 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
   if (pantalla === 1) {
     return (
       <div className="reserva-container">
-        <AppScreenHeaderBack to="/home" title="Reservar cancha" />
+        <AppScreenHeaderBack to={hubHomePath} title="Reservar cancha" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Reserva tu Cancha de PADBOL</h1>
 
@@ -623,7 +639,7 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
   if (pantalla === 2) {
     return (
       <div className="reserva-container">
-        <AppScreenHeaderBack to="/home" title="Reservar cancha" />
+        <AppScreenHeaderBack to={hubHomePath} title="Reservar cancha" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>
             📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
@@ -738,7 +754,7 @@ export default function ReservaForm({ currentCliente, apiBaseUrl = 'https://padb
 
     return (
       <div className="reserva-container">
-        <AppScreenHeaderBack to="/home" title="Reservar cancha" />
+        <AppScreenHeaderBack to={hubHomePath} title="Reservar cancha" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Resumen de reserva</h1>
 

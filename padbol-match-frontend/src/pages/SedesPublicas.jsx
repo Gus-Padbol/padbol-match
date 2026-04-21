@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
+import { useAuth } from '../context/AuthContext';
 
 function formatHorario(apertura, cierre) {
   if (apertura && cierre) return `${apertura} – ${cierre}`;
@@ -25,8 +26,10 @@ function formatKm(km) {
   return `${km.toFixed(1)} km`;
 }
 
-export default function SedesPublicas({ currentCliente, onLogout }) {
+export default function SedesPublicas() {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const hubHomePath = session?.user ? '/hub' : '/';
   const [searchParams] = useSearchParams();
   const from = searchParams.get('from'); // 'reserva' | 'explorar' | null
 
@@ -129,12 +132,7 @@ export default function SedesPublicas({ currentCliente, onLogout }) {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', paddingBottom: '60px' }}>
 
-      <AppScreenHeaderBar
-        backTo="/home"
-        title="Sedes"
-        onLogout={onLogout || undefined}
-        maxWidth="1100px"
-      />
+      <AppScreenHeaderBar backTo={hubHomePath} title="Sedes" maxWidth="1100px" />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 20px 0' }}>
 

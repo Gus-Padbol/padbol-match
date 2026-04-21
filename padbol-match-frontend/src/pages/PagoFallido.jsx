@@ -17,7 +17,7 @@ export default function PagoFallido() {
         padding: 0,
       }}
     >
-      <AppScreenHeaderBack to="/home" title="Pago" />
+      <AppScreenHeaderBack to="/hub" title="Pago" />
       <div
         style={{
           flex: 1,

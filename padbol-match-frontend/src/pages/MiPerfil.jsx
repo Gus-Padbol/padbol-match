@@ -3,11 +3,41 @@ import { useNavigate, Navigate, useSearchParams, useLocation } from 'react-route
 import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
-import { readJugadorPerfil, persistJugadorPerfil, refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
+import {
+  persistJugadorPerfil,
+  refreshJugadorPerfilFromSupabase,
+  isPerfilTorneoCompleto,
+} from '../utils/jugadorPerfil';
+import {
+  whatsappDigitsValido,
+  digitsOnly,
+  buildFullWhatsDigits,
+  formatWhatsAppE164,
+  whatsappNacionalValido,
+  splitStoredWhatsapp,
+} from '../utils/authIdentidad';
+import { mensajeErrorAuthSupabase, mensajeErrorDbSupabase } from '../utils/authErrorsEs';
+import { normalizeTorneoPostPerfilPath } from '../utils/torneoPostPerfilNavigation';
+import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
+import { handleAuthOnce } from '../utils/handleAuthOnce';
+import { useAuth } from '../context/AuthContext';
+import { getDisplayName } from '../utils/displayName';
+import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
+const MSG_CUENTA_Y_FICHA_OK = 'Cuenta creada y ficha guardada correctamente';
+
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+
+/** Asterisco obligatorio (rojo) para labels del registro. */
+const reqAst = <span style={{ color: '#d32f2f', fontWeight: 800 }}>*</span>;
+
+function emailValidoVisible(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
 
 const CATEGORIA_COLOR = {
   Principiante: '#78909c',
@@ -19,50 +49,128 @@ const CATEGORIA_COLOR = {
   Elite:        '#212121',
 };
 
-export default function MiPerfil({ currentCliente, onLogout, onClienteActualizado }) {
+/** Valor del select "país" alineado con opciones (🇦🇷 Argentina). */
+const PAIS_ARGENTINA_PERFIL = `${PAISES_TELEFONO_PRINCIPALES[0].bandera} ${PAISES_TELEFONO_PRINCIPALES[0].nombre}`;
+
+function normalizeNivelTorneoScope(raw) {
+  return String(raw || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '_');
+}
+
+/** Alcance del torneo: local | nacional | internacional (campo `nivel_torneo` en DB). */
+function mostrarCampoPaisSegunTorneo(torneoRow) {
+  if (!torneoRow) return true;
+  const n = normalizeNivelTorneoScope(torneoRow.nivel_torneo);
+  return n === 'nacional' || n === 'internacional';
+}
+
+function mensajeValidarPaisTorneo(torneoRow, paisForm) {
+  if (!torneoRow) {
+    return String(paisForm || '').trim() ? null : 'Seleccioná tu país.';
+  }
+  const n = normalizeNivelTorneoScope(torneoRow.nivel_torneo);
+  if (n === 'internacional' && !String(paisForm || '').trim()) {
+    return 'Seleccioná tu país.';
+  }
+  return null;
+}
+
+function paisPayloadSegunTorneo(torneoRow, paisForm) {
+  const p = String(paisForm || '').trim();
+  if (!torneoRow) return p;
+  const n = normalizeNivelTorneoScope(torneoRow.nivel_torneo);
+  if (n === 'local') return PAIS_ARGENTINA_PERFIL;
+  if (n === 'nacional') return p || PAIS_ARGENTINA_PERFIL;
+  if (n === 'internacional') return p;
+  return p || PAIS_ARGENTINA_PERFIL;
+}
+
+export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
   const [searchParams] = useSearchParams();
-  const fromTorneo = searchParams.get('from') === 'torneo';
   const torneoIdPerfil = searchParams.get('id');
-  const fromEquipo = searchParams.get('from') === 'equipo';
-  const equipoIdPerfil = searchParams.get('equipoId');
+  const redirectAfterAuth = searchParams.get('redirect') || '';
+  const torneoIdValido = Boolean(torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil)));
   const [perfil, setPerfil] = useState(null);
-  const [sedes, setSedes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
   const [editando, setEditando] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const perfilSubmitLockRef = useRef(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [fotoPreview, setFotoPreview] = useState(null);
   const [fotoUploading, setFotoUploading] = useState(false);
   const fotoInputRef = useRef(null);
+  const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
-  const [basicoNombre, setBasicoNombre] = useState('');
-  const [basicoWhatsapp, setBasicoWhatsapp] = useState('');
-  const [basicoEmail, setBasicoEmail] = useState('');
-  const [savingBasicoTorneo, setSavingBasicoTorneo] = useState(false);
-  const [errorMsgBasicoTorneo, setErrorMsgBasicoTorneo] = useState('');
-  const [basicoCiudad, setBasicoCiudad] = useState('');
-  const [basicoApellido, setBasicoApellido] = useState('');
-  const [basicoCategoria, setBasicoCategoria] = useState('5ta');
-  const [equipoTorneoIdResuelto, setEquipoTorneoIdResuelto] = useState(undefined);
-  const [guestNombre, setGuestNombre] = useState('');
-  const [guestApellido, setGuestApellido] = useState('');
-  const [guestWhatsapp, setGuestWhatsapp] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestCategoria, setGuestCategoria] = useState('5ta');
-  const [guestSaving, setGuestSaving] = useState(false);
-  const [guestError, setGuestError] = useState('');
+
+  const sessionOwnerEmail = useMemo(() => session?.user?.email?.trim() || null, [session?.user?.email]);
+
+  useEffect(() => {
+    if (!session?.user?.email) return;
+    if (String(session.user.user_metadata?.nombre || '').trim()) return;
+    let cancelled = false;
+    (async () => {
+      const base = session.user.email.split('@')[0];
+      if (!base) return;
+      const { error } = await supabase.auth.updateUser({
+        data: { nombre: base },
+      });
+      if (!cancelled && !error) void refreshSession();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session, refreshSession]);
+
+  const cuentaDeSesion = useMemo(() => {
+    if (!sessionOwnerEmail) return null;
+    const nombreDb =
+      String(userProfile?.alias || '').trim() ||
+      nombreCompletoJugadorPerfil(userProfile) ||
+      String(userProfile?.nombre || '').trim();
+    return {
+      email: sessionOwnerEmail,
+      nombre: nombreDb || getDisplayName(userProfile, session),
+      whatsapp: String(userProfile?.whatsapp || '').trim(),
+      foto: userProfile?.foto ?? null,
+    };
+  }, [sessionOwnerEmail, userProfile, session]);
+  /** Código país (ej. +54) + número local solo dígitos (sin repetir código en el input) */
+  const [waCodigoPais, setWaCodigoPais] = useState('+54');
+  const [waNumeroLocal, setWaNumeroLocal] = useState('');
+  const [waConfirmLocal, setWaConfirmLocal] = useState('');
+  const waTorneoFormInitRef = useRef(false);
+  const [nombreRegistroTorneo, setNombreRegistroTorneo] = useState('');
+  const [emailRegistro, setEmailRegistro] = useState('');
+  const [nombreTorneoCompleto, setNombreTorneoCompleto] = useState('');
+  const [passRegistroTorneo, setPassRegistroTorneo] = useState('');
+  const [passRegistroTorneo2, setPassRegistroTorneo2] = useState('');
+  const [torneoPerfil, setTorneoPerfil] = useState(null);
+  /** Errores por campo en formulario registro sin sesión */
+  const [registroFieldErrors, setRegistroFieldErrors] = useState({});
+
+  /** Sin sesión: pantalla única de alta de cuenta + ficha. */
+  const esRegistroSinSesion = Boolean(!authLoading && !sessionOwnerEmail);
 
   const avisoPerfilTorneoMsg = useMemo(
     () =>
       (location.state && location.state.avisoPerfilTorneo) ||
-      (fromTorneo ? 'Completa tu perfil para participar en torneos' : ''),
-    [location.state, fromTorneo]
+      (torneoIdValido ? 'Completá tu perfil para participar en torneos' : '') ||
+      (redirectAfterAuth ? 'Completá tu perfil (incluido WhatsApp) para continuar.' : ''),
+    [location.state, torneoIdValido, redirectAfterAuth]
+  );
+
+  const opcionesCodigoWhatsApp = useMemo(
+    () => [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS],
+    []
   );
 
   const [formData, setFormData] = useState({
@@ -70,115 +178,162 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
     nivel: '5ta',
     pais: '',
     ciudad: '',
+    alias: '',
 
     fecha_nacimiento: '',
-    sede_id: '',
     numero_fipa: '',
     es_federado: false,
   });
 
-  useEffect(() => {
-    if (currentCliente) {
-      setBasicoNombre(String(currentCliente.nombre || '').trim());
-      setBasicoWhatsapp(String(currentCliente.whatsapp || '').trim());
-      setBasicoEmail(String(currentCliente.email || '').trim());
-    }
-  }, [currentCliente]);
+  const nivelTorneoScope = useMemo(
+    () => normalizeNivelTorneoScope(torneoPerfil?.nivel_torneo),
+    [torneoPerfil?.nivel_torneo]
+  );
+  const mostrarCampoPais = useMemo(
+    () => mostrarCampoPaisSegunTorneo(torneoPerfil),
+    [torneoPerfil]
+  );
+  const paisHtmlRequired = !torneoPerfil || nivelTorneoScope === 'internacional';
 
   useEffect(() => {
-    if (!fromEquipo || !equipoIdPerfil || !/^\d+$/.test(String(equipoIdPerfil))) {
-      setEquipoTorneoIdResuelto(undefined);
+    if (!torneoIdValido) {
+      setTorneoPerfil(null);
       return;
     }
     let cancelled = false;
-    setEquipoTorneoIdResuelto(null);
     (async () => {
       const { data, error } = await supabase
-        .from('equipos')
-        .select('torneo_id')
-        .eq('id', Number(equipoIdPerfil))
+        .from('torneos')
+        .select('id, nivel_torneo')
+        .eq('id', Number(torneoIdPerfil))
         .maybeSingle();
       if (cancelled) return;
-      if (error || data?.torneo_id == null) setEquipoTorneoIdResuelto(false);
-      else setEquipoTorneoIdResuelto(Number(data.torneo_id));
+      if (!error && data) setTorneoPerfil(data);
+      else setTorneoPerfil(null);
     })();
     return () => {
       cancelled = true;
     };
-  }, [fromEquipo, equipoIdPerfil]);
+  }, [torneoIdValido, torneoIdPerfil]);
+
+  /** Torneo nacional: país por defecto Argentina en el formulario. */
+  useEffect(() => {
+    if (!torneoPerfil || nivelTorneoScope !== 'nacional') return;
+    setFormData((prev) => {
+      if (String(prev.pais || '').trim()) return prev;
+      return { ...prev, pais: PAIS_ARGENTINA_PERFIL };
+    });
+  }, [torneoPerfil, nivelTorneoScope]);
 
   useEffect(() => {
-    if (currentCliente) return;
-    const p = readJugadorPerfil();
-    if (!p) return;
-    setGuestNombre(String(p.nombre || ''));
-    setGuestApellido(String(p.apellido || ''));
-    setGuestWhatsapp(String(p.whatsapp || ''));
-    setGuestEmail(String(p.email || ''));
-    setGuestCategoria(String(p.categoria || p.nivel || '5ta') || '5ta');
-  }, [currentCliente, torneoIdPerfil, equipoIdPerfil]);
+    if (sessionOwnerEmail) return;
+    getOrCreateUsuarioBasico();
+  }, [sessionOwnerEmail]);
 
   useEffect(() => {
-    if (!fromEquipo || !equipoIdPerfil) return;
-    const p = readJugadorPerfil();
-    if (!p) return;
-    setBasicoApellido(String(p.apellido || ''));
-    setBasicoCategoria(String(p.categoria || p.nivel || '5ta') || '5ta');
-  }, [fromEquipo, equipoIdPerfil, currentCliente?.email]);
-
-  useEffect(() => {
-    if (!currentCliente?.email) {
-      setLoading(false);
-      return;
-    }
-    const saltoEquipoFicha =
-      searchParams.get('from') === 'equipo' && searchParams.get('equipoId');
-    if (saltoEquipoFicha) {
-      setLoading(false);
+    if (!sessionOwnerEmail) {
+      if (!authLoading) setLoading(false);
       return;
     }
     fetchPerfil();
-    fetchSedes();
     fetchReservas();
     fetchCreditos();
-  }, [currentCliente?.email, location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionOwnerEmail, location.search, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (loading || !sessionOwnerEmail) return;
+    const needHint = torneoIdValido || Boolean(redirectAfterAuth);
+    if (!needHint) return;
+    if (!isPerfilTorneoCompleto() && !hintEdicionTorneoRef.current) {
+      hintEdicionTorneoRef.current = true;
+      setEditando(true);
+    }
+  }, [torneoIdValido, redirectAfterAuth, loading, sessionOwnerEmail, perfil]);
+
+  useEffect(() => {
+    if (!editando) {
+      waTorneoFormInitRef.current = false;
+      return;
+    }
+    if (!sessionOwnerEmail) return;
+
+    if (!waTorneoFormInitRef.current) {
+      waTorneoFormInitRef.current = true;
+      const raw = String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '').trim();
+      const { codigo, local } = splitStoredWhatsapp(raw);
+      setWaCodigoPais(codigo || '+54');
+      setWaNumeroLocal(local);
+      setWaConfirmLocal('');
+    }
+
+    const base =
+      String(perfil?.nombre || '').trim() ||
+      String(cuentaDeSesion?.nombre || '').trim() ||
+      (session?.user ? getDisplayName(userProfile, session) : '');
+    setNombreTorneoCompleto((prev) => (prev.trim() ? prev : base));
+  }, [
+    editando,
+    sessionOwnerEmail,
+    cuentaDeSesion?.nombre,
+    cuentaDeSesion?.whatsapp,
+    perfil?.nombre,
+    perfil?.whatsapp,
+    session,
+    userProfile,
+  ]);
 
   const fetchPerfil = async () => {
+    const owner = sessionOwnerEmail;
+    if (!owner) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout loading profile')), 8000)
       );
-      const { data, error } = await Promise.race([
-        supabase
-          .from('jugadores_perfil')
-          .select('*')
-          .eq('email', currentCliente.email)
-          .single(),
-        timeoutPromise
-      ]);
+      const uid = session?.user?.id ?? null;
+      const byUserId = uid
+        ? supabase.from('jugadores_perfil').select('*').eq('user_id', uid).maybeSingle()
+        : null;
+      const byEmail = supabase.from('jugadores_perfil').select('*').eq('email', owner).maybeSingle();
 
-      if (!error && data) {
+      let data = null;
+      if (byUserId) {
+        const r1 = await Promise.race([byUserId, timeoutPromise]);
+        if (r1?.data) data = r1.data;
+      }
+      if (!data) {
+        const r2 = await Promise.race([byEmail, timeoutPromise]);
+        data = r2?.data ?? null;
+      }
+
+      if (data) {
         setPerfil(data);
         setFormData({
           lateralidad: data.lateralidad || 'Diestro',
           nivel: data.nivel || '5ta',
           pais: data.pais || '',
           ciudad: data.ciudad || '',
+          alias: data.alias != null ? String(data.alias) : '',
           fecha_nacimiento: data.fecha_nacimiento || '',
-          sede_id: data.sede_id ? String(data.sede_id) : '',
           numero_fipa: data.numero_fipa || '',
           es_federado: data.es_federado || false,
         });
         {
           const rawNom = String(data.nombre || '').trim();
           const parts = rawNom.split(/\s+/).filter(Boolean);
+          const wa =
+            (cuentaDeSesion?.email || '').trim().toLowerCase() === owner.toLowerCase()
+              ? String(cuentaDeSesion?.whatsapp || '').trim()
+              : '';
           persistJugadorPerfil({
             nombre: parts[0] || rawNom,
             apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
             categoria: String(data.nivel || '').trim(),
-            whatsapp: String(currentCliente?.whatsapp || '').trim() || undefined,
-            email: String(currentCliente?.email || '').trim() || undefined,
+            ...(wa ? { whatsapp: wa } : {}),
+            email: owner,
           });
         }
       }
@@ -189,21 +344,13 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
     setLoading(false);
   };
 
-  const fetchSedes = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/sedes`);
-      if (res.ok) setSedes(await res.json() || []);
-    } catch {
-      // sedes optional — fail silently
-    }
-  };
-
   const fetchReservas = async () => {
+    if (!sessionOwnerEmail) return;
     try {
       const { data } = await supabase
         .from('reservas')
         .select('id, sede, fecha, hora, cancha, estado, precio, moneda')
-        .eq('email', currentCliente.email)
+        .eq('email', sessionOwnerEmail)
         .order('fecha', { ascending: false })
         .limit(20);
       setReservas(data || []);
@@ -213,8 +360,9 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
   };
 
   const fetchCreditos = async () => {
+    if (!sessionOwnerEmail) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/creditos/${encodeURIComponent(currentCliente.email)}`);
+      const res = await fetch(`${API_BASE_URL}/api/creditos/${encodeURIComponent(sessionOwnerEmail)}`);
       if (!res.ok) return;
       const data = await res.json();
       setCreditTotal(data.total || 0);
@@ -244,11 +392,17 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
       const fotoUrl = `https://vpldffhsxhgnmitiikof.supabase.co/storage/v1/object/public/avatars/${fileName}`;
 
       // Save URL to jugadores_perfil (upsert so it works even before full profile is saved)
+      const owner = sessionOwnerEmail;
+      if (!owner) return;
+      const nombreIns =
+        String(perfil?.nombre || '').trim() ||
+        String(cuentaDeSesion?.nombre || '').trim() ||
+        '';
       const { error: dbError } = perfil
-        ? await supabase.from('jugadores_perfil').update({ foto_url: fotoUrl }).eq('email', currentCliente.email)
+        ? await supabase.from('jugadores_perfil').update({ foto_url: fotoUrl }).eq('email', owner)
         : await supabase.from('jugadores_perfil').insert([{
-            email: currentCliente.email,
-            nombre: currentCliente.nombre,
+            email: owner,
+            nombre: nombreIns || getDisplayName(userProfile, session),
             foto_url: fotoUrl,
           }]);
 
@@ -256,7 +410,7 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
 
       await fetchPerfil();
     } catch (err) {
-      setErrorMsg('Error al subir foto: ' + err.message);
+      setErrorMsg('No se pudo subir la foto. Probá con otra imagen o más tarde.');
       setFotoPreview(null);
     } finally {
       setFotoUploading(false);
@@ -268,216 +422,316 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleGuardarBasicoTorneo = async (e) => {
+  const handleRegistroCuenta = async (e) => {
     e.preventDefault();
-    setErrorMsgBasicoTorneo('');
-    const n = basicoNombre.trim();
-    const w = basicoWhatsapp.trim();
-    const em = (basicoEmail || currentCliente?.email || '').trim();
-    if (!n) {
-      setErrorMsgBasicoTorneo('El nombre es obligatorio');
-      return;
-    }
-    if (!em && !w) {
-      setErrorMsgBasicoTorneo('Indicá al menos email o WhatsApp');
-      return;
-    }
-    const authEmail = String(currentCliente?.email || '').trim();
-    if (!authEmail) {
-      setErrorMsgBasicoTorneo('Iniciá sesión con un email para guardar tu perfil');
-      return;
-    }
-    setSavingBasicoTorneo(true);
-    const { error } = await supabase
-      .from('clientes')
-      .update({ nombre: n, whatsapp: w || null })
-      .eq('email', authEmail);
-    setSavingBasicoTorneo(false);
-    if (error) {
-      setErrorMsgBasicoTorneo('No se pudo guardar: ' + error.message);
-      return;
-    }
-    const nextUser = {
-      ...currentCliente,
-      nombre: n,
-      whatsapp: w || '',
-      email: em || currentCliente.email,
-    };
-    onClienteActualizado?.(nextUser);
-    await refreshJugadorPerfilFromSupabase(authEmail);
-    const tid = String(torneoIdPerfil || '').trim();
-    if (tid && /^\d+$/.test(tid)) {
-      navigate(`/torneo/${tid}/equipos`, { replace: true });
-    } else {
-      navigate('/torneos', { replace: true });
-    }
-  };
+    if (perfilSubmitLockRef.current || isSubmitting) return;
+    perfilSubmitLockRef.current = true;
+    setIsSubmitting(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    setRegistroFieldErrors({});
 
-  const handleGuardarEquipoFicha = async (e) => {
-    e.preventDefault();
-    setErrorMsgBasicoTorneo('');
-    const n = basicoNombre.trim();
-    const ape = basicoApellido.trim();
-    const w = basicoWhatsapp.trim();
-    const em = (basicoEmail || currentCliente?.email || '').trim();
-    const ciudad = basicoCiudad.trim();
-    const cat = String(basicoCategoria || '').trim();
-    if (!n) {
-      setErrorMsgBasicoTorneo('El nombre es obligatorio');
-      return;
-    }
-    if (!ape) {
-      setErrorMsgBasicoTorneo('El apellido es obligatorio');
-      return;
-    }
-    if (!cat) {
-      setErrorMsgBasicoTorneo('Seleccioná una categoría');
-      return;
-    }
-    if (!em && !w) {
-      setErrorMsgBasicoTorneo('Indicá al menos email o WhatsApp');
-      return;
-    }
-    if (typeof equipoTorneoIdResuelto !== 'number') {
-      setErrorMsgBasicoTorneo('No se pudo obtener el torneo');
-      return;
-    }
-    const authEmail = String(currentCliente?.email || '').trim();
-    if (!authEmail) {
-      persistJugadorPerfil({
-        nombre: n,
-        apellido: ape,
-        whatsapp: w || null,
-        email: em || null,
-        categoria: cat,
+    try {
+      const fe = {};
+      const nom = nombreRegistroTorneo.trim();
+      const partsNom = nom.split(/\s+/).filter(Boolean);
+      if (partsNom.length < 2) {
+        fe.nombre = 'Completá nombre y apellido.';
+      }
+
+      const emRaw = emailRegistro.trim();
+      const emailAuth = emRaw.toLowerCase();
+      if (!emRaw) {
+        fe.email = 'Completá tu email';
+      } else if (!emailValidoVisible(emRaw)) {
+        fe.email = 'Ingresá un email válido';
+      }
+
+      const local = waNumeroLocal.trim();
+      const localConf = waConfirmLocal.trim();
+      if (!digitsOnly(local)) {
+        fe.whatsapp = 'Completá tu WhatsApp';
+      } else if (!whatsappNacionalValido(local)) {
+        fe.whatsapp = 'Ingresá un WhatsApp válido (mínimo 10 dígitos sin código de país).';
+      } else if (digitsOnly(local) !== digitsOnly(localConf)) {
+        fe.whatsappConfirma = 'Repetí el mismo número en la confirmación de WhatsApp.';
+      }
+      const waDigits = buildFullWhatsDigits(waCodigoPais, local);
+      if (!fe.whatsapp && !whatsappDigitsValido(waDigits)) {
+        fe.whatsapp = 'Completá un WhatsApp válido.';
+      }
+      const wa = formatWhatsAppE164(waCodigoPais, local);
+
+      if (!String(formData.nivel || '').trim()) {
+        fe.categoria = 'Seleccioná tu categoría.';
+      }
+
+      if (!passRegistroTorneo && !passRegistroTorneo2) {
+        fe.password = 'Completá la contraseña.';
+        fe.password2 = 'Confirmá la contraseña.';
+      } else if (!passRegistroTorneo) {
+        fe.password = 'Completá la contraseña.';
+      } else if (!passRegistroTorneo2) {
+        fe.password2 = 'Confirmá la contraseña.';
+      } else if (passRegistroTorneo.length < 6) {
+        fe.password = 'La contraseña debe tener al menos 6 caracteres.';
+      } else if (passRegistroTorneo !== passRegistroTorneo2) {
+        fe.password2 = 'Las contraseñas no coinciden.';
+      }
+
+      const errPaisInv = mensajeValidarPaisTorneo(torneoPerfil, formData.pais);
+      if (errPaisInv) {
+        fe.pais = errPaisInv;
+      }
+
+      if (Object.keys(fe).length > 0) {
+        setRegistroFieldErrors(fe);
+        return;
+      }
+
+      if (session?.user?.email) {
+        setErrorMsg('Ya tenés una sesión activa. No hace falta registrarte de nuevo.');
+        return;
+      }
+
+      const { data: authData, error: authErr } = await handleAuthOnce({
+        kind: 'signUp',
+        email: emailAuth,
+        password: passRegistroTorneo,
+        options: { data: { nombre: partsNom.join(' '), whatsapp: wa } },
       });
-      navigate(`/torneo/${equipoTorneoIdResuelto}/equipos`, { replace: true });
-      return;
-    }
-    setSavingBasicoTorneo(true);
-    const { error: errCliente } = await supabase
-      .from('clientes')
-      .update({ nombre: `${n} ${ape}`.trim(), whatsapp: w || null })
-      .eq('email', authEmail);
-    if (errCliente) {
-      setSavingBasicoTorneo(false);
-      setErrorMsgBasicoTorneo('No se pudo guardar: ' + errCliente.message);
-      return;
-    }
-    const { data: filaPerfil } = await supabase
-      .from('jugadores_perfil')
-      .select('email')
-      .eq('email', authEmail)
-      .maybeSingle();
-    const nombreDb = `${n} ${ape}`.trim();
-    const payloadFicha = {
-      nombre: nombreDb,
-      whatsapp: w || null,
-      ciudad: ciudad || null,
-      nivel: cat,
-    };
-    let errPerfil = null;
-    if (filaPerfil) {
-      const { error } = await supabase.from('jugadores_perfil').update(payloadFicha).eq('email', authEmail);
-      errPerfil = error;
-    } else {
-      const { error } = await supabase.from('jugadores_perfil').insert([
+      if (authErr) {
+        console.log('ERROR SIGNUP:', authErr);
+        setErrorMsg(mensajeErrorAuthSupabase(authErr.message));
+        return;
+      }
+      const user = authData?.user;
+      const owner = String(user?.email || emailAuth || '')
+        .trim()
+        .toLowerCase();
+      if (!owner) {
+        console.log('ERROR SIGNUP: respuesta sin user.email', authData);
+        setErrorMsg(
+          'No se recibió el email del usuario tras el registro. Revisá la consola o probá «Iniciar sesión».'
+        );
+        return;
+      }
+      const nombreCli = nom;
+      const paisGuardado = paisPayloadSegunTorneo(torneoPerfil, formData.pais);
+
+      const { error: cliErr } = await supabase
+        .from('clientes')
+        .upsert({ email: owner, nombre: nombreCli, whatsapp: wa }, { onConflict: 'email' });
+      if (cliErr) {
+        console.error(cliErr);
+        setErrorMsg(mensajeErrorDbSupabase(cliErr.message));
+        return;
+      }
+
+      const aliasTrimReg = String(formData.alias || '').trim();
+      const payload = {
+        lateralidad: formData.lateralidad,
+        nivel: formData.nivel,
+        pendiente_validacion: true,
+        pais: paisGuardado,
+        ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
+        fecha_nacimiento: formData.fecha_nacimiento || null,
+        numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
+        es_federado: formData.es_federado,
+        whatsapp: wa,
+        alias: aliasTrimReg || null,
+      };
+
+      const { error: jpErr } = await supabase.from('jugadores_perfil').upsert(
         {
-          email: authEmail,
-          nombre: nombreDb,
-          whatsapp: w || null,
-          ciudad: ciudad || null,
-          lateralidad: 'Diestro',
-          nivel: cat,
-          pais: '🇦🇷 Argentina',
-          pendiente_validacion: true,
+          user_id: user?.id ?? null,
+          email: owner,
+          nombre: nombreCli,
+          ...payload,
         },
-      ]);
-      errPerfil = error;
+        { onConflict: 'email' }
+      );
+
+      if (jpErr) {
+        setErrorMsg(mensajeErrorDbSupabase(jpErr.message));
+        return;
+      }
+
+      void refreshSession();
+      persistJugadorPerfil({
+        nombre: partsNom[0],
+        apellido: partsNom.slice(1).join(' '),
+        categoria: String(formData.nivel || '').trim(),
+        whatsapp: wa,
+        email: owner,
+      });
+      await refreshJugadorPerfilFromSupabase(owner);
+
+      setSuccessMsg(MSG_CUENTA_Y_FICHA_OK);
+      setRegistroFieldErrors({});
+
+      if (isPerfilTorneoCompleto()) {
+        await new Promise((r) => setTimeout(r, 450));
+        const target = normalizeTorneoPostPerfilPath(redirectAfterAuth, torneoIdValido ? torneoIdPerfil : '');
+        navigate(target && target !== '/home' && target !== '/' ? target : '/hub', { replace: true });
+      } else {
+        setErrorMsg('Faltan datos obligatorios en la ficha (nombre, WhatsApp, categoría o país).');
+      }
+    } catch (err) {
+      console.log('ERROR SIGNUP:', err);
+      setErrorMsg(String(err?.message || 'Error al registrar la cuenta.'));
+    } finally {
+      perfilSubmitLockRef.current = false;
+      setIsSubmitting(false);
     }
-    setSavingBasicoTorneo(false);
-    if (errPerfil) {
-      setErrorMsgBasicoTorneo('No se pudo guardar la ficha: ' + errPerfil.message);
-      return;
-    }
-    const nextUser = {
-      ...currentCliente,
-      nombre: nombreDb,
-      whatsapp: w || '',
-      email: em || currentCliente.email,
-    };
-    onClienteActualizado?.(nextUser);
-    persistJugadorPerfil({
-      nombre: n,
-      apellido: ape,
-      whatsapp: w || null,
-      email: em || authEmail,
-      categoria: cat,
-    });
-    navigate(`/torneo/${equipoTorneoIdResuelto}/equipos`, { replace: true });
   };
 
   const handleGuardar = async (e) => {
     e.preventDefault();
-    if (!formData.pais) { setErrorMsg('Seleccioná tu país'); return; }
-    setSaving(true);
+    if (perfilSubmitLockRef.current || isSubmitting) return;
+    perfilSubmitLockRef.current = true;
     setErrorMsg('');
     setSuccessMsg('');
 
-    const payload = {
-      lateralidad: formData.lateralidad,
-      nivel: formData.nivel,
-      pendiente_validacion: true,
-      pais: formData.pais,
-      ciudad: formData.ciudad || null,
+    try {
+      const owner = sessionOwnerEmail;
+      if (!owner) {
+        setErrorMsg('No hay sesión activa.');
+        return;
+      }
+      const errPais = mensajeValidarPaisTorneo(torneoPerfil, formData.pais);
+      if (errPais) {
+        setErrorMsg(errPais);
+        return;
+      }
+      if (!String(formData.nivel || '').trim()) {
+        setErrorMsg('Seleccioná tu categoría.');
+        return;
+      }
 
-      fecha_nacimiento: formData.fecha_nacimiento || null,
-      sede_id: formData.sede_id ? parseInt(formData.sede_id) : null,
-      numero_fipa: formData.numero_fipa || null,
-      es_federado: formData.es_federado,
-    };
+      const np = String(nombreTorneoCompleto).trim().split(/\s+/).filter(Boolean);
+      if (np.length < 2) {
+        setErrorMsg('Completá nombre y apellido.');
+        return;
+      }
 
-    const { error } = perfil
-      ? await supabase.from('jugadores_perfil').update(payload).eq('email', currentCliente.email)
-      : await supabase.from('jugadores_perfil').insert([{
-          email: currentCliente.email,
-          nombre: currentCliente.nombre,
-          whatsapp: currentCliente.whatsapp || null,
-          ...payload,
-        }]);
+      const local = waNumeroLocal.trim();
+      const localConf = waConfirmLocal.trim();
+      if (!digitsOnly(local)) {
+        setErrorMsg('Completá tu WhatsApp');
+        return;
+      }
+      if (!whatsappNacionalValido(local)) {
+        setErrorMsg('Completá tu WhatsApp (al menos 10 dígitos en el número, sin el código de país).');
+        return;
+      }
+      if (digitsOnly(local) !== digitsOnly(localConf)) {
+        setErrorMsg('Repetí el mismo número en la confirmación de WhatsApp.');
+        return;
+      }
+      const waBuilt = buildFullWhatsDigits(waCodigoPais, local);
+      if (!whatsappDigitsValido(waBuilt)) {
+        setErrorMsg('Completá un WhatsApp válido.');
+        return;
+      }
+      const waFinal = formatWhatsAppE164(waCodigoPais, local);
 
-    if (error) {
-      setErrorMsg('Error al guardar: ' + error.message);
-      setSaving(false);
-      return;
+      const nombreGuardar = String(nombreTorneoCompleto).trim();
+
+      setIsSubmitting(true);
+
+      const paisGuardado = paisPayloadSegunTorneo(torneoPerfil, formData.pais);
+
+      const aliasTrim = String(formData.alias || '').trim();
+      const payload = {
+        lateralidad: formData.lateralidad,
+        nivel: formData.nivel,
+        pendiente_validacion: true,
+        pais: paisGuardado,
+        ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
+
+        fecha_nacimiento: formData.fecha_nacimiento || null,
+        numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
+        es_federado: formData.es_federado,
+        alias: aliasTrim || null,
+      };
+
+      const userId = session?.user?.id ?? null;
+      if (!userId) {
+        setErrorMsg('No se pudo obtener el usuario de la sesión.');
+        return;
+      }
+
+      const payloadDb = {
+        user_id: userId,
+        email: owner,
+        nombre: nombreGuardar,
+        whatsapp: waFinal,
+        ...payload,
+      };
+
+      const { error } = await supabase
+        .from('jugadores_perfil')
+        .upsert(payloadDb, { onConflict: 'email' });
+
+      if (error) {
+        setErrorMsg(mensajeErrorDbSupabase(error.message));
+        return;
+      }
+
+      const { error: errCli } = await supabase
+        .from('clientes')
+        .update({ whatsapp: waFinal, nombre: nombreGuardar })
+        .eq('email', owner);
+      if (errCli) {
+        console.error(errCli);
+      }
+      void refreshSession();
+
+      await fetchPerfil();
+      {
+        const raw = String((nombreGuardar || perfil?.nombre || '')).trim();
+        const parts = raw.split(/\s+/).filter(Boolean);
+        persistJugadorPerfil({
+          nombre: parts[0] || raw,
+          apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
+          categoria: String(formData.nivel || '').trim(),
+          whatsapp: waFinal,
+          email: owner,
+        });
+      }
+      await refreshJugadorPerfilFromSupabase(owner);
+
+      setPassRegistroTorneo('');
+      setPassRegistroTorneo2('');
+
+      const target = normalizeTorneoPostPerfilPath(redirectAfterAuth, torneoIdValido ? torneoIdPerfil : '');
+      if (isPerfilTorneoCompleto() && target && target !== '/home' && target !== '/') {
+        setSuccessMsg(target.startsWith('/torneo/') ? MSG_CUENTA_Y_FICHA_OK : '✅ Perfil guardado');
+        setEditando(false);
+        await new Promise((r) => setTimeout(r, 450));
+        navigate(target, { replace: true });
+        return;
+      }
+      setSuccessMsg('✅ Perfil guardado');
+      setEditando(false);
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } finally {
+      perfilSubmitLockRef.current = false;
+      setIsSubmitting(false);
     }
-
-    await fetchPerfil();
-    {
-      const raw = String((currentCliente.nombre || perfil?.nombre || '')).trim();
-      const parts = raw.split(/\s+/).filter(Boolean);
-      persistJugadorPerfil({
-        nombre: parts[0] || raw,
-        apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
-        categoria: String(formData.nivel || '').trim(),
-        whatsapp: String(currentCliente.whatsapp || '').trim() || undefined,
-        email: String(currentCliente.email || '').trim() || undefined,
-      });
-    }
-    setSaving(false);
-    setSuccessMsg('✅ Perfil guardado');
-    setEditando(false);
-    setTimeout(() => setSuccessMsg(''), 3000);
   };
 
   const handleCancelar = async (r) => {
+    const owner = sessionOwnerEmail;
+    if (!owner) return;
     if (!window.confirm('¿Cancelar reserva? Si faltan más de 24hs recibirás un crédito.')) return;
     setCancelando(r.id);
     try {
       const resp = await fetch(`${API_BASE_URL}/api/cancelar-reserva`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservaId: r.id, email: currentCliente.email }),
+        body: JSON.stringify({ reservaId: r.id, email: owner }),
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Error al cancelar');
@@ -494,49 +748,6 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
     }
   };
 
-  const sedeNombre = (id) => {
-    const sede = sedes.find(s => String(s.id) === String(id));
-    return sede ? sede.nombre : '—';
-  };
-
-  const handleGuestRegistro = (e) => {
-    e.preventDefault();
-    setGuestError('');
-    const n = guestNombre.trim();
-    const a = guestApellido.trim();
-    const w = guestWhatsapp.trim();
-    const em = guestEmail.trim();
-    const cat = String(guestCategoria || '').trim();
-    if (!n || !a) {
-      setGuestError('Nombre y apellido son obligatorios');
-      return;
-    }
-    if (!cat) {
-      setGuestError('Seleccioná una categoría');
-      return;
-    }
-    if (!w && !em) {
-      setGuestError('Indicá al menos WhatsApp o email');
-      return;
-    }
-    setGuestSaving(true);
-    persistJugadorPerfil({
-      nombre: n,
-      apellido: a,
-      whatsapp: w || null,
-      email: em || null,
-      categoria: cat,
-    });
-    setGuestSaving(false);
-    if (fromEquipo && typeof equipoTorneoIdResuelto === 'number') {
-      navigate(`/torneo/${equipoTorneoIdResuelto}/equipos`, { replace: true });
-    } else if (fromTorneo && torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil))) {
-      navigate(`/torneo/${torneoIdPerfil}/equipos`, { replace: true });
-    } else {
-      navigate('/torneos', { replace: true });
-    }
-  };
-
   const inputStyle = {
     width: '100%', padding: '10px', marginBottom: '6px',
     border: '1px solid #ddd', borderRadius: '5px',
@@ -547,37 +758,49 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
     marginBottom: '5px', color: '#333', fontSize: '13px',
   };
 
-  if (!currentCliente && fromEquipo && equipoIdPerfil && /^\d+$/.test(String(equipoIdPerfil))) {
-    if (equipoTorneoIdResuelto === null) {
-      return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-          <AppScreenHeaderBar backTo="/torneos" title="Registro" />
-          <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.92)' }}>Cargando…</div>
-        </div>
-      );
-    }
-    if (equipoTorneoIdResuelto === false) {
-      return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-          <AppScreenHeaderBar backTo="/torneos" title="Registro" />
-          <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px', color: 'white', textAlign: 'center' }}>
-            No se encontró el equipo.
-          </div>
-        </div>
-      );
-    }
-  }
-
-  if (!currentCliente && (fromTorneo || fromEquipo)) {
-    const backTo =
-      fromEquipo && typeof equipoTorneoIdResuelto === 'number'
-        ? `/torneo/${equipoTorneoIdResuelto}/equipos`
-        : fromTorneo && torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil))
-          ? `/torneo/${torneoIdPerfil}/equipos`
-          : '/torneos';
+  if (authLoading) {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-        <AppScreenHeaderBar backTo={backTo} title="Mi perfil" />
+        <AppScreenHeaderBar backTo="/hub" title="Mi perfil" />
+        <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
+          Verificando sesión...
+        </div>
+      </div>
+    );
+  }
+
+  if (esRegistroSinSesion) {
+    const regErr = (k) => registroFieldErrors[k];
+    const regBorder = (k) => (regErr(k) ? '1px solid #d32f2f' : '1px solid #ddd');
+    const regErrP = (k) =>
+      regErr(k) ? (
+        <p style={{ color: '#d32f2f', fontSize: '13px', marginTop: '-2px', marginBottom: '10px', lineHeight: 1.35 }}>
+          {regErr(k)}
+        </p>
+      ) : null;
+    const guestInputStyle = {
+      width: '100%',
+      padding: '10px',
+      marginBottom: '6px',
+      border: '1px solid #ddd',
+      borderRadius: '5px',
+      boxSizing: 'border-box',
+      fontSize: '14px',
+      background: 'white',
+    };
+    const guestLabelStyle = {
+      display: 'block',
+      fontWeight: 'bold',
+      marginBottom: '5px',
+      color: '#333',
+      fontSize: '13px',
+    };
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
+        <AppScreenHeaderBar
+          backTo={torneoIdValido ? `/torneo/${torneoIdPerfil}/equipos` : '/hub'}
+          title="Mi perfil"
+        />
         <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
           {avisoPerfilTorneoMsg ? (
             <div
@@ -600,170 +823,192 @@ export default function MiPerfil({ currentCliente, onLogout, onClienteActualizad
             style={{
               background: 'white',
               borderRadius: '12px',
-              padding: '22px 20px',
+              padding: '24px',
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
             }}
           >
-            <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>
-              Registro de jugador
-            </h4>
-            <form onSubmit={handleGuestRegistro}>
-              <label style={labelStyle}>Nombre *</label>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#222' }}>Crear tu cuenta</h3>
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '18px', lineHeight: 1.45 }}>
+              Completá tus datos con un email real: se crea tu usuario en Padbol Match y se guarda tu ficha de jugador.
+              {torneoIdValido ? ' Después volvés al torneo.' : ''}
+            </p>
+            <form onSubmit={handleRegistroCuenta}>
+              <label style={guestLabelStyle}>
+                Nombre y apellido {reqAst}
+              </label>
               <input
-                value={guestNombre}
-                onChange={(e) => setGuestNombre(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                autoComplete="given-name"
-              />
-              <label style={labelStyle}>Apellido *</label>
-              <input
-                value={guestApellido}
-                onChange={(e) => setGuestApellido(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                autoComplete="family-name"
-              />
-              <label style={labelStyle}>Categoría *</label>
-              <select
-                value={guestCategoria}
-                onChange={(e) => setGuestCategoria(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-              >
-                {CATEGORIAS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <label style={labelStyle}>WhatsApp</label>
-              <input
-                value={guestWhatsapp}
-                onChange={(e) => setGuestWhatsapp(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                autoComplete="tel"
-              />
-              <label style={labelStyle}>Email</label>
-              <input
-                type="email"
-                value={guestEmail}
-                onChange={(e) => setGuestEmail(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                autoComplete="email"
-              />
-              <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '12px' }}>
-                Indicá al menos WhatsApp o email.
-              </p>
-              {guestError ? <p style={{ color: '#b91c1c', marginBottom: '12px', fontSize: '14px' }}>{guestError}</p> : null}
-              <button
-                type="submit"
-                disabled={guestSaving}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: '#d32f2f',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  opacity: guestSaving ? 0.65 : 1,
+                type="text"
+                value={nombreRegistroTorneo}
+                onChange={(e) => {
+                  setNombreRegistroTorneo(e.target.value);
+                  setRegistroFieldErrors((p) => ({ ...p, nombre: '' }));
                 }}
-              >
-                {guestSaving ? 'Guardando…' : 'Guardar y continuar'}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentCliente) {
-    return (
-      <Navigate to={`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`} replace />
-    );
-  }
-
-  if (!currentCliente?.email) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent('/perfil')}`} replace />;
-  }
-
-if (loading) {
-  return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-      <AppScreenHeaderBar backTo="/" title="Perfil" onLogout={onLogout} />
-      <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
-        Cargando perfil...
-      </div>
-    </div>
-  );
-}
-
-  const equipoEquipoIdOk =
-    fromEquipo &&
-    equipoIdPerfil &&
-    /^\d+$/.test(String(equipoIdPerfil));
-
-  if (currentCliente && equipoEquipoIdOk) {
-    if (equipoTorneoIdResuelto === null) {
-      return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-          <AppScreenHeaderBar backTo="/torneos" title="Completa tus datos para participar" onLogout={onLogout} />
-          <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.92)' }}>Cargando…</div>
-        </div>
-      );
-    }
-    if (equipoTorneoIdResuelto === false) {
-      return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-          <AppScreenHeaderBar backTo="/" title="Completa tus datos para participar" onLogout={onLogout} />
-          <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px', color: 'white', textAlign: 'center' }}>
-            No se encontró el equipo.
-          </div>
-        </div>
-      );
-    }
-    const tidEq = equipoTorneoIdResuelto;
-    return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-        <AppScreenHeaderBar
-          backTo={`/torneo/${tidEq}/equipos`}
-          title="Completa tus datos para participar"
-          onLogout={onLogout}
-        />
-        <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
-          <div
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '22px 20px',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-            }}
-          >
-            <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>
-              Ficha de jugador para torneo
-            </h4>
-            <form onSubmit={handleGuardarEquipoFicha}>
-              <label style={labelStyle}>Nombre *</label>
-              <input
-                value={basicoNombre}
-                onChange={(e) => setBasicoNombre(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                placeholder="Tu nombre"
+                placeholder="Ej: Juan Pérez"
+                style={{ ...guestInputStyle, marginBottom: regErr('nombre') ? '6px' : '14px', border: regBorder('nombre') }}
                 autoComplete="name"
               />
-              <label style={labelStyle}>Apellido *</label>
+              {regErrP('nombre')}
+
+              <label style={guestLabelStyle}>
+                Email {reqAst}
+              </label>
               <input
-                value={basicoApellido}
-                onChange={(e) => setBasicoApellido(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                placeholder="Tu apellido"
-                autoComplete="family-name"
+                type="email"
+                value={emailRegistro}
+                onChange={(e) => {
+                  setEmailRegistro(e.target.value);
+                  setRegistroFieldErrors((p) => ({ ...p, email: '' }));
+                }}
+                placeholder="tu@email.com"
+                style={{ ...guestInputStyle, marginBottom: regErr('email') ? '6px' : '14px', border: regBorder('email') }}
+                autoComplete="email"
               />
-              <label style={labelStyle}>Categoría *</label>
+              {regErrP('email')}
+
+              <label style={guestLabelStyle}>Alias</label>
+              <input
+                type="text"
+                name="alias"
+                value={formData.alias}
+                onChange={handleChange}
+                placeholder="Alias (opcional)"
+                style={{ ...guestInputStyle, marginBottom: '14px' }}
+                autoComplete="nickname"
+              />
+
+              <label style={guestLabelStyle}>
+                WhatsApp {reqAst}
+              </label>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: '8px',
+                  alignItems: 'stretch',
+                  marginBottom: '6px',
+                  width: '100%',
+                }}
+              >
+                <select
+                  value={waCodigoPais}
+                  onChange={(e) => {
+                    setWaCodigoPais(e.target.value);
+                    setRegistroFieldErrors((p) => ({ ...p, whatsapp: '', whatsappConfirma: '' }));
+                  }}
+                  title="País / código"
+                  aria-label="Código de país"
+                  style={{
+                    ...guestInputStyle,
+                    flex: '0 0 auto',
+                    minWidth: '108px',
+                    maxWidth: '132px',
+                    marginBottom: 0,
+                    cursor: 'pointer',
+                    border: regBorder('whatsapp'),
+                  }}
+                >
+                  {opcionesCodigoWhatsApp.map((p) => (
+                    <option key={`${p.nombre}-${p.codigo}`} value={p.codigo} title={p.nombre}>
+                      {p.bandera} {p.codigo}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  value={waNumeroLocal}
+                  onChange={(e) => {
+                    setWaNumeroLocal(digitsOnly(e.target.value));
+                    setRegistroFieldErrors((p) => ({ ...p, whatsapp: '', whatsappConfirma: '' }));
+                  }}
+                  placeholder="Ej: 2211234567"
+                  aria-label="Número de celular sin código de país"
+                  style={{
+                    ...guestInputStyle,
+                    flex: '1 1 0',
+                    minWidth: 0,
+                    marginBottom: 0,
+                    border: regBorder('whatsapp'),
+                  }}
+                  autoComplete="tel-national"
+                />
+              </div>
+              <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.4 }}>
+                Obligatorio. Por defecto Argentina (+54): solo escribí tu número local (mínimo 10 dígitos), sin +54. Se guarda como +54…
+              </p>
+              {regErrP('whatsapp')}
+
+              <label style={guestLabelStyle}>
+                Confirmar número {reqAst}
+              </label>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={waConfirmLocal}
+                onChange={(e) => {
+                  setWaConfirmLocal(digitsOnly(e.target.value));
+                  setRegistroFieldErrors((p) => ({ ...p, whatsappConfirma: '' }));
+                }}
+                placeholder="Ej: 2211234567"
+                style={{ ...guestInputStyle, marginBottom: regErr('whatsappConfirma') ? '6px' : '14px', border: regBorder('whatsappConfirma') }}
+                autoComplete="tel-national"
+              />
+              {regErrP('whatsappConfirma')}
+
+              <label style={guestLabelStyle}>
+                Contraseña {reqAst}
+              </label>
+              <input
+                type="password"
+                value={passRegistroTorneo}
+                onChange={(e) => {
+                  setPassRegistroTorneo(e.target.value);
+                  setRegistroFieldErrors((p) => ({ ...p, password: '', password2: '' }));
+                }}
+                placeholder="Mínimo 6 caracteres"
+                style={{ ...guestInputStyle, marginBottom: regErr('password') ? '6px' : '14px', border: regBorder('password') }}
+                autoComplete="new-password"
+              />
+              {regErrP('password')}
+
+              <label style={guestLabelStyle}>
+                Confirmar contraseña {reqAst}
+              </label>
+              <input
+                type="password"
+                value={passRegistroTorneo2}
+                onChange={(e) => {
+                  setPassRegistroTorneo2(e.target.value);
+                  setRegistroFieldErrors((p) => ({ ...p, password2: '', password: '' }));
+                }}
+                placeholder="Repetí la contraseña"
+                style={{ ...guestInputStyle, marginBottom: regErr('password2') ? '6px' : '14px', border: regBorder('password2') }}
+                autoComplete="new-password"
+              />
+              {regErrP('password2')}
+
+              <label style={guestLabelStyle}>Lateralidad</label>
               <select
-                value={basicoCategoria}
-                onChange={(e) => setBasicoCategoria(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
+                name="lateralidad"
+                value={formData.lateralidad}
+                onChange={handleChange}
+                style={{ ...guestInputStyle, marginBottom: '14px' }}
+              >
+                <option value="Diestro">Diestro</option>
+                <option value="Zurdo">Zurdo</option>
+              </select>
+
+              <label style={guestLabelStyle}>
+                Categoría {reqAst}
+              </label>
+              <select
+                name="nivel"
+                value={formData.nivel}
+                onChange={(e) => {
+                  handleChange(e);
+                  setRegistroFieldErrors((p) => ({ ...p, categoria: '' }));
+                }}
+                style={{ ...guestInputStyle, marginBottom: regErr('categoria') ? '6px' : '14px', border: regBorder('categoria') }}
               >
                 {CATEGORIAS.map((c) => (
                   <option key={c} value={c}>
@@ -771,49 +1016,140 @@ if (loading) {
                   </option>
                 ))}
               </select>
-              <label style={labelStyle}>Email</label>
-              <input
-                type="email"
-                value={basicoEmail}
-                onChange={(e) => setBasicoEmail(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                placeholder="tu@email.com"
-                autoComplete="email"
-              />
-              <label style={labelStyle}>WhatsApp</label>
-              <input
-                value={basicoWhatsapp}
-                onChange={(e) => setBasicoWhatsapp(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                placeholder="Ej: +54 9 11 1234-5678"
-                autoComplete="tel"
-              />
-              <label style={labelStyle}>Ciudad (opcional)</label>
-              <input
-                value={basicoCiudad}
-                onChange={(e) => setBasicoCiudad(e.target.value)}
-                style={{ ...inputStyle, marginBottom: '14px' }}
-                placeholder="Ej: Buenos Aires"
-              />
-              {errorMsgBasicoTorneo ? (
-                <p style={{ color: '#b91c1c', marginBottom: '12px', fontSize: '14px' }}>{errorMsgBasicoTorneo}</p>
+              <p style={{ color: '#f59e0b', fontSize: '12px', marginTop: '2px', marginBottom: regErr('categoria') ? '6px' : '14px' }}>
+                La categoría será validada por un administrador
+              </p>
+              {regErrP('categoria')}
+
+              {mostrarCampoPais ? (
+                <>
+                  <label style={guestLabelStyle}>
+                    País
+                    {paisHtmlRequired ? <> {reqAst}</> : null}
+                  </label>
+                  {torneoPerfil && nivelTorneoScope === 'nacional' ? (
+                    <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
+                      Por defecto Argentina; podés cambiar el país si corresponde.
+                    </p>
+                  ) : null}
+                  <select
+                    name="pais"
+                    value={formData.pais}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setRegistroFieldErrors((p) => ({ ...p, pais: '' }));
+                    }}
+                    style={{ ...guestInputStyle, marginBottom: regErr('pais') ? '6px' : '14px', border: regBorder('pais') }}
+                    required={paisHtmlRequired}
+                  >
+                    <option value="">— Seleccionar país —</option>
+                    <optgroup label="Principales">
+                      {PAISES_TELEFONO_PRINCIPALES.map((p) => (
+                        <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
+                          {p.bandera} {p.nombre}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Otros países">
+                      {PAISES_TELEFONO_OTROS.map((p) => (
+                        <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
+                          {p.bandera} {p.nombre}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  {regErrP('pais')}
+                </>
               ) : null}
+
+              <label style={guestLabelStyle}>Ciudad</label>
+              <input
+                type="text"
+                name="ciudad"
+                placeholder="Ej: Buenos Aires"
+                value={formData.ciudad}
+                onChange={handleChange}
+                style={{ ...guestInputStyle, marginBottom: '14px' }}
+              />
+
+              <label style={guestLabelStyle}>Fecha de nacimiento</label>
+              <input
+                type="date"
+                name="fecha_nacimiento"
+                value={formData.fecha_nacimiento}
+                onChange={handleChange}
+                style={{ ...guestInputStyle, marginBottom: '14px' }}
+              />
+
+              <label style={guestLabelStyle}>N° FIPA</label>
+              <input
+                type="text"
+                name="numero_fipa"
+                placeholder="Ej: 12345"
+                value={formData.numero_fipa}
+                onChange={handleChange}
+                style={{ ...guestInputStyle, marginBottom: '14px' }}
+              />
+
+              <label style={{ ...guestLabelStyle, marginBottom: '8px' }}>¿Sos federado?</label>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, es_federado: true }))}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    border: '2px solid',
+                    borderColor: formData.es_federado ? '#388e3c' : '#ddd',
+                    background: formData.es_federado ? '#e8f5e9' : 'white',
+                    color: formData.es_federado ? '#388e3c' : '#666',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Sí
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, es_federado: false }))}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    border: '2px solid',
+                    borderColor: !formData.es_federado ? '#d32f2f' : '#ddd',
+                    background: !formData.es_federado ? '#fff3f3' : 'white',
+                    color: !formData.es_federado ? '#d32f2f' : '#666',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  No
+                </button>
+              </div>
+
+              {successMsg ? (
+                <p style={{ color: '#2e7d32', marginBottom: '10px', fontWeight: 600, lineHeight: 1.4 }}>{successMsg}</p>
+              ) : null}
+              {errorMsg ? <p style={{ color: 'red', marginBottom: '10px' }}>{errorMsg}</p> : null}
+
               <button
                 type="submit"
-                disabled={savingBasicoTorneo}
+                disabled={isSubmitting}
                 style={{
                   width: '100%',
                   padding: '12px',
                   background: '#d32f2f',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '5px',
                   cursor: 'pointer',
                   fontWeight: 'bold',
-                  opacity: savingBasicoTorneo ? 0.65 : 1,
+                  opacity: isSubmitting ? 0.65 : 1,
                 }}
               >
-                {savingBasicoTorneo ? 'Guardando…' : 'Guardar y volver al torneo'}
+                {isSubmitting ? 'Guardando...' : torneoIdValido ? 'Guardar y volver al torneo' : 'Crear cuenta'}
               </button>
             </form>
           </div>
@@ -822,22 +1158,38 @@ if (loading) {
     );
   }
 
-const paisParts = (perfil?.pais || '').split(' ');
-const paisFlag = paisParts[0];
-const paisNombre = paisParts.slice(1).join(' ');
-const categoriaColor = CATEGORIA_COLOR[perfil?.nivel] || '#999';
+  if (!sessionOwnerEmail && !esRegistroSinSesion) {
+    return (
+      <Navigate to={`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`} replace />
+    );
+  }
 
-return (
-  <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
+        <AppScreenHeaderBar backTo="/hub" title="Mi perfil" />
+        <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
+          Cargando perfil...
+        </div>
+      </div>
+    );
+  }
 
-    <AppScreenHeaderBar
-      backTo={fromTorneo && torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil)) ? `/torneo/${torneoIdPerfil}/equipos` : '/'}
-      title="Perfil"
-      onLogout={onLogout}
-    />
+  const paisParts = (perfil?.pais || '').split(' ');
+  const paisFlag = paisParts[0];
+  const paisNombre = paisParts.slice(1).join(' ');
+  const categoriaColor = CATEGORIA_COLOR[perfil?.nivel] || '#999';
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
+
+      <AppScreenHeaderBar
+        backTo={torneoIdValido ? `/torneo/${torneoIdPerfil}/equipos` : '/hub'}
+        title="Mi perfil"
+      />
 
     <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
-      {!fromEquipo && avisoPerfilTorneoMsg ? (
+      {avisoPerfilTorneoMsg ? (
         <div
           style={{
             marginBottom: '14px',
@@ -855,81 +1207,10 @@ return (
         </div>
       ) : null}
 
-      {fromTorneo && torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil)) ? (
-        <div
-          style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '22px 20px',
-            marginBottom: '16px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>
-            Datos para crear tu equipo
-          </h4>
-          <form onSubmit={handleGuardarBasicoTorneo}>
-            <label style={labelStyle}>Nombre *</label>
-            <input
-              value={basicoNombre}
-              onChange={(e) => setBasicoNombre(e.target.value)}
-              style={{ ...inputStyle, marginBottom: '14px' }}
-              placeholder="Tu nombre"
-              autoComplete="name"
-            />
-
-            <label style={labelStyle}>WhatsApp (opcional)</label>
-            <input
-              value={basicoWhatsapp}
-              onChange={(e) => setBasicoWhatsapp(e.target.value)}
-              style={{ ...inputStyle, marginBottom: '14px' }}
-              placeholder="Ej: +54 9 11 1234-5678"
-              autoComplete="tel"
-            />
-
-            {!String(currentCliente.email || '').trim() ? (
-              <>
-                <label style={labelStyle}>Email</label>
-                <input
-                  type="email"
-                  value={basicoEmail}
-                  onChange={(e) => setBasicoEmail(e.target.value)}
-                  style={{ ...inputStyle, marginBottom: '14px' }}
-                  placeholder="tu@email.com"
-                  autoComplete="email"
-                />
-              </>
-            ) : null}
-
-            {errorMsgBasicoTorneo ? (
-              <p style={{ color: '#b91c1c', marginBottom: '12px', fontSize: '14px' }}>{errorMsgBasicoTorneo}</p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={savingBasicoTorneo}
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#d32f2f',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                opacity: savingBasicoTorneo ? 0.65 : 1,
-              }}
-            >
-              {savingBasicoTorneo ? 'Guardando…' : 'Guardar y volver al torneo'}
-            </button>
-          </form>
-        </div>
-      ) : null}
-
       <div style={{ background: 'white', borderRadius: '12px', padding: '30px 24px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', marginBottom: '16px', textAlign: 'center' }}>
         {/* Photo */}
         {(() => {
-          const src = fotoPreview || perfil?.foto_url || currentCliente.foto;
+          const src = fotoPreview || perfil?.foto_url || cuentaDeSesion?.foto;
           const circle = (
             <div style={{ position: 'relative', width: '150px', margin: '0 auto 14px', display: 'inline-block' }}>
               {src ? (
@@ -975,7 +1256,9 @@ return (
           style={{ display: 'none' }}
         />
 
-        <h3 style={{ margin: '0 0 6px', fontSize: '22px', color: '#222' }}>{currentCliente.nombre}</h3>
+        <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#222' }}>
+          {userProfile?.nombre || perfil?.nombre || 'Jugador'}
+        </h2>
 
         {perfil?.pais && (
           <p style={{ margin: '0 0 4px', fontSize: '16px' }}>
@@ -985,10 +1268,6 @@ return (
         {perfil?.ciudad && (
           <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>📍 {perfil.ciudad}</p>
         )}
-        {perfil?.sede_id && (
-          <p style={{ margin: '0', color: '#777', fontSize: '13px' }}>🏟️ {sedeNombre(perfil.sede_id)}</p>
-        )}
-
         {/* Badges */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
           {perfil?.nivel && (
@@ -1027,6 +1306,9 @@ return (
           <>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Datos del jugador</h4>
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
+              <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
+              <Row label="Alias" value={String(perfil?.alias || '').trim() || '—'} />
+              <Row label="Email cuenta" value={cuentaDeSesion?.email || '—'} />
               <Row label="Categoría" value={
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: categoriaColor }}>{perfil.nivel}</span>
@@ -1038,10 +1320,18 @@ return (
                 </span>
               } />
               <Row label="Lateralidad" value={perfil.lateralidad} />
-              {perfil.fecha_nacimiento && <Row label="Fecha de nacimiento" value={perfil.fecha_nacimiento} />}
-              {perfil.sede_id && <Row label="Club al que representa" value={sedeNombre(perfil.sede_id)} />}
-              {perfil.numero_fipa && <Row label="N° FIPA" value={perfil.numero_fipa} />}
-              <Row label="Federado" value={perfil.es_federado ? '✅ Sí' : '❌ No'} />
+              {perfil.fecha_nacimiento && (
+                <Row
+                  label="Fecha de nacimiento"
+                  value={new Date(perfil.fecha_nacimiento).toLocaleDateString('es-AR')}
+                />
+              )}
+              <div>
+                <strong>Federado:</strong> {perfil.es_federado ? 'Sí' : 'No'}
+              </div>
+              <div>
+                <strong>N° Federado:</strong> {perfil.numero_fipa}
+              </div>
             </div>
             <button
               onClick={() => setEditando(true)}
@@ -1055,13 +1345,96 @@ return (
           <form onSubmit={handleGuardar}>
             <h4 style={{ margin: '0 0 16px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Editar datos</h4>
 
+            <label style={labelStyle}>Nombre y apellido *</label>
+            <input
+              type="text"
+              value={nombreTorneoCompleto}
+              onChange={(e) => setNombreTorneoCompleto(e.target.value)}
+              placeholder="Ej: Juan Pérez"
+              style={{ ...inputStyle, marginBottom: '14px' }}
+              autoComplete="name"
+            />
+
+            <label style={labelStyle}>Alias</label>
+            <input
+              type="text"
+              name="alias"
+              value={formData.alias}
+              onChange={handleChange}
+              placeholder="Alias (opcional)"
+              style={{ ...inputStyle, marginBottom: '14px' }}
+              autoComplete="nickname"
+            />
+
+            <label style={labelStyle}>WhatsApp</label>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '8px',
+                alignItems: 'stretch',
+                marginBottom: '6px',
+                width: '100%',
+              }}
+            >
+              <select
+                value={waCodigoPais}
+                onChange={(e) => setWaCodigoPais(e.target.value)}
+                title="País / código"
+                aria-label="Código de país"
+                style={{
+                  ...inputStyle,
+                  flex: '0 0 auto',
+                  minWidth: '108px',
+                  maxWidth: '132px',
+                  marginBottom: 0,
+                  cursor: 'pointer',
+                }}
+              >
+                {opcionesCodigoWhatsApp.map((p) => (
+                  <option key={`${p.nombre}-${p.codigo}`} value={p.codigo} title={p.nombre}>
+                    {p.bandera} {p.codigo}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={waNumeroLocal}
+                onChange={(e) => setWaNumeroLocal(digitsOnly(e.target.value))}
+                placeholder="Ej: 91123456789"
+                aria-label="Número local sin código de país"
+                style={{
+                  ...inputStyle,
+                  flex: '1 1 0',
+                  minWidth: 0,
+                  marginBottom: 0,
+                }}
+                autoComplete="tel-national"
+              />
+            </div>
+            <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '14px', lineHeight: 1.4 }}>
+              Obligatorio. Por defecto Argentina (+54): solo el número local (mínimo 10 dígitos), sin repetir +54. Se guarda como +54…
+            </p>
+
+            <label style={labelStyle}>Confirmar número</label>
+            <input
+              type="tel"
+              inputMode="numeric"
+              value={waConfirmLocal}
+              onChange={(e) => setWaConfirmLocal(digitsOnly(e.target.value))}
+              placeholder="Ej: 91123456789"
+              style={{ ...inputStyle, marginBottom: '14px' }}
+              autoComplete="tel-national"
+            />
+
             <label style={labelStyle}>Lateralidad</label>
             <select name="lateralidad" value={formData.lateralidad} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }}>
               <option value="Diestro">🤜 Diestro</option>
               <option value="Zurdo">🤛 Zurdo</option>
             </select>
 
-            <label style={labelStyle}>Categoría</label>
+            <label style={labelStyle}>Categoría *</label>
             <select name="nivel" value={formData.nivel} onChange={handleChange} style={inputStyle}>
               {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -1069,32 +1442,48 @@ return (
               ⏳ La categoría será validada por un administrador
             </p>
 
-            <label style={labelStyle}>País *</label>
-            <select name="pais" value={formData.pais} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} required>
-              <option value="">— Seleccionar país —</option>
-              <optgroup label="Principales">
-                {PAISES_TELEFONO_PRINCIPALES.map(p => (
-                  <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>{p.bandera} {p.nombre}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Otros países">
-                {PAISES_TELEFONO_OTROS.map(p => (
-                  <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>{p.bandera} {p.nombre}</option>
-                ))}
-              </optgroup>
-            </select>
+            {mostrarCampoPais ? (
+              <>
+                <label style={labelStyle}>
+                  País
+                  {!torneoPerfil || nivelTorneoScope === 'internacional' ? ' *' : ''}
+                </label>
+                {torneoPerfil && nivelTorneoScope === 'nacional' ? (
+                  <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
+                    Por defecto Argentina; podés cambiar el país si corresponde.
+                  </p>
+                ) : null}
+                <select
+                  name="pais"
+                  value={formData.pais}
+                  onChange={handleChange}
+                  style={{ ...inputStyle, marginBottom: '14px' }}
+                  required={paisHtmlRequired}
+                >
+                  <option value="">— Seleccionar país —</option>
+                  <optgroup label="Principales">
+                    {PAISES_TELEFONO_PRINCIPALES.map((p) => (
+                      <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
+                        {p.bandera} {p.nombre}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Otros países">
+                    {PAISES_TELEFONO_OTROS.map((p) => (
+                      <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
+                        {p.bandera} {p.nombre}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </>
+            ) : null}
 
             <label style={labelStyle}>Ciudad</label>
             <input type="text" name="ciudad" placeholder="Ej: Buenos Aires" value={formData.ciudad} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
             <label style={labelStyle}>Fecha de nacimiento</label>
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
-
-            <label style={labelStyle}>Club al que representa</label>
-            <select name="sede_id" value={formData.sede_id} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }}>
-              <option value="">— Seleccionar club —</option>
-              {sedes.map(s => <option key={s.id} value={String(s.id)}>{s.nombre}</option>)}
-            </select>
 
             <label style={labelStyle}>N° FIPA (número de federación)</label>
             <input type="text" name="numero_fipa" placeholder="Ej: 12345" value={formData.numero_fipa} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
@@ -1114,12 +1503,30 @@ return (
             {errorMsg && <p style={{ color: 'red', marginBottom: '10px' }}>{errorMsg}</p>}
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" disabled={saving}
-                style={{ flex: 1, padding: '11px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', opacity: saving ? 0.6 : 1 }}>
-                {saving ? 'Guardando...' : '✅ Guardar'}
+              <button type="submit" disabled={isSubmitting}
+                style={{ flex: 1, padding: '11px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', opacity: isSubmitting ? 0.6 : 1 }}>
+                {isSubmitting
+                  ? 'Guardando...'
+                  : torneoIdValido
+                    ? 'Guardar y volver al torneo'
+                    : '✅ Guardar'}
               </button>
-              <button type="button" onClick={() => { setEditando(false); setErrorMsg(''); setFotoPreview(null); }}
-                style={{ flex: 1, padding: '11px', background: 'transparent', color: '#666', border: '1px solid #ccc', borderRadius: '5px', cursor: 'pointer' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditando(false);
+                  setErrorMsg('');
+                  setFotoPreview(null);
+                  setWaConfirmLocal('');
+                  setWaNumeroLocal('');
+                  setWaCodigoPais('+54');
+                  waTorneoFormInitRef.current = false;
+                  setNombreTorneoCompleto('');
+                  setPassRegistroTorneo('');
+                  setPassRegistroTorneo2('');
+                }}
+                style={{ flex: 1, padding: '11px', background: 'transparent', color: '#666', border: '1px solid #ccc', borderRadius: '5px', cursor: 'pointer' }}
+              >
                 Cancelar
               </button>
             </div>

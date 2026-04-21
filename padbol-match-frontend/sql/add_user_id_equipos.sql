@@ -1,0 +1,3 @@
+-- DEPRECATED: la aplicación usa `equipos.creador_id` (UUID de Supabase Auth).
+-- No añadir `user_id` si la tabla ya expone `creador_id`.
+-- (Historial: antes se proponía user_id; el esquema actual del proyecto es creador_id.)

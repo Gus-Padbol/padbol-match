@@ -82,7 +82,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       if (response.ok) {
         setMensaje('✅ Torneo creado correctamente');
         setTimeout(() => {
-          navigate(`/torneo/${result[0].id}/jugadores`);
+          navigate(`/torneo/${result[0].id}`);
         }, 1500);
       } else {
         setError(result.error || 'Error al crear torneo');

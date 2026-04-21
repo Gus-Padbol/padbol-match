@@ -1,8 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import App from './App';
+import { AuthProvider } from './context/AuthContext';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('monta la aplicación', () => {
+  const { container } = render(
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+  expect(container).toBeTruthy();
 });

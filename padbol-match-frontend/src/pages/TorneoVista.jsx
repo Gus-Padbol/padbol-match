@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import '../styles/TorneoVista.css';
-import { isPerfilTorneoCompleto, refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 
 // "2026-02-26" → "26 Feb 2026"
 function formatFecha(str) {
@@ -16,6 +16,7 @@ const ADMIN_EMAILS = ['padbolinternacional@gmail.com', 'admin@padbol.com', 'sm@p
 export default function TorneoVista() {
   const { torneoId } = useParams();
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [torneo, setTorneo] = useState(null);
   const [equipos, setEquipos] = useState([]);
   const [partidos, setPartidos] = useState([]);
@@ -26,40 +27,11 @@ export default function TorneoVista() {
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
   const [iniciando, setIniciando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
-  const [gateOk, setGateOk] = useState(false);
 
-  const currentEmail = (JSON.parse(localStorage.getItem('currentCliente') || '{}')?.email || '').trim().toLowerCase();
+  const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const isAdmin = ADMIN_EMAILS.includes(currentEmail);
 
   useEffect(() => {
-    let cancelled = false;
-    setGateOk(false);
-    (async () => {
-      try {
-        const email = (JSON.parse(localStorage.getItem('currentCliente') || '{}')?.email || '')
-          .trim()
-          .toLowerCase();
-        if (email) await refreshJugadorPerfilFromSupabase(email);
-        if (cancelled) return;
-        if (!isPerfilTorneoCompleto()) {
-          navigate(`/perfil?from=torneo&id=${encodeURIComponent(torneoId)}`, {
-            replace: true,
-            state: { avisoPerfilTorneo: 'Completa tu perfil para participar en torneos' },
-          });
-          return;
-        }
-        if (!cancelled) setGateOk(true);
-      } catch {
-        if (!cancelled) setGateOk(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [torneoId, navigate]);
-
-  useEffect(() => {
-    if (!gateOk) return;
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -88,7 +60,7 @@ export default function TorneoVista() {
     };
 
     fetchData();
-  }, [torneoId, gateOk]);
+  }, [torneoId]);
 
   // Calculates W/L/pts/sets/games stats for a given set of equipos + partidos.
   // Works for the full torneo or a single group slice.
@@ -286,7 +258,7 @@ export default function TorneoVista() {
     }
   };
 
-  if (!gateOk || loading) return <div className="loading">Cargando...</div>;
+  if (loading) return <div className="loading">Cargando...</div>;
   if (error) return <div className="error">Error: {error}</div>;
   if (!torneo) return <div className="error">Torneo no encontrado</div>;
 
@@ -310,7 +282,12 @@ export default function TorneoVista() {
 
     return (
       <div className="torneo-vista-container">
-        <button className="btn-atras" onClick={() => navigate('/admin?tab=torneos')}>← Atrás</button>
+        <button
+          className="btn-atras"
+          onClick={() => navigate(isAdmin ? '/admin?tab=torneos' : '/torneos')}
+        >
+          ← Atrás
+        </button>
 
         <div className="finalizado-header">
           <div className="finalizado-trophy">🏆</div>
@@ -365,15 +342,29 @@ export default function TorneoVista() {
 
   return (
     <div className="torneo-vista-container">
-      <button className="btn-atras" onClick={() => navigate('/admin?tab=torneos')}>← Atrás</button>
+      <button
+        className="btn-atras"
+        onClick={() => navigate(isAdmin ? '/admin?tab=torneos' : '/torneos')}
+      >
+        ← Atrás
+      </button>
 
       <div className="torneo-header">
         <h1>🏆 {torneo.nombre}</h1>
         <p>{torneo.nivel_torneo} • {torneo.tipo_torneo} • {formatFecha(torneo.fecha_inicio)} a {formatFecha(torneo.fecha_fin)}</p>
+        <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn-agregar-jugadores"
+            onClick={() => navigate(`/torneo/${torneoId}/equipos`)}
+          >
+            Equipos e inscripción
+          </button>
+        </div>
         {isAdmin && !['en_curso', 'finalizado'].includes((torneo.estado || '').toLowerCase()) && (
           <div className="torneo-acciones">
-            <button className="btn-agregar-jugadores" onClick={() => navigate(`/torneo/${torneoId}/jugadores`)}>
-              👥 Agregar jugadores
+            <button className="btn-agregar-jugadores" onClick={() => navigate('/mi-perfil')}>
+              👥 Datos de jugadores (Mi perfil)
             </button>
             {!todosEquiposCompletos ? (
               <p className="torneo-iniciar-aviso" style={{ margin: '8px 0 0', color: '#b45309', fontWeight: 600 }}>

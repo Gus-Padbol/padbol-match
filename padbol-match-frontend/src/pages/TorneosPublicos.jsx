@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
+import { useAuth } from '../context/AuthContext';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -63,8 +64,10 @@ const ORDEN_ESTADO_TORNEO = {
   cancelado: 4,
 };
 
-export default function TorneosPublicos({ onLogout }) {
+export default function TorneosPublicos() {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const hubHomePath = session?.user ? '/hub' : '/';
   const [searchParams] = useSearchParams();
   const nearMode = searchParams.get('context') === 'near';
 
@@ -401,7 +404,7 @@ export default function TorneosPublicos({ onLogout }) {
         padding: '12px',
       }}
     >
-      <AppScreenHeaderBar backTo="/home" title="" onLogout={onLogout || undefined} />
+      <AppScreenHeaderBar backTo={hubHomePath} title="" />
 
       <div style={{ maxWidth: '820px', margin: '0 auto' }}>
         <div

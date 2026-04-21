@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
@@ -84,7 +85,8 @@ function sedeFlag(sede) {
 export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const currentEmail = (JSON.parse(localStorage.getItem('currentCliente') || '{}')?.email || '').trim().toLowerCase();
+  const { session } = useAuth();
+  const currentEmail = (session?.user?.email || '').trim().toLowerCase();
 
   // Legacy email-based flags (kept for backward compatibility while roles roll out)
   const isSuperAdmin = rol === 'super_admin' || currentEmail === 'padbolinternacional@gmail.com';

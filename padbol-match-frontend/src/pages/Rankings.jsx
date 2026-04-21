@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = 'https://padbol-backend.onrender.com';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
@@ -26,8 +27,10 @@ const TABS = [
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 
-export default function Rankings({ currentCliente, onLogout }) {
+export default function Rankings() {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const hubHomePath = session?.user ? '/hub' : '/';
 
   const irACambiarSede = () => {
     localStorage.removeItem('ultima_sede');
@@ -129,9 +132,8 @@ export default function Rankings({ currentCliente, onLogout }) {
   return (
     <div style={containerStyle}>
       <AppScreenHeaderBar
-        backTo="/home"
+        backTo={hubHomePath}
         title="Ranking"
-        onLogout={onLogout || undefined}
         childrenRight={
           <button
             type="button"
