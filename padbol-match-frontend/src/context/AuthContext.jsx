@@ -27,8 +27,15 @@ async function refreshUserProfile(session, setUserProfile) {
     .single();
 
   if (data && !error) {
-    setUserProfile(data);
-    const em = String(data.email || '').trim();
+    const perfilDB = data; // lo que viene de Supabase
+
+    setUserProfile({
+      ...perfilDB,
+      nombre: perfilDB?.nombre || '',
+      alias: perfilDB?.alias || '',
+      email: session?.user?.email || ''
+    });
+    const em = String(session?.user?.email || data.email || '').trim();
     if (em) await refreshJugadorPerfilFromSupabase(em);
     return;
   }
@@ -46,8 +53,15 @@ async function refreshUserProfile(session, setUserProfile) {
     .single();
 
   if (nuevo && !insErr) {
-    setUserProfile(nuevo);
-    const em = String(nuevo.email || '').trim();
+    const perfilDB = nuevo; // lo que viene de Supabase
+
+    setUserProfile({
+      ...perfilDB,
+      nombre: perfilDB?.nombre || '',
+      alias: perfilDB?.alias || '',
+      email: session?.user?.email || ''
+    });
+    const em = String(session?.user?.email || nuevo.email || '').trim();
     if (em) await refreshJugadorPerfilFromSupabase(em);
   } else {
     setUserProfile(null);

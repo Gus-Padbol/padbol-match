@@ -23,12 +23,11 @@ import PagoFallido from './pages/PagoFallido';
 import useUserRole from './hooks/useUserRole';
 import EquipoVista from './pages/EquipoVista';
 import UserHome from './pages/UserHome';
-import HomePublic from './pages/HomePublic';
 import AccesoCuenta from './pages/AccesoCuenta';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { GlobalSessionBar, GLOBAL_SESSION_BAR_HEIGHT } from './components/AppUnifiedHeader';
+import { AppScreenHeaderBar } from './components/AppUnifiedHeader';
 import { getDisplayName } from './utils/displayName';
 import { nombreCompletoJugadorPerfil } from './utils/jugadorPerfil';
 
@@ -56,31 +55,7 @@ function RegistroToMiPerfilRedirect() {
   return <Navigate to={buildMiPerfilRegistroUrl(r)} replace />;
 }
 
-/** Raíz: home público si no hay sesión; si hay sesión → HUB. */
-function RootHome() {
-  const { session, loading } = useAuth();
-  if (loading) {
-    return (
-      <div
-        style={{
-          color: 'white',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg,#667eea,#764ba2)',
-        }}
-      >
-        Cargando sesión…
-      </div>
-    );
-  }
-  if (session?.user) return <Navigate to="/hub" replace />;
-  return <HomePublic />;
-}
-
 function AppContent() {
-  const location = useLocation();
   const { session, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -108,31 +83,23 @@ function AppContent() {
 
   const loggedIn = Boolean(session?.user);
 
-  const showGlobalBar = !(location.pathname === '/auth' && !session?.user);
-  const mainPadTop = showGlobalBar ? GLOBAL_SESSION_BAR_HEIGHT : 0;
-
   return (
     <>
-      <GlobalSessionBar />
-      <div style={{ paddingTop: mainPadTop, minHeight: '100vh', boxSizing: 'border-box' }}>
+      <div style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
         <Routes>
+          <Route path="/" element={<Navigate to="/hub" replace />} />
+          <Route path="/hub" element={
+            <ProtectedRoute>
+              <UserHome />
+            </ProtectedRoute>
+          } />
+          <Route path="/inicio" element={<UserHome />} />
+          <Route path="/home" element={<UserHome />} />
+
+          {/* resto de rutas NO TOCAR */}
           <Route path="/auth" element={<AccesoCuenta />} />
           <Route path="/login" element={<LoginToAuthRedirect />} />
           <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
-          <Route path="/" element={<RootHome />} />
-          <Route path="/home" element={<Navigate to="/" replace />} />
-          <Route
-            path="/inicio"
-            element={loggedIn ? <Navigate to="/hub" replace /> : <Navigate to="/" replace />}
-          />
-          <Route
-            path="/hub"
-            element={
-              <ProtectedRoute>
-                <UserHome />
-              </ProtectedRoute>
-            }
-          />
           <Route path="/reservar" element={<ReservaForm />} />
           <Route path="/torneos" element={<TorneosPublicos />} />
           <Route path="/torneo/crear" element={<TorneoCrear />} />

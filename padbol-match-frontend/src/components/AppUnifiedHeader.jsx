@@ -138,20 +138,20 @@ export function AppScreenHeaderBar({
 }
 
 /** Home con sesión: logo izquierda, título centro, acciones derecha (sin ← Volver) */
-export function AppScreenHeaderHome({ children, title = 'Inicio', onLogout }) {
+export function AppScreenHeaderHome({ children, title = 'Inicio', onLogout, showLogo = true }) {
   return (
-    <AppScreenHeaderBar showLogo title={title} onLogout={onLogout} maxWidth="900px">
+    <AppScreenHeaderBar showLogo={showLogo} title={title} onLogout={onLogout} maxWidth="900px">
       {children}
     </AppScreenHeaderBar>
   );
 }
 
 /** Pantalla interior: ← Volver, título, sin logo */
-export function AppScreenHeaderBack({ to = '/home', title = 'Padbol Match', kicker = null, onLogout = null }) {
+export function AppScreenHeaderBack({ to = '/hub', title = 'Padbol Match', kicker = null, onLogout = null }) {
   return <AppScreenHeaderBar backTo={to} title={title} kicker={kicker} onLogout={onLogout} />;
 }
 
-export function AppScreenHeaderBackFloating({ to = '/home', title = 'Padbol Match' }) {
+export function AppScreenHeaderBackFloating({ to = '/hub', title = 'Padbol Match' }) {
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
       <AppScreenHeaderBar backTo={to} title={title} />
