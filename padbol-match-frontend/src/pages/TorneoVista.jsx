@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import '../styles/TorneoVista.css';
 
@@ -261,25 +262,28 @@ export default function TorneoVista() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', paddingTop: '64px', boxSizing: 'border-box' }}>
+      <div style={{ minHeight: '100vh', paddingTop: '64px', paddingBottom: '80px', boxSizing: 'border-box' }}>
         <AppHeader title="Torneo" />
         <div className="loading">Cargando...</div>
+        <BottomNav />
       </div>
     );
   }
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', paddingTop: '64px', boxSizing: 'border-box' }}>
+      <div style={{ minHeight: '100vh', paddingTop: '64px', paddingBottom: '80px', boxSizing: 'border-box' }}>
         <AppHeader title="Torneo" />
         <div className="error">Error: {error}</div>
+        <BottomNav />
       </div>
     );
   }
   if (!torneo) {
     return (
-      <div style={{ minHeight: '100vh', paddingTop: '64px', boxSizing: 'border-box' }}>
+      <div style={{ minHeight: '100vh', paddingTop: '64px', paddingBottom: '80px', boxSizing: 'border-box' }}>
         <AppHeader title="Torneo" />
         <div className="error">Torneo no encontrado</div>
+        <BottomNav />
       </div>
     );
   }
@@ -303,14 +307,8 @@ export default function TorneoVista() {
     );
 
     return (
-      <div className="torneo-vista-container" style={{ paddingTop: '64px' }}>
+      <div className="torneo-vista-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Torneo" />
-        <button
-          className="btn-atras"
-          onClick={() => navigate(isAdmin ? '/admin?tab=torneos' : '/torneos')}
-        >
-          ← Atrás
-        </button>
 
         <div className="finalizado-header">
           <div className="finalizado-trophy">🏆</div>
@@ -359,19 +357,14 @@ export default function TorneoVista() {
             ))}
           </div>
         )}
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="torneo-vista-container" style={{ paddingTop: '64px' }}>
+    <div className="torneo-vista-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
       <AppHeader title="Torneo" />
-      <button
-        className="btn-atras"
-        onClick={() => navigate(isAdmin ? '/admin?tab=torneos' : '/torneos')}
-      >
-        ← Atrás
-      </button>
 
       <div className="torneo-header">
         <h1>🏆 {torneo.nombre}</h1>
@@ -590,6 +583,7 @@ export default function TorneoVista() {
           </div>
         </div>
       )}
+      <BottomNav />
     </div>
   );
 }

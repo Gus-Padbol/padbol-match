@@ -3,9 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
-import { useAuth } from '../context/AuthContext';
-
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -68,8 +65,6 @@ const ORDEN_ESTADO_TORNEO = {
 
 export default function TorneosPublicos() {
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const hubHomePath = session?.user ? '/hub' : '/';
   const [searchParams] = useSearchParams();
   const nearMode = searchParams.get('context') === 'near';
 
@@ -407,7 +402,6 @@ export default function TorneosPublicos() {
       }}
     >
       <AppHeader title="Torneos" />
-      <AppScreenHeaderBar backTo={hubHomePath} title="" />
 
       <div style={{ maxWidth: '820px', margin: '0 auto' }}>
         <div

@@ -13,10 +13,10 @@ export function authRedirectValueHasNestedRedirect(raw) {
 
 /** Post-login / post-registro: solo rutas internas relativas. */
 export function safeRedirectPath(raw) {
-  if (!raw || typeof raw !== 'string') return '/hub';
+  if (!raw || typeof raw !== 'string') return '/';
   const t = raw.trim();
-  if (authRedirectValueHasNestedRedirect(t)) return '/hub';
-  if (!t.startsWith('/') || t.startsWith('//')) return '/hub';
+  if (authRedirectValueHasNestedRedirect(t)) return '/';
+  if (!t.startsWith('/') || t.startsWith('//')) return '/';
   if (t === '/perfil') return '/mi-perfil';
   return t;
 }

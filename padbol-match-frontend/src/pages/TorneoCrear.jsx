@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import '../styles/TorneoCrear.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -103,7 +104,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
   };
 
   return (
-    <div className="torneo-crear-container" style={{ paddingTop: '64px' }}>
+    <div className="torneo-crear-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
       <AppHeader title="Crear torneo" />
       <div className="torneo-crear-card">
         <h1>🏆 Crear Nuevo Torneo</h1>
@@ -219,6 +220,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
           </button>
         </form>
       </div>
+      <BottomNav />
     </div>
   );
 }

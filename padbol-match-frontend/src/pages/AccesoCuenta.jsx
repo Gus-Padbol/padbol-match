@@ -4,6 +4,7 @@ import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { APP_HEADER_LOGO } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
 import { safeRedirectPath } from '../utils/safeRedirect';
@@ -31,12 +32,12 @@ export default function AccesoCuenta() {
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
       const redirectParam = new URLSearchParams(location.search).get('redirect');
-      let dest = '/hub';
+      let dest = '/';
       if (redirectParam) {
         try {
           dest = safeRedirectPath(decodeURIComponent(redirectParam));
         } catch {
-          dest = '/hub';
+          dest = '/';
         }
       }
       navigate(dest, { replace: true });
@@ -139,7 +140,7 @@ export default function AccesoCuenta() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg,#667eea,#764ba2)',
-        padding: '64px 16px 32px 16px',
+        padding: '64px 16px 80px 16px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -385,24 +386,8 @@ export default function AccesoCuenta() {
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          style={{
-            marginTop: '20px',
-            width: '100%',
-            padding: '10px',
-            borderRadius: '8px',
-            border: '1px solid #cbd5e1',
-            background: '#f8fafc',
-            color: '#475569',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          ← Volver al inicio
-        </button>
       </div>
+      <BottomNav />
     </div>
   );
 }

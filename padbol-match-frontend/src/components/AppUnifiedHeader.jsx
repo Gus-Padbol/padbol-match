@@ -157,11 +157,11 @@ export function AppScreenHeaderHome({ children, title = 'Inicio', onLogout, show
 }
 
 /** Pantalla interior: ← Volver, título, sin logo */
-export function AppScreenHeaderBack({ to = '/hub', title = 'Padbol Match', kicker = null, onLogout = null }) {
+export function AppScreenHeaderBack({ to = '/', title = 'Padbol Match', kicker = null, onLogout = null }) {
   return <AppScreenHeaderBar backTo={to} title={title} kicker={kicker} onLogout={onLogout} />;
 }
 
-export function AppScreenHeaderBackFloating({ to = '/hub', title = 'Padbol Match' }) {
+export function AppScreenHeaderBackFloating({ to = '/', title = 'Padbol Match' }) {
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
       <AppScreenHeaderBar backTo={to} title={title} />

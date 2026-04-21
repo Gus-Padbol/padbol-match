@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
-import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
-import { useAuth } from '../context/AuthContext';
-
 function formatHorario(apertura, cierre) {
   if (apertura && cierre) return `${apertura} – ${cierre}`;
   if (apertura) return `Desde ${apertura}`;
@@ -29,8 +27,6 @@ function formatKm(km) {
 
 export default function SedesPublicas() {
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const hubHomePath = session?.user ? '/hub' : '/';
   const [searchParams] = useSearchParams();
   const from = searchParams.get('from'); // 'reserva' | 'explorar' | null
 
@@ -131,10 +127,9 @@ export default function SedesPublicas() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', paddingTop: '64px', paddingBottom: '48px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', paddingTop: '64px', paddingBottom: '80px' }}>
 
       <AppHeader title="Sedes" />
-      <AppScreenHeaderBar backTo={hubHomePath} title="Sedes" maxWidth="1100px" />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px 0' }}>
 
@@ -261,6 +256,7 @@ export default function SedesPublicas() {
           </div>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }

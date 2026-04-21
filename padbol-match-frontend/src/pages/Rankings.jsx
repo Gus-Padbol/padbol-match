@@ -2,9 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
-import { useAuth } from '../context/AuthContext';
-
 const API_BASE = 'https://padbol-backend.onrender.com';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
@@ -29,9 +26,6 @@ const TABS = [
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function Rankings() {
-  const { session } = useAuth();
-  const hubHomePath = session?.user ? '/hub' : '/';
-
   const [activeTab,          setActiveTab]          = useState('internacional');
   const [sedes,              setSedes]              = useState([]);
   const [selectedSede,       setSelectedSede]       = useState('');
@@ -127,7 +121,6 @@ export default function Rankings() {
   return (
     <div style={containerStyle}>
       <AppHeader title="Ranking" />
-      <AppScreenHeaderBar backTo={hubHomePath} title="" />
       <div style={innerStyle}>
 
         {/* Tab bar */}

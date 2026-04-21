@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -669,9 +670,10 @@ export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://pad
 
   if (loading) {
     return (
-      <div style={{ padding: '64px 20px 20px', textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
+      <div style={{ padding: '64px 20px 80px', textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
         <AppHeader title="Admin" />
         Cargando...
+        <BottomNav />
       </div>
     );
   }
@@ -686,7 +688,7 @@ export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://pad
   ];
 
   return (
-    <div className="admin-dashboard" style={{ paddingTop: '64px' }}>
+    <div className="admin-dashboard" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
       <AppHeader title="Admin" />
       <div className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -705,15 +707,6 @@ export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://pad
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>{currentEmail}</span>
-          <button onClick={() => navigate('/torneos')} style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '5px', cursor: 'pointer' }}>
-            🏆 Torneos
-          </button>
-          <button onClick={() => navigate('/rankings')} style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '5px', cursor: 'pointer' }}>
-            🏅 Rankings
-          </button>
-          <button onClick={() => navigate('/')} style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '5px', cursor: 'pointer' }}>
-            ← Inicio
-          </button>
           <button onClick={handleLogout} style={{ padding: '10px 20px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
             Cerrar sesión
           </button>
@@ -1938,6 +1931,7 @@ export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://pad
 
       </div>}
 
+      <BottomNav />
     </div>
   );
 }

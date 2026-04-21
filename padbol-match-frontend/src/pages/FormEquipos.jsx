@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
-import { APP_HEADER_BTN_VOLVER } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import {
@@ -869,8 +869,6 @@ export default function FormEquipos() {
   /** Equipos con al menos un jugador en ficha (lista principal del torneo). */
   const sinEquiposEnTorneoVisibles = equiposVisibles.length === 0;
 
-  const volverInscripcionPath = session?.user ? '/hub' : '/torneos';
-
   const miEquipoLleno =
     !!miEquipo && miEquipo.players.length >= Number(miEquipo.cupo_maximo || miEquipo.cupo || 2);
   const miEquipoListoParaJugar = useMemo(
@@ -1721,19 +1719,6 @@ export default function FormEquipos() {
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          minHeight: '40px',
-        }}
-      >
-        <button type="button" onClick={() => navigate(volverInscripcionPath)} style={APP_HEADER_BTN_VOLVER}>
-          ← Volver
-        </button>
-      </div>
-      <div
-        style={{
-          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
@@ -1776,15 +1761,16 @@ export default function FormEquipos() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 12px' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 80px' }}>
         {renderInscripcionHeader()}
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: 'white' }}>Cargando...</div>
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 12px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 80px' }}>
       {renderInscripcionHeader()}
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>
@@ -2528,6 +2514,7 @@ export default function FormEquipos() {
           </div>
         ) : null}
       </div>
+      <BottomNav />
     </div>
   );
 }

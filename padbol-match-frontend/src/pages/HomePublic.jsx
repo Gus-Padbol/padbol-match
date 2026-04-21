@@ -102,7 +102,7 @@ export default function HomePublic() {
         {session?.user ? (
           <button
             type="button"
-            onClick={() => navigate('/hub')}
+            onClick={() => navigate('/')}
             style={{
               marginTop: '8px',
               background: 'rgba(255,255,255,0.18)',

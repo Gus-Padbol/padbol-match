@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import { AppScreenHeaderBack } from '../components/AppUnifiedHeader';
+import BottomNav from '../components/BottomNav';
 import AppButton from '../components/AppButton';
 import * as T from '../theme/designTokens';
 import { cardStyle } from '../theme/uiStyles';
@@ -15,12 +15,11 @@ export default function PagoFallido() {
         background: `linear-gradient(135deg, ${T.colorErrorDark} 0%, ${T.colorError} 100%)`,
         display: 'flex',
         flexDirection: 'column',
-        padding: '64px 0 0',
+        padding: '64px 0 80px',
         boxSizing: 'border-box',
       }}
     >
       <AppHeader title="Pago" />
-      <AppScreenHeaderBack to="/hub" title="" />
       <div
         style={{
           flex: 1,
@@ -59,6 +58,7 @@ export default function PagoFallido() {
           </AppButton>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

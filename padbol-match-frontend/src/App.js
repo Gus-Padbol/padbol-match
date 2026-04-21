@@ -27,7 +27,6 @@ import AccesoCuenta from './pages/AccesoCuenta';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { authUrlWithRedirect } from './utils/authLoginRedirect';
 import { useAuth } from './context/AuthContext';
-import { AppScreenHeaderBar } from './components/AppUnifiedHeader';
 import { getDisplayName } from './utils/displayName';
 import { nombreCompletoJugadorPerfil } from './utils/jugadorPerfil';
 
@@ -44,9 +43,21 @@ function LegacyPerfilRedirect() {
   return <Navigate to={`/mi-perfil${suffix}`} replace />;
 }
 
+/** `/login` legacy: con query/hash de auth → `/auth`; sin intención → HUB (navegación pública). */
 function LoginToAuthRedirect() {
-  const { search } = useLocation();
-  return <Navigate to={`/auth${search || ''}`} replace />;
+  const { search, hash } = useLocation();
+  const qs = search || '';
+  const h = hash || '';
+  const hasQueryParams = qs.length > 1;
+  const hasOAuthHash =
+    h.includes('access_token') ||
+    h.includes('refresh_token') ||
+    h.includes('type=recovery') ||
+    h.includes('error=');
+  if (hasQueryParams || hasOAuthHash) {
+    return <Navigate to={`/auth${qs}${h}`} replace />;
+  }
+  return <Navigate to="/" replace />;
 }
 
 function RegistroToMiPerfilRedirect() {
@@ -87,7 +98,7 @@ function AppContent() {
     <>
       <div style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
         <Routes>
-          <Route path="/" element={<Navigate to="/hub" replace />} />
+          <Route path="/" element={<UserHome />} />
           <Route path="/hub" element={<UserHome />} />
           <Route path="/inicio" element={<UserHome />} />
           <Route path="/home" element={<UserHome />} />
@@ -121,7 +132,7 @@ function AppContent() {
               ) : canAccessAdmin() ? (
                 <AdminDashboard rol={rol} sedeId={sedeId} />
               ) : (
-                <Navigate to="/hub" replace />
+                <Navigate to="/" replace />
               )
             }
           />

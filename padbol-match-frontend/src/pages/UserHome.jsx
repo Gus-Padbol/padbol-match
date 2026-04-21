@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +11,15 @@ export default function UserHome() {
   const { session, loading: authLoading } = useAuth();
   const [nombreMostrar, setNombreMostrar] = useState('');
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+
+  const requireLoginForAction = (redirectPath) => {
+    if (authLoading) return;
+    if (!session?.user) {
+      navigate(authUrlWithRedirect(redirectPath));
+      return;
+    }
+    navigate(redirectPath);
+  };
 
   useEffect(() => {
     const cargarPerfil = async () => {
@@ -33,36 +43,11 @@ export default function UserHome() {
     cargarPerfil();
   }, []);
 
-  const requireLoginForAction = (redirectPath) => {
-    if (authLoading) return;
-    if (!session?.user) {
-      navigate(authUrlWithRedirect(redirectPath));
-      return;
-    }
-    navigate(redirectPath);
-  };
-
-  const botonesConSede = [
-    {
-      label: 'Reservar',
-      icon: '⚽',
-      action: () => requireLoginForAction('/reservar'),
-    },
-    {
-      label: 'Torneos',
-      icon: '🏆',
-      action: () => navigate('/torneos'),
-    },
-    {
-      label: 'Ranking',
-      icon: '🥇',
-      action: () => navigate('/rankings'),
-    },
-    {
-      label: 'Perfil',
-      icon: '👤',
-      action: () => requireLoginForAction('/mi-perfil'),
-    },
+  const accesosRapidos = [
+    { label: 'Reservar', icon: '⚽', action: () => requireLoginForAction('/reservar') },
+    { label: 'Torneos', icon: '🏆', action: () => navigate('/torneos') },
+    { label: 'Ranking', icon: '🥇', action: () => navigate('/rankings') },
+    { label: 'Perfil', icon: '👤', action: () => requireLoginForAction('/mi-perfil') },
   ];
 
   return (
@@ -73,12 +58,13 @@ export default function UserHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: '28px',
+        paddingTop: '72px',
         paddingLeft: '20px',
         paddingRight: '20px',
         paddingBottom: '80px',
       }}
     >
+      <AppHeader title="Inicio" />
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"
@@ -141,39 +127,42 @@ export default function UserHome() {
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '16px',
+            width: '100%',
+            maxWidth: '420px',
+            margin: '0 auto 20px auto',
           }}
         >
-          {botonesConSede.map(({ label, icon, action }, index) => {
+          {accesosRapidos.map(({ label, icon, action }, index) => {
             const isHovered = hoveredHubBtn === index;
             return (
-            <button
-              key={label}
-              type="button"
-              onClick={action}
-              onMouseEnter={() => setHoveredHubBtn(index)}
-              onMouseLeave={() => setHoveredHubBtn(null)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '18px',
-                borderRadius: '16px',
-                background: '#ffffff',
-                boxShadow: isHovered
-                  ? '0 14px 30px rgba(0,0,0,0.2)'
-                  : '0 10px 25px rgba(0,0,0,0.15)',
-                border: 'none',
-                transition: 'all 0.2s ease',
-                transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: '28px', lineHeight: 1, marginBottom: '6px' }}>{icon}</span>
-              <span style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', lineHeight: 1.2 }}>
-                {label}
-              </span>
-            </button>
+              <button
+                key={label}
+                type="button"
+                onClick={action}
+                onMouseEnter={() => setHoveredHubBtn(index)}
+                onMouseLeave={() => setHoveredHubBtn(null)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '18px',
+                  borderRadius: '16px',
+                  background: '#ffffff',
+                  boxShadow: isHovered
+                    ? '0 14px 30px rgba(0,0,0,0.2)'
+                    : '0 10px 25px rgba(0,0,0,0.15)',
+                  border: 'none',
+                  transition: 'all 0.2s ease',
+                  transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontSize: '28px', lineHeight: 1, marginBottom: '6px' }}>{icon}</span>
+                <span style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', lineHeight: 1.2 }}>
+                  {label}
+                </span>
+              </button>
             );
           })}
         </div>
@@ -183,7 +172,9 @@ export default function UserHome() {
           onClick={() => navigate('/sedes')}
           style={{
             width: '100%',
-            marginTop: '20px',
+            maxWidth: '420px',
+            margin: '0 auto',
+            display: 'block',
             padding: '16px',
             borderRadius: '16px',
             border: 'none',

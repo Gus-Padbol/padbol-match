@@ -9,7 +9,7 @@ export function normalizeTorneoPostPerfilPath(redirectRaw, torneoIdFromQuery) {
   const idQ = String(torneoIdFromQuery || '').trim();
   const queryIdOk = /^\d+$/.test(idQ);
   const raw = String(redirectRaw || '').trim();
-  const next = raw ? safeRedirectPath(raw) : '/hub';
+  const next = raw ? safeRedirectPath(raw) : '/';
 
   if (!raw && queryIdOk) {
     return `/torneo/${idQ}/equipos`;

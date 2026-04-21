@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 
 const API_BASE = 'https://padbol-backend.onrender.com';
 
@@ -97,7 +98,7 @@ export default function PagoExitoso() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '64px 24px 24px',
+        padding: '64px 24px 80px',
         boxSizing: 'border-box',
       }}
     >
@@ -349,6 +350,7 @@ export default function PagoExitoso() {
           </>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }

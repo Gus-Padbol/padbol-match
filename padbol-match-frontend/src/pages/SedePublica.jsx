@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
-import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 
 function formatHorario(apertura, cierre) {
   if (!apertura && !cierre) return null;
@@ -155,13 +155,9 @@ export default function SedePublica() {
   }, [sedeId]);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: '64px' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: '64px', paddingBottom: '80px' }}>
 
-      <AppHeader title="Sede" />
-
-      <div style={{ position: 'relative', zIndex: 20, background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
-        <AppScreenHeaderBar backTo="/sedes" title={sede?.nombre || 'Sede'} />
-      </div>
+      <AppHeader title={sede?.nombre ? String(sede.nombre) : 'Sede'} />
 
       {/* Loading */}
       {loading && (
@@ -408,6 +404,7 @@ export default function SedePublica() {
           </>
         );
       })()}
+      <BottomNav />
     </div>
   );
 }

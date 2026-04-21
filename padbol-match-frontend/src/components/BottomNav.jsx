@@ -3,8 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 
-const HUB_PATHS = ['/hub', '/inicio', '/home'];
-
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,11 +10,22 @@ const BottomNav = () => {
   const path = location.pathname;
 
   const items = [
-    { label: 'Inicio', icon: '🏠', path: '/hub', match: (p) => HUB_PATHS.includes(p) },
+    { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
     { label: 'Torneos', icon: '🏆', path: '/torneos', match: (p) => p === '/torneos' },
     { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
     { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
   ];
+
+  const go = (item) => {
+    if (authLoading) return;
+    if (item.path === '/mi-perfil' || item.path === '/reservar') {
+      if (!session?.user) {
+        navigate(authUrlWithRedirect(item.path));
+        return;
+      }
+    }
+    navigate(item.path);
+  };
 
   return (
     <nav
@@ -43,16 +52,7 @@ const BottomNav = () => {
           <button
             key={item.path}
             type="button"
-            onClick={() => {
-              if (item.path === '/mi-perfil') {
-                if (authLoading) return;
-                if (!session?.user) {
-                  navigate(authUrlWithRedirect('/mi-perfil'));
-                  return;
-                }
-              }
-              navigate(item.path);
-            }}
+            onClick={() => go(item)}
             style={{
               display: 'flex',
               flexDirection: 'column',

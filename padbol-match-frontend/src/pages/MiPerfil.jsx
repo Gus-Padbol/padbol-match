@@ -4,7 +4,6 @@ import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 import {
   persistJugadorPerfil,
   refreshJugadorPerfilFromSupabase,
@@ -549,7 +548,7 @@ export default function MiPerfil() {
       if (isPerfilTorneoCompleto()) {
         await new Promise((r) => setTimeout(r, 450));
         const target = normalizeTorneoPostPerfilPath(redirectAfterAuth, torneoIdValido ? torneoIdPerfil : '');
-        navigate(target && target !== '/home' && target !== '/' ? target : '/hub', { replace: true });
+        navigate(target && target !== '/home' && target !== '/' ? target : '/', { replace: true });
       } else {
         setErrorMsg('Faltan datos obligatorios en la ficha (nombre, WhatsApp, categoría o país).');
       }
@@ -738,7 +737,6 @@ export default function MiPerfil() {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Mi Perfil" />
-        <AppScreenHeaderBar backTo="/hub" title="" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Verificando sesión...
         </div>
@@ -776,10 +774,6 @@ export default function MiPerfil() {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Mi Perfil" />
-        <AppScreenHeaderBar
-          backTo={torneoIdValido ? `/torneo/${torneoIdPerfil}/equipos` : '/hub'}
-          title=""
-        />
         <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
           {avisoPerfilTorneoMsg ? (
             <div
@@ -1148,7 +1142,6 @@ export default function MiPerfil() {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Mi Perfil" />
-        <AppScreenHeaderBar backTo="/hub" title="" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Cargando perfil...
         </div>
@@ -1167,10 +1160,6 @@ export default function MiPerfil() {
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
 
       <AppHeader title="Mi Perfil" />
-      <AppScreenHeaderBar
-        backTo={torneoIdValido ? `/torneo/${torneoIdPerfil}/equipos` : '/hub'}
-        title=""
-      />
 
     <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
       {avisoPerfilTorneoMsg ? (

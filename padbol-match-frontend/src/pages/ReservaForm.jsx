@@ -4,7 +4,6 @@ import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { AppScreenHeaderBack } from '../components/AppUnifiedHeader';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { authLoginRedirectPath } from '../utils/authLoginRedirect';
@@ -92,8 +91,6 @@ export default function ReservaForm({
   const navigate = useNavigate();
   const location = useLocation();
   const { session, loading: authLoading, userProfile } = useAuth();
-
-  const hubHomePath = '/hub';
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -563,7 +560,6 @@ export default function ReservaForm({
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Reservar" />
-        <AppScreenHeaderBack to={hubHomePath} title="" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Reserva tu Cancha de PADBOL</h1>
 
@@ -644,7 +640,6 @@ export default function ReservaForm({
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Reservar" />
-        <AppScreenHeaderBack to={hubHomePath} title="" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>
             📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
@@ -761,7 +756,6 @@ export default function ReservaForm({
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Reservar" />
-        <AppScreenHeaderBack to={hubHomePath} title="" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Resumen de reserva</h1>
 
