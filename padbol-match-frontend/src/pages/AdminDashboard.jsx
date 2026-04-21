@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -666,7 +667,14 @@ export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://pad
     if (!error) setCanchas(prev => prev.map(c => c.id === cancha.id ? { ...c, estado: nuevoEstado } : c));
   };
 
-  if (loading) return <div style={{ padding: '20px', textAlign: 'center' }}>Cargando...</div>;
+  if (loading) {
+    return (
+      <div style={{ padding: '64px 20px 20px', textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
+        <AppHeader title="Admin" />
+        Cargando...
+      </div>
+    );
+  }
 
   const TABS = [
     { id: 'resumen',      label: '📊 Resumen' },
@@ -678,7 +686,8 @@ export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://pad
   ];
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-dashboard" style={{ paddingTop: '64px' }}>
+      <AppHeader title="Admin" />
       <div className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h1 style={{ margin: 0 }}>🏆 PADBOL MATCH - ADMIN</h1>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 
 const API_BASE = 'https://padbol-backend.onrender.com';
 
@@ -96,9 +97,11 @@ export default function PagoExitoso() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px',
+        padding: '64px 24px 24px',
+        boxSizing: 'border-box',
       }}
     >
+      <AppHeader title="Pago" />
       <div
         style={{
           background: 'white',

@@ -6,7 +6,7 @@ export const APP_HEADER_ROW = {
   width: '100%',
   maxWidth: '900px',
   margin: '0 auto',
-  padding: '14px 20px',
+  padding: '8px 20px',
   display: 'flex',
   alignItems: 'center',
   boxSizing: 'border-box',
@@ -50,7 +50,17 @@ export function AppScreenHeaderBar({
   const maxWidth = maxWidthProp ?? '900px';
 
   return (
-    <div style={{ ...APP_HEADER_ROW, maxWidth, display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div
+      style={{
+        ...APP_HEADER_ROW,
+        maxWidth,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        marginTop: '10px',
+        marginBottom: '20px',
+      }}
+    >
       <div
         style={{
           flex: '0 1 34%',

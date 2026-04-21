@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppScreenHeaderHome } from '../components/AppUnifiedHeader';
+import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
 
 export default function UserHome() {
@@ -61,10 +61,10 @@ export default function UserHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: '60px',
+        paddingTop: '28px',
         paddingLeft: '20px',
         paddingRight: '20px',
-        paddingBottom: '32px',
+        paddingBottom: '80px',
       }}
     >
       <img
@@ -77,8 +77,6 @@ export default function UserHome() {
           width: '120px'
         }}
       />
-      <AppScreenHeaderHome title="" showLogo={false} />
-
       <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto' }}>
         <div
           style={{
@@ -106,7 +104,7 @@ export default function UserHome() {
             textAlign: 'center',
             margin: 0,
             fontSize: '13px',
-            color: '#94a3b8',
+            color: '#ffffff',
             lineHeight: 1.4,
           }}>
             ¿Qué querés hacer hoy?
@@ -174,6 +172,7 @@ export default function UserHome() {
           Explorar sedes
         </button>
       </div>
+      <BottomNav />
     </div>
   );
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
+import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { AppScreenHeaderBack } from '../components/AppUnifiedHeader';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -559,8 +561,9 @@ export default function ReservaForm({
   // PANTALLA 1: País, Ciudad, Sede
   if (pantalla === 1) {
     return (
-      <div className="reserva-container">
-        <AppScreenHeaderBack to={hubHomePath} title="Reservar cancha" />
+      <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
+        <AppHeader title="Reservar" />
+        <AppScreenHeaderBack to={hubHomePath} title="" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Reserva tu Cancha de PADBOL</h1>
 
@@ -631,6 +634,7 @@ export default function ReservaForm({
             )}
           </form>
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -638,8 +642,9 @@ export default function ReservaForm({
   // PANTALLA 2: Fecha y Horario
   if (pantalla === 2) {
     return (
-      <div className="reserva-container">
-        <AppScreenHeaderBack to={hubHomePath} title="Reservar cancha" />
+      <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
+        <AppHeader title="Reservar" />
+        <AppScreenHeaderBack to={hubHomePath} title="" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>
             📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
@@ -742,6 +747,7 @@ export default function ReservaForm({
             {error && <div className="error-message">{error}</div>}
           </form>
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -753,8 +759,9 @@ export default function ReservaForm({
     const muestraInputWhatsappResumen = !perfilTelefonoValido(currentCliente);
 
     return (
-      <div className="reserva-container">
-        <AppScreenHeaderBack to={hubHomePath} title="Reservar cancha" />
+      <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
+        <AppHeader title="Reservar" />
+        <AppScreenHeaderBack to={hubHomePath} title="" />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Resumen de reserva</h1>
 
@@ -846,6 +853,7 @@ export default function ReservaForm({
             {mpLoading ? 'Procesando...' : 'Pagar con Mercado Pago'}
           </button>
         </div>
+        <BottomNav />
       </div>
     );
   }

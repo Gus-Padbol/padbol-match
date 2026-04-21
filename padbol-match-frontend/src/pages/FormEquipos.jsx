@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 import { supabase } from '../supabaseClient';
 import { APP_HEADER_BTN_VOLVER } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
@@ -1530,15 +1531,17 @@ export default function FormEquipos() {
     ) : null;
 
   const renderInscripcionHeader = () => (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: '1100px',
-        margin: '0 auto',
-        padding: '2px 12px 6px',
-        boxSizing: 'border-box',
-      }}
-    >
+    <>
+      <AppHeader title="Inscripción" />
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '1100px',
+          margin: '0 auto',
+          padding: '2px 12px 6px',
+          boxSizing: 'border-box',
+        }}
+      >
       <div
         style={{
           display: 'flex',
@@ -1592,11 +1595,12 @@ export default function FormEquipos() {
         </h1>
       </div>
     </div>
+    </>
   );
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '4px 12px 12px' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 12px' }}>
         {renderInscripcionHeader()}
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: 'white' }}>Cargando...</div>
       </div>
@@ -1604,7 +1608,7 @@ export default function FormEquipos() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '4px 12px 12px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 12px' }}>
       {renderInscripcionHeader()}
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 import { supabase } from '../supabaseClient';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
@@ -451,7 +452,10 @@ export default function EquipoVista() {
   }, [equipo?.nombre, esMiEquipo]);
 
   const renderHeader = (titleText) => (
-    <AppScreenHeaderBar title={titleText} backTo={`/torneo/${id}/equipos`} maxWidth="900px" />
+    <>
+      <AppHeader title="Equipo" />
+      <AppScreenHeaderBar title={titleText} backTo={`/torneo/${id}/equipos`} maxWidth="900px" />
+    </>
   );
 
   const aceptarSolicitud = async (solicitud) => {
@@ -590,7 +594,7 @@ export default function EquipoVista() {
 
   if (loading) {
     return (
-      <div style={{ ...pageBackgroundStyle, padding: '8px 12px 12px' }}>
+      <div style={{ ...pageBackgroundStyle, padding: '64px 12px 12px' }}>
         {renderHeader('Equipo')}
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
       </div>
@@ -599,7 +603,7 @@ export default function EquipoVista() {
 
   if (!equipo) {
     return (
-      <div style={{ ...pageBackgroundStyle, padding: '8px 12px 12px' }}>
+      <div style={{ ...pageBackgroundStyle, padding: '64px 12px 12px' }}>
         {renderHeader('Equipo')}
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
           <p>No se encontró el equipo.</p>
@@ -609,7 +613,7 @@ export default function EquipoVista() {
   }
 
   return (
-    <div style={{ ...pageBackgroundStyle, padding: '8px 12px 12px' }}>
+    <div style={{ ...pageBackgroundStyle, padding: '64px 12px 12px' }}>
       {renderHeader(headerTitle)}
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 import { supabase } from '../supabaseClient';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 
@@ -154,7 +155,9 @@ export default function SedePublica() {
   }, [sedeId]);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: '64px' }}>
+
+      <AppHeader title="Sede" />
 
       <div style={{ position: 'relative', zIndex: 20, background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
         <AppScreenHeaderBar backTo="/sedes" title={sede?.nombre || 'Sede'} />

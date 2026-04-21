@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Navigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
+import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 import {
   persistJugadorPerfil,
@@ -103,15 +105,22 @@ export default function MiPerfil() {
   const perfilSubmitLockRef = useRef(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  /** Preview local (blob URL); se muestra hasta que elijas otra o cancels edición del formulario */
   const [fotoPreview, setFotoPreview] = useState(null);
-  const [fotoUploading, setFotoUploading] = useState(false);
-  const fotoInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const fotoPreviewRef = useRef(null);
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
 
   const sessionOwnerEmail = useMemo(() => session?.user?.email?.trim() || null, [session?.user?.email]);
+
+  fotoPreviewRef.current = fotoPreview;
+  useEffect(() => () => {
+    const u = fotoPreviewRef.current;
+    if (u && String(u).startsWith('blob:')) URL.revokeObjectURL(u);
+  }, []);
 
   useEffect(() => {
     if (!session?.user?.email) return;
@@ -372,49 +381,16 @@ export default function MiPerfil() {
     }
   };
 
-  const handleFotoChange = async (e) => {
-    const file = e.target.files[0];
+  const handlePhotoSelected = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show local preview immediately
-    setFotoPreview(URL.createObjectURL(file));
-    setFotoUploading(true);
-    setErrorMsg('');
+    setFotoPreview((prev) => {
+      if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
 
-    try {
-      const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const fotoUrl = `https://vpldffhsxhgnmitiikof.supabase.co/storage/v1/object/public/avatars/${fileName}`;
-
-      // Save URL to jugadores_perfil (upsert so it works even before full profile is saved)
-      const owner = sessionOwnerEmail;
-      if (!owner) return;
-      const nombreIns =
-        String(perfil?.nombre || '').trim() ||
-        String(cuentaDeSesion?.nombre || '').trim() ||
-        '';
-      const { error: dbError } = perfil
-        ? await supabase.from('jugadores_perfil').update({ foto_url: fotoUrl }).eq('email', owner)
-        : await supabase.from('jugadores_perfil').insert([{
-            email: owner,
-            nombre: nombreIns || getDisplayName(userProfile, session),
-            foto_url: fotoUrl,
-          }]);
-
-      if (dbError) throw dbError;
-
-      await fetchPerfil();
-    } catch (err) {
-      setErrorMsg('No se pudo subir la foto. Probá con otra imagen o más tarde.');
-      setFotoPreview(null);
-    } finally {
-      setFotoUploading(false);
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleChange = (e) => {
@@ -760,11 +736,13 @@ export default function MiPerfil() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-        <AppScreenHeaderBar backTo="/hub" title="Mi perfil" />
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
+        <AppHeader title="Mi Perfil" />
+        <AppScreenHeaderBar backTo="/hub" title="" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Verificando sesión...
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -796,10 +774,11 @@ export default function MiPerfil() {
       fontSize: '13px',
     };
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
+        <AppHeader title="Mi Perfil" />
         <AppScreenHeaderBar
           backTo={torneoIdValido ? `/torneo/${torneoIdPerfil}/equipos` : '/hub'}
-          title="Mi perfil"
+          title=""
         />
         <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
           {avisoPerfilTorneoMsg ? (
@@ -1154,6 +1133,7 @@ export default function MiPerfil() {
             </form>
           </div>
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -1166,11 +1146,13 @@ export default function MiPerfil() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
-        <AppScreenHeaderBar backTo="/hub" title="Mi perfil" />
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
+        <AppHeader title="Mi Perfil" />
+        <AppScreenHeaderBar backTo="/hub" title="" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Cargando perfil...
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -1179,13 +1161,15 @@ export default function MiPerfil() {
   const paisFlag = paisParts[0];
   const paisNombre = paisParts.slice(1).join(' ');
   const categoriaColor = CATEGORIA_COLOR[perfil?.nivel] || '#999';
+  const foto = perfil?.foto_url || cuentaDeSesion?.foto || null;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
 
+      <AppHeader title="Mi Perfil" />
       <AppScreenHeaderBar
         backTo={torneoIdValido ? `/torneo/${torneoIdPerfil}/equipos` : '/hub'}
-        title="Mi perfil"
+        title=""
       />
 
     <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
@@ -1208,53 +1192,96 @@ export default function MiPerfil() {
       ) : null}
 
       <div style={{ background: 'white', borderRadius: '12px', padding: '30px 24px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', marginBottom: '16px', textAlign: 'center' }}>
-        {/* Photo */}
-        {(() => {
-          const src = fotoPreview || perfil?.foto_url || cuentaDeSesion?.foto;
-          const circle = (
-            <div style={{ position: 'relative', width: '150px', margin: '0 auto 14px', display: 'inline-block' }}>
-              {src ? (
-                <img
-                  src={src}
-                  alt="Foto"
-                  style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #d32f2f', display: 'block' }}
-                />
-              ) : (
-                <div style={{ width: '150px', height: '150px', borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '64px', border: '3px solid #d32f2f' }}>
-                  👤
-                </div>
-              )}              {editando && (
-                <div
-                  onClick={() => !fotoUploading && fotoInputRef.current?.click()}
-                  style={{
-                    position: 'absolute', inset: 0, borderRadius: '50%',
-                    background: fotoUploading ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.35)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    cursor: fotoUploading ? 'default' : 'pointer',
-                    color: 'white', fontSize: '12px', fontWeight: 'bold', gap: '4px',
-                  }}
-                >
-                  {fotoUploading ? (
-                    <span>Subiendo...</span>
-                  ) : (
-                    <>
-                      <span style={{ fontSize: '24px' }}>📷</span>
-                      <span>Cambiar foto</span>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-          return circle;
-        })()}
+        {/* Foto de perfil: avatar + overlay + input file */}
         <input
-          ref={fotoInputRef}
+          ref={fileInputRef}
           type="file"
           accept="image/*"
-          onChange={handleFotoChange}
           style={{ display: 'none' }}
+          onChange={handlePhotoSelected}
         />
+        <button
+          type="button"
+          aria-label="Subir foto de perfil"
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            position: 'relative',
+            width: '140px',
+            height: '140px',
+            margin: '0 auto 14px',
+            padding: 0,
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            borderRadius: '50%',
+            display: 'block',
+            overflow: 'hidden',
+            boxSizing: 'border-box',
+          }}
+        >
+          <img
+            src={fotoPreview || perfil?.foto_url || cuentaDeSesion?.foto || '/default-avatar.svg'}
+            alt="Perfil"
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              display: 'block',
+              pointerEvents: 'none',
+            }}
+          />
+          {!fotoPreview && !foto && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(15, 23, 42, 0.45)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                borderRadius: '50%',
+                textAlign: 'center',
+                backdropFilter: 'blur(2px)',
+                WebkitBackdropFilter: 'blur(2px)',
+                pointerEvents: 'none',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '28px',
+                  marginBottom: '6px',
+                }}
+                aria-hidden
+              >
+                📷
+              </span>
+              <span
+                style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                }}
+              >
+                Subir foto
+              </span>
+            </div>
+          )}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              boxShadow: 'inset 0 0 0 3px #ef4444',
+              pointerEvents: 'none',
+            }}
+          />
+        </button>
 
         <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#222' }}>
           {userProfile?.nombre || perfil?.nombre || 'Jugador'}
@@ -1636,6 +1663,7 @@ export default function MiPerfil() {
       </div>
 
       </div>
+      <BottomNav />
     </div>
   );
 }

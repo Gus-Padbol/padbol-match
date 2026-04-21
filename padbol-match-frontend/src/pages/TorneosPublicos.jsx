@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
 
@@ -401,9 +403,10 @@ export default function TorneosPublicos() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        padding: '12px',
+        padding: '64px 12px 80px 12px',
       }}
     >
+      <AppHeader title="Torneos" />
       <AppScreenHeaderBar backTo={hubHomePath} title="" />
 
       <div style={{ maxWidth: '820px', margin: '0 auto' }}>
@@ -414,7 +417,7 @@ export default function TorneosPublicos() {
             backdropFilter: 'blur(10px)',
             borderRadius: '16px',
             padding: '14px 16px',
-            marginBottom: '14px',
+            marginBottom: '10px',
             color: 'white',
           }}
         >
@@ -454,6 +457,7 @@ export default function TorneosPublicos() {
 
         {listaTorneos}
       </div>
+      <BottomNav />
     </div>
   );
 }

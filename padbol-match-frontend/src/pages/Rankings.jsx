@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
+import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,15 +29,9 @@ const TABS = [
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function Rankings() {
-  const navigate = useNavigate();
   const { session } = useAuth();
   const hubHomePath = session?.user ? '/hub' : '/';
 
-  const irACambiarSede = () => {
-    localStorage.removeItem('ultima_sede');
-    localStorage.removeItem('ultima_sede_nombre');
-    navigate('/sedes');
-  };
   const [activeTab,          setActiveTab]          = useState('internacional');
   const [sedes,              setSedes]              = useState([]);
   const [selectedSede,       setSelectedSede]       = useState('');
@@ -94,7 +89,7 @@ export default function Rankings() {
   const containerStyle = {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    padding: '24px 16px',
+    padding: '64px 16px 80px 16px',
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   };
 
@@ -131,32 +126,12 @@ export default function Rankings() {
 
   return (
     <div style={containerStyle}>
-      <AppScreenHeaderBar
-        backTo={hubHomePath}
-        title="Ranking"
-        childrenRight={
-          <button
-            type="button"
-            onClick={irACambiarSede}
-            style={{
-              padding: '6px 14px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'rgba(255,255,255,0.95)',
-              background: 'rgba(255,255,255,0.18)',
-              border: '1px solid rgba(255,255,255,0.28)',
-              borderRadius: '9999px',
-              cursor: 'pointer',
-            }}
-          >
-            Cambiar sede
-          </button>
-        }
-      />
+      <AppHeader title="Ranking" />
+      <AppScreenHeaderBar backTo={hubHomePath} title="" />
       <div style={innerStyle}>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '4px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '4px', marginBottom: '12px' }}>
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -181,7 +156,7 @@ export default function Rankings() {
         </div>
 
         {/* Filters */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
           {activeTab === 'local' && (
             <select
               value={selectedSede}
@@ -333,6 +308,7 @@ export default function Rankings() {
           </div>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }

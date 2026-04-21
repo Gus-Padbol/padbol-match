@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import '../styles/TorneoVista.css';
 
@@ -258,9 +259,30 @@ export default function TorneoVista() {
     }
   };
 
-  if (loading) return <div className="loading">Cargando...</div>;
-  if (error) return <div className="error">Error: {error}</div>;
-  if (!torneo) return <div className="error">Torneo no encontrado</div>;
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', paddingTop: '64px', boxSizing: 'border-box' }}>
+        <AppHeader title="Torneo" />
+        <div className="loading">Cargando...</div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div style={{ minHeight: '100vh', paddingTop: '64px', boxSizing: 'border-box' }}>
+        <AppHeader title="Torneo" />
+        <div className="error">Error: {error}</div>
+      </div>
+    );
+  }
+  if (!torneo) {
+    return (
+      <div style={{ minHeight: '100vh', paddingTop: '64px', boxSizing: 'border-box' }}>
+        <AppHeader title="Torneo" />
+        <div className="error">Torneo no encontrado</div>
+      </div>
+    );
+  }
 
   if (torneo.estado === 'finalizado') {
     const top3   = tablaPosiciones.slice(0, 3);
@@ -281,7 +303,8 @@ export default function TorneoVista() {
     );
 
     return (
-      <div className="torneo-vista-container">
+      <div className="torneo-vista-container" style={{ paddingTop: '64px' }}>
+        <AppHeader title="Torneo" />
         <button
           className="btn-atras"
           onClick={() => navigate(isAdmin ? '/admin?tab=torneos' : '/torneos')}
@@ -341,7 +364,8 @@ export default function TorneoVista() {
   }
 
   return (
-    <div className="torneo-vista-container">
+    <div className="torneo-vista-container" style={{ paddingTop: '64px' }}>
+      <AppHeader title="Torneo" />
       <button
         className="btn-atras"
         onClick={() => navigate(isAdmin ? '/admin?tab=torneos' : '/torneos')}

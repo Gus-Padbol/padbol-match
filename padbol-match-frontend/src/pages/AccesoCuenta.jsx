@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
+import AppHeader from '../components/AppHeader';
 import { APP_HEADER_LOGO } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
 import { safeRedirectPath } from '../utils/safeRedirect';
@@ -138,7 +139,7 @@ export default function AccesoCuenta() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg,#667eea,#764ba2)',
-        padding: '24px 16px 32px',
+        padding: '64px 16px 32px 16px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -146,6 +147,7 @@ export default function AccesoCuenta() {
         boxSizing: 'border-box',
       }}
     >
+      <AppHeader title="Acceso" />
       <div style={{ marginBottom: '20px', textAlign: 'center' }}>
         <img src="/logo-padbol-match.png" alt="Padbol Match" style={APP_HEADER_LOGO} />
       </div>

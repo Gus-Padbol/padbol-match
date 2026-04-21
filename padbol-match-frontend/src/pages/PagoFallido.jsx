@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
 import { AppScreenHeaderBack } from '../components/AppUnifiedHeader';
 import AppButton from '../components/AppButton';
 import * as T from '../theme/designTokens';
@@ -14,10 +15,12 @@ export default function PagoFallido() {
         background: `linear-gradient(135deg, ${T.colorErrorDark} 0%, ${T.colorError} 100%)`,
         display: 'flex',
         flexDirection: 'column',
-        padding: 0,
+        padding: '64px 0 0',
+        boxSizing: 'border-box',
       }}
     >
-      <AppScreenHeaderBack to="/hub" title="Pago" />
+      <AppHeader title="Pago" />
+      <AppScreenHeaderBack to="/hub" title="" />
       <div
         style={{
           flex: 1,

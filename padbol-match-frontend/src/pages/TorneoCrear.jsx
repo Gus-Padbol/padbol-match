@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AppHeader from '../components/AppHeader';
 import '../styles/TorneoCrear.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -95,7 +96,8 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
   };
 
   return (
-    <div className="torneo-crear-container">
+    <div className="torneo-crear-container" style={{ paddingTop: '64px' }}>
+      <AppHeader title="Crear torneo" />
       <div className="torneo-crear-card">
         <h1>🏆 Crear Nuevo Torneo</h1>
 
