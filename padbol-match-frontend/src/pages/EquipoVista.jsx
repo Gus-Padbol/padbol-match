@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import { supabase } from '../supabaseClient';
-import { AppScreenHeaderBar } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
 import * as T from '../theme/designTokens';
 import { cardStyle, pageBackgroundStyle, buttonPrimaryStyle } from '../theme/uiStyles';
@@ -20,7 +19,16 @@ import {
 } from '../utils/torneoInscripcionPago';
 import { getDisplayName } from '../utils/displayName';
 import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
-import { jugadorNombreTorneoEtiqueta } from '../utils/jugadorNombreTorneo';
+import {
+  jugadorNombreTorneoEtiqueta,
+  fetchJugadoresPerfilPorJugadores,
+  buildJugadorPerfilLookupMaps,
+  normalizeJugadorEmail,
+} from '../utils/jugadorNombreTorneo';
+import {
+  buildCreadorJugadorParaEquipo,
+  ensureCreadorPrimeroEnLista,
+} from '../utils/equipoCreadorJugadores';
 
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
@@ -31,17 +39,21 @@ function normalizePlayer(p) {
   if (typeof p === 'string') {
     return { nombre: p, email: '', estado: 'confirmado' };
   }
-  const email = p.email != null && p.email !== undefined ? String(p.email) : '';
+  const email = normalizeJugadorEmail(p);
   let estado = p.estado;
   if (!estado) {
-    estado = String(email).trim() ? 'confirmado' : 'pendiente';
+    estado = email ? 'confirmado' : 'pendiente';
   }
+  const rawNombre = String(p.nombre || '').trim();
+  const nombre = rawNombre && !rawNombre.includes('@') ? rawNombre : '';
   return {
-    id: p.id != null && p.id !== '' ? p.id : null,
-    nombre: p.nombre || p.email || 'Jugador',
+    id: p.id != null && p.id !== '' ? String(p.id) : null,
+    nombre,
+    apellido: p.apellido != null && String(p.apellido).trim() ? String(p.apellido).trim() : '',
     alias: p.alias != null && String(p.alias).trim() ? String(p.alias).trim() : '',
     email,
     estado,
+    rol: p.rol != null && String(p.rol).trim() ? String(p.rol).trim() : '',
   };
 }
 
@@ -111,6 +123,9 @@ export default function EquipoVista() {
   const [savingSalirEquipo, setSavingSalirEquipo] = useState(false);
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
   const [perfilLsKey, setPerfilLsKey] = useState(0);
+  const [perfilMapsJugadores, setPerfilMapsJugadores] = useState(() =>
+    buildJugadorPerfilLookupMaps([])
+  );
 
   const authUserId = useMemo(
     () => (session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null),
@@ -160,13 +175,13 @@ export default function EquipoVista() {
       return;
     }
 
-    setEquipo(data || null);
+    let row = data || null;
 
-    if (data?.torneo_id) {
+    if (row?.torneo_id) {
       const { data: torneoData, error: torneoError } = await supabase
         .from('torneos')
         .select('*')
-        .eq('id', Number(data.torneo_id))
+        .eq('id', Number(row.torneo_id))
         .maybeSingle();
 
       if (torneoError) {
@@ -179,19 +194,46 @@ export default function EquipoVista() {
       setTorneo(null);
     }
 
-    const jugadores = Array.isArray(data?.jugadores)
-      ? data.jugadores.map(normalizePlayer).filter(Boolean)
-      : typeof data?.jugadores === 'string' && data.jugadores.trim()
-      ? data.jugadores
+    let jugadores = Array.isArray(row?.jugadores)
+      ? row.jugadores.map(normalizePlayer).filter(Boolean)
+      : typeof row?.jugadores === 'string' && row.jugadores.trim()
+      ? row.jugadores
           .split(' + ')
           .map((n) => ({ nombre: n.trim(), email: '', estado: 'confirmado' }))
           .filter((p) => p.nombre)
       : [];
 
-    const solicitudes = Array.isArray(data?.solicitudes)
-      ? data.solicitudes.map(normalizePlayer).filter(Boolean)
+    const { data: sessionWrap } = await supabase.auth.getSession();
+    const sess = sessionWrap?.session;
+    const authUid = sess?.user?.id ? String(sess.user.id) : null;
+    const creadorId =
+      row?.creador_id != null && row.creador_id !== '' ? String(row.creador_id) : '';
+    const creadorEnLista = jugadores.some((p) => {
+      const pid = p.id != null && p.id !== '' ? String(p.id) : '';
+      return Boolean(creadorId && pid && pid === creadorId);
+    });
+
+    if (authUid && creadorId && authUid === creadorId && !creadorEnLista && sess?.user) {
+      const creadorEntry = buildCreadorJugadorParaEquipo(sess, userProfile, yo);
+      if (creadorEntry) {
+        jugadores = ensureCreadorPrimeroEnLista(jugadores, creadorEntry, yo, authUid);
+        const { error: persistErr } = await supabase
+          .from('equipos')
+          .update({ jugadores })
+          .eq('id', Number(equipoId));
+        if (persistErr) {
+          console.error('equipoVista: persistir creador en jugadores', persistErr);
+        } else if (row) {
+          row = { ...row, jugadores };
+        }
+      }
+    }
+
+    const solicitudes = Array.isArray(row?.solicitudes)
+      ? row.solicitudes.map(normalizePlayer).filter(Boolean)
       : [];
 
+    setEquipo(row);
     setPlayers(jugadores);
     setRequests(solicitudes);
     setLoading(false);
@@ -277,6 +319,45 @@ export default function EquipoVista() {
     usuarioLocal.id,
     session?.user,
   ]);
+
+  const perfilFetchKeyEquipo = useMemo(
+    () =>
+      [...players, ...requests]
+        .map((p) => normalizeJugadorEmail(p))
+        .filter(Boolean)
+        .sort()
+        .join(';'),
+    [players, requests]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const combined = [...players, ...requests];
+      if (!combined.length) {
+        if (!cancelled) setPerfilMapsJugadores(buildJugadorPerfilLookupMaps([]));
+        return;
+      }
+      const rows = await fetchJugadoresPerfilPorJugadores(combined);
+      if (cancelled) return;
+      setPerfilMapsJugadores(buildJugadorPerfilLookupMaps(rows));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [perfilFetchKeyEquipo]);
+
+  const nombreTorneoCtx = useMemo(
+    () => ({
+      perfilByEmailLower: perfilMapsJugadores.perfilByEmailLower,
+      jugadoresTorneo,
+      authSessionEmail: session?.user?.email ?? null,
+      perfilSesion: userProfile,
+      authSession: session,
+      authUserId,
+    }),
+    [perfilMapsJugadores, jugadoresTorneo, session, userProfile, authUserId]
+  );
 
   const soyCreador = useMemo(() => {
     if (!equipo) return false;
@@ -421,42 +502,39 @@ export default function EquipoVista() {
 
   const ejecutarSalirDelEquipo = async () => {
     if (!equipo || !yo) return;
-    setSavingSalirEquipo(true);
-    const nuevosJugadores = players.filter((p) => !samePerson(p, yo));
-    const nuevasSolicitudes = requests.filter((r) => !samePerson(r, yo));
-    const updates = { jugadores: nuevosJugadores, solicitudes: nuevasSolicitudes };
-    if (soyCreador) {
-      updates.creador_email = null;
-      updates.creador_id = null;
-    }
-    const { error } = await supabase.from('equipos').update(updates).eq('id', Number(equipoId));
-    setSavingSalirEquipo(false);
-    if (error) {
-      console.error(error);
-      alert('No se pudo salir del equipo');
-      return;
-    }
     const tid = Number(id);
-    const hint = readEquipoActualForTorneo(tid);
-    if (hint && String(hint) === String(equipoId)) clearEquipoActual();
-    setPlayers(nuevosJugadores);
-    setRequests(nuevasSolicitudes);
-    setEquipo((prev) => (prev ? { ...prev, ...updates } : prev));
+
+    setSavingSalirEquipo(true);
+    if (soyCreador) {
+      const { error } = await supabase.from('equipos').delete().eq('id', Number(equipoId));
+      setSavingSalirEquipo(false);
+      if (error) {
+        console.error(error);
+        alert('No se pudo eliminar el equipo');
+        return;
+      }
+      const hint = readEquipoActualForTorneo(tid);
+      if (hint && String(hint) === String(equipoId)) clearEquipoActual();
+    } else {
+      const nuevosJugadores = players.filter((p) => !samePerson(p, yo));
+      const nuevasSolicitudes = requests.filter((r) => !samePerson(r, yo));
+      const updates = { jugadores: nuevosJugadores, solicitudes: nuevasSolicitudes };
+      const { error } = await supabase.from('equipos').update(updates).eq('id', Number(equipoId));
+      setSavingSalirEquipo(false);
+      if (error) {
+        console.error(error);
+        alert('No se pudo salir del equipo');
+        return;
+      }
+      const hint = readEquipoActualForTorneo(tid);
+      if (hint && String(hint) === String(equipoId)) clearEquipoActual();
+      setPlayers(nuevosJugadores);
+      setRequests(nuevasSolicitudes);
+      setEquipo((prev) => (prev ? { ...prev, ...updates } : prev));
+    }
     setDialogoSalirEquipo(false);
     navigate(`/torneo/${id}/equipos`);
   };
-
-  const headerTitle = useMemo(() => {
-    const nombre = (equipo?.nombre || '').trim() || 'Equipo';
-    return esMiEquipo ? `Tu equipo — ${nombre}` : `Equipo: ${nombre}`;
-  }, [equipo?.nombre, esMiEquipo]);
-
-  const renderHeader = (titleText) => (
-    <>
-      <AppHeader title="Equipo" />
-      <AppScreenHeaderBar title={titleText} backTo={`/torneo/${id}/equipos`} maxWidth="900px" />
-    </>
-  );
 
   const aceptarSolicitud = async (solicitud) => {
     if (!equipo) return;
@@ -472,7 +550,10 @@ export default function EquipoVista() {
       ...solicitud,
       estado: String(solicitud.email || '').trim() ? 'confirmado' : 'pendiente',
     };
-    const nuevosJugadores = [...players, solicitudConfirmada];
+    const creadorEntry =
+      session?.user && buildCreadorJugadorParaEquipo(session, userProfile, yo);
+    const basePlayers = ensureCreadorPrimeroEnLista(players, creadorEntry, yo, authUserId);
+    const nuevosJugadores = [...basePlayers, solicitudConfirmada];
     const nuevasSolicitudes = requests.filter((r) => !samePerson(r, solicitud));
 
     const { error } = await supabase
@@ -595,7 +676,7 @@ export default function EquipoVista() {
   if (loading) {
     return (
       <div style={{ ...pageBackgroundStyle, padding: '64px 12px 12px' }}>
-        {renderHeader('Equipo')}
+        <AppHeader title="Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
       </div>
     );
@@ -604,7 +685,7 @@ export default function EquipoVista() {
   if (!equipo) {
     return (
       <div style={{ ...pageBackgroundStyle, padding: '64px 12px 12px' }}>
-        {renderHeader('Equipo')}
+        <AppHeader title="Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
           <p>No se encontró el equipo.</p>
         </div>
@@ -614,7 +695,7 @@ export default function EquipoVista() {
 
   return (
     <div style={{ ...pageBackgroundStyle, padding: '64px 12px 12px' }}>
-      {renderHeader(headerTitle)}
+      <AppHeader title="Equipo" />
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div
@@ -623,12 +704,67 @@ export default function EquipoVista() {
             marginBottom: 18,
           }}
         >
-          <h2 style={{ marginTop: 0 }}>🏆 {equipo.nombre}</h2>
+          <button
+            type="button"
+            onClick={() => navigate(`/torneo/${id}/equipos`)}
+            style={{
+              margin: '0 0 16px',
+              padding: 0,
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: T.colorTextMuted,
+              textAlign: 'left',
+              display: 'block',
+            }}
+          >
+            ← Volver a equipos del torneo
+          </button>
+
+          {esMiEquipo ? (
+            <div
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: T.colorTextMuted,
+                marginBottom: '8px',
+              }}
+            >
+              Tu equipo
+            </div>
+          ) : null}
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '14px',
+            }}
+          >
+            <span style={{ fontSize: '22px', lineHeight: 1 }} aria-hidden>
+              👥
+            </span>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: '22px',
+                fontWeight: 800,
+                color: '#0f172a',
+                lineHeight: 1.25,
+              }}
+            >
+              {equipo.nombre}
+            </h2>
+          </div>
 
           {!torneoCancelado ? (
             <div
               style={{
-                marginTop: '6px',
                 marginBottom: '12px',
                 fontSize: '15px',
                 fontWeight: 700,
@@ -721,13 +857,21 @@ export default function EquipoVista() {
             </div>
           ) : null}
 
-          {soyCreador && !torneoCancelado ? (
-            <div style={{ color: '#666', marginBottom: '16px' }}>
-              {players.length}/{Number(equipo.cupo_maximo || 2)} jugadores
-            </div>
-          ) : null}
-
-          <h3>Jugadores del equipo</h3>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              gap: '12px',
+              marginTop: '4px',
+              marginBottom: '10px',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Jugadores</h3>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: T.colorTextMuted }}>
+              {players.length}/{cupoEquipo}
+            </span>
+          </div>
 
           {torneoCancelado ? (
             players.length === 0 ? (
@@ -743,7 +887,7 @@ export default function EquipoVista() {
                       background: T.colorCardMuted,
                     }}
                   >
-                    <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p)}</div>
+                    <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
                   </div>
                 ))}
               </div>
@@ -761,7 +905,7 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p)}</div>
+                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
                   {samePerson(p, yo) && !perfilTorneoCompleto ? (
                     <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
                       Perfil incompleto
@@ -770,8 +914,6 @@ export default function EquipoVista() {
                     <div style={{ fontSize: '13px', color: T.colorWarningSoft, fontWeight: 600, marginTop: '4px' }}>
                       Pendiente de confirmar
                     </div>
-                  ) : p.email ? (
-                    <div style={{ fontSize: '13px', color: T.colorTextMuted, marginTop: '4px' }}>{p.email}</div>
                   ) : null}
                 </div>
               ))}
@@ -787,7 +929,7 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p)}</div>
+                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
                   {samePerson(p, yo) && !perfilTorneoCompleto ? (
                     <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
                       Perfil incompleto
@@ -811,7 +953,7 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p)}</div>
+                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
                   {samePerson(p, yo) && !perfilTorneoCompleto ? (
                     <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
                       Perfil incompleto
@@ -934,26 +1076,28 @@ export default function EquipoVista() {
                   {mpInscripcionLoading ? 'Redirigiendo…' : 'Confirmar inscripción'}
                 </button>
               ) : null}
-              <a
-                href={invitarWhatsappHref}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: 'inline-block',
-                  padding: '10px 16px',
-                  background: '#25d366',
-                  color: 'white',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                }}
-              >
-                Invitar por WhatsApp
-              </a>
+              {marcaAbierto ? (
+                <a
+                  href={invitarWhatsappHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    padding: '10px 16px',
+                    background: '#25d366',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
+                >
+                  Invitar por WhatsApp
+                </a>
+              ) : null}
             </div>
           )}
 
-        {soyCreador && !torneoCancelado && (
+        {soyCreador && !torneoCancelado && marcaAbierto && (
           <div
             style={{
               ...cardStyle,
@@ -975,7 +1119,9 @@ export default function EquipoVista() {
                       padding: '12px'
                     }}
                   >
-                    <div style={{ fontWeight: 700, marginBottom: '8px' }}>{jugadorNombreTorneoEtiqueta(sol)}</div>
+                    <div style={{ fontWeight: 700, marginBottom: '8px' }}>
+                      {jugadorNombreTorneoEtiqueta(sol, nombreTorneoCtx)}
+                    </div>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
@@ -1046,7 +1192,9 @@ export default function EquipoVista() {
                 id="salir-equipo-titulo"
                 style={{ margin: '0 0 18px', fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}
               >
-                ¿Seguro que querés salir del equipo?
+                {soyCreador
+                  ? 'Si salís, el equipo se eliminará completamente'
+                  : '¿Querés salir del equipo?'}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button

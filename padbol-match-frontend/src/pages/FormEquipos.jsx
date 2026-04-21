@@ -16,9 +16,19 @@ import {
   etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
 } from '../utils/torneoInscripcionPago';
+import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
 import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
-import { jugadorNombreTorneoEtiqueta } from '../utils/jugadorNombreTorneo';
+import {
+  jugadorNombreTorneoEtiqueta,
+  fetchJugadoresPerfilPorJugadores,
+  buildJugadorPerfilLookupMaps,
+  normalizeJugadorEmail,
+} from '../utils/jugadorNombreTorneo';
+import {
+  buildCreadorJugadorParaEquipo,
+  ensureCreadorPrimeroEnLista,
+} from '../utils/equipoCreadorJugadores';
 
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
@@ -40,17 +50,21 @@ function equipoListoParaTorneo(players, cupo) {
 function normalizePlayer(p) {
   if (!p) return null;
   if (typeof p === 'string') return { nombre: p, email: '', estado: 'confirmado' };
-  const email = p.email != null && p.email !== undefined ? String(p.email) : '';
+  const email = normalizeJugadorEmail(p);
   let estado = p.estado;
   if (!estado) {
-    estado = String(email).trim() ? 'confirmado' : 'pendiente';
+    estado = email ? 'confirmado' : 'pendiente';
   }
+  const rawNombre = String(p.nombre || '').trim();
+  const nombre = rawNombre && !rawNombre.includes('@') ? rawNombre : '';
   return {
-    id: p.id != null && p.id !== '' ? p.id : null,
-    nombre: p.nombre || p.email || 'Jugador',
+    id: p.id != null && p.id !== '' ? String(p.id) : null,
+    nombre,
+    apellido: p.apellido != null && String(p.apellido).trim() ? String(p.apellido).trim() : '',
     alias: p.alias != null && String(p.alias).trim() ? String(p.alias).trim() : '',
     email,
     estado,
+    rol: p.rol != null && String(p.rol).trim() ? String(p.rol).trim() : '',
   };
 }
 
@@ -223,6 +237,7 @@ export default function FormEquipos() {
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
   /** Fila en BD: ya existe equipo con este creador_id en el torneo (miEquipo aún no reflejado en UI). */
   const [equipoDuplicadoBloqueoId, setEquipoDuplicadoBloqueoId] = useState(null);
+  const [perfilMapsTorneo, setPerfilMapsTorneo] = useState(() => buildJugadorPerfilLookupMaps([]));
 
   useEffect(() => {
     setDesktopFlujo(null);
@@ -287,6 +302,66 @@ export default function FormEquipos() {
       cupo: Number(eq.cupo_maximo || 2),
     }));
   }, [equipos]);
+
+  const jugadoresParaLookupPerfil = useMemo(() => {
+    const out = [];
+    const seen = new Set();
+    for (const eq of equipos) {
+      for (const p of getPlayers(eq)) {
+        const em = normalizeJugadorEmail(p);
+        if (!em) continue;
+        if (seen.has(em)) continue;
+        seen.add(em);
+        out.push(p);
+      }
+      for (const r of getRequests(eq)) {
+        const em = normalizeJugadorEmail(r);
+        if (!em) continue;
+        if (seen.has(em)) continue;
+        seen.add(em);
+        out.push(r);
+      }
+    }
+    return out;
+  }, [equipos]);
+
+  const perfilFetchKeyForm = useMemo(
+    () =>
+      jugadoresParaLookupPerfil
+        .map((p) => normalizeJugadorEmail(p))
+        .filter(Boolean)
+        .sort()
+        .join(';'),
+    [jugadoresParaLookupPerfil]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!jugadoresParaLookupPerfil.length) {
+        if (!cancelled) setPerfilMapsTorneo(buildJugadorPerfilLookupMaps([]));
+        return;
+      }
+      const rows = await fetchJugadoresPerfilPorJugadores(jugadoresParaLookupPerfil);
+      if (cancelled) return;
+      setPerfilMapsTorneo(buildJugadorPerfilLookupMaps(rows));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [perfilFetchKeyForm]);
+
+  const nombreTorneoCtxForm = useMemo(
+    () => ({
+      perfilByEmailLower: perfilMapsTorneo.perfilByEmailLower,
+      jugadoresTorneo,
+      authSessionEmail: session?.user?.email ?? null,
+      perfilSesion: userProfile,
+      authSession: session,
+      authUserId,
+    }),
+    [perfilMapsTorneo, jugadoresTorneo, session, userProfile, authUserId]
+  );
 
   const currentJugador = useMemo(() => {
     const sessionEmail = String(session?.user?.email || '').trim();
@@ -385,6 +460,11 @@ export default function FormEquipos() {
   /** Tras registro/login con ?crear=1: abrir formulario crear y limpiar la query. */
   useEffect(() => {
     if (!wantsCrearEquipo || loading) return;
+    if (authLoading) return;
+    if (!session?.user) {
+      navigate(authUrlWithRedirect(`/torneo/${id}/equipos?crear=1`), { replace: true });
+      return;
+    }
     if (torneoCerrado || miEquipo || miSolicitudPendiente) {
       navigate(`/torneo/${id}/equipos`, { replace: true });
       return;
@@ -395,6 +475,8 @@ export default function FormEquipos() {
   }, [
     wantsCrearEquipo,
     loading,
+    authLoading,
+    session?.user,
     torneoCerrado,
     miEquipo?.id,
     miSolicitudPendiente?.id,
@@ -446,29 +528,67 @@ export default function FormEquipos() {
 
   const crearEquipo = async () => {
     const { data } = await supabase.auth.getSession();
-    const session = data.session;
+    const sess = data.session;
 
-    if (!session || !session.user) {
+    if (!sess || !sess.user) {
       alert('Tenés que iniciar sesión');
       navigate(`/auth?redirect=/torneo/${torneoId}/equipos`);
       return;
     }
 
-    const userId = session.user.id;
+    const userId = sess.user.id;
+    const emailAuth = String(sess.user.email || '').trim();
     const tipoEquipo = equipoAbierto ? 'abierto' : 'cerrado';
 
-    const { error } = await supabase.from('equipos').insert({
+    const creadorJugador = buildCreadorJugadorParaEquipo(sess, userProfile, yo);
+    if (!creadorJugador) {
+      alert('Tenés que iniciar sesión');
+      return;
+    }
+    if (!String(creadorJugador.email || '').trim()) {
+      alert('Tu sesión no tiene email. Necesitamos el email en el equipo para identificar jugadores.');
+      return;
+    }
+
+    const insertRow = {
       nombre: nombreEquipo.trim(),
       tipo_equipo: tipoEquipo,
       torneo_id: torneoId,
       creador_id: userId,
-    });
+      jugadores: [creadorJugador],
+      solicitudes: [],
+      cupo_maximo: cupoMaximo,
+      equipo_abierto: equipoAbierto,
+    };
+    if (emailAuth) insertRow.creador_email = emailAuth;
 
+    setSaving(true);
+    const { data: inserted, error } = await supabase
+      .from('equipos')
+      .insert(insertRow)
+      .select('id, jugadores')
+      .maybeSingle();
     if (error) {
+      setSaving(false);
       alert(error.message);
       return;
     }
 
+    const rowId = inserted?.id;
+    if (rowId) {
+      const persisted = getPlayers({ jugadores: inserted?.jugadores });
+      const creatorPresent = persisted.some((p) => jugadorCoincideConYo(p, yo, String(userId)));
+      if (!creatorPresent) {
+        const fixed = ensureCreadorPrimeroEnLista(persisted, creadorJugador, yo, String(userId));
+        const { error: repairErr } = await supabase
+          .from('equipos')
+          .update({ jugadores: fixed })
+          .eq('id', rowId);
+        if (repairErr) console.error('equipos jugadores (reparar creador):', repairErr);
+      }
+    }
+
+    setSaving(false);
     window.location.reload();
   };
 
@@ -549,39 +669,45 @@ export default function FormEquipos() {
       setSalirEquipoIdConfirm(null);
       return;
     }
-    const lista = getPlayers(raw);
-    const nuevos = lista.filter((p) => !samePerson(p, yo));
-    const reqs = getRequests(raw);
-    const nuevasSolicitudes = reqs.filter((r) => !samePerson(r, yo));
     const u = getOrCreateUsuarioBasico();
     const soyCreadorEq = esCreadorEquipoOMiAuth(raw, authEmail, u, authUserId);
-    const updates = { jugadores: nuevos, solicitudes: nuevasSolicitudes };
-    if (soyCreadorEq) {
-      updates.creador_email = null;
-      updates.creador_id = null;
-    }
+
     setSavingSalirEquipo(true);
-    const { error } = await supabase.from('equipos').update(updates).eq('id', raw.id);
-    setSavingSalirEquipo(false);
-    if (error) {
-      console.error(error);
-      alert('No se pudo salir del equipo');
-      return;
+    if (soyCreadorEq) {
+      const { error } = await supabase.from('equipos').delete().eq('id', raw.id);
+      setSavingSalirEquipo(false);
+      if (error) {
+        console.error(error);
+        alert('No se pudo eliminar el equipo');
+        return;
+      }
+      setSalirEquipoIdConfirm(null);
+      const hint = readEquipoActualForTorneo(torneoId);
+      if (hint && String(hint) === String(raw.id)) clearEquipoActual();
+      setEquipos((prev) => prev.filter((e) => e.id !== raw.id));
+    } else {
+      const lista = getPlayers(raw);
+      const nuevos = lista.filter((p) => !samePerson(p, yo));
+      const reqs = getRequests(raw);
+      const nuevasSolicitudes = reqs.filter((r) => !samePerson(r, yo));
+      const updates = { jugadores: nuevos, solicitudes: nuevasSolicitudes };
+      const { error } = await supabase.from('equipos').update(updates).eq('id', raw.id);
+      setSavingSalirEquipo(false);
+      if (error) {
+        console.error(error);
+        alert('No se pudo salir del equipo');
+        return;
+      }
+      setSalirEquipoIdConfirm(null);
+      const hint = readEquipoActualForTorneo(torneoId);
+      if (hint && String(hint) === String(raw.id)) clearEquipoActual();
+      setEquipos((prev) =>
+        prev.map((e) => {
+          if (e.id !== raw.id) return e;
+          return { ...e, jugadores: nuevos, solicitudes: nuevasSolicitudes };
+        })
+      );
     }
-    setSalirEquipoIdConfirm(null);
-    const hint = readEquipoActualForTorneo(torneoId);
-    if (hint && String(hint) === String(raw.id)) clearEquipoActual();
-    setEquipos((prev) =>
-      prev.map((e) => {
-        if (e.id !== raw.id) return e;
-        return {
-          ...e,
-          jugadores: nuevos,
-          solicitudes: nuevasSolicitudes,
-          ...(soyCreadorEq ? { creador_email: null, creador_id: null } : {}),
-        };
-      })
-    );
     await cargarTodo();
     if (isMobile && mobileVista === 'mi_equipo') setMobileVista('lista');
     setDesktopFlujo(null);
@@ -604,7 +730,10 @@ export default function FormEquipos() {
       ...solicitud,
       estado: String(solicitud.email || '').trim() ? 'confirmado' : 'pendiente',
     };
-    const nuevosJugadores = [...players, solicitudConfirmada];
+    const creadorEntry =
+      session?.user && buildCreadorJugadorParaEquipo(session, userProfile, yo);
+    const basePlayers = ensureCreadorPrimeroEnLista(players, creadorEntry, yo, authUserId);
+    const nuevosJugadores = [...basePlayers, solicitudConfirmada];
     const nuevasSolicitudes = requests.filter((r) => !samePerson(r, solicitud));
 
     const { error } = await supabase
@@ -665,7 +794,11 @@ export default function FormEquipos() {
       return;
     }
 
-    const players = getPlayers(miEquipo);
+    let players = getPlayers(miEquipo);
+    const creadorEntry =
+      session?.user && buildCreadorJugadorParaEquipo(session, userProfile, yo);
+    players = ensureCreadorPrimeroEnLista(players, creadorEntry, yo, authUserId);
+
     const cupo = Number(miEquipo.cupo_maximo || miEquipo.cupo || 2);
     if (players.length >= cupo) {
       alert('Equipo completo');
@@ -673,6 +806,10 @@ export default function FormEquipos() {
     }
 
     const nuevo = { nombre, estado: 'pendiente', email: null };
+    if (jugadorCoincideConYo(nuevo, yo, authUserId)) {
+      alert('No podés agregarte como compañero');
+      return;
+    }
     if (players.some((p) => samePerson(p, nuevo))) {
       alert('Ese jugador ya está en el equipo');
       return;
@@ -728,8 +865,9 @@ export default function FormEquipos() {
     [otrosEquiposVisibles]
   );
 
-  const listaUnirseInscripcionAbiertaVacia = !torneoCerrado && equiposUnirseListado.length === 0;
   const puedeOfrecerCrearDesdeLista = !torneoCerrado && !miEquipo && !miSolicitudPendiente;
+  /** Equipos con al menos un jugador en ficha (lista principal del torneo). */
+  const sinEquiposEnTorneoVisibles = equiposVisibles.length === 0;
 
   const volverInscripcionPath = session?.user ? '/hub' : '/torneos';
 
@@ -787,7 +925,9 @@ export default function FormEquipos() {
   };
 
   const renderEquipoCard = (eq, esTuEquipo, textoUnir = '+ Pedir unirme') => {
-    const nombres = eq.players.map((p) => jugadorNombreTorneoEtiqueta(p)).filter(Boolean);
+    const nombres = eq.players
+      .map((p) => jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm))
+      .filter(Boolean);
     const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
     const numJug = eq.players.length;
     const plazasLlenas = numJug >= cupo;
@@ -879,7 +1019,15 @@ export default function FormEquipos() {
 
         {eq.players.length > 0 ? (
           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px', display: 'grid', gap: '4px' }}>
-            {eq.players.map((p, idx) => (
+            {eq.players.map((p, idx) => {
+              const rolTuEquipo =
+                esTuEquipo && soyCreador && samePerson(p, yo)
+                  ? ' (creador)'
+                  : esTuEquipo && esJugadorPendiente(p)
+                    ? ' (pendiente)'
+                    : '';
+              const ocultarEstadoRepetido = esTuEquipo && rolTuEquipo;
+              return (
               <div
                 key={`${eq.id}-pl-${idx}`}
                 style={{
@@ -888,11 +1036,16 @@ export default function FormEquipos() {
                   gap: '8px',
                 }}
               >
-                <span style={{ fontWeight: 600, color: '#334155' }}>{jugadorNombreTorneoEtiqueta(p)}</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>
+                  {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+                  {rolTuEquipo ? (
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>{rolTuEquipo}</span>
+                  ) : null}
+                </span>
                 {samePerson(p, yo) && !perfilTorneoCompleto ? (
                   <span style={{ color: '#b45309', fontWeight: 800, fontSize: '11px' }}>Perfil incompleto</span>
                 ) : !(esTuEquipo && !soyCreador) ? (
-                  esJugadorPendiente(p) ? (
+                  ocultarEstadoRepetido ? null : esJugadorPendiente(p) ? (
                     <span style={{ color: '#b45309', fontWeight: 600 }}>Pendiente de confirmación</span>
                   ) : (
                     <span
@@ -906,7 +1059,8 @@ export default function FormEquipos() {
                   )
                 ) : null}
               </div>
-            ))}
+            );
+            })}
           </div>
         ) : null}
 
@@ -987,7 +1141,9 @@ export default function FormEquipos() {
                   marginBottom: '8px',
                 }}
               >
-                <div style={{ fontSize: '13px', marginBottom: '6px' }}>{jugadorNombreTorneoEtiqueta(sol)}</div>
+                <div style={{ fontSize: '13px', marginBottom: '6px' }}>
+                  {jugadorNombreTorneoEtiqueta(sol, nombreTorneoCtxForm)}
+                </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
@@ -1159,7 +1315,10 @@ export default function FormEquipos() {
       <div style={{ fontWeight: 800, fontSize: '15px', color: '#1e293b' }}>{eq.nombre}</div>
       {eq.players.length > 0 ? (
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '8px', lineHeight: 1.45 }}>
-          {eq.players.map((p) => jugadorNombreTorneoEtiqueta(p)).filter(Boolean).join(' · ')}
+          {eq.players
+            .map((p) => jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm))
+            .filter(Boolean)
+            .join(' · ')}
         </div>
       ) : (
         <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '6px' }}>Sin jugadores</div>
@@ -1211,7 +1370,7 @@ export default function FormEquipos() {
         </div>
       ) : null}
 
-      {listaUnirseInscripcionAbiertaVacia ? (
+      {!torneoCerrado && sinEquiposEnTorneoVisibles ? (
         <div style={{ marginTop: miEquipoEnListado ? '20px' : 0 }}>
           <p
             style={{
@@ -1222,7 +1381,7 @@ export default function FormEquipos() {
               lineHeight: 1.45,
             }}
           >
-            No hay equipos disponibles para unirte en este torneo
+            No hay equipos disponibles para unirte en este momento
           </p>
           {puedeOfrecerCrearDesdeLista && typeof onCrearEquipoClick === 'function' ? (
             <div
@@ -1276,10 +1435,10 @@ export default function FormEquipos() {
             🏆 Formar equipos ({equiposUnirseListado.length})
           </h3>
 
-          {miEquipoEnListado && equiposUnirseListado.length > 0 ? (
+          {miEquipoEnListado ? (
             <div
               style={{
-                marginTop: '32px',
+                marginTop: '20px',
                 marginBottom: '12px',
                 fontWeight: 800,
                 fontSize: '15px',
@@ -1288,6 +1447,23 @@ export default function FormEquipos() {
               }}
             >
               Otros equipos disponibles
+            </div>
+          ) : null}
+
+          {miEquipoEnListado && equiposUnirseListado.length === 0 ? (
+            <div
+              style={{
+                marginBottom: '14px',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                fontSize: '14px',
+                color: '#64748b',
+                lineHeight: 1.45,
+              }}
+            >
+              No hay otros equipos abiertos a los que unirte en este momento.
             </div>
           ) : null}
 
@@ -2205,13 +2381,13 @@ export default function FormEquipos() {
                   <p
                     style={{
                       margin: '0 0 18px',
-                      fontSize: '15px',
-                      fontWeight: 700,
-                      color: '#334155',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#64748b',
                       lineHeight: 1.45,
                     }}
                   >
-                    No hay equipos disponibles para unirte en este torneo
+                    No hay otros equipos abiertos a los que unirte en este momento.
                   </p>
                   {puedeOfrecerCrearDesdeLista ? (
                     <div
@@ -2301,7 +2477,15 @@ export default function FormEquipos() {
                 id="form-salir-equipo-msg"
                 style={{ margin: '0 0 18px', fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}
               >
-                ¿Seguro que querés salir del equipo?
+                {(() => {
+                  const eqSalir = equipos.find((e) => e.id === salirEquipoIdConfirm);
+                  const uDlg = getOrCreateUsuarioBasico();
+                  const esCreadorDlg =
+                    !!eqSalir && esCreadorEquipoOMiAuth(eqSalir, authEmail, uDlg, authUserId);
+                  return esCreadorDlg
+                    ? 'Si salís, el equipo se eliminará completamente'
+                    : '¿Querés salir del equipo?';
+                })()}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button

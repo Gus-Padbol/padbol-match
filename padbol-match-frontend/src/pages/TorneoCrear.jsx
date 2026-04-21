@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import AppHeader from '../components/AppHeader';
 import '../styles/TorneoCrear.css';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 
 export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null }) {
   const [sedes, setSedes] = useState([]);
@@ -19,6 +21,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
 
@@ -44,6 +47,10 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!session?.user) {
+      navigate(authUrlWithRedirect('/torneo/crear'));
+      return;
+    }
     setLoading(true);
     setMensaje('');
     setError('');

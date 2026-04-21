@@ -93,7 +93,7 @@ export default function ReservaForm({
   const location = useLocation();
   const { session, loading: authLoading, userProfile } = useAuth();
 
-  const hubHomePath = session?.user ? '/hub' : '/';
+  const hubHomePath = '/hub';
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();

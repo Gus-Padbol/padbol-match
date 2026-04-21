@@ -25,8 +25,8 @@ import EquipoVista from './pages/EquipoVista';
 import UserHome from './pages/UserHome';
 import AccesoCuenta from './pages/AccesoCuenta';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
+import { authUrlWithRedirect } from './utils/authLoginRedirect';
 import { useAuth } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
 import { AppScreenHeaderBar } from './components/AppUnifiedHeader';
 import { getDisplayName } from './utils/displayName';
 import { nombreCompletoJugadorPerfil } from './utils/jugadorPerfil';
@@ -88,11 +88,7 @@ function AppContent() {
       <div style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
         <Routes>
           <Route path="/" element={<Navigate to="/hub" replace />} />
-          <Route path="/hub" element={
-            <ProtectedRoute>
-              <UserHome />
-            </ProtectedRoute>
-          } />
+          <Route path="/hub" element={<UserHome />} />
           <Route path="/inicio" element={<UserHome />} />
           <Route path="/home" element={<UserHome />} />
 
@@ -114,21 +110,14 @@ function AppContent() {
           <Route path="/sedes" element={<SedesPublicas />} />
           <Route path="/sede/:sedeId" element={<SedePublica />} />
           <Route path="/perfil" element={<LegacyPerfilRedirect />} />
-          <Route
-            path="/mi-perfil"
-            element={
-              <ProtectedRoute>
-                <MiPerfil />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/mi-perfil" element={<MiPerfil />} />
           <Route
             path="/admin"
             element={
               roleLoading ? (
                 <div style={{ color: 'white', padding: 24, textAlign: 'center' }}>Cargando permisos…</div>
               ) : !loggedIn ? (
-                <Navigate to="/" replace />
+                <Navigate to={authUrlWithRedirect('/admin')} replace />
               ) : canAccessAdmin() ? (
                 <AdminDashboard rol={rol} sedeId={sedeId} />
               ) : (

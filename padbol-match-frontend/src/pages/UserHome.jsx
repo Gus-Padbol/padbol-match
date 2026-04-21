@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 
 export default function UserHome() {
   const navigate = useNavigate();
+  const { session, loading: authLoading } = useAuth();
   const [nombreMostrar, setNombreMostrar] = useState('');
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
 
@@ -30,11 +33,20 @@ export default function UserHome() {
     cargarPerfil();
   }, []);
 
+  const requireLoginForAction = (redirectPath) => {
+    if (authLoading) return;
+    if (!session?.user) {
+      navigate(authUrlWithRedirect(redirectPath));
+      return;
+    }
+    navigate(redirectPath);
+  };
+
   const botonesConSede = [
     {
       label: 'Reservar',
       icon: '⚽',
-      action: () => navigate('/reservar'),
+      action: () => requireLoginForAction('/reservar'),
     },
     {
       label: 'Torneos',
@@ -49,7 +61,7 @@ export default function UserHome() {
     {
       label: 'Perfil',
       icon: '👤',
-      action: () => navigate('/mi-perfil'),
+      action: () => requireLoginForAction('/mi-perfil'),
     },
   ];
 
@@ -109,6 +121,19 @@ export default function UserHome() {
           }}>
             ¿Qué querés hacer hoy?
           </p>
+          {!authLoading && !session?.user ? (
+            <p
+              style={{
+                textAlign: 'center',
+                margin: '8px 0 0 0',
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.55)',
+                lineHeight: 1.45,
+              }}
+            >
+              Podés explorar sin registrarte
+            </p>
+          ) : null}
         </div>
 
         <div

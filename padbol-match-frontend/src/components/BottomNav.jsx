@@ -1,11 +1,14 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 
 const HUB_PATHS = ['/hub', '/inicio', '/home'];
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { session, loading: authLoading } = useAuth();
   const path = location.pathname;
 
   const items = [
@@ -40,7 +43,16 @@ const BottomNav = () => {
           <button
             key={item.path}
             type="button"
-            onClick={() => navigate(item.path)}
+            onClick={() => {
+              if (item.path === '/mi-perfil') {
+                if (authLoading) return;
+                if (!session?.user) {
+                  navigate(authUrlWithRedirect('/mi-perfil'));
+                  return;
+                }
+              }
+              navigate(item.path);
+            }}
             style={{
               display: 'flex',
               flexDirection: 'column',
