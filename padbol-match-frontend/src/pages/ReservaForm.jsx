@@ -176,9 +176,9 @@ export default function ReservaForm({
 
   useEffect(() => {
     console.log("CARGANDO SEDES...");
-    console.log("API BASE:", apiBaseUrl);
+    console.log("FETCH SEDES:", "/api/sedes");
 
-    fetch(`${apiBaseUrl}/api/sedes`)
+    fetch(`/api/sedes`)
       .then(async (res) => {
         console.log("STATUS:", res.status);
 
@@ -207,7 +207,8 @@ export default function ReservaForm({
         console.log("ERROR FETCH:", err);
         setError("Error al cargar sedes");
       });
-  }, [apiBaseUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sedes: ruta relativa fija /api/sedes (proxy Netlify)
+  }, []);
 
   // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
   useEffect(() => {
