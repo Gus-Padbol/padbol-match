@@ -266,7 +266,9 @@ export default function ReservaForm({
 
 
   const handleChangePais = (e) => {
-    const pais = e.target.value;
+    const value = e.target.value;
+    console.log('PAIS SELECCIONADO:', value);
+    const pais = value;
     setFiltros({ pais, ciudad: '', sede_id: '' });
     setCiudades([]);
     setSedesFiltradasPorCiudad([]);
@@ -294,7 +296,9 @@ export default function ReservaForm({
   };
 
   const handleChangeSede = (e) => {
-    const sede_id = parseInt(e.target.value);
+    const sedeId = parseInt(e.target.value, 10);
+    console.log('SEDE SELECCIONADA:', sedeId);
+    const sede_id = sedeId;
     setFiltros(prev => ({ ...prev, sede_id }));
     if (sede_id) {
       setPantalla(2);
@@ -578,6 +582,11 @@ export default function ReservaForm({
 
   // PANTALLA 1: País, Ciudad, Sede
   if (pantalla === 1) {
+    const sedesFiltradas = sedesFiltradasPorCiudad;
+    console.log('FILTROS ACTUALES:', filtros);
+    console.log('SEDES FILTRADAS:', sedesFiltradas);
+    console.log('SEDES RAW:', sedes);
+
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
         <AppHeader title="Reservar" />
@@ -628,6 +637,9 @@ export default function ReservaForm({
                     <option key={sede.id} value={sede.id}>{sede.nombre}</option>
                   ))}
                 </select>
+                <div style={{ color: 'white', fontSize: '12px' }}>
+                  DEBUG: {JSON.stringify(sedesFiltradas)}
+                </div>
               </div>
             )}
 
