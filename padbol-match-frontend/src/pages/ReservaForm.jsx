@@ -175,33 +175,39 @@ export default function ReservaForm() {
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    console.log('URL SEDES:', `${API_BASE}/api/sedes`);
+    console.log("URL SEDES:", "https://padbol-backend.onrender.com/api/sedes");
 
-    fetch(`${API_BASE}/api/sedes`)
+    fetch("https://padbol-backend.onrender.com/api/sedes")
       .then(async (res) => {
+        console.log("STATUS:", res.status);
         const text = await res.text();
-        console.log('RAW RESPONSE:', text);
+        console.log("RAW RESPONSE:", text);
 
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status} - ${text}`);
+          console.log("ERROR STATUS:", res.status, res.statusText);
+          return [];
         }
 
         try {
-          return JSON.parse(text);
+          const data = JSON.parse(text);
+          console.log("SEDES:", data);
+          return Array.isArray(data) ? data : [];
         } catch (e) {
-          console.log('NO ES JSON:', text);
-          throw new Error('Respuesta no es JSON');
+          console.log("NO ES JSON");
+          console.log("ERROR", e);
+          return [];
         }
       })
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
-        setSedes(list);
-        const paisesUnicos = [...new Set(list.map((s) => s.pais))].sort();
+      .then((list) => {
+        const arr = Array.isArray(list) ? list : [];
+        setSedes(arr);
+        const paisesUnicos = [...new Set(arr.map((s) => s.pais))].sort();
         setPaises(paisesUnicos);
       })
       .catch((err) => {
-        console.error('ERROR SEDES:', err);
-        setError('Error al cargar sedes');
+        console.log("ERROR", err);
+        setSedes([]);
+        setPaises([]);
       });
   }, []);
 
