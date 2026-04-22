@@ -175,14 +175,30 @@ export default function ReservaForm({
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    const selectedCountry = filtros.pais;
+    console.log('CARGANDO SEDES...');
+    console.log('PAIS:', selectedCountry);
+
     fetch(`${apiBaseUrl}/api/sedes`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) =>
+        res.json().then((data) => {
+          console.log('SEDES:', data);
+          if (!res.ok) {
+            console.log('ERROR SUPABASE:', { status: res.status, statusText: res.statusText, data });
+          }
+          return { res, data };
+        })
+      )
+      .then(({ res, data }) => {
         setSedes(data || []);
-        const paisesUnicos = [...new Set(data.map(s => s.pais))].sort();
+        const paisesUnicos = [...new Set((data || []).map((s) => s.pais))].sort();
         setPaises(paisesUnicos);
       })
-      .catch(err => setError('Error al cargar sedes'));
+      .catch((err) => {
+        console.log('ERROR SUPABASE:', err);
+        setError('Error al cargar sedes');
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- logs de diagnóstico: mismo comportamiento que antes (solo apiBaseUrl)
   }, [apiBaseUrl]);
 
   // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
