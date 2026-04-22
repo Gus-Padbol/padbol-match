@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, Navigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
@@ -1108,12 +1108,6 @@ export default function MiPerfil() {
         </div>
         <BottomNav />
       </div>
-    );
-  }
-
-  if (!sessionOwnerEmail && !esRegistroSinSesion) {
-    return (
-      <Navigate to={`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`} replace />
     );
   }
 

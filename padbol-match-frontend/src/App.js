@@ -36,13 +36,18 @@ const ADMIN_EMAILS = [
   'juanpablo@padbol.com',
 ];
 
+/**
+ * Rutas públicas: sin useAuth en el layout. El HUB (/, /hub, /home) se renderiza siempre;
+ * no existe if (!session) return <Login /> a nivel router.
+ */
+
 function LegacyPerfilRedirect() {
   const loc = useLocation();
   const suffix = `${loc.search || ''}${loc.hash || ''}`;
   return <Navigate to={`/mi-perfil${suffix}`} replace />;
 }
 
-/** `/login` legacy: con query/hash de auth → `/auth`; sin intención → HUB (navegación pública). */
+/** `/login` legacy: con query/hash de auth → `/auth`; sin intención → HUB. */
 function LoginToAuthRedirect() {
   const { search, hash } = useLocation();
   const qs = search || '';
@@ -86,11 +91,7 @@ function authLocationShowsLoginScreen(search, hash) {
   }
 }
 
-/**
- * `/auth` solo con intención explícita o callback (OAuth, PKCE, email, ?redirect=…).
- * Entrada vacía en `/auth` → HUB (evita PWA/Site URL que abran login como pantalla inicial).
- * Acceso voluntario sin destino: `/auth?redirect=/` o `/auth?login=1`.
- */
+/** `/auth` vacío → HUB; con ?redirect= / OAuth / PKCE → pantalla de acceso. */
 function AuthRoute() {
   const { search, hash } = useLocation();
   if (!authLocationShowsLoginScreen(search, hash)) {
@@ -99,7 +100,8 @@ function AuthRoute() {
   return <AccesoCuenta />;
 }
 
-function AppContent() {
+/** Única ruta que exige sesión a nivel router. */
+function AdminRoute() {
   const { session, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -123,58 +125,55 @@ function AppContent() {
 
   const loggedIn = Boolean(session?.user);
 
-  return (
-    <>
-      <div style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
-        <Routes>
-          <Route path="/" element={<UserHome />} />
-          <Route path="/hub" element={<UserHome />} />
-          <Route path="/inicio" element={<UserHome />} />
-          <Route path="/home" element={<UserHome />} />
+  if (roleLoading) {
+    return <div style={{ color: 'white', padding: 24, textAlign: 'center' }}>Cargando permisos…</div>;
+  }
+  if (!loggedIn) {
+    return <Navigate to={authUrlWithRedirect('/admin')} replace />;
+  }
+  if (canAccessAdmin()) {
+    return <AdminDashboard rol={rol} sedeId={sedeId} />;
+  }
+  return <Navigate to="/" replace />;
+}
 
-          {/* resto de rutas NO TOCAR */}
-          <Route path="/auth" element={<AuthRoute />} />
-          <Route path="/login" element={<LoginToAuthRedirect />} />
-          <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
-          <Route path="/reservar" element={<ReservaForm />} />
-          <Route path="/torneos" element={<TorneosPublicos />} />
-          <Route path="/torneo/crear" element={<TorneoCrear />} />
-          <Route path="/torneo/:id/jugadores" element={<Navigate to="/mi-perfil" replace />} />
-          <Route path="/torneo/:id/equipos/:equipoId" element={<EquipoVista />} />
-          <Route path="/torneo/:id/equipos" element={<FormEquipos />} />
-          <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
-          <Route path="/pago-exitoso" element={<PagoExitoso />} />
-          <Route path="/pago-fallido" element={<PagoFallido />} />
-          <Route path="/torneo/:torneoId" element={<TorneoVista />} />
-          <Route path="/rankings" element={<Rankings />} />
-          <Route path="/sedes" element={<SedesPublicas />} />
-          <Route path="/sede/:sedeId" element={<SedePublica />} />
-          <Route path="/perfil" element={<LegacyPerfilRedirect />} />
-          <Route path="/mi-perfil" element={<MiPerfil />} />
-          <Route
-            path="/admin"
-            element={
-              roleLoading ? (
-                <div style={{ color: 'white', padding: 24, textAlign: 'center' }}>Cargando permisos…</div>
-              ) : !loggedIn ? (
-                <Navigate to={authUrlWithRedirect('/admin')} replace />
-              ) : canAccessAdmin() ? (
-                <AdminDashboard rol={rol} sedeId={sedeId} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            }
-          />
-        </Routes>
-      </div>
-    </>
+function AppRoutes() {
+  return (
+    <div style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
+      <Routes>
+        <Route path="/" element={<UserHome />} />
+        <Route path="/hub" element={<UserHome />} />
+        <Route path="/inicio" element={<UserHome />} />
+        <Route path="/home" element={<UserHome />} />
+
+        <Route path="/auth" element={<AuthRoute />} />
+        <Route path="/login" element={<LoginToAuthRedirect />} />
+        <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
+        <Route path="/reservar" element={<ReservaForm />} />
+        <Route path="/torneos" element={<TorneosPublicos />} />
+        <Route path="/torneo/crear" element={<TorneoCrear />} />
+        <Route path="/torneo/:id/jugadores" element={<Navigate to="/mi-perfil" replace />} />
+        <Route path="/torneo/:id/equipos/:equipoId" element={<EquipoVista />} />
+        <Route path="/torneo/:id/equipos" element={<FormEquipos />} />
+        <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
+        <Route path="/pago-exitoso" element={<PagoExitoso />} />
+        <Route path="/pago-fallido" element={<PagoFallido />} />
+        <Route path="/torneo/:torneoId" element={<TorneoVista />} />
+        <Route path="/rankings" element={<Rankings />} />
+        <Route path="/sedes" element={<SedesPublicas />} />
+        <Route path="/sede/:sedeId" element={<SedePublica />} />
+        <Route path="/perfil" element={<LegacyPerfilRedirect />} />
+        <Route path="/mi-perfil" element={<MiPerfil />} />
+        <Route path="/admin" element={<AdminRoute />} />
+      </Routes>
+    </div>
   );
 }
 
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AppRoutes />
     </Router>
   );
 }
