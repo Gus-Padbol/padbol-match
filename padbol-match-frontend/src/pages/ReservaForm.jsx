@@ -333,17 +333,39 @@ export default function ReservaForm() {
       return;
     }
 
-    console.log('BUSCANDO DISPONIBILIDAD:', {
-      sedeId: filtros.sede_id,
-      fecha,
-    });
+    const URL_COMPLETA = `${API_BASE}/api/disponibilidad/${sedeSeleccionada.nombre}/${fecha}`;
+    const fechaSeleccionada = fecha;
+
+    console.log("URL DISPONIBILIDAD:", URL_COMPLETA);
+    console.log("SEDE:", sedeSeleccionada);
+    console.log("FECHA:", fechaSeleccionada);
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_BASE}/api/disponibilidad/${sedeSeleccionada.nombre}/${fecha}`
-      );
-      const reservadas = await response.json();
+      const response = await fetch(URL_COMPLETA);
+      console.log("STATUS:", response.status);
+      const text = await response.text();
+      console.log("RAW RESPONSE:", text);
+
+      if (!response.ok) {
+        console.log("ERROR DISPONIBILIDAD");
+        setHorariosDisponibles([]);
+        return;
+      }
+
+      let reservadas;
+      try {
+        reservadas = JSON.parse(text);
+      } catch {
+        console.log("NO ES JSON");
+        console.log("ERROR DISPONIBILIDAD");
+        setHorariosDisponibles([]);
+        return;
+      }
+
+      if (!Array.isArray(reservadas)) {
+        reservadas = [];
+      }
 
       const sedeData = sedeSeleccionada;
 
@@ -409,9 +431,9 @@ export default function ReservaForm() {
       }
 
       setHorariosDisponibles(todosLosHorarios);
-    } catch (err) {
-      console.error('[ReservaForm] Error in buscarHorariosDisponibles:', err);
-      setError('Error al buscar disponibilidad');
+    } catch {
+      console.log("ERROR DISPONIBILIDAD");
+      setHorariosDisponibles([]);
     } finally {
       setLoading(false);
     }
