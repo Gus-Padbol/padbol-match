@@ -39,9 +39,9 @@ function formatFecha(str) {
 
 function Row({ icon, label }) {
   return (
-    <div style={{ fontSize: '14px', lineHeight: 1.5 }}>
-      {icon != null && icon !== '' ? <span style={{ marginRight: '6px' }}>{icon}</span> : null}
-      {label}
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#444' }}>
+      <span style={{ flexShrink: 0, width: '18px', textAlign: 'center' }}>{icon}</span>
+      <span style={{ lineHeight: 1.4 }}>{label}</span>
     </div>
   );
 }
