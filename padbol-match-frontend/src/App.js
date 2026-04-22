@@ -47,7 +47,11 @@ function LegacyPerfilRedirect() {
   return <Navigate to={`/mi-perfil${suffix}`} replace />;
 }
 
-/** `/login` legacy: con query/hash de auth → `/auth`; sin intención → HUB. */
+/**
+ * Legacy `/login`: nunca deja la app “parada” en login.
+ * - Sin tokens ni query de auth → HUB (`/`).
+ * - Con callback OAuth/PKCE (query o hash) → mismo callback en `/` para que el HUB sea la entrada y Supabase siga leyendo la URL.
+ */
 function LoginToAuthRedirect() {
   const { search, hash } = useLocation();
   const qs = search || '';
@@ -57,9 +61,20 @@ function LoginToAuthRedirect() {
     h.includes('access_token') ||
     h.includes('refresh_token') ||
     h.includes('type=recovery') ||
-    h.includes('error=');
+    h.includes('error=') ||
+    h.includes('code=');
   if (hasQueryParams || hasOAuthHash) {
-    return <Navigate to={`/auth${qs}${h}`} replace />;
+    const hashPart = h.startsWith('#') ? h.slice(1) : h;
+    return (
+      <Navigate
+        to={{
+          pathname: '/',
+          search: qs.length > 1 ? qs : undefined,
+          hash: hashPart || undefined,
+        }}
+        replace
+      />
+    );
   }
   return <Navigate to="/" replace />;
 }
