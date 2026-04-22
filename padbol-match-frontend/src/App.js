@@ -122,34 +122,13 @@ function AppRoutes() {
         <Route path="/auth" element={<AuthRoute />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
 
-        <Route
-          path="/reserva"
-          element={
-            <ProtectedRoute>
-              <Navigate to="/reservar" replace />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reservar"
-          element={
-            <ProtectedRoute>
-              <ReservaForm />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/reserva" element={<Navigate to="/reservar" replace />} />
+        <Route path="/reservar" element={<ReservaForm />} />
 
         <Route path="/torneos" element={<TorneosPublicos />} />
         <Route path="/torneo/crear" element={<TorneoCrear />} />
         <Route path="/torneo/:id/jugadores" element={<Navigate to="/mi-perfil" replace />} />
-        <Route
-          path="/torneo/:id/equipos/:equipoId"
-          element={
-            <ProtectedRoute>
-              <EquipoVista />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/torneo/:id/equipos/:equipoId" element={<EquipoVista />} />
         <Route path="/torneo/:id/equipos" element={<FormEquipos />} />
         <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
         <Route path="/pago-exitoso" element={<PagoExitoso />} />
