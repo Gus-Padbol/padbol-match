@@ -174,6 +174,7 @@ export default function ReservaForm() {
     }
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /*
   useEffect(() => {
     const url = "https://padbol-backend.onrender.com/api/sedes";
     console.log("URL SEDES:", url);
@@ -206,6 +207,30 @@ export default function ReservaForm() {
         setSedes([]);
         setPaises([]);
       });
+  }, []);
+  */
+
+  useEffect(() => {
+    setSedes([
+      {
+        id: 1,
+        nombre: "La Meca Padbol Club",
+        pais: "Argentina",
+        ciudad: "La Plata",
+      },
+      {
+        id: 2,
+        nombre: "Padbol Point ONE",
+        pais: "Estados Unidos",
+        ciudad: "Miami",
+      },
+      {
+        id: 3,
+        nombre: "Madrid Padbol Point",
+        pais: "España",
+        ciudad: "Madrid",
+      },
+    ]);
   }, []);
 
   // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
