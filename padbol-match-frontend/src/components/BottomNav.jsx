@@ -1,12 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   const path = location.pathname;
 
   const items = [
@@ -18,10 +17,6 @@ const BottomNav = () => {
 
   const go = (item) => {
     if (authLoading) return;
-    if (item.path === '/mi-perfil' && !session?.user) {
-      navigate(authUrlWithRedirect(item.path));
-      return;
-    }
     navigate(item.path);
   };
 

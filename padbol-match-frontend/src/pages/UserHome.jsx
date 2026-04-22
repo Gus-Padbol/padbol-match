@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
-import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
 
 export default function UserHome() {
@@ -11,20 +10,11 @@ export default function UserHome() {
   const { session, loading: authLoading, userProfile } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
 
-  const requireLoginForAction = (redirectPath) => {
-    if (authLoading) return;
-    if (!session?.user) {
-      navigate(authUrlWithRedirect(redirectPath));
-      return;
-    }
-    navigate(redirectPath);
-  };
-
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
     { label: 'Torneos', icon: '🏆', action: () => navigate('/torneos') },
     { label: 'Ranking', icon: '🥇', action: () => navigate('/rankings') },
-    { label: 'Perfil', icon: '👤', action: () => requireLoginForAction('/mi-perfil') },
+    { label: 'Perfil', icon: '👤', action: () => navigate('/mi-perfil') },
   ];
 
   const tituloSaludo = session?.user

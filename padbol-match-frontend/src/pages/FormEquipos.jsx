@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -228,6 +228,8 @@ export default function FormEquipos() {
   const [mobileVista, setMobileVista] = useState('inicio');
   /** null | crear | lista — solo escritorio, paso elección antes de acción */
   const [desktopFlujo, setDesktopFlujo] = useState(null);
+  /** Tras abrir ?crear=1 sin sesión: se limpia la URL y se muestra aviso + CTA a login. */
+  const [bannerCrearEquipoRequiereLogin, setBannerCrearEquipoRequiereLogin] = useState(false);
   const [salirEquipoIdConfirm, setSalirEquipoIdConfirm] = useState(null);
   const [savingSalirEquipo, setSavingSalirEquipo] = useState(false);
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
@@ -247,6 +249,20 @@ export default function FormEquipos() {
     mq.addEventListener('change', fn);
     return () => mq.removeEventListener('change', fn);
   }, []);
+
+  const irACrearEquipo = useCallback(() => {
+    if (authLoading) return;
+    if (!session?.user) {
+      navigate(authUrlWithRedirect(`/torneo/${id}/equipos?crear=1`));
+      return;
+    }
+    if (isMobile) setMobileVista('crear');
+    else setDesktopFlujo('crear');
+  }, [authLoading, session?.user, navigate, id, isMobile]);
+
+  useEffect(() => {
+    if (session?.user) setBannerCrearEquipoRequiereLogin(false);
+  }, [session?.user]);
 
   const cargarTodo = async () => {
     if (!torneoId) return;
@@ -458,7 +474,8 @@ export default function FormEquipos() {
     if (!wantsCrearEquipo || loading) return;
     if (authLoading) return;
     if (!session?.user) {
-      navigate(authUrlWithRedirect(`/torneo/${id}/equipos?crear=1`), { replace: true });
+      setBannerCrearEquipoRequiereLogin(true);
+      navigate(`/torneo/${id}/equipos`, { replace: true });
       return;
     }
     if (torneoCerrado || miEquipo || miSolicitudPendiente) {
@@ -1542,6 +1559,59 @@ export default function FormEquipos() {
     </div>
   );
 
+  const bloqueBannerCrearLogin =
+    bannerCrearEquipoRequiereLogin && !session?.user ? (
+      <div
+        style={{
+          marginBottom: '16px',
+          padding: '14px 16px',
+          borderRadius: '12px',
+          background: '#fef9c3',
+          border: '1px solid #fde047',
+          color: '#854d0e',
+          fontWeight: 700,
+          lineHeight: 1.45,
+        }}
+      >
+        <div style={{ marginBottom: '10px' }}>Para crear un equipo necesitás iniciar sesión.</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos?crear=1`))}
+            style={{
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: 800,
+              borderRadius: '10px',
+              border: 'none',
+              cursor: 'pointer',
+              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+              color: 'white',
+              boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
+            }}
+          >
+            Iniciar sesión
+          </button>
+          <button
+            type="button"
+            onClick={() => setBannerCrearEquipoRequiereLogin(false)}
+            style={{
+              padding: '8px 12px',
+              fontSize: '13px',
+              fontWeight: 700,
+              borderRadius: '8px',
+              cursor: 'pointer',
+              background: 'transparent',
+              color: '#713f12',
+              border: '1px solid rgba(113,63,18,0.35)',
+            }}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    ) : null;
+
   const bloqueInscripcionTorneo =
     miEquipo && !torneoCancelado ? (
       <div
@@ -1646,7 +1716,7 @@ export default function FormEquipos() {
           </div>
           <button
             type="button"
-            onClick={() => setDesktopFlujo('crear')}
+            onClick={irACrearEquipo}
             style={{
               marginTop: '4px',
               padding: '14px 16px',
@@ -1771,6 +1841,7 @@ export default function FormEquipos() {
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>
         {bloqueTorneo}
+        {bloqueBannerCrearLogin}
 
         {torneoCancelado ? (
           <>
@@ -2063,7 +2134,7 @@ export default function FormEquipos() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setDesktopFlujo('crear')}
+                  onClick={irACrearEquipo}
                   style={{
                     width: '100%',
                     maxWidth: '320px',
@@ -2083,14 +2154,14 @@ export default function FormEquipos() {
               </div>
             ) : null}
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
-              {listaEquiposContenido('+ Pedir unirme', () => setDesktopFlujo('crear'))}
+              {listaEquiposContenido('+ Pedir unirme', irACrearEquipo)}
             </div>
           </div>
         )}
 
         {!isMobile && !mostrarEleccionDesktop && !miEquipo && !miSolicitudPendiente && (
           <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
-            {listaEquiposContenido('+ Pedir unirme', () => setDesktopFlujo('crear'))}
+            {listaEquiposContenido('+ Pedir unirme', irACrearEquipo)}
           </div>
         )}
 
@@ -2120,7 +2191,7 @@ export default function FormEquipos() {
               </div>
               <button
                 type="button"
-                onClick={() => setMobileVista('crear')}
+                onClick={irACrearEquipo}
                 style={{
                   width: '100%',
                   padding: '14px 16px',
@@ -2246,7 +2317,7 @@ export default function FormEquipos() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setMobileVista('crear')}
+                  onClick={irACrearEquipo}
                   style={{
                     width: '100%',
                     maxWidth: '320px',
@@ -2268,7 +2339,7 @@ export default function FormEquipos() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               {listaEquiposContenido(
                 mobileListaTorneoCerrado ? '+ Pedir unirme' : 'Unirme',
-                () => setMobileVista('crear')
+                irACrearEquipo
               )}
             </div>
           </div>
@@ -2386,7 +2457,7 @@ export default function FormEquipos() {
                       </p>
                       <button
                         type="button"
-                        onClick={() => setMobileVista('crear')}
+                        onClick={irACrearEquipo}
                         style={{
                           width: '100%',
                           maxWidth: '320px',
