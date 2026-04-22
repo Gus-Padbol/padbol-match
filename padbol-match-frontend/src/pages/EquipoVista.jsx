@@ -19,7 +19,6 @@ import {
   iniciarPagoInscripcionTorneo,
 } from '../utils/torneoInscripcionPago';
 import { getDisplayName } from '../utils/displayName';
-import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 import {
   jugadorNombreTorneoEtiqueta,
   fetchJugadoresPerfilPorJugadores,
@@ -101,14 +100,11 @@ export default function EquipoVista() {
     if (!authEmail) return null;
     return {
       email: authEmail,
-      nombre:
-        String(userProfile?.alias || '').trim() ||
-        nombreCompletoJugadorPerfil(userProfile) ||
-        String(userProfile?.nombre || '').trim(),
+      nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       foto: userProfile?.foto ?? null,
     };
-  }, [authEmail, userProfile]);
+  }, [authEmail, userProfile, session]);
 
   const usuarioLocal = getOrCreateUsuarioBasico();
 
@@ -707,25 +703,6 @@ export default function EquipoVista() {
             marginBottom: 18,
           }}
         >
-          <button
-            type="button"
-            onClick={() => navigate(`/torneo/${id}/equipos`)}
-            style={{
-              margin: '0 0 16px',
-              padding: 0,
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: T.colorTextMuted,
-              textAlign: 'left',
-              display: 'block',
-            }}
-          >
-            ← Volver a equipos del torneo
-          </button>
-
           {esMiEquipo ? (
             <div
               style={{

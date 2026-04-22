@@ -8,7 +8,6 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
-import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 
 // Returns the correct price for a given sede + time slot.
 // Falls back to precio_por_reserva / precio_turno if no differentiated prices are configured.
@@ -60,6 +59,15 @@ function todayLocalISO() {
   return `${y}-${m}-${day}`;
 }
 
+function fechaMaxReservaISO() {
+  const d = new Date();
+  d.setDate(d.getDate() + 365);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /** Pantalla 2 solo si ?sedeId= en la URL o ultima_sede en localStorage; sin ambos → pantalla 1 (país/ciudad se completan al cargar sedes). */
 function readPrimedSedeReserva() {
   const emptyFiltros = { pais: '', ciudad: '', sede_id: '' };
@@ -95,13 +103,9 @@ export default function ReservaForm({
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
-    const nombreDb =
-      String(userProfile?.alias || '').trim() ||
-      nombreCompletoJugadorPerfil(userProfile) ||
-      String(userProfile?.nombre || '').trim();
     return {
       email: em,
-      nombre: nombreDb || getDisplayName(userProfile, session),
+      nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       telefono: String(userProfile?.whatsapp || '').trim(),
     };
@@ -228,12 +232,19 @@ export default function ReservaForm({
     );
   }, [sedes, initialSedeId, location.pathname, location.search, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
+  useEffect(() => {
+    if (pantalla !== 2 || !filtros.sede_id) return;
+    setFormData((prev) => {
+      if (prev.fecha) return prev;
+      return { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' };
+    });
+  }, [pantalla, filtros.sede_id]);
+
   // Auto-load time slots when date is selected
   useEffect(() => {
-    console.log('[ReservaForm] Date change effect - pantalla:', pantalla, 'fecha:', formData.fecha, 'sedeId:', filtros.sede_id, 'sedeSeleccionada:', sedeSeleccionada?.nombre);
     if (pantalla !== 2 || !formData.fecha) return;
     if (!sedeSeleccionada) return;
-    console.log('[ReservaForm] Triggering buscarHorariosDisponibles for fecha:', formData.fecha);
     buscarHorariosDisponibles(formData.fecha);
   }, [formData.fecha, pantalla, filtros.sede_id, sedes]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -271,6 +282,12 @@ export default function ReservaForm({
     setFiltros(prev => ({ ...prev, sede_id }));
     if (sede_id) {
       setPantalla(2);
+      setFormData((prev) => ({
+        ...prev,
+        fecha: prev.fecha || todayLocalISO(),
+        hora: '',
+        cancha: '',
+      }));
       setError('');
     }
   };
@@ -281,23 +298,26 @@ export default function ReservaForm({
       return;
     }
     setPantalla(2);
+    setFormData((prev) => ({
+      ...prev,
+      fecha: prev.fecha || todayLocalISO(),
+      hora: '',
+      cancha: '',
+    }));
     setError('');
   };
 
   const buscarHorariosDisponibles = async (fecha) => {
     if (!fecha || !sedeSeleccionada) {
-      console.log('[ReservaForm] buscarHorariosDisponibles early return - fecha:', fecha, 'sedeSeleccionada:', sedeSeleccionada?.nombre);
       return;
     }
 
-    console.log('[ReservaForm] buscarHorariosDisponibles fetching for sede:', sedeSeleccionada.nombre, 'fecha:', fecha);
     setLoading(true);
     try {
       const response = await fetch(
         `${apiBaseUrl}/api/disponibilidad/${sedeSeleccionada.nombre}/${fecha}`
       );
       const reservadas = await response.json();
-      console.log('[ReservaForm] buscarHorariosDisponibles got response:', reservadas);
 
       const sedeData = sedeSeleccionada;
 
@@ -311,7 +331,7 @@ export default function ReservaForm({
           if (!isNaN(apertura)) horaApertura = apertura;
         }
       } catch (e) {
-        console.log('[ReservaForm] Could not parse horario_apertura, using default:', horaApertura);
+        /* ignore parse errors */
       }
 
       try {
@@ -320,13 +340,11 @@ export default function ReservaForm({
           if (!isNaN(cierre)) horaCierre = cierre;
         }
       } catch (e) {
-        console.log('[ReservaForm] Could not parse horario_cierre, using default:', horaCierre);
+        /* ignore parse errors */
       }
 
       const duracion = sedeData.duracion_reserva_minutos || 90;
       const cantidadCanchas = sedeData.cantidad_canchas || 2;
-
-      console.log('[ReservaForm] Schedule config - opening:', horaApertura, 'closing:', horaCierre, 'duration:', duracion, 'courts:', cantidadCanchas);
 
       const todosLosHorarios = [];
 
@@ -364,17 +382,7 @@ export default function ReservaForm({
         }
       }
 
-      console.log('[ReservaForm] Generated', todosLosHorarios.length, 'available time slots');
       setHorariosDisponibles(todosLosHorarios);
-
-      // If no slots found, log full diagnostics
-      if (todosLosHorarios.length === 0) {
-        console.log('[ReservaForm] WARNING: No time slots generated. Debug info:', {
-          horaApertura, horaCierre, duracion, cantidadCanchas,
-          reservadasCount: Array.isArray(reservadas) ? reservadas.length : 'NaN',
-          fechaSelected: fecha
-        });
-      }
     } catch (err) {
       console.error('[ReservaForm] Error in buscarHorariosDisponibles:', err);
       setError('Error al buscar disponibilidad');
@@ -385,9 +393,6 @@ export default function ReservaForm({
 
   const handleChangeFecha = (e) => {
     const fecha = e.target.value;
-    console.log('[ReservaForm] handleChangeFecha called with fecha:', fecha);
-    console.log('[ReservaForm]  Current state - pantalla:', pantalla, 'filtros.sede_id:', filtros.sede_id, 'sedes.length:', sedes.length);
-    console.log('[ReservaForm]  sedeSeleccionada at call time:', sedeSeleccionada?.nombre || sedeSeleccionada);
     setFormData(prev => ({
       ...prev,
       fecha,
@@ -664,8 +669,11 @@ export default function ReservaForm({
                 name="fecha"
                 value={formData.fecha}
                 onChange={handleChangeFecha}
+                min={todayLocalISO()}
+                max={fechaMaxReservaISO()}
                 disabled={!sedeSeleccionada}
                 required
+                className="reserva-input-fecha"
               />
             </div>
 

@@ -22,7 +22,7 @@ import { normalizeTorneoPostPerfilPath } from '../utils/torneoPostPerfilNavigati
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { useAuth } from '../context/AuthContext';
-import { getDisplayName } from '../utils/displayName';
+import { nombreDesdeSesionSinEmail, getDisplayName } from '../utils/displayName';
 import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -91,7 +91,7 @@ function paisPayloadSegunTorneo(torneoRow, paisForm) {
 export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
+  const { session, loading: authLoading, userProfile, refreshSession, signOutAndClear } = useAuth();
   const [searchParams] = useSearchParams();
   const torneoIdPerfil = searchParams.get('id');
   const redirectAfterAuth = searchParams.get('redirect') || '';
@@ -121,32 +121,11 @@ export default function MiPerfil() {
     if (u && String(u).startsWith('blob:')) URL.revokeObjectURL(u);
   }, []);
 
-  useEffect(() => {
-    if (!session?.user?.email) return;
-    if (String(session.user.user_metadata?.nombre || '').trim()) return;
-    let cancelled = false;
-    (async () => {
-      const base = session.user.email.split('@')[0];
-      if (!base) return;
-      const { error } = await supabase.auth.updateUser({
-        data: { nombre: base },
-      });
-      if (!cancelled && !error) void refreshSession();
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [session, refreshSession]);
-
   const cuentaDeSesion = useMemo(() => {
     if (!sessionOwnerEmail) return null;
-    const nombreDb =
-      String(userProfile?.alias || '').trim() ||
-      nombreCompletoJugadorPerfil(userProfile) ||
-      String(userProfile?.nombre || '').trim();
     return {
       email: sessionOwnerEmail,
-      nombre: nombreDb || getDisplayName(userProfile, session),
+      nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       foto: userProfile?.foto ?? null,
     };
@@ -277,7 +256,7 @@ export default function MiPerfil() {
     const base =
       String(perfil?.nombre || '').trim() ||
       String(cuentaDeSesion?.nombre || '').trim() ||
-      (session?.user ? getDisplayName(userProfile, session) : '');
+      (session?.user ? nombreDesdeSesionSinEmail(userProfile, session, '') : '');
     setNombreTorneoCompleto((prev) => (prev.trim() ? prev : base));
   }, [
     editando,
@@ -1273,7 +1252,7 @@ export default function MiPerfil() {
         </button>
 
         <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#222' }}>
-          {userProfile?.nombre || perfil?.nombre || 'Jugador'}
+          {getDisplayName(userProfile || perfil, session)}
         </h2>
 
         {perfil?.pais && (
@@ -1650,6 +1629,32 @@ export default function MiPerfil() {
           Aún no participaste en ningún torneo registrado.
         </p>
       </div>
+
+      {sessionOwnerEmail ? (
+        <p style={{ textAlign: 'center', margin: '16px 0 0' }}>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await signOutAndClear();
+                navigate('/', { replace: true });
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '13px',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </p>
+      ) : null}
 
       </div>
       <BottomNav />

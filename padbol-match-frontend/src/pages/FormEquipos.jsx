@@ -18,7 +18,6 @@ import {
 } from '../utils/torneoInscripcionPago';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
-import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 import {
   jugadorNombreTorneoEtiqueta,
   fetchJugadoresPerfilPorJugadores,
@@ -174,14 +173,11 @@ export default function FormEquipos() {
     if (!authEmail) return null;
     return {
       email: authEmail,
-      nombre:
-        String(userProfile?.alias || '').trim() ||
-        nombreCompletoJugadorPerfil(userProfile) ||
-        String(userProfile?.nombre || '').trim(),
+      nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       foto: userProfile?.foto ?? null,
     };
-  }, [authEmail, userProfile]);
+  }, [authEmail, userProfile, session]);
 
   const [perfilLsKey, setPerfilLsKey] = useState(0);
 

@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
+import { getDisplayName } from '../utils/displayName';
 
 export default function UserHome() {
   const navigate = useNavigate();
-  const { session, loading: authLoading } = useAuth();
-  const [nombreMostrar, setNombreMostrar] = useState('');
+  const { session, loading: authLoading, userProfile } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
 
   const requireLoginForAction = (redirectPath) => {
@@ -21,34 +20,16 @@ export default function UserHome() {
     navigate(redirectPath);
   };
 
-  useEffect(() => {
-    const cargarPerfil = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('jugadores_perfil')
-        .select('nombre, alias')
-        .eq('email', user.email)
-        .single();
-
-      if (data) {
-        setNombreMostrar(
-          data.alias || data.nombre || user.email.split('@')[0]
-        );
-      }
-    };
-
-    cargarPerfil();
-  }, []);
-
   const accesosRapidos = [
-    { label: 'Reservar', icon: '⚽', action: () => requireLoginForAction('/reservar') },
+    { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
     { label: 'Torneos', icon: '🏆', action: () => navigate('/torneos') },
     { label: 'Ranking', icon: '🥇', action: () => navigate('/rankings') },
     { label: 'Perfil', icon: '👤', action: () => requireLoginForAction('/mi-perfil') },
   ];
+
+  const tituloSaludo = session?.user
+    ? `¡Hola ${getDisplayName(userProfile, session)}!`
+    : '¡Hola!';
 
   return (
     <div
@@ -96,7 +77,7 @@ export default function UserHome() {
             fontWeight: '600',
             lineHeight: 1.35,
           }}>
-            {nombreMostrar ? `¡Hola ${nombreMostrar}!` : '¡Hola!'}
+            {tituloSaludo}
           </h1>
           <p style={{
             textAlign: 'center',

@@ -4,67 +4,49 @@ function looksLikeEmailStr(s) {
   return typeof s === 'string' && s.includes('@');
 }
 
-/**
- * Nombre visible: alias DB → primer token nombre DB → metadata auth → email local → "Jugador".
- */
-export function getDisplayName(perfil, session) {
-  const alias = String(perfil?.alias ?? '').trim();
-  if (alias) return alias;
-
-  const fromNombre = String(perfil?.nombre ?? '').trim().split(/\s+/).filter(Boolean)[0];
-  if (fromNombre) return fromNombre;
-
-  const meta = session?.user?.user_metadata?.nombre;
-  const fromMeta = String(meta ?? '').trim().split(/\s+/).filter(Boolean)[0];
-  if (fromMeta) return fromMeta;
-
-  if (session?.user?.email) {
-    return session.user.email.split('@')[0];
-  }
-
-  return 'Jugador';
+function parteLocalEmailLower(email) {
+  const em = String(email || '').trim();
+  if (!em.includes('@')) return '';
+  return em.split('@')[0].toLowerCase();
 }
 
 /**
- * Nombre del usuario logueado solo desde `jugadores_perfil` en contexto + metadatos OAuth.
- * No usa email ni parte local del email como nombre visible; no hace lookups externos.
- * Orden: `perfil.nombre` → nombre+apellido en perfil → `user_metadata.full_name` → otros metadatos → `nombreFallback` (si no es el slug del mail).
+ * Nombre legible solo desde fila `jugadores_perfil` (nombre + apellido).
+ * No deriva nada del email en código: solo evita mostrar la parte local del mail
+ * o un string que sea el email completo como si fuera nombre.
+ */
+export function nombreDesdeFilaJugadoresPerfil(row, userEmail) {
+  if (!row || typeof row !== 'object') return '';
+  const nc = nombreCompletoJugadorPerfil(row).trim();
+  const n = String(row.nombre || '').trim();
+  const candidato = nc || n;
+  if (!candidato) return '';
+  if (looksLikeEmailStr(candidato)) return '';
+  const local = parteLocalEmailLower(userEmail);
+  if (local && candidato.toLowerCase() === local) return '';
+  return candidato;
+}
+
+/**
+ * Nombre para UI cuando hay `perfil` en contexto y sesión (email en `session.user`).
+ * Únicamente `jugadores_perfil`; si no hay nombre útil → "Jugador".
+ */
+export function getDisplayName(perfil, session) {
+  const em = String(session?.user?.email || perfil?.email || '').trim();
+  return nombreDesdeFilaJugadoresPerfil(perfil, em) || 'Jugador';
+}
+
+/**
+ * Igual que {@link getDisplayName} pero devuelve cadena vacía si no hay nombre (sin "Jugador").
+ * Útil para combinar con `nombreFallback` en formularios.
  */
 export function nombreDesdeSesionSinEmail(perfil, session, nombreFallback = '') {
-  if (perfil && typeof perfil === 'object') {
-    const soloNombre = String(perfil.nombre || '').trim();
-    if (soloNombre) return soloNombre;
-    const nc = nombreCompletoJugadorPerfil(perfil).trim();
-    if (nc) return nc;
-    const alias = String(perfil.alias || '').trim();
-    if (alias && !looksLikeEmailStr(alias)) return alias;
-  }
-
-  const u = session?.user;
-  const emailLocal = (() => {
-    const em = String(u?.email || '').trim();
-    if (!em.includes('@')) return '';
-    return em.split('@')[0].toLowerCase();
-  })();
-
-  if (u) {
-    const fullName = String(u.user_metadata?.full_name || '').trim();
-    if (fullName && !looksLikeEmailStr(fullName)) return fullName;
-    const meta = String(
-      u.user_metadata?.name ||
-        u.user_metadata?.given_name ||
-        u.user_metadata?.preferred_username ||
-        u.user_metadata?.nombre ||
-        ''
-    ).trim();
-    if (meta && !looksLikeEmailStr(meta)) return meta;
-  }
-
+  const em = String(session?.user?.email || perfil?.email || '').trim();
+  const fromDb = nombreDesdeFilaJugadoresPerfil(perfil, em);
+  if (fromDb) return fromDb;
   const fb = String(nombreFallback || '').trim();
-  if (fb && !looksLikeEmailStr(fb)) {
-    const fbl = fb.toLowerCase();
-    if (!emailLocal || fbl !== emailLocal) return fb;
-  }
-
-  return '';
+  if (!fb || looksLikeEmailStr(fb)) return '';
+  const local = parteLocalEmailLower(em);
+  if (local && fb.toLowerCase() === local) return '';
+  return fb;
 }

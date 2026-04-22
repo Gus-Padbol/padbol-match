@@ -5,10 +5,13 @@ import { refreshJugadorPerfilFromSupabase, clearJugadorPerfilLocalStorage } from
 const AuthContext = createContext(null);
 
 /**
- * Carga o crea `jugadores_perfil` por `user_id` (UUID de `session.user.id`).
+ * Carga o crea `jugadores_perfil`: primero por email de la sesión, luego por `user_id`.
+ * Nunca usa `email.split` como nombre al crear filas nuevas.
  */
 async function refreshUserProfile(session, setUserProfile) {
   const userId = session?.user?.id ?? null;
+  const email = String(session?.user?.email || '').trim();
+
   if (!userId) {
     try {
       localStorage.removeItem('userProfile');
@@ -20,48 +23,58 @@ async function refreshUserProfile(session, setUserProfile) {
     return;
   }
 
-  const { data, error } = await supabase
-    .from('jugadores_perfil')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
+  let data = null;
+  let error = null;
+
+  if (email) {
+    const r1 = await supabase.from('jugadores_perfil').select('*').eq('email', email).maybeSingle();
+    data = r1.data;
+    error = r1.error;
+  }
+
+  if (!data && !error) {
+    const r2 = await supabase.from('jugadores_perfil').select('*').eq('user_id', userId).maybeSingle();
+    data = r2.data;
+    error = r2.error;
+  }
 
   if (data && !error) {
-    const perfilDB = data; // lo que viene de Supabase
-
+    const perfilDB = data;
     setUserProfile({
       ...perfilDB,
-      nombre: perfilDB?.nombre || '',
-      alias: perfilDB?.alias || '',
-      email: session?.user?.email || ''
+      nombre: perfilDB?.nombre != null ? String(perfilDB.nombre) : '',
+      alias: perfilDB?.alias != null ? String(perfilDB.alias) : '',
+      email: email || String(perfilDB.email || '').trim(),
     });
-    const em = String(session?.user?.email || data.email || '').trim();
+    const em = String(email || data.email || '').trim();
     if (em) await refreshJugadorPerfilFromSupabase(em);
     return;
   }
 
-  const nombreBase = session?.user?.email?.split('@')[0] || 'Jugador';
+  const insertRow = {
+    user_id: userId,
+    nombre: 'Jugador',
+    alias: '',
+  };
+  if (email) {
+    insertRow.email = email;
+  }
 
   const { data: nuevo, error: insErr } = await supabase
     .from('jugadores_perfil')
-    .insert({
-      user_id: userId,
-      nombre: nombreBase,
-      alias: nombreBase,
-    })
+    .insert(insertRow)
     .select()
     .single();
 
   if (nuevo && !insErr) {
-    const perfilDB = nuevo; // lo que viene de Supabase
-
+    const perfilDB = nuevo;
     setUserProfile({
       ...perfilDB,
-      nombre: perfilDB?.nombre || '',
-      alias: perfilDB?.alias || '',
-      email: session?.user?.email || ''
+      nombre: perfilDB?.nombre != null ? String(perfilDB.nombre) : '',
+      alias: perfilDB?.alias != null ? String(perfilDB.alias) : '',
+      email: email || String(perfilDB.email || '').trim(),
     });
-    const em = String(session?.user?.email || nuevo.email || '').trim();
+    const em = String(email || nuevo.email || '').trim();
     if (em) await refreshJugadorPerfilFromSupabase(em);
   } else {
     setUserProfile(null);

@@ -84,7 +84,7 @@ function sedeFlag(sede) {
   return FLAG_MAP[pais.toLowerCase()] || '';
 }
 
-export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
+export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
@@ -704,12 +704,6 @@ export default function AdminDashboard({ handleLogout, apiBaseUrl = 'https://pad
               {ROLE_BADGE[rol]}
             </span>
           )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>{currentEmail}</span>
-          <button onClick={handleLogout} style={{ padding: '10px 20px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-            Cerrar sesión
-          </button>
         </div>
       </div>
 

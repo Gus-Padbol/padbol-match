@@ -18,11 +18,9 @@ const BottomNav = () => {
 
   const go = (item) => {
     if (authLoading) return;
-    if (item.path === '/mi-perfil' || item.path === '/reservar') {
-      if (!session?.user) {
-        navigate(authUrlWithRedirect(item.path));
-        return;
-      }
+    if (item.path === '/mi-perfil' && !session?.user) {
+      navigate(authUrlWithRedirect(item.path));
+      return;
     }
     navigate(item.path);
   };
@@ -35,7 +33,8 @@ const BottomNav = () => {
         bottom: 0,
         left: 0,
         width: '100%',
-        height: '65px',
+        minHeight: '65px',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         background: '#0f172a',
         display: 'flex',
         justifyContent: 'space-around',

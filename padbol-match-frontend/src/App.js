@@ -28,7 +28,6 @@ import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { authUrlWithRedirect } from './utils/authLoginRedirect';
 import { useAuth } from './context/AuthContext';
 import { getDisplayName } from './utils/displayName';
-import { nombreCompletoJugadorPerfil } from './utils/jugadorPerfil';
 
 const ADMIN_EMAILS = [
   'padbolinternacional@gmail.com',
@@ -72,13 +71,9 @@ function AppContent() {
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
-    const nombreDb =
-      String(userProfile?.alias || '').trim() ||
-      nombreCompletoJugadorPerfil(userProfile) ||
-      String(userProfile?.nombre || '').trim();
     return {
       email: em,
-      nombre: nombreDb || getDisplayName(userProfile, session),
+      nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       foto: userProfile?.foto ?? null,
     };

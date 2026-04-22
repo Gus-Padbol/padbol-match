@@ -177,7 +177,7 @@ export default function PagoExitoso() {
                 cursor: 'pointer',
               }}
             >
-              Ir al inicio
+              Continuar
             </button>
           </>
         ) : pagoKind === 'torneo' && torneoInscripcion ? (
@@ -226,22 +226,6 @@ export default function PagoExitoso() {
                 }}
               >
                 Volver al torneo
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                style={{
-                  padding: '11px',
-                  background: 'transparent',
-                  color: '#047857',
-                  border: '1.5px solid #059669',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Ir al inicio
               </button>
             </div>
           </>
@@ -316,7 +300,7 @@ export default function PagoExitoso() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/reservar')}
                 style={{
                   padding: '12px',
                   background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
@@ -325,22 +309,6 @@ export default function PagoExitoso() {
                   borderRadius: '8px',
                   fontSize: '15px',
                   fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Ir al inicio
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/reservar')}
-                style={{
-                  padding: '11px',
-                  background: 'transparent',
-                  color: '#047857',
-                  border: '1.5px solid #059669',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
               >
