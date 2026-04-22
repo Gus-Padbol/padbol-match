@@ -329,6 +329,14 @@ export default function ReservaForm() {
     if (!fecha || !sedeSeleccionada) {
       return;
     }
+    if (filtros.sede_id === '' || filtros.sede_id == null) {
+      return;
+    }
+
+    console.log('BUSCANDO DISPONIBILIDAD:', {
+      sedeId: filtros.sede_id,
+      fecha,
+    });
 
     setLoading(true);
     try {
@@ -435,6 +443,13 @@ export default function ReservaForm() {
 
   const buscarCanchasDisponibles = async (hora) => {
     if (!hora || !formData.fecha) return;
+    if (filtros.sede_id === '' || filtros.sede_id == null) return;
+    if (!sedeSeleccionada) return;
+
+    console.log('BUSCANDO DISPONIBILIDAD:', {
+      sedeId: filtros.sede_id,
+      fecha: formData.fecha,
+    });
 
     try {
       const response = await fetch(
@@ -580,7 +595,11 @@ export default function ReservaForm() {
 
   // PANTALLA 1: País, Ciudad, Sede
   if (pantalla === 1) {
-    const sedesFiltradas = sedesFiltradasPorCiudad;
+    const sedesFiltradas = sedes.filter(
+      (sede) =>
+        (!filtros.pais || sede.pais === filtros.pais) &&
+        (!filtros.ciudad || sede.ciudad === filtros.ciudad)
+    );
     console.log("SEDES EN STATE:", sedes);
     console.log('FILTROS ACTUALES:', filtros);
     console.log('SEDES FILTRADAS:', sedesFiltradas);
@@ -632,9 +651,9 @@ export default function ReservaForm() {
                   required
                 >
                   <option value="">-- Selecciona Sede --</option>
-                  {sedes.map((sede) => (
+                  {sedesFiltradas.map((sede) => (
                     <option key={sede.id} value={sede.id}>
-                      {sede.pais} - {sede.nombre}
+                      {sede.nombre}
                     </option>
                   ))}
                 </select>
