@@ -47,8 +47,10 @@ export default function AccesoCuenta() {
 
   useEffect(() => {
     if (loading || !session?.user || sesionYaRedirigidaRef.current) return;
+    const p = location.pathname;
+    if (p !== '/login' && p !== '/auth') return;
     void afterLogin(session);
-  }, [loading, session?.user?.id, afterLogin]);
+  }, [loading, session?.user?.id, afterLogin, location.pathname]);
 
   useEffect(() => {
     setErrorMsg('');

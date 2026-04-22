@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -49,6 +49,7 @@ function RegistroToMiPerfilRedirect() {
   return <Navigate to={buildMiPerfilRegistroUrl(r)} replace />;
 }
 
+/** Solo `/auth` con callback (hash/query de proveedor). `redirect` solo no abre login aquí — usar `/login`. */
 function authLocationShowsLoginScreen(search, hash) {
   const h = hash || '';
   if (h.length > 1) return true;
@@ -57,7 +58,6 @@ function authLocationShowsLoginScreen(search, hash) {
   try {
     const sp = new URLSearchParams(qs);
     return (
-      sp.has('redirect') ||
       sp.has('code') ||
       sp.has('error') ||
       sp.has('error_description') ||
@@ -110,6 +110,11 @@ function AdminDashboardGate() {
 }
 
 function AppRoutes() {
+  const location = useLocation();
+  useEffect(() => {
+    console.log('ROUTE ACTUAL:', window.location.pathname);
+  }, [location.pathname]);
+
   return (
     <div style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
       <Routes>
@@ -154,6 +159,8 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );
