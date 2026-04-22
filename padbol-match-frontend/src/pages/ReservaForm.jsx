@@ -175,39 +175,24 @@ export default function ReservaForm({
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    console.log("CARGANDO SEDES...");
-    console.log("FETCH SEDES:", "/api/sedes");
-
-    fetch(`/api/sedes`)
+    fetch("/api/sedes")
       .then(async (res) => {
-        console.log("STATUS:", res.status);
-
-        const text = await res.text();
-        console.log("RAW RESPONSE:", text);
-
-        let data;
-        try {
-          data = JSON.parse(text);
-          console.log("SEDES:", data);
-        } catch (e) {
-          console.log("ERROR PARSE JSON:", e);
-          setError("Error al cargar sedes");
-          return;
-        }
-
         if (!res.ok) {
-          console.log("ERROR HTTP:", res.status, text);
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status} - ${text}`);
         }
-
-        setSedes(data || []);
-        const paisesUnicos = [...new Set((data || []).map((s) => s.pais))].sort();
+        return res.json();
+      })
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setSedes(list);
+        const paisesUnicos = [...new Set(list.map((s) => s.pais))].sort();
         setPaises(paisesUnicos);
       })
       .catch((err) => {
-        console.log("ERROR FETCH:", err);
+        console.error("ERROR SEDES:", err);
         setError("Error al cargar sedes");
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sedes: ruta relativa fija /api/sedes (proxy Netlify)
   }, []);
 
   // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
