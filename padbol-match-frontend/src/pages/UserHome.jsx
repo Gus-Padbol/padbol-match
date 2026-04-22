@@ -37,7 +37,7 @@ export default function UserHome() {
       }}
     >
       <AppHeader title="Inicio" showBack={false} />
-      {session?.user ? (
+      {session?.user && (
         <button
           type="button"
           onClick={async () => {
@@ -62,7 +62,7 @@ export default function UserHome() {
         >
           ⏻
         </button>
-      ) : null}
+      )}
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"
