@@ -78,11 +78,16 @@ export async function handleAuthOnce(payload) {
       const prevData =
         payload.options?.data && typeof payload.options.data === 'object' ? payload.options.data : {};
       const nombreMeta = String(prevData.nombre || '').trim() || localPart;
+      const origin =
+        typeof window !== 'undefined' && window.location?.origin ? String(window.location.origin) : '';
+      /** No usar /login como landing: Supabase debe tener esta URL en Redirect URLs. */
+      const emailRedirectTo = origin ? `${origin}/auth` : undefined;
       return await supabase.auth.signUp({
         email: emailTrim,
         password: String(payload.password),
         options: {
           ...(payload.options || {}),
+          ...(emailRedirectTo ? { emailRedirectTo } : {}),
           data: {
             ...prevData,
             nombre: nombreMeta,

@@ -65,6 +65,40 @@ function RegistroToMiPerfilRedirect() {
   return <Navigate to={buildMiPerfilRegistroUrl(r)} replace />;
 }
 
+function authLocationShowsLoginScreen(search, hash) {
+  const h = hash || '';
+  if (h.length > 1) return true;
+  const qs = search || '';
+  if (qs.length <= 1) return false;
+  try {
+    const sp = new URLSearchParams(qs);
+    return (
+      sp.has('redirect') ||
+      sp.has('code') ||
+      sp.has('error') ||
+      sp.has('error_description') ||
+      sp.has('token_hash') ||
+      sp.has('type') ||
+      sp.get('login') === '1'
+    );
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * `/auth` solo con intención explícita o callback (OAuth, PKCE, email, ?redirect=…).
+ * Entrada vacía en `/auth` → HUB (evita PWA/Site URL que abran login como pantalla inicial).
+ * Acceso voluntario sin destino: `/auth?redirect=/` o `/auth?login=1`.
+ */
+function AuthRoute() {
+  const { search, hash } = useLocation();
+  if (!authLocationShowsLoginScreen(search, hash)) {
+    return <Navigate to="/" replace />;
+  }
+  return <AccesoCuenta />;
+}
+
 function AppContent() {
   const { session, userProfile } = useAuth();
 
@@ -99,7 +133,7 @@ function AppContent() {
           <Route path="/home" element={<UserHome />} />
 
           {/* resto de rutas NO TOCAR */}
-          <Route path="/auth" element={<AccesoCuenta />} />
+          <Route path="/auth" element={<AuthRoute />} />
           <Route path="/login" element={<LoginToAuthRedirect />} />
           <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
           <Route path="/reservar" element={<ReservaForm />} />
