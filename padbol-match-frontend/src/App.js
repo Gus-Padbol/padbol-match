@@ -112,7 +112,7 @@ function AdminDashboardGate() {
 function AppRoutes() {
   const location = useLocation();
   useEffect(() => {
-    console.log('ROUTE ACTUAL:', window.location.pathname);
+    console.log('PATH ACTUAL:', window.location.pathname);
   }, [location.pathname]);
 
   return (
@@ -123,7 +123,6 @@ function AppRoutes() {
         <Route path="/inicio" element={<UserHome />} />
         <Route path="/home" element={<UserHome />} />
 
-        <Route path="/login" element={<Login />} />
         <Route path="/auth" element={<AuthRoute />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
 
@@ -142,6 +141,10 @@ function AppRoutes() {
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/sedes" element={<SedesPublicas />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
+        <Route path="/mi-perfil" element={<MiPerfil />} />
+
+        <Route path="/login" element={<Login />} />
+
         <Route
           path="/perfil"
           element={
@@ -150,7 +153,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route path="/mi-perfil" element={<MiPerfil />} />
         <Route
           path="/admin"
           element={
