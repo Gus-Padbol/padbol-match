@@ -679,9 +679,6 @@ export default function ReservaForm() {
                     </option>
                   ))}
                 </select>
-                <div style={{ color: 'white', fontSize: '12px' }}>
-                  DEBUG: {JSON.stringify(sedesFiltradas)}
-                </div>
               </div>
             )}
 
