@@ -19,6 +19,7 @@ import {
   iniciarPagoInscripcionTorneo,
 } from '../utils/torneoInscripcionPago';
 import { getDisplayName } from '../utils/displayName';
+import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import {
   jugadorNombreTorneoEtiqueta,
   fetchJugadoresPerfilPorJugadores,
@@ -444,7 +445,7 @@ export default function EquipoVista() {
     if (!yo) return;
     if (authLoading) return;
     if (!session?.user) {
-      navigate(`/auth?redirect=${encodeURIComponent(location.pathname)}`);
+      navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return;
     }
     if (!isPerfilTorneoCompleto()) {
@@ -649,7 +650,7 @@ export default function EquipoVista() {
     if (getEquipoInscripcionEstado(equipo) === 'confirmado') return;
     if (authLoading) return;
     if (!session?.user) {
-      navigate(`/auth?redirect=${encodeURIComponent(location.pathname)}`);
+      navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return;
     }
     const em = String(authEmail || session?.user?.email || '').trim();

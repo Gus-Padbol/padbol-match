@@ -3,9 +3,9 @@ export function authLoginRedirectPath(location) {
   return `${location.pathname}${location.search || ''}`;
 }
 
-/** URL `/auth?redirect=…` con destino seguro (pathname + search opcional). */
+/** URL `/login?redirect=…` con destino seguro (pathname + search opcional). */
 export function authUrlWithRedirect(pathnameAndSearch) {
   const raw = String(pathnameAndSearch || '/').trim() || '/';
   const p = raw.startsWith('/') ? raw : `/${raw}`;
-  return `/auth?redirect=${encodeURIComponent(p)}`;
+  return `/login?redirect=${encodeURIComponent(p)}`;
 }

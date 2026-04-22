@@ -16,7 +16,7 @@ import {
   etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
 } from '../utils/torneoInscripcionPago';
-import { authUrlWithRedirect } from '../utils/authLoginRedirect';
+import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
 import {
   jugadorNombreTorneoEtiqueta,
@@ -545,7 +545,7 @@ export default function FormEquipos() {
 
     if (!sess || !sess.user) {
       alert('Tenés que iniciar sesión');
-      navigate(`/auth?redirect=/torneo/${torneoId}/equipos`);
+      navigate(authUrlWithRedirect(`/torneo/${torneoId}/equipos`));
       return;
     }
 
@@ -618,7 +618,7 @@ export default function FormEquipos() {
 
     if (authLoading) return;
     if (!session?.user) {
-      navigate(`/auth?redirect=${encodeURIComponent(location.pathname)}`);
+      navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return;
     }
     if (!isPerfilTorneoCompleto()) {
@@ -914,7 +914,7 @@ export default function FormEquipos() {
     if (getEquipoInscripcionEstado(miEquipo) === 'confirmado') return;
     if (authLoading) return;
     if (!session?.user) {
-      navigate(`/auth?redirect=${encodeURIComponent(location.pathname)}`);
+      navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return;
     }
     const em = String(session.user.email || '').trim();

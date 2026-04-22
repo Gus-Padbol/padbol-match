@@ -6,7 +6,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { authLoginRedirectPath } from '../utils/authLoginRedirect';
+import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
 
 // Returns the correct price for a given sede + time slot.
@@ -483,7 +483,7 @@ export default function ReservaForm({
   const handlePagarConMP = async () => {
     if (authLoading) return;
     if (!session?.user) {
-      navigate(`/auth?redirect=${encodeURIComponent(authLoginRedirectPath(location))}`);
+      navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return;
     }
     const sesEm = session.user.email;

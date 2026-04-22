@@ -23,9 +23,10 @@ import PagoFallido from './pages/PagoFallido';
 import useUserRole from './hooks/useUserRole';
 import EquipoVista from './pages/EquipoVista';
 import UserHome from './pages/UserHome';
+import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
+import ProtectedRoute from './components/ProtectedRoute';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
-import { authUrlWithRedirect } from './utils/authLoginRedirect';
 import { useAuth } from './context/AuthContext';
 import { getDisplayName } from './utils/displayName';
 
@@ -40,23 +41,6 @@ function LegacyPerfilRedirect() {
   const loc = useLocation();
   const suffix = `${loc.search || ''}${loc.hash || ''}`;
   return <Navigate to={`/mi-perfil${suffix}`} replace />;
-}
-
-function LegacyLoginPath() {
-  const { search, hash } = useLocation();
-  const qs = search || '';
-  const h = hash || '';
-  const hashPart = h.startsWith('#') ? h.slice(1) : h;
-  return (
-    <Navigate
-      replace
-      to={{
-        pathname: '/',
-        search: qs.length > 1 ? qs : undefined,
-        hash: hashPart || undefined,
-      }}
-    />
-  );
 }
 
 function RegistroToMiPerfilRedirect() {
@@ -86,7 +70,6 @@ function authLocationShowsLoginScreen(search, hash) {
   }
 }
 
-/** `/auth` vacío → HUB; con ?redirect= / OAuth / PKCE → pantalla de acceso. */
 function AuthRoute() {
   const { search, hash } = useLocation();
   if (!authLocationShowsLoginScreen(search, hash)) {
@@ -95,8 +78,7 @@ function AuthRoute() {
   return <AccesoCuenta />;
 }
 
-/** Única ruta que exige sesión a nivel router. */
-function AdminRoute() {
+function AdminDashboardGate() {
   const { session, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -118,13 +100,8 @@ function AdminRoute() {
     return ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
   };
 
-  const loggedIn = Boolean(session?.user);
-
   if (roleLoading) {
     return <div style={{ color: 'white', padding: 24, textAlign: 'center' }}>Cargando permisos…</div>;
-  }
-  if (!loggedIn) {
-    return <Navigate to={authUrlWithRedirect('/admin')} replace />;
   }
   if (canAccessAdmin()) {
     return <AdminDashboard rol={rol} sedeId={sedeId} />;
@@ -141,14 +118,38 @@ function AppRoutes() {
         <Route path="/inicio" element={<UserHome />} />
         <Route path="/home" element={<UserHome />} />
 
+        <Route path="/login" element={<Login />} />
         <Route path="/auth" element={<AuthRoute />} />
-        <Route path="/login" element={<LegacyLoginPath />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
-        <Route path="/reservar" element={<ReservaForm />} />
+
+        <Route
+          path="/reserva"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/reservar" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reservar"
+          element={
+            <ProtectedRoute>
+              <ReservaForm />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/torneos" element={<TorneosPublicos />} />
         <Route path="/torneo/crear" element={<TorneoCrear />} />
         <Route path="/torneo/:id/jugadores" element={<Navigate to="/mi-perfil" replace />} />
-        <Route path="/torneo/:id/equipos/:equipoId" element={<EquipoVista />} />
+        <Route
+          path="/torneo/:id/equipos/:equipoId"
+          element={
+            <ProtectedRoute>
+              <EquipoVista />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/torneo/:id/equipos" element={<FormEquipos />} />
         <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
         <Route path="/pago-exitoso" element={<PagoExitoso />} />
@@ -157,9 +158,23 @@ function AppRoutes() {
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/sedes" element={<SedesPublicas />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
-        <Route path="/perfil" element={<LegacyPerfilRedirect />} />
+        <Route
+          path="/perfil"
+          element={
+            <ProtectedRoute>
+              <LegacyPerfilRedirect />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/mi-perfil" element={<MiPerfil />} />
-        <Route path="/admin" element={<AdminRoute />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardGate />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );

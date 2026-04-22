@@ -6,7 +6,7 @@ export function authRedirectValueHasNestedRedirect(raw) {
   if (!raw || typeof raw !== 'string') return false;
   const t = raw.trim();
   if (!t.startsWith('/')) return false;
-  if (t.startsWith('/auth')) return true;
+  if (t.startsWith('/auth') || t.startsWith('/login')) return true;
   const matches = t.match(/redirect=/g);
   return matches != null && matches.length > 1;
 }

@@ -80,7 +80,7 @@ export async function handleAuthOnce(payload) {
       const nombreMeta = String(prevData.nombre || '').trim() || localPart;
       const origin =
         typeof window !== 'undefined' && window.location?.origin ? String(window.location.origin) : '';
-      const emailRedirectTo = origin ? `${origin}/auth` : undefined;
+      const emailRedirectTo = origin ? `${origin}/login` : undefined;
       return await supabase.auth.signUp({
         email: emailTrim,
         password: String(payload.password),

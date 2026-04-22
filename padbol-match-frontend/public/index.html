@@ -27,20 +27,6 @@
     <title>React App</title>
   </head>
   <body>
-    <script>
-      (function () {
-        try {
-          var path = window.location.pathname || '';
-          var m = path.match(/^(.*?)\/login\/?$/i);
-          if (!m) return;
-          var prefix = m[1] || '';
-          var destPath = (prefix ? prefix + '/' : '/') || '/';
-          var s = window.location.search || '';
-          var h = window.location.hash || '';
-          window.location.replace(window.location.origin + destPath + s + h);
-        } catch (e) {}
-      })();
-    </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
