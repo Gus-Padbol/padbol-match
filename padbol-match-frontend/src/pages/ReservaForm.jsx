@@ -175,30 +175,38 @@ export default function ReservaForm({
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const selectedCountry = filtros.pais;
-    console.log('CARGANDO SEDES...');
-    console.log('PAIS:', selectedCountry);
+    console.log("CARGANDO SEDES...");
+    console.log("API BASE:", apiBaseUrl);
 
     fetch(`${apiBaseUrl}/api/sedes`)
-      .then((res) =>
-        res.json().then((data) => {
-          console.log('SEDES:', data);
-          if (!res.ok) {
-            console.log('ERROR SUPABASE:', { status: res.status, statusText: res.statusText, data });
-          }
-          return { res, data };
-        })
-      )
-      .then(({ res, data }) => {
+      .then(async (res) => {
+        console.log("STATUS:", res.status);
+
+        const text = await res.text();
+        console.log("RAW RESPONSE:", text);
+
+        let data;
+        try {
+          data = JSON.parse(text);
+          console.log("SEDES:", data);
+        } catch (e) {
+          console.log("ERROR PARSE JSON:", e);
+          setError("Error al cargar sedes");
+          return;
+        }
+
+        if (!res.ok) {
+          console.log("ERROR HTTP:", res.status, text);
+        }
+
         setSedes(data || []);
         const paisesUnicos = [...new Set((data || []).map((s) => s.pais))].sort();
         setPaises(paisesUnicos);
       })
       .catch((err) => {
-        console.log('ERROR SUPABASE:', err);
-        setError('Error al cargar sedes');
+        console.log("ERROR FETCH:", err);
+        setError("Error al cargar sedes");
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- logs de diagnóstico: mismo comportamiento que antes (solo apiBaseUrl)
   }, [apiBaseUrl]);
 
   // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
