@@ -174,63 +174,29 @@ export default function ReservaForm() {
     }
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /*
   useEffect(() => {
-    const url = "https://padbol-backend.onrender.com/api/sedes";
-    console.log("URL SEDES:", url);
-
-    fetch(url)
+    fetch("/.netlify/functions/sedes")
       .then(async (res) => {
-        console.log("STATUS:", res.status);
         const text = await res.text();
-        console.log("RAW RESPONSE:", text);
-
-        if (res.status !== 200) {
-          console.log("ERROR STATUS");
-          return [];
+        if (!res.ok) {
+          setSedes([]);
+          setPaises([]);
+          return;
         }
-
         try {
           const parsed = JSON.parse(text);
-          return Array.isArray(parsed) ? parsed : [];
+          const arr = Array.isArray(parsed) ? parsed : [];
+          setSedes(arr);
+          setPaises([...new Set(arr.map((s) => s.pais))].sort());
         } catch {
-          console.log("NO ES JSON");
-          return [];
+          setSedes([]);
+          setPaises([]);
         }
-      })
-      .then((data) => {
-        const arr = Array.isArray(data) ? data : [];
-        setSedes(arr);
-        setPaises([...new Set(arr.map((s) => s.pais))].sort());
       })
       .catch(() => {
         setSedes([]);
         setPaises([]);
       });
-  }, []);
-  */
-
-  useEffect(() => {
-    setSedes([
-      {
-        id: 1,
-        nombre: "La Meca Padbol Club",
-        pais: "Argentina",
-        ciudad: "La Plata",
-      },
-      {
-        id: 2,
-        nombre: "Padbol Point ONE",
-        pais: "Estados Unidos",
-        ciudad: "Miami",
-      },
-      {
-        id: 3,
-        nombre: "Madrid Padbol Point",
-        pais: "España",
-        ciudad: "Madrid",
-      },
-    ]);
   }, []);
 
   // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
