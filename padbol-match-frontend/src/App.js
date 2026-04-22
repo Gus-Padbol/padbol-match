@@ -36,47 +36,27 @@ const ADMIN_EMAILS = [
   'juanpablo@padbol.com',
 ];
 
-/**
- * Rutas públicas: sin useAuth en el layout. El HUB (/, /hub, /home) se renderiza siempre;
- * no existe if (!session) return <Login /> a nivel router.
- */
-
 function LegacyPerfilRedirect() {
   const loc = useLocation();
   const suffix = `${loc.search || ''}${loc.hash || ''}`;
   return <Navigate to={`/mi-perfil${suffix}`} replace />;
 }
 
-/**
- * Legacy `/login`: nunca deja la app “parada” en login.
- * - Sin tokens ni query de auth → HUB (`/`).
- * - Con callback OAuth/PKCE (query o hash) → mismo callback en `/` para que el HUB sea la entrada y Supabase siga leyendo la URL.
- */
-function LoginToAuthRedirect() {
+function LegacyLoginPath() {
   const { search, hash } = useLocation();
   const qs = search || '';
   const h = hash || '';
-  const hasQueryParams = qs.length > 1;
-  const hasOAuthHash =
-    h.includes('access_token') ||
-    h.includes('refresh_token') ||
-    h.includes('type=recovery') ||
-    h.includes('error=') ||
-    h.includes('code=');
-  if (hasQueryParams || hasOAuthHash) {
-    const hashPart = h.startsWith('#') ? h.slice(1) : h;
-    return (
-      <Navigate
-        to={{
-          pathname: '/',
-          search: qs.length > 1 ? qs : undefined,
-          hash: hashPart || undefined,
-        }}
-        replace
-      />
-    );
-  }
-  return <Navigate to="/" replace />;
+  const hashPart = h.startsWith('#') ? h.slice(1) : h;
+  return (
+    <Navigate
+      replace
+      to={{
+        pathname: '/',
+        search: qs.length > 1 ? qs : undefined,
+        hash: hashPart || undefined,
+      }}
+    />
+  );
 }
 
 function RegistroToMiPerfilRedirect() {
@@ -162,7 +142,7 @@ function AppRoutes() {
         <Route path="/home" element={<UserHome />} />
 
         <Route path="/auth" element={<AuthRoute />} />
-        <Route path="/login" element={<LoginToAuthRedirect />} />
+        <Route path="/login" element={<LegacyLoginPath />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
         <Route path="/reservar" element={<ReservaForm />} />
         <Route path="/torneos" element={<TorneosPublicos />} />

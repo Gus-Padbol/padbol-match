@@ -27,26 +27,17 @@
     <title>React App</title>
   </head>
   <body>
-    <!--
-      Evita quedar en /login sin tokens (p. ej. Site URL de Supabase o atajo PWA viejo).
-      Corre antes del bundle: el hub carga sin pasar por la pantalla de login.
-      Si hay OAuth/magic link (hash o query), no tocar: React + /auth lo procesan.
-    -->
     <script>
       (function () {
         try {
           var path = window.location.pathname || '';
-          if (!/\/login\/?$/.test(path)) return;
-          var h = window.location.hash || '';
+          var m = path.match(/^(.*?)\/login\/?$/i);
+          if (!m) return;
+          var prefix = m[1] || '';
+          var destPath = (prefix ? prefix + '/' : '/') || '/';
           var s = window.location.search || '';
-          var hasOAuth =
-            h.indexOf('access_token') !== -1 ||
-            h.indexOf('refresh_token') !== -1 ||
-            h.indexOf('type=recovery') !== -1 ||
-            h.indexOf('error=') !== -1;
-          if (hasOAuth || s.length > 1) return;
-          var destPath = path.replace(/\/login\/?$/, '/') || '/';
-          window.location.replace(window.location.origin + destPath);
+          var h = window.location.hash || '';
+          window.location.replace(window.location.origin + destPath + s + h);
         } catch (e) {}
       })();
     </script>
