@@ -21,6 +21,7 @@ import { mensajeErrorAuthSupabase, mensajeErrorDbSupabase } from '../utils/authE
 import { normalizeTorneoPostPerfilPath } from '../utils/torneoPostPerfilNavigation';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
+import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
 import { nombreDesdeSesionSinEmail, getDisplayName } from '../utils/displayName';
 import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
@@ -725,6 +726,91 @@ export default function MiPerfil() {
   }
 
   if (esRegistroSinSesion) {
+    if (!torneoIdValido) {
+      const goAuth = () => navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
+      return (
+        <div
+          style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            fontFamily: 'Arial',
+            paddingTop: '64px',
+            paddingBottom: '80px',
+          }}
+        >
+          <AppHeader title="Mi Perfil" />
+          <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
+            {avisoPerfilTorneoMsg ? (
+              <div
+                style={{
+                  marginBottom: '14px',
+                  padding: '12px 14px',
+                  background: '#fef9c3',
+                  border: '1px solid #fde047',
+                  borderRadius: '10px',
+                  color: '#854d0e',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  lineHeight: 1.45,
+                }}
+              >
+                {avisoPerfilTorneoMsg}
+              </div>
+            ) : null}
+            <div
+              style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '24px',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+              }}
+            >
+              <h3 style={{ marginTop: 0, marginBottom: '12px', color: '#222' }}>Mi perfil</h3>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
+                Para ver y editar tu ficha necesitás una cuenta. Podés explorar el resto de la app sin iniciar sesión.
+              </p>
+              <button
+                type="button"
+                onClick={goAuth}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: '#d32f2f',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '15px',
+                  marginBottom: '10px',
+                }}
+              >
+                Iniciar sesión o registrarte
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: 'transparent',
+                  color: '#444',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                }}
+              >
+                Volver al inicio
+              </button>
+            </div>
+          </div>
+          <BottomNav />
+        </div>
+      );
+    }
+
     const regErr = (k) => registroFieldErrors[k];
     const regBorder = (k) => (regErr(k) ? '1px solid #d32f2f' : '1px solid #ddd');
     const regErrP = (k) =>
