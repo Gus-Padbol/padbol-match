@@ -14,10 +14,10 @@ const btnVolver = {
 };
 
 /**
- * Barra superior fija: solo ← Volver y título centrado.
+ * Barra superior fija: ← Volver (opcional) y título centrado.
  * La navegación principal va en {@link BottomNav}.
  */
-const AppHeader = ({ title }) => (
+const AppHeader = ({ title, showBack = true }) => (
   <div
     style={{
       position: 'fixed',
@@ -36,16 +36,20 @@ const AppHeader = ({ title }) => (
       borderBottom: '1px solid rgba(255,255,255,0.08)',
     }}
   >
-    <button
-      type="button"
-      onClick={() => {
-        if (typeof window !== 'undefined') window.history.back();
-      }}
-      style={btnVolver}
-      aria-label="Volver atrás"
-    >
-      ← Volver
-    </button>
+    {showBack ? (
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof window !== 'undefined') window.history.back();
+        }}
+        style={btnVolver}
+        aria-label="Volver atrás"
+      >
+        ← Volver
+      </button>
+    ) : (
+      <div aria-hidden style={{ minWidth: '88px' }} />
+    )}
 
     <h3
       style={{
