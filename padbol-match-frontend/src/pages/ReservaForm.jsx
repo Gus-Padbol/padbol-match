@@ -615,6 +615,7 @@ export default function ReservaForm() {
   // PANTALLA 1: País, Ciudad, Sede
   if (pantalla === 1) {
     const sedesFiltradas = sedesFiltradasPorCiudad;
+    console.log("SEDES EN STATE:", sedes);
     console.log('FILTROS ACTUALES:', filtros);
     console.log('SEDES FILTRADAS:', sedesFiltradas);
     console.log('SEDES RAW:', sedes);
@@ -634,7 +635,7 @@ export default function ReservaForm() {
                 required
               >
                 <option value="">-- Selecciona País --</option>
-                {paises.map(pais => (
+                {[...new Set(sedes.map((s) => s.pais))].sort().map((pais) => (
                   <option key={pais} value={pais}>{pais}</option>
                 ))}
               </select>
@@ -665,8 +666,10 @@ export default function ReservaForm() {
                   required
                 >
                   <option value="">-- Selecciona Sede --</option>
-                  {sedesFiltradasPorCiudad.map(sede => (
-                    <option key={sede.id} value={sede.id}>{sede.nombre}</option>
+                  {sedes.map((sede) => (
+                    <option key={sede.id} value={sede.id}>
+                      {sede.pais} - {sede.nombre}
+                    </option>
                   ))}
                 </select>
                 <div style={{ color: 'white', fontSize: '12px' }}>
