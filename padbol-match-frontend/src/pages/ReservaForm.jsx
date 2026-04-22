@@ -93,9 +93,9 @@ function readPrimedSedeReserva() {
   }
 }
 
-export default function ReservaForm({
-  apiBaseUrl = 'https://padbol-backend.onrender.com',
-}) {
+const API_BASE = "https://padbol-backend.onrender.com";
+
+export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session, loading: authLoading, userProfile } = useAuth();
@@ -175,13 +175,23 @@ export default function ReservaForm({
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fetch("/api/sedes")
+    console.log('URL SEDES:', `${API_BASE}/api/sedes`);
+
+    fetch(`${API_BASE}/api/sedes`)
       .then(async (res) => {
+        const text = await res.text();
+        console.log('RAW RESPONSE:', text);
+
         if (!res.ok) {
-          const text = await res.text();
           throw new Error(`HTTP ${res.status} - ${text}`);
         }
-        return res.json();
+
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          console.log('NO ES JSON:', text);
+          throw new Error('Respuesta no es JSON');
+        }
       })
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
@@ -190,8 +200,8 @@ export default function ReservaForm({
         setPaises(paisesUnicos);
       })
       .catch((err) => {
-        console.error("ERROR SEDES:", err);
-        setError("Error al cargar sedes");
+        console.error('ERROR SEDES:', err);
+        setError('Error al cargar sedes');
       });
   }, []);
 
@@ -329,7 +339,7 @@ export default function ReservaForm({
     setLoading(true);
     try {
       const response = await fetch(
-        `${apiBaseUrl}/api/disponibilidad/${sedeSeleccionada.nombre}/${fecha}`
+        `${API_BASE}/api/disponibilidad/${sedeSeleccionada.nombre}/${fecha}`
       );
       const reservadas = await response.json();
 
@@ -434,7 +444,7 @@ export default function ReservaForm({
 
     try {
       const response = await fetch(
-        `${apiBaseUrl}/api/disponibilidad/${sedeSeleccionada.nombre}/${formData.fecha}`
+        `${API_BASE}/api/disponibilidad/${sedeSeleccionada.nombre}/${formData.fecha}`
       );
       const reservadas = await response.json();
 
@@ -543,7 +553,7 @@ export default function ReservaForm({
     };
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/crear-preferencia`, {
+      const res = await fetch(`${API_BASE}/api/crear-preferencia`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
