@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
@@ -93,7 +93,17 @@ function readPrimedSedeReserva() {
   }
 }
 
-const API_BASE = "https://padbol-backend.onrender.com";
+/** Una sola base para todas las llamadas API (local: mismo origen que Rankings; override con REACT_APP_API_BASE_URL). */
+const API_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
+
+function apiUrl(path) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE}${p}`;
+}
 
 export default function ReservaForm() {
   const navigate = useNavigate();
@@ -115,9 +125,8 @@ export default function ReservaForm() {
   const initialSedeId = searchParams.get('sedeId');
 
   const [sedes, setSedes] = useState([]);
-  const [paises, setPaises] = useState([]);
+  const [sedesLoadError, setSedesLoadError] = useState('');
   const [ciudades, setCiudades] = useState([]);
-  const [sedesFiltradasPorCiudad, setSedesFiltradasPorCiudad] = useState([]);
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
@@ -134,6 +143,18 @@ export default function ReservaForm() {
   });
 
   const fechaInputRef = useRef(null);
+
+  const sedeSeleccionada = useMemo(() => {
+    if (!Array.isArray(sedes) || sedes.length === 0 || filtros.sede_id === '' || filtros.sede_id == null) {
+      return null;
+    }
+    return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
+  }, [sedes, filtros.sede_id]);
+
+  const paisesOrdenados = useMemo(
+    () => [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort(),
+    [sedes]
+  );
 
   // Pre-fill phone from profile (whatsapp o teléfono) — split código país + local
   useEffect(() => {
@@ -175,28 +196,35 @@ export default function ReservaForm() {
   }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fetch("/.netlify/functions/sedes")
+    let cancelled = false;
+    setSedesLoadError('');
+    fetch(apiUrl('/api/sedes'))
       .then(async (res) => {
         const text = await res.text();
+        if (cancelled) return;
         if (!res.ok) {
           setSedes([]);
-          setPaises([]);
+          setSedesLoadError('No se pudieron cargar las sedes.');
           return;
         }
         try {
           const parsed = JSON.parse(text);
           const arr = Array.isArray(parsed) ? parsed : [];
           setSedes(arr);
-          setPaises([...new Set(arr.map((s) => s.pais))].sort());
         } catch {
           setSedes([]);
-          setPaises([]);
+          setSedesLoadError('Respuesta inválida al cargar sedes.');
         }
       })
       .catch(() => {
-        setSedes([]);
-        setPaises([]);
+        if (!cancelled) {
+          setSedes([]);
+          setSedesLoadError('Error de red al cargar sedes.');
+        }
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
@@ -234,9 +262,7 @@ export default function ReservaForm() {
     }
 
     const ciudadesDelPais = [...new Set(sedes.filter(s => s.pais === sede.pais).map(s => s.ciudad))].sort();
-    const sedesDeLaCiudad = sedes.filter(s => s.pais === sede.pais && s.ciudad === sede.ciudad);
     setCiudades(ciudadesDelPais);
-    setSedesFiltradasPorCiudad(sedesDeLaCiudad);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
     setPantalla(2);
     setFormData((prev) =>
@@ -244,7 +270,7 @@ export default function ReservaForm() {
         ? prev
         : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
     );
-  }, [sedes, initialSedeId, location.pathname, location.search, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sedes, initialSedeId, location.pathname, location.search]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
@@ -255,21 +281,11 @@ export default function ReservaForm() {
     });
   }, [pantalla, filtros.sede_id]);
 
-  // Auto-load time slots when date is selected
-  useEffect(() => {
-    if (pantalla !== 2 || !formData.fecha) return;
-    if (!sedeSeleccionada) return;
-    buscarHorariosDisponibles(formData.fecha);
-  }, [formData.fecha, pantalla, filtros.sede_id, sedes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-
   const handleChangePais = (e) => {
     const value = e.target.value;
-    console.log('PAIS SELECCIONADO:', value);
     const pais = value;
     setFiltros({ pais, ciudad: '', sede_id: '' });
     setCiudades([]);
-    setSedesFiltradasPorCiudad([]);
 
     if (pais) {
       const ciudadesDelPais = [...new Set(
@@ -281,23 +297,13 @@ export default function ReservaForm() {
 
   const handleChangeCiudad = (e) => {
     const ciudad = e.target.value;
-    setFiltros(prev => ({ ...prev, ciudad, sede_id: '' }));
-
-    if (ciudad) {
-      const sedesDeLaCiudad = sedes.filter(
-        s => s.pais === filtros.pais && s.ciudad === ciudad
-      );
-      setSedesFiltradasPorCiudad(sedesDeLaCiudad);
-    } else {
-      setSedesFiltradasPorCiudad([]);
-    }
+    setFiltros((prev) => ({ ...prev, ciudad, sede_id: '' }));
   };
 
   const handleChangeSede = (e) => {
     const sedeId = parseInt(e.target.value, 10);
-    console.log('SEDE SELECCIONADA:', sedeId);
-    const sede_id = sedeId;
-    setFiltros(prev => ({ ...prev, sede_id }));
+    const sede_id = Number.isNaN(sedeId) ? '' : sedeId;
+    setFiltros((prev) => ({ ...prev, sede_id }));
     if (sede_id) {
       setPantalla(2);
       setFormData((prev) => ({
@@ -325,30 +331,20 @@ export default function ReservaForm() {
     setError('');
   };
 
-  const buscarHorariosDisponibles = async (fecha) => {
-    if (!fecha || !sedeSeleccionada) {
-      return;
-    }
-    if (filtros.sede_id === '' || filtros.sede_id == null) {
-      return;
-    }
+  const buscarHorariosDisponibles = useCallback(async (fecha) => {
+    if (!fecha || !sedeSeleccionada) return;
+    if (filtros.sede_id === '' || filtros.sede_id == null) return;
 
-    const URL_COMPLETA = `${API_BASE}/api/disponibilidad/${sedeSeleccionada.nombre}/${fecha}`;
-    const fechaSeleccionada = fecha;
-
-    console.log("URL DISPONIBILIDAD:", URL_COMPLETA);
-    console.log("SEDE:", sedeSeleccionada);
-    console.log("FECHA:", fechaSeleccionada);
+    const url = apiUrl(
+      `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}`
+    );
 
     setLoading(true);
     try {
-      const response = await fetch(URL_COMPLETA);
-      console.log("STATUS:", response.status);
+      const response = await fetch(url);
       const text = await response.text();
-      console.log("RAW RESPONSE:", text);
 
       if (!response.ok) {
-        console.log("ERROR DISPONIBILIDAD");
         setHorariosDisponibles([]);
         return;
       }
@@ -357,8 +353,6 @@ export default function ReservaForm() {
       try {
         reservadas = JSON.parse(text);
       } catch {
-        console.log("NO ES JSON");
-        console.log("ERROR DISPONIBILIDAD");
         setHorariosDisponibles([]);
         return;
       }
@@ -432,12 +426,17 @@ export default function ReservaForm() {
 
       setHorariosDisponibles(todosLosHorarios);
     } catch {
-      console.log("ERROR DISPONIBILIDAD");
       setHorariosDisponibles([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtros.sede_id, sedeSeleccionada]);
+
+  // Auto-load time slots when date is selected (pantalla 2)
+  useEffect(() => {
+    if (pantalla !== 2 || !formData.fecha || !sedeSeleccionada) return;
+    buscarHorariosDisponibles(formData.fecha);
+  }, [pantalla, formData.fecha, sedeSeleccionada, buscarHorariosDisponibles]);
 
   const handleChangeFecha = (e) => {
     const fecha = e.target.value;
@@ -463,19 +462,16 @@ export default function ReservaForm() {
     buscarCanchasDisponibles(hora);
   };
 
-  const buscarCanchasDisponibles = async (hora) => {
+  const buscarCanchasDisponibles = useCallback(async (hora) => {
     if (!hora || !formData.fecha) return;
     if (filtros.sede_id === '' || filtros.sede_id == null) return;
     if (!sedeSeleccionada) return;
 
-    console.log('BUSCANDO DISPONIBILIDAD:', {
-      sedeId: filtros.sede_id,
-      fecha: formData.fecha,
-    });
-
     try {
       const response = await fetch(
-        `${API_BASE}/api/disponibilidad/${sedeSeleccionada.nombre}/${formData.fecha}`
+        apiUrl(
+          `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(formData.fecha)}`
+        )
       );
       const reservadas = await response.json();
 
@@ -485,10 +481,10 @@ export default function ReservaForm() {
       setCanchasDisponibles(
         Array.from({ length: total }, (_, i) => ({ num: i + 1, libre: !ocupadas.includes(i + 1) }))
       );
-    } catch (err) {
+    } catch {
       setError('Error al buscar canchas disponibles');
     }
-  };
+  }, [formData.fecha, filtros.sede_id, sedeSeleccionada]);
 
   const siguientePantalla3 = () => {
     if (!formData.fecha || !formData.hora) {
@@ -507,11 +503,6 @@ export default function ReservaForm() {
     setPantalla(4);
     setError('');
   };
-
-  const sedeSeleccionada =
-    Array.isArray(sedes) && sedes.length > 0 && filtros.sede_id !== '' && filtros.sede_id != null
-      ? sedes.find((s) => Number(s.id) === Number(filtros.sede_id))
-      : null;
 
   useEffect(() => {
     if (pantalla !== 2 || !sedeSeleccionada) return;
@@ -584,7 +575,7 @@ export default function ReservaForm() {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/api/crear-preferencia`, {
+      const res = await fetch(apiUrl('/api/crear-preferencia'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -597,11 +588,6 @@ export default function ReservaForm() {
         }),
       });
       const data = await res.json();
-      console.log('[MP preferencia / pago]', {
-        merchant_name: data.merchant_name ?? data.merchantName ?? data.merchant?.name,
-        description: data.description ?? data.body?.description,
-        response: data,
-      });
       if (res.ok && data.init_point) {
         localStorage.setItem('ultima_sede', String(filtros.sede_id));
         window.location.href = data.init_point;
@@ -622,10 +608,6 @@ export default function ReservaForm() {
         (!filtros.pais || sede.pais === filtros.pais) &&
         (!filtros.ciudad || sede.ciudad === filtros.ciudad)
     );
-    console.log("SEDES EN STATE:", sedes);
-    console.log('FILTROS ACTUALES:', filtros);
-    console.log('SEDES FILTRADAS:', sedesFiltradas);
-    console.log('SEDES RAW:', sedes);
 
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
@@ -634,6 +616,9 @@ export default function ReservaForm() {
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Reserva tu Cancha de PADBOL</h1>
 
           <form>
+            {sedesLoadError ? (
+              <div className="error-message" role="alert">{sedesLoadError}</div>
+            ) : null}
             <div className="form-group">
               <label>País:</label>
               <select
@@ -642,7 +627,7 @@ export default function ReservaForm() {
                 required
               >
                 <option value="">-- Selecciona País --</option>
-                {[...new Set(sedes.map((s) => s.pais))].sort().map((pais) => (
+                {paisesOrdenados.map((pais) => (
                   <option key={pais} value={pais}>{pais}</option>
                 ))}
               </select>

@@ -1,8 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-const API_BASE = 'https://padbol-backend.onrender.com';
+
+/** Misma convención que ReservaForm.jsx */
+const API_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
+
+function apiUrl(path) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE}${p}`;
+}
+
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
 const FLAG_MAP = {};
@@ -26,57 +38,104 @@ const TABS = [
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function Rankings() {
-  const [activeTab,          setActiveTab]          = useState('internacional');
-  const [sedes,              setSedes]              = useState([]);
-  const [selectedSede,       setSelectedSede]       = useState('');
-  const [selectedCategoria,  setSelectedCategoria]  = useState('');
-  const [rankings,           setRankings]           = useState([]);
-  const [loading,            setLoading]            = useState(false);
-  const [error,              setError]              = useState(null);
+  const [activeTab, setActiveTab] = useState('internacional');
+  const [sedes, setSedes] = useState([]);
+  const [sedesLoadError, setSedesLoadError] = useState('');
+  const [selectedSede, setSelectedSede] = useState('');
+  const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [rankings, setRankings] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Load sedes once for the Local tab dropdown
+  const selectedSedeMeta = useMemo(
+    () => sedes.find((s) => String(s.id) === selectedSede),
+    [sedes, selectedSede]
+  );
+
   useEffect(() => {
-    fetch(`${API_BASE}/api/sedes`)
-      .then(r => r.json())
-      .then(data => setSedes(Array.isArray(data) ? data : []))
-      .catch(() => {});
+    let cancelled = false;
+    setSedesLoadError('');
+    fetch(apiUrl('/api/sedes'))
+      .then(async (res) => {
+        const text = await res.text();
+        if (cancelled) return;
+        if (!res.ok) {
+          setSedes([]);
+          setSedesLoadError('No se pudieron cargar las sedes.');
+          return;
+        }
+        try {
+          const data = JSON.parse(text);
+          setSedes(Array.isArray(data) ? data : []);
+        } catch {
+          setSedes([]);
+          setSedesLoadError('Respuesta inválida al cargar sedes.');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSedes([]);
+          setSedesLoadError('Error de red al cargar sedes.');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const fetchRankings = useCallback(async () => {
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const params = new URLSearchParams({ scope: activeTab });
+    if (activeTab === 'local' && selectedSede) params.set('sede_id', selectedSede);
+    if (selectedCategoria) params.set('categoria', selectedCategoria);
+
+    const url = `${apiUrl('/api/rankings')}?${params.toString()}`;
+
     setLoading(true);
     setError(null);
-    try {
-      const params = new URLSearchParams({ scope: activeTab });
-      if (activeTab === 'local' && selectedSede) params.set('sede_id', selectedSede);
-      if (selectedCategoria) params.set('categoria', selectedCategoria);
+    setRankings([]);
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
-
-      let res;
+    (async () => {
       try {
-        res = await fetch(`${API_BASE}/api/rankings?${params}`, { signal: controller.signal });
+        const res = await fetch(url, { signal: controller.signal });
+        const text = await res.text();
+        if (cancelled) return;
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error('Respuesta inválida del servidor');
+        }
+
+        if (!res.ok) {
+          throw new Error((data && data.error) || 'Error al cargar rankings');
+        }
+        setRankings(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (cancelled) return;
+        const msg =
+          err.name === 'AbortError'
+            ? 'El servidor tardó demasiado. Intentá de nuevo.'
+            : err.message === 'Failed to fetch'
+              ? 'No se pudo conectar al servidor. Revisá tu conexión.'
+              : err.message || 'Error al cargar rankings';
+        setError(msg);
+        setRankings([]);
       } finally {
-        clearTimeout(timeout);
+        if (!cancelled) setLoading(false);
       }
+    })();
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al cargar rankings');
-      setRankings(Array.isArray(data) ? data : []);
-    } catch (err) {
-      const msg = err.name === 'AbortError'
-        ? 'El servidor tardó demasiado. Intentá de nuevo.'
-        : err.message === 'Failed to fetch'
-          ? 'No se pudo conectar al servidor. Revisá tu conexión.'
-          : err.message;
-      setError(msg);
-      setRankings([]);
-    } finally {
-      setLoading(false);
-    }
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [activeTab, selectedSede, selectedCategoria]);
-
-  useEffect(() => { fetchRankings(); }, [fetchRankings]);
 
   // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -128,7 +187,10 @@ export default function Rankings() {
           {TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id); setSelectedSede(''); setRankings([]); }}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSelectedSede('');
+              }}
               style={{
                 flex: 1,
                 padding: '9px 10px',
@@ -158,10 +220,13 @@ export default function Rankings() {
             >
               <option value="">— Todas las sedes —</option>
               {sedes.map(s => (
-                <option key={s.id} value={s.id}>{getFlag(s.pais)} {s.nombre}</option>
+                <option key={s.id} value={String(s.id)}>{getFlag(s.pais)} {s.nombre}</option>
               ))}
             </select>
           )}
+          {activeTab === 'local' && sedesLoadError ? (
+            <span style={{ fontSize: '12px', color: '#fecaca', alignSelf: 'center' }}>{sedesLoadError}</span>
+          ) : null}
           <select
             value={selectedCategoria}
             onChange={e => setSelectedCategoria(e.target.value)}
@@ -182,7 +247,7 @@ export default function Rankings() {
 
         {/* Scope description */}
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginBottom: '12px' }}>
-          {activeTab === 'local'         && (selectedSede ? `Sede seleccionada · ${sedes.find(s => String(s.id) === selectedSede)?.nombre || ''}` : 'Seleccioná una sede para ver el ranking local')}
+          {activeTab === 'local'         && (selectedSede ? `Sede seleccionada · ${selectedSedeMeta?.nombre || ''}` : 'Seleccioná una sede para ver el ranking local')}
           {activeTab === 'nacional'      && 'Puntos acumulados en torneos nacionales e internacionales'}
           {activeTab === 'internacional' && 'Ranking FIPA · Todos los torneos finalizados a nivel mundial'}
         </div>
