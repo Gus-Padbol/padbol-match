@@ -15,7 +15,8 @@ const PORT = 3001;
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://padbol-match.netlify.app'
+    'https://padbol-match.netlify.app',
+    'https://padbol-match-9abn.vercel.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
