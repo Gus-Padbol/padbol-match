@@ -241,7 +241,11 @@ export default function SedePublica() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: '64px', paddingBottom: '80px' }}>
-      <AppHeader title={sede?.nombre ? String(sede.nombre) : 'Sede'} />
+      <AppHeader
+        title={sede?.nombre ? String(sede.nombre) : 'Sede'}
+        backLabel="← Ver otras sedes"
+        onBack={() => navigate('/sedes?ver_todas=1')}
+      />
 
       {loading && (
         <div

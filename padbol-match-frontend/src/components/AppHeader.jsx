@@ -19,9 +19,17 @@ const btnVolver = {
  * Barra superior fija: ← Volver (opcional) y título centrado.
  * La navegación principal va en {@link BottomNav}.
  */
-export default function AppHeader({ title, showBack = true }) {
+export default function AppHeader({ title, showBack = true, onBack, backLabel }) {
   const navigate = useNavigate();
   const { session, signOutAndClear } = useAuth();
+
+  const handleBack = () => {
+    if (typeof onBack === 'function') {
+      onBack();
+      return;
+    }
+    if (typeof window !== 'undefined') window.history.back();
+  };
 
   return (
     <div
@@ -45,13 +53,11 @@ export default function AppHeader({ title, showBack = true }) {
       {showBack ? (
         <button
           type="button"
-          onClick={() => {
-            if (typeof window !== 'undefined') window.history.back();
-          }}
+          onClick={handleBack}
           style={btnVolver}
           aria-label="Volver atrás"
         >
-          ← Volver
+          {backLabel || '← Volver'}
         </button>
       ) : (
         <div aria-hidden style={{ minWidth: '88px' }} />

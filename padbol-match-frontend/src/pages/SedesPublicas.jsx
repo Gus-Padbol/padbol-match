@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import { fetchSedeFavoritaId } from '../utils/sedeFavorita';
 function formatHorario(apertura, cierre) {
   if (apertura && cierre) return `${apertura} – ${cierre}`;
   if (apertura) return `Desde ${apertura}`;
@@ -29,6 +31,11 @@ export default function SedesPublicas() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const from = searchParams.get('from'); // 'reserva' | 'explorar' | null
+  const skipFavoriteRedirect =
+    searchParams.get('ver_todas') === '1' || from === 'explorar';
+
+  const { session, loading: authLoading } = useAuth();
+  const favoriteRunGenRef = useRef(0);
 
   const [sedes,       setSedes]       = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -65,6 +72,27 @@ export default function SedesPublicas() {
 
     fetchSedesWithTimeout();
   }, []);
+
+  // Usuario con historial: ir directo a la sede más usada (salvo ?ver_todas=1 o catálogo explorar).
+  useEffect(() => {
+    if (skipFavoriteRedirect || loading || authLoading) return;
+    if (!session?.user) return;
+    const email = String(session.user.email || '').trim().toLowerCase();
+    if (!email) return;
+
+    const gen = ++favoriteRunGenRef.current;
+    let cancelled = false;
+
+    (async () => {
+      const id = await fetchSedeFavoritaId(email, sedes);
+      if (cancelled || gen !== favoriteRunGenRef.current) return;
+      if (id) navigate(`/sede/${id}`, { replace: true });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [skipFavoriteRedirect, loading, authLoading, session?.user?.id, session?.user?.email, sedes, navigate]);
 
   // Catálogo: no solicitar ubicación. Reserva / sin query: intentar geolocalización para orden cercano.
   useEffect(() => {
