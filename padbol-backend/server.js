@@ -76,22 +76,26 @@ function normalizePhoneToE164ForTwilioWhatsApp(raw) {
   return `whatsapp:+${DEFAULT_CC}${digits}`;
 }
 
-function buildTorneoEquipoInvitacionBody(nombreDestinatario, nombreTorneo, torneoId) {
+function buildTorneoEquipoInvitacionBody(nombreDestinatario, nombreTorneo, torneoId, equipoId) {
   const nombre = String(nombreDestinatario || '').trim() || 'jugador';
   const torneoNombre = String(nombreTorneo || '').trim() || 'el torneo';
   const tid = Number(torneoId);
-  const link = `${TORNEO_EQUIPOS_INVITE_BASE_URL}/torneo/${Number.isFinite(tid) ? tid : String(torneoId)}/equipos`;
+  const slugTid = Number.isFinite(tid) ? tid : String(torneoId);
+  const eid = Number(equipoId);
+  const q =
+    equipoId != null && equipoId !== '' && Number.isFinite(eid) ? `?equipo=${eid}` : '';
+  const link = `${TORNEO_EQUIPOS_INVITE_BASE_URL}/torneo/${slugTid}/equipos${q}`;
   return `Hola ${nombre}, te invito a jugar el torneo "${torneoNombre}". Confirmá tu lugar en el equipo: ${link}`;
 }
 
 /** Invitación a equipo de torneo (Twilio WhatsApp). Requiere credenciales Twilio y teléfono normalizable. */
-async function sendWhatsAppTorneoEquipoInvitacion(telefono, { nombreDestinatario, nombreTorneo, torneoId }) {
+async function sendWhatsAppTorneoEquipoInvitacion(telefono, { nombreDestinatario, nombreTorneo, torneoId, equipoId }) {
   const to = normalizePhoneToE164ForTwilioWhatsApp(telefono);
   if (!to) {
     console.warn('⚠️ Invitación torneo: teléfono vacío o no normalizable a E.164');
     return;
   }
-  const body = buildTorneoEquipoInvitacionBody(nombreDestinatario, nombreTorneo, torneoId);
+  const body = buildTorneoEquipoInvitacionBody(nombreDestinatario, nombreTorneo, torneoId, equipoId);
   await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
   console.log(`✓ WhatsApp invitación torneo enviado a ${to}`);
 }
@@ -1121,6 +1125,7 @@ app.post('/api/equipos/:id/invitar', async (req, res) => {
       nombreDestinatario: nombreHola,
       nombreTorneo,
       torneoId,
+      equipoId,
     });
 
     if (esReenvioJugadorEnLista) {

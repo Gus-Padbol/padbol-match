@@ -8,6 +8,9 @@ import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { safeRedirectPath } from '../utils/safeRedirect';
 
+/** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
+const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
+
 function PasswordEyeIcon({ revealed }) {
   const svgProps = {
     xmlns: 'http://www.w3.org/2000/svg',
@@ -69,6 +72,23 @@ export default function AccesoCuenta() {
         } catch {
           dest = '/';
         }
+      } else {
+        try {
+          const raw = localStorage.getItem(PENDING_TORNEO_INVITE_LS);
+          const o = raw ? JSON.parse(raw) : null;
+          const p = o?.returnPath;
+          const maxAge = 7 * 24 * 60 * 60 * 1000;
+          if (typeof p === 'string' && p.startsWith('/') && Date.now() - (o.ts || 0) < maxAge) {
+            dest = safeRedirectPath(p);
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+      try {
+        localStorage.removeItem(PENDING_TORNEO_INVITE_LS);
+      } catch {
+        /* ignore */
       }
       navigate(dest, { replace: true });
     },

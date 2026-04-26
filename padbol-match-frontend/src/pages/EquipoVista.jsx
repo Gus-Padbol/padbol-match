@@ -396,13 +396,16 @@ export default function EquipoVista() {
   const urlCompartirLugarEquipoWa = useMemo(() => {
     const tid = id != null && String(id).trim() !== '' ? String(id).trim() : '';
     if (!tid) return '';
-    const link = `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos`;
+    const eid = equipoId != null && String(equipoId).trim() !== '' ? String(equipoId).trim() : '';
+    const link = eid
+      ? `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos?equipo=${encodeURIComponent(eid)}`
+      : `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos`;
     const nombreTorneo = String(torneo?.nombre || '').trim() || 'Padbol';
     const nombreSede = String(nombreSedeTorneo || '').trim() || 'la sede del torneo';
     const nombreEquipo = String(equipo?.nombre || '').trim() || 'nuestro equipo';
     const mensaje = `¡Hola! Te invito a jugar juntos el torneo de Padbol ${nombreTorneo} en ${nombreSede}. Somos el equipo ${nombreEquipo}. ¡Confirmá tu lugar y nos vemos en la cancha! 🎯 ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  }, [id, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
+  }, [id, equipoId, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
 
   const abrirCompartirLugarEquipoWa = () => {
     if (!urlCompartirLugarEquipoWa) return;
@@ -732,10 +735,13 @@ export default function EquipoVista() {
   const invitarWhatsappHref = useMemo(() => {
     const base =
       typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
-    const url = `${base}/torneo/${id}/equipos`;
+    const eid = equipoId != null && String(equipoId).trim() !== '' ? String(equipoId).trim() : '';
+    const url = eid
+      ? `${base}/torneo/${id}/equipos?equipo=${encodeURIComponent(eid)}`
+      : `${base}/torneo/${id}/equipos`;
     const txt = `Te invito a registrarte en el torneo y confirmar tu lugar en el equipo "${equipo?.nombre || ''}": ${url}`;
     return `https://wa.me/?text=${encodeURIComponent(txt)}`;
-  }, [id, equipo?.nombre]);
+  }, [id, equipoId, equipo?.nombre]);
 
   const cupoEquipo = Number(equipo?.cupo_maximo || 2);
   const plazasLlenasEquipo = players.length >= cupoEquipo;

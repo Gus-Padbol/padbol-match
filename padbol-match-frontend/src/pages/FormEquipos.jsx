@@ -30,6 +30,9 @@ import {
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 
+/** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
+const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
+
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
 }
@@ -165,6 +168,12 @@ export default function FormEquipos() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const wantsCrearEquipo = searchParams.get('crear') === '1';
+  const inviteEquipoIdNum = useMemo(() => {
+    const r = searchParams.get('equipo');
+    if (r == null || String(r).trim() === '') return NaN;
+    const n = parseInt(String(r).trim(), 10);
+    return Number.isFinite(n) ? n : NaN;
+  }, [searchParams]);
 
   const nombreCreador = session?.user ? getDisplayName(userProfile, session) : '';
 
@@ -237,6 +246,10 @@ export default function FormEquipos() {
   /** Fila en BD: ya existe equipo con este creador_id en el torneo (miEquipo aún no reflejado en UI). */
   const [equipoDuplicadoBloqueoId, setEquipoDuplicadoBloqueoId] = useState(null);
   const [perfilMapsTorneo, setPerfilMapsTorneo] = useState(() => buildJugadorPerfilLookupMaps([]));
+  const [inviteEquipoRow, setInviteEquipoRow] = useState(null);
+  const [inviteEquipoLoading, setInviteEquipoLoading] = useState(false);
+  const [inviteEquipoError, setInviteEquipoError] = useState(null);
+  const [inviteAccionPending, setInviteAccionPending] = useState(false);
 
   useEffect(() => {
     setDesktopFlujo(null);
@@ -306,6 +319,59 @@ export default function FormEquipos() {
   useEffect(() => {
     cargarTodo();
   }, [torneoId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(inviteEquipoIdNum) || !Number.isFinite(torneoId)) {
+      setInviteEquipoRow(null);
+      setInviteEquipoError(null);
+      setInviteEquipoLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setInviteEquipoLoading(true);
+    setInviteEquipoError(null);
+    (async () => {
+      const { data, error } = await supabase
+        .from('equipos')
+        .select('*')
+        .eq('id', inviteEquipoIdNum)
+        .maybeSingle();
+      if (cancelled) return;
+      setInviteEquipoLoading(false);
+      if (error) {
+        console.error(error);
+        setInviteEquipoError('No se pudo cargar el equipo.');
+        setInviteEquipoRow(null);
+        return;
+      }
+      if (!data || Number(data.torneo_id) !== Number(torneoId)) {
+        setInviteEquipoError('Este equipo no pertenece a este torneo.');
+        setInviteEquipoRow(null);
+        return;
+      }
+      setInviteEquipoRow(data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteEquipoIdNum, torneoId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(inviteEquipoIdNum) || !Number.isFinite(torneoId)) return;
+    if (authLoading) return;
+    if (session?.user) return;
+    const returnPath = `/torneo/${torneoId}/equipos?equipo=${encodeURIComponent(String(inviteEquipoIdNum))}`;
+    try {
+      localStorage.setItem(PENDING_TORNEO_INVITE_LS, JSON.stringify({ returnPath, ts: Date.now() }));
+    } catch (_) {}
+    navigate(`/login?redirect=${encodeURIComponent(returnPath)}`, { replace: true });
+  }, [inviteEquipoIdNum, torneoId, session?.user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!Number.isFinite(inviteEquipoIdNum)) return;
+    const found = equipos.find((e) => Number(e.id) === Number(inviteEquipoIdNum));
+    if (found) setInviteEquipoRow({ ...found });
+  }, [equipos, inviteEquipoIdNum]);
 
   const equiposNormalizados = useMemo(() => {
     return equipos.map((eq) => ({
@@ -474,18 +540,20 @@ export default function FormEquipos() {
   useEffect(() => {
     if (!wantsCrearEquipo || loading) return;
     if (authLoading) return;
+    const equipoQ = searchParams.get('equipo');
+    const eqTail = equipoQ ? `?equipo=${encodeURIComponent(equipoQ)}` : '';
     if (!session?.user) {
       setBannerCrearEquipoRequiereLogin(true);
-      navigate(`/torneo/${id}/equipos`, { replace: true });
+      navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
       return;
     }
     if (torneoCerrado || miEquipo || miSolicitudPendiente) {
-      navigate(`/torneo/${id}/equipos`, { replace: true });
+      navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
       return;
     }
     if (isMobile) setMobileVista('crear');
     else setDesktopFlujo('crear');
-    navigate(`/torneo/${id}/equipos`, { replace: true });
+    navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
   }, [
     wantsCrearEquipo,
     loading,
@@ -497,6 +565,7 @@ export default function FormEquipos() {
     isMobile,
     id,
     navigate,
+    searchParams,
   ]);
 
   useEffect(() => {
@@ -617,7 +686,7 @@ export default function FormEquipos() {
     window.location.reload();
   };
 
-  const pedirUnirme = async (equipo) => {
+  const pedirUnirme = async (equipo, opts = {}) => {
     if (miEquipo) {
       alert('Ya estás en un equipo');
       return;
@@ -685,6 +754,31 @@ export default function FormEquipos() {
         eq.id === equipo.id ? { ...eq, solicitudes: nuevasSolicitudes } : eq
       )
     );
+    if (typeof opts.onSuccess === 'function') opts.onSuccess();
+  };
+
+  const rechazarInvitacionDeepLink = () => {
+    try {
+      localStorage.removeItem(PENDING_TORNEO_INVITE_LS);
+    } catch (_) {}
+    navigate(`/torneo/${id}/equipos`, { replace: true });
+  };
+
+  const confirmarInvitacionDeepLink = async () => {
+    if (!inviteEquipoRow) return;
+    setInviteAccionPending(true);
+    try {
+      await pedirUnirme(inviteEquipoRow, {
+        onSuccess: () => {
+          try {
+            localStorage.removeItem(PENDING_TORNEO_INVITE_LS);
+          } catch (_) {}
+          navigate(`/torneo/${id}/equipos`, { replace: true });
+        },
+      });
+    } finally {
+      setInviteAccionPending(false);
+    }
   };
 
   const ejecutarSalirDelEquipoForm = async () => {
@@ -929,10 +1023,12 @@ export default function FormEquipos() {
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
         : '';
-    const url = `${base}/torneo/${id}/equipos`;
+    const teamQ =
+      miEquipo?.id != null && miEquipo.id !== '' ? `?equipo=${encodeURIComponent(String(miEquipo.id))}` : '';
+    const url = `${base}/torneo/${id}/equipos${teamQ}`;
     const txt = `Te invito a registrarte en el torneo "${torneo?.nombre || 'Padbol'}" y confirmar tu lugar en el equipo: ${url}`;
     return `https://wa.me/?text=${encodeURIComponent(txt)}`;
-  }, [id, torneo?.nombre]);
+  }, [id, torneo?.nombre, miEquipo?.id]);
 
   const confirmarInscripcionTorneo = async () => {
     if (!miEquipo || !torneo) return;
@@ -1518,6 +1614,188 @@ export default function FormEquipos() {
     if (typeof window !== 'undefined') window.history.back();
   }, [mostrarPasoEleccion, isMobile, mobileVista, desktopFlujo]);
 
+  const hayParamInvitacionEquipo = Number.isFinite(inviteEquipoIdNum);
+
+  const bloqueInvitacionEquipoDeepLink =
+    !hayParamInvitacionEquipo || torneoCerrado ? null : (() => {
+      const u0 = getOrCreateUsuarioBasico();
+      const jugadoresConfirmadosInv = inviteEquipoRow
+        ? getPlayers(inviteEquipoRow).filter(jugadorRegistradoParaTorneo)
+        : [];
+      const yaOtroEquipoMismoTorneo =
+        !!session?.user && !!miEquipo && Number(miEquipo.id) !== Number(inviteEquipoIdNum);
+      const yaEsteEquipo =
+        !!session?.user && !!miEquipo && Number(miEquipo.id) === Number(inviteEquipoIdNum);
+      const solicitudPendienteEnInvitado =
+        !!session?.user &&
+        !!inviteEquipoRow &&
+        getRequests(inviteEquipoRow).some((r) => jugadorCoincideConYo(r, yo, authUserId));
+      const yaEnPlantelInvitado =
+        !!session?.user &&
+        !!inviteEquipoRow &&
+        (esCreadorEquipoOMiAuth(inviteEquipoRow, authEmail, u0, authUserId) ||
+          usuarioEstaEnEquipoRow(inviteEquipoRow, authUserId) ||
+          getPlayers(inviteEquipoRow).some((p) => jugadorCoincideConYo(p, yo, authUserId)));
+      const equipoCerradoNoSolicitudes = inviteEquipoRow && inviteEquipoRow.equipo_abierto === false;
+      const cupoInv = inviteEquipoRow ? Number(inviteEquipoRow.cupo_maximo || inviteEquipoRow.cupo || 2) : 2;
+      const llenoInv =
+        inviteEquipoRow && getPlayers(inviteEquipoRow).length >= cupoInv;
+
+      return (
+        <div
+          key="invitacion-deep-link"
+          style={{
+            marginBottom: '16px',
+            padding: '18px 20px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #eef2ff 0%, #ffffff 55%)',
+            border: '2px solid #6366f1',
+            boxShadow: '0 10px 36px rgba(79, 70, 229, 0.18)',
+            textAlign: 'left',
+          }}
+        >
+          {inviteEquipoLoading && !inviteEquipoRow ? (
+            <div style={{ fontWeight: 700, color: '#312e81' }}>Cargando invitación…</div>
+          ) : inviteEquipoError ? (
+            <div style={{ fontWeight: 700, color: '#991b1b' }}>{inviteEquipoError}</div>
+          ) : yaOtroEquipoMismoTorneo ? (
+            <div style={{ fontWeight: 700, color: '#92400e', lineHeight: 1.5 }}>
+              Ya estás inscripto en otro equipo en este torneo.
+            </div>
+          ) : yaEnPlantelInvitado || yaEsteEquipo ? (
+            <>
+              <div style={{ fontWeight: 800, fontSize: '16px', color: '#14532d', marginBottom: '8px' }}>
+                Ya formás parte de {inviteEquipoRow?.nombre ? `«${inviteEquipoRow.nombre}»` : 'este equipo'}.
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/torneo/${id}/equipos/${inviteEquipoIdNum}`)}
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  fontWeight: 800,
+                  borderRadius: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                  color: 'white',
+                }}
+              >
+                Ver equipo
+              </button>
+            </>
+          ) : solicitudPendienteEnInvitado ? (
+            <div style={{ fontWeight: 700, color: '#92400e', lineHeight: 1.5 }}>
+              Tu solicitud para unirte a {inviteEquipoRow?.nombre ? `«${inviteEquipoRow.nombre}»` : 'este equipo'}{' '}
+              está pendiente de aprobación del creador.
+            </div>
+          ) : inviteEquipoRow ? (
+            <>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 900,
+                  letterSpacing: '0.14em',
+                  color: '#4338ca',
+                  marginBottom: '8px',
+                }}
+              >
+                INVITACIÓN
+              </div>
+              <h2
+                style={{
+                  margin: '0 0 6px',
+                  fontSize: 'clamp(1.2rem, 3.5vw, 1.45rem)',
+                  fontWeight: 900,
+                  color: '#0f172a',
+                }}
+              >
+                {inviteEquipoRow.nombre || 'Equipo'}
+              </h2>
+              <p style={{ margin: '0 0 14px', fontSize: '15px', fontWeight: 700, color: '#334155', lineHeight: 1.45 }}>
+                Fuiste invitado a unirte a este equipo
+              </p>
+              <div
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  color: '#64748b',
+                  marginBottom: '6px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Jugadores confirmados
+              </div>
+              <ul style={{ margin: '0 0 16px', paddingLeft: '20px', color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>
+                {jugadoresConfirmadosInv.length ? (
+                  jugadoresConfirmadosInv.map((p, idx) => (
+                    <li key={`inv-conf-${idx}`}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}</li>
+                  ))
+                ) : (
+                  <li style={{ listStyle: 'none', marginLeft: '-20px', color: '#64748b' }}>
+                    Todavía no hay jugadores confirmados
+                  </li>
+                )}
+              </ul>
+              {!session?.user ? (
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#475569' }}>
+                  Iniciá sesión para confirmar tu lugar.
+                </p>
+              ) : equipoCerradoNoSolicitudes ? (
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#b45309', lineHeight: 1.45 }}>
+                  Este equipo es cerrado: no acepta solicitudes. Contactá al creador para que te sume.
+                </p>
+              ) : llenoInv ? (
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#64748b' }}>
+                  Este equipo ya está completo.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  <button
+                    type="button"
+                    disabled={inviteAccionPending}
+                    onClick={() => void confirmarInvitacionDeepLink()}
+                    style={{
+                      padding: '12px 18px',
+                      fontSize: '15px',
+                      fontWeight: 800,
+                      borderRadius: '12px',
+                      border: 'none',
+                      cursor: inviteAccionPending ? 'default' : 'pointer',
+                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                      color: 'white',
+                      boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
+                      opacity: inviteAccionPending ? 0.65 : 1,
+                    }}
+                  >
+                    {inviteAccionPending ? 'Enviando…' : 'Confirmar mi lugar'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={inviteAccionPending}
+                    onClick={rechazarInvitacionDeepLink}
+                    style={{
+                      padding: '12px 18px',
+                      fontSize: '14px',
+                      fontWeight: 800,
+                      borderRadius: '12px',
+                      border: '2px solid #cbd5e1',
+                      cursor: inviteAccionPending ? 'default' : 'pointer',
+                      background: '#fff',
+                      color: '#475569',
+                    }}
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+      );
+    })();
+
   const btnVolverEleccionStyle = {
     alignSelf: 'flex-start',
     padding: '8px 12px',
@@ -1852,6 +2130,9 @@ export default function FormEquipos() {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 80px' }}>
         {renderInscripcionHeader()}
+        <div style={{ maxWidth: '1100px', margin: '4px auto 0', padding: '0 12px', boxSizing: 'border-box' }}>
+          {bloqueInvitacionEquipoDeepLink}
+        </div>
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: 'white' }}>Cargando...</div>
         <BottomNav />
       </div>
@@ -1863,6 +2144,7 @@ export default function FormEquipos() {
       {renderInscripcionHeader()}
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>
+        {bloqueInvitacionEquipoDeepLink}
         {bloqueTorneo}
         {bloqueBannerCrearLogin}
 
