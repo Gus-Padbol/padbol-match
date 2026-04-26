@@ -277,6 +277,7 @@ export default function ReservaForm() {
 
   // Tras login: restaurar sede/fecha/hora/cancha guardados al pedir login desde la selección de cancha.
   useEffect(() => {
+    console.log('EFECTO RESTAURACION - sedes:', sedes.length, 'authLoading:', authLoading, 'session:', !!session?.user);
     if (sedes.length < 1) {
       return;
     }
@@ -289,6 +290,7 @@ export default function ReservaForm() {
     } catch {
       return;
     }
+    console.log('DATOS LEIDOS DE SESSION STORAGE:', raw);
     if (!raw) return;
     let data;
     try {
@@ -851,18 +853,20 @@ export default function ReservaForm() {
                         const { data } = await supabase.auth.getSession();
                         if (!data?.session?.user) {
                           try {
+                            const reservaRestorePayload = {
+                              filtros: {
+                                pais: filtros.pais,
+                                ciudad: filtros.ciudad,
+                                sede_id: filtros.sede_id,
+                              },
+                              fecha: formData.fecha,
+                              hora: formData.hora,
+                              cancha: String(c.num),
+                            };
+                            console.log('GUARDANDO EN SESSION STORAGE:', reservaRestorePayload);
                             sessionStorage.setItem(
                               RESERVA_FORM_RESTORE_KEY,
-                              JSON.stringify({
-                                filtros: {
-                                  pais: filtros.pais,
-                                  ciudad: filtros.ciudad,
-                                  sede_id: filtros.sede_id,
-                                },
-                                fecha: formData.fecha,
-                                hora: formData.hora,
-                                cancha: String(c.num),
-                              })
+                              JSON.stringify(reservaRestorePayload)
                             );
                           } catch (_) {
                             /* ignore */
