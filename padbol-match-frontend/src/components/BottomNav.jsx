@@ -1,6 +1,10 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {
+  HUB_APP_HEADER_HEIGHT_PX,
+  HUB_NAV_HEIGHT_PX,
+} from '../constants/hubLayout';
 
 const BottomNav = () => {
   const navigate = useNavigate();
@@ -10,7 +14,12 @@ const BottomNav = () => {
 
   const items = [
     { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
-    { label: 'Torneos', icon: '🏆', path: '/torneos', match: (p) => p === '/torneos' },
+    {
+      label: 'Torneos',
+      icon: '🏆',
+      path: '/torneos',
+      match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+    },
     { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
     { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
   ];
@@ -25,18 +34,19 @@ const BottomNav = () => {
       aria-label="Navegación principal"
       style={{
         position: 'fixed',
-        bottom: 0,
+        top: HUB_APP_HEADER_HEIGHT_PX,
         left: 0,
         width: '100%',
-        minHeight: '65px',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        background: '#0f172a',
+        height: HUB_NAV_HEIGHT_PX,
+        boxSizing: 'border-box',
+        padding: '2px 4px',
+        background: '#f8fafc',
         display: 'flex',
         justifyContent: 'space-around',
-        alignItems: 'center',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
+        alignItems: 'stretch',
+        borderBottom: '1px solid #e2e8f0',
+        boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
         zIndex: 1001,
-        boxSizing: 'border-box',
       }}
     >
       {items.map((item) => {
@@ -54,20 +64,22 @@ const BottomNav = () => {
               justifyContent: 'center',
               flex: 1,
               maxWidth: '120px',
-              padding: '6px 4px',
+              padding: '2px 2px',
               border: 'none',
-              background: 'transparent',
-              color: isActive ? '#22c55e' : '#94a3b8',
-              fontSize: '12px',
+              background: isActive ? 'rgba(34, 197, 94, 0.14)' : 'transparent',
+              color: isActive ? '#15803d' : '#64748b',
+              fontSize: '11px',
               cursor: 'pointer',
-              transition: 'color 0.2s ease, transform 0.2s ease',
+              transition: 'color 0.2s ease, background 0.2s ease',
               fontWeight: isActive ? 700 : 500,
+              borderRadius: '10px',
+              margin: '0 2px',
             }}
           >
             <span
               style={{
-                fontSize: '20px',
-                marginBottom: '2px',
+                fontSize: '18px',
+                marginBottom: '1px',
                 lineHeight: 1,
               }}
               aria-hidden

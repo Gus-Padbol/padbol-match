@@ -2,6 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 
 /** Misma convención que ReservaForm.jsx */
 const API_BASE = (
@@ -142,7 +146,7 @@ export default function Rankings() {
   const containerStyle = {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    padding: '64px 16px 80px 16px',
+    padding: `${HUB_CONTENT_PADDING_TOP_PX}px 16px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 16px`,
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   };
 

@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
 
@@ -30,10 +34,10 @@ export default function UserHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: '72px',
+        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
         paddingLeft: '20px',
         paddingRight: '20px',
-        paddingBottom: '80px',
+        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
       <AppHeader title="Inicio" showBack={false} />

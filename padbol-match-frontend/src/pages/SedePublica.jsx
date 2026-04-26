@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 
 function formatHorario(apertura, cierre) {
@@ -240,7 +244,7 @@ export default function SedePublica() {
   }, [sedeId]);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: '64px', paddingBottom: '80px' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader
         title={sede?.nombre ? String(sede.nombre) : 'Sede'}
         backLabel="← Ver otras sedes"

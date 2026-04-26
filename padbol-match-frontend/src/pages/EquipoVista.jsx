@@ -2,6 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import * as T from '../theme/designTokens';
@@ -817,7 +821,7 @@ export default function EquipoVista() {
 
   if (loading) {
     return (
-      <div style={{ ...pageBackgroundStyle, padding: '64px 12px 80px' }}>
+      <div style={{ ...pageBackgroundStyle, padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
         <AppHeader title="Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
         <BottomNav />
@@ -827,7 +831,7 @@ export default function EquipoVista() {
 
   if (!equipo) {
     return (
-      <div style={{ ...pageBackgroundStyle, padding: '64px 12px 80px' }}>
+      <div style={{ ...pageBackgroundStyle, padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
         <AppHeader title="Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
           <p>No se encontró el equipo.</p>
@@ -838,7 +842,7 @@ export default function EquipoVista() {
   }
 
   return (
-    <div style={{ ...pageBackgroundStyle, padding: '64px 12px 80px' }}>
+    <div style={{ ...pageBackgroundStyle, padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader title="Equipo" />
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>

@@ -3,6 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -417,7 +421,7 @@ export default function TorneosPublicos() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        padding: '64px 12px 80px 12px',
+        padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 12px`,
       }}
     >
       <AppHeader title="Torneos" />

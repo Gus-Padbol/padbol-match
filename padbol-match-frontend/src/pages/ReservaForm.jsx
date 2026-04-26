@@ -5,6 +5,10 @@ import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants
 import AppHeader from '../components/AppHeader';
 import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
@@ -677,7 +681,10 @@ export default function ReservaForm() {
     );
 
     return (
-      <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
+      <div className="reserva-container" style={{
+        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+      }}>
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Reserva tu Cancha de PADBOL</h1>
@@ -747,7 +754,10 @@ export default function ReservaForm() {
   if (pantalla === 2) {
     const hoyIso = todayLocalISO();
     return (
-      <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
+      <div className="reserva-container" style={{
+        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+      }}>
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>
@@ -899,7 +909,10 @@ export default function ReservaForm() {
     const muestraInputWhatsappResumen = !perfilTelefonoValido(currentCliente);
 
     return (
-      <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
+      <div className="reserva-container" style={{
+        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+      }}>
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Resumen de reserva</h1>

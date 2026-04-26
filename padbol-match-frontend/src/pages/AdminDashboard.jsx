@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -670,7 +674,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   if (loading) {
     return (
-      <div style={{ padding: '64px 20px 80px', textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
+      <div style={{ padding: `${HUB_CONTENT_PADDING_TOP_PX}px 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`, textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
         <AppHeader title="Admin" />
         Cargando...
         <BottomNav />
@@ -688,7 +692,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   ];
 
   return (
-    <div className="admin-dashboard" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
+    <div className="admin-dashboard" style={{ paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader title="Admin" />
       <div className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

@@ -5,6 +5,10 @@ import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { safeRedirectPath } from '../utils/safeRedirect';
 import { RESERVA_RETURN_STORAGE_KEY } from '../utils/reservaReturnUrl';
@@ -204,7 +208,7 @@ export default function AccesoCuenta() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg,#667eea,#764ba2)',
-        padding: '64px 16px 80px 16px',
+        padding: `${HUB_CONTENT_PADDING_TOP_PX}px 16px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 16px`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

@@ -17,7 +17,7 @@ const btnVolver = {
 
 /**
  * Barra superior fija: ← Volver (opcional) y título centrado.
- * La navegación principal va en {@link BottomNav}.
+ * La navegación principal del hub va en {@link BottomNav} (fija bajo este header).
  */
 export default function AppHeader({ title, showBack = true, onBack, backLabel }) {
   const navigate = useNavigate();

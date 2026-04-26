@@ -2,6 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
@@ -2128,7 +2132,7 @@ export default function FormEquipos() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 80px' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
         {renderInscripcionHeader()}
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', padding: '0 12px', boxSizing: 'border-box' }}>
           {bloqueInvitacionEquipoDeepLink}
@@ -2140,7 +2144,7 @@ export default function FormEquipos() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: '64px 12px 80px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       {renderInscripcionHeader()}
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>

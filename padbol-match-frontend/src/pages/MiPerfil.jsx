@@ -5,6 +5,10 @@ import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
+} from '../constants/hubLayout';
+import {
   persistJugadorPerfil,
   refreshJugadorPerfilFromSupabase,
   isPerfilTorneoCompleto,
@@ -711,7 +715,7 @@ export default function MiPerfil() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Verificando sesión...
@@ -730,8 +734,8 @@ export default function MiPerfil() {
             minHeight: '100vh',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             fontFamily: 'Arial',
-            paddingTop: '64px',
-            paddingBottom: '80px',
+            paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+            paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
           }}
         >
           <AppHeader title="Mi Perfil" />
@@ -833,7 +837,7 @@ export default function MiPerfil() {
       fontSize: '13px',
     };
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
         <AppHeader title="Mi Perfil" />
         <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
           {avisoPerfilTorneoMsg ? (
@@ -1195,7 +1199,7 @@ export default function MiPerfil() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Cargando perfil...
@@ -1212,7 +1216,7 @@ export default function MiPerfil() {
   const foto = perfil?.foto_url || cuentaDeSesion?.foto || null;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: '64px', paddingBottom: '80px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
 
       <AppHeader title="Mi Perfil" />
 
