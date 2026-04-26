@@ -451,15 +451,27 @@ export default function SedePublica() {
                 onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
                 style={{
                   width: '100%',
-                  padding: '14px 20px',
+                  padding: '16px 22px',
                   marginBottom: '20px',
                   background: 'white',
-                  color: '#334155',
-                  border: '2px solid #cbd5e1',
+                  color: '#15803d',
+                  border: '2px solid #22c55e',
                   borderRadius: '14px',
                   cursor: 'pointer',
                   fontWeight: 800,
                   fontSize: '15px',
+                  boxShadow: '0 2px 12px rgba(34,197,94,0.2)',
+                  letterSpacing: '0.2px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.background = '#f0fdf4';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(34,197,94,0.35)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = '';
+                  e.currentTarget.style.background = 'white';
+                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(34,197,94,0.2)';
                 }}
               >
                 Ver torneos

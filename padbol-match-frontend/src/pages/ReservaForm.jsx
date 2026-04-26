@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'react-router-dom';
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
+import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -138,8 +139,6 @@ export default function ReservaForm() {
       numeroTel: '',
     };
   });
-
-  const fechaInputRef = useRef(null);
 
   const sedeSeleccionada = useMemo(() => {
     if (!Array.isArray(sedes) || sedes.length === 0 || filtros.sede_id === '' || filtros.sede_id == null) {
@@ -519,11 +518,10 @@ export default function ReservaForm() {
     buscarHorariosDisponibles(formData.fecha);
   }, [pantalla, formData.fecha, sedeSeleccionada, buscarHorariosDisponibles]);
 
-  const handleChangeFecha = (e) => {
-    const fecha = e.target.value;
+  const handleSelectFecha = useCallback((fecha) => {
     setLoading(true);
     setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       fecha,
       hora: '',
@@ -531,29 +529,33 @@ export default function ReservaForm() {
     }));
     setHorariosDisponibles([]);
     setCanchasDisponibles([]);
-    // Note: buscarHorariosDisponibles will be triggered automatically by the useEffect
-    // that watches formData.fecha; no need to call it directly here to avoid race conditions
-  };
+    setError('');
+  }, []);
 
-  const handleChangeHora = (e) => {
-    const hora = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      hora,
-      cancha: '',
-    }));
-    buscarCanchasDisponibles(hora);
-  };
+  const selectHorario = useCallback(
+    (hora) => {
+      const f = formData.fecha;
+      setFormData((prev) => ({
+        ...prev,
+        hora,
+        cancha: '',
+      }));
+      void buscarCanchasDisponibles(hora, f);
+      setError('');
+    },
+    [formData.fecha, buscarCanchasDisponibles]
+  );
 
-  const buscarCanchasDisponibles = useCallback(async (hora) => {
-    if (!hora || !formData.fecha) return;
+  const buscarCanchasDisponibles = useCallback(async (hora, fechaReserva) => {
+    const fecha = fechaReserva != null && String(fechaReserva).trim() !== '' ? String(fechaReserva).trim() : formData.fecha;
+    if (!hora || !fecha) return;
     if (filtros.sede_id === '' || filtros.sede_id == null) return;
     if (!sedeSeleccionada) return;
 
     try {
       const response = await fetch(
         apiUrl(
-          `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(formData.fecha)}`
+          `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}`
         )
       );
       const reservadas = await response.json();
@@ -568,20 +570,6 @@ export default function ReservaForm() {
       setError('Error al buscar canchas disponibles');
     }
   }, [formData.fecha, filtros.sede_id, sedeSeleccionada]);
-
-  useEffect(() => {
-    if (pantalla !== 2 || !sedeSeleccionada) return;
-    const t = window.setTimeout(() => {
-      const el = fechaInputRef.current;
-      if (!el) return;
-      try {
-        el.focus({ preventScroll: true });
-      } catch {
-        el.focus();
-      }
-    }, 0);
-    return () => window.clearTimeout(t);
-  }, [pantalla, sedeSeleccionada?.id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -769,44 +757,44 @@ export default function ReservaForm() {
           )}
 
           <form>
-            <div className={`form-group${formData.fecha === hoyIso ? ' reserva-fecha-hoy' : ''}`}>
-              <label>Fecha</label>
-              {formData.fecha === hoyIso && (
-                <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#15803d', fontWeight: 600 }}>
-                  Hoy — tocá el calendario para elegir otro día
-                </p>
-              )}
-              <input
-                ref={fechaInputRef}
-                type="date"
-                name="fecha"
-                value={formData.fecha}
-                onChange={handleChangeFecha}
-                min={todayLocalISO()}
-                max={fechaMaxReservaISO()}
+            <div className="form-group">
+              <label style={{ display: 'block', marginBottom: '10px' }}>Elegí el día</label>
+              <ReservaCalendarioMes
+                selectedIso={formData.fecha}
+                minIso={todayLocalISO()}
+                maxIso={fechaMaxReservaISO()}
+                todayIso={hoyIso}
+                onSelectDay={handleSelectFecha}
                 disabled={!sedeSeleccionada}
-                required
-                className="reserva-input-fecha"
               />
             </div>
 
             {horariosDisponibles.length > 0 && (
               <div className="form-group reserva-horario-bloque">
-                <label>Horario (con canchas libres):</label>
-                <select
-                  name="hora"
-                  value={formData.hora}
-                  onChange={handleChangeHora}
-                  required
-                  className="reserva-select-horario"
-                >
-                  <option value="">-- Selecciona Horario --</option>
-                  {horariosDisponibles.map((h, idx) => (
-                    <option key={idx} value={h.hora}>
-                      {h.horario}
-                    </option>
-                  ))}
-                </select>
+                <label style={{ display: 'block', marginBottom: '10px' }}>Horarios disponibles</label>
+                <div className="flex flex-wrap gap-2">
+                  {horariosDisponibles.map((h) => {
+                    const active = formData.hora === h.hora;
+                    return (
+                      <button
+                        key={h.hora}
+                        type="button"
+                        onClick={() => selectHorario(h.hora)}
+                        className={[
+                          'min-w-[8.5rem] rounded-xl border px-3 py-2.5 text-left text-sm font-semibold shadow-sm transition sm:min-w-[9.5rem] sm:text-[15px]',
+                          active
+                            ? 'border-green-600 bg-green-600 text-white ring-2 ring-green-600 ring-offset-1'
+                            : 'border-slate-200 bg-white text-slate-800 hover:border-green-500 hover:bg-green-50',
+                        ].join(' ')}
+                      >
+                        <span className="block">{h.horario}</span>
+                        <span className={`mt-0.5 block text-xs font-normal ${active ? 'text-green-100' : 'text-slate-500'}`}>
+                          {h.libres} libre{h.libres === 1 ? '' : 's'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
