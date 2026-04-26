@@ -105,6 +105,9 @@ function apiUrl(path) {
   return `${API_BASE}${p}`;
 }
 
+/** Estado de reserva guardado antes de ir al login al elegir cancha sin sesión. */
+const RESERVA_FORM_RESTORE_KEY = 'padbol_reserva_form_restore_v1';
+
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -271,6 +274,68 @@ export default function ReservaForm() {
         : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
     );
   }, [sedes, initialSedeId, location.pathname, location.search]);
+
+  // Tras login: restaurar sede/fecha/hora/cancha guardados al pedir login desde la selección de cancha.
+  useEffect(() => {
+    if (sedes.length === 0 || authLoading || !session?.user) return;
+    let raw;
+    try {
+      raw = sessionStorage.getItem(RESERVA_FORM_RESTORE_KEY);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      try {
+        sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
+      } catch (_) {
+        /* ignore */
+      }
+      return;
+    }
+    const sid = data?.filtros?.sede_id;
+    const fecha = data?.fecha != null ? String(data.fecha).trim() : '';
+    const hora = data?.hora != null ? String(data.hora).trim() : '';
+    const cancha = data?.cancha != null ? String(data.cancha).trim() : '';
+    if (sid === '' || sid == null || !fecha || !hora || !cancha) {
+      try {
+        sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
+      } catch (_) {
+        /* ignore */
+      }
+      return;
+    }
+    const sedeObj = sedes.find((s) => Number(s.id) === Number(sid));
+    if (!sedeObj) {
+      try {
+        sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
+      } catch (_) {
+        /* ignore */
+      }
+      return;
+    }
+    try {
+      sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
+    } catch (_) {
+      /* ignore */
+    }
+    const pais = String(data.filtros?.pais || sedeObj.pais || '').trim();
+    const ciudad = String(data.filtros?.ciudad || sedeObj.ciudad || '').trim();
+    const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
+    setCiudades(ciudadesDelPais);
+    setFiltros({ pais, ciudad, sede_id: Number(sedeObj.id) });
+    setFormData((prev) => ({
+      ...prev,
+      fecha,
+      hora,
+      cancha,
+    }));
+    setPantalla(4);
+    setError('');
+  }, [sedes, authLoading, session?.user]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
@@ -780,6 +845,23 @@ export default function ReservaForm() {
                       onClick={async () => {
                         const { data } = await supabase.auth.getSession();
                         if (!data?.session?.user) {
+                          try {
+                            sessionStorage.setItem(
+                              RESERVA_FORM_RESTORE_KEY,
+                              JSON.stringify({
+                                filtros: {
+                                  pais: filtros.pais,
+                                  ciudad: filtros.ciudad,
+                                  sede_id: filtros.sede_id,
+                                },
+                                fecha: formData.fecha,
+                                hora: formData.hora,
+                                cancha: String(c.num),
+                              })
+                            );
+                          } catch (_) {
+                            /* ignore */
+                          }
                           navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
                           return;
                         }
