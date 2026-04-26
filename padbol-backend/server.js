@@ -1043,8 +1043,10 @@ app.put('/api/equipos/:id', async (req, res) => {
 });
 
 /**
- * Acepta una solicitud pendiente: envía WhatsApp (Twilio) personalizado vía jugadores_perfil y actualiza el equipo.
- * Body: { email } — debe coincidir con una solicitud en `equipos.solicitudes` y con `jugadores_perfil.email`.
+ * Acepta una solicitud pendiente o reenvía invitación: WhatsApp (Twilio) vía jugadores_perfil y actualiza el equipo si aplica.
+ * Body: { email } — `jugadores_perfil` por email (whatsapp obligatorio para enviar).
+ * Caso A: email en `equipos.solicitudes` → envía WA y pasa al jugador a `jugadores`.
+ * Caso B: reenvío → mismo email en `jugadores` con estado pendiente (sin fila en solicitudes) → solo envía WA.
  */
 app.post('/api/equipos/:id/invitar', async (req, res) => {
   try {
@@ -1070,15 +1072,25 @@ app.post('/api/equipos/:id/invitar', async (req, res) => {
     const solicitudIdx = solicitudes.findIndex(
       (r) => String(r?.email || '').trim().toLowerCase() === emailIn,
     );
-    if (solicitudIdx === -1) {
-      return res.status(400).json({ error: 'No hay solicitud pendiente para ese email' });
+    const players = Array.isArray(eq.jugadores) ? eq.jugadores : [];
+    const jugPendIdx = players.findIndex((pl) => {
+      const em = String(pl?.email || '').trim().toLowerCase();
+      const est = String(pl?.estado || '').trim().toLowerCase();
+      return em === emailIn && est === 'pendiente';
+    });
+
+    const esReenvioJugadorEnLista = solicitudIdx === -1 && jugPendIdx !== -1;
+    if (solicitudIdx === -1 && jugPendIdx === -1) {
+      return res.status(400).json({
+        error: 'No hay solicitud pendiente ni jugador en el equipo con ese email y estado pendiente',
+      });
     }
 
-    const solicitud = solicitudes[solicitudIdx];
-    const players = Array.isArray(eq.jugadores) ? eq.jugadores : [];
-    const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
-    if (players.length >= cupo) {
-      return res.status(400).json({ error: 'Equipo completo' });
+    if (!esReenvioJugadorEnLista) {
+      const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
+      if (players.length >= cupo) {
+        return res.status(400).json({ error: 'Equipo completo' });
+      }
     }
 
     const { data: perfil, error: pErr } = await supabase
@@ -1111,6 +1123,17 @@ app.post('/api/equipos/:id/invitar', async (req, res) => {
       torneoId,
     });
 
+    if (esReenvioJugadorEnLista) {
+      const { data: fresh, error: fErr } = await supabase
+        .from('equipos')
+        .select('*')
+        .eq('id', equipoId)
+        .maybeSingle();
+      if (fErr) throw fErr;
+      return res.json({ ok: true, equipo: fresh ?? null });
+    }
+
+    const solicitud = solicitudes[solicitudIdx];
     const solicitudConfirmada = {
       ...solicitud,
       estado: String(solicitud.email || '').trim() ? 'confirmado' : 'pendiente',

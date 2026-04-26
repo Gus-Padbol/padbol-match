@@ -125,6 +125,7 @@ export default function EquipoVista() {
   const [perfilMapsJugadores, setPerfilMapsJugadores] = useState(() =>
     buildJugadorPerfilLookupMaps([])
   );
+  const [reenviandoEmail, setReenviandoEmail] = useState(null);
 
   const authUserId = useMemo(
     () => (session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null),
@@ -367,6 +368,102 @@ export default function EquipoVista() {
     const ce = String(equipo.creador_email || '').trim().toLowerCase();
     return Boolean(!equipo.creador_id && em && ce && ce === em);
   }, [equipo, usuarioLocal.id, authEmail, authUserId]);
+
+  const urlCompartirLugarEquipoWa = useMemo(() => {
+    const tid = id != null && String(id).trim() !== '' ? String(id).trim() : '';
+    if (!tid) return '';
+    const link = `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos`;
+    const text = `Hola, te invito a confirmar tu lugar en el equipo. Ingresá acá: ${link}`;
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  }, [id]);
+
+  const abrirCompartirLugarEquipoWa = () => {
+    if (!urlCompartirLugarEquipoWa) return;
+    window.open(urlCompartirLugarEquipoWa, '_blank', 'noopener,noreferrer');
+  };
+
+  const reenviarInvitacionPendiente = async (emailNorm) => {
+    if (!emailNorm || !equipoId) return;
+    setReenviandoEmail(emailNorm);
+    try {
+      await invitarJugadorEquipo(Number(equipoId), emailNorm);
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || 'Error al reenviar');
+    } finally {
+      setReenviandoEmail(null);
+    }
+  };
+
+  const btnPendienteOutline = {
+    fontSize: '11px',
+    fontWeight: 700,
+    padding: '4px 9px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    border: '1px solid #cbd5e1',
+    background: '#fff',
+    color: '#475569',
+    lineHeight: 1.2,
+  };
+
+  const renderPendienteDeConfirmar = (p, { conAccionesCreador }) => {
+    const etiqueta = (
+      <span style={{ fontSize: '13px', color: T.colorWarningSoft, fontWeight: 600 }}>
+        Pendiente de confirmar
+      </span>
+    );
+    if (!conAccionesCreador) {
+      return (
+        <div style={{ marginTop: '4px' }}>{etiqueta}</div>
+      );
+    }
+    const em = normalizeJugadorEmail(p);
+    const map = perfilMapsJugadores?.perfilByEmailLower;
+    const row = em && map instanceof Map ? map.get(em) : null;
+    const tieneWaPerfil = Boolean(row && String(row.whatsapp || '').trim());
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '8px',
+          marginTop: '4px',
+        }}
+      >
+        {etiqueta}
+        {!em || !tieneWaPerfil ? (
+          <button
+            type="button"
+            onClick={abrirCompartirLugarEquipoWa}
+            disabled={!urlCompartirLugarEquipoWa}
+            style={{
+              ...btnPendienteOutline,
+              opacity: urlCompartirLugarEquipoWa ? 1 : 0.5,
+              cursor: urlCompartirLugarEquipoWa ? 'pointer' : 'default',
+            }}
+          >
+            Compartir link
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={reenviandoEmail === em}
+            onClick={() => void reenviarInvitacionPendiente(em)}
+            style={{
+              ...btnPendienteOutline,
+              opacity: reenviandoEmail === em ? 0.65 : 1,
+              cursor: reenviandoEmail === em ? 'default' : 'pointer',
+            }}
+          >
+            {reenviandoEmail === em ? 'Enviando…' : 'Reenviar invitación'}
+          </button>
+        )}
+      </div>
+    );
+  };
 
   const currentJugador = useMemo(() => {
     const sessionEmail = String(session?.user?.email || '').trim();
@@ -906,9 +1003,7 @@ export default function EquipoVista() {
                       Perfil incompleto
                     </div>
                   ) : esJugadorPendiente(p) ? (
-                    <div style={{ fontSize: '13px', color: T.colorWarningSoft, fontWeight: 600, marginTop: '4px' }}>
-                      Pendiente de confirmar
-                    </div>
+                    renderPendienteDeConfirmar(p, { conAccionesCreador: true })
                   ) : null}
                 </div>
               ))}
@@ -930,9 +1025,7 @@ export default function EquipoVista() {
                       Perfil incompleto
                     </div>
                   ) : esJugadorPendiente(p) ? (
-                    <div style={{ fontSize: '13px', color: T.colorWarningSoft, fontWeight: 600, marginTop: '4px' }}>
-                      Pendiente de confirmar
-                    </div>
+                    renderPendienteDeConfirmar(p, { conAccionesCreador: false })
                   ) : null}
                 </div>
               ))}
