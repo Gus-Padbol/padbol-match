@@ -277,7 +277,12 @@ export default function ReservaForm() {
 
   // Tras login: restaurar sede/fecha/hora/cancha guardados al pedir login desde la selección de cancha.
   useEffect(() => {
-    if (sedes.length === 0 || authLoading || !session?.user) return;
+    if (sedes.length < 1) {
+      return;
+    }
+    if (authLoading || !session?.user) {
+      return;
+    }
     let raw;
     try {
       raw = sessionStorage.getItem(RESERVA_FORM_RESTORE_KEY);
@@ -335,7 +340,7 @@ export default function ReservaForm() {
     }));
     setPantalla(4);
     setError('');
-  }, [sedes, authLoading, session?.user]);
+  }, [sedes.length, sedes, authLoading, session?.user]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
