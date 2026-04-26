@@ -777,7 +777,12 @@ export default function ReservaForm() {
                       key={c.num}
                       type="button"
                       disabled={!c.libre}
-                      onClick={() => {
+                      onClick={async () => {
+                        const { data } = await supabase.auth.getSession();
+                        if (!data?.session?.user) {
+                          navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
+                          return;
+                        }
                         setFormData(prev => ({ ...prev, cancha: String(c.num) }));
                         setPantalla(4);
                         setError('');
