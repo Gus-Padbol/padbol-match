@@ -153,10 +153,16 @@ input[type="date"] {
 }
 
 input.reserva-input-fecha,
-.form-group input.reserva-input-fecha {
+.form-group input[type="date"] {
   font-size: 16px;
   min-height: 48px;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Día de hoy en /reservar?sedeId=… (valor del input = fecha local de hoy) */
+.reserva-fecha-hoy .reserva-input-fecha {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.22);
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
