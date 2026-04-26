@@ -7,6 +7,7 @@ import BottomNav from '../components/BottomNav';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
+import { saveReservaReturnUrl } from '../utils/reservaReturnUrl';
 import { getDisplayName } from '../utils/displayName';
 
 // Returns the correct price for a given sede + time slot.
@@ -169,7 +170,8 @@ export default function ReservaForm() {
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
   const [canchasDisponibles, setCanchasDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [mensaje, setMensaje] = useState('');
+  /** Evita el mensaje "No hay horarios…" un frame antes del fetch (y solo tras una consulta terminada para sede+fecha actuales). */
+  const [horariosUltimaConsulta, setHorariosUltimaConsulta] = useState({ sedeId: '', fecha: '' });
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   /** Número local en pantalla resumen — controlado aparte de formData para no re-disparar efectos al escribir */
@@ -241,13 +243,30 @@ export default function ReservaForm() {
       return;
     }
 
+    const sp = new URLSearchParams(location.search);
+    const fechaQ = (sp.get('fecha') || '').trim();
+    const horaQ = (sp.get('hora') || '').trim();
+    const canchaQ = (sp.get('canchaId') || sp.get('cancha') || '').trim();
+
     const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
     setCiudades(ciudadesDelPais);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
-    setPantalla(2);
-    setFormData((prev) =>
-      prev.fecha ? prev : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
-    );
+
+    if (fechaQ && horaQ && canchaQ) {
+      setFormData((prev) => ({
+        ...prev,
+        fecha: fechaQ,
+        hora: horaQ,
+        cancha: canchaQ,
+      }));
+      setPantalla(4);
+      setError('');
+    } else {
+      setPantalla(2);
+      setFormData((prev) =>
+        prev.fecha ? prev : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
+      );
+    }
   }, [sedes, initialSedeId, location.pathname, location.search]);
 
   // Tras login: restaurar sede/fecha/hora/cancha guardados al pedir login desde la selección de cancha.
@@ -363,12 +382,14 @@ export default function ReservaForm() {
     );
 
     setLoading(true);
+    const sedeIdKey = filtros.sede_id === '' || filtros.sede_id == null ? '' : String(filtros.sede_id);
     try {
       const response = await fetch(url);
       const text = await response.text();
 
       if (!response.ok) {
         setHorariosDisponibles([]);
+        setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
         return;
       }
 
@@ -377,6 +398,7 @@ export default function ReservaForm() {
         reservadas = JSON.parse(text);
       } catch {
         setHorariosDisponibles([]);
+        setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
         return;
       }
 
@@ -448,8 +470,10 @@ export default function ReservaForm() {
       }
 
       setHorariosDisponibles(todosLosHorarios);
+      setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
     } catch {
       setHorariosDisponibles([]);
+      setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
     } finally {
       setLoading(false);
     }
@@ -463,6 +487,8 @@ export default function ReservaForm() {
 
   const handleChangeFecha = (e) => {
     const fecha = e.target.value;
+    setLoading(true);
+    setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
     setFormData(prev => ({
       ...prev,
       fecha,
@@ -552,6 +578,12 @@ export default function ReservaForm() {
   const handlePagarConMP = async () => {
     if (authLoading) return;
     if (!session?.user) {
+      saveReservaReturnUrl({
+        sedeId: filtros.sede_id,
+        fecha: formData.fecha,
+        hora: formData.hora,
+        cancha: formData.cancha,
+      });
       navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return;
     }
@@ -756,7 +788,12 @@ export default function ReservaForm() {
               </div>
             )}
 
-            {formData.fecha && horariosDisponibles.length === 0 && loading === false && (
+            {formData.fecha &&
+              sedeSeleccionada &&
+              horariosDisponibles.length === 0 &&
+              loading === false &&
+              String(filtros.sede_id) === horariosUltimaConsulta.sedeId &&
+              formData.fecha === horariosUltimaConsulta.fecha && (
               <div className="error-message">No hay horarios disponibles para esta fecha</div>
             )}
 
@@ -805,6 +842,12 @@ export default function ReservaForm() {
                           } catch (_) {
                             /* ignore */
                           }
+                          saveReservaReturnUrl({
+                            sedeId: filtros.sede_id,
+                            fecha: formData.fecha,
+                            hora: formData.hora,
+                            cancha: c.num,
+                          });
                           navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
                           return;
                         }
