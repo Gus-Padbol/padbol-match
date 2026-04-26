@@ -127,14 +127,7 @@ function AppRoutes() {
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
 
         <Route path="/reserva" element={<Navigate to="/reservar" replace />} />
-        <Route
-          path="/reservar"
-          element={
-            <ProtectedRoute>
-              <ReservaForm />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/reservar" element={<ReservaForm />} />
 
         <Route path="/torneos" element={<TorneosPublicos />} />
         <Route path="/torneo/crear" element={<TorneoCrear />} />
