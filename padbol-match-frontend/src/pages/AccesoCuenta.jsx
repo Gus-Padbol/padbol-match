@@ -5,7 +5,6 @@ import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { APP_HEADER_LOGO } from '../components/AppUnifiedHeader';
 import { useAuth } from '../context/AuthContext';
 import { safeRedirectPath } from '../utils/safeRedirect';
 
@@ -151,8 +150,27 @@ export default function AccesoCuenta() {
       }}
     >
       <AppHeader title="Acceso" />
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-        <img src="/logo-padbol-match.png" alt="Padbol Match" style={APP_HEADER_LOGO} />
+      <div
+        style={{
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%',
+          maxWidth: '400px',
+        }}
+      >
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
+          style={{
+            width: '120px',
+            height: '120px',
+            minWidth: '120px',
+            minHeight: '120px',
+            display: 'block',
+            objectFit: 'contain',
+          }}
+        />
       </div>
       <div
         style={{
@@ -189,11 +207,12 @@ export default function AccesoCuenta() {
               inputMode="email"
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 boxSizing: 'border-box',
+                fontSize: '16px',
               }}
             />
             <label
@@ -214,11 +233,12 @@ export default function AccesoCuenta() {
               autoComplete="current-password"
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '14px',
                 marginBottom: '18px',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 boxSizing: 'border-box',
+                fontSize: '16px',
               }}
             />
             <button
@@ -226,18 +246,37 @@ export default function AccesoCuenta() {
               disabled={busy}
               style={{
                 width: '100%',
-                padding: '12px',
+                padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
                 background: 'linear-gradient(135deg,#667eea,#764ba2)',
                 color: 'white',
                 fontWeight: 700,
-                fontSize: '15px',
+                fontSize: '18px',
                 cursor: busy ? 'default' : 'pointer',
                 opacity: busy ? 0.7 : 1,
               }}
             >
               {busy ? 'Ingresando…' : 'Ingresar'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo('register')}
+              disabled={busy}
+              style={{
+                marginTop: '14px',
+                width: '100%',
+                padding: 0,
+                border: 'none',
+                background: 'transparent',
+                color: '#fb923c',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: busy ? 'default' : 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              ¿No tenés cuenta? Regístrate
             </button>
           </form>
         ) : (
@@ -261,11 +300,12 @@ export default function AccesoCuenta() {
               inputMode="email"
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 boxSizing: 'border-box',
+                fontSize: '16px',
               }}
             />
             <label
@@ -286,11 +326,12 @@ export default function AccesoCuenta() {
               autoComplete="new-password"
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 boxSizing: 'border-box',
+                fontSize: '16px',
               }}
             />
             <label
@@ -311,11 +352,12 @@ export default function AccesoCuenta() {
               autoComplete="new-password"
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '14px',
                 marginBottom: '18px',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 boxSizing: 'border-box',
+                fontSize: '16px',
               }}
             />
             <button
@@ -323,13 +365,13 @@ export default function AccesoCuenta() {
               disabled={busy}
               style={{
                 width: '100%',
-                padding: '12px',
+                padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
                 background: 'linear-gradient(135deg,#667eea,#764ba2)',
                 color: 'white',
                 fontWeight: 700,
-                fontSize: '15px',
+                fontSize: '18px',
                 cursor: busy ? 'default' : 'pointer',
                 opacity: busy ? 0.7 : 1,
               }}
@@ -346,27 +388,7 @@ export default function AccesoCuenta() {
           <p style={{ color: '#166534', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{infoMsg}</p>
         ) : null}
 
-        {modo === 'login' ? (
-          <button
-            type="button"
-            onClick={() => setModo('register')}
-            disabled={busy}
-            style={{
-              marginTop: '16px',
-              width: '100%',
-              padding: '12px',
-              borderRadius: '10px',
-              border: '1px solid #cbd5e1',
-              background: '#f8fafc',
-              color: '#334155',
-              fontWeight: 700,
-              fontSize: '15px',
-              cursor: busy ? 'default' : 'pointer',
-            }}
-          >
-            Crear cuenta
-          </button>
-        ) : (
+        {modo !== 'login' ? (
           <button
             type="button"
             onClick={() => setModo('login')}
@@ -386,7 +408,7 @@ export default function AccesoCuenta() {
           >
             Ya tengo cuenta
           </button>
-        )}
+        ) : null}
 
       </div>
       <BottomNav />
