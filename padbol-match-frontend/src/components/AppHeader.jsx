@@ -63,7 +63,9 @@ export default function AppHeader({ title, showBack = true, onBack, backLabel })
         <div aria-hidden style={{ minWidth: '88px' }} />
       )}
 
-      <h3
+      <button
+        type="button"
+        onClick={() => navigate('/')}
         style={{
           color: '#fff',
           fontSize: '15px',
@@ -74,11 +76,19 @@ export default function AppHeader({ title, showBack = true, onBack, backLabel })
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           minWidth: 0,
+          cursor: 'pointer',
+          background: 'transparent',
+          border: 'none',
+          padding: '4px 6px',
+          fontFamily: 'inherit',
+          width: '100%',
+          maxWidth: '100%',
         }}
-        title={title}
+        title={title ? `${title} — Ir al inicio` : 'Ir al inicio'}
+        aria-label={title ? `${title}, ir al inicio` : 'Ir al inicio'}
       >
         {title}
-      </h3>
+      </button>
 
       {session?.user ? (
         <button
