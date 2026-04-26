@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -17,59 +19,93 @@ const btnVolver = {
  * Barra superior fija: ← Volver (opcional) y título centrado.
  * La navegación principal va en {@link BottomNav}.
  */
-const AppHeader = ({ title, showBack = true }) => (
-  <div
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      minHeight: '56px',
-      background: '#0f172a',
-      display: 'grid',
-      gridTemplateColumns: 'minmax(88px, auto) 1fr minmax(44px, auto)',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '8px 10px',
-      boxSizing: 'border-box',
-      zIndex: 1002,
-      borderBottom: '1px solid rgba(255,255,255,0.08)',
-    }}
-  >
-    {showBack ? (
-      <button
-        type="button"
-        onClick={() => {
-          if (typeof window !== 'undefined') window.history.back();
-        }}
-        style={btnVolver}
-        aria-label="Volver atrás"
-      >
-        ← Volver
-      </button>
-    ) : (
-      <div aria-hidden style={{ minWidth: '88px' }} />
-    )}
+export default function AppHeader({ title, showBack = true }) {
+  const navigate = useNavigate();
+  const { session, signOutAndClear } = useAuth();
 
-    <h3
+  return (
+    <div
       style={{
-        color: '#fff',
-        fontSize: '15px',
-        fontWeight: 600,
-        margin: 0,
-        textAlign: 'center',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        minWidth: 0,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        minHeight: '56px',
+        background: '#0f172a',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(88px, auto) 1fr minmax(44px, auto)',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '8px 10px',
+        boxSizing: 'border-box',
+        zIndex: 1002,
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}
-      title={title}
     >
-      {title}
-    </h3>
+      {showBack ? (
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined') window.history.back();
+          }}
+          style={btnVolver}
+          aria-label="Volver atrás"
+        >
+          ← Volver
+        </button>
+      ) : (
+        <div aria-hidden style={{ minWidth: '88px' }} />
+      )}
 
-    <div aria-hidden style={{ minWidth: '44px' }} />
-  </div>
-);
+      <h3
+        style={{
+          color: '#fff',
+          fontSize: '15px',
+          fontWeight: 600,
+          margin: 0,
+          textAlign: 'center',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          minWidth: 0,
+        }}
+        title={title}
+      >
+        {title}
+      </h3>
 
-export default AppHeader;
+      {session?.user ? (
+        <button
+          type="button"
+          onClick={async () => {
+            await signOutAndClear();
+            navigate('/');
+          }}
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+          style={{
+            justifySelf: 'end',
+            width: 34,
+            height: 34,
+            padding: 0,
+            borderRadius: '50%',
+            border: 'none',
+            background: 'rgba(255,255,255,0.1)',
+            color: '#e2e8f0',
+            fontSize: 16,
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          ⏻
+        </button>
+      ) : (
+        <div aria-hidden style={{ minWidth: '44px' }} />
+      )}
+    </div>
+  );
+}
