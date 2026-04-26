@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_NAV_HEIGHT_PX,
+  isHubNavBarHiddenPathname,
 } from '../constants/hubLayout';
 
 const BottomNav = () => {
@@ -11,6 +12,8 @@ const BottomNav = () => {
   const location = useLocation();
   const { loading: authLoading } = useAuth();
   const path = location.pathname;
+
+  if (isHubNavBarHiddenPathname(path)) return null;
 
   const items = [
     { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
