@@ -126,6 +126,9 @@ export default function EquipoVista() {
     buildJugadorPerfilLookupMaps([])
   );
   const [reenviandoEmail, setReenviandoEmail] = useState(null);
+  /** `jugadores_perfil` (incl. whatsapp) solo emails de jugadores en equipo con estado pendiente; se actualiza en {@link cargarEquipo}. */
+  const [perfilPendientesPorEmail, setPerfilPendientesPorEmail] = useState(() => new Map());
+  const [nombreSedeTorneo, setNombreSedeTorneo] = useState(null);
 
   const authUserId = useMemo(
     () => (session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null),
@@ -171,6 +174,8 @@ export default function EquipoVista() {
       setTorneo(null);
       setPlayers([]);
       setRequests([]);
+      setNombreSedeTorneo(null);
+      setPerfilPendientesPorEmail(new Map());
       setLoading(false);
       return;
     }
@@ -187,11 +192,24 @@ export default function EquipoVista() {
       if (torneoError) {
         console.error(torneoError);
         setTorneo(null);
+        setNombreSedeTorneo(null);
       } else {
         setTorneo(torneoData || null);
+        let sedeNombre = null;
+        if (torneoData?.sede_id != null && torneoData.sede_id !== '') {
+          const { data: sedeData, error: sedeError } = await supabase
+            .from('sedes')
+            .select('nombre')
+            .eq('id', Number(torneoData.sede_id))
+            .maybeSingle();
+          if (sedeError) console.error(sedeError);
+          else sedeNombre = sedeData?.nombre != null ? String(sedeData.nombre).trim() : null;
+        }
+        setNombreSedeTorneo(sedeNombre && sedeNombre.length ? sedeNombre : null);
       }
     } else {
       setTorneo(null);
+      setNombreSedeTorneo(null);
     }
 
     let jugadores = Array.isArray(row?.jugadores)
@@ -232,6 +250,12 @@ export default function EquipoVista() {
     const solicitudes = Array.isArray(row?.solicitudes)
       ? row.solicitudes.map(normalizePlayer).filter(Boolean)
       : [];
+
+    const pendientesConEmail = jugadores.filter((p) => esJugadorPendiente(p) && normalizeJugadorEmail(p));
+    const perfilesPend = pendientesConEmail.length
+      ? await fetchJugadoresPerfilPorJugadores(pendientesConEmail)
+      : [];
+    setPerfilPendientesPorEmail(buildJugadorPerfilLookupMaps(perfilesPend).perfilByEmailLower);
 
     setEquipo(row);
     setPlayers(jugadores);
@@ -373,9 +397,12 @@ export default function EquipoVista() {
     const tid = id != null && String(id).trim() !== '' ? String(id).trim() : '';
     if (!tid) return '';
     const link = `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos`;
-    const text = `Hola, te invito a confirmar tu lugar en el equipo. Ingresá acá: ${link}`;
-    return `https://wa.me/?text=${encodeURIComponent(text)}`;
-  }, [id]);
+    const nombreTorneo = String(torneo?.nombre || '').trim() || 'Padbol';
+    const nombreSede = String(nombreSedeTorneo || '').trim() || 'la sede del torneo';
+    const nombreEquipo = String(equipo?.nombre || '').trim() || 'nuestro equipo';
+    const mensaje = `¡Hola! Te invito a jugar juntos el torneo de Padbol ${nombreTorneo} en ${nombreSede}. Somos el equipo ${nombreEquipo}. ¡Confirmá tu lugar y nos vemos en la cancha! 🎯 ${link}`;
+    return `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+  }, [id, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
 
   const abrirCompartirLugarEquipoWa = () => {
     if (!urlCompartirLugarEquipoWa) return;
@@ -419,7 +446,7 @@ export default function EquipoVista() {
       );
     }
     const em = normalizeJugadorEmail(p);
-    const map = perfilMapsJugadores?.perfilByEmailLower;
+    const map = perfilPendientesPorEmail;
     const row = em && map instanceof Map ? map.get(em) : null;
     const tieneWaPerfil = Boolean(row && String(row.whatsapp || '').trim());
 
