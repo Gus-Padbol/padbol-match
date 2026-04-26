@@ -68,26 +68,19 @@ function fechaMaxReservaISO() {
   return `${y}-${m}-${day}`;
 }
 
-/** Pantalla 2 solo si ?sedeId= en la URL o ultima_sede en localStorage; sin ambos → pantalla 1 (país/ciudad se completan al cargar sedes). */
+/** Pantalla 2 solo si `?sedeId=` está en la URL. `ultima_sede` en localStorage no abre el calendario directo (siempre elegir sede / perfil primero). */
 function readPrimedSedeReserva() {
   const emptyFiltros = { pais: '', ciudad: '', sede_id: '' };
   if (typeof window === 'undefined') return { pantalla: 1, filtros: emptyFiltros };
   try {
     const params = new URLSearchParams(window.location.search);
     const sedeIdFromUrl = params.get('sedeId')?.trim() || null;
-    const sedeIdLS = localStorage.getItem('ultima_sede')?.trim() || null;
-    const sedeId = sedeIdFromUrl;
-    if (!sedeId && sedeIdLS) {
-      const id = parseInt(String(sedeIdLS), 10);
-      if (Number.isNaN(id)) return { pantalla: 1, filtros: emptyFiltros };
-      return { pantalla: 2, filtros: { ...emptyFiltros, sede_id: id } };
+    if (!sedeIdFromUrl) {
+      return { pantalla: 1, filtros: emptyFiltros };
     }
-    if (sedeId) {
-      const id = parseInt(String(sedeId), 10);
-      if (Number.isNaN(id)) return { pantalla: 1, filtros: emptyFiltros };
-      return { pantalla: 2, filtros: { ...emptyFiltros, sede_id: id } };
-    }
-    return { pantalla: 1, filtros: emptyFiltros };
+    const id = parseInt(String(sedeIdFromUrl), 10);
+    if (Number.isNaN(id)) return { pantalla: 1, filtros: emptyFiltros };
+    return { pantalla: 2, filtros: { ...emptyFiltros, sede_id: id } };
   } catch {
     return { pantalla: 1, filtros: emptyFiltros };
   }
@@ -230,48 +223,30 @@ export default function ReservaForm() {
     };
   }, []);
 
-  // Completar país/ciudad y fijar pantalla 2 cuando hay ?sedeId= o ultima_sede (misma prioridad que el arranque sincrónico).
+  // Completar país/ciudad y fijar pantalla 2 solo cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
   useEffect(() => {
     if (sedes.length === 0) return;
 
     const sedeIdFromUrl =
       initialSedeId && String(initialSedeId).trim() ? String(initialSedeId).trim() : null;
-    const sedeIdLS =
-      typeof localStorage !== 'undefined' ? localStorage.getItem('ultima_sede')?.trim() || null : null;
-    const sedeId = sedeIdFromUrl;
+    if (!sedeIdFromUrl) return;
 
-    let targetRaw = null;
-    if (sedeId) {
-      targetRaw = sedeId;
-    } else if (!sedeId && sedeIdLS) {
-      targetRaw = sedeIdLS;
-    }
-    if (!targetRaw) return;
-
-    const id = parseInt(String(targetRaw), 10);
+    const id = parseInt(String(sedeIdFromUrl), 10);
     if (Number.isNaN(id)) return;
 
     const sede = sedes.find((s) => Number(s.id) === id);
     if (!sede) {
-      if (!sedeIdFromUrl && sedeIdLS) {
-        try {
-          localStorage.removeItem('ultima_sede');
-          localStorage.removeItem('ultima_sede_nombre');
-        } catch (_) { /* ignore */ }
-      }
       setFiltros({ pais: '', ciudad: '', sede_id: '' });
       setPantalla(1);
       return;
     }
 
-    const ciudadesDelPais = [...new Set(sedes.filter(s => s.pais === sede.pais).map(s => s.ciudad))].sort();
+    const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
     setCiudades(ciudadesDelPais);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
     setPantalla(2);
     setFormData((prev) =>
-      prev.fecha
-        ? prev
-        : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
+      prev.fecha ? prev : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
     );
   }, [sedes, initialSedeId, location.pathname, location.search]);
 
