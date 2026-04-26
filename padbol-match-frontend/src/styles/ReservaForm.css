@@ -40,6 +40,69 @@
   margin-bottom: 10px;
 }
 
+.reserva-horarios-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reserva-horario-btn {
+  min-width: 8.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #1e293b;
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.reserva-horario-btn:hover {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+@media (min-width: 640px) {
+  .reserva-horario-btn {
+    min-width: 9.5rem;
+    font-size: 15px;
+  }
+}
+
+.reserva-horario-btnActive {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #fff;
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+.reserva-horario-btnActive:hover {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #fff;
+}
+
+.reserva-horario-linea {
+  display: block;
+}
+
+.reserva-horario-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.reserva-horario-btnActive .reserva-horario-meta {
+  color: #dcfce7;
+}
+
 .reserva-select-horario {
   margin-top: 4px;
 }

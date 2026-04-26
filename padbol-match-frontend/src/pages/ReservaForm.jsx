@@ -532,20 +532,6 @@ export default function ReservaForm() {
     setError('');
   }, []);
 
-  const selectHorario = useCallback(
-    (hora) => {
-      const f = formData.fecha;
-      setFormData((prev) => ({
-        ...prev,
-        hora,
-        cancha: '',
-      }));
-      void buscarCanchasDisponibles(hora, f);
-      setError('');
-    },
-    [formData.fecha, buscarCanchasDisponibles]
-  );
-
   const buscarCanchasDisponibles = useCallback(async (hora, fechaReserva) => {
     const fecha = fechaReserva != null && String(fechaReserva).trim() !== '' ? String(fechaReserva).trim() : formData.fecha;
     if (!hora || !fecha) return;
@@ -570,6 +556,20 @@ export default function ReservaForm() {
       setError('Error al buscar canchas disponibles');
     }
   }, [formData.fecha, filtros.sede_id, sedeSeleccionada]);
+
+  const selectHorario = useCallback(
+    (hora) => {
+      const f = formData.fecha;
+      setFormData((prev) => ({
+        ...prev,
+        hora,
+        cancha: '',
+      }));
+      void buscarCanchasDisponibles(hora, f);
+      setError('');
+    },
+    [formData.fecha, buscarCanchasDisponibles]
+  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -772,7 +772,7 @@ export default function ReservaForm() {
             {horariosDisponibles.length > 0 && (
               <div className="form-group reserva-horario-bloque">
                 <label style={{ display: 'block', marginBottom: '10px' }}>Horarios disponibles</label>
-                <div className="flex flex-wrap gap-2">
+                <div className="reserva-horarios-wrap">
                   {horariosDisponibles.map((h) => {
                     const active = formData.hora === h.hora;
                     return (
@@ -780,15 +780,10 @@ export default function ReservaForm() {
                         key={h.hora}
                         type="button"
                         onClick={() => selectHorario(h.hora)}
-                        className={[
-                          'min-w-[8.5rem] rounded-xl border px-3 py-2.5 text-left text-sm font-semibold shadow-sm transition sm:min-w-[9.5rem] sm:text-[15px]',
-                          active
-                            ? 'border-green-600 bg-green-600 text-white ring-2 ring-green-600 ring-offset-1'
-                            : 'border-slate-200 bg-white text-slate-800 hover:border-green-500 hover:bg-green-50',
-                        ].join(' ')}
+                        className={active ? 'reserva-horario-btn reserva-horario-btnActive' : 'reserva-horario-btn'}
                       >
-                        <span className="block">{h.horario}</span>
-                        <span className={`mt-0.5 block text-xs font-normal ${active ? 'text-green-100' : 'text-slate-500'}`}>
+                        <span className="reserva-horario-linea">{h.horario}</span>
+                        <span className="reserva-horario-meta">
                           {h.libres} libre{h.libres === 1 ? '' : 's'}
                         </span>
                       </button>

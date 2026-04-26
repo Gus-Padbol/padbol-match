@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import styles from './ReservaCalendarioMes.module.css';
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const MESES = [
@@ -30,6 +31,16 @@ function startOfDay(d) {
 function mondayIndexFromDate(d) {
   const dow = d.getDay();
   return dow === 0 ? 6 : dow - 1;
+}
+
+function dayButtonClass(c) {
+  if (c.isSelected) return `${styles.dayBtn} ${styles.daySelected}`;
+  if (!c.selectable) {
+    if (c.isToday) return `${styles.dayBtn} ${styles.dayTodayPast}`;
+    return `${styles.dayBtn} ${styles.dayPast}`;
+  }
+  if (c.isToday) return `${styles.dayBtn} ${styles.dayToday}`;
+  return `${styles.dayBtn} ${styles.dayAvailable}`;
 }
 
 /**
@@ -87,13 +98,13 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
       });
     }
     return list;
-  }, [viewY, viewM, minD, maxD, minIso, selectedIso, disabled]);
+  }, [viewY, viewM, minD, maxD, selectedIso, disabled, hoyStr]);
 
   const title = `${MESES[viewM]} ${viewY}`;
 
   return (
-    <div className="w-full max-w-md mx-auto rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <div className={styles.wrap}>
+      <div className={styles.navRow}>
         <button
           type="button"
           aria-label="Mes anterior"
@@ -108,11 +119,11 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
               return m - 1;
             });
           }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className={styles.navBtn}
         >
           ←
         </button>
-        <div className="min-w-0 flex-1 text-center text-sm font-bold capitalize text-slate-800 sm:text-base">
+        <div className={styles.title}>
           {title}
         </div>
         <button
@@ -129,42 +140,29 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
               return m + 1;
             });
           }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className={styles.navBtn}
         >
           →
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-xs">
+      <div className={styles.weekHeader}>
         {DIAS_SEMANA.map((d) => (
-          <div key={d} className="py-1">
+          <div key={d} className={styles.weekHeaderCell}>
             {d}
           </div>
         ))}
       </div>
-      <div className="mt-1 grid grid-cols-7 gap-1">
+      <div className={styles.grid}>
         {cells.map((c) =>
           c.empty ? (
-            <div key={c.key} className="aspect-square min-h-[2.25rem] sm:min-h-[2.5rem]" aria-hidden />
+            <div key={c.key} className={styles.cellEmpty} aria-hidden />
           ) : (
             <button
               key={c.key}
               type="button"
               disabled={!c.selectable}
               onClick={() => c.selectable && onSelectDay(c.iso)}
-              className={[
-                'aspect-square min-h-[2.25rem] rounded-lg text-sm font-semibold transition sm:min-h-[2.5rem] sm:text-base',
-                c.past ? 'cursor-not-allowed bg-slate-100 text-slate-400' : '',
-                !c.past && !c.isSelected && !c.isToday && c.selectable
-                  ? 'border border-slate-200 bg-white text-slate-800 hover:border-green-500 hover:bg-green-50'
-                  : '',
-                c.isToday && !c.isSelected && c.selectable
-                  ? 'border-2 border-green-600 bg-white text-slate-900'
-                  : '',
-                c.isToday && !c.selectable ? 'border border-slate-200 bg-slate-100 text-slate-400 line-through' : '',
-                c.isSelected ? 'bg-green-600 text-white shadow-md ring-2 ring-green-600 ring-offset-1' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+              className={dayButtonClass(c)}
             >
               {c.day}
             </button>
