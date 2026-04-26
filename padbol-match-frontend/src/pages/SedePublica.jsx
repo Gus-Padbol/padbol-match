@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -10,120 +10,69 @@ function formatHorario(apertura, cierre) {
   return apertura || cierre;
 }
 
-/* ─── Photo Carousel ──────────────────────────────────────────────────── */
-function Carousel({ fotos }) {
-  const [idx, setIdx] = useState(0);
-  const timerRef = useRef(null);
-
-  const startTimer = () => {
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setIdx(p => (p + 1) % fotos.length), 4000);
-  };
-
-  useEffect(() => {
-    if (fotos.length > 1) startTimer();
-    return () => clearInterval(timerRef.current);
-  }, [fotos.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleNav = (delta) => {
-    setIdx(p => (p + delta + fotos.length) % fotos.length);
-    startTimer();
-  };
-
-  if (!fotos.length) return null;
-  const showTwo = fotos.length >= 2;
-  const visible = showTwo ? [fotos[idx], fotos[(idx + 1) % fotos.length]] : [fotos[idx]];
-
-  return (
-    <div style={{ borderRadius: '16px', overflow: 'hidden', background: '#0f172a', marginBottom: '8px' }}>
-      <div style={{ position: 'relative' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: showTwo ? 'repeat(2, 1fr)' : '1fr', gap: '3px' }}>
-          {visible.map((url, i) => (
-            <div key={`${url}-${i}`} style={{ aspectRatio: '4/3', overflow: 'hidden', maxHeight: '280px' }}>
-              <img src={url} alt={`Cancha ${idx + i + 1}`}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </div>
-          ))}
-        </div>
-        {fotos.length > 1 && <>
-          <button onClick={() => handleNav(-1)} aria-label="Anterior" style={{
-            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
-            width: '36px', height: '36px', borderRadius: '50%', zIndex: 2,
-            background: 'rgba(0,0,0,0.6)', color: 'white', border: '1px solid rgba(255,255,255,0.2)',
-            cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>‹</button>
-          <button onClick={() => handleNav(1)} aria-label="Siguiente" style={{
-            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-            width: '36px', height: '36px', borderRadius: '50%', zIndex: 2,
-            background: 'rgba(0,0,0,0.6)', color: 'white', border: '1px solid rgba(255,255,255,0.2)',
-            cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>›</button>
-        </>}
-      </div>
-      {/* Dots — outside overflow:hidden strip */}
-      {fotos.length > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', padding: '10px 0', background: '#0f172a' }}>
-          {fotos.map((_, i) => (
-            <button key={i} onClick={() => { setIdx(i); startTimer(); }} aria-label={`Foto ${i + 1}`}
-              style={{
-                width: i === idx ? '22px' : '8px', height: '8px', borderRadius: '4px',
-                border: 'none', cursor: 'pointer', padding: 0,
-                background: i === idx ? 'white' : 'rgba(255,255,255,0.3)',
-                transition: 'all 0.25s',
-              }} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── Info row ────────────────────────────────────────────────────────── */
-function InfoRow({ icon, text, highlight }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-      {/* Icon in red circle */}
-      <div style={{
-        flexShrink: 0, width: '32px', height: '32px', borderRadius: '50%',
-        background: highlight ? '#dc2626' : '#fee2e2',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '14px', marginTop: '2px',
-      }}>
-        {icon}
-      </div>
-      <span style={{
-        lineHeight: 1.6, fontSize: highlight ? '16px' : '14px',
-        fontWeight: highlight ? 800 : 400,
-        color: highlight ? '#dc2626' : '#374151',
-        paddingTop: '6px',
-      }}>{text}</span>
-    </div>
-  );
-}
-
-/* ─── Google Maps embed ───────────────────────────────────────────────── */
-function MapEmbed({ direccion, ciudad, pais }) {
-  const parts = [direccion, ciudad, pais].filter(Boolean);
+function mapsLinkForSede(sede) {
+  if (!sede) return null;
+  const lat = sede.latitud != null ? Number(sede.latitud) : NaN;
+  const lon = sede.longitud != null ? Number(sede.longitud) : NaN;
+  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    return `https://www.google.com/maps?q=${lat},${lon}`;
+  }
+  const parts = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean);
   if (!parts.length) return null;
-  const q = encodeURIComponent(parts.join(', '));
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(', '))}`;
+}
+
+function collectFotosSede(sede, max = 4) {
+  if (!sede) return [];
+  const out = [];
+  if (Array.isArray(sede.fotos_urls)) {
+    for (const u of sede.fotos_urls) {
+      if (u && String(u).trim()) out.push(String(u).trim());
+      if (out.length >= max) return out;
+    }
+  }
+  const keys = ['foto_1', 'foto_2', 'foto_3', 'foto_4', 'foto1', 'foto2', 'foto3', 'foto4'];
+  for (const k of keys) {
+    const v = sede[k];
+    if (v && String(v).trim()) out.push(String(v).trim());
+    if (out.length >= max) return out;
+  }
+  return out.slice(0, max);
+}
+
+function GaleriaFotos({ urls }) {
+  if (!urls.length) return null;
+  const show = urls.slice(0, 4);
   return (
-    <div style={{ marginBottom: '24px' }}>
-      <h3 style={{ color: '#1e1b4b', fontSize: '15px', fontWeight: 700, marginBottom: '12px' }}>📍 Cómo llegar</h3>
-      <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.1)' }}>
-        <iframe
-          title="Ubicación de la sede"
-          width="100%"
-          height="250"
-          style={{ border: 0, display: 'block' }}
-          loading="lazy"
-          src={`https://maps.google.com/maps?q=${q}&output=embed`}
-        />
-      </div>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '8px',
+        marginBottom: '20px',
+      }}
+    >
+      {show.map((url, i) => (
+        <div
+          key={`${url}-${i}`}
+          style={{
+            aspectRatio: '1',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            background: '#e2e8f0',
+          }}
+        >
+          <img
+            src={url}
+            alt={`Sede ${i + 1}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        </div>
+      ))}
     </div>
   );
 }
 
-/* ─── Main component ──────────────────────────────────────────────────── */
 export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
@@ -132,278 +81,367 @@ export default function SedePublica() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    console.log('[SedePublica] useEffect fired, sedeId:', sedeId);
-    if (!sedeId) { setError('No se recibió un ID de sede.'); setLoading(false); return; }
-    setLoading(true); setError('');
+    if (!sedeId) {
+      setError('No se recibió un ID de sede.');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError('');
     supabase
       .from('sedes')
       .select('*')
       .eq('id', parseInt(sedeId, 10))
       .maybeSingle()
       .then(({ data, error: err }) => {
-        console.log('[SedePublica] query result — data:', data, 'error:', err);
         if (err) setError(`Error al cargar sede: ${err.message}`);
         else if (!data) setError(`Sede con id ${sedeId} no encontrada.`);
         else setSede(data);
         setLoading(false);
       })
-      .catch(err => {
-        console.error('[SedePublica] catch:', err);
+      .catch((err) => {
         setError('Error inesperado: ' + (err?.message || String(err)));
         setLoading(false);
       });
   }, [sedeId]);
 
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          paddingTop: '64px',
+          paddingBottom: '80px',
+        }}
+      >
+        <AppHeader title="Sede" />
+        <p style={{ color: 'white', fontSize: '18px', fontWeight: 600, textAlign: 'center', padding: '48px 20px' }}>
+          Cargando sede…
+        </p>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (error || !sede) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          paddingTop: '64px',
+          paddingBottom: '80px',
+        }}
+      >
+        <AppHeader title="Sede" />
+        <p style={{ color: 'white', fontSize: '16px', fontWeight: 600, textAlign: 'center', padding: '32px 20px' }}>
+          {error || 'Sede no encontrada.'}
+        </p>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
+  const fotos = collectFotosSede(sede, 4);
+  const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
+  const lineaDireccion = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
+  const mapsHref = mapsLinkForSede(sede);
+  const descripcion = String(sede.descripcion || '').trim();
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: '64px', paddingBottom: '80px' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f5f9', paddingTop: '64px', paddingBottom: '88px' }}>
+      <AppHeader title={sede.nombre ? String(sede.nombre) : 'Sede'} />
 
-      <AppHeader title={sede?.nombre ? String(sede.nombre) : 'Sede'} />
+      <div
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%)',
+          padding: '28px 20px 32px',
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: '-40px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '280px',
+            height: '280px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(102,126,234,0.22) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
 
-      {/* Loading */}
-      {loading && (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: 'white', fontSize: '18px', fontWeight: 600 }}>Cargando sede...</p>
-        </div>
-      )}
-
-      {/* Error */}
-      {!loading && (error || !sede) && (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '20px' }}>
-          <p style={{ color: 'white', fontSize: '16px', fontWeight: 600, textAlign: 'center' }}>{error || 'Sede no encontrada.'}</p>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>sedeId: {sedeId ?? '(undefined)'}</p>
-        </div>
-      )}
-
-      {/* Sede loaded */}
-      {!loading && !error && sede && (() => {
-        console.log('[SedePublica] rendering sede:', sede);
-        const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
-        const fotos = Array.isArray(sede.fotos_urls) ? sede.fotos_urls : [];
-        const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
-        const hasAddress = sede.direccion || sede.ciudad || sede.pais;
-
-        return (
-          <>
-            {/* ── HERO ── */}
-            <div style={{
-              position: 'relative', minHeight: '320px',
-              background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%)',
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'flex-end',
-              paddingBottom: '36px', paddingTop: '28px', overflow: 'hidden',
-            }}>
-              {/* Glow blob */}
-              <div style={{
-                position: 'absolute', top: '-60px', left: '50%', transform: 'translateX(-50%)',
-                width: '320px', height: '320px', borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(102,126,234,0.25) 0%, transparent 70%)',
-                pointerEvents: 'none',
-              }} />
-
-              {sede.logo_url && (
-                <div style={{ position: 'relative', zIndex: 2, marginBottom: '18px' }}>
-                  <img src={sede.logo_url} alt={`Logo ${sede.nombre}`}
-                    style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '22px', background: 'white', padding: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.45)' }} />
-                </div>
-              )}
-
-              <h1 style={{
-                position: 'relative', zIndex: 2, color: 'white',
-                fontSize: 'clamp(1.3rem, 6vw, 2.2rem)', fontWeight: 900,
-                margin: '0 0 10px', textAlign: 'center',
-                textShadow: '0 2px 16px rgba(0,0,0,0.6)',
-                padding: '0 24px', lineHeight: 1.15, wordBreak: 'break-word',
-              }}>
-                {sede.nombre || '(sin nombre)'}
-              </h1>
-
-              {sede.descripcion && (
-                <p style={{
-                  position: 'relative', zIndex: 2,
-                  color: 'white', opacity: 0.85,
-                  fontSize: '1rem', fontStyle: 'italic',
-                  textAlign: 'center', maxWidth: '400px',
-                  margin: '0 24px 16px',
-                  lineHeight: 1.6,
-                  textShadow: '0 1px 8px rgba(0,0,0,0.4)',
-                }}>
-                  {sede.descripcion}
-                </p>
-              )}
-
-              {/* Premium license badge */}
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                {licenciaActiva ? (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '7px',
-                    padding: '7px 16px 7px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 800,
-                    background: 'linear-gradient(135deg, rgba(254,243,199,0.97) 0%, rgba(253,230,138,0.97) 100%)',
-                    color: '#92400e', border: '1.5px solid #d97706',
-                    boxShadow: '0 2px 12px rgba(217,119,6,0.4), inset 0 1px 0 rgba(255,255,255,0.6)',
-                  }}>
-                    <span style={{ fontSize: '15px' }}>⭐</span>
-                    <span style={{ fontSize: '13px', fontWeight: 900, letterSpacing: '0.5px' }}>Licencia PADBOL Activa</span>
-                  </span>
-                ) : (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '7px',
-                    padding: '7px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 700,
-                    background: 'rgba(254,226,226,0.93)', color: '#dc2626',
-                    border: '1px solid rgba(220,38,38,0.35)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  }}>
-                    ⛔ No habilitado
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* ── BODY ── */}
-            <div style={{ maxWidth: '700px', margin: '0 auto', padding: '24px 16px 80px' }}>
-
-              {/* ── Top reservar button ── */}
-              <button
-                type="button"
-                onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
-                style={{
-                  width: '100%', padding: '18px 24px', marginBottom: '20px',
-                  background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                  color: 'white', border: 'none', borderRadius: '14px',
-                  cursor: 'pointer', fontWeight: 800, fontSize: '17px',
-                  boxShadow: '0 4px 18px rgba(185,28,28,0.45)',
-                  letterSpacing: '0.2px',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(185,28,28,0.55)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 18px rgba(185,28,28,0.45)'; }}
-              >
-                Reservar cancha
-              </button>
-
-              {/* ── Info card — redesigned ── */}
-              <div style={{
-                background: '#f8fafc', borderRadius: '18px',
-                borderLeft: '4px solid #dc2626',
-                padding: '24px 28px',
-                boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {sede.logo_url ? (
+            <img
+              src={sede.logo_url}
+              alt={sede.nombre ? `Logo ${sede.nombre}` : 'Logo de la sede'}
+              style={{
+                width: 'min(140px, 42vw)',
+                height: 'min(140px, 42vw)',
+                objectFit: 'contain',
+                borderRadius: '24px',
+                background: 'white',
+                padding: '14px',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.45)',
                 marginBottom: '20px',
-              }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {hasAddress && (
-                    <InfoRow icon="📍" text={[sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ')} />
-                  )}
-                  {horario && <InfoRow icon="⏰" text={`Abierto ${horario}`} />}
-                  {sede.telefono && (() => {
-                    const digits = sede.telefono.replace(/\D/g, '');
-                    const waNumber = digits.startsWith('0') ? '54' + digits.slice(1) : digits;
-                    return (
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                        <div style={{ flexShrink: 0, width: '32px', height: '32px', borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', marginTop: '2px' }}>💬</div>
-                        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer"
-                          style={{ paddingTop: '6px', fontSize: '14px', color: '#16a34a', fontWeight: 600, textDecoration: 'none', lineHeight: 1.6 }}
-                          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
-                          Escríbenos por WhatsApp
-                        </a>
-                      </div>
-                    );
-                  })()}
-                  {sede.email_contacto && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                      <div style={{ flexShrink: 0, width: '32px', height: '32px', borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', marginTop: '2px' }}>✉️</div>
-                      <a href={`mailto:${sede.email_contacto}`} style={{ paddingTop: '6px', fontSize: '14px', color: '#374151', textDecoration: 'none', lineHeight: 1.6 }}
-                        onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                        onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
-                        {sede.email_contacto}
-                      </a>
-                    </div>
-                  )}
-                  {!hasAddress && !sede.telefono && !sede.email_contacto && (
-                    <p style={{ color: '#9ca3af', fontSize: '13px', margin: 0 }}>Sin información de contacto cargada.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* ── Social media links ── */}
-              {(() => {
-                const redes = [
-                  { key: 'instagram', label: 'Instagram', bg: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', color: 'white', icon: '📸' },
-                  { key: 'facebook',  label: 'Facebook',  bg: '#1877f2', color: 'white', icon: '👍' },
-                  { key: 'tiktok',    label: 'TikTok',    bg: '#010101', color: 'white', icon: '🎵' },
-                  { key: 'twitter',   label: 'X / Twitter', bg: '#000', color: 'white', icon: '✖' },
-                  { key: 'youtube',   label: 'YouTube',   bg: '#ff0000', color: 'white', icon: '▶' },
-                  { key: 'website',   label: 'Sitio web', bg: '#374151', color: 'white', icon: '🌐' },
-                ].filter(r => sede[r.key]);
-                if (!redes.length) return null;
-                return (
-                  <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ color: '#1e1b4b', fontSize: '15px', fontWeight: 700, marginBottom: '12px', paddingLeft: '2px' }}>🔗 Seguinos</h3>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                      {redes.map(r => (
-                        <a
-                          key={r.key}
-                          href={sede[r.key]}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '7px',
-                            padding: '9px 16px', borderRadius: '10px', textDecoration: 'none',
-                            background: r.bg, color: r.color,
-                            fontSize: '13px', fontWeight: 700,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            transition: 'transform 0.1s, box-shadow 0.1s',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 5px 14px rgba(0,0,0,0.25)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'; }}
-                        >
-                          <span>{r.icon}</span>
-                          <span>{r.label}</span>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* ── Google Maps ── */}
-              {hasAddress && (
-                <MapEmbed
-                  direccion={sede.direccion}
-                  ciudad={sede.ciudad}
-                  pais={sede.pais}
-                />
-              )}
-
-              {/* ── Photo carousel ── */}
-              {fotos.length > 0 && (
-                <div style={{ marginBottom: '20px' }}>
-                  <h3 style={{ color: '#1e1b4b', fontSize: '15px', fontWeight: 700, marginBottom: '12px', paddingLeft: '2px' }}>📸 Las canchas</h3>
-                  <Carousel fotos={fotos} />
-                </div>
-              )}
-
-              {/* ── Reserve button ── */}
-              <button
-                type="button"
-                onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
-                style={{
-                  width: '100%', padding: '18px 24px',
-                  background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                  color: 'white', border: 'none', borderRadius: '14px',
-                  cursor: 'pointer', fontWeight: 800, fontSize: '17px',
-                  boxShadow: '0 4px 18px rgba(185,28,28,0.45)',
-                  transition: 'transform 0.1s, box-shadow 0.1s',
-                  letterSpacing: '0.2px',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(185,28,28,0.55)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 18px rgba(185,28,28,0.45)'; }}
-              >
-                Reservar cancha
-              </button>
-
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 'min(120px, 38vw)',
+                height: 'min(120px, 38vw)',
+                margin: '0 auto 20px',
+                borderRadius: '24px',
+                background: 'rgba(255,255,255,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '52px',
+              }}
+            >
+              🏟️
             </div>
-          </>
-        );
-      })()}
+          )}
+
+          <h1
+            style={{
+              color: 'white',
+              fontSize: 'clamp(1.35rem, 5.5vw, 2rem)',
+              fontWeight: 900,
+              margin: '0 0 12px',
+              lineHeight: 1.15,
+              textShadow: '0 2px 16px rgba(0,0,0,0.55)',
+              wordBreak: 'break-word',
+            }}
+          >
+            {sede.nombre || 'Sede'}
+          </h1>
+
+          {licenciaActiva ? (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '999px',
+                fontSize: '12px',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, rgba(254,243,199,0.97) 0%, rgba(253,230,138,0.97) 100%)',
+                color: '#92400e',
+                border: '1px solid #d97706',
+              }}
+            >
+              ⭐ Licencia PADBOL activa
+            </span>
+          ) : (
+            <span
+              style={{
+                display: 'inline-flex',
+                padding: '6px 14px',
+                borderRadius: '999px',
+                fontSize: '12px',
+                fontWeight: 700,
+                background: 'rgba(254,226,226,0.9)',
+                color: '#b91c1c',
+              }}
+            >
+              ⛔ Sede no habilitada
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '22px 16px 0' }}>
+        {lineaDireccion ? (
+          <div style={{ marginBottom: '18px' }}>
+            {mapsHref ? (
+              <a
+                href={mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  color: '#1d4ed8',
+                  textDecoration: 'none',
+                  lineHeight: 1.45,
+                }}
+              >
+                <span style={{ fontSize: '20px', flexShrink: 0 }} aria-hidden>
+                  📍
+                </span>
+                <span style={{ textDecoration: 'underline', textUnderlineOffset: '3px' }}>{lineaDireccion}</span>
+              </a>
+            ) : (
+              <div style={{ display: 'flex', gap: '10px', fontSize: '15px', fontWeight: 600, color: '#334155' }}>
+                <span aria-hidden>📍</span>
+                <span>{lineaDireccion}</span>
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {fotos.length > 0 ? (
+          <div style={{ marginBottom: '8px' }}>
+            <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px', letterSpacing: '0.04em' }}>
+              GALERÍA
+            </h2>
+            <GaleriaFotos urls={fotos} />
+          </div>
+        ) : null}
+
+        {descripcion ? (
+          <div
+            style={{
+              marginBottom: '22px',
+              padding: '16px 18px',
+              borderRadius: '14px',
+              background: 'white',
+              border: '1px solid #e2e8f0',
+              fontSize: '15px',
+              lineHeight: 1.55,
+              color: '#334155',
+            }}
+          >
+            {descripcion}
+          </div>
+        ) : null}
+
+        {(horario || sede.telefono || sede.email_contacto) && (
+          <div
+            style={{
+              marginBottom: '22px',
+              padding: '16px 18px',
+              borderRadius: '14px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              fontSize: '14px',
+              color: '#475569',
+              lineHeight: 1.6,
+            }}
+          >
+            {horario ? <div style={{ marginBottom: sede.telefono || sede.email_contacto ? '10px' : 0 }}>⏰ {horario}</div> : null}
+            {sede.telefono ? (
+              <div style={{ marginBottom: sede.email_contacto ? '8px' : 0 }}>
+                💬{' '}
+                <a
+                  href={(() => {
+                    const digits = String(sede.telefono).replace(/\D/g, '');
+                    const waNumber = digits.startsWith('0') ? `54${digits.slice(1)}` : digits;
+                    return `https://wa.me/${waNumber}`;
+                  })()}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#15803d', fontWeight: 700 }}
+                >
+                  WhatsApp
+                </a>
+              </div>
+            ) : null}
+            {sede.email_contacto ? (
+              <div>
+                ✉️{' '}
+                <a href={`mailto:${sede.email_contacto}`} style={{ color: '#1d4ed8', fontWeight: 600 }}>
+                  {sede.email_contacto}
+                </a>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {(() => {
+          const redes = [
+            { key: 'instagram', label: 'Instagram', bg: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743)', color: 'white', icon: '📸' },
+            { key: 'facebook', label: 'Facebook', bg: '#1877f2', color: 'white', icon: '👍' },
+            { key: 'tiktok', label: 'TikTok', bg: '#010101', color: 'white', icon: '🎵' },
+            { key: 'twitter', label: 'X', bg: '#000', color: 'white', icon: '✖' },
+            { key: 'youtube', label: 'YouTube', bg: '#ff0000', color: 'white', icon: '▶' },
+            { key: 'website', label: 'Web', bg: '#374151', color: 'white', icon: '🌐' },
+          ].filter((r) => sede[r.key]);
+          if (!redes.length) return null;
+          return (
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#64748b', marginBottom: '10px' }}>SEGUINOS</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {redes.map((r) => (
+                  <a
+                    key={r.key}
+                    href={sede[r.key]}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      background: r.bg,
+                      color: r.color,
+                      fontSize: '12px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>{r.icon}</span>
+                    {r.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+          <button
+            type="button"
+            onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
+            style={{
+              width: '100%',
+              padding: '16px 20px',
+              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '14px',
+              cursor: 'pointer',
+              fontWeight: 900,
+              fontSize: '16px',
+              boxShadow: '0 6px 22px rgba(22,163,74,0.4)',
+            }}
+          >
+            Reservar cancha
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+            style={{
+              width: '100%',
+              padding: '14px 20px',
+              background: 'white',
+              color: '#334155',
+              border: '2px solid #cbd5e1',
+              borderRadius: '14px',
+              cursor: 'pointer',
+              fontWeight: 800,
+              fontSize: '15px',
+            }}
+          >
+            Ver torneos
+          </button>
+        </div>
+      </div>
+
       <BottomNav />
     </div>
   );

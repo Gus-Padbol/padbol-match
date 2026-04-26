@@ -69,6 +69,13 @@ export default function TorneosPublicos() {
   const [searchParams] = useSearchParams();
   const nearMode = searchParams.get('context') === 'near';
 
+  const sedeFiltroId = useMemo(() => {
+    const r = searchParams.get('sedeId');
+    if (r == null || String(r).trim() === '') return null;
+    const n = parseInt(String(r).trim(), 10);
+    return Number.isFinite(n) ? n : null;
+  }, [searchParams]);
+
   const irACambiarSede = () => {
     localStorage.removeItem('ultima_sede');
     localStorage.removeItem('ultima_sede_nombre');
@@ -201,9 +208,17 @@ export default function TorneosPublicos() {
   }, [nearMode, geoStatus, userPos, sedesList, sedesMap]);
 
   const displayedTorneos = useMemo(() => {
+    if (sedeFiltroId != null) {
+      return torneos.filter((t) => Number(t.sede_id) === Number(sedeFiltroId));
+    }
     if (!nearMode || !filterActive || focusSedeId == null) return torneos;
     return torneos.filter((t) => Number(t.sede_id) === Number(focusSedeId));
-  }, [nearMode, filterActive, focusSedeId, torneos]);
+  }, [sedeFiltroId, nearMode, filterActive, focusSedeId, torneos]);
+
+  const sedeFiltroNombre = useMemo(() => {
+    if (sedeFiltroId == null) return null;
+    return sedesMap[String(sedeFiltroId)]?.nombre || null;
+  }, [sedeFiltroId, sedesMap]);
 
   const torneosOrdenados = useMemo(() => {
     const rank = (estado) => ORDEN_ESTADO_TORNEO[String(estado || '').toLowerCase()] ?? 99;
@@ -248,8 +263,10 @@ export default function TorneosPublicos() {
             boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
           }}
         >
-          {nearMode && filterActive ? 'No hay torneos en esta sede por ahora.' : 'No hay torneos disponibles.'}
-          {nearMode && filterActive ? (
+          {(nearMode && filterActive) || sedeFiltroId != null
+            ? 'No hay torneos en esta sede por ahora.'
+            : 'No hay torneos disponibles.'}
+          {(nearMode && filterActive) || sedeFiltroId != null ? (
             <div style={{ marginTop: '12px' }}>
               <button
                 type="button"
@@ -389,6 +406,7 @@ export default function TorneosPublicos() {
     torneosOrdenados,
     nearMode,
     filterActive,
+    sedeFiltroId,
     isMobile,
     sedesMap,
     navigate,
@@ -417,12 +435,14 @@ export default function TorneosPublicos() {
           }}
         >
           <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '4px' }}>
-            {nearMode ? 'Torneos cerca de ti' : 'Torneos disponibles'}
+            {sedeFiltroNombre ? `Torneos · ${sedeFiltroNombre}` : nearMode ? 'Torneos cerca de ti' : 'Torneos disponibles'}
           </div>
-          <div style={{ fontSize: '14px', opacity: 0.92, marginBottom: nearMode ? '10px' : 0 }}>
-            {nearMode
-              ? 'Priorizamos torneos de la sede más cercana a tu ubicación o de tu última sede.'
-              : 'Elige un torneo para ver sus detalles, inscribirte y formar o unirte a un equipo.'}
+          <div style={{ fontSize: '14px', opacity: 0.92, marginBottom: nearMode || sedeFiltroId != null ? '10px' : 0 }}>
+            {sedeFiltroId != null
+              ? 'Solo se listan torneos de esta sede.'
+              : nearMode
+                ? 'Priorizamos torneos de la sede más cercana a tu ubicación o de tu última sede.'
+                : 'Elige un torneo para ver sus detalles, inscribirte y formar o unirte a un equipo.'}
           </div>
           {nearMode && contextLine ? (
             <div style={{ fontSize: '13px', opacity: 0.88, lineHeight: 1.45 }}>{contextLine}</div>
@@ -446,6 +466,27 @@ export default function TorneosPublicos() {
               }}
             >
               Cambiar ciudad / sede
+            </button>
+          ) : null}
+          {sedeFiltroId != null && !nearMode ? (
+            <button
+              type="button"
+              onClick={() => navigate('/torneos')}
+              style={{
+                marginTop: '12px',
+                padding: '8px 14px',
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#1e1b4b',
+                background: 'rgba(255,255,255,0.92)',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                width: '100%',
+                maxWidth: '320px',
+              }}
+            >
+              Ver todos los torneos
             </button>
           ) : null}
         </div>

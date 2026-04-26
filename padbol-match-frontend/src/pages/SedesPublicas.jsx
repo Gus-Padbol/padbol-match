@@ -190,11 +190,23 @@ export default function SedesPublicas() {
             {filtered.map(sede => {
               const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
               return (
-                <div key={sede.id} style={{
+                <div
+                  key={sede.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/sede/${sede.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate(`/sede/${sede.id}`);
+                    }
+                  }}
+                  style={{
                   background: 'white', borderRadius: '16px',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                   overflow: 'hidden', display: 'flex', flexDirection: 'column',
                   transition: 'transform 0.15s, box-shadow 0.15s',
+                  cursor: 'pointer',
                 }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(0,0,0,0.22)'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)'; }}
@@ -241,14 +253,17 @@ export default function SedesPublicas() {
                     )}
                   </div>
 
-                  {/* Card footer */}
-                  <div style={{ padding: '12px 18px', borderTop: '1px solid #f0f0f0' }}>
-                    <button
-                      onClick={() => navigate(`/sede/${sede.id}`)}
-                      style={{ width: '100%', padding: '9px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
-                    >
-                      Ver sede →
-                    </button>
+                  <div
+                    style={{
+                      padding: '12px 18px',
+                      borderTop: '1px solid #f0f0f0',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#6366f1',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Tocá la tarjeta para ver la sede
                   </div>
                 </div>
               );

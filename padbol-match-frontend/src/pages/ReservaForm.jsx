@@ -375,30 +375,8 @@ export default function ReservaForm() {
     const sede_id = Number.isNaN(sedeId) ? '' : sedeId;
     setFiltros((prev) => ({ ...prev, sede_id }));
     if (sede_id) {
-      setPantalla(2);
-      setFormData((prev) => ({
-        ...prev,
-        fecha: prev.fecha || todayLocalISO(),
-        hora: '',
-        cancha: '',
-      }));
-      setError('');
+      navigate(`/sede/${sede_id}`);
     }
-  };
-
-  const siguientePantalla2 = () => {
-    if (!filtros.sede_id) {
-      setError('Selecciona una sede');
-      return;
-    }
-    setPantalla(2);
-    setFormData((prev) => ({
-      ...prev,
-      fecha: prev.fecha || todayLocalISO(),
-      hora: '',
-      cancha: '',
-    }));
-    setError('');
   };
 
   const buscarHorariosDisponibles = useCallback(async (fecha) => {
@@ -739,22 +717,6 @@ export default function ReservaForm() {
 
             {error && <div className="error-message">{error}</div>}
 
-            {filtros.sede_id && (
-              <button type="button" onClick={() => navigate(`/sede/${filtros.sede_id}`)} style={{
-                width: '100%',
-                padding: '12px',
-                background: '#d32f2f',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                marginTop: '20px',
-              }}>
-                Ver sede →
-              </button>
-            )}
           </form>
         </div>
         <BottomNav />
