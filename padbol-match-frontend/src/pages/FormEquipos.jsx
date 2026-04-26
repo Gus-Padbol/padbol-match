@@ -549,6 +549,17 @@ export default function FormEquipos() {
       return;
     }
 
+    if (!isPerfilTorneoCompleto()) {
+      const back = `/torneo/${torneoId}/equipos`;
+      navigate(
+        `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
+        {
+          state: { avisoPerfilTorneo: 'Completá tu perfil para crear un equipo' },
+        }
+      );
+      return;
+    }
+
     const userId = sess.user.id;
     const emailAuth = String(sess.user.email || '').trim();
     const tipoEquipo = equipoAbierto ? 'abierto' : 'cerrado';
