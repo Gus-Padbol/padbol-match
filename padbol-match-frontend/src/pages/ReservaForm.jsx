@@ -102,6 +102,12 @@ function apiUrl(path) {
 /** Estado de reserva guardado antes de ir al login al elegir cancha sin sesión. */
 const RESERVA_FORM_RESTORE_KEY = 'padbol_reserva_form_restore_v1';
 
+/** Pasos en la URL (`rw=`) para que el botón Atrás del navegador coincida con el flujo. */
+const RW_FECHA = 1;
+const RW_HORA = 2;
+const RW_CANCHA = 3;
+const RW_RESUMEN = 4;
+
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -117,9 +123,12 @@ export default function ReservaForm() {
       telefono: String(userProfile?.whatsapp || '').trim(),
     };
   }, [session, userProfile]);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const initialSedeId = searchParams.get('sedeId');
+  const rwParsed = parseInt(String(searchParams.get('rw') || ''), 10);
+  const reservaWizardStep =
+    Number.isFinite(rwParsed) && rwParsed >= RW_FECHA && rwParsed <= RW_RESUMEN ? rwParsed : 0;
 
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
@@ -127,6 +136,21 @@ export default function ReservaForm() {
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
+
+  const sedeIdNum = useMemo(() => {
+    if (initialSedeId == null || String(initialSedeId).trim() === '') return NaN;
+    const n = parseInt(String(initialSedeId), 10);
+    return Number.isFinite(n) ? n : NaN;
+  }, [initialSedeId]);
+
+  const enFlujoDesdeSedePerfil = useMemo(
+    () =>
+      Number.isFinite(sedeIdNum) &&
+      filtros.sede_id !== '' &&
+      filtros.sede_id != null &&
+      Number(filtros.sede_id) === sedeIdNum,
+    [sedeIdNum, filtros.sede_id]
+  );
 
   const [formData, setFormData] = useState(() => {
     const p = readPrimedSedeReserva();
@@ -147,6 +171,36 @@ export default function ReservaForm() {
     }
     return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
   }, [sedes, filtros.sede_id]);
+
+  const handleReservaBack = useCallback(() => {
+    if (pantalla === 1) {
+      navigate('/sedes?ver_todas=1');
+      return;
+    }
+    const sid = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;
+    if (enFlujoDesdeSedePerfil) {
+      if (reservaWizardStep >= RW_HORA) {
+        window.history.back();
+        return;
+      }
+      if (sid) navigate(`/sede/${sid}`);
+      else window.history.back();
+      return;
+    }
+    if (sid) navigate(`/sede/${sid}`);
+    else window.history.back();
+  }, [pantalla, enFlujoDesdeSedePerfil, reservaWizardStep, filtros.sede_id, navigate]);
+
+  useEffect(() => {
+    if (!enFlujoDesdeSedePerfil) return;
+    if (reservaWizardStep === RW_RESUMEN) setPantalla(4);
+    else if (
+      reservaWizardStep === 0 ||
+      (reservaWizardStep >= RW_FECHA && reservaWizardStep <= RW_CANCHA)
+    ) {
+      setPantalla(2);
+    }
+  }, [enFlujoDesdeSedePerfil, reservaWizardStep]);
 
   const paisesOrdenados = useMemo(
     () => [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort(),
@@ -182,16 +236,23 @@ export default function ReservaForm() {
     setWhatsapp(formData.numeroTel || '');
   }, [pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-select + auto-advance when only one court is free
+  // Auto-select + auto-advance when only one court is free (solo paso cancha)
   useEffect(() => {
-    if (!canchasDisponibles.length || pantalla !== 2) return;
-    const libres = canchasDisponibles.filter(c => c.libre);
+    if (!canchasDisponibles.length || reservaWizardStep !== RW_CANCHA) return;
+    const libres = canchasDisponibles.filter((c) => c.libre);
     if (libres.length === 1) {
-      setFormData(prev => ({ ...prev, cancha: String(libres[0].num) }));
-      setPantalla(4);
+      setFormData((prev) => ({ ...prev, cancha: String(libres[0].num) }));
+      setSearchParams(
+        (prev) => {
+          const n = new URLSearchParams(prev);
+          n.set('rw', String(RW_RESUMEN));
+          return n;
+        },
+        { replace: false }
+      );
       setError('');
     }
-  }, [canchasDisponibles]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [canchasDisponibles, reservaWizardStep, setSearchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -225,7 +286,7 @@ export default function ReservaForm() {
     };
   }, []);
 
-  // Completar país/ciudad y fijar pantalla 2 solo cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
+  // Completar país/ciudad y pasos `rw` cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
   useEffect(() => {
     if (sedes.length === 0) return;
 
@@ -240,6 +301,7 @@ export default function ReservaForm() {
     if (!sede) {
       setFiltros({ pais: '', ciudad: '', sede_id: '' });
       setPantalla(1);
+      navigate('/reservar', { replace: true });
       return;
     }
 
@@ -259,15 +321,26 @@ export default function ReservaForm() {
         hora: horaQ,
         cancha: canchaQ,
       }));
-      setPantalla(4);
+      const next = new URLSearchParams(location.search);
+      next.set('sedeId', String(id));
+      next.set('rw', String(RW_RESUMEN));
+      next.set('fecha', fechaQ);
+      next.set('hora', horaQ);
+      next.set('canchaId', canchaQ);
+      setSearchParams(next, { replace: true });
       setError('');
     } else {
-      setPantalla(2);
       setFormData((prev) =>
         prev.fecha ? prev : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
       );
+      const next = new URLSearchParams(location.search);
+      next.set('sedeId', String(id));
+      if (!next.get('rw')) {
+        next.set('rw', String(RW_FECHA));
+        setSearchParams(next, { replace: true });
+      }
     }
-  }, [sedes, initialSedeId, location.pathname, location.search]);
+  }, [sedes, initialSedeId, location.pathname, location.search, navigate, setSearchParams]);
 
   // Tras login: restaurar sede/fecha/hora/cancha guardados al pedir login desde la selección de cancha.
   useEffect(() => {
@@ -332,9 +405,15 @@ export default function ReservaForm() {
       hora,
       cancha,
     }));
-    setPantalla(4);
+    const next = new URLSearchParams();
+    next.set('sedeId', String(sedeObj.id));
+    next.set('rw', String(RW_RESUMEN));
+    next.set('fecha', fecha);
+    next.set('hora', hora);
+    next.set('canchaId', cancha);
+    setSearchParams(next, { replace: false });
     setError('');
-  }, [sedes.length, sedes, authLoading]);
+  }, [sedes.length, sedes, authLoading, setSearchParams]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
@@ -535,26 +614,41 @@ export default function ReservaForm() {
     }
   }, [formData.fecha, filtros.sede_id, sedeSeleccionada]);
 
-  const siguientePantalla3 = () => {
-    if (!formData.fecha || !formData.hora) {
-      setError('Selecciona Fecha y Horario');
+  const continuarDesdeFecha = () => {
+    if (!formData.fecha || horariosDisponibles.length === 0) {
+      setError('Selecciona una fecha con horarios disponibles');
       return;
     }
-    setPantalla(3);
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        n.set('rw', String(RW_HORA));
+        return n;
+      },
+      { replace: false }
+    );
     setError('');
   };
 
-  const siguientePantalla4 = () => {
-    if (!formData.cancha) {
-      setError('Selecciona una cancha');
+  const continuarDesdeHora = () => {
+    if (!formData.hora) {
+      setError('Selecciona un horario');
       return;
     }
-    setPantalla(4);
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        n.set('rw', String(RW_CANCHA));
+        return n;
+      },
+      { replace: false }
+    );
     setError('');
   };
 
   useEffect(() => {
     if (pantalla !== 2 || !sedeSeleccionada) return;
+    if (enFlujoDesdeSedePerfil && !(reservaWizardStep === RW_FECHA || reservaWizardStep === 0)) return;
     const t = window.setTimeout(() => {
       const el = fechaInputRef.current;
       if (!el) return;
@@ -565,7 +659,7 @@ export default function ReservaForm() {
       }
     }, 0);
     return () => window.clearTimeout(t);
-  }, [pantalla, sedeSeleccionada?.id]);
+  }, [pantalla, sedeSeleccionada?.id, enFlujoDesdeSedePerfil, reservaWizardStep]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -666,7 +760,7 @@ export default function ReservaForm() {
 
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
-        <AppHeader title="Reservar" />
+        <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Reserva tu Cancha de PADBOL</h1>
 
@@ -731,11 +825,23 @@ export default function ReservaForm() {
     );
   }
 
-  // PANTALLA 2: Fecha y Horario
+  // PANTALLA 2: Fecha y Horario (con subpasos rw=1..3 si el flujo viene del perfil de sede)
   if (pantalla === 2) {
+    const flujoWizard = enFlujoDesdeSedePerfil;
+    const s = reservaWizardStep;
+    const showFechaInput = !flujoWizard || s === 0 || s === RW_FECHA;
+    const showHorarioSelect = !flujoWizard
+      ? horariosDisponibles.length > 0
+      : s === RW_HORA;
+    const showCanchaBotones = !flujoWizard
+      ? Boolean(formData.hora && canchasDisponibles.length > 0)
+      : s === RW_CANCHA && Boolean(formData.hora);
+    const showResumenFecha = flujoWizard && s >= RW_HORA && formData.fecha;
+    const showResumenHora = flujoWizard && s >= RW_CANCHA && formData.hora;
+
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
-        <AppHeader title="Reservar" />
+        <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>
             📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
@@ -752,6 +858,18 @@ export default function ReservaForm() {
           )}
 
           <form>
+            {showResumenFecha && (
+              <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#444' }}>
+                <strong>Fecha:</strong> {formData.fecha}
+              </p>
+            )}
+            {showResumenHora && (
+              <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#444' }}>
+                <strong>Horario:</strong> {formData.hora}
+              </p>
+            )}
+
+            {showFechaInput && (
             <div className="form-group">
               <label>Fecha:</label>
               <input
@@ -767,8 +885,32 @@ export default function ReservaForm() {
                 className="reserva-input-fecha"
               />
             </div>
+            )}
 
-            {horariosDisponibles.length > 0 && (
+            {flujoWizard && (s === RW_FECHA || s === 0) && (
+              <button
+                type="button"
+                onClick={continuarDesdeFecha}
+                disabled={!formData.fecha || horariosDisponibles.length === 0 || loading}
+                style={{
+                  marginTop: '16px',
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#16a34a',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: '15px',
+                  cursor: !formData.fecha || horariosDisponibles.length === 0 || loading ? 'not-allowed' : 'pointer',
+                  opacity: !formData.fecha || horariosDisponibles.length === 0 || loading ? 0.6 : 1,
+                }}
+              >
+                Continuar
+              </button>
+            )}
+
+            {showHorarioSelect && (
               <div className="form-group reserva-horario-bloque">
                 <label>Horario (con canchas libres):</label>
                 <select
@@ -788,6 +930,29 @@ export default function ReservaForm() {
               </div>
             )}
 
+            {flujoWizard && s === RW_HORA && (
+              <button
+                type="button"
+                onClick={continuarDesdeHora}
+                disabled={!formData.hora}
+                style={{
+                  marginTop: '16px',
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#16a34a',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: '15px',
+                  cursor: !formData.hora ? 'not-allowed' : 'pointer',
+                  opacity: !formData.hora ? 0.6 : 1,
+                }}
+              >
+                Continuar
+              </button>
+            )}
+
             {formData.fecha &&
               sedeSeleccionada &&
               horariosDisponibles.length === 0 &&
@@ -798,7 +963,7 @@ export default function ReservaForm() {
             )}
 
             {/* Price badge — shown as soon as a time is selected */}
-            {formData.hora && (
+            {formData.hora && (!flujoWizard || s >= RW_HORA) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: '#0369a1' }}>
                   💰 {Number(getPrecio(sedeSeleccionada, formData.hora)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
@@ -812,7 +977,7 @@ export default function ReservaForm() {
             )}
 
             {/* Court availability buttons — shown after hora is selected */}
-            {formData.hora && canchasDisponibles.length > 0 && (
+            {showCanchaBotones && (
               <div style={{ marginTop: '20px' }}>
                 <label style={{ display: 'block', fontWeight: 600, color: '#333', marginBottom: '10px' }}>Elige tu cancha:</label>
                 <div className="reserva-canchas-botones">
@@ -852,7 +1017,14 @@ export default function ReservaForm() {
                           return;
                         }
                         setFormData(prev => ({ ...prev, cancha: String(c.num) }));
-                        setPantalla(4);
+                        setSearchParams(
+                          (prev) => {
+                            const n = new URLSearchParams(prev);
+                            n.set('rw', String(RW_RESUMEN));
+                            return n;
+                          },
+                          { replace: false }
+                        );
                         setError('');
                       }}
                       style={{
@@ -888,7 +1060,7 @@ export default function ReservaForm() {
 
     return (
       <div className="reserva-container" style={{ paddingTop: '64px', paddingBottom: '80px' }}>
-        <AppHeader title="Reservar" />
+        <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Resumen de reserva</h1>
 
