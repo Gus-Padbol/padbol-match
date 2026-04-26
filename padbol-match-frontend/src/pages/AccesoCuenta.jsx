@@ -97,11 +97,11 @@ export default function AccesoCuenta() {
     if (busy) return;
     const em = email.trim().toLowerCase();
     if (!em) {
-      setErrorMsg('Ingresá tu email.');
+      setErrorMsg('Ingresa tu email.');
       return;
     }
     if (!password) {
-      setErrorMsg('Ingresá tu contraseña.');
+      setErrorMsg('Ingresa tu contraseña.');
       return;
     }
     setBusy(true);
@@ -133,7 +133,7 @@ export default function AccesoCuenta() {
     if (busy) return;
     const em = email.trim().toLowerCase();
     if (!em) {
-      setErrorMsg('Ingresá tu email.');
+      setErrorMsg('Ingresa tu email.');
       return;
     }
     if (!password || password.length < 6) {
@@ -160,11 +160,11 @@ export default function AccesoCuenta() {
         return;
       }
       if (data?.user) {
-        setInfoMsg('Si tu cuenta requiere confirmación, revisá tu correo. Después podés volver e ingresar.');
+        setInfoMsg('Si tu cuenta requiere confirmación, revisa tu correo. Luego puedes volver a ingresar.');
         setModo('login');
         return;
       }
-      setErrorMsg('No se pudo crear la cuenta. Intentá de nuevo.');
+      setErrorMsg('No se pudo crear la cuenta. Intenta de nuevo.');
     } finally {
       setBusy(false);
     }
@@ -338,7 +338,7 @@ export default function AccesoCuenta() {
                 textAlign: 'center',
               }}
             >
-              ¿No tenés cuenta? Regístrate
+              ¿No tienes cuenta? Regístrate
             </button>
           </form>
         ) : (

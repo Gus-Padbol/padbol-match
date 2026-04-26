@@ -119,9 +119,9 @@ export default function Rankings() {
         if (cancelled) return;
         const msg =
           err.name === 'AbortError'
-            ? 'El servidor tardó demasiado. Intentá de nuevo.'
+            ? 'El servidor tardó demasiado. Intenta de nuevo.'
             : err.message === 'Failed to fetch'
-              ? 'No se pudo conectar al servidor. Revisá tu conexión.'
+              ? 'No se pudo conectar al servidor. Revisa tu conexión.'
               : err.message || 'Error al cargar rankings';
         setError(msg);
         setRankings([]);
@@ -247,7 +247,7 @@ export default function Rankings() {
 
         {/* Scope description */}
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginBottom: '12px' }}>
-          {activeTab === 'local'         && (selectedSede ? `Sede seleccionada · ${selectedSedeMeta?.nombre || ''}` : 'Seleccioná una sede para ver el ranking local')}
+          {activeTab === 'local'         && (selectedSede ? `Sede seleccionada · ${selectedSedeMeta?.nombre || ''}` : 'Selecciona una sede para ver el ranking local')}
           {activeTab === 'nacional'      && 'Puntos acumulados en torneos nacionales e internacionales'}
           {activeTab === 'internacional' && 'Ranking FIPA · Todos los torneos finalizados a nivel mundial'}
         </div>

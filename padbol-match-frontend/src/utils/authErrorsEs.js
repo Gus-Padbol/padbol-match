@@ -3,12 +3,12 @@ export function mensajeErrorAuthSupabase(raw) {
   const s = String(raw || '').trim();
   const m = s.toLowerCase();
 
-  if (!s) return 'Ocurrió un error. Probá de nuevo.';
+  if (!s) return 'Ocurrió un error. Prueba de nuevo.';
   if (m.includes('invalid login credentials') || m.includes('invalid_grant')) {
-    return 'WhatsApp, email o contraseña incorrectos. Verificá los datos e intentá de nuevo.';
+    return 'WhatsApp, email o contraseña incorrectos. Verifica los datos e intenta de nuevo.';
   }
   if (m.includes('email not confirmed')) {
-    return 'Tenés que confirmar tu correo antes de ingresar. Revisá tu bandeja de entrada.';
+    return 'Tienes que confirmar tu correo antes de ingresar. Revisa tu bandeja de entrada.';
   }
   if (
     m.includes('user already registered') ||
@@ -28,10 +28,10 @@ export function mensajeErrorAuthSupabase(raw) {
     }
   }
   if (m.includes('too many requests') || m.includes('rate limit') || m.includes('over_request_rate')) {
-    return 'Hubo muchos intentos. Esperá unos segundos e intentá nuevamente.';
+    return 'Hubo muchos intentos. Espera unos segundos e intenta nuevamente.';
   }
   if (m.includes('network') || m.includes('fetch')) {
-    return 'Problema de conexión. Revisá tu internet e intentá de nuevo.';
+    return 'Problema de conexión. Revisa tu internet e intenta de nuevo.';
   }
 
   return s.length > 280 ? `${s.slice(0, 280)}…` : s;
@@ -40,12 +40,12 @@ export function mensajeErrorAuthSupabase(raw) {
 export function mensajeErrorDbSupabase(raw) {
   const s = String(raw || '').trim();
   const m = s.toLowerCase();
-  if (!s) return 'Error al guardar. Probá de nuevo.';
+  if (!s) return 'Error al guardar. Prueba de nuevo.';
   if (m.includes('duplicate') || m.includes('unique')) {
-    return 'Ese dato ya está en uso. Verificá WhatsApp o email.';
+    return 'Ese dato ya está en uso. Verifica WhatsApp o email.';
   }
   if (m.includes('violates') || m.includes('constraint')) {
-    return 'No se pudo guardar: datos no válidos. Revisá el formulario.';
+    return 'No se pudo guardar: datos no válidos. Revisa el formulario.';
   }
   return mensajeErrorAuthSupabase(s);
 }

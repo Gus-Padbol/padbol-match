@@ -70,11 +70,11 @@ function mostrarCampoPaisSegunTorneo(torneoRow) {
 
 function mensajeValidarPaisTorneo(torneoRow, paisForm) {
   if (!torneoRow) {
-    return String(paisForm || '').trim() ? null : 'Seleccioná tu país.';
+    return String(paisForm || '').trim() ? null : 'Selecciona tu país.';
   }
   const n = normalizeNivelTorneoScope(torneoRow.nivel_torneo);
   if (n === 'internacional' && !String(paisForm || '').trim()) {
-    return 'Seleccioná tu país.';
+    return 'Selecciona tu país.';
   }
   return null;
 }
@@ -151,8 +151,8 @@ export default function MiPerfil() {
   const avisoPerfilTorneoMsg = useMemo(
     () =>
       (location.state && location.state.avisoPerfilTorneo) ||
-      (torneoIdValido ? 'Completá tu perfil para participar en torneos' : '') ||
-      (redirectAfterAuth ? 'Completá tu perfil (incluido WhatsApp) para continuar.' : ''),
+      (torneoIdValido ? 'Completa tu perfil para participar en torneos' : '') ||
+      (redirectAfterAuth ? 'Completa tu perfil (incluido WhatsApp) para continuar.' : ''),
     [location.state, torneoIdValido, redirectAfterAuth]
   );
 
@@ -391,43 +391,43 @@ export default function MiPerfil() {
       const nom = nombreRegistroTorneo.trim();
       const partsNom = nom.split(/\s+/).filter(Boolean);
       if (partsNom.length < 2) {
-        fe.nombre = 'Completá nombre y apellido.';
+        fe.nombre = 'Completa nombre y apellido.';
       }
 
       const emRaw = emailRegistro.trim();
       const emailAuth = emRaw.toLowerCase();
       if (!emRaw) {
-        fe.email = 'Completá tu email';
+        fe.email = 'Completa tu email';
       } else if (!emailValidoVisible(emRaw)) {
-        fe.email = 'Ingresá un email válido';
+        fe.email = 'Ingresa un email válido';
       }
 
       const local = waNumeroLocal.trim();
       const localConf = waConfirmLocal.trim();
       if (!digitsOnly(local)) {
-        fe.whatsapp = 'Completá tu WhatsApp';
+        fe.whatsapp = 'Completa tu WhatsApp';
       } else if (!whatsappNacionalValido(local)) {
-        fe.whatsapp = 'Ingresá un WhatsApp válido (mínimo 10 dígitos sin código de país).';
+        fe.whatsapp = 'Ingresa un WhatsApp válido (mínimo 10 dígitos sin código de país).';
       } else if (digitsOnly(local) !== digitsOnly(localConf)) {
-        fe.whatsappConfirma = 'Repetí el mismo número en la confirmación de WhatsApp.';
+        fe.whatsappConfirma = 'Repite el mismo número en la confirmación de WhatsApp.';
       }
       const waDigits = buildFullWhatsDigits(waCodigoPais, local);
       if (!fe.whatsapp && !whatsappDigitsValido(waDigits)) {
-        fe.whatsapp = 'Completá un WhatsApp válido.';
+        fe.whatsapp = 'Completa un WhatsApp válido.';
       }
       const wa = formatWhatsAppE164(waCodigoPais, local);
 
       if (!String(formData.nivel || '').trim()) {
-        fe.categoria = 'Seleccioná tu categoría.';
+        fe.categoria = 'Selecciona tu categoría.';
       }
 
       if (!passRegistroTorneo && !passRegistroTorneo2) {
-        fe.password = 'Completá la contraseña.';
-        fe.password2 = 'Confirmá la contraseña.';
+        fe.password = 'Completa la contraseña.';
+        fe.password2 = 'Confirma la contraseña.';
       } else if (!passRegistroTorneo) {
-        fe.password = 'Completá la contraseña.';
+        fe.password = 'Completa la contraseña.';
       } else if (!passRegistroTorneo2) {
-        fe.password2 = 'Confirmá la contraseña.';
+        fe.password2 = 'Confirma la contraseña.';
       } else if (passRegistroTorneo.length < 6) {
         fe.password = 'La contraseña debe tener al menos 6 caracteres.';
       } else if (passRegistroTorneo !== passRegistroTorneo2) {
@@ -445,7 +445,7 @@ export default function MiPerfil() {
       }
 
       if (session?.user?.email) {
-        setErrorMsg('Ya tenés una sesión activa. No hace falta registrarte de nuevo.');
+        setErrorMsg('Ya tienes una sesión activa. No hace falta registrarte de nuevo.');
         return;
       }
 
@@ -467,7 +467,7 @@ export default function MiPerfil() {
       if (!owner) {
         console.log('ERROR SIGNUP: respuesta sin user.email', authData);
         setErrorMsg(
-          'No se recibió el email del usuario tras el registro. Revisá la consola o probá «Iniciar sesión».'
+          'No se recibió el email del usuario tras el registro. Revisa la consola o prueba «Iniciar sesión».'
         );
         return;
       }
@@ -560,28 +560,28 @@ export default function MiPerfil() {
         return;
       }
       if (!String(formData.nivel || '').trim()) {
-        setErrorMsg('Seleccioná tu categoría.');
+        setErrorMsg('Selecciona tu categoría.');
         return;
       }
 
       const np = String(nombreTorneoCompleto).trim().split(/\s+/).filter(Boolean);
       if (np.length < 2) {
-        setErrorMsg('Completá nombre y apellido.');
+        setErrorMsg('Completa nombre y apellido.');
         return;
       }
 
       const local = waNumeroLocal.trim();
       if (!digitsOnly(local)) {
-        setErrorMsg('Completá tu WhatsApp');
+        setErrorMsg('Completa tu WhatsApp');
         return;
       }
       if (!whatsappNacionalValido(local)) {
-        setErrorMsg('Completá tu WhatsApp (al menos 10 dígitos en el número, sin el código de país).');
+        setErrorMsg('Completa tu WhatsApp (al menos 10 dígitos en el número, sin el código de país).');
         return;
       }
       const waBuilt = buildFullWhatsDigits(waCodigoPais, local);
       if (!whatsappDigitsValido(waBuilt)) {
-        setErrorMsg('Completá un WhatsApp válido.');
+        setErrorMsg('Completa un WhatsApp válido.');
         return;
       }
       const waFinal = formatWhatsAppE164(waCodigoPais, local);
@@ -763,7 +763,7 @@ export default function MiPerfil() {
             >
               <h3 style={{ marginTop: 0, marginBottom: '12px', color: '#222' }}>Mi perfil</h3>
               <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
-                Para ver y editar tu ficha necesitás una cuenta. Podés explorar el resto de la app sin iniciar sesión.
+                Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión.
               </p>
               <button
                 type="button"
@@ -863,8 +863,8 @@ export default function MiPerfil() {
           >
             <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#222' }}>Crear tu cuenta</h3>
             <p style={{ color: '#666', fontSize: '14px', marginBottom: '18px', lineHeight: 1.45 }}>
-              Completá tus datos con un email real: se crea tu usuario en Padbol Match y se guarda tu ficha de jugador.
-              {torneoIdValido ? ' Después volvés al torneo.' : ''}
+              Completa tus datos con un email real: se crea tu usuario en Padbol Match y se guarda tu ficha de jugador.
+              {torneoIdValido ? ' Después vuelves al torneo.' : ''}
             </p>
             <form onSubmit={handleRegistroCuenta}>
               <label style={guestLabelStyle}>
@@ -1015,7 +1015,7 @@ export default function MiPerfil() {
                   setPassRegistroTorneo2(e.target.value);
                   setRegistroFieldErrors((p) => ({ ...p, password2: '', password: '' }));
                 }}
-                placeholder="Repetí la contraseña"
+                placeholder="Repite la contraseña"
                 style={{ ...guestInputStyle, marginBottom: regErr('password2') ? '6px' : '14px', border: regBorder('password2') }}
                 autoComplete="new-password"
               />
@@ -1063,7 +1063,7 @@ export default function MiPerfil() {
                   </label>
                   {torneoPerfil && nivelTorneoScope === 'nacional' ? (
                     <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
-                      Por defecto Argentina; podés cambiar el país si corresponde.
+                      Por defecto Argentina; puedes cambiar el país si corresponde.
                     </p>
                   ) : null}
                   <select
@@ -1510,7 +1510,7 @@ export default function MiPerfil() {
                 </label>
                 {torneoPerfil && nivelTorneoScope === 'nacional' ? (
                   <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
-                    Por defecto Argentina; podés cambiar el país si corresponde.
+                    Por defecto Argentina; puedes cambiar el país si corresponde.
                   </p>
                 ) : null}
                 <select

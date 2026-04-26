@@ -103,7 +103,7 @@ export default function UserHome() {
             color: '#ffffff',
             lineHeight: 1.4,
           }}>
-            ¿Qué querés hacer hoy?
+            ¿Qué quieres hacer hoy?
           </p>
           {!authLoading && !session?.user ? (
             <p
@@ -115,7 +115,7 @@ export default function UserHome() {
                 lineHeight: 1.45,
               }}
             >
-              Podés explorar sin registrarte
+              Puedes explorar sin registrarte
             </p>
           ) : null}
         </div>

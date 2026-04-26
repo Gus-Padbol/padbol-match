@@ -100,11 +100,11 @@ export async function ensureJugadorPerfilRowForEmail(email) {
   const jp = readJugadorPerfil();
   const full = nombreCompletoJugadorPerfil(jp).trim();
   if (!full) {
-    return { error: new Error('Completá nombre y apellido en tu perfil antes de crear un equipo.') };
+    return { error: new Error('Completa nombre y apellido en tu perfil antes de crear un equipo.') };
   }
   const wa = String(jp?.whatsapp || '').trim();
   if (!whatsappPerfilValido(jp)) {
-    return { error: new Error('Completá un WhatsApp válido en tu perfil.') };
+    return { error: new Error('Completa un WhatsApp válido en tu perfil.') };
   }
   const { data: yaExiste, error: selErr } = await supabase
     .from('jugadores_perfil')

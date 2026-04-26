@@ -544,7 +544,7 @@ export default function FormEquipos() {
     const sess = data.session;
 
     if (!sess || !sess.user) {
-      alert('Tenés que iniciar sesión');
+      alert('Tienes que iniciar sesión');
       navigate(authUrlWithRedirect(`/torneo/${torneoId}/equipos`));
       return;
     }
@@ -554,7 +554,7 @@ export default function FormEquipos() {
       navigate(
         `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
         {
-          state: { avisoPerfilTorneo: 'Completá tu perfil para crear un equipo' },
+          state: { avisoPerfilTorneo: 'Completa tu perfil para crear un equipo' },
         }
       );
       return;
@@ -566,7 +566,7 @@ export default function FormEquipos() {
 
     const creadorJugador = buildCreadorJugadorParaEquipo(sess, userProfile, yo);
     if (!creadorJugador) {
-      alert('Tenés que iniciar sesión');
+      alert('Tienes que iniciar sesión');
       return;
     }
     if (!String(creadorJugador.email || '').trim()) {
@@ -637,7 +637,7 @@ export default function FormEquipos() {
       navigate(
         `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
         {
-          state: { avisoPerfilTorneo: 'Completá tu perfil para crear o unirte a un equipo' },
+          state: { avisoPerfilTorneo: 'Completa tu perfil para crear o unirte a un equipo' },
         }
       );
       return;
@@ -831,7 +831,7 @@ export default function FormEquipos() {
 
     const nuevo = { nombre, estado: 'pendiente', email: null };
     if (jugadorCoincideConYo(nuevo, yo, authUserId)) {
-      alert('No podés agregarte como compañero');
+      alert('No puedes agregarte como compañero');
       return;
     }
     if (players.some((p) => samePerson(p, nuevo))) {
@@ -930,7 +930,7 @@ export default function FormEquipos() {
     }
     const em = String(session.user.email || '').trim();
     if (!em) {
-      alert('Necesitás un email en tu perfil para pagar la inscripción.');
+      alert('Necesitas un email en tu perfil para pagar la inscripción.');
       return;
     }
     setMpInscripcionLoading(true);
@@ -1584,7 +1584,7 @@ export default function FormEquipos() {
           lineHeight: 1.45,
         }}
       >
-        <div style={{ marginBottom: '10px' }}>Para crear un equipo necesitás iniciar sesión.</div>
+        <div style={{ marginBottom: '10px' }}>Para crear un equipo necesitas iniciar sesión.</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           <button
             type="button"
@@ -1900,7 +1900,7 @@ export default function FormEquipos() {
               lineHeight: 1.45,
             }}
           >
-            <div style={{ marginBottom: '12px' }}>Ya tenés un equipo en este torneo</div>
+            <div style={{ marginBottom: '12px' }}>Ya tienes un equipo en este torneo</div>
             <button
               type="button"
               onClick={() => navigate(`/torneo/${id}/equipos/${equipoDuplicadoBloqueoId}`)}
@@ -2547,8 +2547,8 @@ export default function FormEquipos() {
                   const esCreadorDlg =
                     !!eqSalir && esCreadorEquipoOMiAuth(eqSalir, authEmail, uDlg, authUserId);
                   return esCreadorDlg
-                    ? 'Si salís, el equipo se eliminará completamente'
-                    : '¿Querés salir del equipo?';
+                    ? 'Si sales, el equipo se eliminará completamente'
+                    : '¿Quieres salir del equipo?';
                 })()}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>

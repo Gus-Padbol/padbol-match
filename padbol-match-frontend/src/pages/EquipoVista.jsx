@@ -453,7 +453,7 @@ export default function EquipoVista() {
       navigate(
         `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
         {
-          state: { avisoPerfilTorneo: 'Completá tu perfil para crear o unirte a un equipo' },
+          state: { avisoPerfilTorneo: 'Completa tu perfil para crear o unirte a un equipo' },
         }
       );
       return;
@@ -655,7 +655,7 @@ export default function EquipoVista() {
     }
     const em = String(authEmail || session?.user?.email || '').trim();
     if (!em) {
-      alert('Necesitás un email en tu perfil para pagar la inscripción.');
+      alert('Necesitas un email en tu perfil para pagar la inscripción.');
       return;
     }
     setMpInscripcionLoading(true);
@@ -1037,7 +1037,7 @@ export default function EquipoVista() {
               ) : null}
               {equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' ? (
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-                  Pagá la inscripción del equipo para confirmar el cupo en el torneo.
+                  Paga la inscripción del equipo para confirmar el cupo en el torneo.
                 </p>
               ) : null}
               {soyCreador && equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' ? (
@@ -1174,8 +1174,8 @@ export default function EquipoVista() {
                 style={{ margin: '0 0 18px', fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}
               >
                 {soyCreador
-                  ? 'Si salís, el equipo se eliminará completamente'
-                  : '¿Querés salir del equipo?'}
+                  ? 'Si sales, el equipo se eliminará completamente'
+                  : '¿Quieres salir del equipo?'}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button

@@ -1713,7 +1713,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>💳 Mercado Pago</h3>
               <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '480px' }}>
                 <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#555', lineHeight: 1.5 }}>
-                  Ingresá el Access Token de tu cuenta de Mercado Pago para recibir los pagos directamente en tu cuenta.
+                  Ingresa el Access Token de tu cuenta de Mercado Pago para recibir los pagos directamente en tu cuenta.
                 </p>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
                   Access Token de MP
@@ -1738,7 +1738,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>📱 Redes Sociales</h3>
             <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '480px' }}>
               <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#555', lineHeight: 1.5 }}>
-                Ingresá las URLs completas (incluye https://). Solo se muestran las redes que tengas cargadas.
+                Ingresa las URLs completas (incluye https://). Solo se muestran las redes que tengas cargadas.
               </p>
               {[
                 { field: 'instagram', label: '📸 Instagram', placeholder: 'https://instagram.com/tusede' },

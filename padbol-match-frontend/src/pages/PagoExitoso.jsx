@@ -147,7 +147,7 @@ export default function PagoExitoso() {
             >
               Tu pago fue procesado correctamente
               {paymentId ? ` (#${paymentId})` : ''}, pero no pudimos completar el registro automáticamente.
-              Por favor contactá a la sede con el número de pago.
+              Por favor contacta a la sede con el número de pago.
             </p>
             <div
               style={{

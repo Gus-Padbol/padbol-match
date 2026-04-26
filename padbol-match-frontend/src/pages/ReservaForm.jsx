@@ -618,8 +618,8 @@ export default function ReservaForm() {
     if (!ok) {
       setError(
         clienteTieneTelefonoGuardado(ccEff)
-          ? 'El teléfono del perfil no es válido. Completá un número de contacto válido.'
-          : `Ingresá un número de WhatsApp válido (al menos ${MIN_DIGITOS_TELEFONO} dígitos).`
+          ? 'El teléfono del perfil no es válido. Completa un número de contacto válido.'
+          : `Ingresa un número de WhatsApp válido (al menos ${MIN_DIGITOS_TELEFONO} dígitos).`
       );
       return;
     }

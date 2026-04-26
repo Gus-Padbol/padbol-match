@@ -31,7 +31,7 @@ export async function handleAuthOnce(payload) {
   if (authInProgress) {
     return {
       data: { user: null, session: null },
-      error: err('Ya hay una operación de cuenta en curso. Esperá un momento e intentá de nuevo.'),
+      error: err('Ya hay una operación de cuenta en curso. Espera un momento e intenta de nuevo.'),
     };
   }
 
@@ -52,7 +52,7 @@ export async function handleAuthOnce(payload) {
     if (!email || !password) {
       return {
         data: { user: null, session: null },
-        error: err('Completá correo y contraseña antes de continuar.'),
+        error: err('Completa correo y contraseña antes de continuar.'),
       };
     }
     if (kind === 'signUp' && password.length < 6) {
