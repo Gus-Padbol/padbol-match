@@ -281,7 +281,7 @@ export default function ReservaForm() {
     if (sedes.length < 1) {
       return;
     }
-    if (authLoading || !session?.user) {
+    if (authLoading) {
       return;
     }
     let raw;
@@ -342,7 +342,7 @@ export default function ReservaForm() {
     }));
     setPantalla(4);
     setError('');
-  }, [sedes.length, sedes, authLoading, session?.user]);
+  }, [sedes.length, sedes, authLoading]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
