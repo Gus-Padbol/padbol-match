@@ -30,6 +30,7 @@ import {
   buildCreadorJugadorParaEquipo,
   ensureCreadorPrimeroEnLista,
 } from '../utils/equipoCreadorJugadores';
+import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
@@ -541,6 +542,19 @@ export default function EquipoVista() {
     const cupo = Number(equipo.cupo_maximo || 2);
     if (players.length >= cupo) {
       alert('Equipo completo');
+      return;
+    }
+
+    const inviteEmail = String(solicitud.email || '').trim().toLowerCase();
+    if (inviteEmail) {
+      try {
+        await invitarJugadorEquipo(Number(equipoId), inviteEmail);
+      } catch (err) {
+        console.error(err);
+        alert(err?.message || 'Error al aceptar');
+        return;
+      }
+      cargarEquipo();
       return;
     }
 

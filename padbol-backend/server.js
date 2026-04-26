@@ -54,9 +54,8 @@ const TORNEO_EQUIPOS_INVITE_BASE_URL =
 
 /**
  * Twilio WhatsApp exige destino en E.164: `whatsapp:+[código país][número]` sin espacios ni guiones.
- * Ideal: que `usuarios.telefono` ya venga en E.164 (p. ej. +5491123456789 o 5491123456789).
- * Si solo hay dígitos nacionales (heurística AR con WHATSAPP_DEFAULT_COUNTRY_CODE=54 y 10 dígitos),
- * se antepone +549… (móvil). Ajustar env o normalizar en BD si otro país o formato.
+ * `jugadores_perfil.whatsapp` debería estar ya en E.164 (ej. +5492213032019).
+ * Si llega sin +, se normaliza con heurística de país (WHATSAPP_DEFAULT_COUNTRY_CODE, default 54).
  */
 function normalizePhoneToE164ForTwilioWhatsApp(raw) {
   const rawStr = String(raw || '').trim();
@@ -80,7 +79,8 @@ function normalizePhoneToE164ForTwilioWhatsApp(raw) {
 function buildTorneoEquipoInvitacionBody(nombreDestinatario, nombreTorneo, torneoId) {
   const nombre = String(nombreDestinatario || '').trim() || 'jugador';
   const torneoNombre = String(nombreTorneo || '').trim() || 'el torneo';
-  const link = `${TORNEO_EQUIPOS_INVITE_BASE_URL}/torneo/${encodeURIComponent(String(torneoId))}/equipos`;
+  const tid = Number(torneoId);
+  const link = `${TORNEO_EQUIPOS_INVITE_BASE_URL}/torneo/${Number.isFinite(tid) ? tid : String(torneoId)}/equipos`;
   return `Hola ${nombre}, te invito a jugar el torneo "${torneoNombre}". Confirmá tu lugar en el equipo: ${link}`;
 }
 
@@ -94,62 +94,6 @@ async function sendWhatsAppTorneoEquipoInvitacion(telefono, { nombreDestinatario
   const body = buildTorneoEquipoInvitacionBody(nombreDestinatario, nombreTorneo, torneoId);
   await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
   console.log(`✓ WhatsApp invitación torneo enviado a ${to}`);
-}
-
-async function notifyEquipoJugadoresInvitesWhatsApp({ prevJugadores, nextJugadores, torneoId }) {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) return;
-  const tid = Number(torneoId);
-  if (!Number.isFinite(tid)) return;
-
-  const prev = Array.isArray(prevJugadores) ? prevJugadores : [];
-  const next = Array.isArray(nextJugadores) ? nextJugadores : [];
-  const prevEmails = new Set(
-    prev.map((j) => String(j?.email || '').trim().toLowerCase()).filter(Boolean),
-  );
-
-  const { data: torneoRow, error: torneoErr } = await supabase
-    .from('torneos')
-    .select('nombre')
-    .eq('id', tid)
-    .maybeSingle();
-  if (torneoErr) {
-    console.warn('⚠️ Invitación torneo: no se pudo leer torneo:', torneoErr.message);
-    return;
-  }
-  const nombreTorneo = torneoRow?.nombre || `Torneo ${tid}`;
-
-  for (const j of next) {
-    const email = String(j?.email || '').trim().toLowerCase();
-    if (!email || prevEmails.has(email)) continue;
-
-    const { data: usuario, error: uErr } = await supabase
-      .from('usuarios')
-      .select('nombre, apellido, telefono')
-      .eq('email', email)
-      .maybeSingle();
-    if (uErr) {
-      console.warn(`⚠️ usuarios (${email}):`, uErr.message);
-      continue;
-    }
-    if (!usuario?.telefono) {
-      console.warn(`⚠️ Invitación torneo: sin telefono en usuarios para ${email}`);
-      continue;
-    }
-    const nombreHola =
-      String(usuario.nombre || '').trim() ||
-      String(usuario.apellido || '').trim() ||
-      'jugador';
-
-    try {
-      await sendWhatsAppTorneoEquipoInvitacion(usuario.telefono, {
-        nombreDestinatario: nombreHola,
-        nombreTorneo,
-        torneoId: tid,
-      });
-    } catch (err) {
-      console.warn(`⚠️ WhatsApp invitación torneo (${email}):`, err.message);
-    }
-  }
 }
 
 // WhatsApp confirmation helper
@@ -1080,13 +1024,6 @@ app.put('/api/equipos/:id', async (req, res) => {
     const { id } = req.params;
     const { nombre, jugadores, puntos_totales } = req.body;
 
-    const { data: prevRow, error: prevErr } = await supabase
-      .from('equipos')
-      .select('jugadores, torneo_id')
-      .eq('id', id)
-      .maybeSingle();
-    if (prevErr) throw prevErr;
-
     const { data, error } = await supabase
       .from('equipos')
       .update({
@@ -1099,13 +1036,6 @@ app.put('/api/equipos/:id', async (req, res) => {
       .select();
 
     if (error) throw error;
-
-    void notifyEquipoJugadoresInvitesWhatsApp({
-      prevJugadores: prevRow?.jugadores,
-      nextJugadores: jugadores,
-      torneoId: prevRow?.torneo_id ?? data?.[0]?.torneo_id,
-    }).catch((e) => console.warn('⚠️ Invitaciones WhatsApp equipo:', e.message));
-
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1113,64 +1043,96 @@ app.put('/api/equipos/:id', async (req, res) => {
 });
 
 /**
- * Envía la invitación por WhatsApp (Twilio) a un jugador ya agregado al equipo con ese email.
- * Útil cuando el cliente actualiza `equipos` directamente en Supabase y no pasa por PUT /api/equipos.
+ * Acepta una solicitud pendiente: envía WhatsApp (Twilio) personalizado vía jugadores_perfil y actualiza el equipo.
+ * Body: { email } — debe coincidir con una solicitud en `equipos.solicitudes` y con `jugadores_perfil.email`.
  */
-app.post('/api/equipos/:id/enviar-invitacion-torneo-whatsapp', async (req, res) => {
+app.post('/api/equipos/:id/invitar', async (req, res) => {
   try {
-    const { id } = req.params;
-    const email = String((req.body && req.body.email) || '').trim().toLowerCase();
-    if (!email) {
+    const equipoId = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(equipoId)) {
+      return res.status(400).json({ error: 'id de equipo inválido' });
+    }
+
+    const emailIn = String((req.body && req.body.email) || '').trim().toLowerCase();
+    if (!emailIn) {
       return res.status(400).json({ error: 'email es requerido' });
     }
 
-    const { data: eq, error: eErr } = await supabase
-      .from('equipos')
-      .select('id, torneo_id, jugadores')
-      .eq('id', id)
-      .maybeSingle();
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+      return res.status(503).json({ error: 'Twilio no está configurado' });
+    }
+
+    const { data: eq, error: eErr } = await supabase.from('equipos').select('*').eq('id', equipoId).maybeSingle();
     if (eErr) throw eErr;
     if (!eq) return res.status(404).json({ error: 'Equipo no encontrado' });
 
-    const jugadores = Array.isArray(eq.jugadores) ? eq.jugadores : [];
-    const enEquipo = jugadores.some(
-      (j) => String(j?.email || '').trim().toLowerCase() === email,
+    const solicitudes = Array.isArray(eq.solicitudes) ? eq.solicitudes : [];
+    const solicitudIdx = solicitudes.findIndex(
+      (r) => String(r?.email || '').trim().toLowerCase() === emailIn,
     );
-    if (!enEquipo) {
-      return res.status(400).json({ error: 'No hay un jugador en el equipo con ese email' });
+    if (solicitudIdx === -1) {
+      return res.status(400).json({ error: 'No hay solicitud pendiente para ese email' });
     }
 
-    const { data: usuario, error: uErr } = await supabase
-      .from('usuarios')
-      .select('nombre, apellido, telefono')
-      .eq('email', email)
+    const solicitud = solicitudes[solicitudIdx];
+    const players = Array.isArray(eq.jugadores) ? eq.jugadores : [];
+    const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
+    if (players.length >= cupo) {
+      return res.status(400).json({ error: 'Equipo completo' });
+    }
+
+    const { data: perfil, error: pErr } = await supabase
+      .from('jugadores_perfil')
+      .select('id, email, nombre, whatsapp')
+      .ilike('email', emailIn)
       .maybeSingle();
-    if (uErr) throw uErr;
-    if (!usuario?.telefono) {
-      return res.status(400).json({ error: 'Sin teléfono en usuarios para este email' });
+    if (pErr) throw pErr;
+    if (!perfil) {
+      return res.status(404).json({ error: 'No hay ficha en jugadores_perfil para ese email' });
+    }
+    if (!perfil.whatsapp || !String(perfil.whatsapp).trim()) {
+      return res.status(400).json({ error: 'El jugador no tiene WhatsApp en su perfil' });
     }
 
     const { data: torneoRow, error: tErr } = await supabase
       .from('torneos')
-      .select('nombre')
+      .select('id, nombre')
       .eq('id', eq.torneo_id)
       .maybeSingle();
     if (tErr) throw tErr;
     const nombreTorneo = torneoRow?.nombre || `Torneo ${eq.torneo_id}`;
+    const torneoId = torneoRow?.id ?? eq.torneo_id;
 
-    const nombreHola =
-      String(usuario.nombre || '').trim() ||
-      String(usuario.apellido || '').trim() ||
-      'jugador';
+    const nombreHola = String(perfil.nombre || '').trim() || 'jugador';
 
-    await sendWhatsAppTorneoEquipoInvitacion(usuario.telefono, {
+    await sendWhatsAppTorneoEquipoInvitacion(perfil.whatsapp, {
       nombreDestinatario: nombreHola,
       nombreTorneo,
-      torneoId: eq.torneo_id,
+      torneoId,
     });
-    res.json({ ok: true });
+
+    const solicitudConfirmada = {
+      ...solicitud,
+      estado: String(solicitud.email || '').trim() ? 'confirmado' : 'pendiente',
+    };
+    const nuevosJugadores = [...players, solicitudConfirmada];
+    const nuevasSolicitudes = solicitudes.filter((_, i) => i !== solicitudIdx);
+
+    const { data: updated, error: uErr } = await supabase
+      .from('equipos')
+      .update({
+        jugadores: nuevosJugadores,
+        solicitudes: nuevasSolicitudes,
+        updated_at: new Date(),
+      })
+      .eq('id', equipoId)
+      .select();
+
+    if (uErr) throw uErr;
+
+    res.json({ ok: true, equipo: updated?.[0] ?? null });
   } catch (err) {
-    console.error('❌ POST enviar-invitacion-torneo-whatsapp:', err.message);
+    console.error('❌ POST /api/equipos/:id/invitar:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

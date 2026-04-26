@@ -28,6 +28,7 @@ import {
   buildCreadorJugadorParaEquipo,
   ensureCreadorPrimeroEnLista,
 } from '../utils/equipoCreadorJugadores';
+import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
@@ -750,6 +751,21 @@ export default function FormEquipos() {
       return;
     }
 
+    const inviteEmail = String(solicitud.email || '').trim().toLowerCase();
+    if (inviteEmail) {
+      try {
+        const data = await invitarJugadorEquipo(equipo.id, inviteEmail);
+        const upd = data?.equipo;
+        if (upd) {
+          setEquipos((prev) => prev.map((eq) => (eq.id === upd.id ? { ...eq, ...upd } : eq)));
+        }
+      } catch (err) {
+        console.error(err);
+        alert(err?.message || 'Error al aceptar');
+      }
+      return;
+    }
+
     const solicitudConfirmada = {
       ...solicitud,
       estado: String(solicitud.email || '').trim() ? 'confirmado' : 'pendiente',
@@ -1392,7 +1408,8 @@ export default function FormEquipos() {
         </div>
       ) : null}
 
-      {!torneoCerrado && sinEquiposEnTorneoVisibles ? (
+      {!torneoCerrado &&
+      (sinEquiposEnTorneoVisibles || (!miEquipoEnListado && equiposUnirseListado.length === 0)) ? (
         <div style={{ marginTop: miEquipoEnListado ? '20px' : 0 }}>
           <p
             style={{
@@ -1403,59 +1420,37 @@ export default function FormEquipos() {
               lineHeight: 1.45,
             }}
           >
-            No hay equipos disponibles para unirte en este momento
+            No hay equipos buscando jugadores en este momento
           </p>
           {puedeOfrecerCrearDesdeLista && typeof onCrearEquipoClick === 'function' ? (
-            <div
+            <button
+              type="button"
+              onClick={onCrearEquipoClick}
               style={{
-                padding: '14px 16px 16px',
+                width: '100%',
+                maxWidth: '320px',
+                padding: '12px 16px',
+                fontSize: '15px',
+                fontWeight: 800,
                 borderRadius: '12px',
-                background: 'rgba(99, 102, 241, 0.08)',
-                border: '1px solid rgba(99, 102, 241, 0.2)',
-                textAlign: 'center',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                color: 'white',
+                boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
               }}
             >
-              <p style={{ margin: '0 0 10px', color: '#4338ca', fontSize: '15px', fontWeight: 600 }}>
-                ¿No encontrás equipo?
-              </p>
-              <button
-                type="button"
-                onClick={onCrearEquipoClick}
-                style={{
-                  width: '100%',
-                  maxWidth: '320px',
-                  padding: '12px 16px',
-                  fontSize: '15px',
-                  fontWeight: 800,
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                  color: 'white',
-                  boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
-                }}
-              >
-                Crear mi equipo
-              </button>
-              <p
-                style={{
-                  margin: '14px 0 0',
-                  fontSize: '14px',
-                  color: '#64748b',
-                  lineHeight: 1.45,
-                  fontWeight: 500,
-                }}
-              >
-                Puedes crear tu propio equipo y buscar compañeros
-              </p>
-            </div>
+              Crear mi equipo
+            </button>
           ) : null}
         </div>
       ) : (
         <>
-          <h3 style={{ marginTop: miEquipoEnListado ? '20px' : 0, marginBottom: '12px' }}>
-            🏆 Formar equipos ({equiposUnirseListado.length})
-          </h3>
+          {equiposUnirseListado.length > 0 && (
+            <h3 style={{ marginTop: miEquipoEnListado ? '20px' : 0, marginBottom: '12px' }}>
+              🏆 Formar equipos ({equiposUnirseListado.length})
+            </h3>
+          )}
 
           {miEquipoEnListado ? (
             <div
@@ -1505,6 +1500,23 @@ export default function FormEquipos() {
 
   const mostrarPasoEleccion = !torneoCerrado && !miEquipo && !miSolicitudPendiente;
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
+
+  const handleInscripcionHeaderBack = useCallback(() => {
+    if (!mostrarPasoEleccion) {
+      if (typeof window !== 'undefined') window.history.back();
+      return;
+    }
+    if (isMobile) {
+      if (mobileVista !== 'inicio') {
+        setMobileVista('inicio');
+        return;
+      }
+    } else if (desktopFlujo != null) {
+      setDesktopFlujo(null);
+      return;
+    }
+    if (typeof window !== 'undefined') window.history.back();
+  }, [mostrarPasoEleccion, isMobile, mobileVista, desktopFlujo]);
 
   const btnVolverEleccionStyle = {
     alignSelf: 'flex-start',
@@ -1783,7 +1795,7 @@ export default function FormEquipos() {
 
   const renderInscripcionHeader = () => (
     <>
-      <AppHeader title="Inscripción" />
+      <AppHeader title="Inscripción" onBack={handleInscripcionHeaderBack} />
       <div
         style={{
           width: '100%',
@@ -1936,7 +1948,7 @@ export default function FormEquipos() {
               lineHeight: 1.45,
             }}
           >
-            <div style={{ marginBottom: '10px' }}>Pendiente de completar perfil</div>
+            <div style={{ marginBottom: '10px' }}>Ficha de jugador pendiente</div>
             <button
               type="button"
               onClick={() => {
