@@ -630,6 +630,7 @@ export default function MiPerfil() {
         .upsert(payloadDb, { onConflict: 'email' });
 
       if (error) {
+        console.error('ERROR COMPLETO UPSERT:', JSON.stringify(error));
         setErrorMsg(mensajeErrorDbSupabase(error.message));
         return;
       }
