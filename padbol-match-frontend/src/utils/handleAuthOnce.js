@@ -80,7 +80,15 @@ export async function handleAuthOnce(payload) {
       const nombreMeta = String(prevData.nombre || '').trim() || localPart;
       const origin =
         typeof window !== 'undefined' && window.location?.origin ? String(window.location.origin) : '';
-      const emailRedirectTo = origin ? `${origin}/login` : undefined;
+      const reservaRestoreRaw =
+        typeof window !== 'undefined'
+          ? window.sessionStorage?.getItem('padbol_reserva_form_restore_v1')
+          : null;
+      const hasReservaFormRestore =
+        reservaRestoreRaw != null && String(reservaRestoreRaw).trim() !== '';
+      const emailRedirectTo = origin
+        ? `${origin}${hasReservaFormRestore ? '/reservar' : '/login'}`
+        : undefined;
       return await supabase.auth.signUp({
         email: emailTrim,
         password: String(payload.password),
