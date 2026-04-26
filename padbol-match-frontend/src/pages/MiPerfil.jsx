@@ -571,17 +571,12 @@ export default function MiPerfil() {
       }
 
       const local = waNumeroLocal.trim();
-      const localConf = waConfirmLocal.trim();
       if (!digitsOnly(local)) {
         setErrorMsg('Completá tu WhatsApp');
         return;
       }
       if (!whatsappNacionalValido(local)) {
         setErrorMsg('Completá tu WhatsApp (al menos 10 dígitos en el número, sin el código de país).');
-        return;
-      }
-      if (digitsOnly(local) !== digitsOnly(localConf)) {
-        setErrorMsg('Repetí el mismo número en la confirmación de WhatsApp.');
         return;
       }
       const waBuilt = buildFullWhatsDigits(waCodigoPais, local);
@@ -1492,17 +1487,6 @@ export default function MiPerfil() {
             <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '14px', lineHeight: 1.4 }}>
               Obligatorio. Por defecto Argentina (+54): solo el número local (mínimo 10 dígitos), sin repetir +54. Se guarda como +54…
             </p>
-
-            <label style={labelStyle}>Confirmar número</label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              value={waConfirmLocal}
-              onChange={(e) => setWaConfirmLocal(digitsOnly(e.target.value))}
-              placeholder="Ej: 91123456789"
-              style={{ ...inputStyle, marginBottom: '14px' }}
-              autoComplete="tel-national"
-            />
 
             <label style={labelStyle}>Lateralidad</label>
             <select name="lateralidad" value={formData.lateralidad} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }}>
