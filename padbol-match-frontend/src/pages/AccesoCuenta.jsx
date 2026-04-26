@@ -8,6 +8,34 @@ import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { safeRedirectPath } from '../utils/safeRedirect';
 
+function PasswordEyeIcon({ revealed }) {
+  const svgProps = {
+    xmlns: 'http://www.w3.org/2000/svg',
+    viewBox: '0 0 24 24',
+    width: 22,
+    height: 22,
+    fill: 'none',
+    stroke: '#64748b',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  };
+  if (revealed) {
+    return (
+      <svg {...svgProps}>
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...svgProps}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 export default function AccesoCuenta() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,6 +47,9 @@ export default function AccesoCuenta() {
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegPassword2, setShowRegPassword2] = useState(false);
   const sesionYaRedirigidaRef = useRef(false);
 
   const afterLogin = useCallback(
@@ -54,6 +85,9 @@ export default function AccesoCuenta() {
   useEffect(() => {
     setErrorMsg('');
     setInfoMsg('');
+    setShowLoginPassword(false);
+    setShowRegPassword(false);
+    setShowRegPassword2(false);
   }, [modo]);
 
   const handleIngresar = async (e) => {
@@ -176,14 +210,20 @@ export default function AccesoCuenta() {
         style={{
           width: '100%',
           maxWidth: '400px',
-          background: 'rgba(255,255,255,0.98)',
-          borderRadius: '16px',
-          padding: '28px 24px',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+          padding: '0 24px',
+          boxSizing: 'border-box',
         }}
       >
-        <h2 style={{ marginTop: 0, marginBottom: '18px', color: '#1e1b4b' }}>
-          {modo === 'login' ? 'Acceso a tu cuenta' : 'Crear cuenta'}
+        <h2
+          style={{
+            marginTop: 0,
+            marginBottom: '18px',
+            color: '#ffffff',
+            fontSize: '1.35rem',
+            textAlign: 'center',
+          }}
+        >
+          {modo === 'login' ? 'Iniciar Sesión' : 'Crear cuenta'}
         </h2>
 
         {modo === 'login' ? (
@@ -193,7 +233,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'rgba(255,255,255,0.92)',
                 marginBottom: '6px',
               }}
             >
@@ -210,9 +250,10 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #e2e8f0',
                 boxSizing: 'border-box',
                 fontSize: '16px',
+                background: '#ffffff',
               }}
             />
             <label
@@ -220,27 +261,48 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'rgba(255,255,255,0.92)',
                 marginBottom: '6px',
               }}
             >
               Contraseña
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              style={{
-                width: '100%',
-                padding: '14px',
-                marginBottom: '18px',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                boxSizing: 'border-box',
-                fontSize: '16px',
-              }}
-            />
+            <div style={{ position: 'relative', marginBottom: '18px' }}>
+              <input
+                type={showLoginPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                style={{
+                  width: '100%',
+                  padding: '14px 48px 14px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '16px',
+                  background: '#ffffff',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowLoginPassword((v) => !v)}
+                aria-label={showLoginPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                style={{
+                  position: 'absolute',
+                  right: '4px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  padding: '8px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  lineHeight: 0,
+                  borderRadius: '8px',
+                }}
+              >
+                <PasswordEyeIcon revealed={showLoginPassword} />
+              </button>
+            </div>
             <button
               type="submit"
               disabled={busy}
@@ -249,7 +311,7 @@ export default function AccesoCuenta() {
                 padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
-                background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                background: '#dc2626',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
@@ -269,7 +331,7 @@ export default function AccesoCuenta() {
                 padding: 0,
                 border: 'none',
                 background: 'transparent',
-                color: '#fb923c',
+                color: '#fed7aa',
                 fontSize: '15px',
                 fontWeight: 600,
                 cursor: busy ? 'default' : 'pointer',
@@ -286,7 +348,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'rgba(255,255,255,0.92)',
                 marginBottom: '6px',
               }}
             >
@@ -303,9 +365,10 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid #e2e8f0',
                 boxSizing: 'border-box',
                 fontSize: '16px',
+                background: '#ffffff',
               }}
             />
             <label
@@ -313,53 +376,95 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'rgba(255,255,255,0.92)',
                 marginBottom: '6px',
               }}
             >
               Contraseña
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              style={{
-                width: '100%',
-                padding: '14px',
-                marginBottom: '14px',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                boxSizing: 'border-box',
-                fontSize: '16px',
-              }}
-            />
+            <div style={{ position: 'relative', marginBottom: '14px' }}>
+              <input
+                type={showRegPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                style={{
+                  width: '100%',
+                  padding: '14px 48px 14px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '16px',
+                  background: '#ffffff',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowRegPassword((v) => !v)}
+                aria-label={showRegPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                style={{
+                  position: 'absolute',
+                  right: '4px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  padding: '8px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  lineHeight: 0,
+                  borderRadius: '8px',
+                }}
+              >
+                <PasswordEyeIcon revealed={showRegPassword} />
+              </button>
+            </div>
             <label
               style={{
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'rgba(255,255,255,0.92)',
                 marginBottom: '6px',
               }}
             >
               Repetir contraseña
             </label>
-            <input
-              type="password"
-              value={password2}
-              onChange={(e) => setPassword2(e.target.value)}
-              autoComplete="new-password"
-              style={{
-                width: '100%',
-                padding: '14px',
-                marginBottom: '18px',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                boxSizing: 'border-box',
-                fontSize: '16px',
-              }}
-            />
+            <div style={{ position: 'relative', marginBottom: '18px' }}>
+              <input
+                type={showRegPassword2 ? 'text' : 'password'}
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+                autoComplete="new-password"
+                style={{
+                  width: '100%',
+                  padding: '14px 48px 14px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '16px',
+                  background: '#ffffff',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowRegPassword2((v) => !v)}
+                aria-label={showRegPassword2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                style={{
+                  position: 'absolute',
+                  right: '4px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  padding: '8px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  lineHeight: 0,
+                  borderRadius: '8px',
+                }}
+              >
+                <PasswordEyeIcon revealed={showRegPassword2} />
+              </button>
+            </div>
             <button
               type="submit"
               disabled={busy}
@@ -368,7 +473,7 @@ export default function AccesoCuenta() {
                 padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
-                background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                background: '#dc2626',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
@@ -382,10 +487,10 @@ export default function AccesoCuenta() {
         )}
 
         {errorMsg ? (
-          <p style={{ color: '#b91c1c', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{errorMsg}</p>
+          <p style={{ color: '#fecaca', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{errorMsg}</p>
         ) : null}
         {infoMsg ? (
-          <p style={{ color: '#166534', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{infoMsg}</p>
+          <p style={{ color: '#bbf7d0', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{infoMsg}</p>
         ) : null}
 
         {modo !== 'login' ? (
@@ -398,9 +503,9 @@ export default function AccesoCuenta() {
               width: '100%',
               padding: '12px',
               borderRadius: '10px',
-              border: '1px solid #cbd5e1',
-              background: '#f8fafc',
-              color: '#334155',
+              border: '1px solid rgba(255,255,255,0.45)',
+              background: 'rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.95)',
               fontWeight: 700,
               fontSize: '15px',
               cursor: busy ? 'default' : 'pointer',
