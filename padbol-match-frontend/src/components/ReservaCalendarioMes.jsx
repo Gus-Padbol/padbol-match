@@ -52,15 +52,18 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
   const maxD = useMemo(() => startOfDay(parseIsoLocal(maxIso) || new Date()), [maxIso]);
   const hoyStr = todayIso || minIso;
 
+  /** Si aún no hay fecha en el padre, el calendario muestra hoy con el mismo estilo que “seleccionado”. */
+  const effectiveSelectedIso = (selectedIso && String(selectedIso).trim()) || hoyStr;
+
   const [viewY, setViewY] = useState(() => minD.getFullYear());
   const [viewM, setViewM] = useState(() => minD.getMonth());
 
   useEffect(() => {
-    const sel = parseIsoLocal(selectedIso);
+    const sel = parseIsoLocal(effectiveSelectedIso);
     if (!sel) return;
     setViewY(sel.getFullYear());
     setViewM(sel.getMonth());
-  }, [selectedIso]);
+  }, [effectiveSelectedIso]);
 
   const firstNextMonth = useMemo(() => new Date(viewY, viewM + 1, 1), [viewY, viewM]);
   const prevDisabled = useMemo(() => {
@@ -85,7 +88,7 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
       const afterMax = sod > maxD;
       const selectable = !past && !afterMax && !disabled;
       const isToday = iso === hoyStr;
-      const isSelected = selectedIso && iso === selectedIso;
+      const isSelected = iso === effectiveSelectedIso;
       list.push({
         key: iso,
         empty: false,
@@ -98,7 +101,7 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
       });
     }
     return list;
-  }, [viewY, viewM, minD, maxD, selectedIso, disabled, hoyStr]);
+  }, [viewY, viewM, minD, maxD, effectiveSelectedIso, disabled, hoyStr]);
 
   const title = `${MESES[viewM]} ${viewY}`;
 
