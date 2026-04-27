@@ -10,8 +10,8 @@ import { supabase } from '../supabaseClient';
 
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
-/** Margen bajo el flujo principal para que el último bloque (p. ej. mapa) no quede bajo la barra CTA fija (~120px + safe area). */
-const SEDE_PUBLICA_SCROLL_CLEAR_BOTTOM_PX = 120;
+/** Spacer al pie del contenido scrolleable para no quedar bajo la barra CTA fija (px + safe area). */
+const SEDE_PUBLICA_SCROLL_END_SPACER_PX = 120;
 
 const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 const DEFAULT_HERO_BG = 'linear-gradient(160deg, #1a1a2e 0%, #16213e 72%, #0f3460 100%)';
@@ -354,9 +354,8 @@ export default function SedePublica() {
     setDescExpanded(false);
   }, [sedeId]);
 
-  const scrollBottomPad = sede
-    ? `calc(${SEDE_PUBLICA_SCROLL_CLEAR_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`
-    : `${HUB_CONTENT_PADDING_BOTTOM_PX}px`;
+  const mainPaddingBottom =
+    loading || error || !sede ? `${HUB_CONTENT_PADDING_BOTTOM_PX}px` : '0';
 
   const pageMinHeight =
     !loading && !error && sede ? 'auto' : '100vh';
@@ -367,7 +366,7 @@ export default function SedePublica() {
         minHeight: pageMinHeight,
         background: PADBOL_PAGE_GRADIENT,
         paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
-        paddingBottom: scrollBottomPad,
+        paddingBottom: mainPaddingBottom,
         boxSizing: 'border-box',
       }}
     >
@@ -447,127 +446,140 @@ export default function SedePublica() {
                 }}
               />
 
-              <div style={{ position: 'relative', zIndex: 2, display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                {sede.logo_url ? (
-                  <img
-                    src={sede.logo_url}
-                    alt=""
-                    style={{
-                      width: '72px',
-                      height: '72px',
-                      maxWidth: '80px',
-                      maxHeight: '80px',
-                      objectFit: 'contain',
-                      borderRadius: '14px',
-                      background: '#fff',
-                      padding: '6px',
-                      flexShrink: 0,
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: '72px',
-                      height: '72px',
-                      borderRadius: '14px',
-                      background: 'rgba(255,255,255,0.12)',
-                      flexShrink: 0,
-                    }}
-                  />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h1
-                    style={{
-                      color: '#fff',
-                      fontSize: '17px',
-                      fontWeight: 800,
-                      margin: '0 0 6px',
-                      lineHeight: 1.2,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      textShadow: '0 1px 8px rgba(0,0,0,0.45)',
-                    }}
-                    title={sede.nombre || ''}
-                  >
-                    {sede.nombre || '(sin nombre)'}
-                  </h1>
-                  <div style={{ marginBottom: desc ? '6px' : 0 }}>
-                    {licenciaActiva ? (
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '3px 8px',
-                          borderRadius: '999px',
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          letterSpacing: '0.02em',
-                          background: 'rgba(254, 243, 199, 0.92)',
-                          color: '#92400e',
-                          border: '1px solid rgba(217,119,6,0.45)',
-                        }}
-                      >
-                        ⭐ Licencia PADBOL
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          padding: '3px 8px',
-                          borderRadius: '999px',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          background: 'rgba(254,226,226,0.9)',
-                          color: '#b91c1c',
-                          border: '1px solid rgba(220,38,38,0.25)',
-                        }}
-                      >
-                        No habilitado
-                      </span>
-                    )}
+              <div
+                style={{
+                  position: 'relative',
+                  zIndex: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  gap: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  {sede.logo_url ? (
+                    <img
+                      src={sede.logo_url}
+                      alt=""
+                      style={{
+                        width: '72px',
+                        height: '72px',
+                        maxWidth: '80px',
+                        maxHeight: '80px',
+                        objectFit: 'contain',
+                        borderRadius: '14px',
+                        background: '#fff',
+                        padding: '6px',
+                        flexShrink: 0,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '72px',
+                        height: '72px',
+                        borderRadius: '14px',
+                        background: 'rgba(255,255,255,0.12)',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h1
+                      style={{
+                        color: '#fff',
+                        fontSize: '17px',
+                        fontWeight: 800,
+                        margin: 0,
+                        lineHeight: 1.2,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        textShadow: '0 1px 8px rgba(0,0,0,0.45)',
+                      }}
+                      title={sede.nombre || ''}
+                    >
+                      {sede.nombre || '(sin nombre)'}
+                    </h1>
                   </div>
-                  {desc ? (
-                    <div>
-                      <p
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                  {licenciaActiva ? (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '3px 8px',
+                        borderRadius: '999px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        letterSpacing: '0.02em',
+                        background: 'rgba(254, 243, 199, 0.92)',
+                        color: '#92400e',
+                        border: '1px solid rgba(217,119,6,0.45)',
+                      }}
+                    >
+                      ⭐ Licencia PADBOL Activa
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        padding: '3px 8px',
+                        borderRadius: '999px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        background: 'rgba(254,226,226,0.9)',
+                        color: '#b91c1c',
+                        border: '1px solid rgba(220,38,38,0.25)',
+                      }}
+                    >
+                      No habilitado
+                    </span>
+                  )}
+                </div>
+
+                {desc ? (
+                  <div>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: 'rgba(255,255,255,0.82)',
+                        fontSize: '12px',
+                        lineHeight: 1.45,
+                        fontStyle: 'italic',
+                        display: descExpanded ? 'block' : '-webkit-box',
+                        WebkitLineClamp: descExpanded ? 'unset' : 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: descExpanded ? 'visible' : 'hidden',
+                      }}
+                    >
+                      {desc}
+                    </p>
+                    {descLong ? (
+                      <button
+                        type="button"
+                        onClick={() => setDescExpanded((v) => !v)}
                         style={{
-                          margin: 0,
-                          color: 'rgba(255,255,255,0.82)',
-                          fontSize: '12px',
-                          lineHeight: 1.45,
-                          fontStyle: 'italic',
-                          display: descExpanded ? 'block' : '-webkit-box',
-                          WebkitLineClamp: descExpanded ? 'unset' : 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: descExpanded ? 'visible' : 'hidden',
+                          marginTop: '4px',
+                          padding: 0,
+                          border: 'none',
+                          background: 'none',
+                          color: 'rgba(255,255,255,0.95)',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          textDecoration: 'underline',
+                          cursor: 'pointer',
                         }}
                       >
-                        {desc}
-                      </p>
-                      {descLong ? (
-                        <button
-                          type="button"
-                          onClick={() => setDescExpanded((v) => !v)}
-                          style={{
-                            marginTop: '4px',
-                            padding: 0,
-                            border: 'none',
-                            background: 'none',
-                            color: 'rgba(255,255,255,0.95)',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            textDecoration: 'underline',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {descExpanded ? 'Ver menos' : 'Ver más'}
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
+                        {descExpanded ? 'Ver menos' : 'Ver más'}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -668,6 +680,14 @@ export default function SedePublica() {
                 />
               ) : null}
             </div>
+
+            <div
+              aria-hidden
+              style={{
+                height: `calc(${SEDE_PUBLICA_SCROLL_END_SPACER_PX}px + env(safe-area-inset-bottom, 0px))`,
+                flexShrink: 0,
+              }}
+            />
 
             <div
               style={{
