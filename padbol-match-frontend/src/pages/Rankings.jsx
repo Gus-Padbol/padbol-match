@@ -7,6 +7,7 @@ import {
   HUB_CONTENT_PADDING_TOP_PX,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import { supabase } from '../supabaseClient';
 
 /** Misma convención que ReservaForm.jsx */
 const API_BASE = (
@@ -43,7 +44,7 @@ const TABS = [
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function Rankings() {
-  const [activeTab, setActiveTab] = useState('internacional');
+  const [activeTab, setActiveTab] = useState('local');
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
   const [selectedSede, setSelectedSede] = useState('');
@@ -83,6 +84,49 @@ export default function Rankings() {
           setSedesLoadError('Error de red al cargar sedes.');
         }
       });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** Si hay sesión, aplicar categoría del perfil (`nivel`) al filtro cuando exista en la lista. */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const user = auth?.user;
+        if (!user || cancelled) return;
+
+        let nivel = null;
+        const uid = user.id;
+        if (uid) {
+          const { data: byUid } = await supabase
+            .from('jugadores_perfil')
+            .select('nivel')
+            .eq('user_id', uid)
+            .maybeSingle();
+          nivel = byUid?.nivel != null ? String(byUid.nivel).trim() : '';
+        }
+        const email = String(user.email || '').trim().toLowerCase();
+        if (!nivel && email) {
+          const { data: byEmail } = await supabase
+            .from('jugadores_perfil')
+            .select('nivel')
+            .ilike('email', email)
+            .maybeSingle();
+          nivel = byEmail?.nivel != null ? String(byEmail.nivel).trim() : '';
+        }
+
+        if (cancelled) return;
+        const n = String(nivel || '').trim();
+        if (n && CATEGORIAS.includes(n)) {
+          setSelectedCategoria(n);
+        }
+      } catch {
+        /* sin sesión o error de red: se deja "Todas las categorías" */
+      }
+    })();
     return () => {
       cancelled = true;
     };
