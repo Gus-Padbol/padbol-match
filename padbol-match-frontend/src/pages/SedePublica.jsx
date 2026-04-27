@@ -502,7 +502,7 @@ export default function SedePublica() {
                   >
                     <h1
                       style={{
-                        color: '#fff',
+                        color: normalizeHexColor(sede.color_nombre) ?? '#FFFFFF',
                         fontSize: '17px',
                         fontWeight: 800,
                         margin: 0,
