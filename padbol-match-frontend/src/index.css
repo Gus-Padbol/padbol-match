@@ -42,8 +42,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-
-/* TEMPORAL — diagnóstico layout iPhone Safari: quitar tras capturar screenshot */
-* {
-  outline: 1px solid red !important;
-}

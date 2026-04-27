@@ -85,7 +85,9 @@ const BottomNav = () => {
         position: 'fixed',
         top: HUB_APP_HEADER_HEIGHT_PX,
         left: 0,
+        right: 0,
         width: '100%',
+        maxWidth: '100%',
         height: HUB_NAV_HEIGHT_PX,
         boxSizing: 'border-box',
         padding: '2px 4px',
@@ -93,6 +95,7 @@ const BottomNav = () => {
         justifyContent: 'space-around',
         alignItems: 'stretch',
         zIndex: 1001,
+        overflowX: 'hidden',
         ...navBarStyle,
       }}
     >

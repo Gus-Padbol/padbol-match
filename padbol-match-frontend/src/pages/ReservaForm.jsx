@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'react-router-dom';
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
@@ -110,13 +110,6 @@ const RESERVA_FORM_RESTORE_KEY = 'padbol_reserva_form_restore_v1';
 /** Solo se ofrecen / muestran las primeras 2 canchas en el flujo de reserva. */
 const MAX_CANCHAS_RESERVA_UI = 2;
 
-function normalizeSearchText(s) {
-  return String(s || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-}
-
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -201,51 +194,10 @@ export default function ReservaForm() {
   /** Número local en pantalla resumen — controlado aparte de formData para no re-disparar efectos al escribir */
   const [whatsapp, setWhatsapp] = useState('');
 
-  const [paisSearchQuery, setPaisSearchQuery] = useState('');
-  const [paisMenuOpen, setPaisMenuOpen] = useState(false);
-  const [ciudadSearchQuery, setCiudadSearchQuery] = useState('');
-  const [ciudadMenuOpen, setCiudadMenuOpen] = useState(false);
-  const [sedeSearchQuery, setSedeSearchQuery] = useState('');
-  const [sedeMenuOpen, setSedeMenuOpen] = useState(false);
-  const paisSearchRef = useRef(null);
-  const ciudadSearchRef = useRef(null);
-  const sedeSearchRef = useRef(null);
-
-  const paisesFiltradosBusqueda = useMemo(() => {
-    const q = normalizeSearchText(paisSearchQuery);
-    if (!q) return paisesOrdenados;
-    return paisesOrdenados.filter((p) => normalizeSearchText(p).includes(q));
-  }, [paisesOrdenados, paisSearchQuery]);
-
   useEffect(() => {
     if (pantalla !== 4) return;
     setWhatsapp(formData.numeroTel || '');
   }, [pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    setCiudadSearchQuery('');
-    setCiudadMenuOpen(false);
-  }, [filtros.pais]);
-
-  useEffect(() => {
-    setSedeSearchQuery('');
-    setSedeMenuOpen(false);
-  }, [filtros.ciudad]);
-
-  useEffect(() => {
-    if (!paisMenuOpen && !ciudadMenuOpen && !sedeMenuOpen) return;
-    const onDown = (e) => {
-      const t = e.target;
-      if (paisSearchRef.current?.contains(t)) return;
-      if (ciudadSearchRef.current?.contains(t)) return;
-      if (sedeSearchRef.current?.contains(t)) return;
-      setPaisMenuOpen(false);
-      setCiudadMenuOpen(false);
-      setSedeMenuOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [paisMenuOpen, ciudadMenuOpen, sedeMenuOpen]);
 
   // Auto-select + auto-advance cuando solo hay una cancha libre (tras elegir horario)
   useEffect(() => {
@@ -457,15 +409,11 @@ export default function ReservaForm() {
   );
 
   const clearPais = useCallback(() => {
-    setPaisSearchQuery('');
-    setPaisMenuOpen(false);
     setFiltros({ pais: '', ciudad: '', sede_id: '' });
     setCiudades([]);
   }, []);
 
   const clearCiudad = useCallback(() => {
-    setCiudadSearchQuery('');
-    setCiudadMenuOpen(false);
     setFiltros((prev) => ({ ...prev, ciudad: '', sede_id: '' }));
   }, []);
 
@@ -748,17 +696,6 @@ export default function ReservaForm() {
         (!filtros.ciudad || sede.ciudad === filtros.ciudad)
     );
 
-    const useCiudadPills = ciudades.length < 5;
-    const useSedePills = sedesFiltradas.length < 5;
-    const filtroCiudadQ = normalizeSearchText(ciudadSearchQuery);
-    const ciudadesListaBusqueda = !filtroCiudadQ
-      ? ciudades
-      : ciudades.filter((c) => normalizeSearchText(c).includes(filtroCiudadQ));
-    const filtroSedeQ = normalizeSearchText(sedeSearchQuery);
-    const sedesListaBusqueda = !filtroSedeQ
-      ? sedesFiltradas
-      : sedesFiltradas.filter((s) => normalizeSearchText(String(sede.nombre || '')).includes(filtroSedeQ));
-
     return (
       <div
         className="reserva-container reserva-sede-seleccion"
@@ -790,196 +727,71 @@ export default function ReservaForm() {
             <div className="reserva-field-label">País</div>
             {paisesOrdenados.length === 1 ? (
               <div className="reserva-pais-unico">{filtros.pais || paisesOrdenados[0]}</div>
-            ) : filtros.pais ? (
-              <div className="reserva-pais-badge-row">
-                <span className="reserva-pill is-static">{filtros.pais}</span>
-                <button
-                  type="button"
-                  className="reserva-pill-clear"
-                  aria-label="Quitar país"
-                  onClick={clearPais}
-                >
-                  ×
-                </button>
-              </div>
             ) : (
-              <div className="reserva-search-wrap" ref={paisSearchRef}>
-                <div className="reserva-search-input-inner">
-                  <span className="reserva-search-ico" aria-hidden>🔍</span>
-                  <input
-                    type="search"
-                    className="reserva-search-input"
-                    placeholder="Buscar país..."
-                    value={paisSearchQuery}
-                    onChange={(e) => {
-                      setPaisSearchQuery(e.target.value);
-                      setPaisMenuOpen(true);
-                    }}
-                    onFocus={() => setPaisMenuOpen(true)}
-                    autoComplete="off"
-                    enterKeyHint="search"
-                  />
-                </div>
-                {paisMenuOpen ? (
-                  <div className="reserva-search-dropdown" role="listbox">
-                    {paisesFiltradosBusqueda.length === 0 ? (
-                      <div className="reserva-search-empty">Sin coincidencias</div>
-                    ) : (
-                      paisesFiltradosBusqueda.map((pais) => (
-                        <button
-                          key={pais}
-                          type="button"
-                          role="option"
-                          className="reserva-search-option"
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            selectPais(pais);
-                            setPaisMenuOpen(false);
-                            setPaisSearchQuery('');
-                          }}
-                        >
-                          {pais}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                ) : null}
-              </div>
+              <select
+                className="reserva-sede-native-select"
+                aria-label="País"
+                value={filtros.pais || ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (!v) clearPais();
+                  else selectPais(v);
+                }}
+              >
+                <option value="">Seleccioná país…</option>
+                {paisesOrdenados.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
             )}
 
             {filtros.pais ? (
               <>
                 <div className="reserva-field-label">Ciudad</div>
-                {useCiudadPills ? (
-                  <div className="reserva-pill-wrap" role="group" aria-label="Ciudad">
-                    {ciudades.map((ciudad) => (
-                      <button
-                        key={ciudad}
-                        type="button"
-                        className={`reserva-pill${filtros.ciudad === ciudad ? ' is-active' : ''}`}
-                        onClick={() => selectCiudad(ciudad)}
-                      >
-                        {ciudad}
-                      </button>
-                    ))}
-                  </div>
-                ) : filtros.ciudad ? (
-                  <div className="reserva-pais-badge-row">
-                    <span className="reserva-pill is-static">{filtros.ciudad}</span>
-                    <button
-                      type="button"
-                      className="reserva-pill-clear"
-                      aria-label="Quitar ciudad"
-                      onClick={clearCiudad}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ) : (
-                  <div className="reserva-search-wrap" ref={ciudadSearchRef}>
-                    <div className="reserva-search-input-inner">
-                      <span className="reserva-search-ico" aria-hidden>🔍</span>
-                      <input
-                        type="search"
-                        className="reserva-search-input"
-                        placeholder="Buscar ciudad..."
-                        value={ciudadSearchQuery}
-                        onChange={(e) => {
-                          setCiudadSearchQuery(e.target.value);
-                          setCiudadMenuOpen(true);
-                        }}
-                        onFocus={() => setCiudadMenuOpen(true)}
-                        autoComplete="off"
-                      />
-                    </div>
-                    {ciudadMenuOpen ? (
-                      <div className="reserva-search-dropdown" role="listbox">
-                        {ciudadesListaBusqueda.length === 0 ? (
-                          <div className="reserva-search-empty">Sin coincidencias</div>
-                        ) : (
-                          ciudadesListaBusqueda.map((ciudad) => (
-                            <button
-                              key={ciudad}
-                              type="button"
-                              role="option"
-                              className="reserva-search-option"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => {
-                                selectCiudad(ciudad);
-                                setCiudadMenuOpen(false);
-                                setCiudadSearchQuery('');
-                              }}
-                            >
-                              {ciudad}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                )}
+                <select
+                  className="reserva-sede-native-select"
+                  aria-label="Ciudad"
+                  value={filtros.ciudad || ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) clearCiudad();
+                    else selectCiudad(v);
+                  }}
+                  disabled={ciudades.length === 0}
+                >
+                  <option value="">Seleccioná ciudad…</option>
+                  {ciudades.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </>
             ) : null}
 
             {filtros.pais && filtros.ciudad ? (
               <>
                 <div className="reserva-field-label">Sede</div>
-                {useSedePills ? (
-                  <div className="reserva-pill-wrap reserva-pill-wrap--sedes" role="group" aria-label="Sede">
-                    {sedesFiltradas.map((sede) => (
-                      <button
-                        key={sede.id}
-                        type="button"
-                        className={`reserva-pill${Number(filtros.sede_id) === Number(sede.id) ? ' is-active' : ''}`}
-                        onClick={() => selectSedeChip(sede.id)}
-                      >
-                        {sede.nombre}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="reserva-search-wrap" ref={sedeSearchRef}>
-                    <div className="reserva-search-input-inner">
-                      <span className="reserva-search-ico" aria-hidden>🔍</span>
-                      <input
-                        type="search"
-                        className="reserva-search-input"
-                        placeholder="Buscar sede..."
-                        value={sedeSearchQuery}
-                        onChange={(e) => {
-                          setSedeSearchQuery(e.target.value);
-                          setSedeMenuOpen(true);
-                        }}
-                        onFocus={() => setSedeMenuOpen(true)}
-                        autoComplete="off"
-                      />
-                    </div>
-                    {sedeMenuOpen ? (
-                      <div className="reserva-search-dropdown" role="listbox">
-                        {sedesListaBusqueda.length === 0 ? (
-                          <div className="reserva-search-empty">Sin coincidencias</div>
-                        ) : (
-                          sedesListaBusqueda.map((sede) => (
-                            <button
-                              key={sede.id}
-                              type="button"
-                              role="option"
-                              className="reserva-search-option"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => {
-                                setSedeMenuOpen(false);
-                                setSedeSearchQuery('');
-                                selectSedeChip(sede.id);
-                              }}
-                            >
-                              {sede.nombre}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                )}
+                <select
+                  className="reserva-sede-native-select"
+                  aria-label="Sede"
+                  value={filtros.sede_id !== '' && filtros.sede_id != null ? String(filtros.sede_id) : ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) setFiltros((prev) => ({ ...prev, sede_id: '' }));
+                    else selectSedeChip(Number(v));
+                  }}
+                  disabled={sedesFiltradas.length === 0}
+                >
+                  <option value="">Seleccioná sede…</option>
+                  {sedesFiltradas.map((s) => (
+                    <option key={s.id} value={String(s.id)}>
+                      {s.nombre}
+                    </option>
+                  ))}
+                </select>
               </>
             ) : null}
 

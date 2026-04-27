@@ -47,9 +47,8 @@ export default function UserHome() {
         alt="Padbol Match"
         style={{
           display: 'block',
-          margin: '0 auto',
-          marginBottom: '40px',
-          width: '120px'
+          margin: '20px auto 40px',
+          width: '120px',
         }}
       />
       <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto' }}>
