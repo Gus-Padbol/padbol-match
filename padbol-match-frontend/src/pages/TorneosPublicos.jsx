@@ -88,6 +88,14 @@ export default function TorneosPublicos() {
     return Number.isFinite(n) ? n : null;
   }, [searchParams]);
 
+  const handleTorneosAppBack = useCallback(() => {
+    if (sedeFiltroId != null) {
+      navigate(`/sede/${sedeFiltroId}`, { replace: true });
+      return;
+    }
+    navigate(-1);
+  }, [navigate, sedeFiltroId]);
+
   const irACambiarSede = () => {
     localStorage.removeItem('ultima_sede');
     localStorage.removeItem('ultima_sede_nombre');
@@ -464,9 +472,22 @@ export default function TorneosPublicos() {
         padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 12px`,
       }}
     >
-      <AppHeader title="Torneos" />
+      <AppHeader title="Torneos" onBack={handleTorneosAppBack} />
 
       <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
+          width={80}
+          height={80}
+          style={{
+            display: 'block',
+            width: '80px',
+            height: 'auto',
+            margin: '0 auto 14px',
+            objectFit: 'contain',
+          }}
+        />
         <div
           style={{
             background: 'rgba(255,255,255,0.10)',

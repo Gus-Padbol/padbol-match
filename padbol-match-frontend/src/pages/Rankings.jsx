@@ -185,6 +185,19 @@ export default function Rankings() {
     <div style={containerStyle}>
       <AppHeader title="Ranking" />
       <div style={innerStyle}>
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
+          width={80}
+          height={80}
+          style={{
+            display: 'block',
+            width: '80px',
+            height: 'auto',
+            margin: '0 auto 14px',
+            objectFit: 'contain',
+          }}
+        />
 
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '4px', marginBottom: '12px' }}>

@@ -27,6 +27,7 @@ function hideLogoutForPathname(pathname) {
   if (pathOnly === '/torneos' || pathOnly.startsWith('/torneos/')) return true;
   if (pathOnly === '/rankings' || pathOnly.startsWith('/rankings/')) return true;
   if (pathOnly === '/ranking' || pathOnly.startsWith('/ranking/')) return true;
+  if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   return false;
 }
 
