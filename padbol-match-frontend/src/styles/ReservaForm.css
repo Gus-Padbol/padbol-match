@@ -352,16 +352,24 @@
 
 .reserva-horario-bloque label {
   margin-bottom: 10px;
+  text-align: center;
 }
 
 .reserva-horarios-wrap {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
+  width: 100%;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
 }
 
 .reserva-horario-btn {
-  min-width: 8.5rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border-radius: 0.75rem;
   border: 1px solid #e2e8f0;
   background: #fff;
@@ -382,7 +390,6 @@
 
 @media (min-width: 640px) {
   .reserva-horario-btn {
-    min-width: 9.5rem;
     font-size: 15px;
   }
 }
@@ -419,6 +426,10 @@
 
 .reserva-select-horario {
   margin-top: 4px;
+}
+
+.reserva-canchas-bloque {
+  margin-top: 20px;
 }
 
 .reserva-canchas-botones {

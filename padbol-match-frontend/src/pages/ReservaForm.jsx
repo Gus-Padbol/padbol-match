@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'react-router-dom';
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
@@ -7,6 +7,7 @@ import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_CONTENT_PADDING_TOP_PX,
   hubContentPaddingTopPx,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
@@ -193,6 +194,7 @@ export default function ReservaForm() {
   const [mpLoading, setMpLoading] = useState(false);
   /** Número local en pantalla resumen — controlado aparte de formData para no re-disparar efectos al escribir */
   const [whatsapp, setWhatsapp] = useState('');
+  const canchasBloqueRef = useRef(null);
 
   useEffect(() => {
     if (pantalla !== 4) return;
@@ -576,6 +578,7 @@ export default function ReservaForm() {
   const selectHorario = useCallback(
     (hora) => {
       const f = formData.fecha;
+      setCanchasDisponibles([]);
       setFormData((prev) => ({
         ...prev,
         hora,
@@ -586,6 +589,18 @@ export default function ReservaForm() {
     },
     [formData.fecha, buscarCanchasDisponibles]
   );
+
+  useEffect(() => {
+    if (pantalla !== 2) return;
+    if (!formData.hora || canchasDisponibles.length === 0) return;
+    const id = requestAnimationFrame(() => {
+      canchasBloqueRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [pantalla, formData.hora, canchasDisponibles]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -884,7 +899,11 @@ export default function ReservaForm() {
             )}
 
             {formData.hora && canchasDisponibles.length > 0 && (
-              <div style={{ marginTop: '20px' }}>
+              <div
+                ref={canchasBloqueRef}
+                className="reserva-canchas-bloque"
+                style={{ scrollMarginTop: `${HUB_CONTENT_PADDING_TOP_PX}px` }}
+              >
                 <label style={{ display: 'block', fontWeight: 600, color: '#333', marginBottom: '10px' }}>Elige tu cancha:</label>
                 <div className="reserva-canchas-botones">
                   {canchasDisponibles.map(c => (
