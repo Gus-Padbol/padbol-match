@@ -116,7 +116,15 @@ function AppRoutes() {
   }, [location.pathname]);
 
   return (
-    <div style={{ minHeight: '100vh', boxSizing: 'border-box' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
       <Routes>
         <Route path="/" element={<UserHome />} />
         <Route path="/hub" element={<UserHome />} />
@@ -171,7 +179,17 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AppRoutes />
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '100vw',
+          overflowX: 'hidden',
+          minHeight: '100vh',
+          boxSizing: 'border-box',
+        }}
+      >
+        <AppRoutes />
+      </div>
     </Router>
   );
 }

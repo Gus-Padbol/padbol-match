@@ -18,8 +18,8 @@ const btnVolver = {
 const LOGOUT_BTN_SIZE = 34;
 
 /**
- * Barra superior fija: ← Volver (opcional), título centrado en viewport, cierre de sesión.
- * Grid 1fr / auto / 1fr: con `showBack={false}` un hueco del mismo ancho que ⏻ equilibra el título.
+ * Barra superior fija: ← Volver alineado a la izquierda (tras safe-area), título centrado, cierre de sesión.
+ * Grid 1fr / auto / 1fr: con `showBack={false}` un hueco a la derecha de la 1ª columna equilibra el título.
  */
 export default function AppHeader({
   title,
@@ -27,6 +27,8 @@ export default function AppHeader({
   onBack,
   backLabel,
   titleColor,
+  /** Si true, no se muestra el botón de cerrar sesión (p. ej. perfil público de sede). */
+  hideLogout = false,
 }) {
   const navigate = useNavigate();
   const { session, signOutAndClear } = useAuth();
@@ -67,7 +69,7 @@ export default function AppHeader({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: showBack ? 'flex-start' : 'flex-end',
           alignItems: 'center',
           minWidth: 0,
         }}
@@ -150,7 +152,7 @@ export default function AppHeader({
           minWidth: 0,
         }}
       >
-        {session?.user ? (
+        {!hideLogout && session?.user ? (
           <button
             type="button"
             onClick={async () => {
@@ -178,7 +180,7 @@ export default function AppHeader({
           >
             ⏻
           </button>
-        ) : (
+        ) : !hideLogout ? (
           <span
             aria-hidden
             style={{
@@ -187,7 +189,7 @@ export default function AppHeader({
               flexShrink: 0,
             }}
           />
-        )}
+        ) : null}
       </div>
     </div>
   );
