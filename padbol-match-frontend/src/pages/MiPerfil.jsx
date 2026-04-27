@@ -123,6 +123,34 @@ function paisPayloadSegunTorneo(torneoRow, paisForm) {
   return p || PAIS_ARGENTINA_PERFIL;
 }
 
+/** Handle sin @ para el input, desde `instagram_url` (URL o @usuario) guardada en BD. */
+function instagramHandleFromStored(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const u = new URL(s);
+      if (u.hostname.toLowerCase().includes('instagram.com')) {
+        const parts = u.pathname.split('/').filter(Boolean);
+        return parts[0] ? String(parts[0]).replace(/\/$/, '') : '';
+      }
+    } catch {
+      return '';
+    }
+  }
+  return s.replace(/^@/, '').trim();
+}
+
+/** Valor para columna `jugadores_perfil.instagram_url`; null si vacío. */
+function instagramUrlFromHandle(handle) {
+  const h = String(handle ?? '')
+    .trim()
+    .replace(/^@/, '')
+    .replace(/^\/+|\/+$/g, '');
+  if (!h) return null;
+  return `https://www.instagram.com/${h}/`;
+}
+
 export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -222,6 +250,7 @@ export default function MiPerfil() {
     pais: '',
     ciudad: '',
     alias: '',
+    instagram: '',
 
     fecha_nacimiento: '',
     numero_fipa: '',
@@ -360,6 +389,7 @@ export default function MiPerfil() {
           pais: data.pais || '',
           ciudad: data.ciudad || '',
           alias: data.alias != null ? String(data.alias) : '',
+          instagram: instagramHandleFromStored(data.instagram_url),
           fecha_nacimiento: data.fecha_nacimiento || '',
           numero_fipa: data.numero_fipa || '',
           es_federado: data.es_federado || false,
@@ -528,6 +558,7 @@ export default function MiPerfil() {
           lateralidad: 'Diestro',
           pendiente_validacion: true,
           foto_url: fotoUrlGuardada,
+          instagram_url: instagramUrlFromHandle(formData.instagram),
         };
         const { data: inserted, error: insErr } = await supabase
           .from('jugadores_perfil')
@@ -706,6 +737,7 @@ export default function MiPerfil() {
         es_federado: formData.es_federado,
         whatsapp: wa,
         alias: aliasTrimReg || null,
+        instagram_url: instagramUrlFromHandle(formData.instagram),
       };
 
       const { error: jpErr } = await supabase.from('jugadores_perfil').upsert(
@@ -815,6 +847,7 @@ export default function MiPerfil() {
         numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
         es_federado: formData.es_federado,
         alias: aliasTrim || null,
+        instagram_url: instagramUrlFromHandle(formData.instagram),
       };
 
       const userId = session?.user?.id ?? null;
@@ -1144,6 +1177,53 @@ export default function MiPerfil() {
                 autoComplete="nickname"
               />
 
+              <label style={guestLabelStyle}>Instagram</label>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  marginBottom: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '5px',
+                  boxSizing: 'border-box',
+                  background: 'white',
+                  overflow: 'hidden',
+                }}
+              >
+                <span
+                  style={{
+                    padding: '10px 0 10px 10px',
+                    fontWeight: 700,
+                    color: '#64748b',
+                    fontSize: '14px',
+                    flexShrink: 0,
+                  }}
+                  aria-hidden
+                >
+                  @
+                </span>
+                <input
+                  type="text"
+                  name="instagram"
+                  value={formData.instagram}
+                  onChange={handleChange}
+                  placeholder="usuario"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    border: 'none',
+                    outline: 'none',
+                    padding: '10px 10px 10px 4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
               <label style={guestLabelStyle}>
                 WhatsApp {reqAst}
               </label>
@@ -1330,11 +1410,11 @@ export default function MiPerfil() {
                 </>
               ) : null}
 
-              <label style={guestLabelStyle}>Ciudad</label>
+              <label style={guestLabelStyle}>Club habitual</label>
               <input
                 type="text"
                 name="ciudad"
-                placeholder="Ej: Buenos Aires"
+                placeholder="Ej: nombre del club o sede"
                 value={formData.ciudad}
                 onChange={handleChange}
                 style={{ ...guestInputStyle, marginBottom: '14px' }}
@@ -1504,7 +1584,7 @@ export default function MiPerfil() {
             position: 'relative',
             width: '120px',
             height: '120px',
-            margin: '0 auto 14px',
+            margin: '0 auto 6px',
             padding: 0,
             border: 'none',
             background: 'transparent',
@@ -1585,7 +1665,7 @@ export default function MiPerfil() {
             onClick={() => void handleGuardarFoto()}
             style={{
               display: 'block',
-              margin: '0 auto 12px',
+              margin: '0 auto 6px',
               padding: '10px 20px',
               fontSize: '14px',
               fontWeight: 700,
@@ -1600,19 +1680,8 @@ export default function MiPerfil() {
             {guardandoFoto ? 'Guardando…' : 'Guardar foto'}
           </button>
         ) : null}
-        <p
-          style={{
-            margin: '0 auto 14px',
-            maxWidth: '300px',
-            fontSize: '12px',
-            color: '#6b7280',
-            lineHeight: 1.45,
-          }}
-        >
-          Usá una foto de frente con la cara centrada. Mejor resultado con foto cuadrada.
-        </p>
 
-        <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#222' }}>
+        <h2 style={{ margin: '2px 0 6px', fontSize: '22px', color: '#222' }}>
           {getDisplayName(userProfile || perfil, session)}
         </h2>
 
@@ -1622,7 +1691,9 @@ export default function MiPerfil() {
           </p>
         )}
         {perfil?.ciudad && (
-          <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>📍 {perfil.ciudad}</p>
+          <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>
+            Club habitual: {perfil.ciudad}
+          </p>
         )}
         {/* Badges */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1664,6 +1735,14 @@ export default function MiPerfil() {
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row label="Alias" value={String(perfil?.alias || '').trim() || '—'} />
+              <Row
+                label="Instagram"
+                value={
+                  perfil?.instagram_url
+                    ? `@${instagramHandleFromStored(perfil.instagram_url)}`
+                    : '—'
+                }
+              />
               <Row label="Email cuenta" value={cuentaDeSesion?.email || '—'} />
               <Row label="Categoría" value={
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -1721,6 +1800,53 @@ export default function MiPerfil() {
               style={{ ...inputStyle, marginBottom: '14px' }}
               autoComplete="nickname"
             />
+
+            <label style={labelStyle}>Instagram</label>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                marginBottom: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                boxSizing: 'border-box',
+                background: 'white',
+                overflow: 'hidden',
+              }}
+            >
+              <span
+                style={{
+                  padding: '10px 0 10px 10px',
+                  fontWeight: 700,
+                  color: '#64748b',
+                  fontSize: '14px',
+                  flexShrink: 0,
+                }}
+                aria-hidden
+              >
+                @
+              </span>
+              <input
+                type="text"
+                name="instagram"
+                value={formData.instagram}
+                onChange={handleChange}
+                placeholder="usuario"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  border: 'none',
+                  outline: 'none',
+                  padding: '10px 10px 10px 4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
 
             <label style={labelStyle}>WhatsApp</label>
             <div
@@ -1824,8 +1950,15 @@ export default function MiPerfil() {
               </>
             ) : null}
 
-            <label style={labelStyle}>Ciudad</label>
-            <input type="text" name="ciudad" placeholder="Ej: Buenos Aires" value={formData.ciudad} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
+            <label style={labelStyle}>Club habitual</label>
+            <input
+              type="text"
+              name="ciudad"
+              placeholder="Ej: nombre del club o sede"
+              value={formData.ciudad}
+              onChange={handleChange}
+              style={{ ...inputStyle, marginBottom: '14px' }}
+            />
 
             <label style={labelStyle}>Fecha de nacimiento</label>
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
