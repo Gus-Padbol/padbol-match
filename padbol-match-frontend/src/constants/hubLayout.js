@@ -10,8 +10,8 @@ export const HUB_CONTENT_PADDING_TOP_PX =
 export const HUB_CONTENT_PADDING_BOTTOM_PX = 24;
 
 /**
- * Rutas sin barra hub: inicio, sedes, sede, reserva, auth.
- * La barra queda solo en Torneos, Ranking y Perfil (y flujos que la mantengan).
+ * Rutas sin barra hub: inicio, listado sedes, reserva, auth.
+ * Perfil de sede (`/sede/:id`) muestra la barra con estilo sobrio en {@link BottomNav}.
  */
 export function isHubNavBarHiddenPathname(pathname) {
   let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
@@ -23,8 +23,14 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   if (pathOnly === '/' || pathOnly === '/inicio' || pathOnly === '/hub' || pathOnly === '/home') return true;
   if (pathOnly === '/sedes' || pathOnly.startsWith('/sedes/')) return true;
-  if (pathOnly === '/sede' || pathOnly.startsWith('/sede/')) return true;
   return false;
+}
+
+/** Perfil público de sede: barra hub visible con fondo semitransparente. */
+export function isSedeProfilePathname(pathname) {
+  let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
+  pathOnly = pathOnly.replace(/\/+$/, '') || '/';
+  return pathOnly === '/sede' || pathOnly.startsWith('/sede/');
 }
 
 /** padding-top del contenido según si la barra hub está visible bajo el header. */

@@ -5,6 +5,7 @@ import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_NAV_HEIGHT_PX,
   isHubNavBarHiddenPathname,
+  isSedeProfilePathname,
 } from '../constants/hubLayout';
 
 const BottomNav = () => {
@@ -14,6 +15,8 @@ const BottomNav = () => {
   const path = location.pathname;
 
   if (isHubNavBarHiddenPathname(path)) return null;
+
+  const sedeSobrio = isSedeProfilePathname(path);
 
   const items = [
     { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
@@ -32,6 +35,20 @@ const BottomNav = () => {
     navigate(item.path);
   };
 
+  const navBarStyle = sedeSobrio
+    ? {
+        background: 'rgba(0, 0, 0, 0.32)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.12)',
+      }
+    : {
+        background: '#f8fafc',
+        borderBottom: '1px solid #e2e8f0',
+        boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+      };
+
   return (
     <nav
       aria-label="Navegación principal"
@@ -43,17 +60,25 @@ const BottomNav = () => {
         height: HUB_NAV_HEIGHT_PX,
         boxSizing: 'border-box',
         padding: '2px 4px',
-        background: '#f8fafc',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'stretch',
-        borderBottom: '1px solid #e2e8f0',
-        boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
         zIndex: 1001,
+        ...navBarStyle,
       }}
     >
       {items.map((item) => {
         const isActive = item.match(path);
+
+        const btnSobrio = sedeSobrio
+          ? {
+              background: isActive ? 'rgba(34, 197, 94, 0.28)' : 'transparent',
+              color: isActive ? '#bbf7d0' : 'rgba(248, 250, 252, 0.82)',
+            }
+          : {
+              background: isActive ? 'rgba(34, 197, 94, 0.14)' : 'transparent',
+              color: isActive ? '#15803d' : '#64748b',
+            };
 
         return (
           <button
@@ -69,14 +94,13 @@ const BottomNav = () => {
               maxWidth: '120px',
               padding: '2px 2px',
               border: 'none',
-              background: isActive ? 'rgba(34, 197, 94, 0.14)' : 'transparent',
-              color: isActive ? '#15803d' : '#64748b',
               fontSize: '11px',
               cursor: 'pointer',
               transition: 'color 0.2s ease, background 0.2s ease',
               fontWeight: isActive ? 700 : 500,
               borderRadius: '10px',
               margin: '0 2px',
+              ...btnSobrio,
             }}
           >
             <span
@@ -84,6 +108,7 @@ const BottomNav = () => {
                 fontSize: '18px',
                 marginBottom: '1px',
                 lineHeight: 1,
+                opacity: sedeSobrio ? (isActive ? 1 : 0.92) : 1,
               }}
               aria-hidden
             >
