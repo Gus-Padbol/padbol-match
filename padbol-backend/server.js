@@ -1092,6 +1092,46 @@ app.delete('/api/jugadores_torneo/:id', async (req, res) => {
 });
 
 // ===== EQUIPOS =====
+/**
+ * Si `equipo.jugadores` tiene exactamente 2 entradas, resuelve `user_id` de cada una
+ * y guarda en `jugadores_perfil.ultimo_companero_id` el UUID del compañero de pareja.
+ */
+async function actualizarUltimoCompaneroDesdeEquipoRow(equipoRow) {
+  try {
+    if (!equipoRow || typeof equipoRow !== 'object') return;
+    const arr = Array.isArray(equipoRow.jugadores) ? equipoRow.jugadores : [];
+    if (arr.length !== 2) return;
+
+    const esUuid = (s) => {
+      const x = String(s || '').trim();
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
+    };
+
+    const resolveUserId = async (j) => {
+      if (!j || typeof j !== 'object') return null;
+      const idRaw = j.id != null && j.id !== '' ? String(j.id).trim() : '';
+      if (idRaw && esUuid(idRaw)) return idRaw;
+      const em = String(j.email || '').trim().toLowerCase();
+      if (!em) return null;
+      const { data } = await supabase.from('jugadores_perfil').select('user_id').ilike('email', em).maybeSingle();
+      return data?.user_id ? String(data.user_id) : null;
+    };
+
+    const u1 = await resolveUserId(arr[0]);
+    const u2 = await resolveUserId(arr[1]);
+    if (!u1 || !u2 || u1 === u2) return;
+
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      supabase.from('jugadores_perfil').update({ ultimo_companero_id: u2 }).eq('user_id', u1),
+      supabase.from('jugadores_perfil').update({ ultimo_companero_id: u1 }).eq('user_id', u2),
+    ]);
+    if (e1) console.warn('ultimo_companero_id (jugador 1):', e1.message);
+    if (e2) console.warn('ultimo_companero_id (jugador 2):', e2.message);
+  } catch (err) {
+    console.warn('actualizarUltimoCompaneroDesdeEquipoRow:', err?.message || err);
+  }
+}
+
 app.post('/api/torneos/:torneo_id/equipos', async (req, res) => {
   try {
     const { torneo_id } = req.params;
@@ -1109,6 +1149,9 @@ app.post('/api/torneos/:torneo_id/equipos', async (req, res) => {
       .select();
 
     if (error) throw error;
+    if (Array.isArray(data) && data[0]) {
+      await actualizarUltimoCompaneroDesdeEquipoRow(data[0]);
+    }
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1158,6 +1201,9 @@ app.put('/api/equipos/:id', async (req, res) => {
       .select();
 
     if (error) throw error;
+    if (Array.isArray(data) && data[0]) {
+      await actualizarUltimoCompaneroDesdeEquipoRow(data[0]);
+    }
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1276,7 +1322,11 @@ app.post('/api/equipos/:id/invitar', async (req, res) => {
 
     if (uErr) throw uErr;
 
-    res.json({ ok: true, equipo: updated?.[0] ?? null });
+    const eqOut = updated?.[0] ?? null;
+    if (eqOut) {
+      await actualizarUltimoCompaneroDesdeEquipoRow(eqOut);
+    }
+    res.json({ ok: true, equipo: eqOut });
   } catch (err) {
     console.error('❌ POST /api/equipos/:id/invitar:', err.message);
     res.status(500).json({ error: err.message });

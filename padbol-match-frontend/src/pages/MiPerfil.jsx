@@ -263,7 +263,8 @@ export default function MiPerfil() {
   const [companeroOpciones, setCompaneroOpciones] = useState([]);
   const [companeroMenuAbierto, setCompaneroMenuAbierto] = useState(false);
   const [companeroCargando, setCompaneroCargando] = useState(false);
-  const [perfilCompaneroLectura, setPerfilCompaneroLectura] = useState(null);
+  /** Vista lectura: `{ row, kind }` con `kind` habitual | ultimo; `null` si no hay ningún id. */
+  const [perfilCompaneroDisplay, setPerfilCompaneroDisplay] = useState(null);
   const [companeroSeleccionado, setCompaneroSeleccionado] = useState(null);
   const companeroSearchSeqRef = useRef(0);
 
@@ -307,26 +308,40 @@ export default function MiPerfil() {
     });
   }, [torneoPerfil, nivelTorneoScope]);
 
-  /** Vista lectura: ficha del compañero habitual por `companero_id` (= `user_id` del otro jugador). */
+  /** Vista lectura: compañero habitual (`companero_id`) o último torneo (`ultimo_companero_id`). */
   useEffect(() => {
-    if (editando || !perfil?.companero_id) {
-      setPerfilCompaneroLectura(null);
+    if (editando || !perfil) {
+      setPerfilCompaneroDisplay(null);
+      return;
+    }
+    const cid = perfil.companero_id != null ? String(perfil.companero_id).trim() : '';
+    const uid = perfil.ultimo_companero_id != null ? String(perfil.ultimo_companero_id).trim() : '';
+    if (!cid && !uid) {
+      setPerfilCompaneroDisplay(null);
       return;
     }
     let cancelled = false;
     (async () => {
-      const cid = String(perfil.companero_id).trim();
+      if (cid) {
+        const { data } = await supabase
+          .from('jugadores_perfil')
+          .select('user_id, alias, foto_url, nombre')
+          .eq('user_id', cid)
+          .maybeSingle();
+        if (!cancelled) setPerfilCompaneroDisplay({ kind: 'habitual', row: data || null });
+        return;
+      }
       const { data } = await supabase
         .from('jugadores_perfil')
         .select('user_id, alias, foto_url, nombre')
-        .eq('user_id', cid)
+        .eq('user_id', uid)
         .maybeSingle();
-      if (!cancelled) setPerfilCompaneroLectura(data || null);
+      if (!cancelled) setPerfilCompaneroDisplay({ kind: 'ultimo', row: data || null });
     })();
     return () => {
       cancelled = true;
     };
-  }, [editando, perfil?.companero_id]);
+  }, [editando, perfil, perfil?.companero_id, perfil?.ultimo_companero_id]);
 
   /** Edición: sincronizar fila mostrada al guardar `companero_id`. */
   useEffect(() => {
@@ -946,6 +961,10 @@ export default function MiPerfil() {
         alias: aliasTrim || null,
         instagram_url: instagramUrlFromHandle(formData.instagram),
         companero_id: formData.companero_id || null,
+        ultimo_companero_id:
+          perfil?.ultimo_companero_id != null && String(perfil.ultimo_companero_id).trim()
+            ? String(perfil.ultimo_companero_id).trim()
+            : null,
       };
 
       const userId = session?.user?.id ?? null;
@@ -1868,13 +1887,19 @@ export default function MiPerfil() {
                   borderBottom: '1px solid #eee',
                 }}
               >
-                <span style={{ color: '#777', fontSize: '13px', flexShrink: 0 }}>Compañero habitual</span>
+                <span style={{ color: '#777', fontSize: '13px', flexShrink: 0 }}>
+                  {perfilCompaneroDisplay?.kind === 'habitual'
+                    ? 'Compañero habitual'
+                    : perfilCompaneroDisplay?.kind === 'ultimo'
+                      ? 'Último compañero'
+                      : 'Sin compañero habitual'}
+                </span>
                 <span style={{ fontSize: '14px', color: '#333', textAlign: 'right' }}>
-                  {perfil?.companero_id && perfilCompaneroLectura ? (
+                  {perfilCompaneroDisplay?.row ? (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-                      {perfilCompaneroLectura.foto_url ? (
+                      {perfilCompaneroDisplay.row.foto_url ? (
                         <img
-                          src={perfilCompaneroLectura.foto_url}
+                          src={perfilCompaneroDisplay.row.foto_url}
                           alt=""
                           style={{
                             width: '28px',
@@ -1885,11 +1910,13 @@ export default function MiPerfil() {
                           }}
                         />
                       ) : null}
-                      {String(perfilCompaneroLectura.alias || '').trim() ? (
+                      {String(perfilCompaneroDisplay.row.alias || '').trim() ? (
                         <button
                           type="button"
                           onClick={() =>
-                            navigate(`/jugador/${encodeURIComponent(String(perfilCompaneroLectura.alias).trim())}`)
+                            navigate(
+                              `/jugador/${encodeURIComponent(String(perfilCompaneroDisplay.row.alias).trim())}`
+                            )
                           }
                           style={{
                             background: 'none',
@@ -1902,16 +1929,22 @@ export default function MiPerfil() {
                             textDecoration: 'underline',
                           }}
                         >
-                          Juega con @{String(perfilCompaneroLectura.alias).trim()}
+                          @{String(perfilCompaneroDisplay.row.alias).trim()}
                         </button>
                       ) : (
                         <span style={{ fontWeight: 600 }}>
-                          Juega con {nombreCompletoJugadorPerfil(perfilCompaneroLectura) || perfilCompaneroLectura.nombre || '—'}
+                          {nombreCompletoJugadorPerfil(perfilCompaneroDisplay.row) ||
+                            perfilCompaneroDisplay.row.nombre ||
+                            '—'}
                         </span>
                       )}
                     </span>
-                  ) : (
+                  ) : perfilCompaneroDisplay?.kind ? (
                     '—'
+                  ) : (
+                    <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '13px' }}>
+                      — ¡sumate a jugar con él!
+                    </span>
                   )}
                 </span>
               </div>
@@ -2274,6 +2307,17 @@ export default function MiPerfil() {
                 </button>
               </div>
             ) : null}
+            <p
+              style={{
+                fontSize: '12px',
+                color: '#64748b',
+                marginTop: '-4px',
+                marginBottom: '14px',
+                lineHeight: 1.45,
+              }}
+            >
+              Tu último compañero de torneo se actualiza automáticamente
+            </p>
 
             <label style={labelStyle}>Fecha de nacimiento</label>
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />

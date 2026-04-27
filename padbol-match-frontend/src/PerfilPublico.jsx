@@ -190,7 +190,8 @@ export default function PerfilPublico() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState(null);
-  const [companero, setCompanero] = useState(null);
+  /** `null` = sin ids; `{ kind, row }` con fila del otro jugador (o `row: null` si no se encontró). */
+  const [companeroDisplay, setCompaneroDisplay] = useState(null);
   const [stats, setStats] = useState({ torneosJugados: null, torneosGanados: null });
   const [rankingPos, setRankingPos] = useState(null);
 
@@ -211,14 +212,14 @@ export default function PerfilPublico() {
     }
     setLoading(true);
     setPerfil(null);
-    setCompanero(null);
+    setCompaneroDisplay(null);
     setStats({ torneosJugados: null, torneosGanados: null });
     setRankingPos(null);
 
     const { data: rows, error } = await supabase
       .from('jugadores_perfil')
       .select(
-        'user_id, email, nombre, alias, foto_url, pais, ciudad, nivel, lateralidad, instagram_url, companero_id, sede_id'
+        'user_id, email, nombre, alias, foto_url, pais, ciudad, nivel, lateralidad, instagram_url, companero_id, ultimo_companero_id, sede_id'
       )
       .ilike('alias', a)
       .limit(8);
@@ -244,15 +245,23 @@ export default function PerfilPublico() {
     setPerfil(match);
 
     const cid = match.companero_id != null ? String(match.companero_id).trim() : '';
+    const uid = match.ultimo_companero_id != null ? String(match.ultimo_companero_id).trim() : '';
     if (cid) {
       const { data: comp } = await supabase
         .from('jugadores_perfil')
         .select('user_id, alias, foto_url, nombre')
         .eq('user_id', cid)
         .maybeSingle();
-      setCompanero(comp || null);
+      setCompaneroDisplay({ kind: 'habitual', row: comp || null });
+    } else if (uid) {
+      const { data: comp } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre')
+        .eq('user_id', uid)
+        .maybeSingle();
+      setCompaneroDisplay({ kind: 'ultimo', row: comp || null });
     } else {
-      setCompanero(null);
+      setCompaneroDisplay(null);
     }
 
     try {
@@ -423,54 +432,66 @@ export default function PerfilPublico() {
             <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: '14px' }}>Club habitual: {perfil.ciudad}</p>
           ) : null}
 
-          <div
-            style={{
-              margin: '0 0 10px',
-              minHeight: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              flexWrap: 'wrap',
-              fontSize: '14px',
-            }}
-          >
-            {companero ? (
-              <>
-                {companero.foto_url ? (
-                  <img
-                    src={companero.foto_url}
-                    alt=""
-                    style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
-                  />
-                ) : null}
-                {String(companero.alias || '').trim() ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(`/jugador/${encodeURIComponent(String(companero.alias).trim())}`)
-                    }
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                      color: '#5b21b6',
-                      fontWeight: 700,
-                      textDecoration: 'underline',
-                    }}
-                  >
-                    Juega con @{String(companero.alias).trim()}
-                  </button>
-                ) : (
-                  <span style={{ fontWeight: 600, color: '#475569' }}>
-                    Juega con {nombreCompletoJugadorPerfil(companero) || companero.nombre || '—'}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span style={{ color: '#94a3b8', fontWeight: 600 }}>—</span>
-            )}
+          <div style={{ margin: '0 0 10px', textAlign: 'center' }}>
+            <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+              {companeroDisplay?.kind === 'habitual'
+                ? 'Compañero habitual'
+                : companeroDisplay?.kind === 'ultimo'
+                  ? 'Último compañero'
+                  : 'Sin compañero habitual'}
+            </p>
+            <div
+              style={{
+                minHeight: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+                fontSize: '14px',
+              }}
+            >
+              {companeroDisplay?.row ? (
+                <>
+                  {companeroDisplay.row.foto_url ? (
+                    <img
+                      src={companeroDisplay.row.foto_url}
+                      alt=""
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : null}
+                  {String(companeroDisplay.row.alias || '').trim() ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(`/jugador/${encodeURIComponent(String(companeroDisplay.row.alias).trim())}`)
+                      }
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: 'pointer',
+                        color: '#5b21b6',
+                        fontWeight: 700,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      @{String(companeroDisplay.row.alias).trim()}
+                    </button>
+                  ) : (
+                    <span style={{ fontWeight: 600, color: '#475569' }}>
+                      {nombreCompletoJugadorPerfil(companeroDisplay.row) || companeroDisplay.row.nombre || '—'}
+                    </span>
+                  )}
+                </>
+              ) : companeroDisplay?.kind ? (
+                <span style={{ color: '#94a3b8', fontWeight: 600 }}>—</span>
+              ) : (
+                <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '13px' }}>
+                  — ¡sumate a jugar con él!
+                </span>
+              )}
+            </div>
           </div>
 
           {igHref ? (
