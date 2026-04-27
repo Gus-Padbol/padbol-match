@@ -12,7 +12,7 @@ import { getDisplayName } from '../utils/displayName';
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, signOutAndClear } = useAuth();
+  const { session, loading: authLoading, userProfile } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
 
   const accesosRapidos = [
@@ -42,32 +42,6 @@ export default function UserHome() {
       }}
     >
       <AppHeader title="Inicio" showBack={false} />
-      {session?.user && (
-        <button
-          type="button"
-          onClick={async () => {
-            await signOutAndClear();
-            navigate('/');
-          }}
-          style={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            border: 'none',
-            background: 'rgba(255,255,255,0.15)',
-            color: 'white',
-            fontSize: 18,
-            cursor: 'pointer',
-            zIndex: 1003,
-          }}
-          title="Cerrar sesión"
-        >
-          ⏻
-        </button>
-      )}
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"

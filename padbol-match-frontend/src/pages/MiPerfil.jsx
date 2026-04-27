@@ -1700,7 +1700,7 @@ export default function MiPerfil() {
       </div>
 
       {sessionOwnerEmail ? (
-        <p style={{ textAlign: 'center', margin: '16px 0 0' }}>
+        <div style={{ marginTop: '20px', marginBottom: '12px' }}>
           <button
             type="button"
             onClick={async () => {
@@ -1712,17 +1712,22 @@ export default function MiPerfil() {
               }
             }}
             style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(255,255,255,0.8)',
-              fontSize: '13px',
-              textDecoration: 'underline',
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              border: '2px solid #fecaca',
+              background: '#fff',
+              color: '#b91c1c',
+              fontWeight: 700,
+              fontSize: '14px',
               cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              boxSizing: 'border-box',
             }}
           >
-            Cerrar sesión
+            ⏻ Cerrar sesión
           </button>
-        </p>
+        </div>
       ) : null}
 
       </div>
