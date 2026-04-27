@@ -120,7 +120,7 @@ function AppRoutes() {
       style={{
         minHeight: '100vh',
         width: '100%',
-        maxWidth: '100vw',
+        maxWidth: '100%',
         overflowX: 'hidden',
         boxSizing: 'border-box',
       }}
@@ -182,7 +182,7 @@ function App() {
       <div
         style={{
           width: '100%',
-          maxWidth: '100vw',
+          maxWidth: '100%',
           overflowX: 'hidden',
           minHeight: '100vh',
           boxSizing: 'border-box',

@@ -82,10 +82,12 @@ function PhotoStrip({ fotos }) {
         WebkitOverflowScrolling: 'touch',
         marginBottom: '16px',
         paddingBottom: '2px',
-        marginLeft: '-4px',
-        marginRight: '-4px',
         paddingLeft: '4px',
         paddingRight: '4px',
+        boxSizing: 'border-box',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
       }}
     >
       {fotos.map((url, i) => (
