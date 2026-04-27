@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -35,6 +35,7 @@ import {
   ensureCreadorPrimeroEnLista,
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
+import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
 
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
@@ -400,20 +401,6 @@ export default function EquipoVista() {
     return Boolean(!equipo.creador_id && em && ce && ce === em);
   }, [equipo, usuarioLocal.id, authEmail, authUserId]);
 
-  const esJugadorCreadorEnEquipo = useCallback(
-    (p) => {
-      if (!equipo || !p) return false;
-      if (String(p.rol || '').toLowerCase() === 'creador') return true;
-      const cid = String(equipo.creador_id || '').trim();
-      if (cid && p.id != null && String(p.id) === cid) return true;
-      const ce = String(equipo.creador_email || '').trim().toLowerCase();
-      const pe = String(p.email || '').trim().toLowerCase();
-      if (ce && pe && ce === pe) return true;
-      return false;
-    },
-    [equipo]
-  );
-
   const urlCompartirLugarEquipoWa = useMemo(() => {
     const tid = id != null && String(id).trim() !== '' ? String(id).trim() : '';
     if (!tid) return '';
@@ -608,7 +595,7 @@ export default function EquipoVista() {
       return;
     }
     if (equipo.equipo_abierto === false) {
-      alert('Este equipo es cerrado: solo el creador puede sumar jugadores.');
+      alert('Este equipo es cerrado: solo el capitán puede sumar jugadores.');
       return;
     }
     if (miEquipoEnTorneo) {
@@ -686,7 +673,7 @@ export default function EquipoVista() {
   const ejecutarEliminarJugadorDelEquipo = async () => {
     const victima = dialogoEliminarJugador?.jugador;
     if (!equipo || !victima || !soyCreador) return;
-    if (esJugadorCreadorEnEquipo(victima)) return;
+    if (esCapitanJugadorEnFila(victima, equipo)) return;
 
     setSavingEliminarJugador(true);
     const nuevosJugadores = players.filter((pl) => !samePerson(pl, victima));
@@ -906,13 +893,13 @@ export default function EquipoVista() {
               style={{
                 fontSize: '11px',
                 fontWeight: 700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
+                letterSpacing: soyCreador ? '0.04em' : '0.08em',
+                textTransform: soyCreador ? 'none' : 'uppercase',
                 color: T.colorTextMuted,
                 marginBottom: '8px',
               }}
             >
-              Tu equipo
+              {soyCreador ? `${ICONO_CAPITAN} Capitán` : 'Tu equipo'}
             </div>
           ) : null}
 
@@ -1065,7 +1052,10 @@ export default function EquipoVista() {
                       background: T.colorCardMuted,
                     }}
                   >
-                    <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
+                    <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                      <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                      {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1092,7 +1082,10 @@ export default function EquipoVista() {
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
+                      <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                      </div>
                       {samePerson(p, yo) && !perfilTorneoCompleto ? (
                         <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
                           Perfil incompleto
@@ -1101,7 +1094,7 @@ export default function EquipoVista() {
                         renderPendienteDeConfirmar(p, { conAccionesCreador: true })
                       ) : null}
                     </div>
-                    {soyCreador && !torneoCancelado && !esJugadorCreadorEnEquipo(p) ? (
+                    {soyCreador && !torneoCancelado && !esCapitanJugadorEnFila(p, equipo) ? (
                       <button
                         type="button"
                         aria-label={`Quitar a ${jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)} del equipo`}
@@ -1144,7 +1137,10 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
+                  <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                    {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                  </div>
                   {samePerson(p, yo) && !perfilTorneoCompleto ? (
                     <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
                       Perfil incompleto
@@ -1166,7 +1162,10 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
+                  <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                    {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                  </div>
                   {samePerson(p, yo) && !perfilTorneoCompleto ? (
                     <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
                       Perfil incompleto
@@ -1179,7 +1178,7 @@ export default function EquipoVista() {
 
           {esMiEquipo && !soyCreador && !torneoCancelado ? (
             <p style={{ marginTop: '16px', marginBottom: 0, fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.5 }}>
-              Solo el creador del equipo puede modificar este equipo.
+              Solo el capitán del equipo puede modificar este equipo.
             </p>
           ) : null}
 
@@ -1187,11 +1186,11 @@ export default function EquipoVista() {
             <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
               {equipo.equipo_abierto === false ? (
                 <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.5 }}>
-                  Equipo cerrado: el creador suma jugadores; no se aceptan solicitudes para unirse.
+                  Equipo cerrado: el capitán suma jugadores; no se aceptan solicitudes para unirse.
                 </p>
               ) : solicitudPendienteAqui ? (
                 <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted, fontWeight: 600 }}>
-                  Tu solicitud para unirte está pendiente de aprobación del creador.
+                  Tu solicitud para unirte está pendiente de aprobación del capitán.
                 </p>
               ) : solicitudPendienteOtroEquipo ? (
                 <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted }}>

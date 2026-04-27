@@ -33,6 +33,7 @@ import {
   ensureCreadorPrimeroEnLista,
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
+import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
@@ -718,7 +719,7 @@ export default function FormEquipos() {
     const cupo = Number(equipo.cupo_maximo || 2);
 
     if (equipo.equipo_abierto === false) {
-      alert('Este equipo es cerrado: solo el creador puede sumar jugadores.');
+      alert('Este equipo es cerrado: solo el capitán puede sumar jugadores.');
       return;
     }
 
@@ -1059,9 +1060,6 @@ export default function FormEquipos() {
   };
 
   const renderEquipoCard = (eq, esTuEquipo, textoUnir = '+ Pedir unirme') => {
-    const nombres = eq.players
-      .map((p) => jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm))
-      .filter(Boolean);
     const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
     const numJug = eq.players.length;
     const plazasLlenas = numJug >= cupo;
@@ -1148,18 +1146,21 @@ export default function FormEquipos() {
         </div>
 
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '8px' }}>
-          {nombres.length > 0 ? nombres.join(' - ') : 'Sin jugadores'}
+          {eq.players.length > 0
+            ? eq.players.map((p, i) => (
+                <React.Fragment key={`${eq.id}-sum-${i}`}>
+                  {i > 0 ? ' - ' : null}
+                  {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+                  {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
+                </React.Fragment>
+              ))
+            : 'Sin jugadores'}
         </div>
 
         {eq.players.length > 0 ? (
           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px', display: 'grid', gap: '4px' }}>
             {eq.players.map((p, idx) => {
-              const rolTuEquipo =
-                esTuEquipo && soyCreador && samePerson(p, yo)
-                  ? ' (creador)'
-                  : esTuEquipo && esJugadorPendiente(p)
-                    ? ' (pendiente)'
-                    : '';
+              const rolTuEquipo = esTuEquipo && esJugadorPendiente(p) ? ' (pendiente)' : '';
               const ocultarEstadoRepetido = esTuEquipo && rolTuEquipo;
               return (
               <div
@@ -1170,8 +1171,9 @@ export default function FormEquipos() {
                   gap: '8px',
                 }}
               >
-                <span style={{ fontWeight: 600, color: '#334155' }}>
-                  {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+                <span style={{ fontWeight: 600, color: '#334155', display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                  <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}</span>
+                  {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
                   {rolTuEquipo ? (
                     <span style={{ fontWeight: 600, color: '#64748b' }}>{rolTuEquipo}</span>
                   ) : null}
@@ -1254,7 +1256,7 @@ export default function FormEquipos() {
                 fontWeight: 700,
               }}
             >
-              Salir del equipo
+              {soyCreador ? 'Disolver equipo' : 'Salir del equipo'}
             </button>
           ) : null}
         </div>
@@ -1339,7 +1341,7 @@ export default function FormEquipos() {
           fontWeight: 600,
         }}
       >
-        Creador del equipo: {nombreCreador}
+        {ICONO_CAPITAN} Capitán: {nombreCreador}
       </div>
 
       <input
@@ -1410,7 +1412,7 @@ export default function FormEquipos() {
           </button>
         </div>
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#6b7280', lineHeight: 1.45 }}>
-          Abierto: otros jugadores pueden <strong>solicitar</strong> unirse; el creador sigue aprobando cada
+          Abierto: otros jugadores pueden <strong>solicitar</strong> unirse; el capitán sigue aprobando cada
           ingreso.
         </p>
       </div>
@@ -1449,10 +1451,13 @@ export default function FormEquipos() {
       <div style={{ fontWeight: 800, fontSize: '15px', color: '#1e293b' }}>{eq.nombre}</div>
       {eq.players.length > 0 ? (
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '8px', lineHeight: 1.45 }}>
-          {eq.players
-            .map((p) => jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm))
-            .filter(Boolean)
-            .join(' · ')}
+          {eq.players.map((p, i) => (
+            <React.Fragment key={`${eq.id}-can-${i}`}>
+              {i > 0 ? ' · ' : null}
+              {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+              {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
+            </React.Fragment>
+          ))}
         </div>
       ) : (
         <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '6px' }}>Sin jugadores</div>
@@ -1688,7 +1693,7 @@ export default function FormEquipos() {
           ) : solicitudPendienteEnInvitado ? (
             <div style={{ fontWeight: 700, color: '#92400e', lineHeight: 1.5 }}>
               Tu solicitud para unirte a {inviteEquipoRow?.nombre ? `«${inviteEquipoRow.nombre}»` : 'este equipo'}{' '}
-              está pendiente de aprobación del creador.
+              está pendiente de aprobación del capitán.
             </div>
           ) : inviteEquipoRow ? (
             <>
@@ -1730,7 +1735,10 @@ export default function FormEquipos() {
               <ul style={{ margin: '0 0 16px', paddingLeft: '20px', color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>
                 {jugadoresConfirmadosInv.length ? (
                   jugadoresConfirmadosInv.map((p, idx) => (
-                    <li key={`inv-conf-${idx}`}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}</li>
+                    <li key={`inv-conf-${idx}`} style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                      <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}</span>
+                      {inviteEquipoRow && esCapitanJugadorEnFila(p, inviteEquipoRow) ? <CapitanBadgeC /> : null}
+                    </li>
                   ))
                 ) : (
                   <li style={{ listStyle: 'none', marginLeft: '-20px', color: '#64748b' }}>
@@ -1744,7 +1752,7 @@ export default function FormEquipos() {
                 </p>
               ) : equipoCerradoNoSolicitudes ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#b45309', lineHeight: 1.45 }}>
-                  Este equipo es cerrado: no acepta solicitudes. Contactá al creador para que te sume.
+                  Este equipo es cerrado: no acepta solicitudes. Contactá al capitán para que te sume.
                 </p>
               ) : llenoInv ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#64748b' }}>
@@ -1961,7 +1969,7 @@ export default function FormEquipos() {
               marginBottom: soyCreadorMiEquipo && miEquipoListoParaJugar ? '12px' : 0,
             }}
           >
-            Cuando el equipo esté completo, el creador puede pagar la inscripción para confirmar el cupo.
+            Cuando el equipo esté completo, el capitán puede pagar la inscripción para confirmar el cupo.
           </div>
         ) : null}
         {soyCreadorMiEquipo && miEquipoListoParaJugar && getEquipoInscripcionEstado(miEquipo) === 'pendiente' ? (
@@ -2289,7 +2297,7 @@ export default function FormEquipos() {
               Ya sos parte del equipo <strong>{miEquipo.nombre}</strong>
               {soyCreadorMiEquipo ? (
                 <span style={{ display: 'block', marginTop: '6px', fontSize: '13px', fontWeight: 600, opacity: 0.92 }}>
-                  Sos creador del equipo
+                  {ICONO_CAPITAN} Sos capitán del equipo
                 </span>
               ) : (
                 <span style={{ display: 'block', marginTop: '6px', fontSize: '13px', fontWeight: 600, opacity: 0.92 }}>
@@ -2841,7 +2849,7 @@ export default function FormEquipos() {
                   const esCreadorDlg =
                     !!eqSalir && esCreadorEquipoOMiAuth(eqSalir, authEmail, uDlg, authUserId);
                   return esCreadorDlg
-                    ? 'Si sales, el equipo se eliminará completamente'
+                    ? '¿Disolver el equipo? Se eliminará por completo.'
                     : '¿Quieres salir del equipo?';
                 })()}
               </p>
@@ -2879,7 +2887,14 @@ export default function FormEquipos() {
                     opacity: savingSalirEquipo ? 0.7 : 1,
                   }}
                 >
-                  {savingSalirEquipo ? 'Saliendo…' : 'Salir'}
+                  {(() => {
+                    const eqSalir = equipos.find((e) => e.id === salirEquipoIdConfirm);
+                    const uDlg = getOrCreateUsuarioBasico();
+                    const esCreadorDlg =
+                      !!eqSalir && esCreadorEquipoOMiAuth(eqSalir, authEmail, uDlg, authUserId);
+                    if (savingSalirEquipo) return 'Saliendo…';
+                    return esCreadorDlg ? 'Disolver' : 'Salir';
+                  })()}
                 </button>
               </div>
             </div>
