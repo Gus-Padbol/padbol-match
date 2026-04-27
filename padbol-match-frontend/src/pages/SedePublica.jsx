@@ -44,9 +44,9 @@ function heroBackgroundFromSede(sede) {
 /** Tamaño del título del club en el hero según longitud del nombre. */
 function heroClubNameFontSizePx(nombreRaw) {
   const len = String(nombreRaw ?? '').trim().length;
-  if (len < 15) return 22;
-  if (len <= 25) return 18;
-  return 15;
+  if (len < 15) return 26;
+  if (len <= 25) return 22;
+  return 18;
 }
 
 function formatHorario(apertura, cierre) {
@@ -503,6 +503,7 @@ export default function SedePublica() {
                     alignItems: 'center',
                     gap: '10px',
                     width: '100%',
+                    flexShrink: 0,
                   }}
                 >
                   {sede.logo_url ? (
@@ -510,8 +511,8 @@ export default function SedePublica() {
                       src={sede.logo_url}
                       alt=""
                       style={{
-                        width: '90px',
-                        height: '90px',
+                        width: '110px',
+                        height: '110px',
                         objectFit: 'contain',
                         borderRadius: '8px',
                         background: '#fff',
@@ -523,8 +524,8 @@ export default function SedePublica() {
                   ) : (
                     <div
                       style={{
-                        width: '90px',
-                        height: '90px',
+                        width: '110px',
+                        height: '110px',
                         borderRadius: '8px',
                         background: 'rgba(255,255,255,0.12)',
                         flexShrink: 0,
@@ -540,7 +541,7 @@ export default function SedePublica() {
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '4px',
+                      gap: '8px',
                     }}
                   >
                     <h1
@@ -598,7 +599,15 @@ export default function SedePublica() {
                 </div>
 
                 {desc ? (
-                  <div style={{ marginTop: '10px', width: '100%' }}>
+                  <div
+                    style={{
+                      marginTop: '10px',
+                      width: '100%',
+                      maxWidth: '100%',
+                      alignSelf: 'stretch',
+                      boxSizing: 'border-box',
+                    }}
+                  >
                     <p
                       style={{
                         margin: 0,
@@ -607,6 +616,7 @@ export default function SedePublica() {
                         lineHeight: 1.45,
                         fontStyle: 'italic',
                         textAlign: 'center',
+                        width: '100%',
                         display: descExpanded ? 'block' : '-webkit-box',
                         WebkitLineClamp: descExpanded ? 'unset' : 2,
                         WebkitBoxOrient: 'vertical',
