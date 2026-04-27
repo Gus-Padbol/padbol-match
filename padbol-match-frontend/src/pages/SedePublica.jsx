@@ -532,7 +532,7 @@ export default function SedePublica() {
         maxHeight: '100dvh',
         minHeight: '100dvh',
         background: PADBOL_PAGE_GRADIENT,
-        paddingTop: hubContentPaddingTopCss(location.pathname),
+        paddingTop: 0,
         paddingBottom: 0,
         boxSizing: 'border-box',
         width: '100%',
@@ -612,7 +612,7 @@ export default function SedePublica() {
               overflow: 'hidden',
             }}
           >
-            {/* Scroll bajo header+BottomNav: el offset lo aplica el paddingTop del root (hubContentPaddingTopCss). */}
+            {/* paddingTop aquí: el scroll interno respeta el hueco bajo AppHeader + BottomNav fijos. */}
             <div
               style={{
                 flex: 1,
@@ -624,6 +624,7 @@ export default function SedePublica() {
                 maxWidth: '100%',
                 boxSizing: 'border-box',
                 overscrollBehaviorY: 'contain',
+                paddingTop: hubContentPaddingTopCss(location.pathname),
               }}
             >
             <div
