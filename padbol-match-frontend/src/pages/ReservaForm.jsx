@@ -388,6 +388,15 @@ export default function ReservaForm() {
     });
   }, [pantalla, filtros.sede_id]);
 
+  // Pantalla 4 (resumen/pago): al aterrizar —p. ej. tras login— el scroll suele quedar abajo; subir al inicio.
+  useEffect(() => {
+    if (pantalla !== 4) return;
+    const id = window.setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [pantalla]);
+
   const selectPais = useCallback((pais) => {
     setFiltros({ pais, ciudad: '', sede_id: '' });
     if (pais) {
@@ -977,14 +986,18 @@ export default function ReservaForm() {
     const muestraInputWhatsappResumen = !perfilTelefonoValido(currentCliente);
 
     return (
-      <div className="reserva-container" style={{
-        paddingTop: `${reservaPaddingTopPx}px`,
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
-        overflowX: 'hidden',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-      }}>
+      <div
+        className="reserva-container"
+        style={{
+          paddingTop: `${reservaPaddingTopPx}px`,
+          paddingBottom: '24px',
+          margin: '16px auto 0',
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Resumen de reserva</h1>
