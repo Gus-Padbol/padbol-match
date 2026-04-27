@@ -18,6 +18,12 @@ const BottomNav = () => {
 
   const sedeSobrio = isSedeProfilePathname(path);
 
+  /** Perfil público con id: `/sede/123` (no solo `/sede`). */
+  const isSedePublicDetailPath = (() => {
+    const x = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+    return /^\/sede\/[^/]+/.test(x);
+  })();
+
   const matchHubInicio = (p) => {
     const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
     return x === '/' || x === '/inicio' || x === '/hub' || x === '/home';
@@ -25,7 +31,13 @@ const BottomNav = () => {
 
   const items = sedeSobrio
     ? [
-        { label: 'Inicio', icon: '🏠', path: '/', match: matchHubInicio },
+        {
+          label: 'Inicio',
+          icon: '🏠',
+          path: '/',
+          match: matchHubInicio,
+          homePadbolLogo: isSedePublicDetailPath,
+        },
         {
           label: 'Torneos',
           icon: '🏆',
@@ -120,17 +132,37 @@ const BottomNav = () => {
               ...btnSobrio,
             }}
           >
-            <span
-              style={{
-                fontSize: '18px',
-                marginBottom: '1px',
-                lineHeight: 1,
-                opacity: sedeSobrio ? (isActive ? 1 : 0.92) : 1,
-              }}
-              aria-hidden
-            >
-              {item.icon}
-            </span>
+            {item.homePadbolLogo ? (
+              <img
+                src="/logo-padbol-match.png"
+                alt=""
+                width={24}
+                height={24}
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 4,
+                  objectFit: 'contain',
+                  display: 'block',
+                  marginBottom: '1px',
+                  opacity: sedeSobrio ? (isActive ? 1 : 0.92) : 1,
+                  flexShrink: 0,
+                }}
+                aria-hidden
+              />
+            ) : (
+              <span
+                style={{
+                  fontSize: '18px',
+                  marginBottom: '1px',
+                  lineHeight: 1,
+                  opacity: sedeSobrio ? (isActive ? 1 : 0.92) : 1,
+                }}
+                aria-hidden
+              >
+                {item.icon}
+              </span>
+            )}
             {item.label}
           </button>
         );
