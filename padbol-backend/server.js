@@ -100,28 +100,98 @@ async function sendWhatsAppTorneoEquipoInvitacion(telefono, { nombreDestinatario
   console.log(`✓ WhatsApp invitación torneo enviado a ${to}`);
 }
 
-// WhatsApp confirmation helper
-async function sendWhatsAppConfirmation(phone, { sede, fecha, hora, cancha, direccion }) {
-  // Normalise number → E.164 without leading +, then prepend whatsapp:+
-  const digits = String(phone).replace(/\D/g, '');
-  const e164   = digits.startsWith('+') ? digits : `+${digits}`;
-  const to     = `whatsapp:${e164}`;
+/** Fecha YYYY-MM-DD → texto legible en español para el mensaje de confirmación. */
+function formatFechaReservaConfirmacion(fechaIso) {
+  if (!fechaIso || typeof fechaIso !== 'string') return String(fechaIso || '');
+  const [y, m, d] = fechaIso.split('-').map((x) => parseInt(x, 10));
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return fechaIso;
+  const dt = new Date(y, m - 1, d);
+  if (Number.isNaN(dt.getTime())) return fechaIso;
+  return dt
+    .toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
 
-  const body =
-`✅ *Reserva confirmada en ${sede}*
+/** "HH:MM" + minutos → "HH:MM" fin (misma lógica que el front en AdminDashboard). */
+function computeHoraFinDesdeDuracion(horaInicio, duracionMinutos) {
+  if (!horaInicio) return '';
+  const dur = parseInt(duracionMinutos, 10) || 90;
+  const [hh, mm] = String(horaInicio).split(':').map(Number);
+  const mins = (mm || 0) + dur;
+  const endH = String(hh + Math.floor(mins / 60)).padStart(2, '0');
+  const endM = String(mins % 60).padStart(2, '0');
+  return `${endH}:${endM}`;
+}
 
-📅 Fecha: ${fecha}
-⏰ Hora: ${hora}
-🎾 Cancha: ${cancha}${direccion ? `\n📍 ${direccion}` : ''}
+/** Si `hora` ya viene como rango "HH:MM - HH:MM", lo respeta; si no, calcula el fin con duración. */
+function horaInicioYFinParaMensaje(hora, duracionMinutos) {
+  const h = String(hora || '').trim();
+  if (h.includes(' - ')) {
+    const parts = h.split(' - ').map((s) => s.trim());
+    return { horaInicio: parts[0] || h, horaFin: parts[1] || parts[0] || h };
+  }
+  return {
+    horaInicio: h,
+    horaFin: computeHoraFinDesdeDuracion(h, duracionMinutos),
+  };
+}
 
-⏱ Te esperamos 10 minutos antes.
-❌ Podés cancelar hasta 24hs antes desde tu perfil en PADBOL MATCH.
-💬 Ante cualquier consulta escribinos por WhatsApp.
+/**
+ * WhatsApp (Twilio) al confirmar reserva: teléfono desde `jugadores_perfil.whatsapp` por email del usuario.
+ * Si no hay WhatsApp en perfil, solo loguea warning (no usa el número enviado en el body de la reserva).
+ */
+async function sendReservaConfirmadaWhatsAppTwilio({
+  email,
+  nombreFallback,
+  fecha,
+  hora,
+  duracionMinutos,
+  nombreSede,
+}) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    console.warn('⚠️ Confirmación reserva: Twilio no configurado — no se envía WhatsApp');
+    return;
+  }
+  const emailNorm = String(email || '').trim().toLowerCase();
+  if (!emailNorm) {
+    console.warn('⚠️ Confirmación reserva: sin email — no se busca jugadores_perfil');
+    return;
+  }
 
-*PADBOL MATCH*`;
+  const { data: perfil, error: pErr } = await supabase
+    .from('jugadores_perfil')
+    .select('nombre, whatsapp')
+    .ilike('email', emailNorm)
+    .maybeSingle();
+
+  if (pErr) {
+    console.warn('⚠️ Confirmación reserva: error consultando jugadores_perfil:', pErr.message);
+    return;
+  }
+
+  const rawWa = perfil?.whatsapp;
+  if (!rawWa || !String(rawWa).trim()) {
+    console.warn(
+      `⚠️ Confirmación reserva: sin WhatsApp en jugadores_perfil para el email ${emailNorm} — no se envía mensaje`,
+    );
+    return;
+  }
+
+  const nombre =
+    String(perfil?.nombre || '').trim() || String(nombreFallback || '').trim() || 'jugador';
+  const { horaInicio, horaFin } = horaInicioYFinParaMensaje(hora, duracionMinutos);
+  const fechaTxt = formatFechaReservaConfirmacion(fecha);
+  const sedeTxt = String(nombreSede || '').trim() || 'la sede';
+  const body = `¡Hola ${nombre}! ✅ Tu reserva está confirmada. Te esperamos el ${fechaTxt} en horario ${horaInicio} - ${horaFin} en ${sedeTxt}. ⚽ ¡Nos vemos en la cancha!`;
+
+  const to = normalizePhoneToE164ForTwilioWhatsApp(rawWa);
+  if (!to) {
+    console.warn('⚠️ Confirmación reserva: WhatsApp en perfil no normalizable a E.164:', rawWa);
+    return;
+  }
 
   await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
-  console.log(`✓ WhatsApp enviado a ${to}`);
+  console.log(`✓ WhatsApp confirmación de reserva enviado a ${to}`);
 }
 
 // GET sedes
@@ -168,7 +238,7 @@ app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
 // POST reserva
 app.post('/api/reservas', async (req, res) => {
   try {
-    const { sede, fecha, hora, cancha, nombre, email, whatsapp, nivel, precio, estado } = req.body;
+    const { sede, fecha, hora, cancha, nombre, email, whatsapp, nivel, precio, estado, duracion } = req.body;
 
     // Validar campos
     if (!sede || !fecha || !hora || !cancha || !nombre || !email || !whatsapp) {
@@ -190,6 +260,22 @@ app.post('/api/reservas', async (req, res) => {
       return res.status(409).json({ error: 'Este horario ya está reservado' });
     }
 
+    // Sin `estado` en el body (p. ej. pagos MP viejos en external_reference) → confirmada tras pago exitoso.
+    const estadoExplicito =
+      Object.prototype.hasOwnProperty.call(req.body, 'estado') &&
+      estado != null &&
+      String(estado).trim() !== '';
+    const estadoFinal = estadoExplicito ? String(estado).trim() : 'confirmada';
+    let duracionMin = duracion != null && duracion !== '' ? parseInt(duracion, 10) : null;
+    if (!Number.isFinite(duracionMin) || duracionMin <= 0) {
+      const { data: sedeDur } = await supabase
+        .from('sedes')
+        .select('duracion_reserva_minutos')
+        .eq('nombre', sede)
+        .maybeSingle();
+      duracionMin = parseInt(sedeDur?.duracion_reserva_minutos, 10) || 90;
+    }
+
     // Crear reserva
     const { data, error } = await supabase
       .from('reservas')
@@ -204,7 +290,8 @@ app.post('/api/reservas', async (req, res) => {
         whatsapp,
         nivel: nivel || 'Principiante',
         precio: parseInt(precio),
-        estado: estado || 'reservada',
+        estado: estadoFinal,
+        duracion: duracionMin,
       }])
       .select();
 
@@ -212,16 +299,16 @@ app.post('/api/reservas', async (req, res) => {
 
     console.log('✓ Reserva creada:', data);
 
-    // Fetch sede address for WhatsApp message (best-effort)
-    const { data: sedeRow } = await supabase
-      .from('sedes')
-      .select('direccion')
-      .eq('nombre', sede)
-      .maybeSingle();
-
-    // Enviar confirmación por WhatsApp (no bloquea la respuesta si falla)
-    sendWhatsAppConfirmation(whatsapp, { sede, fecha, hora, cancha, direccion: sedeRow?.direccion })
-      .catch(err => console.warn('⚠️ WhatsApp no enviado:', err.message));
+    if (String(estadoFinal).toLowerCase() === 'confirmada') {
+      sendReservaConfirmadaWhatsAppTwilio({
+        email,
+        nombreFallback: nombre,
+        fecha,
+        hora,
+        duracionMinutos: duracionMin,
+        nombreSede: sede,
+      }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva:', err.message));
+    }
 
     res.json(data);
   } catch (err) {
@@ -268,6 +355,13 @@ app.put('/api/reservas/:id', async (req, res) => {
     const { id } = req.params;
     const { sede, fecha, hora, cancha, nombre, email, precio, duracion, estado } = req.body;
 
+    const { data: prevRow, error: prevErr } = await supabase
+      .from('reservas')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (prevErr) throw prevErr;
+
     const updates = {};
     if (sede     !== undefined) updates.sede     = sede;
     if (fecha    !== undefined) updates.fecha    = fecha;
@@ -286,6 +380,30 @@ app.put('/api/reservas/:id', async (req, res) => {
       .select();
 
     if (error) throw error;
+
+    const row = Array.isArray(data) ? data[0] : data;
+    const oldEst = String(prevRow?.estado || '').toLowerCase();
+    const newEst = String(row?.estado ?? prevRow?.estado ?? '').toLowerCase();
+    if (row && newEst === 'confirmada' && oldEst !== 'confirmada') {
+      let dmin = parseInt(row.duracion, 10);
+      if (!Number.isFinite(dmin) || dmin <= 0) {
+        const { data: sedeDur } = await supabase
+          .from('sedes')
+          .select('duracion_reserva_minutos')
+          .eq('nombre', row.sede)
+          .maybeSingle();
+        dmin = parseInt(sedeDur?.duracion_reserva_minutos, 10) || 90;
+      }
+      sendReservaConfirmadaWhatsAppTwilio({
+        email: row.email,
+        nombreFallback: row.nombre,
+        fecha: row.fecha,
+        hora: row.hora,
+        duracionMinutos: dmin,
+        nombreSede: row.sede,
+      }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva (PUT):', err.message));
+    }
+
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });

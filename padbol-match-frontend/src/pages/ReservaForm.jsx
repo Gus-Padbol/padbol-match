@@ -695,6 +695,8 @@ export default function ReservaForm() {
     const precio = getPrecio(sedeSeleccionada, formData.hora);
     const creditoAplicado = 0;
     const precioFinal = Math.max(0, precio - creditoAplicado);
+    const duracionReservaMin =
+      parseInt(sedeSeleccionada.duracion_reserva_minutos, 10) || 90;
     const reservaData = {
       sede: sedeSeleccionada.nombre,
       fecha: formData.fecha,
@@ -707,6 +709,8 @@ export default function ReservaForm() {
       precio,
       moneda: sedeSeleccionada.moneda || 'ARS',
       creditUsed: creditoAplicado,
+      duracion: duracionReservaMin,
+      estado: 'confirmada',
     };
 
     try {
