@@ -133,6 +133,26 @@ export function jugadorNombreTorneoEtiqueta(p, ctx) {
   return 'Jugador';
 }
 
+/**
+ * URL de foto de perfil para listados (sesión actual → perfilSesion; resto → jugadores_perfil por email).
+ */
+export function jugadorTorneoFotoUrl(p, ctx) {
+  if (!p || typeof p !== 'object') return '';
+  if (esMismaCuentaQueSesion(p, ctx)) {
+    const fp = ctx?.perfilSesion;
+    const u = String(fp?.foto_url ?? fp?.foto ?? '').trim();
+    if (u) return u;
+  }
+  const email = normalizeJugadorEmail(p);
+  const byEm = ctx?.perfilByEmailLower;
+  if (email && byEm instanceof Map && byEm.has(email)) {
+    const row = byEm.get(email);
+    const u = String(row?.foto_url ?? row?.foto ?? '').trim();
+    if (u) return u;
+  }
+  return '';
+}
+
 /** Mapa email normalizado → fila jugadores_perfil. */
 export function buildJugadorPerfilLookupMaps(perfiles) {
   const byEmailLower = new Map();
@@ -160,7 +180,7 @@ export async function fetchJugadoresPerfilPorJugadores(players) {
     emailsNorm.map(async (em) => {
       const { data, error } = await supabase
         .from('jugadores_perfil')
-        .select('user_id, nombre, apellido, alias, email, whatsapp')
+        .select('user_id, nombre, apellido, alias, email, whatsapp, foto_url')
         .ilike('email', em)
         .limit(3);
 

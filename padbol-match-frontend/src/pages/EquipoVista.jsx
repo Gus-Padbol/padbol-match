@@ -26,6 +26,8 @@ import { getDisplayName } from '../utils/displayName';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import {
   jugadorNombreTorneoEtiqueta,
+  nombreDisplayJugadorTorneo,
+  jugadorTorneoFotoUrl,
   fetchJugadoresPerfilPorJugadores,
   buildJugadorPerfilLookupMaps,
   normalizeJugadorEmail,
@@ -36,6 +38,52 @@ import {
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
+
+const AVATAR_JUGADOR_EQ_SIZE = 36;
+const AVATAR_JUGADOR_EQ_VIOLETA = '#7c3aed';
+
+function initialAvatarJugadorEquipo(p, ctx) {
+  const label = nombreDisplayJugadorTorneo(p, ctx) || jugadorNombreTorneoEtiqueta(p, ctx);
+  const s = String(label || '').trim();
+  for (let i = 0; i < s.length; i += 1) {
+    const ch = s[i];
+    if (/[A-Za-zÀ-ÿÁÉÍÓÚÑáéíóúñ0-9]/.test(ch)) return ch.toUpperCase();
+  }
+  return '?';
+}
+
+function AvatarJugadorEquipoLista({ p, ctx }) {
+  const foto = jugadorTorneoFotoUrl(p, ctx);
+  const initial = initialAvatarJugadorEquipo(p, ctx);
+  return (
+    <div
+      aria-hidden
+      style={{
+        width: AVATAR_JUGADOR_EQ_SIZE,
+        height: AVATAR_JUGADOR_EQ_SIZE,
+        flexShrink: 0,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_VIOLETA,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {foto ? (
+        <img
+          src={foto}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <span style={{ color: '#fff', fontWeight: 800, fontSize: '15px', lineHeight: 1 }}>{initial}</span>
+      )}
+    </div>
+  );
+}
 
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
@@ -1052,9 +1100,20 @@ export default function EquipoVista() {
                       background: T.colorCardMuted,
                     }}
                   >
-                    <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                      <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                      {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'baseline',
+                          flexWrap: 'wrap',
+                          minWidth: 0,
+                        }}
+                      >
+                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1081,18 +1140,25 @@ export default function EquipoVista() {
                       gap: '10px',
                     }}
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
-                      </div>
-                      {samePerson(p, yo) && !perfilTorneoCompleto ? (
-                        <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
-                          Perfil incompleto
+                    <div style={{ display: 'flex', flex: 1, minWidth: 0, gap: '10px', alignItems: 'flex-start' }}>
+                      <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}
+                        >
+                          <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                          {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
                         </div>
-                      ) : esJugadorPendiente(p) ? (
-                        renderPendienteDeConfirmar(p, { conAccionesCreador: true })
-                      ) : null}
+                        {samePerson(p, yo) && !perfilTorneoCompleto ? (
+                          <div
+                            style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
+                          >
+                            Perfil incompleto
+                          </div>
+                        ) : esJugadorPendiente(p) ? (
+                          renderPendienteDeConfirmar(p, { conAccionesCreador: true })
+                        ) : null}
+                      </div>
                     </div>
                     {soyCreador && !torneoCancelado && !esCapitanJugadorEnFila(p, equipo) ? (
                       <button
@@ -1137,17 +1203,26 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                    <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                    {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
-                  </div>
-                  {samePerson(p, yo) && !perfilTorneoCompleto ? (
-                    <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
-                      Perfil incompleto
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}
+                      >
+                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                      </div>
+                      {samePerson(p, yo) && !perfilTorneoCompleto ? (
+                        <div
+                          style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
+                        >
+                          Perfil incompleto
+                        </div>
+                      ) : esJugadorPendiente(p) ? (
+                        renderPendienteDeConfirmar(p, { conAccionesCreador: false })
+                      ) : null}
                     </div>
-                  ) : esJugadorPendiente(p) ? (
-                    renderPendienteDeConfirmar(p, { conAccionesCreador: false })
-                  ) : null}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1162,15 +1237,24 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                    <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                    {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
-                  </div>
-                  {samePerson(p, yo) && !perfilTorneoCompleto ? (
-                    <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
-                      Perfil incompleto
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}
+                      >
+                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
+                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
+                      </div>
+                      {samePerson(p, yo) && !perfilTorneoCompleto ? (
+                        <div
+                          style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
+                        >
+                          Perfil incompleto
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+                  </div>
                 </div>
               ))}
             </div>
