@@ -1502,8 +1502,8 @@ export default function MiPerfil() {
           onClick={() => fileInputRef.current?.click()}
           style={{
             position: 'relative',
-            width: '140px',
-            height: '140px',
+            width: '120px',
+            height: '120px',
             margin: '0 auto 14px',
             padding: 0,
             border: 'none',
@@ -1521,11 +1521,8 @@ export default function MiPerfil() {
             style={{
               width: '100%',
               height: '100%',
-              borderRadius: '50%',
               objectFit: 'cover',
-              objectPosition: 'top center',
-              transform: 'scale(0.85)',
-              transformOrigin: 'top center',
+              objectPosition: 'center center',
               display: 'block',
               pointerEvents: 'none',
             }}
