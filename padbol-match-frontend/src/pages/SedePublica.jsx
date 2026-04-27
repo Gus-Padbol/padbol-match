@@ -555,7 +555,7 @@ export default function SedePublica() {
   const mainPaddingBottom =
     loading || error || !sede
       ? `${HUB_CONTENT_PADDING_BOTTOM_PX}px`
-      : `${ctaBarHeightPx}px`;
+      : `calc(${ctaBarHeightPx}px + env(safe-area-inset-bottom, 0px))`;
 
   const pageMinHeight =
     !loading && !error && sede ? 'auto' : '100dvh';
@@ -847,7 +847,7 @@ export default function SedePublica() {
                 bottom: 'env(safe-area-inset-bottom, 0px)',
                 width: '100%',
                 maxWidth: '100%',
-                zIndex: 1003,
+                zIndex: 1010,
                 display: 'flex',
                 flexDirection: 'column',
                 paddingBottom: '8px',
