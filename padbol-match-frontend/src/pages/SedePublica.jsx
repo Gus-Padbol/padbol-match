@@ -568,11 +568,7 @@ export default function SedePublica() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader
-        title="Sede"
-        backLabel="← Ver otras sedes"
-        onBack={() => navigate('/sedes?ver_todas=1')}
-      />
+      <AppHeader title="Sede" showBack={false} />
 
       {loading && (
         <div

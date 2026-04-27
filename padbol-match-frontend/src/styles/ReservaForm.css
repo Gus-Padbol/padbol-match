@@ -10,8 +10,9 @@
   max-width: none;
   width: 100%;
   margin: 0;
-  padding-left: 16px;
-  padding-right: 16px;
+  /* Mínimo 16px a cada lado + safe area (el JSX refuerza lo mismo) */
+  padding-left: calc(16px + env(safe-area-inset-left, 0px));
+  padding-right: calc(16px + env(safe-area-inset-right, 0px));
   box-sizing: border-box;
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -21,6 +22,8 @@
   max-width: 480px;
   margin: 0 auto;
   padding: 8px 0 24px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .reserva-sede-seleccion .reserva-sede-logo {
