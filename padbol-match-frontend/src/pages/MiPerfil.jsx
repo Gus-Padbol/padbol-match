@@ -251,11 +251,21 @@ export default function MiPerfil() {
     ciudad: '',
     alias: '',
     instagram: '',
+    /** UUID (`user_id`) del compañero habitual en `jugadores_perfil.companero_id`. */
+    companero_id: null,
 
     fecha_nacimiento: '',
     numero_fipa: '',
     es_federado: false,
   });
+
+  const [companeroBusqueda, setCompaneroBusqueda] = useState('');
+  const [companeroOpciones, setCompaneroOpciones] = useState([]);
+  const [companeroMenuAbierto, setCompaneroMenuAbierto] = useState(false);
+  const [companeroCargando, setCompaneroCargando] = useState(false);
+  const [perfilCompaneroLectura, setPerfilCompaneroLectura] = useState(null);
+  const [companeroSeleccionado, setCompaneroSeleccionado] = useState(null);
+  const companeroSearchSeqRef = useRef(0);
 
   const nivelTorneoScope = useMemo(
     () => normalizeNivelTorneoScope(torneoPerfil?.nivel_torneo),
@@ -296,6 +306,90 @@ export default function MiPerfil() {
       return { ...prev, pais: PAIS_ARGENTINA_PERFIL };
     });
   }, [torneoPerfil, nivelTorneoScope]);
+
+  /** Vista lectura: ficha del compañero habitual por `companero_id` (= `user_id` del otro jugador). */
+  useEffect(() => {
+    if (editando || !perfil?.companero_id) {
+      setPerfilCompaneroLectura(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const cid = String(perfil.companero_id).trim();
+      const { data } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre')
+        .eq('user_id', cid)
+        .maybeSingle();
+      if (!cancelled) setPerfilCompaneroLectura(data || null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editando, perfil?.companero_id]);
+
+  /** Edición: sincronizar fila mostrada al guardar `companero_id`. */
+  useEffect(() => {
+    if (!editando) {
+      setCompaneroSeleccionado(null);
+      return;
+    }
+    const id = formData.companero_id != null ? String(formData.companero_id).trim() : '';
+    if (!id) {
+      setCompaneroSeleccionado(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre')
+        .eq('user_id', id)
+        .maybeSingle();
+      if (!cancelled) setCompaneroSeleccionado(data || null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editando, formData.companero_id]);
+
+  /** Búsqueda de compañero por alias (debounce). */
+  useEffect(() => {
+    if (!editando) {
+      setCompaneroOpciones([]);
+      setCompaneroCargando(false);
+      return;
+    }
+    const raw = companeroBusqueda.trim();
+    if (raw.length < 2) {
+      setCompaneroOpciones([]);
+      setCompaneroCargando(false);
+      return;
+    }
+    const seq = ++companeroSearchSeqRef.current;
+    const handle = setTimeout(async () => {
+      setCompaneroCargando(true);
+      const term = raw.replace(/[%_\\]/g, '');
+      let q = supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre')
+        .not('alias', 'is', null)
+        .neq('alias', '')
+        .ilike('alias', `%${term}%`)
+        .limit(12);
+      const myUid = session?.user?.id;
+      if (myUid) q = q.neq('user_id', myUid);
+      const { data, error } = await q;
+      if (seq !== companeroSearchSeqRef.current) return;
+      setCompaneroCargando(false);
+      if (error) {
+        setCompaneroOpciones([]);
+        return;
+      }
+      setCompaneroOpciones(Array.isArray(data) ? data : []);
+    }, 280);
+    return () => clearTimeout(handle);
+  }, [editando, companeroBusqueda, session?.user?.id]);
 
   useEffect(() => {
     if (sessionOwnerEmail) return;
@@ -390,6 +484,7 @@ export default function MiPerfil() {
           ciudad: data.ciudad || '',
           alias: data.alias != null ? String(data.alias) : '',
           instagram: instagramHandleFromStored(data.instagram_url),
+          companero_id: data.companero_id != null && String(data.companero_id).trim() ? String(data.companero_id).trim() : null,
           fecha_nacimiento: data.fecha_nacimiento || '',
           numero_fipa: data.numero_fipa || '',
           es_federado: data.es_federado || false,
@@ -559,6 +654,7 @@ export default function MiPerfil() {
           pendiente_validacion: true,
           foto_url: fotoUrlGuardada,
           instagram_url: instagramUrlFromHandle(formData.instagram),
+          companero_id: formData.companero_id || null,
         };
         const { data: inserted, error: insErr } = await supabase
           .from('jugadores_perfil')
@@ -738,6 +834,7 @@ export default function MiPerfil() {
         whatsapp: wa,
         alias: aliasTrimReg || null,
         instagram_url: instagramUrlFromHandle(formData.instagram),
+        companero_id: null,
       };
 
       const { error: jpErr } = await supabase.from('jugadores_perfil').upsert(
@@ -848,6 +945,7 @@ export default function MiPerfil() {
         es_federado: formData.es_federado,
         alias: aliasTrim || null,
         instagram_url: instagramUrlFromHandle(formData.instagram),
+        companero_id: formData.companero_id || null,
       };
 
       const userId = session?.user?.id ?? null;
@@ -1525,6 +1623,12 @@ export default function MiPerfil() {
   const categoriaColor = CATEGORIA_COLOR[perfil?.nivel] || '#999';
   const foto = perfil?.foto_url || cuentaDeSesion?.foto || null;
 
+  const nombreCompletoTitulo = getDisplayName(userProfile || perfil, session);
+  const aliasTituloGrande = editando
+    ? String(formData.alias || '').trim()
+    : String(perfil?.alias || '').trim();
+  const nombreDebajoAlias = editando ? String(nombreTorneoCompleto || '').trim() : nombreCompletoTitulo;
+
   return (
     <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
 
@@ -1681,9 +1785,28 @@ export default function MiPerfil() {
           </button>
         ) : null}
 
-        <h2 style={{ margin: '2px 0 6px', fontSize: '22px', color: '#222' }}>
-          {getDisplayName(userProfile || perfil, session)}
-        </h2>
+        {aliasTituloGrande ? (
+          <>
+            <h2 style={{ margin: '2px 0 4px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>
+              {aliasTituloGrande}
+            </h2>
+            <p
+              style={{
+                margin: '0 0 6px',
+                fontSize: '13px',
+                color: '#94a3b8',
+                fontWeight: 400,
+                lineHeight: 1.35,
+              }}
+            >
+              {nombreDebajoAlias || '—'}
+            </p>
+          </>
+        ) : (
+          <h2 style={{ margin: '2px 0 6px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>
+            {nombreCompletoTitulo || 'Jugador'}
+          </h2>
+        )}
 
         {perfil?.pais && (
           <p style={{ margin: '0 0 4px', fontSize: '16px' }}>
@@ -1735,6 +1858,63 @@ export default function MiPerfil() {
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row label="Alias" value={String(perfil?.alias || '').trim() || '—'} />
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '9px 0',
+                  borderBottom: '1px solid #eee',
+                }}
+              >
+                <span style={{ color: '#777', fontSize: '13px', flexShrink: 0 }}>Compañero habitual</span>
+                <span style={{ fontSize: '14px', color: '#333', textAlign: 'right' }}>
+                  {perfil?.companero_id && perfilCompaneroLectura ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                      {perfilCompaneroLectura.foto_url ? (
+                        <img
+                          src={perfilCompaneroLectura.foto_url}
+                          alt=""
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : null}
+                      {String(perfilCompaneroLectura.alias || '').trim() ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/jugador/${encodeURIComponent(String(perfilCompaneroLectura.alias).trim())}`)
+                          }
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            color: '#5b21b6',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          Juega con @{String(perfilCompaneroLectura.alias).trim()}
+                        </button>
+                      ) : (
+                        <span style={{ fontWeight: 600 }}>
+                          Juega con {nombreCompletoJugadorPerfil(perfilCompaneroLectura) || perfilCompaneroLectura.nombre || '—'}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    '—'
+                  )}
+                </span>
+              </div>
               <Row
                 label="Instagram"
                 value={
@@ -1960,6 +2140,141 @@ export default function MiPerfil() {
               style={{ ...inputStyle, marginBottom: '14px' }}
             />
 
+            <label style={labelStyle}>Compañero habitual</label>
+            <div style={{ position: 'relative', marginBottom: formData.companero_id ? '8px' : '14px' }}>
+              <input
+                type="text"
+                value={companeroBusqueda}
+                onChange={(e) => {
+                  setCompaneroBusqueda(e.target.value);
+                  setCompaneroMenuAbierto(true);
+                }}
+                onFocus={() => setCompaneroMenuAbierto(true)}
+                onBlur={() => {
+                  window.setTimeout(() => setCompaneroMenuAbierto(false), 180);
+                }}
+                placeholder="Buscar por alias…"
+                autoComplete="off"
+                spellCheck={false}
+                style={{ ...inputStyle, marginBottom: 0 }}
+              />
+              {companeroMenuAbierto && (companeroCargando || companeroOpciones.length > 0) ? (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: '100%',
+                    margin: '4px 0 0',
+                    padding: '4px 0',
+                    listStyle: 'none',
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    zIndex: 50,
+                  }}
+                >
+                  {companeroCargando && companeroOpciones.length === 0 ? (
+                    <li style={{ padding: '10px 12px', fontSize: '13px', color: '#64748b' }}>Buscando…</li>
+                  ) : null}
+                  {companeroOpciones.map((op) => {
+                    const al = String(op.alias || '').trim();
+                    return (
+                      <li key={op.user_id}>
+                        <button
+                          type="button"
+                          onMouseDown={(ev) => ev.preventDefault()}
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, companero_id: op.user_id }));
+                            setCompaneroSeleccionado(op);
+                            setCompaneroBusqueda('');
+                            setCompaneroOpciones([]);
+                            setCompaneroMenuAbierto(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '8px 12px',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          <img
+                            src={op.foto_url || '/default-avatar.svg'}
+                            alt=""
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>@{al}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </div>
+            {formData.companero_id && companeroSeleccionado ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  marginBottom: '14px',
+                  padding: '8px 10px',
+                  background: '#f8fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                  {companeroSeleccionado.foto_url ? (
+                    <img
+                      src={companeroSeleccionado.foto_url}
+                      alt=""
+                      style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : null}
+                  <span style={{ fontWeight: 700, color: '#334155' }}>
+                    @{String(companeroSeleccionado.alias || '').trim() || '—'}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, companero_id: null }));
+                    setCompaneroSeleccionado(null);
+                    setCompaneroBusqueda('');
+                    setCompaneroOpciones([]);
+                  }}
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#b91c1c',
+                    background: 'transparent',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : null}
+
             <label style={labelStyle}>Fecha de nacimiento</label>
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
@@ -2007,6 +2322,25 @@ export default function MiPerfil() {
                   setNombreTorneoCompleto('');
                   setPassRegistroTorneo('');
                   setPassRegistroTorneo2('');
+                  setCompaneroBusqueda('');
+                  setCompaneroOpciones([]);
+                  setCompaneroMenuAbierto(false);
+                  setCompaneroSeleccionado(null);
+                  setFormData((prev) => ({
+                    ...prev,
+                    companero_id: perfil?.companero_id != null && String(perfil.companero_id).trim()
+                      ? String(perfil.companero_id).trim()
+                      : null,
+                    lateralidad: perfil?.lateralidad || prev.lateralidad,
+                    nivel: perfil?.nivel || prev.nivel,
+                    pais: perfil?.pais || '',
+                    ciudad: perfil?.ciudad || '',
+                    alias: perfil?.alias != null ? String(perfil.alias) : '',
+                    instagram: instagramHandleFromStored(perfil?.instagram_url),
+                    fecha_nacimiento: perfil?.fecha_nacimiento || '',
+                    numero_fipa: perfil?.numero_fipa || '',
+                    es_federado: perfil?.es_federado || false,
+                  }));
                 }}
                 style={{ flex: 1, padding: '11px', background: 'transparent', color: '#666', border: '1px solid #ccc', borderRadius: '5px', cursor: 'pointer' }}
               >

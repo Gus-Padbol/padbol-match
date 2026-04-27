@@ -13,6 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import TorneoCrear from './pages/TorneoCrear';
 import FormEquipos from './pages/FormEquipos';
 import MiPerfil from './pages/MiPerfil';
+import PerfilPublico from './PerfilPublico';
 import TorneoVista from './pages/TorneoVista';
 import Rankings from './pages/Rankings';
 import TorneosPublicos from './pages/TorneosPublicos';
@@ -150,6 +151,7 @@ function AppRoutes() {
         <Route path="/sedes" element={<SedesPublicas />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
         <Route path="/mi-perfil" element={<MiPerfil />} />
+        <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
         <Route path="/login" element={<Login />} />
 
