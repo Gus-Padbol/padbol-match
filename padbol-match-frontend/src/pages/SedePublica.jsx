@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopPx,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 
@@ -12,6 +12,29 @@ const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 /** Altura aproximada de la barra fija: Ver torneos + Reservar + safe area */
 const CTA_FIXED_STACK_MIN_PX = 112;
+
+const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+const DEFAULT_HERO_BG = 'linear-gradient(160deg, #1a1a2e 0%, #16213e 72%, #0f3460 100%)';
+
+function normalizeHexColor(raw) {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  if (/^#[0-9A-Fa-f]{6}$/i.test(s)) return s;
+  if (/^#[0-9A-Fa-f]{3}$/i.test(s)) {
+    const r = s[1];
+    const g = s[2];
+    const b = s[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  return null;
+}
+
+function heroBackgroundFromSede(sede) {
+  const hex = normalizeHexColor(sede?.color_primario);
+  if (!hex) return DEFAULT_HERO_BG;
+  return `linear-gradient(160deg, ${hex} 0%, rgba(15, 23, 42, 0.82) 78%, rgba(15, 23, 42, 0.94) 100%)`;
+}
 
 function formatHorario(apertura, cierre) {
   if (!apertura && !cierre) return null;
@@ -296,6 +319,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
 export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sede, setSede] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -338,8 +362,8 @@ export default function SedePublica() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f1f5f9',
-        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+        background: PADBOL_PAGE_GRADIENT,
+        paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
         paddingBottom: scrollBottomPad,
         boxSizing: 'border-box',
       }}
@@ -359,7 +383,7 @@ export default function SedePublica() {
             justifyContent: 'center',
           }}
         >
-          <p style={{ color: '#64748b', fontSize: '15px', fontWeight: 600 }}>Cargando sede…</p>
+          <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '15px', fontWeight: 600 }}>Cargando sede…</p>
         </div>
       )}
 
@@ -375,10 +399,10 @@ export default function SedePublica() {
             padding: '20px',
           }}
         >
-          <p style={{ color: '#334155', fontSize: '15px', fontWeight: 600, textAlign: 'center' }}>
+          <p style={{ color: '#fff', fontSize: '15px', fontWeight: 600, textAlign: 'center' }}>
             {error || 'Sede no encontrada.'}
           </p>
-          <p style={{ color: '#94a3b8', fontSize: '12px' }}>sedeId: {sedeId ?? '(undefined)'}</p>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '12px' }}>sedeId: {sedeId ?? '(undefined)'}</p>
         </div>
       )}
 
@@ -395,9 +419,15 @@ export default function SedePublica() {
             <div
               style={{
                 position: 'relative',
-                background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 72%, #0f3460 100%)',
+                background: heroBackgroundFromSede(sede),
                 padding: '12px 16px 14px',
                 overflow: 'hidden',
+                borderBottomLeftRadius: '16px',
+                borderBottomRightRadius: '16px',
+                marginLeft: '12px',
+                marginRight: '12px',
+                marginTop: '4px',
+                boxShadow: '0 8px 28px rgba(0, 0, 0, 0.22)',
               }}
             >
               <div
@@ -646,7 +676,7 @@ export default function SedePublica() {
                 display: 'flex',
                 flexDirection: 'column',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-                background: 'linear-gradient(to top, rgba(241,245,249,0.98) 70%, transparent)',
+                background: 'linear-gradient(to top, rgba(102,126,234,0.96) 55%, rgba(118,75,162,0.12) 100%)',
                 paddingTop: '10px',
                 boxShadow: '0 -6px 20px rgba(15, 23, 42, 0.08)',
               }}

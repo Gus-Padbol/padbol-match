@@ -6,10 +6,8 @@ import AppHeader from '../components/AppHeader';
 import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
-  isHubNavBarHiddenPathname,
+  hubContentPaddingTopPx,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -115,8 +113,7 @@ const MAX_CANCHAS_RESERVA_UI = 2;
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const hubNavHidden = isHubNavBarHiddenPathname(location.pathname);
-  const reservaPaddingTopPx = hubNavHidden ? HUB_APP_HEADER_HEIGHT_PX : HUB_CONTENT_PADDING_TOP_PX;
+  const reservaPaddingTopPx = hubContentPaddingTopPx(location.pathname);
   const { session, loading: authLoading, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -389,33 +386,27 @@ export default function ReservaForm() {
     });
   }, [pantalla, filtros.sede_id]);
 
-  const handleChangePais = (e) => {
-    const value = e.target.value;
-    const pais = value;
+  const selectPais = useCallback((pais) => {
     setFiltros({ pais, ciudad: '', sede_id: '' });
-    setCiudades([]);
-
     if (pais) {
-      const ciudadesDelPais = [...new Set(
-        sedes.filter(s => s.pais === pais).map(s => s.ciudad)
-      )].sort();
+      const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
       setCiudades(ciudadesDelPais);
+    } else {
+      setCiudades([]);
     }
-  };
+  }, [sedes]);
 
-  const handleChangeCiudad = (e) => {
-    const ciudad = e.target.value;
+  const selectCiudad = useCallback((ciudad) => {
     setFiltros((prev) => ({ ...prev, ciudad, sede_id: '' }));
-  };
+  }, []);
 
-  const handleChangeSede = (e) => {
-    const sedeId = parseInt(e.target.value, 10);
-    const sede_id = Number.isNaN(sedeId) ? '' : sedeId;
-    setFiltros((prev) => ({ ...prev, sede_id }));
-    if (sede_id) {
-      navigate(`/sede/${sede_id}`);
-    }
-  };
+  const selectSedeChip = useCallback(
+    (id) => {
+      setFiltros((prev) => ({ ...prev, sede_id: id }));
+      navigate(`/sede/${id}`);
+    },
+    [navigate]
+  );
 
   const buscarHorariosDisponibles = useCallback(async (fecha) => {
     if (!fecha || !sedeSeleccionada) return;
@@ -694,6 +685,11 @@ export default function ReservaForm() {
       >
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-sede-inner">
+          <img
+            src="/logo-padbol-match.png"
+            alt="Padbol Match"
+            className="reserva-sede-logo"
+          />
           <h1 className="reserva-sede-title" style={{ margin: 0, marginBottom: '20px' }}>
             🎾 Reserva tu Cancha de PADBOL
           </h1>
@@ -702,56 +698,58 @@ export default function ReservaForm() {
             {sedesLoadError ? (
               <div className="error-message" role="alert">{sedesLoadError}</div>
             ) : null}
-            <div className="form-group">
-              <label>País:</label>
-              <select
-                value={filtros.pais}
-                onChange={handleChangePais}
-                required
-              >
-                <option value="">-- Selecciona País --</option>
-                {paisesOrdenados.map((pais) => (
-                  <option key={pais} value={pais}>{pais}</option>
-                ))}
-              </select>
+
+            <div className="reserva-field-label">País</div>
+            <div className="reserva-pill-wrap" role="group" aria-label="País">
+              {paisesOrdenados.map((pais) => (
+                <button
+                  key={pais}
+                  type="button"
+                  className={`reserva-pill${filtros.pais === pais ? ' is-active' : ''}`}
+                  onClick={() => selectPais(pais)}
+                >
+                  {pais}
+                </button>
+              ))}
             </div>
 
-            {filtros.pais && (
-              <div className="form-group">
-                <label>Ciudad:</label>
-                <select
-                  value={filtros.ciudad}
-                  onChange={handleChangeCiudad}
-                  required
-                >
-                  <option value="">-- Selecciona Ciudad --</option>
-                  {ciudades.map(ciudad => (
-                    <option key={ciudad} value={ciudad}>{ciudad}</option>
+            {filtros.pais ? (
+              <>
+                <div className="reserva-field-label">Ciudad</div>
+                <div className="reserva-pill-wrap" role="group" aria-label="Ciudad">
+                  {ciudades.map((ciudad) => (
+                    <button
+                      key={ciudad}
+                      type="button"
+                      className={`reserva-pill${filtros.ciudad === ciudad ? ' is-active' : ''}`}
+                      onClick={() => selectCiudad(ciudad)}
+                    >
+                      {ciudad}
+                    </button>
                   ))}
-                </select>
-              </div>
-            )}
+                </div>
+              </>
+            ) : null}
 
-            {filtros.ciudad && (
-              <div className="form-group">
-                <label>Sede:</label>
-                <select
-                  value={filtros.sede_id}
-                  onChange={handleChangeSede}
-                  required
-                >
-                  <option value="">-- Selecciona Sede --</option>
+            {filtros.pais && filtros.ciudad ? (
+              <>
+                <div className="reserva-field-label">Sede</div>
+                <div className="reserva-pill-wrap reserva-pill-wrap--sedes" role="group" aria-label="Sede">
                   {sedesFiltradas.map((sede) => (
-                    <option key={sede.id} value={sede.id}>
+                    <button
+                      key={sede.id}
+                      type="button"
+                      className={`reserva-pill${Number(filtros.sede_id) === Number(sede.id) ? ' is-active' : ''}`}
+                      onClick={() => selectSedeChip(sede.id)}
+                    >
                       {sede.nombre}
-                    </option>
+                    </button>
                   ))}
-                </select>
-              </div>
-            )}
+                </div>
+              </>
+            ) : null}
 
             {error && <div className="error-message">{error}</div>}
-
           </form>
         </div>
         <BottomNav />

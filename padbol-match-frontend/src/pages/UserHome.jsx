@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopPx,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
 
 export default function UserHome() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session, loading: authLoading, userProfile, signOutAndClear } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
 
@@ -34,7 +35,7 @@ export default function UserHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+        paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
         paddingLeft: '20px',
         paddingRight: '20px',
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
