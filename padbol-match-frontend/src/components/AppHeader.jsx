@@ -19,7 +19,13 @@ const btnVolver = {
  * Barra superior fija: ← Volver (opcional) y título centrado.
  * La navegación principal del hub va en {@link BottomNav} (fija bajo este header).
  */
-export default function AppHeader({ title, showBack = true, onBack, backLabel }) {
+export default function AppHeader({
+  title,
+  showBack = true,
+  onBack,
+  backLabel,
+  titleColor,
+}) {
   const navigate = useNavigate();
   const { session, signOutAndClear } = useAuth();
 
@@ -67,7 +73,7 @@ export default function AppHeader({ title, showBack = true, onBack, backLabel })
         type="button"
         onClick={() => navigate('/')}
         style={{
-          color: '#fff',
+          color: titleColor || '#fff',
           fontSize: '15px',
           fontWeight: 600,
           margin: 0,

@@ -372,6 +372,11 @@ export default function SedePublica() {
     >
       <AppHeader
         title={sede?.nombre ? String(sede.nombre) : 'Sede'}
+        titleColor={
+          !loading && !error && sede
+            ? normalizeHexColor(sede.color_nombre) ?? '#FFFFFF'
+            : undefined
+        }
         backLabel="← Ver otras sedes"
         onBack={() => navigate('/sedes?ver_todas=1')}
       />
@@ -424,8 +429,7 @@ export default function SedePublica() {
                 background: heroBackgroundFromSede(sede),
                 padding: '12px 16px 14px',
                 overflow: 'hidden',
-                borderBottomLeftRadius: '16px',
-                borderBottomRightRadius: '16px',
+                borderRadius: '16px',
                 marginLeft: '12px',
                 marginRight: '12px',
                 marginTop: '4px',
@@ -453,10 +457,10 @@ export default function SedePublica() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'stretch',
-                  gap: '10px',
+                  gap: '4px',
                 }}
               >
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                   {sede.logo_url ? (
                     <img
                       src={sede.logo_url}
@@ -485,24 +489,6 @@ export default function SedePublica() {
                       }}
                     />
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h1
-                      style={{
-                        color: '#fff',
-                        fontSize: '17px',
-                        fontWeight: 800,
-                        margin: 0,
-                        lineHeight: 1.2,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        textShadow: '0 1px 8px rgba(0,0,0,0.45)',
-                      }}
-                      title={sede.nombre || ''}
-                    >
-                      {sede.nombre || '(sin nombre)'}
-                    </h1>
-                  </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
@@ -543,12 +529,12 @@ export default function SedePublica() {
                 </div>
 
                 {desc ? (
-                  <div>
+                  <div style={{ marginTop: '2px' }}>
                     <p
                       style={{
                         margin: 0,
-                        color: 'rgba(255,255,255,0.82)',
-                        fontSize: '12px',
+                        color: 'rgba(255,255,255,0.9)',
+                        fontSize: '14px',
                         lineHeight: 1.45,
                         fontStyle: 'italic',
                         display: descExpanded ? 'block' : '-webkit-box',
