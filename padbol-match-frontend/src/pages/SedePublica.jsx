@@ -2,8 +2,6 @@ import React, {
   useState,
   useEffect,
   useMemo,
-  useRef,
-  useLayoutEffect,
   useCallback,
 } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -496,15 +494,6 @@ export default function SedePublica() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [descExpanded, setDescExpanded] = useState(false);
-  const [ctaBarHeightPx, setCtaBarHeightPx] = useState(0);
-  const ctaFixedRef = useRef(null);
-
-  const measureCtaBar = useCallback(() => {
-    const el = ctaFixedRef.current;
-    if (!el) return;
-    const h = el.getBoundingClientRect().height;
-    setCtaBarHeightPx(Math.ceil(h));
-  }, []);
 
   useEffect(() => {
     if (!sedeId) {
@@ -535,44 +524,37 @@ export default function SedePublica() {
     setDescExpanded(false);
   }, [sedeId]);
 
-  useLayoutEffect(() => {
-    if (loading || error || !sede) {
-      setCtaBarHeightPx(0);
-      return;
-    }
-    measureCtaBar();
-    const raf = requestAnimationFrame(() => {
-      measureCtaBar();
-    });
-    const onResize = () => measureCtaBar();
-    window.addEventListener('resize', onResize);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', onResize);
-    };
-  }, [loading, error, sede, descExpanded, measureCtaBar]);
+  const sedeViewReady = !loading && !error && sede;
 
-  const mainPaddingBottom =
-    loading || error || !sede
-      ? `${HUB_CONTENT_PADDING_BOTTOM_PX}px`
-      : `calc(${ctaBarHeightPx}px + env(safe-area-inset-bottom, 0px))`;
-
-  const pageMinHeight =
-    !loading && !error && sede ? 'auto' : '100dvh';
-
-  return (
-    <div
-      style={{
-        minHeight: pageMinHeight,
+  const rootPageStyle = sedeViewReady
+    ? {
+        height: '100dvh',
+        maxHeight: '100dvh',
+        minHeight: '100dvh',
         background: PADBOL_PAGE_GRADIENT,
         paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
-        paddingBottom: mainPaddingBottom,
+        paddingBottom: 0,
+        boxSizing: 'border-box',
+        width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        overscrollBehaviorY: 'contain',
+      }
+    : {
+        minHeight: '100dvh',
+        background: PADBOL_PAGE_GRADIENT,
+        paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
+        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
         width: '100%',
         maxWidth: '100%',
         overscrollBehaviorY: 'contain',
-      }}
-    >
+      };
+
+  return (
+    <div style={rootPageStyle}>
       <AppHeader title="" showBack hideLogout />
 
       {loading && (
@@ -618,7 +600,31 @@ export default function SedePublica() {
         const torneosCtaLabel = `Ver torneos de ${nombreSedeCta}`;
 
         return (
-          <>
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                WebkitOverflowScrolling: 'touch',
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                overscrollBehaviorY: 'contain',
+              }}
+            >
             <div
               style={{
                 width: '100%',
@@ -838,20 +844,16 @@ export default function SedePublica() {
               ) : null}
             </div>
             </div>
+            </div>
 
             <div
-              ref={ctaFixedRef}
               style={{
-                position: 'fixed',
-                left: 0,
-                right: 0,
-                bottom: 'env(safe-area-inset-bottom, 0px)',
+                flexShrink: 0,
                 width: '100%',
                 maxWidth: '100%',
-                zIndex: 1010,
                 display: 'flex',
                 flexDirection: 'column',
-                paddingBottom: '8px',
+                paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
                 background: 'linear-gradient(to top, rgba(102,126,234,0.96) 55%, rgba(118,75,162,0.12) 100%)',
                 paddingTop: '10px',
                 boxShadow: '0 -6px 20px rgba(15, 23, 42, 0.08)',
@@ -912,7 +914,7 @@ export default function SedePublica() {
                 </button>
               </div>
             </div>
-          </>
+          </div>
         );
       })()}
       <BottomNav />
