@@ -7,6 +7,7 @@ import {
   HUB_CONTENT_PADDING_TOP_PX,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
+import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 import '../styles/TorneoVista.css';
 
 // "2026-02-26" → "26 Feb 2026"
@@ -319,7 +320,7 @@ export default function TorneoVista() {
           <h1 className="finalizado-titulo">¡Torneo Finalizado!</h1>
           <p className="finalizado-nombre">{torneo.nombre}</p>
           <p className="finalizado-info">
-            {torneo.nivel_torneo} • {torneo.tipo_torneo} • {formatFecha(torneo.fecha_inicio)} a {formatFecha(torneo.fecha_fin)}
+            {formatNivelTorneo(torneo.nivel_torneo)} • {formatTipoTorneo(torneo.tipo_torneo)} • {formatFecha(torneo.fecha_inicio)} a {formatFecha(torneo.fecha_fin)}
           </p>
         </div>
 
@@ -372,7 +373,7 @@ export default function TorneoVista() {
 
       <div className="torneo-header">
         <h1>🏆 {torneo.nombre}</h1>
-        <p>{torneo.nivel_torneo} • {torneo.tipo_torneo} • {formatFecha(torneo.fecha_inicio)} a {formatFecha(torneo.fecha_fin)}</p>
+        <p>{formatNivelTorneo(torneo.nivel_torneo)} • {formatTipoTorneo(torneo.tipo_torneo)} • {formatFecha(torneo.fecha_inicio)} a {formatFecha(torneo.fecha_fin)}</p>
         <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           <button
             type="button"

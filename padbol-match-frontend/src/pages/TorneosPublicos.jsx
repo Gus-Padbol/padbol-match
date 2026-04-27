@@ -7,6 +7,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_CONTENT_PADDING_TOP_PX,
 } from '../constants/hubLayout';
+import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -415,8 +416,8 @@ export default function TorneosPublicos() {
                   }
                 />
                 <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
-                <Row icon="🏆" label={t.tipo_torneo || '—'} />
-                <Row icon="⭐" label={t.nivel_torneo || '—'} />
+                <Row icon="🏆" label={formatTipoTorneo(t.tipo_torneo)} />
+                <Row icon="⭐" label={formatNivelTorneo(t.nivel_torneo)} />
               </div>
 
               <button

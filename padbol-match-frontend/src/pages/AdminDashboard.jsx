@@ -10,6 +10,7 @@ import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
+import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
@@ -963,14 +964,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       {/* Col 2 — nivel */}
                       <div>
                         {torneo.nivel_torneo
-                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>{torneo.nivel_torneo}</span>
+                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
                           : <span style={{ color: '#ddd', fontSize: '11px', display: 'block', width: '120px', textAlign: 'center' }}>—</span>}
                       </div>
 
                       {/* Col 3 — formato */}
                       <div>
                         {torneo.tipo_torneo
-                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>{torneo.tipo_torneo.replace(/_/g, ' ')}</span>
+                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>{formatTipoTorneo(torneo.tipo_torneo)}</span>
                           : <span style={{ color: '#ddd', fontSize: '11px', display: 'block', width: '120px', textAlign: 'center' }}>—</span>}
                       </div>
 

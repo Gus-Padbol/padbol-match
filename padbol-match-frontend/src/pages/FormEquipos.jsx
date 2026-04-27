@@ -33,6 +33,7 @@ import {
   ensureCreadorPrimeroEnLista,
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
+import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -144,24 +145,6 @@ function esCreadorEquipo(eq, authEmailTrim, usuarioBasico) {
 
 function esCreadorEquipoOMiAuth(eq, authEmailTrim, usuarioBasico, authUserId) {
   return esCreadorEquipo(eq, authEmailTrim, usuarioBasico) || equipoUserIdCoincide(eq, usuarioBasico.id, authUserId);
-}
-
-function formatTipoTorneo(raw) {
-  const t = String(raw || '')
-    .toLowerCase()
-    .replace(/\s+/g, '_');
-  if (t === 'round_robin') return 'Round robin';
-  if (t === 'knockout' || t === 'eliminatoria') return 'Knockout';
-  if (t === 'grupos_knockout') return 'Grupos + knockout';
-  return raw || '—';
-}
-
-function formatNivelTorneo(raw) {
-  const n = String(raw || '').toLowerCase();
-  if (n === 'local') return 'Local';
-  if (n === 'nacional') return 'Nacional';
-  if (n === 'internacional') return 'Internacional';
-  return raw || '—';
 }
 
 export default function FormEquipos() {
