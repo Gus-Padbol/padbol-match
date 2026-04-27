@@ -895,7 +895,7 @@ export default function SedePublica() {
                     boxSizing: 'border-box',
                   }}
                 >
-                  🎾 Reservar cancha
+                  ⚽ Reservar cancha
                 </button>
               </div>
             </div>

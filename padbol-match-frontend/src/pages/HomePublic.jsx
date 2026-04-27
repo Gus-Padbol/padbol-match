@@ -89,7 +89,7 @@ export default function HomePublic() {
           }}
         >
           <AppButton variant="primary" onClick={() => navigate('/sedes?from=reserva')}>
-            Reservar cancha
+            ⚽ Reservar cancha
           </AppButton>
           <AppButton variant="secondary" onClick={() => navigate('/torneos?context=near')}>
             Ver torneos
