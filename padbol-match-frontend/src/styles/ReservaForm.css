@@ -10,24 +10,35 @@
 
 /* Pantalla 1 /reservar: fondo degradado sin card (estilo registro) */
 .reserva-container.reserva-sede-seleccion {
+  position: relative;
   width: 100%;
   max-width: 100%;
   margin: 0;
   overflow-x: hidden;
-  /* Mínimo 16px a cada lado + safe area (el JSX refuerza lo mismo) */
-  padding-left: calc(16px + env(safe-area-inset-left, 0px));
-  padding-right: calc(16px + env(safe-area-inset-right, 0px));
   box-sizing: border-box;
+  /* 20px + safe area; el padding vertical lo fija el inline en JSX */
+  padding-left: calc(20px + env(safe-area-inset-left, 0px));
+  padding-right: calc(20px + env(safe-area-inset-right, 0px));
+  padding-top: 0;
+  padding-bottom: 0;
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .reserva-sede-seleccion .reserva-sede-inner {
-  max-width: 480px;
+  max-width: min(480px, 100%);
   margin: 0 auto;
   padding: 8px 0 24px;
   box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+}
+
+.reserva-sede-seleccion form {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .reserva-sede-seleccion .reserva-sede-logo {
@@ -44,6 +55,9 @@
   font-size: clamp(1.15rem, 4.5vw, 1.45rem);
   font-weight: 800;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
 }
 
 .reserva-sede-seleccion .reserva-field-label {
@@ -54,6 +68,9 @@
   color: rgba(255, 255, 255, 0.82);
   margin-bottom: 8px;
   margin-top: 4px;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
 }
 
 .reserva-sede-seleccion .reserva-field-label:first-of-type {
@@ -66,7 +83,11 @@
   gap: 8px;
   margin-bottom: 18px;
   max-height: 200px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -85,12 +106,19 @@
   cursor: pointer;
   font-family: inherit;
   line-height: 1.25;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.reserva-sede-seleccion .reserva-pill:hover {
-  background: rgba(255, 255, 255, 0.24);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .reserva-sede-seleccion .reserva-pill:hover {
+    background: rgba(255, 255, 255, 0.24);
+    transform: translateY(-1px);
+  }
 }
 
 .reserva-sede-seleccion .reserva-pill.is-active {
@@ -113,6 +141,9 @@
   background: rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.22);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
 .reserva-sede-seleccion .reserva-pais-badge-row {
@@ -121,11 +152,18 @@
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 18px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .reserva-sede-seleccion .reserva-pill.is-static {
   cursor: default;
   pointer-events: none;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .reserva-sede-seleccion .reserva-pill-clear {
@@ -148,14 +186,20 @@
   transition: background 0.15s ease, transform 0.12s ease;
 }
 
-.reserva-sede-seleccion .reserva-pill-clear:hover {
-  background: rgba(255, 255, 255, 0.22);
-  transform: scale(1.05);
+@media (hover: hover) {
+  .reserva-sede-seleccion .reserva-pill-clear:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(1.05);
+  }
 }
 
 .reserva-sede-seleccion .reserva-search-wrap {
   position: relative;
   margin-bottom: 18px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .reserva-sede-seleccion .reserva-search-input-inner {
@@ -167,6 +211,9 @@
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.35);
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .reserva-sede-seleccion .reserva-search-ico {
@@ -199,8 +246,12 @@
   right: 0;
   top: calc(100% + 6px);
   z-index: 20;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   max-height: calc(5 * 2.75rem);
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.98);

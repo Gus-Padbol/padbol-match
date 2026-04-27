@@ -765,8 +765,6 @@ export default function ReservaForm() {
         style={{
           paddingTop: `${reservaPaddingTopPx}px`,
           paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
-          paddingLeft: 'calc(16px + env(safe-area-inset-left, 0px))',
-          paddingRight: 'calc(16px + env(safe-area-inset-right, 0px))',
           boxSizing: 'border-box',
           width: '100%',
           maxWidth: '100%',
