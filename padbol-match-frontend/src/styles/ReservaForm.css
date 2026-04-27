@@ -5,6 +5,45 @@
   font-family: Arial, sans-serif;
 }
 
+/* Pantalla 1 /reservar: fondo degradado sin card (estilo registro) */
+.reserva-container.reserva-sede-seleccion {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.reserva-sede-seleccion .reserva-sede-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 8px 0 24px;
+}
+
+.reserva-sede-seleccion .reserva-sede-title {
+  text-align: center;
+  color: #fff;
+  font-size: clamp(1.15rem, 4.5vw, 1.45rem);
+  font-weight: 800;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.reserva-sede-seleccion .form-group label {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.reserva-sede-seleccion .form-group select {
+  background: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.reserva-sede-seleccion .error-message {
+  margin-top: 12px;
+}
+
 .reserva-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);

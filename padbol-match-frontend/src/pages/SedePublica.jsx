@@ -8,8 +8,8 @@ import {
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 
-const PHOTO_STRIP_H = 160;
-const MAP_THUMB_MAX_H = 150;
+const PHOTO_STRIP_H = 120;
+const MAP_THUMB_MAX_H = 120;
 /** Altura aproximada de la barra fija: Ver torneos + Reservar + safe area */
 const CTA_FIXED_STACK_MIN_PX = 112;
 
@@ -538,7 +538,47 @@ export default function SedePublica() {
               </div>
             </div>
 
-            <div style={{ maxWidth: '700px', margin: '0 auto', padding: '12px 14px 0' }}>
+            <div style={{ maxWidth: '700px', margin: '0 auto', padding: '10px 14px 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+                  style={{
+                    width: '100%',
+                    padding: '11px 14px',
+                    background: '#fff',
+                    color: '#15803d',
+                    border: '2px solid #22c55e',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  Ver torneos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                    boxShadow: '0 3px 12px rgba(22, 163, 74, 0.4)',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  🎾 Reservar cancha
+                </button>
+              </div>
+
               <PhotoStrip fotos={fotos} />
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />

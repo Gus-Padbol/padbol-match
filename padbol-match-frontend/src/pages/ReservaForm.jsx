@@ -6,8 +6,10 @@ import AppHeader from '../components/AppHeader';
 import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
 import {
+  HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_CONTENT_PADDING_TOP_PX,
+  isHubNavBarHiddenPathname,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -113,6 +115,8 @@ const MAX_CANCHAS_RESERVA_UI = 2;
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
+  const hubNavHidden = isHubNavBarHiddenPathname(location.pathname);
+  const reservaPaddingTopPx = hubNavHidden ? HUB_APP_HEADER_HEIGHT_PX : HUB_CONTENT_PADDING_TOP_PX;
   const { session, loading: authLoading, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -681,13 +685,18 @@ export default function ReservaForm() {
     );
 
     return (
-      <div className="reserva-container" style={{
-        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
-      }}>
+      <div
+        className="reserva-container reserva-sede-seleccion"
+        style={{
+          paddingTop: `${reservaPaddingTopPx}px`,
+          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        }}
+      >
         <AppHeader title="Reservar" onBack={handleReservaBack} />
-        <div className="reserva-card">
-          <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Reserva tu Cancha de PADBOL</h1>
+        <div className="reserva-sede-inner">
+          <h1 className="reserva-sede-title" style={{ margin: 0, marginBottom: '20px' }}>
+            🎾 Reserva tu Cancha de PADBOL
+          </h1>
 
           <form>
             {sedesLoadError ? (
@@ -755,7 +764,7 @@ export default function ReservaForm() {
     const hoyIso = todayLocalISO();
     return (
       <div className="reserva-container" style={{
-        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+        paddingTop: `${reservaPaddingTopPx}px`,
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}>
         <AppHeader title="Reservar" onBack={handleReservaBack} />
@@ -910,7 +919,7 @@ export default function ReservaForm() {
 
     return (
       <div className="reserva-container" style={{
-        paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
+        paddingTop: `${reservaPaddingTopPx}px`,
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}>
         <AppHeader title="Reservar" onBack={handleReservaBack} />

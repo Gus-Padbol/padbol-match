@@ -9,7 +9,10 @@ export const HUB_CONTENT_PADDING_TOP_PX =
 /** Sin barra inferior fija */
 export const HUB_CONTENT_PADDING_BOTTOM_PX = 24;
 
-/** Rutas de autenticación / acceso: sin barra hub (solo AppHeader con Volver). */
+/**
+ * Rutas sin barra hub (solo AppHeader con Volver): auth, acceso, registro y flujo
+ * `/reservar` (selección de sede y reserva sin barra duplicada).
+ */
 export function isHubNavBarHiddenPathname(pathname) {
   let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
   pathOnly = pathOnly.replace(/\/+$/, '') || '/';
@@ -17,5 +20,6 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/auth' || pathOnly.startsWith('/auth/')) return true;
   if (pathOnly === '/acceso' || pathOnly.startsWith('/acceso/')) return true;
   if (pathOnly === '/registro' || pathOnly.startsWith('/registro/')) return true;
+  if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   return false;
 }
