@@ -6,6 +6,7 @@ import AppHeader from '../components/AppHeader';
 import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
 import {
+  HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_CONTENT_PADDING_TOP_PX,
   hubContentPaddingTopPx,
@@ -984,14 +985,18 @@ export default function ReservaForm() {
     const precio = getPrecio(sedeSeleccionada, formData.hora);
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const muestraInputWhatsappResumen = !perfilTelefonoValido(currentCliente);
+    /** Header fijo + margen 16px + notch; más que hubContentPaddingTopPx en /reservar (solo 56px) para no tapar el título. */
+    const resumenPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 16}px + env(safe-area-inset-top, 0px))`;
+    const resumenPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
 
     return (
       <div
         className="reserva-container"
         style={{
-          paddingTop: `${reservaPaddingTopPx}px`,
-          paddingBottom: '24px',
+          paddingTop: resumenPaddingTop,
+          paddingBottom: `${resumenPaddingBottomPx}px`,
           margin: '16px auto 0',
+          minHeight: 'auto',
           overflowX: 'hidden',
           width: '100%',
           maxWidth: '100%',

@@ -202,16 +202,24 @@ export default function AccesoCuenta() {
     }
   };
 
+  const accesoPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 16}px + env(safe-area-inset-top, 0px))`;
+  const accesoPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
+
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: 'auto',
+        width: '100%',
+        maxWidth: '100%',
         background: 'linear-gradient(135deg,#667eea,#764ba2)',
-        padding: `${HUB_APP_HEADER_HEIGHT_PX}px 16px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 16px`,
+        paddingTop: accesoPaddingTop,
+        paddingLeft: '16px',
+        paddingRight: '16px',
+        paddingBottom: `${accesoPaddingBottomPx}px`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         boxSizing: 'border-box',
       }}
     >
