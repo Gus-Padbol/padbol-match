@@ -158,7 +158,7 @@ export default function ReservaForm() {
 
   const handleReservaBack = useCallback(() => {
     if (pantalla === 1) {
-      navigate('/sedes?ver_todas=1');
+      navigate('/sedes?ver_todas=1&from=reserva', { replace: true });
       return;
     }
     const sid = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;

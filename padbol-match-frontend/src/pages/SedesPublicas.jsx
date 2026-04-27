@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -38,6 +38,19 @@ export default function SedesPublicas() {
   const from = searchParams.get('from'); // 'reserva' | 'explorar' | null
   const skipFavoriteRedirect =
     searchParams.get('ver_todas') === '1' || from === 'explorar';
+
+  /** Volver a Reservar con replace para no encadenar Reservar ↔ Sedes en el historial. */
+  const volverFlujoReserva =
+    from === 'reserva' ||
+    (searchParams.get('ver_todas') === '1' && from !== 'explorar');
+
+  const handleSedesAppBack = useCallback(() => {
+    if (volverFlujoReserva) {
+      navigate('/reservar', { replace: true });
+      return;
+    }
+    navigate(-1);
+  }, [navigate, volverFlujoReserva]);
 
   const { session, loading: authLoading } = useAuth();
   const favoriteRunGenRef = useRef(0);
@@ -162,7 +175,7 @@ export default function SedesPublicas() {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
 
-      <AppHeader title="Sedes" />
+      <AppHeader title="Sedes" onBack={volverFlujoReserva ? handleSedesAppBack : undefined} />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px 0' }}>
 
