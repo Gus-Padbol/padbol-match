@@ -10,8 +10,8 @@ import { supabase } from '../supabaseClient';
 
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
-/** Altura aproximada de la barra fija: Ver torneos + Reservar + safe area */
-const CTA_FIXED_STACK_MIN_PX = 112;
+/** Margen bajo el flujo principal para que el último bloque (p. ej. mapa) no quede bajo la barra CTA fija (~120px + safe area). */
+const SEDE_PUBLICA_SCROLL_CLEAR_BOTTOM_PX = 120;
 
 const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 const DEFAULT_HERO_BG = 'linear-gradient(160deg, #1a1a2e 0%, #16213e 72%, #0f3460 100%)';
@@ -355,13 +355,16 @@ export default function SedePublica() {
   }, [sedeId]);
 
   const scrollBottomPad = sede
-    ? `calc(${CTA_FIXED_STACK_MIN_PX}px + env(safe-area-inset-bottom, 0px) + 8px)`
+    ? `calc(${SEDE_PUBLICA_SCROLL_CLEAR_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`
     : `${HUB_CONTENT_PADDING_BOTTOM_PX}px`;
+
+  const pageMinHeight =
+    !loading && !error && sede ? 'auto' : '100vh';
 
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: pageMinHeight,
         background: PADBOL_PAGE_GRADIENT,
         paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
         paddingBottom: scrollBottomPad,
