@@ -139,7 +139,7 @@ async function fetchTorneoStats(perfil) {
 async function fetchRankingLocalPosicion(perfil) {
   const sid = perfil?.sede_id;
   if (sid == null || sid === '') return null;
-  const em = normalizeEmailStr(perfil.email);
+  const em = normalizeEmailStr(perfil.email || '');
   const nombreLower = String(perfil.nombre || '').trim().toLowerCase();
 
   try {
@@ -166,24 +166,6 @@ const wrap = {
   padding: '20px',
   boxSizing: 'border-box',
 };
-
-function Badge({ text, color }) {
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '4px 12px',
-        borderRadius: '20px',
-        fontSize: '12px',
-        fontWeight: 'bold',
-        color: 'white',
-        background: color,
-      }}
-    >
-      {text}
-    </span>
-  );
-}
 
 export default function PerfilPublico() {
   const { alias: aliasParam } = useParams();
@@ -219,7 +201,7 @@ export default function PerfilPublico() {
     const { data: rows, error } = await supabase
       .from('jugadores_perfil')
       .select(
-        'user_id, email, nombre, alias, foto_url, pais, ciudad, nivel, lateralidad, instagram_url, companero_id, ultimo_companero_id, sede_id'
+        'user_id, nombre, alias, foto_url, pais, ciudad, nivel, lateralidad, instagram_url, companero_id, ultimo_companero_id, sede_id, es_federado, numero_fipa, pendiente_validacion'
       )
       .ilike('alias', a)
       .limit(8);
@@ -422,119 +404,211 @@ export default function PerfilPublico() {
             </h1>
           )}
 
-          {perfil.pais ? (
-            <p style={{ margin: '0 0 4px', fontSize: '16px' }}>
-              {paisFlag}{' '}
-              <span style={{ color: '#555', fontSize: '14px' }}>{paisNombre}</span>
-            </p>
-          ) : null}
-          {perfil.ciudad ? (
-            <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: '14px' }}>Club habitual: {perfil.ciudad}</p>
-          ) : null}
-
-          <div style={{ margin: '0 0 10px', textAlign: 'center' }}>
-            <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
-              {companeroDisplay?.kind === 'habitual'
-                ? 'Compañero habitual'
-                : companeroDisplay?.kind === 'ultimo'
-                  ? 'Último compañero'
-                  : 'Sin compañero habitual'}
-            </p>
-            <div
-              style={{
-                minHeight: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                flexWrap: 'wrap',
-                fontSize: '14px',
-              }}
-            >
-              {companeroDisplay?.row ? (
-                <>
-                  {companeroDisplay.row.foto_url ? (
-                    <img
-                      src={companeroDisplay.row.foto_url}
-                      alt=""
-                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                  ) : null}
-                  {String(companeroDisplay.row.alias || '').trim() ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(`/jugador/${encodeURIComponent(String(companeroDisplay.row.alias).trim())}`)
-                      }
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        cursor: 'pointer',
-                        color: '#5b21b6',
-                        fontWeight: 700,
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      @{String(companeroDisplay.row.alias).trim()}
-                    </button>
-                  ) : (
-                    <span style={{ fontWeight: 600, color: '#475569' }}>
-                      {nombreCompletoJugadorPerfil(companeroDisplay.row) || companeroDisplay.row.nombre || '—'}
-                    </span>
-                  )}
-                </>
-              ) : companeroDisplay?.kind ? (
-                <span style={{ color: '#94a3b8', fontWeight: 600 }}>—</span>
-              ) : (
-                <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '13px' }}>
-                  — ¡sumate a jugar con él!
-                </span>
-              )}
-            </div>
-          </div>
-
-          {igHref ? (
-            <p style={{ margin: '8px 0 0' }}>
-              <a
-                href={igHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: '#c026d3', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}
-              >
-                @{igHandle}
-              </a>
-            </p>
-          ) : null}
-
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '8px',
-              marginTop: '16px',
-              flexWrap: 'wrap',
-              alignItems: 'center',
+              marginTop: '14px',
+              paddingTop: '14px',
+              borderTop: '1px solid #eee',
+              textAlign: 'left',
+              width: '100%',
             }}
           >
-            {perfil.nivel ? (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  padding: '4px 12px',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  color: 'white',
-                  background: categoriaColor,
-                }}
-              >
-                {perfil.nivel}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 0',
+                borderBottom: '1px solid #f1f5f9',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>País</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+                {perfil.pais ? (
+                  <>
+                    {paisFlag} <span style={{ color: '#475569' }}>{paisNombre}</span>
+                  </>
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                )}
               </span>
-            ) : null}
-            {perfil.lateralidad ? <Badge text={perfil.lateralidad} color="#555" /> : null}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 0',
+                borderBottom: '1px solid #f1f5f9',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Club habitual</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+                {String(perfil.ciudad || '').trim() ? perfil.ciudad : <span style={{ color: '#94a3b8' }}>Sin definir</span>}
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 0',
+                borderBottom: '1px solid #f1f5f9',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, flexShrink: 0 }}>
+                {companeroDisplay?.kind === 'habitual'
+                  ? 'Compañero habitual'
+                  : companeroDisplay?.kind === 'ultimo'
+                    ? 'Último compañero'
+                    : 'Sin compañero habitual'}
+              </span>
+              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+                {companeroDisplay?.row ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                    {companeroDisplay.row.foto_url ? (
+                      <img
+                        src={companeroDisplay.row.foto_url}
+                        alt=""
+                        style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : null}
+                    {String(companeroDisplay.row.alias || '').trim() ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/jugador/${encodeURIComponent(String(companeroDisplay.row.alias).trim())}`)
+                        }
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          color: '#5b21b6',
+                          fontWeight: 700,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        @{String(companeroDisplay.row.alias).trim()}
+                      </button>
+                    ) : (
+                      <span style={{ fontWeight: 600 }}>
+                        {nombreCompletoJugadorPerfil(companeroDisplay.row) ||
+                          companeroDisplay.row.nombre ||
+                          'Sin definir'}
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                )}
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 0',
+                borderBottom: '1px solid #f1f5f9',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Categoría</span>
+              <span style={{ fontSize: '14px', textAlign: 'right', display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {perfil.nivel ? (
+                  <>
+                    <span style={{ fontWeight: 'bold', color: categoriaColor }}>{perfil.nivel}</span>
+                    {perfil.pendiente_validacion ? (
+                      <span
+                        title="Pendiente de validación"
+                        style={{
+                          fontSize: '11px',
+                          background: '#fff3cd',
+                          color: '#856404',
+                          border: '1px solid #ffc107',
+                          borderRadius: '10px',
+                          padding: '1px 7px',
+                        }}
+                      >
+                        ⏳ pendiente
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                )}
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 0',
+                borderBottom: '1px solid #f1f5f9',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Lateralidad</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+                {perfil.lateralidad ? perfil.lateralidad : <span style={{ color: '#94a3b8' }}>Sin definir</span>}
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 0',
+                borderBottom: '1px solid #f1f5f9',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Federado</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+                {perfil.es_federado ? (
+                  <>
+                    Sí
+                    {String(perfil.numero_fipa || '').trim() ? (
+                      <span style={{ color: '#64748b', fontSize: '13px', marginLeft: '6px' }}>
+                        · N° {String(perfil.numero_fipa).trim()}
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  'No'
+                )}
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 0 0',
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Instagram</span>
+              <span style={{ fontSize: '14px', textAlign: 'right' }}>
+                {igHref ? (
+                  <a
+                    href={igHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#c026d3', fontWeight: 700, textDecoration: 'none' }}
+                  >
+                    @{igHandle}
+                  </a>
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                )}
+              </span>
+            </div>
           </div>
         </div>
 
