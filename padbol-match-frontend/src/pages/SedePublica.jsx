@@ -566,9 +566,12 @@ export default function SedePublica() {
         paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
         paddingBottom: mainPaddingBottom,
         boxSizing: 'border-box',
+        width: '100%',
+        maxWidth: '100%',
+        overflowX: 'hidden',
       }}
     >
-      <AppHeader title="Sede" showBack={false} />
+      <AppHeader title="" showBack={false} />
 
       {loading && (
         <div

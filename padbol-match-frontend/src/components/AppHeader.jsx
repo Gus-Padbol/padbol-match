@@ -15,9 +15,11 @@ const btnVolver = {
   lineHeight: 1.2,
 };
 
+const LOGOUT_BTN_SIZE = 34;
+
 /**
- * Barra superior fija: ← Volver (opcional) y título centrado.
- * La navegación principal del hub va en {@link BottomNav} (fija bajo este header).
+ * Barra superior fija: ← Volver (opcional), título centrado en viewport, cierre de sesión.
+ * Grid 1fr / auto / 1fr: con `showBack={false}` un hueco del mismo ancho que ⏻ equilibra el título.
  */
 export default function AppHeader({
   title,
@@ -28,6 +30,7 @@ export default function AppHeader({
 }) {
   const navigate = useNavigate();
   const { session, signOutAndClear } = useAuth();
+  const titleStr = String(title ?? '').trim();
 
   const handleBack = () => {
     if (typeof onBack === 'function') {
@@ -37,6 +40,9 @@ export default function AppHeader({
     if (typeof window !== 'undefined') window.history.back();
   };
 
+  const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
+  const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
+
   return (
     <div
       style={{
@@ -44,90 +50,145 @@ export default function AppHeader({
         top: 0,
         left: 0,
         width: '100%',
+        maxWidth: '100%',
+        overflowX: 'hidden',
         minHeight: '56px',
         background: '#0f172a',
         display: 'grid',
-        gridTemplateColumns: 'minmax(88px, auto) 1fr minmax(44px, auto)',
+        gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
-        gap: '8px',
-        padding: '8px 10px',
+        columnGap: '8px',
+        padding: `8px ${padR} 8px ${padL}`,
         boxSizing: 'border-box',
         zIndex: 1002,
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}
     >
-      {showBack ? (
-        <button
-          type="button"
-          onClick={handleBack}
-          style={btnVolver}
-          aria-label="Volver atrás"
-        >
-          {backLabel || '← Volver'}
-        </button>
-      ) : (
-        <div aria-hidden style={{ minWidth: '88px' }} />
-      )}
-
-      <button
-        type="button"
-        onClick={() => navigate('/')}
+      <div
         style={{
-          color: titleColor || '#fff',
-          fontSize: '15px',
-          fontWeight: 600,
-          margin: 0,
-          textAlign: 'center',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
           minWidth: 0,
-          cursor: 'pointer',
-          background: 'transparent',
-          border: 'none',
-          padding: '4px 6px',
-          fontFamily: 'inherit',
-          width: '100%',
-          maxWidth: '100%',
         }}
-        title={title ? `${title} — Ir al inicio` : 'Ir al inicio'}
-        aria-label={title ? `${title}, ir al inicio` : 'Ir al inicio'}
       >
-        {title}
-      </button>
+        {showBack ? (
+          <button
+            type="button"
+            onClick={handleBack}
+            style={{ ...btnVolver, flexShrink: 0 }}
+            aria-label="Volver atrás"
+          >
+            {backLabel || '← Volver'}
+          </button>
+        ) : (
+          <span
+            aria-hidden
+            style={{
+              width: LOGOUT_BTN_SIZE,
+              height: LOGOUT_BTN_SIZE,
+              flexShrink: 0,
+            }}
+          />
+        )}
+      </div>
 
-      {session?.user ? (
-        <button
-          type="button"
-          onClick={async () => {
-            await signOutAndClear();
-            navigate('/');
-          }}
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
-          style={{
-            justifySelf: 'end',
-            width: 34,
-            height: 34,
-            padding: 0,
-            borderRadius: '50%',
-            border: 'none',
-            background: 'rgba(255,255,255,0.1)',
-            color: '#e2e8f0',
-            fontSize: 16,
-            lineHeight: 1,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          ⏻
-        </button>
-      ) : (
-        <div aria-hidden style={{ minWidth: '44px' }} />
-      )}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minWidth: 0,
+          maxWidth: 'min(72vw, 420px)',
+        }}
+      >
+        {titleStr ? (
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            style={{
+              color: titleColor || '#fff',
+              fontSize: '15px',
+              fontWeight: 600,
+              margin: 0,
+              textAlign: 'center',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minWidth: 0,
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              padding: '4px 6px',
+              fontFamily: 'inherit',
+              width: '100%',
+              maxWidth: '100%',
+            }}
+            title={`${titleStr} — Ir al inicio`}
+            aria-label={`${titleStr}, ir al inicio`}
+          >
+            {titleStr}
+          </button>
+        ) : (
+          <span
+            aria-hidden
+            style={{
+              display: 'block',
+              width: 0,
+              height: 1,
+              overflow: 'hidden',
+            }}
+          />
+        )}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          minWidth: 0,
+        }}
+      >
+        {session?.user ? (
+          <button
+            type="button"
+            onClick={async () => {
+              await signOutAndClear();
+              navigate('/');
+            }}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            style={{
+              width: LOGOUT_BTN_SIZE,
+              height: LOGOUT_BTN_SIZE,
+              padding: 0,
+              borderRadius: '50%',
+              border: 'none',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#e2e8f0',
+              fontSize: 16,
+              lineHeight: 1,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            ⏻
+          </button>
+        ) : (
+          <span
+            aria-hidden
+            style={{
+              width: LOGOUT_BTN_SIZE,
+              height: LOGOUT_BTN_SIZE,
+              flexShrink: 0,
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

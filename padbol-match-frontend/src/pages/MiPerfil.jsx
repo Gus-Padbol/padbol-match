@@ -36,6 +36,30 @@ const MSG_CUENTA_Y_FICHA_OK = 'Cuenta creada y ficha guardada correctamente';
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
+const MI_PERFIL_CONTENT_WRAP = {
+  maxWidth: '520px',
+  width: '100%',
+  margin: '0 auto',
+  padding: '20px',
+  boxSizing: 'border-box',
+};
+
+function miPerfilPageOuterStyle(paddingTopPx) {
+  return {
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    fontFamily: 'Arial',
+    paddingTop: `${paddingTopPx}px`,
+    paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+    overflowX: 'hidden',
+    width: '100%',
+    maxWidth: '100%',
+    boxSizing: 'border-box',
+    paddingLeft: 'calc(16px + env(safe-area-inset-left, 0px))',
+    paddingRight: 'calc(16px + env(safe-area-inset-right, 0px))',
+  };
+}
+
 /** Asterisco obligatorio (rojo) para labels del registro. */
 const reqAst = <span style={{ color: '#d32f2f', fontWeight: 800 }}>*</span>;
 
@@ -715,7 +739,7 @@ export default function MiPerfil() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+      <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Verificando sesión...
@@ -729,17 +753,9 @@ export default function MiPerfil() {
     if (!torneoIdValido) {
       const goAuth = () => navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return (
-        <div
-          style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            fontFamily: 'Arial',
-            paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`,
-            paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
-          }}
-        >
+        <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
           <AppHeader title="Mi Perfil" />
-          <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
+          <div style={MI_PERFIL_CONTENT_WRAP}>
             {avisoPerfilTorneoMsg ? (
               <div
                 style={{
@@ -837,9 +853,9 @@ export default function MiPerfil() {
       fontSize: '13px',
     };
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+      <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
         <AppHeader title="Mi Perfil" />
-        <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
+        <div style={MI_PERFIL_CONTENT_WRAP}>
           {avisoPerfilTorneoMsg ? (
             <div
               style={{
@@ -1199,7 +1215,7 @@ export default function MiPerfil() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+      <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Cargando perfil...
@@ -1216,11 +1232,11 @@ export default function MiPerfil() {
   const foto = perfil?.foto_url || cuentaDeSesion?.foto || null;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', fontFamily: 'Arial', paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
 
       <AppHeader title="Mi Perfil" />
 
-    <div style={{ maxWidth: '520px', margin: '0 auto', padding: '20px' }}>
+    <div style={MI_PERFIL_CONTENT_WRAP}>
       {avisoPerfilTorneoMsg ? (
         <div
           style={{
