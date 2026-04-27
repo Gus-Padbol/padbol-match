@@ -570,6 +570,7 @@ export default function SedePublica() {
         boxSizing: 'border-box',
         width: '100%',
         maxWidth: '100%',
+        overscrollBehaviorY: 'contain',
       }}
     >
       <AppHeader title="" showBack hideLogout />
