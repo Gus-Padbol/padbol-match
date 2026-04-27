@@ -122,7 +122,7 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
   if (!embedSrc && !openMapsHref) return null;
 
   return (
-    <div style={{ marginBottom: 0, position: 'relative' }}>
+    <div style={{ paddingBottom: '8px', position: 'relative' }}>
       {embedSrc ? (
         <div
           style={{
@@ -369,12 +369,7 @@ export default function SedePublica() {
       }}
     >
       <AppHeader
-        title={sede?.nombre ? String(sede.nombre) : 'Sede'}
-        titleColor={
-          !loading && !error && sede
-            ? normalizeHexColor(sede.color_nombre) ?? '#FFFFFF'
-            : undefined
-        }
+        title="Sede"
         backLabel="← Ver otras sedes"
         onBack={() => navigate('/sedes?ver_todas=1')}
       />
@@ -454,16 +449,17 @@ export default function SedePublica() {
                   zIndex: 2,
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center',
+                  alignItems: 'stretch',
                   width: '100%',
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
-                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: '10px',
                     width: '100%',
-                    marginBottom: '6px',
                   }}
                 >
                   {sede.logo_url ? (
@@ -471,12 +467,12 @@ export default function SedePublica() {
                       src={sede.logo_url}
                       alt=""
                       style={{
-                        width: '72px',
-                        height: '72px',
+                        width: '90px',
+                        height: '90px',
                         objectFit: 'contain',
-                        borderRadius: '7px',
+                        borderRadius: '8px',
                         background: '#fff',
-                        padding: '3px',
+                        padding: '4px',
                         flexShrink: 0,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
                       }}
@@ -484,79 +480,82 @@ export default function SedePublica() {
                   ) : (
                     <div
                       style={{
-                        width: '72px',
-                        height: '72px',
-                        borderRadius: '7px',
+                        width: '90px',
+                        height: '90px',
+                        borderRadius: '8px',
                         background: 'rgba(255,255,255,0.12)',
                         flexShrink: 0,
                       }}
                     />
                   )}
-                </div>
 
-                <h1
-                  style={{
-                    color: '#fff',
-                    fontSize: '17px',
-                    fontWeight: 800,
-                    margin: 0,
-                    lineHeight: 1.2,
-                    width: '100%',
-                    textAlign: 'center',
-                    wordBreak: 'break-word',
-                    textShadow: '0 1px 8px rgba(0,0,0,0.45)',
-                  }}
-                  title={sede.nombre || ''}
-                >
-                  {sede.nombre || '(sin nombre)'}
-                </h1>
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <h1
+                      style={{
+                        color: '#fff',
+                        fontSize: '17px',
+                        fontWeight: 800,
+                        margin: 0,
+                        lineHeight: 1.2,
+                        width: '100%',
+                        textAlign: 'center',
+                        wordBreak: 'break-word',
+                        textShadow: '0 1px 8px rgba(0,0,0,0.45)',
+                      }}
+                      title={sede.nombre || ''}
+                    >
+                      {sede.nombre || '(sin nombre)'}
+                    </h1>
 
-                <div
-                  style={{
-                    marginTop: '4px',
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {licenciaActiva ? (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '2px',
-                        padding: '2px 4px',
-                        borderRadius: '999px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        letterSpacing: '0.02em',
-                        background: 'rgba(254, 243, 199, 0.92)',
-                        color: '#92400e',
-                        border: '1px solid rgba(217,119,6,0.45)',
-                      }}
-                    >
-                      ⭐ Licencia PADBOL Activa
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        padding: '2px 4px',
-                        borderRadius: '999px',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        background: 'rgba(254,226,226,0.9)',
-                        color: '#b91c1c',
-                        border: '1px solid rgba(220,38,38,0.25)',
-                      }}
-                    >
-                      No habilitado
-                    </span>
-                  )}
+                    {licenciaActiva ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          padding: '2px 4px',
+                          borderRadius: '999px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          letterSpacing: '0.02em',
+                          background: 'rgba(254, 243, 199, 0.92)',
+                          color: '#92400e',
+                          border: '1px solid rgba(217,119,6,0.45)',
+                        }}
+                      >
+                        ⭐ Licencia PADBOL Activa
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          padding: '2px 4px',
+                          borderRadius: '999px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          background: 'rgba(254,226,226,0.9)',
+                          color: '#b91c1c',
+                          border: '1px solid rgba(220,38,38,0.25)',
+                        }}
+                      >
+                        No habilitado
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {desc ? (
-                  <div style={{ marginTop: '8px', width: '100%' }}>
+                  <div style={{ marginTop: '10px', width: '100%' }}>
                     <p
                       style={{
                         margin: 0,
