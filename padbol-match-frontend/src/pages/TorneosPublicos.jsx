@@ -52,21 +52,21 @@ function Row({ icon, label }) {
 }
 
 const estadoStyle = {
-  abierto: { label: 'Abierto', bg: '#dcfce7', color: '#166534' },
-  en_curso: { label: 'En curso', bg: '#fef3c7', color: '#92400e' },
-  finalizado: { label: 'Finalizado', bg: '#fee2e2', color: '#991b1b' },
-  cancelado: { label: 'Cancelado', bg: '#e5e7eb', color: '#374151' },
-  planificacion: { label: 'Planificación', bg: '#e5e7eb', color: '#374151' },
+  planificacion: { label: 'Planificación', bg: '#22c55e', color: '#fff' },
+  inscripcion_abierta: { label: 'Inscripción abierta', bg: '#22c55e', color: '#fff' },
+  abierto: { label: 'Abierto', bg: '#22c55e', color: '#fff' },
+  en_curso: { label: 'En curso', bg: '#eab308', color: '#fff' },
+  finalizado: { label: 'Finalizado', bg: '#ef4444', color: '#fff' },
+  cancelado: { label: 'Cancelado', bg: '#94a3b8', color: '#fff' },
 };
 
-const ORDEN_ESTADO_TORNEO = {
-  en_curso: 1,
-  inscripcion_abierta: 1,
-  abierto: 1,
-  planificacion: 2,
-  finalizado: 3,
-  cancelado: 4,
-};
+/** 0 = activos/próximos; 1 = finalizado; 2 = cancelado (al final). */
+function bucketOrdenTorneo(estado) {
+  const e = String(estado || '').toLowerCase();
+  if (e === 'cancelado') return 2;
+  if (e === 'finalizado') return 1;
+  return 0;
+}
 
 function normalizeSearchText(s) {
   return String(s || '')
@@ -246,10 +246,10 @@ export default function TorneosPublicos() {
   }, [sedeFiltroId, sedesMap]);
 
   const torneosOrdenados = useMemo(() => {
-    const rank = (estado) => ORDEN_ESTADO_TORNEO[String(estado || '').toLowerCase()] ?? 99;
     return [...torneosPorBusqueda].sort((a, b) => {
-      const d = rank(a.estado) - rank(b.estado);
-      if (d !== 0) return d;
+      const ba = bucketOrdenTorneo(a.estado);
+      const bb = bucketOrdenTorneo(b.estado);
+      if (ba !== bb) return ba - bb;
       const fa = String(a.fecha_inicio || '');
       const fb = String(b.fecha_inicio || '');
       return fa.localeCompare(fb);
@@ -339,10 +339,11 @@ export default function TorneosPublicos() {
       >
         {torneosOrdenados.map((t) => {
           const sede = sedesMap[String(t.sede_id)];
-          const badge = estadoStyle[t.estado] || {
+          const estadoKey = String(t.estado || '').toLowerCase();
+          const badge = estadoStyle[estadoKey] || {
             label: t.estado || 'Sin estado',
-            bg: '#e5e7eb',
-            color: '#374151',
+            bg: '#94a3b8',
+            color: '#fff',
           };
 
           return (

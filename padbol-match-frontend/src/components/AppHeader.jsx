@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const btnVolver = {
@@ -17,6 +17,19 @@ const btnVolver = {
 
 const LOGOUT_BTN_SIZE = 34;
 
+/** Rutas donde no se muestra cerrar sesión (solo en Perfil u otras que no matcheen aquí). */
+function hideLogoutForPathname(pathname) {
+  const pathOnly =
+    String(pathname || '/')
+      .split('?')[0]
+      .split('#')[0]
+      .replace(/\/+$/, '') || '/';
+  if (pathOnly === '/torneos' || pathOnly.startsWith('/torneos/')) return true;
+  if (pathOnly === '/rankings' || pathOnly.startsWith('/rankings/')) return true;
+  if (pathOnly === '/ranking' || pathOnly.startsWith('/ranking/')) return true;
+  return false;
+}
+
 /**
  * Barra superior fija: ← Volver alineado a la izquierda (tras safe-area), título centrado, cierre de sesión.
  * Grid 1fr / auto / 1fr: con `showBack={false}` un hueco a la derecha de la 1ª columna equilibra el título.
@@ -31,8 +44,10 @@ export default function AppHeader({
   hideLogout = false,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session, signOutAndClear } = useAuth();
   const titleStr = String(title ?? '').trim();
+  const hideLogoutEffective = hideLogout || hideLogoutForPathname(location.pathname);
 
   const handleBack = () => {
     if (typeof onBack === 'function') {
@@ -152,7 +167,7 @@ export default function AppHeader({
           minWidth: 0,
         }}
       >
-        {!hideLogout && session?.user ? (
+        {!hideLogoutEffective && session?.user ? (
           <button
             type="button"
             onClick={async () => {
@@ -180,7 +195,7 @@ export default function AppHeader({
           >
             ⏻
           </button>
-        ) : !hideLogout ? (
+        ) : !hideLogoutEffective ? (
           <span
             aria-hidden
             style={{
