@@ -132,7 +132,7 @@ export async function refreshJugadorPerfilFromSupabase(email) {
   if (!em) return;
   try {
     const [{ data, error }, { data: cli }] = await Promise.all([
-      supabase.from('jugadores_perfil').select('nombre, nivel, whatsapp').eq('email', em).maybeSingle(),
+      supabase.from('jugadores_perfil').select('nombre, nivel, whatsapp, foto_url').eq('email', em).maybeSingle(),
       supabase.from('clientes').select('whatsapp').eq('email', em).maybeSingle(),
     ]);
     const waCli = String(cli?.whatsapp || '').trim();
@@ -151,11 +151,13 @@ export async function refreshJugadorPerfilFromSupabase(email) {
     const nombre = n0;
     const apellido = a0;
     const categoria = String(data.nivel || '').trim();
+    const fotoUrl = String(data?.foto_url || '').trim();
     persistJugadorPerfil({
       ...(nombre ? { nombre } : {}),
       ...(apellido ? { apellido } : {}),
       ...(categoria ? { categoria } : {}),
       ...(wa ? { whatsapp: wa } : {}),
+      ...(fotoUrl ? { foto_url: fotoUrl } : {}),
       email: em,
     });
   } catch {

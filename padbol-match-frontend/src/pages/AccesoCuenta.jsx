@@ -9,6 +9,7 @@ import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
 } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { safeRedirectPath } from '../utils/safeRedirect';
 import { RESERVA_RETURN_STORAGE_KEY } from '../utils/reservaReturnUrl';
@@ -255,14 +256,7 @@ export default function AccesoCuenta() {
         <img
           src="/logo-padbol-match.png"
           alt="Padbol Match"
-          style={{
-            width: '120px',
-            height: '120px',
-            minWidth: '120px',
-            minHeight: '120px',
-            display: 'block',
-            objectFit: 'contain',
-          }}
+          style={{ ...padbolLogoImgStyle }}
         />
       </div>
       <div

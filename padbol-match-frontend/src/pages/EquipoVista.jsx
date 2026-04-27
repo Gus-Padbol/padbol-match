@@ -4,7 +4,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -108,7 +108,7 @@ export default function EquipoVista() {
       email: authEmail,
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
-      foto: userProfile?.foto ?? null,
+      foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
     };
   }, [authEmail, userProfile, session]);
 
@@ -791,6 +791,18 @@ export default function EquipoVista() {
 
   const inscripcionEstadoEquipo = equipo ? getEquipoInscripcionEstado(equipo) : 'pendiente';
 
+  const equipoPageShellStyle = useMemo(
+    () => ({
+      ...pageBackgroundStyle,
+      boxSizing: 'border-box',
+      paddingTop: hubContentPaddingTopCss(location.pathname),
+      paddingLeft: 12,
+      paddingRight: 12,
+      paddingBottom: `calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+    }),
+    [location.pathname]
+  );
+
   const confirmarInscripcionDesdeVista = async () => {
     if (!equipo || !torneo) return;
     if (!soyCreador) return;
@@ -821,7 +833,7 @@ export default function EquipoVista() {
 
   if (loading) {
     return (
-      <div style={{ ...pageBackgroundStyle, padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+      <div style={equipoPageShellStyle}>
         <AppHeader title="Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
         <BottomNav />
@@ -831,7 +843,7 @@ export default function EquipoVista() {
 
   if (!equipo) {
     return (
-      <div style={{ ...pageBackgroundStyle, padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+      <div style={equipoPageShellStyle}>
         <AppHeader title="Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
           <p>No se encontró el equipo.</p>
@@ -842,7 +854,7 @@ export default function EquipoVista() {
   }
 
   return (
-    <div style={{ ...pageBackgroundStyle, padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div style={equipoPageShellStyle}>
       <AppHeader title="Equipo" />
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>

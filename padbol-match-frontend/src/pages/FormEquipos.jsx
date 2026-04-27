@@ -4,7 +4,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -162,6 +162,19 @@ export default function FormEquipos() {
     return Number.isFinite(n) ? n : NaN;
   }, [searchParams]);
 
+  const inscripcionPageShellStyle = useMemo(
+    () => ({
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg,#667eea,#764ba2)',
+      boxSizing: 'border-box',
+      paddingTop: hubContentPaddingTopCss(location.pathname),
+      paddingLeft: 12,
+      paddingRight: 12,
+      paddingBottom: `calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+    }),
+    [location.pathname]
+  );
+
   const nombreCreador = session?.user ? getDisplayName(userProfile, session) : '';
 
   const authEmail = useMemo(() => String(session?.user?.email || '').trim(), [session?.user?.email]);
@@ -172,7 +185,7 @@ export default function FormEquipos() {
       email: authEmail,
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
-      foto: userProfile?.foto ?? null,
+      foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
     };
   }, [authEmail, userProfile, session]);
 
@@ -2115,7 +2128,7 @@ export default function FormEquipos() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+      <div style={inscripcionPageShellStyle}>
         {renderInscripcionHeader()}
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', padding: '0 12px', boxSizing: 'border-box' }}>
           {bloqueInvitacionEquipoDeepLink}
@@ -2127,7 +2140,7 @@ export default function FormEquipos() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#667eea,#764ba2)', padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>

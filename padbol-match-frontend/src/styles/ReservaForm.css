@@ -74,8 +74,12 @@
 .reserva-sede-seleccion .reserva-sede-logo {
   display: block;
   margin: 0 auto 18px;
-  width: 88px;
+  width: 90px;
+  max-width: 90px;
   height: auto;
+  object-fit: contain;
+  border-radius: 16px;
+  background: transparent;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.2));
 }
 

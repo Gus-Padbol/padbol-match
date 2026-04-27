@@ -36,6 +36,9 @@ const MSG_CUENTA_Y_FICHA_OK = 'Cuenta creada y ficha guardada correctamente';
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
+/** Bucket público en Supabase Storage para fotos de perfil (`jugadores_perfil.foto_url`). */
+const AVATAR_STORAGE_BUCKET = 'avatars';
+
 const MI_PERFIL_CONTENT_WRAP = {
   maxWidth: '520px',
   width: '100%',
@@ -136,6 +139,8 @@ export default function MiPerfil() {
   /** Preview local (blob URL); se muestra hasta que elijas otra o cancels edición del formulario */
   const [fotoPreview, setFotoPreview] = useState(null);
   const fileInputRef = useRef(null);
+  /** Archivo elegido hasta guardar (subida a Storage al confirmar el formulario). */
+  const pendingFotoFileRef = useRef(null);
   const fotoPreviewRef = useRef(null);
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
@@ -156,7 +161,7 @@ export default function MiPerfil() {
       email: sessionOwnerEmail,
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
-      foto: userProfile?.foto ?? null,
+      foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
     };
   }, [sessionOwnerEmail, userProfile, session]);
   /** Código país (ej. +54) + número local solo dígitos (sin repetir código en el input) */
@@ -349,6 +354,7 @@ export default function MiPerfil() {
             apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
             categoria: String(data.nivel || '').trim(),
             ...(wa ? { whatsapp: wa } : {}),
+            ...(data?.foto_url ? { foto_url: data.foto_url } : {}),
             email: owner,
           });
         }
@@ -391,6 +397,7 @@ export default function MiPerfil() {
   const handlePhotoSelected = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    pendingFotoFileRef.current = file;
 
     setFotoPreview((prev) => {
       if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
@@ -648,6 +655,30 @@ export default function MiPerfil() {
         ...payload,
       };
 
+      let fotoUrlGuardada = perfil?.foto_url ?? null;
+      const pendingFoto = pendingFotoFileRef.current;
+      if (pendingFoto) {
+        if (pendingFoto.size > 2 * 1024 * 1024) {
+          setErrorMsg('La imagen supera los 2MB.');
+          return;
+        }
+        const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
+        const ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extRaw) ? extRaw : 'jpg';
+        const path = `perfil/${userId}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from(AVATAR_STORAGE_BUCKET)
+          .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
+        if (upErr) {
+          setErrorMsg(`No se pudo subir la foto: ${upErr.message}`);
+          return;
+        }
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from(AVATAR_STORAGE_BUCKET).getPublicUrl(path);
+        fotoUrlGuardada = `${publicUrl}?t=${Date.now()}`;
+      }
+      payloadDb.foto_url = fotoUrlGuardada;
+
       const { error } = await supabase
         .from('jugadores_perfil')
         .upsert(payloadDb, { onConflict: 'email' });
@@ -665,7 +696,11 @@ export default function MiPerfil() {
       if (errCli) {
         console.error(errCli);
       }
-      void refreshSession();
+      pendingFotoFileRef.current = null;
+      setFotoPreview((prev) => {
+        if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
 
       await fetchPerfil();
       {
@@ -677,9 +712,11 @@ export default function MiPerfil() {
           categoria: String(formData.nivel || '').trim(),
           whatsapp: waFinal,
           email: owner,
+          ...(fotoUrlGuardada ? { foto_url: fotoUrlGuardada } : {}),
         });
       }
       await refreshJugadorPerfilFromSupabase(owner);
+      await refreshSession();
 
       setPassRegistroTorneo('');
       setPassRegistroTorneo2('');
@@ -1594,6 +1631,7 @@ export default function MiPerfil() {
               <button
                 type="button"
                 onClick={() => {
+                  pendingFotoFileRef.current = null;
                   setEditando(false);
                   setErrorMsg('');
                   setFotoPreview(null);

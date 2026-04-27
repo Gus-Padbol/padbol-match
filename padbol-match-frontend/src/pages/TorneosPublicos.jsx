@@ -7,6 +7,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_CONTENT_PADDING_TOP_PX,
 } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -478,14 +479,9 @@ export default function TorneosPublicos() {
         <img
           src="/logo-padbol-match.png"
           alt="Padbol Match"
-          width={80}
-          height={80}
           style={{
-            display: 'block',
-            width: '80px',
-            height: 'auto',
+            ...padbolLogoImgStyle,
             margin: '0 auto 14px',
-            objectFit: 'contain',
           }}
         />
         <div

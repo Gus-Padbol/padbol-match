@@ -6,6 +6,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopPx,
 } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { fetchSedeFavoritaId } from '../utils/sedeFavorita';
@@ -184,14 +185,9 @@ export default function SedesPublicas() {
           <img
             src="/logo-padbol-match.png"
             alt="Padbol Match"
-            width={80}
-            height={80}
             style={{
-              display: 'block',
-              width: '80px',
-              height: 'auto',
+              ...padbolLogoImgStyle,
               margin: '0 auto 16px',
-              objectFit: 'contain',
             }}
           />
           <h2 style={{ color: 'white', fontWeight: 900, fontSize: 'clamp(1.3rem, 4vw, 2rem)', margin: '0 0 16px', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>

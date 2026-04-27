@@ -88,7 +88,7 @@ function AdminDashboardGate() {
       email: em,
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
-      foto: userProfile?.foto ?? null,
+      foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
     };
   }, [session, userProfile]);
 

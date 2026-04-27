@@ -159,7 +159,7 @@ export default function ReservaForm() {
 
   const handleReservaBack = useCallback(() => {
     if (pantalla === 1) {
-      navigate('/sedes?ver_todas=1&from=reserva', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
     const sid = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;
@@ -733,7 +733,7 @@ export default function ReservaForm() {
             className="reserva-sede-logo"
           />
           <h1 className="reserva-sede-title" style={{ margin: 0, marginBottom: '20px' }}>
-            🎾 Reserva tu Cancha de PADBOL
+            ⚽ Reserva tu Cancha de PADBOL
           </h1>
 
           <form>
