@@ -9,7 +9,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  hubContentPaddingTopPx,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 
@@ -532,7 +532,7 @@ export default function SedePublica() {
         maxHeight: '100dvh',
         minHeight: '100dvh',
         background: PADBOL_PAGE_GRADIENT,
-        paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
+        paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingBottom: 0,
         boxSizing: 'border-box',
         width: '100%',
@@ -545,7 +545,7 @@ export default function SedePublica() {
     : {
         minHeight: '100dvh',
         background: PADBOL_PAGE_GRADIENT,
-        paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
+        paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
         width: '100%',
@@ -612,6 +612,7 @@ export default function SedePublica() {
               overflow: 'hidden',
             }}
           >
+            {/* Scroll bajo header+BottomNav: el offset lo aplica el paddingTop del root (hubContentPaddingTopCss). */}
             <div
               style={{
                 flex: 1,

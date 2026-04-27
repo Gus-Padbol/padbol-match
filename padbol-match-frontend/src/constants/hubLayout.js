@@ -33,9 +33,21 @@ export function isSedeProfilePathname(pathname) {
   return pathOnly === '/sede' || pathOnly.startsWith('/sede/');
 }
 
-/** padding-top del contenido según si la barra hub está visible bajo el header. */
+/**
+ * Padding-top en px bajo el header fijo (y la barra hub si aplica).
+ * Perfil público `/sede` y `/sede/:id` siempre muestran header + BottomNav bajo el header.
+ */
 export function hubContentPaddingTopPx(pathname) {
-  return isHubNavBarHiddenPathname(pathname)
-    ? HUB_APP_HEADER_HEIGHT_PX
-    : HUB_CONTENT_PADDING_TOP_PX;
+  if (isSedeProfilePathname(pathname)) {
+    return HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
+  }
+  if (isHubNavBarHiddenPathname(pathname)) {
+    return HUB_APP_HEADER_HEIGHT_PX;
+  }
+  return HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
+}
+
+/** Mismo offset que {@link hubContentPaddingTopPx} más notch / Dynamic Island (iOS). */
+export function hubContentPaddingTopCss(pathname) {
+  return `calc(${hubContentPaddingTopPx(pathname)}px + env(safe-area-inset-top, 0px))`;
 }
