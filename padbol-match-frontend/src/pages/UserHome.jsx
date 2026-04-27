@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -14,6 +14,18 @@ export default function UserHome() {
   const location = useLocation();
   const { session, loading: authLoading, userProfile } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+
+  const nombreSaludoHub = useMemo(() => {
+    if (!session?.user) return '';
+    const alias = String(userProfile?.alias || '').trim();
+    if (alias) return alias;
+    const full = getDisplayName(userProfile, session);
+    const first = String(full || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)[0];
+    return first || 'Jugador';
+  }, [session?.user, userProfile]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
@@ -69,7 +81,7 @@ export default function UserHome() {
             lineHeight: 1.35,
           }}>
             {session?.user
-              ? `¡Hola ${getDisplayName(userProfile, session)}! ¿Qué querés hacer hoy?`
+              ? `¡Hola ${nombreSaludoHub}! ¿Qué querés hacer hoy?`
               : '¡Hola!'}
           </h1>
           {!session?.user ? (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -49,6 +49,18 @@ export default function AppHeader({
   const { session, signOutAndClear } = useAuth();
   const titleStr = String(title ?? '').trim();
   const hideLogoutEffective = hideLogout || hideLogoutForPathname(location.pathname);
+
+  const pathOnly = useMemo(
+    () =>
+      String(location.pathname || '/')
+        .split('?')[0]
+        .split('#')[0]
+        .replace(/\/+$/, '') || '/',
+    [location.pathname]
+  );
+  const showLogout = !hideLogoutEffective && Boolean(session?.user);
+  const miPerfilLogoutSpacing =
+    showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
 
   const handleBack = () => {
     if (typeof onBack === 'function') {
@@ -163,12 +175,17 @@ export default function AppHeader({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'flex-start',
+          justifyContent: miPerfilLogoutSpacing ? 'flex-end' : 'flex-start',
           alignItems: 'center',
           minWidth: 0,
+          width: '100%',
+          marginLeft: miPerfilLogoutSpacing ? 'auto' : undefined,
+          paddingLeft: miPerfilLogoutSpacing ? '8px' : 0,
+          paddingRight: miPerfilLogoutSpacing ? '8px' : 0,
+          boxSizing: 'border-box',
         }}
       >
-        {!hideLogoutEffective && session?.user ? (
+        {showLogout ? (
           <button
             type="button"
             onClick={async () => {
@@ -192,6 +209,7 @@ export default function AppHeader({
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
+              marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
             ⏻

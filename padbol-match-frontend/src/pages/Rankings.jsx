@@ -321,7 +321,9 @@ export default function Rankings() {
                                 height: '38px',
                                 borderRadius: '50%',
                                 objectFit: 'cover',
-                                objectPosition: 'center top',
+                                objectPosition: 'top center',
+                                transform: 'scale(0.85)',
+                                transformOrigin: 'top center',
                                 flexShrink: 0,
                                 border: '2px solid #e5e7eb',
                               }}

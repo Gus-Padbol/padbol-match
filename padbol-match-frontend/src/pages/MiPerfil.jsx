@@ -138,6 +138,9 @@ export default function MiPerfil() {
   const [successMsg, setSuccessMsg] = useState('');
   /** Preview local (blob URL); se muestra hasta que elijas otra o cancels edición del formulario */
   const [fotoPreview, setFotoPreview] = useState(null);
+  /** Hay archivo elegido aún no persistido en Storage (muestra "Guardar foto"). */
+  const [fotoPendienteDeSubir, setFotoPendienteDeSubir] = useState(false);
+  const [guardandoFoto, setGuardandoFoto] = useState(false);
   const fileInputRef = useRef(null);
   /** Archivo elegido hasta guardar (subida a Storage al confirmar el formulario). */
   const pendingFotoFileRef = useRef(null);
@@ -398,6 +401,8 @@ export default function MiPerfil() {
     const file = e.target.files?.[0];
     if (!file) return;
     pendingFotoFileRef.current = file;
+    setFotoPendienteDeSubir(true);
+    setErrorMsg('');
 
     setFotoPreview((prev) => {
       if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
@@ -405,6 +410,113 @@ export default function MiPerfil() {
     });
 
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleGuardarFoto = async () => {
+    const owner = sessionOwnerEmail;
+    const userId = session?.user?.id ?? null;
+    const pendingFoto = pendingFotoFileRef.current;
+    if (!owner || !userId || !pendingFoto || guardandoFoto) return;
+
+    setGuardandoFoto(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      if (pendingFoto.size > 2 * 1024 * 1024) {
+        setErrorMsg('La imagen supera los 2MB.');
+        return;
+      }
+      const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
+      const ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extRaw) ? extRaw : 'jpg';
+      const path = `perfil/${userId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(AVATAR_STORAGE_BUCKET)
+        .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
+      if (upErr) {
+        setErrorMsg(`No se pudo subir la foto: ${upErr.message}`);
+        return;
+      }
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(AVATAR_STORAGE_BUCKET).getPublicUrl(path);
+      const fotoUrlGuardada = `${publicUrl}?t=${Date.now()}`;
+
+      let rowAfter = perfil;
+      if (perfil) {
+        const { error: upDbErr } = await supabase
+          .from('jugadores_perfil')
+          .update({ foto_url: fotoUrlGuardada })
+          .eq('email', owner);
+        if (upDbErr) {
+          setErrorMsg(mensajeErrorDbSupabase(upDbErr.message));
+          return;
+        }
+        rowAfter = { ...perfil, foto_url: fotoUrlGuardada };
+        setPerfil((prev) => (prev ? { ...prev, foto_url: fotoUrlGuardada } : prev));
+      } else {
+        const payloadDb = {
+          user_id: userId,
+          email: owner,
+          nombre: getDisplayName(userProfile, session) || 'Jugador',
+          whatsapp: String(userProfile?.whatsapp || '').trim() || null,
+          nivel: '5ta',
+          lateralidad: 'Diestro',
+          pendiente_validacion: true,
+          foto_url: fotoUrlGuardada,
+        };
+        const { data: inserted, error: insErr } = await supabase
+          .from('jugadores_perfil')
+          .upsert(payloadDb, { onConflict: 'email' })
+          .select()
+          .maybeSingle();
+        if (insErr) {
+          setErrorMsg(mensajeErrorDbSupabase(insErr.message));
+          return;
+        }
+        if (inserted) {
+          rowAfter = inserted;
+          setPerfil(inserted);
+        } else {
+          const { data: reread } = await supabase
+            .from('jugadores_perfil')
+            .select('*')
+            .eq('email', owner)
+            .maybeSingle();
+          if (reread) {
+            rowAfter = reread;
+            setPerfil(reread);
+          } else {
+            rowAfter = payloadDb;
+          }
+        }
+      }
+
+      pendingFotoFileRef.current = null;
+      setFotoPendienteDeSubir(false);
+      setFotoPreview((prev) => {
+        if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
+
+      const rawNom = String((rowAfter?.nombre || getDisplayName(userProfile, session) || '')).trim();
+      const parts = rawNom.split(/\s+/).filter(Boolean);
+      persistJugadorPerfil({
+        nombre: parts[0] || rawNom || 'Jugador',
+        apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
+        categoria: String(rowAfter?.nivel || formData.nivel || '5ta').trim(),
+        whatsapp: String(rowAfter?.whatsapp || userProfile?.whatsapp || '').trim(),
+        email: owner,
+        foto_url: fotoUrlGuardada,
+      });
+      await refreshJugadorPerfilFromSupabase(owner);
+      await refreshSession();
+
+      setSuccessMsg('✅ Foto guardada');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } finally {
+      setGuardandoFoto(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -697,6 +809,7 @@ export default function MiPerfil() {
         console.error(errCli);
       }
       pendingFotoFileRef.current = null;
+      setFotoPendienteDeSubir(false);
       setFotoPreview((prev) => {
         if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
         return null;
@@ -1292,6 +1405,24 @@ export default function MiPerfil() {
         </div>
       ) : null}
 
+      {errorMsg && !editando ? (
+        <div
+          style={{
+            marginBottom: '14px',
+            padding: '12px 14px',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '10px',
+            color: '#b91c1c',
+            fontSize: '13px',
+            fontWeight: 600,
+            lineHeight: 1.45,
+          }}
+        >
+          {errorMsg}
+        </div>
+      ) : null}
+
       <div style={{ background: 'white', borderRadius: '12px', padding: '30px 24px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', marginBottom: '16px', textAlign: 'center' }}>
         {/* Foto de perfil: avatar + overlay + input file */}
         <input
@@ -1328,7 +1459,9 @@ export default function MiPerfil() {
               height: '100%',
               borderRadius: '50%',
               objectFit: 'cover',
-              objectPosition: 'center top',
+              objectPosition: 'top center',
+              transform: 'scale(0.85)',
+              transformOrigin: 'top center',
               display: 'block',
               pointerEvents: 'none',
             }}
@@ -1384,6 +1517,28 @@ export default function MiPerfil() {
             }}
           />
         </button>
+        {fotoPendienteDeSubir ? (
+          <button
+            type="button"
+            disabled={guardandoFoto}
+            onClick={() => void handleGuardarFoto()}
+            style={{
+              display: 'block',
+              margin: '0 auto 12px',
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: 700,
+              color: '#fff',
+              background: guardandoFoto ? '#94a3b8' : '#15803d',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: guardandoFoto ? 'default' : 'pointer',
+              boxShadow: guardandoFoto ? 'none' : '0 4px 12px rgba(21,128,61,0.35)',
+            }}
+          >
+            {guardandoFoto ? 'Guardando…' : 'Guardar foto'}
+          </button>
+        ) : null}
         <p
           style={{
             margin: '0 auto 14px',
@@ -1644,9 +1799,13 @@ export default function MiPerfil() {
                 type="button"
                 onClick={() => {
                   pendingFotoFileRef.current = null;
+                  setFotoPendienteDeSubir(false);
                   setEditando(false);
                   setErrorMsg('');
-                  setFotoPreview(null);
+                  setFotoPreview((prev) => {
+                    if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+                    return null;
+                  });
                   setWaConfirmLocal('');
                   setWaNumeroLocal('');
                   setWaCodigoPais('+54');

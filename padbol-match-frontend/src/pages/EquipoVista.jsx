@@ -74,7 +74,14 @@ function AvatarJugadorEquipoLista({ p, ctx }) {
         <img
           src={foto}
           alt=""
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'top center',
+            transform: 'scale(0.85)',
+            transformOrigin: 'top center',
+          }}
           loading="lazy"
           referrerPolicy="no-referrer"
         />
