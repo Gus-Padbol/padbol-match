@@ -316,7 +316,15 @@ export default function Rankings() {
                             <img
                               src={player.foto_url}
                               alt=""
-                              style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #e5e7eb' }}
+                              style={{
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                objectPosition: 'center top',
+                                flexShrink: 0,
+                                border: '2px solid #e5e7eb',
+                              }}
                             />
                           ) : (
                             <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '17px' }}>

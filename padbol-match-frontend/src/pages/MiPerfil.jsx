@@ -1328,6 +1328,7 @@ export default function MiPerfil() {
               height: '100%',
               borderRadius: '50%',
               objectFit: 'cover',
+              objectPosition: 'center top',
               display: 'block',
               pointerEvents: 'none',
             }}
@@ -1383,6 +1384,17 @@ export default function MiPerfil() {
             }}
           />
         </button>
+        <p
+          style={{
+            margin: '0 auto 14px',
+            maxWidth: '300px',
+            fontSize: '12px',
+            color: '#6b7280',
+            lineHeight: 1.45,
+          }}
+        >
+          Usá una foto de frente con la cara centrada. Mejor resultado con foto cuadrada.
+        </p>
 
         <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#222' }}>
           {getDisplayName(userProfile || perfil, session)}
