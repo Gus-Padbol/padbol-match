@@ -233,6 +233,163 @@ function iconWrap(emoji) {
   );
 }
 
+const SEDE_SOCIAL_CHIPS_META = [
+  {
+    key: 'instagram',
+    name: 'Instagram',
+    iconBg: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+    iconColor: '#fff',
+    iconLabel: 'IG',
+    iconFontSize: '8px',
+  },
+  {
+    key: 'facebook',
+    name: 'Facebook',
+    iconBg: '#1877f2',
+    iconColor: '#fff',
+    iconLabel: 'f',
+    iconFontSize: '12px',
+    iconFontWeight: 800,
+    iconFontFamily: 'system-ui, "Helvetica Neue", Arial, sans-serif',
+  },
+  {
+    key: 'tiktok',
+    name: 'TikTok',
+    iconBg: '#010101',
+    iconColor: '#fff',
+    iconLabel: '♪',
+    iconFontSize: '11px',
+  },
+  {
+    key: 'twitter',
+    name: 'X',
+    iconBg: '#000',
+    iconColor: '#fff',
+    iconLabel: 'X',
+    iconFontSize: '10px',
+    iconFontWeight: 800,
+  },
+  {
+    key: 'youtube',
+    name: 'YouTube',
+    iconBg: '#ff0000',
+    iconColor: '#fff',
+    iconLabel: '▶',
+    iconFontSize: '9px',
+  },
+  {
+    key: 'linkedin',
+    name: 'LinkedIn',
+    iconBg: '#0a66c2',
+    iconColor: '#fff',
+    iconLabel: 'in',
+    iconFontSize: '9px',
+    iconFontWeight: 800,
+    iconFontFamily: 'system-ui, sans-serif',
+  },
+  {
+    key: 'whatsapp',
+    name: 'WhatsApp',
+    iconBg: '#25d366',
+    iconColor: '#fff',
+    iconLabel: 'W',
+    iconFontSize: '10px',
+    iconFontWeight: 800,
+  },
+  {
+    key: 'website',
+    name: 'Web',
+    iconBg: '#475569',
+    iconColor: '#fff',
+    iconLabel: '🔗',
+    iconFontSize: '10px',
+  },
+];
+
+/** Chips de redes debajo de contacto; solo si hay al menos una URL. */
+function SedeSocialChips({ sede }) {
+  const items = SEDE_SOCIAL_CHIPS_META.filter((m) => {
+    const v = sede[m.key];
+    return v != null && String(v).trim() !== '';
+  });
+  if (!items.length) return null;
+
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <div
+        style={{
+          fontSize: '11px',
+          fontWeight: 700,
+          color: '#64748b',
+          marginBottom: '6px',
+        }}
+      >
+        Seguinos
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '6px',
+          alignItems: 'center',
+        }}
+      >
+        {items.map((m) => (
+          <a
+            key={m.key}
+            href={String(sede[m.key]).trim()}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 10px 5px 5px',
+              borderRadius: '999px',
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              textDecoration: 'none',
+              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.06)',
+              boxSizing: 'border-box',
+            }}
+          >
+            <span
+              style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '6px',
+                background: m.iconBg,
+                color: m.iconColor,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: m.iconFontSize,
+                fontWeight: m.iconFontWeight ?? 700,
+                fontFamily: m.iconFontFamily ?? 'inherit',
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+              aria-hidden
+            >
+              {m.iconLabel}
+            </span>
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#334155',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {m.name}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Contacto en una card compacta (~4 líneas). */
 function CompactContactCard({ sede, horario, hasAddress }) {
   const waNumber = sede.telefono
@@ -343,7 +500,10 @@ export default function SedePublica() {
   const measureCtaBar = useCallback(() => {
     const el = ctaFixedRef.current;
     if (!el) return;
-    const h = el.getBoundingClientRect().height;
+    const rect = el.getBoundingClientRect();
+    const padBottom = parseFloat(getComputedStyle(el).paddingBottom) || 0;
+    // Altura útil sin duplicar safe-area: el paddingBottom del fijo ya incluye env(safe-area-inset-bottom).
+    const h = Math.max(0, rect.height - padBottom);
     setCtaBarHeightPx(Math.ceil(h));
   }, []);
 
@@ -697,47 +857,7 @@ export default function SedePublica() {
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
 
-              {(() => {
-                const redes = [
-                  { key: 'instagram', label: 'IG', bg: 'linear-gradient(135deg,#f09433,#bc1888)', color: 'white' },
-                  { key: 'facebook', label: 'FB', bg: '#1877f2', color: 'white' },
-                  { key: 'tiktok', label: 'TT', bg: '#010101', color: 'white' },
-                  { key: 'twitter', label: 'X', bg: '#000', color: 'white' },
-                  { key: 'youtube', label: 'YT', bg: '#ff0000', color: 'white' },
-                  { key: 'website', label: 'Web', bg: '#475569', color: 'white' },
-                ].filter((r) => sede[r.key]);
-                if (!redes.length) return null;
-                return (
-                  <div style={{ marginBottom: '14px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', marginBottom: '6px' }}>Seguinos</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {redes.map((r) => (
-                        <a
-                          key={r.key}
-                          href={sede[r.key]}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            minWidth: '40px',
-                            padding: '6px 10px',
-                            borderRadius: '8px',
-                            textDecoration: 'none',
-                            background: r.bg,
-                            color: r.color,
-                            fontSize: '11px',
-                            fontWeight: 700,
-                          }}
-                        >
-                          {r.label}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
+              <SedeSocialChips sede={sede} />
 
               {hasAddress || (sede.latitud != null && sede.longitud != null) ? (
                 <MapThumbnail
