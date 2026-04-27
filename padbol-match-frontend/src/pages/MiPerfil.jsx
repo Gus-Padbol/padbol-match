@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
@@ -29,6 +31,7 @@ import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRe
 import { useAuth } from '../context/AuthContext';
 import { nombreDesdeSesionSinEmail, getDisplayName } from '../utils/displayName';
 import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
+import { getCroppedImgBlob } from '../utils/cropImage';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -141,6 +144,13 @@ export default function MiPerfil() {
   /** Hay archivo elegido aún no persistido en Storage (muestra "Guardar foto"). */
   const [fotoPendienteDeSubir, setFotoPendienteDeSubir] = useState(false);
   const [guardandoFoto, setGuardandoFoto] = useState(false);
+  /** Modal react-easy-crop: URL (blob) de la imagen elegida antes de confirmar recorte. */
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [cropAreaListo, setCropAreaListo] = useState(false);
+  const croppedAreaPixelsRef = useRef(null);
   const fileInputRef = useRef(null);
   /** Archivo elegido hasta guardar (subida a Storage al confirmar el formulario). */
   const pendingFotoFileRef = useRef(null);
@@ -157,6 +167,15 @@ export default function MiPerfil() {
     const u = fotoPreviewRef.current;
     if (u && String(u).startsWith('blob:')) URL.revokeObjectURL(u);
   }, []);
+
+  useEffect(() => {
+    if (!cropModalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [cropModalOpen]);
 
   const cuentaDeSesion = useMemo(() => {
     if (!sessionOwnerEmail) return null;
@@ -397,17 +416,62 @@ export default function MiPerfil() {
     }
   };
 
+  const cerrarModalRecorte = useCallback(() => {
+    setCropModalOpen(false);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCropAreaListo(false);
+    croppedAreaPixelsRef.current = null;
+    setCropImageSrc((prev) => {
+      if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }, []);
+
+  const onCropComplete = useCallback((_area, areaPixels) => {
+    croppedAreaPixelsRef.current = areaPixels;
+    setCropAreaListo(true);
+  }, []);
+
+  const handleConfirmarRecorte = useCallback(async () => {
+    const src = cropImageSrc;
+    const pixels = croppedAreaPixelsRef.current;
+    if (!src || !pixels) return;
+    setErrorMsg('');
+    try {
+      const blob = await getCroppedImgBlob(src, pixels, 'image/jpeg', 0.92);
+      cerrarModalRecorte();
+      const file = new File([blob], 'perfil-recorte.jpg', { type: 'image/jpeg' });
+      pendingFotoFileRef.current = file;
+      setFotoPendienteDeSubir(true);
+      setFotoPreview((prev) => {
+        if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(file);
+      });
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(String(err?.message || 'No se pudo recortar la imagen.'));
+    }
+  }, [cropImageSrc, cerrarModalRecorte]);
+
   const handlePhotoSelected = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    pendingFotoFileRef.current = file;
-    setFotoPendienteDeSubir(true);
+    if (!String(file.type || '').startsWith('image/')) {
+      setErrorMsg('Elegí un archivo de imagen.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     setErrorMsg('');
-
-    setFotoPreview((prev) => {
+    setCropImageSrc((prev) => {
       if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
     });
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCropAreaListo(false);
+    croppedAreaPixelsRef.current = null;
+    setCropModalOpen(true);
 
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -1955,6 +2019,127 @@ export default function MiPerfil() {
       ) : null}
 
       </div>
+
+      {cropModalOpen && cropImageSrc ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-recorte-foto"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 20000,
+            background: 'rgba(15, 23, 42, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget) cerrarModalRecorte();
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              background: '#fff',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
+            }}
+            onClick={(ev) => ev.stopPropagation()}
+          >
+            <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #e2e8f0' }}>
+              <h3 id="titulo-recorte-foto" style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>
+                Recortar foto
+              </h3>
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                Mové la imagen con el dedo y pellizcá para acercar o alejar. Confirmá cuando quede bien el rostro.
+              </p>
+            </div>
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: 'min(56vh, 360px)',
+                background: '#0f172a',
+              }}
+            >
+              <Cropper
+                image={cropImageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div style={{ padding: '14px 18px 18px' }}>
+              <label
+                htmlFor="mi-perfil-crop-zoom"
+                style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}
+              >
+                Zoom
+              </label>
+              <input
+                id="mi-perfil-crop-zoom"
+                type="range"
+                min={1}
+                max={3}
+                step={0.02}
+                value={zoom}
+                onChange={(ev) => setZoom(Number(ev.target.value))}
+                style={{ width: '100%', marginBottom: '16px' }}
+              />
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={cerrarModalRecorte}
+                  style={{
+                    flex: 1,
+                    minWidth: '120px',
+                    padding: '12px 16px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#334155',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={!cropAreaListo}
+                  onClick={() => void handleConfirmarRecorte()}
+                  style={{
+                    flex: 1,
+                    minWidth: '120px',
+                    padding: '12px 16px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: cropAreaListo ? '#15803d' : '#94a3b8',
+                    color: '#fff',
+                    cursor: cropAreaListo ? 'pointer' : 'default',
+                  }}
+                >
+                  Confirmar recorte
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <BottomNav />
     </div>
   );
