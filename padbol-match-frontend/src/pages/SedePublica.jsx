@@ -500,10 +500,7 @@ export default function SedePublica() {
   const measureCtaBar = useCallback(() => {
     const el = ctaFixedRef.current;
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const padBottom = parseFloat(getComputedStyle(el).paddingBottom) || 0;
-    // Altura útil sin duplicar safe-area: el paddingBottom del fijo ya incluye env(safe-area-inset-bottom).
-    const h = Math.max(0, rect.height - padBottom);
+    const h = el.getBoundingClientRect().height;
     setCtaBarHeightPx(Math.ceil(h));
   }, []);
 
@@ -559,7 +556,7 @@ export default function SedePublica() {
       : `${ctaBarHeightPx}px`;
 
   const pageMinHeight =
-    !loading && !error && sede ? 'auto' : '100vh';
+    !loading && !error && sede ? 'auto' : '100dvh';
 
   return (
     <div
