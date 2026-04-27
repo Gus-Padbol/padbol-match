@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import './AccesoCuenta.css';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
@@ -58,6 +59,24 @@ export default function AccesoCuenta() {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegPassword2, setShowRegPassword2] = useState(false);
   const sesionYaRedirigidaRef = useRef(false);
+
+  const handleAccesoBack = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+
+  /** WebKit dispara `animationstart` al autocompletar (ver AccesoCuenta.css); evita que el layout quede desplazado. */
+  useEffect(() => {
+    const onAnimationStart = (ev) => {
+      if (ev.animationName !== 'pm-acceso-autofill') return;
+      const t = ev.target;
+      if (!(t instanceof HTMLElement) || !t.classList.contains('acceso-cuenta-input')) return;
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0 });
+      });
+    };
+    window.addEventListener('animationstart', onAnimationStart, true);
+    return () => window.removeEventListener('animationstart', onAnimationStart, true);
+  }, []);
 
   const afterLogin = useCallback(
     async (sessionArg) => {
@@ -223,7 +242,7 @@ export default function AccesoCuenta() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Acceso" />
+      <AppHeader title="Acceso" showBack onBack={handleAccesoBack} />
       <div
         style={{
           marginBottom: '20px',
@@ -280,6 +299,7 @@ export default function AccesoCuenta() {
               Email
             </label>
             <input
+              className="acceso-cuenta-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
@@ -309,6 +329,7 @@ export default function AccesoCuenta() {
             </label>
             <div style={{ position: 'relative', marginBottom: '18px' }}>
               <input
+                className="acceso-cuenta-input"
                 type={showLoginPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -395,6 +416,7 @@ export default function AccesoCuenta() {
               Email
             </label>
             <input
+              className="acceso-cuenta-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
@@ -424,6 +446,7 @@ export default function AccesoCuenta() {
             </label>
             <div style={{ position: 'relative', marginBottom: '14px' }}>
               <input
+                className="acceso-cuenta-input"
                 type={showRegPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -471,6 +494,7 @@ export default function AccesoCuenta() {
             </label>
             <div style={{ position: 'relative', marginBottom: '18px' }}>
               <input
+                className="acceso-cuenta-input"
                 type={showRegPassword2 ? 'text' : 'password'}
                 value={password2}
                 onChange={(e) => setPassword2(e.target.value)}

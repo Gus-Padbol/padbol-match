@@ -985,8 +985,8 @@ export default function ReservaForm() {
     const precio = getPrecio(sedeSeleccionada, formData.hora);
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const muestraInputWhatsappResumen = !perfilTelefonoValido(currentCliente);
-    /** Header fijo + margen 16px + notch; más que hubContentPaddingTopPx en /reservar (solo 56px) para no tapar el título. */
-    const resumenPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 16}px + env(safe-area-inset-top, 0px))`;
+    /** Header fijo + margen 24px + notch para que el título del resumen se vea completo en todos los dispositivos. */
+    const resumenPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 24}px + env(safe-area-inset-top, 0px))`;
     const resumenPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
 
     return (

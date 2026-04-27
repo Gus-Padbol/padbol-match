@@ -17,18 +17,18 @@ const btnVolver = {
 
 const LOGOUT_BTN_SIZE = 34;
 
-/** Rutas donde no se muestra cerrar sesión (solo en Perfil u otras que no matcheen aquí). */
+/**
+ * Rutas donde no se muestra ⏻ cerrar sesión.
+ * Solo en Mi Perfil (`/mi-perfil`) se muestra; en hub (`/`, `/hub`, …) y el resto, oculto.
+ */
 function hideLogoutForPathname(pathname) {
   const pathOnly =
     String(pathname || '/')
       .split('?')[0]
       .split('#')[0]
       .replace(/\/+$/, '') || '/';
-  if (pathOnly === '/torneos' || pathOnly.startsWith('/torneos/')) return true;
-  if (pathOnly === '/rankings' || pathOnly.startsWith('/rankings/')) return true;
-  if (pathOnly === '/ranking' || pathOnly.startsWith('/ranking/')) return true;
-  if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
-  return false;
+  if (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/')) return false;
+  return true;
 }
 
 /**

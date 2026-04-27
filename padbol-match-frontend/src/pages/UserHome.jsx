@@ -22,10 +22,6 @@ export default function UserHome() {
     { label: 'Perfil', icon: '👤', action: () => navigate('/mi-perfil') },
   ];
 
-  const tituloSaludo = session?.user
-    ? `¡Hola ${getDisplayName(userProfile, session)}!`
-    : '¡Hola!';
-
   return (
     <div
       style={{
@@ -72,17 +68,22 @@ export default function UserHome() {
             fontWeight: '600',
             lineHeight: 1.35,
           }}>
-            {tituloSaludo}
+            {session?.user
+              ? `¡Hola ${getDisplayName(userProfile, session)}! ¿Qué querés hacer hoy?`
+              : '¡Hola!'}
           </h1>
-          <p style={{
-            textAlign: 'center',
-            margin: 0,
-            fontSize: '13px',
-            color: '#ffffff',
-            lineHeight: 1.4,
-          }}>
-            ¿Qué quieres hacer hoy?
-          </p>
+          {!session?.user ? (
+            <p style={{
+              textAlign: 'center',
+              margin: 0,
+              fontSize: '13px',
+              color: '#ffffff',
+              lineHeight: 1.4,
+            }}
+            >
+              ¿Qué querés hacer hoy?
+            </p>
+          ) : null}
           {!authLoading && !session?.user ? (
             <p
               style={{

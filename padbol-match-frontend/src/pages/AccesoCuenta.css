@@ -1,0 +1,17 @@
+/* Dispara `animationstart` en WebKit cuando el navegador autocompleta (para corregir scroll). */
+@keyframes pm-acceso-autofill {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+input.acceso-cuenta-input:-webkit-autofill,
+input.acceso-cuenta-input:-webkit-autofill:hover,
+input.acceso-cuenta-input:-webkit-autofill:focus,
+input.acceso-cuenta-input:-webkit-autofill:active {
+  animation-name: pm-acceso-autofill;
+  animation-duration: 0.001s;
+}
