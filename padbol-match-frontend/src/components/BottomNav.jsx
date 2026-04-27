@@ -18,17 +18,34 @@ const BottomNav = () => {
 
   const sedeSobrio = isSedeProfilePathname(path);
 
-  const items = [
-    { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
-    {
-      label: 'Torneos',
-      icon: '🏆',
-      path: '/torneos',
-      match: (p) => p === '/torneos' || p.startsWith('/torneo'),
-    },
-    { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
-    { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
-  ];
+  const matchHubInicio = (p) => {
+    const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+    return x === '/' || x === '/inicio' || x === '/hub' || x === '/home';
+  };
+
+  const items = sedeSobrio
+    ? [
+        { label: 'Inicio', icon: '🏠', path: '/', match: matchHubInicio },
+        {
+          label: 'Torneos',
+          icon: '🏆',
+          path: '/torneos',
+          match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+        },
+        { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
+        { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+      ]
+    : [
+        { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
+        {
+          label: 'Torneos',
+          icon: '🏆',
+          path: '/torneos',
+          match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+        },
+        { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
+        { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+      ];
 
   const go = (item) => {
     if (authLoading) return;

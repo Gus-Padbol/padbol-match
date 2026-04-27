@@ -1715,17 +1715,16 @@ export default function MiPerfil() {
               width: '100%',
               padding: '12px 16px',
               borderRadius: '10px',
-              border: '2px solid #fecaca',
-              background: '#fff',
-              color: '#b91c1c',
-              fontWeight: 700,
+              border: '2px solid rgba(148, 163, 184, 0.85)',
+              background: 'transparent',
+              color: 'rgba(248, 250, 252, 0.95)',
+              fontWeight: 600,
               fontSize: '14px',
               cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               boxSizing: 'border-box',
             }}
           >
-            ⏻ Cerrar sesión
+            Cerrar sesión
           </button>
         </div>
       ) : null}

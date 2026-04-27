@@ -613,6 +613,8 @@ export default function SedePublica() {
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const desc = sede.descripcion ? String(sede.descripcion).trim() : '';
         const descLong = desc.length > 140;
+        const nombreSedeCta = String(sede.nombre || 'esta sede').trim();
+        const torneosCtaLabel = `Ver torneos de ${nombreSedeCta}`;
 
         return (
           <>
@@ -810,46 +812,6 @@ export default function SedePublica() {
             </div>
 
             <div style={{ maxWidth: '700px', margin: '0 auto', padding: '10px 14px 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
-                  style={{
-                    width: '100%',
-                    padding: '11px 14px',
-                    background: '#fff',
-                    color: '#15803d',
-                    border: '2px solid #22c55e',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    fontWeight: 800,
-                    fontSize: '14px',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  Ver torneos
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    fontWeight: 800,
-                    fontSize: '14px',
-                    boxShadow: '0 3px 12px rgba(22, 163, 74, 0.4)',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  🎾 Reservar cancha
-                </button>
-              </div>
-
               <PhotoStrip fotos={fotos} />
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
@@ -887,6 +849,7 @@ export default function SedePublica() {
                 <button
                   type="button"
                   onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+                  title={torneosCtaLabel}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -898,9 +861,22 @@ export default function SedePublica() {
                     fontWeight: 800,
                     fontSize: '14px',
                     boxSizing: 'border-box',
+                    minWidth: 0,
+                    display: 'block',
+                    overflow: 'hidden',
                   }}
                 >
-                  Ver torneos
+                  <span
+                    style={{
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                    }}
+                  >
+                    {torneosCtaLabel}
+                  </span>
                 </button>
                 <button
                   type="button"
