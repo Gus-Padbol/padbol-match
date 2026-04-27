@@ -41,28 +41,29 @@
   box-sizing: border-box;
 }
 
-/* Selects nativos país / ciudad / sede (iOS-safe) */
+/* Selects nativos país / ciudad / sede — aspecto burbuja / pill (iOS-safe) */
 .reserva-sede-seleccion .reserva-sede-native-select {
   display: block;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   margin: 0 0 18px;
-  padding: 12px 40px 12px 14px;
+  padding: 14px 48px 14px 22px;
   font-size: 15px;
   font-weight: 600;
   font-family: inherit;
   color: #1e293b;
-  background-color: rgba(255, 255, 255, 0.88);
-  border: 2px solid rgba(255, 255, 255, 0.45);
-  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.92);
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.12);
   appearance: none;
   -webkit-appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 18px center;
   background-size: 14px;
-  min-height: 48px;
+  min-height: 52px;
 }
 
 .reserva-sede-seleccion .reserva-sede-native-select:disabled {

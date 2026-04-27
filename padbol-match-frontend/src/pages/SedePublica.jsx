@@ -570,7 +570,6 @@ export default function SedePublica() {
         boxSizing: 'border-box',
         width: '100%',
         maxWidth: '100%',
-        overflowX: 'hidden',
       }}
     >
       <AppHeader title="" showBack hideLogout />
@@ -619,6 +618,14 @@ export default function SedePublica() {
 
         return (
           <>
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '100%',
+                overflowX: 'hidden',
+                boxSizing: 'border-box',
+              }}
+            >
             <div
               style={{
                 position: 'relative',
@@ -829,6 +836,7 @@ export default function SedePublica() {
                 />
               ) : null}
             </div>
+            </div>
 
             <div
               ref={ctaFixedRef}
@@ -837,6 +845,8 @@ export default function SedePublica() {
                 left: 0,
                 right: 0,
                 bottom: 0,
+                width: '100%',
+                maxWidth: '100%',
                 zIndex: 1003,
                 display: 'flex',
                 flexDirection: 'column',
@@ -844,6 +854,7 @@ export default function SedePublica() {
                 background: 'linear-gradient(to top, rgba(102,126,234,0.96) 55%, rgba(118,75,162,0.12) 100%)',
                 paddingTop: '10px',
                 boxShadow: '0 -6px 20px rgba(15, 23, 42, 0.08)',
+                boxSizing: 'border-box',
               }}
             >
               <div style={{ padding: '0 12px 6px', display: 'flex', flexDirection: 'column', gap: '8px' }}>

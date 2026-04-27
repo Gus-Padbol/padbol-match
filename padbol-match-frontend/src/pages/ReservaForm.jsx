@@ -425,6 +425,25 @@ export default function ReservaForm() {
     selectPais(only);
   }, [pantalla, paisesOrdenados, filtros.pais, selectPais]);
 
+  useEffect(() => {
+    if (pantalla !== 1) return;
+    if (!filtros.pais) return;
+    if (ciudades.length !== 1) return;
+    const only = ciudades[0];
+    if (filtros.ciudad === only) return;
+    selectCiudad(only);
+  }, [pantalla, filtros.pais, filtros.ciudad, ciudades, selectCiudad]);
+
+  useEffect(() => {
+    if (pantalla !== 1) return;
+    if (!filtros.pais || !filtros.ciudad) return;
+    const list = sedes.filter((s) => s.pais === filtros.pais && s.ciudad === filtros.ciudad);
+    if (list.length !== 1) return;
+    const only = list[0];
+    if (Number(filtros.sede_id) === Number(only.id)) return;
+    selectSedeChip(only.id);
+  }, [pantalla, filtros.pais, filtros.ciudad, filtros.sede_id, sedes, selectSedeChip]);
+
   const buscarHorariosDisponibles = useCallback(async (fecha) => {
     if (!fecha || !sedeSeleccionada) return;
     if (filtros.sede_id === '' || filtros.sede_id == null) return;
