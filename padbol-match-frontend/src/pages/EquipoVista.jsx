@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -124,6 +124,9 @@ export default function EquipoVista() {
   const [savingSolicitud, setSavingSolicitud] = useState(false);
   const [dialogoSalirEquipo, setDialogoSalirEquipo] = useState(false);
   const [savingSalirEquipo, setSavingSalirEquipo] = useState(false);
+  /** Jugador a quitar del equipo (solo creador; no el slot creador). */
+  const [dialogoEliminarJugador, setDialogoEliminarJugador] = useState(null);
+  const [savingEliminarJugador, setSavingEliminarJugador] = useState(false);
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
   const [perfilLsKey, setPerfilLsKey] = useState(0);
   const [perfilMapsJugadores, setPerfilMapsJugadores] = useState(() =>
@@ -397,6 +400,20 @@ export default function EquipoVista() {
     return Boolean(!equipo.creador_id && em && ce && ce === em);
   }, [equipo, usuarioLocal.id, authEmail, authUserId]);
 
+  const esJugadorCreadorEnEquipo = useCallback(
+    (p) => {
+      if (!equipo || !p) return false;
+      if (String(p.rol || '').toLowerCase() === 'creador') return true;
+      const cid = String(equipo.creador_id || '').trim();
+      if (cid && p.id != null && String(p.id) === cid) return true;
+      const ce = String(equipo.creador_email || '').trim().toLowerCase();
+      const pe = String(p.email || '').trim().toLowerCase();
+      if (ce && pe && ce === pe) return true;
+      return false;
+    },
+    [equipo]
+  );
+
   const urlCompartirLugarEquipoWa = useMemo(() => {
     const tid = id != null && String(id).trim() !== '' ? String(id).trim() : '';
     if (!tid) return '';
@@ -664,6 +681,26 @@ export default function EquipoVista() {
     }
     setDialogoSalirEquipo(false);
     navigate(`/torneo/${id}/equipos`);
+  };
+
+  const ejecutarEliminarJugadorDelEquipo = async () => {
+    const victima = dialogoEliminarJugador?.jugador;
+    if (!equipo || !victima || !soyCreador) return;
+    if (esJugadorCreadorEnEquipo(victima)) return;
+
+    setSavingEliminarJugador(true);
+    const nuevosJugadores = players.filter((pl) => !samePerson(pl, victima));
+    const nuevasSolicitudes = requests.filter((r) => !samePerson(r, victima));
+    const updates = { jugadores: nuevosJugadores, solicitudes: nuevasSolicitudes };
+    const { error } = await supabase.from('equipos').update(updates).eq('id', Number(equipoId));
+    setSavingEliminarJugador(false);
+    if (error) {
+      console.error(error);
+      alert('No se pudo eliminar al jugador del equipo');
+      return;
+    }
+    setDialogoEliminarJugador(null);
+    await cargarEquipo();
   };
 
   const aceptarSolicitud = async (solicitud) => {
@@ -1037,7 +1074,7 @@ export default function EquipoVista() {
             <div style={{ color: '#666' }}>Todavía no hay jugadores</div>
           ) : soyCreador ? (
             <div style={{ display: 'grid', gap: '10px' }}>
-              {players.map((p, idx) => (
+                {players.map((p, idx) => (
                 <div
                   key={`${p.email || p.nombre}-${idx}`}
                   style={{
@@ -1046,14 +1083,53 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
-                  {samePerson(p, yo) && !perfilTorneoCompleto ? (
-                    <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
-                      Perfil incompleto
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700 }}>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</div>
+                      {samePerson(p, yo) && !perfilTorneoCompleto ? (
+                        <div style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}>
+                          Perfil incompleto
+                        </div>
+                      ) : esJugadorPendiente(p) ? (
+                        renderPendienteDeConfirmar(p, { conAccionesCreador: true })
+                      ) : null}
                     </div>
-                  ) : esJugadorPendiente(p) ? (
-                    renderPendienteDeConfirmar(p, { conAccionesCreador: true })
-                  ) : null}
+                    {soyCreador && !torneoCancelado && !esJugadorCreadorEnEquipo(p) ? (
+                      <button
+                        type="button"
+                        aria-label={`Quitar a ${jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)} del equipo`}
+                        onClick={() =>
+                          setDialogoEliminarJugador({
+                            jugador: p,
+                            etiqueta: jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx),
+                          })
+                        }
+                        style={{
+                          flexShrink: 0,
+                          width: '28px',
+                          height: '28px',
+                          padding: 0,
+                          lineHeight: 1,
+                          fontSize: '16px',
+                          fontWeight: 700,
+                          border: '1px solid #fecaca',
+                          borderRadius: '8px',
+                          background: '#fff',
+                          color: '#b91c1c',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✕
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1162,7 +1238,7 @@ export default function EquipoVista() {
                   cursor: 'pointer',
                 }}
               >
-                Salir del equipo
+                {soyCreador ? 'Disolver equipo' : 'Salir del equipo'}
               </button>
             </div>
           ) : null}
@@ -1330,7 +1406,7 @@ export default function EquipoVista() {
                 style={{ margin: '0 0 18px', fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}
               >
                 {soyCreador
-                  ? 'Si sales, el equipo se eliminará completamente'
+                  ? '¿Disolver el equipo? Se eliminará por completo.'
                   : '¿Quieres salir del equipo?'}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -1367,7 +1443,83 @@ export default function EquipoVista() {
                     opacity: savingSalirEquipo ? 0.7 : 1,
                   }}
                 >
-                  {savingSalirEquipo ? 'Saliendo…' : 'Salir'}
+                  {savingSalirEquipo ? 'Saliendo…' : soyCreador ? 'Disolver' : 'Salir'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {dialogoEliminarJugador ? (
+          <div
+            role="presentation"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 10000,
+              background: 'rgba(15, 23, 42, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
+            }}
+            onClick={() => !savingEliminarJugador && setDialogoEliminarJugador(null)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="eliminar-jugador-titulo"
+              style={{
+                background: '#fff',
+                borderRadius: '14px',
+                padding: '22px 20px',
+                maxWidth: '400px',
+                width: '100%',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p
+                id="eliminar-jugador-titulo"
+                style={{ margin: '0 0 18px', fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}
+              >
+                ¿Eliminar a {dialogoEliminarJugador.etiqueta || 'este jugador'} del equipo?
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  disabled={savingEliminarJugador}
+                  onClick={() => setDialogoEliminarJugador(null)}
+                  style={{
+                    padding: '10px 16px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#334155',
+                    cursor: savingEliminarJugador ? 'default' : 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={savingEliminarJugador}
+                  onClick={() => void ejecutarEliminarJugadorDelEquipo()}
+                  style={{
+                    padding: '10px 16px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#b91c1c',
+                    color: '#fff',
+                    cursor: savingEliminarJugador ? 'default' : 'pointer',
+                    opacity: savingEliminarJugador ? 0.7 : 1,
+                  }}
+                >
+                  {savingEliminarJugador ? 'Eliminando…' : 'Confirmar'}
                 </button>
               </div>
             </div>

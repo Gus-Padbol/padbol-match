@@ -35,7 +35,7 @@ function getFlag(pais) {
 }
 
 const TABS = [
-  { id: 'local',         label: '🏠 Local'              },
+  { id: 'local',         label: '🏟️ Local'              },
   { id: 'nacional',      label: '🌍 Nacional'            },
   { id: 'internacional', label: '🌐 Internacional FIPA'  },
 ];
