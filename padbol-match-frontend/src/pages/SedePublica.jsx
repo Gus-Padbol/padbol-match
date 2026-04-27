@@ -571,7 +571,7 @@ export default function SedePublica() {
         overflowX: 'hidden',
       }}
     >
-      <AppHeader title="" showBack={false} />
+      <AppHeader title="" showBack />
 
       {loading && (
         <div
