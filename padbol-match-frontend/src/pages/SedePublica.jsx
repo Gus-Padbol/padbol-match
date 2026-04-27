@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -32,6 +39,14 @@ function heroBackgroundFromSede(sede) {
   const hex = normalizeHexColor(sede?.color_primario);
   if (!hex) return DEFAULT_HERO_BG;
   return `linear-gradient(160deg, ${hex} 0%, rgba(15, 23, 42, 0.82) 78%, rgba(15, 23, 42, 0.94) 100%)`;
+}
+
+/** Tamaño del título del club en el hero según longitud del nombre. */
+function heroClubNameFontSizePx(nombreRaw) {
+  const len = String(nombreRaw ?? '').trim().length;
+  if (len < 15) return 22;
+  if (len <= 25) return 18;
+  return 15;
 }
 
 function formatHorario(apertura, cierre) {
@@ -122,7 +137,7 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
   if (!embedSrc && !openMapsHref) return null;
 
   return (
-    <div style={{ paddingBottom: '8px', position: 'relative' }}>
+    <div style={{ position: 'relative' }}>
       {embedSrc ? (
         <div
           style={{
@@ -322,6 +337,15 @@ export default function SedePublica() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [descExpanded, setDescExpanded] = useState(false);
+  const [ctaBarHeightPx, setCtaBarHeightPx] = useState(0);
+  const ctaFixedRef = useRef(null);
+
+  const measureCtaBar = useCallback(() => {
+    const el = ctaFixedRef.current;
+    if (!el) return;
+    const h = el.getBoundingClientRect().height;
+    setCtaBarHeightPx(Math.ceil(h));
+  }, []);
 
   useEffect(() => {
     if (!sedeId) {
@@ -352,8 +376,27 @@ export default function SedePublica() {
     setDescExpanded(false);
   }, [sedeId]);
 
+  useLayoutEffect(() => {
+    if (loading || error || !sede) {
+      setCtaBarHeightPx(0);
+      return;
+    }
+    measureCtaBar();
+    const raf = requestAnimationFrame(() => {
+      measureCtaBar();
+    });
+    const onResize = () => measureCtaBar();
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [loading, error, sede, descExpanded, measureCtaBar]);
+
   const mainPaddingBottom =
-    loading || error || !sede ? `${HUB_CONTENT_PADDING_BOTTOM_PX}px` : '0';
+    loading || error || !sede
+      ? `${HUB_CONTENT_PADDING_BOTTOM_PX}px`
+      : `${ctaBarHeightPx}px`;
 
   const pageMinHeight =
     !loading && !error && sede ? 'auto' : '100vh';
@@ -503,7 +546,7 @@ export default function SedePublica() {
                     <h1
                       style={{
                         color: normalizeHexColor(sede.color_nombre) ?? '#FFFFFF',
-                        fontSize: '17px',
+                        fontSize: `${heroClubNameFontSizePx(sede.nombre)}px`,
                         fontWeight: 800,
                         margin: 0,
                         lineHeight: 1.2,
@@ -698,6 +741,7 @@ export default function SedePublica() {
             </div>
 
             <div
+              ref={ctaFixedRef}
               style={{
                 position: 'fixed',
                 left: 0,
