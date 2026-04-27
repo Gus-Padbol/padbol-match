@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/AppHeader';
@@ -68,6 +68,13 @@ const ORDEN_ESTADO_TORNEO = {
   cancelado: 4,
 };
 
+function normalizeSearchText(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
 export default function TorneosPublicos() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -95,6 +102,8 @@ export default function TorneosPublicos() {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
   const [userPos, setUserPos] = useState(null);
   const [geoStatus, setGeoStatus] = useState('idle');
+  const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
+  const torneoSearchInputRef = useRef(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -219,6 +228,18 @@ export default function TorneosPublicos() {
     return torneos.filter((t) => Number(t.sede_id) === Number(focusSedeId));
   }, [sedeFiltroId, nearMode, filterActive, focusSedeId, torneos]);
 
+  const torneosPorBusqueda = useMemo(() => {
+    const q = normalizeSearchText(torneoSearchQuery);
+    if (!q) return displayedTorneos;
+    return displayedTorneos.filter((t) => {
+      const sede = sedesMap[String(t.sede_id)];
+      const blob = normalizeSearchText(
+        [t.nombre, sede?.nombre, sede?.ciudad, sede?.pais].filter(Boolean).join(' ')
+      );
+      return blob.includes(q);
+    });
+  }, [displayedTorneos, torneoSearchQuery, sedesMap]);
+
   const sedeFiltroNombre = useMemo(() => {
     if (sedeFiltroId == null) return null;
     return sedesMap[String(sedeFiltroId)]?.nombre || null;
@@ -226,14 +247,14 @@ export default function TorneosPublicos() {
 
   const torneosOrdenados = useMemo(() => {
     const rank = (estado) => ORDEN_ESTADO_TORNEO[String(estado || '').toLowerCase()] ?? 99;
-    return [...displayedTorneos].sort((a, b) => {
+    return [...torneosPorBusqueda].sort((a, b) => {
       const d = rank(a.estado) - rank(b.estado);
       if (d !== 0) return d;
       const fa = String(a.fecha_inicio || '');
       const fb = String(b.fecha_inicio || '');
       return fa.localeCompare(fb);
     });
-  }, [displayedTorneos]);
+  }, [torneosPorBusqueda]);
 
   const listaTorneos = useMemo(() => {
     if (loading) {
@@ -289,6 +310,22 @@ export default function TorneosPublicos() {
               </button>
             </div>
           ) : null}
+        </div>
+      );
+    }
+    if (displayedTorneos.length > 0 && torneosPorBusqueda.length === 0) {
+      return (
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '18px',
+            color: '#4b5563',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+          }}
+        >
+          No encontramos torneos con ese criterio
         </div>
       );
     }
@@ -407,6 +444,7 @@ export default function TorneosPublicos() {
     loading,
     torneos.length,
     displayedTorneos.length,
+    torneosPorBusqueda.length,
     torneosOrdenados,
     nearMode,
     filterActive,
@@ -494,6 +532,87 @@ export default function TorneosPublicos() {
             </button>
           ) : null}
         </div>
+
+        {!loading && torneos.length > 0 ? (
+          <div style={{ marginBottom: '14px' }}>
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '15px',
+                  lineHeight: 1,
+                  pointerEvents: 'none',
+                  opacity: 0.85,
+                }}
+                aria-hidden
+              >
+                🔍
+              </span>
+              <input
+                ref={torneoSearchInputRef}
+                type="search"
+                autoComplete="off"
+                value={torneoSearchQuery}
+                onChange={(e) => setTorneoSearchQuery(e.target.value)}
+                placeholder="Buscar torneo, club, ciudad o país..."
+                aria-label="Buscar torneos"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '11px 40px 11px 40px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  background: 'rgba(255,255,255,0.95)',
+                  fontSize: '15px',
+                  color: '#111827',
+                  outline: 'none',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+                }}
+              />
+              {torneoSearchQuery.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTorneoSearchQuery('');
+                    torneoSearchInputRef.current?.focus();
+                  }}
+                  aria-label="Limpiar búsqueda"
+                  style={{
+                    position: 'absolute',
+                    right: '6px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '32px',
+                    height: '32px',
+                    padding: 0,
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: 'rgba(15, 23, 42, 0.08)',
+                    color: '#475569',
+                    fontSize: '18px',
+                    lineHeight: 1,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {listaTorneos}
       </div>
