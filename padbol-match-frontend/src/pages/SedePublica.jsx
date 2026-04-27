@@ -63,7 +63,7 @@ function buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud) {
   const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
   const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
   if (Number.isFinite(lat) && Number.isFinite(lon)) {
-    return `https://www.google.com/maps?q=${lat},${lon}`;
+    return `https://maps.google.com/?q=${lat},${lon}`;
   }
   return buildMapsSearchHref(direccion, ciudad, pais);
 }
@@ -127,7 +127,7 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
     const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
     const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      return `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
+      return `https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
     }
     const parts = [direccion, ciudad, pais].filter(Boolean);
     if (!parts.length) return null;
