@@ -569,7 +569,7 @@ export default function SedePublica() {
       }}
     >
       <AppHeader
-        title="🏠 Inicio"
+        title="Sede"
         backLabel="← Ver otras sedes"
         onBack={() => navigate('/sedes?ver_todas=1')}
       />
