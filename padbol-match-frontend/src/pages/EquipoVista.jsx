@@ -265,6 +265,16 @@ export default function EquipoVista() {
   const { session, loading: authLoading, userProfile } = useAuth();
 
   const authEmail = useMemo(() => String(session?.user?.email || '').trim(), [session?.user?.email]);
+  const authEmailLower = useMemo(() => authEmail.toLowerCase(), [authEmail]);
+  const isSuperAdmin = authEmailLower === 'padbolinternacional@gmail.com';
+  const equipoIdParam = useMemo(
+    () => String(equipoId != null && String(equipoId).trim() !== '' ? equipoId : id || '').trim(),
+    [equipoId, id]
+  );
+  const torneoIdParam = useMemo(
+    () => String(equipoId != null && String(equipoId).trim() !== '' ? id || '' : '').trim(),
+    [equipoId, id]
+  );
 
   const cuentaAuth = useMemo(() => {
     if (!authEmail) return null;
@@ -333,12 +343,23 @@ export default function EquipoVista() {
   const perfilIncompleto = !perfilTorneoCompleto;
 
   const cargarEquipo = async () => {
+    if (!equipoIdParam) {
+      setEquipo(null);
+      setTorneo(null);
+      setPlayers([]);
+      setRequests([]);
+      setNombreSedeTorneo(null);
+      setPerfilPendientesPorEmail(new Map());
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    console.log('[Equipo] cargando equipo id:', equipoIdParam, 'usuario:', authEmail);
 
     const { data, error } = await supabase
       .from('equipos')
       .select('*')
-      .eq('id', Number(equipoId))
+      .eq('id', Number(equipoIdParam))
       .maybeSingle();
 
     if (error) {
@@ -404,14 +425,14 @@ export default function EquipoVista() {
       return Boolean(creadorId && pid && pid === creadorId);
     });
 
-    if (authUid && creadorId && authUid === creadorId && !creadorEnLista && sess?.user) {
+    if ((isSuperAdmin || (authUid && creadorId && authUid === creadorId)) && !creadorEnLista && sess?.user) {
       const creadorEntry = buildCreadorJugadorParaEquipo(sess, userProfile, yo);
       if (creadorEntry) {
         jugadores = ensureCreadorPrimeroEnLista(jugadores, creadorEntry, yo, authUid);
         const { error: persistErr } = await supabase
           .from('equipos')
           .update({ jugadores })
-          .eq('id', Number(equipoId));
+          .eq('id', Number(equipoIdParam));
         if (persistErr) {
           console.error('equipoVista: persistir creador en jugadores', persistErr);
         } else if (row) {
@@ -437,8 +458,8 @@ export default function EquipoVista() {
   };
 
   useEffect(() => {
-    if (equipoId) cargarEquipo();
-  }, [equipoId]);
+    if (equipoIdParam) cargarEquipo();
+  }, [equipoIdParam]);
 
   useEffect(() => {
     const tid = equipo?.torneo_id;
@@ -464,7 +485,7 @@ export default function EquipoVista() {
   }, [equipo?.torneo_id]);
 
   useEffect(() => {
-    if (loading || !equipoId) return;
+    if (loading || !equipoIdParam) return;
     const email = String(cuentaAuth?.email || session?.user?.email || '').trim();
     if (!email) return;
     const nombreNorm = String(
@@ -477,7 +498,7 @@ export default function EquipoVista() {
       const { data, error } = await supabase
         .from('equipos')
         .select('jugadores')
-        .eq('id', Number(equipoId))
+        .eq('id', Number(equipoIdParam))
         .maybeSingle();
       if (error || !data?.jugadores || !Array.isArray(data.jugadores)) return;
       const arr = data.jugadores.map(normalizePlayer).filter(Boolean);
@@ -502,13 +523,13 @@ export default function EquipoVista() {
       const { error: upErr } = await supabase
         .from('equipos')
         .update({ jugadores: next })
-        .eq('id', Number(equipoId));
+        .eq('id', Number(equipoIdParam));
       if (!upErr) cargarEquipo();
     };
     void run();
   }, [
     loading,
-    equipoId,
+    equipoIdParam,
     cuentaAuth?.email,
     cuentaAuth?.nombre,
     cuentaAuth?.id,
@@ -609,7 +630,7 @@ export default function EquipoVista() {
   const urlCompartirLugarEquipoWa = useMemo(() => {
     const tid = id != null && String(id).trim() !== '' ? String(id).trim() : '';
     if (!tid) return '';
-    const eid = equipoId != null && String(equipoId).trim() !== '' ? String(equipoId).trim() : '';
+    const eid = equipoIdParam;
     const link = eid
       ? `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos?equipo=${encodeURIComponent(eid)}`
       : `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos`;
@@ -618,7 +639,7 @@ export default function EquipoVista() {
     const nombreEquipo = String(equipo?.nombre || '').trim() || 'nuestro equipo';
     const mensaje = `¡Hola! Te invito a jugar juntos el torneo de Padbol ${nombreTorneo} en ${nombreSede}. Somos el equipo ${nombreEquipo}. ¡Confirmá tu lugar y nos vemos en la cancha! 🎯 ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  }, [id, equipoId, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
+  }, [equipoIdParam, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
 
   const abrirCompartirLugarEquipoWa = () => {
     if (!urlCompartirLugarEquipoWa) return;
@@ -626,10 +647,10 @@ export default function EquipoVista() {
   };
 
   const reenviarInvitacionPendiente = async (emailNorm) => {
-    if (!emailNorm || !equipoId) return;
+    if (!emailNorm || !equipoIdParam) return;
     setReenviandoEmail(emailNorm);
     try {
-      await invitarJugadorEquipo(Number(equipoId), emailNorm);
+      await invitarJugadorEquipo(Number(equipoIdParam), emailNorm);
     } catch (err) {
       console.error(err);
       alert(err?.message || 'Error al reenviar');
@@ -829,7 +850,7 @@ export default function EquipoVista() {
     const { error } = await supabase
       .from('equipos')
       .update({ solicitudes: nuevasSolicitudes })
-      .eq('id', Number(equipoId));
+      .eq('id', Number(equipoIdParam));
     setSavingSolicitud(false);
     if (error) {
       console.error(error);
@@ -845,7 +866,7 @@ export default function EquipoVista() {
 
     setSavingSalirEquipo(true);
     if (soyCreador) {
-      const { error } = await supabase.from('equipos').delete().eq('id', Number(equipoId));
+      const { error } = await supabase.from('equipos').delete().eq('id', Number(equipoIdParam));
       setSavingSalirEquipo(false);
       if (error) {
         console.error(error);
@@ -853,12 +874,12 @@ export default function EquipoVista() {
         return;
       }
       const hint = readEquipoActualForTorneo(tid);
-      if (hint && String(hint) === String(equipoId)) clearEquipoActual();
+      if (hint && String(hint) === String(equipoIdParam)) clearEquipoActual();
     } else {
       const nuevosJugadores = players.filter((p) => !samePerson(p, yo));
       const nuevasSolicitudes = requests.filter((r) => !samePerson(r, yo));
       const updates = { jugadores: nuevosJugadores, solicitudes: nuevasSolicitudes };
-      const { error } = await supabase.from('equipos').update(updates).eq('id', Number(equipoId));
+      const { error } = await supabase.from('equipos').update(updates).eq('id', Number(equipoIdParam));
       setSavingSalirEquipo(false);
       if (error) {
         console.error(error);
@@ -866,13 +887,13 @@ export default function EquipoVista() {
         return;
       }
       const hint = readEquipoActualForTorneo(tid);
-      if (hint && String(hint) === String(equipoId)) clearEquipoActual();
+      if (hint && String(hint) === String(equipoIdParam)) clearEquipoActual();
       setPlayers(nuevosJugadores);
       setRequests(nuevasSolicitudes);
       setEquipo((prev) => (prev ? { ...prev, ...updates } : prev));
     }
     setDialogoSalirEquipo(false);
-    navigate(`/torneo/${id}/equipos`);
+    navigate(`/torneo/${torneoIdParam || equipo?.torneo_id}/equipos`);
   };
 
   const ejecutarEliminarJugadorDelEquipo = async () => {
@@ -884,7 +905,7 @@ export default function EquipoVista() {
     const nuevosJugadores = players.filter((pl) => !samePerson(pl, victima));
     const nuevasSolicitudes = requests.filter((r) => !samePerson(r, victima));
     const updates = { jugadores: nuevosJugadores, solicitudes: nuevasSolicitudes };
-    const { error } = await supabase.from('equipos').update(updates).eq('id', Number(equipoId));
+    const { error } = await supabase.from('equipos').update(updates).eq('id', Number(equipoIdParam));
     setSavingEliminarJugador(false);
     if (error) {
       console.error(error);
@@ -908,7 +929,7 @@ export default function EquipoVista() {
     const inviteEmail = String(solicitud.email || '').trim().toLowerCase();
     if (inviteEmail) {
       try {
-        await invitarJugadorEquipo(Number(equipoId), inviteEmail);
+        await invitarJugadorEquipo(Number(equipoIdParam), inviteEmail);
       } catch (err) {
         console.error(err);
         alert(err?.message || 'Error al aceptar');
@@ -934,7 +955,7 @@ export default function EquipoVista() {
         jugadores: nuevosJugadores,
         solicitudes: nuevasSolicitudes,
       })
-      .eq('id', Number(equipoId));
+      .eq('id', Number(equipoIdParam));
 
     if (error) {
       console.error(error);
@@ -954,7 +975,7 @@ export default function EquipoVista() {
     const { error } = await supabase
       .from('equipos')
       .update({ solicitudes: nuevasSolicitudes })
-      .eq('id', Number(equipoId));
+      .eq('id', Number(equipoIdParam));
 
     if (error) {
       console.error(error);
@@ -966,12 +987,12 @@ export default function EquipoVista() {
   };
 
   const invitarPadbolMatchWhatsappHref = useMemo(() => {
-    const eid = equipoId != null && String(equipoId).trim() !== '' ? String(equipoId).trim() : '';
+    const eid = equipoIdParam;
     if (!eid) return '';
     const link = `https://padbol-match-9abn.vercel.app/equipo/${encodeURIComponent(eid)}`;
     const txt = `¡Hola! Te invito a unirte a mi equipo en PADBOL Match. Entrá con este link: ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(txt)}`;
-  }, [equipoId]);
+  }, [equipoIdParam]);
 
   const cupoEquipo = Number(equipo?.cupo_maximo || 2);
   const plazasLlenasEquipo = players.length >= cupoEquipo;
