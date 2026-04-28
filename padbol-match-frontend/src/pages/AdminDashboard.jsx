@@ -127,8 +127,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [validacionState, setValidacionState] = useState({});
   // keyed by sede name for super-admin reservas detail expand/collapse
   const [superAdminReservasOpen, setSuperAdminReservasOpen] = useState({});
-  const [superAdminPeriodo, setSuperAdminPeriodo] = useState('mes'); // hoy | semana | mes | anio | dia
-  const [superAdminFechaEspecifica, setSuperAdminFechaEspecifica] = useState(
+  const [superAdminPeriodo, setSuperAdminPeriodo] = useState('mes'); // hoy | semana | mes | anio | rango
+  const [superAdminFechaDesde, setSuperAdminFechaDesde] = useState(
+    () => new Date().toISOString().slice(0, 10)
+  );
+  const [superAdminFechaHasta, setSuperAdminFechaHasta] = useState(
     () => new Date().toISOString().slice(0, 10)
   );
 
@@ -403,9 +406,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             sedesData = sedesData.filter(s => s.pais && s.pais.includes(roleData.pais.replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim()));
           }
 
-          const map = {};
-          sedesData.forEach(s => { map[s.id] = s; });
-          setSedesMap(map);
+          const nextSedesMap = {};
+          sedesData.forEach((s) => { nextSedesMap[s.id] = s; });
+          setSedesMap(nextSedesMap);
         }
       } catch { /* sedes opcionales */ }
 
@@ -1119,7 +1122,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const [y, m, d] = fechaISO.split('-').map(Number);
               const fecha = new Date(y, m - 1, d);
               if (Number.isNaN(fecha.getTime())) return false;
-              if (superAdminPeriodo === 'dia') return fechaISO === superAdminFechaEspecifica;
+              if (superAdminPeriodo === 'rango') {
+                const desdeOk = /^\d{4}-\d{2}-\d{2}$/.test(superAdminFechaDesde);
+                const hastaOk = /^\d{4}-\d{2}-\d{2}$/.test(superAdminFechaHasta);
+                if (!desdeOk || !hastaOk) return false;
+                const [dy, dm, dd] = superAdminFechaDesde.split('-').map(Number);
+                const [hy, hm, hd] = superAdminFechaHasta.split('-').map(Number);
+                const desde = new Date(dy, dm - 1, dd);
+                const hasta = new Date(hy, hm - 1, hd, 23, 59, 59, 999);
+                if (Number.isNaN(desde.getTime()) || Number.isNaN(hasta.getTime())) return false;
+                return fecha >= desde && fecha <= hasta;
+              }
               if (superAdminPeriodo === 'hoy') return fecha >= startOfToday && fecha <= now;
               if (superAdminPeriodo === 'semana') return fecha >= startOfWeek && fecha <= now;
               if (superAdminPeriodo === 'anio') return fecha >= startOfYear && fecha <= now;
@@ -1134,7 +1147,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             const porSede = new Map();
             reservasPeriodo.forEach((r) => {
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
-              const sedeInfo = sedesMap?.[r?.sede_id];
+              const sedeInfo = sedesMap?.[r?.sede_id] || {};
               const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
               const ciudad = String(sedeInfo?.ciudad || '').trim() || 'Sin definir';
               const moneda = getMonedaCanonica(r?.moneda);
@@ -1173,7 +1186,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     { id: 'semana', label: 'Esta semana' },
                     { id: 'mes', label: 'Este mes' },
                     { id: 'anio', label: 'Este año' },
-                    { id: 'dia', label: 'Día específico' },
+                    { id: 'rango', label: 'Rango' },
                   ].map((opt) => (
                     <button
                       key={opt.id}
@@ -1195,22 +1208,41 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </button>
                   ))}
                 </div>
-                {superAdminPeriodo === 'dia' ? (
-                  <input
-                    type="date"
-                    value={superAdminFechaEspecifica}
-                    onChange={(e) => setSuperAdminFechaEspecifica(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '16px',
-                      color: '#334155',
-                      background: '#fff',
-                      boxSizing: 'border-box',
-                    }}
-                  />
+                {superAdminPeriodo === 'rango' ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <input
+                      type="date"
+                      value={superAdminFechaDesde}
+                      onChange={(e) => setSuperAdminFechaDesde(e.target.value)}
+                      aria-label="Desde"
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '16px',
+                        color: '#334155',
+                        background: '#fff',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <input
+                      type="date"
+                      value={superAdminFechaHasta}
+                      onChange={(e) => setSuperAdminFechaHasta(e.target.value)}
+                      aria-label="Hasta"
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '16px',
+                        color: '#334155',
+                        background: '#fff',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
                 ) : null}
                 </div>
 
@@ -1234,9 +1266,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ background: '#f8fafc' }}>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Sede</th>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ciudad</th>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>País</th>
+                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Sede + País</th>
                           <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Reservas del mes</th>
                           <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ingresos del mes</th>
                           <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}></th>
@@ -1248,13 +1278,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           return (
                             <React.Fragment key={g.sede}>
                               <tr style={{ borderTop: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{g.sede}</td>
-                                <td style={{ padding: '10px 12px', color: '#475569' }}>{g.ciudad}</td>
                                 <td style={{ padding: '10px 12px', color: '#475569' }}>
-                                  {(() => {
-                                    const flag = sedeFlag({ pais: g.pais });
-                                    return flag ? `${flag} ${g.pais}` : g.pais;
-                                  })()}
+                                  <div style={{ fontWeight: 700, color: '#0f172a' }}>{g.sede}</div>
+                                  <div style={{ marginTop: '2px', fontSize: '11px', color: '#94a3b8' }}>{g.ciudad}</div>
+                                  <div style={{ marginTop: '2px' }}>
+                                    {(() => {
+                                      const flag = sedeFlag({ pais: g.pais });
+                                      return flag ? `${flag} ${g.pais}` : g.pais;
+                                    })()}
+                                  </div>
                                 </td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right', color: '#0f172a', fontWeight: 700 }}>{g.reservasCount}</td>
                                 <td style={{ padding: '10px 12px', color: '#334155', fontWeight: 600 }}>{fmtIngresos(g.ingresos)}</td>
@@ -1270,7 +1302,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               </tr>
                               {open ? (
                                 <tr>
-                                  <td colSpan={6} style={{ padding: '10px 12px', background: '#f8fafc' }}>
+                                  <td colSpan={4} style={{ padding: '10px 12px', background: '#f8fafc' }}>
                                     <div style={{ display: 'grid', gap: '6px' }}>
                                       {g.rows.map((r) => (
                                         <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 120px 1fr 1fr 110px', gap: '8px', fontSize: '12px', color: '#334155', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
