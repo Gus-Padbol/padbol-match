@@ -534,12 +534,20 @@ export default function MiPerfil() {
   const fetchReservas = async () => {
     if (!sessionOwnerEmail) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('reservas')
         .select('id, sede, fecha, hora, cancha, estado, precio, moneda')
-        .eq('email', sessionOwnerEmail)
+        .eq('email_usuario', sessionOwnerEmail)
         .order('fecha', { ascending: false })
         .limit(20);
+      console.log(
+        '[MiPerfil] reservas: filtro columna email_usuario, valor:',
+        sessionOwnerEmail,
+        'filas:',
+        Array.isArray(data) ? data.length : 0,
+        'error:',
+        error
+      );
       setReservas(data || []);
     } catch {
       // fail silently
