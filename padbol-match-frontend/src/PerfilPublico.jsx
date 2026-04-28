@@ -81,6 +81,19 @@ function jugadorEnEquipo(jugadoresArr, perfil) {
   return false;
 }
 
+/** Lee equipos completos y filtra en JS por jugador. */
+async function fetchEquiposJugador(perfil) {
+  const { data: equiposRows, error: equiposErr } = await supabase
+    .from('equipos')
+    .select('id, torneo_id, jugadores');
+  if (equiposErr) {
+    console.warn('[PerfilPublico] equipos (lectura completa para filtrar en JS)', equiposErr);
+    return [];
+  }
+  const rows = equiposRows || [];
+  return rows.filter((eq) => jugadorEnEquipo(eq.jugadores, perfil));
+}
+
 /** Torneos en los que el jugador figura (jugadores_torneo o equipos). */
 async function torneoIdsJugadosPorPerfil(perfil) {
   const uid = perfil?.user_id != null && String(perfil.user_id).trim() !== '' ? String(perfil.user_id).trim() : '';
@@ -93,7 +106,6 @@ async function torneoIdsJugadosPorPerfil(perfil) {
     'perfil.email (raw)': emailPerfil || null,
     'perfil.email (normalizado)': em || null,
     jugadoresTorneoFilas: 0,
-    equiposTotalesLeidos: 0,
     equiposCoincidenJugador: 0,
   };
 
@@ -106,93 +118,59 @@ async function torneoIdsJugadosPorPerfil(perfil) {
     });
   }
 
-  /**
-   * Importante: NO usar contains/ilike sobre `equipos.jugadores` (JSONB).
-   * Se leen todos los equipos y se filtra en JavaScript con `jugadorEnEquipo`.
-   */
-  const { data: equiposRows, error: equiposErr } = await supabase
-    .from('equipos')
-    .select('torneo_id, jugadores');
-  if (equiposErr) {
-    console.warn('[PerfilPublico] equipos (lectura completa para filtrar en JS)', equiposErr);
-  } else {
-    const rows = equiposRows || [];
-    debug.equiposTotalesLeidos = rows.length;
-    for (const eq of rows) {
-      if (!jugadorEnEquipo(eq.jugadores, perfil)) continue;
-      debug.equiposCoincidenJugador += 1;
-      if (eq.torneo_id != null) played.add(eq.torneo_id);
-    }
+  const equiposJugador = await fetchEquiposJugador(perfil);
+  debug.equiposCoincidenJugador = equiposJugador.length;
+  for (const eq of equiposJugador) {
+    if (eq.torneo_id != null) played.add(eq.torneo_id);
   }
+
+  const equipoIds = [...new Set(equiposJugador.map((eq) => eq.id).filter(Boolean))];
 
   const playedArr = [...played].filter((x) => x != null);
   console.log('[PerfilPublico] estadísticas debug', {
     ...debug,
+    equipoIdsCoincidenJugador: equipoIds.length,
     torneoIdsResultantes: playedArr,
     cantidadTorneos: playedArr.length,
   });
 
-  return playedArr;
+  return { torneoIds: playedArr, equipoIds };
 }
 
 /**
  * Suma **todos** los `puntos` en `tabla_puntos` del jugador (coincidencia por `user_id` o `email` en `equipos.jugadores`),
  * sin filtrar por sede, nivel ni torneo.
  */
-async function sumarPuntosTablaPuntosGlobalJugador(perfil) {
-  const PAGE = 800;
-  let offset = 0;
+async function sumarPuntosTablaPuntosGlobalJugador(equipoIds, perfil) {
   let total = 0;
-  let filasEvaluadas = 0;
-  let filasSumadas = 0;
-  const eqCache = new Map();
-
-  while (true) {
-    const { data: tpRows, error } = await supabase
-      .from('tabla_puntos')
-      .select('equipo_id, puntos')
-      .order('id', { ascending: true })
-      .range(offset, offset + PAGE - 1);
-
-    if (error) {
-      console.error('[PerfilPublico] suma global tabla_puntos', error);
-      break;
-    }
-    if (!tpRows?.length) break;
-
-    const eqIds = [...new Set(tpRows.map((r) => r.equipo_id).filter(Boolean))];
-    const eqIdsNuevos = eqIds.filter((id) => !eqCache.has(id));
-    if (eqIdsNuevos.length) {
-      const { data: eqRows, error: errEq } = await supabase
-        .from('equipos')
-        .select('id, jugadores')
-        .in('id', eqIdsNuevos);
-      if (errEq) {
-        console.error('[PerfilPublico] equipos (suma global)', errEq);
-      } else {
-        (eqRows || []).forEach((e) => {
-          eqCache.set(e.id, e);
-        });
-      }
-    }
-
-    for (const pr of tpRows) {
-      filasEvaluadas += 1;
-      const eq = eqCache.get(pr.equipo_id);
-      if (eq && jugadorEnEquipo(eq.jugadores, perfil)) {
-        total += Number(pr.puntos) || 0;
-        filasSumadas += 1;
-      }
-    }
-
-    if (tpRows.length < PAGE) break;
-    offset += PAGE;
+  if (!Array.isArray(equipoIds) || !equipoIds.length) {
+    console.log('[PerfilPublico] puntos totales (tabla_puntos global)', {
+      total: 0,
+      filasEvaluadas: 0,
+      filasSumadas: 0,
+      equipoIdsConsiderados: 0,
+      'perfil.user_id': perfil?.user_id ?? null,
+      'perfil.email': perfil?.email ?? null,
+    });
+    return 0;
   }
+
+  const { data: rows, error } = await supabase
+    .from('tabla_puntos')
+    .select('equipo_id, puntos')
+    .in('equipo_id', equipoIds);
+  if (error) {
+    console.error('[PerfilPublico] suma global tabla_puntos por equipo_id', error);
+    return 0;
+  }
+  const puntosRows = rows || [];
+  for (const r of puntosRows) total += Number(r.puntos) || 0;
 
   console.log('[PerfilPublico] puntos totales (tabla_puntos global)', {
     total,
-    filasEvaluadas,
-    filasSumadas,
+    filasEvaluadas: puntosRows.length,
+    filasSumadas: puntosRows.length,
+    equipoIdsConsiderados: equipoIds.length,
     'perfil.user_id': perfil?.user_id ?? null,
     'perfil.email': perfil?.email ?? null,
   });
@@ -204,10 +182,8 @@ async function sumarPuntosTablaPuntosGlobalJugador(perfil) {
  * Torneos jugados, puntos totales (suma global en `tabla_puntos`) y últimos 3 torneos con posición/puntos (según torneos detectados).
  */
 async function fetchEstadisticasYUltimosTorneos(perfil) {
-  const [puntosTotales, playedArr] = await Promise.all([
-    sumarPuntosTablaPuntosGlobalJugador(perfil),
-    torneoIdsJugadosPorPerfil(perfil),
-  ]);
+  const { torneoIds: playedArr, equipoIds } = await torneoIdsJugadosPorPerfil(perfil);
+  const puntosTotales = await sumarPuntosTablaPuntosGlobalJugador(equipoIds, perfil);
 
   if (!playedArr.length) {
     console.log('[PerfilPublico] estadísticas debug', {
@@ -542,7 +518,6 @@ export default function PerfilPublico() {
   const fotoUrlPerfil = tieneFotoUrl ? String(perfil.foto_url).trim() : '';
   /** Club habitual: solo `perfil.ciudad`. */
   const clubCiudadTrim = perfil?.ciudad != null ? String(perfil.ciudad).trim() : '';
-  const clubHabitualMostrado = clubCiudadTrim ? `Club habitual: ${clubCiudadTrim}` : 'Sin definir';
   /** Ciudad/lugar en UI: solo `perfil.localidad`. */
   const localidadTrim = perfil?.localidad != null ? String(perfil.localidad).trim() : '';
   /** Federado: solo `perfil.es_federado`. */
@@ -700,15 +675,18 @@ export default function PerfilPublico() {
           >
             <div
               style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
                 padding: '8px 0',
                 borderBottom: '1px solid #f1f5f9',
               }}
             >
-              {clubCiudadTrim ? (
-                <span style={{ fontSize: '13px', color: '#777', fontWeight: 400 }}>{clubHabitualMostrado}</span>
-              ) : (
-                <span style={{ fontSize: '13px', color: '#777', fontWeight: 400 }}>Sin definir</span>
-              )}
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Club habitual</span>
+              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+                {clubCiudadTrim ? clubCiudadTrim : <span style={{ color: '#94a3b8' }}>Sin definir</span>}
+              </span>
             </div>
             <div
               style={{
@@ -878,7 +856,18 @@ export default function PerfilPublico() {
                       gap: '6px',
                     }}
                   >
-                    <span aria-hidden>📸</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="url(#igGrad)">
+                      <defs>
+                        <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#f09433" />
+                          <stop offset="25%" stopColor="#e6683c" />
+                          <stop offset="50%" stopColor="#dc2743" />
+                          <stop offset="75%" stopColor="#cc2366" />
+                          <stop offset="100%" stopColor="#bc1888" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.975.975 1.246 2.242 1.308 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.975.975-2.242 1.246-3.608 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.975-.975-1.246-2.242-1.308-3.608C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608.975-.975 2.242-1.246 3.608-1.308 1.266-.058 1.646-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-1.635.074-3.078.46-4.244 1.628C1.641 2.867 1.255 4.31 1.181 5.945 1.123 7.225 1.109 7.633 1.109 12c0 4.367.014 4.775.072 6.055.074 1.635.46 3.078 1.628 4.244 1.166 1.168 2.609 1.554 4.244 1.628 1.28.058 1.688.072 4.947.072s3.667-.014 4.947-.072c1.635-.074 3.078-.46 4.244-1.628 1.168-1.166 1.554-2.609 1.628-4.244.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.074-1.635-.46-3.078-1.628-4.244C19.325 1.641 17.882 1.255 16.247 1.181 14.967 1.123 14.559 1.109 12 1.109zM12 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
+                    </svg>
                     <span>Instagram</span>
                   </a>
                 ) : (
