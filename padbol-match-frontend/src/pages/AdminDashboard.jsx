@@ -697,33 +697,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }
 
   const diaHoy = new Date().getDate();
-  const calendarioTabIcon = (
-    <span
-      aria-hidden
-      style={{
-        display: 'inline-flex',
-        width: 16,
-        height: 16,
-        borderRadius: 4,
-        background: '#fff',
-        color: '#1f2937',
-        fontSize: 10,
-        fontWeight: 800,
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '1px solid rgba(15,23,42,0.28)',
-        lineHeight: 1,
-        marginRight: 5,
-      }}
-    >
-      {diaHoy}
-    </span>
-  );
 
   const TABS = [
     { id: 'resumen',      label: '📊 Resumen' },
     { id: 'torneos',      label: '🏆 Torneos' },
-    { id: 'reservas',     label: <span style={{ display: 'inline-flex', alignItems: 'center' }}>{calendarioTabIcon}Reservas</span> },
+    { id: 'reservas',     label: `📅 ${diaHoy} Reservas` },
     { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
     ...(puedeVerMiSede  ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
     ...(puedeVerConfig  ? [{ id: 'config',  label: '⚙️ Config' }]  : []),
@@ -1184,6 +1162,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
             return (
               <div style={{ display: 'grid', gap: '16px' }}>
+                <div style={{ display: 'grid', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap', paddingBottom: '2px' }}>
                   {[
                     { id: 'hoy', label: 'Hoy' },
@@ -1211,22 +1190,24 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       {opt.label}
                     </button>
                   ))}
-                  {superAdminPeriodo === 'dia' ? (
-                    <input
-                      type="date"
-                      value={superAdminFechaEspecifica}
-                      onChange={(e) => setSuperAdminFechaEspecifica(e.target.value)}
-                      style={{
-                        padding: '5px 8px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '11px',
-                        color: '#334155',
-                        background: '#fff',
-                        flexShrink: 0,
-                      }}
-                    />
-                  ) : null}
+                </div>
+                {superAdminPeriodo === 'dia' ? (
+                  <input
+                    type="date"
+                    value={superAdminFechaEspecifica}
+                    onChange={(e) => setSuperAdminFechaEspecifica(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '16px',
+                      color: '#334155',
+                      background: '#fff',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                ) : null}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
