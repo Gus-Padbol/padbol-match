@@ -86,7 +86,6 @@ async function torneoIdsJugadosPorPerfil(perfil) {
   const uid = perfil?.user_id != null && String(perfil.user_id).trim() !== '' ? String(perfil.user_id).trim() : '';
   const emailPerfil = perfil?.email != null ? String(perfil.email).trim() : '';
   const em = normalizeEmailStr(perfil?.email || '');
-  const rawEmLower = emailPerfil.toLowerCase();
   const played = new Set();
 
   const debug = {
@@ -94,10 +93,8 @@ async function torneoIdsJugadosPorPerfil(perfil) {
     'perfil.email (raw)': emailPerfil || null,
     'perfil.email (normalizado)': em || null,
     jugadoresTorneoFilas: 0,
-    equiposPorContainsId: 0,
-    equiposPorContainsEmailNorm: 0,
-    equiposPorContainsEmailRaw: 0,
-    equiposPorIlikeJugadores: 0,
+    equiposTotalesLeidos: 0,
+    equiposCoincidenJugador: 0,
   };
 
   if (em) {
@@ -109,58 +106,24 @@ async function torneoIdsJugadosPorPerfil(perfil) {
     });
   }
 
-  const mergeEq = (list) => {
-    (list || []).forEach((r) => {
-      if (r.torneo_id != null) played.add(r.torneo_id);
-    });
-  };
-
-  /** Equipos: primero `perfil.user_id` en JSON `jugadores[].id`; si no hay filas, `perfil.email` en `jugadores[].email`. */
-  if (uid) {
-    const { data, error } = await supabase.from('equipos').select('torneo_id').contains('jugadores', [{ id: uid }]);
-    if (error) console.warn('[PerfilPublico] equipos contains id', error);
-    const rows = data || [];
-    debug.equiposPorContainsId = rows.length;
-    mergeEq(rows);
-  }
-
-  if (em) {
-    const { data, error } = await supabase.from('equipos').select('torneo_id').contains('jugadores', [{ email: em }]);
-    if (error) console.warn('[PerfilPublico] equipos contains email norm', error);
-    const rows = data || [];
-    debug.equiposPorContainsEmailNorm = rows.length;
-    mergeEq(rows);
-  }
-
-  if (emailPerfil && rawEmLower !== em) {
-    const { data, error } = await supabase
-      .from('equipos')
-      .select('torneo_id')
-      .contains('jugadores', [{ email: rawEmLower }]);
-    if (error) console.warn('[PerfilPublico] equipos contains email raw lower', error);
-    const rows = data || [];
-    debug.equiposPorContainsEmailRaw = rows.length;
-    mergeEq(rows);
-  }
-
-  /** Respaldo: texto JSON contiene email o user_id (mayúsculas / espacios en JSON). */
-  const needlesIlike = [...new Set([em, uid, emailPerfil].filter(Boolean))];
-  let ilikeFilasTotal = 0;
-  for (const needle of needlesIlike) {
-    const esc = String(needle).replace(/%/g, '\\%').replace(/_/g, '\\_');
-    const { data, error } = await supabase
-      .from('equipos')
-      .select('torneo_id')
-      .filter('jugadores', 'ilike', `%${esc}%`);
-    if (error) {
-      console.warn('[PerfilPublico] equipos ilike jugadores (opcional)', needle, error);
-    } else {
-      const rows = data || [];
-      ilikeFilasTotal += rows.length;
-      mergeEq(rows);
+  /**
+   * Importante: NO usar contains/ilike sobre `equipos.jugadores` (JSONB).
+   * Se leen todos los equipos y se filtra en JavaScript con `jugadorEnEquipo`.
+   */
+  const { data: equiposRows, error: equiposErr } = await supabase
+    .from('equipos')
+    .select('torneo_id, jugadores');
+  if (equiposErr) {
+    console.warn('[PerfilPublico] equipos (lectura completa para filtrar en JS)', equiposErr);
+  } else {
+    const rows = equiposRows || [];
+    debug.equiposTotalesLeidos = rows.length;
+    for (const eq of rows) {
+      if (!jugadorEnEquipo(eq.jugadores, perfil)) continue;
+      debug.equiposCoincidenJugador += 1;
+      if (eq.torneo_id != null) played.add(eq.torneo_id);
     }
   }
-  debug.equiposPorIlikeJugadores = ilikeFilasTotal;
 
   const playedArr = [...played].filter((x) => x != null);
   console.log('[PerfilPublico] estadísticas debug', {
@@ -758,9 +721,19 @@ export default function PerfilPublico() {
               }}
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, flexShrink: 0 }}>
-                {companeroDisplay?.kind === 'ultimo' ? 'Último compañero' : 'Compañero habitual'}
+                {companeroDisplay?.kind === 'ultimo' ? 'Último compañero: ' : 'Compañero habitual: '}
               </span>
-              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+              <span
+                style={{
+                  fontSize: '14px',
+                  color: '#0f172a',
+                  textAlign: 'right',
+                  display: 'inline-flex',
+                  justifyContent: 'flex-end',
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
                 {companeroDisplay?.row ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
                     {companeroDisplay.row.foto_url ? (
@@ -797,7 +770,7 @@ export default function PerfilPublico() {
                     )}
                   </span>
                 ) : (
-                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                  <span style={{ color: '#94a3b8', textAlign: 'right', width: '100%' }}>Sin definir</span>
                 )}
               </span>
             </div>
