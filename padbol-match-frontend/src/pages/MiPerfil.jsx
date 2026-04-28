@@ -248,6 +248,7 @@ export default function MiPerfil() {
     lateralidad: 'Diestro',
     nivel: '5ta',
     pais: '',
+    localidad: '',
     ciudad: '',
     alias: '',
     instagram: '',
@@ -496,6 +497,7 @@ export default function MiPerfil() {
           lateralidad: data.lateralidad || 'Diestro',
           nivel: data.nivel || '5ta',
           pais: data.pais || '',
+          localidad: data.localidad != null ? String(data.localidad) : '',
           ciudad: data.ciudad || '',
           alias: data.alias != null ? String(data.alias) : '',
           instagram: instagramHandleFromStored(data.instagram_url),
@@ -670,6 +672,7 @@ export default function MiPerfil() {
           foto_url: fotoUrlGuardada,
           instagram_url: instagramUrlFromHandle(formData.instagram),
           companero_id: formData.companero_id || null,
+          localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         };
         const { data: inserted, error: insErr } = await supabase
           .from('jugadores_perfil')
@@ -842,6 +845,7 @@ export default function MiPerfil() {
         nivel: formData.nivel,
         pendiente_validacion: true,
         pais: paisGuardado,
+        localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
         numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
@@ -953,6 +957,7 @@ export default function MiPerfil() {
         nivel: formData.nivel,
         pendiente_validacion: true,
         pais: paisGuardado,
+        localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
 
         fecha_nacimiento: formData.fecha_nacimiento || null,
@@ -1527,6 +1532,17 @@ export default function MiPerfil() {
                 </>
               ) : null}
 
+              <label style={guestLabelStyle}>Ciudad</label>
+              <input
+                type="text"
+                name="localidad"
+                placeholder="Ej: La Plata, Buenos Aires, Madrid..."
+                value={formData.localidad}
+                onChange={handleChange}
+                style={{ ...guestInputStyle, marginBottom: '14px' }}
+                autoComplete="address-level2"
+              />
+
               <label style={guestLabelStyle}>Club habitual</label>
               <input
                 type="text"
@@ -1832,6 +1848,11 @@ export default function MiPerfil() {
             {paisFlag} <span style={{ color: '#555', fontSize: '14px' }}>{paisNombre}</span>
           </p>
         )}
+        {perfil && !editando && String(perfil.localidad || perfil.ciudad_residencia || '').trim() ? (
+          <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>
+            📍 {String(perfil.localidad || perfil.ciudad_residencia).trim()}
+          </p>
+        ) : null}
         {perfil?.ciudad && (
           <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>
             Club habitual: {perfil.ciudad}
@@ -2129,6 +2150,17 @@ export default function MiPerfil() {
               </>
             ) : null}
 
+            <label style={labelStyle}>Ciudad</label>
+            <input
+              type="text"
+              name="localidad"
+              placeholder="Ej: La Plata, Buenos Aires, Madrid..."
+              value={formData.localidad}
+              onChange={handleChange}
+              style={{ ...inputStyle, marginBottom: '14px' }}
+              autoComplete="address-level2"
+            />
+
             <label style={labelStyle}>Club habitual</label>
             <input
               type="text"
@@ -2344,6 +2376,7 @@ export default function MiPerfil() {
                     lateralidad: perfil?.lateralidad || prev.lateralidad,
                     nivel: perfil?.nivel || prev.nivel,
                     pais: perfil?.pais || '',
+                    localidad: perfil?.localidad != null ? String(perfil.localidad) : '',
                     ciudad: perfil?.ciudad || '',
                     alias: perfil?.alias != null ? String(perfil.alias) : '',
                     instagram: instagramHandleFromStored(perfil?.instagram_url),
