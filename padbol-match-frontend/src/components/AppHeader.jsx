@@ -47,6 +47,7 @@ export default function AppHeader({
   const authEmail = String(session?.user?.email || '').trim().toLowerCase();
   const showLogout = !hideLogoutEffective && Boolean(session?.user);
   const showAdmin = !hideLogoutEffective && authEmail === 'padbolinternacional@gmail.com';
+  const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
 
@@ -186,9 +187,9 @@ export default function AppHeader({
             {showAdmin ? (
               <button
                 type="button"
-                onClick={() => navigate('/admin')}
-                aria-label="Ir a Admin"
-                title="Admin"
+                onClick={() => navigate(isOnAdmin ? '/' : '/admin')}
+                aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
+                title={isOnAdmin ? 'Volver a la app' : 'Admin'}
                 style={{
                   height: LOGOUT_BTN_SIZE,
                   padding: '0 10px',
@@ -206,7 +207,7 @@ export default function AppHeader({
                   flexShrink: 0,
                 }}
               >
-                ⚙️ Admin
+                {isOnAdmin ? '← App' : '⚙️ Admin'}
               </button>
             ) : null}
             {showLogout ? (

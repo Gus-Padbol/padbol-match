@@ -875,24 +875,32 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const paisSede = String(sede?.pais || '').trim();
               const ubicacionSede = [ciudadSede, paisSede].filter(Boolean).join(', ');
               const NIVEL_COLOR = {
-                nacional:        { bg: '#f3f4f6', color: '#374151' },
-                club_no_oficial: { bg: '#f5f3ff', color: '#6d28d9' },
-                club_oficial:    { bg: '#ede9fe', color: '#5b21b6' },
-                internacional:   { bg: '#dbeafe', color: '#1e40af' },
-                mundial:         { bg: '#fef3c7', color: '#92400e' },
+                club:          { bg: '#e2e8f0', color: '#475569' },
+                nacional:      { bg: '#dbeafe', color: '#1e40af' },
+                internacional: { bg: '#ede9fe', color: '#5b21b6' },
+                fipa:          { bg: '#fef3c7', color: '#b45309' },
               };
               const FORMATO_COLOR = {
                 round_robin:     { bg: '#ede9fe', color: '#5b21b6' },
                 knockout:        { bg: '#fee2e2', color: '#991b1b' },
                 grupos_knockout: { bg: '#e0e7ff', color: '#3730a3' },
               };
-              const nivelColor   = NIVEL_COLOR[torneo.nivel_torneo]  || { bg: '#f3f4f6', color: '#374151' };
+              const nivelTorneoRaw = String(torneo.nivel_torneo || '').trim().toLowerCase();
+              const nivelCanonico = (
+                nivelTorneoRaw === 'club_no_oficial' || nivelTorneoRaw === 'club_oficial'
+              ) ? 'club' : (
+                nivelTorneoRaw === 'mundial'
+              ) ? 'fipa' : nivelTorneoRaw;
+              const nivelColor   = NIVEL_COLOR[nivelCanonico] || { bg: '#e2e8f0', color: '#475569' };
               const formatoColor = FORMATO_COLOR[torneo.tipo_torneo]  || { bg: '#f3f4f6', color: '#374151' };
+              const estadoRaw = String(torneo.estado || '').trim().toLowerCase();
+              const estadoCanonico = estadoRaw === 'activo' ? 'en_curso' : estadoRaw;
               const estadoBadge  = {
-                planificacion: { bg: '#e5e7eb', color: '#374151', label: 'Planificación' },
-                en_curso:      { bg: '#dbeafe', color: '#1d4ed8', label: 'En curso'      },
-                finalizado:    { bg: '#fef3c7', color: '#92400e', label: 'Finalizado'    },
-              }[torneo.estado] || { bg: '#e5e7eb', color: '#374151', label: torneo.estado };
+                planificacion: { bg: '#e2e8f0', color: '#475569', label: 'Planificación' },
+                en_curso:      { bg: '#dcfce7', color: '#166534', label: 'En curso'      },
+                finalizado:    { bg: '#dbeafe', color: '#1e40af', label: 'Finalizado'    },
+                cancelado:     { bg: '#fee2e2', color: '#991b1b', label: 'Cancelado'     },
+              }[estadoCanonico] || { bg: '#e2e8f0', color: '#475569', label: torneo.estado };
               // Shared badge style — fixed 120px, centered
               const badge = (bg, col) => ({
                 background: bg, color: col,
