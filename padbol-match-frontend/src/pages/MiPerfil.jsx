@@ -74,6 +74,35 @@ function emailValidoVisible(raw) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
+/** Inicial para avatar circular cuando no hay `foto_url`. */
+function inicialDesdeNombreCompanero(raw) {
+  const s = String(raw || '').trim();
+  for (let i = 0; i < s.length; i += 1) {
+    const ch = s[i];
+    if (/[A-Za-zÀ-ÿÁÉÍÓÚÑáéíóúñ0-9]/.test(ch)) return ch.toUpperCase();
+  }
+  return '?';
+}
+
+function nombreCompletoCompaneroOp(op) {
+  const n = String(op?.nombre || '').trim();
+  if (n) return n;
+  return String(op?.alias || '').trim() || 'Jugador';
+}
+
+function etiquetaCompaneroNombreYAlias(op) {
+  const nombre = nombreCompletoCompaneroOp(op);
+  const al = String(op?.alias || '').trim();
+  return al ? `${nombre} (@${al})` : nombre;
+}
+
+function escapeIlikeLiteral(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
+}
+
 const CATEGORIA_COLOR = {
   Principiante: '#78909c',
   '5ta':        '#43a047',
@@ -270,6 +299,9 @@ export default function MiPerfil() {
   const [perfilCompaneroDisplay, setPerfilCompaneroDisplay] = useState(null);
   const [companeroSeleccionado, setCompaneroSeleccionado] = useState(null);
   const companeroSearchSeqRef = useRef(0);
+  const [aliasDuplicado, setAliasDuplicado] = useState(false);
+  const [aliasVerificando, setAliasVerificando] = useState(false);
+  const aliasCheckSeqRef = useRef(0);
 
   const nivelTorneoScope = useMemo(
     () => normalizeNivelTorneoScope(torneoPerfil?.nivel_torneo),
@@ -435,6 +467,45 @@ export default function MiPerfil() {
     }, 280);
     return () => clearTimeout(handle);
   }, [editando, companeroBusqueda, session?.user?.id]);
+
+  /** Comprueba que el alias no esté tomado por otro jugador (mismo `user_id` excluido). */
+  useEffect(() => {
+    if (!editando) {
+      setAliasDuplicado(false);
+      setAliasVerificando(false);
+      return;
+    }
+    const raw = String(formData.alias || '').trim();
+    if (!raw) {
+      setAliasDuplicado(false);
+      setAliasVerificando(false);
+      return;
+    }
+    const seq = ++aliasCheckSeqRef.current;
+    setAliasVerificando(true);
+    const handle = setTimeout(async () => {
+      const uid = session?.user?.id;
+      if (!uid) {
+        if (seq === aliasCheckSeqRef.current) setAliasVerificando(false);
+        return;
+      }
+      const literal = escapeIlikeLiteral(raw);
+      const { data, error } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id')
+        .ilike('alias', literal)
+        .neq('user_id', String(uid))
+        .limit(1);
+      if (seq !== aliasCheckSeqRef.current) return;
+      setAliasVerificando(false);
+      if (error) {
+        setAliasDuplicado(false);
+        return;
+      }
+      setAliasDuplicado(Array.isArray(data) && data.length > 0);
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [editando, formData.alias, session?.user?.id]);
 
   useEffect(() => {
     if (sessionOwnerEmail) return;
@@ -964,6 +1035,14 @@ export default function MiPerfil() {
       const np = String(nombreTorneoCompleto).trim().split(/\s+/).filter(Boolean);
       if (np.length < 2) {
         setErrorMsg('Completa nombre y apellido.');
+        return;
+      }
+
+      if (String(formData.alias || '').trim() && aliasDuplicado) {
+        setErrorMsg('Este alias ya está en uso, elegí otro.');
+        return;
+      }
+      if (String(formData.alias || '').trim() && aliasVerificando) {
         return;
       }
 
@@ -2035,9 +2114,27 @@ export default function MiPerfil() {
               value={formData.alias}
               onChange={handleChange}
               placeholder="Alias (opcional)"
-              style={{ ...inputStyle, marginBottom: '14px' }}
+              style={{
+                ...inputStyle,
+                marginBottom: aliasDuplicado ? '6px' : '14px',
+                borderColor: aliasDuplicado ? '#f87171' : undefined,
+              }}
               autoComplete="nickname"
             />
+            {aliasDuplicado ? (
+              <p
+                style={{
+                  color: '#dc2626',
+                  fontSize: '13px',
+                  marginTop: '-8px',
+                  marginBottom: '14px',
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                }}
+              >
+                Este alias ya está en uso, elegí otro.
+              </p>
+            ) : null}
 
             <label style={labelStyle}>Instagram</label>
             <div
@@ -2224,16 +2321,35 @@ export default function MiPerfil() {
                   border: '1px solid #e2e8f0',
                 }}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontSize: '14px', minWidth: 0 }}>
                   {companeroSeleccionado.foto_url ? (
                     <img
                       src={companeroSeleccionado.foto_url}
                       alt=""
-                      style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                      style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                     />
-                  ) : null}
-                  <span style={{ fontWeight: 700, color: '#334155' }}>
-                    @{String(companeroSeleccionado.alias || '').trim() || '—'}
+                  ) : (
+                    <div
+                      aria-hidden
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        flexShrink: 0,
+                        borderRadius: '50%',
+                        background: '#7c3aed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: '14px',
+                      }}
+                    >
+                      {inicialDesdeNombreCompanero(nombreCompletoCompaneroOp(companeroSeleccionado))}
+                    </div>
+                  )}
+                  <span style={{ fontWeight: 700, color: '#334155', minWidth: 0, lineHeight: 1.3 }}>
+                    {etiquetaCompaneroNombreYAlias(companeroSeleccionado)}
                   </span>
                 </span>
                 <button
@@ -2299,7 +2415,7 @@ export default function MiPerfil() {
                       <li style={{ padding: '10px 12px', fontSize: '13px', color: '#64748b' }}>Buscando…</li>
                     ) : null}
                     {companeroOpciones.map((op) => {
-                      const al = String(op.alias || '').trim();
+                      const nom = nombreCompletoCompaneroOp(op);
                       return (
                         <li key={op.user_id}>
                           <button
@@ -2324,18 +2440,41 @@ export default function MiPerfil() {
                               textAlign: 'left',
                             }}
                           >
-                            <img
-                              src={op.foto_url || '/default-avatar.svg'}
-                              alt=""
-                              style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                flexShrink: 0,
-                              }}
-                            />
-                            <span style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>@{al}</span>
+                            {op.foto_url ? (
+                              <img
+                                src={op.foto_url}
+                                alt=""
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '50%',
+                                  objectFit: 'cover',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            ) : (
+                              <div
+                                aria-hidden
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  flexShrink: 0,
+                                  borderRadius: '50%',
+                                  background: '#7c3aed',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#fff',
+                                  fontWeight: 800,
+                                  fontSize: '14px',
+                                }}
+                              >
+                                {inicialDesdeNombreCompanero(nom)}
+                              </div>
+                            )}
+                            <span style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', lineHeight: 1.3, minWidth: 0 }}>
+                              {etiquetaCompaneroNombreYAlias(op)}
+                            </span>
                           </button>
                         </li>
                       );
@@ -2377,8 +2516,27 @@ export default function MiPerfil() {
             {errorMsg && <p style={{ color: 'red', marginBottom: '10px' }}>{errorMsg}</p>}
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" disabled={isSubmitting}
-                style={{ flex: 1, padding: '11px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', opacity: isSubmitting ? 0.6 : 1 }}>
+              <button
+                type="submit"
+                disabled={
+                  isSubmitting ||
+                  (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                }
+                style={{
+                  flex: 1,
+                  padding: '11px',
+                  background: '#d32f2f',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  opacity:
+                    isSubmitting || (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                      ? 0.6
+                      : 1,
+                }}
+              >
                 {isSubmitting
                   ? 'Guardando...'
                   : torneoIdValido
@@ -2390,6 +2548,8 @@ export default function MiPerfil() {
                 onClick={() => {
                   pendingFotoFileRef.current = null;
                   setFotoPendienteDeSubir(false);
+                  setAliasDuplicado(false);
+                  setAliasVerificando(false);
                   setEditando(false);
                   setErrorMsg('');
                   setFotoPreview((prev) => {
