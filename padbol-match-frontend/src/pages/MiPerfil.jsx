@@ -57,7 +57,6 @@ function miPerfilPageOuterStyle(paddingTopPx) {
     fontFamily: 'Arial',
     paddingTop: `${paddingTopPx}px`,
     paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
-    overflowX: 'hidden',
     width: '100%',
     maxWidth: '100%',
     boxSizing: 'border-box',
@@ -179,6 +178,8 @@ export default function MiPerfil() {
   const [zoom, setZoom] = useState(1);
   const [cropAreaListo, setCropAreaListo] = useState(false);
   const croppedAreaPixelsRef = useRef(null);
+  /** Valor inline de `body.style.overflow` antes de abrir el modal de recorte (restaurar al cerrar). */
+  const cropModalBodyOverflowPrevRef = useRef('');
   const fileInputRef = useRef(null);
   /** Archivo elegido hasta guardar (subida a Storage al confirmar el formulario). */
   const pendingFotoFileRef = useRef(null);
@@ -198,10 +199,11 @@ export default function MiPerfil() {
 
   useEffect(() => {
     if (!cropModalOpen) return;
-    const prev = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
+    cropModalBodyOverflowPrevRef.current = prevOverflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = cropModalBodyOverflowPrevRef.current;
     };
   }, [cropModalOpen]);
 
@@ -558,6 +560,7 @@ export default function MiPerfil() {
   };
 
   const cerrarModalRecorte = useCallback(() => {
+    document.body.style.overflow = cropModalBodyOverflowPrevRef.current;
     setCropModalOpen(false);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
