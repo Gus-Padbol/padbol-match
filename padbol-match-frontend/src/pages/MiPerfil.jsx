@@ -369,7 +369,7 @@ export default function MiPerfil() {
     };
   }, [editando, formData.companero_id]);
 
-  /** Búsqueda de compañero por alias (debounce). */
+  /** Búsqueda de compañero por alias, nombre o apellido (debounce). */
   useEffect(() => {
     if (!editando) {
       setCompaneroOpciones([]);
@@ -388,10 +388,8 @@ export default function MiPerfil() {
       const term = raw.replace(/[%_\\]/g, '');
       let q = supabase
         .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre')
-        .not('alias', 'is', null)
-        .neq('alias', '')
-        .ilike('alias', `%${term}%`)
+        .select('user_id, alias, foto_url, nombre, apellido')
+        .or(`alias.ilike.%${term}%,nombre.ilike.%${term}%,apellido.ilike.%${term}%`)
         .limit(12);
       const myUid = session?.user?.id;
       if (myUid) q = q.neq('user_id', myUid);
