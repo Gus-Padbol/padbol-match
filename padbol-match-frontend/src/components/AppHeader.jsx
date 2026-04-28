@@ -163,11 +163,12 @@ export default function AppHeader({
       <div
         style={{
           display: 'flex',
-          justifyContent: miPerfilLogoutSpacing ? 'flex-end' : 'flex-start',
+          justifyContent: showLogout || showAdmin ? 'flex-end' : (miPerfilLogoutSpacing ? 'flex-end' : 'flex-start'),
           alignItems: 'center',
           minWidth: 0,
           width: '100%',
           marginLeft: miPerfilLogoutSpacing ? 'auto' : undefined,
+          marginRight: showLogout || showAdmin ? '16px' : 0,
           paddingLeft: miPerfilLogoutSpacing ? '8px' : 0,
           paddingRight: miPerfilLogoutSpacing ? '8px' : 0,
           boxSizing: 'border-box',
