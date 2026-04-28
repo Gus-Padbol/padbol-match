@@ -387,9 +387,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       // Cargar sedes primero para poder resolver moneda por sede
       let sedesData = [];
       try {
-        const sedesRes = await fetch(`${apiBaseUrl}/api/sedes`);
-        if (sedesRes.ok) {
-          sedesData = await sedesRes.json() || [];
+        const { data: sedesRows, error: sedesErr } = await supabase
+          .from('sedes')
+          .select('id, nombre, ciudad, pais, moneda');
+        if (!sedesErr) {
+          sedesData = sedesRows || [];
 
           // Filter sedes by role scope
           if (esAdminClub && sedeId) {
@@ -1134,6 +1136,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
               const sedeInfo = sedesMap?.[r?.sede_id];
               const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
+              const ciudad = String(sedeInfo?.ciudad || '').trim() || 'Sin definir';
               const moneda = getMonedaCanonica(r?.moneda);
               const precio = Number(r?.precio) || 0;
               if (Object.prototype.hasOwnProperty.call(ingresosMes, moneda)) ingresosMes[moneda] += precio;
@@ -1142,6 +1145,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 porSede.set(sedeNombre, {
                   sede: sedeNombre,
                   pais,
+                  ciudad,
                   reservasCount: 0,
                   ingresos: { ARS: 0, USD: 0, EUR: 0 },
                   rows: [],
@@ -1231,6 +1235,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <thead>
                         <tr style={{ background: '#f8fafc' }}>
                           <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Sede</th>
+                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ciudad</th>
                           <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>País</th>
                           <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Reservas del mes</th>
                           <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ingresos del mes</th>
@@ -1244,7 +1249,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             <React.Fragment key={g.sede}>
                               <tr style={{ borderTop: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{g.sede}</td>
-                                <td style={{ padding: '10px 12px', color: '#475569' }}>{g.pais}</td>
+                                <td style={{ padding: '10px 12px', color: '#475569' }}>{g.ciudad}</td>
+                                <td style={{ padding: '10px 12px', color: '#475569' }}>
+                                  {(() => {
+                                    const flag = sedeFlag({ pais: g.pais });
+                                    return flag ? `${flag} ${g.pais}` : g.pais;
+                                  })()}
+                                </td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right', color: '#0f172a', fontWeight: 700 }}>{g.reservasCount}</td>
                                 <td style={{ padding: '10px 12px', color: '#334155', fontWeight: 600 }}>{fmtIngresos(g.ingresos)}</td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right' }}>
@@ -1259,7 +1270,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               </tr>
                               {open ? (
                                 <tr>
-                                  <td colSpan={5} style={{ padding: '10px 12px', background: '#f8fafc' }}>
+                                  <td colSpan={6} style={{ padding: '10px 12px', background: '#f8fafc' }}>
                                     <div style={{ display: 'grid', gap: '6px' }}>
                                       {g.rows.map((r) => (
                                         <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 120px 1fr 1fr 110px', gap: '8px', fontSize: '12px', color: '#334155', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
