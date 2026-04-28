@@ -2186,7 +2186,7 @@ export default function MiPerfil() {
                 onBlur={() => {
                   window.setTimeout(() => setCompaneroMenuAbierto(false), 180);
                 }}
-                placeholder="Buscar por nombre, apellido o alias..."
+                placeholder="Buscar por nombre o alias..."
                 autoComplete="off"
                 spellCheck={false}
                 style={{ ...inputStyle, marginBottom: 0 }}
