@@ -692,7 +692,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     <div className="admin-dashboard" style={{ paddingTop: '8px', paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader title="" showBack={false} />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '16px' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '56px' }}>
           <img
             src="/logo-padbol-match.png"
             alt="Padbol Match"
