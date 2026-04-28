@@ -387,6 +387,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const fetchData = async () => {
     try {
+      const superAdminByEmail = currentEmail === 'padbolinternacional@gmail.com';
       // Cargar sedes primero para poder resolver moneda por sede
       let sedesData = [];
       try {
@@ -395,20 +396,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           .select('id, nombre, ciudad, pais, moneda');
         if (!sedesErr) {
           sedesData = sedesRows || [];
-
-          // Filter sedes by role scope
-          if (esAdminClub && sedeId) {
-            sedesData = sedesData.filter(s => s.id === sedeId);
+          if (isSuperAdmin || superAdminByEmail) {
+            console.log('[Admin] sedes para super admin', sedesData);
+          } else {
+            console.log('[Admin] sedes cargadas', sedesData);
           }
-          // admin_nacional: filter by pais (stored in user_role_data)
-          const roleData = (() => { try { return JSON.parse(localStorage.getItem('user_role_data') || '{}'); } catch { return {}; } })();
-          if (esAdminNacional && roleData.pais) {
-            sedesData = sedesData.filter(s => s.pais && s.pais.includes(roleData.pais.replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim()));
+
+          // Filter sedes by role scope only when it's not super admin.
+          if (!(isSuperAdmin || superAdminByEmail)) {
+            if (esAdminClub && sedeId) {
+              sedesData = sedesData.filter(s => s.id === sedeId);
+            }
+            // admin_nacional: filter by pais (stored in user_role_data)
+            const roleData = (() => { try { return JSON.parse(localStorage.getItem('user_role_data') || '{}'); } catch { return {}; } })();
+            if (esAdminNacional && roleData.pais) {
+              sedesData = sedesData.filter(s => s.pais && s.pais.includes(roleData.pais.replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim()));
+            }
           }
 
           const nextSedesMap = {};
           sedesData.forEach((s) => { nextSedesMap[s.id] = s; });
           setSedesMap(nextSedesMap);
+          console.log('[Admin] sedesMap', nextSedesMap);
         }
       } catch { /* sedes opcionales */ }
 
@@ -1122,8 +1131,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         {(() => {
           if (isSuperAdmin) {
             const now = new Date();
-            const getMonedaCanonica = (raw) => {
-              const s = String(raw || '').trim().toUpperCase();
+            const getMonedaCanonica = (reserva) => {
+              console.log('[Admin] moneda raw', reserva?.moneda);
+              const s = String(reserva?.moneda || '').trim().toUpperCase();
               if (!s) return 'ARS';
               if (s.includes('EUR') || s.includes('€')) return 'EUR';
               if (s.includes('USD') || s.includes('US$') || s.includes('U$S') || s === '$US') return 'USD';
@@ -1167,9 +1177,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             reservasPeriodo.forEach((r) => {
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
               const sedeInfo = sedesMap?.[r?.sede_id] || {};
+              console.log('[Admin] sede_id de reserva', r?.sede_id, 'sedeInfo', sedesMap?.[r?.sede_id]);
               const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
               const ciudad = String(sedeInfo?.ciudad || '').trim() || 'Sin definir';
-              const moneda = getMonedaCanonica(r?.moneda);
+              const moneda = getMonedaCanonica(r);
               const precio = Number(r?.precio) || 0;
               ingresosMes[moneda] = (ingresosMes[moneda] || 0) + precio;
 
