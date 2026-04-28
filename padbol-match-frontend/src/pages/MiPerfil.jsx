@@ -391,7 +391,7 @@ export default function MiPerfil() {
       let q = supabase
         .from('jugadores_perfil')
         .select('user_id, alias, foto_url, nombre, apellido')
-        .or(`alias.ilike.%${term}%,nombre.ilike.%${term}%,apellido.ilike.%${term}%`)
+        .or(`alias.ilike.*${term}*,nombre.ilike.*${term}*,apellido.ilike.*${term}*`)
         .limit(12);
       const myUid = session?.user?.id;
       if (myUid) q = q.neq('user_id', myUid);
