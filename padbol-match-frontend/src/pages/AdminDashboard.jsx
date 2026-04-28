@@ -58,19 +58,16 @@ function EstadoBadge({ reserva }) {
 }
 
 // Returns true if the reserva's fecha+hora is in the future.
-// Both sides are built as Argentina wall-clock Dates (no offset arithmetic), so the
-// comparison is correct regardless of the browser's local timezone.
+// Reserva datetime is parsed with Argentina offset (-03:00) to avoid UTC drift.
 function esFutura(reserva) {
   if (!reserva.fecha) return false;
   // hora may be stored as "18:00" or "18:00 - 19:30" — use start time only
   const startHora = (reserva.hora || '23:59').split(' - ')[0].trim();
   const timePart = /^\d{1,2}:\d{2}/.test(startHora) ? startHora.substring(0, 5) : '23:59';
-  // Current moment expressed as an Argentina wall-clock Date (parsed as local, no tz offset)
-  const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
-  // Reservation datetime expressed the same way — use the date-only part of fecha to avoid
-  // any embedded time/timezone that could be on the raw DB value
+  const ahora = new Date();
+  // Use explicit Argentina offset so future/past status is stable across client timezones.
   const fechaSolo = reserva.fecha.substring(0, 10); // "YYYY-MM-DD"
-  const reservaDate = new Date(`${fechaSolo} ${timePart}`);
+  const reservaDate = new Date(`${fechaSolo}T${timePart}:00-03:00`);
   return reservaDate > ahora;
 }
 
