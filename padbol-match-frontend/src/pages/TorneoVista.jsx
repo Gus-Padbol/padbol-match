@@ -41,6 +41,8 @@ export default function TorneoVista() {
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const isAdmin = ADMIN_EMAILS.includes(currentEmail);
+  const isSuperAdmin = currentEmail === 'padbolinternacional@gmail.com';
+  const adminGestionView = isAdmin || isSuperAdmin;
   const estadoTorneo = String(torneo?.estado || '').trim().toLowerCase();
   const mostrarTablaYPartidos = ['activo', 'en_curso', 'abierto', 'finalizado'].includes(estadoTorneo);
 
@@ -469,35 +471,64 @@ export default function TorneoVista() {
     <div className="torneo-vista-container" style={{ paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader title="Torneo" />
 
-      <div className="torneo-header">
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', marginBottom: '10px' }}>
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
+          style={{ width: '60px', height: 'auto', objectFit: 'contain' }}
+        />
+      </div>
+      <div className="torneo-header" style={{ marginTop: '16px' }}>
         <h1>🏆 {torneo.nombre}</h1>
         <p>{formatNivelTorneo(torneo.nivel_torneo)} • {formatTipoTorneo(torneo.tipo_torneo)} • {formatFecha(torneo.fecha_inicio)} a {formatFecha(torneo.fecha_fin)}</p>
         <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-          <button
-            type="button"
-            className="btn-agregar-jugadores"
-            onClick={() => navigate(`/torneo/${torneoId}/equipos`)}
-          >
-            Equipos e inscripción
-          </button>
+          {!adminGestionView ? (
+            <button
+              type="button"
+              className="btn-agregar-jugadores"
+              onClick={() => navigate(`/torneo/${torneoId}/equipos`)}
+            >
+              Equipos e inscripción
+            </button>
+          ) : null}
         </div>
-        {isAdmin && !['en_curso', 'finalizado'].includes((torneo.estado || '').toLowerCase()) && (
+        {adminGestionView ? (
           <div className="torneo-acciones">
             <button className="btn-agregar-jugadores" onClick={toggleJugadoresInscriptos}>
               👥 Jugadores inscriptos
             </button>
-            {!todosEquiposCompletos ? (
-              <p className="torneo-iniciar-aviso" style={{ margin: '8px 0 0', color: '#b45309', fontWeight: 600 }}>
-                Faltan equipos completos para iniciar
-              </p>
-            ) : null}
-            <button
-              className="btn-iniciar-torneo"
-              onClick={iniciarTorneo}
-              disabled={iniciando || !todosEquiposCompletos}
-            >
-              {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
-            </button>
+            <div style={{ width: '100%', marginTop: '10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '10px' }}>
+              <h3 style={{ margin: '0 0 8px', color: '#0f172a', fontSize: '14px' }}>Equipos inscriptos</h3>
+              {equipos.length === 0 ? (
+                <p style={{ margin: 0, color: '#64748b' }}>No hay equipos inscriptos todavía.</p>
+              ) : (
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {equipos.map((eq) => (
+                    <div key={eq.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', border: '1px solid #f1f5f9', borderRadius: '10px', padding: '8px 10px' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{eq.nombre || `Equipo #${eq.id}`}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>
+                          {(Array.isArray(eq.jugadores) && eq.jugadores.length > 0)
+                            ? eq.jugadores.map((j) => j?.nombre || j?.alias || 'Jugador').join(' · ')
+                            : 'Sin jugadores'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                          Estado: {String(eq?.estado || 'pendiente')}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-agregar-jugadores"
+                        onClick={() => navigate(`/equipo/${eq.id}`)}
+                        style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}
+                      >
+                        Gestionar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {showJugadoresInscriptos && (
               <div style={{ width: '100%', marginTop: '10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '10px' }}>
                 {loadingJugadoresInscriptos ? (
@@ -525,6 +556,22 @@ export default function TorneoVista() {
                 )}
               </div>
             )}
+          </div>
+        ) : null}
+        {isAdmin && !['en_curso', 'finalizado'].includes((torneo.estado || '').toLowerCase()) && (
+          <div className="torneo-acciones">
+            {!todosEquiposCompletos ? (
+              <p className="torneo-iniciar-aviso" style={{ margin: '8px 0 0', color: '#b45309', fontWeight: 600 }}>
+                Faltan equipos completos para iniciar
+              </p>
+            ) : null}
+            <button
+              className="btn-iniciar-torneo"
+              onClick={iniciarTorneo}
+              disabled={iniciando || !todosEquiposCompletos}
+            >
+              {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
+            </button>
           </div>
         )}
         {isAdmin && torneo.estado === 'en_curso' && partidos.length > 0 && partidos.every(p => p.estado === 'finalizado') && (
