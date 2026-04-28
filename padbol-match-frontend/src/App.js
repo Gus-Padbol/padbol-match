@@ -142,6 +142,7 @@ function AppRoutes() {
         <Route path="/torneo/crear" element={<TorneoCrear />} />
         <Route path="/torneo/:id/jugadores" element={<Navigate to="/mi-perfil" replace />} />
         <Route path="/torneo/:id/equipos/:equipoId" element={<EquipoVista />} />
+        <Route path="/equipo/:id" element={<EquipoVista />} />
         <Route path="/torneo/:id/equipos" element={<FormEquipos />} />
         <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
         <Route path="/pago-exitoso" element={<PagoExitoso />} />
