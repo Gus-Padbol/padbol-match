@@ -675,7 +675,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       <div style={{ padding: `${HUB_CONTENT_PADDING_TOP_PX}px 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`, textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
         <AppHeader title="Admin" />
         Cargando...
-        <BottomNav />
       </div>
     );
   }
@@ -710,7 +709,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>
 
       {/* Tab navigation */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingBottom: '0' }}>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -727,6 +726,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               fontSize: '14px',
               marginBottom: '-2px',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             {tab.label}
@@ -926,69 +926,56 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </div>
                     </div>
                   ) : (
-                    /* ── Compact view: CSS grid keeps columns aligned across all cards ── */
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 120px 130px auto', gap: '0 12px', alignItems: 'center' }}>
-
-                      {/* Col 1 — name, sede, status summary */}
+                    /* ── Compact view in stacked layout: title/sede → badges → estado/equipos/dates/actions ── */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                           {flag && <span style={{ fontSize: '18px', flexShrink: 0 }}>{flag}</span>}
                           <strong style={{ fontSize: '14px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{torneo.nombre}</strong>
                         </div>
-                        {sede && <div style={{ fontSize: '11px', color: '#aaa', marginTop: '1px' }}>{sede.nombre}</div>}
+                        {sede ? <div style={{ fontSize: '11px', color: '#aaa', marginTop: '3px' }}>{sede.nombre}</div> : null}
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                        {torneo.nivel_torneo
+                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
+                          : null}
+                        {torneo.tipo_torneo
+                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>{formatTipoTorneo(torneo.tipo_torneo)}</span>
+                          : null}
+                        <span style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '11px', lineHeight: 1.5, color: '#374151' }}>
+                          {torneo.fecha_inicio
+                            ? <>
+                                <div>{formatFecha(torneo.fecha_inicio)}</div>
+                                {torneo.fecha_fin && <div style={{ color: '#9ca3af' }}>→ {formatFecha(torneo.fecha_fin)}</div>}
+                              </>
+                            : <div style={{ color: '#ddd' }}>—</div>}
+                        </div>
                         {(() => {
                           const st = torneoStats[torneo.id];
-                          if (!st) return <div style={{ fontSize: '11px', color: '#ddd', marginTop: '3px' }}>···</div>;
+                          if (!st) return <div style={{ fontSize: '11px', color: '#ddd' }}>···</div>;
                           if (torneo.estado === 'planificacion') return (
-                            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '3px' }}>
+                            <div style={{ fontSize: '11px', color: '#6b7280' }}>
                               🔧 <strong>{st.equipos_count}</strong> equipo{st.equipos_count !== 1 ? 's' : ''} inscripto{st.equipos_count !== 1 ? 's' : ''}
                             </div>
                           );
                           if (torneo.estado === 'en_curso') return (
-                            <div style={{ fontSize: '11px', color: '#1d4ed8', marginTop: '3px' }}>
+                            <div style={{ fontSize: '11px', color: '#1d4ed8' }}>
                               ⚔️ <strong>{st.partidos_jugados}/{st.total_partidos}</strong> partidos
                             </div>
                           );
                           if (torneo.estado === 'finalizado') return (
-                            <div style={{ fontSize: '11px', color: '#92400e', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontSize: '11px', color: '#92400e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               🥇 <strong>{st.winner?.nombre || '—'}</strong>
                             </div>
                           );
                           return null;
                         })()}
-                      </div>
-
-                      {/* Col 2 — nivel */}
-                      <div>
-                        {torneo.nivel_torneo
-                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
-                          : <span style={{ color: '#ddd', fontSize: '11px', display: 'block', width: '120px', textAlign: 'center' }}>—</span>}
-                      </div>
-
-                      {/* Col 3 — formato */}
-                      <div>
-                        {torneo.tipo_torneo
-                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>{formatTipoTorneo(torneo.tipo_torneo)}</span>
-                          : <span style={{ color: '#ddd', fontSize: '11px', display: 'block', width: '120px', textAlign: 'center' }}>—</span>}
-                      </div>
-
-                      {/* Col 4 — estado */}
-                      <div>
-                        <span style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
-                      </div>
-
-                      {/* Col 5 — dates (2 lines) */}
-                      <div style={{ fontSize: '11px', lineHeight: '1.5' }}>
-                        {torneo.fecha_inicio
-                          ? <>
-                              <div style={{ color: '#374151' }}>{formatFecha(torneo.fecha_inicio)}</div>
-                              {torneo.fecha_fin && <div style={{ color: '#aaa' }}>→ {formatFecha(torneo.fecha_fin)}</div>}
-                            </>
-                          : <div style={{ color: '#ddd' }}>—</div>}
-                      </div>
-
-                      {/* Col 6 — actions */}
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 'auto' }}>
                         <button
                           onClick={() => navigate(`/torneo/${torneo.id}`)}
                           style={{ padding: '6px 14px', background: '#667eea', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
@@ -1013,6 +1000,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             🗑️
                           </button>
                         )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1927,7 +1915,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       </div>}
 
-      <BottomNav />
     </div>
   );
 }
