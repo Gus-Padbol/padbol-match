@@ -43,7 +43,24 @@ const TABS = [
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 
+/** Pantalla estrecha: menos columnas y padding para evitar scroll horizontal en la tabla. */
+function useMediaNarrow(maxWidth = 520) {
+  const [narrow, setNarrow] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= maxWidth : false
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
+    const fn = () => setNarrow(mq.matches);
+    fn();
+    mq.addEventListener('change', fn);
+    return () => mq.removeEventListener('change', fn);
+  }, [maxWidth]);
+  return narrow;
+}
+
 export default function Rankings() {
+  const narrow = useMediaNarrow(520);
   const [activeTab, setActiveTab] = useState('local');
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
@@ -198,12 +215,12 @@ export default function Rankings() {
   const innerStyle = { maxWidth: '960px', margin: '0 auto' };
 
   const thStyle = {
-    padding: '11px 14px',
-    fontSize: '11px',
+    padding: narrow ? '8px 6px' : '11px 14px',
+    fontSize: narrow ? '10px' : '11px',
     fontWeight: '700',
     color: '#6b7280',
     textTransform: 'uppercase',
-    letterSpacing: '0.06em',
+    letterSpacing: narrow ? '0.04em' : '0.06em',
     background: '#f9fafb',
     borderBottom: '2px solid #e5e7eb',
     whiteSpace: 'nowrap',
@@ -215,7 +232,11 @@ export default function Rankings() {
     transition: 'background 0.15s',
   });
 
-  const tdStyle = { padding: '11px 14px', verticalAlign: 'middle' };
+  const tdStyle = { padding: narrow ? '8px 6px' : '11px 14px', verticalAlign: 'middle' };
+
+  const showPaisCol = activeTab === 'internacional';
+  /** En mobile el encabezado "Torneos" se cortaba; el conteo es secundario frente a puntos. */
+  const showTorneosCol = !narrow;
 
   const posStyle = (pos) => {
     if (pos === 1) return { fontSize: '20px', fontWeight: '900', color: '#d97706' };
@@ -328,41 +349,56 @@ export default function Rankings() {
               </div>
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: narrow ? '40px' : '52px' }} />
+                <col />
+                {showPaisCol ? <col style={{ width: narrow ? '44px' : '56px' }} /> : null}
+                <col style={{ width: showTorneosCol ? (narrow ? '22%' : '24%') : (narrow ? '28%' : '30%') }} />
+                {showTorneosCol ? <col style={{ width: narrow ? '52px' : '76px' }} /> : null}
+                <col style={{ width: narrow ? '64px' : '88px' }} />
+              </colgroup>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, textAlign: 'center', width: '52px' }}>#</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>#</th>
                   <th style={{ ...thStyle, textAlign: 'left' }}>Jugador</th>
-                  <th style={{ ...thStyle, textAlign: 'center', width: '60px' }}>País</th>
-                  <th style={{ ...thStyle, textAlign: 'left' }}>Club / Sede</th>
-                  <th style={{ ...thStyle, textAlign: 'center', width: '80px' }}>Torneos</th>
-                  <th style={{ ...thStyle, textAlign: 'center', width: '80px', color: '#3b2f6e' }}>Puntos</th>
+                  {showPaisCol ? (
+                    <th style={{ ...thStyle, textAlign: 'center' }}>País</th>
+                  ) : null}
+                  <th style={{ ...thStyle, textAlign: 'left' }}>Equipo</th>
+                  {showTorneosCol ? (
+                    <th style={{ ...thStyle, textAlign: 'center', whiteSpace: 'normal', lineHeight: 1.2 }}>
+                      Torneos
+                    </th>
+                  ) : null}
+                  <th style={{ ...thStyle, textAlign: 'center', color: '#3b2f6e' }}>Puntos</th>
                 </tr>
               </thead>
               <tbody>
                 {rankings.map((player, idx) => {
                   const pos  = idx + 1;
                   const flag = getFlag(player.pais);
+                  const avatarPx = narrow ? 32 : 38;
                   return (
                     <tr key={player.email || idx} style={trStyle(idx)}>
 
                       {/* Position */}
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         {pos <= 3
-                          ? <span style={{ fontSize: '20px' }}>{MEDAL[pos - 1]}</span>
+                          ? <span style={{ fontSize: narrow ? '17px' : '20px' }}>{MEDAL[pos - 1]}</span>
                           : <span style={posStyle(pos)}>{pos}</span>}
                       </td>
 
                       {/* Player info */}
-                      <td style={tdStyle}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <td style={{ ...tdStyle, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: narrow ? '6px' : '10px', minWidth: 0 }}>
                           {player.foto_url ? (
                             <img
                               src={player.foto_url}
                               alt=""
                               style={{
-                                width: '38px',
-                                height: '38px',
+                                width: `${avatarPx}px`,
+                                height: `${avatarPx}px`,
                                 borderRadius: '50%',
                                 objectFit: 'cover',
                                 objectPosition: 'top center',
@@ -373,35 +409,36 @@ export default function Rankings() {
                               }}
                             />
                           ) : (
-                            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '17px' }}>
+                            <div style={{ width: `${avatarPx}px`, height: `${avatarPx}px`, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: narrow ? '14px' : '17px' }}>
                               👤
                             </div>
                           )}
-                          <div>
-                            <div style={{ fontSize: '14px', fontWeight: '600', color: '#111', lineHeight: 1.2 }}>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: narrow ? '12px' : '14px', fontWeight: '600', color: '#111', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {player.nombre}
                             </div>
-                            {player.nivel && (
+                            {player.nivel && !narrow && (
                               <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{player.nivel}</div>
                             )}
                           </div>
                         </div>
                       </td>
 
-                      {/* Country flag */}
-                      <td style={{ ...tdStyle, textAlign: 'center', fontSize: '22px' }}>
-                        {flag || <span style={{ fontSize: '13px', color: '#d1d5db' }}>—</span>}
-                      </td>
+                      {showPaisCol ? (
+                        <td style={{ ...tdStyle, textAlign: 'center', fontSize: narrow ? '18px' : '22px' }}>
+                          {flag || <span style={{ fontSize: '13px', color: '#d1d5db' }}>—</span>}
+                        </td>
+                      ) : null}
 
-                      {/* Club / sede */}
-                      <td style={{ ...tdStyle, fontSize: '12px', color: '#6b7280', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <td style={{ ...tdStyle, fontSize: narrow ? '11px' : '12px', color: '#6b7280', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {player.equipo_nombre || <span style={{ color: '#d1d5db' }}>—</span>}
                       </td>
 
-                      {/* Tournaments played */}
-                      <td style={{ ...tdStyle, textAlign: 'center', fontSize: '13px', color: '#6b7280' }}>
-                        {player.torneos_count}
-                      </td>
+                      {showTorneosCol ? (
+                        <td style={{ ...tdStyle, textAlign: 'center', fontSize: narrow ? '11px' : '13px', color: '#6b7280' }}>
+                          {player.torneos_count}
+                        </td>
+                      ) : null}
 
                       {/* Points */}
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
@@ -409,8 +446,8 @@ export default function Rankings() {
                           background: pos === 1 ? '#fef3c7' : pos === 2 ? '#f1f5f9' : pos === 3 ? '#fdf4eb' : '#ede9fe',
                           color:      pos === 1 ? '#92400e' : pos === 2 ? '#475569' : pos === 3 ? '#92400e' : '#3b2f6e',
                           borderRadius: '10px',
-                          padding: '3px 12px',
-                          fontSize: '14px',
+                          padding: narrow ? '2px 8px' : '3px 12px',
+                          fontSize: narrow ? '12px' : '14px',
                           fontWeight: '800',
                           display: 'inline-block',
                         }}>
