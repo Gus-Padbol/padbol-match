@@ -388,22 +388,50 @@ export default function MiPerfil() {
     const handle = setTimeout(async () => {
       setCompaneroCargando(true);
       const term = raw.replace(/[%_\\]/g, '');
-      let q = supabase
+      const pattern = `%${term}%`;
+      const myUid = session?.user?.id;
+      let qAlias = supabase
         .from('jugadores_perfil')
         .select('user_id, alias, foto_url, nombre')
-        .or(`alias.ilike.*${term}*,nombre.ilike.*${term}*`)
+        .ilike('alias', pattern)
         .limit(12);
-      const myUid = session?.user?.id;
-      if (myUid) q = q.neq('user_id', myUid);
-      const { data, error } = await q;
+      let qNombre = supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre')
+        .ilike('nombre', pattern)
+        .limit(12);
+      if (myUid) {
+        qAlias = qAlias.neq('user_id', myUid);
+        qNombre = qNombre.neq('user_id', myUid);
+      }
+      const [{ data: rowsAlias, error: errAlias }, { data: rowsNombre, error: errNombre }] = await Promise.all([
+        qAlias,
+        qNombre,
+      ]);
       if (seq !== companeroSearchSeqRef.current) return;
-      console.log('[Compañero] buscando:', term, 'resultados:', data);
+      const byUserId = new Map();
+      for (const row of [...(rowsAlias || []), ...(rowsNombre || [])]) {
+        const uid = row?.user_id;
+        if (uid == null || uid === '') continue;
+        if (!byUserId.has(uid)) byUserId.set(uid, row);
+      }
+      const merged = Array.from(byUserId.values()).slice(0, 12);
+      console.log(
+        '[Compañero] buscando:',
+        term,
+        'resultados:',
+        merged,
+        'length:',
+        merged.length,
+        'errors:',
+        { alias: errAlias, nombre: errNombre }
+      );
       setCompaneroCargando(false);
-      if (error) {
+      if (errAlias && errNombre) {
         setCompaneroOpciones([]);
         return;
       }
-      setCompaneroOpciones(Array.isArray(data) ? data : []);
+      setCompaneroOpciones(merged);
     }, 280);
     return () => clearTimeout(handle);
   }, [editando, companeroBusqueda, session?.user?.id]);
@@ -536,7 +564,7 @@ export default function MiPerfil() {
     try {
       const { data, error } = await supabase
         .from('reservas')
-        .select('id, sede, fecha, hora, cancha, estado, precio, moneda')
+        .select('id, sede, fecha, hora, cancha, estado, precio')
         .eq('email_usuario', sessionOwnerEmail)
         .order('fecha', { ascending: false })
         .limit(20);
