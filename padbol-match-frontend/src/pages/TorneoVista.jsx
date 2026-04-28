@@ -26,6 +26,7 @@ export default function TorneoVista() {
   const { session } = useAuth();
   const [torneo, setTorneo] = useState(null);
   const [equipos, setEquipos] = useState([]);
+  const [sedesMap, setSedesMap] = useState({});
   const [partidos, setPartidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,10 +54,11 @@ export default function TorneoVista() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [torneoRes, equiposRes, partidosRes] = await Promise.all([
+        const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
           fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}`),
           fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}/equipos`),
-          fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}/partidos`)
+          fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}/partidos`),
+          fetch('https://padbol-backend.onrender.com/api/sedes').catch(() => null),
         ]);
 
         if (!torneoRes.ok || !equiposRes.ok || !partidosRes.ok) {
@@ -66,10 +68,20 @@ export default function TorneoVista() {
         const torneoData = await torneoRes.json();
         const equiposData = await equiposRes.json();
         const partidosData = await partidosRes.json();
+        let sedesData = [];
+        if (sedesRes?.ok) {
+          sedesData = await sedesRes.json();
+        }
+
+        const nextSedesMap = {};
+        (sedesData || []).forEach((sede) => {
+          nextSedesMap[String(sede.id)] = sede;
+        });
 
         setTorneo(torneoData);
         setEquipos(equiposData);
         setPartidos(partidosData);
+        setSedesMap(nextSedesMap);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -304,6 +316,12 @@ export default function TorneoVista() {
     );
   }
 
+  const sedeTorneo = sedesMap[String(torneo?.sede_id)];
+  const sedeUbicacion = [sedeTorneo?.ciudad, sedeTorneo?.pais].filter(Boolean).join(', ');
+  const sedeTexto = sedeTorneo
+    ? `📍 ${sedeTorneo.nombre}${sedeUbicacion ? ` · ${sedeUbicacion}` : ''}`
+    : null;
+
   if (torneo.estado === 'finalizado') {
     const top3   = tablaPosiciones.slice(0, 3);
     const rest   = tablaPosiciones.slice(3, 10);
@@ -391,6 +409,7 @@ export default function TorneoVista() {
       </div>
       <div className="torneo-header" style={{ marginTop: '16px' }}>
         <h1>🏆 {torneo.nombre}</h1>
+        {sedeTexto ? <p>{sedeTexto}</p> : null}
         <p>{formatNivelTorneo(torneo.nivel_torneo)} • {formatTipoTorneo(torneo.tipo_torneo)} • {formatFecha(torneo.fecha_inicio)} a {formatFecha(torneo.fecha_fin)}</p>
         <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           {!adminGestionView ? (
@@ -411,14 +430,14 @@ export default function TorneoVista() {
                 <p style={{ margin: 0, color: '#64748b' }}>No hay equipos inscriptos todavía.</p>
               ) : (
                 <div style={{ display: 'grid', gap: '8px' }}>
-                  {equipos.map((eq) => (
-                    <div key={eq.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', border: '1px solid #f1f5f9', borderRadius: '10px', padding: '8px 10px' }}>
+                  {equipos.map((equipo) => (
+                    <div key={equipo.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', border: '1px solid #f1f5f9', borderRadius: '10px', padding: '8px 10px' }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{eq.nombre || `Equipo #${eq.id}`}</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{equipo.nombre || `Equipo #${equipo.id}`}</div>
                         {(() => {
-                          const jugadores = Array.isArray(eq.jugadores) ? eq.jugadores : [];
-                          const cupo = Number(eq?.cupo_maximo || 2);
-                          const tieneCapitan = Boolean(eq?.capitan_id || eq?.capitan_email || eq?.capitan);
+                          const jugadores = Array.isArray(equipo.jugadores) ? equipo.jugadores : [];
+                          const cupo = Number(equipo?.cupo_maximo || 2);
+                          const tieneCapitan = Boolean(equipo?.capitan_id || equipo?.capitan_email || equipo?.capitan);
                           const confirmadosBase = jugadores.length;
                           // Si backend no incluyó al capitán en jugadores, igualmente cuenta como confirmado.
                           const confirmados = Math.max(confirmadosBase, tieneCapitan ? 1 : 0);
@@ -431,7 +450,7 @@ export default function TorneoVista() {
                               const texto = String(j?.alias || j?.nombre || 'Jugador').trim();
                               const aliasRuta = String(j?.alias || j?.nombre || 'jugador').trim();
                               return (
-                                <React.Fragment key={`${eq.id}-jug-${idx}-${texto}`}>
+                                <React.Fragment key={`${equipo.id}-jug-${idx}-${texto}`}>
                                   <span
                                     role="button"
                                     tabIndex={0}
@@ -467,13 +486,16 @@ export default function TorneoVista() {
                           );
                         })()}
                         <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
-                          Estado: {String(eq?.estado || 'pendiente')}
+                          Estado: {String(equipo?.estado || 'pendiente')}
                         </div>
                       </div>
                       <button
                         type="button"
                         className="btn-agregar-jugadores"
-                        onClick={() => navigate(`/equipo/${eq.id}`)}
+                        onClick={() => {
+                          console.log('[TorneoVista] gestionar equipo id:', equipo.id);
+                          navigate(`/equipo/${equipo.id}`);
+                        }}
                         style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}
                       >
                         Gestionar
