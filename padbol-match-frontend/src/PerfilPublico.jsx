@@ -46,7 +46,7 @@ function normalizeJugadorEquipo(p) {
   if (!p || typeof p !== 'object') return null;
   return {
     id: p.id != null && p.id !== '' ? String(p.id) : null,
-    email: String(p.email || '').trim().toLowerCase(),
+    email: normalizeEmailStr(p.email),
     alias: String(p.alias || '').trim().toLowerCase(),
     nombre: String(p.nombre || '').trim().toLowerCase(),
   };
@@ -73,6 +73,9 @@ function jugadorEnEquipo(jugadoresArr, perfil) {
     const p = normalizeJugadorEquipo(raw);
     if (!p) continue;
     if (uid && p.id && idsJugadorEquipoCoinciden(p.id, uid)) return true;
+    // Compatibilidad formato viejo: id numérico, matchear por email case-insensitive.
+    const emailJugadorLower = String(raw?.email || '').trim().toLowerCase();
+    if (rawEm && emailJugadorLower && emailJugadorLower === rawEm) return true;
     if (em && p.email && p.email === em) return true;
     if (rawEm && p.email && p.email === rawEm) return true;
     if (al && p.alias && p.alias === al) return true;
@@ -91,7 +94,19 @@ async function fetchEquiposJugador(perfil) {
     return [];
   }
   const rows = equiposRows || [];
-  return rows.filter((eq) => jugadorEnEquipo(eq.jugadores, perfil));
+  const matched = [];
+  for (const eq of rows) {
+    const match = jugadorEnEquipo(eq.jugadores, perfil);
+    console.log('[PerfilPublico] jugadorEnEquipo check', {
+      equipoId: eq?.id ?? null,
+      torneoId: eq?.torneo_id ?? null,
+      matched: match,
+      perfilUserId: perfil?.user_id ?? null,
+      perfilEmail: perfil?.email ?? null,
+    });
+    if (match) matched.push(eq);
+  }
+  return matched;
 }
 
 /** Torneos en los que el jugador figura (jugadores_torneo o equipos). */
