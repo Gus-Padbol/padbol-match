@@ -444,7 +444,7 @@ export default function TorneoVista() {
                           const faltan = Math.max(cupo - confirmados, 0);
                           return (
                             <>
-                        {Array.isArray(eq.jugadores) && eq.jugadores.length > 0 ? (
+                        {Array.isArray(equipo.jugadores) && equipo.jugadores.length > 0 ? (
                           <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {jugadores.map((j, idx) => {
                               const texto = String(j?.alias || j?.nombre || 'Jugador').trim();
