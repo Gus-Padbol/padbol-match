@@ -692,34 +692,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     <div className="admin-dashboard" style={{ paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader title="" showBack={false} />
       <div className="admin-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 'clamp(16px, 4.8vw, 20px)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src="/logo192.png"
+            alt="Padbol Match"
+            style={{ width: '56px', height: '56px', objectFit: 'contain', marginBottom: '6px' }}
+          />
+          <p style={{ margin: 0, color: '#fff', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>
             {`Panel ${currentEmail === 'padbolinternacional@gmail.com' ? 'Super Admin' : (ROLE_BADGE[rol] || 'Admin').replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`}
-          </h1>
-          {rol && ROLE_BADGE[rol] && (
-            <span style={{
-              padding: '3px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 700,
-              background: rol === 'super_admin' ? 'rgba(250,204,21,0.25)' : rol === 'admin_nacional' ? 'rgba(52,211,153,0.2)' : 'rgba(147,197,253,0.2)',
-              color: rol === 'super_admin' ? '#fde68a' : rol === 'admin_nacional' ? '#6ee7b7' : '#bfdbfe',
-              border: `1px solid ${rol === 'super_admin' ? 'rgba(250,204,21,0.4)' : rol === 'admin_nacional' ? 'rgba(52,211,153,0.35)' : 'rgba(147,197,253,0.35)'}`,
-              whiteSpace: 'nowrap',
-            }}>
-              {ROLE_BADGE[rol]}
-            </span>
-          )}
+          </p>
         </div>
       </div>
 
       {/* Tab navigation */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: `${HUB_CONTENT_PADDING_TOP_PX}px`, zIndex: 100, backgroundColor: '#1f2937' }}>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#667eea' }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -732,7 +718,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               background: 'none',
               cursor: 'pointer',
               fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-              color: activeTab === tab.id ? 'white' : 'rgba(255,255,255,0.7)',
+              color: activeTab === tab.id ? '#fff' : '#1f2937',
               fontSize: '14px',
               marginBottom: '-2px',
               whiteSpace: 'nowrap',
