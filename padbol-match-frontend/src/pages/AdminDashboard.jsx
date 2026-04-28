@@ -142,13 +142,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [apiBaseUrl, rol]); // rol in deps: re-fetch after role resolves from null → actual value
 
   useEffect(() => {
-    const prevBodyOverflow = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
     const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = prevBodyOverflow || '';
-      document.documentElement.style.overflow = prevHtmlOverflow || '';
+      document.body.style.overflow = prevOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, []);
 
