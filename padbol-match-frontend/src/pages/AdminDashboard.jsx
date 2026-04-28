@@ -689,7 +689,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   ];
 
   return (
-    <div className="admin-dashboard" style={{ paddingTop: '8px', paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div className="admin-dashboard" style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden', paddingTop: '8px', paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`, boxSizing: 'border-box' }}>
       <AppHeader title="" showBack={false} />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '56px' }}>
