@@ -125,6 +125,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [pendientesLoading, setPendientesLoading] = useState(true);
   // keyed by player email: { open: bool, categoria: string, saving: bool }
   const [validacionState, setValidacionState] = useState({});
+  // keyed by sede name for super-admin reservas detail expand/collapse
+  const [superAdminReservasOpen, setSuperAdminReservasOpen] = useState({});
 
   useEffect(() => {
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
@@ -1088,6 +1090,126 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       {activeTab === 'reservas' && <div className="section">
         {(() => {
+          if (isSuperAdmin) {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+            const reservasMes = reservas.filter((r) => {
+              const f = String(r?.fecha || '').trim();
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) return false;
+              const [y, m] = f.split('-').map(Number);
+              return y === currentYear && m === currentMonth;
+            });
+
+            const ingresosMes = { ARS: 0, USD: 0, EUR: 0 };
+            const porSede = new Map();
+            reservasMes.forEach((r) => {
+              const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
+              const sedeInfo = sedesMap?.[r?.sede_id];
+              const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
+              const moneda = String(r?.moneda || 'ARS').trim().toUpperCase();
+              const precio = Number(r?.precio) || 0;
+              if (Object.prototype.hasOwnProperty.call(ingresosMes, moneda)) ingresosMes[moneda] += precio;
+
+              if (!porSede.has(sedeNombre)) {
+                porSede.set(sedeNombre, {
+                  sede: sedeNombre,
+                  pais,
+                  reservasCount: 0,
+                  ingresos: { ARS: 0, USD: 0, EUR: 0 },
+                  rows: [],
+                });
+              }
+              const g = porSede.get(sedeNombre);
+              g.reservasCount += 1;
+              if (Object.prototype.hasOwnProperty.call(g.ingresos, moneda)) g.ingresos[moneda] += precio;
+              g.rows.push(r);
+            });
+
+            const fmtIngresos = (obj) => ['ARS', 'USD', 'EUR']
+              .filter((m) => (Number(obj[m]) || 0) > 0)
+              .map((m) => `${m} ${(Number(obj[m]) || 0).toLocaleString('es-AR')}`)
+              .join(' · ') || '—';
+
+            const sedesRows = [...porSede.values()].sort((a, b) => b.reservasCount - a.reservasCount);
+
+            return (
+              <div style={{ display: 'grid', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                  <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Total reservas este mes</div>
+                    <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>{reservasMes.length}</div>
+                  </div>
+                  <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del mes (ARS / USD / EUR)</div>
+                    <div style={{ color: '#0f172a', fontSize: '14px', fontWeight: 800, marginTop: '8px', lineHeight: 1.45 }}>
+                      ARS {ingresosMes.ARS.toLocaleString('es-AR')} · USD {ingresosMes.USD.toLocaleString('es-AR')} · EUR {ingresosMes.EUR.toLocaleString('es-AR')}
+                    </div>
+                  </div>
+                </div>
+
+                {sedesRows.length === 0 ? (
+                  <p style={{ color: '#aaa', padding: '10px 0', margin: 0 }}>Sin reservas este mes.</p>
+                ) : (
+                  <div style={{ background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc' }}>
+                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Sede</th>
+                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>País</th>
+                          <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Reservas del mes</th>
+                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ingresos del mes</th>
+                          <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sedesRows.map((g) => {
+                          const open = !!superAdminReservasOpen[g.sede];
+                          return (
+                            <React.Fragment key={g.sede}>
+                              <tr style={{ borderTop: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{g.sede}</td>
+                                <td style={{ padding: '10px 12px', color: '#475569' }}>{g.pais}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right', color: '#0f172a', fontWeight: 700 }}>{g.reservasCount}</td>
+                                <td style={{ padding: '10px 12px', color: '#334155', fontWeight: 600 }}>{fmtIngresos(g.ingresos)}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSuperAdminReservasOpen((prev) => ({ ...prev, [g.sede]: !open }))}
+                                    style={{ padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: '#334155' }}
+                                  >
+                                    {open ? 'Ocultar detalle' : 'Ver detalle'}
+                                  </button>
+                                </td>
+                              </tr>
+                              {open ? (
+                                <tr>
+                                  <td colSpan={5} style={{ padding: '10px 12px', background: '#f8fafc' }}>
+                                    <div style={{ display: 'grid', gap: '6px' }}>
+                                      {g.rows.map((r) => (
+                                        <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 120px 1fr 1fr 110px', gap: '8px', fontSize: '12px', color: '#334155', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+                                          <span>{r.fecha || '—'}</span>
+                                          <span>{horaRango(r.hora, r.duracion)}</span>
+                                          <span>{r.nombre || '—'}</span>
+                                          <span>{r.email || '—'}</span>
+                                          <span style={{ textAlign: 'right', fontWeight: 700 }}>${(Number(r.precio) || 0).toLocaleString('es-AR')}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : null}
+                            </React.Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           // Upcoming ASC (soonest first), completed DESC (most recent first)
           const proximas    = reservas.filter(esFutura).sort((a, b) => (a.fecha + a.hora) < (b.fecha + b.hora) ? -1 : 1);
           const completadas = reservas.filter(r => !esFutura(r)).sort((a, b) => (a.fecha + a.hora) > (b.fecha + b.hora) ? -1 : 1);
