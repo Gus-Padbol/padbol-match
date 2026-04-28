@@ -344,6 +344,48 @@ export default function PerfilPublico() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (loading || !perfil) return;
+    const ciudadClub = perfil.ciudad;
+    const localidad = perfil.localidad;
+    const nivelCat = perfil.nivel;
+    const foto = perfil.foto_url;
+    const instagram = perfil.instagram_url;
+    const federado = perfil.es_federado;
+    const pendVal = perfil.pendiente_validacion;
+    const ciudadTrim = perfil.ciudad != null ? String(perfil.ciudad).trim() : '';
+    const localidadTrimLog = perfil.localidad != null ? String(perfil.localidad).trim() : '';
+    const nivelTxt =
+      perfil.nivel != null && String(perfil.nivel) !== '' ? String(perfil.nivel) : '';
+    const fotoUsable = perfil.foto_url != null && String(perfil.foto_url).trim() !== '';
+    const igRaw =
+      perfil.instagram_url != null && String(perfil.instagram_url) !== ''
+        ? String(perfil.instagram_url)
+        : '';
+    let igHrefLog = '';
+    if (igRaw && /^https?:\/\//i.test(igRaw)) igHrefLog = igRaw;
+    else {
+      const h = instagramHandleFromStored(igRaw);
+      if (h) igHrefLog = `https://www.instagram.com/${encodeURIComponent(h)}/`;
+    }
+    console.log('[PerfilPublico] mapeo campos (verificación)', {
+      'perfil.ciudad': ciudadClub,
+      'UI club habitual': ciudadTrim ? `Club habitual: ${ciudadTrim}` : 'Sin definir',
+      'perfil.localidad': localidad,
+      'UI línea 📍 (si hay)': localidadTrimLog || '(oculta)',
+      'perfil.nivel': nivelCat,
+      'UI categoría (texto tal cual)': nivelTxt || '(vacío → Sin definir)',
+      'perfil.pendiente_validacion': pendVal,
+      'UI aviso pendiente': pendVal === true ? '(pendiente de validación)' : '(no)',
+      'perfil.foto_url': foto,
+      'UI muestra foto': fotoUsable,
+      'perfil.instagram_url': instagram,
+      'UI instagram href': igHrefLog || '(sin link)',
+      'perfil.es_federado': federado,
+      'UI federado': federado === true ? 'Sí' : federado === false ? 'No' : 'Sin definir',
+    });
+  }, [loading, perfil]);
+
   const pageStyle = {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -361,12 +403,19 @@ export default function PerfilPublico() {
   const paisParts = (perfil?.pais || '').split(' ');
   const paisFlag = paisParts[0];
   const paisNombre = paisParts.slice(1).join(' ');
-  /** Categoría: solo `nivel` de `jugadores_perfil`. */
-  const nivelPerfil = String(perfil?.nivel ?? '').trim();
-  const categoriaColor = CATEGORIA_COLOR[nivelPerfil] || '#999';
+  /** Color chip categoría: clave por `nivel` recortado (solo para color, no sustituye el texto). */
+  const nivelPerfilTrimKey = String(perfil?.nivel ?? '').trim();
+  const categoriaColor = CATEGORIA_COLOR[nivelPerfilTrimKey] || '#999';
+  /** Categoría en UI: valor exacto de `perfil.nivel` (string en BD), sin otra fuente. */
+  const nivelPerfilTexto =
+    perfil?.nivel != null && String(perfil.nivel) !== '' ? String(perfil.nivel) : '';
   const nombreCompleto = nombreCompletoJugadorPerfil(perfil) || String(perfil?.nombre || '').trim();
   const aliasGrande = String(perfil?.alias || '').trim();
-  const instagramRaw = String(perfil?.instagram_url || '').trim();
+  /** Instagram: solo `perfil.instagram_url`. */
+  const instagramRaw =
+    perfil?.instagram_url != null && String(perfil.instagram_url) !== ''
+      ? String(perfil.instagram_url)
+      : '';
   const instagramHref =
     instagramRaw && /^https?:\/\//i.test(instagramRaw)
       ? instagramRaw
@@ -374,11 +423,16 @@ export default function PerfilPublico() {
           const h = instagramHandleFromStored(instagramRaw);
           return h ? `https://www.instagram.com/${encodeURIComponent(h)}/` : '';
         })();
-  const fotoUrlPerfil = String(perfil?.foto_url || '').trim();
-  const clubHabitualTxt = [perfil?.ciudad, perfil?.localidad]
-    .map((x) => String(x || '').trim())
-    .filter(Boolean)
-    .join(' · ');
+  /** Foto: solo `perfil.foto_url`; vacío/null → avatar por defecto. */
+  const tieneFotoUrl = perfil?.foto_url != null && String(perfil.foto_url).trim() !== '';
+  const fotoUrlPerfil = tieneFotoUrl ? String(perfil.foto_url).trim() : '';
+  /** Club habitual: solo `perfil.ciudad`. */
+  const clubCiudadTrim = perfil?.ciudad != null ? String(perfil.ciudad).trim() : '';
+  const clubHabitualMostrado = clubCiudadTrim ? `Club habitual: ${clubCiudadTrim}` : 'Sin definir';
+  /** Ciudad/lugar en UI: solo `perfil.localidad`. */
+  const localidadTrim = perfil?.localidad != null ? String(perfil.localidad).trim() : '';
+  /** Federado: solo `perfil.es_federado`. */
+  const esFederadoBool = perfil?.es_federado;
 
   if (loading) {
     return (
@@ -540,24 +594,32 @@ export default function PerfilPublico() {
                 )}
               </span>
             </div>
+            {localidadTrim ? (
+              <div
+                style={{
+                  padding: '2px 0 8px',
+                  marginTop: '-2px',
+                  borderBottom: '1px solid #f1f5f9',
+                  fontSize: '13px',
+                  color: '#475569',
+                  textAlign: 'right',
+                  lineHeight: 1.4,
+                }}
+              >
+                📍 {localidadTrim}
+              </div>
+            ) : null}
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '6px 0',
+                padding: '8px 0',
                 borderBottom: '1px solid #f1f5f9',
               }}
             >
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Club habitual</span>
-              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
-                {clubHabitualTxt ? (
-                  clubHabitualTxt
-                ) : (
-                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
-                )}
-              </span>
+              {clubCiudadTrim ? (
+                <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 600 }}>{clubHabitualMostrado}</span>
+              ) : (
+                <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>Sin definir</span>
+              )}
             </div>
             <div
               style={{
@@ -624,24 +686,22 @@ export default function PerfilPublico() {
               }}
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Categoría</span>
-              <span style={{ fontSize: '14px', textAlign: 'right', display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {nivelPerfil ? (
+              <span
+                style={{
+                  fontSize: '14px',
+                  textAlign: 'right',
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '6px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                {nivelPerfilTexto ? (
                   <>
-                    <span style={{ fontWeight: 'bold', color: categoriaColor }}>{nivelPerfil}</span>
-                    {perfil.pendiente_validacion ? (
-                      <span
-                        title="Pendiente de validación"
-                        style={{
-                          fontSize: '11px',
-                          background: '#fff3cd',
-                          color: '#856404',
-                          border: '1px solid #ffc107',
-                          borderRadius: '10px',
-                          padding: '1px 7px',
-                        }}
-                      >
-                        ⏳ pendiente
-                      </span>
+                    <span style={{ fontWeight: 'bold', color: categoriaColor }}>{nivelPerfilTexto}</span>
+                    {perfil.pendiente_validacion === true ? (
+                      <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>(pendiente de validación)</span>
                     ) : null}
                   </>
                 ) : (
@@ -676,7 +736,7 @@ export default function PerfilPublico() {
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Federado</span>
               <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
-                {perfil.es_federado === true ? (
+                {esFederadoBool === true ? (
                   <>
                     Sí
                     {String(perfil.numero_fipa || '').trim() ? (
@@ -685,7 +745,7 @@ export default function PerfilPublico() {
                       </span>
                     ) : null}
                   </>
-                ) : perfil.es_federado === false ? (
+                ) : esFederadoBool === false ? (
                   'No'
                 ) : (
                   <span style={{ color: '#94a3b8' }}>Sin definir</span>
