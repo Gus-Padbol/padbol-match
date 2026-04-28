@@ -1139,6 +1139,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               if (s.includes('USD') || s.includes('US$') || s.includes('U$S') || s === '$US') return 'USD';
               return 'ARS';
             };
+            const resolveSedeDesdeReserva = (reserva) => {
+              const sedeReserva = String(reserva?.sede || '').trim();
+              if (!sedeReserva) return null;
+              const sedeReservaLower = sedeReserva.toLowerCase();
+              return Object.values(sedesMap || {}).find((s) => {
+                const nombreSede = String(s?.nombre || '').trim();
+                if (!nombreSede) return false;
+                const nombreSedeLower = nombreSede.toLowerCase();
+                return nombreSedeLower.includes(sedeReservaLower) || sedeReservaLower.includes(nombreSedeLower);
+              }) || null;
+            };
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const startOfWeek = new Date(startOfToday);
             const day = startOfWeek.getDay(); // 0 Sun ... 6 Sat
@@ -1176,11 +1187,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             const porSede = new Map();
             reservasPeriodo.forEach((r) => {
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
-              const sedeInfo = sedesMap?.[r?.sede_id] || {};
-              console.log('[Admin] sede_id de reserva', r?.sede_id, 'sedeInfo', sedesMap?.[r?.sede_id]);
+              const sedeInfo = resolveSedeDesdeReserva(r) || {};
+              console.log('[Admin] sede de reserva', r?.sede, 'sedeInfo', sedeInfo);
               const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
               const ciudad = String(sedeInfo?.ciudad || '').trim() || 'Sin definir';
-              const moneda = getMonedaCanonica(r);
+              const moneda = getMonedaCanonica({ moneda: sedeInfo?.moneda || r?.moneda });
               const precio = Number(r?.precio) || 0;
               ingresosMes[moneda] = (ingresosMes[moneda] || 0) + precio;
 
