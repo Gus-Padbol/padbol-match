@@ -673,7 +673,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   if (loading) {
     return (
       <div style={{ padding: `${HUB_CONTENT_PADDING_TOP_PX}px 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`, textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
-        <AppHeader title="Admin" />
+        <AppHeader title="" showBack={false} />
         Cargando...
       </div>
     );
@@ -690,10 +690,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   return (
     <div className="admin-dashboard" style={{ paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
-      <AppHeader title="Admin" />
+      <AppHeader title="" showBack={false} />
       <div className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <h1 style={{ margin: 0 }}>🏆 PADBOL MATCH - ADMIN</h1>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 'clamp(16px, 4.8vw, 20px)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {`Panel ${currentEmail === 'padbolinternacional@gmail.com' ? 'Super Admin' : (ROLE_BADGE[rol] || 'Admin').replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`}
+          </h1>
           {rol && ROLE_BADGE[rol] && (
             <span style={{
               padding: '3px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 700,
@@ -709,7 +719,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>
 
       {/* Tab navigation */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: `${HUB_CONTENT_PADDING_TOP_PX}px`, zIndex: 100, backgroundColor: '#1f2937' }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
