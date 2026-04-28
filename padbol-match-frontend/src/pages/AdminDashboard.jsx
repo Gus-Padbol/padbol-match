@@ -132,6 +132,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     fetchPendientes();
   }, [apiBaseUrl, rol]); // rol in deps: re-fetch after role resolves from null → actual value
 
+  useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevBodyOverflow || '';
+      document.documentElement.style.overflow = prevHtmlOverflow || '';
+    };
+  }, []);
+
   const fetchPendientes = async () => {
     setPendientesLoading(true);
     const { data, error } = await supabase
@@ -689,7 +700,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   ];
 
   return (
-    <div className="admin-dashboard" style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden', paddingTop: '8px', paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`, boxSizing: 'border-box' }}>
+    <div className="admin-dashboard" style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'none', WebkitOverflowScrolling: 'auto', paddingTop: '8px', paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`, boxSizing: 'border-box' }}>
       <AppHeader title="" showBack={false} />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '56px' }}>
