@@ -127,6 +127,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [validacionState, setValidacionState] = useState({});
   // keyed by sede name for super-admin reservas detail expand/collapse
   const [superAdminReservasOpen, setSuperAdminReservasOpen] = useState({});
+  const [superAdminPeriodo, setSuperAdminPeriodo] = useState('mes'); // hoy | semana | mes | anio
 
   useEffect(() => {
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
@@ -1092,22 +1093,42 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         {(() => {
           if (isSuperAdmin) {
             const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1;
-            const reservasMes = reservas.filter((r) => {
+            const getMonedaCanonica = (raw) => {
+              const s = String(raw || '').trim().toUpperCase();
+              if (!s) return 'ARS';
+              if (s.includes('EUR') || s.includes('€')) return 'EUR';
+              if (s.includes('USD') || s.includes('US$') || s.includes('U$S') || s === '$US') return 'USD';
+              return 'ARS';
+            };
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOfWeek = new Date(startOfToday);
+            const day = startOfWeek.getDay(); // 0 Sun ... 6 Sat
+            const diffToMonday = day === 0 ? 6 : day - 1;
+            startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const isInPeriodo = (fechaISO) => {
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaISO)) return false;
+              const [y, m, d] = fechaISO.split('-').map(Number);
+              const fecha = new Date(y, m - 1, d);
+              if (Number.isNaN(fecha.getTime())) return false;
+              if (superAdminPeriodo === 'hoy') return fecha >= startOfToday && fecha <= now;
+              if (superAdminPeriodo === 'semana') return fecha >= startOfWeek && fecha <= now;
+              if (superAdminPeriodo === 'anio') return fecha >= startOfYear && fecha <= now;
+              return fecha >= startOfMonth && fecha <= now; // mes (default)
+            };
+            const reservasPeriodo = reservas.filter((r) => {
               const f = String(r?.fecha || '').trim();
-              if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) return false;
-              const [y, m] = f.split('-').map(Number);
-              return y === currentYear && m === currentMonth;
+              return isInPeriodo(f);
             });
 
             const ingresosMes = { ARS: 0, USD: 0, EUR: 0 };
             const porSede = new Map();
-            reservasMes.forEach((r) => {
+            reservasPeriodo.forEach((r) => {
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
               const sedeInfo = sedesMap?.[r?.sede_id];
               const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
-              const moneda = String(r?.moneda || 'ARS').trim().toUpperCase();
+              const moneda = getMonedaCanonica(r?.moneda);
               const precio = Number(r?.precio) || 0;
               if (Object.prototype.hasOwnProperty.call(ingresosMes, moneda)) ingresosMes[moneda] += precio;
 
@@ -1135,13 +1156,41 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
             return (
               <div style={{ display: 'grid', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#e2e8f0', fontSize: '13px', fontWeight: 700 }}>Período:</span>
+                  {[
+                    { id: 'hoy', label: 'Hoy' },
+                    { id: 'semana', label: 'Esta semana' },
+                    { id: 'mes', label: 'Este mes' },
+                    { id: 'anio', label: 'Este año' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setSuperAdminPeriodo(opt.id)}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '999px',
+                        border: superAdminPeriodo === opt.id ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
+                        background: superAdminPeriodo === opt.id ? '#6366f1' : '#fff',
+                        color: superAdminPeriodo === opt.id ? '#fff' : '#334155',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
                   <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
-                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Total reservas este mes</div>
-                    <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>{reservasMes.length}</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Total reservas del período</div>
+                    <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>{reservasPeriodo.length}</div>
                   </div>
                   <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
-                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del mes (ARS / USD / EUR)</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del período (ARS / USD / EUR)</div>
                     <div style={{ color: '#0f172a', fontSize: '14px', fontWeight: 800, marginTop: '8px', lineHeight: 1.45 }}>
                       ARS {ingresosMes.ARS.toLocaleString('es-AR')} · USD {ingresosMes.USD.toLocaleString('es-AR')} · EUR {ingresosMes.EUR.toLocaleString('es-AR')}
                     </div>
@@ -1149,7 +1198,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
 
                 {sedesRows.length === 0 ? (
-                  <p style={{ color: '#aaa', padding: '10px 0', margin: 0 }}>Sin reservas este mes.</p>
+                  <p style={{ color: '#aaa', padding: '10px 0', margin: 0 }}>Sin reservas en el período seleccionado.</p>
                 ) : (
                   <div style={{ background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -1178,7 +1227,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                     onClick={() => setSuperAdminReservasOpen((prev) => ({ ...prev, [g.sede]: !open }))}
                                     style={{ padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: '#334155' }}
                                   >
-                                    {open ? 'Ocultar detalle' : 'Ver detalle'}
+                                    {open ? 'Ocultar detalle' : 'Ver detalle →'}
                                   </button>
                                 </td>
                               </tr>
