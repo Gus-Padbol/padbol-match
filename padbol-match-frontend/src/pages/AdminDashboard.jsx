@@ -862,6 +862,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             {torneos.map(torneo => {
               const sede = sedesMap[torneo.sede_id];
               const flag = sedeFlag(sede);
+              const ciudadSede = String(sede?.ciudad || '').trim();
+              const paisSede = String(sede?.pais || '').trim();
+              const ubicacionSede = [ciudadSede, paisSede].filter(Boolean).join(', ');
               const NIVEL_COLOR = {
                 nacional:        { bg: '#f3f4f6', color: '#374151' },
                 club_no_oficial: { bg: '#f5f3ff', color: '#6d28d9' },
@@ -965,6 +968,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <strong style={{ fontSize: '14px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{torneo.nombre}</strong>
                         </div>
                         {sede ? <div style={{ fontSize: '11px', color: '#aaa', marginTop: '3px' }}>{sede.nombre}</div> : null}
+                        {ubicacionSede ? (
+                          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                            {flag ? `${flag} ${ubicacionSede}` : ubicacionSede}
+                          </div>
+                        ) : null}
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
