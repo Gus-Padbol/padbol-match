@@ -74,7 +74,8 @@ function jugadorEnEquipo(jugadoresArr, perfil) {
   return false;
 }
 
-async function fetchTorneoStats(perfil) {
+/** Torneos en los que el jugador figura (jugadores_torneo o equipos). */
+async function torneoIdsJugadosPorPerfil(perfil) {
   const uid = String(perfil.user_id || '').trim();
   const em = normalizeEmailStr(perfil.email);
   const rawEm = String(perfil.email || '').trim();
@@ -109,31 +110,104 @@ async function fetchTorneoStats(perfil) {
     mergeEq(data);
   }
 
-  const playedArr = [...played].filter((x) => x != null);
-  if (!playedArr.length) return { torneosJugados: 0, torneosGanados: 0 };
+  return [...played].filter((x) => x != null);
+}
 
-  const { data: wins } = await supabase
+/**
+ * Torneos jugados, puntos totales (suma en `tabla_puntos` del equipo del jugador) y últimos 3 con posición/puntos.
+ */
+async function fetchEstadisticasYUltimosTorneos(perfil) {
+  const playedArr = await torneoIdsJugadosPorPerfil(perfil);
+  if (!playedArr.length) {
+    return { torneosJugados: 0, puntosTotales: 0, ultimosTorneos: [] };
+  }
+
+  const { data: puntosRows, error: errPuntos } = await supabase
     .from('tabla_puntos')
-    .select('torneo_id, equipo_id')
-    .eq('posicion', 1)
+    .select('torneo_id, equipo_id, posicion, puntos')
     .in('torneo_id', playedArr);
-  const winRows = Array.isArray(wins) ? wins : [];
-  if (!winRows.length) return { torneosJugados: playedArr.length, torneosGanados: 0 };
 
-  const eqIds = [...new Set(winRows.map((w) => w.equipo_id).filter(Boolean))];
-  const { data: eqRows } = await supabase.from('equipos').select('id, torneo_id, jugadores').in('id', eqIds);
+  if (errPuntos) {
+    console.error('[PerfilPublico] tabla_puntos', errPuntos);
+    return { torneosJugados: playedArr.length, puntosTotales: 0, ultimosTorneos: [] };
+  }
+
+  const eqIds = [...new Set((puntosRows || []).map((r) => r.equipo_id).filter(Boolean))];
+  if (!eqIds.length) {
+    return { torneosJugados: playedArr.length, puntosTotales: 0, ultimosTorneos: [] };
+  }
+
+  const { data: eqRows, error: errEq } = await supabase
+    .from('equipos')
+    .select('id, jugadores, torneo_id')
+    .in('id', eqIds);
+
+  if (errEq) {
+    console.error('[PerfilPublico] equipos tabla_puntos', errEq);
+    return { torneosJugados: playedArr.length, puntosTotales: 0, ultimosTorneos: [] };
+  }
+
   const eqMap = {};
   (eqRows || []).forEach((e) => {
     eqMap[e.id] = e;
   });
 
-  const wonTorneos = new Set();
-  for (const w of winRows) {
-    const eq = eqMap[w.equipo_id];
-    if (eq && jugadorEnEquipo(eq.jugadores, perfil)) wonTorneos.add(w.torneo_id);
+  let puntosTotales = 0;
+  const misFilas = [];
+  for (const pr of puntosRows || []) {
+    const eq = eqMap[pr.equipo_id];
+    if (!eq || !jugadorEnEquipo(eq.jugadores, perfil)) continue;
+    puntosTotales += Number(pr.puntos) || 0;
+    misFilas.push({
+      torneo_id: pr.torneo_id,
+      posicion: pr.posicion,
+      puntos: pr.puntos,
+    });
   }
 
-  return { torneosJugados: playedArr.length, torneosGanados: wonTorneos.size };
+  const porTorneo = new Map();
+  for (const row of misFilas) {
+    if (!porTorneo.has(row.torneo_id)) porTorneo.set(row.torneo_id, row);
+  }
+  const unique = [...porTorneo.values()];
+  const tids = [...new Set(unique.map((u) => u.torneo_id))];
+
+  const { data: torneos } = await supabase
+    .from('torneos')
+    .select('id, nombre, updated_at, created_at')
+    .in('id', tids);
+
+  const torneoMeta = {};
+  (torneos || []).forEach((t) => {
+    torneoMeta[t.id] = t;
+  });
+
+  const enriched = unique.map((u) => {
+    const meta = torneoMeta[u.torneo_id];
+    const nom = String(meta?.nombre || '').trim();
+    return {
+      nombre: nom || `Torneo #${u.torneo_id}`,
+      posicion: u.posicion,
+      puntos: u.puntos,
+      sortKey: String(meta?.updated_at || meta?.created_at || ''),
+      idNum: Number(u.torneo_id) || 0,
+    };
+  });
+
+  enriched.sort((a, b) => {
+    const da = Date.parse(a.sortKey) || 0;
+    const db = Date.parse(b.sortKey) || 0;
+    if (db !== da) return db - da;
+    return b.idNum - a.idNum;
+  });
+
+  const ultimosTorneos = enriched.slice(0, 3).map(({ nombre, posicion, puntos }) => ({
+    nombre,
+    posicion,
+    puntos,
+  }));
+
+  return { torneosJugados: playedArr.length, puntosTotales, ultimosTorneos };
 }
 
 async function fetchRankingLocalPosicion(perfil) {
@@ -174,7 +248,8 @@ export default function PerfilPublico() {
   const [perfil, setPerfil] = useState(null);
   /** `null` = sin ids; `{ kind, row }` con fila del otro jugador (o `row: null` si no se encontró). */
   const [companeroDisplay, setCompaneroDisplay] = useState(null);
-  const [stats, setStats] = useState({ torneosJugados: null, torneosGanados: null });
+  const [stats, setStats] = useState({ torneosJugados: null, puntosTotales: null });
+  const [ultimosTorneos, setUltimosTorneos] = useState([]);
   const [rankingPos, setRankingPos] = useState(null);
 
   const aliasDecoded = useMemo(() => {
@@ -195,16 +270,13 @@ export default function PerfilPublico() {
     setLoading(true);
     setPerfil(null);
     setCompaneroDisplay(null);
-    setStats({ torneosJugados: null, torneosGanados: null });
+    setStats({ torneosJugados: null, puntosTotales: null });
+    setUltimosTorneos([]);
     setRankingPos(null);
 
-    const { data: rows, error } = await supabase
-      .from('jugadores_perfil')
-      .select(
-        'user_id, nombre, alias, foto_url, pais, ciudad, nivel, lateralidad, instagram_url, companero_id, ultimo_companero_id, sede_id, es_federado, numero_fipa, pendiente_validacion'
-      )
-      .ilike('alias', a)
-      .limit(8);
+    const { data: rows, error } = await supabase.from('jugadores_perfil').select('*').ilike('alias', a).limit(8);
+
+    console.log('[PerfilPublico] jugadores_perfil respuesta', { error, rows, rowCount: Array.isArray(rows) ? rows.length : 0 });
 
     if (error) {
       console.error('[PerfilPublico]', error);
@@ -223,6 +295,8 @@ export default function PerfilPublico() {
       setLoading(false);
       return;
     }
+
+    console.log('[PerfilPublico] jugadores_perfil fila usada', match);
 
     setPerfil(match);
 
@@ -247,11 +321,13 @@ export default function PerfilPublico() {
     }
 
     try {
-      const s = await fetchTorneoStats(match);
-      setStats(s);
+      const s = await fetchEstadisticasYUltimosTorneos(match);
+      setStats({ torneosJugados: s.torneosJugados, puntosTotales: s.puntosTotales });
+      setUltimosTorneos(Array.isArray(s.ultimosTorneos) ? s.ultimosTorneos : []);
     } catch (e) {
       console.error('[PerfilPublico] stats', e);
-      setStats({ torneosJugados: 0, torneosGanados: 0 });
+      setStats({ torneosJugados: 0, puntosTotales: 0 });
+      setUltimosTorneos([]);
     }
 
     try {
@@ -285,11 +361,24 @@ export default function PerfilPublico() {
   const paisParts = (perfil?.pais || '').split(' ');
   const paisFlag = paisParts[0];
   const paisNombre = paisParts.slice(1).join(' ');
-  const categoriaColor = CATEGORIA_COLOR[perfil?.nivel] || '#999';
+  /** Categoría: solo `nivel` de `jugadores_perfil`. */
+  const nivelPerfil = String(perfil?.nivel ?? '').trim();
+  const categoriaColor = CATEGORIA_COLOR[nivelPerfil] || '#999';
   const nombreCompleto = nombreCompletoJugadorPerfil(perfil) || String(perfil?.nombre || '').trim();
   const aliasGrande = String(perfil?.alias || '').trim();
-  const igHandle = instagramHandleFromStored(perfil?.instagram_url);
-  const igHref = igHandle ? `https://www.instagram.com/${encodeURIComponent(igHandle)}/` : '';
+  const instagramRaw = String(perfil?.instagram_url || '').trim();
+  const instagramHref =
+    instagramRaw && /^https?:\/\//i.test(instagramRaw)
+      ? instagramRaw
+      : (() => {
+          const h = instagramHandleFromStored(instagramRaw);
+          return h ? `https://www.instagram.com/${encodeURIComponent(h)}/` : '';
+        })();
+  const fotoUrlPerfil = String(perfil?.foto_url || '').trim();
+  const clubHabitualTxt = [perfil?.ciudad, perfil?.localidad]
+    .map((x) => String(x || '').trim())
+    .filter(Boolean)
+    .join(' · ');
 
   if (loading) {
     return (
@@ -378,19 +467,36 @@ export default function PerfilPublico() {
               overflow: 'hidden',
               boxShadow: 'inset 0 0 0 3px #ef4444',
               boxSizing: 'border-box',
+              background: '#e2e8f0',
             }}
           >
-            <img
-              src={perfil.foto_url || '/default-avatar.svg'}
-              alt=""
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center center',
-                display: 'block',
-              }}
-            />
+            {fotoUrlPerfil ? (
+              <img
+                src={fotoUrlPerfil}
+                alt=""
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center center',
+                  display: 'block',
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#cbd5e1',
+                }}
+                aria-hidden
+              >
+                <span style={{ fontSize: '44px', lineHeight: 1, opacity: 0.85 }}>👤</span>
+              </div>
+            )}
           </div>
 
           {aliasGrande ? (
@@ -446,7 +552,11 @@ export default function PerfilPublico() {
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Club habitual</span>
               <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
-                {String(perfil.ciudad || '').trim() ? perfil.ciudad : <span style={{ color: '#94a3b8' }}>Sin definir</span>}
+                {clubHabitualTxt ? (
+                  clubHabitualTxt
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                )}
               </span>
             </div>
             <div
@@ -460,11 +570,7 @@ export default function PerfilPublico() {
               }}
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, flexShrink: 0 }}>
-                {companeroDisplay?.kind === 'habitual'
-                  ? 'Compañero habitual'
-                  : companeroDisplay?.kind === 'ultimo'
-                    ? 'Último compañero'
-                    : 'Sin compañero habitual'}
+                {companeroDisplay?.kind === 'ultimo' ? 'Último compañero' : 'Compañero habitual'}
               </span>
               <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
                 {companeroDisplay?.row ? (
@@ -519,9 +625,9 @@ export default function PerfilPublico() {
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Categoría</span>
               <span style={{ fontSize: '14px', textAlign: 'right', display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {perfil.nivel ? (
+                {nivelPerfil ? (
                   <>
-                    <span style={{ fontWeight: 'bold', color: categoriaColor }}>{perfil.nivel}</span>
+                    <span style={{ fontWeight: 'bold', color: categoriaColor }}>{nivelPerfil}</span>
                     {perfil.pendiente_validacion ? (
                       <span
                         title="Pendiente de validación"
@@ -570,7 +676,7 @@ export default function PerfilPublico() {
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Federado</span>
               <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
-                {perfil.es_federado ? (
+                {perfil.es_federado === true ? (
                   <>
                     Sí
                     {String(perfil.numero_fipa || '').trim() ? (
@@ -579,8 +685,10 @@ export default function PerfilPublico() {
                       </span>
                     ) : null}
                   </>
-                ) : (
+                ) : perfil.es_federado === false ? (
                   'No'
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
                 )}
               </span>
             </div>
@@ -595,14 +703,24 @@ export default function PerfilPublico() {
             >
               <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Instagram</span>
               <span style={{ fontSize: '14px', textAlign: 'right' }}>
-                {igHref ? (
+                {instagramHref ? (
                   <a
-                    href={igHref}
+                    href={instagramHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: '#c026d3', fontWeight: 700, textDecoration: 'none' }}
+                    title={instagramRaw}
+                    style={{
+                      color: '#c026d3',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
                   >
-                    @{igHandle}
+                    <span aria-hidden>📸</span>
+                    <span>Instagram</span>
                   </a>
                 ) : (
                   <span style={{ color: '#94a3b8' }}>Sin definir</span>
@@ -653,11 +771,59 @@ export default function PerfilPublico() {
               }}
             >
               <div style={{ fontSize: '26px', fontWeight: 900, color: '#15803d' }}>
-                {stats.torneosGanados != null ? stats.torneosGanados : '—'}
+                {stats.puntosTotales != null ? stats.puntosTotales : '—'}
               </div>
-              <div style={{ fontSize: '12px', color: '#777', marginTop: '4px' }}>Torneos ganados</div>
+              <div style={{ fontSize: '12px', color: '#777', marginTop: '4px' }}>Puntos totales</div>
             </div>
           </div>
+        </div>
+
+        <div
+          style={{
+            background: '#f9f9f9',
+            borderRadius: '12px',
+            padding: '18px 20px',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+            marginBottom: '12px',
+          }}
+        >
+          <h2
+            style={{
+              margin: '0 0 12px',
+              fontSize: '15px',
+              color: '#334155',
+              borderBottom: '1px solid #e5e7eb',
+              paddingBottom: '8px',
+            }}
+          >
+            Últimos torneos
+          </h2>
+          {ultimosTorneos.length === 0 ? (
+            <p style={{ margin: 0, fontSize: '14px', color: '#64748b', fontWeight: 600 }}>
+              Aún no participó en torneos
+            </p>
+          ) : (
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '12px' }}>
+              {ultimosTorneos.map((t, i) => (
+                <li
+                  key={`${t.nombre}-${i}`}
+                  style={{
+                    background: 'white',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>{t.nombre}</div>
+                  <div style={{ fontSize: '13px', color: '#475569' }}>
+                    <span style={{ fontWeight: 700 }}>Posición:</span> {t.posicion != null ? `#${t.posicion}` : '—'}
+                    <span style={{ margin: '0 10px', color: '#cbd5e1' }}>|</span>
+                    <span style={{ fontWeight: 700 }}>Puntos:</span> {t.puntos != null ? t.puntos : '—'}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div
