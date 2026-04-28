@@ -18,20 +18,6 @@ const btnVolver = {
 const LOGOUT_BTN_SIZE = 34;
 
 /**
- * Rutas donde no se muestra ⏻ cerrar sesión.
- * Solo en Mi Perfil (`/mi-perfil`) se muestra; en hub (`/`, `/hub`, …) y el resto, oculto.
- */
-function hideLogoutForPathname(pathname) {
-  const pathOnly =
-    String(pathname || '/')
-      .split('?')[0]
-      .split('#')[0]
-      .replace(/\/+$/, '') || '/';
-  if (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/')) return false;
-  return true;
-}
-
-/**
  * Barra superior fija: ← Volver alineado a la izquierda (tras safe-area), título centrado, cierre de sesión.
  * Grid 1fr / auto / 1fr: con `showBack={false}` un hueco a la derecha de la 1ª columna equilibra el título.
  */
@@ -48,7 +34,7 @@ export default function AppHeader({
   const location = useLocation();
   const { session, signOutAndClear } = useAuth();
   const titleStr = String(title ?? '').trim();
-  const hideLogoutEffective = hideLogout || hideLogoutForPathname(location.pathname);
+  const hideLogoutEffective = hideLogout;
 
   const pathOnly = useMemo(
     () =>
@@ -58,7 +44,9 @@ export default function AppHeader({
         .replace(/\/+$/, '') || '/',
     [location.pathname]
   );
+  const authEmail = String(session?.user?.email || '').trim().toLowerCase();
   const showLogout = !hideLogoutEffective && Boolean(session?.user);
+  const showAdmin = !hideLogoutEffective && authEmail === 'padbolinternacional@gmail.com';
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
 
@@ -185,35 +173,71 @@ export default function AppHeader({
           boxSizing: 'border-box',
         }}
       >
-        {showLogout ? (
-          <button
-            type="button"
-            onClick={async () => {
-              await signOutAndClear();
-              navigate('/');
-            }}
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
+        {showLogout || showAdmin ? (
+          <div
             style={{
-              width: LOGOUT_BTN_SIZE,
-              height: LOGOUT_BTN_SIZE,
-              padding: 0,
-              borderRadius: '50%',
-              border: 'none',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#e2e8f0',
-              fontSize: 16,
-              lineHeight: 1,
-              cursor: 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              gap: '8px',
               marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
-            ⏻
-          </button>
+            {showAdmin ? (
+              <button
+                type="button"
+                onClick={() => navigate('/admin')}
+                aria-label="Ir a Admin"
+                title="Admin"
+                style={{
+                  height: LOGOUT_BTN_SIZE,
+                  padding: '0 10px',
+                  borderRadius: '999px',
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.14)',
+                  color: '#e2e8f0',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                ⚙️ Admin
+              </button>
+            ) : null}
+            {showLogout ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOutAndClear();
+                  navigate('/');
+                }}
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                style={{
+                  width: LOGOUT_BTN_SIZE,
+                  height: LOGOUT_BTN_SIZE,
+                  padding: 0,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.1)',
+                  color: '#e2e8f0',
+                  fontSize: 16,
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                ⏻
+              </button>
+            ) : null}
+          </div>
         ) : !hideLogoutEffective ? (
           <span
             aria-hidden
