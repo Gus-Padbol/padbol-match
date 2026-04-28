@@ -894,13 +894,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const nivelColor   = NIVEL_COLOR[nivelCanonico] || { bg: '#e2e8f0', color: '#475569' };
               const formatoColor = FORMATO_COLOR[torneo.tipo_torneo]  || { bg: '#f3f4f6', color: '#374151' };
               const estadoRaw = String(torneo.estado || '').trim().toLowerCase();
-              const estadoCanonico = estadoRaw === 'activo' ? 'en_curso' : estadoRaw;
+              const estadoCanonico = (
+                estadoRaw === 'activo' || estadoRaw === 'abierto'
+              ) ? 'en_curso' : (
+                estadoRaw === 'proximo'
+              ) ? 'planificacion' : estadoRaw;
               const estadoBadge  = {
-                planificacion: { bg: '#e2e8f0', color: '#475569', label: 'Planificación' },
-                en_curso:      { bg: '#dcfce7', color: '#166534', label: 'En curso'      },
-                finalizado:    { bg: '#dbeafe', color: '#1e40af', label: 'Finalizado'    },
-                cancelado:     { bg: '#fee2e2', color: '#991b1b', label: 'Cancelado'     },
-              }[estadoCanonico] || { bg: '#e2e8f0', color: '#475569', label: torneo.estado };
+                planificacion: { bg: '#22c55e', color: '#ffffff', label: 'Planificación' },
+                en_curso:      { bg: '#3b82f6', color: '#ffffff', label: 'En curso'      },
+                finalizado:    { bg: '#ef4444', color: '#ffffff', label: 'Finalizado'    },
+                cancelado:     { bg: '#9ca3af', color: '#ffffff', label: 'Cancelado'     },
+              }[estadoCanonico] || { bg: '#9ca3af', color: '#ffffff', label: torneo.estado };
               // Shared badge style — fixed 120px, centered
               const badge = (bg, col) => ({
                 background: bg, color: col,
