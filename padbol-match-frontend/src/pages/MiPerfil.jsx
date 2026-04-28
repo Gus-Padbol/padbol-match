@@ -2210,91 +2210,7 @@ export default function MiPerfil() {
             />
 
             <label style={labelStyle}>Compañero habitual</label>
-            <div style={{ position: 'relative', marginBottom: formData.companero_id ? '8px' : '14px' }}>
-              <input
-                type="text"
-                value={companeroBusqueda}
-                onChange={(e) => {
-                  setCompaneroBusqueda(e.target.value);
-                  setCompaneroMenuAbierto(true);
-                }}
-                onFocus={() => setCompaneroMenuAbierto(true)}
-                onBlur={() => {
-                  window.setTimeout(() => setCompaneroMenuAbierto(false), 180);
-                }}
-                placeholder="Buscar por nombre o alias..."
-                autoComplete="off"
-                spellCheck={false}
-                style={{ ...inputStyle, marginBottom: 0 }}
-              />
-              {companeroMenuAbierto && (companeroCargando || companeroOpciones.length > 0) ? (
-                <ul
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    top: '100%',
-                    margin: '4px 0 0',
-                    padding: '4px 0',
-                    listStyle: 'none',
-                    background: '#fff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
-                    maxHeight: '220px',
-                    overflowY: 'auto',
-                    zIndex: 50,
-                  }}
-                >
-                  {companeroCargando && companeroOpciones.length === 0 ? (
-                    <li style={{ padding: '10px 12px', fontSize: '13px', color: '#64748b' }}>Buscando…</li>
-                  ) : null}
-                  {companeroOpciones.map((op) => {
-                    const al = String(op.alias || '').trim();
-                    return (
-                      <li key={op.user_id}>
-                        <button
-                          type="button"
-                          onMouseDown={(ev) => ev.preventDefault()}
-                          onClick={() => {
-                            setFormData((prev) => ({ ...prev, companero_id: op.user_id }));
-                            setCompaneroSeleccionado(op);
-                            setCompaneroBusqueda('');
-                            setCompaneroOpciones([]);
-                            setCompaneroMenuAbierto(false);
-                          }}
-                          style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '8px 12px',
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                          }}
-                        >
-                          <img
-                            src={op.foto_url || '/default-avatar.svg'}
-                            alt=""
-                            style={{
-                              width: '36px',
-                              height: '36px',
-                              borderRadius: '50%',
-                              objectFit: 'cover',
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>@{al}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : null}
-            </div>
-            {formData.companero_id && companeroSeleccionado ? (
+            {companeroSeleccionado ? (
               <div
                 style={{
                   display: 'flex',
@@ -2342,7 +2258,92 @@ export default function MiPerfil() {
                   Quitar
                 </button>
               </div>
-            ) : null}
+            ) : (
+              <div style={{ position: 'relative', marginBottom: '14px' }}>
+                <input
+                  type="text"
+                  value={companeroBusqueda}
+                  onChange={(e) => {
+                    setCompaneroBusqueda(e.target.value);
+                    setCompaneroMenuAbierto(true);
+                  }}
+                  onFocus={() => setCompaneroMenuAbierto(true)}
+                  onBlur={() => {
+                    window.setTimeout(() => setCompaneroMenuAbierto(false), 180);
+                  }}
+                  placeholder="Buscar por nombre o alias..."
+                  autoComplete="off"
+                  spellCheck={false}
+                  style={{ ...inputStyle, marginBottom: 0 }}
+                />
+                {companeroMenuAbierto && (companeroCargando || companeroOpciones.length > 0) ? (
+                  <ul
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: '100%',
+                      margin: '4px 0 0',
+                      padding: '4px 0',
+                      listStyle: 'none',
+                      background: '#fff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
+                      maxHeight: '220px',
+                      overflowY: 'auto',
+                      zIndex: 50,
+                    }}
+                  >
+                    {companeroCargando && companeroOpciones.length === 0 ? (
+                      <li style={{ padding: '10px 12px', fontSize: '13px', color: '#64748b' }}>Buscando…</li>
+                    ) : null}
+                    {companeroOpciones.map((op) => {
+                      const al = String(op.alias || '').trim();
+                      return (
+                        <li key={op.user_id}>
+                          <button
+                            type="button"
+                            onMouseDown={(ev) => ev.preventDefault()}
+                            onClick={() => {
+                              setFormData((prev) => ({ ...prev, companero_id: op.user_id }));
+                              setCompaneroSeleccionado(op);
+                              setCompaneroBusqueda('');
+                              setCompaneroOpciones([]);
+                              setCompaneroMenuAbierto(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '8px 12px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                            }}
+                          >
+                            <img
+                              src={op.foto_url || '/default-avatar.svg'}
+                              alt=""
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>@{al}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
+              </div>
+            )}
             <p
               style={{
                 fontSize: '12px',
