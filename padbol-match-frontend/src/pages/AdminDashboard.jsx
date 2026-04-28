@@ -694,11 +694,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       <div className="admin-header">
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <img
-            src="/logo192.png"
+            src="/logo-padbol-match.png"
             alt="Padbol Match"
-            style={{ width: '56px', height: '56px', objectFit: 'contain', marginBottom: '6px' }}
+            style={{ width: '80px', height: 'auto', objectFit: 'contain', marginBottom: '8px' }}
           />
-          <p style={{ margin: 0, color: '#fff', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>
+          <p style={{ margin: 0, color: '#fff', fontSize: '16px', fontWeight: 700, textAlign: 'center' }}>
             {`Panel ${currentEmail === 'padbolinternacional@gmail.com' ? 'Super Admin' : (ROLE_BADGE[rol] || 'Admin').replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`}
           </p>
         </div>
