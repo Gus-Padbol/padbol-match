@@ -701,12 +701,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     );
   }
 
-  const diaHoy = new Date().getDate();
+  const fechaActualLarga = (() => {
+    const s = new Date().toLocaleDateString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+  })();
 
   const TABS = [
     { id: 'resumen',      label: '📊 Resumen' },
     { id: 'torneos',      label: '🏆 Torneos' },
-    { id: 'reservas',     label: `📅 ${diaHoy} Reservas` },
+    { id: 'reservas',     label: '📅 Reservas' },
     { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
     ...(puedeVerMiSede  ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
     ...(puedeVerConfig  ? [{ id: 'config',  label: '⚙️ Config' }]  : []),
@@ -724,6 +732,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           />
           <p style={{ margin: '0 0 12px', color: '#fff', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
             {`${currentEmail === 'padbolinternacional@gmail.com' ? '🌐 ' : ''}Panel ${currentEmail === 'padbolinternacional@gmail.com' ? 'Super Admin' : (ROLE_BADGE[rol] || 'Admin').replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`}
+          </p>
+          <p style={{ margin: '0 0 12px', color: '#cbd5e1', fontSize: '12px', textAlign: 'center' }}>
+            {fechaActualLarga}
           </p>
         </div>
       </div>
