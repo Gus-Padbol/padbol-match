@@ -1162,7 +1162,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               return isInPeriodo(f);
             });
 
-            const ingresosMes = { ARS: 0, USD: 0, EUR: 0 };
+            const ingresosMes = {};
             const porSede = new Map();
             reservasPeriodo.forEach((r) => {
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
@@ -1171,7 +1171,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const ciudad = String(sedeInfo?.ciudad || '').trim() || 'Sin definir';
               const moneda = getMonedaCanonica(r?.moneda);
               const precio = Number(r?.precio) || 0;
-              if (Object.prototype.hasOwnProperty.call(ingresosMes, moneda)) ingresosMes[moneda] += precio;
+              ingresosMes[moneda] = (ingresosMes[moneda] || 0) + precio;
 
               if (!porSede.has(sedeNombre)) {
                 porSede.set(sedeNombre, {
@@ -1179,20 +1179,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   pais,
                   ciudad,
                   reservasCount: 0,
-                  ingresos: { ARS: 0, USD: 0, EUR: 0 },
+                  ingresos: {},
                   rows: [],
                 });
               }
               const g = porSede.get(sedeNombre);
               g.reservasCount += 1;
-              if (Object.prototype.hasOwnProperty.call(g.ingresos, moneda)) g.ingresos[moneda] += precio;
+              g.ingresos[moneda] = (g.ingresos[moneda] || 0) + precio;
               g.rows.push(r);
             });
 
-            const fmtIngresos = (obj) => ['ARS', 'USD', 'EUR']
-              .filter((m) => (Number(obj[m]) || 0) > 0)
-              .map((m) => `${m} ${(Number(obj[m]) || 0).toLocaleString('es-AR')}`)
-              .join(' · ') || '—';
+            const MONEDA_ORDEN = ['ARS', 'USD', 'EUR'];
+            const fmtIngresos = (obj) => {
+              const keys = Object.keys(obj || {});
+              const ordered = [
+                ...MONEDA_ORDEN.filter((m) => keys.includes(m)),
+                ...keys.filter((m) => !MONEDA_ORDEN.includes(m)),
+              ];
+              const parts = ordered
+                .filter((m) => (Number(obj?.[m]) || 0) > 0)
+                .map((m) => `${m} ${(Number(obj?.[m]) || 0).toLocaleString('es-AR')}`);
+              return parts.length ? parts.join(' · ') : 'Sin ingresos en el período';
+            };
 
             const sedesRows = [...porSede.values()].sort((a, b) => b.reservasCount - a.reservasCount);
 
@@ -1271,9 +1279,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>{reservasPeriodo.length}</div>
                   </div>
                   <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
-                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del período (ARS / USD / EUR)</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del período</div>
                     <div style={{ color: '#0f172a', fontSize: '14px', fontWeight: 800, marginTop: '8px', lineHeight: 1.45 }}>
-                      ARS {ingresosMes.ARS.toLocaleString('es-AR')} · USD {ingresosMes.USD.toLocaleString('es-AR')} · EUR {ingresosMes.EUR.toLocaleString('es-AR')}
+                      {fmtIngresos(ingresosMes)}
                     </div>
                   </div>
                 </div>
@@ -1286,8 +1294,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <thead>
                         <tr style={{ background: '#f8fafc' }}>
                           <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Sede + País</th>
-                          <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Reservas del mes</th>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ingresos del mes</th>
+                          <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Reservas del período</th>
+                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ingresos del período</th>
                           <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}></th>
                         </tr>
                       </thead>
