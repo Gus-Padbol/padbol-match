@@ -127,7 +127,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [validacionState, setValidacionState] = useState({});
   // keyed by sede name for super-admin reservas detail expand/collapse
   const [superAdminReservasOpen, setSuperAdminReservasOpen] = useState({});
-  const [superAdminPeriodo, setSuperAdminPeriodo] = useState('mes'); // hoy | semana | mes | anio
+  const [superAdminPeriodo, setSuperAdminPeriodo] = useState('mes'); // hoy | semana | mes | anio | dia
+  const [superAdminFechaEspecifica, setSuperAdminFechaEspecifica] = useState(
+    () => new Date().toISOString().slice(0, 10)
+  );
 
   useEffect(() => {
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
@@ -693,10 +696,34 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     );
   }
 
+  const diaHoy = new Date().getDate();
+  const calendarioTabIcon = (
+    <span
+      aria-hidden
+      style={{
+        display: 'inline-flex',
+        width: 16,
+        height: 16,
+        borderRadius: 4,
+        background: '#fff',
+        color: '#1f2937',
+        fontSize: 10,
+        fontWeight: 800,
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1px solid rgba(15,23,42,0.28)',
+        lineHeight: 1,
+        marginRight: 5,
+      }}
+    >
+      {diaHoy}
+    </span>
+  );
+
   const TABS = [
     { id: 'resumen',      label: '📊 Resumen' },
     { id: 'torneos',      label: '🏆 Torneos' },
-    { id: 'reservas',     label: '📅 Reservas' },
+    { id: 'reservas',     label: <span style={{ display: 'inline-flex', alignItems: 'center' }}>{calendarioTabIcon}Reservas</span> },
     { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
     ...(puedeVerMiSede  ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
     ...(puedeVerConfig  ? [{ id: 'config',  label: '⚙️ Config' }]  : []),
@@ -1112,6 +1139,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const [y, m, d] = fechaISO.split('-').map(Number);
               const fecha = new Date(y, m - 1, d);
               if (Number.isNaN(fecha.getTime())) return false;
+              if (superAdminPeriodo === 'dia') return fechaISO === superAdminFechaEspecifica;
               if (superAdminPeriodo === 'hoy') return fecha >= startOfToday && fecha <= now;
               if (superAdminPeriodo === 'semana') return fecha >= startOfWeek && fecha <= now;
               if (superAdminPeriodo === 'anio') return fecha >= startOfYear && fecha <= now;
@@ -1156,32 +1184,49 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
             return (
               <div style={{ display: 'grid', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ color: '#e2e8f0', fontSize: '13px', fontWeight: 700 }}>Período:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap', paddingBottom: '2px' }}>
                   {[
                     { id: 'hoy', label: 'Hoy' },
                     { id: 'semana', label: 'Esta semana' },
                     { id: 'mes', label: 'Este mes' },
                     { id: 'anio', label: 'Este año' },
+                    { id: 'dia', label: 'Día específico' },
                   ].map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setSuperAdminPeriodo(opt.id)}
                       style={{
-                        padding: '6px 10px',
+                        padding: '5px 10px',
                         borderRadius: '999px',
                         border: superAdminPeriodo === opt.id ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
                         background: superAdminPeriodo === opt.id ? '#6366f1' : '#fff',
                         color: superAdminPeriodo === opt.id ? '#fff' : '#334155',
                         cursor: 'pointer',
-                        fontSize: '12px',
+                        fontSize: '11px',
                         fontWeight: 700,
+                        flexShrink: 0,
                       }}
                     >
                       {opt.label}
                     </button>
                   ))}
+                  {superAdminPeriodo === 'dia' ? (
+                    <input
+                      type="date"
+                      value={superAdminFechaEspecifica}
+                      onChange={(e) => setSuperAdminFechaEspecifica(e.target.value)}
+                      style={{
+                        padding: '5px 8px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '11px',
+                        color: '#334155',
+                        background: '#fff',
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : null}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
