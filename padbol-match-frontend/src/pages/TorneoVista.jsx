@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import { supabase } from '../supabaseClient';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_CONTENT_PADDING_TOP_PX,
@@ -34,9 +35,106 @@ export default function TorneoVista() {
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
   const [iniciando, setIniciando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [showJugadoresInscriptos, setShowJugadoresInscriptos] = useState(false);
+  const [loadingJugadoresInscriptos, setLoadingJugadoresInscriptos] = useState(false);
+  const [jugadoresInscriptos, setJugadoresInscriptos] = useState([]);
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const isAdmin = ADMIN_EMAILS.includes(currentEmail);
+  const estadoTorneo = String(torneo?.estado || '').trim().toLowerCase();
+  const mostrarTablaYPartidos = ['activo', 'en_curso', 'abierto', 'finalizado'].includes(estadoTorneo);
+
+  const esUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+
+  const cargarJugadoresInscriptos = async () => {
+    setLoadingJugadoresInscriptos(true);
+    try {
+      const { data: equiposRows, error: equiposError } = await supabase
+        .from('equipos')
+        .select('id, jugadores')
+        .eq('torneo_id', torneoId);
+      if (equiposError) throw equiposError;
+
+      const jugadoresBase = [];
+      (equiposRows || []).forEach((equipo) => {
+        const arr = Array.isArray(equipo?.jugadores) ? equipo.jugadores : [];
+        arr.forEach((j) => {
+          if (!j) return;
+          const email = String(j?.email || '').trim().toLowerCase();
+          const userId = String(j?.id || '').trim();
+          jugadoresBase.push({
+            key: userId || email || String(j?.nombre || '').trim(),
+            user_id: esUuid(userId) ? userId : '',
+            email,
+            nombre: String(j?.nombre || '').trim(),
+          });
+        });
+      });
+
+      const userIds = [...new Set(jugadoresBase.map((j) => j.user_id).filter(Boolean))];
+      const emails = [...new Set(jugadoresBase.map((j) => j.email).filter(Boolean))];
+
+      let perfiles = [];
+      if (userIds.length > 0) {
+        const { data: perfilesById, error: errById } = await supabase
+          .from('jugadores_perfil')
+          .select('user_id, email, alias, nombre, nivel, ciudad, localidad, foto_url')
+          .in('user_id', userIds);
+        if (errById) throw errById;
+        perfiles = [...perfiles, ...(perfilesById || [])];
+      }
+      if (emails.length > 0) {
+        const { data: perfilesByEmail, error: errByEmail } = await supabase
+          .from('jugadores_perfil')
+          .select('user_id, email, alias, nombre, nivel, ciudad, localidad, foto_url')
+          .in('email', emails);
+        if (errByEmail) throw errByEmail;
+        perfiles = [...perfiles, ...(perfilesByEmail || [])];
+      }
+
+      const perfilByUserId = new Map();
+      const perfilByEmail = new Map();
+      perfiles.forEach((p) => {
+        const uid = String(p?.user_id || '').trim();
+        const email = String(p?.email || '').trim().toLowerCase();
+        if (uid) perfilByUserId.set(uid, p);
+        if (email) perfilByEmail.set(email, p);
+      });
+
+      const seen = new Set();
+      const jugadores = jugadoresBase
+        .map((base) => {
+          const perfil = (base.user_id && perfilByUserId.get(base.user_id))
+            || (base.email && perfilByEmail.get(base.email))
+            || null;
+          const nombreFinal = String(perfil?.alias || perfil?.nombre || base.nombre || 'Jugador').trim();
+          const categoria = String(perfil?.nivel || 'Sin definir').trim() || 'Sin definir';
+          const sede = String(perfil?.ciudad || perfil?.localidad || 'Sin definir').trim() || 'Sin definir';
+          const foto = String(perfil?.foto_url || '').trim();
+          const key = `${base.user_id || ''}|${base.email || ''}|${nombreFinal.toLowerCase()}`;
+          return { key, nombreFinal, categoria, sede, foto };
+        })
+        .filter((j) => {
+          if (!j.key || seen.has(j.key)) return false;
+          seen.add(j.key);
+          return true;
+        });
+
+      setJugadoresInscriptos(jugadores);
+    } catch (err) {
+      console.error('[TorneoVista] Error cargando jugadores inscriptos:', err);
+      alert('No se pudieron cargar los jugadores inscriptos');
+      setJugadoresInscriptos([]);
+    } finally {
+      setLoadingJugadoresInscriptos(false);
+    }
+  };
+
+  const toggleJugadoresInscriptos = async () => {
+    const next = !showJugadoresInscriptos;
+    setShowJugadoresInscriptos(next);
+    if (next) await cargarJugadoresInscriptos();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -385,8 +483,8 @@ export default function TorneoVista() {
         </div>
         {isAdmin && !['en_curso', 'finalizado'].includes((torneo.estado || '').toLowerCase()) && (
           <div className="torneo-acciones">
-            <button className="btn-agregar-jugadores" onClick={() => navigate('/mi-perfil')}>
-              👥 Datos de jugadores (Mi perfil)
+            <button className="btn-agregar-jugadores" onClick={toggleJugadoresInscriptos}>
+              👥 Jugadores inscriptos
             </button>
             {!todosEquiposCompletos ? (
               <p className="torneo-iniciar-aviso" style={{ margin: '8px 0 0', color: '#b45309', fontWeight: 600 }}>
@@ -400,6 +498,33 @@ export default function TorneoVista() {
             >
               {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
             </button>
+            {showJugadoresInscriptos && (
+              <div style={{ width: '100%', marginTop: '10px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '10px' }}>
+                {loadingJugadoresInscriptos ? (
+                  <p style={{ margin: 0, color: '#64748b' }}>Cargando jugadores...</p>
+                ) : jugadoresInscriptos.length === 0 ? (
+                  <p style={{ margin: 0, color: '#64748b' }}>No hay jugadores inscriptos todavía.</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    {jugadoresInscriptos.map((j) => (
+                      <div key={j.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', border: '1px solid #f1f5f9', borderRadius: '10px', padding: '8px 10px' }}>
+                        {j.foto ? (
+                          <img src={j.foto} alt={j.nombreFinal} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', background: '#e2e8f0' }} />
+                        ) : (
+                          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#e2e8f0', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>👤</div>
+                        )}
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{j.nombreFinal}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>
+                            Categoría: {j.categoria} · Sede: {j.sede}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
         {isAdmin && torneo.estado === 'en_curso' && partidos.length > 0 && partidos.every(p => p.estado === 'finalizado') && (
@@ -412,7 +537,7 @@ export default function TorneoVista() {
       </div>
 
       {/* ── Reusable tabla component ── */}
-      {(() => {
+      {mostrarTablaYPartidos ? (() => {
         const TablaPosicionesTable = ({ tabla }) => (
           <table className="tabla-posiciones">
             <thead>
@@ -531,7 +656,7 @@ export default function TorneoVista() {
             </div>
           </div>
         );
-      })()}
+      })() : null}
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
