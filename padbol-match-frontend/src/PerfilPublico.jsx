@@ -94,17 +94,37 @@ async function fetchEquiposJugador(perfil) {
     return [];
   }
   const rows = equiposRows || [];
+  const torneoIds = [...new Set(rows.map((eq) => eq?.torneo_id).filter((x) => x != null))];
+  const estadoByTorneoId = new Map();
+  if (torneoIds.length) {
+    const { data: torneosRows, error: torneosErr } = await supabase
+      .from('torneos')
+      .select('id, estado')
+      .in('id', torneoIds);
+    if (torneosErr) {
+      console.warn('[PerfilPublico] torneos para filtrar finalizados', torneosErr);
+    } else {
+      for (const t of torneosRows || []) {
+        estadoByTorneoId.set(t.id, String(t.estado || '').trim().toLowerCase());
+      }
+    }
+  }
+
   const matched = [];
   for (const eq of rows) {
     const match = jugadorEnEquipo(eq.jugadores, perfil);
+    const torneoEstado = estadoByTorneoId.get(eq?.torneo_id) || '';
+    const torneoFinalizado = torneoEstado === 'finalizado';
     console.log('[PerfilPublico] jugadorEnEquipo check', {
       equipoId: eq?.id ?? null,
       torneoId: eq?.torneo_id ?? null,
       matched: match,
+      torneoEstado: torneoEstado || null,
+      torneoFinalizado,
       perfilUserId: perfil?.user_id ?? null,
       perfilEmail: perfil?.email ?? null,
     });
-    if (match) matched.push(eq);
+    if (match && torneoFinalizado) matched.push(eq);
   }
   return matched;
 }
