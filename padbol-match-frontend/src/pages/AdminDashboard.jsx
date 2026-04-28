@@ -672,7 +672,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   if (loading) {
     return (
-      <div style={{ padding: `${HUB_CONTENT_PADDING_TOP_PX}px 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`, textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
+      <div style={{ padding: `8px 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`, textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
         <AppHeader title="" showBack={false} />
         Cargando...
       </div>
@@ -689,9 +689,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   ];
 
   return (
-    <div className="admin-dashboard" style={{ paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div className="admin-dashboard" style={{ paddingTop: '8px', paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader title="" showBack={false} />
-      <div className="admin-header">
+      <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <img
             src="/logo-padbol-match.png"
@@ -705,7 +705,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>
 
       {/* Tab navigation */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#667eea' }}>
+      <div style={{ display: 'flex', gap: '4px', marginTop: 0, marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingTop: 0, paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#667eea' }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
