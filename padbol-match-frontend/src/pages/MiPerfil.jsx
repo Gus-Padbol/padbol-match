@@ -395,6 +395,7 @@ export default function MiPerfil() {
       if (myUid) q = q.neq('user_id', myUid);
       const { data, error } = await q;
       if (seq !== companeroSearchSeqRef.current) return;
+      console.log('[Compañero] buscando:', term, 'resultados:', data);
       setCompaneroCargando(false);
       if (error) {
         setCompaneroOpciones([]);
@@ -2182,7 +2183,7 @@ export default function MiPerfil() {
                 onBlur={() => {
                   window.setTimeout(() => setCompaneroMenuAbierto(false), 180);
                 }}
-                placeholder="Buscar por alias…"
+                placeholder="Buscar por nombre, apellido o alias..."
                 autoComplete="off"
                 spellCheck={false}
                 style={{ ...inputStyle, marginBottom: 0 }}
