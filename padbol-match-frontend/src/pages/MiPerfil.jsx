@@ -1838,81 +1838,41 @@ export default function MiPerfil() {
           </p>
         )}
         {perfil && !editando ? (
-          <div
-            style={{
-              marginTop: '12px',
-              paddingTop: '12px',
-              borderTop: '1px solid #eee',
-              textAlign: 'left',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '4px 0',
-              }}
-            >
-              <span style={{ color: '#777', fontSize: '13px', flexShrink: 0 }}>
-                {perfilCompaneroDisplay?.kind === 'habitual'
-                  ? 'Compañero habitual'
-                  : perfilCompaneroDisplay?.kind === 'ultimo'
-                    ? 'Último compañero'
-                    : 'Sin compañero habitual'}
-              </span>
-              <span style={{ fontSize: '14px', color: '#333', textAlign: 'right' }}>
-                {perfilCompaneroDisplay?.row ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-                    {perfilCompaneroDisplay.row.foto_url ? (
-                      <img
-                        src={perfilCompaneroDisplay.row.foto_url}
-                        alt=""
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          flexShrink: 0,
-                        }}
-                      />
-                    ) : null}
-                    {String(perfilCompaneroDisplay.row.alias || '').trim() ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(
-                            `/jugador/${encodeURIComponent(String(perfilCompaneroDisplay.row.alias).trim())}`
-                          )
-                        }
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          color: '#5b21b6',
-                          fontWeight: 600,
-                          fontSize: '14px',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        @{String(perfilCompaneroDisplay.row.alias).trim()}
-                      </button>
-                    ) : (
-                      <span style={{ fontWeight: 600 }}>
-                        {nombreCompletoJugadorPerfil(perfilCompaneroDisplay.row) ||
-                          perfilCompaneroDisplay.row.nombre ||
-                          'Sin definir'}
-                      </span>
-                    )}
-                  </span>
-                ) : (
-                  <span style={{ color: '#64748b', fontSize: '14px' }}>Sin definir</span>
-                )}
-              </span>
-            </div>
-          </div>
+          <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>
+            {perfilCompaneroDisplay?.kind === 'ultimo' ? 'Último compañero' : 'Compañero habitual'}:{' '}
+            {perfilCompaneroDisplay?.row && String(perfilCompaneroDisplay.row.alias || '').trim() ? (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/jugador/${encodeURIComponent(String(perfilCompaneroDisplay.row.alias).trim())}`
+                  )
+                }
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0,
+                  cursor: 'pointer',
+                  color: '#5b21b6',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  textDecoration: 'underline',
+                  fontFamily: 'inherit',
+                }}
+              >
+                @{String(perfilCompaneroDisplay.row.alias).trim()}
+              </button>
+            ) : perfilCompaneroDisplay?.row ? (
+              <>
+                {nombreCompletoJugadorPerfil(perfilCompaneroDisplay.row) ||
+                  perfilCompaneroDisplay.row.nombre ||
+                  'Sin definir'}
+              </>
+            ) : (
+              'Sin definir'
+            )}
+          </p>
         ) : null}
         {/* Badges */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
