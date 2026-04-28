@@ -37,7 +37,7 @@ import {
   ensureCreadorPrimeroEnLista,
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
-import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
+import { esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
 
 const AVATAR_JUGADOR_EQ_SIZE = 36;
 const AVATAR_JUGADOR_EQ_VIOLETA = '#7c3aed';
@@ -130,6 +130,114 @@ function samePerson(a, b) {
   return Boolean(na && na === nb);
 }
 
+/** `jugadores.id` alineado con `auth.users` / `jugadores_perfil.user_id`. */
+const UUID_AUTH_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function jugadorIdLikelyUserId(raw) {
+  const s = raw != null && String(raw).trim() !== '' ? String(raw).trim() : '';
+  return s && UUID_AUTH_ID.test(s) ? s : '';
+}
+
+function perfilJugadorDesdeMaps(p, perfilByEmailLower, perfilByUserId) {
+  const em = normalizeJugadorEmail(p);
+  if (em && perfilByEmailLower instanceof Map && perfilByEmailLower.has(em)) {
+    return perfilByEmailLower.get(em);
+  }
+  const uid = jugadorIdLikelyUserId(p?.id);
+  if (uid && perfilByUserId instanceof Map && perfilByUserId.has(uid)) {
+    return perfilByUserId.get(uid);
+  }
+  return null;
+}
+
+function slugParaPerfilPublicoJugador(p, perfilRow, ctx) {
+  const aliasPerfil = perfilRow && String(perfilRow.alias || '').trim();
+  if (aliasPerfil) return aliasPerfil;
+  const aliasP = String(p?.alias || '').trim();
+  if (aliasP) return aliasP;
+  const nom =
+    nombreDisplayJugadorTorneo(p, ctx) ||
+    jugadorNombreTorneoEtiqueta(p, ctx) ||
+    [p?.nombre, p?.apellido].filter(Boolean).join(' ').trim() ||
+    String(p?.nombre || '').trim();
+  return nom ? nom : '';
+}
+
+/**
+ * Avatar + nombre (link si hay slug) + 🎖️ capitán; `childrenDebajo` no dispara la navegación.
+ */
+function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, navigate, childrenDebajo }) {
+  const perfilRow = perfilJugadorDesdeMaps(p, ctx?.perfilByEmailLower, perfilByUserId);
+  const slug = slugParaPerfilPublicoJugador(p, perfilRow, ctx);
+  const path = slug ? `/jugador/${encodeURIComponent(slug)}` : null;
+  const label = jugadorNombreTorneoEtiqueta(p, ctx);
+  const clickable = Boolean(path);
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flex: 1,
+        minWidth: 0,
+        gap: '10px',
+        alignItems: 'flex-start',
+        cursor: clickable ? 'pointer' : 'default',
+      }}
+      role={clickable ? 'link' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={() => clickable && navigate(path)}
+      onKeyDown={(e) => {
+        if (!clickable) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigate(path);
+        }
+      }}
+    >
+      <AvatarJugadorEquipoLista p={p} ctx={ctx} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontWeight: 700,
+            display: 'inline-flex',
+            alignItems: 'baseline',
+            flexWrap: 'wrap',
+            minWidth: 0,
+          }}
+        >
+          <span
+            style={{
+              color: clickable ? '#2563eb' : undefined,
+              textDecoration: clickable ? 'underline' : undefined,
+            }}
+          >
+            {label}
+          </span>
+          {esCapitanJugadorEnFila(p, equipo) ? (
+            <span
+              title="Capitán"
+              aria-label="Capitán"
+              style={{ marginLeft: 4, fontSize: '1em', lineHeight: 1 }}
+            >
+              {ICONO_CAPITAN}
+            </span>
+          ) : null}
+        </div>
+        {childrenDebajo != null && childrenDebajo !== false ? (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="presentation"
+          >
+            {childrenDebajo}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function getPlayers(eq) {
   if (Array.isArray(eq?.jugadores)) {
     return eq.jugadores.map(normalizePlayer).filter(Boolean);
@@ -188,6 +296,8 @@ export default function EquipoVista() {
   const [perfilMapsJugadores, setPerfilMapsJugadores] = useState(() =>
     buildJugadorPerfilLookupMaps([])
   );
+  /** `user_id` → fila `jugadores_perfil` (complementa el fetch por email). */
+  const [perfilByUserId, setPerfilByUserId] = useState(() => new Map());
   const [reenviandoEmail, setReenviandoEmail] = useState(null);
   /** `jugadores_perfil` (incl. whatsapp) solo emails de jugadores en equipo con estado pendiente; se actualiza en {@link cargarEquipo}. */
   const [perfilPendientesPorEmail, setPerfilPendientesPorEmail] = useState(() => new Map());
@@ -433,6 +543,46 @@ export default function EquipoVista() {
       cancelled = true;
     };
   }, [perfilFetchKeyEquipo]);
+
+  const jugadoresUserIdsFetchKey = useMemo(
+    () =>
+      [...new Set([...players, ...requests].map((p) => jugadorIdLikelyUserId(p?.id)).filter(Boolean))]
+        .sort()
+        .join(';'),
+    [players, requests]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = [
+      ...new Set([...players, ...requests].map((p) => jugadorIdLikelyUserId(p?.id)).filter(Boolean)),
+    ];
+    if (!ids.length) {
+      setPerfilByUserId(new Map());
+      return;
+    }
+    (async () => {
+      const { data, error } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, nombre, apellido, alias, email, whatsapp, foto_url')
+        .in('user_id', ids);
+      if (cancelled) return;
+      if (error) {
+        console.error('EquipoVista jugadores_perfil por user_id', error);
+        setPerfilByUserId(new Map());
+        return;
+      }
+      const m = new Map();
+      for (const row of data || []) {
+        const u = String(row.user_id || '').trim();
+        if (u) m.set(u, row);
+      }
+      setPerfilByUserId(m);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [jugadoresUserIdsFetchKey]);
 
   const nombreTorneoCtx = useMemo(
     () => ({
@@ -815,16 +965,13 @@ export default function EquipoVista() {
     cargarEquipo();
   };
 
-  const invitarWhatsappHref = useMemo(() => {
-    const base =
-      typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+  const invitarPadbolMatchWhatsappHref = useMemo(() => {
     const eid = equipoId != null && String(equipoId).trim() !== '' ? String(equipoId).trim() : '';
-    const url = eid
-      ? `${base}/torneo/${id}/equipos?equipo=${encodeURIComponent(eid)}`
-      : `${base}/torneo/${id}/equipos`;
-    const txt = `Te invito a registrarte en el torneo y confirmar tu lugar en el equipo "${equipo?.nombre || ''}": ${url}`;
+    if (!eid) return '';
+    const link = `https://padbol-match-9abn.vercel.app/equipo/${encodeURIComponent(eid)}`;
+    const txt = `¡Hola! Te invito a unirte a mi equipo en PADBOL Match. Entrá con este link: ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(txt)}`;
-  }, [id, equipoId, equipo?.nombre]);
+  }, [equipoId]);
 
   const cupoEquipo = Number(equipo?.cupo_maximo || 2);
   const plazasLlenasEquipo = players.length >= cupoEquipo;
@@ -913,7 +1060,7 @@ export default function EquipoVista() {
   if (loading) {
     return (
       <div style={equipoPageShellStyle}>
-        <AppHeader title="Equipo" />
+        <AppHeader title="Mi Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
         <BottomNav />
       </div>
@@ -923,7 +1070,7 @@ export default function EquipoVista() {
   if (!equipo) {
     return (
       <div style={equipoPageShellStyle}>
-        <AppHeader title="Equipo" />
+        <AppHeader title="Mi Equipo" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
           <p>No se encontró el equipo.</p>
         </div>
@@ -934,12 +1081,13 @@ export default function EquipoVista() {
 
   return (
     <div style={equipoPageShellStyle}>
-      <AppHeader title="Equipo" />
+      <AppHeader title="Mi Equipo" />
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div
           style={{
             ...cardStyle,
+            marginTop: 16,
             marginBottom: 18,
           }}
         >
@@ -1107,21 +1255,14 @@ export default function EquipoVista() {
                       background: T.colorCardMuted,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                      <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
-                      <div
-                        style={{
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'baseline',
-                          flexWrap: 'wrap',
-                          minWidth: 0,
-                        }}
-                      >
-                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
-                      </div>
-                    </div>
+                    <JugadorFilaIzquierdaNavegable
+                      p={p}
+                      equipo={equipo}
+                      ctx={nombreTorneoCtx}
+                      perfilByUserId={perfilByUserId}
+                      navigate={navigate}
+                      childrenDebajo={null}
+                    />
                   </div>
                 ))}
               </div>
@@ -1147,16 +1288,14 @@ export default function EquipoVista() {
                       gap: '10px',
                     }}
                   >
-                    <div style={{ display: 'flex', flex: 1, minWidth: 0, gap: '10px', alignItems: 'flex-start' }}>
-                      <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}
-                        >
-                          <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                          {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
-                        </div>
-                        {samePerson(p, yo) && !perfilTorneoCompleto ? (
+                    <JugadorFilaIzquierdaNavegable
+                      p={p}
+                      equipo={equipo}
+                      ctx={nombreTorneoCtx}
+                      perfilByUserId={perfilByUserId}
+                      navigate={navigate}
+                      childrenDebajo={
+                        samePerson(p, yo) && !perfilTorneoCompleto ? (
                           <div
                             style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
                           >
@@ -1164,9 +1303,9 @@ export default function EquipoVista() {
                           </div>
                         ) : esJugadorPendiente(p) ? (
                           renderPendienteDeConfirmar(p, { conAccionesCreador: true })
-                        ) : null}
-                      </div>
-                    </div>
+                        ) : null
+                      }
+                    />
                     {soyCreador && !torneoCancelado && !esCapitanJugadorEnFila(p, equipo) ? (
                       <button
                         type="button"
@@ -1210,16 +1349,14 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                    <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}
-                      >
-                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
-                      </div>
-                      {samePerson(p, yo) && !perfilTorneoCompleto ? (
+                  <JugadorFilaIzquierdaNavegable
+                    p={p}
+                    equipo={equipo}
+                    ctx={nombreTorneoCtx}
+                    perfilByUserId={perfilByUserId}
+                    navigate={navigate}
+                    childrenDebajo={
+                      samePerson(p, yo) && !perfilTorneoCompleto ? (
                         <div
                           style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
                         >
@@ -1227,9 +1364,9 @@ export default function EquipoVista() {
                         </div>
                       ) : esJugadorPendiente(p) ? (
                         renderPendienteDeConfirmar(p, { conAccionesCreador: false })
-                      ) : null}
-                    </div>
-                  </div>
+                      ) : null
+                    }
+                  />
                 </div>
               ))}
             </div>
@@ -1244,24 +1381,22 @@ export default function EquipoVista() {
                     background: T.colorCardMuted
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                    <AvatarJugadorEquipoLista p={p} ctx={nombreTorneoCtx} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}
-                      >
-                        <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)}</span>
-                        {esCapitanJugadorEnFila(p, equipo) ? <CapitanBadgeC /> : null}
-                      </div>
-                      {samePerson(p, yo) && !perfilTorneoCompleto ? (
+                  <JugadorFilaIzquierdaNavegable
+                    p={p}
+                    equipo={equipo}
+                    ctx={nombreTorneoCtx}
+                    perfilByUserId={perfilByUserId}
+                    navigate={navigate}
+                    childrenDebajo={
+                      samePerson(p, yo) && !perfilTorneoCompleto ? (
                         <div
                           style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
                         >
                           Perfil incompleto
                         </div>
-                      ) : null}
-                    </div>
-                  </div>
+                      ) : null
+                    }
+                  />
                 </div>
               ))}
             </div>
@@ -1312,6 +1447,41 @@ export default function EquipoVista() {
             </div>
           ) : null}
 
+          {soyCreador && !torneoCancelado && plazasLlenasEquipo ? (
+            <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+              {equipoListoJugar ? (
+                <p style={{ margin: '0 0 14px', fontSize: '14px', color: T.colorSuccessStrong, fontWeight: 700 }}>
+                  Equipo completo
+                </p>
+              ) : (
+                <p style={{ margin: '0 0 14px', fontSize: '14px', color: T.colorWarningSoft, fontWeight: 700 }}>
+                  Faltan confirmar jugadores
+                </p>
+              )}
+              {equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' ? (
+                <>
+                  <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
+                    Paga la inscripción del equipo para confirmar el cupo en el torneo.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={mpInscripcionLoading}
+                    onClick={() => void confirmarInscripcionDesdeVista()}
+                    style={{
+                      ...buttonPrimaryStyle,
+                      width: '100%',
+                      opacity: mpInscripcionLoading ? 0.7 : 1,
+                      cursor: mpInscripcionLoading ? 'default' : 'pointer',
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    }}
+                  >
+                    {mpInscripcionLoading ? 'Redirigiendo…' : 'Confirmar inscripción'}
+                  </button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+
           {puedeMostrarSalirEquipo ? (
             <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
               <button
@@ -1338,7 +1508,9 @@ export default function EquipoVista() {
         {soyCreador &&
           torneo &&
           torneo.estado !== 'finalizado' &&
-          torneo.estado !== 'cancelado' && (
+          torneo.estado !== 'cancelado' &&
+          !plazasLlenasEquipo &&
+          invitarPadbolMatchWhatsappHref ? (
             <div
               style={{
                 ...cardStyle,
@@ -1346,59 +1518,24 @@ export default function EquipoVista() {
               }}
             >
               <h3 style={{ marginTop: 0 }}>Invitar jugadores</h3>
-              {players.length >= cupoEquipo ? (
-                equipoListoJugar ? (
-                  <p style={{ margin: '0 0 14px', fontSize: '14px', color: T.colorSuccessStrong, fontWeight: 700 }}>
-                    Equipo completo
-                  </p>
-                ) : (
-                  <p style={{ margin: '0 0 14px', fontSize: '14px', color: T.colorWarningSoft, fontWeight: 700 }}>
-                    Faltan confirmar jugadores
-                  </p>
-                )
-              ) : null}
-              {equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' ? (
-                <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-                  Paga la inscripción del equipo para confirmar el cupo en el torneo.
-                </p>
-              ) : null}
-              {soyCreador && equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' ? (
-                <button
-                  type="button"
-                  disabled={mpInscripcionLoading}
-                  onClick={() => void confirmarInscripcionDesdeVista()}
-                  style={{
-                    ...buttonPrimaryStyle,
-                    width: '100%',
-                    marginBottom: '14px',
-                    opacity: mpInscripcionLoading ? 0.7 : 1,
-                    cursor: mpInscripcionLoading ? 'default' : 'pointer',
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                  }}
-                >
-                  {mpInscripcionLoading ? 'Redirigiendo…' : 'Confirmar inscripción'}
-                </button>
-              ) : null}
-              {marcaAbierto ? (
-                <a
-                  href={invitarWhatsappHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: 'inline-block',
-                    padding: '10px 16px',
-                    background: '#25d366',
-                    color: 'white',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Invitar por WhatsApp
-                </a>
-              ) : null}
+              <a
+                href={invitarPadbolMatchWhatsappHref}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'inline-block',
+                  padding: '10px 16px',
+                  background: '#25d366',
+                  color: 'white',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                📲 Invitar por WhatsApp
+              </a>
             </div>
-          )}
+          ) : null}
 
         {soyCreador && !torneoCancelado && marcaAbierto && (
           <div
