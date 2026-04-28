@@ -122,7 +122,6 @@ function AppRoutes() {
         minHeight: '100vh',
         width: '100%',
         maxWidth: '100%',
-        overflowX: 'hidden',
         boxSizing: 'border-box',
       }}
     >
@@ -186,7 +185,6 @@ function App() {
         style={{
           width: '100%',
           maxWidth: '100%',
-          overflowX: 'hidden',
           minHeight: '100vh',
           boxSizing: 'border-box',
         }}
