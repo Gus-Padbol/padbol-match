@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import { nombreCompletoJugadorPerfil } from './utils/jugadorPerfil';
+import {
+  nombreCompletoJugadorPerfil,
+  formatAliasConArroba,
+  esCategoriaPendienteValidacion,
+} from './utils/jugadorPerfil';
 import { normalizeEmailStr } from './utils/jugadorNombreTorneo';
 import { formatNivelTorneo } from './utils/torneoFormatters';
+import { fetchTorneosConPuntosParaPerfil, posicionConMedalla } from './utils/torneoHistorialPuntosJugador';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -128,124 +133,6 @@ async function fetchEquiposJugador(perfil) {
     if (match && torneoFinalizado) matched.push(eq);
   }
   return matched;
-}
-
-/** Equipos en los que el jugador figura en `jugadores` (cualquier estado del torneo). */
-async function fetchEquiposJugadorTodosTorneos(perfil) {
-  const { data: equiposRows, error: equiposErr } = await supabase
-    .from('equipos')
-    .select('id, torneo_id, nombre, jugadores');
-  if (equiposErr) {
-    console.warn('[PerfilPublico] equipos (todos torneos, filtro jugador)', equiposErr);
-    return [];
-  }
-  const matched = [];
-  for (const eq of equiposRows || []) {
-    if (jugadorEnEquipo(eq.jugadores, perfil)) matched.push(eq);
-  }
-  return matched;
-}
-
-function posicionConMedalla(pos) {
-  const n = Number(pos);
-  if (!Number.isFinite(n) || n < 1) return '—';
-  if (n === 1) return '🥇 1';
-  if (n === 2) return '🥈 2';
-  if (n === 3) return '🥉 3';
-  return String(n);
-}
-
-function formatFechaTorneoPublico(fin, ini) {
-  const f = String(fin || '').trim();
-  const i = String(ini || '').trim();
-  const raw = f || i;
-  if (!raw) return '—';
-  const d = new Date(`${raw}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-/**
- * Torneos con `tabla_puntos.puntos > 0` donde el jugador pertenece al equipo (jsonb `jugadores`).
- */
-async function fetchTorneosConPuntosPublico(perfil) {
-  const equiposJugador = await fetchEquiposJugadorTodosTorneos(perfil);
-  const equipoIds = [...new Set(equiposJugador.map((e) => e.id).filter((x) => x != null))];
-  if (!equipoIds.length) return [];
-
-  const { data: tpRows, error: errTp } = await supabase
-    .from('tabla_puntos')
-    .select('torneo_id, equipo_id, posicion, puntos')
-    .in('equipo_id', equipoIds)
-    .gt('puntos', 0);
-
-  if (errTp) {
-    console.error('[PerfilPublico] tabla_puntos torneos público', errTp);
-    return [];
-  }
-
-  const eqById = {};
-  equiposJugador.forEach((e) => {
-    eqById[e.id] = e;
-  });
-
-  const misFilas = [];
-  for (const pr of tpRows || []) {
-    if (Number(pr.puntos) <= 0) continue;
-    const eq = eqById[pr.equipo_id];
-    if (!eq || !jugadorEnEquipo(eq.jugadores, perfil)) continue;
-    misFilas.push({
-      torneo_id: pr.torneo_id,
-      equipo_id: pr.equipo_id,
-      posicion: pr.posicion,
-      puntos: pr.puntos,
-    });
-  }
-
-  if (!misFilas.length) return [];
-
-  const tids = [...new Set(misFilas.map((r) => r.torneo_id).filter((x) => x != null))];
-  const { data: torneosRows, error: errT } = await supabase
-    .from('torneos')
-    .select('id, nombre, fecha_inicio, fecha_fin, nivel_torneo, sede_id')
-    .in('id', tids);
-
-  if (errT) {
-    console.error('[PerfilPublico] torneos join tabla_puntos', errT);
-  }
-
-  const torById = {};
-  (torneosRows || []).forEach((t) => {
-    torById[t.id] = t;
-  });
-
-  const items = misFilas.map((row) => {
-    const t = torById[row.torneo_id] || {};
-    const fin = t.fecha_fin;
-    const ini = t.fecha_inicio;
-    const fechaSort = String(fin || ini || '').trim();
-    return {
-      torneo_id: row.torneo_id,
-      equipo_id: row.equipo_id,
-      nombreTorneo: String(t.nombre || '').trim() || `Torneo #${row.torneo_id}`,
-      fecha_inicio: ini,
-      fecha_fin: fin,
-      fechaMostrar: formatFechaTorneoPublico(fin, ini),
-      fechaSort,
-      posicion: row.posicion,
-      puntos: row.puntos,
-      nivel_torneo: t.nivel_torneo,
-    };
-  });
-
-  items.sort((a, b) => {
-    const da = Date.parse(a.fechaSort ? `${a.fechaSort}T12:00:00` : '') || 0;
-    const db = Date.parse(b.fechaSort ? `${b.fechaSort}T12:00:00` : '') || 0;
-    if (db !== da) return db - da;
-    return (Number(b.torneo_id) || 0) - (Number(a.torneo_id) || 0);
-  });
-
-  return items;
 }
 
 /** Torneos en los que el jugador figura (jugadores_torneo o equipos). */
@@ -577,7 +464,7 @@ export default function PerfilPublico() {
     }
 
     try {
-      const lista = await fetchTorneosConPuntosPublico(match);
+      const lista = await fetchTorneosConPuntosParaPerfil(match);
       setTorneosConPuntos(Array.isArray(lista) ? lista : []);
     } catch (e) {
       console.error('[PerfilPublico] torneos con puntos', e);
@@ -808,7 +695,7 @@ export default function PerfilPublico() {
 
           {aliasGrande ? (
             <>
-              <h1 style={{ margin: '4px 0 4px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>{aliasGrande}</h1>
+              <h1 style={{ margin: '4px 0 4px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>{formatAliasConArroba(aliasGrande)}</h1>
               <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#94a3b8', fontWeight: 400 }}>{nombreCompleto || '—'}</p>
             </>
           ) : (
@@ -901,7 +788,7 @@ export default function PerfilPublico() {
                           textDecoration: 'underline',
                         }}
                       >
-                        @{String(companeroDisplay.row.alias).trim()}
+                        {formatAliasConArroba(String(companeroDisplay.row.alias).trim())}
                       </button>
                     ) : (
                       <span style={{ fontWeight: 600 }}>
@@ -941,7 +828,7 @@ export default function PerfilPublico() {
                 {nivelPerfilTexto ? (
                   <>
                     <span style={{ fontWeight: 'bold', color: categoriaColor }}>{nivelPerfilTexto}</span>
-                    {perfil.pendiente_validacion === true ? (
+                    {esCategoriaPendienteValidacion(perfil) ? (
                       <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>(pendiente de validación)</span>
                     ) : null}
                   </>

@@ -8,6 +8,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
+import { formatAliasConArroba } from '../utils/jugadorPerfil';
 
 /** Misma convención que ReservaForm.jsx */
 const API_BASE = (
@@ -19,6 +20,13 @@ const API_BASE = (
 function apiUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
   return `${API_BASE}${p}`;
+}
+
+function etiquetaRankingJugador(player) {
+  if (!player) return '—';
+  const al = String(player.alias || '').trim();
+  if (al) return formatAliasConArroba(al);
+  return String(player.nombre || '').trim() || '—';
 }
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
@@ -415,7 +423,7 @@ export default function Rankings() {
                           )}
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <div style={{ fontSize: narrow ? '12px' : '14px', fontWeight: '600', color: '#111', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {player.nombre}
+                              {etiquetaRankingJugador(player)}
                             </div>
                             {player.nivel && !narrow && (
                               <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{player.nivel}</div>

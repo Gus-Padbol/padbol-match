@@ -8,6 +8,7 @@ import {
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
+import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import '../styles/TorneoVista.css';
 
 // "2026-02-26" → "26 Feb 2026"
@@ -447,7 +448,9 @@ export default function TorneoVista() {
                         {Array.isArray(equipo.jugadores) && equipo.jugadores.length > 0 ? (
                           <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {jugadores.map((j, idx) => {
-                              const texto = String(j?.alias || j?.nombre || 'Jugador').trim();
+                              const texto = String(j?.alias || '').trim()
+                                ? formatAliasConArroba(String(j.alias).trim())
+                                : String(j?.nombre || 'Jugador').trim();
                               const aliasRuta = String(j?.alias || j?.nombre || 'jugador').trim();
                               return (
                                 <React.Fragment key={`${equipo.id}-jug-${idx}-${texto}`}>

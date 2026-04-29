@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient';
-import { nombreCompletoJugadorPerfil } from './jugadorPerfil';
+import { nombreCompletoJugadorPerfil, formatAliasConArroba } from './jugadorPerfil';
 import { nombreDesdeSesionSinEmail } from './displayName';
 
 /**
@@ -19,9 +19,9 @@ function looksLikeEmail(s) {
 
 function etiquetaConAlias(nombreCompleto, aliasTrim) {
   const n = String(nombreCompleto || '').trim();
-  const a = String(aliasTrim || '').trim();
-  if (n && a) return `${n} (${a})`;
-  return n || a || '';
+  const at = formatAliasConArroba(aliasTrim);
+  if (n && at) return `${n} (${at})`;
+  return n || at || '';
 }
 
 function nombreDesdePerfil(perfil) {
@@ -125,10 +125,11 @@ export function jugadorNombreTorneoEtiqueta(p, ctx) {
   const nombre = String(p?.nombre || '').trim();
   const alias = String(p?.alias || '').trim();
   if (nombre && candidatoNombreNoEsSoloLocalDelEmail(p, nombre)) {
-    if (alias && candidatoNombreNoEsSoloLocalDelEmail(p, alias)) return `${nombre} (${alias})`;
+    if (alias && candidatoNombreNoEsSoloLocalDelEmail(p, alias))
+      return `${nombre} (${formatAliasConArroba(alias)})`;
     return nombre;
   }
-  if (alias && candidatoNombreNoEsSoloLocalDelEmail(p, alias)) return alias;
+  if (alias && candidatoNombreNoEsSoloLocalDelEmail(p, alias)) return formatAliasConArroba(alias);
 
   return 'Jugador';
 }

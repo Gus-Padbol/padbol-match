@@ -769,7 +769,18 @@ app.get('/api/rankings', async (req, res) => {
           const key = j.email || j.nombre;
           if (!key) return;
           if (!playerMap[key]) {
-            playerMap[key] = { nombre: j.nombre || key, email: j.email || null, pais: null, foto_url: null, nivel: null, sede_id: null, equipo_nombre: equipo.nombre, puntos_total: 0, torneos_count: 0 };
+            playerMap[key] = {
+              nombre: j.nombre || key,
+              alias: j.alias != null && String(j.alias).trim() ? String(j.alias).trim() : null,
+              email: j.email || null,
+              pais: null,
+              foto_url: null,
+              nivel: null,
+              sede_id: null,
+              equipo_nombre: equipo.nombre,
+              puntos_total: 0,
+              torneos_count: 0,
+            };
           }
           playerMap[key].puntos_total += p.puntos;
           playerMap[key].torneos_count += 1;
@@ -782,7 +793,7 @@ app.get('/api/rankings', async (req, res) => {
     if (emails.length > 0) {
       const { data: perfiles } = await supabase
         .from('jugadores_perfil')
-        .select('email, nombre, pais, foto_url, sede_id, nivel')
+        .select('email, nombre, alias, pais, foto_url, sede_id, nivel')
         .in('email', emails);
 
       (perfiles || []).forEach(perfil => {
@@ -793,6 +804,8 @@ app.get('/api/rankings', async (req, res) => {
         entry.nivel    = perfil.nivel    || null;
         entry.sede_id  = perfil.sede_id  || null;
         entry.nombre   = perfil.nombre   || entry.nombre;
+        const al = perfil.alias != null && String(perfil.alias).trim() ? String(perfil.alias).trim() : '';
+        if (al) entry.alias = al;
       });
     }
 

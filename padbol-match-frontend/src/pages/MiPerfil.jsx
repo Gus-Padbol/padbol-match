@@ -14,7 +14,12 @@ import {
   persistJugadorPerfil,
   refreshJugadorPerfilFromSupabase,
   isPerfilTorneoCompleto,
+  nombreCompletoJugadorPerfil,
+  formatAliasConArroba,
+  esCategoriaPendienteValidacion,
 } from '../utils/jugadorPerfil';
+import { formatNivelTorneo } from '../utils/torneoFormatters';
+import { fetchTorneosConPuntosParaPerfil, posicionConMedalla } from '../utils/torneoHistorialPuntosJugador';
 import {
   whatsappDigitsValido,
   digitsOnly,
@@ -30,7 +35,6 @@ import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
 import { nombreDesdeSesionSinEmail, getDisplayName } from '../utils/displayName';
-import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 import { getCroppedImgBlob } from '../utils/cropImage';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -93,7 +97,7 @@ function nombreCompletoCompaneroOp(op) {
 function etiquetaCompaneroNombreYAlias(op) {
   const nombre = nombreCompletoCompaneroOp(op);
   const al = String(op?.alias || '').trim();
-  return al ? `${nombre} (@${al})` : nombre;
+  return al ? `${nombre} (${formatAliasConArroba(al)})` : nombre;
 }
 
 function escapeIlikeLiteral(value) {
@@ -190,6 +194,7 @@ export default function MiPerfil() {
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
+  const [torneosConPuntosMiPerfil, setTorneosConPuntosMiPerfil] = useState([]);
   const [editando, setEditando] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const perfilSubmitLockRef = useRef(false);
@@ -652,6 +657,26 @@ export default function MiPerfil() {
       // fail silently
     }
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!perfil || typeof perfil !== 'object') {
+      setTorneosConPuntosMiPerfil([]);
+      return undefined;
+    }
+    (async () => {
+      try {
+        const list = await fetchTorneosConPuntosParaPerfil(perfil);
+        if (!cancelled) setTorneosConPuntosMiPerfil(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.warn('[MiPerfil] torneos con puntos', e);
+        if (!cancelled) setTorneosConPuntosMiPerfil([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [perfil?.user_id, perfil?.email, perfil?.alias, perfil?.nombre]);
 
   const fetchCreditos = async () => {
     if (!sessionOwnerEmail) return;
@@ -1940,7 +1965,7 @@ export default function MiPerfil() {
         {aliasTituloGrande ? (
           <>
             <h2 style={{ margin: '2px 0 4px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>
-              {aliasTituloGrande}
+              {formatAliasConArroba(aliasTituloGrande)}
             </h2>
             <p
               style={{
@@ -1999,7 +2024,7 @@ export default function MiPerfil() {
                   fontFamily: 'inherit',
                 }}
               >
-                @{String(perfilCompaneroDisplay.row.alias).trim()}
+                {formatAliasConArroba(String(perfilCompaneroDisplay.row.alias).trim())}
               </button>
             ) : perfilCompaneroDisplay?.row ? (
               <>
@@ -2017,7 +2042,7 @@ export default function MiPerfil() {
           {perfil?.nivel && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', color: 'white', background: categoriaColor }}>
               {perfil.nivel}
-              {perfil.pendiente_validacion && (
+              {esCategoriaPendienteValidacion(perfil) && (
                 <span title="Pendiente de validación por administrador" style={{ fontSize: '11px', background: 'rgba(255,255,255,0.25)', borderRadius: '10px', padding: '1px 6px' }}>
                   ⏳ pendiente
                 </span>
@@ -2051,7 +2076,10 @@ export default function MiPerfil() {
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Datos del jugador</h4>
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
-              <Row label="Alias" value={String(perfil?.alias || '').trim() || '—'} />
+              <Row
+                label="Alias"
+                value={String(perfil?.alias || '').trim() ? formatAliasConArroba(String(perfil.alias).trim()) : '—'}
+              />
               <Row
                 label="Instagram"
                 value={
@@ -2064,7 +2092,7 @@ export default function MiPerfil() {
               <Row label="Categoría" value={
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: categoriaColor }}>{perfil.nivel}</span>
-                  {perfil.pendiente_validacion && (
+                  {esCategoriaPendienteValidacion(perfil) && (
                     <span title="Pendiente de validación" style={{ fontSize: '11px', background: '#fff3cd', color: '#856404', border: '1px solid #ffc107', borderRadius: '10px', padding: '1px 7px' }}>
                       ⏳ pendiente
                     </span>
@@ -2684,15 +2712,38 @@ export default function MiPerfil() {
         )}
       </div>
 
-      {/* Historial de Torneos */}
-      <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
-        <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>
-          🏆 Historial de Torneos
-        </h4>
-        <p style={{ color: '#aaa', textAlign: 'center', margin: '20px 0', fontSize: '14px' }}>
-          Aún no participaste en ningún torneo registrado.
-        </p>
-      </div>
+      {torneosConPuntosMiPerfil.length > 0 ? (
+        <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {torneosConPuntosMiPerfil.map((row) => (
+              <div
+                key={`${row.torneo_id}-${row.equipo_id}`}
+                style={{
+                  background: 'white',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  border: '1px solid #e8e8e8',
+                }}
+              >
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e1b4b', marginBottom: '6px' }}>{row.nombreTorneo}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>📅 {row.fechaMostrar}</div>
+                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
+                  <strong>Posición:</strong> <span style={{ fontWeight: 800 }}>{posicionConMedalla(row.posicion)}</span>
+                </div>
+                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
+                  <strong>Puntos:</strong>{' '}
+                  <span style={{ fontWeight: 800, color: '#15803d' }}>{row.puntos != null ? row.puntos : '—'}</span>
+                </div>
+                <div style={{ fontSize: '13px', color: '#475569' }}>
+                  <strong>Nivel:</strong> {formatNivelTorneo(row.nivel_torneo)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {sessionOwnerEmail ? (
         <div style={{ marginTop: '20px', marginBottom: '12px' }}>

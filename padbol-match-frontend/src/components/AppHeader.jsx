@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
+import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import { loginRedirectAfterHubEntry } from '../utils/authLoginRedirect';
 
 const btnVolver = {
@@ -53,7 +54,7 @@ export default function AppHeader({
   const loginFromHubUrl = `/login?redirect=${encodeURIComponent(loginRedirectAfterHubEntry(location))}`;
   const hubNombreCorto = (() => {
     const alias = String(userProfile?.alias || '').trim();
-    if (alias) return alias;
+    if (alias) return formatAliasConArroba(alias);
     const full = getDisplayName(userProfile, session);
     const first = String(full || '')
       .trim()

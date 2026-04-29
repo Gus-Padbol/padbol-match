@@ -164,3 +164,31 @@ export async function refreshJugadorPerfilFromSupabase(email) {
     /* ignore */
   }
 }
+
+/** Alias para UI: siempre con `@` delante, sin duplicar arrobas. */
+export function formatAliasConArroba(raw) {
+  let a = String(raw || '').trim();
+  if (!a) return '';
+  a = a.replace(/^@+/u, '');
+  return `@${a}`;
+}
+
+/**
+ * ¿Mostrar aviso "pendiente de validación" de categoría?
+ * Evita strings `"false"` de Postgres que en JS son truthy con `&&`.
+ * Si existe `categoria_validada` explícita como validada, no mostrar pendiente.
+ */
+export function esCategoriaPendienteValidacion(perfil) {
+  if (!perfil || typeof perfil !== 'object') return false;
+  const cv = perfil.categoria_validada;
+  if (cv === true || cv === 1) return false;
+  const cvStr = String(cv ?? '').trim().toLowerCase();
+  if (cvStr === 'true' || cvStr === '1') return false;
+
+  const raw = perfil.pendiente_validacion;
+  if (raw === false || raw === 0 || raw === null) return false;
+  const s = String(raw ?? '').trim().toLowerCase();
+  if (s === '' || s === 'false' || s === '0' || s === 'f' || s === 'no') return false;
+  if (raw === true || raw === 1) return true;
+  return s === 'true' || s === '1' || s === 't' || s === 'yes';
+}
