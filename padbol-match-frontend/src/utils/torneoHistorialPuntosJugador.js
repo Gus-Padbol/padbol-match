@@ -76,6 +76,16 @@ export function posicionConMedalla(pos) {
   return String(n);
 }
 
+/** Solo emoji top 3; desde 4° texto `4°` (una línea en pills de perfil). */
+export function emojiMedallaPosicionCompacta(pos) {
+  const n = Number(pos);
+  if (!Number.isFinite(n) || n < 1) return '';
+  if (n === 1) return '🥇';
+  if (n === 2) return '🥈';
+  if (n === 3) return '🥉';
+  return `${n}°`;
+}
+
 /**
  * Torneos con `tabla_puntos.puntos > 0` donde el jugador pertenece al equipo (`jugadores` JSONB).
  * @param {object} perfil Fila `jugadores_perfil` o equivalente (user_id, email, alias, nombre…)

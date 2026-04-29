@@ -19,7 +19,7 @@ import {
   esCategoriaPendienteValidacion,
 } from '../utils/jugadorPerfil';
 import { formatNivelTorneo } from '../utils/torneoFormatters';
-import { fetchTorneosConPuntosParaPerfil, posicionConMedalla } from '../utils/torneoHistorialPuntosJugador';
+import { fetchTorneosConPuntosParaPerfil, emojiMedallaPosicionCompacta } from '../utils/torneoHistorialPuntosJugador';
 import {
   sumarPuntosPorAlcanceDesdeFilasTorneo,
   tieneAlgunoPuntosPorAlcance,
@@ -2746,32 +2746,54 @@ export default function MiPerfil() {
       {torneosConPuntosMiPerfil.length > 0 ? (
         <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
           <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {(mostrarTodosTorneosMiPerfil ? torneosConPuntosMiPerfil : torneosConPuntosMiPerfil.slice(0, 5)).map((row) => (
-              <div
-                key={`${row.torneo_id}-${row.equipo_id}`}
-                style={{
-                  background: 'white',
-                  borderRadius: '10px',
-                  padding: '14px 16px',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                  border: '1px solid #e8e8e8',
-                }}
-              >
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e1b4b', marginBottom: '6px' }}>{row.nombreTorneo}</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>📅 {row.fechaMostrar}</div>
-                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
-                  <strong>Posición:</strong> <span style={{ fontWeight: 800 }}>{posicionConMedalla(row.posicion)}</span>
-                </div>
-                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
-                  <strong>Puntos:</strong>{' '}
-                  <span style={{ fontWeight: 800, color: '#15803d' }}>{row.puntos != null ? row.puntos : '—'}</span>
-                </div>
-                <div style={{ fontSize: '13px', color: '#475569' }}>
-                  <strong>Nivel:</strong> {formatNivelTorneo(row.nivel_torneo)}
-                </div>
-              </div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {(mostrarTodosTorneosMiPerfil ? torneosConPuntosMiPerfil : torneosConPuntosMiPerfil.slice(0, 5)).map((row) => {
+              const med = emojiMedallaPosicionCompacta(row.posicion);
+              const nivelTxt = formatNivelTorneo(row.nivel_torneo);
+              const pts = row.puntos != null ? row.puntos : '—';
+              return (
+                <button
+                  key={`${row.torneo_id}-${row.equipo_id}`}
+                  type="button"
+                  onClick={() => navigate(`/torneo/${row.torneo_id}`)}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f1f5f9',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#334155',
+                    textAlign: 'left',
+                    overflow: 'hidden',
+                    minHeight: 0,
+                  }}
+                >
+                  <span style={{ flexShrink: 0, lineHeight: 1.2 }}>{med}</span>
+                  <span
+                    style={{
+                      minWidth: 0,
+                      flex: '1 1 auto',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 700,
+                      color: '#0f172a',
+                    }}
+                  >
+                    {row.nombreTorneo}
+                  </span>
+                  <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontWeight: 600, color: '#475569' }}>
+                    · {nivelTxt} · {pts} pts · {row.fechaMostrar}
+                  </span>
+                </button>
+              );
+            })}
           </div>
           {torneosConPuntosMiPerfil.length > 5 ? (
             <div style={{ marginTop: '12px', textAlign: 'center' }}>
