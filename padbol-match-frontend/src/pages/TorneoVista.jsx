@@ -189,13 +189,16 @@ export default function TorneoVista() {
     }
   };
 
+  const estadoTorneoLower = String(torneo?.estado || '').toLowerCase();
   const adminTorneoBar = torneo ? (
     <div style={{ marginBottom: '12px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <button type="button" className="btn-agregar-jugadores" onClick={() => navigate(`/torneo/${torneoId}/equipos`)}>
-          Equipos e inscripción
-        </button>
-      </div>
+      {estadoTorneoLower !== 'finalizado' ? (
+        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+          <button type="button" className="btn-agregar-jugadores" onClick={() => navigate(`/torneo/${torneoId}/equipos`)}>
+            Equipos e inscripción
+          </button>
+        </div>
+      ) : null}
       {isAdmin && !['en_curso', 'finalizado'].includes(String(torneo.estado || '').toLowerCase()) && (
         <div className="torneo-acciones">
           {!todosEquiposCompletos ? (

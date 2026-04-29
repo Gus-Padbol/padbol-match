@@ -565,13 +565,6 @@
   max-width: 200px;
 }
 
-.podium-medal {
-  font-size: 40px;
-  line-height: 1;
-  margin-bottom: 10px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
-}
-
 .podium-card {
   background: rgba(255, 255, 255, 0.97);
   border-radius: 16px;
@@ -580,7 +573,7 @@
   width: 100%;
   box-sizing: border-box;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .podium-team-name {
@@ -613,26 +606,36 @@
 .podium-pedestal {
   width: 100%;
   border-radius: 10px 10px 0 0;
-  margin-top: 8px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.podium-medal {
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  user-select: none;
 }
 
 .podium-pedestal--1 {
-  height: 148px;
-  background: linear-gradient(160deg, #f59e0b 0%, #d97706 55%, #b45309 100%);
-  box-shadow: 0 -4px 22px rgba(245, 158, 11, 0.45);
+  height: 120px;
+  background: linear-gradient(165deg, #ffe566 0%, #ffd700 35%, #daa520 70%, #8b6914 100%);
+  box-shadow: 0 -4px 22px rgba(255, 215, 0, 0.45);
 }
 
 .podium-pedestal--2 {
-  height: 102px;
-  background: linear-gradient(160deg, #e2e8f0 0%, #94a3b8 55%, #64748b 100%);
-  box-shadow: 0 -4px 16px rgba(148, 163, 184, 0.4);
+  height: 90px;
+  background: linear-gradient(165deg, #f5f5f5 0%, #d8d8d8 40%, #c0c0c0 75%, #6b6b6b 100%);
+  box-shadow: 0 -4px 16px rgba(192, 192, 192, 0.45);
 }
 
 .podium-pedestal--3 {
-  height: 72px;
-  background: linear-gradient(160deg, #ea580c 0%, #c2410c 55%, #9a3412 100%);
-  box-shadow: 0 -4px 14px rgba(234, 88, 12, 0.35);
+  height: 70px;
+  background: linear-gradient(165deg, #e8a060 0%, #cd7f32 45%, #8b5a2b 85%, #5c3d1e 100%);
+  box-shadow: 0 -4px 14px rgba(139, 90, 43, 0.4);
 }
 
 /* 4th–10th list */

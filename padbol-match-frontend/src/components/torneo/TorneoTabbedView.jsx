@@ -1,7 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import confetti from 'canvas-confetti';
 import { formatNivelTorneo, formatTipoTorneo } from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../../utils/jugadorPerfil';
 import '../../styles/TorneoVista.css';
+
+const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
+
+function randomInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
 
 function formatFecha(str) {
   if (!str) return '';
@@ -206,6 +213,7 @@ export default function TorneoTabbedView({
   showTorneoLogo = true,
 }) {
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
+  const resultadosConfettiPlayedRef = useRef(false);
   const [modalEquipo, setModalEquipo] = useState(null);
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
@@ -328,6 +336,48 @@ export default function TorneoTabbedView({
     if (m[3]) out.push(m[3]);
     return out.length ? out : [...podioFilas].sort((a, b) => a.posicion - b.posicion);
   }, [podioFilas]);
+
+  useEffect(() => {
+    if (activeTab !== 'resultados' || !esFinalizado) {
+      resultadosConfettiPlayedRef.current = false;
+      return;
+    }
+    if (resultadosConfettiPlayedRef.current) return;
+    resultadosConfettiPlayedRef.current = true;
+
+    const isMobile =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(max-width: 768px)').matches || window.innerWidth < 768);
+    const burst = () => {
+      confetti({
+        particleCount: Math.floor(isMobile ? 10 : 22),
+        angle: randomInRange(70, 110),
+        spread: randomInRange(42, 68),
+        startVelocity: isMobile ? 14 : 24,
+        origin: { x: randomInRange(0.12, 0.88), y: randomInRange(-0.08, 0.06) },
+        colors: PADBOL_CONFETTI_COLORS,
+        gravity: randomInRange(0.88, 1.12),
+        drift: randomInRange(-0.35, 0.35),
+        ticks: isMobile ? 200 : 240,
+        scalar: isMobile ? 0.78 : 1,
+        zIndex: 2000,
+        disableForReducedMotion: true,
+        shapes: ['square', 'circle'],
+      });
+    };
+
+    burst();
+    const intervalMs = isMobile ? 280 : 190;
+    const intervalId = window.setInterval(burst, intervalMs);
+    const timeoutId = window.setTimeout(() => {
+      window.clearInterval(intervalId);
+    }, 3000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeTab, esFinalizado]);
 
   const tabs = useMemo(() => {
     const t = [
@@ -709,9 +759,6 @@ export default function TorneoTabbedView({
             fila.posicion === 1 ? 'podium-slot--first' : fila.posicion === 2 ? 'podium-slot--second' : 'podium-slot--third';
           return (
             <div key={fila.posicion} className={`podium-slot ${slotClass}`}>
-              <div className="podium-medal" aria-hidden>
-                {med}
-              </div>
               <div className="podium-card">
                 <div className="podium-team-name">{fila.equipoNombre}</div>
                 {fila.jugadorLineas?.length > 0 ? (
@@ -721,7 +768,9 @@ export default function TorneoTabbedView({
                   {fila.puntos} <span>pts</span>
                 </div>
               </div>
-              <div className={`podium-pedestal ${pedestalClass}`} aria-hidden />
+              <div className={`podium-pedestal ${pedestalClass}`} aria-hidden>
+                <span className="podium-medal">{med}</span>
+              </div>
             </div>
           );
         })}
