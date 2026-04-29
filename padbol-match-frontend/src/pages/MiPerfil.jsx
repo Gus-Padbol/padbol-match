@@ -21,6 +21,11 @@ import {
 import { formatNivelTorneo } from '../utils/torneoFormatters';
 import { fetchTorneosConPuntosParaPerfil, posicionConMedalla } from '../utils/torneoHistorialPuntosJugador';
 import {
+  sumarPuntosPorAlcanceDesdeFilasTorneo,
+  tieneAlgunoPuntosPorAlcance,
+  contarTorneosUnicosConPuntos,
+} from '../utils/perfilPuntosResumen';
+import {
   whatsappDigitsValido,
   digitsOnly,
   buildFullWhatsDigits,
@@ -195,6 +200,7 @@ export default function MiPerfil() {
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
   const [torneosConPuntosMiPerfil, setTorneosConPuntosMiPerfil] = useState([]);
+  const [mostrarTodosTorneosMiPerfil, setMostrarTodosTorneosMiPerfil] = useState(false);
   const [editando, setEditando] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const perfilSubmitLockRef = useRef(false);
@@ -294,6 +300,7 @@ export default function MiPerfil() {
     fecha_nacimiento: '',
     numero_fipa: '',
     es_federado: false,
+    mostrar_torneos_jugados: false,
   });
 
   const [companeroBusqueda, setCompaneroBusqueda] = useState('');
@@ -610,6 +617,7 @@ export default function MiPerfil() {
           fecha_nacimiento: data.fecha_nacimiento || '',
           numero_fipa: data.numero_fipa || '',
           es_federado: data.es_federado || false,
+          mostrar_torneos_jugados: Boolean(data.mostrar_torneos_jugados),
         });
         {
           const rawNom = String(data.nombre || '').trim();
@@ -677,6 +685,19 @@ export default function MiPerfil() {
       cancelled = true;
     };
   }, [perfil?.user_id, perfil?.email, perfil?.alias, perfil?.nombre]);
+
+  useEffect(() => {
+    setMostrarTodosTorneosMiPerfil(false);
+  }, [torneosConPuntosMiPerfil]);
+
+  const puntosAlcanceMiPerfil = useMemo(
+    () => sumarPuntosPorAlcanceDesdeFilasTorneo(torneosConPuntosMiPerfil),
+    [torneosConPuntosMiPerfil]
+  );
+  const torneosUnicosConPuntosMiPerfil = useMemo(
+    () => contarTorneosUnicosConPuntos(torneosConPuntosMiPerfil),
+    [torneosConPuntosMiPerfil]
+  );
 
   const fetchCreditos = async () => {
     if (!sessionOwnerEmail) return;
@@ -988,6 +1009,7 @@ export default function MiPerfil() {
         alias: aliasTrimReg || null,
         instagram_url: instagramUrlFromHandle(formData.instagram),
         companero_id: null,
+        mostrar_torneos_jugados: false,
       };
 
       const { error: jpErr } = await supabase.from('jugadores_perfil').upsert(
@@ -1105,6 +1127,7 @@ export default function MiPerfil() {
         fecha_nacimiento: formData.fecha_nacimiento || null,
         numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
         es_federado: formData.es_federado,
+        mostrar_torneos_jugados: !!formData.mostrar_torneos_jugados,
         alias: aliasTrim || null,
         instagram_url: instagramUrlFromHandle(formData.instagram),
         companero_id: formData.companero_id || null,
@@ -2211,6 +2234,22 @@ export default function MiPerfil() {
               />
             </div>
 
+            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                name="mostrar_torneos_jugados"
+                checked={!!formData.mostrar_torneos_jugados}
+                onChange={handleChange}
+                style={{ width: '18px', height: '18px', flexShrink: 0 }}
+              />
+              <span style={{ fontWeight: 600 }}>
+                Mostrar en mi perfil público la cantidad de torneos jugados (solo el número; por defecto no se muestra).
+              </span>
+            </label>
+            <p style={{ color: '#666', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
+              No revela nombres de torneos ni resultados; solo el total si activás esta opción.
+            </p>
+
             <label style={labelStyle}>WhatsApp</label>
             <div
               style={{
@@ -2610,6 +2649,7 @@ export default function MiPerfil() {
                     fecha_nacimiento: perfil?.fecha_nacimiento || '',
                     numero_fipa: perfil?.numero_fipa || '',
                     es_federado: perfil?.es_federado || false,
+                    mostrar_torneos_jugados: Boolean(perfil?.mostrar_torneos_jugados),
                   }));
                 }}
                 style={{ flex: 1, padding: '11px', background: 'transparent', color: '#666', border: '1px solid #ccc', borderRadius: '5px', cursor: 'pointer' }}
@@ -2642,31 +2682,119 @@ export default function MiPerfil() {
         </div>
       )}
 
-      {/* Stats */}
-      {reservas.length > 0 && (() => {
-        const sedeFav = (() => {
-          const counts = {};
-          reservas.forEach(r => { counts[r.sede] = (counts[r.sede] || 0) + 1; });
-          return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-        })();
+      {/* Estadísticas: puntos por alcance + opcional torneos jugados + resumen reservas */}
+      {(() => {
+        const flagTorneosPub = editando ? !!formData.mostrar_torneos_jugados : !!perfil?.mostrar_torneos_jugados;
+        const hayPuntosNivel = tieneAlgunoPuntosPorAlcance(puntosAlcanceMiPerfil);
+        const hayBloque = hayPuntosNivel || flagTorneosPub || reservas.length > 0;
+        if (!hayBloque) return null;
+        const sedeFav =
+          reservas.length > 0
+            ? (() => {
+                const counts = {};
+                reservas.forEach((r) => {
+                  counts[r.sede] = (counts[r.sede] || 0) + 1;
+                });
+                return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+              })()
+            : null;
         return (
           <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>📊 Estadísticas</h4>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '120px', background: 'white', borderRadius: '10px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: '28px', fontWeight: 900, color: '#d32f2f' }}>{reservas.length}</div>
-                <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>Reservas totales</div>
+            {hayPuntosNivel ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+                {puntosAlcanceMiPerfil.club > 0 ? (
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
+                    📍 Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.club}</span>
+                  </div>
+                ) : null}
+                {puntosAlcanceMiPerfil.nacional > 0 ? (
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
+                    🌎 Puntos Nacional: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.nacional}</span>
+                  </div>
+                ) : null}
+                {puntosAlcanceMiPerfil.fipa > 0 ? (
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
+                    🌐 Puntos FIPA: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.fipa}</span>
+                  </div>
+                ) : null}
               </div>
-              {sedeFav && (
-                <div style={{ flex: 2, minWidth: '160px', background: 'white', borderRadius: '10px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1b4b', lineHeight: 1.3 }}>{sedeFav}</div>
-                  <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>Sede favorita</div>
+            ) : null}
+            {flagTorneosPub ? (
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: reservas.length > 0 ? '14px' : 0 }}>
+                🏆 Torneos jugados: <span style={{ color: '#15803d' }}>{torneosUnicosConPuntosMiPerfil}</span>
+              </div>
+            ) : null}
+            {reservas.length > 0 ? (
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '120px', background: 'white', borderRadius: '10px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 900, color: '#d32f2f' }}>{reservas.length}</div>
+                  <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>Reservas totales</div>
                 </div>
-              )}
-            </div>
+                {sedeFav ? (
+                  <div style={{ flex: 2, minWidth: '160px', background: 'white', borderRadius: '10px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1b4b', lineHeight: 1.3 }}>{sedeFav}</div>
+                    <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>Sede favorita</div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         );
       })()}
+
+      {torneosConPuntosMiPerfil.length > 0 ? (
+        <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {(mostrarTodosTorneosMiPerfil ? torneosConPuntosMiPerfil : torneosConPuntosMiPerfil.slice(0, 5)).map((row) => (
+              <div
+                key={`${row.torneo_id}-${row.equipo_id}`}
+                style={{
+                  background: 'white',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  border: '1px solid #e8e8e8',
+                }}
+              >
+                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e1b4b', marginBottom: '6px' }}>{row.nombreTorneo}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>📅 {row.fechaMostrar}</div>
+                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
+                  <strong>Posición:</strong> <span style={{ fontWeight: 800 }}>{posicionConMedalla(row.posicion)}</span>
+                </div>
+                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
+                  <strong>Puntos:</strong>{' '}
+                  <span style={{ fontWeight: 800, color: '#15803d' }}>{row.puntos != null ? row.puntos : '—'}</span>
+                </div>
+                <div style={{ fontSize: '13px', color: '#475569' }}>
+                  <strong>Nivel:</strong> {formatNivelTorneo(row.nivel_torneo)}
+                </div>
+              </div>
+            ))}
+          </div>
+          {torneosConPuntosMiPerfil.length > 5 ? (
+            <div style={{ marginTop: '12px', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setMostrarTodosTorneosMiPerfil((v) => !v)}
+                style={{
+                  padding: '10px 18px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  background: 'white',
+                  color: '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                {mostrarTodosTorneosMiPerfil ? 'Ver menos' : 'Ver todos'}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Historial de Reservas */}
       <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
@@ -2711,39 +2839,6 @@ export default function MiPerfil() {
           </div>
         )}
       </div>
-
-      {torneosConPuntosMiPerfil.length > 0 ? (
-        <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {torneosConPuntosMiPerfil.map((row) => (
-              <div
-                key={`${row.torneo_id}-${row.equipo_id}`}
-                style={{
-                  background: 'white',
-                  borderRadius: '10px',
-                  padding: '14px 16px',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                  border: '1px solid #e8e8e8',
-                }}
-              >
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e1b4b', marginBottom: '6px' }}>{row.nombreTorneo}</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>📅 {row.fechaMostrar}</div>
-                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
-                  <strong>Posición:</strong> <span style={{ fontWeight: 800 }}>{posicionConMedalla(row.posicion)}</span>
-                </div>
-                <div style={{ fontSize: '14px', color: '#334155', marginBottom: '4px' }}>
-                  <strong>Puntos:</strong>{' '}
-                  <span style={{ fontWeight: 800, color: '#15803d' }}>{row.puntos != null ? row.puntos : '—'}</span>
-                </div>
-                <div style={{ fontSize: '13px', color: '#475569' }}>
-                  <strong>Nivel:</strong> {formatNivelTorneo(row.nivel_torneo)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {sessionOwnerEmail ? (
         <div style={{ marginTop: '20px', marginBottom: '12px' }}>

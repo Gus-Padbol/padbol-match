@@ -9,6 +9,11 @@ import {
 import { normalizeEmailStr } from './utils/jugadorNombreTorneo';
 import { formatNivelTorneo } from './utils/torneoFormatters';
 import { fetchTorneosConPuntosParaPerfil, posicionConMedalla } from './utils/torneoHistorialPuntosJugador';
+import {
+  sumarPuntosPorAlcanceDesdeFilasTorneo,
+  tieneAlgunoPuntosPorAlcance,
+  contarTorneosUnicosConPuntos,
+} from './utils/perfilPuntosResumen';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -379,9 +384,9 @@ export default function PerfilPublico() {
   const [perfil, setPerfil] = useState(null);
   /** `null` = sin ids; `{ kind, row }` con fila del otro jugador (o `row: null` si no se encontró). */
   const [companeroDisplay, setCompaneroDisplay] = useState(null);
-  const [stats, setStats] = useState({ torneosJugados: null, puntosTotales: null });
   const [ultimosTorneos, setUltimosTorneos] = useState([]);
   const [torneosConPuntos, setTorneosConPuntos] = useState([]);
+  const [mostrarTodosTorneosPublico, setMostrarTodosTorneosPublico] = useState(false);
   const [rankingPos, setRankingPos] = useState(null);
 
   const aliasDecoded = useMemo(() => {
@@ -402,7 +407,6 @@ export default function PerfilPublico() {
     setLoading(true);
     setPerfil(null);
     setCompaneroDisplay(null);
-    setStats({ torneosJugados: null, puntosTotales: null });
     setUltimosTorneos([]);
     setTorneosConPuntos([]);
     setRankingPos(null);
@@ -455,11 +459,9 @@ export default function PerfilPublico() {
 
     try {
       const s = await fetchEstadisticasYUltimosTorneos(match);
-      setStats({ torneosJugados: s.torneosJugados, puntosTotales: s.puntosTotales });
       setUltimosTorneos(Array.isArray(s.ultimosTorneos) ? s.ultimosTorneos : []);
     } catch (e) {
       console.error('[PerfilPublico] stats', e);
-      setStats({ torneosJugados: 0, puntosTotales: 0 });
       setUltimosTorneos([]);
     }
 
@@ -484,6 +486,19 @@ export default function PerfilPublico() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setMostrarTodosTorneosPublico(false);
+  }, [torneosConPuntos]);
+
+  const puntosAlcancePublico = useMemo(
+    () => sumarPuntosPorAlcanceDesdeFilasTorneo(torneosConPuntos),
+    [torneosConPuntos]
+  );
+  const torneosUnicosConPuntosPublico = useMemo(
+    () => contarTorneosUnicosConPuntos(torneosConPuntos),
+    [torneosConPuntos]
+  );
 
   useEffect(() => {
     if (loading || !perfil) return;
@@ -929,53 +944,45 @@ export default function PerfilPublico() {
           </div>
         </div>
 
-        <div
-          style={{
-            background: '#f9f9f9',
-            borderRadius: '12px',
-            padding: '18px 20px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-            marginBottom: '12px',
-          }}
-        >
-          <h2 style={{ margin: '0 0 12px', fontSize: '15px', color: '#334155', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' }}>
-            Estadísticas
-          </h2>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <div
-              style={{
-                flex: 1,
-                minWidth: '120px',
-                background: 'white',
-                borderRadius: '10px',
-                padding: '14px',
-                textAlign: 'center',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-              }}
-            >
-              <div style={{ fontSize: '26px', fontWeight: 900, color: '#4f46e5' }}>
-                {stats.torneosJugados != null ? stats.torneosJugados : '—'}
+        {tieneAlgunoPuntosPorAlcance(puntosAlcancePublico) || perfil?.mostrar_torneos_jugados ? (
+          <div
+            style={{
+              background: '#f9f9f9',
+              borderRadius: '12px',
+              padding: '18px 20px',
+              boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+              marginBottom: '12px',
+            }}
+          >
+            <h2 style={{ margin: '0 0 12px', fontSize: '15px', color: '#334155', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' }}>
+              Estadísticas
+            </h2>
+            {tieneAlgunoPuntosPorAlcance(puntosAlcancePublico) ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: perfil?.mostrar_torneos_jugados ? '12px' : 0 }}>
+                {puntosAlcancePublico.club > 0 ? (
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                    📍 Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.club}</span>
+                  </div>
+                ) : null}
+                {puntosAlcancePublico.nacional > 0 ? (
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                    🌎 Puntos Nacional: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.nacional}</span>
+                  </div>
+                ) : null}
+                {puntosAlcancePublico.fipa > 0 ? (
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                    🌐 Puntos FIPA: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.fipa}</span>
+                  </div>
+                ) : null}
               </div>
-              <div style={{ fontSize: '12px', color: '#777', marginTop: '4px' }}>Torneos jugados</div>
-            </div>
-            <div
-              style={{
-                flex: 1,
-                minWidth: '120px',
-                background: 'white',
-                borderRadius: '10px',
-                padding: '14px',
-                textAlign: 'center',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-              }}
-            >
-              <div style={{ fontSize: '26px', fontWeight: 900, color: '#15803d' }}>
-                {stats.puntosTotales != null ? stats.puntosTotales : '—'}
+            ) : null}
+            {perfil?.mostrar_torneos_jugados ? (
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>
+                🏆 Torneos jugados: <span style={{ color: '#15803d' }}>{torneosUnicosConPuntosPublico}</span>
               </div>
-              <div style={{ fontSize: '12px', color: '#777', marginTop: '4px' }}>Puntos totales</div>
-            </div>
+            ) : null}
           </div>
-        </div>
+        ) : null}
 
         {torneosConPuntos.length > 0 ? (
           <div
@@ -999,7 +1006,7 @@ export default function PerfilPublico() {
               Torneos
             </h2>
             <div style={{ display: 'grid', gap: '12px' }}>
-              {torneosConPuntos.map((row) => (
+              {(mostrarTodosTorneosPublico ? torneosConPuntos : torneosConPuntos.slice(0, 5)).map((row) => (
                 <div
                   key={`${row.torneo_id}-${row.equipo_id}`}
                   style={{
@@ -1030,6 +1037,26 @@ export default function PerfilPublico() {
                 </div>
               ))}
             </div>
+            {torneosConPuntos.length > 5 ? (
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setMostrarTodosTorneosPublico((v) => !v)}
+                  style={{
+                    padding: '10px 18px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    background: 'white',
+                    color: '#334155',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {mostrarTodosTorneosPublico ? 'Ver menos' : 'Ver todos'}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
