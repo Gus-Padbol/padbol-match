@@ -34,7 +34,7 @@ import {
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
-import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
+import TorneoTabbedView from '../components/torneo/TorneoTabbedView';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -252,6 +252,7 @@ export default function FormEquipos() {
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
   /** Filas `tabla_puntos` del torneo (solo si está finalizado). */
   const [tablaPuntosRows, setTablaPuntosRows] = useState([]);
+  const [partidos, setPartidos] = useState([]);
   /** Fila en BD: ya existe equipo con este creador_id en el torneo (miEquipo aún no reflejado en UI). */
   const [equipoDuplicadoBloqueoId, setEquipoDuplicadoBloqueoId] = useState(null);
   const [perfilMapsTorneo, setPerfilMapsTorneo] = useState(() => buildJugadorPerfilLookupMaps([]));
@@ -296,15 +297,18 @@ export default function FormEquipos() {
       { data: torneoData, error: torneoError },
       { data: jugadoresData, error: jugadoresError },
       { data: equiposData, error: equiposError },
+      { data: partidosData, error: partidosError },
     ] = await Promise.all([
       supabase.from('torneos').select('*').eq('id', torneoId).maybeSingle(),
       supabase.from('jugadores_torneo').select('*').eq('torneo_id', torneoId).order('id', { ascending: true }),
       supabase.from('equipos').select('*').eq('torneo_id', torneoId).order('id', { ascending: true }),
+      supabase.from('partidos').select('*').eq('torneo_id', torneoId).order('fecha_hora', { ascending: true }),
     ]);
 
     if (torneoError) console.error(torneoError);
     if (jugadoresError) console.error(jugadoresError);
     if (equiposError) console.error(equiposError);
+    if (partidosError) console.error(partidosError);
 
     let sedeNombre = null;
     if (torneoData?.sede_id) {
@@ -321,6 +325,7 @@ export default function FormEquipos() {
     setTorneo(torneoData || null);
     setJugadoresTorneo(Array.isArray(jugadoresData) ? jugadoresData : []);
     setEquipos(Array.isArray(equiposData) ? equiposData : []);
+    setPartidos(Array.isArray(partidosData) ? partidosData : []);
 
     setLoading(false);
   };
@@ -571,6 +576,11 @@ export default function FormEquipos() {
   const torneoCancelado = torneo?.estado === 'cancelado';
   const torneoFinalizado = torneo?.estado === 'finalizado';
 
+  const sedesMapForm = useMemo(() => {
+    if (!torneo?.sede_id || !nombreSede) return {};
+    return { [String(torneo.sede_id)]: { nombre: nombreSede, ciudad: '', pais: '' } };
+  }, [torneo?.sede_id, nombreSede]);
+
   const filasClasificacionFinalizado = useMemo(() => {
     if (!torneoFinalizado || !Array.isArray(tablaPuntosRows) || tablaPuntosRows.length === 0) return [];
     const eqById = {};
@@ -588,15 +598,6 @@ export default function FormEquipos() {
       })
       .sort((a, b) => (a.posicion || 999) - (b.posicion || 999));
   }, [torneoFinalizado, tablaPuntosRows, equipos, nombreTorneoCtxForm]);
-
-  const podioFilasFinalizado = useMemo(
-    () => filasClasificacionFinalizado.filter((f) => f.posicion >= 1 && f.posicion <= 3),
-    [filasClasificacionFinalizado]
-  );
-  const clasificacionDesdeCuarto = useMemo(
-    () => filasClasificacionFinalizado.filter((f) => f.posicion >= 4),
-    [filasClasificacionFinalizado]
-  );
 
   /** Tras registro/login con ?crear=1: abrir formulario crear y limpiar la query. */
   useEffect(() => {
@@ -1652,14 +1653,6 @@ export default function FormEquipos() {
     </>
   );
 
-  const estadoEtiquetaInscripcion = torneoCerrado
-    ? torneo?.estado === 'finalizado'
-      ? 'Finalizado'
-      : torneo?.estado === 'cancelado'
-        ? 'Cancelado'
-        : String(torneo?.estado || '—')
-    : 'Inscripción abierta';
-
   const mostrarPasoEleccion = !torneoCerrado && !miEquipo && !miSolicitudPendiente;
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
 
@@ -1878,177 +1871,6 @@ export default function FormEquipos() {
     marginBottom: '12px',
   };
 
-  const bloqueTorneo = (
-    <div
-      style={{
-        background: '#fff',
-        borderRadius: '16px',
-        padding: '18px 20px',
-        marginBottom: '16px',
-        boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
-      }}
-    >
-      <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-        Torneo
-      </div>
-      <h2 style={{ margin: '6px 0 10px', fontSize: 'clamp(1.15rem, 3vw, 1.45rem)', fontWeight: 900, color: '#0f172a', lineHeight: 1.25 }}>
-        {torneo?.nombre || `Torneo #${torneoId}`}
-      </h2>
-      {nombreSede ? (
-        <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px', fontWeight: 600 }}>📍 {nombreSede}</div>
-      ) : null}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-          gap: '10px 16px',
-          fontSize: '14px',
-          color: '#334155',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Tipo</div>
-          <div style={{ fontWeight: 700 }}>{formatTipoTorneo(torneo?.tipo_torneo)}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Nivel</div>
-          <div style={{ fontWeight: 700 }}>{formatNivelTorneo(torneo?.nivel_torneo)}</div>
-        </div>
-        {String(torneo?.categoria ?? '').trim() ? (
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Categoría</div>
-            <div style={{ fontWeight: 700 }}>{String(torneo.categoria).trim()}</div>
-          </div>
-        ) : null}
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Equipos</div>
-          <div style={{ fontWeight: 700 }}>{equipos.length}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Estado</div>
-          <div style={{ fontWeight: 800, color: torneoCerrado ? '#b45309' : '#15803d' }}>{estadoEtiquetaInscripcion}</div>
-        </div>
-      </div>
-      {torneo?.fecha_inicio ? (
-        <div style={{ marginTop: '12px', fontSize: '13px', color: '#64748b' }}>Fecha inicio: {torneo.fecha_inicio}</div>
-      ) : null}
-    </div>
-  );
-
-  const estadoTorneoFormLower = String(torneo?.estado || '').toLowerCase();
-  const mostrarEquiposInscriptosAbiertos =
-    !torneoCancelado &&
-    !torneoFinalizado &&
-    (estadoTorneoFormLower === 'abierto' || estadoTorneoFormLower === 'en_curso');
-
-  const bloqueEquiposInscriptosPublico = mostrarEquiposInscriptosAbiertos ? (
-    <div
-      style={{
-        background: '#fff',
-        borderRadius: '16px',
-        padding: '18px 20px',
-        marginBottom: '16px',
-        boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
-        border: '1px solid #e5e7eb',
-      }}
-    >
-      <h3 style={{ margin: '0 0 14px', fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>Equipos inscriptos</h3>
-      {equiposVisibles.length === 0 ? (
-        <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>Todavía no hay equipos con plantel confirmado.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {equiposVisibles.map((eq) => {
-            const players = getPlayers(eq).filter(jugadorRegistradoParaTorneo);
-            return (
-              <div
-                key={eq.id}
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '12px',
-                  border: '1px solid #f1f5f9',
-                  background: '#fafafa',
-                }}
-              >
-                <div style={{ fontWeight: 800, fontSize: '15px', color: '#0f172a', marginBottom: '10px' }}>
-                  {eq.nombre || `Equipo #${eq.id}`}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {players.length === 0 ? (
-                    <span style={{ fontSize: '13px', color: '#94a3b8' }}>Sin jugadores confirmados</span>
-                  ) : (
-                    players.map((p, idx) => {
-                      const label = jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm);
-                      const initial = String(label || '?')
-                        .trim()
-                        .charAt(0)
-                        .toUpperCase();
-                      const to = `/jugador/${pathSegmentJugadorPublico(p)}`;
-                      return (
-                        <button
-                          key={`${eq.id}-ins-${idx}-${p.email || p.id || label}`}
-                          type="button"
-                          onClick={() => navigate(to)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            width: '100%',
-                            textAlign: 'left',
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            padding: '4px 0',
-                            borderRadius: '8px',
-                          }}
-                        >
-                          {p.foto_url ? (
-                            <img
-                              src={p.foto_url}
-                              alt=""
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                flexShrink: 0,
-                                border: '1px solid #e2e8f0',
-                              }}
-                            />
-                          ) : (
-                            <span
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                                color: 'white',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {initial}
-                            </span>
-                          )}
-                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155', textDecoration: 'underline' }}>
-                            {label}
-                          </span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  ) : null;
-
   const bloqueBannerCrearLogin =
     !torneoFinalizado && bannerCrearEquipoRequiereLogin && !session?.user ? (
       <div
@@ -2101,141 +1923,6 @@ export default function FormEquipos() {
         </div>
       </div>
     ) : null;
-
-  const bloquePodioResultadosTorneo = torneoFinalizado ? (
-    <div
-      style={{
-        marginBottom: '18px',
-        background: '#fff',
-        padding: '20px 18px',
-        borderRadius: '16px',
-        boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
-        border: '1px solid #e5e7eb',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 14px',
-          fontSize: '1.05rem',
-          fontWeight: 900,
-          color: '#0f172a',
-          letterSpacing: '-0.02em',
-        }}
-      >
-        Podio
-      </h3>
-      {podioFilasFinalizado.length === 0 ? (
-        <p style={{ margin: 0, fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
-          Aún no hay posiciones publicadas en la tabla de puntos.
-        </p>
-      ) : (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '16px',
-            justifyContent: 'center',
-            alignItems: 'stretch',
-          }}
-        >
-          {podioFilasFinalizado.map((fila) => {
-            const med =
-              fila.posicion === 1 ? '🥇' : fila.posicion === 2 ? '🥈' : fila.posicion === 3 ? '🥉' : '🏅';
-            return (
-              <div
-                key={`podio-${fila.posicion}-${fila.equipoNombre}`}
-                style={{
-                  flex: '1 1 140px',
-                  maxWidth: '220px',
-                  minWidth: '130px',
-                  padding: '16px 14px',
-                  borderRadius: '14px',
-                  background:
-                    fila.posicion === 1
-                      ? 'linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%)'
-                      : fila.posicion === 2
-                        ? 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)'
-                        : 'linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%)',
-                  border:
-                    fila.posicion === 1
-                      ? '2px solid #fbbf24'
-                      : fila.posicion === 2
-                        ? '2px solid #cbd5e1'
-                        : '2px solid #fdba74',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: 'clamp(2rem, 8vw, 2.5rem)', lineHeight: 1, marginBottom: '8px' }}>{med}</div>
-                <div
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: 900,
-                    color: '#0f172a',
-                    lineHeight: 1.25,
-                    marginBottom: '10px',
-                  }}
-                >
-                  {fila.equipoNombre}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                  {fila.jugadorLineas.length ? (
-                    fila.jugadorLineas.map((line, i) => (
-                      <div key={`${fila.posicion}-j-${i}`} style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
-                        {line}
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>—</div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {clasificacionDesdeCuarto.length > 0 ? (
-        <>
-          <h4
-            style={{
-              margin: '22px 0 10px',
-              fontSize: '0.95rem',
-              fontWeight: 800,
-              color: '#334155',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Resto de la clasificación
-          </h4>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {clasificacionDesdeCuarto.map((f) => (
-              <li
-                key={`resto-${f.posicion}-${f.equipoNombre}`}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f1f5f9',
-                  fontSize: '14px',
-                }}
-              >
-                <span style={{ color: '#334155', fontWeight: 600 }}>
-                  <span style={{ color: '#94a3b8', marginRight: '8px' }}>{f.posicion}.</span>
-                  {f.equipoNombre}
-                </span>
-                <span style={{ fontWeight: 800, color: '#4f46e5', flexShrink: 0 }}>
-                  {f.puntos != null && f.puntos !== '' ? `${f.puntos} pts` : '—'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-    </div>
-  ) : null;
 
   const bloqueMiEquipoResumenFinalizado =
     torneoFinalizado && session?.user && miEquipo ? (
@@ -2514,11 +2201,17 @@ export default function FormEquipos() {
     <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>
+      <div
+        style={{
+          maxWidth: '1100px',
+          margin: '0 auto',
+          marginTop: '4px',
+          paddingLeft: 12,
+          paddingRight: 12,
+          boxSizing: 'border-box',
+        }}
+      >
         {bloqueInvitacionEquipoDeepLink}
-        {bloqueTorneo}
-        {bloqueEquiposInscriptosPublico}
-        {bloqueBannerCrearLogin}
 
         {torneoCancelado ? (
           <>
@@ -2549,14 +2242,27 @@ export default function FormEquipos() {
               )}
             </div>
           </>
-        ) : torneoFinalizado ? (
-          <>
-            {bloquePodioResultadosTorneo}
-            {bloqueMiEquipoResumenFinalizado}
-          </>
         ) : (
-          <>
-        {bloqueEleccionDesktop}
+          <TorneoTabbedView
+            torneo={torneo}
+            equipos={equipos}
+            partidos={partidos}
+            setPartidos={setPartidos}
+            sedesMap={sedesMapForm}
+            torneoId={id}
+            navigate={navigate}
+            session={session}
+            isAdmin={false}
+            clasificacionFinalFilas={
+              torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
+            }
+            equiposTabFooter={
+              torneoFinalizado ? (
+                bloqueMiEquipoResumenFinalizado
+              ) : (
+                <>
+                  {bloqueBannerCrearLogin}
+                  {bloqueEleccionDesktop}
 
         {equipoDuplicadoBloqueoId && !miEquipo ? (
           <div
@@ -3176,7 +2882,10 @@ export default function FormEquipos() {
             </div>
           </div>
         )}
-          </>
+                </>
+              )
+            }
+          />
         )}
 
         {salirEquipoIdConfirm != null ? (
