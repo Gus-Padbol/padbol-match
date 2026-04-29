@@ -3,22 +3,16 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import TorneoTabbedView, {
+  jugadorEtiquetaConArroba,
   nombreEquipoMostrado,
   safeJugadores,
 } from '../components/torneo/TorneoTabbedView';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
-import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import { supabase } from '../supabaseClient';
 import '../styles/TorneoVista.css';
 
 const ADMIN_EMAILS = ['padbolinternacional@gmail.com', 'admin@padbol.com', 'sm@padbol.com', 'juanpablo@padbol.com'];
-
-function jugadorEtiquetaConArroba(p) {
-  const a = String(p?.alias || '').trim();
-  if (a) return formatAliasConArroba(a);
-  return String(p?.nombre || 'Jugador').trim() || 'Jugador';
-}
 
 export default function TorneoVista() {
   const { torneoId } = useParams();
@@ -37,9 +31,6 @@ export default function TorneoVista() {
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const isAdmin = ADMIN_EMAILS.includes(currentEmail);
-  const isSuperAdmin = currentEmail === 'padbolinternacional@gmail.com';
-  const adminGestionView = isAdmin || isSuperAdmin;
-
   const jugadorEquipoListoParaTorneo = (raw) => {
     const p = typeof raw === 'object' && raw != null ? raw : { nombre: raw, email: '' };
     if (p.estado === 'pendiente') return false;
@@ -200,23 +191,11 @@ export default function TorneoVista() {
 
   const adminTorneoBar = torneo ? (
     <div style={{ marginBottom: '12px' }}>
-      {!adminGestionView ? (
-        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <button type="button" className="btn-agregar-jugadores" onClick={() => navigate(`/torneo/${torneoId}/equipos`)}>
-            Equipos e inscripción
-          </button>
-        </div>
-      ) : null}
-      {adminGestionView ? (
-        <div className="torneo-acciones" style={{ marginTop: 0 }}>
-          <div style={{ width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '10px' }}>
-            <h3 style={{ margin: '0 0 8px', color: '#0f172a', fontSize: '14px' }}>Gestión rápida</h3>
-            <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-              Los equipos se gestionan desde la pestaña EQUIPOS (botón Gestionar si sos capitán).
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <button type="button" className="btn-agregar-jugadores" onClick={() => navigate(`/torneo/${torneoId}/equipos`)}>
+          Equipos e inscripción
+        </button>
+      </div>
       {isAdmin && !['en_curso', 'finalizado'].includes(String(torneo.estado || '').toLowerCase()) && (
         <div className="torneo-acciones">
           {!todosEquiposCompletos ? (

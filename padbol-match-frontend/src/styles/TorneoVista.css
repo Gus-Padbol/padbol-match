@@ -536,38 +536,51 @@
   color: rgba(255,255,255,0.65);
 }
 
-/* Podium stage */
+/* Podium — orden visual 2° · 1° · 3°; bases alineadas abajo, 1° más alto (centro) */
 .podium-wrapper {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 40px;
+  gap: 10px;
+  margin-bottom: 28px;
+  padding: 0 4px;
 }
 
 .podium-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
-  max-width: 220px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 210px;
 }
 
-/* Info card above each block */
-.podium-card {
-  background: rgba(255,255,255,0.97);
-  border-radius: 16px;
-  padding: 16px 12px 12px;
-  text-align: center;
-  width: 100%;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-  margin-bottom: 6px;
+.podium-slot--first {
+  flex: 1.12 1 0;
+  max-width: 230px;
+}
+
+.podium-slot--second,
+.podium-slot--third {
+  max-width: 200px;
 }
 
 .podium-medal {
-  font-size: 32px;
+  font-size: 40px;
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.podium-card {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 16px;
+  padding: 14px 12px 12px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  margin-bottom: 0;
 }
 
 .podium-team-name {
@@ -597,35 +610,29 @@
   margin-left: 2px;
 }
 
-/* Blocks */
-.podium-block {
+.podium-pedestal {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 900;
-  color: rgba(255,255,255,0.9);
   border-radius: 10px 10px 0 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin-top: 8px;
+  flex-shrink: 0;
 }
 
-.podium-block-1 {
-  height: 150px;
-  background: linear-gradient(160deg, #f59e0b 0%, #d97706 60%, #b45309 100%);
-  box-shadow: 0 -4px 20px rgba(245, 158, 11, 0.4);
+.podium-pedestal--1 {
+  height: 148px;
+  background: linear-gradient(160deg, #f59e0b 0%, #d97706 55%, #b45309 100%);
+  box-shadow: 0 -4px 22px rgba(245, 158, 11, 0.45);
 }
 
-.podium-block-2 {
-  height: 110px;
-  background: linear-gradient(160deg, #cbd5e1 0%, #94a3b8 60%, #64748b 100%);
+.podium-pedestal--2 {
+  height: 102px;
+  background: linear-gradient(160deg, #e2e8f0 0%, #94a3b8 55%, #64748b 100%);
   box-shadow: 0 -4px 16px rgba(148, 163, 184, 0.4);
 }
 
-.podium-block-3 {
-  height: 80px;
-  background: linear-gradient(160deg, #d97706 0%, #b45309 60%, #92400e 100%);
-  box-shadow: 0 -4px 14px rgba(180, 83, 9, 0.4);
+.podium-pedestal--3 {
+  height: 72px;
+  background: linear-gradient(160deg, #ea580c 0%, #c2410c 55%, #9a3412 100%);
+  box-shadow: 0 -4px 14px rgba(234, 88, 12, 0.35);
 }
 
 /* 4th–10th list */

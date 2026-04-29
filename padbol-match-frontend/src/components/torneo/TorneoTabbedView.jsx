@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatNivelTorneo, formatTipoTorneo } from '../../utils/torneoFormatters';
-import { formatAliasConArroba } from '../../utils/jugadorPerfil';
+import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../../utils/jugadorPerfil';
 import '../../styles/TorneoVista.css';
 
 function formatFecha(str) {
@@ -31,26 +31,24 @@ export function safeJugadores(eq) {
   return Array.isArray(j) ? j : [];
 }
 
-/** Nombre del equipo o "@a & @b" desde aliases. */
+/** Visible en listados: @alias si hay alias; si no, nombre completo (nombre + apellido). */
+export function jugadorEtiquetaConArroba(p) {
+  const a = String(p?.alias || '').trim();
+  if (a) return formatAliasConArroba(a);
+  const full = nombreCompletoJugadorPerfil(p);
+  if (full) return full;
+  return String(p?.nombre || 'Jugador').trim() || 'Jugador';
+}
+
+/** Nombre del equipo o pareja de etiquetas de jugadores (mismo criterio que {@link jugadorEtiquetaConArroba}). */
 export function nombreEquipoMostrado(eq) {
   const n = String(eq?.nombre || '').trim();
   if (n) return n;
   const j = safeJugadores(eq);
-  const aliases = j
-    .map((p) => String(p?.alias || '').trim())
-    .filter(Boolean)
-    .slice(0, 2);
-  if (aliases.length >= 2) {
-    return `${formatAliasConArroba(aliases[0])} & ${formatAliasConArroba(aliases[1])}`;
-  }
-  if (aliases.length === 1) return formatAliasConArroba(aliases[0]);
+  const labels = j.slice(0, 2).map((player) => jugadorEtiquetaConArroba(player));
+  if (labels.length >= 2) return `${labels[0]} & ${labels[1]}`;
+  if (labels.length === 1) return labels[0];
   return `Equipo #${eq?.id ?? '—'}`;
-}
-
-function jugadorEtiquetaConArroba(p) {
-  const a = String(p?.alias || '').trim();
-  if (a) return formatAliasConArroba(a);
-  return String(p?.nombre || 'Jugador').trim() || 'Jugador';
 }
 
 function esUsuarioCapitanDeEquipo(equipo, session) {
@@ -704,25 +702,29 @@ export default function TorneoTabbedView({
     <div style={{ padding: '8px 0 20px' }}>
       <div className="podium-wrapper" style={{ marginBottom: '20px' }}>
         {podioOrdenVisual.map((fila) => {
-            const med = fila.posicion === 1 ? '🥇' : fila.posicion === 2 ? '🥈' : '🥉';
-            const orderClass =
-              fila.posicion === 1 ? 'podium-block-1' : fila.posicion === 2 ? 'podium-block-2' : 'podium-block-3';
-            return (
-              <div key={fila.posicion} className="podium-slot">
-                <div className="podium-card">
-                  <div className="podium-medal">{med}</div>
-                  <div className="podium-team-name">{fila.equipoNombre}</div>
-                  {fila.jugadorLineas?.length > 0 ? (
-                    <div className="podium-players">{fila.jugadorLineas.join(' · ')}</div>
-                  ) : null}
-                  <div className="podium-points">
-                    {fila.puntos} <span>pts</span>
-                  </div>
-                </div>
-                <div className={`podium-block ${orderClass}`}>{fila.posicion}</div>
+          const med = fila.posicion === 1 ? '🥇' : fila.posicion === 2 ? '🥈' : '🥉';
+          const pedestalClass =
+            fila.posicion === 1 ? 'podium-pedestal--1' : fila.posicion === 2 ? 'podium-pedestal--2' : 'podium-pedestal--3';
+          const slotClass =
+            fila.posicion === 1 ? 'podium-slot--first' : fila.posicion === 2 ? 'podium-slot--second' : 'podium-slot--third';
+          return (
+            <div key={fila.posicion} className={`podium-slot ${slotClass}`}>
+              <div className="podium-medal" aria-hidden>
+                {med}
               </div>
-            );
-          })}
+              <div className="podium-card">
+                <div className="podium-team-name">{fila.equipoNombre}</div>
+                {fila.jugadorLineas?.length > 0 ? (
+                  <div className="podium-players">{fila.jugadorLineas.join(' · ')}</div>
+                ) : null}
+                <div className="podium-points">
+                  {fila.puntos} <span>pts</span>
+                </div>
+              </div>
+              <div className={`podium-pedestal ${pedestalClass}`} aria-hidden />
+            </div>
+          );
+        })}
       </div>
       {desdeCuarto.length > 0 ? (
         <div className="clasificacion-resto">
