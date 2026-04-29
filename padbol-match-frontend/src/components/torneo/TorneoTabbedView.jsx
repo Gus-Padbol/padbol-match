@@ -1,13 +1,59 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import confetti from 'canvas-confetti';
 import { formatNivelTorneo, formatTipoTorneo } from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../../utils/jugadorPerfil';
 import '../../styles/TorneoVista.css';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
 
-function randomInRange(min, max) {
-  return Math.random() * (max - min) + min;
+/** Confetti nativo: divs fijos que caen y se eliminan al terminar la animación. */
+function launchNativePadbolConfetti(isMobile) {
+  if (typeof document === 'undefined') return () => {};
+  try {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
+  } catch {
+    /* ignore */
+  }
+
+  const count = isMobile ? 40 : 80;
+  const root = document.createElement('div');
+  root.className = 'torneo-confetti-root';
+  root.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(root);
+
+  const cleanupBits = () => {
+    if (root.parentNode) root.remove();
+  };
+
+  for (let i = 0; i < count; i += 1) {
+    const bit = document.createElement('div');
+    bit.className = 'torneo-confetti-bit';
+    const size = 6 + Math.random() * 4;
+    const duration = 2 + Math.random() * 2;
+    const delay = Math.random() * 2;
+    bit.style.width = `${size}px`;
+    bit.style.height = `${size}px`;
+    bit.style.left = `${Math.random() * 100}vw`;
+    bit.style.backgroundColor = PADBOL_CONFETTI_COLORS[i % PADBOL_CONFETTI_COLORS.length];
+    bit.style.animationDuration = `${duration}s`;
+    bit.style.animationDelay = `${delay}s`;
+    bit.style.setProperty('--confetti-drift', `${(Math.random() - 0.5) * 200}px`);
+    bit.style.setProperty('--confetti-rot', `${(Math.random() * 8 - 4) * 90}deg`);
+    bit.addEventListener(
+      'animationend',
+      () => {
+        if (bit.parentNode === root) bit.remove();
+      },
+      { once: true }
+    );
+    root.appendChild(bit);
+  }
+
+  const safetyTimer = window.setTimeout(cleanupBits, 6500);
+
+  return () => {
+    window.clearTimeout(safetyTimer);
+    cleanupBits();
+  };
 }
 
 function formatFecha(str) {
@@ -323,7 +369,14 @@ export default function TorneoTabbedView({
   }, [clasificacionFinalFilas, esFinalizado, equipos]);
 
   const podioFilas = useMemo(() => resultadosFilas.filter((f) => f.posicion >= 1 && f.posicion <= 3), [resultadosFilas]);
-  const desdeCuarto = useMemo(() => resultadosFilas.filter((f) => f.posicion >= 4), [resultadosFilas]);
+
+  /** 4°–10° con puntos > 0; solo si hay al menos 4 equipos en la clasificación. */
+  const clasificacionFinalLista = useMemo(() => {
+    if (resultadosFilas.length < 4) return [];
+    return resultadosFilas
+      .filter((f) => f.posicion >= 4 && f.posicion <= 10 && Number(f.puntos) > 0)
+      .sort((a, b) => a.posicion - b.posicion);
+  }, [resultadosFilas]);
 
   const podioOrdenVisual = useMemo(() => {
     const m = {};
@@ -348,35 +401,7 @@ export default function TorneoTabbedView({
     const isMobile =
       typeof window !== 'undefined' &&
       (window.matchMedia('(max-width: 768px)').matches || window.innerWidth < 768);
-    const burst = () => {
-      confetti({
-        particleCount: Math.floor(isMobile ? 10 : 22),
-        angle: randomInRange(70, 110),
-        spread: randomInRange(42, 68),
-        startVelocity: isMobile ? 14 : 24,
-        origin: { x: randomInRange(0.12, 0.88), y: randomInRange(-0.08, 0.06) },
-        colors: PADBOL_CONFETTI_COLORS,
-        gravity: randomInRange(0.88, 1.12),
-        drift: randomInRange(-0.35, 0.35),
-        ticks: isMobile ? 200 : 240,
-        scalar: isMobile ? 0.78 : 1,
-        zIndex: 2000,
-        disableForReducedMotion: true,
-        shapes: ['square', 'circle'],
-      });
-    };
-
-    burst();
-    const intervalMs = isMobile ? 280 : 190;
-    const intervalId = window.setInterval(burst, intervalMs);
-    const timeoutId = window.setTimeout(() => {
-      window.clearInterval(intervalId);
-    }, 3000);
-
-    return () => {
-      window.clearInterval(intervalId);
-      window.clearTimeout(timeoutId);
-    };
+    return launchNativePadbolConfetti(isMobile);
   }, [activeTab, esFinalizado]);
 
   const tabs = useMemo(() => {
@@ -775,38 +800,24 @@ export default function TorneoTabbedView({
           );
         })}
       </div>
-      {desdeCuarto.length > 0 ? (
-        <div className="clasificacion-resto">
-          <h3>Posiciones 4° en adelante</h3>
-          {desdeCuarto.map((f) => (
-            <div key={f.posicion} className="clasificacion-item">
-              <span className="clasificacion-pos">{f.posicion}</span>
-              <div className="clasificacion-info">
-                <span className="clasificacion-nombre">{f.equipoNombre}</span>
-              </div>
-              <span className="clasificacion-pts">{f.puntos != null ? `${f.puntos} pts` : '—'}</span>
-            </div>
-          ))}
+      {clasificacionFinalLista.length > 0 ? (
+        <div className="clasificacion-final-box">
+          <h3 className="clasificacion-final-titulo">Clasificación final</h3>
+          <div className="clasificacion-final-lista">
+            {clasificacionFinalLista.map((f) => {
+              const jugTxt = Array.isArray(f.jugadorLineas) && f.jugadorLineas.length ? f.jugadorLineas.join(' · ') : '—';
+              return (
+                <div key={f.posicion} className="clasificacion-final-fila">
+                  <span className="clasificacion-final-pos">{f.posicion}</span>
+                  <span className="clasificacion-final-equipo">{f.equipoNombre}</span>
+                  <span className="clasificacion-final-jug">{jugTxt}</span>
+                  <span className="clasificacion-final-pts">{f.puntos} pts</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
-      <div
-        style={{
-          marginTop: '20px',
-          padding: '14px 16px',
-          background: 'rgba(255,255,255,0.9)',
-          borderRadius: '12px',
-          fontSize: '14px',
-          color: '#334155',
-          lineHeight: 1.5,
-        }}
-      >
-        <strong>Nivel del torneo:</strong> {formatNivelTorneo(torneo?.nivel_torneo)} ·{' '}
-        <strong>Formato:</strong> {formatTipoTorneo(torneo?.tipo_torneo)}
-        <div style={{ marginTop: '8px', color: '#64748b' }}>
-          Los puntos mostrados se distribuyen al ranking global de jugadores según la clasificación final publicada en tabla de
-          puntos.
-        </div>
-      </div>
     </div>
   );
 

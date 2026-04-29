@@ -708,3 +708,106 @@
   color: rgba(255,255,255,0.7);
   white-space: nowrap;
 }
+
+/* Confetti nativo (pestaña RESULTADOS) */
+@keyframes torneo-confetti-fall {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(var(--confetti-drift, 0px), 115vh, 0) rotate(var(--confetti-rot, 720deg));
+    opacity: 0.92;
+  }
+}
+
+.torneo-confetti-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.torneo-confetti-bit {
+  position: absolute;
+  top: -4px;
+  pointer-events: none;
+  border-radius: 2px;
+  will-change: transform;
+  animation-name: torneo-confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+/* Clasificación final 4°–10° (compacta, una línea) */
+.clasificacion-final-box {
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.clasificacion-final-titulo {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+.clasificacion-final-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clasificacion-final-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.clasificacion-final-pos {
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.clasificacion-final-equipo {
+  flex-shrink: 0;
+  max-width: 38%;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clasificacion-final-jug {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.clasificacion-final-pts {
+  flex-shrink: 0;
+  font-weight: 800;
+  color: #15803d;
+  white-space: nowrap;
+}
