@@ -58,7 +58,7 @@ function equipoListoParaTorneo(players, cupo) {
 
 function normalizePlayer(p) {
   if (!p) return null;
-  if (typeof p === 'string') return { nombre: p, email: '', estado: 'confirmado' };
+  if (typeof p === 'string') return { nombre: p, email: '', estado: 'confirmado', foto_url: '' };
   const email = normalizeJugadorEmail(p);
   let estado = p.estado;
   if (!estado) {
@@ -74,7 +74,13 @@ function normalizePlayer(p) {
     email,
     estado,
     rol: p.rol != null && String(p.rol).trim() ? String(p.rol).trim() : '',
+    foto_url: p?.foto_url != null && String(p.foto_url).trim() ? String(p.foto_url).trim() : '',
   };
+}
+
+function pathSegmentJugadorPublico(p) {
+  const raw = String(p?.alias || '').trim() || String(p?.nombre || '').trim() || 'jugador';
+  return encodeURIComponent(raw.toLowerCase().replace(/\s+/g, '-'));
 }
 
 function getPlayers(eq) {
@@ -84,7 +90,7 @@ function getPlayers(eq) {
   if (typeof eq?.jugadores === 'string' && eq.jugadores.trim()) {
     return eq.jugadores
       .split(' + ')
-      .map((n) => ({ nombre: n.trim(), email: '', estado: 'confirmado' }))
+      .map((n) => ({ nombre: n.trim(), email: '', estado: 'confirmado', foto_url: '' }))
       .filter((p) => p.nombre);
   }
   return [];
@@ -1908,6 +1914,12 @@ export default function FormEquipos() {
           <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Nivel</div>
           <div style={{ fontWeight: 700 }}>{formatNivelTorneo(torneo?.nivel_torneo)}</div>
         </div>
+        {String(torneo?.categoria ?? '').trim() ? (
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Categoría</div>
+            <div style={{ fontWeight: 700 }}>{String(torneo.categoria).trim()}</div>
+          </div>
+        ) : null}
         <div>
           <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Equipos</div>
           <div style={{ fontWeight: 700 }}>{equipos.length}</div>
@@ -1922,6 +1934,120 @@ export default function FormEquipos() {
       ) : null}
     </div>
   );
+
+  const estadoTorneoFormLower = String(torneo?.estado || '').toLowerCase();
+  const mostrarEquiposInscriptosAbiertos =
+    !torneoCancelado &&
+    !torneoFinalizado &&
+    (estadoTorneoFormLower === 'abierto' || estadoTorneoFormLower === 'en_curso');
+
+  const bloqueEquiposInscriptosPublico = mostrarEquiposInscriptosAbiertos ? (
+    <div
+      style={{
+        background: '#fff',
+        borderRadius: '16px',
+        padding: '18px 20px',
+        marginBottom: '16px',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
+        border: '1px solid #e5e7eb',
+      }}
+    >
+      <h3 style={{ margin: '0 0 14px', fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>Equipos inscriptos</h3>
+      {equiposVisibles.length === 0 ? (
+        <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>Todavía no hay equipos con plantel confirmado.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {equiposVisibles.map((eq) => {
+            const players = getPlayers(eq).filter(jugadorRegistradoParaTorneo);
+            return (
+              <div
+                key={eq.id}
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: '12px',
+                  border: '1px solid #f1f5f9',
+                  background: '#fafafa',
+                }}
+              >
+                <div style={{ fontWeight: 800, fontSize: '15px', color: '#0f172a', marginBottom: '10px' }}>
+                  {eq.nombre || `Equipo #${eq.id}`}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {players.length === 0 ? (
+                    <span style={{ fontSize: '13px', color: '#94a3b8' }}>Sin jugadores confirmados</span>
+                  ) : (
+                    players.map((p, idx) => {
+                      const label = jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm);
+                      const initial = String(label || '?')
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase();
+                      const to = `/jugador/${pathSegmentJugadorPublico(p)}`;
+                      return (
+                        <button
+                          key={`${eq.id}-ins-${idx}-${p.email || p.id || label}`}
+                          type="button"
+                          onClick={() => navigate(to)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            width: '100%',
+                            textAlign: 'left',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            padding: '4px 0',
+                            borderRadius: '8px',
+                          }}
+                        >
+                          {p.foto_url ? (
+                            <img
+                              src={p.foto_url}
+                              alt=""
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                flexShrink: 0,
+                                border: '1px solid #e2e8f0',
+                              }}
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                                color: 'white',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {initial}
+                            </span>
+                          )}
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155', textDecoration: 'underline' }}>
+                            {label}
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  ) : null;
 
   const bloqueBannerCrearLogin =
     !torneoFinalizado && bannerCrearEquipoRequiereLogin && !session?.user ? (
@@ -2327,18 +2453,28 @@ export default function FormEquipos() {
           padding: '2px 8px 0',
         }}
       >
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
+        <div
           style={{
-            width: 'min(100%, 112px)',
-            maxWidth: '112px',
-            height: 'auto',
-            display: 'block',
-            objectFit: 'contain',
-            filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.28))',
+            height: '80px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
           }}
-        />
+        >
+          <img
+            src="/logo-padbol-match.png"
+            alt="Padbol Match"
+            style={{
+              maxHeight: '80px',
+              width: 'auto',
+              display: 'block',
+              objectFit: 'contain',
+              objectPosition: 'center',
+              filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.28))',
+            }}
+          />
+        </div>
         <h1
           style={{
             margin: '8px 0 0',
@@ -2381,6 +2517,7 @@ export default function FormEquipos() {
       <div style={{ maxWidth: '1100px', margin: '0 auto', marginTop: '4px' }}>
         {bloqueInvitacionEquipoDeepLink}
         {bloqueTorneo}
+        {bloqueEquiposInscriptosPublico}
         {bloqueBannerCrearLogin}
 
         {torneoCancelado ? (

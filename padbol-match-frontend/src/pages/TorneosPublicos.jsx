@@ -475,23 +475,27 @@ export default function TorneosPublicos() {
       <AppHeader title="Torneos" onBack={handleTorneosAppBack} />
 
       <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          width={90}
-          height={52}
+        <div
           style={{
-            width: 'min(100%, 90px)',
-            height: '52px',
-            maxWidth: '90px',
-            display: 'block',
-            margin: '0 auto 14px',
-            objectFit: 'contain',
-            objectPosition: 'center',
-            borderRadius: '16px',
-            background: 'transparent',
+            height: '80px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '14px',
           }}
-        />
+        >
+          <img
+            src="/logo-padbol-match.png"
+            alt="Padbol Match"
+            style={{
+              maxHeight: '80px',
+              width: 'auto',
+              display: 'block',
+              objectFit: 'contain',
+              objectPosition: 'center',
+            }}
+          />
+        </div>
         <div
           style={{
             background: 'rgba(255,255,255,0.10)',
