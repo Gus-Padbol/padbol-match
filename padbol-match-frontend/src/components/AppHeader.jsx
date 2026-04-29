@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getDisplayName } from '../utils/displayName';
+import { loginRedirectAfterHubEntry } from '../utils/authLoginRedirect';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -29,10 +31,12 @@ export default function AppHeader({
   titleColor,
   /** Si true, no se muestra el botón de cerrar sesión (p. ej. perfil público de sede). */
   hideLogout = false,
+  /** Hub principal: entrada directa a login o chip de usuario (no depende de reservar). */
+  hubDirectLogin = false,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, signOutAndClear } = useAuth();
+  const { session, signOutAndClear, userProfile, loading: authLoading } = useAuth();
   const titleStr = String(title ?? '').trim();
   const hideLogoutEffective = hideLogout;
 
@@ -46,6 +50,21 @@ export default function AppHeader({
   );
   const authEmail = String(session?.user?.email || '').trim().toLowerCase();
   const showLogout = !hideLogoutEffective && Boolean(session?.user);
+  const loginFromHubUrl = `/login?redirect=${encodeURIComponent(loginRedirectAfterHubEntry(location))}`;
+  const hubNombreCorto = (() => {
+    const alias = String(userProfile?.alias || '').trim();
+    if (alias) return alias;
+    const full = getDisplayName(userProfile, session);
+    const first = String(full || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)[0];
+    return first || 'Cuenta';
+  })();
+  const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
+  const hubInicial = String(hubNombreCorto || '?')
+    .charAt(0)
+    .toUpperCase();
   const showAdmin = !hideLogoutEffective && authEmail === 'padbolinternacional@gmail.com';
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =
@@ -184,6 +203,73 @@ export default function AppHeader({
               marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
+            {hubDirectLogin && session?.user ? (
+              <button
+                type="button"
+                onClick={() => navigate('/mi-perfil')}
+                aria-label="Ir a mi perfil"
+                title="Mi perfil"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  maxWidth: 'min(42vw, 160px)',
+                  padding: '4px 8px 4px 4px',
+                  borderRadius: '999px',
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.12)',
+                  color: '#f8fafc',
+                  cursor: 'pointer',
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                {hubFotoUrl ? (
+                  <img
+                    src={hubFotoUrl}
+                    alt=""
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                      border: '1px solid rgba(255,255,255,0.25)',
+                    }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {hubInicial}
+                  </span>
+                )}
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
+                  }}
+                >
+                  {hubNombreCorto}
+                </span>
+              </button>
+            ) : null}
             {showAdmin ? (
               <button
                 type="button"
@@ -240,6 +326,37 @@ export default function AppHeader({
               </button>
             ) : null}
           </div>
+        ) : hubDirectLogin && !session?.user && !authLoading ? (
+          <button
+            type="button"
+            onClick={() => navigate(loginFromHubUrl)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '999px',
+              border: 'none',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e1b4b',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            }}
+          >
+            Iniciar sesión
+          </button>
+        ) : hubDirectLogin && !session?.user && authLoading ? (
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'rgba(255,255,255,0.65)',
+              padding: '8px 4px',
+            }}
+          >
+            …
+          </span>
         ) : !hideLogoutEffective ? (
           <span
             aria-hidden

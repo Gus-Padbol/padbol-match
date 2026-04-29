@@ -8,6 +8,7 @@ import {
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
+import { loginRedirectAfterHubEntry } from '../utils/authLoginRedirect';
 
 export default function UserHome() {
   const navigate = useNavigate();
@@ -34,6 +35,11 @@ export default function UserHome() {
     { label: 'Perfil', icon: '👤', action: () => navigate('/mi-perfil') },
   ];
 
+  const loginDesdeHubUrl = useMemo(
+    () => `/login?redirect=${encodeURIComponent(loginRedirectAfterHubEntry(location))}`,
+    [location.pathname, location.search]
+  );
+
   return (
     <div
       style={{
@@ -49,7 +55,7 @@ export default function UserHome() {
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
-      <AppHeader title="Inicio" showBack={false} />
+      <AppHeader title="Inicio" showBack={false} hubDirectLogin />
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"
@@ -108,6 +114,28 @@ export default function UserHome() {
             >
               Puedes explorar sin registrarte
             </p>
+          ) : null}
+          {!authLoading && !session?.user ? (
+            <button
+              type="button"
+              onClick={() => navigate(loginDesdeHubUrl)}
+              style={{
+                display: 'block',
+                width: '100%',
+                marginTop: '14px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '2px solid rgba(255,255,255,0.85)',
+                background: 'rgba(255,255,255,0.98)',
+                color: '#312e81',
+                fontSize: '15px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.15)',
+              }}
+            >
+              Iniciar sesión
+            </button>
           ) : null}
         </div>
 
