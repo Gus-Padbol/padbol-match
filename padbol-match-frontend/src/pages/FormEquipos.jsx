@@ -244,6 +244,8 @@ export default function FormEquipos() {
   const [salirEquipoIdConfirm, setSalirEquipoIdConfirm] = useState(null);
   const [savingSalirEquipo, setSavingSalirEquipo] = useState(false);
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
+  /** Filas `tabla_puntos` del torneo (solo si está finalizado). */
+  const [tablaPuntosRows, setTablaPuntosRows] = useState([]);
   /** Fila en BD: ya existe equipo con este creador_id en el torneo (miEquipo aún no reflejado en UI). */
   const [equipoDuplicadoBloqueoId, setEquipoDuplicadoBloqueoId] = useState(null);
   const [perfilMapsTorneo, setPerfilMapsTorneo] = useState(() => buildJugadorPerfilLookupMaps([]));
@@ -320,6 +322,31 @@ export default function FormEquipos() {
   useEffect(() => {
     cargarTodo();
   }, [torneoId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(torneoId) || torneo?.estado !== 'finalizado') {
+      setTablaPuntosRows([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('tabla_puntos')
+        .select('equipo_id, posicion, puntos')
+        .eq('torneo_id', torneoId)
+        .order('posicion', { ascending: true });
+      if (cancelled) return;
+      if (error) {
+        console.error('[FormEquipos] tabla_puntos', error);
+        setTablaPuntosRows([]);
+        return;
+      }
+      setTablaPuntosRows(Array.isArray(data) ? data : []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [torneoId, torneo?.estado]);
 
   useEffect(() => {
     if (!Number.isFinite(inviteEquipoIdNum) || !Number.isFinite(torneoId)) {
@@ -536,6 +563,34 @@ export default function FormEquipos() {
 
   const torneoCerrado = torneo?.estado === 'finalizado' || torneo?.estado === 'cancelado';
   const torneoCancelado = torneo?.estado === 'cancelado';
+  const torneoFinalizado = torneo?.estado === 'finalizado';
+
+  const filasClasificacionFinalizado = useMemo(() => {
+    if (!torneoFinalizado || !Array.isArray(tablaPuntosRows) || tablaPuntosRows.length === 0) return [];
+    const eqById = {};
+    for (const e of equipos) eqById[e.id] = e;
+    return tablaPuntosRows
+      .map((row) => {
+        const eq = eqById[row.equipo_id];
+        const players = eq ? getPlayers(eq) : [];
+        return {
+          posicion: Number(row.posicion) || 0,
+          puntos: row.puntos,
+          equipoNombre: String(eq?.nombre || '').trim() || `Equipo #${row.equipo_id}`,
+          jugadorLineas: players.slice(0, 4).map((p) => jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)),
+        };
+      })
+      .sort((a, b) => (a.posicion || 999) - (b.posicion || 999));
+  }, [torneoFinalizado, tablaPuntosRows, equipos, nombreTorneoCtxForm]);
+
+  const podioFilasFinalizado = useMemo(
+    () => filasClasificacionFinalizado.filter((f) => f.posicion >= 1 && f.posicion <= 3),
+    [filasClasificacionFinalizado]
+  );
+  const clasificacionDesdeCuarto = useMemo(
+    () => filasClasificacionFinalizado.filter((f) => f.posicion >= 4),
+    [filasClasificacionFinalizado]
+  );
 
   /** Tras registro/login con ?crear=1: abrir formulario crear y limpiar la query. */
   useEffect(() => {
@@ -1869,7 +1924,7 @@ export default function FormEquipos() {
   );
 
   const bloqueBannerCrearLogin =
-    bannerCrearEquipoRequiereLogin && !session?.user ? (
+    !torneoFinalizado && bannerCrearEquipoRequiereLogin && !session?.user ? (
       <div
         style={{
           marginBottom: '16px',
@@ -1921,8 +1976,180 @@ export default function FormEquipos() {
       </div>
     ) : null;
 
+  const bloquePodioResultadosTorneo = torneoFinalizado ? (
+    <div
+      style={{
+        marginBottom: '18px',
+        background: '#fff',
+        padding: '20px 18px',
+        borderRadius: '16px',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
+        border: '1px solid #e5e7eb',
+      }}
+    >
+      <h3
+        style={{
+          margin: '0 0 14px',
+          fontSize: '1.05rem',
+          fontWeight: 900,
+          color: '#0f172a',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        Podio
+      </h3>
+      {podioFilasFinalizado.length === 0 ? (
+        <p style={{ margin: 0, fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
+          Aún no hay posiciones publicadas en la tabla de puntos.
+        </p>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '16px',
+            justifyContent: 'center',
+            alignItems: 'stretch',
+          }}
+        >
+          {podioFilasFinalizado.map((fila) => {
+            const med =
+              fila.posicion === 1 ? '🥇' : fila.posicion === 2 ? '🥈' : fila.posicion === 3 ? '🥉' : '🏅';
+            return (
+              <div
+                key={`podio-${fila.posicion}-${fila.equipoNombre}`}
+                style={{
+                  flex: '1 1 140px',
+                  maxWidth: '220px',
+                  minWidth: '130px',
+                  padding: '16px 14px',
+                  borderRadius: '14px',
+                  background:
+                    fila.posicion === 1
+                      ? 'linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%)'
+                      : fila.posicion === 2
+                        ? 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)'
+                        : 'linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%)',
+                  border:
+                    fila.posicion === 1
+                      ? '2px solid #fbbf24'
+                      : fila.posicion === 2
+                        ? '2px solid #cbd5e1'
+                        : '2px solid #fdba74',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: 'clamp(2rem, 8vw, 2.5rem)', lineHeight: 1, marginBottom: '8px' }}>{med}</div>
+                <div
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 900,
+                    color: '#0f172a',
+                    lineHeight: 1.25,
+                    marginBottom: '10px',
+                  }}
+                >
+                  {fila.equipoNombre}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                  {fila.jugadorLineas.length ? (
+                    fila.jugadorLineas.map((line, i) => (
+                      <div key={`${fila.posicion}-j-${i}`} style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
+                        {line}
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>—</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {clasificacionDesdeCuarto.length > 0 ? (
+        <>
+          <h4
+            style={{
+              margin: '22px 0 10px',
+              fontSize: '0.95rem',
+              fontWeight: 800,
+              color: '#334155',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Resto de la clasificación
+          </h4>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {clasificacionDesdeCuarto.map((f) => (
+              <li
+                key={`resto-${f.posicion}-${f.equipoNombre}`}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #f1f5f9',
+                  fontSize: '14px',
+                }}
+              >
+                <span style={{ color: '#334155', fontWeight: 600 }}>
+                  <span style={{ color: '#94a3b8', marginRight: '8px' }}>{f.posicion}.</span>
+                  {f.equipoNombre}
+                </span>
+                <span style={{ fontWeight: 800, color: '#4f46e5', flexShrink: 0 }}>
+                  {f.puntos != null && f.puntos !== '' ? `${f.puntos} pts` : '—'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </div>
+  ) : null;
+
+  const bloqueMiEquipoResumenFinalizado =
+    torneoFinalizado && session?.user && miEquipo ? (
+      <div
+        style={{
+          marginBottom: '16px',
+          padding: '14px 16px',
+          borderRadius: '12px',
+          background: 'rgba(255,255,255,0.14)',
+          border: '1px solid rgba(255,255,255,0.22)',
+          color: 'white',
+          fontWeight: 700,
+          fontSize: '14px',
+          lineHeight: 1.45,
+        }}
+      >
+        <div style={{ marginBottom: '10px' }}>
+          Tu equipo: <strong>{miEquipo.nombre}</strong>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate(`/torneo/${id}/equipos/${miEquipo.id}`)}
+          style={{
+            padding: '10px 16px',
+            fontSize: '14px',
+            fontWeight: 800,
+            borderRadius: '10px',
+            border: 'none',
+            cursor: 'pointer',
+            background: 'rgba(255,255,255,0.95)',
+            color: '#15803d',
+          }}
+        >
+          Ver mi equipo
+        </button>
+      </div>
+    ) : null;
+
   const bloqueInscripcionTorneo =
-    miEquipo && !torneoCancelado ? (
+    miEquipo && !torneoCancelado && !torneoFinalizado ? (
       <div
         style={{
           border: '2px dashed rgba(255,255,255,0.38)',
@@ -2081,7 +2308,7 @@ export default function FormEquipos() {
 
   const renderInscripcionHeader = () => (
     <>
-      <AppHeader title="Inscripción" onBack={handleInscripcionHeaderBack} />
+      <AppHeader title={torneoFinalizado ? 'Resultados' : 'Inscripción'} onBack={handleInscripcionHeaderBack} />
       <div
         style={{
           width: '100%',
@@ -2127,7 +2354,7 @@ export default function FormEquipos() {
             textShadow: '0 2px 24px rgba(0,0,0,0.25)',
           }}
         >
-          Inscripción al torneo
+          {torneoFinalizado ? 'Resultados del torneo' : 'Inscripción al torneo'}
         </h1>
       </div>
     </div>
@@ -2184,6 +2411,11 @@ export default function FormEquipos() {
                 equiposVisibles.map((eq) => renderEquipoLecturaCancelado(eq))
               )}
             </div>
+          </>
+        ) : torneoFinalizado ? (
+          <>
+            {bloquePodioResultadosTorneo}
+            {bloqueMiEquipoResumenFinalizado}
           </>
         ) : (
           <>

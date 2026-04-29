@@ -7,7 +7,6 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_CONTENT_PADDING_TOP_PX,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -54,7 +53,7 @@ function Row({ icon, label }) {
 }
 
 const estadoStyle = {
-  planificacion: { label: 'Planificación', bg: '#22c55e', color: '#fff' },
+  planificacion: { label: 'Próximo', bg: '#22c55e', color: '#fff' },
   inscripcion_abierta: { label: 'Inscripción abierta', bg: '#22c55e', color: '#fff' },
   abierto: { label: 'Abierto', bg: '#22c55e', color: '#fff' },
   en_curso: { label: 'En curso', bg: '#eab308', color: '#fff' },
@@ -479,9 +478,18 @@ export default function TorneosPublicos() {
         <img
           src="/logo-padbol-match.png"
           alt="Padbol Match"
+          width={90}
+          height={52}
           style={{
-            ...padbolLogoImgStyle,
+            width: 'min(100%, 90px)',
+            height: '52px',
+            maxWidth: '90px',
+            display: 'block',
             margin: '0 auto 14px',
+            objectFit: 'contain',
+            objectPosition: 'center',
+            borderRadius: '16px',
+            background: 'transparent',
           }}
         />
         <div

@@ -900,7 +900,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 estadoRaw === 'proximo'
               ) ? 'planificacion' : estadoRaw;
               const estadoBadge  = {
-                planificacion: { bg: '#22c55e', color: '#ffffff', label: 'Planificación' },
+                planificacion: { bg: '#22c55e', color: '#ffffff', label: 'Próximo' },
                 en_curso:      { bg: '#3b82f6', color: '#ffffff', label: 'En curso'      },
                 finalizado:    { bg: '#ef4444', color: '#ffffff', label: 'Finalizado'    },
                 cancelado:     { bg: '#9ca3af', color: '#ffffff', label: 'Cancelado'     },
