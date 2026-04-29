@@ -2777,10 +2777,7 @@ export default function MiPerfil() {
                   <span style={{ flexShrink: 0, lineHeight: 1.2 }}>{med}</span>
                   <span
                     style={{
-                      minWidth: 0,
-                      flex: '1 1 auto',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
+                      flexShrink: 0,
                       whiteSpace: 'nowrap',
                       fontWeight: 700,
                       color: '#0f172a',
@@ -2788,8 +2785,18 @@ export default function MiPerfil() {
                   >
                     {row.nombreTorneo}
                   </span>
-                  <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontWeight: 600, color: '#475569' }}>
-                    · {nivelTxt} · {pts} pts · {row.fechaMostrar}
+                  <span
+                    style={{
+                      minWidth: 0,
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 600,
+                      color: '#475569',
+                    }}
+                  >
+                    {` · ${nivelTxt} · ${pts} pts · ${row.fechaMostrar}`}
                   </span>
                 </button>
               );

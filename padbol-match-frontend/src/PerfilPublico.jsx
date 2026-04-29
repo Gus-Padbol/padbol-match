@@ -6,7 +6,6 @@ import {
   formatAliasConArroba,
   esCategoriaPendienteValidacion,
 } from './utils/jugadorPerfil';
-import { normalizeEmailStr } from './utils/jugadorNombreTorneo';
 import { formatNivelTorneo } from './utils/torneoFormatters';
 import { fetchTorneosConPuntosParaPerfil, emojiMedallaPosicionCompacta } from './utils/torneoHistorialPuntosJugador';
 import {
@@ -14,17 +13,6 @@ import {
   tieneAlgunoPuntosPorAlcance,
   contarTorneosUnicosConPuntos,
 } from './utils/perfilPuntosResumen';
-
-const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
-);
-
-function apiUrl(path) {
-  const p = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE}${p}`;
-}
 
 function instagramHandleFromStored(raw) {
   const s = String(raw ?? '').trim();
@@ -53,322 +41,6 @@ const CATEGORIA_COLOR = {
   Elite: '#212121',
 };
 
-function normalizeJugadorEquipo(p) {
-  if (!p || typeof p !== 'object') return null;
-  return {
-    id: p.id != null && p.id !== '' ? String(p.id) : null,
-    email: normalizeEmailStr(p.email),
-    alias: String(p.alias || '').trim().toLowerCase(),
-    nombre: String(p.nombre || '').trim().toLowerCase(),
-  };
-}
-
-/** Igualdad de ids entre JSON de equipo y `perfil.user_id` (string vs número en JSON). */
-function idsJugadorEquipoCoinciden(idJson, userIdPerfil) {
-  const a = idJson != null && idJson !== '' ? String(idJson).trim() : '';
-  const b = userIdPerfil != null && String(userIdPerfil).trim() !== '' ? String(userIdPerfil).trim() : '';
-  return Boolean(a && b && a === b);
-}
-
-function jugadorEnEquipo(jugadoresArr, perfil) {
-  if (!Array.isArray(jugadoresArr) || !perfil) return false;
-  const uid = String(perfil.user_id || '').trim();
-  const em = normalizeEmailStr(perfil.email);
-  const rawEm = String(perfil.email || '').trim().toLowerCase();
-  const al = String(perfil.alias || '').trim().toLowerCase();
-  const nomFull = String(nombreCompletoJugadorPerfil(perfil) || perfil.nombre || '')
-    .trim()
-    .toLowerCase();
-
-  for (const raw of jugadoresArr) {
-    const p = normalizeJugadorEquipo(raw);
-    if (!p) continue;
-    if (uid && p.id && idsJugadorEquipoCoinciden(p.id, uid)) return true;
-    // Compatibilidad formato viejo: id numérico, matchear por email case-insensitive.
-    const emailJugadorLower = String(raw?.email || '').trim().toLowerCase();
-    if (rawEm && emailJugadorLower && emailJugadorLower === rawEm) return true;
-    if (em && p.email && p.email === em) return true;
-    if (rawEm && p.email && p.email === rawEm) return true;
-    if (al && p.alias && p.alias === al) return true;
-    if (nomFull && p.nombre && p.nombre === nomFull) return true;
-  }
-  return false;
-}
-
-/** Lee equipos completos y filtra en JS por jugador. */
-async function fetchEquiposJugador(perfil) {
-  const { data: equiposRows, error: equiposErr } = await supabase
-    .from('equipos')
-    .select('id, torneo_id, jugadores');
-  if (equiposErr) {
-    console.warn('[PerfilPublico] equipos (lectura completa para filtrar en JS)', equiposErr);
-    return [];
-  }
-  const rows = equiposRows || [];
-  const torneoIds = [...new Set(rows.map((eq) => eq?.torneo_id).filter((x) => x != null))];
-  const estadoByTorneoId = new Map();
-  if (torneoIds.length) {
-    const { data: torneosRows, error: torneosErr } = await supabase
-      .from('torneos')
-      .select('id, estado')
-      .in('id', torneoIds);
-    if (torneosErr) {
-      console.warn('[PerfilPublico] torneos para filtrar finalizados', torneosErr);
-    } else {
-      for (const t of torneosRows || []) {
-        estadoByTorneoId.set(t.id, String(t.estado || '').trim().toLowerCase());
-      }
-    }
-  }
-
-  const matched = [];
-  for (const eq of rows) {
-    const match = jugadorEnEquipo(eq.jugadores, perfil);
-    const torneoEstado = estadoByTorneoId.get(eq?.torneo_id) || '';
-    const torneoFinalizado = torneoEstado === 'finalizado';
-    console.log('[PerfilPublico] jugadorEnEquipo check', {
-      equipoId: eq?.id ?? null,
-      torneoId: eq?.torneo_id ?? null,
-      matched: match,
-      torneoEstado: torneoEstado || null,
-      torneoFinalizado,
-      perfilUserId: perfil?.user_id ?? null,
-      perfilEmail: perfil?.email ?? null,
-    });
-    if (match && torneoFinalizado) matched.push(eq);
-  }
-  return matched;
-}
-
-/** Torneos en los que el jugador figura (jugadores_torneo o equipos). */
-async function torneoIdsJugadosPorPerfil(perfil) {
-  const uid = perfil?.user_id != null && String(perfil.user_id).trim() !== '' ? String(perfil.user_id).trim() : '';
-  const emailPerfil = perfil?.email != null ? String(perfil.email).trim() : '';
-  const em = normalizeEmailStr(perfil?.email || '');
-  const played = new Set();
-
-  const debug = {
-    'perfil.user_id': uid || null,
-    'perfil.email (raw)': emailPerfil || null,
-    'perfil.email (normalizado)': em || null,
-    jugadoresTorneoFilas: 0,
-    equiposCoincidenJugador: 0,
-  };
-
-  if (em) {
-    const { data: jt } = await supabase.from('jugadores_torneo').select('torneo_id').ilike('email', em);
-    const rows = jt || [];
-    debug.jugadoresTorneoFilas = rows.length;
-    rows.forEach((r) => {
-      if (r.torneo_id != null) played.add(r.torneo_id);
-    });
-  }
-
-  const equiposJugador = await fetchEquiposJugador(perfil);
-  debug.equiposCoincidenJugador = equiposJugador.length;
-  for (const eq of equiposJugador) {
-    if (eq.torneo_id != null) played.add(eq.torneo_id);
-  }
-
-  const equipoIds = [...new Set(equiposJugador.map((eq) => eq.id).filter(Boolean))];
-
-  const playedArr = [...played].filter((x) => x != null);
-  console.log('[PerfilPublico] estadísticas debug', {
-    ...debug,
-    equipoIdsCoincidenJugador: equipoIds.length,
-    torneoIdsResultantes: playedArr,
-    cantidadTorneos: playedArr.length,
-  });
-
-  return { torneoIds: playedArr, equipoIds };
-}
-
-/**
- * Suma **todos** los `puntos` en `tabla_puntos` del jugador (coincidencia por `user_id` o `email` en `equipos.jugadores`),
- * sin filtrar por sede, nivel ni torneo.
- */
-async function sumarPuntosTablaPuntosGlobalJugador(equipoIds, perfil) {
-  let total = 0;
-  if (!Array.isArray(equipoIds) || !equipoIds.length) {
-    console.log('[PerfilPublico] puntos totales (tabla_puntos global)', {
-      total: 0,
-      filasEvaluadas: 0,
-      filasSumadas: 0,
-      equipoIdsConsiderados: 0,
-      'perfil.user_id': perfil?.user_id ?? null,
-      'perfil.email': perfil?.email ?? null,
-    });
-    return 0;
-  }
-
-  const { data: rows, error } = await supabase
-    .from('tabla_puntos')
-    .select('equipo_id, puntos')
-    .in('equipo_id', equipoIds);
-  if (error) {
-    console.error('[PerfilPublico] suma global tabla_puntos por equipo_id', error);
-    return 0;
-  }
-  const puntosRows = rows || [];
-  for (const r of puntosRows) total += Number(r.puntos) || 0;
-
-  console.log('[PerfilPublico] puntos totales (tabla_puntos global)', {
-    total,
-    filasEvaluadas: puntosRows.length,
-    filasSumadas: puntosRows.length,
-    equipoIdsConsiderados: equipoIds.length,
-    'perfil.user_id': perfil?.user_id ?? null,
-    'perfil.email': perfil?.email ?? null,
-  });
-
-  return total;
-}
-
-/**
- * Torneos jugados, puntos totales (suma global en `tabla_puntos`) y últimos 3 torneos con posición/puntos (según torneos detectados).
- */
-async function fetchEstadisticasYUltimosTorneos(perfil) {
-  const { torneoIds: playedArr, equipoIds } = await torneoIdsJugadosPorPerfil(perfil);
-  const puntosTotales = await sumarPuntosTablaPuntosGlobalJugador(equipoIds, perfil);
-
-  if (!playedArr.length) {
-    console.log('[PerfilPublico] estadísticas debug', {
-      fase: 'sin torneos detectados',
-      motivo: 'playedArr vacío',
-      puntosTotales,
-      playedArr,
-    });
-    return { torneosJugados: 0, puntosTotales, ultimosTorneos: [] };
-  }
-
-  const { data: puntosRows, error: errPuntos } = await supabase
-    .from('tabla_puntos')
-    .select('torneo_id, equipo_id, posicion, puntos')
-    .in('torneo_id', playedArr);
-
-  if (errPuntos) {
-    console.error('[PerfilPublico] tabla_puntos', errPuntos);
-    console.log('[PerfilPublico] estadísticas debug', { fase: 'error tabla_puntos', errPuntos, playedArrLen: playedArr.length });
-    return { torneosJugados: playedArr.length, puntosTotales, ultimosTorneos: [] };
-  }
-
-  const eqIds = [...new Set((puntosRows || []).map((r) => r.equipo_id).filter(Boolean))];
-  if (!eqIds.length) {
-    console.log('[PerfilPublico] estadísticas debug', {
-      fase: 'sin tabla_puntos en torneos detectados',
-      playedArrLen: playedArr.length,
-      filasTablaPuntosQuery: (puntosRows || []).length,
-      puntosTotales,
-    });
-    return { torneosJugados: playedArr.length, puntosTotales, ultimosTorneos: [] };
-  }
-
-  const { data: eqRows, error: errEq } = await supabase
-    .from('equipos')
-    .select('id, jugadores, torneo_id')
-    .in('id', eqIds);
-
-  if (errEq) {
-    console.error('[PerfilPublico] equipos tabla_puntos', errEq);
-    return { torneosJugados: playedArr.length, puntosTotales, ultimosTorneos: [] };
-  }
-
-  const eqMap = {};
-  (eqRows || []).forEach((e) => {
-    eqMap[e.id] = e;
-  });
-
-  const misFilas = [];
-  for (const pr of puntosRows || []) {
-    const eq = eqMap[pr.equipo_id];
-    if (!eq || !jugadorEnEquipo(eq.jugadores, perfil)) continue;
-    misFilas.push({
-      torneo_id: pr.torneo_id,
-      posicion: pr.posicion,
-      puntos: pr.puntos,
-    });
-  }
-
-  const porTorneo = new Map();
-  for (const row of misFilas) {
-    if (!porTorneo.has(row.torneo_id)) porTorneo.set(row.torneo_id, row);
-  }
-  const unique = [...porTorneo.values()];
-  const tids = [...new Set(unique.map((u) => u.torneo_id))];
-
-  const { data: torneos } = await supabase
-    .from('torneos')
-    .select('id, nombre, updated_at, created_at')
-    .in('id', tids);
-
-  const torneoMeta = {};
-  (torneos || []).forEach((t) => {
-    torneoMeta[t.id] = t;
-  });
-
-  const enriched = unique.map((u) => {
-    const meta = torneoMeta[u.torneo_id];
-    const nom = String(meta?.nombre || '').trim();
-    return {
-      nombre: nom || `Torneo #${u.torneo_id}`,
-      posicion: u.posicion,
-      puntos: u.puntos,
-      sortKey: String(meta?.updated_at || meta?.created_at || ''),
-      idNum: Number(u.torneo_id) || 0,
-    };
-  });
-
-  enriched.sort((a, b) => {
-    const da = Date.parse(a.sortKey) || 0;
-    const db = Date.parse(b.sortKey) || 0;
-    if (db !== da) return db - da;
-    return b.idNum - a.idNum;
-  });
-
-  const ultimosTorneos = enriched.slice(0, 3).map(({ nombre, posicion, puntos }) => ({
-    nombre,
-    posicion,
-    puntos,
-  }));
-
-  console.log('[PerfilPublico] estadísticas debug', {
-    fase: 'resultado',
-    torneosJugados: playedArr.length,
-    filasTablaPuntosEnTorneosDetectados: (puntosRows || []).length,
-    equiposIdsEnPuntos: eqIds.length,
-    equiposFilasCargadas: (eqRows || []).length,
-    filasPuntosAsignadasAlJugadorUltimosTorneos: misFilas.length,
-    puntosTotales,
-    nota: 'puntosTotales = suma global tabla_puntos (solo filtro jugador)',
-    ultimosTorneosCount: ultimosTorneos.length,
-  });
-
-  return { torneosJugados: playedArr.length, puntosTotales, ultimosTorneos };
-}
-
-async function fetchRankingLocalPosicion(perfil) {
-  const sid = perfil?.sede_id;
-  if (sid == null || sid === '') return null;
-  const em = normalizeEmailStr(perfil.email || '');
-  const nombreLower = String(perfil.nombre || '').trim().toLowerCase();
-
-  try {
-    const params = new URLSearchParams({ scope: 'local', sede_id: String(sid) });
-    const res = await fetch(`${apiUrl('/api/rankings')}?${params.toString()}`);
-    const data = await res.json();
-    if (!res.ok || !Array.isArray(data)) return null;
-    const idx = data.findIndex((p) => {
-      const pe = String(p.email || '').trim().toLowerCase();
-      if (em && pe === em) return true;
-      if (!p.email && nombreLower && String(p.nombre || '').trim().toLowerCase() === nombreLower) return true;
-      return false;
-    });
-    return idx >= 0 ? idx + 1 : null;
-  } catch {
-    return null;
-  }
-}
-
 const wrap = {
   maxWidth: '520px',
   width: '100%',
@@ -384,10 +56,8 @@ export default function PerfilPublico() {
   const [perfil, setPerfil] = useState(null);
   /** `null` = sin ids; `{ kind, row }` con fila del otro jugador (o `row: null` si no se encontró). */
   const [companeroDisplay, setCompaneroDisplay] = useState(null);
-  const [ultimosTorneos, setUltimosTorneos] = useState([]);
   const [torneosConPuntos, setTorneosConPuntos] = useState([]);
   const [mostrarTodosTorneosPublico, setMostrarTodosTorneosPublico] = useState(false);
-  const [rankingPos, setRankingPos] = useState(null);
 
   const aliasDecoded = useMemo(() => {
     try {
@@ -407,9 +77,7 @@ export default function PerfilPublico() {
     setLoading(true);
     setPerfil(null);
     setCompaneroDisplay(null);
-    setUltimosTorneos([]);
     setTorneosConPuntos([]);
-    setRankingPos(null);
 
     const { data: rows, error } = await supabase.from('jugadores_perfil').select('*').ilike('alias', a).limit(8);
 
@@ -458,26 +126,11 @@ export default function PerfilPublico() {
     }
 
     try {
-      const s = await fetchEstadisticasYUltimosTorneos(match);
-      setUltimosTorneos(Array.isArray(s.ultimosTorneos) ? s.ultimosTorneos : []);
-    } catch (e) {
-      console.error('[PerfilPublico] stats', e);
-      setUltimosTorneos([]);
-    }
-
-    try {
       const lista = await fetchTorneosConPuntosParaPerfil(match);
       setTorneosConPuntos(Array.isArray(lista) ? lista : []);
     } catch (e) {
       console.error('[PerfilPublico] torneos con puntos', e);
       setTorneosConPuntos([]);
-    }
-
-    try {
-      const pos = await fetchRankingLocalPosicion(match);
-      setRankingPos(pos);
-    } catch {
-      setRankingPos(null);
     }
 
     setLoading(false);
@@ -948,38 +601,40 @@ export default function PerfilPublico() {
           <div
             style={{
               background: '#f9f9f9',
-              borderRadius: '12px',
-              padding: '18px 20px',
+              borderRadius: '10px',
+              padding: '10px 14px',
               boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
               marginBottom: '12px',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#0f172a',
+              display: 'flex',
+              flexWrap: 'nowrap',
+              gap: '12px',
+              alignItems: 'center',
+              whiteSpace: 'nowrap',
+              overflowX: 'auto',
             }}
           >
-            <h2 style={{ margin: '0 0 12px', fontSize: '15px', color: '#334155', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' }}>
-              Estadísticas
-            </h2>
-            {tieneAlgunoPuntosPorAlcance(puntosAlcancePublico) ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: perfil?.mostrar_torneos_jugados ? '12px' : 0 }}>
-                {puntosAlcancePublico.club > 0 ? (
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                    📍 Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.club}</span>
-                  </div>
-                ) : null}
-                {puntosAlcancePublico.nacional > 0 ? (
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                    🌎 Puntos Nacional: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.nacional}</span>
-                  </div>
-                ) : null}
-                {puntosAlcancePublico.fipa > 0 ? (
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                    🌐 Puntos FIPA: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.fipa}</span>
-                  </div>
-                ) : null}
-              </div>
+            {puntosAlcancePublico.club > 0 ? (
+              <span>
+                📍 Club: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.club} pts</span>
+              </span>
+            ) : null}
+            {puntosAlcancePublico.nacional > 0 ? (
+              <span>
+                🌎 Nacional: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.nacional} pts</span>
+              </span>
+            ) : null}
+            {puntosAlcancePublico.fipa > 0 ? (
+              <span>
+                🌐 FIPA: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.fipa} pts</span>
+              </span>
             ) : null}
             {perfil?.mostrar_torneos_jugados ? (
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>
+              <span>
                 🏆 Torneos jugados: <span style={{ color: '#15803d' }}>{torneosUnicosConPuntosPublico}</span>
-              </div>
+              </span>
             ) : null}
           </div>
         ) : null}
@@ -1036,10 +691,7 @@ export default function PerfilPublico() {
                     <span style={{ flexShrink: 0, lineHeight: 1.2 }}>{med}</span>
                     <span
                       style={{
-                        minWidth: 0,
-                        flex: '1 1 auto',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        flexShrink: 0,
                         whiteSpace: 'nowrap',
                         fontWeight: 700,
                         color: '#0f172a',
@@ -1047,8 +699,18 @@ export default function PerfilPublico() {
                     >
                       {row.nombreTorneo}
                     </span>
-                    <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontWeight: 600, color: '#475569' }}>
-                      · {nivelTxt} · {pts} pts · {row.fechaMostrar}
+                    <span
+                      style={{
+                        minWidth: 0,
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontWeight: 600,
+                        color: '#475569',
+                      }}
+                    >
+                      {` · ${nivelTxt} · ${pts} pts · ${row.fechaMostrar}`}
                     </span>
                   </button>
                 );
@@ -1076,73 +738,6 @@ export default function PerfilPublico() {
             ) : null}
           </div>
         ) : null}
-
-        <div
-          style={{
-            background: '#f9f9f9',
-            borderRadius: '12px',
-            padding: '18px 20px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-            marginBottom: '12px',
-          }}
-        >
-          <h2
-            style={{
-              margin: '0 0 12px',
-              fontSize: '15px',
-              color: '#334155',
-              borderBottom: '1px solid #e5e7eb',
-              paddingBottom: '8px',
-            }}
-          >
-            Últimos torneos
-          </h2>
-          {ultimosTorneos.length === 0 ? (
-            <p style={{ margin: 0, fontSize: '14px', color: '#64748b', fontWeight: 600 }}>
-              Aún no participó en torneos
-            </p>
-          ) : (
-            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '12px' }}>
-              {ultimosTorneos.map((t, i) => (
-                <li
-                  key={`${t.nombre}-${i}`}
-                  style={{
-                    background: 'white',
-                    borderRadius: '10px',
-                    padding: '12px 14px',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                  }}
-                >
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>{t.nombre}</div>
-                  <div style={{ fontSize: '13px', color: '#475569' }}>
-                    <span style={{ fontWeight: 700 }}>Posición:</span> {t.posicion != null ? `#${t.posicion}` : '—'}
-                    <span style={{ margin: '0 10px', color: '#cbd5e1' }}>|</span>
-                    <span style={{ fontWeight: 700 }}>Puntos:</span> {t.puntos != null ? t.puntos : '—'}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div
-          style={{
-            background: '#f9f9f9',
-            borderRadius: '12px',
-            padding: '18px 20px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-          }}
-        >
-          <h2 style={{ margin: '0 0 8px', fontSize: '15px', color: '#334155' }}>Ranking local</h2>
-          <p style={{ margin: 0, fontSize: '22px', fontWeight: 900, color: '#0f172a' }}>
-            {rankingPos != null ? `#${rankingPos}` : '—'}
-          </p>
-          <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#64748b' }}>
-            {perfil.sede_id != null && perfil.sede_id !== ''
-              ? 'Según el ranking local de la sede indicada en su ficha (torneos finalizados).'
-              : 'Sin sede en la ficha: no se calcula posición local.'}
-          </p>
-        </div>
       </div>
     </div>
   );
