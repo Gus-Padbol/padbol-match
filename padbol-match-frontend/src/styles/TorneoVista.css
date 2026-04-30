@@ -658,9 +658,20 @@
   margin-bottom: 8px;
 }
 
+.podium-player-avatars--row {
+  gap: 6px;
+}
+
+.podium-player-avatars--grid {
+  display: grid;
+  grid-template-columns: repeat(2, 32px);
+  justify-content: center;
+  gap: 6px;
+}
+
 .podium-player-avatar-wrap {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
@@ -668,11 +679,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: -8px;
-}
-
-.podium-player-avatar-wrap:first-child {
-  margin-left: 0;
 }
 
 .podium-player-avatar {
@@ -688,7 +694,7 @@
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
   background: linear-gradient(135deg, #6366f1, #7c3aed);
 }

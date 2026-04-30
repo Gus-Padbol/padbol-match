@@ -276,8 +276,6 @@ export default function TorneoTabbedView({
   adminTorneoBar = null,
   stickyTop = '110px',
   showTorneoLogo = true,
-  /** Tope del logo PADBOL Match (px): ancho y alto máx., centrado, sin recorte. */
-  logoMinHeightPx = 60,
 }) {
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
   const resultadosConfettiPlayedRef = useRef(false);
@@ -288,6 +286,13 @@ export default function TorneoTabbedView({
 
   const estadoLower = String(torneo?.estado || '').toLowerCase();
   const esFinalizado = estadoLower === 'finalizado';
+  const estadoBadge = useMemo(() => {
+    if (estadoLower === 'finalizado') return { label: 'Finalizado', bg: '#fee2e2', color: '#b91c1c' };
+    if (estadoLower === 'abierto') return { label: 'Inscripción abierta', bg: '#dcfce7', color: '#166534' };
+    if (estadoLower === 'en_curso') return { label: 'En curso', bg: '#dbeafe', color: '#1d4ed8' };
+    if (estadoLower === 'planificacion') return { label: 'Próximo', bg: '#e5e7eb', color: '#374151' };
+    return null;
+  }, [estadoLower]);
   const esGruposKnockout = torneo?.tipo_torneo === 'grupos_knockout';
   const esKnockoutPuro = torneo?.tipo_torneo === 'knockout';
   const muestraTabLlave = esGruposKnockout || esKnockoutPuro;
@@ -844,24 +849,6 @@ export default function TorneoTabbedView({
           return (
             <div key={fila.posicion} className={`podium-slot ${slotClass}`}>
               <div className="podium-card">
-                {!sinEquipo ? (
-                  <div className="podium-player-avatars" aria-hidden>
-                    {(Array.isArray(fila.jugadores) ? fila.jugadores : [])
-                      .slice(0, 2)
-                      .map((p, idx) => {
-                        const a = avatarJugadorPodio(p);
-                        return (
-                          <div key={`${a.label}-${idx}`} className="podium-player-avatar-wrap">
-                            {a.foto ? (
-                              <img src={a.foto} alt="" className="podium-player-avatar" loading="lazy" referrerPolicy="no-referrer" />
-                            ) : (
-                              <span className="podium-player-avatar-fallback">{a.initial}</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                  </div>
-                ) : null}
                 <div className={`podium-team-name${sinEquipo ? ' podium-team-name--sin-definir' : ''}`}>
                   {sinEquipo ? (
                     'Sin definir'
@@ -877,6 +864,31 @@ export default function TorneoTabbedView({
                     fila.equipoNombre
                   )}
                 </div>
+                {!sinEquipo ? (
+                  <div
+                    className={`podium-player-avatars ${
+                      (Array.isArray(fila.jugadores) ? fila.jugadores : []).slice(0, 4).length >= 3
+                        ? 'podium-player-avatars--grid'
+                        : 'podium-player-avatars--row'
+                    }`}
+                    aria-hidden
+                  >
+                    {(Array.isArray(fila.jugadores) ? fila.jugadores : [])
+                      .slice(0, 4)
+                      .map((p, idx) => {
+                        const a = avatarJugadorPodio(p);
+                        return (
+                          <div key={`${a.label}-${idx}`} className="podium-player-avatar-wrap">
+                            {a.foto ? (
+                              <img src={a.foto} alt="" className="podium-player-avatar" loading="lazy" referrerPolicy="no-referrer" />
+                            ) : (
+                              <span className="podium-player-avatar-fallback">{a.initial}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : null}
                 <div className="podium-points">
                   {sinEquipo || fila.puntos == null || fila.puntos === '' ? '—' : (
                     <>
@@ -942,10 +954,11 @@ export default function TorneoTabbedView({
       {showTorneoLogo ? (
         <div
           style={{
+            paddingTop: 16,
+            height: 80,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            marginTop: '8px',
             marginBottom: '8px',
             width: '100%',
           }}
@@ -954,8 +967,8 @@ export default function TorneoTabbedView({
             src="/logo-padbol-match.png"
             alt="Padbol Match"
             style={{
-              maxHeight: `${logoMinHeightPx}px`,
-              maxWidth: `${logoMinHeightPx}px`,
+              maxHeight: '70px',
+              maxWidth: '70px',
               height: 'auto',
               width: 'auto',
               objectFit: 'contain',
@@ -967,7 +980,27 @@ export default function TorneoTabbedView({
       ) : null}
 
       <div className="torneo-header" style={{ marginTop: showTorneoLogo ? 0 : '8px', marginBottom: '12px', padding: '20px' }}>
-        <h1 style={{ fontSize: 'clamp(1.15rem, 4vw, 1.75rem)' }}>🏆 {torneo?.nombre}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+          <h1 style={{ fontSize: 'clamp(1.15rem, 4vw, 1.75rem)', margin: 0 }}>🏆 {torneo?.nombre}</h1>
+          {estadoBadge ? (
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '6px 10px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: '0.03em',
+                background: estadoBadge.bg,
+                color: estadoBadge.color,
+                border: '1px solid rgba(15,23,42,0.08)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {estadoBadge.label}
+            </span>
+          ) : null}
+        </div>
         {sedeTexto ? <p>{sedeTexto}</p> : null}
         <p>
           {formatNivelTorneo(torneo?.nivel_torneo)} • {formatTipoTorneo(torneo?.tipo_torneo)} • {formatFecha(torneo?.fecha_inicio)}{' '}
