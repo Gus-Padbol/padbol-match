@@ -66,13 +66,14 @@ function jugadorNombreCompleto(p) {
   return String(p?.nombre || '').trim();
 }
 
+/** `null` si no hay país; si hay datos, `{ flag, name }` para mostrar a la derecha. */
 function parsePaisDisplay(p) {
-  const raw = String(p?.pais || '').trim();
-  if (!raw) return { flag: '🏳️', name: 'Sin país' };
+  const raw = String(p?.pais ?? '').trim();
+  if (!raw) return null;
   const parts = raw.split(' ').filter(Boolean);
   const maybeFlag = parts[0] || '';
   if (/^\p{Extended_Pictographic}+$/u.test(maybeFlag)) {
-    return { flag: maybeFlag, name: parts.slice(1).join(' ') || 'Sin país' };
+    return { flag: maybeFlag, name: parts.slice(1).join(' ').trim() };
   }
   return { flag: '🏳️', name: raw };
 }
@@ -344,6 +345,9 @@ export default function EquipoPerfil() {
                   const pais = parsePaisDisplay(p);
                   const foto = String(p?.foto_url || '').trim();
                   const slug = encodeURIComponent(slugJugador(p));
+                  const paisTxt =
+                    pais &&
+                    [pais.flag, pais.name].filter((x) => String(x || '').trim()).join(' ').trim();
                   return (
                     <button
                       key={`${aliasLabel}-${idx}`}
@@ -357,7 +361,7 @@ export default function EquipoPerfil() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 10,
-                        justifyContent: 'space-between',
+                        justifyContent: paisTxt ? 'space-between' : 'flex-start',
                         cursor: 'pointer',
                         textAlign: 'left',
                       }}
@@ -393,9 +397,11 @@ export default function EquipoPerfil() {
                           ) : null}
                         </div>
                       </div>
-                      <div style={{ flexShrink: 0, color: '#475569', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
-                        {`${pais.flag} ${pais.name}`}
-                      </div>
+                      {paisTxt ? (
+                        <div style={{ flexShrink: 0, color: '#475569', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                          {paisTxt}
+                        </div>
+                      ) : null}
                     </button>
                   );
                 })}
