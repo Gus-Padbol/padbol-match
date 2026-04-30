@@ -22,6 +22,23 @@ const btnVolver = {
 
 const LOGOUT_BTN_SIZE = 34;
 
+const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club'];
+
+/** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
+function hubChipNavigatePath(rolActual, roleLoading) {
+  if (ADMIN_ROLES_CHIP.includes(rolActual || '')) return '/admin';
+  if (roleLoading) {
+    try {
+      const raw = localStorage.getItem('user_role_data');
+      const d = raw ? JSON.parse(raw) : null;
+      if (ADMIN_ROLES_CHIP.includes(d?.rol || '')) return '/admin';
+    } catch {
+      /* ignore */
+    }
+  }
+  return '/mi-perfil';
+}
+
 /**
  * Barra superior fija: ← Volver alineado a la izquierda (tras safe-area), título centrado, cierre de sesión.
  * Grid 1fr / auto / 1fr: con `showBack={false}` un hueco a la derecha de la 1ª columna equilibra el título.
@@ -98,6 +115,12 @@ export default function AppHeader({
     if (rol === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
     return hubNombreCorto;
   }, [session?.user, roleLoading, rol, adminSedeNombre, hubNombreCorto]);
+
+  const hubChipNavPath = useMemo(
+    () => hubChipNavigatePath(rol, roleLoading),
+    [rol, roleLoading]
+  );
+
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
   const hubInicial = String(hubNombreCorto || '?')
     .charAt(0)
@@ -247,9 +270,9 @@ export default function AppHeader({
             {hubDirectLogin && session?.user ? (
               <button
                 type="button"
-                onClick={() => navigate('/mi-perfil')}
-                aria-label="Ir a mi perfil"
-                title="Mi perfil"
+                onClick={() => navigate(hubChipNavPath)}
+                aria-label={hubChipNavPath === '/admin' ? 'Ir al panel de administración' : 'Ir a mi perfil'}
+                title={hubChipNavPath === '/admin' ? 'Panel admin' : 'Mi perfil'}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

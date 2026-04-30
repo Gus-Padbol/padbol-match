@@ -86,20 +86,24 @@ function sedeFlag(sede) {
   return FLAG_MAP[pais.toLowerCase()] || '';
 }
 
+/** Misma sede aunque una API devuelva `sede_id` numérico y otra string (p. ej. 1 vs "1"). */
+function mismoIdSede(a, b) {
+  if (a == null || b == null || b === '') return false;
+  const na = Number(a);
+  const nb = Number(b);
+  if (Number.isFinite(na) && Number.isFinite(nb)) return na === nb;
+  return String(a).trim() === String(b).trim();
+}
+
 /** Reservas / torneos con `sede_id` o nombre de sede acotados al alcance del admin (evita filas sin sede_id). */
 function filaDentroDelAlcanceSedes(row, sedesData) {
   if (!sedesData.length) return false;
-  const idSet = new Set(sedesData.map((s) => s.id));
   const nombreSet = new Set(
     sedesData.map((s) => String(s.nombre || '').trim().toLowerCase()).filter(Boolean)
   );
   const sid = row.sede_id;
   if (sid != null && sid !== '') {
-    const raw = String(sid).trim();
-    const n = /^\d+$/.test(raw) ? parseInt(raw, 10) : Number(sid);
-    if (!Number.isNaN(n) && idSet.has(n)) return true;
-    if (idSet.has(sid)) return true;
-    return false;
+    return sedesData.some((s) => mismoIdSede(s.id, sid));
   }
   const sn = String(row.sede_nombre || row.sede || '')
     .trim()
@@ -427,8 +431,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           // Filter sedes by role scope only when it's not super admin.
           if (!(isSuperAdmin || superAdminByEmail)) {
-            if (esAdminClub && sedeId) {
-              sedesData = sedesData.filter(s => s.id === sedeId);
+            if (esAdminClub && sedeId != null && sedeId !== '') {
+              sedesData = sedesData.filter((s) => mismoIdSede(s.id, sedeId));
             }
             // admin_nacional: filter by pais (stored in user_role_data)
             const roleData = (() => { try { return JSON.parse(localStorage.getItem('user_role_data') || '{}'); } catch { return {}; } })();
@@ -758,7 +762,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     ...(puedeVerConfig  ? [{ id: 'config',  label: '⚙️ Config' }]  : []),
   ];
 
-  const sedeClubHeader = sedeId && sedesMap[sedeId] ? sedesMap[sedeId] : null;
+  const sedeClubHeader =
+    sedeId != null && sedeId !== ''
+      ? Object.values(sedesMap).find((s) => mismoIdSede(s.id, sedeId)) || null
+      : null;
   const tituloPanelAdmin = (() => {
     if (currentEmail === 'padbolinternacional@gmail.com' || rol === 'super_admin') {
       return '🌐 Panel Super Admin';
