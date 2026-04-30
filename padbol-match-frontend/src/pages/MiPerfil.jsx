@@ -39,6 +39,7 @@ import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
+import useUserRole from '../hooks/useUserRole';
 import { nombreDesdeSesionSinEmail, getDisplayName } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
 
@@ -256,6 +257,20 @@ export default function MiPerfil() {
       foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
     };
   }, [sessionOwnerEmail, userProfile, session]);
+
+  const currentClienteRole = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { rol: rolUsuarioPerfil, loading: rolUsuarioPerfilLoading } = useUserRole(currentClienteRole);
+  const ocultarUiJugadorPorAdmin = useMemo(
+    () =>
+      !rolUsuarioPerfilLoading &&
+      ['super_admin', 'admin_nacional', 'admin_club'].includes(rolUsuarioPerfil || ''),
+    [rolUsuarioPerfilLoading, rolUsuarioPerfil]
+  );
+
   /** Código país (ej. +54) + número local solo dígitos (sin repetir código en el input) */
   const [waCodigoPais, setWaCodigoPais] = useState('+54');
   const [waNumeroLocal, setWaNumeroLocal] = useState('');
@@ -1848,7 +1863,7 @@ export default function MiPerfil() {
       <AppHeader title="Mi Perfil" />
 
     <div style={MI_PERFIL_CONTENT_WRAP}>
-      {perfilFaltaCamposEsenciales ? (
+      {perfilFaltaCamposEsenciales && !ocultarUiJugadorPorAdmin ? (
         <div
           style={{
             marginBottom: '14px',
@@ -2794,7 +2809,7 @@ export default function MiPerfil() {
         );
       })()}
 
-      {torneosConPuntosMiPerfil.length > 0 ? (
+      {torneosConPuntosMiPerfil.length > 0 && !ocultarUiJugadorPorAdmin ? (
         <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
           <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

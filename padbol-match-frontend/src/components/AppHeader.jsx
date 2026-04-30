@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
 import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import { loginRedirectAfterHubEntry } from '../utils/authLoginRedirect';
+import useUserRole from '../hooks/useUserRole';
+import { supabase } from '../supabaseClient';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -41,6 +43,32 @@ export default function AppHeader({
   const titleStr = String(title ?? '').trim();
   const hideLogoutEffective = hideLogout;
 
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
+  const [adminSedeNombre, setAdminSedeNombre] = useState('');
+  useEffect(() => {
+    if (rol !== 'admin_club' || !sedeId) {
+      setAdminSedeNombre('');
+      return undefined;
+    }
+    let cancelled = false;
+    supabase
+      .from('sedes')
+      .select('nombre')
+      .eq('id', sedeId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setAdminSedeNombre(String(data?.nombre || '').trim());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [rol, sedeId]);
+
   const pathOnly = useMemo(
     () =>
       String(location.pathname || '/')
@@ -55,13 +83,21 @@ export default function AppHeader({
   const hubNombreCorto = (() => {
     const alias = String(userProfile?.alias || '').trim();
     if (alias) return formatAliasConArroba(alias);
-    const full = getDisplayName(userProfile, session);
-    const first = String(full || '')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)[0];
-    return first || 'Cuenta';
+    const full = String(getDisplayName(userProfile, session) || '').trim();
+    if (full) {
+      const first = full.split(/\s+/).filter(Boolean)[0];
+      if (first) return first;
+    }
+    const em = String(session?.user?.email || '').trim();
+    return em || 'Cuenta';
   })();
+  const hubChipLabel = useMemo(() => {
+    if (!session?.user || roleLoading) return hubNombreCorto;
+    if (rol === 'super_admin') return 'Super Admin';
+    if (rol === 'admin_nacional') return 'Admin Nacional';
+    if (rol === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
+    return hubNombreCorto;
+  }, [session?.user, roleLoading, rol, adminSedeNombre, hubNombreCorto]);
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
   const hubInicial = String(hubNombreCorto || '?')
     .charAt(0)
@@ -192,10 +228,11 @@ export default function AppHeader({
           minWidth: 0,
           width: '100%',
           marginLeft: miPerfilLogoutSpacing ? 'auto' : undefined,
-          marginRight: showLogout || showAdmin ? '16px' : 0,
+          marginRight: showLogout || showAdmin ? '16px' : hubDirectLogin && !session?.user && !authLoading ? '8px' : 0,
           paddingLeft: miPerfilLogoutSpacing ? '8px' : 0,
           paddingRight: miPerfilLogoutSpacing ? '8px' : 0,
           boxSizing: 'border-box',
+          justifySelf: hubDirectLogin && !session?.user && !authLoading ? 'end' : undefined,
         }}
       >
         {showLogout || showAdmin ? (
@@ -270,7 +307,7 @@ export default function AppHeader({
                     minWidth: 0,
                   }}
                 >
-                  {hubNombreCorto}
+                  {hubChipLabel}
                 </span>
               </button>
             ) : null}
@@ -337,15 +374,15 @@ export default function AppHeader({
             style={{
               padding: '8px 12px',
               borderRadius: '999px',
-              border: 'none',
-              background: 'rgba(255,255,255,0.95)',
-              color: '#1e1b4b',
+              border: '1px solid rgba(148,163,184,0.35)',
+              background: 'rgba(148,163,184,0.2)',
+              color: '#e2e8f0',
               fontSize: 12,
-              fontWeight: 800,
+              fontWeight: 700,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+              marginLeft: 'auto',
             }}
           >
             Iniciar sesión

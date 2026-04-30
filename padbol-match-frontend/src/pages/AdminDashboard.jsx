@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
@@ -87,6 +86,28 @@ function sedeFlag(sede) {
   return FLAG_MAP[pais.toLowerCase()] || '';
 }
 
+/** Reservas / torneos con `sede_id` o nombre de sede acotados al alcance del admin (evita filas sin sede_id). */
+function filaDentroDelAlcanceSedes(row, sedesData) {
+  if (!sedesData.length) return false;
+  const idSet = new Set(sedesData.map((s) => s.id));
+  const nombreSet = new Set(
+    sedesData.map((s) => String(s.nombre || '').trim().toLowerCase()).filter(Boolean)
+  );
+  const sid = row.sede_id;
+  if (sid != null && sid !== '') {
+    const raw = String(sid).trim();
+    const n = /^\d+$/.test(raw) ? parseInt(raw, 10) : Number(sid);
+    if (!Number.isNaN(n) && idSet.has(n)) return true;
+    if (idSet.has(sid)) return true;
+    return false;
+  }
+  const sn = String(row.sede_nombre || row.sede || '')
+    .trim()
+    .toLowerCase();
+  if (!sn) return false;
+  return nombreSet.has(sn);
+}
+
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -141,7 +162,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
     fetchData();
     fetchPendientes();
-  }, [apiBaseUrl, rol]); // rol in deps: re-fetch after role resolves from null → actual value
+  }, [apiBaseUrl, rol, sedeId]); // rol/sedeId: re-fetch after role scope resolves
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -429,16 +450,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         if (s.nombre && s.moneda) sedeMonedaMap[s.nombre.trim().toLowerCase()] = s.moneda;
       });
 
-      // Set of allowed sede IDs for non-super-admin filtering
-      const allowedSedeIds = new Set(sedesData.map(s => s.id));
-
       // Cargar reservas
       const resRes = await fetch(`${apiBaseUrl}/api/reservas`);
       let resData = await resRes.json();
 
-      // Filter reservas by allowed sedes (for admin_nacional and admin_club)
-      if (!isSuperAdmin && sedesData.length > 0) {
-        resData = resData.filter(r => r.sede_id == null || allowedSedeIds.has(r.sede_id));
+      // Reservas solo del alcance del rol (admin_club / admin_nacional); sin mezclar otras sedes.
+      if (!isSuperAdmin && !superAdminByEmail) {
+        if (sedesData.length === 0) resData = [];
+        else resData = resData.filter((r) => filaDentroDelAlcanceSedes(r, sedesData));
       }
       setReservas(resData);
 
@@ -457,8 +476,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       // Cargar torneos (filter by sede scope for non-super-admin)
       const tornRes = await fetch(`${apiBaseUrl}/api/torneos`);
       let tornData = await tornRes.json();
-      if (!isSuperAdmin && sedesData.length > 0) {
-        tornData = tornData.filter(t => t.sede_id == null || allowedSedeIds.has(t.sede_id));
+      if (!isSuperAdmin && !superAdminByEmail) {
+        if (sedesData.length === 0) tornData = [];
+        else tornData = tornData.filter((t) => filaDentroDelAlcanceSedes(t, sedesData));
       }
       setTorneos(tornData);
 
@@ -738,17 +758,35 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     ...(puedeVerConfig  ? [{ id: 'config',  label: '⚙️ Config' }]  : []),
   ];
 
+  const sedeClubHeader = sedeId && sedesMap[sedeId] ? sedesMap[sedeId] : null;
+  const tituloPanelAdmin = (() => {
+    if (currentEmail === 'padbolinternacional@gmail.com' || rol === 'super_admin') {
+      return '🌐 Panel Super Admin';
+    }
+    if (esAdminClub && sedeClubHeader?.nombre) {
+      return `Panel Admin · ${sedeClubHeader.nombre}`;
+    }
+    if (esAdminNacional) {
+      return 'Panel Admin Nacional';
+    }
+    const badge = ROLE_BADGE[rol] || 'Admin';
+    return `Panel ${badge.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`;
+  })();
+  const logoPanelSrc =
+    (esAdminClub && sedeClubHeader?.logo_url && String(sedeClubHeader.logo_url).trim()) ||
+    '/logo-padbol-match.png';
+
   return (
     <div
       className="admin-dashboard"
       style={{
-        height: '100vh',
+        minHeight: '100vh',
         overflowY: 'auto',
         overflowX: 'hidden',
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'auto',
         paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingBottom: '12px',
         boxSizing: 'border-box',
       }}
     >
@@ -756,15 +794,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
+            src={logoPanelSrc}
+            alt=""
             style={{
               ...padbolLogoImgStyle,
               marginBottom: '8px',
+              borderRadius: sedeClubHeader?.logo_url ? 12 : padbolLogoImgStyle.borderRadius,
             }}
           />
           <p style={{ margin: '0 0 12px', color: '#fff', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
-            {`${currentEmail === 'padbolinternacional@gmail.com' ? '🌐 ' : ''}Panel ${currentEmail === 'padbolinternacional@gmail.com' ? 'Super Admin' : (ROLE_BADGE[rol] || 'Admin').replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`}
+            {tituloPanelAdmin}
           </p>
           <p style={{ margin: '0 0 12px', color: '#cbd5e1', fontSize: '12px', textAlign: 'center' }}>
             {fechaActualLarga}

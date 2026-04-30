@@ -478,12 +478,13 @@ export default function TorneosPublicos() {
             padding: '14px 16px',
             marginBottom: '10px',
             color: 'white',
+            textAlign: 'center',
           }}
         >
           <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '4px' }}>
             {sedeFiltroNombre ? `Torneos · ${sedeFiltroNombre}` : nearMode ? 'Torneos cerca de ti' : 'Torneos disponibles'}
           </div>
-          <div style={{ fontSize: '14px', opacity: 0.92, marginBottom: nearMode || sedeFiltroId != null ? '10px' : 0 }}>
+          <div style={{ fontSize: '14px', opacity: 0.92, marginBottom: nearMode || sedeFiltroId != null ? '10px' : 0, lineHeight: 1.45 }}>
             {sedeFiltroId != null
               ? 'Solo se listan torneos de esta sede.'
               : nearMode
@@ -499,6 +500,9 @@ export default function TorneosPublicos() {
               onClick={irACambiarSede}
               style={{
                 marginTop: '12px',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                display: 'block',
                 padding: '8px 14px',
                 fontSize: '13px',
                 fontWeight: 700,
@@ -520,6 +524,9 @@ export default function TorneosPublicos() {
               onClick={() => navigate('/torneos')}
               style={{
                 marginTop: '12px',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                display: 'block',
                 padding: '8px 14px',
                 fontSize: '13px',
                 fontWeight: 700,

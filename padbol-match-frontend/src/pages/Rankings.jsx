@@ -225,7 +225,7 @@ export default function Rankings() {
     [location.pathname]
   );
 
-  const innerStyle = { maxWidth: '960px', margin: '0 auto' };
+  const innerStyle = { maxWidth: '960px', margin: '0 auto', width: '100%', boxSizing: 'border-box' };
 
   const thStyle = {
     padding: narrow ? '8px 6px' : '11px 14px',
@@ -269,6 +269,10 @@ export default function Rankings() {
           alt="Padbol Match"
           style={{
             ...padbolLogoImgStyle,
+            display: 'block',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            paddingTop: '20px',
             marginBottom: '14px',
           }}
         />

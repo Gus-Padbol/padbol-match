@@ -20,8 +20,6 @@ const MAP_THUMB_MAX_H = 120;
 const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 /** Azul Francia — hero sede público (sin negro/gris muy oscuro). */
 const HERO_AZUL_FRANCIA = '#0055A4';
-const DEFAULT_HERO_BG = `linear-gradient(165deg, ${HERO_AZUL_FRANCIA} 0%, #003d7a 55%, #002654 100%)`;
-
 function normalizeHexColor(raw) {
   if (raw == null) return null;
   const s = String(raw).trim();
@@ -36,10 +34,9 @@ function normalizeHexColor(raw) {
   return null;
 }
 
-function heroBackgroundFromSede(sede) {
-  const hex = normalizeHexColor(sede?.color_primario);
-  if (!hex) return DEFAULT_HERO_BG;
-  return `linear-gradient(165deg, ${hex} 0%, ${HERO_AZUL_FRANCIA} 52%, #002654 100%)`;
+/** Fondo hero sede pública: azul Francia fijo (pedido de producto). */
+function heroBackgroundSedePublica() {
+  return HERO_AZUL_FRANCIA;
 }
 
 /** Tamaño del título del club en el hero según longitud del nombre. */
@@ -49,9 +46,6 @@ function heroClubNameFontSizePx(nombreRaw) {
   if (len <= 25) return 24;
   return 20;
 }
-
-/** Caja cuadrada del logo en el hero (fila superior; compacta). */
-const HERO_LOGO_BOX_PX = 96;
 
 /** Frase bajo el hero si la sede no tiene descripción en BD. */
 const SEDE_HERO_FRASE_DEFAULT =
@@ -702,7 +696,7 @@ export default function SedePublica() {
                 borderRadius: '16px',
                 marginLeft: '6px',
                 marginRight: '6px',
-                marginTop: '10px',
+                marginTop: '6px',
                 boxShadow: '0 8px 28px rgba(0, 0, 0, 0.22)',
                 overflow: 'visible',
               }}
@@ -712,7 +706,7 @@ export default function SedePublica() {
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: heroBackgroundFromSede(sede),
+                  background: heroBackgroundSedePublica(),
                   borderRadius: '16px',
                   zIndex: 0,
                 }}
@@ -722,7 +716,7 @@ export default function SedePublica() {
                 style={{
                   position: 'relative',
                   zIndex: 1,
-                  padding: '12px 12px 14px',
+                  padding: '8px 10px 10px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'stretch',
@@ -734,25 +728,26 @@ export default function SedePublica() {
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    alignItems: 'flex-start',
-                    gap: '12px',
+                    alignItems: 'stretch',
+                    gap: '10px',
                     width: '100%',
-                    flexShrink: 0,
+                    minHeight: '96px',
                   }}
                 >
                   <div
                     style={{
-                      width: `${HERO_LOGO_BOX_PX}px`,
-                      height: `${HERO_LOGO_BOX_PX}px`,
+                      width: 'min(32vw, 124px)',
+                      minWidth: '92px',
                       flexShrink: 0,
+                      alignSelf: 'stretch',
                       borderRadius: '12px',
-                      background: 'rgba(15, 23, 42, 0.35)',
+                      background: 'rgba(15, 23, 42, 0.28)',
                       boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       overflow: 'hidden',
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)',
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
                     }}
                   >
                     {sede.logo_url ? (
@@ -762,6 +757,7 @@ export default function SedePublica() {
                         style={{
                           width: '100%',
                           height: '100%',
+                          maxHeight: '140px',
                           objectFit: 'contain',
                           objectPosition: 'center center',
                           display: 'block',
@@ -772,11 +768,12 @@ export default function SedePublica() {
                         style={{
                           width: '100%',
                           height: '100%',
+                          minHeight: '88px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: 'rgba(248,250,252,0.35)',
-                          fontSize: '36px',
+                          fontSize: '40px',
                           lineHeight: 1,
                         }}
                         aria-hidden
@@ -790,14 +787,16 @@ export default function SedePublica() {
                     style={{
                       flex: 1,
                       minWidth: 0,
-                      minHeight: `${HERO_LOGO_BOX_PX}px`,
                       display: 'flex',
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      alignItems: 'center',
-                      alignContent: 'center',
-                      justifyContent: 'flex-start',
-                      gap: '10px 12px',
+                      flexDirection: 'column',
+                      alignItems: 'stretch',
+                      gap: '8px',
+                      background: 'rgba(15, 23, 42, 0.2)',
+                      borderRadius: '12px',
+                      padding: '10px 12px',
+                      boxSizing: 'border-box',
+                      border: '1px solid rgba(255,255,255,0.14)',
+                      justifyContent: 'center',
                     }}
                   >
                     <h1
@@ -807,9 +806,8 @@ export default function SedePublica() {
                         fontWeight: 800,
                         margin: 0,
                         lineHeight: 1.2,
-                        flex: '1 1 120px',
                         minWidth: 0,
-                        textAlign: 'left',
+                        textAlign: 'center',
                         wordBreak: 'break-word',
                         textShadow: '0 1px 8px rgba(0,0,0,0.35)',
                         boxSizing: 'border-box',
@@ -819,68 +817,67 @@ export default function SedePublica() {
                       {sede.nombre || '(sin nombre)'}
                     </h1>
 
-                    {licenciaActiva ? (
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '5px 11px',
-                          borderRadius: '999px',
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          letterSpacing: '0.02em',
-                          background: 'rgba(254, 243, 199, 0.92)',
-                          color: '#92400e',
-                          border: '1px solid rgba(217,119,6,0.45)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        ⭐ Licencia PADBOL Activa
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          padding: '5px 11px',
-                          borderRadius: '999px',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          background: 'rgba(254,226,226,0.9)',
-                          color: '#b91c1c',
-                          border: '1px solid rgba(220,38,38,0.25)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        No habilitado
-                      </span>
-                    )}
-                  </div>
-                </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: '100%',
+                      }}
+                    >
+                      {licenciaActiva ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '5px 11px',
+                            borderRadius: '999px',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            letterSpacing: '0.02em',
+                            background: 'rgba(254, 243, 199, 0.92)',
+                            color: '#92400e',
+                            border: '1px solid rgba(217,119,6,0.45)',
+                          }}
+                        >
+                          ⭐ Licencia PADBOL Activa
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            padding: '5px 11px',
+                            borderRadius: '999px',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            background: 'rgba(254,226,226,0.9)',
+                            color: '#b91c1c',
+                            border: '1px solid rgba(220,38,38,0.25)',
+                          }}
+                        >
+                          No habilitado
+                        </span>
+                      )}
+                    </div>
 
-                <div
-                  style={{
-                    marginTop: '10px',
-                    width: '100%',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <p
-                    style={{
-                      margin: 0,
-                      color: 'rgba(255,255,255,0.95)',
-                      fontSize: '14px',
-                      lineHeight: 1.5,
-                      fontStyle: 'italic',
-                      textAlign: 'center',
-                      width: '100%',
-                      display: 'block',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {fraseHero}
-                  </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: 'rgba(255,255,255,0.95)',
+                        fontSize: '13px',
+                        lineHeight: 1.45,
+                        fontStyle: 'italic',
+                        textAlign: 'center',
+                        width: '100%',
+                        display: 'block',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {fraseHero}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

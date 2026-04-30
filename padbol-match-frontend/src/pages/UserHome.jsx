@@ -20,12 +20,13 @@ export default function UserHome() {
     if (!session?.user) return '';
     const alias = String(userProfile?.alias || '').trim();
     if (alias) return formatAliasConArroba(alias);
-    const full = getDisplayName(userProfile, session);
-    const first = String(full || '')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)[0];
-    return first || 'Jugador';
+    const full = String(getDisplayName(userProfile, session) || '').trim();
+    if (full) {
+      const first = full.split(/\s+/).filter(Boolean)[0];
+      if (first) return first;
+    }
+    const em = String(session.user.email || '').trim();
+    return em || 'Cuenta';
   }, [session?.user, userProfile]);
 
   const accesosRapidos = [
@@ -56,6 +57,11 @@ export default function UserHome() {
         alt="Padbol Match"
         style={{
           ...padbolLogoImgStyle,
+          display: 'block',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          paddingTop: '24px',
+          height: '120px',
           marginBottom: '40px',
         }}
       />
@@ -91,7 +97,7 @@ export default function UserHome() {
                 margin: '12px 0 0 0',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#ffffff',
                 lineHeight: 1.45,
               }}
             >
