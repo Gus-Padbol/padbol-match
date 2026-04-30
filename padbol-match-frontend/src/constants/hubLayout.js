@@ -51,3 +51,10 @@ export function hubContentPaddingTopPx(pathname) {
 export function hubContentPaddingTopCss(pathname) {
   return `calc(${hubContentPaddingTopPx(pathname)}px + env(safe-area-inset-top, 0px))`;
 }
+
+/**
+ * Posición `top` del {@link BottomNav} fijo, alineada bajo el AppHeader que respeta safe-area.
+ */
+export function hubBottomNavFixedTopCss() {
+  return `calc(${HUB_APP_HEADER_HEIGHT_PX}px + env(safe-area-inset-top, 0px))`;
+}

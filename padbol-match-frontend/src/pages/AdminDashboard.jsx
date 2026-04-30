@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
@@ -88,6 +88,7 @@ function sedeFlag(sede) {
 
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
@@ -703,7 +704,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   if (loading) {
     return (
-      <div style={{ padding: `8px 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`, textAlign: 'center', minHeight: '100vh', boxSizing: 'border-box' }}>
+      <div
+        style={{
+          padding: `${hubContentPaddingTopCss(location.pathname)} 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          textAlign: 'center',
+          minHeight: '100vh',
+          boxSizing: 'border-box',
+        }}
+      >
         <AppHeader title="" showBack={false} />
         Cargando...
       </div>
@@ -730,10 +738,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   ];
 
   return (
-    <div className="admin-dashboard" style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'none', WebkitOverflowScrolling: 'auto', paddingTop: '8px', paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`, boxSizing: 'border-box' }}>
+    <div
+      className="admin-dashboard"
+      style={{
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto',
+        paddingTop: hubContentPaddingTopCss(location.pathname),
+        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        boxSizing: 'border-box',
+      }}
+    >
       <AppHeader title="" showBack={false} />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '56px' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img
             src="/logo-padbol-match.png"
             alt="Padbol Match"

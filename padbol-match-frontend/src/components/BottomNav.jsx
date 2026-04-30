@@ -2,8 +2,8 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  HUB_APP_HEADER_HEIGHT_PX,
   HUB_NAV_HEIGHT_PX,
+  hubBottomNavFixedTopCss,
   isHubNavBarHiddenPathname,
   isSedeProfilePathname,
 } from '../constants/hubLayout';
@@ -83,7 +83,7 @@ const BottomNav = () => {
       aria-label="Navegación principal"
       style={{
         position: 'fixed',
-        top: HUB_APP_HEADER_HEIGHT_PX,
+        top: hubBottomNavFixedTopCss(),
         left: 0,
         right: 0,
         width: '100%',

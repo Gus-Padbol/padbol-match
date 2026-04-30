@@ -1,10 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import AppButton from '../components/AppButton';
 import * as T from '../theme/designTokens';
@@ -12,6 +12,7 @@ import { cardStyle } from '../theme/uiStyles';
 
 export default function PagoFallido() {
   const navigate = useNavigate();
+  const location = useLocation();
   return (
     <div
       style={{
@@ -19,7 +20,7 @@ export default function PagoFallido() {
         background: `linear-gradient(135deg, ${T.colorErrorDark} 0%, ${T.colorError} 100%)`,
         display: 'flex',
         flexDirection: 'column',
-        padding: `${HUB_CONTENT_PADDING_TOP_PX}px 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
       }}
     >

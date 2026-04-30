@@ -8,8 +8,7 @@ import BottomNav from '../components/BottomNav';
 import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
-  hubContentPaddingTopPx,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -159,7 +158,7 @@ const MAX_CANCHAS_RESERVA_UI = 2;
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const reservaPaddingTopPx = hubContentPaddingTopPx(location.pathname);
+  const reservaPaddingTopCss = hubContentPaddingTopCss(location.pathname);
   const { session, loading: authLoading, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -771,7 +770,7 @@ export default function ReservaForm() {
       <div
         className="reserva-container reserva-sede-seleccion"
         style={{
-          paddingTop: `${reservaPaddingTopPx}px`,
+          paddingTop: reservaPaddingTopCss,
           paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
           boxSizing: 'border-box',
           width: '100%',
@@ -896,7 +895,7 @@ export default function ReservaForm() {
     const hoyIso = todayLocalISO();
     return (
       <div className="reserva-container" style={{
-        paddingTop: `${reservaPaddingTopPx}px`,
+        paddingTop: reservaPaddingTopCss,
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         overflowX: 'hidden',
         width: '100%',
@@ -983,7 +982,7 @@ export default function ReservaForm() {
               <div
                 ref={canchasBloqueRef}
                 className="reserva-canchas-bloque"
-                style={{ scrollMarginTop: `${HUB_CONTENT_PADDING_TOP_PX}px` }}
+                style={{ scrollMarginTop: reservaPaddingTopCss }}
               >
                 <label style={{ display: 'block', fontWeight: 600, color: '#333', marginBottom: '10px' }}>Elige tu cancha:</label>
                 <div className="reserva-canchas-botones">

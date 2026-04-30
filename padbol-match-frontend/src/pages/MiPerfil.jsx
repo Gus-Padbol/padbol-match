@@ -8,7 +8,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import {
   persistJugadorPerfil,
@@ -59,12 +59,12 @@ const MI_PERFIL_CONTENT_WRAP = {
   boxSizing: 'border-box',
 };
 
-function miPerfilPageOuterStyle(paddingTopPx) {
+function miPerfilPageOuterStyle(paddingTopCss) {
   return {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     fontFamily: 'Arial',
-    paddingTop: `${paddingTopPx}px`,
+    paddingTop: paddingTopCss,
     paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
     width: '100%',
     maxWidth: '100%',
@@ -1286,7 +1286,7 @@ export default function MiPerfil() {
 
   if (authLoading) {
     return (
-      <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
+      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Verificando sesión...
@@ -1300,7 +1300,7 @@ export default function MiPerfil() {
     if (!torneoIdValido) {
       const goAuth = () => navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return (
-        <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
+        <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
           <AppHeader title="Mi Perfil" />
           <div style={MI_PERFIL_CONTENT_WRAP}>
             {avisoPerfilTorneoMsg ? (
@@ -1400,7 +1400,7 @@ export default function MiPerfil() {
       fontSize: '13px',
     };
     return (
-      <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
+      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
         <AppHeader title="Mi Perfil" />
         <div style={MI_PERFIL_CONTENT_WRAP}>
           {avisoPerfilTorneoMsg ? (
@@ -1820,7 +1820,7 @@ export default function MiPerfil() {
 
   if (loading) {
     return (
-      <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
+      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
           Cargando perfil...
@@ -1843,7 +1843,7 @@ export default function MiPerfil() {
   const nombreDebajoAlias = editando ? String(nombreTorneoCompleto || '').trim() : nombreCompletoTitulo;
 
   return (
-    <div style={miPerfilPageOuterStyle(HUB_CONTENT_PADDING_TOP_PX)}>
+    <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
 
       <AppHeader title="Mi Perfil" />
 

@@ -4,7 +4,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  hubContentPaddingTopPx,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
@@ -174,7 +174,7 @@ export default function SedesPublicas() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
 
       <AppHeader title="Sedes" onBack={volverFlujoReserva ? handleSedesAppBack : undefined} />
 

@@ -3,10 +3,10 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import '../styles/TorneoCrear.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 
@@ -26,6 +26,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useAuth();
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
@@ -108,7 +109,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
   };
 
   return (
-    <div className="torneo-crear-container" style={{ paddingTop: `${HUB_CONTENT_PADDING_TOP_PX}px`, paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div className="torneo-crear-container" style={{ paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
       <AppHeader title="Crear torneo" />
       <div className="torneo-crear-card">
         <h1>🏆 Crear Nuevo Torneo</h1>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
@@ -68,6 +69,7 @@ function useMediaNarrow(maxWidth = 520) {
 }
 
 export default function Rankings() {
+  const location = useLocation();
   const narrow = useMediaNarrow(520);
   const [activeTab, setActiveTab] = useState('local');
   const [sedes, setSedes] = useState([]);
@@ -213,12 +215,15 @@ export default function Rankings() {
 
   // ── Styles ──────────────────────────────────────────────────────────────────
 
-  const containerStyle = {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    padding: `${HUB_CONTENT_PADDING_TOP_PX}px 16px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 16px`,
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-  };
+  const containerStyle = useMemo(
+    () => ({
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: `${hubContentPaddingTopCss(location.pathname)} 16px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 16px`,
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    }),
+    [location.pathname]
+  );
 
   const innerStyle = { maxWidth: '960px', margin: '0 auto' };
 

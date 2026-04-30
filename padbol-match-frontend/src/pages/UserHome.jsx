@@ -4,7 +4,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  hubContentPaddingTopPx,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
@@ -50,7 +50,7 @@ export default function UserHome() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: `${hubContentPaddingTopPx(location.pathname)}px`,
+        paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingLeft: '20px',
         paddingRight: '20px',
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,

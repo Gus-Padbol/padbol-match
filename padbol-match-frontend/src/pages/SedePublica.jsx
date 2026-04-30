@@ -671,6 +671,7 @@ export default function SedePublica() {
                 boxSizing: 'border-box',
                 overscrollBehaviorY: 'contain',
                 paddingTop: hubContentPaddingTopCss(location.pathname),
+                scrollPaddingTop: hubContentPaddingTopCss(location.pathname),
               }}
             >
             <div
@@ -690,7 +691,7 @@ export default function SedePublica() {
                 borderRadius: '16px',
                 marginLeft: '6px',
                 marginRight: '6px',
-                marginTop: '2px',
+                marginTop: '10px',
                 boxShadow: '0 8px 28px rgba(0, 0, 0, 0.22)',
               }}
             >

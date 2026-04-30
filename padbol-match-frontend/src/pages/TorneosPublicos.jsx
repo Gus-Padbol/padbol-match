@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_CONTENT_PADDING_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 
@@ -78,6 +78,7 @@ function normalizeSearchText(s) {
 
 export default function TorneosPublicos() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const nearMode = searchParams.get('context') === 'near';
 
@@ -469,7 +470,7 @@ export default function TorneosPublicos() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        padding: `${HUB_CONTENT_PADDING_TOP_PX}px 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 12px`,
+        padding: `${hubContentPaddingTopCss(location.pathname)} 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 12px`,
       }}
     >
       <AppHeader title="Torneos" onBack={handleTorneosAppBack} />
