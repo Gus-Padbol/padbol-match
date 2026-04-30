@@ -301,6 +301,7 @@ export default function TorneoVista() {
         adminTorneoBar={adminTorneoBar}
         stickyTop={hubContentPaddingTopCss(location.pathname)}
         showTorneoLogo
+        logoMinHeightPx={80}
       />
       <BottomNav />
     </div>

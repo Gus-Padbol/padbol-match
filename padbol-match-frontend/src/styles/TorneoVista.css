@@ -583,6 +583,11 @@
   margin-bottom: 4px;
 }
 
+.podium-team-name--sin-definir {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
 .podium-players {
   font-size: 11px;
   color: #6b7280;
@@ -810,4 +815,9 @@
   font-weight: 800;
   color: #15803d;
   white-space: nowrap;
+}
+
+.clasificacion-final-mute {
+  color: #94a3b8 !important;
+  font-weight: 600;
 }

@@ -7,9 +7,13 @@ const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
 
 /** Confetti nativo: divs fijos que caen y se eliminan al terminar la animación. */
 function launchNativePadbolConfetti(isMobile) {
+  console.log('[TorneoTabbedView] launchNativePadbolConfetti start', { isMobile, t: Date.now() });
   if (typeof document === 'undefined') return () => {};
   try {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      console.log('[TorneoTabbedView] launchNativePadbolConfetti skipped (prefers-reduced-motion)');
+      return () => {};
+    }
   } catch {
     /* ignore */
   }
@@ -257,6 +261,8 @@ export default function TorneoTabbedView({
   adminTorneoBar = null,
   stickyTop = '110px',
   showTorneoLogo = true,
+  /** Alto mínimo del logo PADBOL Match (px), centrado, sin recorte. */
+  logoMinHeightPx = 80,
 }) {
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
   const resultadosConfettiPlayedRef = useRef(false);
@@ -368,27 +374,40 @@ export default function TorneoTabbedView({
     }));
   }, [clasificacionFinalFilas, esFinalizado, equipos]);
 
-  const podioFilas = useMemo(() => resultadosFilas.filter((f) => f.posicion >= 1 && f.posicion <= 3), [resultadosFilas]);
-
-  /** 4°–10° con puntos > 0; solo si hay al menos 4 equipos en la clasificación. */
-  const clasificacionFinalLista = useMemo(() => {
-    if (resultadosFilas.length < 4) return [];
-    return resultadosFilas
-      .filter((f) => f.posicion >= 4 && f.posicion <= 10 && Number(f.puntos) > 0)
-      .sort((a, b) => a.posicion - b.posicion);
+  /** Podio olímpico 2° · 1° · 3°; siempre 3 huecos, con placeholder si falta fila. */
+  const podioSlotsCompletos = useMemo(() => {
+    const byPos = {};
+    resultadosFilas.forEach((f) => {
+      if (f.posicion >= 1 && f.posicion <= 3) byPos[f.posicion] = f;
+    });
+    const orden = [2, 1, 3];
+    return orden.map((pos) => {
+      const fila = byPos[pos];
+      if (fila) return { ...fila, sinEquipo: false };
+      return {
+        posicion: pos,
+        equipoNombre: '',
+        jugadorLineas: [],
+        puntos: null,
+        sinEquipo: true,
+      };
+    });
   }, [resultadosFilas]);
 
-  const podioOrdenVisual = useMemo(() => {
-    const m = {};
-    podioFilas.forEach((f) => {
-      m[f.posicion] = f;
+  /** Posiciones 4–10 siempre; huecos vacíos con — */
+  const clasificacionFinalFilasCompletas = useMemo(() => {
+    const byPos = {};
+    resultadosFilas.forEach((f) => {
+      if (f.posicion >= 4 && f.posicion <= 10) byPos[f.posicion] = f;
     });
-    const out = [];
-    if (m[2]) out.push(m[2]);
-    if (m[1]) out.push(m[1]);
-    if (m[3]) out.push(m[3]);
-    return out.length ? out : [...podioFilas].sort((a, b) => a.posicion - b.posicion);
-  }, [podioFilas]);
+    const rows = [];
+    for (let pos = 4; pos <= 10; pos += 1) {
+      const f = byPos[pos];
+      if (f) rows.push({ ...f, vacio: false });
+      else rows.push({ posicion: pos, equipoNombre: '', jugadorLineas: [], puntos: null, vacio: true });
+    }
+    return rows;
+  }, [resultadosFilas]);
 
   useEffect(() => {
     if (activeTab !== 'resultados' || !esFinalizado) {
@@ -776,21 +795,28 @@ export default function TorneoTabbedView({
   const renderTabResultados = () => (
     <div style={{ padding: '8px 0 20px' }}>
       <div className="podium-wrapper" style={{ marginBottom: '20px' }}>
-        {podioOrdenVisual.map((fila) => {
+        {podioSlotsCompletos.map((fila) => {
           const med = fila.posicion === 1 ? '🥇' : fila.posicion === 2 ? '🥈' : '🥉';
           const pedestalClass =
             fila.posicion === 1 ? 'podium-pedestal--1' : fila.posicion === 2 ? 'podium-pedestal--2' : 'podium-pedestal--3';
           const slotClass =
             fila.posicion === 1 ? 'podium-slot--first' : fila.posicion === 2 ? 'podium-slot--second' : 'podium-slot--third';
+          const sinEquipo = Boolean(fila.sinEquipo);
           return (
             <div key={fila.posicion} className={`podium-slot ${slotClass}`}>
               <div className="podium-card">
-                <div className="podium-team-name">{fila.equipoNombre}</div>
-                {fila.jugadorLineas?.length > 0 ? (
+                <div className={`podium-team-name${sinEquipo ? ' podium-team-name--sin-definir' : ''}`}>
+                  {sinEquipo ? 'Sin definir' : fila.equipoNombre}
+                </div>
+                {!sinEquipo && fila.jugadorLineas?.length > 0 ? (
                   <div className="podium-players">{fila.jugadorLineas.join(' · ')}</div>
                 ) : null}
                 <div className="podium-points">
-                  {fila.puntos} <span>pts</span>
+                  {sinEquipo || fila.puntos == null || fila.puntos === '' ? '—' : (
+                    <>
+                      {fila.puntos} <span>pts</span>
+                    </>
+                  )}
                 </div>
               </div>
               <div className={`podium-pedestal ${pedestalClass}`} aria-hidden>
@@ -800,24 +826,29 @@ export default function TorneoTabbedView({
           );
         })}
       </div>
-      {clasificacionFinalLista.length > 0 ? (
-        <div className="clasificacion-final-box">
-          <h3 className="clasificacion-final-titulo">Clasificación final</h3>
-          <div className="clasificacion-final-lista">
-            {clasificacionFinalLista.map((f) => {
-              const jugTxt = Array.isArray(f.jugadorLineas) && f.jugadorLineas.length ? f.jugadorLineas.join(' · ') : '—';
-              return (
-                <div key={f.posicion} className="clasificacion-final-fila">
-                  <span className="clasificacion-final-pos">{f.posicion}</span>
-                  <span className="clasificacion-final-equipo">{f.equipoNombre}</span>
-                  <span className="clasificacion-final-jug">{jugTxt}</span>
-                  <span className="clasificacion-final-pts">{f.puntos} pts</span>
-                </div>
-              );
-            })}
-          </div>
+      <div className="clasificacion-final-box">
+        <h3 className="clasificacion-final-titulo">Clasificación final</h3>
+        <div className="clasificacion-final-lista">
+          {clasificacionFinalFilasCompletas.map((f) => {
+            const vacio = Boolean(f.vacio);
+            const jugTxt =
+              !vacio && Array.isArray(f.jugadorLineas) && f.jugadorLineas.length ? f.jugadorLineas.join(' · ') : '—';
+            const nombre = vacio || !String(f.equipoNombre || '').trim() ? '—' : f.equipoNombre;
+            const ptsTxt =
+              vacio || f.puntos == null || f.puntos === '' || Number.isNaN(Number(f.puntos))
+                ? '—'
+                : `${Number(f.puntos)} pts`;
+            return (
+              <div key={f.posicion} className="clasificacion-final-fila">
+                <span className="clasificacion-final-pos">{f.posicion}</span>
+                <span className={`clasificacion-final-equipo${vacio ? ' clasificacion-final-mute' : ''}`}>{nombre}</span>
+                <span className={`clasificacion-final-jug${vacio ? ' clasificacion-final-mute' : ''}`}>{jugTxt}</span>
+                <span className={`clasificacion-final-pts${vacio ? ' clasificacion-final-mute' : ''}`}>{ptsTxt}</span>
+              </div>
+            );
+          })}
         </div>
-      ) : null}
+      </div>
     </div>
   );
 
@@ -843,8 +874,30 @@ export default function TorneoTabbedView({
   return (
     <>
       {showTorneoLogo ? (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px', marginBottom: '8px' }}>
-          <img src="/logo-padbol-match.png" alt="Padbol Match" style={{ width: '52px', height: 'auto', objectFit: 'contain' }} />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: '8px',
+            marginBottom: '8px',
+            width: '100%',
+            minHeight: `${logoMinHeightPx}px`,
+          }}
+        >
+          <img
+            src="/logo-padbol-match.png"
+            alt="Padbol Match"
+            style={{
+              minHeight: `${logoMinHeightPx}px`,
+              height: 'auto',
+              width: 'auto',
+              maxWidth: '100%',
+              objectFit: 'contain',
+              objectPosition: 'center',
+              display: 'block',
+            }}
+          />
         </div>
       ) : null}
 
