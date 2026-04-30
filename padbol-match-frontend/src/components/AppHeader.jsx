@@ -130,6 +130,14 @@ export default function AppHeader({
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
 
+  const hubInicioPath =
+    pathOnly === '/' ||
+    pathOnly === '/inicio' ||
+    pathOnly === '/hub' ||
+    pathOnly === '/home';
+  /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
+  const compactHubChip = hubDirectLogin && hubInicioPath && Boolean(session?.user);
+
   const handleBack = () => {
     if (typeof onBack === 'function') {
       onBack();
@@ -153,7 +161,7 @@ export default function AppHeader({
         minHeight: '56px',
         background: '#0f172a',
         display: 'grid',
-        gridTemplateColumns: '1fr auto 1fr',
+        gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1fr)',
         alignItems: 'center',
         columnGap: '8px',
         paddingTop: 'calc(8px + env(safe-area-inset-top, 0px))',
@@ -200,7 +208,7 @@ export default function AppHeader({
           justifyContent: 'center',
           alignItems: 'center',
           minWidth: 0,
-          maxWidth: 'min(72vw, 420px)',
+          maxWidth: compactHubChip ? 'min(38vw, 168px)' : 'min(72vw, 420px)',
         }}
       >
         {titleStr ? (
@@ -276,9 +284,9 @@ export default function AppHeader({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  maxWidth: 'min(42vw, 160px)',
-                  padding: '4px 8px 4px 4px',
+                  gap: compactHubChip ? 4 : 6,
+                  maxWidth: compactHubChip ? 'min(30vw, 100px)' : 'min(42vw, 160px)',
+                  padding: compactHubChip ? '3px 6px 3px 3px' : '4px 8px 4px 4px',
                   borderRadius: '999px',
                   border: 'none',
                   background: 'rgba(255,255,255,0.12)',
@@ -293,8 +301,8 @@ export default function AppHeader({
                     src={hubFotoUrl}
                     alt=""
                     style={{
-                      width: 28,
-                      height: 28,
+                      width: compactHubChip ? 22 : 28,
+                      height: compactHubChip ? 22 : 28,
                       borderRadius: '50%',
                       objectFit: 'cover',
                       flexShrink: 0,
@@ -304,12 +312,12 @@ export default function AppHeader({
                 ) : (
                   <span
                     style={{
-                      width: 28,
-                      height: 28,
+                      width: compactHubChip ? 22 : 28,
+                      height: compactHubChip ? 22 : 28,
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #667eea, #764ba2)',
                       color: '#fff',
-                      fontSize: 12,
+                      fontSize: compactHubChip ? 10 : 12,
                       fontWeight: 800,
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -322,7 +330,7 @@ export default function AppHeader({
                 )}
                 <span
                   style={{
-                    fontSize: 12,
+                    fontSize: compactHubChip ? 10 : 12,
                     fontWeight: 700,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',

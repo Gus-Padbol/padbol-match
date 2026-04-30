@@ -168,17 +168,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     fetchPendientes();
   }, [apiBaseUrl, rol, sedeId]); // rol/sedeId: re-fetch after role scope resolves
 
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.documentElement.style.overflow = prevHtmlOverflow;
-    };
-  }, []);
-
   const fetchPendientes = async () => {
     setPendientesLoading(true);
     const { data, error } = await supabase
@@ -466,12 +455,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setReservas(resData);
 
       const totales = { ARS: 0, USD: 0, EUR: 0 };
-      resData.forEach(item => {
-        // Priority: reserva.moneda → sede's moneda → ARS
-        const moneda =
-          item.moneda ||
-          (item.sede ? sedeMonedaMap[item.sede.trim().toLowerCase()] : null) ||
-          'ARS';
+      const monedaUnicaClub =
+        esAdminClub && sedesData.length === 1
+          ? String(sedesData[0].moneda || 'ARS').trim().toUpperCase()
+          : null;
+      const bucketMoneda = (raw) => {
+        const s = String(raw || '').trim().toUpperCase();
+        if (s.includes('EUR') || s === '€') return 'EUR';
+        if (s.includes('USD') || s.includes('US$') || s === 'U$S') return 'USD';
+        return 'ARS';
+      };
+      resData.forEach((item) => {
+        const rawMoneda = monedaUnicaClub
+          ? monedaUnicaClub
+          : item.moneda ||
+            (item.sede ? sedeMonedaMap[item.sede.trim().toLowerCase()] : null) ||
+            'ARS';
+        const moneda = bucketMoneda(rawMoneda);
         if (moneda in totales) totales[moneda] += item.precio || 0;
         else totales.ARS += item.precio || 0;
       });
@@ -737,7 +737,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="" showBack={false} />
+        <AppHeader title="Inicio" showBack onBack={() => navigate('/')} backLabel="← Volver" />
         Cargando...
       </div>
     );
@@ -797,7 +797,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="" showBack={false} />
+      <AppHeader title="Inicio" showBack onBack={() => navigate('/')} backLabel="← Volver" />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img
@@ -805,6 +805,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             alt=""
             style={{
               ...padbolLogoImgStyle,
+              display: 'block',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              height: '110px',
               marginBottom: '8px',
               borderRadius: sedeClubHeader?.logo_url ? 12 : padbolLogoImgStyle.borderRadius,
             }}
