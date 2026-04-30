@@ -261,8 +261,8 @@ export default function TorneoTabbedView({
   adminTorneoBar = null,
   stickyTop = '110px',
   showTorneoLogo = true,
-  /** Alto mínimo del logo PADBOL Match (px), centrado, sin recorte. */
-  logoMinHeightPx = 80,
+  /** Tope del logo PADBOL Match (px): ancho y alto máx., centrado, sin recorte. */
+  logoMinHeightPx = 60,
 }) {
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
   const resultadosConfettiPlayedRef = useRef(false);
@@ -882,17 +882,16 @@ export default function TorneoTabbedView({
             marginTop: '8px',
             marginBottom: '8px',
             width: '100%',
-            minHeight: `${logoMinHeightPx}px`,
           }}
         >
           <img
             src="/logo-padbol-match.png"
             alt="Padbol Match"
             style={{
-              minHeight: `${logoMinHeightPx}px`,
+              maxHeight: `${logoMinHeightPx}px`,
+              maxWidth: `${logoMinHeightPx}px`,
               height: 'auto',
               width: 'auto',
-              maxWidth: '100%',
               objectFit: 'contain',
               objectPosition: 'center',
               display: 'block',

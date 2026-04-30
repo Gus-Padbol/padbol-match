@@ -565,6 +565,57 @@
   max-width: 200px;
 }
 
+/* Podio: en pantallas angostas mantener visibles los 3 lugares (2° · 1° · 3°) */
+@media (max-width: 768px) {
+  .podium-wrapper {
+    gap: 4px;
+    padding: 0 6px;
+    flex-wrap: nowrap;
+    justify-content: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .podium-slot,
+  .podium-slot--first,
+  .podium-slot--second,
+  .podium-slot--third {
+    flex: 0 0 30%;
+    min-width: 78px;
+    max-width: 108px;
+  }
+
+  .podium-card {
+    padding: 10px 6px 8px;
+    border-radius: 12px;
+  }
+
+  .podium-team-name {
+    font-size: 12px;
+  }
+
+  .podium-points {
+    font-size: 15px;
+  }
+
+  .podium-medal {
+    font-size: 36px;
+  }
+
+  .podium-pedestal--1 {
+    height: 100px;
+  }
+
+  .podium-pedestal--2 {
+    height: 76px;
+  }
+
+  .podium-pedestal--3 {
+    height: 58px;
+  }
+}
+
 .podium-card {
   background: rgba(255, 255, 255, 0.97);
   border-radius: 16px;
