@@ -48,8 +48,12 @@ function heroClubNameFontSizePx(nombreRaw) {
   return 20;
 }
 
-/** Alto fijo del logo en el hero (fila logo | nombre); ancho según aspect ratio, object-fit contain. */
-const HERO_LOGO_HEIGHT_PX = 100;
+/** Caja cuadrada del logo en el hero (fila superior). */
+const HERO_LOGO_BOX_PX = 110;
+
+/** Frase bajo el hero si la sede no tiene descripción en BD. */
+const SEDE_HERO_FRASE_DEFAULT =
+  'El primer Club de Padbol del Mundo, donde todo comenzó...';
 
 /** Margen extra bajo header+BottomNav: evita que el borde superior del hero/logo quede bajo el chrome fijo en iOS. */
 const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 16;
@@ -649,6 +653,7 @@ export default function SedePublica() {
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const desc = sede.descripcion ? String(sede.descripcion).trim() : '';
+        const fraseHero = desc || SEDE_HERO_FRASE_DEFAULT;
         const nombreSedeCta = String(sede.nombre || 'esta sede').trim();
         const torneosCtaLabel = `Ver torneos de ${nombreSedeCta}`;
 
@@ -728,18 +733,24 @@ export default function SedePublica() {
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: '12px',
+                    gap: '14px',
                     width: '100%',
                     flexShrink: 0,
                   }}
                 >
                   <div
                     style={{
+                      width: `${HERO_LOGO_BOX_PX}px`,
+                      height: `${HERO_LOGO_BOX_PX}px`,
                       flexShrink: 0,
+                      borderRadius: '14px',
+                      background: 'rgba(15, 23, 42, 0.65)',
+                      boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      alignSelf: 'stretch',
+                      overflow: 'hidden',
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)',
                     }}
                   >
                     {sede.logo_url ? (
@@ -747,29 +758,29 @@ export default function SedePublica() {
                         src={sede.logo_url}
                         alt=""
                         style={{
-                          height: `${HERO_LOGO_HEIGHT_PX}px`,
-                          width: 'auto',
-                          maxWidth: 'min(42vw, 150px)',
+                          width: '100%',
+                          height: '100%',
                           objectFit: 'contain',
                           objectPosition: 'center center',
-                          borderRadius: '10px',
-                          background: '#fff',
-                          padding: '4px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
                           display: 'block',
                         }}
                       />
                     ) : (
                       <div
                         style={{
-                          width: `${HERO_LOGO_HEIGHT_PX}px`,
-                          height: `${HERO_LOGO_HEIGHT_PX}px`,
-                          borderRadius: '10px',
-                          background: 'rgba(255,255,255,0.14)',
-                          border: '1px dashed rgba(255,255,255,0.35)',
-                          boxSizing: 'border-box',
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'rgba(248,250,252,0.35)',
+                          fontSize: '36px',
+                          lineHeight: 1,
                         }}
-                      />
+                        aria-hidden
+                      >
+                        ⚽
+                      </div>
                     )}
                   </div>
 
@@ -782,6 +793,7 @@ export default function SedePublica() {
                       alignItems: 'flex-start',
                       justifyContent: 'center',
                       gap: '8px',
+                      alignSelf: 'stretch',
                     }}
                   >
                     <h1
@@ -808,7 +820,7 @@ export default function SedePublica() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
-                          padding: '4px 10px',
+                          padding: '5px 11px',
                           borderRadius: '999px',
                           fontSize: '10px',
                           fontWeight: 700,
@@ -825,7 +837,7 @@ export default function SedePublica() {
                       <span
                         style={{
                           display: 'inline-flex',
-                          padding: '4px 10px',
+                          padding: '5px 11px',
                           borderRadius: '999px',
                           fontSize: '10px',
                           fontWeight: 600,
@@ -841,32 +853,30 @@ export default function SedePublica() {
                   </div>
                 </div>
 
-                {desc ? (
-                  <div
+                <div
+                  style={{
+                    marginTop: '16px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <p
                     style={{
-                      marginTop: '14px',
+                      margin: 0,
+                      color: 'rgba(255,255,255,0.92)',
+                      fontSize: '15px',
+                      lineHeight: 1.55,
+                      fontStyle: 'italic',
+                      textAlign: 'center',
                       width: '100%',
-                      boxSizing: 'border-box',
+                      display: 'block',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
                     }}
                   >
-                    <p
-                      style={{
-                        margin: 0,
-                        color: 'rgba(255,255,255,0.92)',
-                        fontSize: '14px',
-                        lineHeight: 1.55,
-                        fontStyle: 'italic',
-                        textAlign: 'left',
-                        width: '100%',
-                        display: 'block',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {desc}
-                    </p>
-                  </div>
-                ) : null}
+                    {fraseHero}
+                  </p>
+                </div>
               </div>
             </div>
 
