@@ -8,31 +8,15 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { nombreDesdeFilaJugadoresPerfil } from '../utils/displayName';
-import { formatAliasConArroba, PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
+import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { supabase } from '../supabaseClient';
 
-function parteLocalEmail(email) {
-  const em = String(email || '').trim();
-  if (!em.includes('@')) return '';
-  return em.split('@')[0].trim() || '';
-}
-
-/** Saludo hub: alias → nombre perfil → parte local del email; nunca "jugador". */
-function textoSaludoDesdePerfilHub(jpRow, emailSesion) {
-  const em = String(emailSesion || '').trim();
-  const local = parteLocalEmail(em);
-  const alias = String(jpRow?.alias || '').trim();
-  if (alias) return formatAliasConArroba(alias);
-  const nombrePerfil = nombreDesdeFilaJugadoresPerfil(jpRow, em).trim();
-  if (nombrePerfil) {
-    const first = nombrePerfil.split(/\s+/).filter(Boolean)[0] || '';
-    if (first && first.toLowerCase() !== 'jugador') return first;
-    if (nombrePerfil.length > 0 && nombrePerfil.toLowerCase() !== 'jugador') return nombrePerfil;
-  }
-  if (local && local.toLowerCase() !== 'jugador') return local;
-  if (em) return local || 'Cuenta';
-  return 'Cuenta';
+/** Solo el campo `nombre` del perfil; primera palabra (ej. "Juan Pablo" → "Juan"). Sin alias ni email. */
+function primerNombreSaludoHub(jpRow) {
+  const raw = String(jpRow?.nombre || '').trim();
+  if (!raw) return '';
+  const first = raw.split(/\s+/).filter(Boolean)[0] || '';
+  return first;
 }
 
 export default function UserHome() {
@@ -73,10 +57,7 @@ export default function UserHome() {
     };
   }, [session?.user?.id]);
 
-  const nombreSaludoHub = useMemo(() => {
-    if (!session?.user) return '';
-    return textoSaludoDesdePerfilHub(perfilHubRow, session.user.email);
-  }, [session?.user, perfilHubRow]);
+  const nombreSaludoHub = useMemo(() => primerNombreSaludoHub(perfilHubRow), [perfilHubRow]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
@@ -136,7 +117,9 @@ export default function UserHome() {
             lineHeight: 1.35,
           }}>
             {session?.user
-              ? `¡Hola ${nombreSaludoHub}! ¿Qué querés hacer hoy?`
+              ? nombreSaludoHub
+                ? `¡Hola ${nombreSaludoHub}! ¿Qué querés hacer hoy?`
+                : '¡Hola! ¿Qué querés hacer hoy?'
               : '¡Hola! ¿Qué querés hacer hoy?'}
           </h1>
           {!authLoading && !session?.user ? (

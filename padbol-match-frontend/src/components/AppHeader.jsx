@@ -207,13 +207,30 @@ export default function AppHeader({
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
-  /** Texto junto al avatar: evita repetir la inicial si ya va en el círculo. */
-  const adminMinimalChipText = useMemo(
-    () => String(hubChipLabel || '').replace(/^Admin · /, 'Admin '),
-    [hubChipLabel]
-  );
+  /** Panel admin compacto: solo rol corto (sin nombre de sede). */
+  const adminMinimalRolCorto = useMemo(() => {
+    if (!session?.user) return '';
+    if (roleLoading) return '…';
+    if (rol === 'super_admin') return 'Super Admin';
+    if (rol === 'admin_nacional') return 'Admin Nacional';
+    if (rol === 'admin_club') return 'Admin Club';
+    return 'Admin';
+  }, [session?.user, roleLoading, rol]);
 
-  if (adminPanelMinimalHeader) {
+  /** Inicial desde `nombre` del perfil (no alias); fallback email. */
+  const adminMinimalInicial = useMemo(() => {
+    const n = String(userProfile?.nombre || '').trim();
+    if (n) return n.charAt(0).toUpperCase();
+    const em = String(session?.user?.email || '').trim();
+    if (em) return em.charAt(0).toUpperCase();
+    return '?';
+  }, [userProfile?.nombre, session?.user?.email]);
+
+  /** Ruta /admin: siempre barra compacta con sesión (refuerzo si falta el prop). */
+  const useAdminMinimalLayout =
+    adminPanelMinimalHeader || (Boolean(session?.user) && isOnAdmin);
+
+  if (useAdminMinimalLayout) {
     return (
       <div
         style={{
@@ -249,7 +266,7 @@ export default function AppHeader({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              maxWidth: 'min(72vw, 280px)',
+              maxWidth: 'min(56vw, 200px)',
               padding: '3px 8px 3px 3px',
               borderRadius: '999px',
               border: '1px solid rgba(255,255,255,0.28)',
@@ -289,7 +306,7 @@ export default function AppHeader({
                   flexShrink: 0,
                 }}
               >
-                {hubInicial}
+                {adminMinimalInicial}
               </span>
             )}
             <span
@@ -302,7 +319,7 @@ export default function AppHeader({
                 minWidth: 0,
               }}
             >
-              {adminMinimalChipText}
+              {adminMinimalRolCorto}
             </span>
           </button>
         ) : (
