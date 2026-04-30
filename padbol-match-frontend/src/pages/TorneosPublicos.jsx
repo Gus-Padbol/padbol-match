@@ -7,7 +7,9 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
+import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -61,14 +63,6 @@ const estadoStyle = {
   cancelado: { label: 'Cancelado', bg: '#94a3b8', color: '#fff' },
 };
 
-/** 0 = activos/próximos; 1 = finalizado; 2 = cancelado (al final). */
-function bucketOrdenTorneo(estado) {
-  const e = String(estado || '').toLowerCase();
-  if (e === 'cancelado') return 2;
-  if (e === 'finalizado') return 1;
-  return 0;
-}
-
 function normalizeSearchText(s) {
   return String(s || '')
     .normalize('NFD')
@@ -120,7 +114,7 @@ export default function TorneosPublicos() {
 
     const [{ data: torneosData, error: torneosError }, { data: sedesData, error: sedesError }] =
       await Promise.all([
-        supabase.from('torneos').select('*').order('fecha_inicio', { ascending: true }),
+        supabase.from('torneos').select('*').order('fecha_inicio', { ascending: false }),
         supabase.from('sedes').select('id,nombre,ciudad,pais,latitud,longitud'),
       ]);
 
@@ -255,16 +249,7 @@ export default function TorneosPublicos() {
     return sedesMap[String(sedeFiltroId)]?.nombre || null;
   }, [sedeFiltroId, sedesMap]);
 
-  const torneosOrdenados = useMemo(() => {
-    return [...torneosPorBusqueda].sort((a, b) => {
-      const ba = bucketOrdenTorneo(a.estado);
-      const bb = bucketOrdenTorneo(b.estado);
-      if (ba !== bb) return ba - bb;
-      const fa = String(a.fecha_inicio || '');
-      const fb = String(b.fecha_inicio || '');
-      return fa.localeCompare(fb);
-    });
-  }, [torneosPorBusqueda]);
+  const torneosOrdenados = useMemo(() => [...torneosPorBusqueda].sort(compareTorneosPublico), [torneosPorBusqueda]);
 
   const listaTorneos = useMemo(() => {
     if (loading) {
@@ -476,27 +461,14 @@ export default function TorneosPublicos() {
       <AppHeader title="Torneos" onBack={handleTorneosAppBack} />
 
       <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-        <div
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
           style={{
-            height: '80px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            ...padbolLogoImgStyle,
             marginBottom: '14px',
           }}
-        >
-          <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
-            style={{
-              maxHeight: '80px',
-              width: 'auto',
-              display: 'block',
-              objectFit: 'contain',
-              objectPosition: 'center',
-            }}
-          />
-        </div>
+        />
         <div
           style={{
             background: 'rgba(255,255,255,0.10)',

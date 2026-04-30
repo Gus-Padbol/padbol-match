@@ -18,7 +18,9 @@ const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-const DEFAULT_HERO_BG = 'linear-gradient(160deg, #1a1a2e 0%, #16213e 72%, #0f3460 100%)';
+/** Azul Francia — hero sede público (sin negro/gris muy oscuro). */
+const HERO_AZUL_FRANCIA = '#0055A4';
+const DEFAULT_HERO_BG = `linear-gradient(165deg, ${HERO_AZUL_FRANCIA} 0%, #003d7a 55%, #002654 100%)`;
 
 function normalizeHexColor(raw) {
   if (raw == null) return null;
@@ -37,7 +39,7 @@ function normalizeHexColor(raw) {
 function heroBackgroundFromSede(sede) {
   const hex = normalizeHexColor(sede?.color_primario);
   if (!hex) return DEFAULT_HERO_BG;
-  return `linear-gradient(160deg, ${hex} 0%, rgba(15, 23, 42, 0.82) 78%, rgba(15, 23, 42, 0.94) 100%)`;
+  return `linear-gradient(165deg, ${hex} 0%, ${HERO_AZUL_FRANCIA} 52%, #002654 100%)`;
 }
 
 /** Tamaño del título del club en el hero según longitud del nombre. */
@@ -48,8 +50,8 @@ function heroClubNameFontSizePx(nombreRaw) {
   return 20;
 }
 
-/** Caja cuadrada del logo en el hero (fila superior). */
-const HERO_LOGO_BOX_PX = 110;
+/** Caja cuadrada del logo en el hero (fila superior; compacta). */
+const HERO_LOGO_BOX_PX = 96;
 
 /** Frase bajo el hero si la sede no tiene descripción en BD. */
 const SEDE_HERO_FRASE_DEFAULT =
@@ -720,7 +722,7 @@ export default function SedePublica() {
                 style={{
                   position: 'relative',
                   zIndex: 1,
-                  padding: '16px 14px 18px',
+                  padding: '12px 12px 14px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'stretch',
@@ -732,8 +734,8 @@ export default function SedePublica() {
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: '14px',
+                    alignItems: 'flex-start',
+                    gap: '12px',
                     width: '100%',
                     flexShrink: 0,
                   }}
@@ -743,8 +745,8 @@ export default function SedePublica() {
                       width: `${HERO_LOGO_BOX_PX}px`,
                       height: `${HERO_LOGO_BOX_PX}px`,
                       flexShrink: 0,
-                      borderRadius: '14px',
-                      background: 'rgba(15, 23, 42, 0.65)',
+                      borderRadius: '12px',
+                      background: 'rgba(15, 23, 42, 0.35)',
                       boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
@@ -788,12 +790,14 @@ export default function SedePublica() {
                     style={{
                       flex: 1,
                       minWidth: 0,
+                      minHeight: `${HERO_LOGO_BOX_PX}px`,
                       display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      alignSelf: 'stretch',
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      alignContent: 'center',
+                      justifyContent: 'flex-start',
+                      gap: '10px 12px',
                     }}
                   >
                     <h1
@@ -803,10 +807,11 @@ export default function SedePublica() {
                         fontWeight: 800,
                         margin: 0,
                         lineHeight: 1.2,
-                        width: '100%',
+                        flex: '1 1 120px',
+                        minWidth: 0,
                         textAlign: 'left',
                         wordBreak: 'break-word',
-                        textShadow: '0 1px 8px rgba(0,0,0,0.45)',
+                        textShadow: '0 1px 8px rgba(0,0,0,0.35)',
                         boxSizing: 'border-box',
                       }}
                       title={sede.nombre || ''}
@@ -828,7 +833,7 @@ export default function SedePublica() {
                           background: 'rgba(254, 243, 199, 0.92)',
                           color: '#92400e',
                           border: '1px solid rgba(217,119,6,0.45)',
-                          alignSelf: 'flex-start',
+                          flexShrink: 0,
                         }}
                       >
                         ⭐ Licencia PADBOL Activa
@@ -844,7 +849,7 @@ export default function SedePublica() {
                           background: 'rgba(254,226,226,0.9)',
                           color: '#b91c1c',
                           border: '1px solid rgba(220,38,38,0.25)',
-                          alignSelf: 'flex-start',
+                          flexShrink: 0,
                         }}
                       >
                         No habilitado
@@ -855,7 +860,7 @@ export default function SedePublica() {
 
                 <div
                   style={{
-                    marginTop: '16px',
+                    marginTop: '10px',
                     width: '100%',
                     boxSizing: 'border-box',
                   }}
@@ -863,9 +868,9 @@ export default function SedePublica() {
                   <p
                     style={{
                       margin: 0,
-                      color: 'rgba(255,255,255,0.92)',
-                      fontSize: '15px',
-                      lineHeight: 1.55,
+                      color: 'rgba(255,255,255,0.95)',
+                      fontSize: '14px',
+                      lineHeight: 1.5,
                       fontStyle: 'italic',
                       textAlign: 'center',
                       width: '100%',

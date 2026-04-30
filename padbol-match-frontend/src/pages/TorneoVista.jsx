@@ -296,7 +296,7 @@ export default function TorneoVista() {
         alt="Padbol Match"
         style={{
           ...padbolLogoImgStyle,
-          margin: '6px auto 10px',
+          marginBottom: '10px',
         }}
       />
       <TorneoTabbedView

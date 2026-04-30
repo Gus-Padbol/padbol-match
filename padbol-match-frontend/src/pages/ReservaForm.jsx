@@ -33,6 +33,30 @@ function getPrecio(sede, hora) {
     : Number(sede.precio_tarde  || base);
 }
 
+/** Texto visible en el selector de país; el `value` sigue siendo el string exacto de la sede. */
+function etiquetaPaisReservaSelector(paisRaw) {
+  const p = String(paisRaw || '').trim();
+  if (!p) return '';
+  const sinEmojiInicial = p.replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
+  const baseNombre = sinEmojiInicial || p;
+  const lc = baseNombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const compact = lc.replace(/\s+/g, '');
+  if (lc === 'argentina' || lc.startsWith('argentina ')) return /^🇦🇷/.test(p) ? p : `🇦🇷 ${baseNombre}`;
+  if (lc === 'españa' || lc === 'espana' || lc.startsWith('españa ') || lc.startsWith('espana ')) {
+    return /^🇪🇸/.test(p) ? p : `🇪🇸 ${baseNombre}`;
+  }
+  if (
+    compact.includes('estadosunidos') ||
+    lc.includes('estados unidos') ||
+    lc === 'usa' ||
+    compact === 'eeuu' ||
+    lc.startsWith('ee. uu')
+  ) {
+    return /^🇺🇸/.test(p) ? p : `🇺🇸 ${baseNombre}`;
+  }
+  return p;
+}
+
 function primerTelefonoCliente(c) {
   if (!c) return '';
   return String(c.whatsapp || c.telefono || '').trim();
@@ -763,7 +787,9 @@ export default function ReservaForm() {
               🌐
             </span>
             {paisesOrdenados.length === 1 ? (
-              <div className="reserva-sede-pais-pill-static">{filtros.pais || paisesOrdenados[0]}</div>
+              <div className="reserva-sede-pais-pill-static">
+                {etiquetaPaisReservaSelector(filtros.pais || paisesOrdenados[0])}
+              </div>
             ) : (
               <select
                 id="reserva-pais-select"
@@ -779,7 +805,7 @@ export default function ReservaForm() {
                 <option value="">Elegí un país…</option>
                 {paisesOrdenados.map((p) => (
                   <option key={p} value={p}>
-                    {p}
+                    {etiquetaPaisReservaSelector(p)}
                   </option>
                 ))}
               </select>

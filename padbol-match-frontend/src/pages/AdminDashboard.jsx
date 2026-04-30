@@ -6,6 +6,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -757,7 +758,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <img
             src="/logo-padbol-match.png"
             alt="Padbol Match"
-            style={{ width: '80px', height: 'auto', objectFit: 'contain', marginBottom: '8px' }}
+            style={{
+              ...padbolLogoImgStyle,
+              marginBottom: '8px',
+            }}
           />
           <p style={{ margin: '0 0 12px', color: '#fff', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
             {`${currentEmail === 'padbolinternacional@gmail.com' ? '🌐 ' : ''}Panel ${currentEmail === 'padbolinternacional@gmail.com' ? 'Super Admin' : (ROLE_BADGE[rol] || 'Admin').replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`}

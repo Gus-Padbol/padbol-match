@@ -289,9 +289,7 @@ export default function EquipoPerfil() {
         alt="Padbol Match"
         style={{
           ...padbolLogoImgStyle,
-          width: 64,
-          maxWidth: 64,
-          margin: '6px auto 14px',
+          marginBottom: '14px',
         }}
       />
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>

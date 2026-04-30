@@ -6,11 +6,10 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
 import { formatAliasConArroba } from '../utils/jugadorPerfil';
-import { loginRedirectAfterHubEntry } from '../utils/authLoginRedirect';
-
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,11 +35,6 @@ export default function UserHome() {
     { label: 'Perfil', icon: '👤', action: () => navigate('/mi-perfil') },
   ];
 
-  const loginDesdeHubUrl = useMemo(
-    () => `/login?redirect=${encodeURIComponent(loginRedirectAfterHubEntry(location))}`,
-    [location.pathname, location.search]
-  );
-
   return (
     <div
       style={{
@@ -61,9 +55,8 @@ export default function UserHome() {
         src="/logo-padbol-match.png"
         alt="Padbol Match"
         style={{
-          display: 'block',
-          margin: '20px auto 40px',
-          width: '120px',
+          ...padbolLogoImgStyle,
+          marginBottom: '40px',
         }}
       />
       <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto' }}>
@@ -89,54 +82,21 @@ export default function UserHome() {
           }}>
             {session?.user
               ? `¡Hola ${nombreSaludoHub}! ¿Qué querés hacer hoy?`
-              : '¡Hola!'}
+              : '¡Hola! ¿Qué querés hacer hoy?'}
           </h1>
-          {!session?.user ? (
-            <p style={{
-              textAlign: 'center',
-              margin: 0,
-              fontSize: '13px',
-              color: '#ffffff',
-              lineHeight: 1.4,
-            }}
-            >
-              ¿Qué querés hacer hoy?
-            </p>
-          ) : null}
           {!authLoading && !session?.user ? (
             <p
               style={{
                 textAlign: 'center',
-                margin: '8px 0 0 0',
-                fontSize: '12px',
-                color: 'rgba(255,255,255,0.55)',
+                margin: '12px 0 0 0',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
                 lineHeight: 1.45,
               }}
             >
-              Puedes explorar sin registrarte
+              Podés explorar sin registrarte
             </p>
-          ) : null}
-          {!authLoading && !session?.user ? (
-            <button
-              type="button"
-              onClick={() => navigate(loginDesdeHubUrl)}
-              style={{
-                display: 'block',
-                width: '100%',
-                marginTop: '14px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '2px solid rgba(255,255,255,0.85)',
-                background: 'rgba(255,255,255,0.98)',
-                color: '#312e81',
-                fontSize: '15px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                boxShadow: '0 6px 18px rgba(0,0,0,0.15)',
-              }}
-            >
-              Iniciar sesión
-            </button>
           ) : null}
         </div>
 

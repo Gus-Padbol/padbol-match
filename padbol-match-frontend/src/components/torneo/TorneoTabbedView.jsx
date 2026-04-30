@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../../utils/jugadorPerfil';
 import '../../styles/TorneoVista.css';
@@ -949,31 +950,14 @@ export default function TorneoTabbedView({
   return (
     <>
       {showTorneoLogo ? (
-        <div
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
           style={{
-            paddingTop: 16,
-            height: 80,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            ...padbolLogoImgStyle,
             marginBottom: '8px',
-            width: '100%',
           }}
-        >
-          <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
-            style={{
-              maxHeight: '70px',
-              maxWidth: '70px',
-              height: 'auto',
-              width: 'auto',
-              objectFit: 'contain',
-              objectPosition: 'center',
-              display: 'block',
-            }}
-          />
-        </div>
+        />
       ) : null}
 
       <div className="torneo-header" style={{ marginTop: showTorneoLogo ? 0 : '8px', marginBottom: '12px', padding: '20px' }}>

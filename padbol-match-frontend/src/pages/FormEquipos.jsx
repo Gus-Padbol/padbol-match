@@ -6,6 +6,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
@@ -2143,28 +2144,15 @@ export default function FormEquipos() {
           padding: '2px 8px 0',
         }}
       >
-        <div
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
           style={{
-            height: '80px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
+            ...padbolLogoImgStyle,
+            marginBottom: '12px',
+            filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.28))',
           }}
-        >
-          <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
-            style={{
-              maxHeight: '80px',
-              width: 'auto',
-              display: 'block',
-              objectFit: 'contain',
-              objectPosition: 'center',
-              filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.28))',
-            }}
-          />
-        </div>
+        />
         <h1
           style={{
             margin: '8px 0 0',

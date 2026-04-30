@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppButton from '../components/AppButton';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { pageBackgroundStyle } from '../theme/uiStyles';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,7 +10,6 @@ export default function HomePublic() {
   const { session } = useAuth();
 
   const blockGap = 'clamp(18px, 2.2vw, 22px)';
-  const headlineBand = 'min(100%, 128px)';
 
   return (
     <div
@@ -41,11 +41,7 @@ export default function HomePublic() {
           src="/logo-padbol-match.png"
           alt="Padbol Match"
           style={{
-            width: headlineBand,
-            maxWidth: '128px',
-            height: 'auto',
-            display: 'block',
-            objectFit: 'contain',
+            ...padbolLogoImgStyle,
             filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.28))',
           }}
         />

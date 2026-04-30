@@ -567,17 +567,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .reserva-sede-seleccion .reserva-sede-hero {
   text-align: center;
-  padding-top: 8px;
-  margin-bottom: 22px;
+  padding-top: 0;
+  margin-bottom: 18px;
 }
 
 .reserva-sede-seleccion .reserva-sede-hero-logo {
   display: block;
   margin: 0 auto;
-  padding-top: 12px;
-  width: 60px;
-  max-width: 60px;
-  height: auto;
+  padding-top: 20px;
+  height: 90px;
+  width: auto;
+  max-width: none;
   object-fit: contain;
   border-radius: 12px;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.22));

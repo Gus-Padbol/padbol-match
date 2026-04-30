@@ -269,7 +269,7 @@ export default function Rankings() {
           alt="Padbol Match"
           style={{
             ...padbolLogoImgStyle,
-            margin: '0 auto 14px',
+            marginBottom: '14px',
           }}
         />
 

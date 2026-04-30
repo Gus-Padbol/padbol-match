@@ -256,7 +256,10 @@ export default function AccesoCuenta() {
         <img
           src="/logo-padbol-match.png"
           alt="Padbol Match"
-          style={{ ...padbolLogoImgStyle }}
+          style={{
+            ...padbolLogoImgStyle,
+            marginBottom: '4px',
+          }}
         />
       </div>
       <div

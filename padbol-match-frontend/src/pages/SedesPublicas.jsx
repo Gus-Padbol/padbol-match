@@ -187,7 +187,7 @@ export default function SedesPublicas() {
             alt="Padbol Match"
             style={{
               ...padbolLogoImgStyle,
-              margin: '0 auto 16px',
+              marginBottom: '16px',
             }}
           />
           <h2 style={{ color: 'white', fontWeight: 900, fontSize: 'clamp(1.3rem, 4vw, 2rem)', margin: '0 0 16px', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
