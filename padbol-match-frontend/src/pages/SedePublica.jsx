@@ -10,6 +10,7 @@ import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubContentPaddingTopPx,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 
@@ -49,6 +50,9 @@ function heroClubNameFontSizePx(nombreRaw) {
 
 const HERO_LOGO_MIN_PX = 120;
 const HERO_LOGO_MAX_PX = 168;
+
+/** Margen extra bajo header+BottomNav: evita que el borde superior del hero/logo quede bajo el chrome fijo en iOS. */
+const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 16;
 
 function formatHorario(apertura, cierre) {
   if (!apertura && !cierre) return null;
@@ -535,10 +539,17 @@ function CompactContactCard({ sede, horario, hasAddress }) {
   );
 }
 
+/** Perfil público de sede: ruta `/sede/:sedeId` en App.js → solo este componente (no hay SedeVista / SedePerfil). */
 export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  /** Incluye buffer extra: el alto real del chrome (header+nav) en notch puede superar el valor teórico. */
+  const sedeScrollPaddingTopCss = useMemo(
+    () =>
+      `calc(${hubContentPaddingTopPx(location.pathname)}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
+    [location.pathname]
+  );
   const [sede, setSede] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -673,8 +684,8 @@ export default function SedePublica() {
                 maxWidth: '100%',
                 boxSizing: 'border-box',
                 overscrollBehaviorY: 'contain',
-                paddingTop: hubContentPaddingTopCss(location.pathname),
-                scrollPaddingTop: hubContentPaddingTopCss(location.pathname),
+                paddingTop: sedeScrollPaddingTopCss,
+                scrollPaddingTop: sedeScrollPaddingTopCss,
               }}
             >
             <div
@@ -688,39 +699,35 @@ export default function SedePublica() {
             <div
               style={{
                 position: 'relative',
-                background: heroBackgroundFromSede(sede),
-                padding: '16px 14px 18px',
-                overflow: 'hidden',
                 borderRadius: '16px',
                 marginLeft: '6px',
                 marginRight: '6px',
                 marginTop: '10px',
                 boxShadow: '0 8px 28px rgba(0, 0, 0, 0.22)',
+                overflow: 'visible',
               }}
             >
               <div
+                aria-hidden
                 style={{
                   position: 'absolute',
-                  top: '8px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: `${HERO_LOGO_MAX_PX + 24}px`,
-                  height: `${HERO_LOGO_MAX_PX + 24}px`,
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(102,126,234,0.18) 0%, transparent 72%)',
-                  pointerEvents: 'none',
+                  inset: 0,
+                  background: heroBackgroundFromSede(sede),
+                  borderRadius: '16px',
+                  zIndex: 0,
                 }}
               />
 
               <div
                 style={{
                   position: 'relative',
-                  zIndex: 2,
+                  zIndex: 1,
+                  padding: '18px 14px 20px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   width: '100%',
-                  gap: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <div
@@ -731,6 +738,9 @@ export default function SedePublica() {
                     width: '100%',
                     minHeight: `${HERO_LOGO_MIN_PX}px`,
                     marginBottom: '14px',
+                    flexShrink: 0,
+                    position: 'relative',
+                    zIndex: 2,
                   }}
                 >
                   {sede.logo_url ? (
@@ -743,11 +753,13 @@ export default function SedePublica() {
                         width: 'auto',
                         maxWidth: 'min(88vw, 240px)',
                         objectFit: 'contain',
+                        objectPosition: 'center center',
                         borderRadius: '12px',
                         background: '#fff',
                         padding: '6px',
                         boxShadow: '0 2px 12px rgba(0,0,0,0.35)',
                         display: 'block',
+                        flexShrink: 0,
                       }}
                     />
                   ) : (
@@ -760,6 +772,7 @@ export default function SedePublica() {
                         background: 'rgba(255,255,255,0.14)',
                         border: '1px dashed rgba(255,255,255,0.35)',
                         boxSizing: 'border-box',
+                        flexShrink: 0,
                       }}
                     />
                   )}
@@ -771,7 +784,7 @@ export default function SedePublica() {
                     fontSize: `${heroClubNameFontSizePx(sede.nombre)}px`,
                     fontWeight: 800,
                     margin: 0,
-                    lineHeight: 1.2,
+                    lineHeight: 1.25,
                     width: '100%',
                     maxWidth: '100%',
                     textAlign: 'center',
@@ -780,13 +793,26 @@ export default function SedePublica() {
                     paddingLeft: '4px',
                     paddingRight: '4px',
                     boxSizing: 'border-box',
+                    flexShrink: 0,
+                    position: 'relative',
+                    zIndex: 2,
                   }}
                   title={sede.nombre || ''}
                 >
                   {sede.nombre || '(sin nombre)'}
                 </h1>
 
-                <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <div
+                  style={{
+                    marginTop: '10px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    width: '100%',
+                    flexShrink: 0,
+                    position: 'relative',
+                    zIndex: 2,
+                  }}
+                >
                   {licenciaActiva ? (
                     <span
                       style={{
@@ -833,6 +859,9 @@ export default function SedePublica() {
                       boxSizing: 'border-box',
                       paddingLeft: '2px',
                       paddingRight: '2px',
+                      flexShrink: 0,
+                      position: 'relative',
+                      zIndex: 2,
                     }}
                   >
                     <p
@@ -844,10 +873,9 @@ export default function SedePublica() {
                         fontStyle: 'italic',
                         textAlign: 'center',
                         width: '100%',
-                        display: descExpanded ? 'block' : '-webkit-box',
-                        WebkitLineClamp: descExpanded ? 'unset' : 3,
-                        WebkitBoxOrient: 'vertical',
+                        display: 'block',
                         overflow: descExpanded ? 'visible' : 'hidden',
+                        maxHeight: descExpanded ? 'none' : '4.5em',
                       }}
                     >
                       {desc}
