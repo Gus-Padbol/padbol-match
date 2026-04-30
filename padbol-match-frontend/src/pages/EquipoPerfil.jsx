@@ -25,14 +25,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 function userIdsDesdeJugadoresEquipo(raw) {
   const ids = new Set();
   for (const p of raw) {
-    const uid = String(p?.id || '').trim();
+    const uid = String(p?.user_id || p?.id || '').trim();
     if (uid && UUID_RE.test(uid)) ids.add(uid);
   }
   return [...ids];
 }
 
 function mergeJugadorConPerfil(p, perfilPorUserId) {
-  const uid = String(p?.id || '').trim();
+  const uid = String(p?.user_id || p?.id || '').trim();
   const perfil = uid && perfilPorUserId && perfilPorUserId[uid];
   if (!perfil) return p;
   const str = (v) => String(v ?? '').trim();
