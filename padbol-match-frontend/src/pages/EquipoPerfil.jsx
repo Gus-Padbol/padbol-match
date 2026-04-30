@@ -75,7 +75,7 @@ function parsePaisDisplay(p) {
   if (/^\p{Extended_Pictographic}+$/u.test(maybeFlag)) {
     return { flag: maybeFlag, name: parts.slice(1).join(' ').trim() };
   }
-  return { flag: '🏳️', name: raw };
+  return { flag: '', name: raw };
 }
 
 function emojiMedalla(pos) {
