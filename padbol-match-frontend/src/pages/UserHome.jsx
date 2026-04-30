@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -8,26 +8,75 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { getDisplayName } from '../utils/displayName';
-import { formatAliasConArroba } from '../utils/jugadorPerfil';
+import { nombreDesdeFilaJugadoresPerfil } from '../utils/displayName';
+import { formatAliasConArroba, PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
+import { supabase } from '../supabaseClient';
+
+function parteLocalEmail(email) {
+  const em = String(email || '').trim();
+  if (!em.includes('@')) return '';
+  return em.split('@')[0].trim() || '';
+}
+
+/** Saludo hub: alias → nombre perfil → parte local del email; nunca "jugador". */
+function textoSaludoDesdePerfilHub(jpRow, emailSesion) {
+  const em = String(emailSesion || '').trim();
+  const local = parteLocalEmail(em);
+  const alias = String(jpRow?.alias || '').trim();
+  if (alias) return formatAliasConArroba(alias);
+  const nombrePerfil = nombreDesdeFilaJugadoresPerfil(jpRow, em).trim();
+  if (nombrePerfil) {
+    const first = nombrePerfil.split(/\s+/).filter(Boolean)[0] || '';
+    if (first && first.toLowerCase() !== 'jugador') return first;
+    if (nombrePerfil.length > 0 && nombrePerfil.toLowerCase() !== 'jugador') return nombrePerfil;
+  }
+  if (local && local.toLowerCase() !== 'jugador') return local;
+  if (em) return local || 'Cuenta';
+  return 'Cuenta';
+}
+
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+  const [perfilHubRow, setPerfilHubRow] = useState(null);
+
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) {
+      setPerfilHubRow(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const load = () => {
+      supabase
+        .from('jugadores_perfil')
+        .select('alias,nombre,apellido,email')
+        .eq('user_id', uid)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (cancelled) return;
+          if (error) {
+            console.warn('[UserHome] jugadores_perfil', error.message);
+            setPerfilHubRow(null);
+            return;
+          }
+          setPerfilHubRow(data && typeof data === 'object' ? data : null);
+        });
+    };
+    load();
+    window.addEventListener(PERFIL_CHANGE_EVENT, load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(PERFIL_CHANGE_EVENT, load);
+    };
+  }, [session?.user?.id]);
 
   const nombreSaludoHub = useMemo(() => {
     if (!session?.user) return '';
-    const alias = String(userProfile?.alias || '').trim();
-    if (alias) return formatAliasConArroba(alias);
-    const full = String(getDisplayName(userProfile, session) || '').trim();
-    if (full) {
-      const first = full.split(/\s+/).filter(Boolean)[0];
-      if (first) return first;
-    }
-    const em = String(session.user.email || '').trim();
-    return em || 'Cuenta';
-  }, [session?.user, userProfile]);
+    return textoSaludoDesdePerfilHub(perfilHubRow, session.user.email);
+  }, [session?.user, perfilHubRow]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },

@@ -11,12 +11,13 @@ export function authUrlWithRedirect(pathnameAndSearch) {
 }
 
 /**
- * Tras login desde el hub (`/`, `/hub`, …): ir al perfil.
- * Desde otra ruta: volver a la misma URL (pathname + search).
+ * Valor de `?redirect=` al abrir login desde el hub (`/`, `/hub`, …): vuelve al hub (`/`).
+ * Desde otra ruta: conservar pathname + search para volver tras login.
+ * El destino final lo decide `AccesoCuenta` (por defecto `/` si no hay `redirect=`).
  */
 export function loginRedirectAfterHubEntry(location) {
   const path = String(location?.pathname || '/').replace(/\/+$/, '') || '/';
   const hubRoots = ['/', '/hub', '/inicio', '/home'];
-  if (hubRoots.includes(path)) return '/mi-perfil';
+  if (hubRoots.includes(path)) return '/';
   return authLoginRedirectPath(location);
 }

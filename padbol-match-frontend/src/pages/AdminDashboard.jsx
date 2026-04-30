@@ -21,6 +21,22 @@ import { getCroppedImgBlob } from '../utils/cropImage';
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
+const MAX_FOTOS_SEDE = 20;
+
+function normalizeHexSedeAdmin(raw) {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  if (/^#[0-9A-Fa-f]{6}$/i.test(s)) return s;
+  if (/^#[0-9A-Fa-f]{3}$/i.test(s)) {
+    const r = s[1];
+    const g = s[2];
+    const b = s[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  return null;
+}
+
 /** Muestra "3ra" en lugar de "3" en validaciones y fichas. */
 function formatNivelValidacionDisplay(raw) {
   const s = String(raw ?? '').trim();
@@ -726,6 +742,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [logoCropZoom, setLogoCropZoom] = useState(1);
   const [logoCropAreaListo, setLogoCropAreaListo] = useState(false);
   const logoCropPixelsRef = useRef(null);
+  const colorFondoLogoSaveTimerRef = useRef(null);
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
@@ -762,6 +779,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           twitter:          sedeData.twitter    || '',
           youtube:          sedeData.youtube    || '',
           website:          sedeData.website    || '',
+          color_fondo_logo: normalizeHexSedeAdmin(sedeData.color_fondo_logo) || '#000000',
         });
         setLicenciaForm({
           numero_licencia: sedeData.numero_licencia || '',
@@ -784,6 +802,26 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       .maybeSingle()
       .then(({ data }) => { if (data) setSedeStatus(data); });
   }, [sedeId, esAdminClub]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const schedulePersistColorFondoLogo = useCallback(
+    (hex) => {
+      if (!sedeId) return;
+      if (colorFondoLogoSaveTimerRef.current) window.clearTimeout(colorFondoLogoSaveTimerRef.current);
+      colorFondoLogoSaveTimerRef.current = window.setTimeout(async () => {
+        colorFondoLogoSaveTimerRef.current = null;
+        const v = normalizeHexSedeAdmin(hex) || '#000000';
+        const { error } = await supabase.from('sedes').update({ color_fondo_logo: v }).eq('id', sedeId);
+        if (!error) {
+          setMiSede((prev) => (prev ? { ...prev, color_fondo_logo: v } : prev));
+          setLogoMsg('✅ Color del logo guardado');
+          window.setTimeout(() => setLogoMsg(''), 2500);
+        } else {
+          setLogoMsg(`⚠️ ${error.message}`);
+        }
+      }, 400);
+    },
+    [sedeId]
+  );
 
   const guardarMiSede = async () => {
     setMiSedeSaving(true); setMiSedeMsg('');
@@ -810,6 +848,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       twitter:          miSedeForm.twitter    || null,
       youtube:          miSedeForm.youtube    || null,
       website:          miSedeForm.website    || null,
+      color_fondo_logo: normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000',
     }).eq('id', sedeId);
     setMiSedeSaving(false);
     setMiSedeMsg(error ? `⚠️ ${error.message}` : '✅ Sede actualizada');
@@ -910,7 +949,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const subirFoto = async (file) => {
     if (!file) return;
-    if (fotosUrls.length >= 4) { setFotosMsg('⚠️ Máximo 4 fotos permitidas'); return; }
+    if (fotosUrls.length >= MAX_FOTOS_SEDE) {
+      setFotosMsg(`⚠️ Máximo ${MAX_FOTOS_SEDE} fotos permitidas`);
+      return;
+    }
     if (file.size > 2 * 1024 * 1024) { setFotosMsg('⚠️ El archivo supera los 2MB'); return; }
     setFotosUploading(true); setFotosMsg('');
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -2581,11 +2623,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <p style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 700, color: '#1e1b4b' }}>Logo del club</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
               {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt="Logo del club"
-                  style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '10px', border: '1px solid #e5e7eb', background: '#f9fafb' }}
-                />
+                <div
+                  style={{
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb',
+                    background: normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <img
+                    src={logoUrl}
+                    alt="Logo del club"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                  />
+                </div>
               ) : (
                 <div style={{ width: '100px', height: '100px', borderRadius: '10px', border: '2px dashed #d1d5db', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '4px' }}>
                   <span style={{ fontSize: '28px' }}>🏟️</span>
@@ -2614,6 +2670,27 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </label>
                 <span style={{ fontSize: '12px', color: '#9ca3af' }}>JPG, PNG o WEBP · máx. 2MB</span>
                 <span style={{ fontSize: '11px', color: '#c4b5fd', lineHeight: 1.4 }}>💡 Recomendado: PNG transparente, mín. 300×300 px</span>
+                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e5e7eb', width: '100%', maxWidth: '320px' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                    Fondo del logo en la página pública de la sede
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <input
+                      type="color"
+                      aria-label="Color de fondo del logo"
+                      value={normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000'}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setMiSedeForm((prev) => ({ ...prev, color_fondo_logo: v }));
+                        schedulePersistColorFondoLogo(v);
+                      }}
+                      style={{ width: '48px', height: '40px', padding: 0, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: '#fff' }}
+                    />
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                      Se aplica detrás del logo en el hero. Por defecto negro (#000000).
+                    </span>
+                  </div>
+                </div>
                 {logoMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: logoMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{logoMsg}</span>}
               </div>
             </div>
@@ -2624,9 +2701,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
               <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#1e1b4b' }}>
                 Fotos de las canchas
-                <span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af', marginLeft: '8px' }}>({fotosUrls.length}/4)</span>
+                <span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af', marginLeft: '8px' }}>
+                  ({fotosUrls.length}/{MAX_FOTOS_SEDE})
+                </span>
               </p>
-              {fotosUrls.length < 4 && (
+              {fotosUrls.length < MAX_FOTOS_SEDE && (
                 <label style={{
                   display: 'inline-block', padding: '7px 16px',
                   background: fotosUploading ? '#e5e7eb' : 'linear-gradient(135deg, #4f46e5, #3730a3)',

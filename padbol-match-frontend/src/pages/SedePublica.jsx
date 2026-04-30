@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
 } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -18,8 +19,8 @@ const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-/** Azul Francia — hero sede público (sin negro/gris muy oscuro). */
-const HERO_AZUL_FRANCIA = '#0055A4';
+const FOTOS_DESTACADAS_MAX = 4;
+
 function normalizeHexColor(raw) {
   if (raw == null) return null;
   const s = String(raw).trim();
@@ -34,9 +35,13 @@ function normalizeHexColor(raw) {
   return null;
 }
 
-/** Fondo hero sede pública: azul Francia fijo (pedido de producto). */
+/** Marco exterior del hero: mismo gradiente violeta que el resto de la app. */
 function heroBackgroundSedePublica() {
-  return HERO_AZUL_FRANCIA;
+  return PADBOL_PAGE_GRADIENT;
+}
+
+function colorFondoLogoSede(sedeRow) {
+  return normalizeHexColor(sedeRow?.color_fondo_logo) || '#000000';
 }
 
 /** Tamaño del título del club en el hero según longitud del nombre. */
@@ -75,51 +80,180 @@ function buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud) {
   return buildMapsSearchHref(direccion, ciudad, pais);
 }
 
-/** Carrusel horizontal: fotos altura fija, ancho proporcional. */
-function PhotoStrip({ fotos }) {
-  if (!fotos.length) return null;
+/** Primeras fotos en carrusel destacado (scroll-snap). */
+function SedeFotosCarruselDestacado({ urls, onOpenAtIndex }) {
+  const slice = urls.slice(0, Math.min(FOTOS_DESTACADAS_MAX, urls.length));
+  if (!slice.length) return null;
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '10px',
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
+          paddingBottom: '6px',
+          paddingLeft: '2px',
+          paddingRight: '2px',
+          boxSizing: 'border-box',
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+        }}
+      >
+        {slice.map((url, i) => (
+          <button
+            key={`${url}-${i}`}
+            type="button"
+            onClick={() => onOpenAtIndex(i)}
+            style={{
+              flex: '0 0 min(88vw, 340px)',
+              scrollSnapAlign: 'center',
+              height: PHOTO_STRIP_H,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              background: '#e2e8f0',
+              boxShadow: '0 2px 10px rgba(15, 23, 42, 0.15)',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              position: 'relative',
+            }}
+          >
+            <img
+              src={url}
+              alt={`Foto ${i + 1}`}
+              style={{
+                width: '100%',
+                height: PHOTO_STRIP_H,
+                display: 'block',
+                objectFit: 'cover',
+              }}
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
+  const touchStartX = useRef(null);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onIndexChange((i) => Math.max(0, i - 1));
+      if (e.key === 'ArrowRight') onIndexChange((i) => Math.min(fotos.length - 1, i + 1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [fotos.length, onClose, onIndexChange]);
+
+  if (!fotos.length || index < 0 || index >= fotos.length) return null;
+
+  const url = fotos[index];
+
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Galería de fotos"
       style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 20000,
+        background: 'rgba(0,0,0,0.92)',
         display: 'flex',
-        gap: '8px',
-        overflowX: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        marginBottom: '16px',
-        paddingBottom: '2px',
-        paddingLeft: '4px',
-        paddingRight: '4px',
-        boxSizing: 'border-box',
-        width: '100%',
-        maxWidth: '100%',
-        minWidth: 0,
+        flexDirection: 'column',
+        touchAction: 'pan-y',
+      }}
+      onTouchStart={(e) => {
+        touchStartX.current = e.touches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(e) => {
+        const start = touchStartX.current;
+        touchStartX.current = null;
+        if (start == null) return;
+        const end = e.changedTouches[0]?.clientX;
+        if (end == null) return;
+        const dx = end - start;
+        if (dx < -48) onIndexChange(Math.min(fotos.length - 1, index + 1));
+        else if (dx > 48) onIndexChange(Math.max(0, index - 1));
       }}
     >
-      {fotos.map((url, i) => (
-        <div
-          key={`${url}-${i}`}
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 14px',
+          paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))',
+        }}
+      >
+        <span style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: 700 }}>
+          {index + 1} / {fotos.length}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
           style={{
-            flexShrink: 0,
-            height: PHOTO_STRIP_H,
+            padding: '8px 14px',
             borderRadius: '10px',
-            overflow: 'hidden',
-            background: '#e2e8f0',
-            boxShadow: '0 1px 4px rgba(15, 23, 42, 0.12)',
+            border: '1px solid rgba(248,250,252,0.35)',
+            background: 'rgba(15,23,42,0.5)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '14px',
+            cursor: 'pointer',
           }}
         >
-          <img
-            src={url}
-            alt={`Foto ${i + 1}`}
-            style={{
-              height: PHOTO_STRIP_H,
-              width: 'auto',
-              maxWidth: 'min(78vw, 280px)',
-              display: 'block',
-              objectFit: 'cover',
-            }}
-          />
-        </div>
-      ))}
+          Cerrar
+        </button>
+      </div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '8px 12px calc(12px + env(safe-area-inset-bottom, 0px))',
+          boxSizing: 'border-box',
+        }}
+      >
+        <img
+          src={url}
+          alt={`Foto ${index + 1}`}
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain',
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}
+          draggable={false}
+        />
+      </div>
+      <p
+        style={{
+          margin: 0,
+          padding: '10px 16px calc(14px + env(safe-area-inset-bottom, 0px))',
+          textAlign: 'center',
+          color: 'rgba(248,250,252,0.65)',
+          fontSize: '12px',
+          fontWeight: 600,
+        }}
+      >
+        Deslizá hacia los lados para cambiar de foto
+      </p>
     </div>
   );
 }
@@ -553,6 +687,8 @@ export default function SedePublica() {
   const [sede, setSede] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [fotosGalleryOpen, setFotosGalleryOpen] = useState(false);
+  const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
   useEffect(() => {
     if (!sedeId) {
       setError('No se recibió un ID de sede.');
@@ -654,6 +790,7 @@ export default function SedePublica() {
         const torneosCtaLabel = `Ver torneos de ${nombreSedeCta}`;
 
         return (
+          <>
           <div
             style={{
               flex: 1,
@@ -741,13 +878,13 @@ export default function SedePublica() {
                       flexShrink: 0,
                       alignSelf: 'stretch',
                       borderRadius: '12px',
-                      background: 'rgba(15, 23, 42, 0.28)',
+                      background: colorFondoLogoSede(sede),
                       boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       overflow: 'hidden',
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12)',
                     }}
                   >
                     {sede.logo_url ? (
@@ -883,7 +1020,39 @@ export default function SedePublica() {
             </div>
 
             <div style={{ maxWidth: '700px', margin: '0 auto', padding: '10px 14px 0' }}>
-              <PhotoStrip fotos={fotos} />
+              <SedeFotosCarruselDestacado
+                urls={fotos}
+                onOpenAtIndex={(i) => {
+                  setFotosGalleryIndex(i);
+                  setFotosGalleryOpen(true);
+                }}
+              />
+              {fotos.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFotosGalleryIndex(0);
+                    setFotosGalleryOpen(true);
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    maxWidth: '100%',
+                    marginBottom: '16px',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    background: 'rgba(255,255,255,0.14)',
+                    color: '#f8fafc',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  Ver todas las fotos ({fotos.length})
+                </button>
+              ) : null}
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
 
@@ -971,6 +1140,16 @@ export default function SedePublica() {
               </div>
             </div>
           </div>
+
+          {fotosGalleryOpen ? (
+            <SedeFotosLightbox
+              fotos={fotos}
+              index={fotosGalleryIndex}
+              onClose={() => setFotosGalleryOpen(false)}
+              onIndexChange={setFotosGalleryIndex}
+            />
+          ) : null}
+          </>
         );
       })()}
       <BottomNav />
