@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { formatNivelTorneo } from '../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
@@ -19,12 +20,30 @@ function safeJugadores(eq) {
   return Array.isArray(j) ? j : [];
 }
 
-function jugadorLabel(p) {
-  const alias = String(p?.alias || '').trim();
-  if (alias) return formatAliasConArroba(alias);
-  const full = nombreCompletoJugadorPerfil(p);
-  if (full) return full;
-  return String(p?.nombre || 'Jugador').trim() || 'Jugador';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function userIdsDesdeJugadoresEquipo(raw) {
+  const ids = new Set();
+  for (const p of raw) {
+    const uid = String(p?.id || '').trim();
+    if (uid && UUID_RE.test(uid)) ids.add(uid);
+  }
+  return [...ids];
+}
+
+function mergeJugadorConPerfil(p, perfilPorUserId) {
+  const uid = String(p?.id || '').trim();
+  const perfil = uid && perfilPorUserId && perfilPorUserId[uid];
+  if (!perfil) return p;
+  const str = (v) => String(v ?? '').trim();
+  return {
+    ...p,
+    pais: str(perfil.pais) ? perfil.pais : p.pais,
+    foto_url: str(perfil.foto_url) ? perfil.foto_url : p.foto_url,
+    alias: str(perfil.alias) ? perfil.alias : p.alias,
+    nombre: str(perfil.nombre) ? perfil.nombre : p.nombre,
+    apellido: str(perfil.apellido) ? perfil.apellido : p.apellido,
+  };
 }
 
 function slugJugador(p) {
@@ -121,6 +140,7 @@ export default function EquipoPerfil() {
   const [loading, setLoading] = useState(true);
   const [equipo, setEquipo] = useState(null);
   const [historial, setHistorial] = useState([]);
+  const [perfilPorUserId, setPerfilPorUserId] = useState({});
 
   const shellStyle = useMemo(
     () => ({
@@ -130,7 +150,7 @@ export default function EquipoPerfil() {
       paddingLeft: 12,
       paddingRight: 12,
       boxSizing: 'border-box',
-      background: 'linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)',
+      background: 'linear-gradient(135deg,#667eea,#764ba2)',
     }),
     [location.pathname]
   );
@@ -143,12 +163,14 @@ export default function EquipoPerfil() {
         if (!cancelled) {
           setEquipo(null);
           setHistorial([]);
+          setPerfilPorUserId({});
           setLoading(false);
         }
         return;
       }
 
       setLoading(true);
+      setPerfilPorUserId({});
       const { data: eq, error: eqErr } = await supabase
         .from('equipos')
         .select('id, nombre, foto_url, jugadores, torneo_id')
@@ -159,11 +181,33 @@ export default function EquipoPerfil() {
       if (eqErr || !eq) {
         setEquipo(null);
         setHistorial([]);
+        setPerfilPorUserId({});
         setLoading(false);
         return;
       }
 
       setEquipo(eq);
+
+      const rawJugadores = safeJugadores(eq);
+      const uids = userIdsDesdeJugadoresEquipo(rawJugadores);
+      if (uids.length > 0) {
+        const { data: perfiles, error: perfilErr } = await supabase
+          .from('jugadores_perfil')
+          .select('user_id, pais, foto_url, alias, nombre, apellido')
+          .in('user_id', uids);
+        if (cancelled) return;
+        if (perfilErr) {
+          console.error('[EquipoPerfil] jugadores_perfil', perfilErr);
+          setPerfilPorUserId({});
+        } else {
+          const map = Object.fromEntries(
+            (perfiles || []).map((row) => [String(row.user_id), row])
+          );
+          setPerfilPorUserId(map);
+        }
+      } else if (!cancelled) {
+        setPerfilPorUserId({});
+      }
 
       const { data: rows, error: rowErr } = await supabase
         .from('tabla_puntos')
@@ -213,26 +257,49 @@ export default function EquipoPerfil() {
     };
   }, [id]);
 
-  const jugadores = useMemo(() => safeJugadores(equipo), [equipo]);
+  const jugadores = useMemo(() => {
+    const raw = safeJugadores(equipo);
+    return raw.map((p) => mergeJugadorConPerfil(p, perfilPorUserId));
+  }, [equipo, perfilPorUserId]);
+
+  const cardWhite = {
+    background: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    border: '1px solid rgba(255,255,255,0.35)',
+    boxShadow: '0 8px 28px rgba(15,23,42,0.12)',
+  };
 
   return (
     <div style={shellStyle}>
       <AppHeader title="Equipo" />
-      <div style={{ maxWidth: 760, margin: '0 auto' }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 18, border: '1px solid #e2e8f0', boxShadow: '0 6px 22px rgba(15,23,42,0.08)' }}>
-          {loading ? (
+      <img
+        src="/logo-padbol-match.png"
+        alt="Padbol Match"
+        style={{
+          ...padbolLogoImgStyle,
+          width: 64,
+          maxWidth: 64,
+          margin: '6px auto 14px',
+        }}
+      />
+      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {loading ? (
+          <div style={cardWhite}>
             <p style={{ margin: 0, color: '#64748b' }}>Cargando equipo...</p>
-          ) : !equipo ? (
+          </div>
+        ) : !equipo ? (
+          <div style={cardWhite}>
             <p style={{ margin: 0, color: '#b91c1c', fontWeight: 700 }}>No se encontró el equipo.</p>
-          ) : (
-            <>
+          </div>
+        ) : (
+          <>
               <div
                 style={{
-                  marginBottom: 14,
-                  borderRadius: 14,
+                  ...cardWhite,
+                  marginBottom: 0,
                   padding: '16px 14px',
-                  background: 'linear-gradient(180deg, #ede9fe 0%, #eef2ff 60%, #ffffff 100%)',
-                  border: '1px solid #ddd6fe',
+                  background: '#fff',
                 }}
               >
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
@@ -260,9 +327,7 @@ export default function EquipoPerfil() {
               </h1>
               </div>
 
-              <div style={{ height: 1, background: '#e2e8f0', margin: '4px 0 12px' }} />
-
-              <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{ ...cardWhite, padding: 14, display: 'grid', gap: 10 }}>
                 {jugadores.map((p, idx) => {
                   const aliasLabel = jugadorAliasLabel(p);
                   const fullName = jugadorNombreCompleto(p);
@@ -276,7 +341,7 @@ export default function EquipoPerfil() {
                       onClick={() => navigate(`/jugador/${slug}`)}
                       style={{
                         border: '1px solid #e2e8f0',
-                        background: '#f8fafc',
+                        background: '#fff',
                         borderRadius: 12,
                         padding: '8px 10px',
                         display: 'flex',
@@ -327,8 +392,7 @@ export default function EquipoPerfil() {
               </div>
 
               {historial.length > 0 ? (
-                <div style={{ marginTop: 18 }}>
-                  <div style={{ height: 1, background: '#e2e8f0', margin: '0 0 12px' }} />
+                <div style={{ ...cardWhite, marginTop: 0 }}>
                   <h3 style={{ margin: '0 0 10px', color: '#334155', fontSize: 16 }}>{`🏆 Historial del equipo (${historial.length} torneos)`}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {historial.map((h) => (
@@ -339,7 +403,7 @@ export default function EquipoPerfil() {
                         style={{
                           width: '100%',
                           border: '1px solid #e2e8f0',
-                          background: '#f1f5f9',
+                          background: '#fff',
                           borderRadius: 10,
                           padding: '8px 12px',
                           display: 'flex',
@@ -371,7 +435,6 @@ export default function EquipoPerfil() {
               ) : null}
             </>
           )}
-        </div>
       </div>
       <BottomNav />
     </div>
