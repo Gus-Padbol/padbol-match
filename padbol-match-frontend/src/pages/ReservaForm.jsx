@@ -28,6 +28,50 @@ function getPrecio(sede, hora) {
     : Number(sede.precio_tarde  || base);
 }
 
+/** Primera URL de `fotos_urls` o imagen legacy. */
+function primeraFotoSede(sede) {
+  const arr = sede?.fotos_urls;
+  if (Array.isArray(arr)) {
+    for (const item of arr) {
+      const u = String(item || '').trim();
+      if (u) return u;
+    }
+  }
+  const alt = String(sede?.imagen_url || sede?.foto_url || sede?.foto || '').trim();
+  return alt || null;
+}
+
+function horarioDisponibleTexto(sede) {
+  const a = String(sede?.horario_apertura || '').trim() || '10:00';
+  const c = String(sede?.horario_cierre || '').trim() || '23:00';
+  return `Turnos ${a} – ${c}`;
+}
+
+/** Precio mínimo por turno para mostrar en card (mañana/tarde o base). */
+function precioDesdeCard(sede) {
+  const base = Number(sede?.precio_por_reserva || sede?.precio_turno || 0);
+  const m = Number(sede?.precio_manana);
+  const t = Number(sede?.precio_tarde);
+  if (Number.isFinite(m) && m > 0 && Number.isFinite(t) && t > 0) return Math.min(m, t);
+  if (Number.isFinite(m) && m > 0) return m;
+  if (Number.isFinite(t) && t > 0) return t;
+  return base;
+}
+
+function ciudadPaisConBandera(sede) {
+  const ciudad = String(sede?.ciudad || '').trim();
+  const raw = String(sede?.pais || '').trim();
+  if (!raw) return { linea: ciudad || '—', flag: '' };
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2 && String(parts[0]).length <= 8) {
+    return {
+      flag: parts[0],
+      linea: [ciudad, parts.slice(1).join(' ')].filter(Boolean).join(' · ') || parts.slice(1).join(' '),
+    };
+  }
+  return { flag: '', linea: [ciudad, raw].filter(Boolean).join(' · ') || raw };
+}
+
 function primerTelefonoCliente(c) {
   if (!c) return '';
   return String(c.whatsapp || c.telefono || '').trim();
@@ -408,25 +452,37 @@ export default function ReservaForm() {
     }
   }, [sedes]);
 
-  const selectCiudad = useCallback((ciudad) => {
-    setFiltros((prev) => ({ ...prev, ciudad, sede_id: '' }));
-  }, []);
-
-  const selectSedeChip = useCallback(
-    (id) => {
-      setFiltros((prev) => ({ ...prev, sede_id: id }));
-      navigate(`/sede/${id}`);
+  const abrirReservaSedeDesdeCard = useCallback(
+    (sede) => {
+      navigate(`/reservar?sedeId=${encodeURIComponent(String(sede.id))}`);
     },
     [navigate]
   );
 
+  const prevPaisCardsRef = useRef(null);
+  const [reservaCardsWave, setReservaCardsWave] = useState(0);
+
+  useEffect(() => {
+    const p = String(filtros.pais || '').trim();
+    if (!p) {
+      prevPaisCardsRef.current = null;
+      return;
+    }
+    if (prevPaisCardsRef.current !== p) {
+      prevPaisCardsRef.current = p;
+      setReservaCardsWave((w) => w + 1);
+    }
+  }, [filtros.pais]);
+
+  useEffect(() => {
+    if (sedes.length === 0 || paisesOrdenados.length !== 1) return;
+    const only = paisesOrdenados[0];
+    if (String(filtros.pais || '').trim() !== only) selectPais(only);
+  }, [sedes, paisesOrdenados, filtros.pais, selectPais]);
+
   const clearPais = useCallback(() => {
     setFiltros({ pais: '', ciudad: '', sede_id: '' });
     setCiudades([]);
-  }, []);
-
-  const clearCiudad = useCallback(() => {
-    setFiltros((prev) => ({ ...prev, ciudad: '', sede_id: '' }));
   }, []);
 
   const buscarHorariosDisponibles = useCallback(async (fecha) => {
@@ -705,13 +761,11 @@ export default function ReservaForm() {
     }
   };
 
-  // PANTALLA 1: País, Ciudad, Sede
+  // PANTALLA 1: País + cards de sedes (rediseño)
   if (pantalla === 1) {
-    const sedesFiltradas = sedes.filter(
-      (sede) =>
-        (!filtros.pais || sede.pais === filtros.pais) &&
-        (!filtros.ciudad || sede.ciudad === filtros.ciudad)
-    );
+    const sedesFiltradas = filtros.pais
+      ? sedes.filter((sede) => String(sede.pais || '').trim() === String(filtros.pais).trim())
+      : [];
 
     return (
       <div
@@ -727,27 +781,36 @@ export default function ReservaForm() {
       >
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-sede-inner">
-          <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
-            className="reserva-sede-logo"
-          />
-          <h1 className="reserva-sede-title" style={{ margin: 0, marginBottom: '20px' }}>
-            ⚽ Reserva tu Cancha de PADBOL
-          </h1>
+          <header className="reserva-sede-hero">
+            <img
+              src="/logo-padbol-match.png"
+              alt="Padbol Match"
+              className="reserva-sede-hero-logo"
+            />
+            <h1 className="reserva-sede-hero-title">Reservá tu cancha</h1>
+            <p className="reserva-sede-hero-sub">Elegí tu sede y horario favorito</p>
+          </header>
 
-          <form>
-            {sedesLoadError ? (
-              <div className="error-message" role="alert">{sedesLoadError}</div>
-            ) : null}
+          {sedesLoadError ? (
+            <div className="error-message reserva-sede-alert" role="alert">
+              {sedesLoadError}
+            </div>
+          ) : null}
 
-            <div className="reserva-field-label">País</div>
+          <label className="reserva-sede-pais-question" htmlFor="reserva-pais-select">
+            ¿Dónde querés jugar?
+          </label>
+          <div className="reserva-sede-pais-pill-shell">
+            <span className="reserva-sede-pais-pill-icon" aria-hidden>
+              🌐
+            </span>
             {paisesOrdenados.length === 1 ? (
-              <div className="reserva-pais-unico">{filtros.pais || paisesOrdenados[0]}</div>
+              <div className="reserva-sede-pais-pill-static">{filtros.pais || paisesOrdenados[0]}</div>
             ) : (
               <select
-                className="reserva-sede-native-select"
-                aria-label="País"
+                id="reserva-pais-select"
+                className="reserva-sede-pais-pill-select"
+                aria-label="¿Dónde querés jugar?"
                 value={filtros.pais || ''}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -755,7 +818,7 @@ export default function ReservaForm() {
                   else selectPais(v);
                 }}
               >
-                <option value="">Seleccioná país…</option>
+                <option value="">Elegí un país…</option>
                 {paisesOrdenados.map((p) => (
                   <option key={p} value={p}>
                     {p}
@@ -763,57 +826,65 @@ export default function ReservaForm() {
                 ))}
               </select>
             )}
+          </div>
 
-            {filtros.pais ? (
-              <>
-                <div className="reserva-field-label">Ciudad</div>
-                <select
-                  className="reserva-sede-native-select"
-                  aria-label="Ciudad"
-                  value={filtros.ciudad || ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (!v) clearCiudad();
-                    else selectCiudad(v);
-                  }}
-                  disabled={ciudades.length === 0}
-                >
-                  <option value="">Seleccioná ciudad…</option>
-                  {ciudades.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </>
-            ) : null}
+          {filtros.pais ? (
+            <div key={reservaCardsWave} className="reserva-sede-cards-root">
+              {sedesFiltradas.length === 0 ? (
+                <p className="reserva-sede-empty-pais">Próximamente en tu país 🌎</p>
+              ) : (
+                <ul className="reserva-sede-cards-list">
+                  {sedesFiltradas.map((sede, idx) => {
+                    const foto = primeraFotoSede(sede);
+                    const { flag, linea } = ciudadPaisConBandera(sede);
+                    const precio = precioDesdeCard(sede);
+                    const moneda = String(sede.moneda || 'ARS').trim() || 'ARS';
+                    return (
+                      <li
+                        key={sede.id}
+                        className="reserva-sede-card"
+                        style={{ '--reserva-stagger': `${idx * 80}ms` }}
+                      >
+                        <div className="reserva-sede-card-photo-wrap">
+                          {foto ? (
+                            <img src={foto} alt="" className="reserva-sede-card-photo" loading="lazy" />
+                          ) : (
+                            <div className="reserva-sede-card-photo-placeholder" aria-hidden>
+                              ⚽
+                            </div>
+                          )}
+                        </div>
+                        <div className="reserva-sede-card-body">
+                          <h2 className="reserva-sede-card-name">{String(sede.nombre || 'Sede').trim()}</h2>
+                          <p className="reserva-sede-card-loc">
+                            {flag ? <span className="reserva-sede-card-flag">{flag}</span> : null}
+                            <span>{linea}</span>
+                          </p>
+                          <p className="reserva-sede-card-hours">{horarioDisponibleTexto(sede)}</p>
+                          <p className="reserva-sede-card-price">
+                            Desde{' '}
+                            <strong>
+                              {Number(precio || 0).toLocaleString('es-AR')} {moneda}
+                            </strong>{' '}
+                            / turno
+                          </p>
+                          <button
+                            type="button"
+                            className="reserva-sede-card-btn"
+                            onClick={() => abrirReservaSedeDesdeCard(sede)}
+                          >
+                            Reservar
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          ) : null}
 
-            {filtros.pais && filtros.ciudad ? (
-              <>
-                <div className="reserva-field-label">Sede</div>
-                <select
-                  className="reserva-sede-native-select"
-                  aria-label="Sede"
-                  value={filtros.sede_id !== '' && filtros.sede_id != null ? String(filtros.sede_id) : ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (!v) setFiltros((prev) => ({ ...prev, sede_id: '' }));
-                    else selectSedeChip(Number(v));
-                  }}
-                  disabled={sedesFiltradas.length === 0}
-                >
-                  <option value="">Seleccioná sede…</option>
-                  {sedesFiltradas.map((s) => (
-                    <option key={s.id} value={String(s.id)}>
-                      {s.nombre}
-                    </option>
-                  ))}
-                </select>
-              </>
-            ) : null}
-
-            {error && <div className="error-message">{error}</div>}
-          </form>
+          {error ? <div className="error-message reserva-sede-alert">{error}</div> : null}
         </div>
         <BottomNav />
       </div>
