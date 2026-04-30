@@ -8,6 +8,7 @@ import TorneoTabbedView, {
   safeJugadores,
 } from '../components/torneo/TorneoTabbedView';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import '../styles/TorneoVista.css';
@@ -290,6 +291,14 @@ export default function TorneoVista() {
       }}
     >
       <AppHeader title="Torneo" />
+      <img
+        src="/logo-padbol-match.png"
+        alt="Padbol Match"
+        style={{
+          ...padbolLogoImgStyle,
+          margin: '6px auto 10px',
+        }}
+      />
       <TorneoTabbedView
         torneo={torneo}
         equipos={equipos}
@@ -303,7 +312,7 @@ export default function TorneoVista() {
         clasificacionFinalFilas={clasificacionFinalFilas}
         adminTorneoBar={adminTorneoBar}
         stickyTop={hubContentPaddingTopCss(location.pathname)}
-        showTorneoLogo
+        showTorneoLogo={false}
       />
       <BottomNav />
     </div>

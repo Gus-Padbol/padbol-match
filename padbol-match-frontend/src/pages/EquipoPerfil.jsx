@@ -189,13 +189,20 @@ export default function EquipoPerfil() {
       setEquipo(eq);
 
       const rawJugadores = safeJugadores(eq);
+      console.log('[EquipoPerfil] jugadores raw (desde equipo.jugadores)', rawJugadores);
       const uids = userIdsDesdeJugadoresEquipo(rawJugadores);
+      console.log('[EquipoPerfil] userIds extraídos para join jugadores_perfil', uids);
       if (uids.length > 0) {
         const { data: perfiles, error: perfilErr } = await supabase
           .from('jugadores_perfil')
           .select('user_id, pais, foto_url, alias, nombre, apellido')
           .in('user_id', uids);
         if (cancelled) return;
+        console.log('[EquipoPerfil] jugadores_perfil join resultado', {
+          error: perfilErr,
+          rows: perfiles,
+          rowCount: Array.isArray(perfiles) ? perfiles.length : 0,
+        });
         if (perfilErr) {
           console.error('[EquipoPerfil] jugadores_perfil', perfilErr);
           setPerfilPorUserId({});
@@ -203,9 +210,13 @@ export default function EquipoPerfil() {
           const map = Object.fromEntries(
             (perfiles || []).map((row) => [String(row.user_id), row])
           );
+          const mergedPreview = rawJugadores.map((p) => mergeJugadorConPerfil(p, map));
+          console.log('[EquipoPerfil] mapa user_id → perfil', map);
+          console.log('[EquipoPerfil] jugadores tras merge (preview)', mergedPreview);
           setPerfilPorUserId(map);
         }
       } else if (!cancelled) {
+        console.log('[EquipoPerfil] sin userIds UUID; no se consulta jugadores_perfil');
         setPerfilPorUserId({});
       }
 

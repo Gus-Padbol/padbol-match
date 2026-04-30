@@ -865,20 +865,17 @@ export default function TorneoTabbedView({
                   )}
                 </div>
                 {!sinEquipo ? (
-                  <div
-                    className={`podium-player-avatars ${
-                      (Array.isArray(fila.jugadores) ? fila.jugadores : []).slice(0, 4).length >= 3
-                        ? 'podium-player-avatars--grid'
-                        : 'podium-player-avatars--row'
-                    }`}
-                    aria-hidden
-                  >
+                  <div className="podium-player-avatars" aria-hidden>
                     {(Array.isArray(fila.jugadores) ? fila.jugadores : [])
                       .slice(0, 4)
                       .map((p, idx) => {
                         const a = avatarJugadorPodio(p);
                         return (
-                          <div key={`${a.label}-${idx}`} className="podium-player-avatar-wrap">
+                          <div
+                            key={`${a.label}-${idx}`}
+                            className="podium-player-avatar-wrap"
+                            style={{ zIndex: idx + 1 }}
+                          >
                             {a.foto ? (
                               <img src={a.foto} alt="" className="podium-player-avatar" loading="lazy" referrerPolicy="no-referrer" />
                             ) : (

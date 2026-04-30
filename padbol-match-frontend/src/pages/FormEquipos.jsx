@@ -2256,6 +2256,7 @@ export default function FormEquipos() {
             navigate={navigate}
             session={session}
             isAdmin={false}
+            showTorneoLogo={false}
             clasificacionFinalFilas={
               torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
             }
