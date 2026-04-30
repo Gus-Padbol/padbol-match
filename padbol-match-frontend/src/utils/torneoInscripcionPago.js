@@ -18,6 +18,12 @@ export function etiquetaInscripcionEstado(estado) {
   return estado === 'confirmado' ? 'Inscripción confirmada' : 'Inscripción pendiente de pago';
 }
 
+/** Nuevas inscripciones / equipos: solo antes de que el torneo esté en curso o terminado. */
+export function torneoPermiteNuevasInscripciones(torneo) {
+  const e = String(torneo?.estado || '').toLowerCase();
+  return e !== 'finalizado' && e !== 'cancelado' && e !== 'en_curso';
+}
+
 /**
  * Crea preferencia MP y redirige al checkout.
  * @returns {{ ok: true } | { ok: false, error: string }}

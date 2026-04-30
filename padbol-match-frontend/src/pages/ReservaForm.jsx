@@ -1068,7 +1068,7 @@ export default function ReservaForm() {
       >
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div className="reserva-card">
-          <h1 style={{ margin: 0, marginBottom: '20px' }}>🎾 Resumen de reserva</h1>
+          <h1 style={{ margin: 0, marginBottom: '20px' }}>⚽ Resumen de reserva</h1>
 
           <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
             <p style={{ margin: '0 0 8px' }}><strong>📍 Sede:</strong> {sedeSeleccionada?.nombre}</p>

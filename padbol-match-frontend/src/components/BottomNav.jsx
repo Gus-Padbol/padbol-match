@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import useUserRole from '../hooks/useUserRole';
+import { readAdminNavContext } from '../utils/adminNavContext';
 import {
   HUB_NAV_HEIGHT_PX,
   hubBottomNavFixedTopCss,
@@ -11,8 +13,25 @@ import {
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { loading: authLoading } = useAuth();
+  const { loading: authLoading, session } = useAuth();
   const path = location.pathname;
+  const pathOnly = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+  const adminTabActivo = new URLSearchParams(location.search).get('tab') || 'resumen';
+
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { rol } = useUserRole(currentCliente);
+
+  const adminClubContext =
+    rol === 'admin_club' &&
+    (pathOnly === '/admin' ||
+      pathOnly.startsWith('/admin/') ||
+      pathOnly.startsWith('/torneo') ||
+      Boolean(location.state?.fromAdmin) ||
+      readAdminNavContext());
 
   if (isHubNavBarHiddenPathname(path)) return null;
 
@@ -29,42 +48,90 @@ const BottomNav = () => {
     return x === '/' || x === '/inicio' || x === '/hub' || x === '/home';
   };
 
-  const items = sedeSobrio
+  const items = adminClubContext
     ? [
         {
-          label: 'Inicio',
-          icon: '🏠',
-          path: '/',
-          match: matchHubInicio,
-          homePadbolLogo: isSedePublicDetailPath,
+          label: 'Resumen',
+          icon: '📊',
+          path: '/admin?tab=resumen',
+          match: (p) => {
+            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+            return x === '/admin' && adminTabActivo === 'resumen';
+          },
         },
         {
           label: 'Torneos',
           icon: '🏆',
-          path: '/torneos',
-          match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+          path: '/admin?tab=torneos',
+          match: (p) => {
+            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+            return x.startsWith('/torneo') || (x === '/admin' && adminTabActivo === 'torneos');
+          },
         },
-        { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
-        { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+        {
+          label: 'Reservas',
+          icon: '⚽',
+          path: '/admin?tab=reservas',
+          match: (p) => {
+            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+            return x === '/admin' && adminTabActivo === 'reservas';
+          },
+        },
+        {
+          label: 'Validaciones',
+          icon: '⏳',
+          path: '/admin?tab=validaciones',
+          match: (p) => {
+            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+            return x === '/admin' && adminTabActivo === 'validaciones';
+          },
+        },
+        {
+          label: 'Mi Sede',
+          icon: '🏟️',
+          path: '/admin?tab=mi_sede',
+          match: (p) => {
+            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+            return x === '/admin' && adminTabActivo === 'mi_sede';
+          },
+        },
       ]
-    : [
-        { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
-        {
-          label: 'Torneos',
-          icon: '🏆',
-          path: '/torneos',
-          match: (p) => p === '/torneos' || p.startsWith('/torneo'),
-        },
-        { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
-        { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
-      ];
+    : sedeSobrio
+      ? [
+          {
+            label: 'Inicio',
+            icon: '🏠',
+            path: '/',
+            match: matchHubInicio,
+            homePadbolLogo: isSedePublicDetailPath,
+          },
+          {
+            label: 'Torneos',
+            icon: '🏆',
+            path: '/torneos',
+            match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+          },
+          { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
+          { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+        ]
+      : [
+          { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
+          {
+            label: 'Torneos',
+            icon: '🏆',
+            path: '/torneos',
+            match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+          },
+          { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
+          { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+        ];
 
   const go = (item) => {
     if (authLoading) return;
     navigate(item.path);
   };
 
-  const navBarStyle = sedeSobrio
+  const navBarStyle = sedeSobrio && !adminClubContext
     ? {
         background: 'rgba(0, 0, 0, 0.32)',
         backdropFilter: 'blur(10px)',
@@ -102,7 +169,7 @@ const BottomNav = () => {
       {items.map((item) => {
         const isActive = item.match(path);
 
-        const btnSobrio = sedeSobrio
+        const btnSobrio = sedeSobrio && !adminClubContext
           ? {
               background: isActive ? 'rgba(34, 197, 94, 0.28)' : 'transparent',
               color: isActive ? '#bbf7d0' : 'rgba(248, 250, 252, 0.82)',
@@ -114,7 +181,7 @@ const BottomNav = () => {
 
         return (
           <button
-            key={item.path}
+            key={`${item.label}-${item.path}`}
             type="button"
             onClick={() => go(item)}
             style={{

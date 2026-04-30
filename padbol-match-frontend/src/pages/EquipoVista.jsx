@@ -21,7 +21,11 @@ import {
   getEquipoInscripcionEstado,
   etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
+  torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
+import useUserRole from '../hooks/useUserRole';
+import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
+import { readAdminNavContext } from '../utils/adminNavContext';
 import { getDisplayName } from '../utils/displayName';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import {
@@ -313,11 +317,46 @@ export default function EquipoVista() {
   /** `jugadores_perfil` (incl. whatsapp) solo emails de jugadores en equipo con estado pendiente; se actualiza en {@link cargarEquipo}. */
   const [perfilPendientesPorEmail, setPerfilPendientesPorEmail] = useState(() => new Map());
   const [nombreSedeTorneo, setNombreSedeTorneo] = useState(null);
+  const [sedeTorneoRow, setSedeTorneoRow] = useState(null);
 
   const authUserId = useMemo(
     () => (session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null),
     [session?.user?.id]
   );
+
+  const currentClienteTorneoEq = useMemo(() => (authEmail ? { email: authEmail } : null), [authEmail]);
+  const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentClienteTorneoEq);
+  const fromAdminNav = Boolean(location.state?.fromAdmin);
+  const esAdminGestionTorneoEq = useMemo(
+    () =>
+      computeIsAdminEnTorneo({
+        email: authEmailLower,
+        torneo,
+        sedeTorneo: sedeTorneoRow,
+        rol,
+        userSedeId,
+        userPaisRol,
+        fromAdmin: fromAdminNav || readAdminNavContext(),
+      }),
+    [authEmailLower, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, fromAdminNav]
+  );
+
+  const tituloHeaderEquipo = esAdminGestionTorneoEq ? 'Equipo' : 'Mi Equipo';
+  const handleBackEquipoVista = () => {
+    if (esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext())) {
+      navigate('/admin');
+      return;
+    }
+    if (fromAdminNav && torneo?.id) {
+      navigate(`/torneo/${torneo.id}`, { state: { ...location.state, fromAdmin: true } });
+      return;
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    navigate('/');
+  };
 
   useEffect(() => {
     let alive = true;
@@ -350,6 +389,7 @@ export default function EquipoVista() {
       setPlayers([]);
       setRequests([]);
       setNombreSedeTorneo(null);
+      setSedeTorneoRow(null);
       setPerfilPendientesPorEmail(new Map());
       setLoading(false);
       return;
@@ -370,6 +410,7 @@ export default function EquipoVista() {
       setPlayers([]);
       setRequests([]);
       setNombreSedeTorneo(null);
+      setSedeTorneoRow(null);
       setPerfilPendientesPorEmail(new Map());
       setLoading(false);
       return;
@@ -388,23 +429,30 @@ export default function EquipoVista() {
         console.error(torneoError);
         setTorneo(null);
         setNombreSedeTorneo(null);
+        setSedeTorneoRow(null);
       } else {
         setTorneo(torneoData || null);
         let sedeNombre = null;
+        let sedeFull = null;
         if (torneoData?.sede_id != null && torneoData.sede_id !== '') {
           const { data: sedeData, error: sedeError } = await supabase
             .from('sedes')
-            .select('nombre')
+            .select('nombre, pais, ciudad')
             .eq('id', Number(torneoData.sede_id))
             .maybeSingle();
           if (sedeError) console.error(sedeError);
-          else sedeNombre = sedeData?.nombre != null ? String(sedeData.nombre).trim() : null;
+          else {
+            sedeNombre = sedeData?.nombre != null ? String(sedeData.nombre).trim() : null;
+            sedeFull = sedeData || null;
+          }
         }
         setNombreSedeTorneo(sedeNombre && sedeNombre.length ? sedeNombre : null);
+        setSedeTorneoRow(sedeFull);
       }
     } else {
       setTorneo(null);
       setNombreSedeTorneo(null);
+      setSedeTorneoRow(null);
     }
 
     let jugadores = Array.isArray(row?.jugadores)
@@ -1047,8 +1095,7 @@ export default function EquipoVista() {
     return { texto: 'Cupos libres', color: '#64748b' };
   })();
   const torneoCancelado = torneo?.estado === 'cancelado';
-  const torneoInscripcionAbierta =
-    torneo && torneo.estado !== 'finalizado' && torneo.estado !== 'cancelado';
+  const torneoInscripcionAbierta = torneo && torneoPermiteNuevasInscripciones(torneo);
   const solicitudPendienteAqui = !!(yo && requests.some((r) => samePerson(r, yo)));
   const solicitudPendienteOtroEquipo = !!(
     yo &&
@@ -1123,7 +1170,7 @@ export default function EquipoVista() {
   if (loading) {
     return (
       <div style={equipoPageShellStyle}>
-        <AppHeader title="Mi Equipo" />
+        <AppHeader title={tituloHeaderEquipo} showBack onBack={handleBackEquipoVista} backLabel="← Volver" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
         <BottomNav />
       </div>
@@ -1133,7 +1180,7 @@ export default function EquipoVista() {
   if (!equipo) {
     return (
       <div style={equipoPageShellStyle}>
-        <AppHeader title="Mi Equipo" />
+        <AppHeader title={tituloHeaderEquipo} showBack onBack={handleBackEquipoVista} backLabel="← Volver" />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
           <p>No se encontró el equipo.</p>
         </div>
@@ -1144,7 +1191,7 @@ export default function EquipoVista() {
 
   return (
     <div style={equipoPageShellStyle}>
-      <AppHeader title="Mi Equipo" />
+      <AppHeader title={tituloHeaderEquipo} showBack onBack={handleBackEquipoVista} backLabel="← Volver" />
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div
@@ -1263,22 +1310,67 @@ export default function EquipoVista() {
 
           {!torneoCancelado ? (
             <div style={{ marginBottom: '14px' }}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  padding: '5px 12px',
-                  borderRadius: '999px',
-                  ...(inscripcionEstadoEquipo === 'confirmado'
-                    ? { background: '#dcfce7', color: '#166534', border: '1px solid #86efac' }
-                    : { background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' }),
-                }}
-              >
-                {etiquetaInscripcionEstado(inscripcionEstadoEquipo)}
-              </span>
+              {inscripcionEstadoEquipo === 'confirmado' ? (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    padding: '5px 12px',
+                    borderRadius: '999px',
+                    background: '#dcfce7',
+                    color: '#166534',
+                    border: '1px solid #86efac',
+                  }}
+                >
+                  Inscripción confirmada
+                </span>
+              ) : soyCreador && equipoListoJugar ? (
+                <button
+                  type="button"
+                  disabled={mpInscripcionLoading}
+                  onClick={() => void confirmarInscripcionDesdeVista()}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    maxWidth: '340px',
+                    padding: '14px 18px',
+                    fontSize: '16px',
+                    fontWeight: 800,
+                    borderRadius: '14px',
+                    border: 'none',
+                    cursor: mpInscripcionLoading ? 'default' : 'pointer',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: 'white',
+                    boxShadow: '0 6px 20px rgba(217,119,6,0.45)',
+                    opacity: mpInscripcionLoading ? 0.75 : 1,
+                  }}
+                >
+                  {mpInscripcionLoading ? 'Redirigiendo…' : '💳 Pagar inscripción'}
+                </button>
+              ) : (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    padding: '5px 12px',
+                    borderRadius: '999px',
+                    background: '#fef3c7',
+                    color: '#92400e',
+                    border: '1px solid #fcd34d',
+                  }}
+                >
+                  {etiquetaInscripcionEstado(inscripcionEstadoEquipo)}
+                </span>
+              )}
             </div>
           ) : null}
 
@@ -1575,26 +1667,10 @@ export default function EquipoVista() {
                   Faltan confirmar jugadores
                 </p>
               )}
-              {equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' ? (
-                <>
-                  <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-                    Paga la inscripción del equipo para confirmar el cupo en el torneo.
-                  </p>
-                  <button
-                    type="button"
-                    disabled={mpInscripcionLoading}
-                    onClick={() => void confirmarInscripcionDesdeVista()}
-                    style={{
-                      ...buttonPrimaryStyle,
-                      width: '100%',
-                      opacity: mpInscripcionLoading ? 0.7 : 1,
-                      cursor: mpInscripcionLoading ? 'default' : 'pointer',
-                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    }}
-                  >
-                    {mpInscripcionLoading ? 'Redirigiendo…' : 'Confirmar inscripción'}
-                  </button>
-                </>
+              {equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' && !soyCreador ? (
+                <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
+                  El capitán debe completar el pago de inscripción para confirmar el cupo.
+                </p>
               ) : null}
             </div>
           ) : null}

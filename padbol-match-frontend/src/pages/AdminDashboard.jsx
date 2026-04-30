@@ -1,18 +1,71 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_NAV_HEIGHT_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { setAdminNavContext } from '../utils/adminNavContext';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
+import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
+import { getCroppedImgBlob } from '../utils/cropImage';
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+
+/** Muestra "3ra" en lugar de "3" en validaciones y fichas. */
+function formatNivelValidacionDisplay(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return '—';
+  const map = { '1': '1ra', '2': '2da', '3': '3ra', '4': '4ta', '5': '5ta' };
+  if (map[s]) return map[s];
+  return s;
+}
+
+function bucketMonedaAdmin(raw) {
+  const u = String(raw || '').trim().toUpperCase();
+  if (u.includes('EUR') || u === '€') return 'EUR';
+  if (u.includes('USD') || u.includes('US$') || u === 'U$S' || u === '$US') return 'USD';
+  return 'ARS';
+}
+
+/** `fechaISO` = YYYY-MM-DD (reserva o fecha derivada de equipo). */
+function fechaDentroDePeriodoDashboard(fechaISO, now, periodo, fechaDesde, fechaHasta) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaISO || '').trim())) return false;
+  const [y, m, d] = fechaISO.split('-').map(Number);
+  const fecha = new Date(y, m - 1, d);
+  if (Number.isNaN(fecha.getTime())) return false;
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(startOfToday);
+  const day = startOfWeek.getDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  if (periodo === 'rango') {
+    const desdeOk = /^\d{4}-\d{2}-\d{2}$/.test(fechaDesde);
+    const hastaOk = /^\d{4}-\d{2}-\d{2}$/.test(fechaHasta);
+    if (!desdeOk || !hastaOk) return false;
+    const [dy, dm, dd] = fechaDesde.split('-').map(Number);
+    const [hy, hm, hd] = fechaHasta.split('-').map(Number);
+    const desde = new Date(dy, dm - 1, dd);
+    const hasta = new Date(hy, hm - 1, hd, 23, 59, 59, 999);
+    if (Number.isNaN(desde.getTime()) || Number.isNaN(hasta.getTime())) return false;
+    return fecha >= desde && fecha <= hasta;
+  }
+  if (periodo === 'hoy') return fecha >= startOfToday && fecha <= now;
+  if (periodo === 'semana') return fecha >= startOfWeek && fecha <= now;
+  if (periodo === 'anio') return fecha >= startOfYear && fecha <= now;
+  return fecha >= startOfMonth && fecha <= now;
+}
 
 // "2026-02-26" → "26 Feb 2026"
 function formatFecha(str) {
@@ -139,7 +192,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [reservas, setReservas] = useState([]);
   const [torneos, setTorneos] = useState([]);
   const [sedesMap, setSedesMap] = useState({});
-  const [ingresos, setIngresos] = useState({ ARS: 0, USD: 0, EUR: 0 });
+  /** Equipos de torneos en alcance (para ingresos por inscripción confirmada). */
+  const [equiposInscripcionRows, setEquiposInscripcionRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -167,6 +221,117 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     fetchData();
     fetchPendientes();
   }, [apiBaseUrl, rol, sedeId]); // rol/sedeId: re-fetch after role scope resolves
+
+  useEffect(() => {
+    if (esAdminClub) setAdminNavContext(true);
+  }, [esAdminClub]);
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (!t) return;
+    const allowed = new Set(['resumen', 'torneos', 'reservas', 'validaciones', 'mi_sede', 'config']);
+    if (!allowed.has(t)) return;
+    setActiveTab((prev) => {
+      if (prev === t) return prev;
+      sessionStorage.setItem('adminActiveTab', t);
+      return t;
+    });
+  }, [searchParams]);
+
+  const cifrasFinanzasResumen = useMemo(() => {
+    const now = new Date();
+    const inP = (iso) =>
+      fechaDentroDePeriodoDashboard(
+        iso,
+        now,
+        superAdminPeriodo,
+        superAdminFechaDesde,
+        superAdminFechaHasta
+      );
+
+    const reservasFiltradas = reservas.filter((r) => inP(String(r?.fecha || '').trim()));
+
+    const fechaInscripcionEquipo = (eq) => {
+      const u = eq?.updated_at || eq?.created_at;
+      if (!u) return '';
+      return String(u).slice(0, 10);
+    };
+    const equiposInsFiltrados = equiposInscripcionRows.filter(
+      (eq) =>
+        String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado' &&
+        inP(fechaInscripcionEquipo(eq))
+    );
+
+    const torneoById = {};
+    torneos.forEach((t) => {
+      torneoById[t.id] = t;
+    });
+
+    const superAdminByEmail = currentEmail === 'padbolinternacional@gmail.com';
+    if (isSuperAdmin || superAdminByEmail) {
+      const acum = {
+        reservas: { ARS: 0, USD: 0, EUR: 0 },
+        inscripciones: { ARS: 0, USD: 0, EUR: 0 },
+      };
+      reservasFiltradas.forEach((r) => {
+        const sn = String(r?.sede || '').trim().toLowerCase();
+        const sedeRow = Object.values(sedesMap || {}).find(
+          (s) => sn && String(s?.nombre || '').trim().toLowerCase() === sn
+        );
+        const mon = bucketMonedaAdmin(sedeRow?.moneda || r?.moneda || 'ARS');
+        acum.reservas[mon] = (acum.reservas[mon] || 0) + (Number(r?.precio) || 0);
+      });
+      equiposInsFiltrados.forEach((eq) => {
+        const t = torneoById[eq.torneo_id];
+        const mon = bucketMonedaAdmin(t?.moneda || 'ARS');
+        acum.inscripciones[mon] = (acum.inscripciones[mon] || 0) + precioInscripcionTorneo(t);
+      });
+      const total = { ARS: 0, USD: 0, EUR: 0 };
+      ['ARS', 'USD', 'EUR'].forEach((k) => {
+        total[k] = (acum.reservas[k] || 0) + (acum.inscripciones[k] || 0);
+      });
+      return {
+        tipo: 'super',
+        porFuente: acum,
+        total,
+        reservasEnPeriodo: reservasFiltradas.length,
+      };
+    }
+
+    const monedaSede =
+      esAdminClub && sedeId != null && sedeId !== ''
+        ? bucketMonedaAdmin(sedesMap[String(sedeId)]?.moneda || 'ARS')
+        : 'ARS';
+
+    let reservasSum = 0;
+    reservasFiltradas.forEach((r) => {
+      reservasSum += Number(r?.precio) || 0;
+    });
+    let insSum = 0;
+    equiposInsFiltrados.forEach((eq) => {
+      insSum += precioInscripcionTorneo(torneoById[eq.torneo_id]);
+    });
+    return {
+      tipo: 'sede',
+      moneda: monedaSede,
+      reservas: reservasSum,
+      inscripciones: insSum,
+      total: reservasSum + insSum,
+      reservasEnPeriodo: reservasFiltradas.length,
+    };
+  }, [
+    reservas,
+    equiposInscripcionRows,
+    torneos,
+    superAdminPeriodo,
+    superAdminFechaDesde,
+    superAdminFechaHasta,
+    isSuperAdmin,
+    currentEmail,
+    esAdminClub,
+    sedeId,
+    sedesMap,
+  ]);
 
   const fetchPendientes = async () => {
     setPendientesLoading(true);
@@ -454,29 +619,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       }
       setReservas(resData);
 
-      const totales = { ARS: 0, USD: 0, EUR: 0 };
-      const monedaUnicaClub =
-        esAdminClub && sedesData.length === 1
-          ? String(sedesData[0].moneda || 'ARS').trim().toUpperCase()
-          : null;
-      const bucketMoneda = (raw) => {
-        const s = String(raw || '').trim().toUpperCase();
-        if (s.includes('EUR') || s === '€') return 'EUR';
-        if (s.includes('USD') || s.includes('US$') || s === 'U$S') return 'USD';
-        return 'ARS';
-      };
-      resData.forEach((item) => {
-        const rawMoneda = monedaUnicaClub
-          ? monedaUnicaClub
-          : item.moneda ||
-            (item.sede ? sedeMonedaMap[item.sede.trim().toLowerCase()] : null) ||
-            'ARS';
-        const moneda = bucketMoneda(rawMoneda);
-        if (moneda in totales) totales[moneda] += item.precio || 0;
-        else totales.ARS += item.precio || 0;
-      });
-      setIngresos(totales);
-
       // Cargar torneos (filter by sede scope for non-super-admin)
       const tornRes = await fetch(`${apiBaseUrl}/api/torneos`);
       let tornData = await tornRes.json();
@@ -485,6 +627,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         else tornData = tornData.filter((t) => filaDentroDelAlcanceSedes(t, sedesData));
       }
       setTorneos(tornData);
+
+      let eqIns = [];
+      if (tornData.length > 0) {
+        const tids = tornData.map((t) => t.id).filter((id) => Number.isFinite(Number(id)));
+        if (tids.length > 0) {
+          const { data: eqd, error: eqErr } = await supabase
+            .from('equipos')
+            .select('torneo_id, inscripcion_estado, updated_at, created_at')
+            .in('torneo_id', tids);
+          if (!eqErr && Array.isArray(eqd)) eqIns = eqd;
+        }
+      }
+      setEquiposInscripcionRows(eqIns);
 
       setLoading(false);
     } catch (err) {
@@ -565,6 +720,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [logoUrl,        setLogoUrl]        = useState('');
   const [logoUploading,  setLogoUploading]  = useState(false);
   const [logoMsg,        setLogoMsg]        = useState('');
+  const [logoCropOpen, setLogoCropOpen] = useState(false);
+  const [logoCropSrc, setLogoCropSrc] = useState(null);
+  const [logoCrop, setLogoCrop] = useState({ x: 0, y: 0 });
+  const [logoCropZoom, setLogoCropZoom] = useState(1);
+  const [logoCropAreaListo, setLogoCropAreaListo] = useState(false);
+  const logoCropPixelsRef = useRef(null);
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
@@ -667,20 +828,84 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setTimeout(() => setLicenciaMsg(''), 3000);
   };
 
-  const subirLogo = async (file) => {
+  const cerrarModalLogoCrop = useCallback(() => {
+    if (logoCropSrc) URL.revokeObjectURL(logoCropSrc);
+    setLogoCropSrc(null);
+    setLogoCropOpen(false);
+    setLogoCrop({ x: 0, y: 0 });
+    setLogoCropZoom(1);
+    logoCropPixelsRef.current = null;
+    setLogoCropAreaListo(false);
+  }, [logoCropSrc]);
+
+  const onLogoCropComplete = useCallback((_, areaPixels) => {
+    logoCropPixelsRef.current = areaPixels;
+    setLogoCropAreaListo(Boolean(areaPixels?.width));
+  }, []);
+
+  const abrirRecorteLogoDesdeFile = (file) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { setLogoMsg('⚠️ El archivo supera los 2MB'); return; }
-    setLogoUploading(true); setLogoMsg('');
-    const ext = file.name.split('.').pop().toLowerCase();
-    const path = `${sedeId}/logo.${ext}`;
-    const { error: uploadError } = await supabase.storage.from('sedes').upload(path, file, { upsert: true, contentType: file.type });
-    if (uploadError) { setLogoMsg(`⚠️ ${uploadError.message}`); setLogoUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from('sedes').getPublicUrl(path);
-    await supabase.from('sedes').update({ logo_url: publicUrl }).eq('id', sedeId);
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoMsg('⚠️ El archivo supera los 2MB');
+      return;
+    }
+    if (!String(file.type || '').startsWith('image/')) {
+      setLogoMsg('⚠️ Elegí una imagen');
+      return;
+    }
+    setLogoMsg('');
+    const url = URL.createObjectURL(file);
+    setLogoCropSrc(url);
+    setLogoCrop({ x: 0, y: 0 });
+    setLogoCropZoom(1);
+    logoCropPixelsRef.current = null;
+    setLogoCropAreaListo(false);
+    setLogoCropOpen(true);
+  };
+
+  const subirLogoBlob = async (blob) => {
+    if (!sedeId) return;
+    setLogoUploading(true);
+    setLogoMsg('');
+    const path = `sedes/${sedeId}/logo.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+    if (uploadError) {
+      setLogoMsg(`⚠️ ${uploadError.message}`);
+      setLogoUploading(false);
+      return;
+    }
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('avatars').getPublicUrl(path);
+    const { error: dbErr } = await supabase.from('sedes').update({ logo_url: publicUrl }).eq('id', sedeId);
+    if (dbErr) {
+      setLogoMsg(`⚠️ ${dbErr.message}`);
+      setLogoUploading(false);
+      return;
+    }
     setLogoUrl(`${publicUrl}?t=${Date.now()}`);
     setLogoUploading(false);
     setLogoMsg('✅ Logo actualizado');
     setTimeout(() => setLogoMsg(''), 3000);
+  };
+
+  const confirmarRecorteLogo = async () => {
+    const src = logoCropSrc;
+    const pixels = logoCropPixelsRef.current;
+    if (!src || !pixels) return;
+    setLogoUploading(true);
+    setLogoMsg('');
+    try {
+      const blob = await getCroppedImgBlob(src, pixels, 'image/jpeg', 0.92);
+      cerrarModalLogoCrop();
+      await subirLogoBlob(blob);
+    } catch (e) {
+      setLogoMsg(`⚠️ ${e?.message || 'Error al recortar'}`);
+    } finally {
+      setLogoUploading(false);
+    }
   };
 
   const subirFoto = async (file) => {
@@ -727,18 +952,24 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (!error) setCanchas(prev => prev.map(c => c.id === cancha.id ? { ...c, estado: nuevoEstado } : c));
   };
 
+  const handleVolverHubDesdeAdmin = () => {
+    if (esAdminClub) setAdminNavContext(false);
+    navigate('/');
+  };
+
   if (loading) {
     return (
       <div
         style={{
-          padding: `${hubContentPaddingTopCss(location.pathname)} 20px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          padding: `${hubContentPaddingTopCss(location.pathname)} 20px calc(${HUB_NAV_HEIGHT_PX + HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
           textAlign: 'center',
           minHeight: '100vh',
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Inicio" showBack onBack={() => navigate('/')} backLabel="← Volver" />
+        <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Volver" />
         Cargando...
+        <BottomNav />
       </div>
     );
   }
@@ -756,7 +987,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const TABS = [
     { id: 'resumen',      label: '📊 Resumen' },
     { id: 'torneos',      label: '🏆 Torneos' },
-    { id: 'reservas',     label: '📅 Reservas' },
+    { id: 'reservas',     label: '⚽ Reservas' },
     { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
     ...(puedeVerMiSede  ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
     ...(puedeVerConfig  ? [{ id: 'config',  label: '⚙️ Config' }]  : []),
@@ -793,11 +1024,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'auto',
         paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: '12px',
+        paddingBottom: `calc(12px + ${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`,
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Inicio" showBack onBack={() => navigate('/')} backLabel="← Volver" />
+      <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Volver" />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img
@@ -899,27 +1130,175 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           );
         })()}
-        <div className="dashboard-grid">
-        <div className="card ingresos">
-          <h2>Ingresos Totales</h2>
-          <div className="ingresos-por-moneda">
-            <div className="ingreso-fila">
-              <span className="ingreso-codigo">ARS</span>
-              <span className="ingreso-valor">$ {ingresos.ARS.toLocaleString('es-AR')}</span>
-            </div>
-            <div className="ingreso-fila">
-              <span className="ingreso-codigo">USD</span>
-              <span className="ingreso-valor">US$ {ingresos.USD.toLocaleString('en-US')}</span>
-            </div>
-            <div className="ingreso-fila">
-              <span className="ingreso-codigo">EUR</span>
-              <span className="ingreso-valor">€ {ingresos.EUR.toLocaleString('de-DE')}</span>
-            </div>
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
+            Período del resumen financiero
           </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              whiteSpace: 'nowrap',
+              paddingBottom: '2px',
+            }}
+          >
+            {[
+              { id: 'hoy', label: 'Hoy' },
+              { id: 'semana', label: 'Semana' },
+              { id: 'mes', label: 'Mes' },
+              { id: 'anio', label: 'Año' },
+              { id: 'rango', label: 'Rango' },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSuperAdminPeriodo(opt.id)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: '999px',
+                  border: superAdminPeriodo === opt.id ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
+                  background: superAdminPeriodo === opt.id ? '#6366f1' : '#fff',
+                  color: superAdminPeriodo === opt.id ? '#fff' : '#334155',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {superAdminPeriodo === 'rango' ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px', maxWidth: '420px' }}>
+              <input
+                type="date"
+                value={superAdminFechaDesde}
+                onChange={(e) => setSuperAdminFechaDesde(e.target.value)}
+                aria-label="Desde"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '14px',
+                  color: '#334155',
+                  background: '#fff',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <input
+                type="date"
+                value={superAdminFechaHasta}
+                onChange={(e) => setSuperAdminFechaHasta(e.target.value)}
+                aria-label="Hasta"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '14px',
+                  color: '#334155',
+                  background: '#fff',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          ) : null}
+        </div>
+        <div className="dashboard-grid">
+        <div className="card ingresos" style={cifrasFinanzasResumen.tipo === 'sede' ? { gridColumn: '1 / -1' } : undefined}>
+          <h2>Ingresos del período</h2>
+          {cifrasFinanzasResumen.tipo === 'sede' ? (
+            <div className="ingresos-por-moneda">
+              <div className="ingreso-fila" style={{ textAlign: 'left' }}>
+                <span className="ingreso-codigo" style={{ flex: 1 }}>
+                  ⚽ Reservas de canchas
+                </span>
+                <span className="ingreso-valor" style={{ fontSize: '1.1rem' }}>
+                  $ {cifrasFinanzasResumen.reservas.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
+                </span>
+              </div>
+              <div className="ingreso-fila" style={{ textAlign: 'left' }}>
+                <span className="ingreso-codigo" style={{ flex: 1 }}>
+                  🏆 Inscripciones a torneos
+                </span>
+                <span className="ingreso-valor" style={{ fontSize: '1.1rem' }}>
+                  $ {cifrasFinanzasResumen.inscripciones.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
+                </span>
+              </div>
+              <div
+                className="ingreso-fila"
+                style={{ textAlign: 'left', borderLeftColor: '#16a34a', background: '#f0fdf4' }}
+              >
+                <span className="ingreso-codigo" style={{ flex: 1, color: '#166534' }}>
+                  Total
+                </span>
+                <span className="ingreso-valor" style={{ fontSize: '1.25rem', color: '#15803d' }}>
+                  $ {cifrasFinanzasResumen.total.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
+                </span>
+              </div>
+            </div>
+          ) : (
+            (() => {
+              const MON = ['ARS', 'USD', 'EUR'];
+              const fmt = (obj) =>
+                MON.filter((m) => (Number(obj?.[m]) || 0) > 0)
+                  .map((m) => {
+                    const n = Number(obj[m]) || 0;
+                    if (m === 'ARS') return `$ ${n.toLocaleString('es-AR')} ARS`;
+                    if (m === 'USD') return `US$ ${n.toLocaleString('en-US')} USD`;
+                    return `€ ${n.toLocaleString('de-DE')} EUR`;
+                  })
+                  .join(' · ') || 'Sin ingresos en el período';
+              const pf = cifrasFinanzasResumen.porFuente;
+              return (
+                <div className="ingresos-por-moneda">
+                  <div className="ingreso-fila" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
+                    <span className="ingreso-codigo" style={{ width: '100%' }}>
+                      ⚽ Reservas de canchas
+                    </span>
+                    <span className="ingreso-valor" style={{ fontSize: '0.95rem', textAlign: 'right' }}>
+                      {fmt(pf.reservas)}
+                    </span>
+                  </div>
+                  <div className="ingreso-fila" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
+                    <span className="ingreso-codigo" style={{ width: '100%' }}>
+                      🏆 Inscripciones a torneos
+                    </span>
+                    <span className="ingreso-valor" style={{ fontSize: '0.95rem', textAlign: 'right' }}>
+                      {fmt(pf.inscripciones)}
+                    </span>
+                  </div>
+                  <div
+                    className="ingreso-fila"
+                    style={{
+                      flexDirection: 'column',
+                      alignItems: 'stretch',
+                      gap: '6px',
+                      borderLeftColor: '#16a34a',
+                      background: '#f0fdf4',
+                    }}
+                  >
+                    <span className="ingreso-codigo" style={{ width: '100%', color: '#166534' }}>
+                      Total
+                    </span>
+                    <span className="ingreso-valor" style={{ fontSize: '1rem', textAlign: 'right', color: '#15803d' }}>
+                      {fmt(cifrasFinanzasResumen.total)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()
+          )}
         </div>
         <div className="card reservas">
-          <h2>Total Reservas</h2>
-          <p className="count">{reservas.length}</p>
+          <h2>Reservas en período</h2>
+          <p className="count">{cifrasFinanzasResumen.reservasEnPeriodo}</p>
         </div>
         <div className="card torneos">
           <h2>Total Torneos</h2>
@@ -1165,7 +1544,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <div style={{ marginTop: '5px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {flag && <span style={{ fontSize: '18px' }}>{flag}</span>}
                       <span style={{ background: '#fffde7', border: '1px solid #ffc107', color: '#7c5b00', borderRadius: '12px', padding: '2px 10px', fontSize: '12px', fontWeight: 'bold' }}>
-                        {jugador.nivel}
+                        {formatNivelValidacionDisplay(jugador.nivel)}
                       </span>
                     </div>
                   </div>
@@ -2226,7 +2605,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     type="file" accept="image/jpeg,image/png,image/webp"
                     style={{ display: 'none' }}
                     disabled={logoUploading}
-                    onChange={e => subirLogo(e.target.files[0])}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = '';
+                      abrirRecorteLogoDesdeFile(f);
+                    }}
                   />
                 </label>
                 <span style={{ fontSize: '12px', color: '#9ca3af' }}>JPG, PNG o WEBP · máx. 2MB</span>
@@ -2297,6 +2680,119 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       </div>}
 
+      {logoCropOpen && logoCropSrc ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Recortar logo del club"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 20000,
+            background: 'rgba(15, 23, 42, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget && !logoUploading) cerrarModalLogoCrop();
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              background: '#fff',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
+            }}
+            onClick={(ev) => ev.stopPropagation()}
+          >
+            <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #e2e8f0' }}>
+              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>Recortar logo</h3>
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                Mové y hacé zoom para encuadrar el logo. Se guardará como JPG en buena calidad.
+              </p>
+            </div>
+            <div style={{ position: 'relative', width: '100%', height: 'min(56vh, 360px)', background: '#0f172a' }}>
+              <Cropper
+                image={logoCropSrc}
+                crop={logoCrop}
+                zoom={logoCropZoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setLogoCrop}
+                onZoomChange={setLogoCropZoom}
+                onCropComplete={onLogoCropComplete}
+              />
+            </div>
+            <div style={{ padding: '14px 18px 18px' }}>
+              <label
+                htmlFor="admin-logo-crop-zoom"
+                style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}
+              >
+                Zoom
+              </label>
+              <input
+                id="admin-logo-crop-zoom"
+                type="range"
+                min={1}
+                max={3}
+                step={0.02}
+                value={logoCropZoom}
+                onChange={(ev) => setLogoCropZoom(Number(ev.target.value))}
+                style={{ width: '100%', marginBottom: '16px' }}
+              />
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  disabled={logoUploading}
+                  onClick={() => !logoUploading && cerrarModalLogoCrop()}
+                  style={{
+                    flex: 1,
+                    minWidth: '120px',
+                    padding: '12px 16px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#334155',
+                    cursor: logoUploading ? 'default' : 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={!logoCropAreaListo || logoUploading}
+                  onClick={() => void confirmarRecorteLogo()}
+                  style={{
+                    flex: 1,
+                    minWidth: '120px',
+                    padding: '12px 16px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: logoCropAreaListo && !logoUploading ? '#15803d' : '#94a3b8',
+                    color: '#fff',
+                    cursor: logoCropAreaListo && !logoUploading ? 'pointer' : 'default',
+                  }}
+                >
+                  {logoUploading ? 'Subiendo…' : 'Confirmar recorte'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <BottomNav />
     </div>
   );
 }

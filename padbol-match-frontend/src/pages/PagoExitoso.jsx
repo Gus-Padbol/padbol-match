@@ -317,7 +317,7 @@ export default function PagoExitoso() {
                   cursor: 'pointer',
                 }}
               >
-                🎾 Hacer otra reserva
+                ⚽ Hacer otra reserva
               </button>
             </div>
           </>

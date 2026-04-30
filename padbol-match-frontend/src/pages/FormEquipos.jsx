@@ -16,10 +16,12 @@ import {
   PERFIL_CHANGE_EVENT,
 } from '../utils/jugadorPerfil';
 import { setTorneoEquipoActual, clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
+import { setAdminNavContext } from '../utils/adminNavContext';
 import {
   getEquipoInscripcionEstado,
   etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
+  torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
@@ -589,6 +591,11 @@ export default function FormEquipos() {
   const torneoCerrado = torneo?.estado === 'finalizado' || torneo?.estado === 'cancelado';
   const torneoCancelado = torneo?.estado === 'cancelado';
   const torneoFinalizado = torneo?.estado === 'finalizado';
+  const flujoInscripcionTorneoActivo = Boolean(torneo && torneoPermiteNuevasInscripciones(torneo));
+
+  useEffect(() => {
+    if (location.state?.fromAdmin) setAdminNavContext(true);
+  }, [location.state?.fromAdmin]);
 
   const sedesMapForm = useMemo(() => {
     if (!torneo?.sede_id) return {};
@@ -657,7 +664,7 @@ export default function FormEquipos() {
       navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
       return;
     }
-    if (torneoCerrado || miEquipo || miSolicitudPendiente) {
+    if (!flujoInscripcionTorneoActivo || miEquipo || miSolicitudPendiente) {
       navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
       return;
     }
@@ -669,7 +676,7 @@ export default function FormEquipos() {
     loading,
     authLoading,
     session?.user,
-    torneoCerrado,
+    flujoInscripcionTorneoActivo,
     miEquipo?.id,
     miSolicitudPendiente?.id,
     isMobile,
@@ -714,10 +721,10 @@ export default function FormEquipos() {
   }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, authUserId, session?.user]);
 
   useEffect(() => {
-    if (!isMobile || torneoCerrado) return;
+    if (!isMobile || !flujoInscripcionTorneoActivo) return;
     if (miEquipo) setMobileVista('mi_equipo');
     else if (miSolicitudPendiente) setMobileVista('lista');
-  }, [isMobile, torneoCerrado, miEquipo?.id, miSolicitudPendiente?.id]);
+  }, [isMobile, flujoInscripcionTorneoActivo, miEquipo?.id, miSolicitudPendiente?.id]);
 
   const crearEquipo = async () => {
     const { data } = await supabase.auth.getSession();
@@ -1093,12 +1100,12 @@ export default function FormEquipos() {
 
   const equiposUnirseListado = useMemo(() => {
     const pool = miEquipoEnListado ? otrosEquiposVisibles : equiposVisibles;
-    if (torneoCerrado) return pool;
+    if (!flujoInscripcionTorneoActivo) return pool;
     return pool.filter((eq) => {
       const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
       return eq.equipo_abierto === true && eq.players.length < cupo;
     });
-  }, [torneoCerrado, miEquipoEnListado, otrosEquiposVisibles, equiposVisibles]);
+  }, [flujoInscripcionTorneoActivo, miEquipoEnListado, otrosEquiposVisibles, equiposVisibles]);
 
   const otrosEquiposDisponiblesParaUnirse = useMemo(
     () =>
@@ -1109,7 +1116,7 @@ export default function FormEquipos() {
     [otrosEquiposVisibles]
   );
 
-  const puedeOfrecerCrearDesdeLista = !torneoCerrado && !miEquipo && !miSolicitudPendiente;
+  const puedeOfrecerCrearDesdeLista = flujoInscripcionTorneoActivo && !miEquipo && !miSolicitudPendiente;
   /** Equipos con al menos un jugador en ficha (lista principal del torneo). */
   const sinEquiposEnTorneoVisibles = equiposVisibles.length === 0;
 
@@ -1428,11 +1435,11 @@ export default function FormEquipos() {
   };
 
   const mobileInicio =
-    isMobile && !torneoCerrado && !miEquipo && !miSolicitudPendiente && mobileVista === 'inicio';
+    isMobile && flujoInscripcionTorneoActivo && !miEquipo && !miSolicitudPendiente && mobileVista === 'inicio';
   const mobileCrear =
-    isMobile && !torneoCerrado && !miEquipo && !miSolicitudPendiente && mobileVista === 'crear';
+    isMobile && flujoInscripcionTorneoActivo && !miEquipo && !miSolicitudPendiente && mobileVista === 'crear';
   const mobileListaEquipos =
-    isMobile && !miEquipo && !torneoCerrado && (mobileVista === 'lista' || miSolicitudPendiente);
+    isMobile && !miEquipo && flujoInscripcionTorneoActivo && (mobileVista === 'lista' || miSolicitudPendiente);
   const mobileListaTorneoCerrado = isMobile && torneoCerrado;
   const mobileMiEquipoVista = isMobile && miEquipo && mobileVista === 'mi_equipo';
   const mobileOtrosEquipos = isMobile && miEquipo && mobileVista === 'otros';
@@ -1618,7 +1625,7 @@ export default function FormEquipos() {
         </div>
       ) : null}
 
-      {!torneoCerrado &&
+      {flujoInscripcionTorneoActivo &&
       (sinEquiposEnTorneoVisibles || (!miEquipoEnListado && equiposUnirseListado.length === 0)) ? (
         <div style={{ marginTop: miEquipoEnListado ? '20px' : 0 }}>
           <p
@@ -1700,7 +1707,7 @@ export default function FormEquipos() {
     </>
   );
 
-  const mostrarPasoEleccion = !torneoCerrado && !miEquipo && !miSolicitudPendiente;
+  const mostrarPasoEleccion = flujoInscripcionTorneoActivo && !miEquipo && !miSolicitudPendiente;
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
 
   const handleInscripcionHeaderBack = useCallback(() => {
@@ -1735,7 +1742,7 @@ export default function FormEquipos() {
   const hayParamInvitacionEquipo = Number.isFinite(inviteEquipoIdNum);
 
   const bloqueInvitacionEquipoDeepLink =
-    !hayParamInvitacionEquipo || torneoCerrado ? null : (() => {
+    !hayParamInvitacionEquipo || !flujoInscripcionTorneoActivo ? null : (() => {
       const u0 = getOrCreateUsuarioBasico();
       const jugadoresConfirmadosInv = inviteEquipoRow
         ? getPlayers(inviteEquipoRow).filter(jugadorRegistradoParaTorneo)
@@ -2469,7 +2476,7 @@ export default function FormEquipos() {
 
         {miEquipo && !torneoCancelado && !isMobile ? bloqueInscripcionTorneo : null}
 
-        {miEquipo && soyCreadorMiEquipo && !torneoCerrado ? (
+        {miEquipo && soyCreadorMiEquipo && !torneoFinalizado && !torneoCancelado ? (
           <div
             style={{
               marginBottom: '18px',
@@ -2571,7 +2578,7 @@ export default function FormEquipos() {
             <button type="button" onClick={() => setDesktopFlujo(null)} style={btnVolverEleccionStyle}>
               ← Elegir otra opción
             </button>
-            {!torneoCerrado && !miSolicitudPendiente && equiposUnirseListado.length > 0 ? (
+            {flujoInscripcionTorneoActivo && !miSolicitudPendiente && equiposUnirseListado.length > 0 ? (
               <div
                 style={{
                   marginBottom: '12px',
@@ -2755,7 +2762,7 @@ export default function FormEquipos() {
                 ← Elegir otra opción
               </button>
             ) : null}
-            {!torneoCerrado && !miSolicitudPendiente && equiposUnirseListado.length > 0 ? (
+            {flujoInscripcionTorneoActivo && !miSolicitudPendiente && equiposUnirseListado.length > 0 ? (
               <div
                 style={{
                   padding: '14px 16px 16px',

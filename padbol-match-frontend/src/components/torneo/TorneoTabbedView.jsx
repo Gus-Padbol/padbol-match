@@ -507,7 +507,7 @@ export default function TorneoTabbedView({
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
                   <button
                     type="button"
-                    onClick={() => navigate(`/equipo/${equipo.id}`)}
+                    onClick={() => navigate(`/equipo/${equipo.id}`, navOpts)}
                     style={{
                       border: 'none',
                       background: 'transparent',
@@ -859,7 +859,7 @@ export default function TorneoTabbedView({
                   ) : fila.equipoId != null ? (
                     <button
                       type="button"
-                      onClick={() => navigate(`/equipo/${fila.equipoId}`)}
+                      onClick={() => navigate(`/equipo/${fila.equipoId}`, navOpts)}
                       className="podium-team-link"
                     >
                       {fila.equipoNombre}

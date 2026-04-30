@@ -605,19 +605,15 @@ app.put('/api/torneos/:id', async (req, res) => {
     const { id } = req.params;
     const { nombre, nivel_torneo, tipo_torneo, estado, fecha_inicio, fecha_fin } = req.body;
 
-    const { data, error } = await supabase
-      .from('torneos')
-      .update({
-        nombre,
-        nivel_torneo,
-        tipo_torneo,
-        estado,
-        fecha_inicio,
-        fecha_fin,
-        updated_at: new Date(),
-      })
-      .eq('id', id)
-      .select();
+    const patch = { updated_at: new Date() };
+    if (nombre !== undefined) patch.nombre = nombre;
+    if (nivel_torneo !== undefined) patch.nivel_torneo = nivel_torneo;
+    if (tipo_torneo !== undefined) patch.tipo_torneo = tipo_torneo;
+    if (estado !== undefined) patch.estado = estado;
+    if (fecha_inicio !== undefined) patch.fecha_inicio = fecha_inicio;
+    if (fecha_fin !== undefined) patch.fecha_fin = fecha_fin;
+
+    const { data, error } = await supabase.from('torneos').update(patch).eq('id', id).select();
 
     if (error) throw error;
     res.json(data);

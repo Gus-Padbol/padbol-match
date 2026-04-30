@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
+import { readAdminNavContext, setAdminNavContext } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
 export default function TorneoVista() {
@@ -56,6 +57,10 @@ export default function TorneoVista() {
     () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),
     [location.state, fromAdmin]
   );
+
+  useEffect(() => {
+    if (fromAdmin) setAdminNavContext(true);
+  }, [fromAdmin]);
   const jugadorEquipoListoParaTorneo = (raw) => {
     const p = typeof raw === 'object' && raw != null ? raw : { nombre: raw, email: '' };
     if (p.estado === 'pendiente') return false;
@@ -165,11 +170,16 @@ export default function TorneoVista() {
   }, [tablaPuntosRows, equipos]);
 
   const iniciarTorneo = async () => {
-    if (!todosEquiposCompletos) {
-      alert('Faltan equipos completos para iniciar');
+    const avisoIncompleto = !todosEquiposCompletos
+      ? 'Algunos equipos aún no están completos. '
+      : '';
+    if (
+      !window.confirm(
+        `${avisoIncompleto}¿Iniciar el torneo? Se cerrará la inscripción y el estado pasará a «en curso».`
+      )
+    ) {
       return;
     }
-    if (!window.confirm('¿Iniciar el torneo? El estado cambiará a "en curso".')) return;
     setIniciando(true);
     try {
       const res = await fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}`, {
@@ -235,14 +245,14 @@ export default function TorneoVista() {
         <div className="torneo-acciones">
           {!todosEquiposCompletos ? (
             <p className="torneo-iniciar-aviso" style={{ margin: '8px 0 0', color: '#b45309', fontWeight: 600 }}>
-              Faltan equipos completos para iniciar
+              Aviso: faltan equipos completos — podés iniciar igual para cerrar inscripción.
             </p>
           ) : null}
           <button
             type="button"
             className="btn-iniciar-torneo"
             onClick={() => void iniciarTorneo()}
-            disabled={iniciando || !todosEquiposCompletos}
+            disabled={iniciando}
           >
             {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
           </button>
@@ -271,7 +281,16 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" />
+        <AppHeader
+          title="Torneo"
+          showBack
+          onBack={() => {
+            if (fromAdmin || readAdminNavContext()) navigate('/admin');
+            else if (window.history.length > 1) window.history.back();
+            else navigate('/');
+          }}
+          backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
+        />
         <div className="loading">Cargando...</div>
         <BottomNav />
       </div>
@@ -287,7 +306,16 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" />
+        <AppHeader
+          title="Torneo"
+          showBack
+          onBack={() => {
+            if (fromAdmin || readAdminNavContext()) navigate('/admin');
+            else if (window.history.length > 1) window.history.back();
+            else navigate('/');
+          }}
+          backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
+        />
         <div className="error">Error: {error}</div>
         <BottomNav />
       </div>
@@ -303,7 +331,16 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" />
+        <AppHeader
+          title="Torneo"
+          showBack
+          onBack={() => {
+            if (fromAdmin || readAdminNavContext()) navigate('/admin');
+            else if (window.history.length > 1) window.history.back();
+            else navigate('/');
+          }}
+          backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
+        />
         <div className="error">Torneo no encontrado</div>
         <BottomNav />
       </div>
@@ -318,7 +355,16 @@ export default function TorneoVista() {
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
-      <AppHeader title="Torneo" />
+      <AppHeader
+        title="Torneo"
+        showBack
+        onBack={() => {
+          if (fromAdmin || readAdminNavContext()) navigate('/admin');
+          else if (window.history.length > 1) window.history.back();
+          else navigate('/');
+        }}
+        backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
+      />
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"
