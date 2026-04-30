@@ -993,13 +993,36 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   };
 
-  const subirFotosMultiples = async (fileList) => {
-    if (!sedeId) return;
-    const picked = Array.from(fileList || []).filter((f) => String(f.type || '').startsWith('image/'));
-    if (!picked.length) return;
+  /**
+   * Sube varias fotos. Recibe un `File[]` ya materializado (p. ej. desde onChange leyendo files antes de cualquier await).
+   * Opcional `opts.uploadingPrimed`: si true, el caller ya puso Subiendo… y no se llama setFotosUploading(true) al inicio.
+   */
+  const subirFotosMultiples = async (fileList, opts = {}) => {
+    const uploadingPrimed = Boolean(opts.uploadingPrimed);
+    if (!sedeId) {
+      if (uploadingPrimed) {
+        setFotosUploading(false);
+        setFotosUploadLabel('');
+      }
+      return;
+    }
+    const picked = (Array.isArray(fileList) ? fileList : Array.from(fileList || [])).filter((f) =>
+      String(f.type || '').startsWith('image/')
+    );
+    if (!picked.length) {
+      if (uploadingPrimed) {
+        setFotosUploading(false);
+        setFotosUploadLabel('');
+      }
+      return;
+    }
     const espacio = MAX_FOTOS_SEDE - fotosUrls.length;
     if (espacio <= 0) {
       setFotosMsg(`⚠️ Máximo ${MAX_FOTOS_SEDE} fotos permitidas`);
+      if (uploadingPrimed) {
+        setFotosUploading(false);
+        setFotosUploadLabel('');
+      }
       return;
     }
     const toProcess = picked.slice(0, espacio);
@@ -1008,8 +1031,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     } else {
       setFotosMsg('');
     }
-    setFotosUploading(true);
-    setFotosUploadLabel('');
+    if (!uploadingPrimed) {
+      setFotosUploading(true);
+      setFotosUploadLabel('Subiendo...');
+    }
     const n = toProcess.length;
     let completed = 0;
     const failures = [];
@@ -2970,12 +2995,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     type="file"
                     accept="image/*"
                     multiple
+                    capture={undefined}
                     style={{ display: 'none' }}
                     disabled={fotosUploading}
-                    onChange={(e) => {
-                      const fl = e.target.files;
-                      e.target.value = '';
-                      if (fl?.length) subirFotosMultiples(fl);
+                    onChange={async (e) => {
+                      const input = e.target;
+                      const files = Array.from(input.files || []);
+                      if (!files.length) {
+                        input.value = '';
+                        return;
+                      }
+                      setFotosUploading(true);
+                      setFotosUploadLabel('Subiendo...');
+                      try {
+                        await subirFotosMultiples(files, { uploadingPrimed: true });
+                      } finally {
+                        input.value = '';
+                      }
                     }}
                   />
                 </label>
