@@ -15,6 +15,12 @@ import { useAuth } from '../context/AuthContext';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { saveReservaReturnUrl } from '../utils/reservaReturnUrl';
 import { getDisplayName } from '../utils/displayName';
+import {
+  ciudadPaisConBandera,
+  horarioDisponibleTexto,
+  precioDesdeCard,
+  primeraFotoSede,
+} from '../utils/sedeCardUi';
 
 // Returns the correct price for a given sede + time slot.
 // Falls back to precio_por_reserva / precio_turno if no differentiated prices are configured.
@@ -25,50 +31,6 @@ function getPrecio(sede, hora) {
   return h < 16
     ? Number(sede.precio_manana || base)
     : Number(sede.precio_tarde  || base);
-}
-
-/** Primera URL de `fotos_urls` o imagen legacy. */
-function primeraFotoSede(sede) {
-  const arr = sede?.fotos_urls;
-  if (Array.isArray(arr)) {
-    for (const item of arr) {
-      const u = String(item || '').trim();
-      if (u) return u;
-    }
-  }
-  const alt = String(sede?.imagen_url || sede?.foto_url || sede?.foto || '').trim();
-  return alt || null;
-}
-
-function horarioDisponibleTexto(sede) {
-  const a = String(sede?.horario_apertura || '').trim() || '10:00';
-  const c = String(sede?.horario_cierre || '').trim() || '23:00';
-  return `Turnos ${a} – ${c}`;
-}
-
-/** Precio mínimo por turno para mostrar en card (mañana/tarde o base). */
-function precioDesdeCard(sede) {
-  const base = Number(sede?.precio_por_reserva || sede?.precio_turno || 0);
-  const m = Number(sede?.precio_manana);
-  const t = Number(sede?.precio_tarde);
-  if (Number.isFinite(m) && m > 0 && Number.isFinite(t) && t > 0) return Math.min(m, t);
-  if (Number.isFinite(m) && m > 0) return m;
-  if (Number.isFinite(t) && t > 0) return t;
-  return base;
-}
-
-function ciudadPaisConBandera(sede) {
-  const ciudad = String(sede?.ciudad || '').trim();
-  const raw = String(sede?.pais || '').trim();
-  if (!raw) return { linea: ciudad || '—', flag: '' };
-  const parts = raw.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2 && String(parts[0]).length <= 8) {
-    return {
-      flag: parts[0],
-      linea: [ciudad, parts.slice(1).join(' ')].filter(Boolean).join(' · ') || parts.slice(1).join(' '),
-    };
-  }
-  return { flag: '', linea: [ciudad, raw].filter(Boolean).join(' · ') || raw };
 }
 
 function primerTelefonoCliente(c) {
@@ -451,12 +413,9 @@ export default function ReservaForm() {
     }
   }, [sedes]);
 
-  const abrirReservaSedeDesdeCard = useCallback(
-    (sede) => {
-      navigate(`/reservar?sedeId=${encodeURIComponent(String(sede.id))}`);
-    },
-    [navigate]
-  );
+  const abrirPerfilPublicoSedeDesdeCard = useCallback((sede) => {
+    navigate(`/sede/${encodeURIComponent(String(sede.id))}`);
+  }, [navigate]);
 
   const prevPaisCardsRef = useRef(null);
   const [reservaCardsWave, setReservaCardsWave] = useState(0);
@@ -870,7 +829,7 @@ export default function ReservaForm() {
                           <button
                             type="button"
                             className="reserva-sede-card-btn"
-                            onClick={() => abrirReservaSedeDesdeCard(sede)}
+                            onClick={() => abrirPerfilPublicoSedeDesdeCard(sede)}
                           >
                             Reservar
                           </button>
