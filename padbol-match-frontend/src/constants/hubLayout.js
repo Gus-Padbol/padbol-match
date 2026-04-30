@@ -23,6 +23,7 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   if (pathOnly === '/' || pathOnly === '/inicio' || pathOnly === '/hub' || pathOnly === '/home') return true;
   if (pathOnly === '/sedes' || pathOnly.startsWith('/sedes/')) return true;
+  if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
   return false;
 }
 

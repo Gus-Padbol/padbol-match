@@ -62,6 +62,10 @@ export default function AppHeader({
   hideLogout = false,
   /** Hub principal: entrada directa a login o chip de usuario (no depende de reservar). */
   hubDirectLogin = false,
+  /**
+   * Panel /admin: chip compacto a la izquierda, logout a la derecha; sin ← Inicio ni menú ⋮.
+   */
+  adminPanelMinimalHeader = false,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -202,6 +206,142 @@ export default function AppHeader({
 
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
+
+  /** Texto junto al avatar: evita repetir la inicial si ya va en el círculo. */
+  const adminMinimalChipText = useMemo(
+    () => String(hubChipLabel || '').replace(/^Admin · /, 'Admin '),
+    [hubChipLabel]
+  );
+
+  if (adminPanelMinimalHeader) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden',
+          minHeight: '56px',
+          background: '#0f172a',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          paddingTop: 'calc(8px + env(safe-area-inset-top, 0px))',
+          paddingBottom: '8px',
+          paddingLeft: padL,
+          paddingRight: padR,
+          boxSizing: 'border-box',
+          zIndex: 1002,
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        {session?.user ? (
+          <button
+            type="button"
+            onClick={() => navigate('/admin')}
+            aria-label="Ir al panel de administración"
+            title="Panel admin"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              maxWidth: 'min(72vw, 280px)',
+              padding: '3px 8px 3px 3px',
+              borderRadius: '999px',
+              border: '1px solid rgba(255,255,255,0.28)',
+              background: 'rgba(255,255,255,0.12)',
+              color: '#f8fafc',
+              cursor: 'pointer',
+              flexShrink: 1,
+              minWidth: 0,
+            }}
+          >
+            {hubFotoUrl ? (
+              <img
+                src={hubFotoUrl}
+                alt=""
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                  border: '1px solid rgba(255,255,255,0.25)',
+                }}
+              />
+            ) : (
+              <span
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {hubInicial}
+              </span>
+            )}
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+              }}
+            >
+              {adminMinimalChipText}
+            </span>
+          </button>
+        ) : (
+          <span aria-hidden style={{ width: 32, height: 32, flexShrink: 0 }} />
+        )}
+        {showLogout && session?.user ? (
+          <button
+            type="button"
+            onClick={async () => {
+              await signOutAndClear();
+              navigate('/');
+            }}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            style={{
+              width: LOGOUT_BTN_SIZE,
+              height: LOGOUT_BTN_SIZE,
+              padding: 0,
+              borderRadius: '50%',
+              border: 'none',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#e2e8f0',
+              fontSize: 16,
+              lineHeight: 1,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            ⏻
+          </button>
+        ) : (
+          <span aria-hidden style={{ width: LOGOUT_BTN_SIZE, height: LOGOUT_BTN_SIZE, flexShrink: 0 }} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

@@ -3,10 +3,8 @@ import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_NAV_HEIGHT_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { setAdminNavContext, clearAdminNavContext } from '../utils/adminNavContext';
@@ -22,6 +20,40 @@ import { getCroppedImgBlob } from '../utils/cropImage';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
 const MAX_FOTOS_SEDE = 20;
+
+function newFranjaId() {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `fj-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+function normalizeFranjasHorarias(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((f) => ({
+    id: String(f?.id || '').trim() || newFranjaId(),
+    nombre: String(f?.nombre ?? '').trim(),
+    hora_inicio: String(f?.hora_inicio ?? '').trim().slice(0, 5),
+    hora_fin: String(f?.hora_fin ?? '').trim().slice(0, 5),
+    precio:
+      f?.precio === '' || f?.precio == null
+        ? ''
+        : String(f.precio).replace(/\./g, '').replace(/[^\d]/g, ''),
+  }));
+}
+
+function franjasHorariasToDbPayload(rows) {
+  return rows.map((r) => {
+    const digits = String(r.precio ?? '').replace(/\./g, '').replace(/[^\d]/g, '');
+    const precio = digits === '' ? 0 : parseInt(digits, 10);
+    return {
+      id: String(r.id || '').trim() || newFranjaId(),
+      nombre: String(r.nombre || '').trim(),
+      hora_inicio: String(r.hora_inicio || '').trim().slice(0, 5),
+      hora_fin: String(r.hora_fin || '').trim().slice(0, 5),
+      precio: Number.isFinite(precio) ? precio : 0,
+    };
+  });
+}
 
 function normalizeHexSedeAdmin(raw) {
   if (raw == null) return null;
@@ -746,6 +778,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
+  const [fotosUploadLabel, setFotosUploadLabel] = useState('');
+  const [franjasHorarias, setFranjasHorarias] = useState([]);
+  const [franjasSaving, setFranjasSaving] = useState(false);
+  const [franjasMsg, setFranjasMsg] = useState('');
+  const [fotosDestacadas, setFotosDestacadas] = useState([]);
+  const [fotosDestacadasSaving, setFotosDestacadasSaving] = useState(false);
+  const [fotosDestacadasMsg, setFotosDestacadasMsg] = useState('');
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
@@ -766,8 +805,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           horario_apertura: sedeData.horario_apertura || '',
           horario_cierre:   sedeData.horario_cierre   || '',
           precio_turno:     sedeData.precio_turno     ?? '',
-          precio_manana:    sedeData.precio_manana    ?? '',
-          precio_tarde:     sedeData.precio_tarde     ?? '',
           moneda:           sedeData.moneda           || 'ARS',
           descripcion:      sedeData.descripcion      || '',
           mp_access_token:  sedeData.mp_access_token  || '',
@@ -787,7 +824,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           licencia_activa: sedeData.licencia_activa ?? true,
         });
         setLogoUrl(sedeData.logo_url || '');
-        setFotosUrls(Array.isArray(sedeData.fotos_urls) ? sedeData.fotos_urls : []);
+        const todasFotos = Array.isArray(sedeData.fotos_urls)
+          ? sedeData.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
+          : [];
+        setFotosUrls(todasFotos);
+        const destRaw = Array.isArray(sedeData.fotos_destacadas) ? sedeData.fotos_destacadas : [];
+        setFotosDestacadas(
+          destRaw
+            .map((u) => String(u || '').trim())
+            .filter((u) => todasFotos.includes(u))
+            .slice(0, 4)
+        );
+        setFranjasHorarias(normalizeFranjasHorarias(sedeData.franjas_horarias));
       }
       setCanchas(canchasData || []);
       setMiSedeLoading(false);
@@ -835,8 +883,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       horario_apertura: miSedeForm.horario_apertura || null,
       horario_cierre:   miSedeForm.horario_cierre   || null,
       precio_turno:     miSedeForm.precio_turno  !== '' ? parseFloat(miSedeForm.precio_turno)  : null,
-      precio_manana:    miSedeForm.precio_manana  !== '' ? parseFloat(miSedeForm.precio_manana) : null,
-      precio_tarde:     miSedeForm.precio_tarde   !== '' ? parseFloat(miSedeForm.precio_tarde)  : null,
       moneda:           miSedeForm.moneda           || 'ARS',
       descripcion:      miSedeForm.descripcion      || null,
       mp_access_token:  miSedeForm.mp_access_token  || null,
@@ -947,25 +993,119 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   };
 
-  const subirFoto = async (file) => {
-    if (!file) return;
-    if (fotosUrls.length >= MAX_FOTOS_SEDE) {
+  const subirFotosMultiples = async (fileList) => {
+    if (!sedeId) return;
+    const picked = Array.from(fileList || []).filter((f) => String(f.type || '').startsWith('image/'));
+    if (!picked.length) return;
+    const espacio = MAX_FOTOS_SEDE - fotosUrls.length;
+    if (espacio <= 0) {
       setFotosMsg(`⚠️ Máximo ${MAX_FOTOS_SEDE} fotos permitidas`);
       return;
     }
-    if (file.size > 2 * 1024 * 1024) { setFotosMsg('⚠️ El archivo supera los 2MB'); return; }
-    setFotosUploading(true); setFotosMsg('');
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `${sedeId}/fotos/${Date.now()}_${safeName}`;
-    const { error: uploadError } = await supabase.storage.from('sedes').upload(path, file, { contentType: file.type });
-    if (uploadError) { setFotosMsg(`⚠️ ${uploadError.message}`); setFotosUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from('sedes').getPublicUrl(path);
-    const newFotos = [...fotosUrls, publicUrl];
-    await supabase.from('sedes').update({ fotos_urls: newFotos }).eq('id', sedeId);
-    setFotosUrls(newFotos);
+    const toProcess = picked.slice(0, espacio);
+    if (picked.length > espacio) {
+      setFotosMsg(`Solo podés agregar ${espacio} ${espacio === 1 ? 'foto más' : 'fotos más'}.`);
+    } else {
+      setFotosMsg('');
+    }
+    setFotosUploading(true);
+    setFotosUploadLabel('');
+    const n = toProcess.length;
+    let completed = 0;
+    const failures = [];
+    const urlsOk = [];
+
+    const uploadOne = async (file, index) => {
+      const name = file.name || `foto-${index}`;
+      if (file.size > 2 * 1024 * 1024) {
+        failures.push(`${name}: supera 2MB`);
+        completed += 1;
+        setFotosUploadLabel(`Subiendo ${completed} de ${n} fotos...`);
+        return;
+      }
+      const safeName = name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${sedeId}/fotos/${Date.now()}_${index}_${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from('sedes')
+        .upload(path, file, { contentType: file.type || 'image/jpeg' });
+      if (uploadError) {
+        failures.push(`${name}: ${uploadError.message}`);
+      } else {
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('sedes').getPublicUrl(path);
+        urlsOk.push({ index, url: publicUrl });
+      }
+      completed += 1;
+      setFotosUploadLabel(`Subiendo ${completed} de ${n} fotos...`);
+    };
+
+    await Promise.all(toProcess.map((f, i) => uploadOne(f, i)));
+    urlsOk.sort((a, b) => a.index - b.index);
+    const merged = [...fotosUrls, ...urlsOk.map((x) => x.url)];
+    if (urlsOk.length) {
+      await supabase.from('sedes').update({ fotos_urls: merged }).eq('id', sedeId);
+      setFotosUrls(merged);
+    }
     setFotosUploading(false);
-    setFotosMsg('✅ Foto agregada');
-    setTimeout(() => setFotosMsg(''), 3000);
+    setFotosUploadLabel('');
+    if (failures.length && urlsOk.length) {
+      setFotosMsg(`⚠️ Algunas no se subieron: ${failures.join(' · ')}`);
+    } else if (failures.length) {
+      setFotosMsg(`⚠️ ${failures.join(' · ')}`);
+    } else if (urlsOk.length) {
+      setFotosMsg(`✅ ${urlsOk.length === 1 ? '1 foto agregada' : `${urlsOk.length} fotos agregadas`}`);
+    }
+    if (failures.length || urlsOk.length) {
+      setTimeout(() => setFotosMsg(''), 5000);
+    }
+  };
+
+  const guardarFranjas = async () => {
+    if (!sedeId) return;
+    setFranjasSaving(true);
+    setFranjasMsg('');
+    const payload = franjasHorariasToDbPayload(franjasHorarias);
+    const { error } = await supabase.from('sedes').update({ franjas_horarias: payload }).eq('id', sedeId);
+    setFranjasSaving(false);
+    if (error) {
+      setFranjasMsg(`⚠️ ${error.message}`);
+    } else {
+      setFranjasMsg('✅ Franjas guardadas');
+      setFranjasHorarias(normalizeFranjasHorarias(payload));
+      setMiSede((prev) => (prev ? { ...prev, franjas_horarias: payload } : prev));
+    }
+    setTimeout(() => setFranjasMsg(''), 3000);
+  };
+
+  const guardarFotosDestacadas = async () => {
+    if (!sedeId) return;
+    setFotosDestacadasSaving(true);
+    setFotosDestacadasMsg('');
+    const arr = fotosDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, 4);
+    const { error } = await supabase.from('sedes').update({ fotos_destacadas: arr }).eq('id', sedeId);
+    setFotosDestacadasSaving(false);
+    if (error) setFotosDestacadasMsg(`⚠️ ${error.message}`);
+    else {
+      setFotosDestacadas(arr);
+      setFotosDestacadasMsg('✅ Destacadas guardadas');
+    }
+    setTimeout(() => setFotosDestacadasMsg(''), 3000);
+  };
+
+  const toggleDestacadaFoto = (url) => {
+    setFotosDestacadas((prev) => {
+      const i = prev.indexOf(url);
+      if (i >= 0) return prev.filter((u) => u !== url);
+      if (prev.length >= 4) {
+        window.setTimeout(() => {
+          setFotosDestacadasMsg('Ya tenés 4 fotos en el carrusel. Quitá una para agregar otra');
+          window.setTimeout(() => setFotosDestacadasMsg(''), 4000);
+        }, 0);
+        return prev;
+      }
+      return [...prev, url];
+    });
   };
 
   const eliminarFoto = async (url) => {
@@ -975,9 +1115,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       const storagePath = decodeURIComponent(url.substring(idx + marker.length).split('?')[0]);
       await supabase.storage.from('sedes').remove([storagePath]);
     }
-    const newFotos = fotosUrls.filter(u => u !== url);
+    const newFotos = fotosUrls.filter((u) => u !== url);
     await supabase.from('sedes').update({ fotos_urls: newFotos }).eq('id', sedeId);
     setFotosUrls(newFotos);
+    setFotosDestacadas((prev) => prev.filter((u) => u !== url));
   };
 
   const agregarCancha = async () => {
@@ -1003,15 +1144,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     return (
       <div
         style={{
-          padding: `${hubContentPaddingTopCss(location.pathname)} 20px calc(${HUB_NAV_HEIGHT_PX + HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+          padding: `${hubContentPaddingTopCss(location.pathname)} 20px calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
           textAlign: 'center',
           minHeight: '100vh',
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Inicio" />
+        <AppHeader title="" showBack={false} adminPanelMinimalHeader />
         Cargando...
-        <BottomNav />
       </div>
     );
   }
@@ -1066,11 +1206,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'auto',
         paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: `calc(12px + ${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`,
+        paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Inicio" />
+      <AppHeader title="" showBack={false} adminPanelMinimalHeader />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img
@@ -2282,7 +2422,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>}
 
       {/* ── Mi Sede tab ── */}
-      {activeTab === 'mi_sede' && puedeVerMiSede && <div className="section">
+      {activeTab === 'mi_sede' && puedeVerMiSede && <div className="section admin-mi-sede-form">
         <h2>🏟️ Mi Sede</h2>
 
         {miSedeLoading ? (
@@ -2387,40 +2527,40 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 { label: 'Latitud',                field: 'latitud',          placeholder: 'Ej: -34.6037' },
                 { label: 'Longitud',               field: 'longitud',         placeholder: 'Ej: -58.3816', hint: 'Puedes obtener las coordenadas desde Google Maps (clic derecho → "¿Qué hay aquí?")' },
               ].map(({ label, field, placeholder, hint }) => (
-                <div key={field} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+                <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                   <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555', paddingTop: '8px' }}>{label}</label>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                     <input
                       type="text"
                       value={miSedeForm[field] || ''}
                       placeholder={placeholder || ''}
                       onChange={e => setMiSedeForm(p => ({ ...p, [field]: e.target.value }))}
-                      style={{ width: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', boxSizing: 'border-box' }}
+                      style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', boxSizing: 'border-box' }}
                     />
                     {hint && <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#9ca3af' }}>{hint}</p>}
                   </div>
                 </div>
               ))}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+              <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                 <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555', paddingTop: '8px' }}>Descripción del club</label>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <textarea
-                    rows={4}
+                    rows={6}
                     maxLength={300}
                     value={miSedeForm.descripcion || ''}
                     placeholder="Ej: Primer club de PADBOL del mundo, donde todo comenzó..."
                     onChange={e => setMiSedeForm(p => ({ ...p, descripcion: e.target.value }))}
-                    style={{ width: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
                   />
                   <div style={{ textAlign: 'right', fontSize: '12px', color: (miSedeForm.descripcion || '').length >= 280 ? '#dc2626' : '#9ca3af', marginTop: '3px' }}>
                     {(miSedeForm.descripcion || '').length}/300
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                 <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Moneda</label>
                 <select value={miSedeForm.moneda || 'ARS'} onChange={e => setMiSedeForm(p => ({ ...p, moneda: e.target.value }))}
-                  style={{ padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}>
+                  style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', boxSizing: 'border-box', flex: 1, minWidth: 0 }}>
                   <option value="ARS">ARS — Peso argentino</option>
                   <option value="USD">USD — Dólar estadounidense</option>
                   <option value="EUR">EUR — Euro</option>
@@ -2442,10 +2582,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {/* ── 2. Precios ── */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Precios</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '400px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
+              <div className="admin-mi-sede-field-row admin-mi-sede-precio-base" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Precio por turno (90 min)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <span style={{ fontSize: '13px', color: '#888', fontWeight: 600 }}>{miSedeForm.moneda || 'ARS'}</span>
                   <input
                     type="text"
@@ -2457,45 +2597,157 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
                       setMiSedeForm(p => ({ ...p, precio_turno: digits }));
                     }}
-                    style={{ width: '120px', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: '#1e1b4b', textAlign: 'right' }}
+                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: '#1e1b4b', textAlign: 'right', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
               <p style={{ margin: '4px 0 18px', fontSize: '12px', color: '#9ca3af', lineHeight: 1.5 }}>
-                Precio base aplicado cuando no hay tarifas diferenciadas.
+                Precio base cuando ninguna franja cubre el horario del turno.
               </p>
 
-              {[
-                { field: 'precio_manana', label: '🌅 Mañana (08–16hs)' },
-                { field: 'precio_tarde',  label: '🌆 Tarde/noche (16–23hs)' },
-              ].map(({ field, label }) => (
-                <div key={field} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555', width: '190px' }}>{label}</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '13px', color: '#888', fontWeight: 600 }}>{miSedeForm.moneda || 'ARS'}</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={miSedeForm[field] !== '' && miSedeForm[field] !== null
-                        ? Number(miSedeForm[field]).toLocaleString('es-AR')
-                        : ''}
-                      onChange={e => {
-                        const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
-                        setMiSedeForm(p => ({ ...p, [field]: digits }));
+              <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 700, color: '#334155' }}>Franjas horarias y precios</p>
+              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#9ca3af', lineHeight: 1.5 }}>
+                Definí tantas franjas como quieras. El precio de la reserva se elige según la hora de inicio del turno (formato 24 h).
+              </p>
+              {franjasHorarias.map((fj, idx) => (
+                <div
+                  key={fj.id}
+                  className="admin-franja-bloque"
+                  style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Franja {idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFranjasHorarias((rows) => rows.filter((r) => r.id !== fj.id))}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: '#fee2e2',
+                        color: '#b91c1c',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
                       }}
-                      placeholder="Ej: 5000"
-                      style={{ width: '120px', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: '#1e1b4b', textAlign: 'right' }}
-                    />
+                      title="Eliminar franja"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#555' }}>Nombre</label>
+                  <input
+                    type="text"
+                    value={fj.nombre}
+                    placeholder="Ej: Mañana, Tarde, Noche"
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, nombre: v } : r)));
+                    }}
+                    style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                  />
+                  <div className="admin-franja-horas" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                    <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>Inicio</label>
+                      <input
+                        type="time"
+                        value={fj.hora_inicio}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, hora_inicio: v } : r)));
+                        }}
+                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                      />
+                    </div>
+                    <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>Fin</label>
+                      <input
+                        type="time"
+                        value={fj.hora_fin}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, hora_fin: v } : r)));
+                        }}
+                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                      />
+                    </div>
+                    <div style={{ flex: '1 1 140px', minWidth: 0 }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>
+                        Precio ({miSedeForm.moneda || 'ARS'})
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={
+                          fj.precio === '' || fj.precio == null
+                            ? ''
+                            : Number(String(fj.precio).replace(/\D/g, '') || 0).toLocaleString('es-AR')
+                        }
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                          setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, precio: digits } : r)));
+                        }}
+                        placeholder="Ej: 8000"
+                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: '#1e1b4b', textAlign: 'right' }}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
-              <p style={{ margin: '0 0 16px', fontSize: '12px', color: '#9ca3af', lineHeight: 1.5 }}>
-                Si se configuran ambas tarifas, el precio cambia automáticamente según el horario del turno.
-              </p>
-
-              <button onClick={guardarMiSede} disabled={miSedeSaving}
-                style={{ padding: '8px 20px', background: miSedeSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar precios'}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFranjasHorarias((rows) => [
+                      ...rows,
+                      { id: newFranjaId(), nombre: '', hora_inicio: '', hora_fin: '', precio: '' },
+                    ])
+                  }
+                  style={{
+                    padding: '8px 16px',
+                    background: '#e0e7ff',
+                    color: '#3730a3',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                  }}
+                >
+                  + Agregar franja
+                </button>
+                <button
+                  type="button"
+                  onClick={guardarFranjas}
+                  disabled={franjasSaving}
+                  style={{
+                    padding: '8px 20px',
+                    background: franjasSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: franjasSaving ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                  }}
+                >
+                  {franjasSaving ? '⏳ Guardando...' : '💾 Guardar franjas'}
+                </button>
+                {franjasMsg ? (
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{franjasMsg}</span>
+                ) : null}
+              </div>
+              <button onClick={guardarMiSede} disabled={miSedeSaving} type="button"
+                style={{ marginTop: '16px', padding: '8px 20px', background: miSedeSaving ? '#a5b4fc' : 'linear-gradient(135deg, #6366f1, #4338ca)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar precio base'}
               </button>
             </div>
           </div>
@@ -2541,14 +2793,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 { field: 'youtube',   label: '▶ YouTube',   placeholder: 'https://youtube.com/@tusede' },
                 { field: 'website',   label: '🌐 Sitio web', placeholder: 'https://tusede.com' },
               ].map(({ field, label, placeholder }) => (
-                <div key={field} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                   <label style={{ width: '150px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>{label}</label>
                   <input
                     type="url"
                     value={miSedeForm[field] || ''}
                     placeholder={placeholder}
                     onChange={e => setMiSedeForm(p => ({ ...p, [field]: e.target.value }))}
-                    style={{ flex: 1, padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box' }}
+                    style={{ flex: 1, minWidth: 0, maxWidth: '100%', width: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box' }}
                   />
                 </div>
               ))}
@@ -2599,11 +2851,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </table>
               )}
               {/* Add court */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div className="admin-mi-sede-field-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input type="text" placeholder="Ej: Cancha 3" value={nuevaCancha}
                   onChange={e => setNuevaCancha(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') agregarCancha(); }}
-                  style={{ flex: 1, padding: '7px 10px', border: '1.5px solid #a5b4fc', borderRadius: '6px', fontSize: '13px', color: '#333' }} />
+                  style={{ flex: 1, minWidth: 0, maxWidth: '100%', width: '100%', padding: '7px 10px', border: '1.5px solid #a5b4fc', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box' }} />
                 <button onClick={agregarCancha}
                   style={{ padding: '7px 16px', background: 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', whiteSpace: 'nowrap' }}>
                   + Agregar
@@ -2713,47 +2965,137 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   borderRadius: '8px', cursor: fotosUploading ? 'not-allowed' : 'pointer',
                   fontWeight: 700, fontSize: '13px',
                 }}>
-                  {fotosUploading ? '⏳ Subiendo...' : '+ Agregar foto'}
+                  {fotosUploading ? '⏳ Subiendo...' : '+ Agregar fotos'}
                   <input
-                    type="file" accept="image/jpeg,image/png,image/webp"
+                    type="file"
+                    accept="image/*"
+                    multiple
                     style={{ display: 'none' }}
                     disabled={fotosUploading}
-                    onChange={e => subirFoto(e.target.files[0])}
+                    onChange={(e) => {
+                      const fl = e.target.files;
+                      e.target.value = '';
+                      if (fl?.length) subirFotosMultiples(fl);
+                    }}
                   />
                 </label>
               )}
             </div>
+            {fotosUploadLabel ? (
+              <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#6366f1' }}>{fotosUploadLabel}</p>
+            ) : null}
+            <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+              Marcá hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). Guardá con el botón inferior.
+            </p>
             {fotosUrls.length === 0 ? (
               <p style={{ color: '#aaa', fontSize: '13px', margin: 0 }}>No hay fotos cargadas aún.</p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                {fotosUrls.map((url, i) => (
-                  <div key={url} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', background: '#f1f5f9' }}>
-                    <img
-                      src={url}
-                      alt={`Cancha ${i + 1}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-                    <button
-                      onClick={() => eliminarFoto(url)}
-                      style={{
-                        position: 'absolute', top: '6px', right: '6px',
-                        width: '26px', height: '26px', borderRadius: '50%',
-                        background: 'rgba(220,38,38,0.85)', color: 'white',
-                        border: 'none', cursor: 'pointer', fontSize: '14px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        lineHeight: 1,
-                      }}
-                      title="Eliminar foto"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+                {fotosUrls.map((url, i) => {
+                  const ord = fotosDestacadas.indexOf(url);
+                  const destacada = ord >= 0;
+                  return (
+                    <div key={url} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', background: '#f1f5f9' }}>
+                      <img
+                        src={url}
+                        alt={`Cancha ${i + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                      {destacada ? (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            left: '8px',
+                            bottom: '8px',
+                            minWidth: '22px',
+                            height: '22px',
+                            padding: '0 6px',
+                            borderRadius: '8px',
+                            background: 'rgba(15,23,42,0.75)',
+                            color: '#f8fafc',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            pointerEvents: 'none',
+                          }}
+                        >
+                          {ord + 1}
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => toggleDestacadaFoto(url)}
+                        title={destacada ? 'Quitar del carrusel' : 'Destacar en carrusel'}
+                        style={{
+                          position: 'absolute',
+                          top: '6px',
+                          left: '6px',
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '50%',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          lineHeight: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: destacada ? 'rgba(234,179,8,0.95)' : 'rgba(15,23,42,0.55)',
+                          color: destacada ? '#1e1b4b' : '#fef9c3',
+                        }}
+                      >
+                        ★
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => eliminarFoto(url)}
+                        style={{
+                          position: 'absolute', top: '6px', right: '6px',
+                          width: '26px', height: '26px', borderRadius: '50%',
+                          background: 'rgba(220,38,38,0.85)', color: 'white',
+                          border: 'none', cursor: 'pointer', fontSize: '14px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          lineHeight: 1,
+                        }}
+                        title="Eliminar foto"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
-            {fotosMsg && <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: fotosMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{fotosMsg}</p>}
-            <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#9ca3af' }}>JPG, PNG o WEBP · máx. 2MB por foto</p>
+            {fotosUrls.length > 0 ? (
+              <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={guardarFotosDestacadas}
+                  disabled={fotosDestacadasSaving}
+                  style={{
+                    padding: '8px 20px',
+                    background: fotosDestacadasSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: fotosDestacadasSaving ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                  }}
+                >
+                  {fotosDestacadasSaving ? '⏳ Guardando...' : '💾 Guardar destacadas'}
+                </button>
+                {fotosDestacadasMsg ? (
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: fotosDestacadasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>
+                    {fotosDestacadasMsg}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            {fotosMsg ? <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: fotosMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{fotosMsg}</p> : null}
+            <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#9ca3af' }}>Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos</p>
           </div>
         </div>}
 
@@ -2871,7 +3213,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       ) : null}
 
-      <BottomNav />
     </div>
   );
 }

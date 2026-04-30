@@ -1,3 +1,5 @@
+import { precioMinimoFranjas } from './franjasHorarias';
+
 /** Primera URL de `fotos_urls` o imagen legacy (cards sede en /reservar y hub). */
 export function primeraFotoSede(sede) {
   const arr = sede?.fotos_urls;
@@ -17,9 +19,11 @@ export function horarioDisponibleTexto(sede) {
   return `Turnos ${a} – ${c}`;
 }
 
-/** Precio mínimo por turno para mostrar en card (mañana/tarde o base). */
+/** Precio mínimo por turno para mostrar en card (franjas JSONB, mañana/tarde o base). */
 export function precioDesdeCard(sede) {
   const base = Number(sede?.precio_por_reserva || sede?.precio_turno || 0);
+  const desdeFranjas = precioMinimoFranjas(sede);
+  if (desdeFranjas != null && desdeFranjas >= 0) return desdeFranjas;
   const m = Number(sede?.precio_manana);
   const t = Number(sede?.precio_tarde);
   if (Number.isFinite(m) && m > 0 && Number.isFinite(t) && t > 0) return Math.min(m, t);

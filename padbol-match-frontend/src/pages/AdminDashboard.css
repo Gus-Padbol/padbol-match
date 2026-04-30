@@ -172,3 +172,50 @@
     font-size: 0.9rem;
   }
 }
+
+/* Mi Sede: evitar overflow horizontal en mobile */
+.admin-mi-sede-form {
+  overflow-x: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 560px) {
+  .admin-mi-sede-form .admin-mi-sede-field-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .admin-mi-sede-form .admin-mi-sede-field-row > label {
+    width: 100% !important;
+    max-width: 100%;
+    padding-top: 0 !important;
+  }
+
+  .admin-mi-sede-form .admin-mi-sede-field-row > div {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .admin-mi-sede-form input,
+  .admin-mi-sede-form select,
+  .admin-mi-sede-form textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .admin-mi-sede-form .admin-mi-sede-precio-base {
+    align-items: stretch !important;
+  }
+
+  .admin-mi-sede-form .admin-franja-horas {
+    flex-direction: column !important;
+  }
+
+  .admin-mi-sede-form .admin-franja-horas > div {
+    width: 100%;
+    max-width: 100%;
+  }
+}

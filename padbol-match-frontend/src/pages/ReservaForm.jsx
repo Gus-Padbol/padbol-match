@@ -21,12 +21,15 @@ import {
   precioDesdeCard,
   primeraFotoSede,
 } from '../utils/sedeCardUi';
+import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
 
 // Returns the correct price for a given sede + time slot.
-// Falls back to precio_por_reserva / precio_turno if no differentiated prices are configured.
+// Falls back a mañana/tarde legacy o precio base.
 function getPrecio(sede, hora) {
   const base = Number(sede?.precio_por_reserva || sede?.precio_turno || 0);
   if (!hora || !sede) return base;
+  const desdeFranjas = precioDesdeFranjas(sede, hora);
+  if (desdeFranjas != null) return desdeFranjas;
   const h = parseInt(hora.split(':')[0], 10);
   return h < 16
     ? Number(sede.precio_manana || base)
@@ -904,10 +907,7 @@ export default function ReservaForm() {
                 </>
               );
             })()}
-            {sedeSeleccionada.precio_manana && sedeSeleccionada.precio_tarde
-              ? ` • 🌅 $${Number(sedeSeleccionada.precio_manana).toLocaleString('es-AR')} / 🌆 $${Number(sedeSeleccionada.precio_tarde).toLocaleString('es-AR')} ${sedeSeleccionada.moneda || 'ARS'}`
-              : ` • $${Number(sedeSeleccionada.precio_por_reserva || sedeSeleccionada.precio_turno || 0).toLocaleString('es-AR')} ${sedeSeleccionada.moneda || 'ARS'}`
-            }
+            {textoLineaTarifasReserva(sedeSeleccionada)}
           </p>
           )}
 
@@ -963,11 +963,19 @@ export default function ReservaForm() {
                 <span style={{ fontSize: '15px', fontWeight: 800, color: '#0369a1' }}>
                   💰 {Number(getPrecio(sedeSeleccionada, formData.hora)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
-                {sedeSeleccionada?.precio_manana && sedeSeleccionada?.precio_tarde && (
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                    {parseInt(formData.hora.split(':')[0], 10) < 16 ? '🌅 Tarifa mañana' : '🌆 Tarifa tarde/noche'}
-                  </span>
-                )}
+                {(() => {
+                  const subEtiqueta =
+                    nombreFranjaActiva(sedeSeleccionada, formData.hora) ||
+                    (sedeSeleccionada?.precio_manana && sedeSeleccionada?.precio_tarde
+                      ? parseInt(formData.hora.split(':')[0], 10) < 16
+                        ? '🌅 Tarifa mañana'
+                        : '🌆 Tarifa tarde/noche'
+                      : '');
+                  if (!subEtiqueta) return null;
+                  return (
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>{subEtiqueta}</span>
+                  );
+                })()}
               </div>
             )}
 
