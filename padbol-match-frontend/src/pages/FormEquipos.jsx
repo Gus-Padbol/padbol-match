@@ -16,7 +16,7 @@ import {
   PERFIL_CHANGE_EVENT,
 } from '../utils/jugadorPerfil';
 import { setTorneoEquipoActual, clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
-import { setAdminNavContext } from '../utils/adminNavContext';
+import { setAdminNavContext, readAdminNavContext } from '../utils/adminNavContext';
 import {
   getEquipoInscripcionEstado,
   etiquetaInscripcionEstado,
@@ -1711,7 +1711,7 @@ export default function FormEquipos() {
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
 
   const handleInscripcionHeaderBack = useCallback(() => {
-    if (esAdminGestionTorneo && location.state?.fromAdmin) {
+    if (esAdminGestionTorneo && (location.state?.fromAdmin || readAdminNavContext())) {
       navigate('/admin');
       return;
     }
@@ -2198,6 +2198,9 @@ export default function FormEquipos() {
               : 'Inscripción'
         }
         onBack={handleInscripcionHeaderBack}
+        backLabel={
+          esAdminGestionTorneo && (location.state?.fromAdmin || readAdminNavContext()) ? '← Admin' : undefined
+        }
       />
       <div
         style={{

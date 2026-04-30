@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
@@ -6,6 +6,7 @@ import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import { loginRedirectAfterHubEntry } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
+import { readAdminNavContext, clearAdminNavContext } from '../utils/adminNavContext';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -25,6 +26,14 @@ const LOGOUT_BTN_SIZE = 34;
 const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club'];
 
 /** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
+function readCachedRolHeader() {
+  try {
+    return JSON.parse(localStorage.getItem('user_role_data') || '{}')?.rol || null;
+  } catch {
+    return null;
+  }
+}
+
 function hubChipNavigatePath(rolActual, roleLoading) {
   if (ADMIN_ROLES_CHIP.includes(rolActual || '')) return '/admin';
   if (roleLoading) {
@@ -66,7 +75,11 @@ export default function AppHeader({
     return { email: em };
   }, [session?.user?.email]);
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
+  const rolEffectiveHeader = useMemo(() => rol || readCachedRolHeader(), [rol]);
+  const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const adminMenuRef = useRef(null);
   useEffect(() => {
     if (rol !== 'admin_club' || !sedeId) {
       setAdminSedeNombre('');
@@ -121,11 +134,33 @@ export default function AppHeader({
     [rol, roleLoading]
   );
 
+  const adminFlowSurface = useMemo(() => {
+    if (!session?.user || !isPanelAdminUser) return false;
+    const adminContextFlag = readAdminNavContext();
+    const fromAdminNav = Boolean(location.state?.fromAdmin);
+    if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
+    if (adminContextFlag || fromAdminNav) return true;
+    if (pathOnly.startsWith('/torneo') && (adminContextFlag || fromAdminNav)) return true;
+    if (pathOnly.startsWith('/equipo/') && (adminContextFlag || fromAdminNav)) return true;
+    return false;
+  }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
+
+  useEffect(() => {
+    if (!adminMenuOpen) return undefined;
+    const close = (e) => {
+      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target)) {
+        setAdminMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [adminMenuOpen]);
+
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
   const hubInicial = String(hubNombreCorto || '?')
     .charAt(0)
     .toUpperCase();
-  const showAdmin = !hideLogoutEffective && authEmail === 'padbolinternacional@gmail.com';
+  const showAdmin = !hideLogoutEffective && authEmail === 'padbolinternacional@gmail.com' && !adminFlowSurface;
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
@@ -138,9 +173,28 @@ export default function AppHeader({
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
   const compactHubChip = hubDirectLogin && hubInicioPath && Boolean(session?.user);
 
+  const displayBackLabel = useMemo(() => {
+    if (backLabel) return backLabel;
+    if (!showBack) return '← Volver';
+    if (typeof onBack === 'function') return '← Volver';
+    if (adminFlowSurface) {
+      return pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? '← Inicio' : '← Admin';
+    }
+    return '← Volver';
+  }, [backLabel, showBack, onBack, adminFlowSurface, pathOnly]);
+
   const handleBack = () => {
     if (typeof onBack === 'function') {
       onBack();
+      return;
+    }
+    if (adminFlowSurface) {
+      if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) {
+        clearAdminNavContext();
+        navigate('/');
+        return;
+      }
+      navigate('/admin');
       return;
     }
     if (typeof window !== 'undefined') window.history.back();
@@ -188,7 +242,7 @@ export default function AppHeader({
             style={{ ...btnVolver, flexShrink: 0 }}
             aria-label="Volver atrás"
           >
-            {backLabel || '← Volver'}
+            {displayBackLabel}
           </button>
         ) : (
           <span
@@ -275,72 +329,157 @@ export default function AppHeader({
               marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
-            {hubDirectLogin && session?.user ? (
-              <button
-                type="button"
-                onClick={() => navigate(hubChipNavPath)}
-                aria-label={hubChipNavPath === '/admin' ? 'Ir al panel de administración' : 'Ir a mi perfil'}
-                title={hubChipNavPath === '/admin' ? 'Panel admin' : 'Mi perfil'}
+            {(hubDirectLogin || adminFlowSurface) && session?.user ? (
+              <div
+                ref={adminFlowSurface ? adminMenuRef : undefined}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: compactHubChip ? 4 : 6,
-                  maxWidth: compactHubChip ? 'min(30vw, 100px)' : 'min(42vw, 160px)',
-                  padding: compactHubChip ? '3px 6px 3px 3px' : '4px 8px 4px 4px',
-                  borderRadius: '999px',
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.12)',
-                  color: '#f8fafc',
-                  cursor: 'pointer',
-                  flexShrink: 1,
-                  minWidth: 0,
+                  gap: adminFlowSurface ? 4 : undefined,
+                  position: 'relative',
                 }}
               >
-                {hubFotoUrl ? (
-                  <img
-                    src={hubFotoUrl}
-                    alt=""
-                    style={{
-                      width: compactHubChip ? 22 : 28,
-                      height: compactHubChip ? 22 : 28,
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      flexShrink: 0,
-                      border: '1px solid rgba(255,255,255,0.25)',
-                    }}
-                  />
-                ) : (
-                  <span
-                    style={{
-                      width: compactHubChip ? 22 : 28,
-                      height: compactHubChip ? 22 : 28,
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                      color: '#fff',
-                      fontSize: compactHubChip ? 10 : 12,
-                      fontWeight: 800,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {hubInicial}
-                  </span>
-                )}
-                <span
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminMenuOpen(false);
+                    navigate(adminFlowSurface ? '/admin' : hubChipNavPath);
+                  }}
+                  aria-label={adminFlowSurface ? 'Ir al panel de administración' : hubChipNavPath === '/admin' ? 'Ir al panel de administración' : 'Ir a mi perfil'}
+                  title={adminFlowSurface ? 'Panel admin' : hubChipNavPath === '/admin' ? 'Panel admin' : 'Mi perfil'}
                   style={{
-                    fontSize: compactHubChip ? 10 : 12,
-                    fontWeight: 700,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: compactHubChip ? 4 : 6,
+                    maxWidth: adminFlowSurface
+                      ? 'min(52vw, 220px)'
+                      : compactHubChip
+                        ? 'min(30vw, 100px)'
+                        : 'min(42vw, 160px)',
+                    padding: compactHubChip ? '3px 6px 3px 3px' : '4px 8px 4px 4px',
+                    borderRadius: '999px',
+                    border: adminFlowSurface ? '1px solid rgba(255,255,255,0.28)' : 'none',
+                    background: 'rgba(255,255,255,0.12)',
+                    color: '#f8fafc',
+                    cursor: 'pointer',
+                    flexShrink: 1,
                     minWidth: 0,
                   }}
                 >
-                  {hubChipLabel}
-                </span>
-              </button>
+                  {hubFotoUrl ? (
+                    <img
+                      src={hubFotoUrl}
+                      alt=""
+                      style={{
+                        width: compactHubChip ? 22 : 28,
+                        height: compactHubChip ? 22 : 28,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        flexShrink: 0,
+                        border: '1px solid rgba(255,255,255,0.25)',
+                      }}
+                    />
+                  ) : (
+                    <span
+                      style={{
+                        width: compactHubChip ? 22 : 28,
+                        height: compactHubChip ? 22 : 28,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                        color: '#fff',
+                        fontSize: compactHubChip ? 10 : 12,
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {hubInicial}
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      fontSize: compactHubChip ? 10 : 12,
+                      fontWeight: 700,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}
+                  >
+                    {hubChipLabel}
+                  </span>
+                </button>
+                {adminFlowSurface ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAdminMenuOpen((o) => !o)}
+                      aria-label="Opciones de modo admin"
+                      title="Opciones"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        padding: 0,
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.22)',
+                        background: 'rgba(255,255,255,0.1)',
+                        color: '#e2e8f0',
+                        fontSize: 14,
+                        fontWeight: 800,
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      ⋮
+                    </button>
+                    {adminMenuOpen ? (
+                      <div
+                        role="menu"
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          right: 0,
+                          marginTop: 8,
+                          minWidth: 168,
+                          padding: '6px 0',
+                          borderRadius: 10,
+                          background: '#1e293b',
+                          border: '1px solid rgba(148,163,184,0.35)',
+                          boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
+                          zIndex: 2000,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setAdminMenuOpen(false);
+                            clearAdminNavContext();
+                            navigate('/');
+                          }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 14px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#f1f5f9',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Modo jugador
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
             ) : null}
             {showAdmin ? (
               <button

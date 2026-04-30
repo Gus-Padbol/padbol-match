@@ -9,7 +9,7 @@ import {
   HUB_NAV_HEIGHT_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
-import { setAdminNavContext } from '../utils/adminNavContext';
+import { setAdminNavContext, clearAdminNavContext } from '../utils/adminNavContext';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
@@ -953,7 +953,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   const handleVolverHubDesdeAdmin = () => {
-    if (esAdminClub) setAdminNavContext(false);
+    clearAdminNavContext();
     navigate('/');
   };
 
@@ -967,7 +967,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Volver" />
+        <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Inicio" />
         Cargando...
         <BottomNav />
       </div>
@@ -1028,7 +1028,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Volver" />
+      <AppHeader title="Inicio" showBack onBack={handleVolverHubDesdeAdmin} backLabel="← Inicio" />
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img

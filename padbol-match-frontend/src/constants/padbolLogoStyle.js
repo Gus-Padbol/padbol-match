@@ -4,8 +4,8 @@
  */
 export const padbolLogoImgStyle = {
   display: 'block',
-  margin: '0 auto',
-  paddingTop: '20px',
+  margin: '16px auto 0',
+  paddingTop: 0,
   height: '110px',
   width: 'auto',
   objectFit: 'contain',

@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
-import { readAdminNavContext, setAdminNavContext } from '../utils/adminNavContext';
+import { setAdminNavContext } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
 export default function TorneoVista() {
@@ -229,7 +229,7 @@ export default function TorneoVista() {
 
   const estadoTorneoLower = String(torneo?.estado || '').toLowerCase();
   const adminTorneoBar = torneo ? (
-    <div style={{ marginBottom: '12px' }}>
+    <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
       {estadoTorneoLower !== 'finalizado' ? (
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
           <button
@@ -242,15 +242,15 @@ export default function TorneoVista() {
         </div>
       ) : null}
       {isAdmin && !['en_curso', 'finalizado'].includes(String(torneo.estado || '').toLowerCase()) && (
-        <div className="torneo-acciones">
+        <div className="torneo-acciones torneo-acciones--sobre-violeta">
           {!todosEquiposCompletos ? (
-            <p className="torneo-iniciar-aviso" style={{ margin: '8px 0 0', color: '#b45309', fontWeight: 600 }}>
-              Aviso: faltan equipos completos — podés iniciar igual para cerrar inscripción.
+            <p className="torneo-iniciar-aviso">
+              Faltan equipos completos para iniciar. Podés iniciar igual para cerrar inscripción.
             </p>
           ) : null}
           <button
             type="button"
-            className="btn-iniciar-torneo"
+            className="btn-iniciar-torneo btn-iniciar-torneo--sobre-violeta"
             onClick={() => void iniciarTorneo()}
             disabled={iniciando}
           >
@@ -281,16 +281,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader
-          title="Torneo"
-          showBack
-          onBack={() => {
-            if (fromAdmin || readAdminNavContext()) navigate('/admin');
-            else if (window.history.length > 1) window.history.back();
-            else navigate('/');
-          }}
-          backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
-        />
+        <AppHeader title="Torneo" showBack />
         <div className="loading">Cargando...</div>
         <BottomNav />
       </div>
@@ -306,16 +297,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader
-          title="Torneo"
-          showBack
-          onBack={() => {
-            if (fromAdmin || readAdminNavContext()) navigate('/admin');
-            else if (window.history.length > 1) window.history.back();
-            else navigate('/');
-          }}
-          backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
-        />
+        <AppHeader title="Torneo" showBack />
         <div className="error">Error: {error}</div>
         <BottomNav />
       </div>
@@ -331,16 +313,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader
-          title="Torneo"
-          showBack
-          onBack={() => {
-            if (fromAdmin || readAdminNavContext()) navigate('/admin');
-            else if (window.history.length > 1) window.history.back();
-            else navigate('/');
-          }}
-          backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
-        />
+        <AppHeader title="Torneo" showBack />
         <div className="error">Torneo no encontrado</div>
         <BottomNav />
       </div>
@@ -355,16 +328,7 @@ export default function TorneoVista() {
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
-      <AppHeader
-        title="Torneo"
-        showBack
-        onBack={() => {
-          if (fromAdmin || readAdminNavContext()) navigate('/admin');
-          else if (window.history.length > 1) window.history.back();
-          else navigate('/');
-        }}
-        backLabel={fromAdmin || readAdminNavContext() ? '← Admin' : '← Volver'}
-      />
+      <AppHeader title="Torneo" showBack />
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"

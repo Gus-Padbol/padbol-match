@@ -17,3 +17,7 @@ export function readAdminNavContext() {
     return false;
   }
 }
+
+export function clearAdminNavContext() {
+  setAdminNavContext(false);
+}

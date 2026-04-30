@@ -86,6 +86,28 @@ function initialFromText(value) {
   return '?';
 }
 
+/** Games a/b from "6-4", "6 4", "6  0". */
+function parseSetGames(setStr) {
+  const parts = String(setStr || '')
+    .trim()
+    .split(/[\s-]+/)
+    .filter(Boolean);
+  if (parts.length < 2) return null;
+  const a = Number(parts[0]);
+  const b = Number(parts[1]);
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  return { a, b };
+}
+
+/** Normaliza entrada de set a formato "n-m" (espacio → guion). */
+function normalizeSetInput(raw) {
+  const t = String(raw || '').trim();
+  if (!t) return '';
+  const parts = t.split(/[\s-]+/).filter(Boolean);
+  if (parts.length >= 2) return `${parts[0]}-${parts[1]}`;
+  return t;
+}
+
 function avatarJugadorPodio(p) {
   const foto = String(p?.foto_url || '').trim();
   const label = jugadorEtiquetaConArroba(p);
@@ -148,7 +170,9 @@ function calcularStats(equiposList, partidosList) {
     let ggA = 0;
     let ggB = 0;
     sets.forEach((set) => {
-      const [a, b] = set.split('-').map(Number);
+      const parsed = parseSetGames(set);
+      if (!parsed) return;
+      const { a, b } = parsed;
       ggA += a;
       ggB += b;
       if (a > b) sgA += 1;
@@ -218,7 +242,9 @@ function contarSetsGanados(partido) {
   let a = 0;
   let b = 0;
   sets.forEach((set) => {
-    const [x, y] = String(set).split('-').map(Number);
+    const parsed = parseSetGames(set);
+    if (!parsed) return;
+    const { a: x, b: y } = parsed;
     if (x > y) a += 1;
     else if (y > x) b += 1;
   });
@@ -289,6 +315,7 @@ export default function TorneoTabbedView({
 
   const estadoLower = String(torneo?.estado || '').toLowerCase();
   const esFinalizado = estadoLower === 'finalizado';
+  const puedeCargarResultados = isAdmin && estadoLower === 'en_curso';
   const estadoBadge = useMemo(() => {
     if (estadoLower === 'finalizado') return { label: 'Finalizado', bg: '#fee2e2', color: '#b91c1c' };
     if (estadoLower === 'abierto') return { label: 'Inscripción abierta', bg: '#dcfce7', color: '#166534' };
@@ -349,16 +376,29 @@ export default function TorneoTabbedView({
     (partido) => {
       if (!isAdmin) return;
       if (partido.estado === 'finalizado') return;
+      if (!puedeCargarResultados) {
+        alert('Iniciá el torneo para comenzar a cargar resultados.');
+        return;
+      }
       setSelectedPartido(partido);
       setResultado({ set1: '', set2: '', set3: '' });
       setShowModalResultado(true);
     },
-    [isAdmin]
+    [isAdmin, puedeCargarResultados]
   );
 
   const guardarResultado = async () => {
     if (!selectedPartido) return;
-    const sets = [resultado.set1, resultado.set2, resultado.set3].filter((s) => s.trim());
+    if (!puedeCargarResultados) {
+      alert('Iniciá el torneo para comenzar a cargar resultados.');
+      return;
+    }
+    const norm = {
+      set1: normalizeSetInput(resultado.set1),
+      set2: normalizeSetInput(resultado.set2),
+      set3: normalizeSetInput(resultado.set3),
+    };
+    const sets = [norm.set1, norm.set2, norm.set3].filter((s) => s.trim());
     if (sets.length < 2) {
       alert('Mínimo 2 sets requeridos');
       return;
@@ -369,13 +409,13 @@ export default function TorneoTabbedView({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           estado: 'finalizado',
-          resultado: JSON.stringify(resultado),
+          resultado: JSON.stringify(norm),
         }),
       });
       if (res.ok) {
         setPartidos((prev) =>
           prev.map((p) =>
-            p.id === selectedPartido.id ? { ...p, estado: 'finalizado', resultado: JSON.stringify(resultado) } : p
+            p.id === selectedPartido.id ? { ...p, estado: 'finalizado', resultado: JSON.stringify(norm) } : p
           )
         );
         setShowModalResultado(false);
@@ -613,69 +653,95 @@ export default function TorneoTabbedView({
     </div>
   );
 
-  const renderGrupoTable = (grupoLabel, tablaRows, onNombreClick) => (
-    <div style={{ marginBottom: '22px' }}>
-      <div style={{ fontWeight: 900, fontSize: '15px', color: '#0f172a', marginBottom: '8px' }}>Grupo {grupoLabel}</div>
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-        <table style={{ width: '100%', minWidth: 420, borderCollapse: 'collapse', fontSize: '12px', background: '#fff' }}>
-          <thead>
-            <tr style={{ background: '#f8fafc', color: '#475569' }}>
-              {['EQUIPO', 'PJ', 'PG', 'PP', 'SF', 'SC', 'PTS'].map((h) => (
-                <th key={h} style={{ padding: '8px 6px', textAlign: h === 'EQUIPO' ? 'left' : 'center', fontWeight: 800 }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {tablaRows.map((row, idx) => {
-              const nombreCorto = trunc12(nombreEquipoMostrado({ ...row, nombre: row.nombre }));
-              const clasifica = idx < 2;
-              return (
-                <tr
-                  key={row.id}
-                  style={{
-                    borderTop: '1px solid #f1f5f9',
-                    background: clasifica ? 'rgba(34, 197, 94, 0.12)' : 'transparent',
-                  }}
-                >
-                  <td style={{ padding: '8px 6px', fontWeight: 700, maxWidth: 140 }}>
-                    <button
-                      type="button"
-                      onClick={() => onNombreClick(row)}
-                      style={{
-                        border: 'none',
-                        background: 'transparent',
-                        cursor: 'pointer',
-                        color: '#0f172a',
-                        fontWeight: 700,
-                        padding: 0,
-                        textAlign: 'left',
-                        maxWidth: 130,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        display: 'block',
-                      }}
-                      title={nombreEquipoMostrado({ ...row, nombre: row.nombre })}
+  const renderGrupoTable = (grupoLabel, tablaRows, onNombreClick) => {
+    const statHeaders = ['PJ', 'PG', 'PP', 'SF', 'SC', 'GF', 'GC', 'PTS'];
+    return (
+      <div style={{ marginBottom: '22px' }}>
+        <div style={{ fontWeight: 900, fontSize: '15px', color: '#0f172a', marginBottom: '8px' }}>Grupo {grupoLabel}</div>
+        <div className="tabla-grupos-scroll-outer">
+          <table className="tabla-grupos-stats">
+            <thead>
+              <tr style={{ color: '#475569' }}>
+                <th className="tabla-grupos-col-equipo tabla-grupos-th-equipo">EQUIPO</th>
+                {statHeaders.map((h) => (
+                  <th key={h} className="tabla-grupos-col-stat">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tablaRows.map((row, idx) => {
+                const nombreCorto = trunc12(nombreEquipoMostrado({ ...row, nombre: row.nombre }));
+                const clasifica = idx < 2;
+                const bgFila = clasifica ? 'rgba(34, 197, 94, 0.12)' : '#ffffff';
+                return (
+                  <tr
+                    key={row.id}
+                    style={{
+                      borderTop: '1px solid #f1f5f9',
+                      background: bgFila,
+                    }}
+                  >
+                    <td
+                      className="tabla-grupos-col-equipo"
+                      style={{ fontWeight: 700, maxWidth: 140, background: bgFila }}
                     >
-                      {nombreCorto}
-                    </button>
-                  </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center' }}>{row.jj}</td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center' }}>{row.g}</td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center' }}>{row.p}</td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center' }}>{row.sg}</td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center' }}>{row.sp}</td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: 900, color: '#4f46e5' }}>{row.pts}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      <button
+                        type="button"
+                        onClick={() => onNombreClick(row)}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          color: '#0f172a',
+                          fontWeight: 700,
+                          padding: 0,
+                          textAlign: 'left',
+                          maxWidth: 130,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: 'block',
+                        }}
+                        title={nombreEquipoMostrado({ ...row, nombre: row.nombre })}
+                      >
+                        {nombreCorto}
+                      </button>
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
+                      {row.jj}
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
+                      {row.g}
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
+                      {row.p}
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
+                      {row.sg}
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
+                      {row.sp}
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
+                      {row.gg}
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
+                      {row.gp}
+                    </td>
+                    <td className="tabla-grupos-col-stat" style={{ fontWeight: 900, color: '#4f46e5', background: bgFila }}>
+                      {row.pts}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderTabGrupos = () => {
     const openEq = (row) => setModalEquipo(equipos.find((e) => e.id === row.id) || row);
@@ -716,9 +782,9 @@ export default function TorneoTabbedView({
         <div
           key={partido.id}
           className="partido-item"
-          style={{ cursor: isAdmin ? 'pointer' : 'default' }}
-          onClick={isAdmin ? () => abrirModalResultado(partido) : undefined}
-          role={isAdmin ? 'button' : undefined}
+          style={{ cursor: puedeCargarResultados ? 'pointer' : 'default' }}
+          onClick={puedeCargarResultados ? () => abrirModalResultado(partido) : undefined}
+          role={puedeCargarResultados ? 'button' : undefined}
         >
           <div className="partido-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
             <span style={{ fontWeight: 700, color: '#0f172a' }}>
@@ -738,8 +804,8 @@ export default function TorneoTabbedView({
       <div
         key={partido.id}
         className="partido-item"
-        style={{ cursor: isAdmin ? 'pointer' : 'default' }}
-        onClick={isAdmin ? () => abrirModalResultado(partido) : undefined}
+        style={{ cursor: puedeCargarResultados ? 'pointer' : 'default' }}
+        onClick={puedeCargarResultados ? () => abrirModalResultado(partido) : undefined}
       >
         <div className="partido-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px', flex: 1 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', width: '100%' }}>
@@ -764,6 +830,23 @@ export default function TorneoTabbedView({
 
   const renderTabFixture = () => (
     <div className="partidos-box" style={{ marginTop: '8px', background: 'white', borderRadius: '16px', padding: '16px' }}>
+      {isAdmin && estadoLower !== 'en_curso' && !esFinalizado ? (
+        <p
+          style={{
+            margin: '0 0 14px',
+            padding: '12px 14px',
+            borderRadius: '12px',
+            background: '#fef3c7',
+            color: '#92400e',
+            fontWeight: 600,
+            fontSize: '14px',
+            border: '1px solid #fcd34d',
+            lineHeight: 1.45,
+          }}
+        >
+          Iniciá el torneo para comenzar a cargar resultados.
+        </p>
+      ) : null}
       {partidosOrdenados.length === 0 ? (
         <p className="sin-partidos">Sin partidos</p>
       ) : (
@@ -1086,7 +1169,9 @@ export default function TorneoTabbedView({
                   type="text"
                   placeholder="6-4"
                   value={resultado.set1}
-                  onChange={(e) => setResultado({ ...resultado, set1: e.target.value })}
+                  onChange={(e) =>
+                    setResultado({ ...resultado, set1: normalizeSetInput(e.target.value) })
+                  }
                 />
               </div>
               <div className="input-group">
@@ -1094,7 +1179,9 @@ export default function TorneoTabbedView({
                 <input
                   type="text"
                   value={resultado.set2}
-                  onChange={(e) => setResultado({ ...resultado, set2: e.target.value })}
+                  onChange={(e) =>
+                    setResultado({ ...resultado, set2: normalizeSetInput(e.target.value) })
+                  }
                 />
               </div>
               <div className="input-group">
@@ -1102,7 +1189,9 @@ export default function TorneoTabbedView({
                 <input
                   type="text"
                   value={resultado.set3}
-                  onChange={(e) => setResultado({ ...resultado, set3: e.target.value })}
+                  onChange={(e) =>
+                    setResultado({ ...resultado, set3: normalizeSetInput(e.target.value) })
+                  }
                 />
               </div>
             </div>

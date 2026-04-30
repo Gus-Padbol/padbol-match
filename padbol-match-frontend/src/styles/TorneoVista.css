@@ -94,6 +94,35 @@
   cursor: not-allowed;
 }
 
+/* Acciones admin sobre fondo violeta del contenedor del torneo */
+.torneo-vista-container .torneo-admin-bar-violeta .torneo-iniciar-aviso {
+  margin: 8px auto 0;
+  max-width: 420px;
+  text-align: center;
+  color: #fff59d;
+  font-weight: 700;
+  line-height: 1.4;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.torneo-vista-container .torneo-admin-bar-violeta .torneo-acciones--sobre-violeta {
+  flex-direction: column;
+  align-items: center;
+}
+
+.torneo-vista-container .torneo-admin-bar-violeta .btn-iniciar-torneo--sobre-violeta {
+  background: linear-gradient(180deg, #fffef5 0%, #fff59d 45%, #fde047 100%);
+  color: #1e293b;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  font-weight: 800;
+}
+
+.torneo-vista-container .torneo-admin-bar-violeta .btn-iniciar-torneo--sobre-violeta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+}
+
 .btn-finalizar-torneo {
   background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
   color: #ffffff;
@@ -114,6 +143,56 @@
 .btn-finalizar-torneo:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Tabla grupos: columna EQUIPO fija; resto con scroll horizontal en mobile */
+.tabla-grupos-scroll-outer {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.tabla-grupos-stats {
+  width: 100%;
+  min-width: 580px;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: #fff;
+}
+
+.tabla-grupos-col-equipo {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  padding: 8px 6px;
+  text-align: left;
+  box-shadow: 4px 0 10px -6px rgba(15, 23, 42, 0.25);
+}
+
+.tabla-grupos-th-equipo {
+  background: #f8fafc;
+  z-index: 3;
+  font-weight: 800;
+  color: #475569;
+}
+
+.tabla-grupos-col-stat {
+  padding: 8px 6px;
+  text-align: center;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #334155;
+}
+
+.tabla-grupos-stats thead tr {
+  background: #f8fafc;
+}
+
+.tabla-grupos-stats thead .tabla-grupos-col-stat {
+  font-weight: 800;
+  color: #475569;
 }
 
 .grupos-container {

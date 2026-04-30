@@ -10,6 +10,17 @@ import {
   isSedeProfilePathname,
 } from '../constants/hubLayout';
 
+const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club'];
+
+function readCachedRol() {
+  try {
+    const d = JSON.parse(localStorage.getItem('user_role_data') || '{}');
+    return d?.rol || null;
+  } catch {
+    return null;
+  }
+}
+
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,14 +35,20 @@ const BottomNav = () => {
     return { email: em };
   }, [session?.user?.email]);
   const { rol } = useUserRole(currentCliente);
+  const rolEffective = rol || readCachedRol();
 
-  const adminClubContext =
-    rol === 'admin_club' &&
-    (pathOnly === '/admin' ||
-      pathOnly.startsWith('/admin/') ||
-      pathOnly.startsWith('/torneo') ||
-      Boolean(location.state?.fromAdmin) ||
-      readAdminNavContext());
+  const isPanelAdmin = ADMIN_PANEL_ROLES.includes(rolEffective || '');
+
+  /** Panel /admin: siempre barra de admin (nunca Reservar/Torneos jugador). */
+  const adminDashboardBottomNav = pathOnly === '/admin' && isPanelAdmin;
+
+  /** Torneo / equipos con contexto admin (desde panel o flag de sesión). */
+  const adminTorneoBottomNav =
+    isPanelAdmin &&
+    pathOnly.startsWith('/torneo') &&
+    (Boolean(location.state?.fromAdmin) || readAdminNavContext());
+
+  const adminBottomNavActive = adminDashboardBottomNav || adminTorneoBottomNav;
 
   if (isHubNavBarHiddenPathname(path)) return null;
 
@@ -48,102 +65,168 @@ const BottomNav = () => {
     return x === '/' || x === '/inicio' || x === '/hub' || x === '/home';
   };
 
-  const items = adminClubContext
-    ? [
-        {
-          label: 'Resumen',
-          icon: '📊',
-          path: '/admin?tab=resumen',
-          match: (p) => {
-            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-            return x === '/admin' && adminTabActivo === 'resumen';
-          },
-        },
-        {
-          label: 'Torneos',
-          icon: '🏆',
-          path: '/admin?tab=torneos',
-          match: (p) => {
-            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-            return x.startsWith('/torneo') || (x === '/admin' && adminTabActivo === 'torneos');
-          },
-        },
-        {
-          label: 'Reservas',
-          icon: '⚽',
-          path: '/admin?tab=reservas',
-          match: (p) => {
-            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-            return x === '/admin' && adminTabActivo === 'reservas';
-          },
-        },
-        {
-          label: 'Validaciones',
-          icon: '⏳',
-          path: '/admin?tab=validaciones',
-          match: (p) => {
-            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-            return x === '/admin' && adminTabActivo === 'validaciones';
-          },
-        },
-        {
-          label: 'Mi Sede',
-          icon: '🏟️',
-          path: '/admin?tab=mi_sede',
-          match: (p) => {
-            const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-            return x === '/admin' && adminTabActivo === 'mi_sede';
-          },
-        },
-      ]
-    : sedeSobrio
+  const adminDashboardItems = [
+    {
+      label: 'Resumen',
+      icon: '📊',
+      path: '/admin?tab=resumen',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'resumen';
+      },
+    },
+    {
+      label: 'Torneos',
+      icon: '🏆',
+      path: '/admin?tab=torneos',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x.startsWith('/torneo') || (x === '/admin' && adminTabActivo === 'torneos');
+      },
+    },
+    {
+      label: 'Reservas',
+      icon: '⚽',
+      path: '/admin?tab=reservas',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'reservas';
+      },
+    },
+    {
+      label: 'Validaciones',
+      icon: '⏳',
+      path: '/admin?tab=validaciones',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'validaciones';
+      },
+    },
+    {
+      label: 'Mi Sede',
+      icon: '🏟️',
+      path: '/admin?tab=mi_sede',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'mi_sede';
+      },
+    },
+    ...(rolEffective === 'super_admin'
       ? [
           {
-            label: 'Inicio',
-            icon: '🏠',
-            path: '/',
-            match: matchHubInicio,
-            homePadbolLogo: isSedePublicDetailPath,
+            label: 'Config',
+            icon: '⚙️',
+            path: '/admin?tab=config',
+            match: (p) => {
+              const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+              return x === '/admin' && adminTabActivo === 'config';
+            },
           },
-          {
-            label: 'Torneos',
-            icon: '🏆',
-            path: '/torneos',
-            match: (p) => p === '/torneos' || p.startsWith('/torneo'),
-          },
-          { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
-          { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
         ]
-      : [
-          { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
-          {
-            label: 'Torneos',
-            icon: '🏆',
-            path: '/torneos',
-            match: (p) => p === '/torneos' || p.startsWith('/torneo'),
-          },
-          { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
-          { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
-        ];
+      : []),
+  ];
+
+  const adminTorneoItems = [
+    {
+      label: 'Resumen',
+      icon: '📊',
+      path: '/admin?tab=resumen',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'resumen';
+      },
+    },
+    {
+      label: 'Torneos',
+      icon: '🏆',
+      path: '/admin?tab=torneos',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x.startsWith('/torneo') || (x === '/admin' && adminTabActivo === 'torneos');
+      },
+    },
+    {
+      label: 'Reservas',
+      icon: '⚽',
+      path: '/admin?tab=reservas',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'reservas';
+      },
+    },
+    {
+      label: 'Validaciones',
+      icon: '⏳',
+      path: '/admin?tab=validaciones',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'validaciones';
+      },
+    },
+    {
+      label: 'Mi Sede',
+      icon: '🏟️',
+      path: '/admin?tab=mi_sede',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'mi_sede';
+      },
+    },
+  ];
+
+  const items = adminDashboardBottomNav
+    ? adminDashboardItems
+    : adminTorneoBottomNav
+      ? adminTorneoItems
+      : sedeSobrio
+        ? [
+            {
+              label: 'Inicio',
+              icon: '🏠',
+              path: '/',
+              match: matchHubInicio,
+              homePadbolLogo: isSedePublicDetailPath,
+            },
+            {
+              label: 'Torneos',
+              icon: '🏆',
+              path: '/torneos',
+              match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+            },
+            { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
+            { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+          ]
+        : [
+            { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
+            {
+              label: 'Torneos',
+              icon: '🏆',
+              path: '/torneos',
+              match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+            },
+            { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
+            { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+          ];
 
   const go = (item) => {
     if (authLoading) return;
     navigate(item.path);
   };
 
-  const navBarStyle = sedeSobrio && !adminClubContext
-    ? {
-        background: 'rgba(0, 0, 0, 0.32)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.12)',
-      }
-    : {
-        background: '#f8fafc',
-        borderBottom: '1px solid #e2e8f0',
-        boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-      };
+  const navBarStyle =
+    sedeSobrio && !adminBottomNavActive
+      ? {
+          background: 'rgba(0, 0, 0, 0.32)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.12)',
+        }
+      : {
+          background: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        };
 
   return (
     <nav
@@ -169,15 +252,16 @@ const BottomNav = () => {
       {items.map((item) => {
         const isActive = item.match(path);
 
-        const btnSobrio = sedeSobrio && !adminClubContext
-          ? {
-              background: isActive ? 'rgba(34, 197, 94, 0.28)' : 'transparent',
-              color: isActive ? '#bbf7d0' : 'rgba(248, 250, 252, 0.82)',
-            }
-          : {
-              background: isActive ? 'rgba(34, 197, 94, 0.14)' : 'transparent',
-              color: isActive ? '#15803d' : '#64748b',
-            };
+        const btnSobrio =
+          sedeSobrio && !adminBottomNavActive
+            ? {
+                background: isActive ? 'rgba(34, 197, 94, 0.28)' : 'transparent',
+                color: isActive ? '#bbf7d0' : 'rgba(248, 250, 252, 0.82)',
+              }
+            : {
+                background: isActive ? 'rgba(34, 197, 94, 0.14)' : 'transparent',
+                color: isActive ? '#15803d' : '#64748b',
+              };
 
         return (
           <button
@@ -190,7 +274,7 @@ const BottomNav = () => {
               alignItems: 'center',
               justifyContent: 'center',
               flex: 1,
-              maxWidth: '120px',
+              maxWidth: adminDashboardBottomNav && rolEffective === 'super_admin' ? '72px' : '120px',
               padding: '2px 2px',
               border: 'none',
               fontSize: '11px',

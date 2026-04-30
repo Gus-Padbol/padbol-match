@@ -1170,7 +1170,14 @@ export default function EquipoVista() {
   if (loading) {
     return (
       <div style={equipoPageShellStyle}>
-        <AppHeader title={tituloHeaderEquipo} showBack onBack={handleBackEquipoVista} backLabel="← Volver" />
+        <AppHeader
+          title={tituloHeaderEquipo}
+          showBack
+          onBack={handleBackEquipoVista}
+          backLabel={
+            esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
+          }
+        />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
         <BottomNav />
       </div>
@@ -1180,7 +1187,14 @@ export default function EquipoVista() {
   if (!equipo) {
     return (
       <div style={equipoPageShellStyle}>
-        <AppHeader title={tituloHeaderEquipo} showBack onBack={handleBackEquipoVista} backLabel="← Volver" />
+        <AppHeader
+          title={tituloHeaderEquipo}
+          showBack
+          onBack={handleBackEquipoVista}
+          backLabel={
+            esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
+          }
+        />
         <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
           <p>No se encontró el equipo.</p>
         </div>
@@ -1191,7 +1205,14 @@ export default function EquipoVista() {
 
   return (
     <div style={equipoPageShellStyle}>
-      <AppHeader title={tituloHeaderEquipo} showBack onBack={handleBackEquipoVista} backLabel="← Volver" />
+      <AppHeader
+        title={tituloHeaderEquipo}
+        showBack
+        onBack={handleBackEquipoVista}
+        backLabel={
+          esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
+        }
+      />
 
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div
