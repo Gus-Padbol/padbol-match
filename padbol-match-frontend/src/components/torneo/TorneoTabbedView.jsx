@@ -76,6 +76,21 @@ function slugJugador(raw) {
   );
 }
 
+function initialFromText(value) {
+  const s = String(value || '').trim();
+  for (let i = 0; i < s.length; i += 1) {
+    const ch = s[i];
+    if (/[A-Za-zÀ-ÿ0-9]/.test(ch)) return ch.toUpperCase();
+  }
+  return '?';
+}
+
+function avatarJugadorPodio(p) {
+  const foto = String(p?.foto_url || '').trim();
+  const label = jugadorEtiquetaConArroba(p);
+  return { foto, label, initial: initialFromText(label.replace(/^@/, '')) };
+}
+
 export function safeJugadores(eq) {
   let j = eq?.jugadores;
   if (typeof j === 'string') {
@@ -367,8 +382,11 @@ export default function TorneoTabbedView({
     if (!esFinalizado) return [];
     const sorted = [...equipos].sort((a, b) => (Number(b.puntos_ranking) || 0) - (Number(a.puntos_ranking) || 0));
     return sorted.map((eq, i) => ({
+      equipoId: eq.id,
       posicion: i + 1,
       puntos: eq.puntos_ranking ?? 0,
+      fotoEquipoUrl: String(eq?.foto_url || '').trim(),
+      jugadores: safeJugadores(eq),
       equipoNombre: nombreEquipoMostrado(eq),
       jugadorLineas: safeJugadores(eq).slice(0, 4).map((p) => jugadorEtiquetaConArroba(p)),
     }));
@@ -385,9 +403,12 @@ export default function TorneoTabbedView({
       const fila = byPos[pos];
       if (fila) return { ...fila, sinEquipo: false };
       return {
+        equipoId: null,
         posicion: pos,
         equipoNombre: '',
         jugadorLineas: [],
+        jugadores: [],
+        fotoEquipoUrl: '',
         puntos: null,
         sinEquipo: true,
       };
@@ -475,14 +496,32 @@ export default function TorneoTabbedView({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
-                  <div style={{ fontWeight: 900, fontSize: '16px', color: '#0f172a', marginBottom: '10px', flex: 1, minWidth: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/equipo/${equipo.id}`)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontWeight: 900,
+                      fontSize: '16px',
+                      color: '#2563eb',
+                      textDecoration: 'underline',
+                      marginBottom: '10px',
+                      flex: 1,
+                      minWidth: 0,
+                      padding: 0,
+                      textAlign: 'left',
+                    }}
+                    title={titulo}
+                  >
                     {titulo}
-                  </div>
+                  </button>
                   {capOk ? (
                     <button
                       type="button"
                       className="btn-agregar-jugadores"
-                      onClick={() => navigate(`/equipo/${equipo.id}`)}
+                      onClick={() => navigate(`/torneo/${torneoId}/equipos/${equipo.id}`)}
                       style={{ padding: '6px 12px', fontSize: '12px', flexShrink: 0 }}
                     >
                       Gestionar
@@ -805,12 +844,39 @@ export default function TorneoTabbedView({
           return (
             <div key={fila.posicion} className={`podium-slot ${slotClass}`}>
               <div className="podium-card">
-                <div className={`podium-team-name${sinEquipo ? ' podium-team-name--sin-definir' : ''}`}>
-                  {sinEquipo ? 'Sin definir' : fila.equipoNombre}
-                </div>
-                {!sinEquipo && fila.jugadorLineas?.length > 0 ? (
-                  <div className="podium-players">{fila.jugadorLineas.join(' · ')}</div>
+                {!sinEquipo ? (
+                  <div className="podium-player-avatars" aria-hidden>
+                    {(Array.isArray(fila.jugadores) ? fila.jugadores : [])
+                      .slice(0, 2)
+                      .map((p, idx) => {
+                        const a = avatarJugadorPodio(p);
+                        return (
+                          <div key={`${a.label}-${idx}`} className="podium-player-avatar-wrap">
+                            {a.foto ? (
+                              <img src={a.foto} alt="" className="podium-player-avatar" loading="lazy" referrerPolicy="no-referrer" />
+                            ) : (
+                              <span className="podium-player-avatar-fallback">{a.initial}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
                 ) : null}
+                <div className={`podium-team-name${sinEquipo ? ' podium-team-name--sin-definir' : ''}`}>
+                  {sinEquipo ? (
+                    'Sin definir'
+                  ) : fila.equipoId != null ? (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/equipo/${fila.equipoId}`)}
+                      className="podium-team-link"
+                    >
+                      {fila.equipoNombre}
+                    </button>
+                  ) : (
+                    fila.equipoNombre
+                  )}
+                </div>
                 <div className="podium-points">
                   {sinEquipo || fila.puntos == null || fila.puntos === '' ? '—' : (
                     <>

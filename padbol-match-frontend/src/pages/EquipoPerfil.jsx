@@ -1,0 +1,304 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
+import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { supabase } from '../supabaseClient';
+import { formatNivelTorneo } from '../utils/torneoFormatters';
+import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
+
+function safeJugadores(eq) {
+  let j = eq?.jugadores;
+  if (typeof j === 'string') {
+    try {
+      j = JSON.parse(j);
+    } catch {
+      j = [];
+    }
+  }
+  return Array.isArray(j) ? j : [];
+}
+
+function jugadorLabel(p) {
+  const alias = String(p?.alias || '').trim();
+  if (alias) return formatAliasConArroba(alias);
+  const full = nombreCompletoJugadorPerfil(p);
+  if (full) return full;
+  return String(p?.nombre || 'Jugador').trim() || 'Jugador';
+}
+
+function slugJugador(p) {
+  const alias = String(p?.alias || '').trim();
+  if (alias) return alias;
+  const nombre = String(nombreCompletoJugadorPerfil(p) || p?.nombre || 'jugador').trim();
+  return nombre || 'jugador';
+}
+
+function emojiMedalla(pos) {
+  if (Number(pos) === 1) return '🥇';
+  if (Number(pos) === 2) return '🥈';
+  if (Number(pos) === 3) return '🥉';
+  return '🏅';
+}
+
+function fechaCorta(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function initialFromLabel(label) {
+  const s = String(label || '').trim();
+  for (let i = 0; i < s.length; i += 1) {
+    const ch = s[i];
+    if (/[A-Za-zÀ-ÿ0-9]/.test(ch)) return ch.toUpperCase();
+  }
+  return '?';
+}
+
+function Avatar({ src, label, size }) {
+  const initial = initialFromLabel(label);
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        flexShrink: 0,
+        background: src ? '#e2e8f0' : 'linear-gradient(135deg, #6366f1, #7c3aed)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1px solid #e2e8f0',
+      }}
+    >
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <span style={{ color: '#fff', fontWeight: 800, fontSize: `${Math.max(12, Math.round(size * 0.36))}px` }}>{initial}</span>
+      )}
+    </div>
+  );
+}
+
+export default function EquipoPerfil() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [equipo, setEquipo] = useState(null);
+  const [historial, setHistorial] = useState([]);
+
+  const shellStyle = useMemo(
+    () => ({
+      minHeight: '100vh',
+      paddingTop: hubContentPaddingTopCss(location.pathname),
+      paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+      paddingLeft: 12,
+      paddingRight: 12,
+      boxSizing: 'border-box',
+      background: 'linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)',
+    }),
+    [location.pathname]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const eid = Number(id);
+      if (!Number.isFinite(eid)) {
+        if (!cancelled) {
+          setEquipo(null);
+          setHistorial([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      setLoading(true);
+      const { data: eq, error: eqErr } = await supabase
+        .from('equipos')
+        .select('id, nombre, foto_url, jugadores, torneo_id')
+        .eq('id', eid)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (eqErr || !eq) {
+        setEquipo(null);
+        setHistorial([]);
+        setLoading(false);
+        return;
+      }
+
+      setEquipo(eq);
+
+      const { data: rows, error: rowErr } = await supabase
+        .from('tabla_puntos')
+        .select('torneo_id, posicion, puntos')
+        .eq('equipo_id', eid)
+        .order('torneo_id', { ascending: false });
+      if (cancelled) return;
+      if (rowErr || !Array.isArray(rows) || rows.length === 0) {
+        setHistorial([]);
+        setLoading(false);
+        return;
+      }
+
+      const torneoIds = [...new Set(rows.map((r) => r.torneo_id).filter((x) => x != null))];
+      const { data: torneos } = await supabase
+        .from('torneos')
+        .select('id, nombre, nivel_torneo, fecha_inicio, fecha_fin, created_at, updated_at')
+        .in('id', torneoIds);
+      if (cancelled) return;
+
+      const byId = new Map((torneos || []).map((t) => [t.id, t]));
+      const merged = rows
+        .map((r) => {
+          const t = byId.get(r.torneo_id);
+          const fecha = t?.fecha_fin || t?.fecha_inicio || t?.updated_at || t?.created_at || '';
+          return {
+            torneoId: r.torneo_id,
+            nombre: String(t?.nombre || `Torneo #${r.torneo_id}`),
+            nivel: formatNivelTorneo(t?.nivel_torneo),
+            posicion: Number(r?.posicion) || 0,
+            puntos: Number(r?.puntos) || 0,
+            fecha,
+          };
+        })
+        .sort((a, b) => {
+          const da = Date.parse(a.fecha) || 0;
+          const db = Date.parse(b.fecha) || 0;
+          if (db !== da) return db - da;
+          return (Number(b.torneoId) || 0) - (Number(a.torneoId) || 0);
+        });
+      setHistorial(merged);
+      setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const jugadores = useMemo(() => safeJugadores(equipo), [equipo]);
+
+  return (
+    <div style={shellStyle}>
+      <AppHeader title="Equipo" />
+      <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, border: '1px solid #e2e8f0', boxShadow: '0 6px 22px rgba(15,23,42,0.08)' }}>
+          {loading ? (
+            <p style={{ margin: 0, color: '#64748b' }}>Cargando equipo...</p>
+          ) : !equipo ? (
+            <p style={{ margin: 0, color: '#b91c1c', fontWeight: 700 }}>No se encontró el equipo.</p>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                {String(equipo?.foto_url || '').trim() ? (
+                  <Avatar src={String(equipo.foto_url).trim()} label={equipo.nombre} size={112} />
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {jugadores.slice(0, 2).map((p, idx) => {
+                      const label = jugadorLabel(p);
+                      const foto = String(p?.foto_url || '').trim();
+                      return (
+                        <div key={`${label}-${idx}`} style={{ marginLeft: idx === 0 ? 0 : -12 }}>
+                          <Avatar src={foto} label={label} size={64} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <h1 style={{ margin: '0 0 14px', textAlign: 'center', fontSize: '28px', lineHeight: 1.2, color: '#0f172a' }}>
+                {String(equipo.nombre || '').trim() || `Equipo #${equipo.id}`}
+              </h1>
+
+              <div style={{ display: 'grid', gap: 10 }}>
+                {jugadores.map((p, idx) => {
+                  const label = jugadorLabel(p);
+                  const foto = String(p?.foto_url || '').trim();
+                  const slug = encodeURIComponent(slugJugador(p));
+                  return (
+                    <button
+                      key={`${label}-${idx}`}
+                      type="button"
+                      onClick={() => navigate(`/jugador/${slug}`)}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        background: '#f8fafc',
+                        borderRadius: 12,
+                        padding: '8px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <Avatar src={foto} label={label} size={48} />
+                      <span style={{ fontWeight: 700, color: '#2563eb', textDecoration: 'underline' }}>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {historial.length > 0 ? (
+                <div style={{ marginTop: 18 }}>
+                  <h3 style={{ margin: '0 0 10px', color: '#334155', fontSize: 16 }}>Historial</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {historial.map((h) => (
+                      <button
+                        key={`${h.torneoId}-${h.posicion}-${h.puntos}`}
+                        type="button"
+                        onClick={() => navigate(`/torneo/${h.torneoId}`)}
+                        style={{
+                          width: '100%',
+                          border: '1px solid #e2e8f0',
+                          background: '#f1f5f9',
+                          borderRadius: 10,
+                          padding: '8px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <span style={{ flexShrink: 0, lineHeight: 1.2 }}>{emojiMedalla(h.posicion)}</span>
+                        <span
+                          style={{
+                            minWidth: 0,
+                            flex: 1,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            fontWeight: 700,
+                            color: '#0f172a',
+                          }}
+                        >
+                          {`${h.nombre} · ${h.nivel} · ${h.puntos} pts · ${fechaCorta(h.fecha)}`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
+      <BottomNav />
+    </div>
+  );
+}

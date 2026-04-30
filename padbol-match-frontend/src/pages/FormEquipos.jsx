@@ -590,8 +590,11 @@ export default function FormEquipos() {
         const eq = eqById[row.equipo_id];
         const players = eq ? getPlayers(eq) : [];
         return {
+          equipoId: eq?.id ?? row.equipo_id,
           posicion: Number(row.posicion) || 0,
           puntos: row.puntos,
+          fotoEquipoUrl: String(eq?.foto_url || '').trim(),
+          jugadores: players,
           equipoNombre: String(eq?.nombre || '').trim() || `Equipo #${row.equipo_id}`,
           jugadorLineas: players.slice(0, 4).map((p) => jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)),
         };

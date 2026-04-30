@@ -309,6 +309,7 @@ export default function EquipoVista() {
   /** `user_id` → fila `jugadores_perfil` (complementa el fetch por email). */
   const [perfilByUserId, setPerfilByUserId] = useState(() => new Map());
   const [reenviandoEmail, setReenviandoEmail] = useState(null);
+  const [subiendoFotoEquipo, setSubiendoFotoEquipo] = useState(false);
   /** `jugadores_perfil` (incl. whatsapp) solo emails de jugadores en equipo con estado pendiente; se actualiza en {@link cargarEquipo}. */
   const [perfilPendientesPorEmail, setPerfilPendientesPorEmail] = useState(() => new Map());
   const [nombreSedeTorneo, setNombreSedeTorneo] = useState(null);
@@ -644,6 +645,47 @@ export default function EquipoVista() {
   const abrirCompartirLugarEquipoWa = () => {
     if (!urlCompartirLugarEquipoWa) return;
     window.open(urlCompartirLugarEquipoWa, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleSubirFotoEquipo = async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file || !equipoIdParam || !soyCreador) return;
+    if (!String(file.type || '').startsWith('image/')) {
+      alert('Selecciona un archivo de imagen.');
+      ev.target.value = '';
+      return;
+    }
+    setSubiendoFotoEquipo(true);
+    try {
+      const storagePath = `equipos/${equipoIdParam}/foto.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from('avatars')
+        .upload(storagePath, file, {
+          upsert: true,
+          contentType: file.type || 'image/jpeg',
+          cacheControl: '3600',
+        });
+      if (upErr) {
+        alert(`No se pudo subir la foto: ${upErr.message}`);
+        return;
+      }
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(storagePath);
+      const fotoUrl = `${publicUrl}?t=${Date.now()}`;
+      const { error: dbErr } = await supabase
+        .from('equipos')
+        .update({ foto_url: fotoUrl })
+        .eq('id', Number(equipoIdParam));
+      if (dbErr) {
+        alert(`No se pudo guardar la foto del equipo: ${dbErr.message}`);
+        return;
+      }
+      setEquipo((prev) => (prev ? { ...prev, foto_url: fotoUrl } : prev));
+    } finally {
+      setSubiendoFotoEquipo(false);
+      ev.target.value = '';
+    }
   };
 
   const reenviarInvitacionPendiente = async (emailNorm) => {
@@ -1135,9 +1177,33 @@ export default function EquipoVista() {
               marginBottom: '14px',
             }}
           >
-            <span style={{ fontSize: '22px', lineHeight: 1 }} aria-hidden>
-              👥
-            </span>
+            <div
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '1px solid #e2e8f0',
+                background: '#e2e8f0',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {String(equipo?.foto_url || '').trim() ? (
+                <img
+                  src={String(equipo.foto_url).trim()}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span style={{ fontSize: '22px', lineHeight: 1 }} aria-hidden>
+                  👥
+                </span>
+              )}
+            </div>
             <h2
               style={{
                 margin: 0,
@@ -1150,6 +1216,36 @@ export default function EquipoVista() {
               {equipo.nombre}
             </h2>
           </div>
+
+          {soyCreador && !torneoCancelado ? (
+            <div style={{ marginBottom: '14px' }}>
+              <label
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 12px',
+                  borderRadius: 10,
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#334155',
+                  cursor: subiendoFotoEquipo ? 'default' : 'pointer',
+                  opacity: subiendoFotoEquipo ? 0.65 : 1,
+                }}
+              >
+                {subiendoFotoEquipo ? 'Subiendo foto…' : 'Subir foto de equipo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => void handleSubirFotoEquipo(e)}
+                  disabled={subiendoFotoEquipo}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+          ) : null}
 
           {!torneoCancelado ? (
             <div

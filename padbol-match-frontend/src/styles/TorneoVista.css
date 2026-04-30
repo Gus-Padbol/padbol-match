@@ -634,9 +634,63 @@
   margin-bottom: 4px;
 }
 
+.podium-team-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: #2563eb;
+  font-size: inherit;
+  font-weight: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .podium-team-name--sin-definir {
   color: #94a3b8;
   font-weight: 600;
+}
+
+.podium-player-avatars {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.podium-player-avatar-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -8px;
+}
+
+.podium-player-avatar-wrap:first-child {
+  margin-left: 0;
+}
+
+.podium-player-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.podium-player-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
 }
 
 .podium-players {

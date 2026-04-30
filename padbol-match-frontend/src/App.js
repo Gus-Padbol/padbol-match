@@ -19,6 +19,7 @@ import Rankings from './pages/Rankings';
 import TorneosPublicos from './pages/TorneosPublicos';
 import SedePublica from './pages/SedePublica';
 import SedesPublicas from './pages/SedesPublicas';
+import EquipoPerfil from './pages/EquipoPerfil';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
 import useUserRole from './hooks/useUserRole';
@@ -141,7 +142,7 @@ function AppRoutes() {
         <Route path="/torneo/crear" element={<TorneoCrear />} />
         <Route path="/torneo/:id/jugadores" element={<Navigate to="/mi-perfil" replace />} />
         <Route path="/torneo/:id/equipos/:equipoId" element={<EquipoVista />} />
-        <Route path="/equipo/:id" element={<EquipoVista />} />
+        <Route path="/equipo/:id" element={<EquipoPerfil />} />
         <Route path="/torneo/:id/equipos" element={<FormEquipos />} />
         <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
         <Route path="/pago-exitoso" element={<PagoExitoso />} />

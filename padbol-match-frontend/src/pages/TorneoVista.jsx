@@ -127,8 +127,11 @@ export default function TorneoVista() {
         const eq = eqById[row.equipo_id];
         const players = eq ? safeJugadores(eq) : [];
         return {
+          equipoId: eq?.id ?? row.equipo_id,
           posicion: Number(row.posicion) || 0,
           puntos: row.puntos,
+          fotoEquipoUrl: String(eq?.foto_url || '').trim(),
+          jugadores: players,
           equipoNombre: eq ? nombreEquipoMostrado(eq) : `Equipo #${row.equipo_id}`,
           jugadorLineas: players.slice(0, 4).map((p) => jugadorEtiquetaConArroba(p)),
         };
