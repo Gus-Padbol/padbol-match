@@ -271,7 +271,7 @@ export default function EquipoPerfil() {
                   const slug = encodeURIComponent(slugJugador(p));
                   return (
                     <button
-                      key={`${label}-${idx}`}
+                      key={`${aliasLabel}-${idx}`}
                       type="button"
                       onClick={() => navigate(`/jugador/${slug}`)}
                       style={{
