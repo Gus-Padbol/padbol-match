@@ -34,6 +34,31 @@ function slugJugador(p) {
   return nombre || 'jugador';
 }
 
+function jugadorAliasLabel(p) {
+  const alias = String(p?.alias || '').trim();
+  if (alias) return formatAliasConArroba(alias);
+  const full = nombreCompletoJugadorPerfil(p);
+  if (full) return full;
+  return String(p?.nombre || 'Jugador').trim() || 'Jugador';
+}
+
+function jugadorNombreCompleto(p) {
+  const full = nombreCompletoJugadorPerfil(p);
+  if (full) return full;
+  return String(p?.nombre || '').trim();
+}
+
+function parsePaisDisplay(p) {
+  const raw = String(p?.pais || '').trim();
+  if (!raw) return { flag: '🏳️', name: 'Sin país' };
+  const parts = raw.split(' ').filter(Boolean);
+  const maybeFlag = parts[0] || '';
+  if (/^\p{Extended_Pictographic}+$/u.test(maybeFlag)) {
+    return { flag: maybeFlag, name: parts.slice(1).join(' ') || 'Sin país' };
+  }
+  return { flag: '🏳️', name: raw };
+}
+
 function emojiMedalla(pos) {
   if (Number(pos) === 1) return '🥇';
   if (Number(pos) === 2) return '🥈';
@@ -201,17 +226,28 @@ export default function EquipoPerfil() {
             <p style={{ margin: 0, color: '#b91c1c', fontWeight: 700 }}>No se encontró el equipo.</p>
           ) : (
             <>
+              <div
+                style={{
+                  marginBottom: 14,
+                  borderRadius: 14,
+                  padding: '16px 14px',
+                  background: 'linear-gradient(180deg, #ede9fe 0%, #eef2ff 60%, #ffffff 100%)',
+                  border: '1px solid #ddd6fe',
+                }}
+              >
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
                 {String(equipo?.foto_url || '').trim() ? (
                   <Avatar src={String(equipo.foto_url).trim()} label={equipo.nombre} size={112} />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {jugadores.slice(0, 2).map((p, idx) => {
-                      const label = jugadorLabel(p);
+                    {jugadores.slice(0, 4).map((p, idx) => {
+                      const label = jugadorAliasLabel(p);
                       const foto = String(p?.foto_url || '').trim();
                       return (
-                        <div key={`${label}-${idx}`} style={{ marginLeft: idx === 0 ? 0 : -12 }}>
-                          <Avatar src={foto} label={label} size={64} />
+                        <div key={`${label}-${idx}`} style={{ marginLeft: idx === 0 ? 0 : -12, zIndex: 20 - idx }}>
+                          <div style={{ border: '2px solid #fff', borderRadius: '50%' }}>
+                            <Avatar src={foto} label={label} size={72} />
+                          </div>
                         </div>
                       );
                     })}
@@ -219,13 +255,18 @@ export default function EquipoPerfil() {
                 )}
               </div>
 
-              <h1 style={{ margin: '0 0 14px', textAlign: 'center', fontSize: '28px', lineHeight: 1.2, color: '#0f172a' }}>
+              <h1 style={{ margin: '0 0 4px', textAlign: 'center', fontSize: '32px', fontWeight: 900, lineHeight: 1.2, color: '#0f172a' }}>
                 {String(equipo.nombre || '').trim() || `Equipo #${equipo.id}`}
               </h1>
+              </div>
+
+              <div style={{ height: 1, background: '#e2e8f0', margin: '4px 0 12px' }} />
 
               <div style={{ display: 'grid', gap: 10 }}>
                 {jugadores.map((p, idx) => {
-                  const label = jugadorLabel(p);
+                  const aliasLabel = jugadorAliasLabel(p);
+                  const fullName = jugadorNombreCompleto(p);
+                  const pais = parsePaisDisplay(p);
                   const foto = String(p?.foto_url || '').trim();
                   const slug = encodeURIComponent(slugJugador(p));
                   return (
@@ -241,12 +282,45 @@ export default function EquipoPerfil() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 10,
+                        justifyContent: 'space-between',
                         cursor: 'pointer',
                         textAlign: 'left',
                       }}
                     >
-                      <Avatar src={foto} label={label} size={48} />
-                      <span style={{ fontWeight: 700, color: '#2563eb', textDecoration: 'underline' }}>{label}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                        <Avatar src={foto} label={aliasLabel} size={48} />
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              color: '#2563eb',
+                              textDecoration: 'underline',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {aliasLabel}
+                          </div>
+                          {fullName && fullName !== aliasLabel ? (
+                            <div
+                              style={{
+                                marginTop: 2,
+                                color: '#64748b',
+                                fontSize: 12,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {fullName}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div style={{ flexShrink: 0, color: '#475569', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        {`${pais.flag} ${pais.name}`}
+                      </div>
                     </button>
                   );
                 })}
@@ -254,7 +328,8 @@ export default function EquipoPerfil() {
 
               {historial.length > 0 ? (
                 <div style={{ marginTop: 18 }}>
-                  <h3 style={{ margin: '0 0 10px', color: '#334155', fontSize: 16 }}>Historial</h3>
+                  <div style={{ height: 1, background: '#e2e8f0', margin: '0 0 12px' }} />
+                  <h3 style={{ margin: '0 0 10px', color: '#334155', fontSize: 16 }}>{`🏆 Historial del equipo (${historial.length} torneos)`}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {historial.map((h) => (
                       <button
