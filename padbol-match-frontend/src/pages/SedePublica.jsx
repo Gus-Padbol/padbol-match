@@ -56,8 +56,11 @@ function heroClubNameFontSizePx(nombreRaw) {
 const SEDE_HERO_FRASE_DEFAULT =
   'El primer Club de Padbol del Mundo, donde todo comenzó...';
 
-/** Margen extra bajo header+BottomNav: evita que el borde superior del hero/logo quede bajo el chrome fijo en iOS. */
-const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 16;
+/**
+ * Margen extra bajo AppHeader + BottomNav fijos (ref. hubLayout: 56 + 54 px + safe-area).
+ * Buffer mayor que antes: el header real puede superar 56px por paddings verticales.
+ */
+const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 36;
 
 function formatHorario(apertura, cierre) {
   if (!apertura && !cierre) return null;
@@ -96,7 +99,11 @@ function urlsCarruselSedePublica(sede) {
   return { urls: todas.slice(0, FOTOS_DESTACADAS_MAX), usarOrden: false };
 }
 
-/** Primeras fotos en carrusel destacado (scroll-snap). */
+/** Tres fotos visibles a la vez (~30% c/u + gap 8px); scroll horizontal si hay más. */
+const CARRUSEL_GAP_PX = 8;
+const CARRUSEL_SLIDE_BASIS = `calc((100% - ${2 * CARRUSEL_GAP_PX}px) / 3)`;
+
+/** Primeras fotos en carrusel destacado (scroll-snap, sin autoplay). */
 function SedeFotosCarruselDestacado({ urls, onOpenAtIndex, showOrderNumbers = false }) {
   const slice = urls.slice(0, Math.min(FOTOS_DESTACADAS_MAX, urls.length));
   if (!slice.length) return null;
@@ -105,7 +112,7 @@ function SedeFotosCarruselDestacado({ urls, onOpenAtIndex, showOrderNumbers = fa
       <div
         style={{
           display: 'flex',
-          gap: '10px',
+          gap: `${CARRUSEL_GAP_PX}px`,
           overflowX: 'auto',
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
@@ -124,8 +131,9 @@ function SedeFotosCarruselDestacado({ urls, onOpenAtIndex, showOrderNumbers = fa
             type="button"
             onClick={() => onOpenAtIndex(i)}
             style={{
-              flex: '0 0 min(88vw, 340px)',
-              scrollSnapAlign: 'center',
+              flex: `0 0 ${CARRUSEL_SLIDE_BASIS}`,
+              maxWidth: CARRUSEL_SLIDE_BASIS,
+              scrollSnapAlign: 'start',
               height: PHOTO_STRIP_H,
               borderRadius: '12px',
               overflow: 'hidden',
@@ -717,7 +725,7 @@ export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  /** Incluye buffer extra: el alto real del chrome (header+nav) en notch puede superar el valor teórico. */
+  /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
       `calc(${hubContentPaddingTopPx(location.pathname)}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
@@ -855,7 +863,6 @@ export default function SedePublica() {
                 maxWidth: '100%',
                 boxSizing: 'border-box',
                 overscrollBehaviorY: 'contain',
-                paddingTop: sedeScrollPaddingTopCss,
                 scrollPaddingTop: sedeScrollPaddingTopCss,
               }}
             >
@@ -865,6 +872,8 @@ export default function SedePublica() {
                 maxWidth: '100%',
                 overflowX: 'hidden',
                 boxSizing: 'border-box',
+                /* Hueco bajo AppHeader + BottomNav: vive en el contenedor del hero / columna de contenido. */
+                paddingTop: sedeScrollPaddingTopCss,
               }}
             >
             <div
