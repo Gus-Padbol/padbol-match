@@ -269,6 +269,8 @@ export default function TorneoTabbedView({
   navigate,
   session,
   isAdmin = false,
+  /** Se reenvía en `navigate(..., { state })` al abrir gestión de equipo (mantener fromAdmin). */
+  navigateState = null,
   /** Filas desde `tabla_puntos` + equipos (misma forma que FormEquipos). */
   clasificacionFinalFilas = null,
   /** Contenido extra bajo la lista de equipos (inscripción en FormEquipos). */
@@ -337,6 +339,7 @@ export default function TorneoTabbedView({
   }, [torneo?.estado, torneo?.id]);
 
   const sedeTorneo = sedesMap[String(torneo?.sede_id)];
+  const navOpts = navigateState != null ? { state: navigateState } : undefined;
   const sedeUbicacion = [sedeTorneo?.ciudad, sedeTorneo?.pais].filter(Boolean).join(', ');
   const sedeTexto = sedeTorneo
     ? `📍 ${sedeTorneo.nombre}${sedeUbicacion ? ` · ${sedeUbicacion}` : ''}`
@@ -523,11 +526,11 @@ export default function TorneoTabbedView({
                   >
                     {titulo}
                   </button>
-                  {capOk ? (
+                  {capOk || isAdmin ? (
                     <button
                       type="button"
                       className="btn-agregar-jugadores"
-                      onClick={() => navigate(`/torneo/${torneoId}/equipos/${equipo.id}`)}
+                      onClick={() => navigate(`/torneo/${torneoId}/equipos/${equipo.id}`, navOpts)}
                       style={{ padding: '6px 12px', fontSize: '12px', flexShrink: 0 }}
                     >
                       Gestionar

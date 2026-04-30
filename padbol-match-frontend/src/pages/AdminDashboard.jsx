@@ -1111,7 +1111,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         })()}
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 'auto' }}>
                         <button
-                          onClick={() => navigate(`/torneo/${torneo.id}`)}
+                          onClick={() => navigate(`/torneo/${torneo.id}`, { state: { fromAdmin: true } })}
                           style={{ padding: '6px 14px', background: '#667eea', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
                         >
                           Ver →

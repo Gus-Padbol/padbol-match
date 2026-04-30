@@ -23,6 +23,8 @@ import {
 } from '../utils/torneoInscripcionPago';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
+import useUserRole from '../hooks/useUserRole';
+import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
 import {
   jugadorNombreTorneoEtiqueta,
   fetchJugadoresPerfilPorJugadores,
@@ -197,6 +199,12 @@ export default function FormEquipos() {
     };
   }, [authEmail, userProfile, session]);
 
+  const currentClienteTorneo = useMemo(() => {
+    if (!authEmail) return null;
+    return { email: authEmail };
+  }, [authEmail]);
+  const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentClienteTorneo);
+
   const [perfilLsKey, setPerfilLsKey] = useState(0);
 
   const authUserId = useMemo(
@@ -238,6 +246,8 @@ export default function FormEquipos() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [nombreSede, setNombreSede] = useState(null);
+  /** Fila sede del torneo (nombre, pais, ciudad) para permisos admin_nacional. */
+  const [sedeTorneoRow, setSedeTorneoRow] = useState(null);
   const [companeroNombre, setCompaneroNombre] = useState('');
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
@@ -312,16 +322,19 @@ export default function FormEquipos() {
     if (partidosError) console.error(partidosError);
 
     let sedeNombre = null;
+    let sedeFull = null;
     if (torneoData?.sede_id) {
       const { data: sedeData, error: sedeError } = await supabase
         .from('sedes')
-        .select('nombre')
+        .select('nombre, pais, ciudad')
         .eq('id', torneoData.sede_id)
         .maybeSingle();
       if (sedeError) console.error(sedeError);
       sedeNombre = sedeData?.nombre || null;
+      sedeFull = sedeData || null;
     }
     setNombreSede(sedeNombre);
+    setSedeTorneoRow(sedeFull);
 
     setTorneo(torneoData || null);
     setJugadoresTorneo(Array.isArray(jugadoresData) ? jugadoresData : []);
@@ -578,9 +591,39 @@ export default function FormEquipos() {
   const torneoFinalizado = torneo?.estado === 'finalizado';
 
   const sedesMapForm = useMemo(() => {
-    if (!torneo?.sede_id || !nombreSede) return {};
-    return { [String(torneo.sede_id)]: { nombre: nombreSede, ciudad: '', pais: '' } };
-  }, [torneo?.sede_id, nombreSede]);
+    if (!torneo?.sede_id) return {};
+    const nombre = nombreSede || sedeTorneoRow?.nombre;
+    if (!nombre) return {};
+    const sid = String(torneo.sede_id);
+    return {
+      [sid]: {
+        nombre,
+        ciudad: sedeTorneoRow?.ciudad || '',
+        pais: sedeTorneoRow?.pais || '',
+      },
+    };
+  }, [torneo?.sede_id, nombreSede, sedeTorneoRow]);
+
+  const esAdminGestionTorneo = useMemo(
+    () =>
+      computeIsAdminEnTorneo({
+        email: authEmail,
+        torneo,
+        sedeTorneo: sedeTorneoRow,
+        rol,
+        userSedeId,
+        userPaisRol,
+        fromAdmin: Boolean(location.state?.fromAdmin),
+      }),
+    [authEmail, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
+  );
+
+  const torneoNavStateForm = useMemo(() => {
+    const base =
+      location.state && typeof location.state === 'object' ? { ...location.state } : {};
+    if (location.state?.fromAdmin) base.fromAdmin = true;
+    return Object.keys(base).length ? base : null;
+  }, [location.state]);
 
   const filasClasificacionFinalizado = useMemo(() => {
     if (!torneoFinalizado || !Array.isArray(tablaPuntosRows) || tablaPuntosRows.length === 0) return [];
@@ -1661,6 +1704,10 @@ export default function FormEquipos() {
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
 
   const handleInscripcionHeaderBack = useCallback(() => {
+    if (esAdminGestionTorneo && location.state?.fromAdmin) {
+      navigate('/admin');
+      return;
+    }
     if (!mostrarPasoEleccion) {
       if (typeof window !== 'undefined') window.history.back();
       return;
@@ -1675,7 +1722,15 @@ export default function FormEquipos() {
       return;
     }
     if (typeof window !== 'undefined') window.history.back();
-  }, [mostrarPasoEleccion, isMobile, mobileVista, desktopFlujo]);
+  }, [
+    esAdminGestionTorneo,
+    location.state?.fromAdmin,
+    navigate,
+    mostrarPasoEleccion,
+    isMobile,
+    mobileVista,
+    desktopFlujo,
+  ]);
 
   const hayParamInvitacionEquipo = Number.isFinite(inviteEquipoIdNum);
 
@@ -2125,7 +2180,18 @@ export default function FormEquipos() {
 
   const renderInscripcionHeader = () => (
     <>
-      <AppHeader title={torneoFinalizado ? 'Resultados' : 'Inscripción'} onBack={handleInscripcionHeaderBack} />
+      <AppHeader
+        title={
+          esAdminGestionTorneo
+            ? torneoFinalizado
+              ? 'Resultados'
+              : 'Gestión del torneo'
+            : torneoFinalizado
+              ? 'Resultados'
+              : 'Inscripción'
+        }
+        onBack={handleInscripcionHeaderBack}
+      />
       <div
         style={{
           width: '100%',
@@ -2168,7 +2234,13 @@ export default function FormEquipos() {
             textShadow: '0 2px 24px rgba(0,0,0,0.25)',
           }}
         >
-          {torneoFinalizado ? 'Resultados del torneo' : 'Inscripción al torneo'}
+          {esAdminGestionTorneo
+            ? torneoFinalizado
+              ? 'Resultados del torneo'
+              : 'Gestión de equipos y torneo'
+            : torneoFinalizado
+              ? 'Resultados del torneo'
+              : 'Inscripción al torneo'}
         </h1>
       </div>
     </div>
@@ -2180,7 +2252,7 @@ export default function FormEquipos() {
       <div style={inscripcionPageShellStyle}>
         {renderInscripcionHeader()}
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', padding: '0 12px', boxSizing: 'border-box' }}>
-          {bloqueInvitacionEquipoDeepLink}
+          {!esAdminGestionTorneo ? bloqueInvitacionEquipoDeepLink : null}
         </div>
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: 'white' }}>Cargando...</div>
         <BottomNav />
@@ -2202,7 +2274,7 @@ export default function FormEquipos() {
           boxSizing: 'border-box',
         }}
       >
-        {bloqueInvitacionEquipoDeepLink}
+        {!esAdminGestionTorneo ? bloqueInvitacionEquipoDeepLink : null}
 
         {torneoCancelado ? (
           <>
@@ -2243,13 +2315,14 @@ export default function FormEquipos() {
             torneoId={id}
             navigate={navigate}
             session={session}
-            isAdmin={false}
+            isAdmin={esAdminGestionTorneo}
+            navigateState={torneoNavStateForm}
             showTorneoLogo={false}
             clasificacionFinalFilas={
               torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
             }
             equiposTabFooter={
-              torneoFinalizado ? (
+              esAdminGestionTorneo ? null : torneoFinalizado ? (
                 bloqueMiEquipoResumenFinalizado
               ) : (
                 <>

@@ -10,16 +10,22 @@ import TorneoTabbedView, {
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
+import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
+import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
 import '../styles/TorneoVista.css';
-
-const ADMIN_EMAILS = ['padbolinternacional@gmail.com', 'admin@padbol.com', 'sm@padbol.com', 'juanpablo@padbol.com'];
 
 export default function TorneoVista() {
   const { torneoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentCliente);
   const [torneo, setTorneo] = useState(null);
   const [equipos, setEquipos] = useState([]);
   const [sedesMap, setSedesMap] = useState({});
@@ -31,7 +37,25 @@ export default function TorneoVista() {
   const [finalizando, setFinalizando] = useState(false);
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
-  const isAdmin = ADMIN_EMAILS.includes(currentEmail);
+  const sedeTorneo = torneo ? sedesMap[String(torneo.sede_id)] : null;
+  const fromAdmin = Boolean(location.state?.fromAdmin);
+  const isAdmin = useMemo(
+    () =>
+      computeIsAdminEnTorneo({
+        email: currentEmail,
+        torneo,
+        sedeTorneo,
+        rol,
+        userSedeId,
+        userPaisRol,
+        fromAdmin,
+      }),
+    [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
+  );
+  const torneoNavState = useMemo(
+    () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),
+    [location.state, fromAdmin]
+  );
   const jugadorEquipoListoParaTorneo = (raw) => {
     const p = typeof raw === 'object' && raw != null ? raw : { nombre: raw, email: '' };
     if (p.estado === 'pendiente') return false;
@@ -198,7 +222,11 @@ export default function TorneoVista() {
     <div style={{ marginBottom: '12px' }}>
       {estadoTorneoLower !== 'finalizado' ? (
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <button type="button" className="btn-agregar-jugadores" onClick={() => navigate(`/torneo/${torneoId}/equipos`)}>
+          <button
+            type="button"
+            className="btn-agregar-jugadores"
+            onClick={() => navigate(`/torneo/${torneoId}/equipos`, torneoNavState ? { state: torneoNavState } : undefined)}
+          >
             Equipos e inscripción
           </button>
         </div>
@@ -309,6 +337,7 @@ export default function TorneoVista() {
         navigate={navigate}
         session={session}
         isAdmin={isAdmin}
+        navigateState={torneoNavState}
         clasificacionFinalFilas={clasificacionFinalFilas}
         adminTorneoBar={adminTorneoBar}
         stickyTop={hubContentPaddingTopCss(location.pathname)}
