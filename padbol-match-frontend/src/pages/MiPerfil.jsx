@@ -281,6 +281,17 @@ export default function MiPerfil() {
     [location.state, torneoIdValido, redirectAfterAuth]
   );
 
+  /** Sin fila o falta foto, país, lateralidad o categoría en `jugadores_perfil`. */
+  const perfilFaltaCamposEsenciales = useMemo(() => {
+    const p = perfil;
+    if (!p || typeof p !== 'object') return true;
+    if (!String(p.foto_url || '').trim()) return true;
+    if (!String(p.pais || '').trim()) return true;
+    if (!String(p.lateralidad || '').trim()) return true;
+    if (!String(p.nivel || '').trim()) return true;
+    return false;
+  }, [perfil]);
+
   const opcionesCodigoWhatsApp = useMemo(
     () => [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS],
     []
@@ -635,6 +646,8 @@ export default function MiPerfil() {
             email: owner,
           });
         }
+      } else {
+        setPerfil(null);
       }
     } catch (err) {
       // Profile is optional; silently fail if not found or network error
@@ -1835,6 +1848,44 @@ export default function MiPerfil() {
       <AppHeader title="Mi Perfil" />
 
     <div style={MI_PERFIL_CONTENT_WRAP}>
+      {perfilFaltaCamposEsenciales ? (
+        <div
+          style={{
+            marginBottom: '14px',
+            padding: '14px 16px',
+            background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+            border: '1px solid #fdba74',
+            borderRadius: '12px',
+            color: '#9a3412',
+            fontSize: '14px',
+            fontWeight: 600,
+            lineHeight: 1.45,
+            boxShadow: '0 2px 10px rgba(234, 88, 12, 0.12)',
+          }}
+        >
+          <p style={{ margin: '0 0 12px', padding: 0 }}>
+            ⚠️ Tu perfil está incompleto. Completá tus datos para aparecer bien en torneos y rankings.
+          </p>
+          <button
+            type="button"
+            onClick={() => setEditando(true)}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 800,
+              fontSize: '14px',
+              boxShadow: '0 2px 8px rgba(194, 65, 12, 0.35)',
+            }}
+          >
+            Completar perfil
+          </button>
+        </div>
+      ) : null}
       {avisoPerfilTorneoMsg ? (
         <div
           style={{
