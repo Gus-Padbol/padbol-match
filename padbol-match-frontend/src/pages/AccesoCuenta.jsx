@@ -89,13 +89,14 @@ export default function AccesoCuenta() {
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
       const redirectParam = new URLSearchParams(location.search).get('redirect');
+      const redirectParamExplicit = redirectParam != null && String(redirectParam).trim() !== '';
       let dest = '/';
       try {
         const reservaReturn = localStorage.getItem(RESERVA_RETURN_STORAGE_KEY);
         if (typeof reservaReturn === 'string' && reservaReturn.trim()) {
           dest = safeRedirectPath(reservaReturn.trim());
           localStorage.removeItem(RESERVA_RETURN_STORAGE_KEY);
-        } else if (redirectParam) {
+        } else if (redirectParamExplicit) {
           try {
             dest = safeRedirectPath(decodeURIComponent(redirectParam));
           } catch {
@@ -116,6 +117,16 @@ export default function AccesoCuenta() {
         }
       } catch {
         /* ignore */
+      }
+      // Sin `?redirect=` explícito: nunca mandar al hub a /mi-perfil (sesión nueva o restaurada).
+      if (!redirectParamExplicit) {
+        const destPath = String(dest || '/')
+          .split('?')[0]
+          .split('#')[0]
+          .replace(/\/+$/, '') || '/';
+        if (destPath === '/mi-perfil' || destPath.startsWith('/mi-perfil/')) {
+          dest = '/';
+        }
       }
       try {
         localStorage.removeItem(PENDING_TORNEO_INVITE_LS);

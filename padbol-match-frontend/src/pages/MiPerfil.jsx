@@ -673,21 +673,26 @@ export default function MiPerfil() {
 
   const fetchReservas = async () => {
     if (!sessionOwnerEmail) return;
+    const emailNorm = String(sessionOwnerEmail).trim().toLowerCase();
     try {
+      // Tabla `reservas`: columna del contacto es `email` (ver POST /api/reservas en padbol-backend/server.js).
       const { data, error } = await supabase
         .from('reservas')
         .select('id, sede, fecha, hora, cancha, estado, precio')
-        .eq('email_usuario', sessionOwnerEmail)
+        .eq('email', emailNorm)
         .order('fecha', { ascending: false })
         .limit(20);
-      console.log(
-        '[MiPerfil] reservas: filtro columna email_usuario, valor:',
-        sessionOwnerEmail,
-        'filas:',
-        Array.isArray(data) ? data.length : 0,
-        'error:',
-        error
-      );
+      if (error) {
+        console.error('[MiPerfil] reservas Supabase error (completo):', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          raw: error,
+        });
+      } else {
+        console.log('[MiPerfil] reservas por email:', emailNorm, 'filas:', Array.isArray(data) ? data.length : 0);
+      }
       setReservas(data || []);
     } catch {
       // fail silently
