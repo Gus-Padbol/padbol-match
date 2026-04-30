@@ -42,7 +42,6 @@ function mergeJugadorConPerfil(p, perfilPorUserId) {
     foto_url: str(perfil.foto_url) ? perfil.foto_url : p.foto_url,
     alias: str(perfil.alias) ? perfil.alias : p.alias,
     nombre: str(perfil.nombre) ? perfil.nombre : p.nombre,
-    apellido: str(perfil.apellido) ? perfil.apellido : p.apellido,
   };
 }
 
@@ -195,7 +194,7 @@ export default function EquipoPerfil() {
       if (uids.length > 0) {
         const { data: perfiles, error: perfilErr } = await supabase
           .from('jugadores_perfil')
-          .select('user_id, pais, foto_url, alias, nombre, apellido')
+          .select('user_id, pais, foto_url, alias, nombre')
           .in('user_id', uids);
         if (cancelled) return;
         console.log('[EquipoPerfil] jugadores_perfil join resultado', {
