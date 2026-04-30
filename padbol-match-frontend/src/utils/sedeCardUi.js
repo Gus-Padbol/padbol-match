@@ -28,16 +28,26 @@ export function precioDesdeCard(sede) {
   return base;
 }
 
+const SEP = ' · ';
+
+/**
+ * Ubicación para cards / cabeceras de reserva: opcionalmente bandera al inicio de `pais`,
+ * y siempre **ciudad primero**, **nombre de país después**, unidos con punto medio (` · `).
+ * Ej.: pais `🇺🇸 Estados Unidos`, ciudad `Miami` → flag `🇺🇸`, linea `Miami · Estados Unidos`.
+ */
 export function ciudadPaisConBandera(sede) {
   const ciudad = String(sede?.ciudad || '').trim();
   const raw = String(sede?.pais || '').trim();
   if (!raw) return { linea: ciudad || '—', flag: '' };
   const parts = raw.split(/\s+/).filter(Boolean);
   if (parts.length >= 2 && String(parts[0]).length <= 8) {
+    const paisSinBandera = parts.slice(1).join(' ').trim();
+    const linea = [ciudad, paisSinBandera].filter(Boolean).join(SEP) || paisSinBandera || ciudad || '—';
     return {
       flag: parts[0],
-      linea: [ciudad, parts.slice(1).join(' ')].filter(Boolean).join(' · ') || parts.slice(1).join(' '),
+      linea,
     };
   }
-  return { flag: '', linea: [ciudad, raw].filter(Boolean).join(' · ') || raw };
+  const linea = [ciudad, raw].filter(Boolean).join(SEP) || raw;
+  return { flag: '', linea };
 }

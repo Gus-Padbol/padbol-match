@@ -869,7 +869,15 @@ export default function ReservaForm() {
 
           {sedeSeleccionada && (
           <p style={{ color: '#666', marginBottom: '30px', textAlign: 'center' }}>
-            {sedeSeleccionada.ciudad}, {sedeSeleccionada.pais}
+            {(() => {
+              const { flag, linea } = ciudadPaisConBandera(sedeSeleccionada);
+              return (
+                <>
+                  {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
+                  {linea}
+                </>
+              );
+            })()}
             {sedeSeleccionada.precio_manana && sedeSeleccionada.precio_tarde
               ? ` • 🌅 $${Number(sedeSeleccionada.precio_manana).toLocaleString('es-AR')} / 🌆 $${Number(sedeSeleccionada.precio_tarde).toLocaleString('es-AR')} ${sedeSeleccionada.moneda || 'ARS'}`
               : ` • $${Number(sedeSeleccionada.precio_por_reserva || sedeSeleccionada.precio_turno || 0).toLocaleString('es-AR')} ${sedeSeleccionada.moneda || 'ARS'}`
