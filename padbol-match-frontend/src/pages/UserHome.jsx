@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -9,17 +9,57 @@ import {
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
+import { supabase } from '../supabaseClient';
+
+function esPlaceholderJugador(s) {
+  return String(s || '').trim().toLowerCase() === 'jugador';
+}
+
+/** Primera palabra con solo la inicial en mayúscula ("JUAN PABLO" → "Juan", "juanpablo" → "Juanpablo"). */
+function capitalizarPrimeraPalabra(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  const first = s.split(/\s+/).filter(Boolean)[0];
+  if (!first) return '';
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
 
 /**
- * Primer nombre desde `jugadores_perfil` (contexto auth): `nombre` o, si falta, `nombre_completo`.
- * Solo la primera palabra. Sin alias ni email.
+ * Orden: `profiles` (nombre, nombre_completo, full_name) → `jugadores_perfil` mismo orden
+ * → `user_metadata` (full_name, name, nombre) → parte local del email.
  */
-function primerNombreSaludoHub(perfil) {
-  if (!perfil || typeof perfil !== 'object') return '';
-  const raw =
-    String(perfil.nombre || '').trim() || String(perfil.nombre_completo || '').trim();
+function pickRawNombreSaludo(perfil, authUser, profilesRow) {
+  const meta = authUser?.user_metadata || {};
+  const tryRow = (row) => {
+    if (!row || typeof row !== 'object') return '';
+    for (const k of ['nombre', 'nombre_completo', 'full_name', 'display_name']) {
+      const v = String(row[k] || '').trim();
+      if (!v) continue;
+      if (k === 'nombre' && esPlaceholderJugador(v)) continue;
+      return v;
+    }
+    return '';
+  };
+  const chain = [
+    tryRow(profilesRow),
+    tryRow(perfil),
+    String(meta.full_name || '').trim(),
+    String(meta.name || '').trim(),
+    String(meta.nombre || '').trim(),
+  ];
+  for (const c of chain) {
+    if (c) return c;
+  }
+  const em = String(authUser?.email || '').trim();
+  if (!em.includes('@')) return '';
+  const local = em.split('@')[0].trim();
+  return local || '';
+}
+
+function primerNombreSaludoHub(perfil, authUser, profilesRow) {
+  const raw = pickRawNombreSaludo(perfil, authUser, profilesRow);
   if (!raw) return '';
-  return raw.split(/\s+/).filter(Boolean)[0] || '';
+  return capitalizarPrimeraPalabra(raw);
 }
 
 export default function UserHome() {
@@ -27,6 +67,7 @@ export default function UserHome() {
   const location = useLocation();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+  const [profilesRow, setProfilesRow] = useState(null);
 
   useEffect(() => {
     const onPerfil = () => {
@@ -36,7 +77,43 @@ export default function UserHome() {
     return () => window.removeEventListener(PERFIL_CHANGE_EVENT, onPerfil);
   }, [refreshSession]);
 
-  const primerNombre = primerNombreSaludoHub(userProfile);
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) {
+      setProfilesRow(null);
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+      if (cancelled) return;
+      if (!error && data) {
+        setProfilesRow(data);
+        return;
+      }
+      const r2 = await supabase.from('profiles').select('*').eq('user_id', uid).maybeSingle();
+      if (cancelled) return;
+      if (!r2.error && r2.data) setProfilesRow(r2.data);
+      else setProfilesRow(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    if (profileLoading) return;
+    // Depuración: campos disponibles en sesión / perfiles (pedido explícito).
+    console.log('[UserHome] session.user (completo)', session.user);
+    console.log('[UserHome] userProfile jugadores_perfil (completo)', userProfile);
+    console.log('[UserHome] profiles fila (completo)', profilesRow);
+  }, [session?.user, profileLoading, userProfile, profilesRow]);
+
+  const primerNombre = useMemo(
+    () => primerNombreSaludoHub(userProfile, session?.user, profilesRow),
+    [userProfile, session?.user, profilesRow]
+  );
   const saludoListo =
     !session?.user ||
     (!authLoading && !profileLoading);
@@ -107,6 +184,7 @@ export default function UserHome() {
         >
           <h1
             aria-busy={Boolean(session?.user && profileLoading)}
+            className="user-home-saludo"
             style={{
               color: 'white',
               textAlign: 'center',
@@ -118,6 +196,10 @@ export default function UserHome() {
               display: session?.user ? 'flex' : undefined,
               alignItems: session?.user ? 'center' : undefined,
               justifyContent: session?.user ? 'center' : undefined,
+              opacity: 1,
+              animation: 'none',
+              WebkitAnimation: 'none',
+              transition: 'none',
             }}
           >
             {lineaSaludo ?? '\u00a0'}

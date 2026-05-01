@@ -46,3 +46,10 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Hub inicio: saludo sin animación ni titilado heredado */
+.user-home-saludo {
+  animation: none !important;
+  -webkit-animation: none !important;
+  transition: none !important;
+}
