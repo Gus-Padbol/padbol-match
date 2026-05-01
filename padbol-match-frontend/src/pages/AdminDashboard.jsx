@@ -3,7 +3,6 @@ import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
@@ -1178,7 +1177,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       >
         <AppHeader title="" showBack={false} adminPanelMinimalHeader />
         Cargando...
-        <BottomNav />
       </div>
     );
   }
@@ -3254,8 +3252,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
         </div>
       ) : null}
-
-      <BottomNav />
     </div>
   );
 }

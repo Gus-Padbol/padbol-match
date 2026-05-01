@@ -271,17 +271,6 @@ export default function AppHeader({
         }}
       >
         {session?.user ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: '2px',
-              flexShrink: 1,
-              minWidth: 0,
-              maxWidth: 'min(58vw, 220px)',
-            }}
-          >
           <button
             type="button"
             onClick={() => {
@@ -289,12 +278,12 @@ export default function AppHeader({
               navigate('/');
             }}
             aria-label="Volver al hub como jugador"
-            title="← Volver al hub"
+            title="Volver al hub"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              maxWidth: '100%',
+              maxWidth: 'min(58vw, 220px)',
               padding: '3px 8px 3px 3px',
               borderRadius: '999px',
               border: '1px solid rgba(255,255,255,0.28)',
@@ -350,22 +339,6 @@ export default function AppHeader({
               {adminMinimalRolCorto}
             </span>
           </button>
-          <span
-            style={{
-              fontSize: '10px',
-              fontWeight: 600,
-              color: 'rgba(226, 232, 240, 0.72)',
-              paddingLeft: '4px',
-              lineHeight: 1.2,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '100%',
-            }}
-          >
-            ← Volver al hub
-          </span>
-          </div>
         ) : (
           <span aria-hidden style={{ width: 32, height: 32, flexShrink: 0 }} />
         )}

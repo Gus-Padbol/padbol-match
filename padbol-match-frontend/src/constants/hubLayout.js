@@ -11,12 +11,13 @@ export const HUB_CONTENT_PADDING_BOTTOM_PX = 24;
 
 /**
  * Rutas sin barra hub: inicio, listado sedes, reserva, auth.
- * `/admin` muestra {@link BottomNav} en modo panel (Resumen, Torneos, …).
+ * `/admin` usa solo las pestañas del propio panel (no {@link BottomNav} bajo el header).
  * Perfil de sede (`/sede/:id`) muestra la barra con estilo sobrio en {@link BottomNav}.
  */
 export function isHubNavBarHiddenPathname(pathname) {
   let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
   pathOnly = pathOnly.replace(/\/+$/, '') || '/';
+  if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
   if (pathOnly === '/login') return true;
   if (pathOnly === '/auth' || pathOnly.startsWith('/auth/')) return true;
   if (pathOnly === '/acceso' || pathOnly.startsWith('/acceso/')) return true;
