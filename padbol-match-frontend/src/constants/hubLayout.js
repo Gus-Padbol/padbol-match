@@ -11,6 +11,7 @@ export const HUB_CONTENT_PADDING_BOTTOM_PX = 24;
 
 /**
  * Rutas sin barra hub: inicio, listado sedes, reserva, auth.
+ * `/admin` muestra {@link BottomNav} en modo panel (Resumen, Torneos, …).
  * Perfil de sede (`/sede/:id`) muestra la barra con estilo sobrio en {@link BottomNav}.
  */
 export function isHubNavBarHiddenPathname(pathname) {
@@ -23,7 +24,6 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   if (pathOnly === '/' || pathOnly === '/inicio' || pathOnly === '/hub' || pathOnly === '/home') return true;
   if (pathOnly === '/sedes' || pathOnly.startsWith('/sedes/')) return true;
-  if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
   return false;
 }
 
