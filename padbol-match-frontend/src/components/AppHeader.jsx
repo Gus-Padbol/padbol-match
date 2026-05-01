@@ -25,20 +25,6 @@ const LOGOUT_BTN_SIZE = 34;
 
 const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club'];
 
-/** Texto chip admin club: "Admin" + sede corta (quita sufijo Padbol Club; máx. 15 chars del tramo sede). */
-const ADMIN_CHIP_SEDE_MAX = 15;
-
-function etiquetaAdminClubChipCorta(sedeNombreRaw) {
-  let n = String(sedeNombreRaw || '').trim();
-  if (!n) return 'Admin Club';
-  n = n.replace(/\s+padbol\s+club\s*$/i, '').trim();
-  const parts = n.split(/\s+/).filter(Boolean);
-  const base = parts.length >= 2 ? `${parts[0]} ${parts[1]}` : parts[0] || n;
-  const sedeEll =
-    base.length > ADMIN_CHIP_SEDE_MAX ? `${base.slice(0, ADMIN_CHIP_SEDE_MAX)}…` : base;
-  return `Admin ${sedeEll}`;
-}
-
 /** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
 function readCachedRolHeader() {
   try {
@@ -221,15 +207,15 @@ export default function AppHeader({
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
-  /** Panel admin compacto: rol corto; admin_club con nombre de sede acortado. */
+  /** Panel admin compacto: super/nacional con rol; admin_club indica vuelta al hub. */
   const adminMinimalRolCorto = useMemo(() => {
     if (!session?.user) return '';
     if (roleLoading) return '…';
     if (rol === 'super_admin') return 'Super Admin';
     if (rol === 'admin_nacional') return 'Admin Nacional';
-    if (rol === 'admin_club') return etiquetaAdminClubChipCorta(adminSedeNombre);
+    if (rol === 'admin_club') return '← Hub';
     return 'Admin';
-  }, [session?.user, roleLoading, rol, adminSedeNombre]);
+  }, [session?.user, roleLoading, rol]);
 
   /** Inicial desde `nombre` del perfil (no alias); fallback email. */
   const adminMinimalInicial = useMemo(() => {
