@@ -25,6 +25,48 @@ const LOGOUT_BTN_SIZE = 34;
 
 const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club'];
 
+const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
+
+function esNombrePlaceholderJugador(s) {
+  return String(s || '').trim().toLowerCase() === 'jugador';
+}
+
+function primeraPalabraHandle(s) {
+  const t = String(s || '').trim();
+  if (!t) return '';
+  return t.split(/\s+/).filter(Boolean)[0] || '';
+}
+
+/**
+ * Chip barra admin compacta (solo super_admin): `@` + alias o primera palabra del nombre;
+ * fallback `Gus` solo para {@link PADBOL_SUPER_ADMIN_EMAIL} si no hay nombre útil.
+ */
+function etiquetaChipSuperAdminPanelMinimal(userProfile, sessionUser) {
+  const email = String(sessionUser?.email || '').trim().toLowerCase();
+  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
+  const alias = String(userProfile?.alias || '').trim();
+  if (alias) {
+    const h = primeraPalabraHandle(alias.replace(/^@+/u, ''));
+    if (h) return `@${h.charAt(0).toUpperCase()}${h.slice(1).toLowerCase()}`;
+  }
+  const meta = sessionUser?.user_metadata || {};
+  let raw =
+    (!esNombrePlaceholderJugador(userProfile?.nombre)
+      ? primeraPalabraHandle(userProfile?.nombre)
+      : '') ||
+    primeraPalabraHandle(userProfile?.nombre_completo) ||
+    primeraPalabraHandle(meta.full_name) ||
+    primeraPalabraHandle(meta.name) ||
+    '';
+  if (email === PADBOL_SUPER_ADMIN_EMAIL && (!raw || raw.toLowerCase() === local)) {
+    raw = 'Gus';
+  }
+  if (!raw && local) raw = local;
+  if (!raw) raw = 'Usuario';
+  const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  return `@${cap}`;
+}
+
 /** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
 function readCachedRolHeader() {
   try {
@@ -247,15 +289,15 @@ export default function AppHeader({
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
-  /** Panel admin compacto: super/nacional con rol; admin_club indica vuelta al hub. */
+  /** Panel admin compacto: super → @handle al hub; nacional rol; admin_club ← Hub. */
   const adminMinimalRolCorto = useMemo(() => {
     if (!session?.user) return '';
     if (roleLoading) return '…';
-    if (rol === 'super_admin') return 'Super Admin';
+    if (rol === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
     if (rol === 'admin_nacional') return 'Admin Nacional';
     if (rol === 'admin_club') return '← Hub';
     return 'Admin';
-  }, [session?.user, roleLoading, rol]);
+  }, [session?.user, roleLoading, rol, userProfile]);
 
   /** Inicial desde `nombre` del perfil (no alias); fallback email. */
   const adminMinimalInicial = useMemo(() => {
