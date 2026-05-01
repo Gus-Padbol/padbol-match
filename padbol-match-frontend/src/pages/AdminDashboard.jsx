@@ -1254,9 +1254,82 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <p style={{ margin: '0 0 12px', color: '#fff', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
             {tituloPanelAdmin}
           </p>
-          <p style={{ margin: '0 0 12px', color: '#cbd5e1', fontSize: '12px', textAlign: 'center' }}>
+          <p style={{ margin: '0 0 10px', color: '#cbd5e1', fontSize: '12px', textAlign: 'center' }}>
             {fechaActualLarga}
           </p>
+          {esAdminClub && sedeStatus ? (() => {
+            const { numero_licencia, licencia_activa } = sedeStatus;
+            if (!numero_licencia) {
+              return (
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '14px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '5px 12px',
+                      borderRadius: '999px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      background: 'rgba(241,245,249,0.95)',
+                      color: '#64748b',
+                      border: '1px solid rgba(148,163,184,0.5)',
+                      boxShadow: '0 1px 4px rgba(15,23,42,0.08)',
+                    }}
+                  >
+                    📋 Sin licencia asignada
+                  </span>
+                </div>
+              );
+            }
+            if (licencia_activa) {
+              return (
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '14px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 16px',
+                      borderRadius: '999px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      background: 'linear-gradient(145deg, #C9A84C 0%, #dcc062 42%, #F0D060 100%)',
+                      color: '#5a3e00',
+                      border: '1px solid #9a7b2e',
+                      boxShadow:
+                        '0 2px 12px rgba(201, 168, 76, 0.45), 0 1px 3px rgba(90, 62, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.35)',
+                    }}
+                  >
+                    <span style={{ fontSize: '13px', lineHeight: 1 }} aria-hidden>👑</span>
+                    Licencia PADBOL Activa
+                  </span>
+                </div>
+              );
+            }
+            return (
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '14px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '5px 12px',
+                    borderRadius: '999px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    background: 'linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%)',
+                    color: '#991b1b',
+                    border: '1px solid #fca5a5',
+                    boxShadow: '0 1px 6px rgba(220,38,38,0.15)',
+                  }}
+                >
+                  ⚠️ Licencia Suspendida
+                </span>
+              </div>
+            );
+          })() : null}
         </div>
       </div>
 
@@ -1316,31 +1389,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       )}
 
       {activeTab === 'resumen' && <>
-        {esAdminClub && sedeStatus && (() => {
-          const { numero_licencia, licencia_activa } = sedeStatus;
-          const badge = !numero_licencia
-            ? { icon: '📋', text: 'Sin licencia asignada', bg: '#f1f5f9', color: '#64748b', border: '#cbd5e1' }
-            : licencia_activa
-              ? { icon: '✅', text: 'Licencia PADBOL Activa', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' }
-              : { icon: '⚠️', text: 'Licencia Suspendida',   bg: '#fef2f2', color: '#dc2626', border: '#fecaca' };
-          return (
-            <div style={{ marginBottom: '20px' }}>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '5px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600,
-                background: badge.bg, color: badge.color,
-                border: `1px solid ${badge.border}`,
-              }}>
-                {badge.icon} {badge.text}
-                {numero_licencia && (
-                  <span style={{ fontFamily: 'monospace', fontWeight: 400, opacity: 0.75, marginLeft: '4px' }}>
-                    · {numero_licencia}
-                  </span>
-                )}
-              </span>
-            </div>
-          );
-        })()}
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
             Período del resumen financiero
