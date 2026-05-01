@@ -177,7 +177,7 @@ export default function AppHeader({
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
   const compactHubChip = hubDirectLogin && hubInicioPath && Boolean(session?.user);
 
-  /** Hub inicio con sesión: Admin a la izquierda, chip + logout a la derecha; ocultar “Inicio” si hay >2 controles. */
+  /** Hub inicio con sesión: super admin → [⚙ Admin] + [⏻] sin chip; resto → chip + logout; “Inicio” oculto si >2 controles o super admin. */
   const hubHomeCompactHeader =
     hubDirectLogin && hubInicioPath && Boolean(session?.user);
   const hubHeaderControlCount =
@@ -185,6 +185,9 @@ export default function AppHeader({
     (hubDirectLogin && Boolean(session?.user) ? 1 : 0) +
     (showLogout ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
+  /** Super admin en hub inicio: un solo control a la izquierda (⚙ Admin), sin chip ni “Inicio”. */
+  const superAdminHubPlayer = hubHomeCompactHeader && showAdmin;
+  const shouldHideHubCenterTitle = superAdminHubPlayer || hideHubCenterTitle;
 
   const displayBackLabel = useMemo(() => {
     if (backLabel) return backLabel;
@@ -474,7 +477,7 @@ export default function AppHeader({
         }}
       >
         {titleStr ? (
-          !hubHomeCompactHeader || !hideHubCenterTitle ? (
+          !shouldHideHubCenterTitle ? (
             <button
               type="button"
               onClick={() => navigate('/')}
@@ -549,7 +552,7 @@ export default function AppHeader({
               marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
-            {(hubDirectLogin || adminFlowSurface) && session?.user ? (
+            {(hubDirectLogin || adminFlowSurface) && session?.user && !superAdminHubPlayer ? (
               <div
                 ref={adminFlowSurface ? adminMenuRef : undefined}
                 style={{
