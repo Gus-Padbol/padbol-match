@@ -177,6 +177,15 @@ export default function AppHeader({
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
   const compactHubChip = hubDirectLogin && hubInicioPath && Boolean(session?.user);
 
+  /** Hub inicio con sesión: Admin a la izquierda, chip + logout a la derecha; ocultar “Inicio” si hay >2 controles. */
+  const hubHomeCompactHeader =
+    hubDirectLogin && hubInicioPath && Boolean(session?.user);
+  const hubHeaderControlCount =
+    (showAdmin ? 1 : 0) +
+    (hubDirectLogin && Boolean(session?.user) ? 1 : 0) +
+    (showLogout ? 1 : 0);
+  const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
+
   const displayBackLabel = useMemo(() => {
     if (backLabel) return backLabel;
     if (!showBack) return '← Volver';
@@ -203,6 +212,34 @@ export default function AppHeader({
     }
     if (typeof window !== 'undefined') window.history.back();
   };
+
+  const adminShortcutButton =
+    showAdmin ? (
+      <button
+        type="button"
+        onClick={() => navigate(isOnAdmin ? '/' : '/admin')}
+        aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
+        title={isOnAdmin ? 'Volver a la app' : 'Admin'}
+        style={{
+          height: LOGOUT_BTN_SIZE,
+          padding: '0 10px',
+          borderRadius: '999px',
+          border: 'none',
+          background: 'rgba(255,255,255,0.14)',
+          color: '#e2e8f0',
+          fontSize: 13,
+          fontWeight: 700,
+          lineHeight: 1,
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {isOnAdmin ? '← App' : '⚙️ Admin'}
+      </button>
+    ) : null;
 
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
@@ -390,12 +427,23 @@ export default function AppHeader({
       <div
         style={{
           display: 'flex',
-          justifyContent: showBack ? 'flex-start' : 'flex-end',
+          justifyContent: hubHomeCompactHeader ? 'flex-start' : showBack ? 'flex-start' : 'flex-end',
           alignItems: 'center',
           minWidth: 0,
         }}
       >
-        {showBack ? (
+        {hubHomeCompactHeader ? (
+          adminShortcutButton || (
+            <span
+              aria-hidden
+              style={{
+                width: LOGOUT_BTN_SIZE,
+                height: LOGOUT_BTN_SIZE,
+                flexShrink: 0,
+              }}
+            />
+          )
+        ) : showBack ? (
           <button
             type="button"
             onClick={handleBack}
@@ -426,32 +474,44 @@ export default function AppHeader({
         }}
       >
         {titleStr ? (
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            style={{
-              color: titleColor || '#fff',
-              fontSize: '15px',
-              fontWeight: 600,
-              margin: 0,
-              textAlign: 'center',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              minWidth: 0,
-              cursor: 'pointer',
-              background: 'transparent',
-              border: 'none',
-              padding: '4px 6px',
-              fontFamily: 'inherit',
-              width: '100%',
-              maxWidth: '100%',
-            }}
-            title={`${titleStr} — Ir al inicio`}
-            aria-label={`${titleStr}, ir al inicio`}
-          >
-            {titleStr}
-          </button>
+          !hubHomeCompactHeader || !hideHubCenterTitle ? (
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              style={{
+                color: titleColor || '#fff',
+                fontSize: '15px',
+                fontWeight: 600,
+                margin: 0,
+                textAlign: 'center',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+                cursor: 'pointer',
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 6px',
+                fontFamily: 'inherit',
+                width: '100%',
+                maxWidth: '100%',
+              }}
+              title={`${titleStr} — Ir al inicio`}
+              aria-label={`${titleStr}, ir al inicio`}
+            >
+              {titleStr}
+            </button>
+          ) : (
+            <span
+              aria-hidden
+              style={{
+                display: 'block',
+                width: 0,
+                height: 1,
+                overflow: 'hidden',
+              }}
+            />
+          )
         ) : (
           <span
             aria-hidden
@@ -641,32 +701,7 @@ export default function AppHeader({
                 ) : null}
               </div>
             ) : null}
-            {showAdmin ? (
-              <button
-                type="button"
-                onClick={() => navigate(isOnAdmin ? '/' : '/admin')}
-                aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
-                title={isOnAdmin ? 'Volver a la app' : 'Admin'}
-                style={{
-                  height: LOGOUT_BTN_SIZE,
-                  padding: '0 10px',
-                  borderRadius: '999px',
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.14)',
-                  color: '#e2e8f0',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {isOnAdmin ? '← App' : '⚙️ Admin'}
-              </button>
-            ) : null}
+            {showAdmin && !hubHomeCompactHeader ? adminShortcutButton : null}
             {showLogout ? (
               <button
                 type="button"

@@ -11,6 +11,8 @@ import { useAuth } from '../context/AuthContext';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { supabase } from '../supabaseClient';
 
+const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
+
 function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
@@ -57,7 +59,16 @@ function pickRawNombreSaludo(perfil, authUser, profilesRow) {
 }
 
 function primerNombreSaludoHub(perfil, authUser, profilesRow) {
+  const email = String(authUser?.email || '').trim().toLowerCase();
   const raw = pickRawNombreSaludo(perfil, authUser, profilesRow);
+  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
+  if (email === PADBOL_SUPER_ADMIN_EMAIL) {
+    const weak =
+      !raw ||
+      esPlaceholderJugador(raw) ||
+      (local && String(raw).trim().toLowerCase() === local);
+    if (weak) return 'Gus';
+  }
   if (!raw) return '';
   return capitalizarPrimeraPalabra(raw);
 }
@@ -65,7 +76,7 @@ function primerNombreSaludoHub(perfil, authUser, profilesRow) {
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
+  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
   const [profilesRow, setProfilesRow] = useState(null);
 
@@ -103,28 +114,23 @@ export default function UserHome() {
 
   useEffect(() => {
     if (!session?.user) return;
-    if (profileLoading) return;
-    // Depuración: campos disponibles en sesión / perfiles (pedido explícito).
     console.log('[UserHome] session.user (completo)', session.user);
     console.log('[UserHome] userProfile jugadores_perfil (completo)', userProfile);
     console.log('[UserHome] profiles fila (completo)', profilesRow);
-  }, [session?.user, profileLoading, userProfile, profilesRow]);
+    const em = String(session.user.email || '').trim().toLowerCase();
+    if (em === PADBOL_SUPER_ADMIN_EMAIL) {
+      console.log(
+        '[UserHome] padbolinternacional@gmail.com — verificación profile (profiles + jugadores_perfil)',
+        { profilesRow, userProfile }
+      );
+    }
+  }, [session?.user, userProfile, profilesRow]);
 
-  const primerNombre = useMemo(
-    () => primerNombreSaludoHub(userProfile, session?.user, profilesRow),
-    [userProfile, session?.user, profilesRow]
-  );
-  const saludoListo =
-    !session?.user ||
-    (!authLoading && !profileLoading);
-  const lineaSaludo =
-    !session?.user
-      ? '¡Hola! ¿Qué querés hacer hoy?'
-      : !saludoListo
-        ? null
-        : primerNombre
-          ? `¡Hola ${primerNombre}! ¿Qué querés hacer hoy?`
-          : '¡Hola! ¿Qué querés hacer hoy?';
+  const lineaSaludo = useMemo(() => {
+    if (!session?.user) return '¡Hola! ¿Qué querés hacer hoy?';
+    const p = primerNombreSaludoHub(userProfile, session.user, profilesRow);
+    return p ? `¡Hola ${p}! ¿Qué querés hacer hoy?` : '¡Hola! ¿Qué querés hacer hoy?';
+  }, [session?.user, userProfile, profilesRow]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
@@ -171,6 +177,7 @@ export default function UserHome() {
       />
       <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto' }}>
         <div
+          className="user-home-saludo-caja"
           style={{
             background: 'rgba(255,255,255,0.10)',
             border: '1px solid rgba(255,255,255,0.16)',
@@ -180,10 +187,13 @@ export default function UserHome() {
             maxWidth: '300px',
             margin: '0 auto 30px auto',
             color: 'white',
+            opacity: 1,
+            animation: 'none',
+            WebkitAnimation: 'none',
+            transition: 'none',
           }}
         >
           <h1
-            aria-busy={Boolean(session?.user && profileLoading)}
             className="user-home-saludo"
             style={{
               color: 'white',
@@ -192,17 +202,13 @@ export default function UserHome() {
               fontSize: '18px',
               fontWeight: '600',
               lineHeight: 1.35,
-              minHeight: session?.user ? '48px' : undefined,
-              display: session?.user ? 'flex' : undefined,
-              alignItems: session?.user ? 'center' : undefined,
-              justifyContent: session?.user ? 'center' : undefined,
               opacity: 1,
               animation: 'none',
               WebkitAnimation: 'none',
               transition: 'none',
             }}
           >
-            {lineaSaludo ?? '\u00a0'}
+            {lineaSaludo}
           </h1>
           {!authLoading && !session?.user ? (
             <p
