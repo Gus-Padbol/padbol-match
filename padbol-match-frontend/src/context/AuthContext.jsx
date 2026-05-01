@@ -88,15 +88,30 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  /** Con sesión: true hasta que termine {@link refreshUserProfile} (evita saludo antes de tener `nombre`). */
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const user = session?.user ?? null;
 
   const loadProfile = useCallback(async (sessionArg) => {
+    if (!sessionArg?.user?.id) {
+      setProfileLoading(false);
+      try {
+        await refreshUserProfile(sessionArg, setUserProfile);
+      } catch (e) {
+        console.error(e);
+        setUserProfile(null);
+      }
+      return;
+    }
+    setProfileLoading(true);
     try {
       await refreshUserProfile(sessionArg, setUserProfile);
     } catch (e) {
       console.error(e);
       setUserProfile(null);
+    } finally {
+      setProfileLoading(false);
     }
   }, []);
 
@@ -118,6 +133,9 @@ export function AuthProvider({ children }) {
         }
         clearJugadorPerfilLocalStorage();
         setUserProfile(null);
+        setProfileLoading(false);
+      } else if (s.user) {
+        setProfileLoading(true);
       }
       setSession(s);
       setLoading(false);
@@ -158,6 +176,7 @@ export function AuthProvider({ children }) {
     clearJugadorPerfilLocalStorage();
     setSession(null);
     setUserProfile(null);
+    setProfileLoading(false);
   }, []);
 
   const value = useMemo(
@@ -166,10 +185,11 @@ export function AuthProvider({ children }) {
       user,
       userProfile,
       loading,
+      profileLoading,
       refreshSession,
       signOutAndClear,
     }),
-    [session, user, userProfile, loading, refreshSession, signOutAndClear]
+    [session, user, userProfile, loading, profileLoading, refreshSession, signOutAndClear]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

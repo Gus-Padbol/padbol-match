@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -9,55 +9,45 @@ import {
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
-import { supabase } from '../supabaseClient';
 
-/** Solo el campo `nombre` del perfil; primera palabra (ej. "Juan Pablo" → "Juan"). Sin alias ni email. */
-function primerNombreSaludoHub(jpRow) {
-  const raw = String(jpRow?.nombre || '').trim();
+/**
+ * Primer nombre desde `jugadores_perfil` (contexto auth): `nombre` o, si falta, `nombre_completo`.
+ * Solo la primera palabra. Sin alias ni email.
+ */
+function primerNombreSaludoHub(perfil) {
+  if (!perfil || typeof perfil !== 'object') return '';
+  const raw =
+    String(perfil.nombre || '').trim() || String(perfil.nombre_completo || '').trim();
   if (!raw) return '';
-  const first = raw.split(/\s+/).filter(Boolean)[0] || '';
-  return first;
+  return raw.split(/\s+/).filter(Boolean)[0] || '';
 }
 
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
-  const [perfilHubRow, setPerfilHubRow] = useState(null);
 
   useEffect(() => {
-    const uid = session?.user?.id;
-    if (!uid) {
-      setPerfilHubRow(null);
-      return undefined;
-    }
-    let cancelled = false;
-    const load = () => {
-      supabase
-        .from('jugadores_perfil')
-        .select('alias,nombre,apellido,email')
-        .eq('user_id', uid)
-        .maybeSingle()
-        .then(({ data, error }) => {
-          if (cancelled) return;
-          if (error) {
-            console.warn('[UserHome] jugadores_perfil', error.message);
-            setPerfilHubRow(null);
-            return;
-          }
-          setPerfilHubRow(data && typeof data === 'object' ? data : null);
-        });
+    const onPerfil = () => {
+      void refreshSession();
     };
-    load();
-    window.addEventListener(PERFIL_CHANGE_EVENT, load);
-    return () => {
-      cancelled = true;
-      window.removeEventListener(PERFIL_CHANGE_EVENT, load);
-    };
-  }, [session?.user?.id]);
+    window.addEventListener(PERFIL_CHANGE_EVENT, onPerfil);
+    return () => window.removeEventListener(PERFIL_CHANGE_EVENT, onPerfil);
+  }, [refreshSession]);
 
-  const nombreSaludoHub = useMemo(() => primerNombreSaludoHub(perfilHubRow), [perfilHubRow]);
+  const primerNombre = primerNombreSaludoHub(userProfile);
+  const saludoListo =
+    !session?.user ||
+    (!authLoading && !profileLoading);
+  const lineaSaludo =
+    !session?.user
+      ? '¡Hola! ¿Qué querés hacer hoy?'
+      : !saludoListo
+        ? null
+        : primerNombre
+          ? `¡Hola ${primerNombre}! ¿Qué querés hacer hoy?`
+          : '¡Hola! ¿Qué querés hacer hoy?';
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
@@ -90,8 +80,15 @@ export default function UserHome() {
           display: 'block',
           marginLeft: 'auto',
           marginRight: 'auto',
-          paddingTop: '24px',
+          marginTop: '16px',
+          paddingTop: 0,
+          width: 'auto',
           height: '120px',
+          minWidth: '120px',
+          minHeight: '120px',
+          maxWidth: 'min(92vw, 360px)',
+          objectFit: 'contain',
+          objectPosition: 'center center',
           marginBottom: '40px',
         }}
       />
@@ -108,19 +105,22 @@ export default function UserHome() {
             color: 'white',
           }}
         >
-          <h1 style={{
-            color: 'white',
-            textAlign: 'center',
-            margin: '0 0 6px 0',
-            fontSize: '18px',
-            fontWeight: '600',
-            lineHeight: 1.35,
-          }}>
-            {session?.user
-              ? nombreSaludoHub
-                ? `¡Hola ${nombreSaludoHub}! ¿Qué querés hacer hoy?`
-                : '¡Hola! ¿Qué querés hacer hoy?'
-              : '¡Hola! ¿Qué querés hacer hoy?'}
+          <h1
+            aria-busy={Boolean(session?.user && profileLoading)}
+            style={{
+              color: 'white',
+              textAlign: 'center',
+              margin: '0 0 6px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              lineHeight: 1.35,
+              minHeight: session?.user ? '48px' : undefined,
+              display: session?.user ? 'flex' : undefined,
+              alignItems: session?.user ? 'center' : undefined,
+              justifyContent: session?.user ? 'center' : undefined,
+            }}
+          >
+            {lineaSaludo ?? '\u00a0'}
           </h1>
           {!authLoading && !session?.user ? (
             <p
