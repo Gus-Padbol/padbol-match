@@ -85,7 +85,7 @@ function buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud) {
 
 /**
  * URLs del carrusel: `fotos_destacadas` en orden (máx. 4), solo si existen en `fotos_urls`;
- * si no, primeras 4 de la galería (`usarOrden` false → sin badges 1–4).
+ * si no, primeras 4 de la galería.
  */
 function urlsCarruselSedePublica(sede) {
   const todas = Array.isArray(sede?.fotos_urls)
@@ -103,8 +103,8 @@ function urlsCarruselSedePublica(sede) {
 const CARRUSEL_GAP_PX = 8;
 const CARRUSEL_SLIDE_BASIS = `calc((100% - ${2 * CARRUSEL_GAP_PX}px) / 3)`;
 
-/** Primeras fotos en carrusel destacado (scroll-snap, sin autoplay). */
-function SedeFotosCarruselDestacado({ urls, onOpenAtIndex, showOrderNumbers = false }) {
+/** Primeras fotos en carrusel destacado (scroll-snap, sin autoplay). Sin badges numéricos. */
+function SedeFotosCarruselDestacado({ urls, onOpenAtIndex }) {
   const slice = urls.slice(0, Math.min(FOTOS_DESTACADAS_MAX, urls.length));
   if (!slice.length) return null;
   return (
@@ -147,7 +147,7 @@ function SedeFotosCarruselDestacado({ urls, onOpenAtIndex, showOrderNumbers = fa
           >
             <img
               src={url}
-              alt={`Foto ${i + 1}`}
+              alt="Instalaciones de la sede"
               style={{
                 width: '100%',
                 height: PHOTO_STRIP_H,
@@ -155,29 +155,6 @@ function SedeFotosCarruselDestacado({ urls, onOpenAtIndex, showOrderNumbers = fa
                 objectFit: 'cover',
               }}
             />
-            {showOrderNumbers ? (
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '8px',
-                  bottom: '8px',
-                  minWidth: '22px',
-                  height: '22px',
-                  padding: '0 6px',
-                  borderRadius: '8px',
-                  background: 'rgba(15,23,42,0.72)',
-                  color: '#f8fafc',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
-                {i + 1}
-              </span>
-            ) : null}
           </button>
         ))}
       </div>
@@ -829,7 +806,7 @@ export default function SedePublica() {
       {!loading && !error && sede && (() => {
         const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
         const fotos = Array.isArray(sede.fotos_urls) ? sede.fotos_urls : [];
-        const { urls: fotosCarrusel, usarOrden: carruselUsaDestacadas } = urlsCarruselSedePublica(sede);
+        const { urls: fotosCarrusel } = urlsCarruselSedePublica(sede);
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const desc = sede.descripcion ? String(sede.descripcion).trim() : '';
@@ -1071,7 +1048,6 @@ export default function SedePublica() {
             <div style={{ maxWidth: '700px', margin: '0 auto', padding: '10px 14px 0' }}>
               <SedeFotosCarruselDestacado
                 urls={fotosCarrusel}
-                showOrderNumbers={carruselUsaDestacadas}
                 onOpenAtIndex={(i) => {
                   const url = fotosCarrusel[i];
                   const idxFull = url ? fotos.indexOf(url) : -1;

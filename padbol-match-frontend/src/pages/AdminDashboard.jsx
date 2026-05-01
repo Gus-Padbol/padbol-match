@@ -2987,38 +2987,64 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </span>
               </p>
               {fotosUrls.length < MAX_FOTOS_SEDE && (
-                <label style={{
-                  display: 'inline-block', padding: '7px 16px',
-                  background: fotosUploading ? '#e5e7eb' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
-                  color: fotosUploading ? '#9ca3af' : 'white',
-                  borderRadius: '8px', cursor: fotosUploading ? 'not-allowed' : 'pointer',
-                  fontWeight: 700, fontSize: '13px',
-                }}>
-                  {fotosUploading ? '⏳ Subiendo...' : '+ Agregar fotos'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    capture={undefined}
-                    style={{ display: 'none' }}
-                    disabled={fotosUploading}
-                    onChange={async (e) => {
-                      const input = e.target;
-                      const files = Array.from(input.files || []);
-                      if (!files.length) {
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <label style={{
+                    display: 'inline-block', padding: '7px 16px',
+                    background: fotosUploading ? '#e5e7eb' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    color: fotosUploading ? '#9ca3af' : 'white',
+                    borderRadius: '8px', cursor: fotosUploading ? 'not-allowed' : 'pointer',
+                    fontWeight: 700, fontSize: '13px',
+                  }}>
+                    {fotosUploading ? '⏳ Subiendo...' : '+ Agregar fotos'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style={{ display: 'none' }}
+                      disabled={fotosUploading}
+                      onChange={(e) => {
+                        const input = e.target;
+                        const files = Array.from(input.files || []);
                         input.value = '';
-                        return;
-                      }
-                      setFotosUploading(true);
-                      setFotosUploadLabel('Subiendo...');
-                      try {
-                        await subirFotosMultiples(files, { uploadingPrimed: true });
-                      } finally {
-                        input.value = '';
-                      }
+                        if (!files.length) return;
+                        setFotosUploading(true);
+                        setFotosUploadLabel(files.length > 1 ? `Subiendo ${files.length} fotos...` : 'Subiendo 1 de 1...');
+                        void subirFotosMultiples(files, { uploadingPrimed: true });
+                      }}
+                    />
+                  </label>
+                  <label
+                    style={{
+                      display: 'inline-block',
+                      padding: '7px 14px',
+                      background: fotosUploading ? '#f1f5f9' : '#fff',
+                      color: fotosUploading ? '#94a3b8' : '#3730a3',
+                      border: '2px solid #a5b4fc',
+                      borderRadius: '8px',
+                      cursor: fotosUploading ? 'not-allowed' : 'pointer',
+                      fontWeight: 700,
+                      fontSize: '13px',
                     }}
-                  />
-                </label>
+                    title="Recomendado en Safari iPhone: una foto por vez"
+                  >
+                    + Agregar una foto
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      disabled={fotosUploading}
+                      onChange={(e) => {
+                        const input = e.target;
+                        const file = input.files && input.files[0];
+                        input.value = '';
+                        if (!file) return;
+                        setFotosUploading(true);
+                        setFotosUploadLabel('Subiendo 1 de 1...');
+                        void subirFotosMultiples([file], { uploadingPrimed: true });
+                      }}
+                    />
+                  </label>
+                </div>
               )}
             </div>
             {fotosUploadLabel ? (
@@ -3135,7 +3161,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
             ) : null}
             {fotosMsg ? <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: fotosMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{fotosMsg}</p> : null}
-            <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#9ca3af' }}>Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos</p>
+            <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#9ca3af' }}>
+              Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos. En iPhone, si varias a la vez no suben, usá «+ Agregar una foto».
+            </p>
           </div>
         </div>}
 
