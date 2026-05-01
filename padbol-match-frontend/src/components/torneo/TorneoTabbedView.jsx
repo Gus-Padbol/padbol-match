@@ -295,6 +295,8 @@ export default function TorneoTabbedView({
   navigate,
   session,
   isAdmin = false,
+  /** Solo club/nacional de alcance: botón "Gestionar" en equipos (no super_admin ni modo jugador con fromAdmin). */
+  puedeGestionarEquiposTorneo = false,
   /** Se reenvía en `navigate(..., { state })` al abrir gestión de equipo (mantener fromAdmin). */
   navigateState = null,
   /** Filas desde `tabla_puntos` + equipos (misma forma que FormEquipos). */
@@ -316,6 +318,23 @@ export default function TorneoTabbedView({
   const estadoLower = String(torneo?.estado || '').toLowerCase();
   const esFinalizado = estadoLower === 'finalizado';
   const puedeCargarResultados = isAdmin && estadoLower === 'en_curso';
+  const hayAlMenosUnResultadoEnPartidos = useMemo(() => {
+    return partidos.some((p) => {
+      try {
+        if (!p) return false;
+        if (String(p.estado || '').toLowerCase() === 'finalizado') return true;
+        return parseResultadoSets(p).length > 0;
+      } catch {
+        return false;
+      }
+    });
+  }, [partidos]);
+  const mostrarCartelIniciarTorneoParaResultados =
+    isAdmin &&
+    estadoLower !== 'en_curso' &&
+    estadoLower !== 'activo' &&
+    !esFinalizado &&
+    !hayAlMenosUnResultadoEnPartidos;
   const estadoBadge = useMemo(() => {
     if (estadoLower === 'finalizado') return { label: 'Finalizado', bg: '#fee2e2', color: '#b91c1c' };
     if (estadoLower === 'abierto') return { label: 'Inscripción abierta', bg: '#dcfce7', color: '#166534' };
@@ -566,7 +585,7 @@ export default function TorneoTabbedView({
                   >
                     {titulo}
                   </button>
-                  {capOk || isAdmin ? (
+                  {capOk || puedeGestionarEquiposTorneo ? (
                     <button
                       type="button"
                       className="btn-agregar-jugadores"
@@ -830,7 +849,7 @@ export default function TorneoTabbedView({
 
   const renderTabFixture = () => (
     <div className="partidos-box" style={{ marginTop: '8px', background: 'white', borderRadius: '16px', padding: '16px' }}>
-      {isAdmin && estadoLower !== 'en_curso' && !esFinalizado ? (
+      {mostrarCartelIniciarTorneoParaResultados ? (
         <p
           style={{
             margin: '0 0 14px',

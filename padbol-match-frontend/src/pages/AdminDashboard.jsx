@@ -69,6 +69,39 @@ function normalizeHexSedeAdmin(raw) {
   return null;
 }
 
+const ADMIN_TABS_ALLOWED = new Set(['resumen', 'torneos', 'reservas', 'validaciones', 'mi_sede', 'config']);
+
+function sanitizeAdminActiveTab(raw) {
+  const t = String(raw || '').trim();
+  return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
+}
+
+function hexToRgbSedeHero(hex) {
+  const h = normalizeHexSedeAdmin(hex);
+  if (!h || h.length < 7) return { r: 76, g: 29, b: 149 };
+  return {
+    r: parseInt(h.slice(1, 3), 16),
+    g: parseInt(h.slice(3, 5), 16),
+    b: parseInt(h.slice(5, 7), 16),
+  };
+}
+
+function luminanciaRelativaSedeHero(hex) {
+  const { r, g, b } = hexToRgbSedeHero(hex);
+  const lin = (v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const R = lin(r);
+  const G = lin(g);
+  const B = lin(b);
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+}
+
+function textoAutoDesdePrimarioSedeHero(hexPrim) {
+  return luminanciaRelativaSedeHero(hexPrim) < 0.5 ? '#ffffff' : '#0f172a';
+}
+
 /** Muestra "3ra" en lugar de "3" en validaciones y fichas. */
 function formatNivelValidacionDisplay(raw) {
   const s = String(raw ?? '').trim();
@@ -246,8 +279,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
-  const [activeTab, setActiveTab] = useState(
-    searchParams.get('tab') || sessionStorage.getItem('adminActiveTab') || 'resumen'
+  const [activeTab, setActiveTab] = useState(() =>
+    sanitizeAdminActiveTab(searchParams.get('tab') || sessionStorage.getItem('adminActiveTab'))
   );
 
   const [pendientes, setPendientes] = useState([]);
@@ -277,8 +310,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   useEffect(() => {
     const t = searchParams.get('tab');
     if (!t) return;
-    const allowed = new Set(['resumen', 'torneos', 'reservas', 'validaciones', 'mi_sede', 'config']);
-    if (!allowed.has(t)) return;
+    if (!ADMIN_TABS_ALLOWED.has(t)) return;
     setActiveTab((prev) => {
       if (prev === t) return prev;
       sessionStorage.setItem('adminActiveTab', t);
@@ -817,6 +849,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           youtube:          sedeData.youtube    || '',
           website:          sedeData.website    || '',
           color_fondo_logo: normalizeHexSedeAdmin(sedeData.color_fondo_logo) || '#000000',
+          color_hero_primario: normalizeHexSedeAdmin(sedeData.color_hero_primario) || '#4C1D95',
+          color_hero_secundario: normalizeHexSedeAdmin(sedeData.color_hero_secundario) || '#7C3AED',
+          color_borde_hero: normalizeHexSedeAdmin(sedeData.color_borde_hero) || '#6D28D9',
         });
         setLicenciaForm({
           numero_licencia: sedeData.numero_licencia || '',
@@ -873,6 +908,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarMiSede = async () => {
     setMiSedeSaving(true); setMiSedeMsg('');
+    const prev = miSede;
     const { error } = await supabase.from('sedes').update({
       nombre:           miSedeForm.nombre,
       direccion:        miSedeForm.direccion        || null,
@@ -895,14 +931,70 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       youtube:          miSedeForm.youtube    || null,
       website:          miSedeForm.website    || null,
       color_fondo_logo: normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000',
+      color_hero_primario: normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95',
+      color_hero_secundario: normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED',
+      color_borde_hero: normalizeHexSedeAdmin(miSedeForm.color_borde_hero) || '#6D28D9',
     }).eq('id', sedeId);
     setMiSedeSaving(false);
     setMiSedeMsg(error ? `⚠️ ${error.message}` : '✅ Sede actualizada');
     setTimeout(() => setMiSedeMsg(''), 3000);
+    if (!error && prev) {
+      const secret = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_PADBOL_SEDE_CRITICO_NOTIFY_SECRET : '';
+      const pushCambio = (campo, a, b) => {
+        const sa = a == null || a === '' ? '' : String(a);
+        const sb = b == null || b === '' ? '' : String(b);
+        if (sa !== sb) return { campo, anterior: sa || '—', nuevo: sb || '—' };
+        return null;
+      };
+      const cambios = [
+        pushCambio('nombre', prev.nombre, miSedeForm.nombre),
+        pushCambio('dirección / ubicación', prev.direccion, miSedeForm.direccion),
+        pushCambio(
+          'latitud',
+          prev.latitud != null && prev.latitud !== '' ? String(prev.latitud) : '',
+          miSedeForm.latitud !== '' && Number.isFinite(parseFloat(miSedeForm.latitud)) ? String(parseFloat(miSedeForm.latitud)) : ''
+        ),
+        pushCambio(
+          'longitud',
+          prev.longitud != null && prev.longitud !== '' ? String(prev.longitud) : '',
+          miSedeForm.longitud !== '' && Number.isFinite(parseFloat(miSedeForm.longitud)) ? String(parseFloat(miSedeForm.longitud)) : ''
+        ),
+        pushCambio('email de contacto / admin', prev.email_contacto, miSedeForm.email_contacto),
+      ].filter(Boolean);
+      if (secret && cambios.length) {
+        const sedeNombre = String(miSedeForm.nombre || prev.nombre || '').trim() || '(sede)';
+        void fetch(`${apiBaseUrl}/api/notify/sede-cambio-critico`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret,
+            sedeNombre,
+            actorEmail: currentEmail,
+            cambios,
+          }),
+        }).catch(() => {});
+      }
+      setMiSede((p) =>
+        p
+          ? {
+              ...p,
+              nombre: miSedeForm.nombre,
+              direccion: miSedeForm.direccion || null,
+              email_contacto: miSedeForm.email_contacto || null,
+              latitud: miSedeForm.latitud !== '' ? parseFloat(miSedeForm.latitud) : null,
+              longitud: miSedeForm.longitud !== '' ? parseFloat(miSedeForm.longitud) : null,
+              color_hero_primario: normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95',
+              color_hero_secundario: normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED',
+              color_borde_hero: normalizeHexSedeAdmin(miSedeForm.color_borde_hero) || '#6D28D9',
+            }
+          : p
+      );
+    }
   };
 
   const guardarLicencia = async () => {
     setLicenciaSaving(true); setLicenciaMsg('');
+    const prev = miSede;
     const { error } = await supabase.from('sedes').update({
       numero_licencia: licenciaForm.numero_licencia || null,
       fecha_licencia:  licenciaForm.fecha_licencia  || null,
@@ -911,6 +1003,48 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setLicenciaSaving(false);
     setLicenciaMsg(error ? `⚠️ ${error.message}` : '✅ Licencia actualizada');
     setTimeout(() => setLicenciaMsg(''), 3000);
+    if (!error && prev) {
+      const secret = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_PADBOL_SEDE_CRITICO_NOTIFY_SECRET : '';
+      const cambios = [];
+      const sa = (v) => (v == null || v === '' ? '' : String(v));
+      const sbBool = (v) => (v ? 'activa' : 'suspendida');
+      if (sa(prev.numero_licencia) !== sa(licenciaForm.numero_licencia)) {
+        cambios.push({ campo: 'número de licencia', anterior: sa(prev.numero_licencia) || '—', nuevo: sa(licenciaForm.numero_licencia) || '—' });
+      }
+      if (sa(prev.fecha_licencia) !== sa(licenciaForm.fecha_licencia)) {
+        cambios.push({ campo: 'fecha de licencia', anterior: sa(prev.fecha_licencia) || '—', nuevo: sa(licenciaForm.fecha_licencia) || '—' });
+      }
+      if (Boolean(prev.licencia_activa) !== Boolean(licenciaForm.licencia_activa)) {
+        cambios.push({
+          campo: 'estado de licencia',
+          anterior: sbBool(Boolean(prev.licencia_activa)),
+          nuevo: sbBool(Boolean(licenciaForm.licencia_activa)),
+        });
+      }
+      if (secret && cambios.length) {
+        const sedeNombre = String(miSedeForm.nombre || prev.nombre || '').trim() || '(sede)';
+        void fetch(`${apiBaseUrl}/api/notify/sede-cambio-critico`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret,
+            sedeNombre,
+            actorEmail: currentEmail,
+            cambios,
+          }),
+        }).catch(() => {});
+      }
+      setMiSede((p) =>
+        p
+          ? {
+              ...p,
+              numero_licencia: licenciaForm.numero_licencia || null,
+              fecha_licencia: licenciaForm.fecha_licencia || null,
+              licencia_activa: licenciaForm.licencia_activa,
+            }
+          : p
+      );
+    }
   };
 
   const cerrarModalLogoCrop = useCallback(() => {
@@ -2585,6 +2719,85 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* ── Colores del hero (página pública de la sede) ── */}
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Colores del hero</h3>
+            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
+              <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+                El bloque derecho del hero público usa siempre un degradado del color principal al secundario. El texto se ajusta solo según la luminosidad del color principal.
+              </p>
+              {[
+                { label: 'Color principal (degradado inicio)', field: 'color_hero_primario' },
+                { label: 'Color secundario (degradado fin)', field: 'color_hero_secundario' },
+                { label: 'Color del borde / filete', field: 'color_borde_hero' },
+              ].map(({ label, field }) => (
+                <div key={field} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  <label style={{ width: '200px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>{label}</label>
+                  <input
+                    type="color"
+                    value={normalizeHexSedeAdmin(miSedeForm[field]) || (field === 'color_hero_primario' ? '#4C1D95' : field === 'color_hero_secundario' ? '#7C3AED' : '#6D28D9')}
+                    onChange={(e) => setMiSedeForm((p) => ({ ...p, [field]: e.target.value }))}
+                    style={{ width: 48, height: 36, padding: 0, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer' }}
+                  />
+                  <input
+                    type="text"
+                    value={miSedeForm[field] || ''}
+                    onChange={(e) => setMiSedeForm((p) => ({ ...p, [field]: e.target.value }))}
+                    style={{ flex: 1, minWidth: '120px', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', fontFamily: 'monospace' }}
+                  />
+                </div>
+              ))}
+              <div
+                style={{
+                  marginTop: '18px',
+                  borderRadius: '14px',
+                  border: `3px solid ${normalizeHexSedeAdmin(miSedeForm.color_borde_hero) || '#6D28D9'}`,
+                  overflow: 'hidden',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'stretch',
+                    minHeight: '88px',
+                    background: `linear-gradient(135deg, ${normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95'} 0%, ${normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED'} 100%)`,
+                  }}
+                >
+                  <div style={{ width: '72px', flexShrink: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.35)', fontSize: '22px' }}>⚽</div>
+                  <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        fontSize: '17px',
+                        color: textoAutoDesdePrimarioSedeHero(miSedeForm.color_hero_primario),
+                        textAlign: 'center',
+                        textShadow: '0 1px 6px rgba(0,0,0,0.25)',
+                      }}
+                    >
+                      {miSedeForm.nombre || 'Tu club'}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        fontStyle: 'italic',
+                        textAlign: 'center',
+                        color:
+                          textoAutoDesdePrimarioSedeHero(miSedeForm.color_hero_primario) === '#ffffff'
+                            ? 'rgba(255,255,255,0.9)'
+                            : 'rgba(15,23,42,0.85)',
+                      }}
+                    >
+                      Vista previa del hero público
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p style={{ margin: '14px 0 0', fontSize: '12px', color: '#94a3b8' }}>Guardá los cambios con «Guardar cambios» en Información general.</p>
             </div>
           </div>
 

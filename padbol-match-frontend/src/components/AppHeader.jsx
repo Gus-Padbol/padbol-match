@@ -41,6 +41,25 @@ function primeraPalabraHandle(s) {
  * Chip barra admin compacta (solo super_admin): `@` + alias o primera palabra del nombre;
  * fallback `Gus` solo para {@link PADBOL_SUPER_ADMIN_EMAIL} si no hay nombre útil.
  */
+/** `@` + primera palabra del perfil (jugador) para chip en panel admin (nacional / club). */
+function etiquetaArrobaPrimerNombrePerfil(userProfile, sessionUser) {
+  const meta = sessionUser?.user_metadata || {};
+  let raw =
+    (!esNombrePlaceholderJugador(userProfile?.nombre)
+      ? primeraPalabraHandle(userProfile?.nombre)
+      : '') ||
+    primeraPalabraHandle(userProfile?.nombre_completo) ||
+    primeraPalabraHandle(meta.full_name) ||
+    primeraPalabraHandle(meta.name) ||
+    '';
+  const email = String(sessionUser?.email || '').trim().toLowerCase();
+  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
+  if (!raw && local) raw = local;
+  if (!raw) raw = 'Usuario';
+  const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  return `@${cap}`;
+}
+
 function etiquetaChipSuperAdminPanelMinimal(userProfile, sessionUser) {
   const email = String(sessionUser?.email || '').trim().toLowerCase();
   const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
@@ -206,7 +225,8 @@ export default function AppHeader({
   const hubInicial = String(hubNombreCorto || '?')
     .charAt(0)
     .toUpperCase();
-  const showAdmin = !hideLogoutEffective && authEmail === 'padbolinternacional@gmail.com' && !adminFlowSurface;
+  const esRolAdminHub = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
+  const showAdminShortcutHub = !hideLogoutEffective && esRolAdminHub && !adminFlowSurface;
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
@@ -223,13 +243,13 @@ export default function AppHeader({
   const hubHomeCompactHeader =
     hubDirectLogin && hubInicioPath && Boolean(session?.user);
   const hubHeaderControlCount =
-    (showAdmin ? 1 : 0) +
+    (showAdminShortcutHub ? 1 : 0) +
     (hubDirectLogin && Boolean(session?.user) ? 1 : 0) +
     (showLogout ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
-  /** Super admin en hub inicio: un solo control a la izquierda (⚙ Admin), sin chip ni “Inicio”. */
-  const superAdminHubPlayer = hubHomeCompactHeader && showAdmin;
-  const shouldHideHubCenterTitle = superAdminHubPlayer || hideHubCenterTitle;
+  /** Admin en hub inicio: ⚙ a la izquierda; título central puede ocultarse si hay muchos controles. */
+  const adminHubInicioCompacto = hubHomeCompactHeader && showAdminShortcutHub;
+  const shouldHideHubCenterTitle = adminHubInicioCompacto || hideHubCenterTitle;
 
   const displayBackLabel = useMemo(() => {
     if (backLabel) return backLabel;
@@ -259,7 +279,7 @@ export default function AppHeader({
   };
 
   const adminShortcutButton =
-    showAdmin ? (
+    showAdminShortcutHub ? (
       <button
         type="button"
         onClick={() => navigate(isOnAdmin ? '/' : '/admin')}
@@ -282,20 +302,19 @@ export default function AppHeader({
           flexShrink: 0,
         }}
       >
-        {isOnAdmin ? '← App' : '⚙️ Admin'}
+        {isOnAdmin ? '← App' : '⚙ Admin'}
       </button>
     ) : null;
 
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
-  /** Panel admin compacto: super → @handle al hub; nacional rol; admin_club ← Hub. */
+  /** Panel admin: chip solo identidad jugador (@Gus / @Juan), sin texto “← Hub”. */
   const adminMinimalRolCorto = useMemo(() => {
     if (!session?.user) return '';
     if (roleLoading) return '…';
     if (rol === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
-    if (rol === 'admin_nacional') return 'Admin Nacional';
-    if (rol === 'admin_club') return '← Hub';
+    if (rol === 'admin_nacional' || rol === 'admin_club') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
     return 'Admin';
   }, [session?.user, roleLoading, rol, userProfile]);
 
@@ -573,19 +592,19 @@ export default function AppHeader({
       <div
         style={{
           display: 'flex',
-          justifyContent: showLogout || showAdmin ? 'flex-end' : (miPerfilLogoutSpacing ? 'flex-end' : 'flex-start'),
+          justifyContent: showLogout || showAdminShortcutHub ? 'flex-end' : (miPerfilLogoutSpacing ? 'flex-end' : 'flex-start'),
           alignItems: 'center',
           minWidth: 0,
           width: '100%',
           marginLeft: miPerfilLogoutSpacing ? 'auto' : undefined,
-          marginRight: showLogout || showAdmin ? '16px' : hubDirectLogin && !session?.user && !authLoading ? '8px' : 0,
+          marginRight: showLogout || showAdminShortcutHub ? '16px' : hubDirectLogin && !session?.user && !authLoading ? '8px' : 0,
           paddingLeft: miPerfilLogoutSpacing ? '8px' : 0,
           paddingRight: miPerfilLogoutSpacing ? '8px' : 0,
           boxSizing: 'border-box',
           justifySelf: hubDirectLogin && !session?.user && !authLoading ? 'end' : undefined,
         }}
       >
-        {showLogout || showAdmin ? (
+        {showLogout || showAdminShortcutHub ? (
           <div
             style={{
               display: 'inline-flex',
@@ -594,7 +613,7 @@ export default function AppHeader({
               marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
-            {(hubDirectLogin || adminFlowSurface) && session?.user && !superAdminHubPlayer ? (
+            {(hubDirectLogin || adminFlowSurface) && session?.user ? (
               <div
                 ref={adminFlowSurface ? adminMenuRef : undefined}
                 style={{
@@ -746,7 +765,7 @@ export default function AppHeader({
                 ) : null}
               </div>
             ) : null}
-            {showAdmin && !hubHomeCompactHeader ? adminShortcutButton : null}
+            {showAdminShortcutHub && !hubHomeCompactHeader ? adminShortcutButton : null}
             {showLogout ? (
               <button
                 type="button"

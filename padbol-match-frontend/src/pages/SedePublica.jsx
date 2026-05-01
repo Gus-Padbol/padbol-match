@@ -35,9 +35,37 @@ function normalizeHexColor(raw) {
   return null;
 }
 
-/** Marco exterior del hero: mismo gradiente violeta que el resto de la app. */
-function heroBackgroundSedePublica() {
-  return PADBOL_PAGE_GRADIENT;
+function heroGradientSedePublica(sede) {
+  const p = normalizeHexColor(sede?.color_hero_primario) || '#4C1D95';
+  const s = normalizeHexColor(sede?.color_hero_secundario) || '#7C3AED';
+  return `linear-gradient(135deg, ${p} 0%, ${s} 100%)`;
+}
+
+function heroBordeExteriorSede(sede) {
+  return normalizeHexColor(sede?.color_borde_hero) || '#6D28D9';
+}
+
+function luminanciaRelativaHex(hex) {
+  const h = normalizeHexColor(hex) || '#4C1D95';
+  const r = parseInt(h.slice(1, 3), 16) / 255;
+  const g = parseInt(h.slice(3, 5), 16) / 255;
+  const b = parseInt(h.slice(5, 7), 16) / 255;
+  const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+/** Texto principal del hero según luminosidad del color primario de la sede. */
+function heroTextoTituloSede(sede) {
+  const prim = normalizeHexColor(sede?.color_hero_primario) || '#4C1D95';
+  return luminanciaRelativaHex(prim) < 0.5 ? '#ffffff' : '#0f172a';
+}
+
+function heroTextoFraseSede(sede) {
+  return heroTextoTituloSede(sede) === '#ffffff' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.88)';
+}
+
+function heroBordeBloqueDerechoSede(sede) {
+  return heroTextoTituloSede(sede) === '#ffffff' ? 'rgba(255,255,255,0.22)' : 'rgba(15,23,42,0.2)';
 }
 
 function colorFondoLogoSede(sedeRow) {
@@ -862,6 +890,8 @@ export default function SedePublica() {
                 marginTop: '6px',
                 boxShadow: '0 8px 28px rgba(0, 0, 0, 0.22)',
                 overflow: 'visible',
+                border: `2px solid ${heroBordeExteriorSede(sede)}`,
+                boxSizing: 'border-box',
               }}
             >
               <div
@@ -869,8 +899,8 @@ export default function SedePublica() {
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: heroBackgroundSedePublica(),
-                  borderRadius: '16px',
+                  background: heroGradientSedePublica(sede),
+                  borderRadius: '14px',
                   zIndex: 0,
                 }}
               />
@@ -954,17 +984,17 @@ export default function SedePublica() {
                       flexDirection: 'column',
                       alignItems: 'stretch',
                       gap: '8px',
-                      background: 'rgba(15, 23, 42, 0.2)',
+                      background: heroGradientSedePublica(sede),
                       borderRadius: '12px',
                       padding: '10px 12px',
                       boxSizing: 'border-box',
-                      border: '1px solid rgba(255,255,255,0.14)',
+                      border: `1px solid ${heroBordeBloqueDerechoSede(sede)}`,
                       justifyContent: 'center',
                     }}
                   >
                     <h1
                       style={{
-                        color: normalizeHexColor(sede.color_nombre) ?? '#FFFFFF',
+                        color: heroTextoTituloSede(sede),
                         fontSize: `${heroClubNameFontSizePx(sede.nombre)}px`,
                         fontWeight: 800,
                         margin: 0,
@@ -972,7 +1002,10 @@ export default function SedePublica() {
                         minWidth: 0,
                         textAlign: 'center',
                         wordBreak: 'break-word',
-                        textShadow: '0 1px 8px rgba(0,0,0,0.35)',
+                        textShadow:
+                          heroTextoTituloSede(sede) === '#ffffff'
+                            ? '0 1px 8px rgba(0,0,0,0.35)'
+                            : '0 1px 4px rgba(255,255,255,0.35)',
                         boxSizing: 'border-box',
                       }}
                       title={sede.nombre || ''}
@@ -1027,7 +1060,7 @@ export default function SedePublica() {
                     <p
                       style={{
                         margin: 0,
-                        color: 'rgba(255,255,255,0.95)',
+                        color: heroTextoFraseSede(sede),
                         fontSize: '13px',
                         lineHeight: 1.45,
                         fontStyle: 'italic',

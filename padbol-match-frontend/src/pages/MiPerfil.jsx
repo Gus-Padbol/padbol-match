@@ -189,6 +189,14 @@ function instagramUrlFromHandle(handle) {
   return `https://www.instagram.com/${h}/`;
 }
 
+function urlComprobanteMercadoPagoReserva(r) {
+  const direct = String(r?.mp_comprobante_url || '').trim();
+  if (direct) return direct;
+  const id = String(r?.mp_payment_id || '').trim();
+  if (id) return `https://www.mercadopago.com.ar/payments/${encodeURIComponent(id)}`;
+  return 'https://www.mercadopago.com.ar/activities';
+}
+
 export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -200,6 +208,7 @@ export default function MiPerfil() {
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
+  const [misReservasColapsado, setMisReservasColapsado] = useState(true);
   const [torneosConPuntosMiPerfil, setTorneosConPuntosMiPerfil] = useState([]);
   const [mostrarTodosTorneosMiPerfil, setMostrarTodosTorneosMiPerfil] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -678,7 +687,7 @@ export default function MiPerfil() {
       // Tabla `reservas`: columna del contacto es `email` (ver POST /api/reservas en padbol-backend/server.js).
       const { data, error } = await supabase
         .from('reservas')
-        .select('id, sede, fecha, hora, cancha, estado, precio')
+        .select('id, sede, fecha, hora, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url')
         .eq('email', emailNorm)
         .order('fecha', { ascending: false })
         .limit(20);
@@ -2897,47 +2906,104 @@ export default function MiPerfil() {
       ) : null}
 
       {/* Historial de Reservas */}
-      <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
-        <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>🗓️ Mis Reservas</h4>
-        {reservas.length === 0 ? (
-          <p style={{ color: '#aaa', textAlign: 'center', margin: '20px 0', fontSize: '14px' }}>Aún no tienes reservas registradas.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {reservas.map(r => {
+      <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '12px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+        <button
+          type="button"
+          onClick={() => setMisReservasColapsado((v) => !v)}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            margin: 0,
+            padding: '10px 0 12px',
+            border: 'none',
+            borderBottom: misReservasColapsado ? 'none' : '1px solid #e0e0e0',
+            background: 'transparent',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 700,
+            color: '#333',
+            textAlign: 'left',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span>📋 Mis Reservas ({reservas.length}) {misReservasColapsado ? '▼' : '▲'}</span>
+        </button>
+        {!misReservasColapsado && reservas.length === 0 ? (
+          <p style={{ color: '#aaa', textAlign: 'center', margin: '12px 0 8px', fontSize: '14px' }}>Aún no tienes reservas registradas.</p>
+        ) : null}
+        {!misReservasColapsado && reservas.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+            {reservas.map((r) => {
               const horasHasta = (new Date(`${r.fecha}T${r.hora}:00-03:00`) - Date.now()) / (1000 * 60 * 60);
               const canCancel = horasHasta > 2 && r.estado !== 'cancelada';
+              const mon = String(r.moneda || 'ARS').trim().toUpperCase();
+              const montoNum = r.monto_pagado != null && r.monto_pagado !== '' ? Number(r.monto_pagado) : Number(r.precio) || 0;
+              const mpId = String(r.mp_payment_id || '').trim();
               return (
-                <div key={r.id} style={{ background: 'white', borderRadius: '8px', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '13px', color: '#1e1b4b' }}>{r.sede}</div>
-                    <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>📅 {r.fecha} &nbsp;⏰ {r.hora} &nbsp;⚽ Cancha {r.cancha}</div>
+                <div key={r.id} style={{ background: 'white', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: '#1e1b4b' }}>{r.sede}</div>
+                      <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>📅 {r.fecha} &nbsp;⏰ {r.hora} &nbsp;⚽ Cancha {r.cancha}</div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        background: r.estado === 'confirmada' ? '#dcfce7' : r.estado === 'cancelada' ? '#fee2e2' : r.estado === 'test' ? '#f3f4f6' : '#fef9c3',
+                        color: r.estado === 'confirmada' ? '#16a34a' : r.estado === 'cancelada' ? '#dc2626' : r.estado === 'test' ? '#6b7280' : '#854d0e',
+                      }}
+                    >
+                      {r.estado || 'reservada'}
+                    </span>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                    {r.precio > 0 && (
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#d32f2f' }}>
-                        {Number(r.precio).toLocaleString('es-AR')} {r.moneda || 'ARS'}
-                      </div>
-                    )}
-                    <span style={{
-                      fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px',
-                      background: r.estado === 'confirmada' ? '#dcfce7' : r.estado === 'cancelada' ? '#fee2e2' : r.estado === 'test' ? '#f3f4f6' : '#fef9c3',
-                      color: r.estado === 'confirmada' ? '#16a34a' : r.estado === 'cancelada' ? '#dc2626' : r.estado === 'test' ? '#6b7280' : '#854d0e',
-                    }}>{r.estado || 'reservada'}</span>
-                    {canCancel && (
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#b91c1c' }}>
+                    Monto pagado: {montoNum > 0 ? `${Number(montoNum).toLocaleString('es-AR')} ${mon}` : '—'}
+                  </div>
+                  {mpId ? (
+                    <div style={{ fontSize: '11px', color: '#64748b', wordBreak: 'break-all' }}>
+                      ID transacción MP: <span style={{ fontFamily: 'monospace' }}>{mpId}</span>
+                    </div>
+                  ) : null}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                    <a
+                      href={urlComprobanteMercadoPagoReserva(r)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        background: '#0ea5e9',
+                        color: '#fff',
+                        textDecoration: 'none',
+                        display: 'inline-block',
+                      }}
+                    >
+                      Ver comprobante
+                    </a>
+                    {canCancel ? (
                       <button
+                        type="button"
                         onClick={() => handleCancelar(r)}
                         disabled={cancelando === r.id}
-                        style={{ fontSize: '11px', padding: '3px 8px', border: '1px solid #fca5a5', borderRadius: '6px', background: '#fff', color: '#dc2626', cursor: 'pointer', fontWeight: 600, opacity: cancelando === r.id ? 0.6 : 1 }}
+                        style={{ fontSize: '11px', padding: '6px 10px', border: '1px solid #fca5a5', borderRadius: '6px', background: '#fff', color: '#dc2626', cursor: 'pointer', fontWeight: 600, opacity: cancelando === r.id ? 0.6 : 1 }}
                       >
                         {cancelando === r.id ? 'Cancelando...' : 'Cancelar'}
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               );
             })}
           </div>
-        )}
+        ) : null}
       </div>
 
       {sessionOwnerEmail ? (

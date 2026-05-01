@@ -17,60 +17,62 @@ function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
 
-/** Primera palabra con solo la inicial en mayúscula ("JUAN PABLO" → "Juan", "juanpablo" → "Juanpablo"). */
-function capitalizarPrimeraPalabra(raw) {
+function primeraPalabraTexto(s) {
+  const t = String(s || '').trim();
+  if (!t) return '';
+  return t.split(/\s+/).filter(Boolean)[0] || '';
+}
+
+/** Capitaliza por palabras; una sola palabra en minúsculas → solo inicial mayúscula ("juanpablo" → "Juanpablo"). */
+function capitalizarNombreSaludo(raw) {
   const s = String(raw || '').trim();
   if (!s) return '';
-  const first = s.split(/\s+/).filter(Boolean)[0];
-  if (!first) return '';
-  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  const words = s.split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  }
+  const w = words[0] || '';
+  if (!w) return '';
+  if (/[a-z][A-Z]/.test(w)) {
+    return w
+      .split(/(?=[A-Z])/)
+      .filter(Boolean)
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+
+function nombreDesdeProfilesParaSaludo(profilesRow) {
+  if (!profilesRow || typeof profilesRow !== 'object') return '';
+  for (const k of ['nombre', 'nombre_completo', 'full_name']) {
+    const v = String(profilesRow[k] || '').trim();
+    if (!v) continue;
+    if (k === 'nombre' && esPlaceholderJugador(v)) continue;
+    return v;
+  }
+  return '';
 }
 
 /**
- * Orden: `profiles` (nombre, nombre_completo, full_name) → `jugadores_perfil` mismo orden
- * → `user_metadata` (full_name, name, nombre) → parte local del email.
+ * Saludo: `profiles.nombre` → `nombre_completo` → `full_name` → parte local del email;
+ * capitalización y solo la primera palabra del resultado.
  */
-function pickRawNombreSaludo(perfil, authUser, profilesRow) {
-  const meta = authUser?.user_metadata || {};
-  const tryRow = (row) => {
-    if (!row || typeof row !== 'object') return '';
-    for (const k of ['nombre', 'nombre_completo', 'full_name', 'display_name']) {
-      const v = String(row[k] || '').trim();
-      if (!v) continue;
-      if (k === 'nombre' && esPlaceholderJugador(v)) continue;
-      return v;
-    }
-    return '';
-  };
-  const chain = [
-    tryRow(profilesRow),
-    tryRow(perfil),
-    String(meta.full_name || '').trim(),
-    String(meta.name || '').trim(),
-    String(meta.nombre || '').trim(),
-  ];
-  for (const c of chain) {
-    if (c) return c;
-  }
-  const em = String(authUser?.email || '').trim();
-  if (!em.includes('@')) return '';
-  const local = em.split('@')[0].trim();
-  return local || '';
-}
-
-function primerNombreSaludoHub(perfil, authUser, profilesRow) {
+function obtenerNombreSaludo(authUser, profilesRow) {
   const email = String(authUser?.email || '').trim().toLowerCase();
-  const raw = pickRawNombreSaludo(perfil, authUser, profilesRow);
-  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
+  const local = email.includes('@') ? email.split('@')[0].trim() : '';
+  let raw = nombreDesdeProfilesParaSaludo(profilesRow);
+  if (!raw) raw = local || '';
   if (email === PADBOL_SUPER_ADMIN_EMAIL) {
     const weak =
       !raw ||
       esPlaceholderJugador(raw) ||
-      (local && String(raw).trim().toLowerCase() === local);
+      (local && String(raw).trim().toLowerCase() === local.toLowerCase());
     if (weak) return 'Gus';
   }
   if (!raw) return '';
-  return capitalizarPrimeraPalabra(raw);
+  const cap = capitalizarNombreSaludo(raw);
+  return primeraPalabraTexto(cap);
 }
 
 export default function UserHome() {
@@ -128,9 +130,9 @@ export default function UserHome() {
 
   const lineaSaludo = useMemo(() => {
     if (!session?.user) return '¡Hola! ¿Qué querés hacer hoy?';
-    const p = primerNombreSaludoHub(userProfile, session.user, profilesRow);
+    const p = obtenerNombreSaludo(session.user, profilesRow);
     return p ? `¡Hola ${p}! ¿Qué querés hacer hoy?` : '¡Hola! ¿Qué querés hacer hoy?';
-  }, [session?.user, userProfile, profilesRow]);
+  }, [session?.user, profilesRow]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },

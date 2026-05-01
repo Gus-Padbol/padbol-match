@@ -26,7 +26,7 @@ import {
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
 import useUserRole from '../hooks/useUserRole';
-import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
+import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
 import {
   jugadorNombreTorneoEtiqueta,
   fetchJugadoresPerfilPorJugadores,
@@ -623,6 +623,18 @@ export default function FormEquipos() {
         fromAdmin: Boolean(location.state?.fromAdmin),
       }),
     [authEmail, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
+  );
+
+  const puedeGestionarEquiposTorneo = useMemo(
+    () =>
+      computePuedeGestionarEquiposTorneo({
+        torneo,
+        sedeTorneo: sedeTorneoRow,
+        rol,
+        userSedeId,
+        userPaisRol,
+      }),
+    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol]
   );
 
   const torneoNavStateForm = useMemo(() => {
@@ -2326,6 +2338,7 @@ export default function FormEquipos() {
             navigate={navigate}
             session={session}
             isAdmin={esAdminGestionTorneo}
+            puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
             navigateState={torneoNavStateForm}
             showTorneoLogo={false}
             clasificacionFinalFilas={

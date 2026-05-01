@@ -194,6 +194,63 @@ async function sendReservaConfirmadaWhatsAppTwilio({
   console.log(`✓ WhatsApp confirmación de reserva enviado a ${to}`);
 }
 
+const PADBOL_SEDE_CRITICO_NOTIFY_SECRET = process.env.PADBOL_SEDE_CRITICO_NOTIFY_SECRET;
+
+function resolveSuperAdminNotifyWhatsAppTo() {
+  const raw = String(process.env.SUPER_ADMIN_NOTIFY_WHATSAPP || '').trim();
+  if (!raw) return null;
+  if (raw.toLowerCase().startsWith('whatsapp:')) return raw;
+  return normalizePhoneToE164ForTwilioWhatsApp(raw);
+}
+
+/** Aviso a super admin (Twilio) por cambios críticos en una sede (ubicación, nombre, licencia, etc.). */
+async function sendSedeCambioCriticoWhatsAppTwilio({ sedeNombre, actorEmail, cambios }) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    console.warn('⚠️ Notificación sede crítica: Twilio no configurado');
+    return;
+  }
+  const to = resolveSuperAdminNotifyWhatsAppTo();
+  if (!to) {
+    console.warn('⚠️ Notificación sede crítica: defina SUPER_ADMIN_NOTIFY_WHATSAPP en .env (E.164 o whatsapp:+...)');
+    return;
+  }
+  const when = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+  const nm = String(sedeNombre || '(sin nombre)').trim();
+  const actor = String(actorEmail || '').trim() || '—';
+  for (const c of cambios) {
+    const campo = String(c.campo || 'campo').trim();
+    const anterior = c.anterior == null || c.anterior === '' ? '—' : String(c.anterior);
+    const nuevo = c.nuevo == null || c.nuevo === '' ? '—' : String(c.nuevo);
+    const body =
+      `⚠️ Cambio en sede ${nm}: Se modificó ${campo}\n` +
+      `Por: ${actor}\n` +
+      `Fecha: ${when}\n` +
+      `Valor anterior: ${anterior} → Nuevo valor: ${nuevo}`;
+    await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
+    console.log(`✓ WhatsApp notificación sede crítica (${campo}) → ${to}`);
+  }
+}
+
+app.post('/api/notify/sede-cambio-critico', async (req, res) => {
+  try {
+    if (!PADBOL_SEDE_CRITICO_NOTIFY_SECRET) {
+      return res.status(503).json({ error: 'Notificaciones sede no configuradas' });
+    }
+    const { secret, sedeNombre, actorEmail, cambios } = req.body || {};
+    if (secret !== PADBOL_SEDE_CRITICO_NOTIFY_SECRET) {
+      return res.status(401).json({ error: 'No autorizado' });
+    }
+    if (!Array.isArray(cambios) || cambios.length === 0) {
+      return res.status(400).json({ error: 'Sin cambios' });
+    }
+    await sendSedeCambioCriticoWhatsAppTwilio({ sedeNombre, actorEmail, cambios });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ POST /api/notify/sede-cambio-critico:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET sedes
 app.get('/api/sedes', async (req, res) => {
   try {

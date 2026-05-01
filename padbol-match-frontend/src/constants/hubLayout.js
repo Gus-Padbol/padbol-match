@@ -49,9 +49,12 @@ export function hubContentPaddingTopPx(pathname) {
   return HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
 }
 
-/** Mismo offset que {@link hubContentPaddingTopPx} más notch / Dynamic Island (iOS). */
+/**
+ * Offset bajo header fijo (+ barra hub si aplica).
+ * El notch lo cubre `padding-top` en `#root` (index.css); aquí solo altura fija para no duplicar safe-area.
+ */
 export function hubContentPaddingTopCss(pathname) {
-  return `calc(${hubContentPaddingTopPx(pathname)}px + env(safe-area-inset-top, 0px))`;
+  return `${hubContentPaddingTopPx(pathname)}px`;
 }
 
 /**

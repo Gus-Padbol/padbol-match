@@ -12,7 +12,7 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
-import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
+import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
 import { setAdminNavContext } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
@@ -52,6 +52,17 @@ export default function TorneoVista() {
         fromAdmin,
       }),
     [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
+  );
+  const puedeGestionarEquiposTorneo = useMemo(
+    () =>
+      computePuedeGestionarEquiposTorneo({
+        torneo,
+        sedeTorneo,
+        rol,
+        userSedeId,
+        userPaisRol,
+      }),
+    [torneo, sedeTorneo, rol, userSedeId, userPaisRol]
   );
   const torneoNavState = useMemo(
     () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),
@@ -347,6 +358,7 @@ export default function TorneoVista() {
         navigate={navigate}
         session={session}
         isAdmin={isAdmin}
+        puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
         navigateState={torneoNavState}
         clasificacionFinalFilas={clasificacionFinalFilas}
         adminTorneoBar={adminTorneoBar}
