@@ -1289,10 +1289,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      padding: '6px 16px',
+                      gap: '4px',
+                      padding: '4px 12px',
                       borderRadius: '999px',
-                      fontSize: '12px',
+                      fontSize: '0.75rem',
                       fontWeight: 700,
                       letterSpacing: '0.02em',
                       background: 'linear-gradient(145deg, #C9A84C 0%, #dcc062 42%, #F0D060 100%)',
@@ -1302,7 +1302,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         '0 2px 12px rgba(201, 168, 76, 0.45), 0 1px 3px rgba(90, 62, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.35)',
                     }}
                   >
-                    <span style={{ fontSize: '13px', lineHeight: 1 }} aria-hidden>👑</span>
+                    <span style={{ fontSize: '0.8rem', lineHeight: 1 }} aria-hidden>⭐</span>
                     Licencia PADBOL Activa
                   </span>
                 </div>
