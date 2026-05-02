@@ -9,7 +9,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
-import { formatAliasConArroba } from '../utils/jugadorPerfil';
+import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 
 /** Misma convención que ReservaForm.jsx */
 const API_BASE = (
@@ -25,8 +25,8 @@ function apiUrl(path) {
 
 function etiquetaRankingJugador(player) {
   if (!player) return '—';
-  const al = String(player.alias || '').trim();
-  if (al) return formatAliasConArroba(al);
+  const main = nombreCompletoJugadorPerfil(player);
+  if (main) return main;
   return String(player.nombre || '').trim() || '—';
 }
 

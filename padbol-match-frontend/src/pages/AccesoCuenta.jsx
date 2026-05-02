@@ -11,7 +11,6 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { safeRedirectPath } from '../utils/safeRedirect';
 import { RESERVA_RETURN_STORAGE_KEY } from '../utils/reservaReturnUrl';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
@@ -88,55 +87,20 @@ export default function AccesoCuenta() {
       const ue = s.user.email?.trim();
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
-      // Destino post-login: siempre vía safeRedirectPath (nunca /admin → hub en "/").
-      const redirectParam = new URLSearchParams(location.search).get('redirect');
-      const redirectParamExplicit = redirectParam != null && String(redirectParam).trim() !== '';
-      let dest = '/';
       try {
-        const reservaReturn = localStorage.getItem(RESERVA_RETURN_STORAGE_KEY);
-        if (typeof reservaReturn === 'string' && reservaReturn.trim()) {
-          dest = safeRedirectPath(reservaReturn.trim());
-          localStorage.removeItem(RESERVA_RETURN_STORAGE_KEY);
-        } else if (redirectParamExplicit) {
-          try {
-            dest = safeRedirectPath(decodeURIComponent(redirectParam));
-          } catch {
-            dest = '/';
-          }
-        } else {
-          try {
-            const raw = localStorage.getItem(PENDING_TORNEO_INVITE_LS);
-            const o = raw ? JSON.parse(raw) : null;
-            const p = o?.returnPath;
-            const maxAge = 7 * 24 * 60 * 60 * 1000;
-            if (typeof p === 'string' && p.startsWith('/') && Date.now() - (o.ts || 0) < maxAge) {
-              dest = safeRedirectPath(p);
-            }
-          } catch {
-            /* ignore */
-          }
-        }
+        localStorage.removeItem(RESERVA_RETURN_STORAGE_KEY);
       } catch {
         /* ignore */
-      }
-      // Sin `?redirect=` explícito: nunca mandar al hub a /mi-perfil (sesión nueva o restaurada).
-      if (!redirectParamExplicit) {
-        const destPath = String(dest || '/')
-          .split('?')[0]
-          .split('#')[0]
-          .replace(/\/+$/, '') || '/';
-        if (destPath === '/mi-perfil' || destPath.startsWith('/mi-perfil/')) {
-          dest = '/';
-        }
       }
       try {
         localStorage.removeItem(PENDING_TORNEO_INVITE_LS);
       } catch {
         /* ignore */
       }
-      navigate(dest, { replace: true });
+      // Siempre al hub: nunca /admin ni otras rutas tras login (incl. si venía de redirect o panel).
+      navigate('/', { replace: true });
     },
-    [navigate, refreshSession, location.search]
+    [navigate, refreshSession]
   );
 
   useEffect(() => {

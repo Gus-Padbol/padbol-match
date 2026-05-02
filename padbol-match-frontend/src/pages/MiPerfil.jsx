@@ -113,6 +113,16 @@ function escapeIlikeLiteral(value) {
     .replace(/_/g, '\\_');
 }
 
+/** Base para sugerencias de alias: minúsculas, sin espacios ni caracteres especiales. */
+function baseAliasDesdeTextoLibre(raw) {
+  const t = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+  return t.replace(/[^a-z0-9_]/g, '').slice(0, 32);
+}
+
 /** Columnas `nombre` + `apellido`; si falta `apellido`, parte desde `nombre` con espacios (datos viejos). */
 function nombreApellidoEditDesdePerfilRow(row) {
   if (!row || typeof row !== 'object') return { nombre: '', apellido: '' };
@@ -339,6 +349,7 @@ export default function MiPerfil() {
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
+    nombre_saludo: '',
     lateralidad: 'Diestro',
     nivel: '5ta',
     pais: '',
@@ -366,7 +377,11 @@ export default function MiPerfil() {
   const companeroSearchSeqRef = useRef(0);
   const [aliasDuplicado, setAliasDuplicado] = useState(false);
   const [aliasVerificando, setAliasVerificando] = useState(false);
+  const [aliasDisponible, setAliasDisponible] = useState(false);
+  const [aliasSuggestions, setAliasSuggestions] = useState([]);
+  const [aliasSugerenciasCargando, setAliasSugerenciasCargando] = useState(false);
   const aliasCheckSeqRef = useRef(0);
+  const nombreSaludoSuggestSeqRef = useRef(0);
 
   const nivelTorneoScope = useMemo(
     () => normalizeNivelTorneoScope(torneoPerfil?.nivel_torneo),
@@ -549,44 +564,89 @@ export default function MiPerfil() {
     return () => clearTimeout(handle);
   }, [editando, companeroBusqueda, session?.user?.id]);
 
-  /** Comprueba que el alias no esté tomado por otro jugador (mismo `user_id` excluido). */
+  /** Comprueba que el alias no esté tomado (debounce 500 ms). Con sesión: excluye el propio `user_id`. */
   useEffect(() => {
-    if (!editando) {
+    if (!editando && !esRegistroSinSesion) {
       setAliasDuplicado(false);
       setAliasVerificando(false);
+      setAliasDisponible(false);
       return;
     }
     const raw = String(formData.alias || '').trim();
     if (!raw) {
       setAliasDuplicado(false);
       setAliasVerificando(false);
+      setAliasDisponible(false);
       return;
     }
     const seq = ++aliasCheckSeqRef.current;
     setAliasVerificando(true);
+    setAliasDisponible(false);
     const handle = setTimeout(async () => {
       const uid = session?.user?.id;
-      if (!uid) {
-        if (seq === aliasCheckSeqRef.current) setAliasVerificando(false);
-        return;
-      }
       const literal = escapeIlikeLiteral(raw);
-      const { data, error } = await supabase
-        .from('jugadores_perfil')
-        .select('user_id')
-        .ilike('alias', literal)
-        .neq('user_id', String(uid))
-        .limit(1);
+      let q = supabase.from('jugadores_perfil').select('user_id').ilike('alias', literal).limit(1);
+      if (uid) q = q.neq('user_id', String(uid));
+      const { data, error } = await q;
       if (seq !== aliasCheckSeqRef.current) return;
       setAliasVerificando(false);
       if (error) {
         setAliasDuplicado(false);
+        setAliasDisponible(false);
         return;
       }
-      setAliasDuplicado(Array.isArray(data) && data.length > 0);
-    }, 400);
+      const dup = Array.isArray(data) && data.length > 0;
+      setAliasDuplicado(dup);
+      setAliasDisponible(!dup);
+    }, 500);
     return () => clearTimeout(handle);
-  }, [editando, formData.alias, session?.user?.id]);
+  }, [editando, esRegistroSinSesion, formData.alias, session?.user?.id]);
+
+  /** Sugerencias de alias desde «¿Cómo querés que te llamemos?» (disponibilidad en jugadores_perfil). */
+  useEffect(() => {
+    if (!editando && !esRegistroSinSesion) {
+      setAliasSuggestions([]);
+      setAliasSugerenciasCargando(false);
+      return;
+    }
+    const uid = session?.user?.id;
+    if (!uid && !esRegistroSinSesion) {
+      setAliasSuggestions([]);
+      return;
+    }
+    const base = baseAliasDesdeTextoLibre(formData.nombre_saludo);
+    if (!base) {
+      setAliasSuggestions([]);
+      setAliasSugerenciasCargando(false);
+      return;
+    }
+    const nRand = Math.floor(Math.random() * 90) + 10;
+    const rawCandidates = [`${base}`, `${base}${nRand}`, `${base}_padbol`];
+    const candidates = [...new Set(rawCandidates.map((s) => String(s).toLowerCase()))];
+    const seq = ++nombreSaludoSuggestSeqRef.current;
+    setAliasSugerenciasCargando(true);
+    const t = setTimeout(async () => {
+      const checkFree = async (aliasVal) => {
+        const lit = escapeIlikeLiteral(String(aliasVal || '').trim());
+        if (!lit) return false;
+        let q = supabase.from('jugadores_perfil').select('user_id').ilike('alias', lit).limit(1);
+        if (uid) q = q.neq('user_id', String(uid));
+        const { data, error } = await q;
+        if (error) return false;
+        return !(Array.isArray(data) && data.length > 0);
+      };
+      const rows = await Promise.all(
+        candidates.map(async (texto) => ({
+          texto,
+          libre: await checkFree(texto),
+        }))
+      );
+      if (seq !== nombreSaludoSuggestSeqRef.current) return;
+      setAliasSugerenciasCargando(false);
+      setAliasSuggestions(rows);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [editando, esRegistroSinSesion, formData.nombre_saludo, session?.user?.id]);
 
   useEffect(() => {
     if (sessionOwnerEmail) return;
@@ -668,6 +728,7 @@ export default function MiPerfil() {
         setFormData({
           nombre: na.nombre,
           apellido: na.apellido,
+          nombre_saludo: data.nombre_saludo != null ? String(data.nombre_saludo) : '',
           lateralidad: data.lateralidad || 'Diestro',
           nivel: data.nivel || '5ta',
           pais: data.pais || '',
@@ -1023,6 +1084,26 @@ export default function MiPerfil() {
         return;
       }
 
+      const aliasReg = String(formData.alias || '').trim();
+      if (aliasReg && (aliasDuplicado || aliasVerificando)) {
+        setErrorMsg(
+          aliasVerificando ? 'Esperá un momento mientras verificamos el alias.' : 'Este alias ya está en uso, elegí otro.'
+        );
+        return;
+      }
+      if (aliasReg) {
+        const lit = escapeIlikeLiteral(aliasReg);
+        const { data: dupReg, error: dupRegErr } = await supabase
+          .from('jugadores_perfil')
+          .select('user_id')
+          .ilike('alias', lit)
+          .limit(1);
+        if (!dupRegErr && Array.isArray(dupReg) && dupReg.length > 0) {
+          setErrorMsg('Este alias ya está en uso, elegí otro.');
+          return;
+        }
+      }
+
       if (session?.user?.email) {
         setErrorMsg('Ya tienes una sesión activa. No hace falta registrarte de nuevo.');
         return;
@@ -1064,6 +1145,7 @@ export default function MiPerfil() {
       }
 
       const aliasTrimReg = String(formData.alias || '').trim();
+      const nombreSaludoReg = String(formData.nombre_saludo || '').trim();
       const payload = {
         lateralidad: formData.lateralidad,
         nivel: formData.nivel,
@@ -1076,6 +1158,7 @@ export default function MiPerfil() {
         es_federado: formData.es_federado,
         whatsapp: wa,
         alias: aliasTrimReg || null,
+        nombre_saludo: nombreSaludoReg || null,
         instagram_url: instagramUrlFromHandle(formData.instagram),
         companero_id: null,
         mostrar_torneos_jugados: false,
@@ -1101,6 +1184,7 @@ export default function MiPerfil() {
       persistJugadorPerfil({
         nombre: nom,
         apellido: apellReg,
+        nombre_saludo: String(formData.nombre_saludo || '').trim(),
         categoria: String(formData.nivel || '').trim(),
         whatsapp: wa,
         email: owner,
@@ -1212,11 +1296,26 @@ export default function MiPerfil() {
         return;
       }
 
+      if (aliasTrim) {
+        const lit = escapeIlikeLiteral(aliasTrim);
+        const { data: dupRows, error: dupErr } = await supabase
+          .from('jugadores_perfil')
+          .select('user_id')
+          .ilike('alias', lit)
+          .neq('user_id', String(userId))
+          .limit(1);
+        if (!dupErr && Array.isArray(dupRows) && dupRows.length > 0) {
+          setErrorMsg('Este alias ya está en uso, elegí otro.');
+          return;
+        }
+      }
+
       const payloadDb = {
         user_id: userId,
         email: owner,
         nombre: nombreTrim,
         apellido: apellidoTrim || null,
+        nombre_saludo: String(formData.nombre_saludo || '').trim() || null,
         whatsapp: waFinal,
         ...payload,
       };
@@ -1275,6 +1374,7 @@ export default function MiPerfil() {
         persistJugadorPerfil({
           nombre: nombreTrim,
           apellido: apellidoTrim,
+          nombre_saludo: String(formData.nombre_saludo || '').trim(),
           categoria: String(formData.nivel || '').trim(),
           whatsapp: waFinal,
           email: owner,
@@ -1515,6 +1615,60 @@ export default function MiPerfil() {
                 autoComplete="family-name"
               />
 
+              <label style={guestLabelStyle}>¿Cómo querés que te llamemos?</label>
+              <input
+                type="text"
+                name="nombre_saludo"
+                value={formData.nombre_saludo}
+                onChange={handleChange}
+                placeholder="Ej: Gus, Eli, Carlitos"
+                style={{ ...guestInputStyle, marginBottom: '8px' }}
+                autoComplete="off"
+              />
+              {aliasSugerenciasCargando ? (
+                <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
+              ) : null}
+              {aliasSuggestions.length > 0 ? (
+                <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                    Sugerencias de alias
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {aliasSuggestions.map(({ texto, libre }) => (
+                      <button
+                        key={texto}
+                        type="button"
+                        disabled={!libre}
+                        onClick={() => {
+                          if (!libre) return;
+                          setFormData((prev) => ({ ...prev, alias: texto }));
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          padding: '6px 10px',
+                          background: libre ? '#fff' : '#fef2f2',
+                          cursor: libre ? 'pointer' : 'not-allowed',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: '#0f172a',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <span aria-hidden>{libre ? '✓' : '✗'}</span>
+                        <span>{formatAliasConArroba(texto)}</span>
+                        <span style={{ fontSize: '11px', color: libre ? '#15803d' : '#b91c1c', marginLeft: 'auto' }}>
+                          {libre ? 'Disponible' : 'En uso'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <label style={guestLabelStyle}>
                 Email {reqAst}
               </label>
@@ -1538,9 +1692,23 @@ export default function MiPerfil() {
                 value={formData.alias}
                 onChange={handleChange}
                 placeholder="Alias (opcional)"
-                style={{ ...guestInputStyle, marginBottom: '14px' }}
+                style={{
+                  ...guestInputStyle,
+                  marginBottom: aliasDuplicado ? '6px' : '14px',
+                  borderColor: aliasDuplicado ? '#f87171' : aliasDisponible && String(formData.alias || '').trim() ? '#22c55e' : undefined,
+                }}
                 autoComplete="nickname"
               />
+              {String(formData.alias || '').trim() && !aliasVerificando && !aliasDuplicado ? (
+                <p style={{ color: '#15803d', fontSize: '13px', marginTop: '-8px', marginBottom: '10px', fontWeight: 600 }}>
+                  ✓ Disponible
+                </p>
+              ) : null}
+              {aliasDuplicado ? (
+                <p style={{ color: '#dc2626', fontSize: '13px', marginTop: '-8px', marginBottom: '14px', fontWeight: 600 }}>
+                  ✗ Ya está en uso
+                </p>
+              ) : null}
 
               <label style={guestLabelStyle}>Instagram</label>
               <div
@@ -2232,6 +2400,10 @@ export default function MiPerfil() {
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row
+                label="¿Cómo querés que te llamemos?"
+                value={String(perfil?.nombre_saludo || '').trim() || '—'}
+              />
+              <Row
                 label="Alias"
                 value={String(perfil?.alias || '').trim() ? formatAliasConArroba(String(perfil.alias).trim()) : '—'}
               />
@@ -2302,6 +2474,62 @@ export default function MiPerfil() {
               autoComplete="family-name"
             />
 
+            <label style={labelStyle}>¿Cómo querés que te llamemos?</label>
+            <input
+              type="text"
+              name="nombre_saludo"
+              value={formData.nombre_saludo}
+              onChange={handleChange}
+              placeholder="Ej: Gus, Eli, Carlitos"
+              style={{ ...inputStyle, marginBottom: '8px' }}
+              autoComplete="off"
+            />
+            {aliasSugerenciasCargando ? (
+              <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
+            ) : null}
+            {aliasSuggestions.length > 0 ? (
+              <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                  Sugerencias de alias (tocá para usar)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {aliasSuggestions.map(({ texto, libre }) => (
+                    <button
+                      key={texto}
+                      type="button"
+                      disabled={!libre}
+                      onClick={() => {
+                        if (!libre) return;
+                        setFormData((prev) => ({ ...prev, alias: texto }));
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        background: libre ? '#fff' : '#fef2f2',
+                        cursor: libre ? 'pointer' : 'not-allowed',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: '#0f172a',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <span aria-hidden style={{ fontSize: '14px' }}>
+                        {libre ? '✓' : '✗'}
+                      </span>
+                      <span>{formatAliasConArroba(texto)}</span>
+                      <span style={{ fontSize: '11px', color: libre ? '#15803d' : '#b91c1c', marginLeft: 'auto' }}>
+                        {libre ? 'Disponible' : 'En uso'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <label style={labelStyle}>Alias</label>
             <input
               type="text"
@@ -2312,10 +2540,15 @@ export default function MiPerfil() {
               style={{
                 ...inputStyle,
                 marginBottom: aliasDuplicado ? '6px' : '14px',
-                borderColor: aliasDuplicado ? '#f87171' : undefined,
+                borderColor: aliasDuplicado ? '#f87171' : aliasDisponible && String(formData.alias || '').trim() ? '#22c55e' : undefined,
               }}
               autoComplete="nickname"
             />
+            {String(formData.alias || '').trim() && !aliasVerificando && !aliasDuplicado ? (
+              <p style={{ color: '#15803d', fontSize: '13px', marginTop: '-10px', marginBottom: '12px', fontWeight: 600 }}>
+                ✓ Disponible
+              </p>
+            ) : null}
             {aliasDuplicado ? (
               <p
                 style={{
@@ -2327,7 +2560,7 @@ export default function MiPerfil() {
                   lineHeight: 1.35,
                 }}
               >
-                Este alias ya está en uso, elegí otro.
+                ✗ Ya está en uso — elegí otro u otra sugerencia.
               </p>
             ) : null}
 
@@ -2770,6 +3003,9 @@ export default function MiPerfil() {
                   setFotoPendienteDeSubir(false);
                   setAliasDuplicado(false);
                   setAliasVerificando(false);
+                  setAliasDisponible(false);
+                  setAliasSuggestions([]);
+                  setAliasSugerenciasCargando(false);
                   setEditando(false);
                   setErrorMsg('');
                   setFotoPreview((prev) => {
@@ -2801,6 +3037,7 @@ export default function MiPerfil() {
                       localidad: perfil?.localidad != null ? String(perfil.localidad) : '',
                       ciudad: perfil?.ciudad || '',
                       alias: perfil?.alias != null ? String(perfil.alias) : '',
+                      nombre_saludo: perfil?.nombre_saludo != null ? String(perfil.nombre_saludo) : '',
                       instagram: instagramHandleFromStored(perfil?.instagram_url),
                       fecha_nacimiento: perfil?.fecha_nacimiento || '',
                       numero_fipa: perfil?.numero_fipa || '',

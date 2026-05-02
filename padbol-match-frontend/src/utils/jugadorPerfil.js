@@ -40,6 +40,15 @@ export function nombreCompletoJugadorPerfil(p) {
   return [n, a].filter(Boolean).join(' ').trim();
 }
 
+/** Nombre visible en torneos / rankings / fixture: nombre + apellido; sin usar alias como texto principal. */
+export function nombreListadoTorneoRanking(p) {
+  const full = nombreCompletoJugadorPerfil(p);
+  if (full) return full;
+  const n = String(p?.nombre || '').trim();
+  if (n) return n;
+  return 'Jugador';
+}
+
 function nombreApellidoEfectivos(p) {
   if (!p || typeof p !== 'object') return { nombre: '', apellido: '' };
   let nombre = String(p.nombre ?? '').trim();

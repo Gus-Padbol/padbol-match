@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../../utils/torneoFormatters';
-import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../../utils/jugadorPerfil';
+import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import '../../styles/TorneoVista.css';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
@@ -111,8 +111,8 @@ function normalizeSetInput(raw) {
 
 function avatarJugadorPodio(p) {
   const foto = String(p?.foto_url || '').trim();
-  const label = jugadorEtiquetaConArroba(p);
-  return { foto, label, initial: initialFromText(label.replace(/^@/, '')) };
+  const label = nombreListadoTorneoRanking(p);
+  return { foto, label, initial: initialFromText(label) };
 }
 
 export function safeJugadores(eq) {
@@ -127,13 +127,9 @@ export function safeJugadores(eq) {
   return Array.isArray(j) ? j : [];
 }
 
-/** Visible en listados: @alias si hay alias; si no, nombre completo (nombre + apellido). */
+/** Texto principal en listados de torneo: nombre + apellido (sin usar alias como nombre). */
 export function jugadorEtiquetaConArroba(p) {
-  const a = String(p?.alias || '').trim();
-  if (a) return formatAliasConArroba(a);
-  const full = nombreCompletoJugadorPerfil(p);
-  if (full) return full;
-  return String(p?.nombre || 'Jugador').trim() || 'Jugador';
+  return nombreListadoTorneoRanking(p);
 }
 
 /** Nombre del equipo o pareja de etiquetas de jugadores (mismo criterio que {@link jugadorEtiquetaConArroba}). */
@@ -609,9 +605,10 @@ export default function TorneoTabbedView({
                     <span style={{ fontSize: '13px', color: '#94a3b8' }}>Sin jugadores</span>
                   ) : (
                     jugadores.map((p, idx) => {
-                      const label = jugadorEtiquetaConArroba(p);
+                      const nombreMain = nombreListadoTorneoRanking(p);
+                      const al = String(p?.alias || '').trim();
                       const aliasRuta = String(p?.alias || p?.nombre || 'jugador').trim();
-                      const initial = String(label.replace(/^@/, '') || '?')
+                      const initial = String(nombreMain || '?')
                         .charAt(0)
                         .toUpperCase();
                       const foto = String(p?.foto_url || '').trim();
@@ -663,8 +660,13 @@ export default function TorneoTabbedView({
                               {initial}
                             </span>
                           )}
-                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#2563eb', textDecoration: 'underline' }}>
-                            {label}
+                          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{nombreMain}</span>
+                            {al ? (
+                              <span style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb', textDecoration: 'underline' }}>
+                                {formatAliasConArroba(al)}
+                              </span>
+                            ) : null}
                           </span>
                         </button>
                       );
@@ -1165,7 +1167,14 @@ export default function TorneoTabbedView({
                     textAlign: 'left',
                   }}
                 >
-                  <span style={{ fontWeight: 700, color: '#0f172a' }}>{jugadorEtiquetaConArroba(p)}</span>
+                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{nombreListadoTorneoRanking(p)}</span>
+                    {String(p?.alias || '').trim() ? (
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb' }}>
+                        {formatAliasConArroba(String(p.alias).trim())}
+                      </span>
+                    ) : null}
+                  </span>
                 </button>
               ))}
             </div>

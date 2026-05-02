@@ -8,7 +8,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
+import { PERFIL_CHANGE_EVENT, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 import { supabase } from '../supabaseClient';
 
 function esPlaceholderJugador(s) {
@@ -21,14 +21,18 @@ function capitalizarPalabraSaludo(w) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-/**
- * Solo columna `nombre` de jugadores_perfil (p. ej. "Juan Pablo" o "Gustavo").
- * No concatena `apellido` ni usa otros campos.
- */
-function nombreDesdeJugadoresPerfil(userProfile) {
+/** `nombre_saludo` libre en jugadores_perfil (vacío → no aplica). */
+function nombreDesdeSaludoPerfil(userProfile) {
+  const v = String(userProfile?.nombre_saludo || '').trim();
+  return v || '';
+}
+
+/** Primer token de `nombre` (columna perfil), sin apellido en el saludo. */
+function primerNombreDesdePerfil(userProfile) {
   const v = String(userProfile?.nombre || '').trim();
   if (!v || esPlaceholderJugador(v)) return '';
-  return v;
+  const first = v.split(/\s+/).filter(Boolean)[0] || '';
+  return first ? capitalizarPalabraSaludo(first) : '';
 }
 
 /** Parte local del email capitalizada (fallback si no hay nombre en perfil). */
@@ -43,12 +47,14 @@ function nombreDesdeParteLocalEmail(local) {
 }
 
 /**
- * Saludo: únicamente `jugadores_perfil.nombre` (userProfile). Sin profiles, metadata ni full_name.
- * Si no hay nombre válido → parte local del email.
+ * Saludo solo desde jugadores_perfil: nombre_saludo → primer nombre → email local.
+ * Sin profiles, metadata ni full_name.
  */
 function obtenerNombreSaludo(authUser, userProfile) {
-  const fromJp = nombreDesdeJugadoresPerfil(userProfile);
-  if (fromJp) return fromJp;
+  const fromSaludo = nombreDesdeSaludoPerfil(userProfile);
+  if (fromSaludo) return fromSaludo;
+  const fromNom = primerNombreDesdePerfil(userProfile);
+  if (fromNom) return fromNom;
   const email = String(authUser?.email || '').trim().toLowerCase();
   const local = email.includes('@') ? email.split('@')[0].trim() : '';
   return nombreDesdeParteLocalEmail(local);
@@ -96,8 +102,10 @@ export default function UserHome() {
   useEffect(() => {
     if (!session?.user) return;
     console.log('DEBUG saludo:', {
+      jugadores_perfil_nombre_saludo: userProfile?.nombre_saludo,
       jugadores_perfil_nombre: userProfile?.nombre,
       jugadores_perfil_apellido: userProfile?.apellido,
+      nombre_completo_ref: nombreCompletoJugadorPerfil(userProfile),
       profiles_nombre: profilesRow?.nombre,
       session_email: session?.user?.email,
       session_metadata: session?.user?.user_metadata,
