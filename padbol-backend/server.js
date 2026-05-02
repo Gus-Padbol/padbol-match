@@ -11,13 +11,25 @@ dotenv.config();
 const app = express();
 const PORT = 3001;
 
-// CORS
-app.use(cors({
-  origin: [
+/** Orígenes permitidos: `CORS_ORIGIN` en Render (coma-separado) + lista base. */
+function buildCorsAllowedOrigins() {
+  const raw = String(process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || '').trim();
+  const fromEnv = raw
+    ? raw.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const defaults = [
     'http://localhost:3000',
     'https://padbol-match.netlify.app',
-    'https://padbol-match-9abn.vercel.app'
-  ],
+    'https://padbol-match-9abn.vercel.app',
+    'https://www.padbolmatch.com',
+    'https://padbolmatch.com',
+  ];
+  return [...new Set([...fromEnv, ...defaults])];
+}
+
+// CORS (Render: CORS_ORIGIN=https://www.padbolmatch.com,https://padbolmatch.com,https://padbol-match-9abn.vercel.app)
+app.use(cors({
+  origin: buildCorsAllowedOrigins(),
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));

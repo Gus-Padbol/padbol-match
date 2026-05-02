@@ -3076,27 +3076,17 @@ export default function MiPerfil() {
         </div>
       )}
 
-      {/* Estadísticas: puntos por alcance + opcional torneos jugados + resumen reservas */}
+      {/* Estadísticas: puntos por alcance + opcional torneos jugados (sin resumen de reservas / sede favorita). */}
       {(() => {
         const flagTorneosPub = editando ? !!formData.mostrar_torneos_jugados : !!perfil?.mostrar_torneos_jugados;
         const hayPuntosNivel = tieneAlgunoPuntosPorAlcance(puntosAlcanceMiPerfil);
-        const hayBloque = hayPuntosNivel || flagTorneosPub || reservas.length > 0;
+        const hayBloque = hayPuntosNivel || flagTorneosPub;
         if (!hayBloque) return null;
-        const sedeFav =
-          reservas.length > 0
-            ? (() => {
-                const counts = {};
-                reservas.forEach((r) => {
-                  counts[r.sede] = (counts[r.sede] || 0) + 1;
-                });
-                return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-              })()
-            : null;
         return (
           <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>📊 Estadísticas</h4>
             {hayPuntosNivel ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: flagTorneosPub ? '14px' : 0 }}>
                 {puntosAlcanceMiPerfil.club > 0 ? (
                   <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
                     📍 Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.club}</span>
@@ -3115,22 +3105,8 @@ export default function MiPerfil() {
               </div>
             ) : null}
             {flagTorneosPub ? (
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: reservas.length > 0 ? '14px' : 0 }}>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: 0 }}>
                 🏆 Torneos jugados: <span style={{ color: '#15803d' }}>{torneosUnicosConPuntosMiPerfil}</span>
-              </div>
-            ) : null}
-            {reservas.length > 0 ? (
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '120px', background: 'white', borderRadius: '10px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                  <div style={{ fontSize: '28px', fontWeight: 900, color: '#d32f2f' }}>{reservas.length}</div>
-                  <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>Reservas totales</div>
-                </div>
-                {sedeFav ? (
-                  <div style={{ flex: 2, minWidth: '160px', background: 'white', borderRadius: '10px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1b4b', lineHeight: 1.3 }}>{sedeFav}</div>
-                    <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>Sede favorita</div>
-                  </div>
-                ) : null}
               </div>
             ) : null}
           </div>

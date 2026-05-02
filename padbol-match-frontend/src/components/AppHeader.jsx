@@ -330,6 +330,10 @@ export default function AppHeader({
     (muestraChipUsuarioHubDerecha ? 1 : 0) +
     (showLogout ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
+  /** Hub inicio (UserHome): ⚙ Admin siempre columna izquierda — mismo criterio para super_admin y admin_club. */
+  const botonAdminIzquierdaEnHub =
+    showAdminShortcutHub && hubDirectLogin && hubInicioPath && Boolean(session?.user);
+
   /** Admin en hub inicio: ⚙ a la izquierda; título central puede ocultarse si hay muchos controles. */
   const adminHubInicioCompacto = hubHomeCompactHeader && showAdminShortcutHub;
   const shouldHideHubCenterTitle = adminHubInicioCompacto || hideHubCenterTitle;
@@ -567,17 +571,17 @@ export default function AppHeader({
           minWidth: 0,
         }}
       >
-        {hubHomeCompactHeader ? (
-          adminShortcutButton || (
-            <span
-              aria-hidden
-              style={{
-                width: LOGOUT_BTN_SIZE,
-                height: LOGOUT_BTN_SIZE,
-                flexShrink: 0,
-              }}
-            />
-          )
+        {botonAdminIzquierdaEnHub ? (
+          adminShortcutButton
+        ) : hubHomeCompactHeader ? (
+          <span
+            aria-hidden
+            style={{
+              width: LOGOUT_BTN_SIZE,
+              height: LOGOUT_BTN_SIZE,
+              flexShrink: 0,
+            }}
+          />
         ) : showBack ? (
           <button
             type="button"
@@ -766,7 +770,7 @@ export default function AppHeader({
                 </button>
               </div>
             ) : null}
-            {showAdminShortcutHub && !hubHomeCompactHeader ? adminShortcutButton : null}
+            {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
             {showLogout ? (
               <button
                 type="button"
