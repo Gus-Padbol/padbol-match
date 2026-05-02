@@ -8,8 +8,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { PERFIL_CHANGE_EVENT, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
-import { supabase } from '../supabaseClient';
+import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 
 function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
@@ -35,37 +34,11 @@ function primerNombreDesdePerfil(userProfile) {
   return first ? capitalizarPalabraSaludo(first) : '';
 }
 
-/** Parte local del email capitalizada (fallback si no hay nombre en perfil). */
-function nombreDesdeParteLocalEmail(local) {
-  const s = String(local || '').trim();
-  if (!s) return '';
-  if (/[a-z][A-Z]/.test(s)) {
-    const parts = s.split(/(?=[A-Z])/).filter(Boolean);
-    return capitalizarPalabraSaludo(parts[0] || s);
-  }
-  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-}
-
-/**
- * Saludo solo desde jugadores_perfil: nombre_saludo → primer nombre → email local.
- * Sin profiles, metadata ni full_name.
- */
-function obtenerNombreSaludo(authUser, userProfile) {
-  const fromSaludo = nombreDesdeSaludoPerfil(userProfile);
-  if (fromSaludo) return fromSaludo;
-  const fromNom = primerNombreDesdePerfil(userProfile);
-  if (fromNom) return fromNom;
-  const email = String(authUser?.email || '').trim().toLowerCase();
-  const local = email.includes('@') ? email.split('@')[0].trim() : '';
-  return nombreDesdeParteLocalEmail(local);
-}
-
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
+  const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
-  const [profilesRow, setProfilesRow] = useState(null);
 
   useEffect(() => {
     const onPerfil = () => {
@@ -75,48 +48,21 @@ export default function UserHome() {
     return () => window.removeEventListener(PERFIL_CHANGE_EVENT, onPerfil);
   }, [refreshSession]);
 
-  useEffect(() => {
-    const uid = session?.user?.id;
-    if (!uid) {
-      setProfilesRow(null);
-      return undefined;
-    }
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
-      if (cancelled) return;
-      if (!error && data) {
-        setProfilesRow(data);
-        return;
-      }
-      const r2 = await supabase.from('profiles').select('*').eq('user_id', uid).maybeSingle();
-      if (cancelled) return;
-      if (!r2.error && r2.data) setProfilesRow(r2.data);
-      else setProfilesRow(null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    if (!session?.user) return;
-    console.log('DEBUG saludo:', {
-      jugadores_perfil_nombre_saludo: userProfile?.nombre_saludo,
-      jugadores_perfil_nombre: userProfile?.nombre,
-      jugadores_perfil_apellido: userProfile?.apellido,
-      nombre_completo_ref: nombreCompletoJugadorPerfil(userProfile),
-      profiles_nombre: profilesRow?.nombre,
-      session_email: session?.user?.email,
-      session_metadata: session?.user?.user_metadata,
-    });
-  }, [session?.user, userProfile, profilesRow]);
-
   const lineaSaludo = useMemo(() => {
-    if (!session?.user) return '¡Hola! ¿Qué querés hacer hoy?';
-    const p = obtenerNombreSaludo(session.user, userProfile);
-    return p ? `¡Hola ${p}! ¿Qué querés hacer hoy?` : '¡Hola! ¿Qué querés hacer hoy?';
-  }, [session?.user, userProfile]);
+    const sufijo = '¿Qué querés hacer hoy?';
+    if (!session?.user) return `¡Hola! ${sufijo}`;
+    if (profileLoading || userProfile === null) {
+      return `¡Hola! ${sufijo}`;
+    }
+    const ns = nombreDesdeSaludoPerfil(userProfile);
+    if (ns) {
+      const mostrar = ns.charAt(0).toUpperCase() + ns.slice(1);
+      return `¡Hola ${mostrar}! ${sufijo}`;
+    }
+    const nom = primerNombreDesdePerfil(userProfile);
+    if (nom) return `¡Hola ${nom}! ${sufijo}`;
+    return `¡Hola! ${sufijo}`;
+  }, [session?.user, userProfile, profileLoading]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },

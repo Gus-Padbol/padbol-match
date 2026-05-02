@@ -34,6 +34,11 @@ const LEGACY_GLOBAL_ADMIN_EMAILS_HEADER = [
   'sm@padbol.com',
 ];
 
+function emailEsLegacyAdminHub(emailRaw) {
+  const email = String(emailRaw || '').trim().toLowerCase();
+  return LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(email);
+}
+
 function esNombrePlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
@@ -176,19 +181,25 @@ export default function AppHeader({
     return { email: em };
   }, [session?.user?.email]);
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
-  /** Una vez `user_roles` confirma admin, el hub no revierte a chip jugador aunque el fetch deje `rol` null o limpie caché. */
-  const [hubAdminRolEver, setHubAdminRolEver] = useState(() =>
-    ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')
-  );
+  /** Una vez admin (user_roles, caché, email legacy), el hub no revierte aunque el fetch deje `rol` null o limpie caché. */
+  const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
+    if (ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')) return true;
+    if (emailEsLegacyAdminHub(session?.user?.email)) return true;
+    return false;
+  });
   useEffect(() => {
     if (!session?.user) {
       setHubAdminRolEver(false);
       return;
     }
+    if (emailEsLegacyAdminHub(session.user.email)) {
+      setHubAdminRolEver((prev) => prev || true);
+      return;
+    }
     if (ADMIN_ROLES_CHIP.includes(rol || '')) {
       setHubAdminRolEver((prev) => prev || true);
     }
-  }, [session?.user, rol]);
+  }, [session?.user, rol, session?.user?.email]);
   /** Rol desde DB/caché; si aún no hay fila `user_roles` (p. ej. otro proyecto/host), usar rol en JWT de Supabase Auth. */
   const rolEffectiveHeader = useMemo(() => {
     const cached = readCachedRolHeader();
@@ -331,13 +342,6 @@ export default function AppHeader({
     !hideLogoutEffective &&
     esRolAdminHub &&
     (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
-
-  console.log('AppHeader render:', {
-    esRolAdminHub,
-    roleLoading,
-    rolEffectiveHeader,
-    showAdminShortcutHub,
-  });
 
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =
