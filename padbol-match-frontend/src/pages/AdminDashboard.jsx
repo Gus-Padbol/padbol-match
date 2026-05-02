@@ -281,11 +281,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
-  const [activeTab, setActiveTab] = useState(() => {
-    const fromUrl = searchParams.get('tab');
-    if (fromUrl && ADMIN_TABS_ALLOWED.has(fromUrl)) return fromUrl;
-    return 'resumen';
-  });
+  const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab')));
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
@@ -293,7 +289,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [validacionState, setValidacionState] = useState({});
   // keyed by sede name for super-admin reservas detail expand/collapse
   const [superAdminReservasOpen, setSuperAdminReservasOpen] = useState({});
-  const [superAdminPeriodo, setSuperAdminPeriodo] = useState('mes'); // hoy | semana | mes | anio | rango
+  const [superAdminPeriodo, setSuperAdminPeriodo] = useState('hoy'); // hoy | semana | mes | anio | rango
   const [superAdminFechaDesde, setSuperAdminFechaDesde] = useState(
     () => new Date().toISOString().slice(0, 10)
   );
@@ -312,9 +308,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [esAdminClub]);
 
   useEffect(() => {
-    const t = searchParams.get('tab');
-    if (!t) return;
-    if (!ADMIN_TABS_ALLOWED.has(t)) return;
+    const raw = searchParams.get('tab');
+    if (raw == null || String(raw).trim() === '') {
+      setActiveTab('resumen');
+      return;
+    }
+    const t = sanitizeAdminActiveTab(raw);
     setActiveTab((prev) => {
       if (prev === t) return prev;
       sessionStorage.setItem('adminActiveTab', t);
@@ -2054,7 +2053,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               if (superAdminPeriodo === 'hoy') return fecha >= startOfToday && fecha <= now;
               if (superAdminPeriodo === 'semana') return fecha >= startOfWeek && fecha <= now;
               if (superAdminPeriodo === 'anio') return fecha >= startOfYear && fecha <= now;
-              return fecha >= startOfMonth && fecha <= now; // mes (default)
+              return fecha >= startOfMonth && fecha <= now; // mes
             };
             const reservasPeriodo = reservas.filter((r) => {
               const f = String(r?.fecha || '').trim();
