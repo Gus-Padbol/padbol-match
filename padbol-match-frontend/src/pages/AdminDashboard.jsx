@@ -249,6 +249,7 @@ function filaDentroDelAlcanceSedes(row, sedesData) {
 }
 
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
+  console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();

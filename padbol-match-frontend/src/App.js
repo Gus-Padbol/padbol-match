@@ -96,13 +96,16 @@ function AdminDashboardGate() {
 
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
 
+  const emailLower = (currentCliente?.email || '').trim().toLowerCase();
+  /** Emails con panel global: no bloquear en /admin mientras resuelve `user_roles` (p. ej. hub → Admin sin estado). */
+  const legacyAdminEmailBypassRoleLoading = ADMIN_EMAILS.includes(emailLower);
+
   const canAccessAdmin = () => {
-    const email = (currentCliente?.email || '').trim().toLowerCase();
-    if (ADMIN_EMAILS.includes(email)) return true;
+    if (ADMIN_EMAILS.includes(emailLower)) return true;
     return ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
   };
 
-  if (roleLoading) {
+  if (roleLoading && !legacyAdminEmailBypassRoleLoading) {
     return <div style={{ color: 'white', padding: 24, textAlign: 'center' }}>Cargando permisos…</div>;
   }
   if (canAccessAdmin()) {
@@ -164,6 +167,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        {/* /admin: sin condición por email en la ruta; AdminDashboardGate usa ADMIN_EMAILS + roles (legacy no espera roleLoading). */}
         <Route
           path="/admin"
           element={

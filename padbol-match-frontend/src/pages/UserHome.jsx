@@ -107,7 +107,6 @@ export default function UserHome() {
       />
       <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto' }}>
         <div
-          className="user-home-saludo-caja"
           style={{
             background: 'rgba(255,255,255,0.10)',
             border: '1px solid rgba(255,255,255,0.16)',
@@ -117,14 +116,9 @@ export default function UserHome() {
             maxWidth: '300px',
             margin: '0 auto 30px auto',
             color: 'white',
-            opacity: 1,
-            animation: 'none',
-            WebkitAnimation: 'none',
-            transition: 'none',
           }}
         >
           <h1
-            className="user-home-saludo"
             style={{
               color: 'white',
               textAlign: 'center',
@@ -132,10 +126,7 @@ export default function UserHome() {
               fontSize: '18px',
               fontWeight: '600',
               lineHeight: 1.35,
-              opacity: 1,
-              animation: 'none',
-              WebkitAnimation: 'none',
-              transition: 'none',
+              minHeight: '2.7em',
             }}
           >
             {lineaSaludo}

@@ -76,15 +76,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-
-/* Hub inicio: saludo sin animación ni titilado heredado */
-.user-home-saludo,
-.user-home-saludo-caja {
-  animation: none !important;
-  -webkit-animation: none !important;
-  transition: none !important;
-}
-
-.user-home-saludo-caja {
-  opacity: 1 !important;
-}
