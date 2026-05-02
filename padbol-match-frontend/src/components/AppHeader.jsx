@@ -176,6 +176,19 @@ export default function AppHeader({
     return { email: em };
   }, [session?.user?.email]);
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
+  /** Una vez `user_roles` confirma admin, el hub no revierte a chip jugador aunque el fetch deje `rol` null o limpie caché. */
+  const [hubAdminRolEver, setHubAdminRolEver] = useState(() =>
+    ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')
+  );
+  useEffect(() => {
+    if (!session?.user) {
+      setHubAdminRolEver(false);
+      return;
+    }
+    if (ADMIN_ROLES_CHIP.includes(rol || '')) {
+      setHubAdminRolEver((prev) => prev || true);
+    }
+  }, [session?.user, rol]);
   /** Rol desde DB/caché; si aún no hay fila `user_roles` (p. ej. otro proyecto/host), usar rol en JWT de Supabase Auth. */
   const rolEffectiveHeader = useMemo(() => {
     const cached = readCachedRolHeader();
@@ -310,6 +323,7 @@ export default function AppHeader({
     .charAt(0)
     .toUpperCase();
   const esRolAdminHub =
+    hubAdminRolEver ||
     ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '') ||
     (Boolean(roleLoading) && LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(authEmail));
   /** En el hub de inicio (`hubDirectLogin` + /) siempre mostrar ⚙ aunque quede `adminFlowSurface` por contexto; fuera del hub, el atajo se oculta en flujo admin. */
@@ -317,6 +331,14 @@ export default function AppHeader({
     !hideLogoutEffective &&
     esRolAdminHub &&
     (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
+
+  console.log('AppHeader render:', {
+    esRolAdminHub,
+    roleLoading,
+    rolEffectiveHeader,
+    showAdminShortcutHub,
+  });
+
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
@@ -348,12 +370,6 @@ export default function AppHeader({
     Boolean(session?.user) &&
     ((hubDirectLogin && muestraChipUsuarioHubDerecha) ||
       (adminFlowSurface && !(hubDirectLogin && hubInicioPath)));
-
-  useEffect(() => {
-    if (!hubDirectLogin || !hubInicioPath || !session?.user) return;
-    const email = authEmail;
-    console.log('DEBUG hub admin:', { esRolAdminHub, rol, email });
-  }, [hubDirectLogin, hubInicioPath, session?.user, esRolAdminHub, rol, authEmail]);
 
   const displayBackLabel = useMemo(() => {
     if (backLabel) return backLabel;
