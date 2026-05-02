@@ -37,11 +37,7 @@ function primeraPalabraHandle(s) {
   return t.split(/\s+/).filter(Boolean)[0] || '';
 }
 
-/**
- * Chip barra admin compacta (solo super_admin): `@` + alias o primera palabra del nombre;
- * fallback `Gus` solo para {@link PADBOL_SUPER_ADMIN_EMAIL} si no hay nombre útil.
- */
-/** `@` + primera palabra del perfil (jugador) para chip en panel admin (nacional / club). */
+/** `@` + primera palabra del perfil (jugador) para chip en panel admin (admin_nacional). */
 function etiquetaArrobaPrimerNombrePerfil(userProfile, sessionUser) {
   const meta = sessionUser?.user_metadata || {};
   let raw =
@@ -54,6 +50,39 @@ function etiquetaArrobaPrimerNombrePerfil(userProfile, sessionUser) {
     '';
   const email = String(sessionUser?.email || '').trim().toLowerCase();
   const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
+  if (!raw && local) raw = local;
+  if (!raw) raw = 'Usuario';
+  const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  return `@${cap}`;
+}
+
+/**
+ * Chip panel admin para `admin_club`: prioridad `alias` → `username` en `profiles` → `username` jugador / metadata → nombre → email local.
+ * Ej.: alias "Juampi" → "@Juampi"
+ */
+function etiquetaArrobaAdminClubChip(userProfile, sessionUser, profilesUsernameFromDb = '') {
+  const meta = sessionUser?.user_metadata || {};
+  const strip = (s) => String(s || '').trim().replace(/^@+/u, '');
+  const aliasSrc = strip(userProfile?.alias);
+  const profUser = strip(profilesUsernameFromDb);
+  const jpUser = strip(userProfile?.username);
+  const metaUser = strip(meta.alias || meta.username || meta.preferred_username);
+  const email = String(sessionUser?.email || '').trim().toLowerCase();
+  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
+
+  let raw = '';
+  for (const c of [aliasSrc, profUser, jpUser, metaUser]) {
+    if (c) {
+      raw = primeraPalabraHandle(c) || c;
+      break;
+    }
+  }
+  if (!raw && !esNombrePlaceholderJugador(userProfile?.nombre)) {
+    raw =
+      primeraPalabraHandle(userProfile?.nombre) ||
+      primeraPalabraHandle(userProfile?.nombre_completo) ||
+      '';
+  }
   if (!raw && local) raw = local;
   if (!raw) raw = 'Usuario';
   const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
@@ -143,6 +172,31 @@ export default function AppHeader({
   const rolEffectiveHeader = useMemo(() => rol || readCachedRolHeader(), [rol]);
   const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
+  const [profilesUsernameClubChip, setProfilesUsernameClubChip] = useState('');
+  useEffect(() => {
+    if (rol !== 'admin_club' || !session?.user?.id) {
+      setProfilesUsernameClubChip('');
+      return undefined;
+    }
+    let cancelled = false;
+    supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', session.user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data?.username != null && String(data.username).trim()) {
+          setProfilesUsernameClubChip(String(data.username).trim());
+        } else {
+          setProfilesUsernameClubChip('');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [rol, session?.user?.id]);
+
   useEffect(() => {
     if (rol !== 'admin_club' || !sedeId) {
       setAdminSedeNombre('');
@@ -200,14 +254,15 @@ export default function AppHeader({
     if (!session?.user || roleLoading) return hubNombreCorto;
     if (adminFlowSurface) {
       if (rol === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
-      if (rol === 'admin_nacional' || rol === 'admin_club') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
+      if (rol === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
+      if (rol === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
       return hubNombreCorto;
     }
     if (rol === 'super_admin') return 'Super Admin';
     if (rol === 'admin_nacional') return 'Admin Nacional';
     if (rol === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
     return hubNombreCorto;
-  }, [session?.user, roleLoading, rol, adminSedeNombre, hubNombreCorto, adminFlowSurface, userProfile]);
+  }, [session?.user, roleLoading, rol, adminSedeNombre, hubNombreCorto, adminFlowSurface, userProfile, profilesUsernameClubChip]);
 
   const hubChipNavPath = useMemo(
     () => hubChipNavigatePath(rol, roleLoading),
@@ -311,9 +366,10 @@ export default function AppHeader({
     if (!session?.user) return '';
     if (roleLoading) return '…';
     if (rol === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
-    if (rol === 'admin_nacional' || rol === 'admin_club') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
+    if (rol === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
+    if (rol === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
     return 'Admin';
-  }, [session?.user, roleLoading, rol, userProfile]);
+  }, [session?.user, roleLoading, rol, userProfile, profilesUsernameClubChip]);
 
   /** Inicial desde `nombre` del perfil (no alias); fallback email. */
   const adminMinimalInicial = useMemo(() => {
