@@ -16,7 +16,7 @@ import {
   PERFIL_CHANGE_EVENT,
 } from '../utils/jugadorPerfil';
 import { setTorneoEquipoActual, clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
-import { setAdminNavContext, readAdminNavContext } from '../utils/adminNavContext';
+import { setAdminNavContext, tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
 import {
   getEquipoInscripcionEstado,
   etiquetaInscripcionEstado,
@@ -594,7 +594,7 @@ export default function FormEquipos() {
   const flujoInscripcionTorneoActivo = Boolean(torneo && torneoPermiteNuevasInscripciones(torneo));
 
   useEffect(() => {
-    if (location.state?.fromAdmin) setAdminNavContext(true);
+    if (location.state?.fromAdmin === true) setAdminNavContext(true);
   }, [location.state?.fromAdmin]);
 
   const sedesMapForm = useMemo(() => {
@@ -610,6 +610,8 @@ export default function FormEquipos() {
       },
     };
   }, [torneo?.sede_id, nombreSede, sedeTorneoRow]);
+
+  const contextoGestionEquiposTorneo = tieneContextoAdminGestionEquiposTorneo(location.state);
 
   const esAdminGestionTorneo = useMemo(
     () =>
@@ -633,15 +635,15 @@ export default function FormEquipos() {
         rol,
         userSedeId,
         userPaisRol,
-        fromAdmin: Boolean(location.state?.fromAdmin) || readAdminNavContext(),
+        fromAdmin: contextoGestionEquiposTorneo,
       }),
-    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
+    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, contextoGestionEquiposTorneo]
   );
 
   const torneoNavStateForm = useMemo(() => {
     const base =
       location.state && typeof location.state === 'object' ? { ...location.state } : {};
-    if (location.state?.fromAdmin) base.fromAdmin = true;
+    if (location.state?.fromAdmin === true) base.fromAdmin = true;
     return Object.keys(base).length ? base : null;
   }, [location.state]);
 
@@ -1724,7 +1726,7 @@ export default function FormEquipos() {
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
 
   const handleInscripcionHeaderBack = useCallback(() => {
-    if (esAdminGestionTorneo && (location.state?.fromAdmin || readAdminNavContext())) {
+    if (esAdminGestionTorneo && contextoGestionEquiposTorneo) {
       navigate('/admin');
       return;
     }
@@ -1744,7 +1746,7 @@ export default function FormEquipos() {
     if (typeof window !== 'undefined') window.history.back();
   }, [
     esAdminGestionTorneo,
-    location.state?.fromAdmin,
+    contextoGestionEquiposTorneo,
     navigate,
     mostrarPasoEleccion,
     isMobile,
@@ -2212,7 +2214,7 @@ export default function FormEquipos() {
         }
         onBack={handleInscripcionHeaderBack}
         backLabel={
-          esAdminGestionTorneo && (location.state?.fromAdmin || readAdminNavContext()) ? '← Admin' : undefined
+          esAdminGestionTorneo && contextoGestionEquiposTorneo ? '← Admin' : undefined
         }
       />
       <div

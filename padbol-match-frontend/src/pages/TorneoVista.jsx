@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
-import { setAdminNavContext, readAdminNavContext } from '../utils/adminNavContext';
+import { setAdminNavContext, tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
 export default function TorneoVista() {
@@ -40,7 +40,7 @@ export default function TorneoVista() {
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const sedeTorneo = torneo ? sedesMap[String(torneo.sede_id)] : null;
   const fromAdmin = Boolean(location.state?.fromAdmin);
-  const adminGestionaEquiposContext = fromAdmin || readAdminNavContext();
+  const adminGestionaEquiposContext = tieneContextoAdminGestionEquiposTorneo(location.state);
   const isAdmin = useMemo(
     () =>
       computeIsAdminEnTorneo({
@@ -72,8 +72,8 @@ export default function TorneoVista() {
   );
 
   useEffect(() => {
-    if (fromAdmin) setAdminNavContext(true);
-  }, [fromAdmin]);
+    if (location.state?.fromAdmin === true) setAdminNavContext(true);
+  }, [location.state?.fromAdmin]);
   const jugadorEquipoListoParaTorneo = (raw) => {
     const p = typeof raw === 'object' && raw != null ? raw : { nombre: raw, email: '' };
     if (p.estado === 'pendiente') return false;

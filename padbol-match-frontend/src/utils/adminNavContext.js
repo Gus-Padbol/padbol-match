@@ -21,3 +21,14 @@ export function readAdminNavContext() {
 export function clearAdminNavContext() {
   setAdminNavContext(false);
 }
+
+/**
+ * Contexto para "Gestionar" equipos / gestión masiva: solo con `state.fromAdmin === true`
+ * (navegación desde panel) o bandera de sesión activa (`readAdminNavContext`).
+ */
+export function tieneContextoAdminGestionEquiposTorneo(locationState) {
+  if (locationState != null && typeof locationState === 'object' && locationState.fromAdmin === true) {
+    return true;
+  }
+  return readAdminNavContext();
+}
