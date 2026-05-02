@@ -306,6 +306,8 @@ export default function TorneoTabbedView({
   equiposTabFooter = null,
   /** Bloque admin (iniciar/finalizar, etc.) encima de las pestañas. */
   adminTorneoBar = null,
+  /** Inscripción jugador: justo debajo de la barra admin y antes de EQUIPOS/GRUPOS/… */
+  bannerAntesTabs = null,
   stickyTop = '110px',
   showTorneoLogo = true,
 }) {
@@ -1090,6 +1092,8 @@ export default function TorneoTabbedView({
       </div>
 
       {adminTorneoBar}
+
+      {bannerAntesTabs}
 
       <div
         className="torneo-tabs-sticky"

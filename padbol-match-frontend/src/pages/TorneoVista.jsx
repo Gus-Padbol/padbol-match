@@ -241,8 +241,8 @@ export default function TorneoVista() {
   };
 
   const estadoTorneoLower = String(torneo?.estado || '').toLowerCase();
-  const adminGestionandoEnTorneo =
-    isAdmin && (fromAdmin || readAdminNavContext());
+  /** Solo `state.fromAdmin`: el flag de sesión no debe ocultar inscripción a quien entra desde el hub. */
+  const modoAdminExplicitoEnVista = fromAdmin;
   const inscripcionAbiertaParaJugador = ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
   const puedeMostrarIniciarTorneo =
     isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
@@ -256,6 +256,46 @@ export default function TorneoVista() {
     }
     return null;
   }, [equipos, session?.user?.email]);
+
+  const bannerInscripcionJugador = useMemo(() => {
+    if (!torneo || !session?.user || !inscripcionAbiertaParaJugador || modoAdminExplicitoEnVista) return null;
+    const navEquipos =
+      fromAdmin && torneoNavState
+        ? { state: torneoNavState }
+        : undefined;
+    return (
+      <div className="torneo-inscripcion-jugador-banner">
+        {miEquipoEnTorneo ? (
+          <p className="torneo-inscripcion-jugador-banner__texto">
+            ✓ Ya estás inscripto — {nombreEquipoMostrado(miEquipoEnTorneo)}
+          </p>
+        ) : (
+          <>
+            <p className="torneo-inscripcion-jugador-banner__sub">
+              Inscripción abierta. Creá un equipo o unite a uno existente.
+            </p>
+            <button
+              type="button"
+              className="torneo-inscripcion-jugador-banner__cta btn-agregar-jugadores"
+              onClick={() => navigate(`/torneo/${torneoId}/equipos`, navEquipos)}
+            >
+              ➕ Inscribirme / Crear equipo
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }, [
+    torneo,
+    session?.user,
+    inscripcionAbiertaParaJugador,
+    modoAdminExplicitoEnVista,
+    miEquipoEnTorneo,
+    torneoId,
+    navigate,
+    fromAdmin,
+    torneoNavState,
+  ]);
 
   const adminTorneoBar = torneo ? (
     <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
@@ -366,51 +406,6 @@ export default function TorneoVista() {
           marginBottom: '10px',
         }}
       />
-      {torneo && session?.user && inscripcionAbiertaParaJugador && !adminGestionandoEnTorneo ? (
-        <div
-          style={{
-            margin: '0 12px 16px',
-            padding: '14px 16px',
-            borderRadius: '14px',
-            background: 'rgba(255,255,255,0.95)',
-            border: '1px solid #c7d2fe',
-            boxShadow: '0 4px 14px rgba(99,102,241,0.15)',
-          }}
-        >
-          {miEquipoEnTorneo ? (
-            <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#166534', textAlign: 'center' }}>
-              ✓ Ya estás inscripto — {nombreEquipoMostrado(miEquipoEnTorneo)}
-            </p>
-          ) : (
-            <>
-              <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#475569', textAlign: 'center', lineHeight: 1.4 }}>
-                Inscripción abierta. Creá un equipo o unite a uno existente.
-              </p>
-              <button
-                type="button"
-                className="btn-agregar-jugadores"
-                onClick={() =>
-                  navigate(`/torneo/${torneoId}/equipos`, torneoNavState ? { state: torneoNavState } : undefined)
-                }
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '12px 16px',
-                  fontSize: '15px',
-                  fontWeight: 800,
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                  color: '#fff',
-                }}
-              >
-                ➕ Inscribirme / Crear equipo
-              </button>
-            </>
-          )}
-        </div>
-      ) : null}
       <TorneoTabbedView
         torneo={torneo}
         equipos={equipos}
@@ -425,6 +420,7 @@ export default function TorneoVista() {
         navigateState={torneoNavState}
         clasificacionFinalFilas={clasificacionFinalFilas}
         adminTorneoBar={adminTorneoBar}
+        bannerAntesTabs={bannerInscripcionJugador}
         stickyTop={hubContentPaddingTopCss(location.pathname)}
         showTorneoLogo={false}
       />
