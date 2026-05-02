@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
@@ -143,8 +143,6 @@ export default function AppHeader({
   const rolEffectiveHeader = useMemo(() => rol || readCachedRolHeader(), [rol]);
   const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
-  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
-  const adminMenuRef = useRef(null);
   useEffect(() => {
     if (rol !== 'admin_club' || !sedeId) {
       setAdminSedeNombre('');
@@ -172,6 +170,18 @@ export default function AppHeader({
         .replace(/\/+$/, '') || '/',
     [location.pathname]
   );
+
+  const adminFlowSurface = useMemo(() => {
+    if (!session?.user || !isPanelAdminUser) return false;
+    const adminContextFlag = readAdminNavContext();
+    const fromAdminNav = Boolean(location.state?.fromAdmin);
+    if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
+    if (adminContextFlag || fromAdminNav) return true;
+    if (pathOnly.startsWith('/torneo') && (adminContextFlag || fromAdminNav)) return true;
+    if (pathOnly.startsWith('/equipo/') && (adminContextFlag || fromAdminNav)) return true;
+    return false;
+  }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
+
   const authEmail = String(session?.user?.email || '').trim().toLowerCase();
   const showLogout = !hideLogoutEffective && Boolean(session?.user);
   const loginFromHubUrl = `/login?redirect=${encodeURIComponent(loginRedirectAfterHubEntry(location))}`;
@@ -188,38 +198,21 @@ export default function AppHeader({
   })();
   const hubChipLabel = useMemo(() => {
     if (!session?.user || roleLoading) return hubNombreCorto;
+    if (adminFlowSurface) {
+      if (rol === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
+      if (rol === 'admin_nacional' || rol === 'admin_club') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
+      return hubNombreCorto;
+    }
     if (rol === 'super_admin') return 'Super Admin';
     if (rol === 'admin_nacional') return 'Admin Nacional';
     if (rol === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
     return hubNombreCorto;
-  }, [session?.user, roleLoading, rol, adminSedeNombre, hubNombreCorto]);
+  }, [session?.user, roleLoading, rol, adminSedeNombre, hubNombreCorto, adminFlowSurface, userProfile]);
 
   const hubChipNavPath = useMemo(
     () => hubChipNavigatePath(rol, roleLoading),
     [rol, roleLoading]
   );
-
-  const adminFlowSurface = useMemo(() => {
-    if (!session?.user || !isPanelAdminUser) return false;
-    const adminContextFlag = readAdminNavContext();
-    const fromAdminNav = Boolean(location.state?.fromAdmin);
-    if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
-    if (adminContextFlag || fromAdminNav) return true;
-    if (pathOnly.startsWith('/torneo') && (adminContextFlag || fromAdminNav)) return true;
-    if (pathOnly.startsWith('/equipo/') && (adminContextFlag || fromAdminNav)) return true;
-    return false;
-  }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
-
-  useEffect(() => {
-    if (!adminMenuOpen) return undefined;
-    const close = (e) => {
-      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target)) {
-        setAdminMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [adminMenuOpen]);
 
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
   const hubInicial = String(hubNombreCorto || '?')
@@ -242,9 +235,13 @@ export default function AppHeader({
   /** Hub inicio con sesión: super admin → [⚙ Admin] + [⏻] sin chip; resto → chip + logout; “Inicio” oculto si >2 controles o super admin. */
   const hubHomeCompactHeader =
     hubDirectLogin && hubInicioPath && Boolean(session?.user);
+  const muestraChipUsuarioHubDerecha =
+    hubDirectLogin &&
+    Boolean(session?.user) &&
+    !(hubHomeCompactHeader && showAdminShortcutHub);
   const hubHeaderControlCount =
     (showAdminShortcutHub ? 1 : 0) +
-    (hubDirectLogin && Boolean(session?.user) ? 1 : 0) +
+    (muestraChipUsuarioHubDerecha ? 1 : 0) +
     (showLogout ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
   /** Admin en hub inicio: ⚙ a la izquierda; título central puede ocultarse si hay muchos controles. */
@@ -613,20 +610,18 @@ export default function AppHeader({
               marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
-            {(hubDirectLogin || adminFlowSurface) && session?.user ? (
+            {((hubDirectLogin && muestraChipUsuarioHubDerecha) || adminFlowSurface) && session?.user ? (
               <div
-                ref={adminFlowSurface ? adminMenuRef : undefined}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: adminFlowSurface ? 4 : undefined,
+                  gap: 4,
                   position: 'relative',
                 }}
               >
                 <button
                   type="button"
                   onClick={() => {
-                    setAdminMenuOpen(false);
                     navigate(adminFlowSurface ? '/admin' : hubChipNavPath);
                   }}
                   aria-label={adminFlowSurface ? 'Ir al panel de administración' : hubChipNavPath === '/admin' ? 'Ir al panel de administración' : 'Ir a mi perfil'}
@@ -634,13 +629,13 @@ export default function AppHeader({
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: compactHubChip ? 4 : 6,
+                    gap: adminFlowSurface ? 4 : compactHubChip ? 4 : 6,
                     maxWidth: adminFlowSurface
-                      ? 'min(52vw, 220px)'
+                      ? 'min(34vw, 132px)'
                       : compactHubChip
                         ? 'min(30vw, 100px)'
                         : 'min(42vw, 160px)',
-                    padding: compactHubChip ? '3px 6px 3px 3px' : '4px 8px 4px 4px',
+                    padding: adminFlowSurface ? '2px 8px 2px 2px' : compactHubChip ? '3px 6px 3px 3px' : '4px 8px 4px 4px',
                     borderRadius: '999px',
                     border: adminFlowSurface ? '1px solid rgba(255,255,255,0.28)' : 'none',
                     background: 'rgba(255,255,255,0.12)',
@@ -650,7 +645,7 @@ export default function AppHeader({
                     minWidth: 0,
                   }}
                 >
-                  {hubFotoUrl ? (
+                  {hubFotoUrl && !adminFlowSurface ? (
                     <img
                       src={hubFotoUrl}
                       alt=""
@@ -666,12 +661,12 @@ export default function AppHeader({
                   ) : (
                     <span
                       style={{
-                        width: compactHubChip ? 22 : 28,
-                        height: compactHubChip ? 22 : 28,
+                        width: adminFlowSurface ? 22 : compactHubChip ? 22 : 28,
+                        height: adminFlowSurface ? 22 : compactHubChip ? 22 : 28,
                         borderRadius: '50%',
                         background: 'linear-gradient(135deg, #667eea, #764ba2)',
                         color: '#fff',
-                        fontSize: compactHubChip ? 10 : 12,
+                        fontSize: adminFlowSurface ? 10 : compactHubChip ? 10 : 12,
                         fontWeight: 800,
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -684,7 +679,7 @@ export default function AppHeader({
                   )}
                   <span
                     style={{
-                      fontSize: compactHubChip ? 10 : 12,
+                      fontSize: adminFlowSurface ? 11 : compactHubChip ? 10 : 12,
                       fontWeight: 700,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -695,74 +690,6 @@ export default function AppHeader({
                     {hubChipLabel}
                   </span>
                 </button>
-                {adminFlowSurface ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setAdminMenuOpen((o) => !o)}
-                      aria-label="Opciones de modo admin"
-                      title="Opciones"
-                      style={{
-                        width: 28,
-                        height: 28,
-                        padding: 0,
-                        borderRadius: '8px',
-                        border: '1px solid rgba(255,255,255,0.22)',
-                        background: 'rgba(255,255,255,0.1)',
-                        color: '#e2e8f0',
-                        fontSize: 14,
-                        fontWeight: 800,
-                        lineHeight: 1,
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    >
-                      ⋮
-                    </button>
-                    {adminMenuOpen ? (
-                      <div
-                        role="menu"
-                        style={{
-                          position: 'absolute',
-                          top: '100%',
-                          right: 0,
-                          marginTop: 8,
-                          minWidth: 168,
-                          padding: '6px 0',
-                          borderRadius: 10,
-                          background: '#1e293b',
-                          border: '1px solid rgba(148,163,184,0.35)',
-                          boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
-                          zIndex: 2000,
-                        }}
-                      >
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setAdminMenuOpen(false);
-                            clearAdminNavContext();
-                            navigate('/');
-                          }}
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: '10px 14px',
-                            border: 'none',
-                            background: 'transparent',
-                            color: '#f1f5f9',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Modo jugador
-                        </button>
-                      </div>
-                    ) : null}
-                  </>
-                ) : null}
               </div>
             ) : null}
             {showAdminShortcutHub && !hubHomeCompactHeader ? adminShortcutButton : null}

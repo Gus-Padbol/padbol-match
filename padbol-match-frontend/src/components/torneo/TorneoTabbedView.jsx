@@ -317,7 +317,7 @@ export default function TorneoTabbedView({
 
   const estadoLower = String(torneo?.estado || '').toLowerCase();
   const esFinalizado = estadoLower === 'finalizado';
-  const puedeCargarResultados = isAdmin && estadoLower === 'en_curso';
+  const puedeCargarResultados = isAdmin && (estadoLower === 'en_curso' || estadoLower === 'activo');
   const hayAlMenosUnResultadoEnPartidos = useMemo(() => {
     return partidos.some((p) => {
       try {
@@ -337,8 +337,10 @@ export default function TorneoTabbedView({
     !hayAlMenosUnResultadoEnPartidos;
   const estadoBadge = useMemo(() => {
     if (estadoLower === 'finalizado') return { label: 'Finalizado', bg: '#fee2e2', color: '#b91c1c' };
+    if (estadoLower === 'en_curso' || estadoLower === 'activo') {
+      return { label: 'En curso', bg: '#dbeafe', color: '#1d4ed8' };
+    }
     if (estadoLower === 'abierto') return { label: 'Inscripción abierta', bg: '#dcfce7', color: '#166534' };
-    if (estadoLower === 'en_curso') return { label: 'En curso', bg: '#dbeafe', color: '#1d4ed8' };
     if (estadoLower === 'planificacion') return { label: 'Próximo', bg: '#e5e7eb', color: '#374151' };
     return null;
   }, [estadoLower]);

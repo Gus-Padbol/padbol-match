@@ -279,9 +279,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
-  const [activeTab, setActiveTab] = useState(() =>
-    sanitizeAdminActiveTab(searchParams.get('tab') || sessionStorage.getItem('adminActiveTab'))
-  );
+  const [activeTab, setActiveTab] = useState(() => {
+    const fromUrl = searchParams.get('tab');
+    if (fromUrl && ADMIN_TABS_ALLOWED.has(fromUrl)) return fromUrl;
+    return 'resumen';
+  });
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);

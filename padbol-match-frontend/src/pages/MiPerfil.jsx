@@ -192,9 +192,11 @@ function instagramUrlFromHandle(handle) {
 function urlComprobanteMercadoPagoReserva(r) {
   const direct = String(r?.mp_comprobante_url || '').trim();
   if (direct) return direct;
-  const id = String(r?.mp_payment_id || '').trim();
-  if (id) return `https://www.mercadopago.com.ar/payments/${encodeURIComponent(id)}`;
   return 'https://www.mercadopago.com.ar/activities';
+}
+
+function puedeMostrarComprobanteMp(r) {
+  return Boolean(String(r?.mp_comprobante_url || '').trim() || String(r?.mp_payment_id || '').trim());
 }
 
 export default function MiPerfil() {
@@ -345,6 +347,7 @@ export default function MiPerfil() {
   /** Vista lectura: `{ row, kind }` con `kind` habitual | ultimo; `null` si no hay ningún id. */
   const [perfilCompaneroDisplay, setPerfilCompaneroDisplay] = useState(null);
   const [companeroSeleccionado, setCompaneroSeleccionado] = useState(null);
+  const [sedesClubHabitual, setSedesClubHabitual] = useState([]);
   const companeroSearchSeqRef = useRef(0);
   const [aliasDuplicado, setAliasDuplicado] = useState(false);
   const [aliasVerificando, setAliasVerificando] = useState(false);
@@ -359,6 +362,22 @@ export default function MiPerfil() {
     [torneoPerfil]
   );
   const paisHtmlRequired = !torneoPerfil || nivelTorneoScope === 'internacional';
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from('sedes')
+      .select('id, nombre')
+      .order('nombre', { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && Array.isArray(data)) setSedesClubHabitual(data);
+        else setSedesClubHabitual([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!torneoIdValido) {
@@ -1751,14 +1770,23 @@ export default function MiPerfil() {
               />
 
               <label style={guestLabelStyle}>Club habitual</label>
-              <input
-                type="text"
+              <select
                 name="ciudad"
-                placeholder="Ej: nombre del club o sede"
-                value={formData.ciudad}
+                value={String(formData.ciudad || '').trim()}
                 onChange={handleChange}
                 style={{ ...guestInputStyle, marginBottom: '14px' }}
-              />
+              >
+                <option value="">Seleccioná tu sede habitual</option>
+                {formData.ciudad &&
+                !sedesClubHabitual.some((s) => String(s.nombre) === String(formData.ciudad).trim()) ? (
+                  <option value={String(formData.ciudad).trim()}>{String(formData.ciudad).trim()}</option>
+                ) : null}
+                {sedesClubHabitual.map((s) => (
+                  <option key={s.id} value={s.nombre}>
+                    {s.nombre}
+                  </option>
+                ))}
+              </select>
 
               <label style={guestLabelStyle}>Fecha de nacimiento</label>
               <input
@@ -2444,14 +2472,23 @@ export default function MiPerfil() {
             />
 
             <label style={labelStyle}>Club habitual</label>
-            <input
-              type="text"
+            <select
               name="ciudad"
-              placeholder="Ej: nombre del club o sede"
-              value={formData.ciudad}
+              value={String(formData.ciudad || '').trim()}
               onChange={handleChange}
               style={{ ...inputStyle, marginBottom: '14px' }}
-            />
+            >
+              <option value="">Seleccioná tu sede habitual</option>
+              {formData.ciudad &&
+              !sedesClubHabitual.some((s) => String(s.nombre) === String(formData.ciudad).trim()) ? (
+                <option value={String(formData.ciudad).trim()}>{String(formData.ciudad).trim()}</option>
+              ) : null}
+              {sedesClubHabitual.map((s) => (
+                <option key={s.id} value={s.nombre}>
+                  {s.nombre}
+                </option>
+              ))}
+            </select>
 
             <label style={labelStyle}>Compañero habitual</label>
             {companeroSeleccionado ? (
@@ -2946,8 +2983,11 @@ export default function MiPerfil() {
                 <div key={r.id} style={{ background: 'white', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '13px', color: '#1e1b4b' }}>{r.sede}</div>
-                      <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>📅 {r.fecha} &nbsp;⏰ {r.hora} &nbsp;⚽ Cancha {r.cancha}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                        📅 {r.fecha} &nbsp;⏰ {r.hora}
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '14px', color: '#1e1b4b', marginTop: '6px' }}>{r.sede}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>⚽ Cancha {r.cancha}</div>
                     </div>
                     <span
                       style={{
@@ -2971,23 +3011,25 @@ export default function MiPerfil() {
                     </div>
                   ) : null}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                    <a
-                      href={urlComprobanteMercadoPagoReserva(r)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        background: '#0ea5e9',
-                        color: '#fff',
-                        textDecoration: 'none',
-                        display: 'inline-block',
-                      }}
-                    >
-                      Ver comprobante
-                    </a>
+                    {puedeMostrarComprobanteMp(r) ? (
+                      <a
+                        href={urlComprobanteMercadoPagoReserva(r)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          background: '#0ea5e9',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          display: 'inline-block',
+                        }}
+                      >
+                        Ver comprobante
+                      </a>
+                    ) : null}
                     {canCancel ? (
                       <button
                         type="button"

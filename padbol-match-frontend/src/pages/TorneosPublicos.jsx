@@ -59,6 +59,8 @@ const estadoStyle = {
   inscripcion_abierta: { label: 'Inscripción abierta', bg: '#22c55e', color: '#fff' },
   abierto: { label: 'Abierto', bg: '#22c55e', color: '#fff' },
   en_curso: { label: 'En curso', bg: '#eab308', color: '#fff' },
+  /** Misma semántica que `en_curso` en la app (listado alineado con detalle). */
+  activo: { label: 'En curso', bg: '#eab308', color: '#fff' },
   finalizado: { label: 'Finalizado', bg: '#ef4444', color: '#fff' },
   cancelado: { label: 'Cancelado', bg: '#94a3b8', color: '#fff' },
 };

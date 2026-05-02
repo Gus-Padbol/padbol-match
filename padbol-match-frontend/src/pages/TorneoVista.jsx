@@ -252,7 +252,8 @@ export default function TorneoVista() {
           </button>
         </div>
       ) : null}
-      {isAdmin && !['en_curso', 'finalizado'].includes(String(torneo.estado || '').toLowerCase()) && (
+      {isAdmin &&
+        !['en_curso', 'activo', 'finalizado'].includes(String(torneo.estado || '').toLowerCase()) && (
         <div className="torneo-acciones torneo-acciones--sobre-violeta">
           {!todosEquiposCompletos ? (
             <p className="torneo-iniciar-aviso">
@@ -270,7 +271,7 @@ export default function TorneoVista() {
         </div>
       )}
       {isAdmin &&
-        String(torneo.estado || '').toLowerCase() === 'en_curso' &&
+        ['en_curso', 'activo'].includes(String(torneo.estado || '').toLowerCase()) &&
         partidos.length > 0 &&
         partidos.every((p) => p.estado === 'finalizado') && (
           <div className="torneo-acciones">

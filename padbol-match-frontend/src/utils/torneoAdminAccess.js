@@ -99,7 +99,7 @@ export function computePuedeGestionarEquiposTorneo({
   userPaisRol,
 }) {
   if (!torneo) return false;
-  if (rol === 'super_admin') return false;
+  if (rol === 'super_admin') return true;
 
   if (rol === 'admin_club' && userSedeId != null && userSedeId !== '') {
     if (mismoIdSedeTorneo(userSedeId, torneo.sede_id)) return true;

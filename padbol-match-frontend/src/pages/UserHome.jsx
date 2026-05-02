@@ -17,30 +17,19 @@ function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
 
-function primeraPalabraTexto(s) {
-  const t = String(s || '').trim();
+function capitalizarPalabraSaludo(w) {
+  const t = String(w || '').trim();
   if (!t) return '';
-  return t.split(/\s+/).filter(Boolean)[0] || '';
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-/** Capitaliza por palabras; una sola palabra en minúsculas → solo inicial mayúscula ("juanpablo" → "Juanpablo"). */
-function capitalizarNombreSaludo(raw) {
-  const s = String(raw || '').trim();
-  if (!s) return '';
-  const words = s.split(/\s+/).filter(Boolean);
-  if (words.length > 1) {
-    return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-  }
-  const w = words[0] || '';
-  if (!w) return '';
-  if (/[a-z][A-Z]/.test(w)) {
-    return w
-      .split(/(?=[A-Z])/)
-      .filter(Boolean)
-      .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-      .join(' ');
-  }
-  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+/** Primera palabra del campo perfil, luego capitalizada ("JUAN PABLO" → "Juan"). */
+function primeraPalabraCapitalizada(val) {
+  const raw = String(val || '').trim();
+  if (!raw) return '';
+  const first = raw.split(/\s+/).filter(Boolean)[0] || '';
+  if (!first) return '';
+  return capitalizarPalabraSaludo(first);
 }
 
 function nombreDesdeProfilesParaSaludo(profilesRow) {
@@ -49,30 +38,46 @@ function nombreDesdeProfilesParaSaludo(profilesRow) {
     const v = String(profilesRow[k] || '').trim();
     if (!v) continue;
     if (k === 'nombre' && esPlaceholderJugador(v)) continue;
-    return v;
+    const out = primeraPalabraCapitalizada(v);
+    if (out) return out;
   }
   return '';
 }
 
+/** Parte local del email: camelCase → primera parte capitalizada; todo minúsculas → solo 1ª mayúscula. */
+function nombreDesdeParteLocalEmail(local) {
+  const s = String(local || '').trim();
+  if (!s) return '';
+  if (/[a-z][A-Z]/.test(s)) {
+    const parts = s.split(/(?=[A-Z])/).filter(Boolean);
+    return capitalizarPalabraSaludo(parts[0] || s);
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 /**
- * Saludo: `profiles.nombre` → `nombre_completo` → `full_name` → parte local del email;
- * capitalización y solo la primera palabra del resultado.
+ * Orden: `profiles` (primera palabra de nombre / nombre_completo / full_name) → parte local del email.
  */
 function obtenerNombreSaludo(authUser, profilesRow) {
   const email = String(authUser?.email || '').trim().toLowerCase();
   const local = email.includes('@') ? email.split('@')[0].trim() : '';
-  let raw = nombreDesdeProfilesParaSaludo(profilesRow);
-  if (!raw) raw = local || '';
-  if (email === PADBOL_SUPER_ADMIN_EMAIL) {
-    const weak =
-      !raw ||
-      esPlaceholderJugador(raw) ||
-      (local && String(raw).trim().toLowerCase() === local.toLowerCase());
-    if (weak) return 'Gus';
+
+  const fromProfile = nombreDesdeProfilesParaSaludo(profilesRow);
+  if (fromProfile) {
+    if (email === PADBOL_SUPER_ADMIN_EMAIL) {
+      const weak =
+        esPlaceholderJugador(fromProfile) ||
+        (local && fromProfile.toLowerCase() === local.toLowerCase());
+      if (weak) return 'Gus';
+    }
+    return fromProfile;
   }
-  if (!raw) return '';
-  const cap = capitalizarNombreSaludo(raw);
-  return primeraPalabraTexto(cap);
+
+  const fromEmail = nombreDesdeParteLocalEmail(local);
+  if (email === PADBOL_SUPER_ADMIN_EMAIL) {
+    if (!fromEmail || (local && fromEmail.toLowerCase() === local.toLowerCase())) return 'Gus';
+  }
+  return fromEmail;
 }
 
 export default function UserHome() {
