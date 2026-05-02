@@ -176,7 +176,19 @@ export default function AppHeader({
     return { email: em };
   }, [session?.user?.email]);
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
-  const rolEffectiveHeader = useMemo(() => rol || readCachedRolHeader(), [rol]);
+  /** Rol desde DB/caché; si aún no hay fila `user_roles` (p. ej. otro proyecto/host), usar rol en JWT de Supabase Auth. */
+  const rolEffectiveHeader = useMemo(() => {
+    const cached = readCachedRolHeader();
+    const fromJwt = (() => {
+      const r = String(
+        session?.user?.app_metadata?.role ?? session?.user?.user_metadata?.role ?? ''
+      )
+        .trim()
+        .toLowerCase();
+      return ADMIN_ROLES_CHIP.includes(r) ? r : null;
+    })();
+    return rol || cached || fromJwt;
+  }, [rol, session?.user?.app_metadata?.role, session?.user?.user_metadata?.role]);
   const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
   const [profilesUsernameClubChip, setProfilesUsernameClubChip] = useState('');
@@ -259,21 +271,31 @@ export default function AppHeader({
   })();
   const hubChipLabel = useMemo(() => {
     if (!session?.user || roleLoading) return hubNombreCorto;
+    const r = rolEffectiveHeader || '';
     if (adminFlowSurface) {
-      if (rol === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
-      if (rol === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
-      if (rol === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
+      if (r === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
+      if (r === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
+      if (r === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
       return hubNombreCorto;
     }
-    if (rol === 'super_admin') return 'Super Admin';
-    if (rol === 'admin_nacional') return 'Admin Nacional';
-    if (rol === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
+    if (r === 'super_admin') return 'Super Admin';
+    if (r === 'admin_nacional') return 'Admin Nacional';
+    if (r === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
     return hubNombreCorto;
-  }, [session?.user, roleLoading, rol, adminSedeNombre, hubNombreCorto, adminFlowSurface, userProfile, profilesUsernameClubChip]);
+  }, [
+    session?.user,
+    roleLoading,
+    rolEffectiveHeader,
+    adminSedeNombre,
+    hubNombreCorto,
+    adminFlowSurface,
+    userProfile,
+    profilesUsernameClubChip,
+  ]);
 
   const hubChipNavPath = useMemo(
-    () => hubChipNavigatePath(rol, roleLoading),
-    [rol, roleLoading]
+    () => hubChipNavigatePath(rolEffectiveHeader, roleLoading),
+    [rolEffectiveHeader, roleLoading]
   );
 
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();

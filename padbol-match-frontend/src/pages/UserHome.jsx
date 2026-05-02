@@ -31,14 +31,6 @@ function nombreDesdeJugadoresPerfil(userProfile) {
   return v;
 }
 
-/** Solo `profiles.nombre` (nunca nombre_completo / full_name, para no mezclar con apellido). */
-function nombreDesdeProfilesSoloNombre(profilesRow) {
-  if (!profilesRow || typeof profilesRow !== 'object') return '';
-  const v = String(profilesRow.nombre || '').trim();
-  if (!v || esPlaceholderJugador(v)) return '';
-  return v;
-}
-
 /** Parte local del email capitalizada (fallback si no hay nombre en perfil). */
 function nombreDesdeParteLocalEmail(local) {
   const s = String(local || '').trim();
@@ -51,19 +43,14 @@ function nombreDesdeParteLocalEmail(local) {
 }
 
 /**
- * Saludo: solo `jugadores_perfil.nombre`, luego solo `profiles.nombre`, luego email local.
- * Nunca alias ni concatenar apellido.
+ * Saludo: únicamente `jugadores_perfil.nombre` (userProfile). Sin profiles, metadata ni full_name.
+ * Si no hay nombre válido → parte local del email.
  */
-function obtenerNombreSaludo(authUser, userProfile, profilesRow) {
-  const email = String(authUser?.email || '').trim().toLowerCase();
-  const local = email.includes('@') ? email.split('@')[0].trim() : '';
-
+function obtenerNombreSaludo(authUser, userProfile) {
   const fromJp = nombreDesdeJugadoresPerfil(userProfile);
   if (fromJp) return fromJp;
-
-  const fromProfiles = nombreDesdeProfilesSoloNombre(profilesRow);
-  if (fromProfiles) return fromProfiles;
-
+  const email = String(authUser?.email || '').trim().toLowerCase();
+  const local = email.includes('@') ? email.split('@')[0].trim() : '';
   return nombreDesdeParteLocalEmail(local);
 }
 
@@ -106,11 +93,22 @@ export default function UserHome() {
     };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    if (!session?.user) return;
+    console.log('DEBUG saludo:', {
+      jugadores_perfil_nombre: userProfile?.nombre,
+      jugadores_perfil_apellido: userProfile?.apellido,
+      profiles_nombre: profilesRow?.nombre,
+      session_email: session?.user?.email,
+      session_metadata: session?.user?.user_metadata,
+    });
+  }, [session?.user, userProfile, profilesRow]);
+
   const lineaSaludo = useMemo(() => {
     if (!session?.user) return '¡Hola! ¿Qué querés hacer hoy?';
-    const p = obtenerNombreSaludo(session.user, userProfile, profilesRow);
+    const p = obtenerNombreSaludo(session.user, userProfile);
     return p ? `¡Hola ${p}! ¿Qué querés hacer hoy?` : '¡Hola! ¿Qué querés hacer hoy?';
-  }, [session?.user, userProfile, profilesRow]);
+  }, [session?.user, userProfile]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
