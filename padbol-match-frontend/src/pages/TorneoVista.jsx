@@ -249,14 +249,21 @@ export default function TorneoVista() {
     isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
 
   const miEquipoEnTorneo = useMemo(() => {
-    const em = String(session?.user?.email || '').trim().toLowerCase();
-    if (!em || !Array.isArray(equipos) || equipos.length === 0) return null;
-    for (const eq of equipos) {
-      const arr = Array.isArray(eq?.jugadores) ? eq.jugadores : [];
-      if (arr.some((j) => String(j?.email || '').trim().toLowerCase() === em)) return eq;
+    if (!session?.user || !Array.isArray(equipos) || equipos.length === 0) return null;
+    const uid = session.user.id;
+    const userEmail = String(session.user.email || '').trim().toLowerCase();
+    for (const equipo of equipos) {
+      const arr = Array.isArray(equipo?.jugadores) ? equipo.jugadores : [];
+      const yaInscripto = arr.some((j) => {
+        const jid = j?.id != null && String(j.id).trim() !== '' ? String(j.id) : null;
+        if (jid != null && uid != null && jid === String(uid)) return true;
+        const je = String(j?.email || '').trim().toLowerCase();
+        return userEmail && je === userEmail;
+      });
+      if (yaInscripto) return equipo;
     }
     return null;
-  }, [equipos, session?.user?.email]);
+  }, [equipos, session?.user?.id, session?.user?.email]);
 
   const bannerInscripcionJugador = useMemo(() => {
     if (!torneo || !session?.user || !mostrarBannerInscripcionPorEstado || modoAdminExplicitoEnVista) return null;
