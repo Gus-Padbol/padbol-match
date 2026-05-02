@@ -27,6 +27,13 @@ const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club'];
 
 const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
 
+/** Misma lista que en torneo admin: mientras carga `user_roles`, el hub ya oculta chip para estos emails. */
+const LEGACY_GLOBAL_ADMIN_EMAILS_HEADER = [
+  PADBOL_SUPER_ADMIN_EMAIL,
+  'admin@padbol.com',
+  'sm@padbol.com',
+];
+
 function esNombrePlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
@@ -273,7 +280,9 @@ export default function AppHeader({
   const hubInicial = String(hubNombreCorto || '?')
     .charAt(0)
     .toUpperCase();
-  const esRolAdminHub = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
+  const esRolAdminHub =
+    ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '') ||
+    (Boolean(roleLoading) && LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(authEmail));
   const showAdminShortcutHub = !hideLogoutEffective && esRolAdminHub && !adminFlowSurface;
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =

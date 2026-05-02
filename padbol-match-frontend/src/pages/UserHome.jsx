@@ -21,21 +21,22 @@ function capitalizarPalabraSaludo(w) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-/** Campo `nombre` tal como está guardado (p. ej. "Juan Pablo"); sin alias ni primera palabra. */
+/**
+ * Solo columna `nombre` de jugadores_perfil (p. ej. "Juan Pablo" o "Gustavo").
+ * No concatena `apellido` ni usa otros campos.
+ */
 function nombreDesdeJugadoresPerfil(userProfile) {
   const v = String(userProfile?.nombre || '').trim();
   if (!v || esPlaceholderJugador(v)) return '';
   return v;
 }
 
-function nombreDesdeProfilesNombreReal(profilesRow) {
+/** Solo `profiles.nombre` (nunca nombre_completo / full_name, para no mezclar con apellido). */
+function nombreDesdeProfilesSoloNombre(profilesRow) {
   if (!profilesRow || typeof profilesRow !== 'object') return '';
-  for (const k of ['nombre', 'nombre_completo', 'full_name']) {
-    const v = String(profilesRow[k] || '').trim();
-    if (!v || esPlaceholderJugador(v)) continue;
-    return v;
-  }
-  return '';
+  const v = String(profilesRow.nombre || '').trim();
+  if (!v || esPlaceholderJugador(v)) return '';
+  return v;
 }
 
 /** Parte local del email capitalizada (fallback si no hay nombre en perfil). */
@@ -50,17 +51,17 @@ function nombreDesdeParteLocalEmail(local) {
 }
 
 /**
- * Saludo: `jugadores_perfil.nombre` → `profiles.nombre` / nombre_completo / full_name → email local.
- * Nunca usa alias.
+ * Saludo: solo `jugadores_perfil.nombre`, luego solo `profiles.nombre`, luego email local.
+ * Nunca alias ni concatenar apellido.
  */
 function obtenerNombreSaludo(authUser, userProfile, profilesRow) {
   const email = String(authUser?.email || '').trim().toLowerCase();
-  const local = email.includes('@') ? email.split('@')[0].trim() : ''; // fallback saludo
+  const local = email.includes('@') ? email.split('@')[0].trim() : '';
 
   const fromJp = nombreDesdeJugadoresPerfil(userProfile);
   if (fromJp) return fromJp;
 
-  const fromProfiles = nombreDesdeProfilesNombreReal(profilesRow);
+  const fromProfiles = nombreDesdeProfilesSoloNombre(profilesRow);
   if (fromProfiles) return fromProfiles;
 
   return nombreDesdeParteLocalEmail(local);
