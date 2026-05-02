@@ -396,12 +396,8 @@ export default function AppHeader({
   if (useAdminMinimalLayout) {
     return (
       <div
+        className="app-header-shell"
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          maxWidth: '100%',
           overflowX: 'hidden',
           minHeight: '56px',
           background: '#0f172a',
@@ -410,12 +406,9 @@ export default function AppHeader({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
-          paddingTop: 'calc(8px + env(safe-area-inset-top, 0px))',
           paddingBottom: '8px',
           paddingLeft: padL,
           paddingRight: padR,
-          boxSizing: 'border-box',
-          zIndex: 1002,
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
@@ -528,12 +521,8 @@ export default function AppHeader({
 
   return (
     <div
+      className="app-header-shell"
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        maxWidth: '100%',
         overflowX: 'hidden',
         minHeight: '56px',
         background: '#0f172a',
@@ -541,12 +530,9 @@ export default function AppHeader({
         gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1fr)',
         alignItems: 'center',
         columnGap: '8px',
-        paddingTop: 'calc(8px + env(safe-area-inset-top, 0px))',
         paddingBottom: '8px',
         paddingLeft: padL,
         paddingRight: padR,
-        boxSizing: 'border-box',
-        zIndex: 1002,
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}
     >

@@ -3,6 +3,8 @@
  * justo debajo del header.
  */
 export const HUB_APP_HEADER_HEIGHT_PX = 56;
+/** Padding vertical del AppHeader (8px arriba + 8px abajo, alineado con AppHeader.jsx). */
+export const APP_HEADER_OUTER_PADDING_PX = 16;
 export const HUB_NAV_HEIGHT_PX = 54;
 export const HUB_CONTENT_PADDING_TOP_PX =
   HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
@@ -50,16 +52,23 @@ export function hubContentPaddingTopPx(pathname) {
 }
 
 /**
- * Offset bajo header fijo (+ barra hub si aplica).
- * El notch lo cubre `padding-top` en `#root` (index.css); aquí solo altura fija para no duplicar safe-area.
+ * Altura ocupada por el AppHeader fijo (minHeight + paddings + safe-area en iOS).
  */
-export function hubContentPaddingTopCss(pathname) {
-  return `${hubContentPaddingTopPx(pathname)}px`;
+export function appHeaderStackHeightCss() {
+  return `calc(${HUB_APP_HEADER_HEIGHT_PX + APP_HEADER_OUTER_PADDING_PX}px + env(safe-area-inset-top, 0px))`;
 }
 
 /**
- * Posición `top` del {@link BottomNav} fijo, alineada bajo el AppHeader que respeta safe-area.
+ * Offset bajo header fijo (+ barra hub si aplica) + chrome del header + safe-area.
+ */
+export function hubContentPaddingTopCss(pathname) {
+  const basePx = hubContentPaddingTopPx(pathname);
+  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX}px + env(safe-area-inset-top, 0px))`;
+}
+
+/**
+ * Posición `top` del {@link BottomNav} fijo, bajo el AppHeader (misma pila que {@link hubContentPaddingTopCss} sin nav).
  */
 export function hubBottomNavFixedTopCss() {
-  return `calc(${HUB_APP_HEADER_HEIGHT_PX}px + env(safe-area-inset-top, 0px))`;
+  return appHeaderStackHeightCss();
 }

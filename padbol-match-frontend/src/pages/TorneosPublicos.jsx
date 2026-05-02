@@ -10,7 +10,7 @@ import {
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
-import { TORNEO_ESTADO_PUBLICO_STYLE } from '../utils/torneoEstadoPublico';
+import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -326,8 +326,7 @@ export default function TorneosPublicos() {
       >
         {torneosOrdenados.map((t) => {
           const sede = sedesMap[String(t.sede_id)];
-          const estadoKey = String(t.estado || '').toLowerCase();
-          const badge = TORNEO_ESTADO_PUBLICO_STYLE[estadoKey] || {
+          const badge = badgeTorneoEstadoPublico(t.estado) || {
             label: t.estado || 'Sin estado',
             bg: '#94a3b8',
             color: '#fff',

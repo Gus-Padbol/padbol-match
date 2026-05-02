@@ -14,6 +14,7 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
+import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -1748,18 +1749,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               ) ? 'fipa' : nivelTorneoRaw;
               const nivelColor   = NIVEL_COLOR[nivelCanonico] || { bg: '#e2e8f0', color: '#475569' };
               const formatoColor = FORMATO_COLOR[torneo.tipo_torneo]  || { bg: '#f3f4f6', color: '#374151' };
-              const estadoRaw = String(torneo.estado || '').trim().toLowerCase();
-              const estadoCanonico = (
-                estadoRaw === 'activo' || estadoRaw === 'abierto'
-              ) ? 'en_curso' : (
-                estadoRaw === 'proximo'
-              ) ? 'planificacion' : estadoRaw;
-              const estadoBadge  = {
-                planificacion: { bg: '#22c55e', color: '#ffffff', label: 'Próximo' },
-                en_curso:      { bg: '#3b82f6', color: '#ffffff', label: 'En curso'      },
-                finalizado:    { bg: '#ef4444', color: '#ffffff', label: 'Finalizado'    },
-                cancelado:     { bg: '#9ca3af', color: '#ffffff', label: 'Cancelado'     },
-              }[estadoCanonico] || { bg: '#9ca3af', color: '#ffffff', label: torneo.estado };
+              const estadoBadge =
+                badgeTorneoEstadoPublico(torneo.estado) || {
+                  bg: '#94a3b8',
+                  color: '#ffffff',
+                  label: String(torneo.estado || '').trim() || '—',
+                };
               // Shared badge style — fixed 120px, centered
               const badge = (bg, col) => ({
                 background: bg, color: col,

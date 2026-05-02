@@ -9,12 +9,30 @@ html {
   min-height: 100vh;
   overflow: auto;
   width: 100%;
+  /* iOS < 11.2 y Safari: barra superior / notch */
+  padding-top: constant(safe-area-inset-top);
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-body,
 #root {
-  padding-top: 0;
+  padding-top: 0 !important;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* AppHeader fijo: safe area dentro del header (no tapar con scroll dinámico de Safari) */
+.app-header-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  z-index: 1002;
+  padding-top: calc(8px + constant(safe-area-inset-top));
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
 }
 
 :root {
@@ -34,14 +52,9 @@ body,
   --pm-shadow-card: 0 8px 28px rgba(15, 23, 42, 0.1);
 }
 
-#root {
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100%;
-}
-
 body {
   margin: 0;
+  padding-top: 0 !important;
   height: auto;
   min-height: 100vh;
   overflow: auto;
@@ -52,6 +65,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mi Perfil: la foto no pegada al borde superior del bloque blanco */
+.mi-perfil-foto-bloque {
+  padding-top: 16px;
 }
 
 code {

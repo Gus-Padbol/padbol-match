@@ -2003,6 +2003,7 @@ export default function MiPerfil() {
 
       <div style={{ background: 'white', borderRadius: '12px', padding: '30px 24px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', marginBottom: '16px', textAlign: 'center' }}>
         {/* Foto de perfil: avatar + overlay + input file */}
+        <div className="mi-perfil-foto-bloque">
         <input
           ref={fileInputRef}
           type="file"
@@ -2092,6 +2093,7 @@ export default function MiPerfil() {
             }}
           />
         </button>
+        </div>
         {fotoPendienteDeSubir ? (
           <button
             type="button"
