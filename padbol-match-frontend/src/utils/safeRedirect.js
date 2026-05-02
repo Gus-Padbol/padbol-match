@@ -18,5 +18,8 @@ export function safeRedirectPath(raw) {
   if (authRedirectValueHasNestedRedirect(t)) return '/';
   if (!t.startsWith('/') || t.startsWith('//')) return '/';
   if (t === '/perfil') return '/mi-perfil';
+  const pathOnly = t.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+  // Post-login siempre al hub jugador; nunca abrir el panel admin directo.
+  if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return '/';
   return t;
 }

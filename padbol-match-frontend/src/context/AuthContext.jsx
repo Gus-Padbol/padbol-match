@@ -83,6 +83,7 @@ async function refreshUserProfile(session, setUserProfile) {
 
 /**
  * Sesión = tiempo real Supabase (onAuthStateChange + getSession).
+ * La navegación tras login/registro la hace {@link AccesoCuenta} (destino por defecto "/").
  */
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);

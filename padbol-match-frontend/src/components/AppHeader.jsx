@@ -392,15 +392,16 @@ export default function AppHeader({
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
-  /** Panel admin: chip solo identidad jugador (@Gus / @Juan), sin texto “← Hub”. */
+  /** Panel admin: chip solo identidad jugador (@Gus / @Juampi), mismo criterio que el hub; usa rol efectivo (JWT/caché) para no quedar en “Admin” mientras carga user_roles. */
   const adminMinimalRolCorto = useMemo(() => {
     if (!session?.user) return '';
-    if (roleLoading) return '…';
-    if (rol === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
-    if (rol === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
-    if (rol === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
+    const r = rolEffectiveHeader || '';
+    if (roleLoading && !r) return '…';
+    if (r === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
+    if (r === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
+    if (r === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
     return 'Admin';
-  }, [session?.user, roleLoading, rol, userProfile, profilesUsernameClubChip]);
+  }, [session?.user, roleLoading, rolEffectiveHeader, userProfile, profilesUsernameClubChip]);
 
   /** Inicial desde `nombre` del perfil (no alias); fallback email. */
   const adminMinimalInicial = useMemo(() => {

@@ -88,6 +88,7 @@ export default function AccesoCuenta() {
       const ue = s.user.email?.trim();
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
+      // Destino post-login: siempre vía safeRedirectPath (nunca /admin → hub en "/").
       const redirectParam = new URLSearchParams(location.search).get('redirect');
       const redirectParamExplicit = redirectParam != null && String(redirectParam).trim() !== '';
       let dest = '/';
