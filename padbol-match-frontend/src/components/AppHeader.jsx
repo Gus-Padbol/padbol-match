@@ -244,6 +244,13 @@ export default function AppHeader({
     [location.pathname]
   );
 
+  /** Rutas del hub jugador (/, /hub, …): aquí nunca va el chip @alias; sí ⚙ Admin + ⏻ para admins. */
+  const hubInicioPath =
+    pathOnly === '/' ||
+    pathOnly === '/inicio' ||
+    pathOnly === '/hub' ||
+    pathOnly === '/home';
+
   const adminFlowSurface = useMemo(() => {
     if (!session?.user || !isPanelAdminUser) return false;
     const adminContextFlag = readAdminNavContext();
@@ -305,16 +312,14 @@ export default function AppHeader({
   const esRolAdminHub =
     ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '') ||
     (Boolean(roleLoading) && LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(authEmail));
-  const showAdminShortcutHub = !hideLogoutEffective && esRolAdminHub && !adminFlowSurface;
+  /** En el hub de inicio (`hubDirectLogin` + /) siempre mostrar ⚙ aunque quede `adminFlowSurface` por contexto; fuera del hub, el atajo se oculta en flujo admin. */
+  const showAdminShortcutHub =
+    !hideLogoutEffective &&
+    esRolAdminHub &&
+    (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
-
-  const hubInicioPath =
-    pathOnly === '/' ||
-    pathOnly === '/inicio' ||
-    pathOnly === '/hub' ||
-    pathOnly === '/home';
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
   const compactHubChip = hubDirectLogin && hubInicioPath && Boolean(session?.user);
 
@@ -337,6 +342,18 @@ export default function AppHeader({
   /** Admin en hub inicio: ⚙ a la izquierda; título central puede ocultarse si hay muchos controles. */
   const adminHubInicioCompacto = hubHomeCompactHeader && showAdminShortcutHub;
   const shouldHideHubCenterTitle = adminHubInicioCompacto || hideHubCenterTitle;
+
+  /** Chip identidad en la barra grid: nunca en hub inicio con `hubDirectLogin` (chip solo en /admin vía layout minimal o en rutas admin/torneo fuera del hub raíz). */
+  const jugadorChipEnHeaderGrid =
+    Boolean(session?.user) &&
+    ((hubDirectLogin && muestraChipUsuarioHubDerecha) ||
+      (adminFlowSurface && !(hubDirectLogin && hubInicioPath)));
+
+  useEffect(() => {
+    if (!hubDirectLogin || !hubInicioPath || !session?.user) return;
+    const email = authEmail;
+    console.log('DEBUG hub admin:', { esRolAdminHub, rol, email });
+  }, [hubDirectLogin, hubInicioPath, session?.user, esRolAdminHub, rol, authEmail]);
 
   const displayBackLabel = useMemo(() => {
     if (backLabel) return backLabel;
@@ -688,7 +705,7 @@ export default function AppHeader({
               marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
             }}
           >
-            {((hubDirectLogin && muestraChipUsuarioHubDerecha) || adminFlowSurface) && session?.user ? (
+            {jugadorChipEnHeaderGrid ? (
               <div
                 style={{
                   display: 'inline-flex',
