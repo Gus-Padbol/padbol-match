@@ -9,8 +9,12 @@ html {
   min-height: 100vh;
   overflow: auto;
   width: 100%;
-  /* Un solo inset arriba (evita sumar safe-area en body + #root) */
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+body,
+#root {
+  padding-top: 0;
 }
 
 :root {

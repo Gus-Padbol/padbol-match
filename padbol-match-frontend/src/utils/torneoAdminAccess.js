@@ -88,8 +88,8 @@ export function computeIsAdminEnTorneo({
 }
 
 /**
- * Botón "Gestionar" equipos del torneo: solo `admin_club` de la sede del torneo o `admin_nacional`
- * del país en torneos nacionales. Sin `super_admin`, sin emails legacy, sin atajo `fromAdmin` / caché.
+ * Botón "Gestionar" en equipos: solo con contexto admin (panel o flag de sesión) y rol aplicable.
+ * `super_admin` / `admin_nacional` no gestionan equipos como jugador sin ese contexto.
  */
 export function computePuedeGestionarEquiposTorneo({
   torneo,
@@ -97,8 +97,12 @@ export function computePuedeGestionarEquiposTorneo({
   rol,
   userSedeId,
   userPaisRol,
+  fromAdmin,
 }) {
   if (!torneo) return false;
+  const ctx = Boolean(fromAdmin);
+  if (!ctx) return false;
+
   if (rol === 'super_admin') return true;
 
   if (rol === 'admin_club' && userSedeId != null && userSedeId !== '') {

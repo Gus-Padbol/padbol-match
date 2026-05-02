@@ -10,6 +10,7 @@ import {
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
+import { TORNEO_ESTADO_PUBLICO_STYLE } from '../utils/torneoEstadoPublico';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -53,17 +54,6 @@ function Row({ icon, label }) {
     </div>
   );
 }
-
-const estadoStyle = {
-  planificacion: { label: 'Próximo', bg: '#22c55e', color: '#fff' },
-  inscripcion_abierta: { label: 'Inscripción abierta', bg: '#22c55e', color: '#fff' },
-  abierto: { label: 'Abierto', bg: '#22c55e', color: '#fff' },
-  en_curso: { label: 'En curso', bg: '#eab308', color: '#fff' },
-  /** Misma semántica que `en_curso` en la app (listado alineado con detalle). */
-  activo: { label: 'En curso', bg: '#eab308', color: '#fff' },
-  finalizado: { label: 'Finalizado', bg: '#ef4444', color: '#fff' },
-  cancelado: { label: 'Cancelado', bg: '#94a3b8', color: '#fff' },
-};
 
 function normalizeSearchText(s) {
   return String(s || '')
@@ -337,7 +327,7 @@ export default function TorneosPublicos() {
         {torneosOrdenados.map((t) => {
           const sede = sedesMap[String(t.sede_id)];
           const estadoKey = String(t.estado || '').toLowerCase();
-          const badge = estadoStyle[estadoKey] || {
+          const badge = TORNEO_ESTADO_PUBLICO_STYLE[estadoKey] || {
             label: t.estado || 'Sin estado',
             bg: '#94a3b8',
             color: '#fff',

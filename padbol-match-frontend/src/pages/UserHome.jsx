@@ -11,8 +11,6 @@ import { useAuth } from '../context/AuthContext';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { supabase } from '../supabaseClient';
 
-const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
-
 function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
@@ -23,28 +21,24 @@ function capitalizarPalabraSaludo(w) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-/** Primera palabra del campo perfil, luego capitalizada ("JUAN PABLO" → "Juan"). */
-function primeraPalabraCapitalizada(val) {
-  const raw = String(val || '').trim();
-  if (!raw) return '';
-  const first = raw.split(/\s+/).filter(Boolean)[0] || '';
-  if (!first) return '';
-  return capitalizarPalabraSaludo(first);
+/** Campo `nombre` tal como está guardado (p. ej. "Juan Pablo"); sin alias ni primera palabra. */
+function nombreDesdeJugadoresPerfil(userProfile) {
+  const v = String(userProfile?.nombre || '').trim();
+  if (!v || esPlaceholderJugador(v)) return '';
+  return v;
 }
 
-function nombreDesdeProfilesParaSaludo(profilesRow) {
+function nombreDesdeProfilesNombreReal(profilesRow) {
   if (!profilesRow || typeof profilesRow !== 'object') return '';
   for (const k of ['nombre', 'nombre_completo', 'full_name']) {
     const v = String(profilesRow[k] || '').trim();
-    if (!v) continue;
-    if (k === 'nombre' && esPlaceholderJugador(v)) continue;
-    const out = primeraPalabraCapitalizada(v);
-    if (out) return out;
+    if (!v || esPlaceholderJugador(v)) continue;
+    return v;
   }
   return '';
 }
 
-/** Parte local del email: camelCase → primera parte capitalizada; todo minúsculas → solo 1ª mayúscula. */
+/** Parte local del email capitalizada (fallback si no hay nombre en perfil). */
 function nombreDesdeParteLocalEmail(local) {
   const s = String(local || '').trim();
   if (!s) return '';
@@ -56,28 +50,20 @@ function nombreDesdeParteLocalEmail(local) {
 }
 
 /**
- * Orden: `profiles` (primera palabra de nombre / nombre_completo / full_name) → parte local del email.
+ * Saludo: `jugadores_perfil.nombre` → `profiles.nombre` / nombre_completo / full_name → email local.
+ * Nunca usa alias.
  */
-function obtenerNombreSaludo(authUser, profilesRow) {
+function obtenerNombreSaludo(authUser, userProfile, profilesRow) {
   const email = String(authUser?.email || '').trim().toLowerCase();
-  const local = email.includes('@') ? email.split('@')[0].trim() : '';
+  const local = email.includes('@') ? email.split('@')[0].trim() : ''; // fallback saludo
 
-  const fromProfile = nombreDesdeProfilesParaSaludo(profilesRow);
-  if (fromProfile) {
-    if (email === PADBOL_SUPER_ADMIN_EMAIL) {
-      const weak =
-        esPlaceholderJugador(fromProfile) ||
-        (local && fromProfile.toLowerCase() === local.toLowerCase());
-      if (weak) return 'Gus';
-    }
-    return fromProfile;
-  }
+  const fromJp = nombreDesdeJugadoresPerfil(userProfile);
+  if (fromJp) return fromJp;
 
-  const fromEmail = nombreDesdeParteLocalEmail(local);
-  if (email === PADBOL_SUPER_ADMIN_EMAIL) {
-    if (!fromEmail || (local && fromEmail.toLowerCase() === local.toLowerCase())) return 'Gus';
-  }
-  return fromEmail;
+  const fromProfiles = nombreDesdeProfilesNombreReal(profilesRow);
+  if (fromProfiles) return fromProfiles;
+
+  return nombreDesdeParteLocalEmail(local);
 }
 
 export default function UserHome() {
@@ -119,25 +105,11 @@ export default function UserHome() {
     };
   }, [session?.user?.id]);
 
-  useEffect(() => {
-    if (!session?.user) return;
-    console.log('[UserHome] session.user (completo)', session.user);
-    console.log('[UserHome] userProfile jugadores_perfil (completo)', userProfile);
-    console.log('[UserHome] profiles fila (completo)', profilesRow);
-    const em = String(session.user.email || '').trim().toLowerCase();
-    if (em === PADBOL_SUPER_ADMIN_EMAIL) {
-      console.log(
-        '[UserHome] padbolinternacional@gmail.com — verificación profile (profiles + jugadores_perfil)',
-        { profilesRow, userProfile }
-      );
-    }
-  }, [session?.user, userProfile, profilesRow]);
-
   const lineaSaludo = useMemo(() => {
     if (!session?.user) return '¡Hola! ¿Qué querés hacer hoy?';
-    const p = obtenerNombreSaludo(session.user, profilesRow);
+    const p = obtenerNombreSaludo(session.user, userProfile, profilesRow);
     return p ? `¡Hola ${p}! ¿Qué querés hacer hoy?` : '¡Hola! ¿Qué querés hacer hoy?';
-  }, [session?.user, profilesRow]);
+  }, [session?.user, userProfile, profilesRow]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
@@ -170,8 +142,6 @@ export default function UserHome() {
           display: 'block',
           marginLeft: 'auto',
           marginRight: 'auto',
-          marginTop: '16px',
-          paddingTop: 0,
           width: 'auto',
           height: '120px',
           minWidth: '120px',

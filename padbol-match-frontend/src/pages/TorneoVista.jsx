@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
-import { setAdminNavContext } from '../utils/adminNavContext';
+import { setAdminNavContext, readAdminNavContext } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
 export default function TorneoVista() {
@@ -40,6 +40,7 @@ export default function TorneoVista() {
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const sedeTorneo = torneo ? sedesMap[String(torneo.sede_id)] : null;
   const fromAdmin = Boolean(location.state?.fromAdmin);
+  const adminGestionaEquiposContext = fromAdmin || readAdminNavContext();
   const isAdmin = useMemo(
     () =>
       computeIsAdminEnTorneo({
@@ -61,8 +62,9 @@ export default function TorneoVista() {
         rol,
         userSedeId,
         userPaisRol,
+        fromAdmin: adminGestionaEquiposContext,
       }),
-    [torneo, sedeTorneo, rol, userSedeId, userPaisRol]
+    [torneo, sedeTorneo, rol, userSedeId, userPaisRol, adminGestionaEquiposContext]
   );
   const torneoNavState = useMemo(
     () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),
@@ -239,6 +241,22 @@ export default function TorneoVista() {
   };
 
   const estadoTorneoLower = String(torneo?.estado || '').toLowerCase();
+  const adminGestionandoEnTorneo =
+    isAdmin && (fromAdmin || readAdminNavContext());
+  const inscripcionAbiertaParaJugador = ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
+  const puedeMostrarIniciarTorneo =
+    isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
+
+  const miEquipoEnTorneo = useMemo(() => {
+    const em = String(session?.user?.email || '').trim().toLowerCase();
+    if (!em || !Array.isArray(equipos) || equipos.length === 0) return null;
+    for (const eq of equipos) {
+      const arr = Array.isArray(eq?.jugadores) ? eq.jugadores : [];
+      if (arr.some((j) => String(j?.email || '').trim().toLowerCase() === em)) return eq;
+    }
+    return null;
+  }, [equipos, session?.user?.email]);
+
   const adminTorneoBar = torneo ? (
     <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
       {estadoTorneoLower !== 'finalizado' ? (
@@ -252,8 +270,7 @@ export default function TorneoVista() {
           </button>
         </div>
       ) : null}
-      {isAdmin &&
-        !['en_curso', 'activo', 'finalizado'].includes(String(torneo.estado || '').toLowerCase()) && (
+      {puedeMostrarIniciarTorneo && (
         <div className="torneo-acciones torneo-acciones--sobre-violeta">
           {!todosEquiposCompletos ? (
             <p className="torneo-iniciar-aviso">
@@ -349,6 +366,51 @@ export default function TorneoVista() {
           marginBottom: '10px',
         }}
       />
+      {torneo && session?.user && inscripcionAbiertaParaJugador && !adminGestionandoEnTorneo ? (
+        <div
+          style={{
+            margin: '0 12px 16px',
+            padding: '14px 16px',
+            borderRadius: '14px',
+            background: 'rgba(255,255,255,0.95)',
+            border: '1px solid #c7d2fe',
+            boxShadow: '0 4px 14px rgba(99,102,241,0.15)',
+          }}
+        >
+          {miEquipoEnTorneo ? (
+            <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#166534', textAlign: 'center' }}>
+              ✓ Ya estás inscripto — {nombreEquipoMostrado(miEquipoEnTorneo)}
+            </p>
+          ) : (
+            <>
+              <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#475569', textAlign: 'center', lineHeight: 1.4 }}>
+                Inscripción abierta. Creá un equipo o unite a uno existente.
+              </p>
+              <button
+                type="button"
+                className="btn-agregar-jugadores"
+                onClick={() =>
+                  navigate(`/torneo/${torneoId}/equipos`, torneoNavState ? { state: torneoNavState } : undefined)
+                }
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  borderRadius: '12px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                  color: '#fff',
+                }}
+              >
+                ➕ Inscribirme / Crear equipo
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
       <TorneoTabbedView
         torneo={torneo}
         equipos={equipos}

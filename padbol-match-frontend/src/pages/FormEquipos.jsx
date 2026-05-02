@@ -633,8 +633,9 @@ export default function FormEquipos() {
         rol,
         userSedeId,
         userPaisRol,
+        fromAdmin: Boolean(location.state?.fromAdmin) || readAdminNavContext(),
       }),
-    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol]
+    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
   );
 
   const torneoNavStateForm = useMemo(() => {

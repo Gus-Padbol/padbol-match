@@ -67,7 +67,7 @@ export function isPerfilTorneoCompleto(perfil) {
   const { nombre, apellido } = nombreApellidoEfectivos(p);
   const categoria = String(p.categoria ?? p.nivel ?? '').trim();
   if (!whatsappPerfilValido(p)) return false;
-  return nombre.length > 0 && apellido.length > 0 && categoria.length > 0;
+  return nombre.length > 0 && categoria.length > 0;
 }
 
 /** Identidad de torneo sin cuenta Supabase */

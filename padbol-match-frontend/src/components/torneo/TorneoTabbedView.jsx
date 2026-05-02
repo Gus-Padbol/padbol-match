@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
+import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
 import { formatNivelTorneo, formatTipoTorneo } from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../../utils/jugadorPerfil';
 import '../../styles/TorneoVista.css';
@@ -295,7 +296,7 @@ export default function TorneoTabbedView({
   navigate,
   session,
   isAdmin = false,
-  /** Solo club/nacional de alcance: botón "Gestionar" en equipos (no super_admin ni modo jugador con fromAdmin). */
+  /** Gestionar equipos: rol aplicable y contexto admin (`fromAdmin` / sesión panel). */
   puedeGestionarEquiposTorneo = false,
   /** Se reenvía en `navigate(..., { state })` al abrir gestión de equipo (mantener fromAdmin). */
   navigateState = null,
@@ -335,15 +336,7 @@ export default function TorneoTabbedView({
     estadoLower !== 'activo' &&
     !esFinalizado &&
     !hayAlMenosUnResultadoEnPartidos;
-  const estadoBadge = useMemo(() => {
-    if (estadoLower === 'finalizado') return { label: 'Finalizado', bg: '#fee2e2', color: '#b91c1c' };
-    if (estadoLower === 'en_curso' || estadoLower === 'activo') {
-      return { label: 'En curso', bg: '#dbeafe', color: '#1d4ed8' };
-    }
-    if (estadoLower === 'abierto') return { label: 'Inscripción abierta', bg: '#dcfce7', color: '#166534' };
-    if (estadoLower === 'planificacion') return { label: 'Próximo', bg: '#e5e7eb', color: '#374151' };
-    return null;
-  }, [estadoLower]);
+  const estadoBadge = useMemo(() => badgeTorneoEstadoPublico(torneo?.estado), [torneo?.estado]);
   const esGruposKnockout = torneo?.tipo_torneo === 'grupos_knockout';
   const esKnockoutPuro = torneo?.tipo_torneo === 'knockout';
   const muestraTabLlave = esGruposKnockout || esKnockoutPuro;

@@ -40,7 +40,7 @@ import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
-import { nombreDesdeSesionSinEmail, getDisplayName } from '../utils/displayName';
+import { getDisplayName } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -111,6 +111,18 @@ function escapeIlikeLiteral(value) {
     .replace(/\\/g, '\\\\')
     .replace(/%/g, '\\%')
     .replace(/_/g, '\\_');
+}
+
+/** Columnas `nombre` + `apellido`; si falta `apellido`, parte desde `nombre` con espacios (datos viejos). */
+function nombreApellidoEditDesdePerfilRow(row) {
+  if (!row || typeof row !== 'object') return { nombre: '', apellido: '' };
+  const ap = String(row.apellido ?? '').trim();
+  const nomRaw = String(row.nombre || '').trim();
+  if (ap) return { nombre: nomRaw, apellido: ap };
+  if (!nomRaw) return { nombre: '', apellido: '' };
+  const parts = nomRaw.split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return { nombre: nomRaw, apellido: '' };
+  return { nombre: parts[0], apellido: parts.slice(1).join(' ') };
 }
 
 const CATEGORIA_COLOR = {
@@ -288,8 +300,8 @@ export default function MiPerfil() {
   const [waConfirmLocal, setWaConfirmLocal] = useState('');
   const waTorneoFormInitRef = useRef(false);
   const [nombreRegistroTorneo, setNombreRegistroTorneo] = useState('');
+  const [apellidoRegistroTorneo, setApellidoRegistroTorneo] = useState('');
   const [emailRegistro, setEmailRegistro] = useState('');
-  const [nombreTorneoCompleto, setNombreTorneoCompleto] = useState('');
   const [passRegistroTorneo, setPassRegistroTorneo] = useState('');
   const [passRegistroTorneo2, setPassRegistroTorneo2] = useState('');
   const [torneoPerfil, setTorneoPerfil] = useState(null);
@@ -311,6 +323,7 @@ export default function MiPerfil() {
   const perfilFaltaCamposEsenciales = useMemo(() => {
     const p = perfil;
     if (!p || typeof p !== 'object') return true;
+    if (!String(p.nombre || '').trim()) return true;
     if (!String(p.foto_url || '').trim()) return true;
     if (!String(p.pais || '').trim()) return true;
     if (!String(p.lateralidad || '').trim()) return true;
@@ -324,6 +337,8 @@ export default function MiPerfil() {
   );
 
   const [formData, setFormData] = useState({
+    nombre: '',
+    apellido: '',
     lateralidad: 'Diestro',
     nivel: '5ta',
     pais: '',
@@ -613,21 +628,11 @@ export default function MiPerfil() {
       setWaNumeroLocal(local);
       setWaConfirmLocal('');
     }
-
-    const base =
-      String(perfil?.nombre || '').trim() ||
-      String(cuentaDeSesion?.nombre || '').trim() ||
-      (session?.user ? nombreDesdeSesionSinEmail(userProfile, session, '') : '');
-    setNombreTorneoCompleto((prev) => (prev.trim() ? prev : base));
   }, [
     editando,
     sessionOwnerEmail,
-    cuentaDeSesion?.nombre,
     cuentaDeSesion?.whatsapp,
-    perfil?.nombre,
     perfil?.whatsapp,
-    session,
-    userProfile,
   ]);
 
   const fetchPerfil = async () => {
@@ -659,7 +664,10 @@ export default function MiPerfil() {
 
       if (data) {
         setPerfil(data);
+        const na = nombreApellidoEditDesdePerfilRow(data);
         setFormData({
+          nombre: na.nombre,
+          apellido: na.apellido,
           lateralidad: data.lateralidad || 'Diestro',
           nivel: data.nivel || '5ta',
           pais: data.pais || '',
@@ -674,15 +682,13 @@ export default function MiPerfil() {
           mostrar_torneos_jugados: Boolean(data.mostrar_torneos_jugados),
         });
         {
-          const rawNom = String(data.nombre || '').trim();
-          const parts = rawNom.split(/\s+/).filter(Boolean);
           const wa =
             (cuentaDeSesion?.email || '').trim().toLowerCase() === owner.toLowerCase()
               ? String(cuentaDeSesion?.whatsapp || '').trim()
               : '';
           persistJugadorPerfil({
-            nombre: parts[0] || rawNom,
-            apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
+            nombre: na.nombre,
+            apellido: na.apellido,
             categoria: String(data.nivel || '').trim(),
             ...(wa ? { whatsapp: wa } : {}),
             ...(data?.foto_url ? { foto_url: data.foto_url } : {}),
@@ -924,11 +930,12 @@ export default function MiPerfil() {
         return null;
       });
 
-      const rawNom = String((rowAfter?.nombre || getDisplayName(userProfile, session) || '')).trim();
-      const parts = rawNom.split(/\s+/).filter(Boolean);
+      const naFoto = nombreApellidoEditDesdePerfilRow(rowAfter || {});
+      const nomF = naFoto.nombre || String(rowAfter?.nombre || '').trim() || 'Jugador';
+      const apF = naFoto.apellido;
       persistJugadorPerfil({
-        nombre: parts[0] || rawNom || 'Jugador',
-        apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
+        nombre: nomF,
+        apellido: apF,
         categoria: String(rowAfter?.nivel || formData.nivel || '5ta').trim(),
         whatsapp: String(rowAfter?.whatsapp || userProfile?.whatsapp || '').trim(),
         email: owner,
@@ -960,10 +967,10 @@ export default function MiPerfil() {
 
     try {
       const fe = {};
-      const nom = nombreRegistroTorneo.trim();
-      const partsNom = nom.split(/\s+/).filter(Boolean);
-      if (partsNom.length < 2) {
-        fe.nombre = 'Completa nombre y apellido.';
+      const nom = String(nombreRegistroTorneo || '').trim();
+      const apellReg = String(apellidoRegistroTorneo || '').trim();
+      if (!nom) {
+        fe.nombre = 'Completá tu nombre.';
       }
 
       const emRaw = emailRegistro.trim();
@@ -1021,11 +1028,12 @@ export default function MiPerfil() {
         return;
       }
 
+      const nombreAuthMeta = [nom, apellReg].filter(Boolean).join(' ').trim();
       const { data: authData, error: authErr } = await handleAuthOnce({
         kind: 'signUp',
         email: emailAuth,
         password: passRegistroTorneo,
-        options: { data: { nombre: partsNom.join(' '), whatsapp: wa } },
+        options: { data: { nombre: nombreAuthMeta, whatsapp: wa } },
       });
       if (authErr) {
         console.log('ERROR SIGNUP:', authErr);
@@ -1043,7 +1051,7 @@ export default function MiPerfil() {
         );
         return;
       }
-      const nombreCli = nom;
+      const nombreCli = [nom, apellReg].filter(Boolean).join(' ').trim();
       const paisGuardado = paisPayloadSegunTorneo(torneoPerfil, formData.pais);
 
       const { error: cliErr } = await supabase
@@ -1077,7 +1085,8 @@ export default function MiPerfil() {
         {
           user_id: user?.id ?? null,
           email: owner,
-          nombre: nombreCli,
+          nombre: nom,
+          apellido: apellReg || null,
           ...payload,
         },
         { onConflict: 'email' }
@@ -1090,8 +1099,8 @@ export default function MiPerfil() {
 
       void refreshSession();
       persistJugadorPerfil({
-        nombre: partsNom[0],
-        apellido: partsNom.slice(1).join(' '),
+        nombre: nom,
+        apellido: apellReg,
         categoria: String(formData.nivel || '').trim(),
         whatsapp: wa,
         email: owner,
@@ -1140,11 +1149,12 @@ export default function MiPerfil() {
         return;
       }
 
-      const np = String(nombreTorneoCompleto).trim().split(/\s+/).filter(Boolean);
-      if (np.length < 2) {
-        setErrorMsg('Completa nombre y apellido.');
+      const nombreTrim = String(formData.nombre || '').trim();
+      if (!nombreTrim) {
+        setErrorMsg('Completá tu nombre.');
         return;
       }
+      const apellidoTrim = String(formData.apellido || '').trim();
 
       if (String(formData.alias || '').trim() && aliasDuplicado) {
         setErrorMsg('Este alias ya está en uso, elegí otro.');
@@ -1169,8 +1179,6 @@ export default function MiPerfil() {
         return;
       }
       const waFinal = formatWhatsAppE164(waCodigoPais, local);
-
-      const nombreGuardar = String(nombreTorneoCompleto).trim();
 
       setIsSubmitting(true);
 
@@ -1207,7 +1215,8 @@ export default function MiPerfil() {
       const payloadDb = {
         user_id: userId,
         email: owner,
-        nombre: nombreGuardar,
+        nombre: nombreTrim,
+        apellido: apellidoTrim || null,
         whatsapp: waFinal,
         ...payload,
       };
@@ -1246,9 +1255,10 @@ export default function MiPerfil() {
         return;
       }
 
+      const nombreClienteDisplay = [nombreTrim, apellidoTrim].filter(Boolean).join(' ').trim();
       const { error: errCli } = await supabase
         .from('clientes')
-        .update({ whatsapp: waFinal, nombre: nombreGuardar })
+        .update({ whatsapp: waFinal, nombre: nombreClienteDisplay })
         .eq('email', owner);
       if (errCli) {
         console.error(errCli);
@@ -1262,11 +1272,9 @@ export default function MiPerfil() {
 
       await fetchPerfil();
       {
-        const raw = String((nombreGuardar || perfil?.nombre || '')).trim();
-        const parts = raw.split(/\s+/).filter(Boolean);
         persistJugadorPerfil({
-          nombre: parts[0] || raw,
-          apellido: parts.length > 1 ? parts.slice(1).join(' ') : '',
+          nombre: nombreTrim,
+          apellido: apellidoTrim,
           categoria: String(formData.nivel || '').trim(),
           whatsapp: waFinal,
           email: owner,
@@ -1483,7 +1491,7 @@ export default function MiPerfil() {
             </p>
             <form onSubmit={handleRegistroCuenta}>
               <label style={guestLabelStyle}>
-                Nombre y apellido {reqAst}
+                Nombre {reqAst}
               </label>
               <input
                 type="text"
@@ -1492,11 +1500,20 @@ export default function MiPerfil() {
                   setNombreRegistroTorneo(e.target.value);
                   setRegistroFieldErrors((p) => ({ ...p, nombre: '' }));
                 }}
-                placeholder="Ej: Juan Pérez"
+                placeholder="Ej: Juan Pablo"
                 style={{ ...guestInputStyle, marginBottom: regErr('nombre') ? '6px' : '14px', border: regBorder('nombre') }}
-                autoComplete="name"
+                autoComplete="given-name"
               />
               {regErrP('nombre')}
+              <label style={guestLabelStyle}>Apellido</label>
+              <input
+                type="text"
+                value={apellidoRegistroTorneo}
+                onChange={(e) => setApellidoRegistroTorneo(e.target.value)}
+                placeholder="Opcional"
+                style={{ ...guestInputStyle, marginBottom: '14px' }}
+                autoComplete="family-name"
+              />
 
               <label style={guestLabelStyle}>
                 Email {reqAst}
@@ -1897,7 +1914,12 @@ export default function MiPerfil() {
   const aliasTituloGrande = editando
     ? String(formData.alias || '').trim()
     : String(perfil?.alias || '').trim();
-  const nombreDebajoAlias = editando ? String(nombreTorneoCompleto || '').trim() : nombreCompletoTitulo;
+  const textoNombreColumnas = perfil
+    ? [String(perfil.nombre || '').trim(), String(perfil.apellido || '').trim()].filter(Boolean).join(' ').trim()
+    : '';
+  const nombreDebajoAlias = editando
+    ? [String(formData.nombre || '').trim(), String(formData.apellido || '').trim()].filter(Boolean).join(' ').trim()
+    : textoNombreColumnas || nombreCompletoTitulo;
 
   return (
     <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
@@ -2256,14 +2278,26 @@ export default function MiPerfil() {
           <form onSubmit={handleGuardar}>
             <h4 style={{ margin: '0 0 16px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Editar datos</h4>
 
-            <label style={labelStyle}>Nombre y apellido *</label>
+            <label style={labelStyle}>Nombre {reqAst}</label>
             <input
               type="text"
-              value={nombreTorneoCompleto}
-              onChange={(e) => setNombreTorneoCompleto(e.target.value)}
-              placeholder="Ej: Juan Pérez"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              placeholder="Ej: Juan Pablo"
+              style={{ ...inputStyle, marginBottom: '10px' }}
+              autoComplete="given-name"
+              required
+            />
+            <label style={labelStyle}>Apellido</label>
+            <input
+              type="text"
+              name="apellido"
+              value={formData.apellido}
+              onChange={handleChange}
+              placeholder="Opcional"
               style={{ ...inputStyle, marginBottom: '14px' }}
-              autoComplete="name"
+              autoComplete="family-name"
             />
 
             <label style={labelStyle}>Alias</label>
@@ -2744,30 +2778,34 @@ export default function MiPerfil() {
                   setWaNumeroLocal('');
                   setWaCodigoPais('+54');
                   waTorneoFormInitRef.current = false;
-                  setNombreTorneoCompleto('');
                   setPassRegistroTorneo('');
                   setPassRegistroTorneo2('');
                   setCompaneroBusqueda('');
                   setCompaneroOpciones([]);
                   setCompaneroMenuAbierto(false);
                   setCompaneroSeleccionado(null);
-                  setFormData((prev) => ({
-                    ...prev,
-                    companero_id: perfil?.companero_id != null && String(perfil.companero_id).trim()
-                      ? String(perfil.companero_id).trim()
-                      : null,
-                    lateralidad: perfil?.lateralidad || prev.lateralidad,
-                    nivel: perfil?.nivel || prev.nivel,
-                    pais: perfil?.pais || '',
-                    localidad: perfil?.localidad != null ? String(perfil.localidad) : '',
-                    ciudad: perfil?.ciudad || '',
-                    alias: perfil?.alias != null ? String(perfil.alias) : '',
-                    instagram: instagramHandleFromStored(perfil?.instagram_url),
-                    fecha_nacimiento: perfil?.fecha_nacimiento || '',
-                    numero_fipa: perfil?.numero_fipa || '',
-                    es_federado: perfil?.es_federado || false,
-                    mostrar_torneos_jugados: Boolean(perfil?.mostrar_torneos_jugados),
-                  }));
+                  setFormData((prev) => {
+                    const na = nombreApellidoEditDesdePerfilRow(perfil || {});
+                    return {
+                      ...prev,
+                      nombre: na.nombre,
+                      apellido: na.apellido,
+                      companero_id: perfil?.companero_id != null && String(perfil.companero_id).trim()
+                        ? String(perfil.companero_id).trim()
+                        : null,
+                      lateralidad: perfil?.lateralidad || prev.lateralidad,
+                      nivel: perfil?.nivel || prev.nivel,
+                      pais: perfil?.pais || '',
+                      localidad: perfil?.localidad != null ? String(perfil.localidad) : '',
+                      ciudad: perfil?.ciudad || '',
+                      alias: perfil?.alias != null ? String(perfil.alias) : '',
+                      instagram: instagramHandleFromStored(perfil?.instagram_url),
+                      fecha_nacimiento: perfil?.fecha_nacimiento || '',
+                      numero_fipa: perfil?.numero_fipa || '',
+                      es_federado: perfil?.es_federado || false,
+                      mostrar_torneos_jugados: Boolean(perfil?.mostrar_torneos_jugados),
+                    };
+                  });
                 }}
                 style={{ flex: 1, padding: '11px', background: 'transparent', color: '#666', border: '1px solid #ccc', borderRadius: '5px', cursor: 'pointer' }}
               >

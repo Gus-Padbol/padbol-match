@@ -293,7 +293,7 @@ export default function AppHeader({
   const muestraChipUsuarioHubDerecha =
     hubDirectLogin &&
     Boolean(session?.user) &&
-    !(hubHomeCompactHeader && showAdminShortcutHub);
+    !(hubHomeCompactHeader && esRolAdminHub);
   const hubHeaderControlCount =
     (showAdminShortcutHub ? 1 : 0) +
     (muestraChipUsuarioHubDerecha ? 1 : 0) +
