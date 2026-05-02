@@ -13,7 +13,8 @@ import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
-import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
+import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
+import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { getCroppedImgBlob } from '../utils/cropImage';
 
@@ -614,6 +615,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setEditTorneoForm({
       nombre:       torneo.nombre       || '',
       nivel_torneo: torneo.nivel_torneo || '',
+      categoria:    torneo.categoria    || CATEGORIA_TORNEO_DEFAULT,
       tipo_torneo:  torneo.tipo_torneo  || '',
       fecha_inicio: torneo.fecha_inicio || '',
       fecha_fin:    torneo.fecha_fin    || '',
@@ -622,11 +624,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   const guardarTorneo = async (torneoId) => {
+    if (!String(editTorneoForm.categoria || '').trim()) {
+      alert('Seleccioná la categoría del torneo');
+      return;
+    }
     setSavingTorneo(true);
     try {
       const body = {
         ...editTorneoForm,
         sede_id: editTorneoForm.sede_id ? parseInt(editTorneoForm.sede_id) : null,
+        categoria: String(editTorneoForm.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
       };
       const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, {
         method: 'PUT',
@@ -1803,6 +1810,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             <option value="grupos_knockout">Grupos + Knockout</option>
                           </select>
                         </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Categoría *</label>
+                          <select
+                            style={inp}
+                            value={editTorneoForm.categoria || CATEGORIA_TORNEO_DEFAULT}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, categoria: e.target.value }))}
+                            required
+                          >
+                            {TORNEO_CATEGORIA_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Fecha inicio</label>
                           <input type="date" style={inp} value={editTorneoForm.fecha_inicio} onChange={e => setEditTorneoForm(p => ({ ...p, fecha_inicio: e.target.value }))} />
@@ -1848,6 +1870,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         {torneo.nivel_torneo
                           ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
                           : null}
+                        <span style={badge('#f0fdf4', '#166534')}>{formatCategoriaTorneo(torneo.categoria)}</span>
                         {torneo.tipo_torneo
                           ? <span style={badge(formatoColor.bg, formatoColor.color)}>{formatTipoTorneo(torneo.tipo_torneo)}</span>
                           : null}

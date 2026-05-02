@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
-import { formatNivelTorneo, formatTipoTorneo } from '../../utils/torneoFormatters';
+import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../../utils/jugadorPerfil';
 import '../../styles/TorneoVista.css';
 
@@ -339,6 +339,17 @@ export default function TorneoTabbedView({
     !esFinalizado &&
     !hayAlMenosUnResultadoEnPartidos;
   const estadoBadge = useMemo(() => badgeTorneoEstadoPublico(torneo?.estado), [torneo?.estado]);
+
+  useEffect(() => {
+    if (!torneo) return;
+    console.log('[TorneoTabbedView] estado actual del torneo (API/DB):', {
+      estado: torneo.estado,
+      estadoNormalizado: String(torneo.estado || '').toLowerCase(),
+      torneoId: torneo.id,
+      nombre: torneo.nombre,
+    });
+  }, [torneo?.id, torneo?.estado]);
+
   const esGruposKnockout = torneo?.tipo_torneo === 'grupos_knockout';
   const esKnockoutPuro = torneo?.tipo_torneo === 'knockout';
   const muestraTabLlave = esGruposKnockout || esKnockoutPuro;
@@ -1086,8 +1097,8 @@ export default function TorneoTabbedView({
         </div>
         {sedeTexto ? <p>{sedeTexto}</p> : null}
         <p>
-          {formatNivelTorneo(torneo?.nivel_torneo)} • {formatTipoTorneo(torneo?.tipo_torneo)} • {formatFecha(torneo?.fecha_inicio)}{' '}
-          a {formatFecha(torneo?.fecha_fin)}
+          {formatNivelTorneo(torneo?.nivel_torneo)} • {formatCategoriaTorneo(torneo?.categoria)} •{' '}
+          {formatTipoTorneo(torneo?.tipo_torneo)} • {formatFecha(torneo?.fecha_inicio)} a {formatFecha(torneo?.fecha_fin)}
         </p>
       </div>
 

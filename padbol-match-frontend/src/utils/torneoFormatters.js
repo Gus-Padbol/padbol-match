@@ -42,3 +42,14 @@ export function formatNivelTorneo(nivel) {
   if (n === 'local') return 'Local';
   return capitalizeFirstAfterUnderscores(nivel);
 }
+
+/**
+ * @param {string | null | undefined} c Valor de `torneos.categoria`
+ * @returns {string}
+ */
+export function formatCategoriaTorneo(c) {
+  const v = String(c || '').trim();
+  if (!v) return 'Libre';
+  if (v === 'Libre') return 'Libre (todas las categorías)';
+  return v;
+}

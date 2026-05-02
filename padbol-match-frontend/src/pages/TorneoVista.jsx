@@ -243,7 +243,8 @@ export default function TorneoVista() {
   const estadoTorneoLower = String(torneo?.estado || '').toLowerCase();
   /** Solo `state.fromAdmin`: el flag de sesión no debe ocultar inscripción a quien entra desde el hub. */
   const modoAdminExplicitoEnVista = fromAdmin;
-  const inscripcionAbiertaParaJugador = ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
+  /** Banner inscripción: todos los estados salvo `finalizado` (incluye planificación, en curso, etc.). */
+  const mostrarBannerInscripcionPorEstado = estadoTorneoLower !== 'finalizado';
   const puedeMostrarIniciarTorneo =
     isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
 
@@ -258,7 +259,7 @@ export default function TorneoVista() {
   }, [equipos, session?.user?.email]);
 
   const bannerInscripcionJugador = useMemo(() => {
-    if (!torneo || !session?.user || !inscripcionAbiertaParaJugador || modoAdminExplicitoEnVista) return null;
+    if (!torneo || !session?.user || !mostrarBannerInscripcionPorEstado || modoAdminExplicitoEnVista) return null;
     const navEquipos =
       fromAdmin && torneoNavState
         ? { state: torneoNavState }
@@ -288,7 +289,7 @@ export default function TorneoVista() {
   }, [
     torneo,
     session?.user,
-    inscripcionAbiertaParaJugador,
+    mostrarBannerInscripcionPorEstado,
     modoAdminExplicitoEnVista,
     miEquipoEnTorneo,
     torneoId,

@@ -562,7 +562,18 @@ function generarGruposKnockout(equipos, torneoId, sedeId) {
 // ===== TORNEOS =====
 app.post('/api/torneos', async (req, res) => {
   try {
-    const { nombre, sede_id, nivel_torneo, tipo_torneo, fecha_inicio, fecha_fin, cantidad_equipos, es_multisede, created_by } = req.body;
+    const {
+      nombre,
+      sede_id,
+      nivel_torneo,
+      tipo_torneo,
+      categoria,
+      fecha_inicio,
+      fecha_fin,
+      cantidad_equipos,
+      es_multisede,
+      created_by,
+    } = req.body;
 
     const { data, error } = await supabase
       .from('torneos')
@@ -571,6 +582,7 @@ app.post('/api/torneos', async (req, res) => {
         sede_id: sede_id || null,
         nivel_torneo,
         tipo_torneo,
+        categoria: categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre',
         estado: 'planificacion',
         fecha_inicio,
         fecha_fin,
@@ -660,12 +672,16 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
 app.put('/api/torneos/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, nivel_torneo, tipo_torneo, estado, fecha_inicio, fecha_fin } = req.body;
+    const { nombre, nivel_torneo, tipo_torneo, categoria, estado, fecha_inicio, fecha_fin } = req.body;
 
     const patch = { updated_at: new Date() };
     if (nombre !== undefined) patch.nombre = nombre;
     if (nivel_torneo !== undefined) patch.nivel_torneo = nivel_torneo;
     if (tipo_torneo !== undefined) patch.tipo_torneo = tipo_torneo;
+    if (categoria !== undefined) {
+      patch.categoria =
+        categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre';
+    }
     if (estado !== undefined) patch.estado = estado;
     if (fecha_inicio !== undefined) patch.fecha_inicio = fecha_inicio;
     if (fecha_fin !== undefined) patch.fecha_fin = fecha_fin;

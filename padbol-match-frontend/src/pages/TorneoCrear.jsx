@@ -9,6 +9,7 @@ import '../styles/TorneoCrear.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
+import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 
 export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null }) {
   const [sedes, setSedes] = useState([]);
@@ -17,6 +18,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     nombre: '',
     sede_id: '',
     nivel_torneo: 'club',
+    categoria: CATEGORIA_TORNEO_DEFAULT,
     tipo_torneo: 'round_robin',
     fecha_inicio: '',
     fecha_fin: '',
@@ -66,6 +68,11 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       setLoading(false);
       return;
     }
+    if (!String(formData.categoria || '').trim()) {
+      setError('Seleccioná la categoría del torneo');
+      setLoading(false);
+      return;
+    }
 
     if (!formData.es_multisede && !formData.sede_id) {
       setError('Selecciona una sede (o marca multisede)'); 
@@ -81,6 +88,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
           nombre: formData.nombre,
           sede_id: formData.es_multisede ? null : parseInt(formData.sede_id),
           nivel_torneo: formData.nivel_torneo,
+          categoria: String(formData.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
           tipo_torneo: formData.tipo_torneo,
           fecha_inicio: formData.fecha_inicio,
           fecha_fin: formData.fecha_fin,
@@ -172,6 +180,17 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
               </select>
             </div>
           )}
+
+          <div className="form-group">
+            <label>Categoría *</label>
+            <select name="categoria" value={formData.categoria} onChange={handleChange} required>
+              {TORNEO_CATEGORIA_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="form-group">
             <label>Formato *</label>
