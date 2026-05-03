@@ -115,6 +115,7 @@ async function adminListScopeFromRequest(req) {
     pais: row?.pais || null,
     superA: isSuperAdminApi(email, rol),
     row,
+    authUserId: user.id ?? null,
   };
 }
 
@@ -392,6 +393,16 @@ app.post('/api/reservas', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
+    const authUser = await authUserFromBearer(req);
+    const emailNorm = String(email).trim().toLowerCase();
+    const user_id =
+      authUser?.id &&
+      String(authUser.email || '')
+        .trim()
+        .toLowerCase() === emailNorm
+        ? authUser.id
+        : null;
+
     // Verificar double-booking
     const { data: existentes, error: errCheck } = await supabase
       .from('reservas')
@@ -439,6 +450,7 @@ app.post('/api/reservas', async (req, res) => {
         precio: parseInt(precio),
         estado: estadoFinal,
         duracion: duracionMin,
+        ...(user_id ? { user_id } : {}),
       }])
       .select();
 
@@ -506,6 +518,8 @@ app.get('/api/reservas', async (req, res) => {
           return res.json([]);
         }
         query = query.in('sede', nombres);
+      } else if (scope.authUserId) {
+        query = query.eq('user_id', scope.authUserId);
       } else {
         return res.json([]);
       }

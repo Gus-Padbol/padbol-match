@@ -684,7 +684,7 @@ export default function MiPerfil() {
     fetchPerfil();
     fetchReservas();
     fetchCreditos();
-  }, [sessionOwnerEmail, location.search, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionOwnerEmail, session?.user?.id, location.search, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (loading || !sessionOwnerEmail) return;
@@ -790,14 +790,16 @@ export default function MiPerfil() {
   };
 
   const fetchReservas = async () => {
-    if (!sessionOwnerEmail) return;
-    const emailNorm = String(sessionOwnerEmail).trim().toLowerCase();
+    const uid = session?.user?.id;
+    if (!uid) {
+      setReservas([]);
+      return;
+    }
     try {
-      // Tabla `reservas`: columna del contacto es `email` (ver POST /api/reservas en padbol-backend/server.js).
       const { data, error } = await supabase
         .from('reservas')
         .select('id, sede, fecha, hora, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url')
-        .eq('email', emailNorm)
+        .eq('user_id', uid)
         .order('fecha', { ascending: false })
         .limit(20);
       if (error) {
@@ -809,7 +811,7 @@ export default function MiPerfil() {
           raw: error,
         });
       } else {
-        console.log('[MiPerfil] reservas por email:', emailNorm, 'filas:', Array.isArray(data) ? data.length : 0);
+        console.log('[MiPerfil] reservas por user_id:', uid, 'filas:', Array.isArray(data) ? data.length : 0);
       }
       setReservas(data || []);
     } catch {
