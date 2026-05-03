@@ -28,6 +28,7 @@ const emptyForm = () => ({
   nombre: '',
   direccion: '',
   ciudad: '',
+  provincia: '',
   pais: 'Argentina',
   latitud: '',
   longitud: '',
@@ -109,6 +110,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
         nombre: form.nombre.trim(),
         direccion: form.direccion.trim() || null,
         ciudad: form.ciudad.trim() || null,
+        provincia: form.provincia.trim() || null,
         pais: form.pais.trim() || null,
         latitud: form.latitud,
         longitud: form.longitud,
@@ -245,6 +247,13 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
             <input style={inputStyle} value={form.direccion} onChange={(e) => setField('direccion', e.target.value)} />
             <label style={{ ...labelStyle, marginTop: 12 }}>Ciudad</label>
             <input style={inputStyle} value={form.ciudad} onChange={(e) => setField('ciudad', e.target.value)} />
+            <label style={{ ...labelStyle, marginTop: 12 }}>Provincia / Estado / Región</label>
+            <input
+              style={inputStyle}
+              value={form.provincia}
+              onChange={(e) => setField('provincia', e.target.value)}
+              placeholder="Opcional"
+            />
             <label style={{ ...labelStyle, marginTop: 12 }}>País</label>
             <select style={inputStyle} value={form.pais} onChange={(e) => setField('pais', e.target.value)}>
               {paises.map((p) => (
@@ -307,7 +316,12 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               onChange={(e) => isSuper && setField('numero_licencia', e.target.value)}
             />
             <label style={{ ...labelStyle, marginTop: 12 }}>Fecha de contrato</label>
-            <input style={inputStyle} type="date" value={form.fecha_contrato} onChange={(e) => setField('fecha_contrato', e.target.value)} />
+            <input
+              style={inputStyle}
+              type="date"
+              value={form.fecha_contrato}
+              onChange={(e) => setField('fecha_contrato', e.target.value)}
+            />
             <label style={{ ...labelStyle, marginTop: 12 }}>Tipo</label>
             <select style={inputStyle} value={form.tipo_licencia} onChange={(e) => setField('tipo_licencia', e.target.value)}>
               <option value="club_afiliado">Club Afiliado</option>

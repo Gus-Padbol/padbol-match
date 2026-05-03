@@ -73,6 +73,14 @@ function normalizeHexSedeAdmin(raw) {
 
 const ADMIN_TABS_ALLOWED = new Set(['resumen', 'torneos', 'reservas', 'validaciones', 'mi_sede', 'config', 'sedes_pendientes']);
 
+/** Igual que `ADMIN_EMAILS` en App.js: emails con alcance global (torneos/reservas sin filtrar por sede). */
+const ADMIN_EMAILS_LEGACY_SUPER = [
+  'padbolinternacional@gmail.com',
+  'admin@padbol.com',
+  'sm@padbol.com',
+  'juanpablo@padbol.com',
+];
+
 function sanitizeAdminActiveTab(raw) {
   const t = String(raw || '').trim();
   return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
@@ -258,8 +266,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   // Legacy email-based flags (kept for backward compatibility while roles roll out)
   const isSuperAdmin =
-    rol === 'super_admin' ||
-    ['padbolinternacional@gmail.com', 'admin@padbol.com', 'sm@padbol.com', 'juanpablo@padbol.com'].includes(currentEmail);
+    rol === 'super_admin' || ADMIN_EMAILS_LEGACY_SUPER.includes(currentEmail);
   const isAdmin = isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club' ||
     ['admin@padbol.com', 'sm@padbol.com', 'juanpablo@padbol.com'].includes(currentEmail);
 
@@ -438,8 +445,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       torneoById[t.id] = t;
     });
 
-    const superAdminByEmail = currentEmail === 'padbolinternacional@gmail.com';
-    if (isSuperAdmin || superAdminByEmail) {
+    if (isSuperAdmin) {
       const acum = {
         reservas: { ARS: 0, USD: 0, EUR: 0 },
         inscripciones: { ARS: 0, USD: 0, EUR: 0 },
@@ -745,63 +751,72 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const fetchData = async () => {
     try {
-      const superAdminByEmail = currentEmail === 'padbolinternacional@gmail.com';
-      // Cargar sedes primero para poder resolver moneda por sede
-      let sedesData = [];
+      let allSedesRows = [];
       try {
         const { data: sedesRows, error: sedesErr } = await supabase
           .from('sedes')
           .select('id, nombre, ciudad, pais, moneda');
         if (!sedesErr) {
-          sedesData = sedesRows || [];
-          if (isSuperAdmin || superAdminByEmail) {
-            console.log('[Admin] sedes para super admin', sedesData);
+          allSedesRows = sedesRows || [];
+          if (isSuperAdmin) {
+            console.log('[Admin] sedes para super admin', allSedesRows);
           } else {
-            console.log('[Admin] sedes cargadas', sedesData);
+            console.log('[Admin] sedes cargadas', allSedesRows);
           }
-
-          // Filter sedes by role scope only when it's not super admin.
-          if (!(isSuperAdmin || superAdminByEmail)) {
-            if (esAdminClub && sedeId != null && sedeId !== '') {
-              sedesData = sedesData.filter((s) => mismoIdSede(s.id, sedeId));
-            }
-            // admin_nacional: filter by pais (stored in user_role_data)
-            const roleData = (() => { try { return JSON.parse(localStorage.getItem('user_role_data') || '{}'); } catch { return {}; } })();
-            if (esAdminNacional && roleData.pais) {
-              sedesData = sedesData.filter(s => s.pais && s.pais.includes(roleData.pais.replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim()));
-            }
-          }
-
-          const nextSedesMap = {};
-          sedesData.forEach((s) => { nextSedesMap[s.id] = s; });
-          setSedesMap(nextSedesMap);
-          console.log('[Admin] sedesMap', nextSedesMap);
         }
       } catch { /* sedes opcionales */ }
 
-      // nombre de sede → moneda (ej: "Padbol Vienna" → "EUR")
-      const sedeMonedaMap = {};
-      sedesData.forEach(s => {
-        if (s.nombre && s.moneda) sedeMonedaMap[s.nombre.trim().toLowerCase()] = s.moneda;
-      });
+      /** Sedes del alcance del rol (para filtrar reservas/torneos). Super: todas. */
+      let sedesAlcance = [];
+      if (isSuperAdmin) {
+        sedesAlcance = allSedesRows;
+      } else if (esAdminClub && sedeId != null && sedeId !== '') {
+        sedesAlcance = allSedesRows.filter((s) => mismoIdSede(s.id, sedeId));
+      } else if (esAdminNacional) {
+        const roleData = (() => {
+          try {
+            return JSON.parse(localStorage.getItem('user_role_data') || '{}');
+          } catch {
+            return {};
+          }
+        })();
+        const paisAdmin = roleData.pais
+          ? String(roleData.pais).replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim()
+          : '';
+        if (paisAdmin) {
+          sedesAlcance = allSedesRows.filter(
+            (s) => s.pais && String(s.pais).includes(paisAdmin)
+          );
+        } else {
+          sedesAlcance = [];
+        }
+      } else {
+        sedesAlcance = [];
+      }
 
-      // Cargar reservas
+      /** Mapa de sedes: super ve todas las sedes (nombres en torneos de cualquier sede); el resto solo su alcance. */
+      const sedesParaMapa = isSuperAdmin ? allSedesRows : sedesAlcance;
+      const nextSedesMap = {};
+      sedesParaMapa.forEach((s) => {
+        nextSedesMap[s.id] = s;
+      });
+      setSedesMap(nextSedesMap);
+      console.log('[Admin] sedesMap', nextSedesMap);
+
       const resRes = await fetch(`${apiBaseUrl}/api/reservas`);
       let resData = await resRes.json();
 
-      // Reservas solo del alcance del rol (admin_club / admin_nacional); sin mezclar otras sedes.
-      if (!isSuperAdmin && !superAdminByEmail) {
-        if (sedesData.length === 0) resData = [];
-        else resData = resData.filter((r) => filaDentroDelAlcanceSedes(r, sedesData));
+      if (!isSuperAdmin) {
+        if (sedesAlcance.length === 0) resData = [];
+        else resData = resData.filter((r) => filaDentroDelAlcanceSedes(r, sedesAlcance));
       }
       setReservas(resData);
 
-      // Cargar torneos (filter by sede scope for non-super-admin)
       const tornRes = await fetch(`${apiBaseUrl}/api/torneos`);
       let tornData = await tornRes.json();
-      if (!isSuperAdmin && !superAdminByEmail) {
-        if (sedesData.length === 0) tornData = [];
-        else tornData = tornData.filter((t) => filaDentroDelAlcanceSedes(t, sedesData));
+      if (!isSuperAdmin) {
+        if (sedesAlcance.length === 0) tornData = [];
+        else tornData = tornData.filter((t) => filaDentroDelAlcanceSedes(t, sedesAlcance));
       }
       setTorneos(tornData);
 
@@ -1437,7 +1452,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ? Object.values(sedesMap).find((s) => mismoIdSede(s.id, sedeId)) || null
       : null;
   const tituloPanelAdmin = (() => {
-    if (currentEmail === 'padbolinternacional@gmail.com' || rol === 'super_admin') {
+    if (isSuperAdmin) {
       return '🌐 Panel Super Admin';
     }
     if (esAdminClub && sedeClubHeader?.nombre) {
