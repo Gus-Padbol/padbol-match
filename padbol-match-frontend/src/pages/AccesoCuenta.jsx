@@ -58,6 +58,9 @@ export default function AccesoCuenta() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegPassword2, setShowRegPassword2] = useState(false);
+  const [regNombre, setRegNombre] = useState('');
+  const [regApellido, setRegApellido] = useState('');
+  const [regGenero, setRegGenero] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
 
   const handleAccesoBack = useCallback(() => {
@@ -116,6 +119,9 @@ export default function AccesoCuenta() {
     setShowLoginPassword(false);
     setShowRegPassword(false);
     setShowRegPassword2(false);
+    setRegNombre('');
+    setRegApellido('');
+    setRegGenero('');
   }, [modo]);
 
   const handleIngresar = async (e) => {
@@ -172,12 +178,34 @@ export default function AccesoCuenta() {
       setErrorMsg('Las contraseñas no coinciden.');
       return;
     }
+    const nom = String(regNombre || '').trim();
+    const ap = String(regApellido || '').trim();
+    const gen = String(regGenero || '').trim();
+    if (!nom) {
+      setErrorMsg('Completá tu nombre.');
+      return;
+    }
+    if (!ap) {
+      setErrorMsg('Completá tu apellido.');
+      return;
+    }
+    if (gen !== 'masculino' && gen !== 'femenino') {
+      setErrorMsg('Seleccioná género (Masculino o Femenino).');
+      return;
+    }
     setBusy(true);
     try {
       const { data, error } = await handleAuthOnce({
         kind: 'signUp',
         email: em,
         password,
+        options: {
+          data: {
+            nombre: nom,
+            apellido: ap,
+            genero: gen,
+          },
+        },
       });
       if (error) {
         setErrorMsg(mensajeErrorAuthSupabase(error.message));
@@ -377,6 +405,94 @@ export default function AccesoCuenta() {
           </form>
         ) : (
           <form onSubmit={handleRegistrar}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
+                marginBottom: '6px',
+              }}
+            >
+              Nombre <span style={{ color: '#fecaca' }}>*</span>
+            </label>
+            <input
+              className="acceso-cuenta-input"
+              value={regNombre}
+              onChange={(e) => setRegNombre(e.target.value)}
+              type="text"
+              autoComplete="given-name"
+              placeholder="Ej: Juan"
+              style={{
+                width: '100%',
+                padding: '14px',
+                marginBottom: '14px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                boxSizing: 'border-box',
+                fontSize: '16px',
+                background: '#ffffff',
+              }}
+            />
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
+                marginBottom: '6px',
+              }}
+            >
+              Apellido <span style={{ color: '#fecaca' }}>*</span>
+            </label>
+            <input
+              className="acceso-cuenta-input"
+              value={regApellido}
+              onChange={(e) => setRegApellido(e.target.value)}
+              type="text"
+              autoComplete="family-name"
+              placeholder="Ej: Pérez"
+              style={{
+                width: '100%',
+                padding: '14px',
+                marginBottom: '14px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                boxSizing: 'border-box',
+                fontSize: '16px',
+                background: '#ffffff',
+              }}
+            />
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
+                marginBottom: '6px',
+              }}
+            >
+              Género <span style={{ color: '#fecaca' }}>*</span>
+            </label>
+            <select
+              className="acceso-cuenta-input"
+              value={regGenero}
+              onChange={(e) => setRegGenero(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '14px',
+                marginBottom: '14px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                boxSizing: 'border-box',
+                fontSize: '16px',
+                background: '#ffffff',
+              }}
+            >
+              <option value="">— Elegir —</option>
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
+            </select>
             <label
               style={{
                 display: 'block',

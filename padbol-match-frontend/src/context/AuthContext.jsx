@@ -52,11 +52,17 @@ async function refreshUserProfile(session, setUserProfile) {
     return;
   }
 
+  const meta = session?.user?.user_metadata || {};
+  const nombreMeta = String(meta.nombre || '').trim();
+  const apellidoMeta = String(meta.apellido || '').trim();
+  const generoMeta = String(meta.genero || '').trim();
   const insertRow = {
     user_id: userId,
-    nombre: 'Jugador',
+    nombre: nombreMeta || 'Jugador',
+    apellido: apellidoMeta || null,
     alias: '',
   };
+  if (generoMeta) insertRow.genero = generoMeta;
   if (email) {
     insertRow.email = email;
   }

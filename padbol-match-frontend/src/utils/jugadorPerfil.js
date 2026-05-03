@@ -69,14 +69,18 @@ export function whatsappPerfilValido(perfil) {
   return whatsappDigitsValido(wa);
 }
 
-/** Perfil mínimo torneo: nombre, apellido, categoría y WhatsApp válido (obligatorio). */
+/** Perfil mínimo torneo: nombre, apellido, género, categoría, lateralidad y WhatsApp válido. */
 export function isPerfilTorneoCompleto(perfil) {
   const p = perfil ?? readJugadorPerfil();
   if (!p || typeof p !== 'object') return false;
-  const { nombre, apellido } = nombreApellidoEfectivos(p);
+  const nombre = String(p.nombre ?? '').trim();
+  const apellido = String(p.apellido ?? '').trim();
   const categoria = String(p.categoria ?? p.nivel ?? '').trim();
+  const lateralidad = String(p.lateralidad ?? '').trim();
+  const genero = String(p.genero ?? '').trim();
   if (!whatsappPerfilValido(p)) return false;
-  return nombre.length > 0 && categoria.length > 0;
+  if (!nombre || !apellido || !categoria || !lateralidad || !genero) return false;
+  return true;
 }
 
 /** Identidad de torneo sin cuenta Supabase */

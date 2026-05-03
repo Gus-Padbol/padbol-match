@@ -8,7 +8,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
+import { PERFIL_CHANGE_EVENT, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 
 const LS_SALUDO_NOMBRE = 'padbol_nombre_saludo';
 const LS_SALUDO_UID = 'padbol_nombre_saludo_uid';
@@ -28,8 +28,8 @@ function escribirNombreSaludoCache(userId, userProfile) {
   if (!userId || !userProfile) return;
   try {
     const ns = String(userProfile.nombre_saludo || '').trim();
-    const nom = String(userProfile.nombre || '').trim();
-    const v = ns || nom;
+    const full = nombreCompletoJugadorPerfil(userProfile).trim();
+    const v = ns || full;
     if (!v) return;
     localStorage.setItem(LS_SALUDO_NOMBRE, v);
     localStorage.setItem(LS_SALUDO_UID, String(userId));
@@ -66,6 +66,16 @@ function primerNombreDesdePerfil(userProfile) {
   if (!v || esPlaceholderJugador(v)) return '';
   const first = v.split(/\s+/).filter(Boolean)[0] || '';
   return first ? capitalizarPalabraSaludo(first) : '';
+}
+
+/** Saludo con nombre + apellido (capitalizado); no usa email. */
+function nombreApellidoSaludoDesdePerfil(userProfile) {
+  const full = nombreCompletoJugadorPerfil(userProfile).trim();
+  if (!full) return '';
+  const parts = full.split(/\s+/).filter(Boolean);
+  if (!parts.length) return '';
+  if (esPlaceholderJugador(parts[0])) return '';
+  return parts.map(capitalizarPalabraSaludo).join(' ');
 }
 
 export default function UserHome() {
@@ -113,6 +123,8 @@ export default function UserHome() {
       const mostrar = ns.charAt(0).toUpperCase() + ns.slice(1);
       return `¡Hola ${mostrar}! ${sufijo}`;
     }
+    const nomAp = nombreApellidoSaludoDesdePerfil(userProfile);
+    if (nomAp) return `¡Hola ${nomAp}! ${sufijo}`;
     const nom = primerNombreDesdePerfil(userProfile);
     if (nom) return `¡Hola ${nom}! ${sufijo}`;
     if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;

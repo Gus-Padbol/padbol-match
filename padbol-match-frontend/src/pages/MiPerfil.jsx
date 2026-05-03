@@ -340,6 +340,15 @@ export default function MiPerfil() {
   const [torneoPerfil, setTorneoPerfil] = useState(null);
   /** Errores por campo en formulario registro sin sesión */
   const [registroFieldErrors, setRegistroFieldErrors] = useState({});
+  const [fichaFieldErrors, setFichaFieldErrors] = useState({});
+  const fichErr = (k) => fichaFieldErrors[k];
+  const fichErrP = (k) =>
+    fichErr(k) ? (
+      <p style={{ color: '#d32f2f', fontSize: '12px', marginTop: '-4px', marginBottom: '8px', fontWeight: 600 }}>
+        {fichErr(k)}
+      </p>
+    ) : null;
+  const fichBorder = (k) => (fichErr(k) ? '2px solid #d32f2f' : '1px solid #ddd');
 
   /** Sin sesión: pantalla única de alta de cuenta + ficha. */
   const esRegistroSinSesion = Boolean(!authLoading && !sessionOwnerEmail);
@@ -352,12 +361,13 @@ export default function MiPerfil() {
     [location.state, torneoIdValido, redirectAfterAuth]
   );
 
-  /** Sin fila o falta foto, país, lateralidad o categoría en `jugadores_perfil`. */
+  /** Sin fila o faltan datos obligatorios (foto no obligatoria). */
   const perfilFaltaCamposEsenciales = useMemo(() => {
     const p = perfil;
     if (!p || typeof p !== 'object') return true;
     if (!String(p.nombre || '').trim()) return true;
-    if (!String(p.foto_url || '').trim()) return true;
+    if (!String(p.apellido || '').trim()) return true;
+    if (!String(p.genero || '').trim()) return true;
     if (!String(p.pais || '').trim()) return true;
     if (!String(p.lateralidad || '').trim()) return true;
     if (!String(p.nivel || '').trim()) return true;
@@ -372,6 +382,7 @@ export default function MiPerfil() {
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
+    genero: '',
     nombre_saludo: '',
     lateralidad: 'Diestro',
     nivel: '5ta',
@@ -751,6 +762,7 @@ export default function MiPerfil() {
         setFormData({
           nombre: na.nombre,
           apellido: na.apellido,
+          genero: data.genero != null ? String(data.genero).trim() : '',
           nombre_saludo: data.nombre_saludo != null ? String(data.nombre_saludo) : '',
           lateralidad: data.lateralidad || 'Diestro',
           nivel: data.nivel || '5ta',
@@ -1039,7 +1051,11 @@ export default function MiPerfil() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    const nextVal = type === 'checkbox' ? checked : value;
+    setFormData((prev) => ({ ...prev, [name]: nextVal }));
+    if (['nombre', 'apellido', 'genero', 'nivel', 'lateralidad'].includes(name)) {
+      setFichaFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleRegistroCuenta = async (e) => {
@@ -1057,6 +1073,16 @@ export default function MiPerfil() {
       const apellReg = String(apellidoRegistroTorneo || '').trim();
       if (!nom) {
         fe.nombre = 'Completá tu nombre.';
+      }
+      if (!apellReg) {
+        fe.apellido = 'Completá tu apellido.';
+      }
+      const genReg = String(formData.genero || '').trim();
+      if (!genReg || (genReg !== 'masculino' && genReg !== 'femenino')) {
+        fe.genero = 'Seleccioná género (Masculino o Femenino).';
+      }
+      if (!String(formData.lateralidad || '').trim()) {
+        fe.lateralidad = 'Seleccioná lateralidad.';
       }
 
       const emRaw = emailRegistro.trim();
@@ -1083,7 +1109,7 @@ export default function MiPerfil() {
       const wa = formatWhatsAppE164(waCodigoPais, local);
 
       if (!String(formData.nivel || '').trim()) {
-        fe.categoria = 'Selecciona tu categoría.';
+        fe.categoria = 'Seleccioná tu categoría.';
       }
 
       if (!passRegistroTorneo && !passRegistroTorneo2) {
@@ -1134,12 +1160,18 @@ export default function MiPerfil() {
         return;
       }
 
-      const nombreAuthMeta = [nom, apellReg].filter(Boolean).join(' ').trim();
       const { data: authData, error: authErr } = await handleAuthOnce({
         kind: 'signUp',
         email: emailAuth,
         password: passRegistroTorneo,
-        options: { data: { nombre: nombreAuthMeta, whatsapp: wa } },
+        options: {
+          data: {
+            nombre: nom,
+            apellido: apellReg,
+            genero: genReg,
+            whatsapp: wa,
+          },
+        },
       });
       if (authErr) {
         console.log('ERROR SIGNUP:', authErr);
@@ -1174,6 +1206,7 @@ export default function MiPerfil() {
       const payload = {
         lateralidad: formData.lateralidad,
         nivel: formData.nivel,
+        genero: genReg,
         pendiente_validacion: true,
         pais: paisGuardado,
         localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
@@ -1194,7 +1227,7 @@ export default function MiPerfil() {
           user_id: user?.id ?? null,
           email: owner,
           nombre: nom,
-          apellido: apellReg || null,
+          apellido: apellReg,
           ...payload,
         },
         { onConflict: 'email' }
@@ -1209,6 +1242,7 @@ export default function MiPerfil() {
       persistJugadorPerfil({
         nombre: nom,
         apellido: apellReg,
+        genero: genReg,
         nombre_saludo: String(formData.nombre_saludo || '').trim(),
         categoria: String(formData.nivel || '').trim(),
         whatsapp: wa,
@@ -1241,6 +1275,7 @@ export default function MiPerfil() {
     perfilSubmitLockRef.current = true;
     setErrorMsg('');
     setSuccessMsg('');
+    setFichaFieldErrors({});
 
     try {
       const owner = sessionOwnerEmail;
@@ -1253,17 +1288,21 @@ export default function MiPerfil() {
         setErrorMsg(errPais);
         return;
       }
-      if (!String(formData.nivel || '').trim()) {
-        setErrorMsg('Selecciona tu categoría.');
-        return;
-      }
-
       const nombreTrim = String(formData.nombre || '').trim();
-      if (!nombreTrim) {
-        setErrorMsg('Completá tu nombre.');
+      const apellidoTrim = String(formData.apellido || '').trim();
+      const genTrim = String(formData.genero || '').trim();
+      const fe = {};
+      if (!nombreTrim) fe.nombre = 'Completá tu nombre.';
+      if (!apellidoTrim) fe.apellido = 'Completá tu apellido.';
+      if (!genTrim || (genTrim !== 'masculino' && genTrim !== 'femenino')) {
+        fe.genero = 'Seleccioná género (Masculino o Femenino).';
+      }
+      if (!String(formData.nivel || '').trim()) fe.nivel = 'Seleccioná tu categoría.';
+      if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Seleccioná lateralidad.';
+      if (Object.keys(fe).length) {
+        setFichaFieldErrors(fe);
         return;
       }
-      const apellidoTrim = String(formData.apellido || '').trim();
 
       if (String(formData.alias || '').trim() && aliasDuplicado) {
         setErrorMsg('Este alias ya está en uso, elegí otro.');
@@ -1297,6 +1336,7 @@ export default function MiPerfil() {
       const payload = {
         lateralidad: formData.lateralidad,
         nivel: formData.nivel,
+        genero: genTrim,
         pendiente_validacion: true,
         pais: paisGuardado,
         localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
@@ -1399,6 +1439,7 @@ export default function MiPerfil() {
         persistJugadorPerfil({
           nombre: nombreTrim,
           apellido: apellidoTrim,
+          genero: genTrim,
           nombre_saludo: String(formData.nombre_saludo || '').trim(),
           categoria: String(formData.nivel || '').trim(),
           whatsapp: waFinal,
@@ -1422,6 +1463,7 @@ export default function MiPerfil() {
       }
       setSuccessMsg('✅ Perfil guardado');
       setEditando(false);
+      setFichaFieldErrors({});
       setTimeout(() => setSuccessMsg(''), 3000);
     } finally {
       perfilSubmitLockRef.current = false;
@@ -1630,15 +1672,39 @@ export default function MiPerfil() {
                 autoComplete="given-name"
               />
               {regErrP('nombre')}
-              <label style={guestLabelStyle}>Apellido</label>
+              <label style={guestLabelStyle}>
+                Apellido {reqAst}
+              </label>
               <input
                 type="text"
                 value={apellidoRegistroTorneo}
-                onChange={(e) => setApellidoRegistroTorneo(e.target.value)}
-                placeholder="Opcional"
-                style={{ ...guestInputStyle, marginBottom: '14px' }}
+                onChange={(e) => {
+                  setApellidoRegistroTorneo(e.target.value);
+                  setRegistroFieldErrors((p) => ({ ...p, apellido: '' }));
+                }}
+                placeholder="Ej: Pérez"
+                style={{ ...guestInputStyle, marginBottom: regErr('apellido') ? '6px' : '14px', border: regBorder('apellido') }}
                 autoComplete="family-name"
               />
+              {regErrP('apellido')}
+
+              <label style={guestLabelStyle}>
+                Género {reqAst}
+              </label>
+              <select
+                name="genero"
+                value={formData.genero}
+                onChange={(e) => {
+                  handleChange(e);
+                  setRegistroFieldErrors((p) => ({ ...p, genero: '' }));
+                }}
+                style={{ ...guestInputStyle, marginBottom: regErr('genero') ? '6px' : '14px', border: regBorder('genero') }}
+              >
+                <option value="">— Elegir —</option>
+                <option value="masculino">Masculino</option>
+                <option value="femenino">Femenino</option>
+              </select>
+              {regErrP('genero')}
 
               <label style={guestLabelStyle}>¿Cómo querés que te llamemos?</label>
               <input
@@ -1893,16 +1959,22 @@ export default function MiPerfil() {
               />
               {regErrP('password2')}
 
-              <label style={guestLabelStyle}>Lateralidad</label>
+              <label style={guestLabelStyle}>
+                Lateralidad {reqAst}
+              </label>
               <select
                 name="lateralidad"
                 value={formData.lateralidad}
-                onChange={handleChange}
-                style={{ ...guestInputStyle, marginBottom: '14px' }}
+                onChange={(e) => {
+                  handleChange(e);
+                  setRegistroFieldErrors((p) => ({ ...p, lateralidad: '' }));
+                }}
+                style={{ ...guestInputStyle, marginBottom: regErr('lateralidad') ? '6px' : '14px', border: regBorder('lateralidad') }}
               >
                 <option value="Diestro">Diestro</option>
                 <option value="Zurdo">Zurdo</option>
               </select>
+              {regErrP('lateralidad')}
 
               <label style={guestLabelStyle}>
                 Categoría {reqAst}
@@ -2423,6 +2495,20 @@ export default function MiPerfil() {
           <>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Datos del jugador</h4>
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
+              <Row
+                label="Nombre y apellido"
+                value={nombreCompletoJugadorPerfil(perfil)?.trim() || '—'}
+              />
+              <Row
+                label="Género"
+                value={
+                  perfil.genero === 'masculino'
+                    ? 'Masculino'
+                    : perfil.genero === 'femenino'
+                      ? 'Femenino'
+                      : '—'
+                }
+              />
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row
                 label="¿Cómo querés que te llamemos?"
@@ -2484,20 +2570,35 @@ export default function MiPerfil() {
               value={formData.nombre}
               onChange={handleChange}
               placeholder="Ej: Juan Pablo"
-              style={{ ...inputStyle, marginBottom: '10px' }}
+              style={{ ...inputStyle, marginBottom: fichErr('nombre') ? '6px' : '10px', border: fichBorder('nombre') }}
               autoComplete="given-name"
               required
             />
-            <label style={labelStyle}>Apellido</label>
+            {fichErrP('nombre')}
+            <label style={labelStyle}>Apellido {reqAst}</label>
             <input
               type="text"
               name="apellido"
               value={formData.apellido}
               onChange={handleChange}
-              placeholder="Opcional"
-              style={{ ...inputStyle, marginBottom: '14px' }}
+              placeholder="Ej: Pérez"
+              style={{ ...inputStyle, marginBottom: fichErr('apellido') ? '6px' : '14px', border: fichBorder('apellido') }}
               autoComplete="family-name"
             />
+            {fichErrP('apellido')}
+
+            <label style={labelStyle}>Género {reqAst}</label>
+            <select
+              name="genero"
+              value={formData.genero}
+              onChange={handleChange}
+              style={{ ...inputStyle, marginBottom: fichErr('genero') ? '6px' : '14px', border: fichBorder('genero') }}
+            >
+              <option value="">— Elegir —</option>
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
+            </select>
+            {fichErrP('genero')}
 
             <label style={labelStyle}>¿Cómo querés que te llamemos?</label>
             <input
@@ -2703,16 +2804,28 @@ export default function MiPerfil() {
               Obligatorio. Por defecto Argentina (+54): solo el número local (mínimo 10 dígitos), sin repetir +54. Se guarda como +54…
             </p>
 
-            <label style={labelStyle}>Lateralidad</label>
-            <select name="lateralidad" value={formData.lateralidad} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }}>
+            <label style={labelStyle}>Lateralidad {reqAst}</label>
+            <select
+              name="lateralidad"
+              value={formData.lateralidad}
+              onChange={handleChange}
+              style={{ ...inputStyle, marginBottom: fichErr('lateralidad') ? '6px' : '14px', border: fichBorder('lateralidad') }}
+            >
               <option value="Diestro">🤜 Diestro</option>
               <option value="Zurdo">🤛 Zurdo</option>
             </select>
+            {fichErrP('lateralidad')}
 
-            <label style={labelStyle}>Categoría *</label>
-            <select name="nivel" value={formData.nivel} onChange={handleChange} style={inputStyle}>
+            <label style={labelStyle}>Categoría {reqAst}</label>
+            <select
+              name="nivel"
+              value={formData.nivel}
+              onChange={handleChange}
+              style={{ ...inputStyle, border: fichBorder('nivel') }}
+            >
               {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
+            {fichErrP('nivel')}
             <p style={{ color: '#f59e0b', fontSize: '12px', marginTop: '2px', marginBottom: '14px' }}>
               ⏳ La categoría será validada por un administrador
             </p>
