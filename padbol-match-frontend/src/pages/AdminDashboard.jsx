@@ -396,7 +396,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
     fetchData();
     fetchPendientes();
-  }, [apiBaseUrl, rol, sedeId]); // rol/sedeId: re-fetch after role scope resolves
+  }, [apiBaseUrl, rol, sedeId, session?.access_token]); // token: alcance correcto en GET torneos/reservas
 
   useEffect(() => {
     if (esAdminClub) setAdminNavContext(true);
@@ -751,6 +751,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const fetchData = async () => {
     try {
+      console.log('ADMIN fetchData:', {
+        isSuperAdmin,
+        rol,
+        email: currentEmail,
+        sedeId,
+      });
+      const listAuthHeaders = session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {};
+
       let allSedesRows = [];
       try {
         const { data: sedesRows, error: sedesErr } = await supabase
@@ -803,7 +813,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setSedesMap(nextSedesMap);
       console.log('[Admin] sedesMap', nextSedesMap);
 
-      const resRes = await fetch(`${apiBaseUrl}/api/reservas`);
+      const resRes = await fetch(`${apiBaseUrl}/api/reservas`, { headers: { ...listAuthHeaders } });
       let resData = await resRes.json();
 
       if (!isSuperAdmin) {
@@ -812,7 +822,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       }
       setReservas(resData);
 
-      const tornRes = await fetch(`${apiBaseUrl}/api/torneos`);
+      const tornRes = await fetch(`${apiBaseUrl}/api/torneos`, { headers: { ...listAuthHeaders } });
       const tornResOk = tornRes.ok;
       const tornResStatus = tornRes.status;
       let tornData = [];

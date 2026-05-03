@@ -40,6 +40,71 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ─── JWT + user_roles (GET torneos/reservas con alcance, rutas /api/admin/*) ──
+const LEGACY_SUPER_ADMIN_EMAILS_API = [
+  'padbolinternacional@gmail.com',
+  'admin@padbol.com',
+  'sm@padbol.com',
+  'juanpablo@padbol.com',
+];
+
+async function authUserFromBearer(req) {
+  const auth = String(req.headers.authorization || '');
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  if (!m) return null;
+  const token = m[1].trim();
+  if (!token) return null;
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.email) return null;
+  return data.user;
+}
+
+async function fetchUserRoleRow(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return null;
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role, sede_id, nombre, pais')
+    .eq('email', em)
+    .maybeSingle();
+  if (error) return null;
+  return data;
+}
+
+function isSuperAdminApi(userEmail, role) {
+  const em = String(userEmail || '').trim().toLowerCase();
+  if (LEGACY_SUPER_ADMIN_EMAILS_API.includes(em)) return true;
+  return role === 'super_admin';
+}
+
+/** Alineado con el front (user_role_data): quita bandera emoji al comparar país. */
+function normalizeAdminPaisLabel(raw) {
+  if (raw == null || raw === '') return '';
+  return String(raw).replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim();
+}
+
+/**
+ * JWT (Authorization Bearer) + fila `user_roles` en Supabase.
+ * Sin Bearer válido → null (listados sin filtro de rol, compat. anónima).
+ */
+async function adminListScopeFromRequest(req) {
+  const user = await authUserFromBearer(req);
+  if (!user?.email) return null;
+  const email = String(user.email).trim().toLowerCase();
+  const row = await fetchUserRoleRow(user.email);
+  const rol = row?.role || null;
+  const sedeIdRaw = row?.sede_id;
+  const sedeId = sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
+  return {
+    email,
+    rol,
+    sedeId: Number.isFinite(sedeId) ? sedeId : null,
+    pais: row?.pais || null,
+    superA: isSuperAdminApi(email, rol),
+    row,
+  };
+}
+
 // Mercado Pago
 if (!process.env.MP_ACCESS_TOKEN) {
   console.warn('⚠️  MP_ACCESS_TOKEN no está configurado — los pagos fallarán en producción');
@@ -386,14 +451,54 @@ app.post('/api/reservas', async (req, res) => {
   }
 });
 
-// GET reservas
+// GET reservas — con Bearer: super_admin / emails legacy → todas; admin_club → sede; admin_nacional → sedes del país
 app.get('/api/reservas', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('reservas')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const scope = await adminListScopeFromRequest(req);
+    const logLine = scope
+      ? { rol: scope.rol, email: scope.email, sedeId: scope.sedeId }
+      : { rol: null, email: null, sedeId: null };
+    console.log('GET /reservas:', logLine);
 
+    let query = supabase.from('reservas').select('*');
+
+    if (scope) {
+      if (scope.superA) {
+        // sin filtro
+      } else if (scope.rol === 'admin_club' && scope.sedeId != null) {
+        const { data: sedeRow, error: se } = await supabase
+          .from('sedes')
+          .select('nombre')
+          .eq('id', scope.sedeId)
+          .maybeSingle();
+        if (se) throw se;
+        const nombre = String(sedeRow?.nombre || '').trim();
+        if (!nombre) {
+          return res.json([]);
+        }
+        query = query.eq('sede', nombre);
+      } else if (scope.rol === 'admin_nacional' && scope.pais) {
+        const paisAdmin = normalizeAdminPaisLabel(scope.pais);
+        const { data: sedesAll, error: e2 } = await supabase.from('sedes').select('nombre, pais');
+        if (e2) throw e2;
+        const nombres = [
+          ...new Set(
+            (sedesAll || [])
+              .filter((s) => s.pais && String(s.pais).includes(paisAdmin))
+              .map((s) => String(s.nombre || '').trim())
+              .filter(Boolean)
+          ),
+        ];
+        if (nombres.length === 0) {
+          return res.json([]);
+        }
+        query = query.in('sede', nombres);
+      } else {
+        return res.json([]);
+      }
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
     res.json(data || []);
   } catch (err) {
@@ -613,11 +718,37 @@ app.post('/api/torneos', async (req, res) => {
 
 app.get('/api/torneos', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('torneos')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const scope = await adminListScopeFromRequest(req);
+    const logLine = scope
+      ? { rol: scope.rol, email: scope.email, sedeId: scope.sedeId }
+      : { rol: null, email: null, sedeId: null };
+    console.log('GET /torneos:', logLine);
 
+    let query = supabase.from('torneos').select('*');
+
+    if (scope) {
+      if (scope.superA) {
+        // sin filtro
+      } else if (scope.rol === 'admin_club' && scope.sedeId != null) {
+        query = query.eq('sede_id', scope.sedeId);
+      } else if (scope.rol === 'admin_nacional' && scope.pais) {
+        const paisAdmin = normalizeAdminPaisLabel(scope.pais);
+        const { data: sedesAll, error: e2 } = await supabase.from('sedes').select('id, pais');
+        if (e2) throw e2;
+        const ids = (sedesAll || [])
+          .filter((s) => s.pais && String(s.pais).includes(paisAdmin))
+          .map((s) => s.id)
+          .filter((id) => id != null);
+        if (ids.length === 0) {
+          return res.json([]);
+        }
+        query = query.in('sede_id', ids);
+      } else {
+        return res.json([]);
+      }
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
     res.json(data || []);
   } catch (err) {
@@ -1896,43 +2027,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
   }
 });
 
-// ─── Admin: sedes pendientes / alta sede (JWT + user_roles) ───────────────────
-
-const LEGACY_SUPER_ADMIN_EMAILS_API = [
-  'padbolinternacional@gmail.com',
-  'admin@padbol.com',
-  'sm@padbol.com',
-  'juanpablo@padbol.com',
-];
-
-async function authUserFromBearer(req) {
-  const auth = String(req.headers.authorization || '');
-  const m = auth.match(/^Bearer\s+(.+)$/i);
-  if (!m) return null;
-  const token = m[1].trim();
-  if (!token) return null;
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user?.email) return null;
-  return data.user;
-}
-
-async function fetchUserRoleRow(email) {
-  const em = String(email || '').trim().toLowerCase();
-  if (!em) return null;
-  const { data, error } = await supabase
-    .from('user_roles')
-    .select('role, sede_id, nombre, pais')
-    .eq('email', em)
-    .maybeSingle();
-  if (error) return null;
-  return data;
-}
-
-function isSuperAdminApi(userEmail, role) {
-  const em = String(userEmail || '').trim().toLowerCase();
-  if (LEGACY_SUPER_ADMIN_EMAILS_API.includes(em)) return true;
-  return role === 'super_admin';
-}
+// ─── Admin: sedes pendientes / alta sede (usa auth arriba) ───────────────────
 
 async function sendTwilioWhatsAppBodyToRaw(toRaw, body) {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
