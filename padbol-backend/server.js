@@ -30,6 +30,10 @@ function buildCorsAllowedOrigins() {
 
 // CORS + JSON parser primero: ningún app.get/post ni headers CORS manuales deben ir encima.
 // CORS (Render: CORS_ORIGIN=https://www.padbolmatch.com,https://padbolmatch.com,https://padbol-match-9abn.vercel.app)
+app.use((req, res, next) => {
+  console.log('CORS DEBUG - Origin:', req.headers.origin, '| Allowed:', buildCorsAllowedOrigins());
+  next();
+});
 app.use(cors({
   origin: function (origin, callback) {
     const allowed = buildCorsAllowedOrigins();
