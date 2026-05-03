@@ -813,10 +813,29 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setReservas(resData);
 
       const tornRes = await fetch(`${apiBaseUrl}/api/torneos`);
-      let tornData = await tornRes.json();
+      const tornResOk = tornRes.ok;
+      const tornResStatus = tornRes.status;
+      let tornData = [];
+      let tornParseError = null;
+      try {
+        const parsed = await tornRes.json();
+        if (Array.isArray(parsed)) {
+          tornData = parsed;
+        } else {
+          tornParseError = { invalidPayload: parsed };
+        }
+      } catch (e) {
+        tornParseError = { message: e?.message || String(e) };
+      }
       if (!isSuperAdmin) {
         if (sedesAlcance.length === 0) tornData = [];
         else tornData = tornData.filter((t) => filaDentroDelAlcanceSedes(t, sedesAlcance));
+      }
+      if (isSuperAdmin && (!tornData || tornData.length === 0)) {
+        const error =
+          tornParseError ||
+          (!tornResOk ? { status: tornResStatus, statusText: tornRes.statusText } : null);
+        console.log('fetchData torneos:', { isSuperAdmin, torneos: tornData, error });
       }
       setTorneos(tornData);
 

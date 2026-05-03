@@ -6,6 +6,7 @@ import {
   Navigate,
   useSearchParams,
   useLocation,
+  useNavigate,
 } from 'react-router-dom';
 import './App.css';
 import ReservaForm from './pages/ReservaForm';
@@ -82,6 +83,7 @@ function AuthRoute() {
 }
 
 function AdminDashboardGate() {
+  const navigate = useNavigate();
   const { session, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -98,7 +100,7 @@ function AdminDashboardGate() {
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
 
   const emailLower = (currentCliente?.email || '').trim().toLowerCase();
-  /** Emails con panel global: no bloquear en /admin mientras resuelve `user_roles` (p. ej. hub → Admin sin estado). */
+  /** Emails con panel global: montar AdminDashboard de inmediato sin esperar `user_roles`. */
   const legacyAdminEmailBypassRoleLoading = ADMIN_EMAILS.includes(emailLower);
 
   const canAccessAdmin = () => {
@@ -106,13 +108,85 @@ function AdminDashboardGate() {
     return ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
   };
 
-  if (roleLoading && !legacyAdminEmailBypassRoleLoading) {
-    return <div style={{ color: 'white', padding: 24, textAlign: 'center' }}>Cargando permisos…</div>;
+  if (legacyAdminEmailBypassRoleLoading) {
+    return <AdminDashboard rol={rol} sedeId={sedeId} />;
   }
+
+  if (roleLoading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+          padding: 24,
+          textAlign: 'center',
+          color: 'rgba(255,255,255,0.95)',
+          fontWeight: 600,
+          fontSize: '16px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            width: 40,
+            height: 40,
+            border: '3px solid rgba(255,255,255,0.25)',
+            borderTopColor: '#fff',
+            borderRadius: '50%',
+            animation: 'adminGateSpin 0.75s linear infinite',
+          }}
+        />
+        Cargando panel…
+        <style>{`@keyframes adminGateSpin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   if (canAccessAdmin()) {
     return <AdminDashboard rol={rol} sedeId={sedeId} />;
   }
-  return <Navigate to="/" replace />;
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 20,
+        padding: 24,
+        textAlign: 'center',
+        color: 'rgba(255,255,255,0.95)',
+        boxSizing: 'border-box',
+      }}
+    >
+      <p style={{ margin: 0, fontSize: '17px', fontWeight: 600, maxWidth: 360 }}>
+        No tenés permisos para acceder al panel
+      </p>
+      <button
+        type="button"
+        onClick={() => navigate('/hub')}
+        style={{
+          padding: '12px 20px',
+          borderRadius: 12,
+          border: 'none',
+          fontWeight: 700,
+          fontSize: '15px',
+          cursor: 'pointer',
+          background: '#fff',
+          color: '#1e293b',
+        }}
+      >
+        Volver al hub
+      </button>
+    </div>
+  );
 }
 
 function AppRoutes() {
