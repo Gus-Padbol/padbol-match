@@ -62,6 +62,58 @@ function normalizeSearchText(s) {
     .toLowerCase();
 }
 
+/** Estado normalizado para filtros (alinea con `torneoOrdenPublico` / BD). */
+function estadoTorneoNormalizado(estadoRaw) {
+  return String(estadoRaw || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '_')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function esEstadoProgramadoTorneo(estadoRaw) {
+  const e = estadoTorneoNormalizado(estadoRaw);
+  const primero = e === 'inscripcion_abierta' ? 'abierto' : e;
+  return primero === 'planificacion' || primero === 'abierto' || primero === 'proximo';
+}
+
+function esEstadoEnCursoTorneo(estadoRaw) {
+  const e = estadoTorneoNormalizado(estadoRaw);
+  return e === 'en_curso' || e === 'activo';
+}
+
+function esEstadoFinalizadoTorneo(estadoRaw) {
+  return estadoTorneoNormalizado(estadoRaw) === 'finalizado';
+}
+
+/**
+ * @param {'programados_y_en_curso'|'programado'|'en_curso'|'finalizado'|'todos'} filtro
+ */
+function torneoPasaFiltroEstadoVista(t, filtro) {
+  if (filtro === 'todos') return true;
+  if (filtro === 'finalizado') return esEstadoFinalizadoTorneo(t?.estado);
+  if (filtro === 'en_curso') return esEstadoEnCursoTorneo(t?.estado);
+  if (filtro === 'programado') return esEstadoProgramadoTorneo(t?.estado);
+  /* programados_y_en_curso: todo salvo finalizado y cancelado */
+  const e = estadoTorneoNormalizado(t?.estado);
+  if (e === 'finalizado' || e === 'cancelado') return false;
+  return true;
+}
+
+function badgeEstadoTorneoListado(t) {
+  if (esEstadoFinalizadoTorneo(t?.estado)) {
+    return { label: 'Finalizado', bg: '#dc2626', color: '#fff' };
+  }
+  const b = badgeTorneoEstadoPublico(t.estado);
+  if (b) return b;
+  return {
+    label: t.estado ? String(t.estado) : 'Sin estado',
+    bg: '#94a3b8',
+    color: '#fff',
+  };
+}
+
 export default function TorneosPublicos() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,6 +152,8 @@ export default function TorneosPublicos() {
   const [geoStatus, setGeoStatus] = useState('idle');
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
   const torneoSearchInputRef = useRef(null);
+  /** Por defecto: programados + en curso (excluye finalizado y cancelado). */
+  const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('programados_y_en_curso');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -224,17 +278,22 @@ export default function TorneosPublicos() {
     return torneos.filter((t) => Number(t.sede_id) === Number(focusSedeId));
   }, [sedeFiltroId, nearMode, filterActive, focusSedeId, torneos]);
 
+  const torneosTrasFiltroEstado = useMemo(
+    () => displayedTorneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneo)),
+    [displayedTorneos, filtroEstadoTorneo]
+  );
+
   const torneosPorBusqueda = useMemo(() => {
     const q = normalizeSearchText(torneoSearchQuery);
-    if (!q) return displayedTorneos;
-    return displayedTorneos.filter((t) => {
+    if (!q) return torneosTrasFiltroEstado;
+    return torneosTrasFiltroEstado.filter((t) => {
       const sede = sedesMap[String(t.sede_id)];
       const blob = normalizeSearchText(
         [t.nombre, sede?.nombre, sede?.ciudad, sede?.pais].filter(Boolean).join(' ')
       );
       return blob.includes(q);
     });
-  }, [displayedTorneos, torneoSearchQuery, sedesMap]);
+  }, [torneosTrasFiltroEstado, torneoSearchQuery, sedesMap]);
 
   const sedeFiltroNombre = useMemo(() => {
     if (sedeFiltroId == null) return null;
@@ -300,6 +359,39 @@ export default function TorneosPublicos() {
         </div>
       );
     }
+    if (displayedTorneos.length > 0 && torneosTrasFiltroEstado.length === 0) {
+      return (
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '18px',
+            color: '#4b5563',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+          }}
+        >
+          No hay torneos con el estado seleccionado.
+          <div style={{ marginTop: '12px' }}>
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoTorneo('todos')}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: 'white',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Ver todos los estados
+            </button>
+          </div>
+        </div>
+      );
+    }
     if (displayedTorneos.length > 0 && torneosPorBusqueda.length === 0) {
       return (
         <div
@@ -326,11 +418,7 @@ export default function TorneosPublicos() {
       >
         {torneosOrdenados.map((t) => {
           const sede = sedesMap[String(t.sede_id)];
-          const badge = badgeTorneoEstadoPublico(t.estado) || {
-            label: t.estado || 'Sin estado',
-            bg: '#94a3b8',
-            color: '#fff',
-          };
+          const badge = badgeEstadoTorneoListado(t);
 
           return (
             <div
@@ -431,6 +519,7 @@ export default function TorneosPublicos() {
     loading,
     torneos.length,
     displayedTorneos.length,
+    torneosTrasFiltroEstado.length,
     torneosPorBusqueda.length,
     torneosOrdenados,
     nearMode,
@@ -537,6 +626,45 @@ export default function TorneosPublicos() {
 
         {!loading && torneos.length > 0 ? (
           <div style={{ marginBottom: '14px' }}>
+            <div style={{ marginBottom: '10px' }}>
+              <label
+                htmlFor="filtro-estado-torneos"
+                style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.88)',
+                  marginBottom: '6px',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                Estado del torneo
+              </label>
+              <select
+                id="filtro-estado-torneos"
+                value={filtroEstadoTorneo}
+                onChange={(e) => setFiltroEstadoTorneo(e.target.value)}
+                style={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
+                  padding: '10px 12px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  background: 'rgba(255,255,255,0.95)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#111827',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="programados_y_en_curso">Programado y en curso</option>
+                <option value="programado">Programado</option>
+                <option value="en_curso">En curso</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="todos">Todos</option>
+              </select>
+            </div>
             <div
               style={{
                 position: 'relative',

@@ -298,6 +298,8 @@ export default function TorneoTabbedView({
   navigateState = null,
   /** Filas desde `tabla_puntos` + equipos (misma forma que FormEquipos). */
   clasificacionFinalFilas = null,
+  /** CTA inscripción encima de la lista de equipos (jugador). */
+  equiposTabHeader = null,
   /** Contenido extra bajo la lista de equipos (inscripción en FormEquipos). */
   equiposTabFooter = null,
   /** Bloque admin (iniciar/finalizar, etc.) encima de las pestañas. */
@@ -548,6 +550,7 @@ export default function TorneoTabbedView({
 
   const renderTabEquipos = () => (
     <div style={{ padding: '4px 0 20px' }}>
+      {equiposTabHeader}
       {equipos.length === 0 ? (
         <p style={{ color: '#64748b', margin: 0 }}>No hay equipos inscriptos.</p>
       ) : (

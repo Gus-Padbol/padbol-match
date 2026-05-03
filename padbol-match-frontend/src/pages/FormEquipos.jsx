@@ -1725,6 +1725,50 @@ export default function FormEquipos() {
   const mostrarPasoEleccion = flujoInscripcionTorneoActivo && !miEquipo && !miSolicitudPendiente;
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
 
+  const mostrarBotonInscribirseEnTabEquipos =
+    !esAdminGestionTorneo &&
+    !torneoFinalizado &&
+    !torneoCancelado &&
+    (!session?.user || (!miEquipo && !miSolicitudPendiente));
+
+  const abrirFlujoInscripcionDesdeTab = useCallback(() => {
+    if (authLoading) return;
+    if (!session?.user) {
+      navigate(authUrlWithRedirect(`/torneo/${id}/equipos`));
+      return;
+    }
+    if (isMobile) {
+      if (mostrarPasoEleccion) setMobileVista('inicio');
+      else setMobileVista('lista');
+      return;
+    }
+    if (mostrarPasoEleccion) {
+      setDesktopFlujo(null);
+      return;
+    }
+    setDesktopFlujo('lista');
+  }, [authLoading, session?.user, navigate, id, isMobile, mostrarPasoEleccion]);
+
+  const btnInscribirseTorneoTabStyle = useMemo(
+    () => ({
+      width: '100%',
+      maxWidth: '360px',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      display: 'block',
+      padding: '12px 18px',
+      fontSize: '15px',
+      fontWeight: 800,
+      borderRadius: '12px',
+      border: 'none',
+      cursor: 'pointer',
+      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+      color: 'white',
+      boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+    }),
+    []
+  );
+
   const handleInscripcionHeaderBack = useCallback(() => {
     if (esAdminGestionTorneo && contextoGestionEquiposTorneo) {
       navigate('/admin');
@@ -2346,6 +2390,15 @@ export default function FormEquipos() {
             showTorneoLogo={false}
             clasificacionFinalFilas={
               torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
+            }
+            equiposTabHeader={
+              mostrarBotonInscribirseEnTabEquipos ? (
+                <div style={{ marginBottom: '14px', textAlign: 'center' }}>
+                  <button type="button" onClick={abrirFlujoInscripcionDesdeTab} style={btnInscribirseTorneoTabStyle}>
+                    Inscribirse
+                  </button>
+                </div>
+              ) : null
             }
             equiposTabFooter={
               esAdminGestionTorneo ? null : torneoFinalizado ? (
@@ -2973,6 +3026,13 @@ export default function FormEquipos() {
             </div>
           </div>
         )}
+                {mostrarBotonInscribirseEnTabEquipos ? (
+                  <div style={{ marginTop: '20px', marginBottom: '8px', textAlign: 'center' }}>
+                    <button type="button" onClick={abrirFlujoInscripcionDesdeTab} style={btnInscribirseTorneoTabStyle}>
+                      Inscribirse
+                    </button>
+                  </div>
+                ) : null}
                 </>
               )
             }
