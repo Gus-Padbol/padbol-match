@@ -24,6 +24,9 @@ export const hubInstagramColumnWrapStyle = {
   boxSizing: 'border-box',
 };
 
+/** Ancho máximo de la barra hub inferior (alineado con columna contenido). */
+export const hubBottomNavMaxWidthPx = HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX;
+
 /**
  * Rutas sin barra hub: inicio, listado sedes, reserva, auth.
  * `/admin` usa solo las pestañas del propio panel (no {@link BottomNav} bajo el header).

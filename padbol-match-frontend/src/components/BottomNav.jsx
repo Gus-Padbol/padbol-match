@@ -6,6 +6,7 @@ import { readAdminNavContext } from '../utils/adminNavContext';
 import {
   HUB_NAV_HEIGHT_PX,
   hubBottomNavFixedTopCss,
+  hubBottomNavMaxWidthPx,
   isHubNavBarHiddenPathname,
   isSedeProfilePathname,
 } from '../constants/hubLayout';
@@ -256,18 +257,33 @@ const BottomNav = () => {
         left: 0,
         right: 0,
         width: '100%',
-        maxWidth: '100%',
         height: HUB_NAV_HEIGHT_PX,
         boxSizing: 'border-box',
-        padding: '2px 4px',
+        padding: 0,
         display: 'flex',
-        justifyContent: 'space-around',
+        justifyContent: 'center',
         alignItems: 'stretch',
         zIndex: 1001,
         overflowX: 'hidden',
-        ...navBarStyle,
+        background: 'transparent',
+        pointerEvents: 'none',
       }}
     >
+      <div
+        style={{
+          pointerEvents: 'auto',
+          width: '100%',
+          maxWidth: hubBottomNavMaxWidthPx,
+          height: '100%',
+          boxSizing: 'border-box',
+          padding: '2px max(4px, env(safe-area-inset-left, 0px)) 2px max(4px, env(safe-area-inset-right, 0px))',
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'stretch',
+          overflowX: 'hidden',
+          ...navBarStyle,
+        }}
+      >
       {items.map((item) => {
         const isActive = item.match(path);
 
@@ -340,6 +356,7 @@ const BottomNav = () => {
           </button>
         );
       })}
+      </div>
     </nav>
   );
 };

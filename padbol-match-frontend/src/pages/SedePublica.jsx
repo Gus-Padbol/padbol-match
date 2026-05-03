@@ -22,6 +22,21 @@ const MAP_THUMB_MAX_H = 120;
 const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 const FOTOS_DESTACADAS_MAX = 4;
 
+/** Misma apariencia que el CTA inferior «Reservar cancha» en esta vista. */
+const SEDE_BTN_RESERVAR_CANCHA_STYLE = {
+  width: '100%',
+  padding: '14px 16px',
+  background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '12px',
+  cursor: 'pointer',
+  fontWeight: 800,
+  fontSize: '15px',
+  boxShadow: '0 4px 14px rgba(22, 163, 74, 0.45)',
+  boxSizing: 'border-box',
+};
+
 function normalizeHexColor(raw) {
   if (raw == null) return null;
   const s = String(raw).trim();
@@ -1078,6 +1093,16 @@ export default function SedePublica() {
               </div>
             </div>
 
+            <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '14px 8px 6px' }}>
+              <button
+                type="button"
+                onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
+                style={SEDE_BTN_RESERVAR_CANCHA_STYLE}
+              >
+                ⚽ Reservar cancha
+              </button>
+            </div>
+
             <div style={{ width: '100%', maxWidth: '100%', margin: 0, padding: '10px 14px 0', boxSizing: 'border-box' }}>
               <SedeFotosCarruselDestacado
                 urls={fotosCarrusel}
@@ -1190,19 +1215,7 @@ export default function SedePublica() {
                 <button
                   type="button"
                   onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    fontWeight: 800,
-                    fontSize: '15px',
-                    boxShadow: '0 4px 14px rgba(22, 163, 74, 0.45)',
-                    boxSizing: 'border-box',
-                  }}
+                  style={SEDE_BTN_RESERVAR_CANCHA_STYLE}
                 >
                   ⚽ Reservar cancha
                 </button>
