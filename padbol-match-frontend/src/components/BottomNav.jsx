@@ -25,6 +25,14 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { loading: authLoading, session } = useAuth();
+  const sessionEmailLower = String(session?.user?.email || '').trim().toLowerCase();
+  const superAdminNavEmails = [
+    'padbolinternacional@gmail.com',
+    'admin@padbol.com',
+    'sm@padbol.com',
+    'juanpablo@padbol.com',
+  ];
+  const superAdminBottomNav = rolEffective === 'super_admin' || superAdminNavEmails.includes(sessionEmailLower);
   const path = location.pathname;
   const pathOnly = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
   const adminTabActivo = new URLSearchParams(location.search).get('tab') || 'resumen';
@@ -111,8 +119,17 @@ const BottomNav = () => {
         return x === '/admin' && adminTabActivo === 'mi_sede';
       },
     },
-    ...(rolEffective === 'super_admin'
+    ...(superAdminBottomNav
       ? [
+          {
+            label: 'Sedes pend.',
+            icon: '🏟️',
+            path: '/admin?tab=sedes_pendientes',
+            match: (p) => {
+              const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+              return x === '/admin' && adminTabActivo === 'sedes_pendientes';
+            },
+          },
           {
             label: 'Config',
             icon: '⚙️',

@@ -1896,6 +1896,379 @@ app.post('/api/crear-preferencia', async (req, res) => {
   }
 });
 
+// ─── Admin: sedes pendientes / alta sede (JWT + user_roles) ───────────────────
+
+const LEGACY_SUPER_ADMIN_EMAILS_API = [
+  'padbolinternacional@gmail.com',
+  'admin@padbol.com',
+  'sm@padbol.com',
+  'juanpablo@padbol.com',
+];
+
+async function authUserFromBearer(req) {
+  const auth = String(req.headers.authorization || '');
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  if (!m) return null;
+  const token = m[1].trim();
+  if (!token) return null;
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.email) return null;
+  return data.user;
+}
+
+async function fetchUserRoleRow(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return null;
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role, sede_id, nombre, pais')
+    .eq('email', em)
+    .maybeSingle();
+  if (error) return null;
+  return data;
+}
+
+function isSuperAdminApi(userEmail, role) {
+  const em = String(userEmail || '').trim().toLowerCase();
+  if (LEGACY_SUPER_ADMIN_EMAILS_API.includes(em)) return true;
+  return role === 'super_admin';
+}
+
+async function sendTwilioWhatsAppBodyToRaw(toRaw, body) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    console.warn('⚠️ Twilio no configurado — no se envía WhatsApp');
+    return;
+  }
+  const raw = String(toRaw || '').trim();
+  if (!raw) return;
+  const to = raw.toLowerCase().startsWith('whatsapp:') ? raw : normalizePhoneToE164ForTwilioWhatsApp(raw);
+  if (!to) {
+    console.warn('⚠️ WhatsApp: destino no normalizable:', toRaw);
+    return;
+  }
+  await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body: String(body || '').trim() });
+  console.log(`✓ WhatsApp enviado → ${to}`);
+}
+
+async function fetchJugadorWhatsappPorEmail(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return null;
+  const { data } = await supabase.from('jugadores_perfil').select('whatsapp').eq('email', em).maybeSingle();
+  const w = data?.whatsapp != null ? String(data.whatsapp).trim() : '';
+  return w || null;
+}
+
+async function upsertUserRoleAdminClub({ email, nombre, pais, sede_id }) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return new Error('Email licenciatario vacío');
+  const payload = {
+    email: em,
+    role: 'admin_club',
+    nombre: nombre || null,
+    pais: pais || null,
+    sede_id,
+    torneos_oficiales_habilitados: false,
+  };
+  const { data: ex } = await supabase.from('user_roles').select('email').eq('email', em).maybeSingle();
+  if (ex?.email) {
+    const { error } = await supabase
+      .from('user_roles')
+      .update({
+        role: 'admin_club',
+        nombre: payload.nombre,
+        pais: payload.pais,
+        sede_id: payload.sede_id,
+        torneos_oficiales_habilitados: false,
+      })
+      .eq('email', em);
+    return error || null;
+  }
+  const { error } = await supabase.from('user_roles').insert(payload);
+  return error || null;
+}
+
+function mapPendingRowToSedeInsert(row) {
+  return {
+    nombre: String(row.nombre || '').trim(),
+    direccion: row.direccion || null,
+    ciudad: row.ciudad || null,
+    pais: row.pais || null,
+    latitud: row.latitud != null ? Number(row.latitud) : null,
+    longitud: row.longitud != null ? Number(row.longitud) : null,
+    horario_apertura: row.horario_apertura || null,
+    horario_cierre: row.horario_cierre || null,
+    precio_turno: row.precio_base != null && row.precio_base !== '' ? Number(row.precio_base) : null,
+    moneda: row.moneda || 'ARS',
+    telefono: row.whatsapp || null,
+    email_contacto: row.email_contacto || null,
+    numero_licencia: row.numero_licencia || null,
+    fecha_licencia: row.fecha_contrato || null,
+    licencia_activa: true,
+    franjas_horarias: [],
+    fotos_destacadas: [],
+  };
+}
+
+/** POST /api/admin/sedes-pendientes — solo admin_nacional: inserta fila pendiente + aviso a super admin. */
+app.post('/api/admin/sedes-pendientes', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    const role = rowRole?.role || null;
+    if (isSuperAdminApi(user.email, role)) {
+      return res.status(403).json({ error: 'Usá “Crear sede” desde el formulario de super admin' });
+    }
+    if (role !== 'admin_nacional') {
+      return res.status(403).json({ error: 'Solo admin nacional puede enviar solicitudes pendientes' });
+    }
+    const b = req.body || {};
+    const nombre = String(b.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ error: 'Nombre del club obligatorio' });
+    const licEmail = String(b.licenciatario_email || '').trim().toLowerCase();
+    if (!licEmail) return res.status(400).json({ error: 'Email del licenciatario obligatorio' });
+
+    const insert = {
+      created_by: String(user.email).trim().toLowerCase(),
+      estado: 'pendiente',
+      nombre,
+      direccion: b.direccion || null,
+      ciudad: b.ciudad || null,
+      pais: b.pais || null,
+      latitud: b.latitud != null && b.latitud !== '' ? Number(b.latitud) : null,
+      longitud: b.longitud != null && b.longitud !== '' ? Number(b.longitud) : null,
+      horario_apertura: b.horario_apertura || null,
+      horario_cierre: b.horario_cierre || null,
+      precio_base: b.precio_base != null && b.precio_base !== '' ? Number(b.precio_base) : null,
+      moneda: b.moneda || 'ARS',
+      whatsapp: b.whatsapp || null,
+      email_contacto: b.email_contacto || null,
+      numero_licencia: b.numero_licencia || null,
+      fecha_contrato: b.fecha_contrato || null,
+      tipo_licencia: b.tipo_licencia === 'padbol_point' ? 'padbol_point' : 'club_afiliado',
+      licenciatario_nombre: b.licenciatario_nombre || null,
+      licenciatario_email: licEmail,
+      licenciatario_telefono: b.licenciatario_telefono || null,
+      licenciatario_pais: b.licenciatario_pais || null,
+    };
+
+    const { data: ins, error } = await supabase.from('sedes_pendientes').insert(insert).select('id').single();
+    if (error) throw error;
+
+    const toSuper = resolveSuperAdminNotifyWhatsAppTo();
+    if (toSuper) {
+      const msg =
+        `🏟 Nueva sede pendiente de aprobación\n` +
+        `Club: ${nombre}\n` +
+        `País: ${insert.pais || '—'}\n` +
+        `Licenciatario: ${insert.licenciatario_nombre || '—'} (${licEmail})\n` +
+        `Enviado por: ${insert.created_by}\n` +
+        `Revisar en: padbolmatch.com/admin`;
+      await sendTwilioWhatsAppBodyToRaw(toSuper, msg);
+    }
+
+    res.json({ ok: true, id: ins?.id });
+  } catch (err) {
+    console.error('❌ POST /api/admin/sedes-pendientes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/sedes-directa — super_admin: inserta sede activa + user_roles admin_club. */
+app.post('/api/admin/sedes-directa', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    const role = rowRole?.role || null;
+    if (!isSuperAdminApi(user.email, role)) {
+      return res.status(403).json({ error: 'Solo super admin puede crear sede directa' });
+    }
+    const b = req.body || {};
+    const nombre = String(b.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ error: 'Nombre del club obligatorio' });
+    const licEmail = String(b.licenciatario_email || '').trim().toLowerCase();
+    if (!licEmail) return res.status(400).json({ error: 'Email del licenciatario obligatorio' });
+
+    const sedePayload = {
+      nombre,
+      direccion: b.direccion || null,
+      ciudad: b.ciudad || null,
+      pais: b.pais || null,
+      latitud: b.latitud != null && b.latitud !== '' ? Number(b.latitud) : null,
+      longitud: b.longitud != null && b.longitud !== '' ? Number(b.longitud) : null,
+      horario_apertura: b.horario_apertura || null,
+      horario_cierre: b.horario_cierre || null,
+      precio_turno: b.precio_base != null && b.precio_base !== '' ? Number(b.precio_base) : null,
+      moneda: b.moneda || 'ARS',
+      telefono: b.whatsapp || null,
+      email_contacto: b.email_contacto || null,
+      numero_licencia: b.numero_licencia || null,
+      fecha_licencia: b.fecha_contrato || null,
+      licencia_activa: true,
+      franjas_horarias: [],
+      fotos_destacadas: [],
+    };
+
+    const { data: sedeRow, error: sedeErr } = await supabase.from('sedes').insert(sedePayload).select('id').single();
+    if (sedeErr) throw sedeErr;
+    const sedeId = sedeRow.id;
+
+    const urErr = await upsertUserRoleAdminClub({
+      email: licEmail,
+      nombre: String(b.licenciatario_nombre || '').trim() || null,
+      pais: b.licenciatario_pais || b.pais || null,
+      sede_id: sedeId,
+    });
+    if (urErr) {
+      await supabase.from('sedes').delete().eq('id', sedeId);
+      throw urErr;
+    }
+
+    const waLic = b.licenciatario_telefono || b.whatsapp;
+    if (waLic) {
+      const msg =
+        `🎉 Bienvenido a PADBOL Match. Tu sede "${nombre}" está activa.\n` +
+        `Ingresá al panel: padbolmatch.com/admin`;
+      await sendTwilioWhatsAppBodyToRaw(waLic, msg);
+    }
+
+    res.json({ ok: true, sede_id: sedeId });
+  } catch (err) {
+    console.error('❌ POST /api/admin/sedes-directa:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/sedes-pendientes — super_admin lista. */
+app.get('/api/admin/sedes-pendientes', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    const role = rowRole?.role || null;
+    if (!isSuperAdminApi(user.email, role)) {
+      return res.status(403).json({ error: 'Solo super admin' });
+    }
+    const estado = String(req.query.estado || 'pendiente').trim() || 'pendiente';
+    const { data, error } = await supabase
+      .from('sedes_pendientes')
+      .select('*')
+      .eq('estado', estado)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('❌ GET /api/admin/sedes-pendientes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/sedes-pendientes/:id/aprobar */
+app.post('/api/admin/sedes-pendientes/:id/aprobar', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    const role = rowRole?.role || null;
+    if (!isSuperAdminApi(user.email, role)) {
+      return res.status(403).json({ error: 'Solo super admin' });
+    }
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'Id inválido' });
+
+    const { data: pend, error: pe } = await supabase.from('sedes_pendientes').select('*').eq('id', id).maybeSingle();
+    if (pe) throw pe;
+    if (!pend) return res.status(404).json({ error: 'No encontrada' });
+    if (pend.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya no está pendiente' });
+
+    const sedePayload = mapPendingRowToSedeInsert(pend);
+    const { data: sedeRow, error: sedeErr } = await supabase.from('sedes').insert(sedePayload).select('id').single();
+    if (sedeErr) throw sedeErr;
+    const sedeId = sedeRow.id;
+
+    const licEmail = String(pend.licenciatario_email || '').trim().toLowerCase();
+    if (!licEmail) {
+      await supabase.from('sedes').delete().eq('id', sedeId);
+      return res.status(400).json({ error: 'Solicitud sin email de licenciatario' });
+    }
+    const urErr = await upsertUserRoleAdminClub({
+      email: licEmail,
+      nombre: pend.licenciatario_nombre || null,
+      pais: pend.licenciatario_pais || pend.pais || null,
+      sede_id: sedeId,
+    });
+    if (urErr) {
+      await supabase.from('sedes').delete().eq('id', sedeId);
+      throw urErr;
+    }
+
+    await supabase.from('sedes_pendientes').update({ estado: 'aprobada' }).eq('id', id);
+
+    const nombre = String(pend.nombre || '').trim();
+    const waNacional = await fetchJugadorWhatsappPorEmail(pend.created_by);
+    if (waNacional) {
+      await sendTwilioWhatsAppBodyToRaw(
+        waNacional,
+        `✅ Sede ${nombre} aprobada en PADBOL Match.`
+      );
+    }
+    const waLic = pend.licenciatario_telefono || pend.whatsapp;
+    if (waLic) {
+      await sendTwilioWhatsAppBodyToRaw(
+        waLic,
+        `🎉 Bienvenido a PADBOL Match. Tu sede "${nombre}" está activa.\nIngresá al panel: padbolmatch.com/admin`
+      );
+    }
+
+    res.json({ ok: true, sede_id: sedeId });
+  } catch (err) {
+    console.error('❌ POST aprobar sede pendiente:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/sedes-pendientes/:id/rechazar body: { motivo } */
+app.post('/api/admin/sedes-pendientes/:id/rechazar', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    const role = rowRole?.role || null;
+    if (!isSuperAdminApi(user.email, role)) {
+      return res.status(403).json({ error: 'Solo super admin' });
+    }
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'Id inválido' });
+    const motivo = String(req.body?.motivo || '').trim();
+    if (!motivo) return res.status(400).json({ error: 'Motivo obligatorio' });
+
+    const { data: pend, error: pe } = await supabase.from('sedes_pendientes').select('*').eq('id', id).maybeSingle();
+    if (pe) throw pe;
+    if (!pend) return res.status(404).json({ error: 'No encontrada' });
+    if (pend.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya no está pendiente' });
+
+    await supabase
+      .from('sedes_pendientes')
+      .update({ estado: 'rechazada', motivo_rechazo: motivo })
+      .eq('id', id);
+
+    const waNacional = await fetchJugadorWhatsappPorEmail(pend.created_by);
+    if (waNacional) {
+      const nombre = String(pend.nombre || '').trim();
+      await sendTwilioWhatsAppBodyToRaw(
+        waNacional,
+        `❌ Sede "${nombre}" rechazada.\nMotivo: ${motivo}`
+      );
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ POST rechazar sede pendiente:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Cron: WhatsApp reminder 1 hour before reservation ──────────────────────
 cron.schedule('*/5 * * * *', async () => {
   try {

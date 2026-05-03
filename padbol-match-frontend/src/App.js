@@ -28,6 +28,7 @@ import UserHome from './pages/UserHome';
 import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
+import NuevaSede from './components/NuevaSede';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import { getDisplayName } from './utils/displayName';
@@ -173,6 +174,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <AdminDashboardGate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/nueva-sede"
+          element={
+            <ProtectedRoute>
+              <NuevaSede />
             </ProtectedRoute>
           }
         />
