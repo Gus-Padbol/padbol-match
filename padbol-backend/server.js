@@ -30,7 +30,14 @@ function buildCorsAllowedOrigins() {
 
 // CORS (Render: CORS_ORIGIN=https://www.padbolmatch.com,https://padbolmatch.com,https://padbol-match-9abn.vercel.app)
 app.use(cors({
-  origin: buildCorsAllowedOrigins(),
+  origin: function (origin, callback) {
+    const allowed = buildCorsAllowedOrigins();
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
