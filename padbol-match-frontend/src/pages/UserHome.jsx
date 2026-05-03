@@ -10,6 +10,40 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 
+const LS_SALUDO_NOMBRE = 'padbol_nombre_saludo';
+const LS_SALUDO_UID = 'padbol_nombre_saludo_uid';
+
+function readNombreSaludoCacheado(userId) {
+  if (!userId) return '';
+  try {
+    const owner = String(localStorage.getItem(LS_SALUDO_UID) || '').trim();
+    if (owner !== String(userId)) return '';
+    return String(localStorage.getItem(LS_SALUDO_NOMBRE) || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+function escribirNombreSaludoCache(userId, userProfile) {
+  if (!userId || !userProfile) return;
+  try {
+    const ns = String(userProfile.nombre_saludo || '').trim();
+    const nom = String(userProfile.nombre || '').trim();
+    const v = ns || nom;
+    if (!v) return;
+    localStorage.setItem(LS_SALUDO_NOMBRE, v);
+    localStorage.setItem(LS_SALUDO_UID, String(userId));
+  } catch {
+    /* ignore */
+  }
+}
+
+function etiquetaSaludoDesdeCache(raw) {
+  const t = String(raw || '').trim();
+  if (!t) return '';
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
@@ -48,10 +82,30 @@ export default function UserHome() {
     return () => window.removeEventListener(PERFIL_CHANGE_EVENT, onPerfil);
   }, [refreshSession]);
 
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    if (profileLoading || userProfile == null) return;
+    escribirNombreSaludoCache(session.user.id, userProfile);
+  }, [session?.user?.id, userProfile, profileLoading]);
+
+  useEffect(() => {
+    if (session?.user) return;
+    try {
+      localStorage.removeItem(LS_SALUDO_NOMBRE);
+      localStorage.removeItem(LS_SALUDO_UID);
+    } catch {
+      /* ignore */
+    }
+  }, [session?.user]);
+
   const lineaSaludo = useMemo(() => {
     const sufijo = '¿Qué querés hacer hoy?';
     if (!session?.user) return `¡Hola! ${sufijo}`;
+    const uid = session.user.id;
+    const desdeCache = readNombreSaludoCacheado(uid);
+
     if (profileLoading || userProfile === null) {
+      if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;
       return `¡Hola! ${sufijo}`;
     }
     const ns = nombreDesdeSaludoPerfil(userProfile);
@@ -61,6 +115,7 @@ export default function UserHome() {
     }
     const nom = primerNombreDesdePerfil(userProfile);
     if (nom) return `¡Hola ${nom}! ${sufijo}`;
+    if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;
     return `¡Hola! ${sufijo}`;
   }, [session?.user, userProfile, profileLoading]);
 
