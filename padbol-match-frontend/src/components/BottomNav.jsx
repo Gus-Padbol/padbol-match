@@ -32,10 +32,6 @@ const BottomNav = () => {
     'sm@padbol.com',
     'juanpablo@padbol.com',
   ];
-  const superAdminBottomNav = rolEffective === 'super_admin' || superAdminNavEmails.includes(sessionEmailLower);
-  const path = location.pathname;
-  const pathOnly = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-  const adminTabActivo = new URLSearchParams(location.search).get('tab') || 'resumen';
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -44,6 +40,12 @@ const BottomNav = () => {
   }, [session?.user?.email]);
   const { rol } = useUserRole(currentCliente);
   const rolEffective = rol || readCachedRol();
+
+  const superAdminBottomNav = rolEffective === 'super_admin' || superAdminNavEmails.includes(sessionEmailLower);
+
+  const path = location.pathname;
+  const pathOnly = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+  const adminTabActivo = new URLSearchParams(location.search).get('tab') || 'resumen';
 
   const isPanelAdmin = ADMIN_PANEL_ROLES.includes(rolEffective || '');
 
