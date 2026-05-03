@@ -12,6 +12,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
   hubContentPaddingTopPx,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 
@@ -873,12 +874,11 @@ export default function SedePublica() {
             >
             <div
               style={{
-                width: '100%',
-                maxWidth: '100%',
+                ...hubInstagramColumnWrapStyle,
                 overflowX: 'hidden',
-                boxSizing: 'border-box',
-                /* Hueco bajo AppHeader + BottomNav: vive en el contenedor del hero / columna de contenido. */
                 paddingTop: sedeScrollPaddingTopCss,
+                paddingLeft: 'max(6px, env(safe-area-inset-left, 0px))',
+                paddingRight: 'max(6px, env(safe-area-inset-right, 0px))',
               }}
             >
             <div
@@ -1078,7 +1078,7 @@ export default function SedePublica() {
               </div>
             </div>
 
-            <div style={{ maxWidth: '700px', margin: '0 auto', padding: '10px 14px 0' }}>
+            <div style={{ width: '100%', maxWidth: '100%', margin: 0, padding: '10px 14px 0', boxSizing: 'border-box' }}>
               <SedeFotosCarruselDestacado
                 urls={fotosCarrusel}
                 onOpenAtIndex={(i) => {
@@ -1146,7 +1146,15 @@ export default function SedePublica() {
                 boxSizing: 'border-box',
               }}
             >
-              <div style={{ padding: '0 12px 6px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div
+                style={{
+                  ...hubInstagramColumnWrapStyle,
+                  padding: '0 12px 6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}

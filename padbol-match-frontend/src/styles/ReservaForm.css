@@ -1,7 +1,7 @@
 .reserva-container {
   width: 100%;
-  max-width: min(600px, 100%);
-  margin: 16px auto;
+  max-width: 100%;
+  margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
   box-sizing: border-box;
@@ -26,7 +26,7 @@
 }
 
 .reserva-sede-seleccion .reserva-sede-inner {
-  max-width: min(480px, 100%);
+  max-width: 100%;
   margin: 0 auto;
   padding: 8px 0 24px;
   box-sizing: border-box;

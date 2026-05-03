@@ -9,6 +9,7 @@ import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -765,6 +766,13 @@ export default function ReservaForm() {
         }}
       >
         <AppHeader title="Reservar" onBack={handleReservaBack} />
+        <div
+          style={{
+            ...hubInstagramColumnWrapStyle,
+            paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+            paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+          }}
+        >
         <div className="reserva-sede-inner">
           <header className="reserva-sede-hero">
             <img
@@ -873,6 +881,7 @@ export default function ReservaForm() {
 
           {error ? <div className="error-message reserva-sede-alert">{error}</div> : null}
         </div>
+        </div>
         <BottomNav />
       </div>
     );
@@ -891,6 +900,13 @@ export default function ReservaForm() {
         boxSizing: 'border-box',
       }}>
         <AppHeader title="Reservar" onBack={handleReservaBack} />
+        <div
+          style={{
+            ...hubInstagramColumnWrapStyle,
+            paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+            paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+          }}
+        >
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>
             📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
@@ -1046,6 +1062,7 @@ export default function ReservaForm() {
             {error && <div className="error-message">{error}</div>}
           </form>
         </div>
+        </div>
         <BottomNav />
       </div>
     );
@@ -1075,6 +1092,13 @@ export default function ReservaForm() {
         }}
       >
         <AppHeader title="Reservar" onBack={handleReservaBack} />
+        <div
+          style={{
+            ...hubInstagramColumnWrapStyle,
+            paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+            paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+          }}
+        >
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>⚽ Resumen de reserva</h1>
 
@@ -1165,6 +1189,7 @@ export default function ReservaForm() {
           >
             {mpLoading ? 'Procesando...' : 'Pagar con Mercado Pago'}
           </button>
+        </div>
         </div>
         <BottomNav />
       </div>

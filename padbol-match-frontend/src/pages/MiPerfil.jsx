@@ -9,6 +9,7 @@ import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
 } from '../constants/hubLayout';
 import {
   persistJugadorPerfil,
@@ -53,7 +54,7 @@ const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 const AVATAR_STORAGE_BUCKET = 'avatars';
 
 const MI_PERFIL_CONTENT_WRAP = {
-  maxWidth: '520px',
+  maxWidth: `${HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}px`,
   width: '100%',
   margin: '0 auto',
   padding: '20px',

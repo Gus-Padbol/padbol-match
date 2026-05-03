@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
@@ -148,12 +149,17 @@ export default function UserHome() {
         flexDirection: 'column',
         alignItems: 'center',
         paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingLeft: '20px',
-        paddingRight: '20px',
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
       <AppHeader title="Inicio" showBack={false} hubDirectLogin />
+      <div
+        style={{
+          ...hubInstagramColumnWrapStyle,
+          paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
+        }}
+      >
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"
@@ -172,7 +178,7 @@ export default function UserHome() {
           marginBottom: '40px',
         }}
       />
-      <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto' }}>
+      <div style={{ width: '100%', margin: '0 auto' }}>
         <div
           style={{
             background: 'rgba(255,255,255,0.10)',
@@ -279,6 +285,7 @@ export default function UserHome() {
         >
           Explorar sedes
         </button>
+      </div>
       </div>
       <BottomNav />
     </div>

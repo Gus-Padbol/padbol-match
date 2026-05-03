@@ -6,6 +6,7 @@ import {
   formatAliasConArroba,
   esCategoriaPendienteValidacion,
 } from './utils/jugadorPerfil';
+import { hubInstagramColumnWrapStyle } from './constants/hubLayout';
 import { formatNivelTorneo } from './utils/torneoFormatters';
 import { fetchTorneosConPuntosParaPerfil, emojiMedallaPosicionCompacta } from './utils/torneoHistorialPuntosJugador';
 import {
@@ -42,11 +43,10 @@ const CATEGORIA_COLOR = {
 };
 
 const wrap = {
-  maxWidth: '520px',
-  width: '100%',
-  margin: '0 auto',
+  ...hubInstagramColumnWrapStyle,
   padding: '20px',
-  boxSizing: 'border-box',
+  paddingLeft: 'max(20px, env(safe-area-inset-left, 0px))',
+  paddingRight: 'max(20px, env(safe-area-inset-right, 0px))',
 };
 
 export default function PerfilPublico() {

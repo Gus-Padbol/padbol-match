@@ -12,6 +12,19 @@ export const HUB_CONTENT_PADDING_TOP_PX =
 export const HUB_CONTENT_PADDING_BOTTOM_PX = 24;
 
 /**
+ * Columna principal centrada (estilo feed móvil en desktop): fondo full-bleed, contenido acotado.
+ */
+export const HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX = 900;
+
+export const hubInstagramColumnWrapStyle = {
+  maxWidth: `${HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}px`,
+  width: '100%',
+  marginLeft: 'auto',
+  marginRight: 'auto',
+  boxSizing: 'border-box',
+};
+
+/**
  * Rutas sin barra hub: inicio, listado sedes, reserva, auth.
  * `/admin` usa solo las pestañas del propio panel (no {@link BottomNav} bajo el header).
  * Perfil de sede (`/sede/:id`) muestra la barra con estilo sobrio en {@link BottomNav}.

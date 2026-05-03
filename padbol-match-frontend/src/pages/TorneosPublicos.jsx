@@ -6,6 +6,7 @@ import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
@@ -535,12 +536,18 @@ export default function TorneosPublicos() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        padding: `${hubContentPaddingTopCss(location.pathname)} 12px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 12px`,
+        padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
       }}
     >
       <AppHeader title="Torneos" onBack={handleTorneosAppBack} />
 
-      <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+      <div
+        style={{
+          ...hubInstagramColumnWrapStyle,
+          paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+        }}
+      >
         <img
           src="/logo-padbol-match.png"
           alt="Padbol Match"

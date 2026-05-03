@@ -6,6 +6,7 @@ import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
@@ -219,13 +220,17 @@ export default function Rankings() {
     () => ({
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: `${hubContentPaddingTopCss(location.pathname)} 16px ${HUB_CONTENT_PADDING_BOTTOM_PX}px 16px`,
+      padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     }),
     [location.pathname]
   );
 
-  const innerStyle = { maxWidth: '960px', margin: '0 auto', width: '100%', boxSizing: 'border-box' };
+  const innerStyle = {
+    ...hubInstagramColumnWrapStyle,
+    paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
+    paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
+  };
 
   const thStyle = {
     padding: narrow ? '8px 6px' : '11px 14px',
