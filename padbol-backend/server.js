@@ -1061,7 +1061,8 @@ app.get('/api/rankings', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('❌ Error GET /api/rankings:', err.message);
-    res.status(500).json({ error: err.message });
+    // El cliente espera un array; vacío evita romper la UI de rankings.
+    res.status(200).json([]);
   }
 });
 

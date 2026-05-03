@@ -129,7 +129,7 @@ export default function PerfilPublico() {
       const lista = await fetchTorneosConPuntosParaPerfil(match);
       setTorneosConPuntos(Array.isArray(lista) ? lista : []);
     } catch (e) {
-      console.error('[PerfilPublico] torneos con puntos', e);
+      console.error('[PerfilPublico] torneos con puntos (fetch)', e);
       setTorneosConPuntos([]);
     }
 
@@ -144,14 +144,24 @@ export default function PerfilPublico() {
     setMostrarTodosTorneosPublico(false);
   }, [torneosConPuntos]);
 
-  const puntosAlcancePublico = useMemo(
-    () => sumarPuntosPorAlcanceDesdeFilasTorneo(torneosConPuntos),
-    [torneosConPuntos]
-  );
-  const torneosUnicosConPuntosPublico = useMemo(
-    () => contarTorneosUnicosConPuntos(torneosConPuntos),
-    [torneosConPuntos]
-  );
+  const puntosAlcancePublico = useMemo(() => {
+    try {
+      const filas = Array.isArray(torneosConPuntos) ? torneosConPuntos : [];
+      return sumarPuntosPorAlcanceDesdeFilasTorneo(filas);
+    } catch (e) {
+      console.error('[PerfilPublico] puntos por alcance', e);
+      return { club: 0, nacional: 0, fipa: 0 };
+    }
+  }, [torneosConPuntos]);
+
+  const torneosUnicosConPuntosPublico = useMemo(() => {
+    try {
+      return contarTorneosUnicosConPuntos(Array.isArray(torneosConPuntos) ? torneosConPuntos : []);
+    } catch (e) {
+      console.error('[PerfilPublico] conteo torneos únicos', e);
+      return 0;
+    }
+  }, [torneosConPuntos]);
 
   useEffect(() => {
     if (loading || !perfil) return;
@@ -639,105 +649,121 @@ export default function PerfilPublico() {
           </div>
         ) : null}
 
-        {torneosConPuntos.length > 0 ? (
-          <div
+        <div
+          style={{
+            background: '#f9f9f9',
+            borderRadius: '12px',
+            padding: '18px 20px',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+            marginBottom: '12px',
+          }}
+        >
+          <h2
             style={{
-              background: '#f9f9f9',
-              borderRadius: '12px',
-              padding: '18px 20px',
-              boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-              marginBottom: '12px',
+              margin: '0 0 12px',
+              fontSize: '15px',
+              color: '#334155',
+              borderBottom: '1px solid #e5e7eb',
+              paddingBottom: '8px',
             }}
           >
-            <h2
-              style={{
-                margin: '0 0 12px',
-                fontSize: '15px',
-                color: '#334155',
-                borderBottom: '1px solid #e5e7eb',
-                paddingBottom: '8px',
-              }}
-            >
-              🏆 Mis Torneos
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {(mostrarTodosTorneosPublico ? torneosConPuntos : torneosConPuntos.slice(0, 5)).map((row) => {
-                const med = emojiMedallaPosicionCompacta(row.posicion);
-                const nivelTxt = formatNivelTorneo(row.nivel_torneo);
-                const pts = row.puntos != null ? row.puntos : '—';
-                return (
+            🏆 Competencias y puntos
+          </h2>
+          {Array.isArray(torneosConPuntos) && torneosConPuntos.length > 0 ? (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {(mostrarTodosTorneosPublico ? torneosConPuntos : torneosConPuntos.slice(0, 5)).map((row, idx) => {
+                  if (!row || typeof row !== 'object') return null;
+                  try {
+                    const tid = row.torneo_id != null ? row.torneo_id : idx;
+                    const eid = row.equipo_id != null ? row.equipo_id : 'x';
+                    const med = emojiMedallaPosicionCompacta(row.posicion);
+                    const nivelTxt = formatNivelTorneo(row.nivel_torneo);
+                    const pts = row.puntos != null ? row.puntos : '—';
+                    const nombreT = row.nombreTorneo != null ? String(row.nombreTorneo) : `Torneo #${tid}`;
+                    const fechaM = row.fechaMostrar != null ? String(row.fechaMostrar) : '—';
+                    return (
+                      <button
+                        key={`${tid}-${eid}-${idx}`}
+                        type="button"
+                        onClick={() => navigate(`/torneo/${tid}`)}
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid #e2e8f0',
+                          background: '#f1f5f9',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          color: '#334155',
+                          textAlign: 'left',
+                          overflow: 'hidden',
+                          minHeight: 0,
+                        }}
+                      >
+                        <span style={{ flexShrink: 0, lineHeight: 1.2 }}>{med}</span>
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap',
+                            fontWeight: 700,
+                            color: '#0f172a',
+                          }}
+                        >
+                          {nombreT}
+                        </span>
+                        <span
+                          style={{
+                            minWidth: 0,
+                            flex: 1,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            fontWeight: 600,
+                            color: '#475569',
+                          }}
+                        >
+                          {` · ${nivelTxt} · ${pts} pts · ${fechaM}`}
+                        </span>
+                      </button>
+                    );
+                  } catch (rowErr) {
+                    console.error('[PerfilPublico] fila torneo', rowErr);
+                    return null;
+                  }
+                })}
+              </div>
+              {torneosConPuntos.length > 5 ? (
+                <div style={{ marginTop: '12px', textAlign: 'center' }}>
                   <button
-                    key={`${row.torneo_id}-${row.equipo_id}`}
                     type="button"
-                    onClick={() => navigate(`/torneo/${row.torneo_id}`)}
+                    onClick={() => setMostrarTodosTorneosPublico((v) => !v)}
                     style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 12px',
-                      borderRadius: '10px',
-                      border: '1px solid #e2e8f0',
-                      background: '#f1f5f9',
-                      cursor: 'pointer',
+                      padding: '10px 18px',
                       fontSize: '14px',
+                      fontWeight: 700,
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      background: 'white',
                       color: '#334155',
-                      textAlign: 'left',
-                      overflow: 'hidden',
-                      minHeight: 0,
+                      cursor: 'pointer',
                     }}
                   >
-                    <span style={{ flexShrink: 0, lineHeight: 1.2 }}>{med}</span>
-                    <span
-                      style={{
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap',
-                        fontWeight: 700,
-                        color: '#0f172a',
-                      }}
-                    >
-                      {row.nombreTorneo}
-                    </span>
-                    <span
-                      style={{
-                        minWidth: 0,
-                        flex: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontWeight: 600,
-                        color: '#475569',
-                      }}
-                    >
-                      {` · ${nivelTxt} · ${pts} pts · ${row.fechaMostrar}`}
-                    </span>
+                    {mostrarTodosTorneosPublico ? 'Ver menos' : 'Ver todos'}
                   </button>
-                );
-              })}
-            </div>
-            {torneosConPuntos.length > 5 ? (
-              <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setMostrarTodosTorneosPublico((v) => !v)}
-                  style={{
-                    padding: '10px 18px',
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
-                    background: 'white',
-                    color: '#334155',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {mostrarTodosTorneosPublico ? 'Ver menos' : 'Ver todos'}
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px', fontWeight: 600, textAlign: 'center', padding: '12px 8px' }}>
+              Sin competencias registradas
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

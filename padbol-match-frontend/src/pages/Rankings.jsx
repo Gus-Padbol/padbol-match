@@ -78,7 +78,8 @@ export default function Rankings() {
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [rankings, setRankings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  /** Si el fetch falla (red, timeout, 5xx), mostramos vacío amigable en lugar del mensaje de error técnico. */
+  const [rankingSinDatosDisponibles, setRankingSinDatosDisponibles] = useState(false);
 
   const selectedSedeMeta = useMemo(
     () => sedes.find((s) => String(s.id) === selectedSede),
@@ -171,7 +172,7 @@ export default function Rankings() {
     const url = `${apiUrl('/api/rankings')}?${params.toString()}`;
 
     setLoading(true);
-    setError(null);
+    setRankingSinDatosDisponibles(false);
     setRankings([]);
 
     (async () => {
@@ -184,22 +185,21 @@ export default function Rankings() {
         try {
           data = JSON.parse(text);
         } catch {
-          throw new Error('Respuesta inválida del servidor');
+          setRankingSinDatosDisponibles(true);
+          setRankings([]);
+          return;
         }
 
         if (!res.ok) {
-          throw new Error((data && data.error) || 'Error al cargar rankings');
+          setRankingSinDatosDisponibles(true);
+          setRankings(Array.isArray(data) ? data : []);
+          return;
         }
+        setRankingSinDatosDisponibles(false);
         setRankings(Array.isArray(data) ? data : []);
       } catch (err) {
         if (cancelled) return;
-        const msg =
-          err.name === 'AbortError'
-            ? 'El servidor tardó demasiado. Intenta de nuevo.'
-            : err.message === 'Failed to fetch'
-              ? 'No se pudo conectar al servidor. Revisa tu conexión.'
-              : err.message || 'Error al cargar rankings';
-        setError(msg);
+        setRankingSinDatosDisponibles(true);
         setRankings([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -353,17 +353,21 @@ export default function Rankings() {
             <div style={{ padding: '60px', textAlign: 'center', color: '#bbb', fontSize: '15px' }}>
               Cargando rankings...
             </div>
-          ) : error ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444', fontSize: '14px' }}>
-              ⚠️ {error}
-            </div>
           ) : rankings.length === 0 ? (
             <div style={{ padding: '60px', textAlign: 'center' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏆</div>
-              <div style={{ color: '#9ca3af', fontSize: '15px', fontWeight: '600' }}>Sin datos de ranking todavía</div>
-              <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
-                Los puntos se asignan automáticamente al finalizar torneos.
+              <div style={{ color: '#9ca3af', fontSize: '15px', fontWeight: '600' }}>
+                {rankingSinDatosDisponibles ? 'Sin datos disponibles' : 'Sin datos de ranking todavía'}
               </div>
+              {!rankingSinDatosDisponibles ? (
+                <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
+                  Los puntos se asignan automáticamente al finalizar torneos.
+                </div>
+              ) : (
+                <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
+                  No pudimos cargar el ranking en este momento.
+                </div>
+              )}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>

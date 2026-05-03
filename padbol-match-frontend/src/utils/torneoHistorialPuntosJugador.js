@@ -91,6 +91,15 @@ export function emojiMedallaPosicionCompacta(pos) {
  * @param {object} perfil Fila `jugadores_perfil` o equivalente (user_id, email, alias, nombre…)
  */
 export async function fetchTorneosConPuntosParaPerfil(perfil) {
+  try {
+    return await fetchTorneosConPuntosParaPerfilInner(perfil);
+  } catch (e) {
+    console.error('[torneoHistorialPuntosJugador] fetchTorneosConPuntosParaPerfil', e);
+    return [];
+  }
+}
+
+async function fetchTorneosConPuntosParaPerfilInner(perfil) {
   const equiposJugador = await fetchEquiposJugadorTodosTorneos(perfil);
   const equipoIds = [...new Set(equiposJugador.map((e) => e.id).filter((x) => x != null))];
   if (!equipoIds.length) return [];
