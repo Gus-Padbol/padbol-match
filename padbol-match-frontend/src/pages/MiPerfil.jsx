@@ -113,6 +113,29 @@ function escapeIlikeLiteral(value) {
     .replace(/_/g, '\\_');
 }
 
+/** Primeros YYYY-MM-DD del valor (DATE o ISO legacy) sin interpretar como UTC. */
+function fechaNacimientoDesdeDb(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
+  return m ? m[1] : '';
+}
+
+/** Solo persiste calendario local YYYY-MM-DD; evita Date / toISOString(). */
+function fechaNacimientoParaPayload(inputValue) {
+  const s = String(inputValue ?? '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  return s;
+}
+
+/** Vista es-AR dd/mm/yyyy desde string almacenado, sin new Date(). */
+function fechaNacimientoDisplayEsAr(raw) {
+  const ymd = fechaNacimientoDesdeDb(raw);
+  if (!ymd) return '—';
+  const [y, mo, d] = ymd.split('-');
+  return `${d}/${mo}/${y}`;
+}
+
 /** Base para sugerencias de alias: minúsculas, sin espacios ni caracteres especiales. */
 function baseAliasDesdeTextoLibre(raw) {
   const t = String(raw || '')
@@ -737,7 +760,7 @@ export default function MiPerfil() {
           alias: data.alias != null ? String(data.alias) : '',
           instagram: instagramHandleFromStored(data.instagram_url),
           companero_id: data.companero_id != null && String(data.companero_id).trim() ? String(data.companero_id).trim() : null,
-          fecha_nacimiento: data.fecha_nacimiento || '',
+          fecha_nacimiento: fechaNacimientoDesdeDb(data.fecha_nacimiento),
           numero_fipa: data.numero_fipa || '',
           es_federado: data.es_federado || false,
           mostrar_torneos_jugados: Boolean(data.mostrar_torneos_jugados),
@@ -1153,7 +1176,7 @@ export default function MiPerfil() {
         pais: paisGuardado,
         localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
-        fecha_nacimiento: formData.fecha_nacimiento || null,
+        fecha_nacimiento: fechaNacimientoParaPayload(formData.fecha_nacimiento),
         numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
         es_federado: formData.es_federado,
         whatsapp: wa,
@@ -1277,7 +1300,7 @@ export default function MiPerfil() {
         localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
 
-        fecha_nacimiento: formData.fecha_nacimiento || null,
+        fecha_nacimiento: fechaNacimientoParaPayload(formData.fecha_nacimiento),
         numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
         es_federado: formData.es_federado,
         mostrar_torneos_jugados: !!formData.mostrar_torneos_jugados,
@@ -2427,10 +2450,10 @@ export default function MiPerfil() {
                 </span>
               } />
               <Row label="Lateralidad" value={perfil.lateralidad} />
-              {perfil.fecha_nacimiento && (
+              {fechaNacimientoDesdeDb(perfil.fecha_nacimiento) && (
                 <Row
                   label="Fecha de nacimiento"
-                  value={new Date(perfil.fecha_nacimiento).toLocaleDateString('es-AR')}
+                  value={fechaNacimientoDisplayEsAr(perfil.fecha_nacimiento)}
                 />
               )}
               <div>
@@ -3039,7 +3062,7 @@ export default function MiPerfil() {
                       alias: perfil?.alias != null ? String(perfil.alias) : '',
                       nombre_saludo: perfil?.nombre_saludo != null ? String(perfil.nombre_saludo) : '',
                       instagram: instagramHandleFromStored(perfil?.instagram_url),
-                      fecha_nacimiento: perfil?.fecha_nacimiento || '',
+                      fecha_nacimiento: fechaNacimientoDesdeDb(perfil?.fecha_nacimiento) || '',
                       numero_fipa: perfil?.numero_fipa || '',
                       es_federado: perfil?.es_federado || false,
                       mostrar_torneos_jugados: Boolean(perfil?.mostrar_torneos_jugados),
