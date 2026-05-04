@@ -13,8 +13,8 @@ import {
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { RESERVA_FORM_RESTORE_KEY, saveReservaReturnUrl } from '../utils/reservaReturnUrl';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
-import { saveReservaReturnUrl } from '../utils/reservaReturnUrl';
 import { getDisplayName } from '../utils/displayName';
 import {
   ciudadPaisConBandera,
@@ -138,9 +138,6 @@ function apiUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
   return `${API_BASE}${p}`;
 }
-
-/** Estado de reserva guardado antes de ir al login al elegir cancha sin sesión. */
-const RESERVA_FORM_RESTORE_KEY = 'padbol_reserva_form_restore_v1';
 
 /** Solo se ofrecen / muestran las primeras 2 canchas en el flujo de reserva. */
 const MAX_CANCHAS_RESERVA_UI = 2;
@@ -665,6 +662,21 @@ export default function ReservaForm() {
   const handlePagarConMP = async () => {
     if (authLoading) return;
     if (!session?.user) {
+      try {
+        const reservaRestorePayload = {
+          filtros: {
+            pais: filtros.pais,
+            ciudad: filtros.ciudad,
+            sede_id: filtros.sede_id,
+          },
+          fecha: formData.fecha,
+          hora: formData.hora,
+          cancha: String(formData.cancha),
+        };
+        sessionStorage.setItem(RESERVA_FORM_RESTORE_KEY, JSON.stringify(reservaRestorePayload));
+      } catch (_) {
+        /* ignore */
+      }
       saveReservaReturnUrl({
         sedeId: filtros.sede_id,
         fecha: formData.fecha,

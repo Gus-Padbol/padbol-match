@@ -34,13 +34,6 @@ import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import { getDisplayName } from './utils/displayName';
 
-const ADMIN_EMAILS = [
-  'padbolinternacional@gmail.com',
-  'admin@padbol.com',
-  'sm@padbol.com',
-  'juanpablo@padbol.com',
-];
-
 function LegacyPerfilRedirect() {
   const loc = useLocation();
   const suffix = `${loc.search || ''}${loc.hash || ''}`;
@@ -99,18 +92,8 @@ function AdminDashboardGate() {
 
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
 
-  const emailLower = (currentCliente?.email || '').trim().toLowerCase();
-  /** Emails con panel global: montar AdminDashboard de inmediato sin esperar `user_roles`. */
-  const legacyAdminEmailBypassRoleLoading = ADMIN_EMAILS.includes(emailLower);
-
-  const canAccessAdmin = () => {
-    if (ADMIN_EMAILS.includes(emailLower)) return true;
-    return ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
-  };
-
-  if (legacyAdminEmailBypassRoleLoading) {
-    return <AdminDashboard rol={rol} sedeId={sedeId} />;
-  }
+  /** Solo roles definidos en `user_roles` (sin fallback por email a super_admin). */
+  const canAccessAdmin = () => ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
 
   if (roleLoading) {
     return (
@@ -242,7 +225,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        {/* /admin: sin condición por email en la ruta; AdminDashboardGate usa ADMIN_EMAILS + roles (legacy no espera roleLoading). */}
+        {/* /admin: AdminDashboardGate espera user_roles y no usa lista legacy de emails para super_admin. */}
         <Route
           path="/admin"
           element={

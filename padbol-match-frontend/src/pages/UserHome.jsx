@@ -65,8 +65,8 @@ export default function UserHome() {
   const lineaSaludo = useMemo(() => {
     const sufijo = '¿Qué querés hacer hoy?';
     if (!session?.user) return `¡Hola! ${sufijo}`;
-    /* Hasta que termine refreshUserProfile: sin nombre (evita caché/local con nombre completo). */
-    if (profileLoading || userProfile === null) {
+    /* Sin nombre hasta tener perfil Supabase (evita parpadeo / texto intermedio). */
+    if (authLoading || profileLoading || userProfile === null) {
       return `¡Hola! ${sufijo}`;
     }
     const ap = nombreDesdeApodoPerfil(userProfile);
@@ -77,7 +77,7 @@ export default function UserHome() {
     const nom = primerNombreDesdePerfil(userProfile);
     if (nom) return `¡Hola ${nom}! ${sufijo}`;
     return `¡Hola! ${sufijo}`;
-  }, [session?.user, userProfile, profileLoading]);
+  }, [session?.user, userProfile, profileLoading, authLoading]);
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
@@ -147,6 +147,7 @@ export default function UserHome() {
               fontWeight: '600',
               lineHeight: 1.35,
               minHeight: '2.7em',
+              transition: 'none',
             }}
           >
             {lineaSaludo}

@@ -82,7 +82,10 @@ export async function handleAuthOnce(payload) {
         typeof window !== 'undefined' && window.location?.origin ? String(window.location.origin) : '';
       const reservaRestoreRaw =
         typeof window !== 'undefined'
-          ? window.sessionStorage?.getItem('padbol_reserva_form_restore_v1')
+          ? window.sessionStorage?.getItem(
+              // Keep in sync with reservaReturnUrl.js RESERVA_FORM_RESTORE_KEY
+              'padbol_reserva_form_restore_v1'
+            )
           : null;
       const hasReservaFormRestore =
         reservaRestoreRaw != null && String(reservaRestoreRaw).trim() !== '';

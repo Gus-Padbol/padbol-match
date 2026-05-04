@@ -75,14 +75,6 @@ function normalizeHexSedeAdmin(raw) {
 
 const ADMIN_TABS_ALLOWED = new Set(['resumen', 'torneos', 'reservas', 'validaciones', 'mi_sede', 'config', 'sedes_pendientes']);
 
-/** Igual que `ADMIN_EMAILS` en App.js: emails con alcance global (torneos/reservas sin filtrar por sede). */
-const ADMIN_EMAILS_LEGACY_SUPER = [
-  'padbolinternacional@gmail.com',
-  'admin@padbol.com',
-  'sm@padbol.com',
-  'juanpablo@padbol.com',
-];
-
 function sanitizeAdminActiveTab(raw) {
   const t = String(raw || '').trim();
   return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
@@ -266,11 +258,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const { session } = useAuth();
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
 
-  // Legacy email-based flags (kept for backward compatibility while roles roll out)
-  const isSuperAdmin =
-    rol === 'super_admin' || ADMIN_EMAILS_LEGACY_SUPER.includes(currentEmail);
-  const isAdmin = isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club' ||
-    ['admin@padbol.com', 'sm@padbol.com', 'juanpablo@padbol.com'].includes(currentEmail);
+  const isSuperAdmin = rol === 'super_admin';
+  const isAdmin =
+    isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club';
 
   // Role-based access flags
   const esAdminNacional = rol === 'admin_nacional';
