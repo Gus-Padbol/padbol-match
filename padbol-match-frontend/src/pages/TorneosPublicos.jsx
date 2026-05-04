@@ -461,7 +461,7 @@ export default function TorneosPublicos() {
 
               <button
                 type="button"
-                onClick={() => navigate(`/torneo/${t.id}/equipos`)}
+                onClick={() => navigate(`/torneo/${t.id}`)}
                 style={{
                   marginTop: '12px',
                   width: '100%',

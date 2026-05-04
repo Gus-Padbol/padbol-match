@@ -453,59 +453,66 @@ export default function TorneoVista() {
     anotarmeListaEspera,
   ]);
 
-  const adminTorneoBar = torneo ? (
-    <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
-      {estadoTorneoLower !== 'finalizado' ? (
-        <div style={{ textAlign: 'center', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-          {puedeMostrarAbrirInscripcionAdmin ? (
-            <button
-              type="button"
-              className="btn-agregar-jugadores"
-              style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', color: '#fff', fontWeight: 800 }}
-              onClick={() => void abrirInscripcionDesdeAdmin()}
-              disabled={abrirInscripcionLoading}
-            >
-              {abrirInscripcionLoading ? 'Abriendo…' : '📣 Abrir inscripción'}
-            </button>
-          ) : null}
+  /** Solo admins del torneo: jugadores desde /torneos no deben ver CTAs de gestión ni «Equipos e inscripción» aquí. */
+  const adminBarFilaEquiposGestión =
+    isAdmin && estadoTorneoLower !== 'finalizado' ? (
+      <div style={{ textAlign: 'center', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+        {puedeMostrarAbrirInscripcionAdmin ? (
           <button
             type="button"
             className="btn-agregar-jugadores"
-            onClick={() => navigate(`/torneo/${torneoId}/equipos`, torneoNavState ? { state: torneoNavState } : undefined)}
+            style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', color: '#fff', fontWeight: 800 }}
+            onClick={() => void abrirInscripcionDesdeAdmin()}
+            disabled={abrirInscripcionLoading}
           >
-            Equipos e inscripción
+            {abrirInscripcionLoading ? 'Abriendo…' : '📣 Abrir inscripción'}
           </button>
-        </div>
+        ) : null}
+        <button
+          type="button"
+          className="btn-agregar-jugadores"
+          onClick={() => navigate(`/torneo/${torneoId}/equipos`, torneoNavState ? { state: torneoNavState } : undefined)}
+        >
+          Equipos e inscripción
+        </button>
+      </div>
+    ) : null;
+  const adminBarIniciarTorneo = isAdmin && puedeMostrarIniciarTorneo ? (
+    <div className="torneo-acciones torneo-acciones--sobre-violeta">
+      {!todosEquiposCompletos ? (
+        <p className="torneo-iniciar-aviso">
+          Faltan equipos completos para iniciar. Podés iniciar igual para cerrar inscripción.
+        </p>
       ) : null}
-      {puedeMostrarIniciarTorneo && (
-        <div className="torneo-acciones torneo-acciones--sobre-violeta">
-          {!todosEquiposCompletos ? (
-            <p className="torneo-iniciar-aviso">
-              Faltan equipos completos para iniciar. Podés iniciar igual para cerrar inscripción.
-            </p>
-          ) : null}
-          <button
-            type="button"
-            className="btn-iniciar-torneo btn-iniciar-torneo--sobre-violeta"
-            onClick={() => void iniciarTorneo()}
-            disabled={iniciando}
-          >
-            {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
-          </button>
-        </div>
-      )}
-      {isAdmin &&
-        ['en_curso', 'activo'].includes(String(torneo.estado || '').toLowerCase()) &&
-        partidos.length > 0 &&
-        partidos.every((p) => p.estado === 'finalizado') && (
-          <div className="torneo-acciones">
-            <button type="button" className="btn-finalizar-torneo" onClick={() => void finalizarTorneo()} disabled={finalizando}>
-              {finalizando ? 'Finalizando...' : '🏆 Finalizar torneo'}
-            </button>
-          </div>
-        )}
+      <button
+        type="button"
+        className="btn-iniciar-torneo btn-iniciar-torneo--sobre-violeta"
+        onClick={() => void iniciarTorneo()}
+        disabled={iniciando}
+      >
+        {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
+      </button>
     </div>
   ) : null;
+  const adminBarFinalizarTorneo =
+    isAdmin &&
+    ['en_curso', 'activo'].includes(String(torneo?.estado || '').toLowerCase()) &&
+    partidos.length > 0 &&
+    partidos.every((p) => p.estado === 'finalizado') ? (
+      <div className="torneo-acciones">
+        <button type="button" className="btn-finalizar-torneo" onClick={() => void finalizarTorneo()} disabled={finalizando}>
+          {finalizando ? 'Finalizando...' : '🏆 Finalizar torneo'}
+        </button>
+      </div>
+    ) : null;
+  const adminTorneoBar =
+    torneo && isAdmin && (adminBarFilaEquiposGestión || adminBarIniciarTorneo || adminBarFinalizarTorneo) ? (
+      <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
+        {adminBarFilaEquiposGestión}
+        {adminBarIniciarTorneo}
+        {adminBarFinalizarTorneo}
+      </div>
+    ) : null;
 
   if (loading) {
     return (
