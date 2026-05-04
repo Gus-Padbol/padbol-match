@@ -384,7 +384,7 @@ export default function MiPerfil() {
     nombre: '',
     apellido: '',
     genero: '',
-    nombre_saludo: '',
+    apodo: '',
     lateralidad: 'Diestro',
     nivel: '5ta',
     pais: '',
@@ -649,7 +649,7 @@ export default function MiPerfil() {
       setAliasSuggestions([]);
       return;
     }
-    const base = baseAliasDesdeTextoLibre(formData.nombre_saludo);
+    const base = baseAliasDesdeTextoLibre(formData.apodo);
     if (!base) {
       setAliasSuggestions([]);
       setAliasSugerenciasCargando(false);
@@ -681,7 +681,7 @@ export default function MiPerfil() {
       setAliasSuggestions(rows);
     }, 500);
     return () => clearTimeout(t);
-  }, [editando, esRegistroSinSesion, formData.nombre_saludo, session?.user?.id]);
+  }, [editando, esRegistroSinSesion, formData.apodo, session?.user?.id]);
 
   useEffect(() => {
     if (sessionOwnerEmail) return;
@@ -764,7 +764,9 @@ export default function MiPerfil() {
           nombre: na.nombre,
           apellido: na.apellido,
           genero: data.genero != null ? String(data.genero).trim() : '',
-          nombre_saludo: data.nombre_saludo != null ? String(data.nombre_saludo) : '',
+          apodo:
+            String(data.apodo ?? '').trim() ||
+            (data.nombre_saludo != null ? String(data.nombre_saludo) : ''),
           lateralidad: data.lateralidad || 'Diestro',
           nivel: data.nivel || '5ta',
           pais: data.pais || '',
@@ -1203,7 +1205,7 @@ export default function MiPerfil() {
       }
 
       const aliasTrimReg = String(formData.alias || '').trim();
-      const nombreSaludoReg = String(formData.nombre_saludo || '').trim();
+      const apodoReg = String(formData.apodo || '').trim();
       const payload = {
         lateralidad: formData.lateralidad,
         nivel: formData.nivel,
@@ -1217,7 +1219,7 @@ export default function MiPerfil() {
         es_federado: formData.es_federado,
         whatsapp: wa,
         alias: aliasTrimReg || null,
-        nombre_saludo: nombreSaludoReg || null,
+        apodo: apodoReg || null,
         instagram_url: instagramUrlFromHandle(formData.instagram),
         companero_id: null,
         mostrar_torneos_jugados: false,
@@ -1244,7 +1246,7 @@ export default function MiPerfil() {
         nombre: nom,
         apellido: apellReg,
         genero: genReg,
-        nombre_saludo: String(formData.nombre_saludo || '').trim(),
+        apodo: String(formData.apodo || '').trim(),
         categoria: String(formData.nivel || '').trim(),
         whatsapp: wa,
         email: owner,
@@ -1381,7 +1383,7 @@ export default function MiPerfil() {
         email: owner,
         nombre: nombreTrim,
         apellido: apellidoTrim || null,
-        nombre_saludo: String(formData.nombre_saludo || '').trim() || null,
+        apodo: String(formData.apodo || '').trim() || null,
         whatsapp: waFinal,
         ...payload,
       };
@@ -1441,7 +1443,7 @@ export default function MiPerfil() {
           nombre: nombreTrim,
           apellido: apellidoTrim,
           genero: genTrim,
-          nombre_saludo: String(formData.nombre_saludo || '').trim(),
+          apodo: String(formData.apodo || '').trim(),
           categoria: String(formData.nivel || '').trim(),
           whatsapp: waFinal,
           email: owner,
@@ -1710,8 +1712,8 @@ export default function MiPerfil() {
               <label style={guestLabelStyle}>¿Cómo querés que te llamemos?</label>
               <input
                 type="text"
-                name="nombre_saludo"
-                value={formData.nombre_saludo}
+                name="apodo"
+                value={formData.apodo}
                 onChange={handleChange}
                 placeholder="Ej: Gus, Eli, Carlitos"
                 style={{ ...guestInputStyle, marginBottom: '8px' }}
@@ -2513,7 +2515,11 @@ export default function MiPerfil() {
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row
                 label="¿Cómo querés que te llamemos?"
-                value={String(perfil?.nombre_saludo || '').trim() || '—'}
+                value={
+                  String(perfil?.apodo || '').trim() ||
+                  String(perfil?.nombre_saludo || '').trim() ||
+                  '—'
+                }
               />
               <Row
                 label="Alias"
@@ -2604,8 +2610,8 @@ export default function MiPerfil() {
             <label style={labelStyle}>¿Cómo querés que te llamemos?</label>
             <input
               type="text"
-              name="nombre_saludo"
-              value={formData.nombre_saludo}
+              name="apodo"
+              value={formData.apodo}
               onChange={handleChange}
               placeholder="Ej: Gus, Eli, Carlitos"
               style={{ ...inputStyle, marginBottom: '8px' }}
@@ -3176,7 +3182,9 @@ export default function MiPerfil() {
                       localidad: perfil?.localidad != null ? String(perfil.localidad) : '',
                       ciudad: perfil?.ciudad || '',
                       alias: perfil?.alias != null ? String(perfil.alias) : '',
-                      nombre_saludo: perfil?.nombre_saludo != null ? String(perfil.nombre_saludo) : '',
+                      apodo:
+                        String(perfil?.apodo ?? '').trim() ||
+                        (perfil?.nombre_saludo != null ? String(perfil.nombre_saludo) : ''),
                       instagram: instagramHandleFromStored(perfil?.instagram_url),
                       fecha_nacimiento: fechaNacimientoDesdeDb(perfil?.fecha_nacimiento) || '',
                       numero_fipa: perfil?.numero_fipa || '',

@@ -44,6 +44,7 @@ async function refreshUserProfile(session, setUserProfile) {
       ...perfilDB,
       nombre: perfilDB?.nombre != null ? String(perfilDB.nombre) : '',
       nombre_saludo: perfilDB?.nombre_saludo != null ? String(perfilDB.nombre_saludo) : '',
+      apodo: perfilDB?.apodo != null ? String(perfilDB.apodo) : '',
       alias: perfilDB?.alias != null ? String(perfilDB.alias) : '',
       email: email || String(perfilDB.email || '').trim(),
     });
@@ -79,6 +80,7 @@ async function refreshUserProfile(session, setUserProfile) {
       ...perfilDB,
       nombre: perfilDB?.nombre != null ? String(perfilDB.nombre) : '',
       nombre_saludo: perfilDB?.nombre_saludo != null ? String(perfilDB.nombre_saludo) : '',
+      apodo: perfilDB?.apodo != null ? String(perfilDB.apodo) : '',
       alias: perfilDB?.alias != null ? String(perfilDB.alias) : '',
       email: email || String(perfilDB.email || '').trim(),
     });

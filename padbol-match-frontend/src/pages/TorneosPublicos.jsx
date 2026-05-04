@@ -12,6 +12,11 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
+import {
+  FILTROS_ESTADO_TORNEO_PILLS,
+  torneoPasaFiltroEstadoVista,
+  esEstadoFinalizadoTorneo,
+} from '../utils/torneoEstadoFiltroPills';
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -62,55 +67,6 @@ function normalizeSearchText(s) {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 }
-
-/** Estado normalizado para filtros (alinea con `torneoOrdenPublico` / BD). */
-function estadoTorneoNormalizado(estadoRaw) {
-  return String(estadoRaw || '')
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '_')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
-function esInscripcionAbiertaTorneo(estadoRaw) {
-  const e = estadoTorneoNormalizado(estadoRaw);
-  return e === 'abierto' || e === 'inscripcion_abierta';
-}
-
-function esProximoTorneo(estadoRaw) {
-  const e = estadoTorneoNormalizado(estadoRaw);
-  return e === 'planificacion' || e === 'proximo';
-}
-
-function esEstadoEnCursoTorneo(estadoRaw) {
-  const e = estadoTorneoNormalizado(estadoRaw);
-  return e === 'en_curso' || e === 'activo';
-}
-
-function esEstadoFinalizadoTorneo(estadoRaw) {
-  return estadoTorneoNormalizado(estadoRaw) === 'finalizado';
-}
-
-/**
- * @param {'todos'|'inscripcion_abierta'|'proximo'|'en_curso'|'finalizado'} filtro
- */
-function torneoPasaFiltroEstadoVista(t, filtro) {
-  if (filtro === 'todos') return true;
-  if (filtro === 'finalizado') return esEstadoFinalizadoTorneo(t?.estado);
-  if (filtro === 'en_curso') return esEstadoEnCursoTorneo(t?.estado);
-  if (filtro === 'inscripcion_abierta') return esInscripcionAbiertaTorneo(t?.estado);
-  if (filtro === 'proximo') return esProximoTorneo(t?.estado);
-  return true;
-}
-
-const FILTROS_ESTADO_TORNEO_PILLS = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'inscripcion_abierta', label: 'Inscripción abierta' },
-  { id: 'proximo', label: 'Próximo' },
-  { id: 'en_curso', label: 'En curso' },
-  { id: 'finalizado', label: 'Finalizado' },
-];
 
 function badgeEstadoTorneoListado(t) {
   if (esEstadoFinalizadoTorneo(t?.estado)) {

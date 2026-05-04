@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
+import { FILTROS_ESTADO_TORNEO_PILLS, torneoPasaFiltroEstadoVista } from '../utils/torneoEstadoFiltroPills';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -286,6 +287,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const [reservas, setReservas] = useState([]);
   const [torneos, setTorneos] = useState([]);
+  const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
   const [sedesMap, setSedesMap] = useState({});
   /** Equipos de torneos en alcance (para ingresos por inscripción confirmada). */
   const [equiposInscripcionRows, setEquiposInscripcionRows] = useState([]);
@@ -574,6 +576,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editTorneoForm, setEditTorneoForm] = useState({});
   const [savingTorneo, setSavingTorneo] = useState(false);
   const [torneoStats, setTorneoStats] = useState({});
+
+  const torneosFiltradosAdminEstado = useMemo(
+    () => torneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneoAdmin)),
+    [torneos, filtroEstadoTorneoAdmin]
+  );
 
   // ── Config puntos (superAdmin only) ──
   const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
@@ -1892,11 +1899,60 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             + Nuevo Torneo
           </button>
         </div>
+        {torneos.length > 0 ? (
+          <div style={{ marginBottom: '14px', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#555', marginBottom: '8px' }}>Estado del torneo</div>
+            <div
+              role="group"
+              aria-label="Estado del torneo"
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                flexWrap: 'nowrap',
+                gap: '8px',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'thin',
+                paddingBottom: '4px',
+              }}
+            >
+              {FILTROS_ESTADO_TORNEO_PILLS.map(({ id, label }) => {
+                const active = filtroEstadoTorneoAdmin === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setFiltroEstadoTorneoAdmin(id)}
+                    style={{
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                      padding: '8px 14px',
+                      borderRadius: '999px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      fontFamily: 'inherit',
+                      cursor: 'pointer',
+                      border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
+                      background: active ? '#667eea' : 'transparent',
+                      color: active ? '#fff' : '#374151',
+                      boxShadow: active ? '0 2px 8px rgba(102, 126, 234, 0.35)' : 'none',
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
         {torneos.length === 0 ? (
           <p style={{ color: '#999' }}>Sin torneos</p>
+        ) : torneosFiltradosAdminEstado.length === 0 ? (
+          <p style={{ color: '#999' }}>No hay torneos con este estado.</p>
         ) : (
           <div style={{ display: 'grid', gap: '10px' }}>
-            {torneos.map(torneo => {
+            {torneosFiltradosAdminEstado.map(torneo => {
               const sede = sedesMap[torneo.sede_id];
               const flag = sedeFlag(sede);
               const ciudadSede = String(sede?.ciudad || '').trim();

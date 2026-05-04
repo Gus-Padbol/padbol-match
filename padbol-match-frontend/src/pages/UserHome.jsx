@@ -28,9 +28,11 @@ function readNombreSaludoCacheado(userId) {
 function escribirNombreSaludoCache(userId, userProfile) {
   if (!userId || !userProfile) return;
   try {
+    const ap = String(userProfile.apodo || '').trim();
+    const nomAp = nombreApellidoSaludoDesdePerfil(userProfile).trim();
     const ns = String(userProfile.nombre_saludo || '').trim();
     const full = nombreCompletoJugadorPerfil(userProfile).trim();
-    const v = ns || full;
+    const v = ap || nomAp || ns || full;
     if (!v) return;
     localStorage.setItem(LS_SALUDO_NOMBRE, v);
     localStorage.setItem(LS_SALUDO_UID, String(userId));
@@ -55,7 +57,13 @@ function capitalizarPalabraSaludo(w) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-/** `nombre_saludo` libre en jugadores_perfil (vacío → no aplica). */
+/** `apodo` en jugadores_perfil (vacío → no aplica). */
+function nombreDesdeApodoPerfil(userProfile) {
+  const v = String(userProfile?.apodo || '').trim();
+  return v || '';
+}
+
+/** `nombre_saludo` legacy en jugadores_perfil (vacío → no aplica). */
 function nombreDesdeSaludoPerfil(userProfile) {
   const v = String(userProfile?.nombre_saludo || '').trim();
   return v || '';
@@ -119,15 +127,20 @@ export default function UserHome() {
       if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;
       return `¡Hola! ${sufijo}`;
     }
-    const ns = nombreDesdeSaludoPerfil(userProfile);
-    if (ns) {
-      const mostrar = ns.charAt(0).toUpperCase() + ns.slice(1);
+    const ap = nombreDesdeApodoPerfil(userProfile);
+    if (ap) {
+      const mostrar = ap.charAt(0).toUpperCase() + ap.slice(1);
       return `¡Hola ${mostrar}! ${sufijo}`;
     }
     const nomAp = nombreApellidoSaludoDesdePerfil(userProfile);
     if (nomAp) return `¡Hola ${nomAp}! ${sufijo}`;
     const nom = primerNombreDesdePerfil(userProfile);
     if (nom) return `¡Hola ${nom}! ${sufijo}`;
+    const ns = nombreDesdeSaludoPerfil(userProfile);
+    if (ns) {
+      const mostrar = ns.charAt(0).toUpperCase() + ns.slice(1);
+      return `¡Hola ${mostrar}! ${sufijo}`;
+    }
     if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;
     return `¡Hola! ${sufijo}`;
   }, [session?.user, userProfile, profileLoading]);
