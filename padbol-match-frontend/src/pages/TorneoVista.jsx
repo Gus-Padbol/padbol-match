@@ -591,7 +591,10 @@ export default function TorneoVista() {
               onClick={() => {
                 setModalInscribirseOpen(false);
                 clearAdminNavContext();
-                navigate(`/torneo/${torneoId}/equipos?crear=1`, { state: { fromAdmin: false } });
+                navigate(`/torneo/${torneoId}/equipos?crear=1`, {
+                  replace: true,
+                  state: { fromAdmin: false },
+                });
               }}
             >
               <span className="torneo-modal-participacion-opcion__titulo">Tengo equipo completo</span>
@@ -603,7 +606,10 @@ export default function TorneoVista() {
               onClick={() => {
                 setModalInscribirseOpen(false);
                 clearAdminNavContext();
-                navigate(`/torneo/${torneoId}/equipos`, { state: { fromAdmin: false } });
+                navigate(`/torneo/${torneoId}/equipos`, {
+                  replace: true,
+                  state: { fromAdmin: false },
+                });
               }}
             >
               <span className="torneo-modal-participacion-opcion__titulo">Busco compañero/s</span>

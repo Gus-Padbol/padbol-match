@@ -1,6 +1,13 @@
 /** Session flag: admin_club (y similares) navegando en contexto panel / torneo desde admin. */
 const KEY = 'padbol_admin_nav_context';
 
+/** Claves legacy / torneo: limpiar junto con {@link clearAdminNavContext} al pasar a inscripción jugador. */
+const ADMIN_TORNEO_SESSION_KEYS = [
+  KEY,
+  'padbol_admin_torneo_context',
+  'padbol_from_admin',
+];
+
 export function setAdminNavContext(active) {
   try {
     if (active) sessionStorage.setItem(KEY, '1');
@@ -18,19 +25,21 @@ export function readAdminNavContext() {
   }
 }
 
+/** Quita todas las banderas de admin en sessionStorage usadas por hub / torneo / inscripción. */
 export function clearAdminNavContext() {
-  setAdminNavContext(false);
+  try {
+    for (const k of ADMIN_TORNEO_SESSION_KEYS) {
+      sessionStorage.removeItem(k);
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
- * Contexto para "Gestionar" equipos / gestión masiva: solo con `state.fromAdmin === true`
- * (navegación desde panel) o bandera de sesión activa (`readAdminNavContext`).
+ * Contexto gestión equipos en `/torneo/:id/equipos`: solo si `location.state.fromAdmin === true`.
+ * No usa sessionStorage: `false`, `undefined` o ausencia de state → modo jugador.
  */
 export function tieneContextoAdminGestionEquiposTorneo(locationState) {
-  if (locationState != null && typeof locationState === 'object') {
-    /** Navegación explícita de jugador (p. ej. inscripción desde TorneoVista): ignora bandera de sesión. */
-    if (locationState.fromAdmin === false) return false;
-    if (locationState.fromAdmin === true) return true;
-  }
-  return readAdminNavContext();
+  return locationState != null && typeof locationState === 'object' && locationState.fromAdmin === true;
 }

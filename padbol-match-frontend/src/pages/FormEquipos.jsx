@@ -633,7 +633,7 @@ export default function FormEquipos() {
         rol,
         userSedeId,
         userPaisRol,
-        fromAdmin: Boolean(location.state?.fromAdmin),
+        fromAdmin: location.state?.fromAdmin === true,
       }),
     [authEmail, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
   );
@@ -651,8 +651,8 @@ export default function FormEquipos() {
     [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, contextoGestionEquiposTorneo]
   );
 
-  /** Vista jugador forzada: sin barra/título de gestión aunque el usuario sea admin del club. */
-  const mostrarUiAdminFormEquipos = esAdminGestionTorneo && location.state?.fromAdmin !== false;
+  /** UI gestión: solo con `state.fromAdmin === true` explícito (no sessionStorage). */
+  const mostrarUiAdminFormEquipos = esAdminGestionTorneo && location.state?.fromAdmin === true;
 
   const torneoNavStateForm = useMemo(() => {
     const base =
