@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -43,6 +43,8 @@ export default function UserHome() {
   const location = useLocation();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+  /** Nombre para el saludo: se fija una sola vez al tener perfil listo (evita parpadeo por re-renders). */
+  const [nombreFinal, setNombreFinal] = useState(null);
 
   useEffect(() => {
     const onPerfil = () => {
@@ -54,6 +56,7 @@ export default function UserHome() {
 
   useEffect(() => {
     if (session?.user) return;
+    setNombreFinal(null);
     try {
       localStorage.removeItem('padbol_nombre_saludo');
       localStorage.removeItem('padbol_nombre_saludo_uid');
@@ -62,22 +65,29 @@ export default function UserHome() {
     }
   }, [session?.user]);
 
-  const lineaSaludo = useMemo(() => {
-    const sufijo = '¿Qué querés hacer hoy?';
-    if (!session?.user) return `¡Hola! ${sufijo}`;
-    /* Sin nombre hasta tener perfil Supabase (evita parpadeo / texto intermedio). */
-    if (authLoading || profileLoading || userProfile === null) {
-      return `¡Hola! ${sufijo}`;
-    }
-    const ap = nombreDesdeApodoPerfil(userProfile);
-    if (ap) {
-      const mostrar = ap.charAt(0).toUpperCase() + ap.slice(1);
-      return `¡Hola ${mostrar}! ${sufijo}`;
-    }
-    const nom = primerNombreDesdePerfil(userProfile);
-    if (nom) return `¡Hola ${nom}! ${sufijo}`;
-    return `¡Hola! ${sufijo}`;
-  }, [session?.user, userProfile, profileLoading, authLoading]);
+  useEffect(() => {
+    setNombreFinal(null);
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    if (authLoading || profileLoading || userProfile == null) return;
+    setNombreFinal((prev) => {
+      if (prev !== null) return prev;
+      const ap = nombreDesdeApodoPerfil(userProfile);
+      if (ap) return ap.charAt(0).toUpperCase() + ap.slice(1);
+      const nom = primerNombreDesdePerfil(userProfile);
+      if (nom) return nom;
+      return '';
+    });
+  }, [session?.user, authLoading, profileLoading, userProfile]);
+
+  const sufijo = '¿Qué querés hacer hoy?';
+  const lineaSaludo = !session?.user
+    ? `¡Hola! ${sufijo}`
+    : nombreFinal
+      ? `¡Hola, ${nombreFinal}! ${sufijo}`
+      : `¡Hola! ${sufijo}`;
 
   const accesosRapidos = [
     { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
@@ -148,6 +158,7 @@ export default function UserHome() {
               lineHeight: 1.35,
               minHeight: '2.7em',
               transition: 'none',
+              animation: 'none',
             }}
           >
             {lineaSaludo}
