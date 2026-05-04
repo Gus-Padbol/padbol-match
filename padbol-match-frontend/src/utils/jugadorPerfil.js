@@ -83,6 +83,18 @@ export function isPerfilTorneoCompleto(perfil) {
   return true;
 }
 
+/**
+ * Ficha “suficiente” para no mostrar aviso pendiente en torneo: nombre, apellido y género
+ * (alineado con `jugadores_perfil` vía LS). No exige WhatsApp, categoría, lateralidad, foto ni alias.
+ */
+export function isFichaJugadorBasicaCompleta(perfil) {
+  const p = perfil ?? readJugadorPerfil();
+  if (!p || typeof p !== 'object') return false;
+  const { nombre, apellido } = nombreApellidoEfectivos(p);
+  const genero = String(p.genero ?? '').trim();
+  return Boolean(nombre && apellido && genero);
+}
+
 /** Identidad de torneo sin cuenta Supabase */
 export function tieneRegistroTorneo() {
   return isPerfilTorneoCompleto();
@@ -145,7 +157,11 @@ export async function refreshJugadorPerfilFromSupabase(email) {
   if (!em) return;
   try {
     const [{ data, error }, { data: cli }] = await Promise.all([
-      supabase.from('jugadores_perfil').select('nombre, nivel, whatsapp, foto_url').eq('email', em).maybeSingle(),
+      supabase
+        .from('jugadores_perfil')
+        .select('nombre, apellido, nivel, whatsapp, foto_url, genero, lateralidad')
+        .eq('email', em)
+        .maybeSingle(),
       supabase.from('clientes').select('whatsapp').eq('email', em).maybeSingle(),
     ]);
     const waCli = String(cli?.whatsapp || '').trim();
@@ -159,18 +175,22 @@ export async function refreshJugadorPerfilFromSupabase(email) {
     }
     const { nombre: n0, apellido: a0 } = nombreApellidoEfectivos({
       nombre: data.nombre,
-      apellido: '',
+      apellido: data.apellido ?? '',
     });
     const nombre = n0;
     const apellido = a0;
     const categoria = String(data.nivel || '').trim();
     const fotoUrl = String(data?.foto_url || '').trim();
+    const genero = String(data?.genero ?? '').trim();
+    const lateralidad = String(data?.lateralidad ?? '').trim();
     persistJugadorPerfil({
       ...(nombre ? { nombre } : {}),
       ...(apellido ? { apellido } : {}),
       ...(categoria ? { categoria } : {}),
       ...(wa ? { whatsapp: wa } : {}),
       ...(fotoUrl ? { foto_url: fotoUrl } : {}),
+      ...(genero ? { genero } : {}),
+      ...(lateralidad ? { lateralidad } : {}),
       email: em,
     });
   } catch {

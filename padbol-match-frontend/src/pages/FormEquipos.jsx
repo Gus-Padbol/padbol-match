@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import {
   isPerfilTorneoCompleto,
+  isFichaJugadorBasicaCompleta,
   refreshJugadorPerfilFromSupabase,
   PERFIL_CHANGE_EVENT,
 } from '../utils/jugadorPerfil';
@@ -168,6 +169,9 @@ export default function FormEquipos() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const wantsCrearEquipo = searchParams.get('crear') === '1';
+  /** Navegación desde TorneoVista con `state: { fromAdmin: false }` (inscripción jugador). */
+  const inscripcionDesdeTorneoVistaJugador = location.state?.fromAdmin === false;
+  const ocultarEleccionPorCrearUrlJugador = wantsCrearEquipo && inscripcionDesdeTorneoVistaJugador;
   const inviteEquipoIdNum = useMemo(() => {
     const r = searchParams.get('equipo');
     if (r == null || String(r).trim() === '') return NaN;
@@ -238,6 +242,11 @@ export default function FormEquipos() {
     return isPerfilTorneoCompleto();
   }, [perfilLsKey]);
   const perfilIncompleto = !perfilTorneoCompleto;
+  /** Banner "Ficha pendiente": solo si faltan nombre/apellido/género (no WhatsApp ni foto). */
+  const fichaBasicaIncompleta = useMemo(() => {
+    void perfilLsKey;
+    return !isFichaJugadorBasicaCompleta();
+  }, [perfilLsKey]);
 
   const [torneo, setTorneo] = useState(null);
   const [jugadoresTorneo, setJugadoresTorneo] = useState([]);
@@ -673,8 +682,8 @@ export default function FormEquipos() {
       .sort((a, b) => (a.posicion || 999) - (b.posicion || 999));
   }, [torneoFinalizado, tablaPuntosRows, equipos, nombreTorneoCtxForm]);
 
-  /** Tras registro/login con ?crear=1: abrir formulario crear y limpiar la query. */
-  useEffect(() => {
+  /** Tras registro/login con ?crear=1: abrir formulario crear y limpiar la query (layout: sin flash de pantalla de elección). */
+  useLayoutEffect(() => {
     if (!wantsCrearEquipo || loading) return;
     if (authLoading) return;
     const equipoQ = searchParams.get('equipo');
@@ -1455,7 +1464,12 @@ export default function FormEquipos() {
   };
 
   const mobileInicio =
-    isMobile && flujoInscripcionTorneoActivo && !miEquipo && !miSolicitudPendiente && mobileVista === 'inicio';
+    isMobile &&
+    flujoInscripcionTorneoActivo &&
+    !miEquipo &&
+    !miSolicitudPendiente &&
+    mobileVista === 'inicio' &&
+    !ocultarEleccionPorCrearUrlJugador;
   const mobileCrear =
     isMobile && flujoInscripcionTorneoActivo && !miEquipo && !miSolicitudPendiente && mobileVista === 'crear';
   const mobileListaEquipos =
@@ -1734,6 +1748,8 @@ export default function FormEquipos() {
     !mostrarUiAdminFormEquipos &&
     !torneoFinalizado &&
     !torneoCancelado &&
+    !inscripcionDesdeTorneoVistaJugador &&
+    !wantsCrearEquipo &&
     (!session?.user || (!miEquipo && !miSolicitudPendiente));
 
   const abrirFlujoInscripcionDesdeTab = useCallback(() => {
@@ -2172,7 +2188,7 @@ export default function FormEquipos() {
     ) : null;
 
   const bloqueEleccionDesktop =
-    mostrarEleccionDesktop && desktopFlujo === null ? (
+    mostrarEleccionDesktop && desktopFlujo === null && !ocultarEleccionPorCrearUrlJugador ? (
       <div
         style={{
           display: 'grid',
@@ -2486,7 +2502,7 @@ export default function FormEquipos() {
           </div>
         ) : null}
 
-        {session?.user && !torneoCancelado && perfilIncompleto ? (
+        {session?.user && !torneoCancelado && fichaBasicaIncompleta ? (
           <div
             style={{
               marginBottom: '18px',
