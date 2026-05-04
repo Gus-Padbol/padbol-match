@@ -7,14 +7,18 @@ import TorneoTabbedView, {
   nombreEquipoMostrado,
   safeJugadores,
 } from '../components/torneo/TorneoTabbedView';
-import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
+  hubContentPaddingTopCss,
+} from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
-import { setAdminNavContext, tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
+import { clearAdminNavContext, setAdminNavContext } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -48,7 +52,6 @@ export default function TorneoVista() {
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const sedeTorneo = torneo ? sedesMap[String(torneo.sede_id)] : null;
   const fromAdmin = Boolean(location.state?.fromAdmin);
-  const adminGestionaEquiposContext = tieneContextoAdminGestionEquiposTorneo(location.state);
   const isAdmin = useMemo(
     () =>
       computeIsAdminEnTorneo({
@@ -62,6 +65,8 @@ export default function TorneoVista() {
       }),
     [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
   );
+  /** Barra violeta y permisos de edición en pestañas: solo con `state.fromAdmin` (no basta ser admin del club sin venir del panel). */
+  const isAdminGestionEnEstaVista = isAdmin && fromAdmin;
   const puedeGestionarEquiposTorneo = useMemo(
     () =>
       computePuedeGestionarEquiposTorneo({
@@ -70,14 +75,16 @@ export default function TorneoVista() {
         rol,
         userSedeId,
         userPaisRol,
-        fromAdmin: adminGestionaEquiposContext,
+        fromAdmin: location.state?.fromAdmin === true,
       }),
-    [torneo, sedeTorneo, rol, userSedeId, userPaisRol, adminGestionaEquiposContext]
+    [torneo, sedeTorneo, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
   );
   const torneoNavState = useMemo(
     () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),
     [location.state, fromAdmin]
   );
+  /** No reenviar `fromAdmin` a enlaces de la vista pública (perfiles, equipos en solo lectura). */
+  const torneoNavStateParaTabbed = fromAdmin ? torneoNavState : null;
 
   useEffect(() => {
     if (location.state?.fromAdmin === true) setAdminNavContext(true);
@@ -339,9 +346,6 @@ export default function TorneoVista() {
     return null;
   }, [equipos, session?.user?.id, session?.user?.email]);
 
-  const navEquipos =
-    fromAdmin && torneoNavState ? { state: torneoNavState } : undefined;
-
   const anotarmeListaEspera = useCallback(async () => {
     if (!session?.user) {
       navigate(authUrlWithRedirect(`/torneo/${torneoId}`));
@@ -453,9 +457,9 @@ export default function TorneoVista() {
     anotarmeListaEspera,
   ]);
 
-  /** Solo admins del torneo: jugadores desde /torneos no deben ver CTAs de gestión ni «Equipos e inscripción» aquí. */
+  /** Solo admin que entró desde el panel (`fromAdmin`): no jugadores ni admin en ruta pública. */
   const adminBarFilaEquiposGestión =
-    isAdmin && estadoTorneoLower !== 'finalizado' ? (
+    isAdminGestionEnEstaVista && estadoTorneoLower !== 'finalizado' ? (
       <div style={{ textAlign: 'center', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
         {puedeMostrarAbrirInscripcionAdmin ? (
           <button
@@ -477,7 +481,7 @@ export default function TorneoVista() {
         </button>
       </div>
     ) : null;
-  const adminBarIniciarTorneo = isAdmin && puedeMostrarIniciarTorneo ? (
+  const adminBarIniciarTorneo = isAdminGestionEnEstaVista && puedeMostrarIniciarTorneo ? (
     <div className="torneo-acciones torneo-acciones--sobre-violeta">
       {!todosEquiposCompletos ? (
         <p className="torneo-iniciar-aviso">
@@ -495,7 +499,7 @@ export default function TorneoVista() {
     </div>
   ) : null;
   const adminBarFinalizarTorneo =
-    isAdmin &&
+    isAdminGestionEnEstaVista &&
     ['en_curso', 'activo'].includes(String(torneo?.estado || '').toLowerCase()) &&
     partidos.length > 0 &&
     partidos.every((p) => p.estado === 'finalizado') ? (
@@ -506,7 +510,7 @@ export default function TorneoVista() {
       </div>
     ) : null;
   const adminTorneoBar =
-    torneo && isAdmin && (adminBarFilaEquiposGestión || adminBarIniciarTorneo || adminBarFinalizarTorneo) ? (
+    torneo && isAdminGestionEnEstaVista && (adminBarFilaEquiposGestión || adminBarIniciarTorneo || adminBarFinalizarTorneo) ? (
       <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
         {adminBarFilaEquiposGestión}
         {adminBarIniciarTorneo}
@@ -524,7 +528,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" showBack />
+        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div className="loading">Cargando...</div>
         <BottomNav />
       </div>
@@ -540,7 +544,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" showBack />
+        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div className="error">Error: {error}</div>
         <BottomNav />
       </div>
@@ -556,7 +560,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" showBack />
+        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div className="error">Torneo no encontrado</div>
         <BottomNav />
       </div>
@@ -586,7 +590,8 @@ export default function TorneoVista() {
               className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--primaria"
               onClick={() => {
                 setModalInscribirseOpen(false);
-                navigate(`/torneo/${torneoId}/equipos?crear=1`, navEquipos);
+                clearAdminNavContext();
+                navigate(`/torneo/${torneoId}/equipos?crear=1`, { state: { fromAdmin: false } });
               }}
             >
               <span className="torneo-modal-participacion-opcion__titulo">Formar equipo</span>
@@ -599,7 +604,8 @@ export default function TorneoVista() {
               className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--secundaria"
               onClick={() => {
                 setModalInscribirseOpen(false);
-                navigate(`/torneo/${torneoId}/equipos`, navEquipos);
+                clearAdminNavContext();
+                navigate(`/torneo/${torneoId}/equipos`, { state: { fromAdmin: false } });
               }}
             >
               <span className="torneo-modal-participacion-opcion__titulo">Ya tengo equipo</span>
@@ -618,7 +624,7 @@ export default function TorneoVista() {
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
-      <AppHeader title="Torneo" showBack />
+      <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
       <img
         src="/logo-padbol-match.png"
         alt="Padbol Match"
@@ -636,9 +642,9 @@ export default function TorneoVista() {
         torneoId={torneoId}
         navigate={navigate}
         session={session}
-        isAdmin={isAdmin}
+        isAdmin={isAdminGestionEnEstaVista}
         puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
-        navigateState={torneoNavState}
+        navigateState={torneoNavStateParaTabbed}
         clasificacionFinalFilas={clasificacionFinalFilas}
         adminTorneoBar={adminTorneoBar}
         bannerAntesTabs={bannerInscripcionJugador}

@@ -27,8 +27,10 @@ export function clearAdminNavContext() {
  * (navegación desde panel) o bandera de sesión activa (`readAdminNavContext`).
  */
 export function tieneContextoAdminGestionEquiposTorneo(locationState) {
-  if (locationState != null && typeof locationState === 'object' && locationState.fromAdmin === true) {
-    return true;
+  if (locationState != null && typeof locationState === 'object') {
+    /** Navegación explícita de jugador (p. ej. inscripción desde TorneoVista): ignora bandera de sesión. */
+    if (locationState.fromAdmin === false) return false;
+    if (locationState.fromAdmin === true) return true;
   }
   return readAdminNavContext();
 }

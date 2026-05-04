@@ -168,6 +168,8 @@ export default function AppHeader({
    * Panel /admin: chip compacto a la izquierda, logout a la derecha; sin ← Inicio ni menú ⋮.
    */
   adminPanelMinimalHeader = false,
+  /** Si se define (px), el contenido de la barra queda centrado y acotado (p. ej. 900 como el hub). */
+  contentMaxWidth = null,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -433,6 +435,18 @@ export default function AppHeader({
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
+  const headerInnerMaxStyle = useMemo(() => {
+    const n = contentMaxWidth == null || contentMaxWidth === '' ? NaN : Number(contentMaxWidth);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return {
+      width: '100%',
+      maxWidth: `${n}px`,
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      boxSizing: 'border-box',
+    };
+  }, [contentMaxWidth]);
+
   /** Panel admin: chip solo identidad jugador (@Gus / @Juampi), mismo criterio que el hub; usa rol efectivo (JWT/caché) para no quedar en “Admin” mientras carga user_roles. */
   const adminMinimalRolCorto = useMemo(() => {
     if (!session?.user) return '';
@@ -458,24 +472,8 @@ export default function AppHeader({
     adminPanelMinimalHeader || (Boolean(session?.user) && isOnAdmin);
 
   if (useAdminMinimalLayout) {
-    return (
-      <div
-        className="app-header-shell"
-        style={{
-          overflowX: 'hidden',
-          minHeight: '56px',
-          background: '#0f172a',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          paddingBottom: '8px',
-          paddingLeft: padL,
-          paddingRight: padR,
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
+    const adminMinimalRow = (
+      <>
         {session?.user ? (
           <button
             type="button"
@@ -579,9 +577,46 @@ export default function AppHeader({
         ) : (
           <span aria-hidden style={{ width: LOGOUT_BTN_SIZE, height: LOGOUT_BTN_SIZE, flexShrink: 0 }} />
         )}
+      </>
+    );
+    return (
+      <div
+        className="app-header-shell"
+        style={{
+          overflowX: 'hidden',
+          minHeight: '56px',
+          background: '#0f172a',
+          paddingBottom: '8px',
+          paddingLeft: padL,
+          paddingRight: padR,
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            minHeight: '56px',
+            ...(headerInnerMaxStyle || {}),
+          }}
+        >
+          {adminMinimalRow}
+        </div>
       </div>
     );
   }
+
+  const headerGridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1fr)',
+    alignItems: 'center',
+    columnGap: '8px',
+    minHeight: '56px',
+    ...(headerInnerMaxStyle || {}),
+  };
 
   return (
     <div
@@ -590,16 +625,13 @@ export default function AppHeader({
         overflowX: 'hidden',
         minHeight: '56px',
         background: '#0f172a',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1fr)',
-        alignItems: 'center',
-        columnGap: '8px',
         paddingBottom: '8px',
         paddingLeft: padL,
         paddingRight: padR,
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}
     >
+      <div style={headerGridStyle}>
       <div
         style={{
           display: 'flex',
@@ -879,6 +911,7 @@ export default function AppHeader({
             }}
           />
         ) : null}
+      </div>
       </div>
     </div>
   );
