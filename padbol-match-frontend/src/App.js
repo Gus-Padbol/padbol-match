@@ -95,6 +95,9 @@ function AdminDashboardGate() {
   /** Solo roles definidos en `user_roles` (sin fallback por email a super_admin). */
   const canAccessAdmin = () => ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
 
+  const email = currentCliente?.email ?? null;
+  console.log('GATE:', { roleLoading, rol, sedeId, email, canAccess: canAccessAdmin() });
+
   const spinner = (
     <div
       style={{
