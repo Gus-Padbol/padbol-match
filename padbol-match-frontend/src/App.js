@@ -95,45 +95,49 @@ function AdminDashboardGate() {
   /** Solo roles definidos en `user_roles` (sin fallback por email a super_admin). */
   const canAccessAdmin = () => ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
 
-  if (roleLoading) {
-    return (
+  const spinner = (
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 16,
+        padding: 24,
+        textAlign: 'center',
+        color: 'rgba(255,255,255,0.95)',
+        fontWeight: 600,
+        fontSize: '16px',
+        boxSizing: 'border-box',
+      }}
+    >
       <div
+        aria-hidden
         style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 16,
-          padding: 24,
-          textAlign: 'center',
-          color: 'rgba(255,255,255,0.95)',
-          fontWeight: 600,
-          fontSize: '16px',
-          boxSizing: 'border-box',
+          width: 40,
+          height: 40,
+          border: '3px solid rgba(255,255,255,0.25)',
+          borderTopColor: '#fff',
+          borderRadius: '50%',
+          animation: 'adminGateSpin 0.75s linear infinite',
         }}
-      >
-        <div
-          aria-hidden
-          style={{
-            width: 40,
-            height: 40,
-            border: '3px solid rgba(255,255,255,0.25)',
-            borderTopColor: '#fff',
-            borderRadius: '50%',
-            animation: 'adminGateSpin 0.75s linear infinite',
-          }}
-        />
-        Cargando panel…
-        <style>{`@keyframes adminGateSpin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
+      />
+      Cargando panel…
+      <style>{`@keyframes adminGateSpin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  /* Mientras useUserRole carga: nunca denegar (rol puede ser null un instante). */
+  if (roleLoading) {
+    return spinner;
   }
 
   if (canAccessAdmin()) {
     return <AdminDashboard rol={rol} sedeId={sedeId} />;
   }
 
+  /* roleLoading === false: rol ya resuelto; sin rol de panel → denegar. */
   return (
     <div
       style={{
