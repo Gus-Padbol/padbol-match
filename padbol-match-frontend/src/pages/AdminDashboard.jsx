@@ -1488,9 +1488,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     return (
       <div
         style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          maxWidth: '100%',
+          overflowY: 'auto',
           padding: `${hubContentPaddingTopCss(location.pathname)} 20px calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
           textAlign: 'center',
-          minHeight: '100vh',
           boxSizing: 'border-box',
         }}
       >
@@ -1545,17 +1551,30 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     <div
       className="admin-dashboard"
       style={{
-        minHeight: '100vh',
-        overflowY: 'auto',
-        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        minHeight: 0,
+        width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden',
         overscrollBehavior: 'none',
-        WebkitOverflowScrolling: 'auto',
-        paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
         boxSizing: 'border-box',
       }}
     >
       <AppHeader title="" showBack={false} adminPanelMinimalHeader />
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+          boxSizing: 'border-box',
+        }}
+      >
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img
@@ -3835,6 +3854,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>}
 
       </div>}
+      </div>
       </div>
 
       {logoCropOpen && logoCropSrc ? (
