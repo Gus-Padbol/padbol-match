@@ -688,18 +688,22 @@ export default function FormEquipos() {
     if (authLoading) return;
     const equipoQ = searchParams.get('equipo');
     const eqTail = equipoQ ? `?equipo=${encodeURIComponent(equipoQ)}` : '';
+    const replaceOpts =
+      location.state != null && typeof location.state === 'object'
+        ? { replace: true, state: { ...location.state } }
+        : { replace: true };
     if (!session?.user) {
       setBannerCrearEquipoRequiereLogin(true);
-      navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
+      navigate(`/torneo/${id}/equipos${eqTail}`, replaceOpts);
       return;
     }
     if (!flujoInscripcionTorneoActivo || miEquipo || miSolicitudPendiente) {
-      navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
+      navigate(`/torneo/${id}/equipos${eqTail}`, replaceOpts);
       return;
     }
     if (isMobile) setMobileVista('crear');
     else setDesktopFlujo('crear');
-    navigate(`/torneo/${id}/equipos${eqTail}`, { replace: true });
+    navigate(`/torneo/${id}/equipos${eqTail}`, replaceOpts);
   }, [
     wantsCrearEquipo,
     loading,
@@ -712,6 +716,7 @@ export default function FormEquipos() {
     id,
     navigate,
     searchParams,
+    location.state,
   ]);
 
   useEffect(() => {
@@ -2209,9 +2214,9 @@ export default function FormEquipos() {
             gap: '12px',
           }}
         >
-          <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>Crear equipo</div>
+          <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>Tengo equipo completo</div>
           <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-            Nombre del equipo, tamaño (2 / 3 / 4) y si aceptás solicitudes para unirse.
+            Ya tenemos todos los integrantes
           </div>
           <button
             type="button"
@@ -2244,9 +2249,9 @@ export default function FormEquipos() {
             gap: '12px',
           }}
         >
-          <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>Estoy solo o me falta compañero</div>
+          <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>Busco compañero/s</div>
           <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-            Arma un equipo y busca compañero o súmate a uno disponible
+            Me anoto solo y busco con quién jugar
           </div>
           <button
             type="button"
@@ -2450,7 +2455,7 @@ export default function FormEquipos() {
               torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
             }
             equiposTabHeader={
-              mostrarBotonInscribirseEnTabEquipos ? (
+              mostrarBotonInscribirseEnTabEquipos && location.state?.fromAdmin !== false ? (
                 <div style={{ marginBottom: '14px', textAlign: 'center' }}>
                   <button type="button" onClick={abrirFlujoInscripcionDesdeTab} style={btnInscribirseTorneoTabStyle}>
                     Inscribirse
@@ -2775,9 +2780,9 @@ export default function FormEquipos() {
                 gap: '12px',
               }}
             >
-              <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>Crear equipo</div>
+              <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>Tengo equipo completo</div>
               <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-                Nombre del equipo, tamaño (2 / 3 / 4) y si aceptás solicitudes para unirse.
+                Ya tenemos todos los integrantes
               </div>
               <button
                 type="button"
@@ -2809,9 +2814,9 @@ export default function FormEquipos() {
                 gap: '12px',
               }}
             >
-              <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>Estoy solo o me falta compañero</div>
+              <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>Busco compañero/s</div>
               <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-                Arma un equipo y busca compañero o súmate a uno disponible
+                Me anoto solo y busco con quién jugar
               </div>
               <button
                 type="button"
@@ -3084,7 +3089,7 @@ export default function FormEquipos() {
             </div>
           </div>
         )}
-                {mostrarBotonInscribirseEnTabEquipos ? (
+                {mostrarBotonInscribirseEnTabEquipos && location.state?.fromAdmin !== false ? (
                   <div style={{ marginTop: '20px', marginBottom: '8px', textAlign: 'center' }}>
                     <button type="button" onClick={abrirFlujoInscripcionDesdeTab} style={btnInscribirseTorneoTabStyle}>
                       Inscribirse
