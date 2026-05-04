@@ -11,43 +11,6 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 
-const LS_SALUDO_NOMBRE = 'padbol_nombre_saludo';
-const LS_SALUDO_UID = 'padbol_nombre_saludo_uid';
-
-function readNombreSaludoCacheado(userId) {
-  if (!userId) return '';
-  try {
-    const owner = String(localStorage.getItem(LS_SALUDO_UID) || '').trim();
-    if (owner !== String(userId)) return '';
-    return String(localStorage.getItem(LS_SALUDO_NOMBRE) || '').trim();
-  } catch {
-    return '';
-  }
-}
-
-function escribirNombreSaludoCache(userId, userProfile) {
-  if (!userId || !userProfile) return;
-  try {
-    const ap = String(userProfile.apodo ?? '')
-      .trim();
-    const nom = primerNombreDesdePerfil(userProfile);
-    const ns = String(userProfile.nombre_saludo ?? '')
-      .trim();
-    const v = ap || nom || ns;
-    if (!v) return;
-    localStorage.setItem(LS_SALUDO_NOMBRE, v);
-    localStorage.setItem(LS_SALUDO_UID, String(userId));
-  } catch {
-    /* ignore */
-  }
-}
-
-function etiquetaSaludoDesdeCache(raw) {
-  const t = String(raw || '').trim();
-  if (!t) return '';
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
-
 function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
 }
@@ -64,12 +27,6 @@ function nombreDesdeApodoPerfil(userProfile) {
   const raw = userProfile.apodo;
   if (raw == null) return '';
   const v = String(raw).trim();
-  return v || '';
-}
-
-/** `nombre_saludo` legacy en jugadores_perfil (vacío → no aplica). */
-function nombreDesdeSaludoPerfil(userProfile) {
-  const v = String(userProfile?.nombre_saludo || '').trim();
   return v || '';
 }
 
@@ -96,16 +53,10 @@ export default function UserHome() {
   }, [refreshSession]);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
-    if (profileLoading || userProfile == null) return;
-    escribirNombreSaludoCache(session.user.id, userProfile);
-  }, [session?.user?.id, userProfile, profileLoading]);
-
-  useEffect(() => {
     if (session?.user) return;
     try {
-      localStorage.removeItem(LS_SALUDO_NOMBRE);
-      localStorage.removeItem(LS_SALUDO_UID);
+      localStorage.removeItem('padbol_nombre_saludo');
+      localStorage.removeItem('padbol_nombre_saludo_uid');
     } catch {
       /* ignore */
     }
@@ -114,16 +65,10 @@ export default function UserHome() {
   const lineaSaludo = useMemo(() => {
     const sufijo = '¿Qué querés hacer hoy?';
     if (!session?.user) return `¡Hola! ${sufijo}`;
-    const uid = session.user.id;
-    const desdeCache = readNombreSaludoCacheado(uid);
-
+    /* Hasta que termine refreshUserProfile: sin nombre (evita caché/local con nombre completo). */
     if (profileLoading || userProfile === null) {
-      if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;
       return `¡Hola! ${sufijo}`;
     }
-
-    console.log('SALUDO DEBUG:', { apodo: userProfile?.apodo, nombre: userProfile?.nombre });
-
     const ap = nombreDesdeApodoPerfil(userProfile);
     if (ap) {
       const mostrar = ap.charAt(0).toUpperCase() + ap.slice(1);
@@ -131,12 +76,6 @@ export default function UserHome() {
     }
     const nom = primerNombreDesdePerfil(userProfile);
     if (nom) return `¡Hola ${nom}! ${sufijo}`;
-    const ns = nombreDesdeSaludoPerfil(userProfile);
-    if (ns) {
-      const mostrar = ns.charAt(0).toUpperCase() + ns.slice(1);
-      return `¡Hola ${mostrar}! ${sufijo}`;
-    }
-    if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;
     return `¡Hola! ${sufijo}`;
   }, [session?.user, userProfile, profileLoading]);
 

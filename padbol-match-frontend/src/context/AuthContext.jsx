@@ -4,6 +4,19 @@ import { refreshJugadorPerfilFromSupabase, clearJugadorPerfilLocalStorage } from
 
 const AuthContext = createContext(null);
 
+/** Caché legacy del saludo en home; se borra al (re)cargar perfil para no mostrar nombre completo viejo. */
+const LS_SALUDO_NOMBRE = 'padbol_nombre_saludo';
+const LS_SALUDO_UID = 'padbol_nombre_saludo_uid';
+
+function clearSaludoHomeLocalStorage() {
+  try {
+    localStorage.removeItem(LS_SALUDO_NOMBRE);
+    localStorage.removeItem(LS_SALUDO_UID);
+  } catch (_) {
+    /* ignore */
+  }
+}
+
 /**
  * Carga o crea `jugadores_perfil`: primero por email de la sesión, luego por `user_id`.
  * Nunca usa `email.split` como nombre al crear filas nuevas.
@@ -99,12 +112,13 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  /** Con sesión: true hasta que termine {@link refreshUserProfile} (evita saludo antes de tener `nombre`). */
+  /** Con sesión: true hasta que termine {@link refreshUserProfile} (evita saludo antes de tener `apodo`/perfil). */
   const [profileLoading, setProfileLoading] = useState(false);
 
   const user = session?.user ?? null;
 
   const loadProfile = useCallback(async (sessionArg) => {
+    clearSaludoHomeLocalStorage();
     if (!sessionArg?.user?.id) {
       setProfileLoading(false);
       try {

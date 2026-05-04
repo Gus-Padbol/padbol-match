@@ -227,6 +227,27 @@ function horaInicioYFinParaMensaje(hora, duracionMinutos) {
   };
 }
 
+/** Twilio / saludo: `apodo` si existe; si no, primer token de `nombre` o de `nombreFallback` (nunca nombre completo). */
+function nombreWhatsappJugadorDesdePerfil(perfil, nombreFallback = '') {
+  const ap = String(perfil?.apodo ?? '').trim();
+  if (ap) return ap;
+  const n = String(perfil?.nombre ?? '').trim();
+  if (n) {
+    const first = n.split(/\s+/).filter(Boolean)[0] || '';
+    if (first) {
+      return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    }
+  }
+  const fb = String(nombreFallback ?? '').trim();
+  if (fb) {
+    const first = fb.split(/\s+/).filter(Boolean)[0] || '';
+    if (first) {
+      return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    }
+  }
+  return 'jugador';
+}
+
 /**
  * WhatsApp (Twilio) al confirmar reserva: teléfono desde `jugadores_perfil.whatsapp` por email del usuario.
  * Si no hay WhatsApp en perfil, solo loguea warning (no usa el número enviado en el body de la reserva).
@@ -251,7 +272,7 @@ async function sendReservaConfirmadaWhatsAppTwilio({
 
   const { data: perfil, error: pErr } = await supabase
     .from('jugadores_perfil')
-    .select('nombre, whatsapp')
+    .select('nombre, apodo, whatsapp')
     .ilike('email', emailNorm)
     .maybeSingle();
 
@@ -268,8 +289,7 @@ async function sendReservaConfirmadaWhatsAppTwilio({
     return;
   }
 
-  const nombre =
-    String(perfil?.nombre || '').trim() || String(nombreFallback || '').trim() || 'jugador';
+  const nombre = nombreWhatsappJugadorDesdePerfil(perfil, nombreFallback);
   const { horaInicio, horaFin } = horaInicioYFinParaMensaje(hora, duracionMinutos);
   const fechaTxt = formatFechaReservaConfirmacion(fecha);
   const sedeTxt = String(nombreSede || '').trim() || 'la sede';
@@ -1519,7 +1539,7 @@ app.post('/api/equipos/:id/invitar', async (req, res) => {
 
     const { data: perfil, error: pErr } = await supabase
       .from('jugadores_perfil')
-      .select('id, email, nombre, whatsapp')
+      .select('id, email, nombre, apodo, whatsapp')
       .ilike('email', emailIn)
       .maybeSingle();
     if (pErr) throw pErr;
@@ -1539,7 +1559,7 @@ app.post('/api/equipos/:id/invitar', async (req, res) => {
     const nombreTorneo = torneoRow?.nombre || `Torneo ${eq.torneo_id}`;
     const torneoId = torneoRow?.id ?? eq.torneo_id;
 
-    const nombreHola = String(perfil.nombre || '').trim() || 'jugador';
+    const nombreHola = nombreWhatsappJugadorDesdePerfil(perfil, '');
 
     await sendWhatsAppTorneoEquipoInvitacion(perfil.whatsapp, {
       nombreDestinatario: nombreHola,
