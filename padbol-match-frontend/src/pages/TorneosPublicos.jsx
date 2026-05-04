@@ -73,10 +73,14 @@ function estadoTorneoNormalizado(estadoRaw) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-function esEstadoProgramadoTorneo(estadoRaw) {
+function esInscripcionAbiertaTorneo(estadoRaw) {
   const e = estadoTorneoNormalizado(estadoRaw);
-  const primero = e === 'inscripcion_abierta' ? 'abierto' : e;
-  return primero === 'planificacion' || primero === 'abierto' || primero === 'proximo';
+  return e === 'abierto' || e === 'inscripcion_abierta';
+}
+
+function esProximoTorneo(estadoRaw) {
+  const e = estadoTorneoNormalizado(estadoRaw);
+  return e === 'planificacion' || e === 'proximo';
 }
 
 function esEstadoEnCursoTorneo(estadoRaw) {
@@ -89,18 +93,24 @@ function esEstadoFinalizadoTorneo(estadoRaw) {
 }
 
 /**
- * @param {'programados_y_en_curso'|'programado'|'en_curso'|'finalizado'|'todos'} filtro
+ * @param {'todos'|'inscripcion_abierta'|'proximo'|'en_curso'|'finalizado'} filtro
  */
 function torneoPasaFiltroEstadoVista(t, filtro) {
   if (filtro === 'todos') return true;
   if (filtro === 'finalizado') return esEstadoFinalizadoTorneo(t?.estado);
   if (filtro === 'en_curso') return esEstadoEnCursoTorneo(t?.estado);
-  if (filtro === 'programado') return esEstadoProgramadoTorneo(t?.estado);
-  /* programados_y_en_curso: todo salvo finalizado y cancelado */
-  const e = estadoTorneoNormalizado(t?.estado);
-  if (e === 'finalizado' || e === 'cancelado') return false;
+  if (filtro === 'inscripcion_abierta') return esInscripcionAbiertaTorneo(t?.estado);
+  if (filtro === 'proximo') return esProximoTorneo(t?.estado);
   return true;
 }
+
+const FILTROS_ESTADO_TORNEO_PILLS = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'inscripcion_abierta', label: 'Inscripción abierta' },
+  { id: 'proximo', label: 'Próximo' },
+  { id: 'en_curso', label: 'En curso' },
+  { id: 'finalizado', label: 'Finalizado' },
+];
 
 function badgeEstadoTorneoListado(t) {
   if (esEstadoFinalizadoTorneo(t?.estado)) {
@@ -153,8 +163,7 @@ export default function TorneosPublicos() {
   const [geoStatus, setGeoStatus] = useState('idle');
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
   const torneoSearchInputRef = useRef(null);
-  /** Por defecto: programados + en curso (excluye finalizado y cancelado). */
-  const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('programados_y_en_curso');
+  const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('todos');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -537,6 +546,7 @@ export default function TorneosPublicos() {
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
         padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
     >
       <AppHeader title="Torneos" onBack={handleTorneosAppBack} />
@@ -634,43 +644,59 @@ export default function TorneosPublicos() {
         {!loading && torneos.length > 0 ? (
           <div style={{ marginBottom: '14px' }}>
             <div style={{ marginBottom: '10px' }}>
-              <label
-                htmlFor="filtro-estado-torneos"
+              <div
                 style={{
-                  display: 'block',
                   fontSize: '12px',
                   fontWeight: 700,
                   color: 'rgba(255,255,255,0.88)',
-                  marginBottom: '6px',
+                  marginBottom: '8px',
                   letterSpacing: '0.02em',
                 }}
               >
                 Estado del torneo
-              </label>
-              <select
-                id="filtro-estado-torneos"
-                value={filtroEstadoTorneo}
-                onChange={(e) => setFiltroEstadoTorneo(e.target.value)}
+              </div>
+              <div
+                role="group"
+                aria-label="Estado del torneo"
                 style={{
-                  width: '100%',
-                  maxWidth: '100%',
-                  boxSizing: 'border-box',
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  background: 'rgba(255,255,255,0.95)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#111827',
-                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  flexWrap: 'nowrap',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'thin',
+                  paddingBottom: '4px',
                 }}
               >
-                <option value="programados_y_en_curso">Programado y en curso</option>
-                <option value="programado">Programado</option>
-                <option value="en_curso">En curso</option>
-                <option value="finalizado">Finalizado</option>
-                <option value="todos">Todos</option>
-              </select>
+                {FILTROS_ESTADO_TORNEO_PILLS.map(({ id, label }) => {
+                  const active = filtroEstadoTorneo === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setFiltroEstadoTorneo(id)}
+                      style={{
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                        padding: '8px 14px',
+                        borderRadius: '999px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        border: active ? '1px solid #667eea' : '1px solid rgba(255,255,255,0.45)',
+                        background: active ? '#667eea' : 'transparent',
+                        color: active ? '#fff' : 'rgba(255,255,255,0.92)',
+                        boxShadow: active ? '0 2px 10px rgba(0,0,0,0.12)' : 'none',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div
               style={{
