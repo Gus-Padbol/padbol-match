@@ -100,16 +100,31 @@ export default function UserHome() {
     <div
       style={{
         position: 'relative',
-        minHeight: '100vh',
+        minHeight: '100dvh',
         background: 'linear-gradient(135deg,#667eea,#764ba2)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        alignItems: 'stretch',
+        boxSizing: 'border-box',
       }}
     >
       <AppHeader title="Inicio" showBack={false} hubDirectLogin />
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          width: '100%',
+          boxSizing: 'border-box',
+          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
       <div
         style={{
           ...hubInstagramColumnWrapStyle,
@@ -244,6 +259,7 @@ export default function UserHome() {
         >
           Explorar sedes
         </button>
+      </div>
       </div>
       </div>
       <BottomNav />

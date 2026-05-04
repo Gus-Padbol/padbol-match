@@ -188,7 +188,10 @@ function AppRoutes() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',
@@ -261,9 +264,12 @@ function App() {
     <Router>
       <div
         style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
           width: '100%',
           maxWidth: '100%',
-          minHeight: '100vh',
           boxSizing: 'border-box',
         }}
       >

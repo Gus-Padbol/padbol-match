@@ -737,23 +737,36 @@ app.post('/api/torneos', async (req, res) => {
       cantidad_equipos,
       es_multisede,
       created_by,
+      equipos_por_grupo,
+      clasificados_por_grupo,
+      mejores_terceros_clasificados,
     } = req.body;
+
+    const row = {
+      nombre,
+      sede_id: sede_id || null,
+      nivel_torneo,
+      tipo_torneo,
+      categoria: categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre',
+      estado: 'planificacion',
+      fecha_inicio,
+      fecha_fin,
+      cantidad_equipos,
+      es_multisede,
+      created_by,
+    };
+    if (tipo_torneo === 'grupos_knockout') {
+      const ep = parseInt(String(equipos_por_grupo), 10);
+      const cp = parseInt(String(clasificados_por_grupo), 10);
+      const mt = parseInt(String(mejores_terceros_clasificados), 10);
+      if (Number.isFinite(ep) && ep > 0) row.equipos_por_grupo = ep;
+      if (Number.isFinite(cp) && cp >= 0) row.clasificados_por_grupo = cp;
+      if (Number.isFinite(mt) && mt >= 0) row.mejores_terceros_clasificados = mt;
+    }
 
     const { data, error } = await supabase
       .from('torneos')
-      .insert([{
-        nombre,
-        sede_id: sede_id || null,
-        nivel_torneo,
-        tipo_torneo,
-        categoria: categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre',
-        estado: 'planificacion',
-        fecha_inicio,
-        fecha_fin,
-        cantidad_equipos,
-        es_multisede,
-        created_by,
-      }])
+      .insert([row])
       .select();
 
     if (error) throw error;

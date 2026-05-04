@@ -979,6 +979,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [logoCropAreaListo, setLogoCropAreaListo] = useState(false);
   const logoCropPixelsRef = useRef(null);
   const colorFondoLogoSaveTimerRef = useRef(null);
+  const adminTabsStripRef = useRef(null);
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
@@ -989,6 +990,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [fotosDestacadas, setFotosDestacadas] = useState([]);
   const [fotosDestacadasSaving, setFotosDestacadasSaving] = useState(false);
   const [fotosDestacadasMsg, setFotosDestacadasMsg] = useState('');
+
+  useEffect(() => {
+    if (loading) return;
+    const el = adminTabsStripRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [loading]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
@@ -1679,8 +1692,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       )}
 
-      {/* Tab navigation */}
-      <div style={{ display: 'flex', gap: '4px', marginTop: '8px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingTop: 0, paddingBottom: '0', overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#667eea' }}>
+      {/* Tab navigation — rueda vertical desplaza scroll horizontal */}
+      <div ref={adminTabsStripRef} style={{ display: 'flex', gap: '4px', marginTop: '8px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingTop: 0, paddingBottom: '0', overflowX: 'auto', overflowY: 'hidden', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#667eea' }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
