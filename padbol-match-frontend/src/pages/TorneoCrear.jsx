@@ -24,6 +24,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     fecha_inicio: '',
     fecha_fin: '',
     cantidad_equipos: '',
+    costo_inscripcion: '',
     es_multisede: false,
     equipos_por_grupo: '',
     clasificados_por_grupo: '',
@@ -124,6 +125,14 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       es_multisede: formData.es_multisede,
       created_by: null,
     };
+
+    const rawCosto = String(formData.costo_inscripcion ?? '').trim();
+    if (rawCosto !== '') {
+      const c = parseFloat(rawCosto.replace(',', '.'));
+      payload.costo_inscripcion = Number.isFinite(c) && c >= 0 ? c : 0;
+    } else {
+      payload.costo_inscripcion = 0;
+    }
 
     if (formData.tipo_torneo === 'grupos_knockout') {
       const ep = parseInt(String(formData.equipos_por_grupo), 10);
@@ -381,6 +390,22 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   placeholder="Ej: 8"
                   min="2"
                 />
+              </div>
+
+              <div className="form-group">
+                <label>Costo de inscripción por equipo (opcional)</label>
+                <input
+                  type="number"
+                  name="costo_inscripcion"
+                  value={formData.costo_inscripcion}
+                  onChange={handleChange}
+                  placeholder="0 = gratis"
+                  min="0"
+                  step="1"
+                />
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  Monto total por equipo (ARS u otra moneda de la sede en Mercado Pago). Dejá vacío o 0 si no hay costo.
+                </small>
               </div>
 
               {error && <div className="error-message">{error}</div>}

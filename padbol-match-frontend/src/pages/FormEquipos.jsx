@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -15,6 +15,7 @@ import {
   isFichaJugadorBasicaCompleta,
   refreshJugadorPerfilFromSupabase,
   PERFIL_CHANGE_EVENT,
+  nombreCompletoJugadorPerfil,
 } from '../utils/jugadorPerfil';
 import { setTorneoEquipoActual, clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
 import { setAdminNavContext, tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
@@ -22,6 +23,7 @@ import {
   getEquipoInscripcionEstado,
   etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
+  precioInscripcionTorneo,
   torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
@@ -45,6 +47,11 @@ import '../styles/TorneoVista.css';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
+
+const BACKEND_API_BASE =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
 
 function esJugadorPendiente(p) {
   return p?.estado === 'pendiente';
@@ -260,7 +267,10 @@ export default function FormEquipos() {
   const [nombreSede, setNombreSede] = useState(null);
   /** Fila sede del torneo (nombre, pais, ciudad) para permisos admin_nacional. */
   const [sedeTorneoRow, setSedeTorneoRow] = useState(null);
-  const [companeroNombre, setCompaneroNombre] = useState('');
+  const [companeroBusqueda, setCompaneroBusqueda] = useState('');
+  const [companeroOpciones, setCompaneroOpciones] = useState([]);
+  const [companeroBusquedaCargando, setCompaneroBusquedaCargando] = useState(false);
+  const companeroSearchSeqRef = useRef(0);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   );
@@ -356,6 +366,17 @@ export default function FormEquipos() {
 
     setLoading(false);
   };
+
+  const refrescarEquiposDesdeSupabase = useCallback(async () => {
+    if (!torneoId) return;
+    const { data, error } = await supabase
+      .from('equipos')
+      .select('*')
+      .eq('torneo_id', torneoId)
+      .order('id', { ascending: true });
+    if (error) console.error(error);
+    else if (Array.isArray(data)) setEquipos(data);
+  }, [torneoId]);
 
   useEffect(() => {
     cargarTodo();
@@ -552,6 +573,54 @@ export default function FormEquipos() {
       email: emailJug || emailCliente,
     };
   }, [cuentaAuth, currentJugador, perfilLsKey, authUserId, session, userProfile]);
+
+  useEffect(() => {
+    const raw = companeroBusqueda.trim();
+    if (raw.length < 2) {
+      setCompaneroOpciones([]);
+      setCompaneroBusquedaCargando(false);
+      return;
+    }
+    const seq = ++companeroSearchSeqRef.current;
+    const handle = setTimeout(async () => {
+      setCompaneroBusquedaCargando(true);
+      const term = raw.replace(/[%_\\]/g, '');
+      const pattern = `%${term}%`;
+      const myUid = session?.user?.id;
+      let qAlias = supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre, apellido, email')
+        .ilike('alias', pattern)
+        .limit(12);
+      let qNombre = supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre, apellido, email')
+        .ilike('nombre', pattern)
+        .limit(12);
+      let qApellido = supabase
+        .from('jugadores_perfil')
+        .select('user_id, alias, foto_url, nombre, apellido, email')
+        .ilike('apellido', pattern)
+        .limit(12);
+      if (myUid) {
+        const uid = String(myUid);
+        qAlias = qAlias.neq('user_id', uid);
+        qNombre = qNombre.neq('user_id', uid);
+        qApellido = qApellido.neq('user_id', uid);
+      }
+      const [a, b, c] = await Promise.all([qAlias, qNombre, qApellido]);
+      if (seq !== companeroSearchSeqRef.current) return;
+      setCompaneroBusquedaCargando(false);
+      const byUserId = new Map();
+      for (const row of [...(a.data || []), ...(b.data || []), ...(c.data || [])]) {
+        const uid = row?.user_id;
+        if (uid == null || uid === '') continue;
+        if (!byUserId.has(uid)) byUserId.set(uid, row);
+      }
+      setCompaneroOpciones(Array.from(byUserId.values()).slice(0, 12));
+    }, 280);
+    return () => clearTimeout(handle);
+  }, [companeroBusqueda, session?.user?.id]);
 
   const miEquipo = useMemo(() => {
     if (!yo) return null;
@@ -983,13 +1052,27 @@ export default function FormEquipos() {
     setDesktopFlujo(null);
   };
 
+  async function notificarCapitanEquipoCompletoSiAplica(equipoId, prevCount, nextCount, cupo) {
+    if (!equipoId || nextCount < cupo || prevCount >= cupo) return;
+    try {
+      await fetch(`${BACKEND_API_BASE}/api/torneos/notificar-equipo-completo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ equipo_id: equipoId, torneo_id: torneoId }),
+      });
+    } catch (e) {
+      console.warn('[FormEquipos] notify equipo completo', e);
+    }
+  }
+
   const aceptarSolicitud = async (equipo, solicitud) => {
     const u = getOrCreateUsuarioBasico();
     if (!esCreadorEquipoOMiAuth(equipo, authEmail, u, authUserId)) return;
 
     const players = getPlayers(equipo);
     const requests = getRequests(equipo);
-    const cupo = Number(equipo.cupo_maximo || 2);
+    const cupo = Number(equipo.cupo_maximo || equipo.cupo || 2);
+    const prevLen = players.length;
 
     if (players.length >= cupo) {
       alert('Equipo completo');
@@ -1003,6 +1086,8 @@ export default function FormEquipos() {
         const upd = data?.equipo;
         if (upd) {
           setEquipos((prev) => prev.map((eq) => (eq.id === upd.id ? { ...eq, ...upd } : eq)));
+          const nextLen = getPlayers(upd).length;
+          void notificarCapitanEquipoCompletoSiAplica(equipo.id, prevLen, nextLen, cupo);
         }
       } catch (err) {
         console.error(err);
@@ -1042,6 +1127,7 @@ export default function FormEquipos() {
           : eq
       )
     );
+    void notificarCapitanEquipoCompletoSiAplica(equipo.id, basePlayers.length, nuevosJugadores.length, cupo);
   };
 
   const rechazarSolicitud = async (equipo, solicitud) => {
@@ -1069,15 +1155,9 @@ export default function FormEquipos() {
     );
   };
 
-  const agregarCompanero = async () => {
+  const agregarCompaneroDesdePerfil = async (row) => {
     const u = getOrCreateUsuarioBasico();
-    if (!miEquipo || !esCreadorEquipoOMiAuth(miEquipo, authEmail, u, authUserId)) return;
-
-    const nombre = companeroNombre.trim();
-    if (!nombre) {
-      alert('Escribe el nombre del compañero');
-      return;
-    }
+    if (!miEquipo || !esCreadorEquipoOMiAuth(miEquipo, authEmail, u, authUserId) || !row) return;
 
     let players = getPlayers(miEquipo);
     const creadorEntry =
@@ -1090,7 +1170,19 @@ export default function FormEquipos() {
       return;
     }
 
-    const nuevo = { nombre, estado: 'pendiente', email: null };
+    const em = String(row.email || '').trim().toLowerCase();
+    const nombreCompleto = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || 'Jugador';
+    const nombrePrim =
+      String(row.nombre || '').trim() || (nombreCompleto.split(/\s+/).filter(Boolean)[0] || 'Jugador');
+    const nuevo = {
+      id: row.user_id != null && String(row.user_id).trim() !== '' ? String(row.user_id).trim() : null,
+      nombre: nombrePrim,
+      apellido: String(row.apellido || '').trim(),
+      alias: String(row.alias || '').trim(),
+      email: em,
+      estado: 'confirmado',
+      foto_url: row.foto_url != null && String(row.foto_url).trim() ? String(row.foto_url).trim() : '',
+    };
     if (jugadorCoincideConYo(nuevo, yo, authUserId)) {
       alert('No puedes agregarte como compañero');
       return;
@@ -1100,6 +1192,7 @@ export default function FormEquipos() {
       return;
     }
 
+    const prevLen = players.length;
     const nuevosJugadores = [...players, nuevo];
     setSaving(true);
     const { error } = await supabase
@@ -1117,7 +1210,9 @@ export default function FormEquipos() {
     setEquipos((prev) =>
       prev.map((eq) => (eq.id === miEquipo.id ? { ...eq, jugadores: nuevosJugadores } : eq))
     );
-    setCompaneroNombre('');
+    setCompaneroBusqueda('');
+    setCompaneroOpciones([]);
+    void notificarCapitanEquipoCompletoSiAplica(miEquipo.id, prevLen, nuevosJugadores.length, cupo);
   };
 
   const equiposVisibles = equiposNormalizados.filter((eq) => eq.players.length > 0);
@@ -1168,6 +1263,11 @@ export default function FormEquipos() {
   );
   const uBas = getOrCreateUsuarioBasico();
   const soyCreadorMiEquipo = !!miEquipo && esCreadorEquipoOMiAuth(miEquipo, authEmail, uBas, authUserId);
+  const soyMiembroMiEquipo = useMemo(() => {
+    if (!miEquipo) return false;
+    if (esCreadorEquipoOMiAuth(miEquipo, authEmail, uBas, authUserId)) return true;
+    return getPlayers(miEquipo).some((p) => jugadorCoincideConYo(p, yo, authUserId));
+  }, [miEquipo, authEmail, uBas, authUserId, yo]);
 
   const invitarWhatsappHref = useMemo(() => {
     const base =
@@ -1183,8 +1283,7 @@ export default function FormEquipos() {
 
   const confirmarInscripcionTorneo = async () => {
     if (!miEquipo || !torneo) return;
-    if (!soyCreadorMiEquipo) return;
-    if (!miEquipoListoParaJugar) return;
+    if (!soyMiembroMiEquipo) return;
     if (getEquipoInscripcionEstado(miEquipo) === 'confirmado') return;
     if (authLoading) return;
     if (!session?.user) {
@@ -1206,7 +1305,11 @@ export default function FormEquipos() {
       torneo,
     });
     setMpInscripcionLoading(false);
-    if (!r.ok) alert(r.error);
+    if (!r.ok) {
+      alert(r.error);
+      return;
+    }
+    if (r.gratis) await refrescarEquiposDesdeSupabase();
   };
 
   const renderEquipoCard = (eq, esTuEquipo, textoUnir = '+ Pedir unirme') => {
@@ -2133,6 +2236,14 @@ export default function FormEquipos() {
       </div>
     ) : null;
 
+  const costoInscripcionTorneoUi = torneo ? precioInscripcionTorneo(torneo) : 0;
+  const estadoInscripcionMiEquipo = miEquipo ? getEquipoInscripcionEstado(miEquipo) : 'pendiente';
+  const badgePendientePagoVisible =
+    !!miEquipo &&
+    miEquipoLleno &&
+    estadoInscripcionMiEquipo === 'pendiente' &&
+    costoInscripcionTorneoUi > 0;
+
   const bloqueInscripcionTorneo =
     miEquipo && !torneoCancelado && !torneoFinalizado ? (
       <div
@@ -2156,35 +2267,51 @@ export default function FormEquipos() {
           <div style={{ fontWeight: 800, fontSize: '13px', color: 'rgba(255,255,255,0.95)' }}>
             Inscripción al torneo
           </div>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              padding: '4px 10px',
-              borderRadius: '999px',
-              ...(getEquipoInscripcionEstado(miEquipo) === 'confirmado'
-                ? { background: 'rgba(220,252,231,0.95)', color: '#166534' }
-                : { background: 'rgba(254,243,199,0.95)', color: '#92400e' }),
-            }}
-          >
-            {getEquipoInscripcionEstado(miEquipo) === 'confirmado' ? 'Confirmada' : 'Pendiente de pago'}
-          </span>
+          {estadoInscripcionMiEquipo === 'confirmado' ? (
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                background: 'rgba(220,252,231,0.95)',
+                color: '#166534',
+              }}
+            >
+              Confirmada
+            </span>
+          ) : badgePendientePagoVisible ? (
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                background: 'rgba(254,243,199,0.95)',
+                color: '#92400e',
+              }}
+            >
+              Pendiente de pago
+            </span>
+          ) : null}
         </div>
-        {getEquipoInscripcionEstado(miEquipo) === 'pendiente' ? (
+        {badgePendientePagoVisible ? (
           <div
             style={{
               fontSize: '12px',
               color: 'rgba(255,255,255,0.78)',
               lineHeight: 1.45,
-              marginBottom: soyCreadorMiEquipo && miEquipoListoParaJugar ? '12px' : 0,
+              marginBottom: soyMiembroMiEquipo ? '12px' : 0,
             }}
           >
-            Cuando el equipo esté completo, el capitán puede pagar la inscripción para confirmar el cupo.
+            Para confirmar el cupo, cualquier integrante puede pagar la inscripción completa.
           </div>
         ) : null}
-        {soyCreadorMiEquipo && miEquipoListoParaJugar && getEquipoInscripcionEstado(miEquipo) === 'pendiente' ? (
+        {estadoInscripcionMiEquipo === 'pendiente' && soyMiembroMiEquipo ? (
           <button
             type="button"
             disabled={mpInscripcionLoading}
@@ -2203,7 +2330,11 @@ export default function FormEquipos() {
               boxShadow: '0 4px 14px rgba(217,119,6,0.35)',
             }}
           >
-            {mpInscripcionLoading ? 'Redirigiendo…' : 'Confirmar inscripción'}
+            {mpInscripcionLoading
+              ? 'Redirigiendo…'
+              : costoInscripcionTorneoUi > 0
+                ? '💳 Pagar inscripción'
+                : 'Confirmar inscripción (sin costo)'}
           </button>
         ) : null}
       </div>
@@ -2642,36 +2773,113 @@ export default function FormEquipos() {
               <>
                 <div style={{ fontWeight: 700, marginBottom: '10px', color: '#111' }}>Agregar compañero</div>
                 <input
-                  type="text"
-                  placeholder="Nombre del compañero"
-                  value={companeroNombre}
-                  onChange={(e) => setCompaneroNombre(e.target.value)}
+                  type="search"
+                  placeholder="Buscar por nombre, apellido o alias…"
+                  value={companeroBusqueda}
+                  onChange={(e) => setCompaneroBusqueda(e.target.value)}
+                  autoComplete="off"
                   style={{
                     width: '100%',
                     padding: '10px',
-                    marginBottom: '10px',
+                    marginBottom: '8px',
                     borderRadius: '8px',
                     border: '1px solid #ccc',
                     boxSizing: 'border-box',
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={agregarCompanero}
-                  disabled={saving}
-                  style={{
-                    padding: '10px 16px',
-                    background: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    cursor: saving ? 'default' : 'pointer',
-                    opacity: saving ? 0.65 : 1,
-                  }}
-                >
-                  Agregar
-                </button>
+                {companeroBusquedaCargando ? (
+                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>Buscando…</div>
+                ) : null}
+                {companeroOpciones.length > 0 ? (
+                  <div
+                    style={{
+                      maxHeight: '220px',
+                      overflowY: 'auto',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      marginBottom: '10px',
+                      background: '#f8fafc',
+                    }}
+                  >
+                    {companeroOpciones.map((row) => {
+                      const uid = row?.user_id != null ? String(row.user_id) : '';
+                      const nom = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || 'Jugador';
+                      const al = String(row.alias || '').trim();
+                      const foto = String(row.foto_url || '').trim();
+                      return (
+                        <button
+                          key={uid || al || nom}
+                          type="button"
+                          disabled={saving}
+                          onClick={() => void agregarCompaneroDesdePerfil(row)}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '10px 12px',
+                            border: 'none',
+                            borderBottom: '1px solid #e2e8f0',
+                            background: 'transparent',
+                            cursor: saving ? 'default' : 'pointer',
+                            textAlign: 'left',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          {foto ? (
+                            <img
+                              src={foto}
+                              alt=""
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                flexShrink: 0,
+                              }}
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                                color: '#fff',
+                                fontWeight: 800,
+                                fontSize: '14px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {String(nom || '?')
+                                .trim()
+                                .charAt(0)
+                                .toUpperCase()}
+                            </span>
+                          )}
+                          <span style={{ minWidth: 0, flex: 1 }}>
+                            <span style={{ display: 'block', fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
+                              {nom}
+                            </span>
+                            {al ? (
+                              <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                                @{al}
+                              </span>
+                            ) : null}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : companeroBusqueda.trim().length >= 2 ? (
+                  <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#64748b' }}>
+                    No hay coincidencias en el buscador. Podés invitar por WhatsApp.
+                  </p>
+                ) : null}
               </>
             ) : miEquipoListoParaJugar ? (
               <div style={{ fontSize: '14px', color: '#166534', fontWeight: 700 }}>Equipo completo</div>

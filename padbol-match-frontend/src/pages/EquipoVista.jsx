@@ -21,6 +21,7 @@ import {
   getEquipoInscripcionEstado,
   etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
+  precioInscripcionTorneo,
   torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
 import useUserRole from '../hooks/useUserRole';
@@ -1126,6 +1127,11 @@ export default function EquipoVista() {
     esMiEquipo && !torneoCancelado && (formaPartePlantel || soyCreador);
 
   const inscripcionEstadoEquipo = equipo ? getEquipoInscripcionEstado(equipo) : 'pendiente';
+  const costoInscripcionTorneoEq = torneo ? precioInscripcionTorneo(torneo) : 0;
+  const badgePendientePagoEquipoVista =
+    equipoListoJugar &&
+    inscripcionEstadoEquipo === 'pendiente' &&
+    costoInscripcionTorneoEq > 0;
 
   const equipoPageShellStyle = useMemo(
     () => ({
@@ -1141,8 +1147,7 @@ export default function EquipoVista() {
 
   const confirmarInscripcionDesdeVista = async () => {
     if (!equipo || !torneo) return;
-    if (!soyCreador) return;
-    if (!equipoListoJugar) return;
+    if (!esMiEquipo) return;
     if (getEquipoInscripcionEstado(equipo) === 'confirmado') return;
     if (authLoading) return;
     if (!session?.user) {
@@ -1164,7 +1169,11 @@ export default function EquipoVista() {
       torneo,
     });
     setMpInscripcionLoading(false);
-    if (!r.ok) alert(r.error);
+    if (!r.ok) {
+      alert(r.error);
+      return;
+    }
+    if (r.gratis) await cargarEquipo();
   };
 
   if (loading) {
@@ -1348,49 +1357,81 @@ export default function EquipoVista() {
                 >
                   Inscripción confirmada
                 </span>
-              ) : soyCreador && equipoListoJugar ? (
-                <button
-                  type="button"
-                  disabled={mpInscripcionLoading}
-                  onClick={() => void confirmarInscripcionDesdeVista()}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    width: '100%',
-                    maxWidth: '340px',
-                    padding: '14px 18px',
-                    fontSize: '16px',
-                    fontWeight: 800,
-                    borderRadius: '14px',
-                    border: 'none',
-                    cursor: mpInscripcionLoading ? 'default' : 'pointer',
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: 'white',
-                    boxShadow: '0 6px 20px rgba(217,119,6,0.45)',
-                    opacity: mpInscripcionLoading ? 0.75 : 1,
-                  }}
-                >
-                  {mpInscripcionLoading ? 'Redirigiendo…' : '💳 Pagar inscripción'}
-                </button>
               ) : (
-                <span
-                  style={{
-                    display: 'inline-block',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    padding: '5px 12px',
-                    borderRadius: '999px',
-                    background: '#fef3c7',
-                    color: '#92400e',
-                    border: '1px solid #fcd34d',
-                  }}
-                >
-                  {etiquetaInscripcionEstado(inscripcionEstadoEquipo)}
-                </span>
+                <>
+                  {badgePendientePagoEquipoVista ? (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        padding: '5px 12px',
+                        borderRadius: '999px',
+                        background: '#fef3c7',
+                        color: '#92400e',
+                        border: '1px solid #fcd34d',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      Pendiente de pago
+                    </span>
+                  ) : null}
+                  {badgePendientePagoEquipoVista ? (
+                    <p style={{ margin: '0 0 12px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
+                      Para confirmar el cupo, cualquier integrante puede pagar la inscripción completa.
+                    </p>
+                  ) : null}
+                  {inscripcionEstadoEquipo === 'pendiente' && esMiEquipo ? (
+                    <button
+                      type="button"
+                      disabled={mpInscripcionLoading}
+                      onClick={() => void confirmarInscripcionDesdeVista()}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        maxWidth: '340px',
+                        padding: '14px 18px',
+                        fontSize: '16px',
+                        fontWeight: 800,
+                        borderRadius: '14px',
+                        border: 'none',
+                        cursor: mpInscripcionLoading ? 'default' : 'pointer',
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        color: 'white',
+                        boxShadow: '0 6px 20px rgba(217,119,6,0.45)',
+                        opacity: mpInscripcionLoading ? 0.75 : 1,
+                      }}
+                    >
+                      {mpInscripcionLoading
+                        ? 'Redirigiendo…'
+                        : costoInscripcionTorneoEq > 0
+                          ? '💳 Pagar inscripción'
+                          : 'Confirmar inscripción (sin costo)'}
+                    </button>
+                  ) : inscripcionEstadoEquipo === 'pendiente' && !badgePendientePagoEquipoVista ? (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        padding: '5px 12px',
+                        borderRadius: '999px',
+                        background: '#fef3c7',
+                        color: '#92400e',
+                        border: '1px solid #fcd34d',
+                      }}
+                    >
+                      {etiquetaInscripcionEstado(inscripcionEstadoEquipo)}
+                    </span>
+                  ) : null}
+                </>
               )}
             </div>
           ) : null}
@@ -1690,7 +1731,7 @@ export default function EquipoVista() {
               )}
               {equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' && !soyCreador ? (
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-                  El capitán debe completar el pago de inscripción para confirmar el cupo.
+                  Para confirmar el cupo, cualquier integrante puede pagar la inscripción completa.
                 </p>
               ) : null}
             </div>

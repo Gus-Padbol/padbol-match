@@ -592,7 +592,7 @@ export default function TorneoTabbedView({
                   >
                     {titulo}
                   </button>
-                  {capOk || puedeGestionarEquiposTorneo ? (
+                  {puedeGestionarEquiposTorneo ? (
                     <button
                       type="button"
                       className="btn-agregar-jugadores"
@@ -600,6 +600,15 @@ export default function TorneoTabbedView({
                       style={{ padding: '6px 12px', fontSize: '12px', flexShrink: 0 }}
                     >
                       Gestionar
+                    </button>
+                  ) : capOk ? (
+                    <button
+                      type="button"
+                      className="btn-agregar-jugadores"
+                      onClick={() => navigate(`/torneo/${torneoId}/equipos/${equipo.id}`, navOpts)}
+                      style={{ padding: '6px 12px', fontSize: '12px', flexShrink: 0 }}
+                    >
+                      Ver mi equipo
                     </button>
                   ) : null}
                 </div>

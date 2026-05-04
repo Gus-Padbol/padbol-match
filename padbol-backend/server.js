@@ -735,6 +735,7 @@ app.post('/api/torneos', async (req, res) => {
       fecha_inicio,
       fecha_fin,
       cantidad_equipos,
+      costo_inscripcion,
       es_multisede,
       created_by,
       equipos_por_grupo,
@@ -755,6 +756,12 @@ app.post('/api/torneos', async (req, res) => {
       es_multisede,
       created_by,
     };
+    if (costo_inscripcion !== undefined && costo_inscripcion !== null && costo_inscripcion !== '') {
+      const c = Number(String(costo_inscripcion).replace(',', '.'));
+      row.costo_inscripcion = Number.isFinite(c) && c >= 0 ? c : 0;
+    } else {
+      row.costo_inscripcion = 0;
+    }
     if (tipo_torneo === 'grupos_knockout') {
       const ep = parseInt(String(equipos_por_grupo), 10);
       const cp = parseInt(String(clasificados_por_grupo), 10);
@@ -868,6 +875,61 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ POST /api/torneos/confirmar-inscripcion:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** WhatsApp al capitán cuando el equipo completa cupo (inscripción pendiente de pago). */
+app.post('/api/torneos/notificar-equipo-completo', async (req, res) => {
+  try {
+    const { equipo_id, torneo_id } = req.body || {};
+    const eid = parseInt(String(equipo_id), 10);
+    const tid = parseInt(String(torneo_id), 10);
+    if (!eid || !tid) {
+      return res.status(400).json({ error: 'equipo_id y torneo_id son requeridos' });
+    }
+
+    const { data: eq, error: errEq } = await supabase
+      .from('equipos')
+      .select('id, torneo_id, nombre, jugadores, cupo_maximo, cupo, creador_id, creador_email')
+      .eq('id', eid)
+      .maybeSingle();
+
+    if (errEq) throw errEq;
+    if (!eq || Number(eq.torneo_id) !== tid) {
+      return res.status(404).json({ error: 'Equipo no encontrado' });
+    }
+
+    const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
+    const players = Array.isArray(eq.jugadores) ? eq.jugadores : [];
+    if (players.length < cupo) {
+      return res.status(400).json({ error: 'El equipo aún no está completo' });
+    }
+
+    const nombreEquipo = String(eq.nombre || 'tu equipo').trim();
+    const body = `🏆 Tu equipo ${nombreEquipo} está completo. Confirmá el cupo pagando la inscripción en padbolmatch.com`;
+
+    let whatsappDest = '';
+    const creadorUid = eq.creador_id != null && String(eq.creador_id).trim() !== '' ? String(eq.creador_id).trim() : '';
+    if (creadorUid) {
+      const { data: perfil } = await supabase
+        .from('jugadores_perfil')
+        .select('whatsapp')
+        .eq('user_id', creadorUid)
+        .maybeSingle();
+      whatsappDest = perfil?.whatsapp != null ? String(perfil.whatsapp).trim() : '';
+    }
+    if (!whatsappDest && eq.creador_email) {
+      whatsappDest = (await fetchJugadorWhatsappPorEmail(eq.creador_email)) || '';
+    }
+    if (!whatsappDest) {
+      return res.json({ ok: true, skipped: true, reason: 'no_whatsapp_capitan' });
+    }
+
+    await sendTwilioWhatsAppBodyToRaw(whatsappDest, body);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ POST /api/torneos/notificar-equipo-completo:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

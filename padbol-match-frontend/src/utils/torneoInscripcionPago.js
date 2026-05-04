@@ -7,11 +7,20 @@ export function getEquipoInscripcionEstado(equipo) {
   return 'pendiente';
 }
 
-/** Precio unitario inscripción equipo (ARS u otra moneda del torneo). Fallback si no hay columna en DB. */
+/**
+ * Monto inscripción por equipo (ARS / moneda del torneo).
+ * Prioriza `costo_inscripcion` en BD; 0 = gratis. Legacy: `precio_inscripcion_equipo` / `precio_inscripcion`.
+ */
 export function precioInscripcionTorneo(torneo) {
-  const n = Number(torneo?.precio_inscripcion_equipo ?? torneo?.precio_inscripcion ?? 0);
-  if (Number.isFinite(n) && n > 0) return Math.round(n);
-  return 5000;
+  if (!torneo || typeof torneo !== 'object') return 0;
+  if (Object.prototype.hasOwnProperty.call(torneo, 'costo_inscripcion')) {
+    const c = Number(torneo.costo_inscripcion);
+    if (Number.isFinite(c) && c >= 0) return Math.round(c);
+    return 0;
+  }
+  const legacy = Number(torneo?.precio_inscripcion_equipo ?? torneo?.precio_inscripcion ?? 0);
+  if (Number.isFinite(legacy) && legacy > 0) return Math.round(legacy);
+  return 0;
 }
 
 export function etiquetaInscripcionEstado(estado) {
@@ -37,6 +46,27 @@ export async function iniciarPagoInscripcionTorneo({
   torneo,
 }) {
   const precio = precioInscripcionTorneo(torneo);
+  if (!Number.isFinite(precio) || precio <= 0) {
+    try {
+      const res = await fetch(`${API_MP_BASE}/api/torneos/confirmar-inscripcion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          equipo_id: Number(equipoId),
+          torneo_id: Number(torneoId),
+          email: String(email || '').trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data.ok || data.already)) {
+        return { ok: true, gratis: true };
+      }
+      return { ok: false, error: data.error || 'No se pudo confirmar la inscripción sin costo' };
+    } catch (e) {
+      return { ok: false, error: e?.message || 'Error de conexión' };
+    }
+  }
+
   const moneda = String(torneo?.moneda || 'ARS').trim() || 'ARS';
   const sedeId = torneo?.sede_id != null ? Number(torneo.sede_id) : null;
   const titulo = `Inscripción torneo — ${String(equipoNombre || 'Equipo').slice(0, 60)}`;
