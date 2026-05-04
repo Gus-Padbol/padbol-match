@@ -40,6 +40,7 @@ import {
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
 import TorneoTabbedView from '../components/torneo/TorneoTabbedView';
+import '../styles/TorneoVista.css';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -263,6 +264,7 @@ export default function FormEquipos() {
   const [salirEquipoIdConfirm, setSalirEquipoIdConfirm] = useState(null);
   const [savingSalirEquipo, setSavingSalirEquipo] = useState(false);
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
+  const [modalParticipacionAbierto, setModalParticipacionAbierto] = useState(false);
   /** Filas `tabla_puntos` del torneo (solo si está finalizado). */
   const [tablaPuntosRows, setTablaPuntosRows] = useState([]);
   const [partidos, setPartidos] = useState([]);
@@ -1737,17 +1739,21 @@ export default function FormEquipos() {
       navigate(authUrlWithRedirect(`/torneo/${id}/equipos`));
       return;
     }
-    if (isMobile) {
-      if (mostrarPasoEleccion) setMobileVista('inicio');
-      else setMobileVista('lista');
-      return;
-    }
-    if (mostrarPasoEleccion) {
-      setDesktopFlujo(null);
-      return;
-    }
-    setDesktopFlujo('lista');
-  }, [authLoading, session?.user, navigate, id, isMobile, mostrarPasoEleccion]);
+    setModalParticipacionAbierto(true);
+  }, [authLoading, session?.user, navigate, id]);
+
+  const cerrarModalParticipacion = useCallback(() => setModalParticipacionAbierto(false), []);
+
+  const modalElegirFormarEquipo = useCallback(() => {
+    setModalParticipacionAbierto(false);
+    irACrearEquipo();
+  }, [irACrearEquipo]);
+
+  const modalElegirYaTengoEquipo = useCallback(() => {
+    setModalParticipacionAbierto(false);
+    if (isMobile) setMobileVista('lista');
+    else setDesktopFlujo('lista');
+  }, [isMobile]);
 
   const btnInscribirseTorneoTabStyle = useMemo(
     () => ({
@@ -1762,9 +1768,9 @@ export default function FormEquipos() {
       borderRadius: '12px',
       border: 'none',
       cursor: 'pointer',
-      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
       color: 'white',
-      boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
     }),
     []
   );
@@ -2330,6 +2336,37 @@ export default function FormEquipos() {
   }
 
   return (
+    <>
+      {modalParticipacionAbierto ? (
+        <div
+          className="torneo-modal-participacion-overlay"
+          role="presentation"
+          onClick={cerrarModalParticipacion}
+        >
+          <div
+            className="torneo-modal-participacion-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="formequipos-participacion-titulo"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="formequipos-participacion-titulo" className="torneo-modal-participacion-titulo">
+              ¿Cómo querés participar?
+            </h2>
+            <button type="button" className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--primaria" onClick={modalElegirFormarEquipo}>
+              <span className="torneo-modal-participacion-opcion__titulo">Formar equipo</span>
+              <span className="torneo-modal-participacion-opcion__sub">Estás solo o querés crear un equipo nuevo</span>
+            </button>
+            <button type="button" className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--secundaria" onClick={modalElegirYaTengoEquipo}>
+              <span className="torneo-modal-participacion-opcion__titulo">Ya tengo equipo</span>
+              <span className="torneo-modal-participacion-opcion__sub">Unirme a un equipo existente</span>
+            </button>
+            <button type="button" className="torneo-modal-participacion-cerrar" onClick={cerrarModalParticipacion}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : null}
     <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
 
@@ -3132,5 +3169,6 @@ export default function FormEquipos() {
       </div>
       <BottomNav />
     </div>
+    </>
   );
 }

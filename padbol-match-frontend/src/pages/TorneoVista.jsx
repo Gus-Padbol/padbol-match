@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -10,17 +10,25 @@ import TorneoTabbedView, {
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
+import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
 import { setAdminNavContext, tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
+const API_BASE_URL = 'https://padbol-backend.onrender.com';
+
 export default function TorneoVista() {
   const { torneoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const [modalInscribirseOpen, setModalInscribirseOpen] = useState(false);
+  const [listaEsperaEnrolled, setListaEsperaEnrolled] = useState(false);
+  const [listaEsperaChecked, setListaEsperaChecked] = useState(false);
+  const [listaEsperaMsg, setListaEsperaMsg] = useState('');
+  const [abrirInscripcionLoading, setAbrirInscripcionLoading] = useState(false);
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
@@ -96,10 +104,10 @@ export default function TorneoVista() {
       try {
         setLoading(true);
         const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-          fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}`),
-          fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}/equipos`),
-          fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}/partidos`),
-          fetch('https://padbol-backend.onrender.com/api/sedes').catch(() => null),
+          fetch(`${API_BASE_URL}/api/torneos/${torneoId}`),
+          fetch(`${API_BASE_URL}/api/torneos/${torneoId}/equipos`),
+          fetch(`${API_BASE_URL}/api/torneos/${torneoId}/partidos`),
+          fetch(`${API_BASE_URL}/api/sedes`).catch(() => null),
         ]);
 
         if (!torneoRes.ok || !equiposRes.ok || !partidosRes.ok) {
@@ -132,6 +140,65 @@ export default function TorneoVista() {
 
     fetchData();
   }, [torneoId]);
+
+  useEffect(() => {
+    setListaEsperaChecked(false);
+    setListaEsperaEnrolled(false);
+    setListaEsperaMsg('');
+  }, [torneoId]);
+
+  useEffect(() => {
+    const st = String(torneo?.estado || '').toLowerCase();
+    if (!session?.access_token || !torneoId || (st !== 'planificacion' && st !== 'proximo')) {
+      setListaEsperaChecked(true);
+      if (st !== 'planificacion' && st !== 'proximo') setListaEsperaEnrolled(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}/lista-espera/me`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const j = await r.json().catch(() => ({}));
+        if (cancelled) return;
+        setListaEsperaEnrolled(Boolean(j?.enrolled));
+      } catch {
+        if (!cancelled) setListaEsperaEnrolled(false);
+      } finally {
+        if (!cancelled) setListaEsperaChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [torneoId, torneo?.estado, session?.access_token]);
+
+  const abrirInscripcionDesdeAdmin = async () => {
+    if (!window.confirm('¿Confirmar apertura de inscripción?')) return;
+    setAbrirInscripcionLoading(true);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ estado: 'abierto' }),
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        const row = Array.isArray(data) ? data[0] : data;
+        setTorneo((prev) => ({ ...prev, estado: row?.estado ?? 'abierto' }));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err?.error || 'No se pudo abrir la inscripción');
+      }
+    } catch (e) {
+      alert(e?.message || 'Error de red');
+    } finally {
+      setAbrirInscripcionLoading(false);
+    }
+  };
 
   const tidNum = parseInt(String(torneoId), 10);
   useEffect(() => {
@@ -195,7 +262,7 @@ export default function TorneoVista() {
     }
     setIniciando(true);
     try {
-      const res = await fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: 'en_curso' }),
@@ -217,7 +284,7 @@ export default function TorneoVista() {
       return;
     setFinalizando(true);
     try {
-      const res = await fetch(`https://padbol-backend.onrender.com/api/torneos/${torneoId}/finalizar`, {
+      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}/finalizar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -243,10 +310,17 @@ export default function TorneoVista() {
   const estadoTorneoLower = String(torneo?.estado || '').toLowerCase();
   /** Solo `state.fromAdmin`: el flag de sesión no debe ocultar inscripción a quien entra desde el hub. */
   const modoAdminExplicitoEnVista = fromAdmin;
-  /** Banner inscripción: todos los estados salvo `finalizado` (incluye planificación, en curso, etc.). */
-  const mostrarBannerInscripcionPorEstado = estadoTorneoLower !== 'finalizado';
+  const esListaEsperaTorneo =
+    estadoTorneoLower === 'planificacion' || estadoTorneoLower === 'proximo';
+  const esInscripcionAbiertaJugador =
+    estadoTorneoLower === 'abierto' || estadoTorneoLower === 'inscripcion_abierta';
+  const mostrarBannerJugadorTorneo =
+    !modoAdminExplicitoEnVista &&
+    estadoTorneoLower !== 'finalizado' &&
+    (esListaEsperaTorneo || esInscripcionAbiertaJugador);
   const puedeMostrarIniciarTorneo =
     isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
+  const puedeMostrarAbrirInscripcionAdmin = isAdmin && esListaEsperaTorneo;
 
   const miEquipoEnTorneo = useMemo(() => {
     if (!session?.user || !Array.isArray(equipos) || equipos.length === 0) return null;
@@ -265,50 +339,135 @@ export default function TorneoVista() {
     return null;
   }, [equipos, session?.user?.id, session?.user?.email]);
 
+  const navEquipos =
+    fromAdmin && torneoNavState ? { state: torneoNavState } : undefined;
+
+  const anotarmeListaEspera = useCallback(async () => {
+    if (!session?.user) {
+      navigate(authUrlWithRedirect(`/torneo/${torneoId}`));
+      return;
+    }
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}/lista-espera`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setListaEsperaEnrolled(true);
+        setListaEsperaMsg(
+          j?.already ? '' : '¡Listo! Te avisamos por WhatsApp cuando abra la inscripción.'
+        );
+      } else {
+        alert(j?.error || 'No se pudo anotar en lista de espera');
+      }
+    } catch (e) {
+      alert(e?.message || 'Error de red');
+    }
+  }, [session?.user, session?.access_token, torneoId, navigate]);
+
   const bannerInscripcionJugador = useMemo(() => {
-    if (!torneo || !session?.user || !mostrarBannerInscripcionPorEstado || modoAdminExplicitoEnVista) return null;
-    const navEquipos =
-      fromAdmin && torneoNavState
-        ? { state: torneoNavState }
-        : undefined;
-    return (
-      <div className="torneo-inscripcion-jugador-banner">
-        {miEquipoEnTorneo ? (
+    if (!torneo || !mostrarBannerJugadorTorneo) return null;
+
+    if (session?.user && miEquipoEnTorneo && esInscripcionAbiertaJugador) {
+      return (
+        <div className="torneo-inscripcion-jugador-banner">
           <p className="torneo-inscripcion-jugador-banner__texto">
             ✓ Ya estás inscripto — {nombreEquipoMostrado(miEquipoEnTorneo)}
           </p>
-        ) : (
-          <>
-            <p className="torneo-inscripcion-jugador-banner__sub">
-              Inscripción abierta. Creá un equipo o unite a uno existente.
+        </div>
+      );
+    }
+
+    if (esListaEsperaTorneo) {
+      return (
+        <div className="torneo-inscripcion-jugador-banner">
+          <p className="torneo-inscripcion-jugador-banner__sub">
+            La inscripción aún no está abierta. Dejá tus datos y te avisamos por WhatsApp.
+          </p>
+          {listaEsperaMsg ? (
+            <p className="torneo-inscripcion-jugador-banner__texto" style={{ marginTop: '10px' }}>
+              {listaEsperaMsg}
             </p>
+          ) : null}
+          {listaEsperaEnrolled ? (
+            <p className="torneo-inscripcion-jugador-banner__texto" style={{ marginTop: '12px' }}>
+              Ya estás en lista de espera ✓
+            </p>
+          ) : (
             <button
               type="button"
               className="torneo-inscripcion-jugador-banner__cta btn-agregar-jugadores"
-              onClick={() => navigate(`/torneo/${torneoId}/equipos`, navEquipos)}
+              onClick={() => void anotarmeListaEspera()}
+              disabled={session?.user && !listaEsperaChecked}
             >
-              ➕ Inscribirme / Crear equipo
+              Anotarme en lista de espera
             </button>
-          </>
-        )}
-      </div>
-    );
+          )}
+        </div>
+      );
+    }
+
+    if (esInscripcionAbiertaJugador) {
+      return (
+        <div className="torneo-inscripcion-jugador-banner">
+          <p className="torneo-inscripcion-jugador-banner__sub">
+            Inscripción abierta. Elegí cómo querés participar.
+          </p>
+          <button
+            type="button"
+            className="torneo-inscripcion-jugador-banner__cta torneo-btn-inscribirse-verde"
+            onClick={() => {
+              if (!session?.user) {
+                navigate(authUrlWithRedirect(`/torneo/${torneoId}`));
+                return;
+              }
+              setModalInscribirseOpen(true);
+            }}
+          >
+            Inscribirse
+          </button>
+        </div>
+      );
+    }
+
+    return null;
   }, [
     torneo,
     session?.user,
-    mostrarBannerInscripcionPorEstado,
-    modoAdminExplicitoEnVista,
+    session?.access_token,
+    mostrarBannerJugadorTorneo,
+    esListaEsperaTorneo,
+    esInscripcionAbiertaJugador,
     miEquipoEnTorneo,
+    listaEsperaEnrolled,
+    listaEsperaChecked,
+    listaEsperaMsg,
     torneoId,
     navigate,
-    fromAdmin,
-    torneoNavState,
+    anotarmeListaEspera,
   ]);
 
   const adminTorneoBar = torneo ? (
     <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
       {estadoTorneoLower !== 'finalizado' ? (
-        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+          {puedeMostrarAbrirInscripcionAdmin ? (
+            <button
+              type="button"
+              className="btn-agregar-jugadores"
+              style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', color: '#fff', fontWeight: 800 }}
+              onClick={() => void abrirInscripcionDesdeAdmin()}
+              disabled={abrirInscripcionLoading}
+            >
+              {abrirInscripcionLoading ? 'Abriendo…' : '📣 Abrir inscripción'}
+            </button>
+          ) : null}
           <button
             type="button"
             className="btn-agregar-jugadores"
@@ -398,6 +557,53 @@ export default function TorneoVista() {
   }
 
   return (
+    <>
+      {modalInscribirseOpen ? (
+        <div
+          className="torneo-modal-participacion-overlay"
+          role="presentation"
+          onClick={() => setModalInscribirseOpen(false)}
+        >
+          <div
+            className="torneo-modal-participacion-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="torneo-participacion-titulo"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="torneo-participacion-titulo" className="torneo-modal-participacion-titulo">
+              ¿Cómo querés participar?
+            </h2>
+            <button
+              type="button"
+              className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--primaria"
+              onClick={() => {
+                setModalInscribirseOpen(false);
+                navigate(`/torneo/${torneoId}/equipos?crear=1`, navEquipos);
+              }}
+            >
+              <span className="torneo-modal-participacion-opcion__titulo">Formar equipo</span>
+              <span className="torneo-modal-participacion-opcion__sub">
+                Estás solo o querés crear un equipo nuevo
+              </span>
+            </button>
+            <button
+              type="button"
+              className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--secundaria"
+              onClick={() => {
+                setModalInscribirseOpen(false);
+                navigate(`/torneo/${torneoId}/equipos`, navEquipos);
+              }}
+            >
+              <span className="torneo-modal-participacion-opcion__titulo">Ya tengo equipo</span>
+              <span className="torneo-modal-participacion-opcion__sub">Unirme a un equipo existente</span>
+            </button>
+            <button type="button" className="torneo-modal-participacion-cerrar" onClick={() => setModalInscribirseOpen(false)}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : null}
     <div
       className="torneo-vista-container"
       style={{
@@ -434,5 +640,6 @@ export default function TorneoVista() {
       />
       <BottomNav />
     </div>
+    </>
   );
 }

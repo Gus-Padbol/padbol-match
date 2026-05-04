@@ -45,6 +45,102 @@
   border-radius: 14px !important;
 }
 
+.torneo-btn-inscribirse-verde {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35) !important;
+}
+
+.torneo-modal-participacion-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.torneo-modal-participacion-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px 20px 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.torneo-modal-participacion-titulo {
+  margin: 0 0 18px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.torneo-modal-participacion-opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  border: 2px solid transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.torneo-modal-participacion-opcion:hover {
+  transform: translateY(-1px);
+}
+
+.torneo-modal-participacion-opcion--primaria {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #22c55e;
+  color: #14532d;
+}
+
+.torneo-modal-participacion-opcion--secundaria {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-color: #6366f1;
+  color: #312e81;
+}
+
+.torneo-modal-participacion-opcion__titulo {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.torneo-modal-participacion-opcion__sub {
+  font-size: 0.88rem;
+  font-weight: 600;
+  opacity: 0.92;
+  line-height: 1.4;
+}
+
+.torneo-modal-participacion-cerrar {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .btn-atras {
   background: #ffffff;
   color: #667eea;

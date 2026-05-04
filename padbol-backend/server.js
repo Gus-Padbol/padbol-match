@@ -43,7 +43,7 @@ app.use(cors({
       callback(new Error('Not allowed by CORS: ' + origin));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true
 }));
 app.use(express.json());
@@ -872,10 +872,48 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
   }
 });
 
-app.put('/api/torneos/:id', async (req, res) => {
+async function notifyListaEsperaInscripcionAbierta(torneoId, nombreTorneo) {
+  try {
+    const { data: rows, error } = await supabase
+      .from('lista_espera_torneos')
+      .select('id, email, nombre, whatsapp')
+      .eq('torneo_id', torneoId);
+    if (error) {
+      console.warn('lista_espera_torneos select:', error.message);
+      return;
+    }
+    const tname = String(nombreTorneo || 'el torneo').trim();
+    const baseUrl = String(TORNEO_EQUIPOS_INVITE_BASE_URL || FRONTEND_URL || '').replace(/\/$/, '');
+    const link = `${baseUrl}/torneo/${torneoId}/equipos`;
+    const body = `¡Hola! La inscripción a «${tname}» ya está abierta. Entrá acá para inscribirte: ${link}`;
+    for (const row of rows || []) {
+      let dest = String(row?.whatsapp || '').trim();
+      if (!dest && row?.email) {
+        dest = (await fetchJugadorWhatsappPorEmail(row.email)) || '';
+      }
+      if (!dest) continue;
+      try {
+        await sendTwilioWhatsAppBodyToRaw(dest, body);
+      } catch (e) {
+        console.warn('WhatsApp lista espera fila', row?.id, e?.message || e);
+      }
+    }
+  } catch (e) {
+    console.warn('notifyListaEsperaInscripcionAbierta:', e?.message || e);
+  }
+}
+
+async function handleTorneoPatchOrPut(req, res) {
   try {
     const { id } = req.params;
     const { nombre, nivel_torneo, tipo_torneo, categoria, estado, fecha_inicio, fecha_fin } = req.body;
+
+    const { data: prevRow, error: prevErr } = await supabase
+      .from('torneos')
+      .select('estado, nombre')
+      .eq('id', id)
+      .maybeSingle();
+    if (prevErr) throw prevErr;
 
     const patch = { updated_at: new Date() };
     if (nombre !== undefined) patch.nombre = nombre;
@@ -892,7 +930,98 @@ app.put('/api/torneos/:id', async (req, res) => {
     const { data, error } = await supabase.from('torneos').update(patch).eq('id', id).select();
 
     if (error) throw error;
+    const row0 = Array.isArray(data) ? data[0] : null;
+    const newEst = String(row0?.estado ?? '').toLowerCase();
+    const oldEst = String(prevRow?.estado ?? '').toLowerCase();
+    if (
+      patch.estado !== undefined &&
+      newEst === 'abierto' &&
+      (oldEst === 'planificacion' || oldEst === 'proximo')
+    ) {
+      void notifyListaEsperaInscripcionAbierta(id, row0?.nombre || prevRow?.nombre);
+    }
     res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+app.put('/api/torneos/:id', handleTorneoPatchOrPut);
+app.patch('/api/torneos/:id', handleTorneoPatchOrPut);
+
+/** ¿El usuario autenticado ya está en lista de espera del torneo? */
+app.get('/api/torneos/:id/lista-espera/me', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from('lista_espera_torneos')
+      .select('id')
+      .eq('torneo_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ enrolled: Boolean(data) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** Anotarse en lista de espera (torneo en planificación / próximo). */
+app.post('/api/torneos/:id/lista-espera', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const email = String(user.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email requerido' });
+
+    const { data: torneoRow, error: tErr } = await supabase
+      .from('torneos')
+      .select('id, estado, nombre')
+      .eq('id', id)
+      .maybeSingle();
+    if (tErr) throw tErr;
+    if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    const te = String(torneoRow.estado || '').toLowerCase();
+    if (te !== 'planificacion' && te !== 'proximo') {
+      return res.status(400).json({ error: 'La lista de espera solo aplica antes de abrir inscripción' });
+    }
+
+    const { data: perfil, error: pErr } = await supabase
+      .from('jugadores_perfil')
+      .select('nombre, whatsapp')
+      .eq('email', email)
+      .maybeSingle();
+    if (pErr) throw pErr;
+    const nombre = perfil?.nombre != null ? String(perfil.nombre).trim() : '';
+    const whatsapp = perfil?.whatsapp != null ? String(perfil.whatsapp).trim() : '';
+
+    const { data: exist } = await supabase
+      .from('lista_espera_torneos')
+      .select('id')
+      .eq('torneo_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (exist) {
+      return res.json({ ok: true, already: true });
+    }
+
+    const { error: insErr } = await supabase.from('lista_espera_torneos').insert({
+      torneo_id: id,
+      user_id: user.id,
+      email,
+      nombre: nombre || null,
+      whatsapp: whatsapp || null,
+    });
+    if (insErr) {
+      if (String(insErr.code) === '23505') {
+        return res.json({ ok: true, already: true });
+      }
+      throw insErr;
+    }
+    res.json({ ok: true, already: false });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
