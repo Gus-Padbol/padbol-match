@@ -9,7 +9,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { PERFIL_CHANGE_EVENT, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
+import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 
 const LS_SALUDO_NOMBRE = 'padbol_nombre_saludo';
 const LS_SALUDO_UID = 'padbol_nombre_saludo_uid';
@@ -28,11 +28,12 @@ function readNombreSaludoCacheado(userId) {
 function escribirNombreSaludoCache(userId, userProfile) {
   if (!userId || !userProfile) return;
   try {
-    const ap = String(userProfile.apodo || '').trim();
-    const nomAp = nombreApellidoSaludoDesdePerfil(userProfile).trim();
-    const ns = String(userProfile.nombre_saludo || '').trim();
-    const full = nombreCompletoJugadorPerfil(userProfile).trim();
-    const v = ap || nomAp || ns || full;
+    const ap = String(userProfile.apodo ?? '')
+      .trim();
+    const nom = primerNombreDesdePerfil(userProfile);
+    const ns = String(userProfile.nombre_saludo ?? '')
+      .trim();
+    const v = ap || nom || ns;
     if (!v) return;
     localStorage.setItem(LS_SALUDO_NOMBRE, v);
     localStorage.setItem(LS_SALUDO_UID, String(userId));
@@ -57,9 +58,12 @@ function capitalizarPalabraSaludo(w) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-/** `apodo` en jugadores_perfil (vacío → no aplica). */
+/** `apodo` en jugadores_perfil (vacío → no aplica). Lee explícitamente la columna. */
 function nombreDesdeApodoPerfil(userProfile) {
-  const v = String(userProfile?.apodo || '').trim();
+  if (!userProfile || typeof userProfile !== 'object') return '';
+  const raw = userProfile.apodo;
+  if (raw == null) return '';
+  const v = String(raw).trim();
   return v || '';
 }
 
@@ -75,16 +79,6 @@ function primerNombreDesdePerfil(userProfile) {
   if (!v || esPlaceholderJugador(v)) return '';
   const first = v.split(/\s+/).filter(Boolean)[0] || '';
   return first ? capitalizarPalabraSaludo(first) : '';
-}
-
-/** Saludo con nombre + apellido (capitalizado); no usa email. */
-function nombreApellidoSaludoDesdePerfil(userProfile) {
-  const full = nombreCompletoJugadorPerfil(userProfile).trim();
-  if (!full) return '';
-  const parts = full.split(/\s+/).filter(Boolean);
-  if (!parts.length) return '';
-  if (esPlaceholderJugador(parts[0])) return '';
-  return parts.map(capitalizarPalabraSaludo).join(' ');
 }
 
 export default function UserHome() {
@@ -127,13 +121,14 @@ export default function UserHome() {
       if (desdeCache) return `¡Hola ${etiquetaSaludoDesdeCache(desdeCache)}! ${sufijo}`;
       return `¡Hola! ${sufijo}`;
     }
+
+    console.log('SALUDO DEBUG:', { apodo: userProfile?.apodo, nombre: userProfile?.nombre });
+
     const ap = nombreDesdeApodoPerfil(userProfile);
     if (ap) {
       const mostrar = ap.charAt(0).toUpperCase() + ap.slice(1);
       return `¡Hola ${mostrar}! ${sufijo}`;
     }
-    const nomAp = nombreApellidoSaludoDesdePerfil(userProfile);
-    if (nomAp) return `¡Hola ${nomAp}! ${sufijo}`;
     const nom = primerNombreDesdePerfil(userProfile);
     if (nom) return `¡Hola ${nom}! ${sufijo}`;
     const ns = nombreDesdeSaludoPerfil(userProfile);
