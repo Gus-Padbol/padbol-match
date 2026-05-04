@@ -195,6 +195,38 @@ function EstadoBadge({ reserva }) {
   return <span style={{ background: '#ede9fe', color: '#3b2f6e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>🟢 Confirmada</span>;
 }
 
+/** Pills filtro listado reservas (pestaña Reservas). */
+const FILTROS_RESERVA_ADMIN_PILLS = [
+  { id: 'todas', label: 'Todas' },
+  { id: 'confirmadas', label: 'Confirmadas' },
+  { id: 'pendientes', label: 'Pendientes' },
+  { id: 'canceladas', label: 'Canceladas' },
+];
+
+/** Buckets alineados con {@link EstadoBadge}: cancelada | pendientes (reservada u otro) | confirmadas (confirmada/completada). */
+function bucketEstadoReservaAdmin(estadoRaw) {
+  const e = String(estadoRaw || '').trim().toLowerCase();
+  if (e === 'cancelada') return 'canceladas';
+  if (e === 'reservada') return 'pendientes';
+  if (e === 'confirmada' || e === 'completada') return 'confirmadas';
+  return 'pendientes';
+}
+
+function reservaPasaFiltroEstadoPill(r, filtro) {
+  if (!filtro || filtro === 'todas') return true;
+  return bucketEstadoReservaAdmin(r?.estado) === filtro;
+}
+
+function sortReservasFechaHoraDesc(arr) {
+  const key = (r) => {
+    const f = String(r?.fecha || '').trim();
+    const start = String(r?.hora || '').split(' - ')[0].trim() || '00:00';
+    const hm = /^\d{1,2}:\d{2}/.test(start) ? start.slice(0, 5).padStart(5, '0') : '00:00';
+    return `${f}T${hm}`;
+  };
+  return [...arr].sort((a, b) => key(b).localeCompare(key(a)));
+}
+
 // Returns true if the reserva's fecha+hora is in the future.
 // Reserva datetime is parsed with Argentina offset (-03:00) to avoid UTC drift.
 function esFutura(reserva) {
@@ -278,6 +310,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [reservas, setReservas] = useState([]);
   const [torneos, setTorneos] = useState([]);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
+  const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
   const [sedesMap, setSedesMap] = useState({});
   /** Equipos de torneos en alcance (para ingresos por inscripción confirmada). */
   const [equiposInscripcionRows, setEquiposInscripcionRows] = useState([]);
@@ -2278,10 +2311,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const f = String(r?.fecha || '').trim();
               return isInPeriodo(f);
             });
+            const reservasPeriodoFiltradas = reservasPeriodo.filter((r) => reservaPasaFiltroEstadoPill(r, filtroPillReservas));
 
             const ingresosMes = {};
             const porSede = new Map();
-            reservasPeriodo.forEach((r) => {
+            reservasPeriodoFiltradas.forEach((r) => {
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
               const sedeInfo = resolveSedeDesdeReserva(r) || {};
               console.log('[Admin] sede de reserva', r?.sede, 'sedeInfo', sedeInfo);
@@ -2391,10 +2425,56 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 ) : null}
                 </div>
 
+                <div style={{ marginBottom: '0', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>Estado de la reserva</div>
+                  <div
+                    role="group"
+                    aria-label="Estado de la reserva"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      flexWrap: 'nowrap',
+                      gap: '8px',
+                      overflowX: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      scrollbarWidth: 'thin',
+                      paddingBottom: '4px',
+                    }}
+                  >
+                    {FILTROS_RESERVA_ADMIN_PILLS.map(({ id, label }) => {
+                      const active = filtroPillReservas === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setFiltroPillReservas(id)}
+                          style={{
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap',
+                            padding: '8px 14px',
+                            borderRadius: '999px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            fontFamily: 'inherit',
+                            cursor: 'pointer',
+                            border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
+                            background: active ? '#667eea' : 'transparent',
+                            color: active ? '#fff' : '#374151',
+                            boxShadow: active ? '0 2px 8px rgba(102, 126, 234, 0.35)' : 'none',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
                   <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
                     <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Total reservas del período</div>
-                    <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>{reservasPeriodo.length}</div>
+                    <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>{reservasPeriodoFiltradas.length}</div>
                   </div>
                   <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
                     <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del período</div>
@@ -2405,7 +2485,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
 
                 {sedesRows.length === 0 ? (
-                  <p style={{ color: '#aaa', padding: '10px 0', margin: 0 }}>Sin reservas en el período seleccionado.</p>
+                  <p style={{ color: '#aaa', padding: '10px 0', margin: 0 }}>Sin reservas en este período</p>
                 ) : (
                   <div style={{ background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -2449,12 +2529,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 <tr>
                                   <td colSpan={4} style={{ padding: '10px 12px', background: '#f8fafc' }}>
                                     <div style={{ display: 'grid', gap: '6px' }}>
-                                      {g.rows.map((r) => (
-                                        <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '120px 120px 1fr 1fr 110px', gap: '8px', fontSize: '12px', color: '#334155', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+                                      {sortReservasFechaHoraDesc(g.rows).map((r) => (
+                                        <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '100px 130px 52px minmax(88px, 1fr) 120px 92px', gap: '8px', alignItems: 'center', fontSize: '12px', color: '#334155', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
                                           <span>{r.fecha || '—'}</span>
                                           <span>{horaRango(r.hora, r.duracion)}</span>
-                                          <span>{r.nombre || '—'}</span>
-                                          <span>{r.email || '—'}</span>
+                                          <span style={{ textAlign: 'center' }}>{r.cancha ?? '—'}</span>
+                                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.nombre || '—'}</span>
+                                          <span><EstadoBadge reserva={r} /></span>
                                           <span style={{ textAlign: 'right', fontWeight: 700 }}>${(Number(r.precio) || 0).toLocaleString('es-AR')}</span>
                                         </div>
                                       ))}
@@ -2473,159 +2554,144 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             );
           }
 
-          // Upcoming ASC (soonest first), completed DESC (most recent first)
-          const proximas    = reservas.filter(esFutura).sort((a, b) => (a.fecha + a.hora) < (b.fecha + b.hora) ? -1 : 1);
-          const completadas = reservas.filter(r => !esFutura(r)).sort((a, b) => (a.fecha + a.hora) > (b.fecha + b.hora) ? -1 : 1);
-          const allRows = [...proximas, ...completadas];
-
-          if (allRows.length === 0) return <p style={{ color: '#aaa', padding: '10px 0' }}>Sin reservas registradas.</p>;
-
-          // Build ordered day groups preserving insertion order
-          const orderedDays = [];
-          const dayMap = {};
-          allRows.forEach(r => {
-            const k = r.fecha || 'Sin fecha';
-            if (!dayMap[k]) { dayMap[k] = []; orderedDays.push(k); }
-            dayMap[k].push(r);
-          });
-
-          const shortDate = (str) => {
-            if (!str || str === 'Sin fecha') return str;
-            const [y, m, d] = str.split('-').map(Number);
-            const date = new Date(y, m - 1, d);
-            const DIAS  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-            const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            return `${DIAS[date.getDay()]} ${d} ${MESES[m - 1]}`;
-          };
+          const sortedRows = sortReservasFechaHoraDesc(
+            reservas.filter((r) => reservaPasaFiltroEstadoPill(r, filtroPillReservas))
+          );
 
           const BTN = (extra) => ({
             padding: '4px 10px', border: 'none', borderRadius: '3px',
             cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', color: 'white', ...extra,
           });
 
-          return (
-            <div className="reservas-table-wrap">
-            <table className="reservas-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '988px', marginTop: 0 }}>
-              <colgroup>
-                <col style={{ width: '52px' }} /> {/* Date label */}
-                <col style={{ width: '108px' }} />{/* Sede */}
-                <col style={{ width: '112px' }} />{/* Horario */}
-                <col style={{ width: '80px' }} /> {/* Cancha */}
-                <col style={{ width: '116px' }} />{/* Nombre */}
-                <col style={{ width: '200px' }} />{/* Email */}
-                <col style={{ width: '88px' }} /> {/* Precio */}
-                <col style={{ width: '102px' }} />{/* Estado */}
-                <col style={{ width: '130px' }} />{/* Acciones */}
-              </colgroup>
-              <thead>
-                <tr>
-                  <th style={{ padding: '10px 4px', fontSize: '10px', textAlign: 'center', color: '#888' }}></th>
-                  <th>Sede</th>
-                  <th>Horario</th>
-                  <th style={{ textAlign: 'center' }}>Cancha</th>
-                  <th>Nombre</th>
-                  <th>Email</th>
-                  <th>Precio</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderedDays.map(dia => {
-                  const rows = dayMap[dia];
-                  const upcoming = esFutura(rows[0]);
-                  const accentColor  = upcoming ? '#16a34a' : '#94a3b8';
-                  const accentLight  = upcoming ? 'rgba(22,163,74,0.18)' : 'rgba(148,163,184,0.18)';
-                  const dateBg       = upcoming ? '#f0fdf4' : 'rgba(148,163,184,0.08)';
-                  const rowBg        = upcoming ? '#f0fdf4' : undefined;
-                  const dateColor    = upcoming ? '#15803d' : '#64748b';
-                  const dayTopBorder = `2px solid ${upcoming ? 'rgba(22,163,74,0.45)' : 'rgba(148,163,184,0.35)'}`;
+          const pillsBlock = (
+            <div style={{ marginBottom: '14px', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#555', marginBottom: '8px' }}>Estado de la reserva</div>
+              <div
+                role="group"
+                aria-label="Estado de la reserva"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  flexWrap: 'nowrap',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'thin',
+                  paddingBottom: '4px',
+                }}
+              >
+                {FILTROS_RESERVA_ADMIN_PILLS.map(({ id, label }) => {
+                  const active = filtroPillReservas === id;
                   return (
-                    <React.Fragment key={dia}>
-                      {rows.map((r, idx) => (
-                        <tr key={r.id} style={rowBg ? { background: rowBg } : undefined}>
-                          {/* Date cell: spans all rows for this day */}
-                          {idx === 0 && (
-                            <td rowSpan={rows.length} style={{
-                              borderLeft: `4px solid ${accentColor}`,
-                              borderRight: `2px solid ${accentLight}`,
-                              borderTop: dayTopBorder,
-                              borderBottom: `2px solid ${accentLight}`,
-                              background: dateBg,
-                              padding: '6px 2px',
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                            }}>
-                              <span style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                writingMode: 'vertical-rl',
-                                transform: 'rotate(180deg)',
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                color: dateColor,
-                                letterSpacing: '0.04em',
-                                whiteSpace: 'nowrap',
-                                width: '100%',
-                              }}>
-                                {shortDate(dia)}
-                              </span>
-                            </td>
-                          )}
-                          {editandoId === r.id ? (
-                            <>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}><input type="text" value={editFormData.sede || ''} onChange={e => setEditFormData({ ...editFormData, sede: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}>
-                                <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-                                  <input type="time" value={editFormData.hora || ''} onChange={e => setEditFormData({ ...editFormData, hora: e.target.value })} style={{ padding: '4px', flex: 1, minWidth: 0 }} />
-                                  <input type="number" placeholder="min" value={editFormData.duracion || ''} onChange={e => setEditFormData({ ...editFormData, duracion: e.target.value })} style={{ padding: '4px', width: '46px' }} title="Duración en minutos" />
-                                </div>
-                              </td>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}><input type="number" value={editFormData.cancha || ''} onChange={e => setEditFormData({ ...editFormData, cancha: parseInt(e.target.value) })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}><input type="text" value={editFormData.nombre || ''} onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}><input type="email" value={editFormData.email || ''} onChange={e => setEditFormData({ ...editFormData, email: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}><input type="number" value={editFormData.precio || ''} onChange={e => setEditFormData({ ...editFormData, precio: parseInt(e.target.value) })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}>
-                                <select value={editFormData.estado || 'reservada'} onChange={e => setEditFormData({ ...editFormData, estado: e.target.value })} style={{ padding: '4px 6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', width: '100%' }}>
-                                  <option value="reservada">📋 Reservada</option>
-                                  <option value="confirmada">🟢 Confirmada</option>
-                                  <option value="completada">✅ Completada</option>
-                                  <option value="cancelada">❌ Cancelada</option>
-                                </select>
-                              </td>
-                              <td style={{ padding: '6px 8px', borderTop: idx === 0 ? dayTopBorder : undefined }}>
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                  <button onClick={() => guardarEdicion(r.id)} style={BTN({ background: '#4caf50' })}>✅ Guardar</button>
-                                  <button onClick={cancelarEdicion} style={BTN({ background: '#999' })}>✕</button>
-                                </div>
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderTop: idx === 0 ? dayTopBorder : undefined }}>{r.sede}</td>
-                              <td style={{ whiteSpace: 'nowrap', borderTop: idx === 0 ? dayTopBorder : undefined }}>{horaRango(r.hora, r.duracion)}</td>
-                              <td style={{ textAlign: 'center', whiteSpace: 'nowrap', borderTop: idx === 0 ? dayTopBorder : undefined }}>{r.cancha}</td>
-                              <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderTop: idx === 0 ? dayTopBorder : undefined }}>{r.nombre}</td>
-                              <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '12px', borderTop: idx === 0 ? dayTopBorder : undefined }}>{r.email}</td>
-                              <td style={{ whiteSpace: 'nowrap', borderTop: idx === 0 ? dayTopBorder : undefined }}>${(r.precio || 30000).toLocaleString('es-AR')}</td>
-                              <td style={{ borderTop: idx === 0 ? dayTopBorder : undefined }}><EstadoBadge reserva={r} /></td>
-                              <td style={{ borderTop: idx === 0 ? dayTopBorder : undefined }}>
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                  <button onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>✏️ Editar</button>
-                                  <button onClick={() => cancelarReserva(r.id)} style={BTN({ background: '#d32f2f' })}>🗑️</button>
-                                </div>
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      ))}
-                    </React.Fragment>
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setFiltroPillReservas(id)}
+                      style={{
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                        padding: '8px 14px',
+                        borderRadius: '999px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
+                        background: active ? '#667eea' : 'transparent',
+                        color: active ? '#fff' : '#374151',
+                        boxShadow: active ? '0 2px 8px rgba(102, 126, 234, 0.35)' : 'none',
+                      }}
+                    >
+                      {label}
+                    </button>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
             </div>
+          );
+
+          if (sortedRows.length === 0) {
+            return (
+              <>
+                {pillsBlock}
+                <p style={{ color: '#aaa', padding: '10px 0' }}>Sin reservas en este período</p>
+              </>
+            );
+          }
+
+          return (
+            <>
+              {pillsBlock}
+              <div className="reservas-table-wrap">
+                <table className="reservas-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: esAdminNacional ? '880px' : '720px', marginTop: 0 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ padding: '10px 8px' }}>Fecha</th>
+                      <th style={{ padding: '10px 8px' }}>Horario</th>
+                      <th style={{ padding: '10px 8px', textAlign: 'center' }}>Cancha</th>
+                      {esAdminNacional ? <th style={{ padding: '10px 8px' }}>Sede</th> : null}
+                      <th style={{ padding: '10px 8px' }}>Jugador</th>
+                      <th style={{ padding: '10px 8px' }}>Estado</th>
+                      <th style={{ padding: '10px 8px' }}>Monto</th>
+                      <th style={{ padding: '10px 8px' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedRows.map((r) => (
+                      editandoId === r.id ? (
+                        <tr key={r.id}>
+                          <td style={{ padding: '6px 8px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{formatFecha(editFormData.fecha) || '—'}</td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                              <input type="time" value={editFormData.hora || ''} onChange={e => setEditFormData({ ...editFormData, hora: e.target.value })} style={{ padding: '4px', flex: 1, minWidth: 0 }} />
+                              <input type="number" placeholder="min" value={editFormData.duracion || ''} onChange={e => setEditFormData({ ...editFormData, duracion: e.target.value })} style={{ padding: '4px', width: '46px' }} title="Duración en minutos" />
+                            </div>
+                          </td>
+                          <td style={{ padding: '6px 8px' }}><input type="number" value={editFormData.cancha || ''} onChange={e => setEditFormData({ ...editFormData, cancha: parseInt(e.target.value, 10) })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
+                          {esAdminNacional ? <td style={{ padding: '6px 8px' }}><input type="text" value={editFormData.sede || ''} onChange={e => setEditFormData({ ...editFormData, sede: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td> : null}
+                          <td style={{ padding: '6px 8px' }}>
+                            <input type="text" value={editFormData.nombre || ''} onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box', marginBottom: '4px' }} />
+                            <input type="email" value={editFormData.email || ''} onChange={e => setEditFormData({ ...editFormData, email: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box', fontSize: '11px' }} placeholder="Email" />
+                          </td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <select value={editFormData.estado || 'reservada'} onChange={e => setEditFormData({ ...editFormData, estado: e.target.value })} style={{ padding: '4px 6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', width: '100%' }}>
+                              <option value="reservada">📋 Reservada</option>
+                              <option value="confirmada">🟢 Confirmada</option>
+                              <option value="completada">✅ Completada</option>
+                              <option value="cancelada">❌ Cancelada</option>
+                            </select>
+                          </td>
+                          <td style={{ padding: '6px 8px' }}><input type="number" value={editFormData.precio || ''} onChange={e => setEditFormData({ ...editFormData, precio: parseInt(e.target.value, 10) })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button type="button" onClick={() => guardarEdicion(r.id)} style={BTN({ background: '#4caf50' })}>✅ Guardar</button>
+                              <button type="button" onClick={cancelarEdicion} style={BTN({ background: '#999' })}>✕</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={r.id}>
+                          <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{formatFecha(r.fecha) || '—'}</td>
+                          <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{horaRango(r.hora, r.duracion)}</td>
+                          <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.cancha ?? '—'}</td>
+                          {esAdminNacional ? <td style={{ padding: '6px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sede}</td> : null}
+                          <td style={{ padding: '6px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.nombre}</td>
+                          <td style={{ padding: '6px 8px' }}><EstadoBadge reserva={r} /></td>
+                          <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>${(r.precio || 30000).toLocaleString('es-AR')}</td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>✏️ Editar</button>
+                              <button type="button" onClick={() => cancelarReserva(r.id)} style={BTN({ background: '#d32f2f' })}>🗑️</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           );
         })()}
       </div>}
