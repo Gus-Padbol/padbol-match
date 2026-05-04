@@ -270,6 +270,14 @@ export default function AppHeader({
     [location.pathname]
   );
 
+  /** /torneo/:id/equipos sin venir del panel: mismo ancho hub, título corto "Equipos". */
+  const headerTitleDisplay = useMemo(() => {
+    if (!/^\/torneo\/[^/]+\/equipos$/u.test(pathOnly)) return titleStr;
+    if (location.state?.fromAdmin === true) return titleStr;
+    if (titleStr === 'Gestión del torneo' || titleStr === 'Inscripción') return 'Equipos';
+    return titleStr;
+  }, [pathOnly, location.state?.fromAdmin, titleStr]);
+
   /** Rutas del hub jugador (/, /hub, …): aquí nunca va el chip @alias; sí ⚙ Admin + ⏻ para admins. */
   const hubInicioPath =
     pathOnly === '/' ||
@@ -681,7 +689,7 @@ export default function AppHeader({
           maxWidth: compactHubChip ? 'min(38vw, 168px)' : 'min(72vw, 420px)',
         }}
       >
-        {titleStr ? (
+        {headerTitleDisplay ? (
           !shouldHideHubCenterTitle ? (
             <button
               type="button"
@@ -704,10 +712,10 @@ export default function AppHeader({
                 width: '100%',
                 maxWidth: '100%',
               }}
-              title={`${titleStr} — Ir al inicio`}
-              aria-label={`${titleStr}, ir al inicio`}
+              title={`${headerTitleDisplay} — Ir al inicio`}
+              aria-label={`${headerTitleDisplay}, ir al inicio`}
             >
-              {titleStr}
+              {headerTitleDisplay}
             </button>
           ) : (
             <span

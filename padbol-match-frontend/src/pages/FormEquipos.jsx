@@ -642,6 +642,9 @@ export default function FormEquipos() {
     [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, contextoGestionEquiposTorneo]
   );
 
+  /** Vista jugador forzada: sin barra/título de gestión aunque el usuario sea admin del club. */
+  const mostrarUiAdminFormEquipos = esAdminGestionTorneo && location.state?.fromAdmin !== false;
+
   const torneoNavStateForm = useMemo(() => {
     const base =
       location.state && typeof location.state === 'object' ? { ...location.state } : {};
@@ -1728,7 +1731,7 @@ export default function FormEquipos() {
   const mostrarEleccionDesktop = !isMobile && mostrarPasoEleccion;
 
   const mostrarBotonInscribirseEnTabEquipos =
-    !esAdminGestionTorneo &&
+    !mostrarUiAdminFormEquipos &&
     !torneoFinalizado &&
     !torneoCancelado &&
     (!session?.user || (!miEquipo && !miSolicitudPendiente));
@@ -1776,7 +1779,7 @@ export default function FormEquipos() {
   );
 
   const handleInscripcionHeaderBack = useCallback(() => {
-    if (esAdminGestionTorneo && contextoGestionEquiposTorneo) {
+    if (mostrarUiAdminFormEquipos && contextoGestionEquiposTorneo) {
       navigate('/admin');
       return;
     }
@@ -1795,7 +1798,7 @@ export default function FormEquipos() {
     }
     if (typeof window !== 'undefined') window.history.back();
   }, [
-    esAdminGestionTorneo,
+    mostrarUiAdminFormEquipos,
     contextoGestionEquiposTorneo,
     navigate,
     mostrarPasoEleccion,
@@ -2254,17 +2257,17 @@ export default function FormEquipos() {
     <>
       <AppHeader
         title={
-          esAdminGestionTorneo
+          mostrarUiAdminFormEquipos
             ? torneoFinalizado
               ? 'Resultados'
               : 'Gestión del torneo'
             : torneoFinalizado
               ? 'Resultados'
-              : 'Inscripción'
+              : 'Equipos'
         }
         onBack={handleInscripcionHeaderBack}
         backLabel={
-          esAdminGestionTorneo && contextoGestionEquiposTorneo ? '← Admin' : undefined
+          mostrarUiAdminFormEquipos && contextoGestionEquiposTorneo ? '← Admin' : undefined
         }
       />
       <div
@@ -2309,13 +2312,15 @@ export default function FormEquipos() {
             textShadow: '0 2px 24px rgba(0,0,0,0.25)',
           }}
         >
-          {esAdminGestionTorneo
+          {mostrarUiAdminFormEquipos
             ? torneoFinalizado
               ? 'Resultados del torneo'
               : 'Gestión de equipos y torneo'
             : torneoFinalizado
               ? 'Resultados del torneo'
-              : 'Inscripción al torneo'}
+              : location.state?.fromAdmin === false
+                ? 'Equipos del torneo'
+                : 'Inscripción al torneo'}
         </h1>
       </div>
     </div>
@@ -2327,7 +2332,7 @@ export default function FormEquipos() {
       <div style={inscripcionPageShellStyle}>
         {renderInscripcionHeader()}
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', padding: '0 12px', boxSizing: 'border-box' }}>
-          {!esAdminGestionTorneo ? bloqueInvitacionEquipoDeepLink : null}
+          {!mostrarUiAdminFormEquipos ? bloqueInvitacionEquipoDeepLink : null}
         </div>
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: 'white' }}>Cargando...</div>
         <BottomNav />
@@ -2354,12 +2359,12 @@ export default function FormEquipos() {
               ¿Cómo querés participar?
             </h2>
             <button type="button" className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--primaria" onClick={modalElegirFormarEquipo}>
-              <span className="torneo-modal-participacion-opcion__titulo">Formar equipo</span>
-              <span className="torneo-modal-participacion-opcion__sub">Estás solo o querés crear un equipo nuevo</span>
+              <span className="torneo-modal-participacion-opcion__titulo">Tengo equipo completo</span>
+              <span className="torneo-modal-participacion-opcion__sub">Ya tenemos todos los integrantes</span>
             </button>
             <button type="button" className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--secundaria" onClick={modalElegirYaTengoEquipo}>
-              <span className="torneo-modal-participacion-opcion__titulo">Ya tengo equipo</span>
-              <span className="torneo-modal-participacion-opcion__sub">Unirme a un equipo existente</span>
+              <span className="torneo-modal-participacion-opcion__titulo">Busco compañero/s</span>
+              <span className="torneo-modal-participacion-opcion__sub">Me anoto solo y busco con quién jugar</span>
             </button>
             <button type="button" className="torneo-modal-participacion-cerrar" onClick={cerrarModalParticipacion}>
               Cancelar
@@ -2380,7 +2385,7 @@ export default function FormEquipos() {
           boxSizing: 'border-box',
         }}
       >
-        {!esAdminGestionTorneo ? bloqueInvitacionEquipoDeepLink : null}
+        {!mostrarUiAdminFormEquipos ? bloqueInvitacionEquipoDeepLink : null}
 
         {torneoCancelado ? (
           <>
@@ -2421,7 +2426,7 @@ export default function FormEquipos() {
             torneoId={id}
             navigate={navigate}
             session={session}
-            isAdmin={esAdminGestionTorneo}
+            isAdmin={mostrarUiAdminFormEquipos}
             puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
             navigateState={torneoNavStateForm}
             showTorneoLogo={false}
@@ -2438,7 +2443,7 @@ export default function FormEquipos() {
               ) : null
             }
             equiposTabFooter={
-              esAdminGestionTorneo ? null : torneoFinalizado ? (
+              mostrarUiAdminFormEquipos ? null : torneoFinalizado ? (
                 bloqueMiEquipoResumenFinalizado
               ) : (
                 <>

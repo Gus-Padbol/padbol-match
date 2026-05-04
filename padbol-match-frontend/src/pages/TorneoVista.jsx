@@ -594,10 +594,8 @@ export default function TorneoVista() {
                 navigate(`/torneo/${torneoId}/equipos?crear=1`, { state: { fromAdmin: false } });
               }}
             >
-              <span className="torneo-modal-participacion-opcion__titulo">Formar equipo</span>
-              <span className="torneo-modal-participacion-opcion__sub">
-                Estás solo o querés crear un equipo nuevo
-              </span>
+              <span className="torneo-modal-participacion-opcion__titulo">Tengo equipo completo</span>
+              <span className="torneo-modal-participacion-opcion__sub">Ya tenemos todos los integrantes</span>
             </button>
             <button
               type="button"
@@ -608,8 +606,8 @@ export default function TorneoVista() {
                 navigate(`/torneo/${torneoId}/equipos`, { state: { fromAdmin: false } });
               }}
             >
-              <span className="torneo-modal-participacion-opcion__titulo">Ya tengo equipo</span>
-              <span className="torneo-modal-participacion-opcion__sub">Unirme a un equipo existente</span>
+              <span className="torneo-modal-participacion-opcion__titulo">Busco compañero/s</span>
+              <span className="torneo-modal-participacion-opcion__sub">Me anoto solo y busco con quién jugar</span>
             </button>
             <button type="button" className="torneo-modal-participacion-cerrar" onClick={() => setModalInscribirseOpen(false)}>
               Cancelar
