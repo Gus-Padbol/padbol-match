@@ -1512,21 +1512,38 @@ export default function FormEquipos() {
         }}
       />
 
-      <select
-        value={cupoMaximo}
-        onChange={(e) => setCupoMaximo(Number(e.target.value))}
-        style={{
-          width: '100%',
-          padding: '10px',
-          marginTop: '10px',
-          borderRadius: '8px',
-          border: '1px solid #ccc',
-        }}
-      >
-        <option value={2}>Equipo de 2</option>
-        <option value={3}>Equipo de 3</option>
-        <option value={4}>Equipo de 4</option>
-      </select>
+      <div style={{ marginTop: '14px' }}>
+        <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>Tamaño del equipo</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {[2, 3, 4].map((n) => {
+            const active = cupoMaximo === n;
+            return (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setCupoMaximo(n)}
+                style={{
+                  flex: '1 1 88px',
+                  minWidth: '72px',
+                  padding: '8px 14px',
+                  borderRadius: '999px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
+                  background: active ? '#667eea' : 'transparent',
+                  color: active ? '#fff' : '#334155',
+                  boxShadow: active ? '0 2px 10px rgba(102, 126, 234, 0.25)' : 'none',
+                }}
+              >
+                Equipo de {n}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div style={{ marginTop: '14px' }}>
         <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>Tipo de equipo</div>

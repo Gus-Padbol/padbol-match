@@ -44,9 +44,9 @@ const CATEGORIA_COLOR = {
 
 const wrap = {
   ...hubInstagramColumnWrapStyle,
-  padding: '20px',
-  paddingLeft: 'max(20px, env(safe-area-inset-left, 0px))',
-  paddingRight: 'max(20px, env(safe-area-inset-right, 0px))',
+  padding: '20px 16px',
+  paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
+  paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
 };
 
 export default function PerfilPublico() {
@@ -217,6 +217,9 @@ export default function PerfilPublico() {
     boxSizing: 'border-box',
     paddingLeft: 'calc(16px + env(safe-area-inset-left, 0px))',
     paddingRight: 'calc(16px + env(safe-area-inset-right, 0px))',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   };
 
   const paisParts = (perfil?.pais || '').split(' ');
