@@ -3,6 +3,10 @@ import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
+import {
+  horasRevelarEquiposTorneo,
+  torneoListaEquiposOcultaParaPublico,
+} from '../../utils/torneoRevelacionEquipos';
 import '../../styles/TorneoVista.css';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
@@ -551,7 +555,24 @@ export default function TorneoTabbedView({
   const renderTabEquipos = () => (
     <div style={{ padding: '4px 0 20px' }}>
       {equiposTabHeader}
-      {equipos.length === 0 ? (
+      {ocultarListaEquiposPublico ? (
+        <div
+          style={{
+            padding: '16px 18px',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(129,140,248,0.08) 100%)',
+            border: '1px solid rgba(99,102,241,0.35)',
+            color: '#312e81',
+            fontSize: '15px',
+            fontWeight: 700,
+            lineHeight: 1.55,
+            textAlign: 'center',
+          }}
+        >
+          Los equipos participantes se revelan {horasRevelarEquiposMsg} horas antes del inicio. ¡Anotate y sorprendé a
+          todos el día del torneo!
+        </div>
+      ) : equipos.length === 0 ? (
         <p style={{ color: '#64748b', margin: 0 }}>No hay equipos inscriptos.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>

@@ -25,6 +25,8 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     fecha_fin: '',
     cantidad_equipos: '',
     costo_inscripcion: '',
+    cupos_maximos: '',
+    horas_revelar_equipos: '48',
     es_multisede: false,
     equipos_por_grupo: '',
     clasificados_por_grupo: '',
@@ -132,6 +134,21 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       payload.costo_inscripcion = Number.isFinite(c) && c >= 0 ? c : 0;
     } else {
       payload.costo_inscripcion = 0;
+    }
+
+    const rawCupos = String(formData.cupos_maximos ?? '').trim();
+    if (rawCupos !== '') {
+      const cm = parseInt(rawCupos, 10);
+      payload.cupos_maximos = Number.isFinite(cm) && cm > 0 ? cm : null;
+    } else {
+      payload.cupos_maximos = null;
+    }
+    const rawHorasRev = String(formData.horas_revelar_equipos ?? '').trim();
+    if (rawHorasRev !== '') {
+      const hr = parseInt(rawHorasRev, 10);
+      payload.horas_revelar_equipos = Number.isFinite(hr) && hr >= 0 ? hr : 48;
+    } else {
+      payload.horas_revelar_equipos = 48;
     }
 
     if (formData.tipo_torneo === 'grupos_knockout') {
@@ -405,6 +422,38 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
                   Monto total por equipo (ARS u otra moneda de la sede en Mercado Pago). Dejá vacío o 0 si no hay costo.
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label>Cupos máximos de equipos (opcional)</label>
+                <input
+                  type="number"
+                  name="cupos_maximos"
+                  value={formData.cupos_maximos}
+                  onChange={handleChange}
+                  placeholder="Ej: 16 — para mostrar cupos disponibles en el listado público"
+                  min="1"
+                  step="1"
+                />
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  Si lo definís, en la lista de torneos se muestran los cupos libres según equipos con inscripción confirmada.
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label>Horas antes del inicio para revelar equipos participantes</label>
+                <input
+                  type="number"
+                  name="horas_revelar_equipos"
+                  value={formData.horas_revelar_equipos}
+                  onChange={handleChange}
+                  placeholder="48"
+                  min="0"
+                  step="1"
+                />
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  Hasta entonces, en la pestaña Equipos los jugadores ven un mensaje en lugar de la lista (los admins del torneo siempre ven los equipos). Podés cambiar este valor desde el panel.
                 </small>
               </div>
 

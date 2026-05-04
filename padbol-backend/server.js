@@ -736,6 +736,8 @@ app.post('/api/torneos', async (req, res) => {
       fecha_fin,
       cantidad_equipos,
       costo_inscripcion,
+      cupos_maximos,
+      horas_revelar_equipos,
       es_multisede,
       created_by,
       equipos_por_grupo,
@@ -761,6 +763,18 @@ app.post('/api/torneos', async (req, res) => {
       row.costo_inscripcion = Number.isFinite(c) && c >= 0 ? c : 0;
     } else {
       row.costo_inscripcion = 0;
+    }
+    if (cupos_maximos !== undefined && cupos_maximos !== null && cupos_maximos !== '') {
+      const cm = parseInt(String(cupos_maximos), 10);
+      row.cupos_maximos = Number.isFinite(cm) && cm > 0 ? cm : null;
+    } else {
+      row.cupos_maximos = null;
+    }
+    if (horas_revelar_equipos !== undefined && horas_revelar_equipos !== null && horas_revelar_equipos !== '') {
+      const hr = parseInt(String(horas_revelar_equipos), 10);
+      row.horas_revelar_equipos = Number.isFinite(hr) && hr >= 0 ? hr : 48;
+    } else {
+      row.horas_revelar_equipos = 48;
     }
     if (tipo_torneo === 'grupos_knockout') {
       const ep = parseInt(String(equipos_por_grupo), 10);
@@ -968,7 +982,18 @@ async function notifyListaEsperaInscripcionAbierta(torneoId, nombreTorneo) {
 async function handleTorneoPatchOrPut(req, res) {
   try {
     const { id } = req.params;
-    const { nombre, nivel_torneo, tipo_torneo, categoria, estado, fecha_inicio, fecha_fin } = req.body;
+    const {
+      nombre,
+      nivel_torneo,
+      tipo_torneo,
+      categoria,
+      estado,
+      fecha_inicio,
+      fecha_fin,
+      cupos_maximos,
+      horas_revelar_equipos,
+      costo_inscripcion,
+    } = req.body;
 
     const { data: prevRow, error: prevErr } = await supabase
       .from('torneos')
@@ -988,6 +1013,22 @@ async function handleTorneoPatchOrPut(req, res) {
     if (estado !== undefined) patch.estado = estado;
     if (fecha_inicio !== undefined) patch.fecha_inicio = fecha_inicio;
     if (fecha_fin !== undefined) patch.fecha_fin = fecha_fin;
+    if (cupos_maximos !== undefined) {
+      if (cupos_maximos === null || cupos_maximos === '') {
+        patch.cupos_maximos = null;
+      } else {
+        const cm = parseInt(String(cupos_maximos), 10);
+        patch.cupos_maximos = Number.isFinite(cm) && cm > 0 ? cm : null;
+      }
+    }
+    if (horas_revelar_equipos !== undefined && horas_revelar_equipos !== null && horas_revelar_equipos !== '') {
+      const hr = parseInt(String(horas_revelar_equipos), 10);
+      if (Number.isFinite(hr) && hr >= 0) patch.horas_revelar_equipos = hr;
+    }
+    if (costo_inscripcion !== undefined && costo_inscripcion !== null && costo_inscripcion !== '') {
+      const c = Number(String(costo_inscripcion).replace(',', '.'));
+      if (Number.isFinite(c) && c >= 0) patch.costo_inscripcion = c;
+    }
 
     const { data, error } = await supabase.from('torneos').update(patch).eq('id', id).select();
 

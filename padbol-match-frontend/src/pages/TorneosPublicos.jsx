@@ -120,6 +120,8 @@ export default function TorneosPublicos() {
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
   const torneoSearchInputRef = useRef(null);
   const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('todos');
+  /** Conteo de equipos con inscripción confirmada por torneo_id (para cupos disponibles en card). */
+  const [equiposConfirmadosPorTorneoId, setEquiposConfirmadosPorTorneoId] = useState({});
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -162,6 +164,38 @@ export default function TorneosPublicos() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!Array.isArray(torneos) || torneos.length === 0) {
+        setEquiposConfirmadosPorTorneoId({});
+        return;
+      }
+      const ids = [...new Set(torneos.map((t) => t.id).filter((id) => id != null))];
+      const { data, error } = await supabase
+        .from('equipos')
+        .select('torneo_id, inscripcion_estado')
+        .in('torneo_id', ids);
+      if (cancelled) return;
+      if (error) {
+        console.error('TorneosPublicos cupos equipos:', error);
+        setEquiposConfirmadosPorTorneoId({});
+        return;
+      }
+      const m = {};
+      for (const row of data || []) {
+        const tid = row.torneo_id;
+        if (tid == null) continue;
+        if (String(row.inscripcion_estado || '').toLowerCase() !== 'confirmado') continue;
+        m[tid] = (m[tid] || 0) + 1;
+      }
+      setEquiposConfirmadosPorTorneoId(m);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [torneos]);
 
   useEffect(() => {
     if (!nearMode) {
@@ -457,6 +491,16 @@ export default function TorneosPublicos() {
                 <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
                 <Row icon="🏆" label={formatTipoTorneo(t.tipo_torneo)} />
                 <Row icon="⭐" label={formatNivelTorneo(t.nivel_torneo)} />
+                {(() => {
+                  const max =
+                    t.cupos_maximos != null && String(t.cupos_maximos).trim() !== ''
+                      ? Number(t.cupos_maximos)
+                      : NaN;
+                  if (!Number.isFinite(max) || max <= 0) return null;
+                  const conf = equiposConfirmadosPorTorneoId[t.id] ?? 0;
+                  const disp = Math.max(0, max - conf);
+                  return <Row icon="🎫" label={`${disp} cupos disponibles`} />;
+                })()}
               </div>
 
               <button
@@ -494,6 +538,7 @@ export default function TorneosPublicos() {
     isMobile,
     sedesMap,
     navigate,
+    equiposConfirmadosPorTorneoId,
   ]);
 
   return (

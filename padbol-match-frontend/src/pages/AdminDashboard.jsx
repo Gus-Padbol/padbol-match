@@ -745,6 +745,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       fecha_inicio: torneo.fecha_inicio || '',
       fecha_fin:    torneo.fecha_fin    || '',
       sede_id:      torneo.sede_id      != null ? String(torneo.sede_id) : '',
+      cupos_maximos:
+        torneo.cupos_maximos != null && torneo.cupos_maximos !== '' ? String(torneo.cupos_maximos) : '',
+      horas_revelar_equipos:
+        torneo.horas_revelar_equipos != null && torneo.horas_revelar_equipos !== ''
+          ? String(torneo.horas_revelar_equipos)
+          : '48',
     });
   };
 
@@ -767,7 +773,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       });
       if (res.ok) {
         const updated = await res.json();
-        setTorneos(prev => prev.map(t => t.id === torneoId ? { ...t, ...body } : t));
+        const row0 = Array.isArray(updated) ? updated[0] : updated;
+        setTorneos((prev) => prev.map((t) => (t.id === torneoId ? { ...t, ...(row0 || body) } : t)));
         setEditandoTorneoId(null);
       } else {
         const data = await res.json().catch(() => ({}));
@@ -2110,6 +2117,33 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Fecha fin</label>
                           <input type="date" style={inp} value={editTorneoForm.fecha_fin} onChange={e => setEditTorneoForm(p => ({ ...p, fecha_fin: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Cupos máx. equipos</label>
+                          <input
+                            type="number"
+                            style={inp}
+                            min="1"
+                            placeholder="Vacío = sin tope en card pública"
+                            value={editTorneoForm.cupos_maximos ?? ''}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, cupos_maximos: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
+                            Horas revelar equipos
+                          </label>
+                          <input
+                            type="number"
+                            style={inp}
+                            min="0"
+                            placeholder="48"
+                            value={editTorneoForm.horas_revelar_equipos ?? '48'}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, horas_revelar_equipos: e.target.value }))}
+                          />
+                          <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>
+                            Vista pública: oculta la lista hasta esta cantidad de horas antes del inicio (admins ven siempre).
+                          </div>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

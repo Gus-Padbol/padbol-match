@@ -30,6 +30,7 @@ import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRe
 import { getDisplayName } from '../utils/displayName';
 import useUserRole from '../hooks/useUserRole';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
+import { mensajeConfirmacionCupoTrasEquipoCompleto } from '../utils/torneoRevelacionEquipos';
 import {
   jugadorNombreTorneoEtiqueta,
   fetchJugadoresPerfilPorJugadores,
@@ -271,6 +272,7 @@ export default function FormEquipos() {
   const [companeroOpciones, setCompaneroOpciones] = useState([]);
   const [companeroBusquedaCargando, setCompaneroBusquedaCargando] = useState(false);
   const companeroSearchSeqRef = useRef(0);
+  const [bannerCupoTrasEquipoCompleto, setBannerCupoTrasEquipoCompleto] = useState(null);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   );
@@ -380,6 +382,10 @@ export default function FormEquipos() {
 
   useEffect(() => {
     cargarTodo();
+  }, [torneoId]);
+
+  useEffect(() => {
+    setBannerCupoTrasEquipoCompleto(null);
   }, [torneoId]);
 
   useEffect(() => {
@@ -1088,6 +1094,9 @@ export default function FormEquipos() {
           setEquipos((prev) => prev.map((eq) => (eq.id === upd.id ? { ...eq, ...upd } : eq)));
           const nextLen = getPlayers(upd).length;
           void notificarCapitanEquipoCompletoSiAplica(equipo.id, prevLen, nextLen, cupo);
+          if (nextLen >= cupo && prevLen < cupo && torneo) {
+            setBannerCupoTrasEquipoCompleto(mensajeConfirmacionCupoTrasEquipoCompleto(torneo));
+          }
         }
       } catch (err) {
         console.error(err);
@@ -1128,6 +1137,9 @@ export default function FormEquipos() {
       )
     );
     void notificarCapitanEquipoCompletoSiAplica(equipo.id, basePlayers.length, nuevosJugadores.length, cupo);
+    if (nuevosJugadores.length >= cupo && basePlayers.length < cupo && torneo) {
+      setBannerCupoTrasEquipoCompleto(mensajeConfirmacionCupoTrasEquipoCompleto(torneo));
+    }
   };
 
   const rechazarSolicitud = async (equipo, solicitud) => {
@@ -1213,6 +1225,9 @@ export default function FormEquipos() {
     setCompaneroBusqueda('');
     setCompaneroOpciones([]);
     void notificarCapitanEquipoCompletoSiAplica(miEquipo.id, prevLen, nuevosJugadores.length, cupo);
+    if (nuevosJugadores.length >= cupo && prevLen < cupo && torneo) {
+      setBannerCupoTrasEquipoCompleto(mensajeConfirmacionCupoTrasEquipoCompleto(torneo));
+    }
   };
 
   const equiposVisibles = equiposNormalizados.filter((eq) => eq.players.length > 0);
@@ -2617,6 +2632,39 @@ export default function FormEquipos() {
               ) : (
                 <>
                   {bloqueBannerCrearLogin}
+                  {bannerCupoTrasEquipoCompleto ? (
+                    <div
+                      style={{
+                        marginBottom: '16px',
+                        padding: '14px 16px',
+                        borderRadius: '12px',
+                        background: '#e0e7ff',
+                        border: '1px solid #a5b4fc',
+                        color: '#312e81',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      <div style={{ marginBottom: '10px' }}>{bannerCupoTrasEquipoCompleto}</div>
+                      <button
+                        type="button"
+                        onClick={() => setBannerCupoTrasEquipoCompleto(null)}
+                        style={{
+                          padding: '8px 14px',
+                          fontSize: '13px',
+                          fontWeight: 800,
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          background: '#4f46e5',
+                          color: 'white',
+                        }}
+                      >
+                        Entendido
+                      </button>
+                    </div>
+                  ) : null}
                   {bloqueEleccionDesktop}
 
         {equipoDuplicadoBloqueoId && !miEquipo ? (
