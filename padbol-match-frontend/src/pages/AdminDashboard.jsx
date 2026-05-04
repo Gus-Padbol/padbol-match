@@ -6,6 +6,7 @@ import AppHeader from '../components/AppHeader';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { setAdminNavContext, clearAdminNavContext } from '../utils/adminNavContext';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
@@ -1609,6 +1610,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       </div>
 
+      <div
+        style={{
+          ...hubInstagramColumnWrapStyle,
+          paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+        }}
+      >
       {(isSuperAdmin || esAdminNacional) && (
         <div
           style={{
@@ -3702,6 +3710,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>}
 
       </div>}
+      </div>
 
       {logoCropOpen && logoCropSrc ? (
         <div
