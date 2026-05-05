@@ -6,6 +6,7 @@ import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
+import { isPadbolModoJugadorActivo } from '../utils/padbolModoJugador';
 
 const API_DEFAULT = 'https://padbol-backend.onrender.com';
 
@@ -77,7 +78,9 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const { rol, loading: roleLoading } = useUserRole(currentCliente);
 
   const emailLower = String(session?.user?.email || '').trim().toLowerCase();
-  const isSuper = rol === 'super_admin' || LEGACY_SUPER.includes(emailLower);
+  const isSuper =
+    (rol === 'super_admin' || LEGACY_SUPER.includes(emailLower)) &&
+    !isPadbolModoJugadorActivo({ email: session?.user?.email, rol });
   const isNacional = rol === 'admin_nacional';
   const puede = isSuper || isNacional;
 

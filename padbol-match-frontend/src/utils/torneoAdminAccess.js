@@ -1,3 +1,5 @@
+import { isPadbolModoJugadorActivo } from './padbolModoJugador';
+
 /**
  * Permisos de gestión de torneo según `user_roles` y sede/nivel del torneo.
  */
@@ -62,6 +64,7 @@ export function computeIsAdminEnTorneo({
   userPaisRol,
   fromAdmin,
 }) {
+  if (isPadbolModoJugadorActivo({ email, rol })) return false;
   const em = String(email || '').trim().toLowerCase();
   if (LEGACY_GLOBAL_ADMIN_EMAILS.includes(em)) return true;
   if (rol === 'super_admin') return true;
@@ -92,6 +95,7 @@ export function computeIsAdminEnTorneo({
  * `super_admin` / `admin_nacional` no gestionan equipos como jugador sin ese contexto.
  */
 export function computePuedeGestionarEquiposTorneo({
+  email,
   torneo,
   sedeTorneo,
   rol,
@@ -99,6 +103,7 @@ export function computePuedeGestionarEquiposTorneo({
   userPaisRol,
   fromAdmin,
 }) {
+  if (isPadbolModoJugadorActivo({ email, rol })) return false;
   if (!torneo) return false;
   const ctx = Boolean(fromAdmin);
   if (!ctx) return false;

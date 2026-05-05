@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -33,6 +33,10 @@ import NuevaSede from './components/NuevaSede';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import { getDisplayName } from './utils/displayName';
+import {
+  isPadbolModoJugadorActivo,
+  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
+} from './utils/padbolModoJugador';
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -92,6 +96,23 @@ function AdminDashboardGate() {
 
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
 
+  const [padbolModoJugadorGateRev, setPadbolModoJugadorGateRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setPadbolModoJugadorGateRev((n) => n + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+    window.addEventListener('storage', bump);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+      window.removeEventListener('storage', bump);
+    };
+  }, []);
+
+  const modoJugadorBloqueaAdmin = useMemo(
+    () => isPadbolModoJugadorActivo({ email: currentCliente?.email, rol }),
+    [currentCliente?.email, rol, padbolModoJugadorGateRev]
+  );
+
   /** Solo roles definidos en `user_roles` (sin fallback por email a super_admin). */
   const canAccessAdmin = () => ['super_admin', 'admin_nacional', 'admin_club'].includes(rol);
 
@@ -134,6 +155,10 @@ function AdminDashboardGate() {
   /* Mientras useUserRole carga: nunca denegar (rol puede ser null un instante). */
   if (roleLoading) {
     return spinner;
+  }
+
+  if (modoJugadorBloqueaAdmin) {
+    return <Navigate to="/hub" replace />;
   }
 
   if (canAccessAdmin()) {

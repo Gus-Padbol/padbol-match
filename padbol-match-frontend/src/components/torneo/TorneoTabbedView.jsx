@@ -7,6 +7,11 @@ import {
   horasRevelarEquiposTorneo,
   torneoListaEquiposOcultaParaPublico,
 } from '../../utils/torneoRevelacionEquipos';
+import useUserRole from '../../hooks/useUserRole';
+import {
+  isPadbolModoJugadorActivo,
+  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
+} from '../../utils/padbolModoJugador';
 import '../../styles/TorneoVista.css';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
@@ -316,15 +321,44 @@ export default function TorneoTabbedView({
   showTorneoLogo = true,
 }) {
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
+  const [padbolModoJugadorTick, setPadbolModoJugadorTick] = useState(0);
   const resultadosConfettiPlayedRef = useRef(false);
   const [modalEquipo, setModalEquipo] = useState(null);
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
 
+  const tabbedCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { rol: rolTabbed } = useUserRole(tabbedCliente);
+  useEffect(() => {
+    const fn = () => setPadbolModoJugadorTick((t) => t + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, fn);
+    window.addEventListener('storage', fn);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, fn);
+      window.removeEventListener('storage', fn);
+    };
+  }, []);
+  const modoJugadorAnulaAdminTabbed = useMemo(
+    () => isPadbolModoJugadorActivo({ email: session?.user?.email, rol: rolTabbed }),
+    [session?.user?.email, rolTabbed, padbolModoJugadorTick]
+  );
+  const isAdminEfectivo = Boolean(isAdmin && !modoJugadorAnulaAdminTabbed);
+  const equiposRevelacionBypassEfectivo = Boolean(
+    equiposRevelacionBypass && !modoJugadorAnulaAdminTabbed
+  );
+  const puedeGestionarEquiposTorneoEfectivo = Boolean(
+    puedeGestionarEquiposTorneo && !modoJugadorAnulaAdminTabbed
+  );
+
   const estadoLower = String(torneo?.estado || '').toLowerCase();
   const esFinalizado = estadoLower === 'finalizado';
-  const puedeCargarResultados = isAdmin && (estadoLower === 'en_curso' || estadoLower === 'activo');
+  const puedeCargarResultados = isAdminEfectivo && (estadoLower === 'en_curso' || estadoLower === 'activo');
   const hayAlMenosUnResultadoEnPartidos = useMemo(() => {
     return partidos.some((p) => {
       try {
@@ -337,7 +371,7 @@ export default function TorneoTabbedView({
     });
   }, [partidos]);
   const mostrarCartelIniciarTorneoParaResultados =
-    isAdmin &&
+    isAdminEfectivo &&
     estadoLower !== 'en_curso' &&
     estadoLower !== 'activo' &&
     !esFinalizado &&
@@ -405,7 +439,7 @@ export default function TorneoTabbedView({
 
   const abrirModalResultado = useCallback(
     (partido) => {
-      if (!isAdmin) return;
+      if (!isAdminEfectivo) return;
       if (partido.estado === 'finalizado') return;
       if (!puedeCargarResultados) {
         alert('Iniciá el torneo para comenzar a cargar resultados.');
@@ -415,7 +449,7 @@ export default function TorneoTabbedView({
       setResultado({ set1: '', set2: '', set3: '' });
       setShowModalResultado(true);
     },
-    [isAdmin, puedeCargarResultados]
+    [isAdminEfectivo, puedeCargarResultados]
   );
 
   const guardarResultado = async () => {
@@ -543,9 +577,9 @@ export default function TorneoTabbedView({
   const ocultarListaEquiposPublico = useMemo(
     () =>
       torneoListaEquiposOcultaParaPublico(torneo, {
-        isAdmin: Boolean(isAdmin || equiposRevelacionBypass),
+        isAdmin: Boolean(isAdminEfectivo || equiposRevelacionBypassEfectivo),
       }),
-    [torneo, isAdmin, equiposRevelacionBypass]
+    [torneo, isAdminEfectivo, equiposRevelacionBypassEfectivo]
   );
 
   const rondasLlave = useMemo(() => {
@@ -628,7 +662,7 @@ export default function TorneoTabbedView({
                   >
                     {titulo}
                   </button>
-                  {puedeGestionarEquiposTorneo ? (
+                  {puedeGestionarEquiposTorneoEfectivo ? (
                     <button
                       type="button"
                       className="btn-agregar-jugadores"

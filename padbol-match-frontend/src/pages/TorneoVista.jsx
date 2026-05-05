@@ -19,6 +19,7 @@ import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
+import { PADBOL_MODO_JUGADOR_CHANGED_EVENT } from '../utils/padbolModoJugador';
 import { clearAdminNavContext, setAdminNavContext } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
@@ -40,6 +41,17 @@ export default function TorneoVista() {
     return { email: em };
   }, [session?.user?.email]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentCliente);
+  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+    window.addEventListener('storage', bump);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+      window.removeEventListener('storage', bump);
+    };
+  }, []);
   const [torneo, setTorneo] = useState(null);
   const [equipos, setEquipos] = useState([]);
   const [sedesMap, setSedesMap] = useState({});
@@ -64,13 +76,14 @@ export default function TorneoVista() {
         userPaisRol,
         fromAdmin,
       }),
-    [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
+    [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin, padbolModoJugadorRev]
   );
   /** Barra violeta y permisos de edición en pestañas: solo con `state.fromAdmin` (no basta ser admin del club sin venir del panel). */
   const isAdminGestionEnEstaVista = isAdmin && fromAdmin;
   const puedeGestionarEquiposTorneo = useMemo(
     () =>
       computePuedeGestionarEquiposTorneo({
+        email: currentEmail,
         torneo,
         sedeTorneo,
         rol,
@@ -78,7 +91,16 @@ export default function TorneoVista() {
         userPaisRol,
         fromAdmin: location.state?.fromAdmin === true,
       }),
-    [torneo, sedeTorneo, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
+    [
+      currentEmail,
+      torneo,
+      sedeTorneo,
+      rol,
+      userSedeId,
+      userPaisRol,
+      location.state?.fromAdmin,
+      padbolModoJugadorRev,
+    ]
   );
   const torneoNavState = useMemo(
     () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),

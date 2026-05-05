@@ -28,6 +28,11 @@ import {
 } from '../utils/torneoInscripcionPago';
 import useUserRole from '../hooks/useUserRole';
 import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
+import {
+  isSuperAdminIdentity,
+  isPadbolModoJugadorActivo,
+  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
+} from '../utils/padbolModoJugador';
 import { readAdminNavContext } from '../utils/adminNavContext';
 import { getDisplayName } from '../utils/displayName';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
@@ -287,7 +292,6 @@ export default function EquipoVista() {
 
   const authEmail = useMemo(() => String(session?.user?.email || '').trim(), [session?.user?.email]);
   const authEmailLower = useMemo(() => authEmail.toLowerCase(), [authEmail]);
-  const isSuperAdmin = authEmailLower === 'padbolinternacional@gmail.com';
   const equipoIdParam = useMemo(
     () => String(equipoId != null && String(equipoId).trim() !== '' ? equipoId : id || '').trim(),
     [equipoId, id]
@@ -350,6 +354,22 @@ export default function EquipoVista() {
 
   const currentClienteTorneoEq = useMemo(() => (authEmail ? { email: authEmail } : null), [authEmail]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentClienteTorneoEq);
+  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+    window.addEventListener('storage', bump);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+      window.removeEventListener('storage', bump);
+    };
+  }, []);
+  const isSuperAdmin = useMemo(
+    () =>
+      isSuperAdminIdentity(authEmail, rol) && !isPadbolModoJugadorActivo({ email: authEmail, rol }),
+    [authEmail, rol, padbolModoJugadorRev]
+  );
   const fromAdminNav = Boolean(location.state?.fromAdmin);
   const esAdminGestionTorneoEq = useMemo(
     () =>
@@ -362,7 +382,16 @@ export default function EquipoVista() {
         userPaisRol,
         fromAdmin: fromAdminNav || readAdminNavContext(),
       }),
-    [authEmailLower, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, fromAdminNav]
+    [
+      authEmailLower,
+      torneo,
+      sedeTorneoRow,
+      rol,
+      userSedeId,
+      userPaisRol,
+      fromAdminNav,
+      padbolModoJugadorRev,
+    ]
   );
 
   const tituloHeaderEquipo = esAdminGestionTorneoEq ? 'Equipo' : 'Mi Equipo';

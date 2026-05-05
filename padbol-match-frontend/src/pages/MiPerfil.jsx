@@ -43,6 +43,10 @@ import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { getDisplayName } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
+import {
+  isPadbolModoJugadorActivo,
+  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
+} from '../utils/padbolModoJugador';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -321,12 +325,23 @@ export default function MiPerfil() {
     return { email: em };
   }, [session?.user?.email]);
   const { rol: rolUsuarioPerfil, loading: rolUsuarioPerfilLoading } = useUserRole(currentClienteRole);
-  const ocultarUiJugadorPorAdmin = useMemo(
-    () =>
-      !rolUsuarioPerfilLoading &&
-      ['super_admin', 'admin_nacional', 'admin_club'].includes(rolUsuarioPerfil || ''),
-    [rolUsuarioPerfilLoading, rolUsuarioPerfil]
-  );
+  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+    window.addEventListener('storage', bump);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+      window.removeEventListener('storage', bump);
+    };
+  }, []);
+  const ocultarUiJugadorPorAdmin = useMemo(() => {
+    if (rolUsuarioPerfilLoading) return false;
+    if (!['super_admin', 'admin_nacional', 'admin_club'].includes(rolUsuarioPerfil || '')) return false;
+    if (isPadbolModoJugadorActivo({ email: session?.user?.email, rol: rolUsuarioPerfil })) return false;
+    return true;
+  }, [rolUsuarioPerfilLoading, rolUsuarioPerfil, session?.user?.email, padbolModoJugadorRev]);
 
   /** Código país (ej. +54) + número local solo dígitos (sin repetir código en el input) */
   const [waCodigoPais, setWaCodigoPais] = useState('+54');

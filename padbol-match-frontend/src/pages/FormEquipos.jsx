@@ -30,6 +30,7 @@ import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRe
 import { getDisplayName } from '../utils/displayName';
 import useUserRole from '../hooks/useUserRole';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
+import { PADBOL_MODO_JUGADOR_CHANGED_EVENT } from '../utils/padbolModoJugador';
 import { mensajeConfirmacionCupoTrasEquipoCompleto } from '../utils/torneoRevelacionEquipos';
 import {
   jugadorNombreTorneoEtiqueta,
@@ -219,6 +220,18 @@ export default function FormEquipos() {
     return { email: authEmail };
   }, [authEmail]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentClienteTorneo);
+
+  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+    window.addEventListener('storage', bump);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+      window.removeEventListener('storage', bump);
+    };
+  }, []);
 
   const [perfilLsKey, setPerfilLsKey] = useState(0);
 
@@ -710,12 +723,22 @@ export default function FormEquipos() {
         userPaisRol,
         fromAdmin: location.state?.fromAdmin === true,
       }),
-    [authEmail, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
+    [
+      authEmail,
+      torneo,
+      sedeTorneoRow,
+      rol,
+      userSedeId,
+      userPaisRol,
+      location.state?.fromAdmin,
+      padbolModoJugadorRev,
+    ]
   );
 
   const puedeGestionarEquiposTorneo = useMemo(
     () =>
       computePuedeGestionarEquiposTorneo({
+        email: authEmail,
         torneo,
         sedeTorneo: sedeTorneoRow,
         rol,
@@ -723,7 +746,16 @@ export default function FormEquipos() {
         userPaisRol,
         fromAdmin: contextoGestionEquiposTorneo,
       }),
-    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, contextoGestionEquiposTorneo]
+    [
+      authEmail,
+      torneo,
+      sedeTorneoRow,
+      rol,
+      userSedeId,
+      userPaisRol,
+      contextoGestionEquiposTorneo,
+      padbolModoJugadorRev,
+    ]
   );
 
   /** UI gestión: solo con `state.fromAdmin === true` explícito (no sessionStorage). */

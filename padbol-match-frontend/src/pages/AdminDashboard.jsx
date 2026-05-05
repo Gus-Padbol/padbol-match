@@ -20,6 +20,10 @@ import { FILTROS_ESTADO_TORNEO_PILLS, torneoPasaFiltroEstadoVista } from '../uti
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { getCroppedImgBlob } from '../utils/cropImage';
+import {
+  isPadbolModoJugadorActivo,
+  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
+} from '../utils/padbolModoJugador';
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
@@ -290,7 +294,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const { session } = useAuth();
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
 
-  const isSuperAdmin = rol === 'super_admin';
+  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+    window.addEventListener('storage', bump);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+      window.removeEventListener('storage', bump);
+    };
+  }, []);
+
+  const isSuperAdmin = useMemo(() => {
+    if (rol !== 'super_admin') return false;
+    if (isPadbolModoJugadorActivo({ email: session?.user?.email, rol })) return false;
+    return true;
+  }, [rol, session?.user?.email, padbolModoJugadorRev]);
   const isAdmin =
     isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club';
 

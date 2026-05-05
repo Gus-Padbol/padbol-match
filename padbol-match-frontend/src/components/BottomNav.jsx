@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
@@ -10,6 +10,10 @@ import {
   isHubNavBarHiddenPathname,
   isSedeProfilePathname,
 } from '../constants/hubLayout';
+import {
+  isPadbolModoJugadorActivo,
+  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
+} from '../utils/padbolModoJugador';
 
 const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club'];
 
@@ -42,7 +46,26 @@ const BottomNav = () => {
   const { rol } = useUserRole(currentCliente);
   const rolEffective = rol || readCachedRol();
 
-  const superAdminBottomNav = rolEffective === 'super_admin' || superAdminNavEmails.includes(sessionEmailLower);
+  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+    window.addEventListener('storage', bump);
+    return () => {
+      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
+      window.removeEventListener('storage', bump);
+    };
+  }, []);
+
+  const modoJugadorActivoBottom = useMemo(
+    () => isPadbolModoJugadorActivo({ email: session?.user?.email, rol: rolEffective }),
+    [session?.user?.email, rolEffective, padbolModoJugadorRev]
+  );
+
+  const superAdminBottomNav =
+    !modoJugadorActivoBottom &&
+    (rolEffective === 'super_admin' || superAdminNavEmails.includes(sessionEmailLower));
 
   const path = location.pathname;
   const pathOnly = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
@@ -309,7 +332,7 @@ const BottomNav = () => {
               alignItems: 'center',
               justifyContent: 'center',
               flex: 1,
-              maxWidth: adminDashboardBottomNav && rolEffective === 'super_admin' ? '72px' : '120px',
+              maxWidth: adminDashboardBottomNav && superAdminBottomNav ? '72px' : '120px',
               padding: '2px 2px',
               border: 'none',
               fontSize: '11px',
