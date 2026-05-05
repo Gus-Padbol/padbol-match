@@ -296,6 +296,8 @@ export default function TorneoTabbedView({
   navigate,
   session,
   isAdmin = false,
+  /** Admin del torneo (sede/nivel) sin `fromAdmin`: ver lista de equipos aunque aplique ocultación por horas. */
+  equiposRevelacionBypass = false,
   /** Gestionar equipos: rol aplicable y contexto admin (`fromAdmin` / sesión panel). */
   puedeGestionarEquiposTorneo = false,
   /** Se reenvía en `navigate(..., { state })` al abrir gestión de equipo (mantener fromAdmin). */
@@ -532,6 +534,19 @@ export default function TorneoTabbedView({
     if (esFinalizado) t.push({ id: 'resultados', label: 'RESULTADOS' });
     return t;
   }, [muestraTabLlave, esFinalizado]);
+
+  const horasRevelarEquiposMsg = useMemo(
+    () => String(horasRevelarEquiposTorneo(torneo)),
+    [torneo?.horas_revelar_equipos]
+  );
+
+  const ocultarListaEquiposPublico = useMemo(
+    () =>
+      torneoListaEquiposOcultaParaPublico(torneo, {
+        isAdmin: Boolean(isAdmin || equiposRevelacionBypass),
+      }),
+    [torneo, isAdmin, equiposRevelacionBypass]
+  );
 
   const rondasLlave = useMemo(() => {
     const list = [...partidosLlave].sort((a, b) => {
@@ -807,7 +822,27 @@ export default function TorneoTabbedView({
 
   const renderTabGrupos = () => {
     const openEq = (row) => setModalEquipo(equipos.find((e) => e.id === row.id) || row);
-    if (esGruposKnockout && grupos.length > 0) {
+    if (esGruposKnockout) {
+      if (grupos.length === 0) {
+        return (
+          <div
+            style={{
+              padding: '24px 16px',
+              marginTop: '8px',
+              background: '#fff',
+              borderRadius: '14px',
+              textAlign: 'center',
+              color: '#475569',
+              fontWeight: 700,
+              fontSize: '15px',
+              lineHeight: 1.55,
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            Los grupos se definirán después del sorteo oficial.
+          </div>
+        );
+      }
       return (
         <div style={{ padding: '8px 0' }}>
           {grupos.map((grupo) => {

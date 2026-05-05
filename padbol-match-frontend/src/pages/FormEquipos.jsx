@@ -2611,6 +2611,7 @@ export default function FormEquipos() {
             navigate={navigate}
             session={session}
             isAdmin={mostrarUiAdminFormEquipos}
+            equiposRevelacionBypass={esAdminGestionTorneo}
             puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
             navigateState={torneoNavStateForm}
             showTorneoLogo={false}

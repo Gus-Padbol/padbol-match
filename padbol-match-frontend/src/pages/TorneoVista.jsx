@@ -11,6 +11,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   hubContentPaddingTopCss,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
@@ -382,7 +383,7 @@ export default function TorneoVista() {
       return (
         <div className="torneo-inscripcion-jugador-banner">
           <p className="torneo-inscripcion-jugador-banner__texto">
-            ✓ Ya estás inscripto — {nombreEquipoMostrado(miEquipoEnTorneo)}
+            ✓ Ya sos parte del equipo {nombreEquipoMostrado(miEquipoEnTorneo)}
           </p>
         </div>
       );
@@ -518,6 +519,16 @@ export default function TorneoVista() {
       </div>
     ) : null;
 
+  const torneoVistaColumnStyle = useMemo(
+    () => ({
+      ...hubInstagramColumnWrapStyle,
+      paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+      paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+      boxSizing: 'border-box',
+    }),
+    []
+  );
+
   if (loading) {
     return (
       <div
@@ -529,7 +540,9 @@ export default function TorneoVista() {
         }}
       >
         <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
-        <div className="loading">Cargando...</div>
+        <div style={torneoVistaColumnStyle} className="loading">
+          Cargando...
+        </div>
         <BottomNav />
       </div>
     );
@@ -545,7 +558,9 @@ export default function TorneoVista() {
         }}
       >
         <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
-        <div className="error">Error: {error}</div>
+        <div style={torneoVistaColumnStyle} className="error">
+          Error: {error}
+        </div>
         <BottomNav />
       </div>
     );
@@ -561,7 +576,9 @@ export default function TorneoVista() {
         }}
       >
         <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
-        <div className="error">Torneo no encontrado</div>
+        <div style={torneoVistaColumnStyle} className="error">
+          Torneo no encontrado
+        </div>
         <BottomNav />
       </div>
     );
@@ -628,33 +645,36 @@ export default function TorneoVista() {
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
-      <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
-      <img
-        src="/logo-padbol-match.png"
-        alt="Padbol Match"
-        style={{
-          ...padbolLogoImgStyle,
-          marginBottom: '10px',
-        }}
-      />
-      <TorneoTabbedView
-        torneo={torneo}
-        equipos={equipos}
-        partidos={partidos}
-        setPartidos={setPartidos}
-        sedesMap={sedesMap}
-        torneoId={torneoId}
-        navigate={navigate}
-        session={session}
-        isAdmin={isAdminGestionEnEstaVista}
-        puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
-        navigateState={torneoNavStateParaTabbed}
-        clasificacionFinalFilas={clasificacionFinalFilas}
-        adminTorneoBar={adminTorneoBar}
-        bannerAntesTabs={bannerInscripcionJugador}
-        stickyTop={hubContentPaddingTopCss(location.pathname)}
-        showTorneoLogo={false}
-      />
+      <div style={torneoVistaColumnStyle}>
+        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
+          style={{
+            ...padbolLogoImgStyle,
+            marginBottom: '10px',
+          }}
+        />
+        <TorneoTabbedView
+          torneo={torneo}
+          equipos={equipos}
+          partidos={partidos}
+          setPartidos={setPartidos}
+          sedesMap={sedesMap}
+          torneoId={torneoId}
+          navigate={navigate}
+          session={session}
+          isAdmin={isAdminGestionEnEstaVista}
+          equiposRevelacionBypass={isAdmin}
+          puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
+          navigateState={torneoNavStateParaTabbed}
+          clasificacionFinalFilas={clasificacionFinalFilas}
+          adminTorneoBar={adminTorneoBar}
+          bannerAntesTabs={bannerInscripcionJugador}
+          stickyTop={hubContentPaddingTopCss(location.pathname)}
+          showTorneoLogo={false}
+        />
+      </div>
       <BottomNav />
     </div>
     </>
