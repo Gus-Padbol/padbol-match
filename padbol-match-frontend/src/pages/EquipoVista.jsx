@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +14,7 @@ import { cardStyle, pageBackgroundStyle, buttonPrimaryStyle } from '../theme/uiS
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import {
   isPerfilTorneoCompleto,
+  formatAliasConArroba,
   refreshJugadorPerfilFromSupabase,
   PERFIL_CHANGE_EVENT,
 } from '../utils/jugadorPerfil';
@@ -122,6 +124,20 @@ function normalizePlayer(p) {
     estado,
     rol: p.rol != null && String(p.rol).trim() ? String(p.rol).trim() : '',
   };
+}
+
+/** Fila `jugadores_perfil`: misma regla que {@link isPerfilTorneoCompleto} para sumar al equipo sin WhatsApp manual. */
+function perfilTorneoCompletoDesdeFilaJp(row) {
+  if (!row || typeof row !== 'object') return false;
+  return isPerfilTorneoCompleto({
+    nombre: row.nombre,
+    apellido: row.apellido,
+    categoria: row.categoria || row.nivel,
+    nivel: row.nivel || row.categoria,
+    lateralidad: row.lateralidad,
+    genero: row.genero,
+    whatsapp: row.whatsapp,
+  });
 }
 
 function samePerson(a, b) {
@@ -319,6 +335,13 @@ export default function EquipoVista() {
   const [perfilPendientesPorEmail, setPerfilPendientesPorEmail] = useState(() => new Map());
   const [nombreSedeTorneo, setNombreSedeTorneo] = useState(null);
   const [sedeTorneoRow, setSedeTorneoRow] = useState(null);
+  const [invitarJugadorInput, setInvitarJugadorInput] = useState('');
+  const [invitarJugadorDebounced, setInvitarJugadorDebounced] = useState('');
+  const [invitarBuscarTodasSedes, setInvitarBuscarTodasSedes] = useState(false);
+  const [invitarOpciones, setInvitarOpciones] = useState([]);
+  const [invitarBuscando, setInvitarBuscando] = useState(false);
+  const [invitarAgregandoUserId, setInvitarAgregandoUserId] = useState(null);
+  const invitarSearchSeqRef = useRef(0);
 
   const authUserId = useMemo(
     () => (session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null),
@@ -654,6 +677,95 @@ export default function EquipoVista() {
       cancelled = true;
     };
   }, [jugadoresUserIdsFetchKey]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setInvitarJugadorDebounced(String(invitarJugadorInput || '').trim()), 320);
+    return () => clearTimeout(t);
+  }, [invitarJugadorInput]);
+
+  useEffect(() => {
+    setInvitarBuscarTodasSedes(false);
+  }, [invitarJugadorDebounced]);
+
+  useEffect(() => {
+    const q = invitarJugadorDebounced;
+    if (q.length < 2) {
+      setInvitarOpciones([]);
+      setInvitarBuscando(false);
+      return;
+    }
+    const seq = ++invitarSearchSeqRef.current;
+    setInvitarBuscando(true);
+    const term = q.replace(/[%_\\]/g, '');
+    const pattern = `%${term}%`;
+    const myUid = session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null;
+    const sedeNombre = String(nombreSedeTorneo || '').trim();
+    const filtrarSedeClubHabitual = !invitarBuscarTodasSedes && Boolean(sedeNombre);
+
+    const camposJp =
+      'user_id, alias, foto_url, nombre, apellido, email, whatsapp, genero, lateralidad, nivel, categoria, ciudad';
+
+    const mk = (col) => {
+      let qq = supabase.from('jugadores_perfil').select(camposJp).ilike(col, pattern).limit(18);
+      if (filtrarSedeClubHabitual) qq = qq.ilike('ciudad', sedeNombre);
+      if (myUid) qq = qq.neq('user_id', myUid);
+      return qq;
+    };
+
+    void Promise.all([mk('alias'), mk('nombre'), mk('apellido')])
+      .then(([a, b, c]) => {
+        if (seq !== invitarSearchSeqRef.current) return;
+        setInvitarBuscando(false);
+        const byUserId = new Map();
+        for (const row of [...(a.data || []), ...(b.data || []), ...(c.data || [])]) {
+          const uid = row?.user_id;
+          if (uid == null || uid === '') continue;
+          const em = String(row.email || '').trim().toLowerCase();
+          if (!em) continue;
+          const key = String(uid);
+          if (!byUserId.has(key)) byUserId.set(key, row);
+        }
+        let list = Array.from(byUserId.values());
+        list = list.filter((row) => {
+          const em = String(row.email || '').trim().toLowerCase();
+          const uid = String(row.user_id || '');
+          if (players.some((p) => normalizeJugadorEmail(p) === em || (uid && String(p.id || '') === uid)))
+            return false;
+          if (requests.some((r) => normalizeJugadorEmail(r) === em || (uid && String(r.id || '') === uid)))
+            return false;
+          return true;
+        });
+        list = list.filter((row) => {
+          const em = String(row.email || '').trim().toLowerCase();
+          const uid = String(row.user_id || '');
+          for (const e of torneoEquipos) {
+            if (equipo && Number(e.id) === Number(equipo.id)) continue;
+            const ps = getPlayers(e);
+            if (ps.some((p) => normalizeJugadorEmail(p) === em || (uid && String(p.id || '') === uid)))
+              return false;
+            const rs = getRequests(e);
+            if (rs.some((r) => normalizeJugadorEmail(r) === em || (uid && String(r.id || '') === uid)))
+              return false;
+          }
+          return true;
+        });
+        setInvitarOpciones(list.slice(0, 15));
+      })
+      .catch(() => {
+        if (seq !== invitarSearchSeqRef.current) return;
+        setInvitarBuscando(false);
+        setInvitarOpciones([]);
+      });
+  }, [
+    invitarJugadorDebounced,
+    invitarBuscarTodasSedes,
+    nombreSedeTorneo,
+    session?.user?.id,
+    players,
+    requests,
+    torneoEquipos,
+    equipo?.id,
+  ]);
 
   const nombreTorneoCtx = useMemo(
     () => ({
@@ -1077,6 +1189,87 @@ export default function EquipoVista() {
     cargarEquipo();
   };
 
+  const agregarJugadorInvitadoDesdePerfil = async (row) => {
+    if (!equipo || !soyCreador || !equipoIdParam) return;
+    if (torneoCancelado || torneo?.estado === 'finalizado') return;
+    if (equipo.equipo_abierto === false) {
+      alert('Equipo cerrado: solo podés invitar con el link; no se suman jugadores desde la búsqueda.');
+      return;
+    }
+    const uid = row?.user_id != null && row.user_id !== '' ? String(row.user_id) : '';
+    const email = String(row.email || '').trim().toLowerCase();
+    if (!email || !uid) {
+      alert('Ese perfil no tiene email vinculado. Usá «Invitar por WhatsApp».');
+      return;
+    }
+    if (!perfilTorneoCompletoDesdeFilaJp(row)) {
+      alert(
+        'Este jugador no tiene la ficha completa para torneos (WhatsApp, género, categoría, lateralidad). Invitalo con «Invitar por WhatsApp».'
+      );
+      return;
+    }
+    const cupo = Number(equipo.cupo_maximo || 2);
+    if (players.length >= cupo) {
+      alert('Equipo completo');
+      return;
+    }
+    if (
+      players.some(
+        (p) =>
+          normalizeJugadorEmail(p) === email || (uid && String(p.id || '') === uid)
+      ) ||
+      requests.some(
+        (r) =>
+          normalizeJugadorEmail(r) === email || (uid && String(r.id || '') === uid)
+      )
+    ) {
+      alert('Ese jugador ya está en el equipo o en solicitudes.');
+      return;
+    }
+    for (const e of torneoEquipos) {
+      if (equipo && Number(e.id) === Number(equipo.id)) continue;
+      const ps = getPlayers(e);
+      if (ps.some((p) => normalizeJugadorEmail(p) === email || (uid && String(p.id || '') === uid))) {
+        alert('Ese jugador ya está en otro equipo de este torneo.');
+        return;
+      }
+      const rs = getRequests(e);
+      if (rs.some((r) => normalizeJugadorEmail(r) === email || (uid && String(r.id || '') === uid))) {
+        alert('Ese jugador tiene una solicitud pendiente en otro equipo.');
+        return;
+      }
+    }
+
+    setInvitarAgregandoUserId(uid);
+    try {
+      const nuevo = normalizePlayer({
+        id: uid,
+        nombre: String(row.nombre || '').trim(),
+        apellido: String(row.apellido || '').trim(),
+        alias: String(row.alias || '').trim(),
+        email,
+        estado: 'confirmado',
+      });
+      const creadorEntry =
+        session?.user && buildCreadorJugadorParaEquipo(session, userProfile, yo);
+      const basePlayers = ensureCreadorPrimeroEnLista(players, creadorEntry, yo, authUserId);
+      const nuevosJugadores = [...basePlayers, nuevo];
+      const { error } = await supabase
+        .from('equipos')
+        .update({ jugadores: nuevosJugadores })
+        .eq('id', Number(equipoIdParam));
+      if (error) throw error;
+      setInvitarJugadorInput('');
+      setInvitarOpciones([]);
+      await cargarEquipo();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || 'No se pudo agregar al jugador');
+    } finally {
+      setInvitarAgregandoUserId(null);
+    }
+  };
+
   const invitarPadbolMatchWhatsappHref = useMemo(() => {
     const eid = equipoIdParam;
     if (!eid) return '';
@@ -1138,11 +1331,20 @@ export default function EquipoVista() {
       ...pageBackgroundStyle,
       boxSizing: 'border-box',
       paddingTop: hubContentPaddingTopCss(location.pathname),
-      paddingLeft: 12,
-      paddingRight: 12,
+      paddingLeft: 0,
+      paddingRight: 0,
       paddingBottom: `calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
     }),
     [location.pathname]
+  );
+
+  const equipoColumnWrapStyle = useMemo(
+    () => ({
+      ...hubInstagramColumnWrapStyle,
+      paddingLeft: 12,
+      paddingRight: 12,
+    }),
+    []
   );
 
   const confirmarInscripcionDesdeVista = async () => {
@@ -1187,7 +1389,9 @@ export default function EquipoVista() {
             esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
           }
         />
-        <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>Cargando equipo...</div>
+        <div style={equipoColumnWrapStyle}>
+          <div style={{ ...cardStyle, margin: '0 auto' }}>Cargando equipo...</div>
+        </div>
         <BottomNav />
       </div>
     );
@@ -1204,8 +1408,10 @@ export default function EquipoVista() {
             esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
           }
         />
-        <div style={{ ...cardStyle, maxWidth: '900px', margin: '0 auto' }}>
-          <p>No se encontró el equipo.</p>
+        <div style={equipoColumnWrapStyle}>
+          <div style={{ ...cardStyle, margin: '0 auto' }}>
+            <p>No se encontró el equipo.</p>
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -1223,7 +1429,7 @@ export default function EquipoVista() {
         }
       />
 
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div style={equipoColumnWrapStyle}>
         <div
           style={{
             ...cardStyle,
@@ -1761,18 +1967,188 @@ export default function EquipoVista() {
         </div>
 
         {soyCreador &&
-          torneo &&
-          torneo.estado !== 'finalizado' &&
-          torneo.estado !== 'cancelado' &&
-          !plazasLlenasEquipo &&
-          invitarPadbolMatchWhatsappHref ? (
+        torneo &&
+        torneo.estado !== 'finalizado' &&
+        torneo.estado !== 'cancelado' &&
+        !plazasLlenasEquipo &&
+        invitarPadbolMatchWhatsappHref ? (
+          <div
+            style={{
+              ...cardStyle,
+              marginBottom: 18,
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>Invitar jugadores</h3>
+            <p style={{ margin: '0 0 12px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
+              {nombreSedeTorneo ? (
+                <>
+                  Buscá por nombre, apellido o alias. Primero listamos perfiles con club habitual en{' '}
+                  <strong>{nombreSedeTorneo}</strong> (como en Mi perfil).
+                </>
+              ) : (
+                <>Buscá por nombre, apellido o alias (mínimo 2 caracteres).</>
+              )}
+            </p>
+            <input
+              type="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              value={invitarJugadorInput}
+              onChange={(e) => setInvitarJugadorInput(e.target.value)}
+              placeholder="Nombre, apellido o alias…"
+              style={{
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                padding: '12px 14px',
+                fontSize: '15px',
+                borderRadius: '12px',
+                border: '1px solid #cbd5e1',
+                marginBottom: '10px',
+              }}
+            />
+            {invitarBuscando ? (
+              <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted }}>Buscando…</p>
+            ) : null}
+            {!invitarBuscando &&
+            invitarJugadorDebounced.length >= 2 &&
+            !invitarBuscarTodasSedes &&
+            nombreSedeTorneo &&
+            invitarOpciones.length === 0 ? (
+              <div style={{ marginBottom: '12px' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                  No hay coincidencias en esta sede.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setInvitarBuscarTodasSedes(true)}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: '1px solid #6366f1',
+                    background: '#eef2ff',
+                    color: '#4338ca',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Buscar en todas las sedes
+                </button>
+              </div>
+            ) : null}
+            {!invitarBuscando &&
+            invitarJugadorDebounced.length >= 2 &&
+            invitarOpciones.length === 0 &&
+            (invitarBuscarTodasSedes || !nombreSedeTorneo) ? (
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b' }}>No hay resultados.</p>
+            ) : null}
+            {invitarOpciones.length > 0 ? (
+              <ul
+                style={{
+                  listStyle: 'none',
+                  margin: '0 0 14px',
+                  padding: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                {invitarOpciones.map((row) => {
+                  const uid = row?.user_id != null ? String(row.user_id) : '';
+                  const nombreLinea = [String(row.nombre || '').trim(), String(row.apellido || '').trim()]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim();
+                  const labelNombre = nombreLinea || 'Jugador';
+                  const aliasTxt = formatAliasConArroba(row.alias);
+                  const foto = String(row.foto_url || '').trim();
+                  const puedeSumarDirecto = perfilTorneoCompletoDesdeFilaJp(row);
+                  const busy = invitarAgregandoUserId === uid;
+                  return (
+                    <li key={uid || row.email}>
+                      <button
+                        type="button"
+                        disabled={busy || !puedeSumarDirecto}
+                        onClick={() => void agregarJugadorInvitadoDesdePerfil(row)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          textAlign: 'left',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                          background: '#f8fafc',
+                          cursor: busy || !puedeSumarDirecto ? 'default' : 'pointer',
+                          opacity: busy ? 0.7 : puedeSumarDirecto ? 1 : 0.85,
+                        }}
+                      >
+                        <div
+                          aria-hidden
+                          style={{
+                            width: 44,
+                            height: 44,
+                            flexShrink: 0,
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_VIOLETA,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {foto ? (
+                            <img
+                              src={foto}
+                              alt=""
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                objectPosition: 'top center',
+                              }}
+                              loading="lazy"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <span style={{ color: '#fff', fontWeight: 800, fontSize: '16px' }}>
+                              {String(labelNombre).trim().charAt(0).toUpperCase() || '?'}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>{labelNombre}</div>
+                          {aliasTxt ? (
+                            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>{aliasTxt}</div>
+                          ) : null}
+                          {!puedeSumarDirecto ? (
+                            <div style={{ fontSize: '12px', color: T.colorWarningSoft, marginTop: '4px', fontWeight: 600 }}>
+                              Ficha incompleta — usá WhatsApp abajo
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: '12px', color: '#15803d', marginTop: '4px', fontWeight: 700 }}>
+                              Tocá para sumar al equipo
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
             <div
               style={{
-                ...cardStyle,
-                marginBottom: 18,
+                marginTop: invitarOpciones.length ? 4 : 0,
+                paddingTop: invitarOpciones.length ? 12 : 0,
+                borderTop: invitarOpciones.length ? '1px solid #e2e8f0' : 'none',
               }}
             >
-              <h3 style={{ marginTop: 0 }}>Invitar jugadores</h3>
+              <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: T.colorTextMuted }}>
+                También podés
+              </p>
               <a
                 href={invitarPadbolMatchWhatsappHref}
                 target="_blank"
@@ -1790,7 +2166,8 @@ export default function EquipoVista() {
                 📲 Invitar por WhatsApp
               </a>
             </div>
-          ) : null}
+          </div>
+        ) : null}
 
         {soyCreador && !torneoCancelado && marcaAbierto && (
           <div
