@@ -10,6 +10,7 @@ import AppHeader from '../components/AppHeader';
 import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import {
+  APP_HEADER_OUTER_PADDING_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
   hubContentPaddingTopPx,
@@ -129,8 +130,8 @@ const SEDE_HERO_FRASE_DEFAULT =
   'El primer Club de Padbol del Mundo, donde todo comenzó...';
 
 /**
- * Margen extra bajo AppHeader + BottomNav fijos (ref. hubLayout: 56 + 54 px + safe-area).
- * Buffer mayor que antes: el header real puede superar 56px por paddings verticales.
+ * Margen extra bajo AppHeader + BottomNav + chrome del header (ref. hubLayout) + safe-area.
+ * Incluye {@link APP_HEADER_OUTER_PADDING_PX} como en {@link hubContentPaddingTopCss} para que el hero no quede bajo la barra fija.
  */
 const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 36;
 
@@ -775,7 +776,7 @@ export default function SedePublica() {
   /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
-      `calc(${hubContentPaddingTopPx(location.pathname)}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
+      `calc(${hubContentPaddingTopPx(location.pathname) + APP_HEADER_OUTER_PADDING_PX}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
     [location.pathname]
   );
   const [sede, setSede] = useState(null);
@@ -1055,15 +1056,14 @@ export default function SedePublica() {
                     title="Compartir sede"
                     style={{
                       pointerEvents: 'auto',
-                      width: '36px',
-                      height: '36px',
+                      width: '32px',
+                      height: '32px',
                       borderRadius: '10px',
                       border: '1px solid rgba(255,255,255,0.38)',
                       background: 'rgba(15,23,42,0.32)',
                       backdropFilter: 'blur(8px)',
                       WebkitBackdropFilter: 'blur(8px)',
-                      color: heroTextoTituloSede(sede) === '#ffffff' ? '#f8fafc' : '#0f172a',
-                      fontSize: '18px',
+                      color: '#ffffff',
                       lineHeight: 1,
                       cursor: 'pointer',
                       display: 'flex',
@@ -1075,7 +1075,24 @@ export default function SedePublica() {
                       boxSizing: 'border-box',
                     }}
                   >
-                    ⤴
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden
+                    >
+                      <circle cx="18" cy="5" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                      <circle cx="6" cy="12" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                      <circle cx="18" cy="19" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                      <path
+                        d="M15.4 6.35L8.6 10.45M8.6 13.55L15.4 17.65"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                      />
+                    </svg>
                   </button>
                   {sedeShareCopied ? (
                     <span
@@ -1124,9 +1141,11 @@ export default function SedePublica() {
                     style={{
                       width: 'min(32vw, 124px)',
                       minWidth: '92px',
+                      maxWidth: '124px',
+                      aspectRatio: '1',
                       flexShrink: 0,
-                      alignSelf: 'stretch',
-                      borderRadius: '12px',
+                      alignSelf: 'center',
+                      borderRadius: '16px',
                       background: colorFondoLogoSede(sede),
                       boxSizing: 'border-box',
                       display: 'flex',
@@ -1143,8 +1162,7 @@ export default function SedePublica() {
                         style={{
                           width: '100%',
                           height: '100%',
-                          maxHeight: '140px',
-                          objectFit: 'contain',
+                          objectFit: 'cover',
                           objectPosition: 'center center',
                           display: 'block',
                         }}
@@ -1154,7 +1172,6 @@ export default function SedePublica() {
                         style={{
                           width: '100%',
                           height: '100%',
-                          minHeight: '88px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
