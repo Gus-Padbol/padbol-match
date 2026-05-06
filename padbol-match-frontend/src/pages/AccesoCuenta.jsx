@@ -12,10 +12,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import {
-  RESERVA_RETURN_STORAGE_KEY,
-  getPostLoginReservaPath,
-} from '../utils/reservaReturnUrl';
+import { RESERVA_RETURN_STORAGE_KEY, resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -94,7 +91,7 @@ export default function AccesoCuenta() {
       const ue = s.user.email?.trim();
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
-      const destinoTrasLogin = getPostLoginReservaPath();
+      const destinoTrasLogin = resolvePostLoginNavigatePath(location.search);
       try {
         localStorage.removeItem(RESERVA_RETURN_STORAGE_KEY);
       } catch {
@@ -107,7 +104,7 @@ export default function AccesoCuenta() {
       }
       navigate(destinoTrasLogin, { replace: true });
     },
-    [navigate, refreshSession]
+    [navigate, refreshSession, location.search]
   );
 
   useEffect(() => {

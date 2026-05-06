@@ -52,6 +52,42 @@ function urlSearchFromRestoreData(data) {
 }
 
 /**
+ * Si `?redirect=` apunta a `/reservar` (misma pestaña u OAuth que conserva la query), usarlo cuando no haya estado v2 en sessionStorage.
+ * Solo rutas internas que empiezan por `/reservar` (evita open redirect).
+ */
+export function safeReservaPathFromLoginRedirect(loginSearch) {
+  if (loginSearch == null) return null;
+  const q = String(loginSearch);
+  try {
+    const sp = new URLSearchParams(q.startsWith('?') ? q.slice(1) : q);
+    const raw = sp.get('redirect');
+    if (raw == null || raw === '') return null;
+    let path;
+    try {
+      path = decodeURIComponent(String(raw).trim());
+    } catch {
+      path = String(raw).trim();
+    }
+    if (!path.startsWith('/') || path.startsWith('//')) return null;
+    if (!path.startsWith('/reservar')) return null;
+    return path.split('#')[0];
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Destino tras login: prioriza sessionStorage v2 / localStorage de reserva; si no hay datos, usa `?redirect=` solo si es `/reservar…`.
+ */
+export function resolvePostLoginNavigatePath(loginSearch) {
+  const fromStored = getPostLoginReservaPath();
+  if (fromStored.startsWith('/reservar')) return fromStored;
+  const fromRedirect = safeReservaPathFromLoginRedirect(loginSearch);
+  if (fromRedirect) return fromRedirect;
+  return fromStored;
+}
+
+/**
  * Tras login/registro: URL para volver a `/reservar` (sessionStorage v2, localStorage return, o legacy session).
  */
 export function getPostLoginReservaPath() {

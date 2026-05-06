@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 /** Modal compacto: foto, nombre, alias, categoría, sede (sin navegar a otra ruta). */
 export default function JugadorPreviewModal({ open, onClose, data }) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   if (!open || !data) return null;
 
   const row = (label, value) => (
@@ -28,7 +37,6 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
         boxSizing: 'border-box',
       }}
       onClick={onClose}
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
     >
       <div
         role="dialog"
@@ -86,7 +94,7 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
 
         {row('Alias', data.aliasLabel)}
         {row('Categoría', data.categoria)}
-        {row('Club / sede habitual', data.sede)}
+        {row('Sede', data.sede)}
 
         <button
           type="button"
