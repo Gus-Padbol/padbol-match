@@ -35,9 +35,18 @@ export function horarioDisponibleTexto(sede) {
   return `Turnos ${a} – ${c}`;
 }
 
+/** Precio base por turno desde la fila `sedes` (prioriza `precio_turno` de Supabase). */
+export function precioBaseTurnoDesdeSede(sede) {
+  const pt = Number(sede?.precio_turno);
+  if (Number.isFinite(pt) && pt >= 0) return pt;
+  const ppr = Number(sede?.precio_por_reserva);
+  if (Number.isFinite(ppr) && ppr >= 0) return ppr;
+  return 0;
+}
+
 /** Precio mínimo por turno para mostrar en card (franjas JSONB, mañana/tarde o base). */
 export function precioDesdeCard(sede) {
-  const base = Number(sede?.precio_por_reserva || sede?.precio_turno || 0);
+  const base = precioBaseTurnoDesdeSede(sede);
   const desdeFranjas = precioMinimoFranjas(sede);
   if (desdeFranjas != null && desdeFranjas >= 0) return desdeFranjas;
   const m = Number(sede?.precio_manana);

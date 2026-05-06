@@ -86,6 +86,8 @@ export function textoLineaTarifasReserva(sede) {
   if (sede?.precio_manana && sede?.precio_tarde) {
     return ` • 🌅 $${Number(sede.precio_manana).toLocaleString('es-AR')} / 🌆 $${Number(sede.precio_tarde).toLocaleString('es-AR')} ${moneda}`;
   }
-  const base = Number(sede?.precio_por_reserva || sede?.precio_turno || 0);
+  const pt = Number(sede?.precio_turno);
+  const base =
+    Number.isFinite(pt) && pt >= 0 ? pt : Number(sede?.precio_por_reserva || 0) || 0;
   return ` • $${base.toLocaleString('es-AR')} ${moneda}`;
 }

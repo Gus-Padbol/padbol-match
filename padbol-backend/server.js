@@ -454,6 +454,24 @@ app.get('/api/sedes', async (req, res) => {
   }
 });
 
+/** Una sede con todos los campos de `sedes` (precio_turno, franjas, etc.) para reserva / detalle. */
+app.get('/api/sedes/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    const { data: sede, error } = await supabase.from('sedes').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    if (!sede) return res.status(404).json({ error: 'Sede no encontrada' });
+    console.log('Precio sede:', sede.precio_turno);
+    res.json(sede);
+  } catch (err) {
+    console.error('❌ Error GET /api/sedes/:id:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET disponibilidad
 app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
   try {

@@ -26,15 +26,16 @@ import {
   ciudadPaisConBandera,
   getDistanceKm,
   horarioDisponibleTexto,
+  precioBaseTurnoDesdeSede,
   precioDesdeCard,
   primeraFotoSede,
 } from '../utils/sedeCardUi';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
 
 // Returns the correct price for a given sede + time slot.
-// Falls back a mañana/tarde legacy o precio base.
+// Base desde `sedes` (precio_turno en Supabase, luego legacy precio_por_reserva); luego franjas o mañana/tarde.
 function getPrecio(sede, hora) {
-  const base = Number(sede?.precio_por_reserva || sede?.precio_turno || 0);
+  const base = precioBaseTurnoDesdeSede(sede);
   if (!hora || !sede) return base;
   const desdeFranjas = precioDesdeFranjas(sede, hora);
   if (desdeFranjas != null) return desdeFranjas;
@@ -281,6 +282,42 @@ export default function ReservaForm() {
       { timeout: 8000, maximumAge: 600000 }
     );
   }, [pantalla]);
+
+  /** Refrescar la sede desde la API al reservar/pagar para usar precio_turno y tarifas actualizados en Supabase. */
+  useEffect(() => {
+    const rawId = filtros.sede_id;
+    if (rawId === '' || rawId == null) return;
+    if (pantalla !== 2 && pantalla !== 4) return;
+    let cancelled = false;
+    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}`))
+      .then(async (res) => {
+        const text = await res.text();
+        if (cancelled) return;
+        if (!res.ok) return;
+        let sedeFresh;
+        try {
+          sedeFresh = JSON.parse(text);
+        } catch {
+          return;
+        }
+        if (!sedeFresh || typeof sedeFresh !== 'object') return;
+        setSedes((prev) => {
+          if (!Array.isArray(prev)) return prev;
+          const nid = Number(rawId);
+          const idx = prev.findIndex((s) => Number(s.id) === nid);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = { ...next[idx], ...sedeFresh };
+            return next;
+          }
+          return [...prev, sedeFresh];
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [filtros.sede_id, pantalla]);
 
   const [mostrarEtiquetaSedeMasCercanaGeo, setMostrarEtiquetaSedeMasCercanaGeo] = useState(false);
 
