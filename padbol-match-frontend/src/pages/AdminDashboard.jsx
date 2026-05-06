@@ -82,6 +82,30 @@ function sanitizeAdminActiveTab(raw) {
   return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
 }
 
+const MS_48H = 48 * 60 * 60 * 1000;
+
+/** `YYYY-MM-DD` → inicio del día en hora local; inválido → null */
+function parseLocalDayStartFromIsoDate(iso) {
+  const s = String(iso || '').trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y, m, d] = s.split('-').map((n) => parseInt(n, 10));
+  if (![y, m, d].every((n) => Number.isFinite(n))) return null;
+  return new Date(y, m - 1, d, 0, 0, 0, 0);
+}
+
+/** Inscripción “cierra pronto”: primera fecha del torneo dentro de las próximas 48 h (proxy de cierre). */
+function torneoCierreInscripcionDentroDe48h(torneo, now = new Date()) {
+  const start = parseLocalDayStartFromIsoDate(torneo?.fecha_inicio);
+  if (!start) return false;
+  const ms = start.getTime() - now.getTime();
+  return ms > 0 && ms <= MS_48H;
+}
+
+function torneoEstadoInscripcionAbiertaAdmin(t) {
+  const e = String(t?.estado || '').toLowerCase();
+  return e === 'abierto' || e === 'inscripcion_abierta';
+}
+
 function hexToRgbSedeHero(hex) {
   const h = normalizeHexSedeAdmin(hex);
   if (!h || h.length < 7) return { r: 76, g: 29, b: 149 };
@@ -557,7 +581,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   );
 
   useEffect(() => {
-    if (activeTab === 'sedes_pendientes' && puedeVerSedesPendientes) {
+    if (!puedeVerSedesPendientes) return;
+    if (activeTab === 'sedes_pendientes' || activeTab === 'resumen') {
       void cargarSedesPendientes();
     }
   }, [activeTab, puedeVerSedesPendientes, cargarSedesPendientes]);
@@ -697,9 +722,33 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (!t) return false;
       return precioInscripcionTorneo(t) > 0;
     });
+
+    const pendientesSinConfirmarPorTorneo = {};
+    for (const eq of equiposInscripcionRows) {
+      if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') continue;
+      const t = torneoById[eq.torneo_id];
+      if (!t || !torneoEstadoInscripcionAbiertaAdmin(t)) continue;
+      if (!torneoCierreInscripcionDentroDe48h(t, now)) continue;
+      const tid = Number(eq.torneo_id);
+      if (!Number.isFinite(tid)) continue;
+      pendientesSinConfirmarPorTorneo[tid] = (pendientesSinConfirmarPorTorneo[tid] || 0) + 1;
+    }
+    const alertasEquiposSinConfirmarCierre48h = Object.entries(pendientesSinConfirmarPorTorneo)
+      .map(([tidStr, count]) => {
+        const tid = Number(tidStr);
+        const t = torneoById[tid];
+        return {
+          torneoId: tid,
+          nombre: String(t?.nombre || 'Torneo').trim() || 'Torneo',
+          count: Number(count) || 0,
+        };
+      })
+      .filter((a) => a.count > 0);
+
     return {
       reservasHoy,
       equiposPendientePagoCount: equiposPendientePago.length,
+      alertasEquiposSinConfirmarCierre48h,
     };
   }, [reservas, equiposInscripcionRows, torneos]);
 
@@ -2080,39 +2129,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               onShift={shiftFinanzasPeriodo}
             />
           )}
-          <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div
-              style={{
-                padding: '10px 14px',
-                borderRadius: '10px',
-                background: 'rgba(255,255,255,0.14)',
-                border: '1px solid rgba(255,255,255,0.22)',
-                color: 'rgba(255,255,255,0.95)',
-                fontSize: '13px',
-                fontWeight: 700,
-              }}
-            >
-              Reservas de canchas <strong>hoy</strong>: {resumenHoyYAlertas.reservasHoy}
-            </div>
-            {resumenHoyYAlertas.equiposPendientePagoCount > 0 ? (
-              <div
-                role="alert"
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: '10px',
-                  background: '#fef3c7',
-                  border: '1px solid #fbbf24',
-                  color: '#92400e',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                }}
-              >
-                Atención: hay {resumenHoyYAlertas.equiposPendientePagoCount} equipo
-                {resumenHoyYAlertas.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción{' '}
-                <strong>pendiente de pago</strong> (torneos con costo de inscripción).
-              </div>
-            ) : null}
-          </div>
         </div>
         <div className="dashboard-grid">
         <div className="card ingresos" style={cifrasFinanzasResumen.tipo === 'sede' ? { gridColumn: '1 / -1' } : undefined}>
@@ -2209,6 +2225,84 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <p className="count">{torneos.length}</p>
         </div>
       </div>
+
+        <div
+          style={{
+            marginTop: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            maxWidth: '720px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+        >
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: '10px',
+              background: 'rgba(255,255,255,0.14)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              color: 'rgba(255,255,255,0.95)',
+              fontSize: '13px',
+              fontWeight: 700,
+            }}
+          >
+            Reservas de hoy: {resumenHoyYAlertas.reservasHoy}
+          </div>
+          {resumenHoyYAlertas.equiposPendientePagoCount > 0 ? (
+            <div
+              role="alert"
+              style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                background: '#fef3c7',
+                border: '1px solid #fbbf24',
+                color: '#92400e',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+            >
+              Atención: hay {resumenHoyYAlertas.equiposPendientePagoCount} equipo
+              {resumenHoyYAlertas.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción{' '}
+              <strong>pendiente de pago</strong> (torneos con costo de inscripción).
+            </div>
+          ) : null}
+          {resumenHoyYAlertas.alertasEquiposSinConfirmarCierre48h.map((a) => (
+            <div
+              key={a.torneoId}
+              role="alert"
+              style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                background: '#ffedd5',
+                border: '1px solid #fb923c',
+                color: '#9a3412',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+            >
+              {a.count} equipo{a.count === 1 ? '' : 's'} sin confirmar en {a.nombre}
+            </div>
+          ))}
+          {puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0 ? (
+            <div
+              role="alert"
+              style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                background: '#fee2e2',
+                border: '1px solid #f87171',
+                color: '#991b1b',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+            >
+              {sedesPendientes.length} sede{sedesPendientes.length === 1 ? '' : 's'} pendiente
+              {sedesPendientes.length === 1 ? '' : 's'} de aprobación
+            </div>
+          ) : null}
+        </div>
       </>}
 
       {activeTab === 'torneos' && <>
