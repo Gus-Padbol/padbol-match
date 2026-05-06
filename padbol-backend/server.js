@@ -1692,6 +1692,104 @@ app.get('/api/jugadores', async (req, res) => {
   }
 });
 
+/**
+ * Búsqueda en `jugadores_perfil` por nombre, apellido o alias (ilike).
+ * Query: ?q=texto (mín. 2) &torneo_id= opcional (badges disponibilidad) &exclude_user_id= opcional
+ */
+app.get('/api/jugadores/buscar', async (req, res) => {
+  try {
+    const qRaw = String(req.query.q || '').trim();
+    if (qRaw.length < 2) {
+      return res.status(400).json({ error: 'El parámetro q debe tener al menos 2 caracteres' });
+    }
+    const safe = qRaw.replace(/[%_\\]/g, '').slice(0, 80);
+    if (safe.length < 2) {
+      return res.status(400).json({ error: 'El parámetro q debe tener al menos 2 caracteres' });
+    }
+    const pattern = `%${safe}%`;
+    const excludeUid = String(req.query.exclude_user_id || '').trim();
+    const torneoIdRaw = req.query.torneo_id;
+    const torneoId =
+      torneoIdRaw != null && torneoIdRaw !== '' && String(torneoIdRaw).trim() !== ''
+        ? parseInt(String(torneoIdRaw).trim(), 10)
+        : NaN;
+    const conTorneo = Number.isFinite(torneoId) && torneoId > 0;
+
+    const sel = 'user_id, alias, foto_url, nombre, apellido, email';
+    const lim = 12;
+    const [rAlias, rNombre, rApellido] = await Promise.all([
+      supabase.from('jugadores_perfil').select(sel).ilike('alias', pattern).limit(lim),
+      supabase.from('jugadores_perfil').select(sel).ilike('nombre', pattern).limit(lim),
+      supabase.from('jugadores_perfil').select(sel).ilike('apellido', pattern).limit(lim),
+    ]);
+    if (rAlias.error) throw rAlias.error;
+    if (rNombre.error) throw rNombre.error;
+    if (rApellido.error) throw rApellido.error;
+
+    const byUserId = new Map();
+    for (const row of [...(rAlias.data || []), ...(rNombre.data || []), ...(rApellido.data || [])]) {
+      if (!row || typeof row !== 'object') continue;
+      const uid = row.user_id != null ? String(row.user_id).trim() : '';
+      if (!uid) continue;
+      if (excludeUid && uid === excludeUid) continue;
+      if (!byUserId.has(uid)) byUserId.set(uid, row);
+    }
+    let rows = Array.from(byUserId.values()).slice(0, lim);
+
+    const parseJsonArray = (raw) => {
+      if (Array.isArray(raw)) return raw;
+      if (typeof raw === 'string') {
+        try {
+          const x = JSON.parse(raw);
+          return Array.isArray(x) ? x : [];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    };
+
+    const jugadorEnEquipoTorneo = (perfilRow, equiposRows) => {
+      const uid = perfilRow.user_id != null ? String(perfilRow.user_id).trim() : '';
+      const email = String(perfilRow.email || '').trim().toLowerCase();
+      const matchLista = (arr) => {
+        for (const p of arr) {
+          if (!p || typeof p !== 'object') continue;
+          const pe = String(p.email || '').trim().toLowerCase();
+          const pid = p.id != null && String(p.id).trim() !== '' ? String(p.id).trim() : '';
+          if (email && pe && pe === email) return true;
+          if (uid && pid && pid === uid) return true;
+        }
+        return false;
+      };
+      for (const eq of equiposRows || []) {
+        if (matchLista(parseJsonArray(eq?.jugadores))) return true;
+        if (matchLista(parseJsonArray(eq?.solicitudes))) return true;
+      }
+      return false;
+    };
+
+    if (conTorneo) {
+      const { data: eqs, error: eEq } = await supabase
+        .from('equipos')
+        .select('id,jugadores,solicitudes')
+        .eq('torneo_id', torneoId);
+      if (eEq) console.warn('jugadores/buscar equipos:', eEq.message);
+      const equiposList = Array.isArray(eqs) ? eqs : [];
+      rows = rows.map((row) => {
+        const enEq = jugadorEnEquipoTorneo(row, equiposList);
+        const disponibilidad = enEq ? 'tiene_equipo' : 'buscando_companero';
+        return { ...row, disponibilidad };
+      });
+    }
+
+    res.json(rows);
+  } catch (err) {
+    console.error('GET /api/jugadores/buscar', err);
+    res.status(500).json({ error: err?.message || String(err) });
+  }
+});
+
 app.get('/api/jugadores/:id', async (req, res) => {
   try {
     const { id } = req.params;

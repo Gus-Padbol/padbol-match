@@ -619,43 +619,32 @@ export default function FormEquipos() {
     const seq = ++companeroSearchSeqRef.current;
     const handle = setTimeout(async () => {
       setCompaneroBusquedaCargando(true);
-      const term = raw.replace(/[%_\\]/g, '');
-      const pattern = `%${term}%`;
-      const myUid = session?.user?.id;
-      let qAlias = supabase
-        .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre, apellido, email')
-        .ilike('alias', pattern)
-        .limit(12);
-      let qNombre = supabase
-        .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre, apellido, email')
-        .ilike('nombre', pattern)
-        .limit(12);
-      let qApellido = supabase
-        .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre, apellido, email')
-        .ilike('apellido', pattern)
-        .limit(12);
-      if (myUid) {
-        const uid = String(myUid);
-        qAlias = qAlias.neq('user_id', uid);
-        qNombre = qNombre.neq('user_id', uid);
-        qApellido = qApellido.neq('user_id', uid);
+      try {
+        const url = new URL(`${BACKEND_API_BASE}/api/jugadores/buscar`);
+        url.searchParams.set('q', raw);
+        if (Number.isFinite(torneoId) && torneoId > 0) {
+          url.searchParams.set('torneo_id', String(torneoId));
+        }
+        if (session?.user?.id) {
+          url.searchParams.set('exclude_user_id', String(session.user.id));
+        }
+        const res = await fetch(url.toString());
+        const j = await res.json().catch(() => null);
+        if (seq !== companeroSearchSeqRef.current) return;
+        if (!res.ok || !Array.isArray(j)) {
+          setCompaneroOpciones([]);
+          return;
+        }
+        setCompaneroOpciones(j.slice(0, 12));
+      } catch (e) {
+        console.error('buscar jugadores', e);
+        if (seq === companeroSearchSeqRef.current) setCompaneroOpciones([]);
+      } finally {
+        if (seq === companeroSearchSeqRef.current) setCompaneroBusquedaCargando(false);
       }
-      const [a, b, c] = await Promise.all([qAlias, qNombre, qApellido]);
-      if (seq !== companeroSearchSeqRef.current) return;
-      setCompaneroBusquedaCargando(false);
-      const byUserId = new Map();
-      for (const row of [...(a.data || []), ...(b.data || []), ...(c.data || [])]) {
-        const uid = row?.user_id;
-        if (uid == null || uid === '') continue;
-        if (!byUserId.has(uid)) byUserId.set(uid, row);
-      }
-      setCompaneroOpciones(Array.from(byUserId.values()).slice(0, 12));
     }, 280);
     return () => clearTimeout(handle);
-  }, [companeroBusqueda, session?.user?.id]);
+  }, [companeroBusqueda, session?.user?.id, torneoId]);
 
   const miEquipo = useMemo(() => {
     if (!yo) return null;
@@ -1197,6 +1186,10 @@ export default function FormEquipos() {
   const agregarCompaneroDesdePerfil = async (row) => {
     const u = getOrCreateUsuarioBasico();
     if (!miEquipo || !esCreadorEquipoOMiAuth(miEquipo, authEmail, u, authUserId) || !row) return;
+    if (row.disponibilidad === 'tiene_equipo') {
+      alert('Ese jugador ya tiene equipo en este torneo.');
+      return;
+    }
 
     let players = getPlayers(miEquipo);
     const creadorEntry =
@@ -2898,11 +2891,16 @@ export default function FormEquipos() {
                       const nom = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || 'Jugador';
                       const al = String(row.alias || '').trim();
                       const foto = String(row.foto_url || '').trim();
+                      const tieneEquipoTorneo = row.disponibilidad === 'tiene_equipo';
+                      const badgeLabel = tieneEquipoTorneo ? 'Tiene equipo' : 'Buscando compañero';
+                      const badgeBg = tieneEquipoTorneo ? '#fee2e2' : '#dbeafe';
+                      const badgeColor = tieneEquipoTorneo ? '#991b1b' : '#1e40af';
                       return (
                         <button
                           key={uid || al || nom}
                           type="button"
-                          disabled={saving}
+                          disabled={saving || tieneEquipoTorneo}
+                          title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : undefined}
                           onClick={() => void agregarCompaneroDesdePerfil(row)}
                           style={{
                             width: '100%',
@@ -2913,9 +2911,10 @@ export default function FormEquipos() {
                             border: 'none',
                             borderBottom: '1px solid #e2e8f0',
                             background: 'transparent',
-                            cursor: saving ? 'default' : 'pointer',
+                            cursor: saving || tieneEquipoTorneo ? 'default' : 'pointer',
                             textAlign: 'left',
                             fontFamily: 'inherit',
+                            opacity: tieneEquipoTorneo ? 0.72 : 1,
                           }}
                         >
                           {foto ? (
@@ -2962,6 +2961,25 @@ export default function FormEquipos() {
                                 @{al}
                               </span>
                             ) : null}
+                          </span>
+                          <span
+                            style={{
+                              flexShrink: 0,
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase',
+                              padding: '4px 8px',
+                              borderRadius: '999px',
+                              background: badgeBg,
+                              color: badgeColor,
+                              border: `1px solid ${tieneEquipoTorneo ? '#fecaca' : '#bfdbfe'}`,
+                              maxWidth: '120px',
+                              textAlign: 'center',
+                              lineHeight: 1.25,
+                            }}
+                          >
+                            {badgeLabel}
                           </span>
                         </button>
                       );
