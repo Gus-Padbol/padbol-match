@@ -19,6 +19,8 @@ import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
   FILTROS_ESTADO_TORNEO_PILLS,
+  esEstadoCanceladoTorneo,
+  esEstadoFinalizadoTorneo,
   normalizeTorneoFiltroEstadoPill,
   torneoPasaFiltroEstadoVista,
 } from '../utils/torneoEstadoFiltroPills';
@@ -79,7 +81,22 @@ function normalizeHexSedeAdmin(raw) {
   return null;
 }
 
-const ADMIN_TABS_ALLOWED = new Set(['resumen', 'torneos', 'reservas', 'validaciones', 'mi_sede', 'config', 'sedes_pendientes']);
+const ADMIN_TABS_ALLOWED = new Set([
+  'resumen',
+  'torneos',
+  'reservas',
+  'validaciones',
+  'mi_sede',
+  'config',
+  'sedes_pendientes',
+  'sedes',
+  'jugadores',
+]);
+
+/** Torneos que siguen “en juego” a nivel operativo (no finalizados ni cancelados). */
+function torneoConsideradoActivoPanelNacional(t) {
+  return !esEstadoFinalizadoTorneo(t?.estado) && !esEstadoCanceladoTorneo(t?.estado);
+}
 
 function sanitizeAdminActiveTab(raw) {
   const t = String(raw || '').trim();
@@ -499,6 +516,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const esAdminNacional = rol === 'admin_nacional';
   const esAdminClub     = rol === 'admin_club';
   const puedeVerConfig  = isSuperAdmin;
+
+  const paisAdminNacional = useMemo(() => {
+    if (!esAdminNacional) return '';
+    try {
+      const roleData = JSON.parse(localStorage.getItem('user_role_data') || '{}');
+      const raw = roleData.pais;
+      return raw ? String(raw).replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim() : '';
+    } catch {
+      return '';
+    }
+  }, [esAdminNacional]);
+
+  const [jugadoresFederadosPais, setJugadoresFederadosPais] = useState([]);
+  const [totalJugadoresPais, setTotalJugadoresPais] = useState(0);
+  const [nacionalJugadoresLoading, setNacionalJugadoresLoading] = useState(false);
   const puedeVerSedesPendientes = isSuperAdmin;
   const puedeCrearTorneosOficiales = isSuperAdmin || (!esAdminClub);
 
@@ -881,6 +913,75 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     return torneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneoAdmin));
   }, [torneos, filtroEstadoTorneoAdmin]);
 
+  const torneosActivosNacionalCount = useMemo(
+    () => torneos.filter((t) => torneoConsideradoActivoPanelNacional(t)).length,
+    [torneos]
+  );
+
+  const sedesNacionalLista = useMemo(() => {
+    if (!esAdminNacional) return [];
+    return Object.values(sedesMap || {}).sort((a, b) =>
+      String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' })
+    );
+  }, [esAdminNacional, sedesMap]);
+
+  useEffect(() => {
+    if (!esAdminNacional) {
+      setJugadoresFederadosPais([]);
+      setTotalJugadoresPais(0);
+      return;
+    }
+    if (!paisAdminNacional) {
+      setJugadoresFederadosPais([]);
+      setTotalJugadoresPais(0);
+      return;
+    }
+    let cancelled = false;
+    setNacionalJugadoresLoading(true);
+    (async () => {
+      try {
+        const pat = `%${paisAdminNacional}%`;
+        const { data, error } = await supabase
+          .from('jugadores_perfil')
+          .select('email, nombre, apellido, alias, pais, nivel, foto_url, es_federado')
+          .ilike('pais', pat)
+          .order('nombre');
+        if (cancelled) return;
+        if (error) {
+          setJugadoresFederadosPais([]);
+          setTotalJugadoresPais(0);
+          return;
+        }
+        const rows = Array.isArray(data) ? data : [];
+        const inCountry = rows.filter(
+          (j) => j?.pais && String(j.pais).includes(paisAdminNacional)
+        );
+        setTotalJugadoresPais(inCountry.length);
+        setJugadoresFederadosPais(
+          inCountry.filter((j) => j.es_federado === true)
+        );
+      } catch {
+        if (!cancelled) {
+          setJugadoresFederadosPais([]);
+          setTotalJugadoresPais(0);
+        }
+      } finally {
+        if (!cancelled) setNacionalJugadoresLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [esAdminNacional, paisAdminNacional, session?.access_token]);
+
+  useEffect(() => {
+    if (!esAdminNacional) return;
+    const permitidas = new Set(['resumen', 'torneos', 'sedes', 'jugadores']);
+    if (permitidas.has(activeTab)) return;
+    setActiveTab('resumen');
+    navigate('/admin?tab=resumen', { replace: true });
+  }, [esAdminNacional, activeTab, navigate]);
+
   // ── Config puntos (superAdmin only) ──
   const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
   const CONFIG_POSICIONES_DEFAULT    = { 1: 30, 2: 20, 3: 15, 4: 12, 5: 8, 6: 6, 7: 4, 8: 3, 9: 1, 10: 1 };
@@ -1105,7 +1206,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       try {
         const { data: sedesRows, error: sedesErr } = await supabase
           .from('sedes')
-          .select('id, nombre, ciudad, pais, moneda');
+          .select('id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia');
         if (!sedesErr) {
           allSedesRows = sedesRows || [];
           if (isSuperAdmin) {
@@ -1834,15 +1935,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
   })();
 
-  const TABS = [
-    { id: 'resumen',      label: '📊 Resumen' },
-    { id: 'torneos',      label: '🏆 Torneos' },
-    { id: 'reservas',     label: '⚽ Reservas' },
-    { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
-    ...(puedeVerMiSede  ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
-    ...(puedeVerSedesPendientes ? [{ id: 'sedes_pendientes', label: '🏟️ Sedes pendientes' }] : []),
-    ...(puedeVerConfig  ? [{ id: 'config',  label: '⚙️ Config' }]  : []),
-  ];
+  const TABS = esAdminNacional
+    ? [
+        { id: 'resumen', label: 'Resumen' },
+        { id: 'torneos', label: 'Torneos' },
+        { id: 'sedes', label: 'Sedes' },
+        { id: 'jugadores', label: 'Jugadores' },
+      ]
+    : [
+        { id: 'resumen', label: '📊 Resumen' },
+        { id: 'torneos', label: '🏆 Torneos' },
+        { id: 'reservas', label: '⚽ Reservas' },
+        { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
+        ...(puedeVerMiSede ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
+        ...(puedeVerSedesPendientes ? [{ id: 'sedes_pendientes', label: '🏟️ Sedes pendientes' }] : []),
+        ...(puedeVerConfig ? [{ id: 'config', label: '⚙️ Config' }] : []),
+      ];
 
   const sedeClubHeader =
     sedeId != null && sedeId !== ''
@@ -2085,7 +2193,49 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       )}
 
-      {activeTab === 'resumen' && <>
+      {activeTab === 'resumen' && (esAdminNacional ? (
+        <>
+          <div
+            style={{
+              marginBottom: '14px',
+              textAlign: 'center',
+              color: 'rgba(255,255,255,0.92)',
+              fontSize: '14px',
+              fontWeight: 600,
+            }}
+          >
+            {paisAdminNacional
+              ? `País asignado: ${paisAdminNacional}`
+              : 'Sin país en tu rol: cargá el país en user_roles para ver el alcance.'}
+          </div>
+          {!paisAdminNacional ? (
+            <div className="section" style={{ background: '#fff8e1', border: '1px solid #ffc107' }}>
+              <p style={{ margin: 0, color: '#5d4037' }}>
+                Contactá a un super admin para que tu usuario nacional tenga el campo <strong>país</strong> en la base.
+              </p>
+            </div>
+          ) : (
+            <div className="dashboard-grid">
+              <div className="card reservas">
+                <h2>Total sedes</h2>
+                <p className="count">{sedesNacionalLista.length}</p>
+                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Clubes en tu país</p>
+              </div>
+              <div className="card torneos">
+                <h2>Total jugadores</h2>
+                <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
+                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Fichas con país coincidente</p>
+              </div>
+              <div className="card torneos">
+                <h2>Torneos activos</h2>
+                <p className="count">{torneosActivosNacionalCount}</p>
+                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
             Período del resumen financiero
@@ -2340,7 +2490,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           ) : null}
         </div>
-      </>}
+        </>
+      )}
 
       {activeTab === 'torneos' && <>
         <div style={{ marginBottom: '18px' }}>
@@ -2697,6 +2848,115 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         }}
       />
       </>}
+
+      {activeTab === 'sedes' && esAdminNacional && (
+        <div className="section">
+          <h2>Sedes en tu país</h2>
+          {sedesNacionalLista.length === 0 ? (
+            <p style={{ color: '#999' }}>No hay sedes que coincidan con tu alcance nacional.</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="reservas-table">
+                <thead>
+                  <tr>
+                    <th>Sede</th>
+                    <th>Ciudad</th>
+                    <th>Licencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sedesNacionalLista.map((s) => {
+                    const flagS = sedeFlag(s);
+                    const licActiva = s.licencia_activa === true && s.numero_licencia;
+                    return (
+                      <tr key={s.id}>
+                        <td style={{ fontWeight: 700 }}>
+                          {flagS ? `${flagS} ` : ''}
+                          {String(s.nombre || '').trim() || '—'}
+                        </td>
+                        <td>{String(s.ciudad || '').trim() || '—'}</td>
+                        <td>
+                          {licActiva ? (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 10px',
+                                borderRadius: '999px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                background: '#dcfce7',
+                                color: '#166534',
+                              }}
+                            >
+                              Activa · {String(s.numero_licencia).trim()}
+                            </span>
+                          ) : s.numero_licencia ? (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 10px',
+                                borderRadius: '999px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                background: '#fee2e2',
+                                color: '#991b1b',
+                              }}
+                            >
+                              Inactiva
+                            </span>
+                          ) : (
+                            <span style={{ color: '#64748b', fontSize: '13px' }}>Sin licencia</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'jugadores' && esAdminNacional && (
+        <div className="section">
+          <h2>Jugadores federados en tu país</h2>
+          {nacionalJugadoresLoading ? (
+            <p style={{ color: '#999' }}>Cargando…</p>
+          ) : jugadoresFederadosPais.length === 0 ? (
+            <p style={{ color: '#999' }}>No hay jugadores marcados como federados en tu país.</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="reservas-table">
+                <thead>
+                  <tr>
+                    <th>Jugador</th>
+                    <th>Email</th>
+                    <th>Categoría</th>
+                    <th>País (ficha)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jugadoresFederadosPais.map((j) => {
+                    const nom = [String(j.nombre || '').trim(), String(j.apellido || '').trim()]
+                      .filter(Boolean)
+                      .join(' ')
+                      .trim();
+                    return (
+                      <tr key={j.email || `${j.nombre}-${j.apellido}`}>
+                        <td style={{ fontWeight: 700 }}>{nom || String(j.alias || '').trim() || '—'}</td>
+                        <td style={{ fontSize: '13px' }}>{String(j.email || '').trim() || '—'}</td>
+                        <td>{String(j.nivel || '').trim() || '—'}</td>
+                        <td>{String(j.pais || '').trim() || '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {activeTab === 'validaciones' && <div className="section">
         <h2>⏳ Jugadores Pendientes de Validación</h2>
