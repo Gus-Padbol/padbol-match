@@ -45,6 +45,7 @@ import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRe
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
+import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -278,6 +279,8 @@ export default function MiPerfil() {
   const [zoom, setZoom] = useState(1);
   const [cropAreaListo, setCropAreaListo] = useState(false);
   const croppedAreaPixelsRef = useRef(null);
+  const [fotoAccionModalOpen, setFotoAccionModalOpen] = useState(false);
+  const [fotoAccionModalStep, setFotoAccionModalStep] = useState('menu');
   /** Valor inline de `body.style.overflow` antes de abrir el modal de recorte (restaurar al cerrar). */
   const cropModalBodyOverflowPrevRef = useRef('');
   const fileInputRef = useRef(null);
@@ -307,6 +310,10 @@ export default function MiPerfil() {
       document.body.style.overflow = cropModalBodyOverflowPrevRef.current;
     };
   }, [cropModalOpen]);
+
+  useEffect(() => {
+    if (!fotoAccionModalOpen) setFotoAccionModalStep('menu');
+  }, [fotoAccionModalOpen]);
 
   const cuentaDeSesion = useMemo(() => {
     if (!sessionOwnerEmail) return null;
@@ -913,6 +920,8 @@ export default function MiPerfil() {
   }, [cropImageSrc, cerrarModalRecorte]);
 
   const handlePhotoSelected = (e) => {
+    setFotoAccionModalOpen(false);
+    setFotoAccionModalStep('menu');
     const file = e.target.files?.[0];
     if (!file) return;
     if (!String(file.type || '').startsWith('image/')) {
@@ -1044,6 +1053,68 @@ export default function MiPerfil() {
       setGuardandoFoto(false);
     }
   };
+
+  const cerrarFotoAccionModal = useCallback(() => {
+    setFotoAccionModalOpen(false);
+    setFotoAccionModalStep('menu');
+  }, []);
+
+  const aplicarFotoUrlASesion = useCallback(
+    async (fotoUrlValue) => {
+      const owner = sessionOwnerEmail;
+      const userId = session?.user?.id ?? null;
+      if (!owner || !userId) {
+        setErrorMsg('Iniciá sesión para cambiar la foto.');
+        return;
+      }
+      if (!perfil) {
+        setErrorMsg('No encontramos tu ficha de jugador.');
+        return;
+      }
+
+      setGuardandoFoto(true);
+      setErrorMsg('');
+      setSuccessMsg('');
+      try {
+        const fotoVal =
+          fotoUrlValue == null || String(fotoUrlValue).trim() === '' ? null : String(fotoUrlValue).trim();
+
+        const { error: upDbErr } = await supabase
+          .from('jugadores_perfil')
+          .update({ foto_url: fotoVal })
+          .eq('email', owner);
+        if (upDbErr) {
+          setErrorMsg(mensajeErrorDbSupabase(upDbErr.message));
+          return;
+        }
+
+        setPerfil((prev) => (prev ? { ...prev, foto_url: fotoVal } : prev));
+        const na = nombreApellidoEditDesdePerfilRow(perfil);
+        persistJugadorPerfil({
+          nombre: na.nombre || String(perfil.nombre || '').trim() || 'Jugador',
+          apellido: na.apellido,
+          categoria: String(perfil.nivel || formData.nivel || '5ta').trim(),
+          whatsapp: String(perfil.whatsapp || userProfile?.whatsapp || '').trim(),
+          email: owner,
+          foto_url: fotoVal || '',
+        });
+        pendingFotoFileRef.current = null;
+        setFotoPendienteDeSubir(false);
+        setFotoPreview((prev) => {
+          if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+          return null;
+        });
+        await refreshJugadorPerfilFromSupabase(owner);
+        await refreshSession();
+        cerrarFotoAccionModal();
+        setSuccessMsg(fotoVal ? '✅ Foto actualizada' : '✅ Foto eliminada');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } finally {
+        setGuardandoFoto(false);
+      }
+    },
+    [sessionOwnerEmail, session?.user?.id, perfil, formData.nivel, userProfile?.whatsapp, cerrarFotoAccionModal]
+  );
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -2168,6 +2239,11 @@ export default function MiPerfil() {
   const paisNombre = paisParts.slice(1).join(' ');
   const categoriaColor = CATEGORIA_COLOR[perfil?.nivel] || '#999';
   const foto = perfil?.foto_url || cuentaDeSesion?.foto || null;
+  const puedeEliminarFotoPerfil = Boolean(
+    (fotoPreview && String(fotoPreview).trim()) ||
+      String(perfil?.foto_url || '').trim() ||
+      String(cuentaDeSesion?.foto || '').trim()
+  );
 
   const nombreCompletoTitulo = getDisplayName(userProfile || perfil, session);
   const aliasTituloGrande = editando
@@ -2272,8 +2348,14 @@ export default function MiPerfil() {
         />
         <button
           type="button"
-          aria-label="Subir foto de perfil"
-          onClick={() => fileInputRef.current?.click()}
+          aria-label="Cambiar foto de perfil"
+          onClick={() => {
+            if (!sessionOwnerEmail) {
+              fileInputRef.current?.click();
+              return;
+            }
+            setFotoAccionModalOpen(true);
+          }}
           style={{
             position: 'relative',
             width: '120px',
@@ -3483,6 +3565,211 @@ export default function MiPerfil() {
       ) : null}
 
       </div>
+
+      {fotoAccionModalOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={fotoAccionModalStep === 'menu' ? 'mi-perfil-foto-accion-titulo' : undefined}
+          aria-label={fotoAccionModalStep === 'avatars' ? 'Elegí un avatar predeterminado' : undefined}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 19900,
+            background: 'rgba(15, 23, 42, 0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            boxSizing: 'border-box',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget && !guardandoFoto) cerrarFotoAccionModal();
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: fotoAccionModalStep === 'avatars' ? 400 : 360,
+              background: '#fff',
+              borderRadius: '16px',
+              padding: '20px 18px 16px',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
+              boxSizing: 'border-box',
+            }}
+            onClick={(ev) => ev.stopPropagation()}
+          >
+            {fotoAccionModalStep === 'menu' ? (
+              <>
+                <h3 id="mi-perfil-foto-accion-titulo" style={{ margin: '0 0 16px', fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', textAlign: 'center' }}>
+                  Foto de perfil
+                </h3>
+                <button
+                  type="button"
+                  disabled={guardandoFoto}
+                  onClick={() => {
+                    cerrarFotoAccionModal();
+                    window.setTimeout(() => fileInputRef.current?.click(), 0);
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    marginBottom: '10px',
+                    padding: '14px 16px',
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    textAlign: 'left',
+                    borderRadius: '12px',
+                    border: '2px solid #22c55e',
+                    background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                    color: '#14532d',
+                    cursor: guardandoFoto ? 'default' : 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Elegir foto
+                  <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, opacity: 0.9, marginTop: '4px' }}>
+                    Subí una imagen desde tu dispositivo
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={guardandoFoto}
+                  onClick={() => setFotoAccionModalStep('avatars')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    marginBottom: '10px',
+                    padding: '14px 16px',
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    textAlign: 'left',
+                    borderRadius: '12px',
+                    border: '2px solid #6366f1',
+                    background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
+                    color: '#312e81',
+                    cursor: guardandoFoto ? 'default' : 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Usar avatar
+                  <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, opacity: 0.9, marginTop: '4px' }}>
+                    Elegí un dibujo predeterminado
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={guardandoFoto || !puedeEliminarFotoPerfil}
+                  onClick={() => void aplicarFotoUrlASesion(null)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    marginBottom: '12px',
+                    padding: '14px 16px',
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    textAlign: 'left',
+                    borderRadius: '12px',
+                    border: '2px solid #fecaca',
+                    background: puedeEliminarFotoPerfil ? '#fef2f2' : '#f1f5f9',
+                    color: puedeEliminarFotoPerfil ? '#991b1b' : '#94a3b8',
+                    cursor: guardandoFoto || !puedeEliminarFotoPerfil ? 'default' : 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Eliminar foto
+                  <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, opacity: 0.9, marginTop: '4px' }}>
+                    Volvé al avatar por defecto
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={guardandoFoto}
+                  onClick={cerrarFotoAccionModal}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px',
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#64748b',
+                    fontWeight: 700,
+                    fontSize: '15px',
+                    cursor: guardandoFoto ? 'default' : 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Cancelar
+                </button>
+                {guardandoFoto ? (
+                  <p style={{ margin: '12px 0 0', textAlign: 'center', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
+                    Guardando…
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <button
+                    type="button"
+                    disabled={guardandoFoto}
+                    onClick={() => setFotoAccionModalStep('menu')}
+                    style={{
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                      borderRadius: '10px',
+                      padding: '8px 12px',
+                      fontWeight: 800,
+                      cursor: guardandoFoto ? 'default' : 'pointer',
+                      color: '#334155',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    ← Atrás
+                  </button>
+                  <h3 style={{ margin: 0, flex: 1, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', textAlign: 'center' }}>
+                    Elegí un avatar
+                  </h3>
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {PRESET_PROFILE_AVATAR_URLS.map((url, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={guardandoFoto}
+                      onClick={() => void aplicarFotoUrlASesion(url)}
+                      style={{
+                        aspectRatio: '1',
+                        borderRadius: '14px',
+                        border: '2px solid #e2e8f0',
+                        padding: 0,
+                        overflow: 'hidden',
+                        cursor: guardandoFoto ? 'default' : 'pointer',
+                        background: '#f8fafc',
+                      }}
+                      aria-label={`Avatar predeterminado ${idx + 1}`}
+                    >
+                      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    </button>
+                  ))}
+                </div>
+                {guardandoFoto ? (
+                  <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
+                    Guardando…
+                  </p>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {cropModalOpen && cropImageSrc ? (
         <div

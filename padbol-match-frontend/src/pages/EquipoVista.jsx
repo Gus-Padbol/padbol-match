@@ -18,6 +18,7 @@ import {
   formatAliasConArroba,
   refreshJugadorPerfilFromSupabase,
   PERFIL_CHANGE_EVENT,
+  nombreCompletoJugadorPerfil,
 } from '../utils/jugadorPerfil';
 import { clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
 import {
@@ -119,7 +120,7 @@ function esJugadorPendiente(p) {
 function normalizePlayer(p) {
   if (!p) return null;
   if (typeof p === 'string') {
-    return { nombre: p, email: '', estado: 'confirmado' };
+    return { nombre: p, email: '', estado: 'confirmado', foto_url: '' };
   }
   const email = normalizeJugadorEmail(p);
   let estado = p.estado;
@@ -136,6 +137,7 @@ function normalizePlayer(p) {
     email,
     estado,
     rol: p.rol != null && String(p.rol).trim() ? String(p.rol).trim() : '',
+    foto_url: p?.foto_url != null && String(p.foto_url).trim() ? String(p.foto_url).trim() : '',
   };
 }
 
@@ -321,7 +323,6 @@ export default function EquipoVista() {
   const [sedeTorneoRow, setSedeTorneoRow] = useState(null);
   const [invitarJugadorInput, setInvitarJugadorInput] = useState('');
   const [invitarJugadorDebounced, setInvitarJugadorDebounced] = useState('');
-  const [invitarBuscarTodasSedes, setInvitarBuscarTodasSedes] = useState(false);
   const [invitarOpciones, setInvitarOpciones] = useState([]);
   const [invitarBuscando, setInvitarBuscando] = useState(false);
   const [invitarAgregandoUserId, setInvitarAgregandoUserId] = useState(null);
@@ -675,88 +676,42 @@ export default function EquipoVista() {
   }, [invitarJugadorInput]);
 
   useEffect(() => {
-    setInvitarBuscarTodasSedes(false);
-  }, [invitarJugadorDebounced]);
-
-  useEffect(() => {
     const q = invitarJugadorDebounced;
     if (q.length < 2) {
       setInvitarOpciones([]);
       setInvitarBuscando(false);
       return;
     }
+    const tid = equipo?.torneo_id != null ? Number(equipo.torneo_id) : NaN;
+    if (!Number.isFinite(tid) || tid <= 0) {
+      setInvitarOpciones([]);
+      setInvitarBuscando(false);
+      return;
+    }
     const seq = ++invitarSearchSeqRef.current;
     setInvitarBuscando(true);
-    const term = q.replace(/[%_\\]/g, '');
-    const pattern = `%${term}%`;
-    const myUid = session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null;
-    const sedeNombre = String(nombreSedeTorneo || '').trim();
-    const filtrarSedeClubHabitual = !invitarBuscarTodasSedes && Boolean(sedeNombre);
-
-    const camposJp =
-      'user_id, alias, foto_url, nombre, apellido, email, whatsapp, genero, lateralidad, nivel, categoria, ciudad';
-
-    const mk = (col) => {
-      let qq = supabase.from('jugadores_perfil').select(camposJp).ilike(col, pattern).limit(18);
-      if (filtrarSedeClubHabitual) qq = qq.ilike('ciudad', sedeNombre);
-      if (myUid) qq = qq.neq('user_id', myUid);
-      return qq;
-    };
-
-    void Promise.all([mk('alias'), mk('nombre'), mk('apellido')])
-      .then(([a, b, c]) => {
+    (async () => {
+      try {
+        const url = new URL(`${API_BACKEND_BASE}/api/jugadores/buscar`);
+        url.searchParams.set('q', q);
+        url.searchParams.set('torneo_id', String(tid));
+        if (session?.user?.id) url.searchParams.set('exclude_user_id', String(session.user.id));
+        const res = await fetch(url.toString());
+        const j = await res.json().catch(() => null);
         if (seq !== invitarSearchSeqRef.current) return;
         setInvitarBuscando(false);
-        const byUserId = new Map();
-        for (const row of [...(a.data || []), ...(b.data || []), ...(c.data || [])]) {
-          const uid = row?.user_id;
-          if (uid == null || uid === '') continue;
-          const em = String(row.email || '').trim().toLowerCase();
-          if (!em) continue;
-          const key = String(uid);
-          if (!byUserId.has(key)) byUserId.set(key, row);
+        if (!res.ok || !Array.isArray(j)) {
+          setInvitarOpciones([]);
+          return;
         }
-        let list = Array.from(byUserId.values());
-        list = list.filter((row) => {
-          const em = String(row.email || '').trim().toLowerCase();
-          const uid = String(row.user_id || '');
-          if (players.some((p) => normalizeJugadorEmail(p) === em || (uid && String(p.id || '') === uid)))
-            return false;
-          if (requests.some((r) => normalizeJugadorEmail(r) === em || (uid && String(r.id || '') === uid)))
-            return false;
-          return true;
-        });
-        list = list.filter((row) => {
-          const em = String(row.email || '').trim().toLowerCase();
-          const uid = String(row.user_id || '');
-          for (const e of torneoEquipos) {
-            if (equipo && Number(e.id) === Number(equipo.id)) continue;
-            const ps = getPlayers(e);
-            if (ps.some((p) => normalizeJugadorEmail(p) === em || (uid && String(p.id || '') === uid)))
-              return false;
-            const rs = getRequests(e);
-            if (rs.some((r) => normalizeJugadorEmail(r) === em || (uid && String(r.id || '') === uid)))
-              return false;
-          }
-          return true;
-        });
-        setInvitarOpciones(list.slice(0, 15));
-      })
-      .catch(() => {
+        setInvitarOpciones(j.slice(0, 12));
+      } catch {
         if (seq !== invitarSearchSeqRef.current) return;
         setInvitarBuscando(false);
         setInvitarOpciones([]);
-      });
-  }, [
-    invitarJugadorDebounced,
-    invitarBuscarTodasSedes,
-    nombreSedeTorneo,
-    session?.user?.id,
-    players,
-    requests,
-    torneoEquipos,
-    equipo?.id,
-  ]);
+      }
+    })();
+  }, [invitarJugadorDebounced, equipo?.torneo_id, session?.user?.id]);
 
   const nombreTorneoCtx = useMemo(
     () => ({
@@ -1101,6 +1056,16 @@ export default function EquipoVista() {
     const victima = dialogoEliminarJugador?.jugador;
     if (!equipo || !victima || !soyCreador) return;
     if (esCapitanJugadorEnFila(victima, equipo)) return;
+    const insEq = String(getEquipoInscripcionEstado(equipo) || '').toLowerCase();
+    const puedeEditarPlantel =
+      torneo &&
+      torneo.estado !== 'cancelado' &&
+      torneo.estado !== 'finalizado' &&
+      insEq !== 'confirmado';
+    if (!puedeEditarPlantel) {
+      alert('No podés quitar jugadores: la inscripción del equipo ya está confirmada.');
+      return;
+    }
 
     setSavingEliminarJugador(true);
     const nuevosJugadores = players.filter((pl) => !samePerson(pl, victima));
@@ -1190,8 +1155,18 @@ export default function EquipoVista() {
   const agregarJugadorInvitadoDesdePerfil = async (row) => {
     if (!equipo || !soyCreador || !equipoIdParam) return;
     if (torneoCancelado || torneo?.estado === 'finalizado') return;
-    if (equipo.equipo_abierto === false) {
+    const insEq = String(getEquipoInscripcionEstado(equipo) || '').toLowerCase();
+    const puedeEditarPlantel =
+      torneo &&
+      torneo.estado !== 'cancelado' &&
+      torneo.estado !== 'finalizado' &&
+      insEq !== 'confirmado';
+    if (equipo.equipo_abierto === false && !puedeEditarPlantel) {
       alert('Equipo cerrado: solo podés invitar con el link; no se suman jugadores desde la búsqueda.');
+      return;
+    }
+    if (row?.disponibilidad === 'tiene_equipo') {
+      alert('Ese jugador ya tiene equipo en este torneo.');
       return;
     }
     const uid = row?.user_id != null && row.user_id !== '' ? String(row.user_id) : '';
@@ -1200,7 +1175,16 @@ export default function EquipoVista() {
       alert('Ese perfil no tiene email vinculado. Usá «Invitar por WhatsApp».');
       return;
     }
-    if (!perfilTorneoCompletoDesdeFilaJp(row)) {
+    let fullRow = row;
+    const { data: jpRow, error: jpErr } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, nombre, apellido, alias, email, whatsapp, genero, lateralidad, nivel, categoria, ciudad, foto_url')
+      .eq('user_id', uid)
+      .maybeSingle();
+    if (!jpErr && jpRow) {
+      fullRow = { ...row, ...jpRow };
+    }
+    if (!perfilTorneoCompletoDesdeFilaJp(fullRow)) {
       alert(
         'Este jugador no tiene la ficha completa para torneos (WhatsApp, género, categoría, lateralidad). Invitalo con «Invitar por WhatsApp».'
       );
@@ -1242,11 +1226,12 @@ export default function EquipoVista() {
     try {
       const nuevo = normalizePlayer({
         id: uid,
-        nombre: String(row.nombre || '').trim(),
-        apellido: String(row.apellido || '').trim(),
-        alias: String(row.alias || '').trim(),
+        nombre: String(fullRow.nombre || '').trim(),
+        apellido: String(fullRow.apellido || '').trim(),
+        alias: String(fullRow.alias || '').trim(),
         email,
         estado: 'confirmado',
+        foto_url: fullRow.foto_url != null && String(fullRow.foto_url).trim() ? String(fullRow.foto_url).trim() : '',
       });
       const creadorEntry =
         session?.user && buildCreadorJugadorParaEquipo(session, userProfile, yo);
@@ -1318,6 +1303,11 @@ export default function EquipoVista() {
     esMiEquipo && !torneoCancelado && (formaPartePlantel || soyCreador);
 
   const inscripcionEstadoEquipo = equipo ? getEquipoInscripcionEstado(equipo) : 'pendiente';
+  const puedeCapitanEditarPlantelInscripcionNoConfirmada = useMemo(() => {
+    if (!soyCreador || !equipo || !torneo) return false;
+    if (torneo.estado === 'cancelado' || torneo.estado === 'finalizado') return false;
+    return String(inscripcionEstadoEquipo || '').toLowerCase() !== 'confirmado';
+  }, [soyCreador, equipo, torneo, inscripcionEstadoEquipo]);
   const costoInscripcionTorneoEq = torneo ? precioInscripcionTorneo(torneo) : 0;
   const badgePendientePagoEquipoVista =
     equipoListoJugar &&
@@ -1834,7 +1824,10 @@ export default function EquipoVista() {
                         ) : null
                       }
                     />
-                    {soyCreador && !torneoCancelado && !esCapitanJugadorEnFila(p, equipo) ? (
+                    {soyCreador &&
+                    !torneoCancelado &&
+                    puedeCapitanEditarPlantelInscripcionNoConfirmada &&
+                    !esCapitanJugadorEnFila(p, equipo) ? (
                       <button
                         type="button"
                         aria-label={`Quitar a ${jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)} del equipo`}
@@ -2021,7 +2014,7 @@ export default function EquipoVista() {
         torneo &&
         torneo.estado !== 'finalizado' &&
         torneo.estado !== 'cancelado' &&
-        !plazasLlenasEquipo &&
+        (!plazasLlenasEquipo || puedeCapitanEditarPlantelInscripcionNoConfirmada) &&
         invitarPadbolMatchWhatsappHref ? (
           <div
             style={{
@@ -2030,15 +2023,26 @@ export default function EquipoVista() {
             }}
           >
             <h3 style={{ marginTop: 0 }}>Invitar jugadores</h3>
+            {plazasLlenasEquipo && puedeCapitanEditarPlantelInscripcionNoConfirmada ? (
+              <p
+                style={{
+                  margin: '0 0 12px',
+                  fontSize: '13px',
+                  color: '#92400e',
+                  fontWeight: 700,
+                  lineHeight: 1.45,
+                  padding: '10px 12px',
+                  background: '#fffbeb',
+                  border: '1px solid #fcd34d',
+                  borderRadius: '10px',
+                }}
+              >
+                Equipo completo: podés quitar a un jugador (excepto el capitán) y sumar otro con la búsqueda, mientras la
+                inscripción no esté confirmada.
+              </p>
+            ) : null}
             <p style={{ margin: '0 0 12px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-              {nombreSedeTorneo ? (
-                <>
-                  Buscá por nombre, apellido o alias. Primero listamos perfiles con club habitual en{' '}
-                  <strong>{nombreSedeTorneo}</strong> (como en Mi perfil).
-                </>
-              ) : (
-                <>Buscá por nombre, apellido o alias (mínimo 2 caracteres).</>
-              )}
+              Buscá por nombre, apellido o alias (mínimo 2 caracteres). Misma búsqueda que en la inscripción al torneo.
             </p>
             <input
               type="search"
@@ -2061,38 +2065,10 @@ export default function EquipoVista() {
             {invitarBuscando ? (
               <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted }}>Buscando…</p>
             ) : null}
-            {!invitarBuscando &&
-            invitarJugadorDebounced.length >= 2 &&
-            !invitarBuscarTodasSedes &&
-            nombreSedeTorneo &&
-            invitarOpciones.length === 0 ? (
-              <div style={{ marginBottom: '12px' }}>
-                <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                  No hay coincidencias en esta sede.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setInvitarBuscarTodasSedes(true)}
-                  style={{
-                    padding: '8px 14px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    borderRadius: '10px',
-                    border: '1px solid #6366f1',
-                    background: '#eef2ff',
-                    color: '#4338ca',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Buscar en todas las sedes
-                </button>
-              </div>
-            ) : null}
-            {!invitarBuscando &&
-            invitarJugadorDebounced.length >= 2 &&
-            invitarOpciones.length === 0 &&
-            (invitarBuscarTodasSedes || !nombreSedeTorneo) ? (
-              <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b' }}>No hay resultados.</p>
+            {!invitarBuscando && invitarJugadorDebounced.length >= 2 && invitarOpciones.length === 0 ? (
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b' }}>
+                No hay coincidencias. Podés invitar por WhatsApp.
+              </p>
             ) : null}
             {invitarOpciones.length > 0 ? (
               <ul
@@ -2107,20 +2083,20 @@ export default function EquipoVista() {
               >
                 {invitarOpciones.map((row) => {
                   const uid = row?.user_id != null ? String(row.user_id) : '';
-                  const nombreLinea = [String(row.nombre || '').trim(), String(row.apellido || '').trim()]
-                    .filter(Boolean)
-                    .join(' ')
-                    .trim();
-                  const labelNombre = nombreLinea || 'Jugador';
-                  const aliasTxt = formatAliasConArroba(row.alias);
+                  const nom = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || 'Jugador';
+                  const al = String(row.alias || '').trim();
                   const foto = String(row.foto_url || '').trim();
-                  const puedeSumarDirecto = perfilTorneoCompletoDesdeFilaJp(row);
+                  const tieneEquipoTorneo = row.disponibilidad === 'tiene_equipo';
+                  const badgeLabel = tieneEquipoTorneo ? 'Tiene equipo' : 'Buscando compañero';
+                  const badgeBg = tieneEquipoTorneo ? '#fee2e2' : '#dbeafe';
+                  const badgeColor = tieneEquipoTorneo ? '#991b1b' : '#1e40af';
                   const busy = invitarAgregandoUserId === uid;
                   return (
                     <li key={uid || row.email}>
                       <button
                         type="button"
-                        disabled={busy || !puedeSumarDirecto}
+                        disabled={busy || tieneEquipoTorneo}
+                        title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : undefined}
                         onClick={() => void agregarJugadorInvitadoDesdePerfil(row)}
                         style={{
                           width: '100%',
@@ -2132,8 +2108,8 @@ export default function EquipoVista() {
                           borderRadius: '12px',
                           border: '1px solid #e2e8f0',
                           background: '#f8fafc',
-                          cursor: busy || !puedeSumarDirecto ? 'default' : 'pointer',
-                          opacity: busy ? 0.7 : puedeSumarDirecto ? 1 : 0.85,
+                          cursor: busy || tieneEquipoTorneo ? 'default' : 'pointer',
+                          opacity: busy ? 0.7 : tieneEquipoTorneo ? 0.72 : 1,
                         }}
                       >
                         <div
@@ -2165,25 +2141,43 @@ export default function EquipoVista() {
                             />
                           ) : (
                             <span style={{ color: '#fff', fontWeight: 800, fontSize: '16px' }}>
-                              {String(labelNombre).trim().charAt(0).toUpperCase() || '?'}
+                              {String(nom || '?')
+                                .trim()
+                                .charAt(0)
+                                .toUpperCase()}
                             </span>
                           )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>{labelNombre}</div>
-                          {aliasTxt ? (
-                            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>{aliasTxt}</div>
+                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>{nom}</div>
+                          {al ? (
+                            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>
+                              {formatAliasConArroba(al)}
+                            </div>
                           ) : null}
-                          {!puedeSumarDirecto ? (
-                            <div style={{ fontSize: '12px', color: T.colorWarningSoft, marginTop: '4px', fontWeight: 600 }}>
-                              Ficha incompleta — usá WhatsApp abajo
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: '12px', color: '#15803d', marginTop: '4px', fontWeight: 700 }}>
-                              Tocá para sumar al equipo
-                            </div>
-                          )}
+                          <div style={{ fontSize: '12px', color: '#15803d', marginTop: '4px', fontWeight: 700 }}>
+                            {tieneEquipoTorneo ? 'No disponible para este equipo' : 'Tocá para sumar al equipo'}
+                          </div>
                         </div>
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                            padding: '4px 8px',
+                            borderRadius: '999px',
+                            background: badgeBg,
+                            color: badgeColor,
+                            border: `1px solid ${tieneEquipoTorneo ? '#fecaca' : '#bfdbfe'}`,
+                            maxWidth: '120px',
+                            textAlign: 'center',
+                            lineHeight: 1.25,
+                          }}
+                        >
+                          {badgeLabel}
+                        </span>
                       </button>
                     </li>
                   );
