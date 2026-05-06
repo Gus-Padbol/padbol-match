@@ -27,6 +27,11 @@ import {
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
+import {
+  mensajeEstadoTorneoSoloLecturaAdmin,
+  opcionesSelectEstadoTorneoAdmin,
+  validarCambioEstadoTorneoAdminGuardar,
+} from '../utils/torneoEstadoTransiciones';
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
@@ -1161,6 +1166,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       alert('Seleccioná la categoría del torneo');
       return;
     }
+    const origRow = torneos.find((t) => t.id === torneoId);
+    const errEstado = validarCambioEstadoTorneoAdminGuardar({
+      estadoApiTorneoActual: origRow?.estado,
+      estadoFormNuevo: editTorneoForm.estado,
+      isSuperAdmin,
+    });
+    if (errEstado) {
+      alert(errEstado);
+      return;
+    }
     setSavingTorneo(true);
     try {
       const body = {
@@ -1169,9 +1184,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         categoria: String(editTorneoForm.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
         estado: mapEstadoTorneoFormParaApi(editTorneoForm.estado || 'proximo'),
       };
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(body),
       });
       if (res.ok) {
@@ -2642,19 +2659,48 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
-                            Estado (manual)
+                            {isSuperAdmin ? 'Estado (manual)' : 'Estado'}
                           </label>
-                          <select
-                            style={inp}
-                            value={editTorneoForm.estado || 'proximo'}
-                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, estado: e.target.value }))}
-                          >
-                            <option value="proximo">Próximo</option>
-                            <option value="abierto">Inscripción abierta</option>
-                            <option value="en_curso">En curso</option>
-                            <option value="finalizado">Finalizado</option>
-                            <option value="cancelado">Cancelado</option>
-                          </select>
+                          {(() => {
+                            const opts = opcionesSelectEstadoTorneoAdmin(torneo.estado, isSuperAdmin);
+                            const soloLecturaMsg = mensajeEstadoTorneoSoloLecturaAdmin(torneo.estado, isSuperAdmin);
+                            if (opts) {
+                              return (
+                                <>
+                                  <select
+                                    style={inp}
+                                    value={editTorneoForm.estado || 'proximo'}
+                                    onChange={(e) => setEditTorneoForm((p) => ({ ...p, estado: e.target.value }))}
+                                  >
+                                    {opts.map((o) => (
+                                      <option key={o.value} value={o.value}>
+                                        {o.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {!isSuperAdmin && opts.length === 2 ? (
+                                    <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>
+                                      Desde «Próximo» solo podés pasar a «Inscripción abierta». Lo demás se hace desde la vista del torneo.
+                                    </div>
+                                  ) : null}
+                                </>
+                              );
+                            }
+                            return (
+                              <div
+                                style={{
+                                  ...inp,
+                                  background: '#f9fafb',
+                                  color: '#374151',
+                                  fontSize: '12px',
+                                  lineHeight: 1.35,
+                                  padding: '8px 10px',
+                                }}
+                              >
+                                {soloLecturaMsg || 'Estado sin edición manual.'}
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Fecha inicio</label>

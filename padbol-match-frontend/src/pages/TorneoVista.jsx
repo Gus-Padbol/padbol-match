@@ -443,15 +443,18 @@ export default function TorneoVista() {
     }
     setIniciando(true);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ estado: 'en_curso' }),
       });
       if (res.ok) {
         setTorneo((prev) => ({ ...prev, estado: 'en_curso' }));
       } else {
-        alert('Error al iniciar el torneo');
+        const err = await res.json().catch(() => ({}));
+        alert(err?.error || 'Error al iniciar el torneo');
       }
     } catch (err) {
       alert('Error: ' + err.message);

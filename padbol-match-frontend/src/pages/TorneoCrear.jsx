@@ -33,6 +33,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     equipos_por_grupo: '',
     clasificados_por_grupo: '',
     mejores_terceros_clasificados: '',
+    fecha_apertura_inscripcion: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -171,6 +172,17 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       payload.equipos_por_grupo = ep;
       payload.clasificados_por_grupo = cp;
       payload.mejores_terceros_clasificados = Number.isFinite(mt) && mt >= 0 ? mt : 0;
+    }
+
+    const rawFap = String(formData.fecha_apertura_inscripcion ?? '').trim();
+    if (rawFap) {
+      const d = new Date(rawFap);
+      if (Number.isNaN(d.getTime())) {
+        setError('La fecha/hora de apertura automática no es válida');
+        setLoading(false);
+        return;
+      }
+      payload.fecha_apertura_inscripcion = d.toISOString();
     }
 
     try {
@@ -391,6 +403,20 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   </div>
                 </>
               )}
+
+              <div className="form-group">
+                <label>Apertura automática de inscripción (opcional)</label>
+                <input
+                  type="datetime-local"
+                  name="fecha_apertura_inscripcion"
+                  value={formData.fecha_apertura_inscripcion}
+                  onChange={handleChange}
+                />
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
+                  Si lo completás, el sistema pasa el torneo a «Inscripción abierta» en esa fecha y hora (torneo en
+                  planificación).
+                </small>
+              </div>
 
               <div className="form-row">
                 <div className="form-group">

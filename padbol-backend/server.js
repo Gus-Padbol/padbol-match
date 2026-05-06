@@ -976,6 +976,24 @@ function normalizeTorneoEstadoForDb(raw) {
   return null;
 }
 
+/** Transiciones permitidas sin rol super_admin (PATCH/PUT estado). */
+function torneoTransicionEstadoPermitidaNonSuper(prevDb, nextDb) {
+  const p = normalizeTorneoEstadoForDb(prevDb) || 'planificacion';
+  const n = normalizeTorneoEstadoForDb(nextDb);
+  if (!n) return false;
+  if (p === n) return true;
+  return (p === 'planificacion' && n === 'abierto') || (p === 'abierto' && n === 'en_curso');
+}
+
+/** Body → columna timestamptz o null; `omit` si no vino la clave. */
+function normalizeFechaAperturaInscripcionInput(v) {
+  if (v === undefined) return { action: 'omit' };
+  if (v === null || v === '') return { action: 'set', value: null };
+  const d = new Date(String(v).trim());
+  if (Number.isNaN(d.getTime())) return { action: 'invalid' };
+  return { action: 'set', value: d.toISOString() };
+}
+
 // ===== TORNEOS =====
 app.post('/api/torneos', async (req, res) => {
   try {
@@ -997,6 +1015,7 @@ app.post('/api/torneos', async (req, res) => {
       clasificados_por_grupo,
       mejores_terceros_clasificados,
       estado: estadoBody,
+      fecha_apertura_inscripcion: fechaAperturaBody,
     } = req.body;
 
     const estadoNorm = normalizeTorneoEstadoForDb(estadoBody);
@@ -1039,6 +1058,14 @@ app.post('/api/torneos', async (req, res) => {
       if (Number.isFinite(ep) && ep > 0) row.equipos_por_grupo = ep;
       if (Number.isFinite(cp) && cp >= 0) row.clasificados_por_grupo = cp;
       if (Number.isFinite(mt) && mt >= 0) row.mejores_terceros_clasificados = mt;
+    }
+
+    const fap = normalizeFechaAperturaInscripcionInput(fechaAperturaBody);
+    if (fap.action === 'invalid') {
+      return res.status(400).json({ error: 'fecha_apertura_inscripcion inválida' });
+    }
+    if (fap.action === 'set') {
+      row.fecha_apertura_inscripcion = fap.value;
     }
 
     const { data, error } = await supabase
@@ -1271,6 +1298,7 @@ async function handleTorneoPatchOrPut(req, res) {
       cupos_maximos,
       horas_revelar_equipos,
       costo_inscripcion,
+      fecha_apertura_inscripcion: fechaAperturaPatch,
     } = req.body;
 
     const { data: prevRow, error: prevErr } = await supabase
@@ -1289,8 +1317,26 @@ async function handleTorneoPatchOrPut(req, res) {
         categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre';
     }
     if (estado !== undefined) {
+      const rawEst = String(estado ?? '').trim();
       const estNorm = normalizeTorneoEstadoForDb(estado);
-      if (estNorm) patch.estado = estNorm;
+      if (rawEst && !estNorm) {
+        return res.status(400).json({ error: 'Estado de torneo inválido' });
+      }
+      if (estNorm) {
+        const prevNorm = normalizeTorneoEstadoForDb(prevRow?.estado) || 'planificacion';
+        if (estNorm !== prevNorm) {
+          const user = await authUserFromBearer(req);
+          if (!user?.email) {
+            return res.status(401).json({ error: 'Autenticación requerida para cambiar el estado del torneo' });
+          }
+          const rowRole = await fetchUserRoleRow(user.email);
+          const superA = isSuperAdminApi(user.email, rowRole?.role);
+          if (!superA && !torneoTransicionEstadoPermitidaNonSuper(prevNorm, estNorm)) {
+            return res.status(403).json({ error: 'Transición de estado no permitida' });
+          }
+          patch.estado = estNorm;
+        }
+      }
     }
     if (fecha_inicio !== undefined) patch.fecha_inicio = fecha_inicio;
     if (fecha_fin !== undefined) patch.fecha_fin = fecha_fin;
@@ -1309,6 +1355,15 @@ async function handleTorneoPatchOrPut(req, res) {
     if (costo_inscripcion !== undefined && costo_inscripcion !== null && costo_inscripcion !== '') {
       const c = Number(String(costo_inscripcion).replace(',', '.'));
       if (Number.isFinite(c) && c >= 0) patch.costo_inscripcion = c;
+    }
+    if (fechaAperturaPatch !== undefined) {
+      const fap = normalizeFechaAperturaInscripcionInput(fechaAperturaPatch);
+      if (fap.action === 'invalid') {
+        return res.status(400).json({ error: 'fecha_apertura_inscripcion inválida' });
+      }
+      if (fap.action === 'set') {
+        patch.fecha_apertura_inscripcion = fap.value;
+      }
     }
 
     const { data, error } = await supabase.from('torneos').update(patch).eq('id', id).select();
@@ -3373,6 +3428,34 @@ async function cierreInscripcionTorneos24hAntesInicio() {
     }
   }
 }
+
+/** Inscripción automática: `fecha_apertura_inscripcion` alcanzada → estado abierto. */
+async function aplicarFechaAperturaInscripcionTorneos() {
+  const nowIso = new Date().toISOString();
+  const { data: updated, error } = await supabase
+    .from('torneos')
+    .update({ estado: 'abierto', updated_at: new Date() })
+    .not('fecha_apertura_inscripcion', 'is', null)
+    .lte('fecha_apertura_inscripcion', nowIso)
+    .in('estado', ['planificacion', 'proximo'])
+    .select('id, nombre');
+
+  if (error) throw error;
+  for (const row of updated || []) {
+    void notifyListaEsperaInscripcionAbierta(row.id, row.nombre);
+  }
+  if (updated?.length) {
+    console.log(`📅 Apertura automática inscripción: ${updated.length} torneo(s)`);
+  }
+}
+
+cron.schedule('*/10 * * * *', async () => {
+  try {
+    await aplicarFechaAperturaInscripcionTorneos();
+  } catch (err) {
+    console.error('❌ Cron fecha apertura inscripción torneos:', err.message);
+  }
+}, { timezone: 'America/Argentina/Buenos_Aires' });
 
 cron.schedule('0 * * * *', async () => {
   try {
