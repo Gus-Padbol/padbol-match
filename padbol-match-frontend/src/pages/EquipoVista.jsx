@@ -1590,7 +1590,7 @@ export default function EquipoVista() {
                         url={equipoShareMeta.url}
                         style={{ width: '100%' }}
                       >
-                        Compartir mi equipo
+                        Compartir equipo
                       </ShareLinkButton>
                     </div>
                   ) : null}
