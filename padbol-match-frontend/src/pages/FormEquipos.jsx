@@ -29,7 +29,11 @@ import {
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
 import useUserRole from '../hooks/useUserRole';
-import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
+import {
+  computeIsAdminEnTorneo,
+  computePuedeGestionarEquiposTorneo,
+  pathnameIsAdminRoute,
+} from '../utils/torneoAdminAccess';
 import { mensajeConfirmacionCupoTrasEquipoCompleto } from '../utils/torneoRevelacionEquipos';
 import {
   jugadorNombreTorneoEtiqueta,
@@ -177,6 +181,7 @@ export default function FormEquipos() {
   const torneoId = parseInt(id, 10);
   const navigate = useNavigate();
   const location = useLocation();
+  const enRutaAdminEquipos = pathnameIsAdminRoute(location.pathname);
   const [searchParams] = useSearchParams();
   const wantsCrearEquipo = searchParams.get('crear') === '1';
   /** Navegación desde TorneoVista con `state: { fromAdmin: false }` (inscripción jugador). */
@@ -728,9 +733,9 @@ export default function FormEquipos() {
         userSedeId,
         userPaisRol,
         fromAdmin: location.state?.fromAdmin === true,
-        enRutaAdmin: false,
+        enRutaAdmin: enRutaAdminEquipos,
       }),
-    [authEmail, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
+    [authEmail, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin, enRutaAdminEquipos]
   );
 
   const puedeGestionarEquiposTorneo = useMemo(
@@ -742,9 +747,9 @@ export default function FormEquipos() {
         userSedeId,
         userPaisRol,
         fromAdmin: contextoGestionEquiposTorneo,
-        enRutaAdmin: false,
+        enRutaAdmin: enRutaAdminEquipos,
       }),
-    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, contextoGestionEquiposTorneo]
+    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, contextoGestionEquiposTorneo, enRutaAdminEquipos]
   );
 
   /** UI gestión: solo con `state.fromAdmin === true` explícito (no sessionStorage). */
@@ -2642,7 +2647,7 @@ export default function FormEquipos() {
             navigate={navigate}
             session={session}
             isAdmin={mostrarUiAdminFormEquipos}
-            equiposRevelacionBypass={esAdminGestionTorneo}
+            equiposRevelacionBypass={mostrarUiAdminFormEquipos}
             puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
             navigateState={torneoNavStateForm}
             jugadorNombreTorneoCtx={nombreTorneoCtxForm}

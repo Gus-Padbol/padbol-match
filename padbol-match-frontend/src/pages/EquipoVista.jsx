@@ -27,7 +27,11 @@ import {
   torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
 import useUserRole from '../hooks/useUserRole';
-import { computeIsAdminEnTorneo, isGlobalSuperAdminEmailOrRole } from '../utils/torneoAdminAccess';
+import {
+  computeIsAdminEnTorneo,
+  isGlobalSuperAdminEmailOrRole,
+  pathnameIsAdminRoute,
+} from '../utils/torneoAdminAccess';
 import { getDisplayName } from '../utils/displayName';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import {
@@ -323,6 +327,7 @@ export default function EquipoVista() {
   const currentClienteTorneoEq = useMemo(() => (authEmail ? { email: authEmail } : null), [authEmail]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentClienteTorneoEq);
   const fromAdminStrict = location.state?.fromAdmin === true;
+  const enRutaAdminEquipo = pathnameIsAdminRoute(location.pathname);
   const isSuperAdmin = useMemo(
     () => isGlobalSuperAdminEmailOrRole(authEmail, rol) && fromAdminStrict,
     [authEmail, rol, fromAdminStrict]
@@ -338,9 +343,9 @@ export default function EquipoVista() {
         userSedeId,
         userPaisRol,
         fromAdmin: fromAdminStrict,
-        enRutaAdmin: false,
+        enRutaAdmin: enRutaAdminEquipo,
       }),
-    [authEmailLower, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, fromAdminStrict]
+    [authEmailLower, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, fromAdminStrict, enRutaAdminEquipo]
   );
 
   const tituloHeaderEquipo = esAdminGestionTorneoEq ? 'Equipo' : 'Mi Equipo';

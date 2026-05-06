@@ -1,8 +1,17 @@
 /**
  * Permisos de gestión de torneo según `user_roles` y sede/nivel del torneo.
  * El bypass (ver equipos antes de tiempo, barra de gestión, etc.) solo aplica si
- * `fromAdmin === true` (navigation state) o `enRutaAdmin === true` (pathname /admin).
+ * la ruta actual es `/admin` (o subruta) o `location.state.fromAdmin === true`.
  */
+
+/** True si el pathname es el panel (`/admin`, `/admin/nueva-sede`, etc.). */
+export function pathnameIsAdminRoute(pathname) {
+  const p = String(pathname || '/')
+    .split('?')[0]
+    .split('#')[0]
+    .replace(/\/+$/, '') || '/';
+  return p === '/admin' || p.startsWith('/admin/');
+}
 
 export function mismoIdSedeTorneo(a, b) {
   if (a == null || b == null || b === '') return false;
@@ -62,7 +71,7 @@ export function isGlobalSuperAdminEmailOrRole(email, rol) {
 
 /**
  * Puede usar controles de gestión del torneo (iniciar/finalizar, resultados, revelar equipos, etc.).
- * Requiere contexto panel: `fromAdmin` o estar en ruta `/admin`.
+ * Requiere contexto panel: ruta `/admin` o `fromAdmin === true` en el state de navegación.
  */
 export function computeIsAdminEnTorneo({
   email,
@@ -74,7 +83,7 @@ export function computeIsAdminEnTorneo({
   fromAdmin,
   enRutaAdmin = false,
 }) {
-  const adminCtx = Boolean(fromAdmin) || Boolean(enRutaAdmin);
+  const adminCtx = enRutaAdmin === true || fromAdmin === true;
   if (!adminCtx || !torneo) return false;
 
   const em = String(email || '').trim().toLowerCase();
@@ -112,7 +121,7 @@ export function computePuedeGestionarEquiposTorneo({
   enRutaAdmin = false,
 }) {
   if (!torneo) return false;
-  const ctx = Boolean(fromAdmin) || Boolean(enRutaAdmin);
+  const ctx = enRutaAdmin === true || fromAdmin === true;
   if (!ctx) return false;
 
   if (rol === 'super_admin') return true;

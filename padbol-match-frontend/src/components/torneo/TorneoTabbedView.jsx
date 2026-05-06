@@ -289,7 +289,7 @@ export default function TorneoTabbedView({
   navigate,
   session,
   isAdmin = false,
-  /** Admin del torneo (sede/nivel) sin `fromAdmin`: ver lista de equipos aunque aplique ocultación por horas. */
+  /** Ver equipos aunque aplique ocultación por horas: solo con contexto panel (`/admin` o `state.fromAdmin`). */
   equiposRevelacionBypass = false,
   /** Gestionar equipos: rol aplicable y contexto admin (`fromAdmin` / sesión panel). */
   puedeGestionarEquiposTorneo = false,

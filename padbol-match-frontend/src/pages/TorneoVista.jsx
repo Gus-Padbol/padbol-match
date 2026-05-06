@@ -18,7 +18,11 @@ import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
-import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
+import {
+  computeIsAdminEnTorneo,
+  computePuedeGestionarEquiposTorneo,
+  pathnameIsAdminRoute,
+} from '../utils/torneoAdminAccess';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import {
   fetchJugadoresPerfilPorJugadores,
@@ -111,6 +115,7 @@ export default function TorneoVista() {
     [perfilMapsVista, session, userProfile, authUserId]
   );
   const fromAdmin = location.state?.fromAdmin === true;
+  const enRutaAdminTorneo = pathnameIsAdminRoute(location.pathname);
   const isAdmin = useMemo(
     () =>
       computeIsAdminEnTorneo({
@@ -121,9 +126,9 @@ export default function TorneoVista() {
         userSedeId,
         userPaisRol,
         fromAdmin,
-        enRutaAdmin: false,
+        enRutaAdmin: enRutaAdminTorneo,
       }),
-    [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
+    [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin, enRutaAdminTorneo]
   );
   /** Barra violeta y permisos de edición en pestañas: solo con `state.fromAdmin === true`. */
   const isAdminGestionEnEstaVista = isAdmin && fromAdmin;
@@ -136,9 +141,9 @@ export default function TorneoVista() {
         userSedeId,
         userPaisRol,
         fromAdmin,
-        enRutaAdmin: false,
+        enRutaAdmin: enRutaAdminTorneo,
       }),
-    [torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
+    [torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin, enRutaAdminTorneo]
   );
   const torneoNavState = useMemo(
     () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),
@@ -723,7 +728,7 @@ export default function TorneoVista() {
           navigate={navigate}
           session={session}
           isAdmin={isAdminGestionEnEstaVista}
-          equiposRevelacionBypass={isAdmin}
+          equiposRevelacionBypass={isAdminGestionEnEstaVista}
           puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
           navigateState={torneoNavStateParaTabbed}
           jugadorNombreTorneoCtx={nombreTorneoCtxVista}
