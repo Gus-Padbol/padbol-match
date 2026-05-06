@@ -36,17 +36,27 @@ export function esEstadoCanceladoTorneo(estadoRaw) {
   return estadoTorneoNormalizado(estadoRaw) === 'cancelado';
 }
 
+/** Valor del pill de filtro normalizado (trim, minúsculas, sin acentos en la clave). */
+export function normalizeTorneoFiltroEstadoPill(filtro) {
+  return String(filtro ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 /**
  * @param {{ estado?: string } | null} t
  * @param {'todos'|'inscripcion_abierta'|'proximo'|'en_curso'|'finalizado'|'cancelado'} filtro
  */
 export function torneoPasaFiltroEstadoVista(t, filtro) {
-  if (filtro === 'todos') return true;
-  if (filtro === 'finalizado') return esEstadoFinalizadoTorneo(t?.estado);
-  if (filtro === 'en_curso') return esEstadoEnCursoTorneo(t?.estado);
-  if (filtro === 'inscripcion_abierta') return esInscripcionAbiertaTorneo(t?.estado);
-  if (filtro === 'proximo') return esProximoTorneo(t?.estado);
-  if (filtro === 'cancelado') return esEstadoCanceladoTorneo(t?.estado);
+  const f = normalizeTorneoFiltroEstadoPill(filtro);
+  if (f === 'todos' || f === 'todas' || f === '') return true;
+  if (f === 'finalizado') return esEstadoFinalizadoTorneo(t?.estado);
+  if (f === 'en_curso') return esEstadoEnCursoTorneo(t?.estado);
+  if (f === 'inscripcion_abierta') return esInscripcionAbiertaTorneo(t?.estado);
+  if (f === 'proximo') return esProximoTorneo(t?.estado);
+  if (f === 'cancelado') return esEstadoCanceladoTorneo(t?.estado);
   return true;
 }
 

@@ -17,7 +17,11 @@ import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
-import { FILTROS_ESTADO_TORNEO_PILLS, torneoPasaFiltroEstadoVista } from '../utils/torneoEstadoFiltroPills';
+import {
+  FILTROS_ESTADO_TORNEO_PILLS,
+  normalizeTorneoFiltroEstadoPill,
+  torneoPasaFiltroEstadoVista,
+} from '../utils/torneoEstadoFiltroPills';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
@@ -80,6 +84,37 @@ const ADMIN_TABS_ALLOWED = new Set(['resumen', 'torneos', 'reservas', 'validacio
 function sanitizeAdminActiveTab(raw) {
   const t = String(raw || '').trim();
   return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
+}
+
+/** Pills de filtro: inactivo blanco + borde gris; activo #667eea + texto blanco (Resumen, Torneos, Reservas). */
+const ADMIN_FILTER_PILL_BASE = {
+  padding: '8px 14px',
+  borderRadius: '999px',
+  fontSize: '13px',
+  fontWeight: 700,
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
+  lineHeight: 1.25,
+  boxSizing: 'border-box',
+};
+
+function adminFilterPillButtonStyle(active) {
+  if (active) {
+    return {
+      ...ADMIN_FILTER_PILL_BASE,
+      background: '#667eea',
+      color: '#fff',
+      border: 'none',
+    };
+  }
+  return {
+    ...ADMIN_FILTER_PILL_BASE,
+    background: '#fff',
+    color: '#1e293b',
+    border: '1px solid #e2e8f0',
+  };
 }
 
 const MS_48H = 48 * 60 * 60 * 1000;
@@ -838,10 +873,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     return e === 'abierto' || e === 'inscripcion_abierta';
   };
 
-  const torneosFiltradosAdminEstado = useMemo(
-    () => torneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneoAdmin)),
-    [torneos, filtroEstadoTorneoAdmin]
-  );
+  const torneosFiltradosAdminEstado = useMemo(() => {
+    const f = normalizeTorneoFiltroEstadoPill(filtroEstadoTorneoAdmin);
+    if (f === 'todos' || f === 'todas' || f === '') {
+      return torneos;
+    }
+    return torneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneoAdmin));
+  }, [torneos, filtroEstadoTorneoAdmin]);
 
   // ── Config puntos (superAdmin only) ──
   const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
@@ -2080,17 +2118,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
                   }
                 }}
-                style={{
-                  padding: '5px 10px',
-                  borderRadius: '999px',
-                  border: superAdminPeriodo === opt.id ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
-                  background: superAdminPeriodo === opt.id ? '#6366f1' : '#fff',
-                  color: superAdminPeriodo === opt.id ? '#fff' : '#334155',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
+                style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id)}
               >
                 {opt.label}
               </button>
@@ -2341,17 +2369,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFiltroEstadoTorneoAdmin(id)}
-                  style={{
-                    padding: '5px 10px',
-                    borderRadius: '999px',
-                    border: active ? '1px solid #a5b4fc' : '1px solid rgba(255, 255, 255, 0.55)',
-                    background: active ? '#667eea' : 'transparent',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
+                  style={adminFilterPillButtonStyle(active)}
                 >
                   {label}
                 </button>
@@ -2775,17 +2793,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFiltroPillReservas(id)}
-                  style={{
-                    padding: '5px 10px',
-                    borderRadius: '999px',
-                    border: active ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
-                    background: active ? '#667eea' : '#fff',
-                    color: active ? '#fff' : '#334155',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
+                  style={adminFilterPillButtonStyle(active)}
                 >
                   {label}
                 </button>
@@ -2892,17 +2900,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
                         }
                       }}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: '999px',
-                        border: superAdminPeriodo === opt.id ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
-                        background: superAdminPeriodo === opt.id ? '#6366f1' : '#fff',
-                        color: superAdminPeriodo === opt.id ? '#fff' : '#334155',
-                        cursor: 'pointer',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        flexShrink: 0,
-                      }}
+                      style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id)}
                     >
                       {opt.label}
                     </button>
