@@ -16,6 +16,7 @@ import {
   hubContentPaddingTopPx,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
@@ -768,11 +769,557 @@ function CompactContactCard({ sede, horario, hasAddress }) {
   );
 }
 
+const API_BASE_RESENAS = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
+
+function apiUrlResenas(path) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_RESENAS}${p}`;
+}
+
+const RESENA_MAX_CHARS = 200;
+
+function formatFechaResenaPublica(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function EstrellasSoloLectura({ value }) {
+  const v = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
+  return (
+    <span
+      style={{ display: 'inline-flex', gap: '1px', alignItems: 'center' }}
+      title={`${v} de 5`}
+      aria-label={`${v} de 5 estrellas`}
+    >
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span
+          key={i}
+          style={{
+            fontSize: '13px',
+            color: i <= v ? '#fbbf24' : 'rgba(226,232,240,0.35)',
+          }}
+        >
+          ★
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function EstrellasInteractivas({ value, onChange, disabled }) {
+  return (
+    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }} role="group" aria-label="Calificación en estrellas">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          disabled={disabled}
+          onClick={() => onChange(n)}
+          aria-label={`${n} de 5 estrellas`}
+          aria-pressed={value >= n}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            fontSize: '26px',
+            lineHeight: 1,
+            padding: 0,
+            color: value >= n ? '#fbbf24' : 'rgba(248,250,252,0.28)',
+          }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ListaResenaCard({ r, isLast }) {
+  const nombre = r?.autor?.nombre || 'Jugador';
+  const foto = r?.autor?.foto_url;
+  const ini = nombre ? nombre.charAt(0).toUpperCase() : '?';
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: '10px',
+        padding: '12px 0',
+        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.12)',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: '999px',
+          overflow: 'hidden',
+          flexShrink: 0,
+          background: 'rgba(15,23,42,0.55)',
+          boxSizing: 'border-box',
+        }}
+      >
+        {foto ? (
+          <img src={foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: '16px',
+              color: '#e2e8f0',
+            }}
+            aria-hidden
+          >
+            {ini}
+          </div>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: '6px 10px',
+          }}
+        >
+          <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>{nombre}</span>
+          <EstrellasSoloLectura value={r.estrellas} />
+          <span style={{ fontSize: '12px', color: 'rgba(226,232,240,0.65)' }}>
+            {formatFechaResenaPublica(r.created_at)}
+          </span>
+        </div>
+        {String(r.comentario || '').trim() ? (
+          <p
+            style={{
+              margin: '8px 0 0',
+              fontSize: '13px',
+              lineHeight: 1.45,
+              color: 'rgba(248,250,252,0.9)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {r.comentario}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
+  const idNum = useMemo(() => parseInt(String(sedeId), 10), [sedeId]);
+  const [payload, setPayload] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [verTodasOpen, setVerTodasOpen] = useState(false);
+  const [todasRows, setTodasRows] = useState([]);
+  const [todasLoading, setTodasLoading] = useState(false);
+  const [estrellasForm, setEstrellasForm] = useState(5);
+  const [comentarioForm, setComentarioForm] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formMsg, setFormMsg] = useState('');
+
+  const loadResenas = useCallback(async () => {
+    if (!Number.isFinite(idNum)) return;
+    setLoading(true);
+    setErr('');
+    const headers = {};
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    try {
+      const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas?limit=5&offset=0`), { headers });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.error || `Error ${r.status}`);
+      setPayload(body);
+    } catch (e) {
+      setErr(e.message || 'Error');
+      setPayload(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [idNum, accessToken]);
+
+  useEffect(() => {
+    void loadResenas();
+  }, [loadResenas]);
+
+  const openVerTodas = useCallback(async () => {
+    if (!Number.isFinite(idNum)) return;
+    setVerTodasOpen(true);
+    setTodasLoading(true);
+    const headers = {};
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    try {
+      const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas?limit=100&offset=0`), { headers });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.error || `Error ${r.status}`);
+      setTodasRows(Array.isArray(body.resenas) ? body.resenas : []);
+    } catch {
+      setTodasRows([]);
+    } finally {
+      setTodasLoading(false);
+    }
+  }, [idNum, accessToken]);
+
+  const submitResena = async (e) => {
+    e.preventDefault();
+    if (!accessToken) return;
+    setFormMsg('');
+    setSubmitting(true);
+    try {
+      const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ estrellas: estrellasForm, comentario: comentarioForm.trim() }),
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.error || `Error ${r.status}`);
+      setComentarioForm('');
+      setEstrellasForm(5);
+      setFormMsg('¡Gracias por tu reseña!');
+      await loadResenas();
+    } catch (e2) {
+      setFormMsg(e2.message || 'No se pudo enviar');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!Number.isFinite(idNum)) return null;
+
+  const cardStyle = {
+    marginTop: '6px',
+    marginBottom: '18px',
+    padding: '16px 14px',
+    borderRadius: '14px',
+    background: 'rgba(255,255,255,0.12)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxSizing: 'border-box',
+  };
+
+  const lista = payload?.resenas || [];
+  const promedioTxt =
+    payload?.promedio != null && Number.isFinite(Number(payload.promedio))
+      ? Number(payload.promedio).toFixed(1)
+      : '—';
+  const promedioNum = Number(payload?.promedio);
+  const estrellasPromedio = Number.isFinite(promedioNum) ? Math.round(promedioNum) : 0;
+
+  return (
+    <div style={cardStyle}>
+      <h2
+        style={{
+          margin: '0 0 10px',
+          fontSize: '17px',
+          fontWeight: 800,
+          color: '#f8fafc',
+        }}
+      >
+        Reseñas
+      </h2>
+      {loading ? (
+        <p style={{ margin: 0, color: 'rgba(248,250,252,0.65)', fontSize: '13px' }}>Cargando reseñas…</p>
+      ) : err ? (
+        <p style={{ margin: 0, color: '#fecaca', fontSize: '13px' }}>{err}</p>
+      ) : (
+        <>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '10px 14px',
+              marginBottom: '12px',
+            }}
+          >
+            <span style={{ fontSize: '28px', fontWeight: 800, color: '#fbbf24' }}>{promedioTxt}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <EstrellasSoloLectura value={estrellasPromedio} />
+              <span style={{ fontSize: '12px', color: 'rgba(226,232,240,0.75)' }}>
+                {payload?.total
+                  ? `${payload.total} reseña${payload.total === 1 ? '' : 's'}`
+                  : 'Sin reseñas aún'}
+              </span>
+            </div>
+          </div>
+
+          {!accessToken ? (
+            <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(248,250,252,0.88)' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/auth')}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#93c5fd',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  padding: 0,
+                  fontSize: 'inherit',
+                }}
+              >
+                Iniciá sesión
+              </button>{' '}
+              para dejar tu reseña.
+            </p>
+          ) : payload?.ya_reseño ? (
+            <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(226,232,240,0.88)' }}>
+              Ya dejaste tu reseña en esta sede. ¡Gracias!
+            </p>
+          ) : (
+            <form
+              onSubmit={submitResena}
+              style={{
+                marginBottom: '16px',
+                padding: '12px',
+                borderRadius: '12px',
+                background: 'rgba(15,23,42,0.28)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                boxSizing: 'border-box',
+              }}
+            >
+              <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#e2e8f0' }}>
+                Tu calificación
+              </div>
+              <EstrellasInteractivas value={estrellasForm} onChange={setEstrellasForm} disabled={submitting} />
+              <label
+                style={{ display: 'block', marginTop: '12px', fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}
+                htmlFor="sede-resena-comentario"
+              >
+                Comentario (opcional, máx. {RESENA_MAX_CHARS} caracteres)
+              </label>
+              <textarea
+                id="sede-resena-comentario"
+                value={comentarioForm}
+                maxLength={RESENA_MAX_CHARS}
+                disabled={submitting}
+                onChange={(e) => setComentarioForm(e.target.value)}
+                rows={3}
+                style={{
+                  width: '100%',
+                  marginTop: '6px',
+                  boxSizing: 'border-box',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(15,23,42,0.45)',
+                  color: '#f8fafc',
+                  padding: '10px',
+                  fontSize: '13px',
+                  resize: 'vertical',
+                  minHeight: '72px',
+                }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '8px',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '11px', color: 'rgba(226,232,240,0.55)' }}>
+                  {comentarioForm.length}/{RESENA_MAX_CHARS}
+                </span>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#22c55e',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '13px',
+                    cursor: submitting ? 'wait' : 'pointer',
+                  }}
+                >
+                  {submitting ? 'Enviando…' : 'Publicar reseña'}
+                </button>
+              </div>
+              {formMsg ? (
+                <p
+                  style={{
+                    margin: '10px 0 0',
+                    fontSize: '12px',
+                    color: formMsg.startsWith('¡') ? '#bbf7d0' : '#fecaca',
+                  }}
+                >
+                  {formMsg}
+                </p>
+              ) : null}
+            </form>
+          )}
+
+          {lista.length === 0 ? (
+            <p
+              style={{
+                margin: 0,
+                fontSize: '13px',
+                color: 'rgba(248,250,252,0.55)',
+                fontStyle: 'italic',
+              }}
+            >
+              Sé el primero en contar tu experiencia.
+            </p>
+          ) : (
+            <div>
+              {lista.map((row, idx) => (
+                <ListaResenaCard key={row.id} r={row} isLast={idx === lista.length - 1} />
+              ))}
+            </div>
+          )}
+
+          {(payload?.total ?? 0) > 5 ? (
+            <button
+              type="button"
+              onClick={() => void openVerTodas()}
+              style={{
+                marginTop: '12px',
+                width: '100%',
+                padding: '11px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.35)',
+                background: 'rgba(255,255,255,0.1)',
+                color: '#f8fafc',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxSizing: 'border-box',
+              }}
+            >
+              Ver todas
+            </button>
+          ) : null}
+        </>
+      )}
+
+      {verTodasOpen ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            background: 'rgba(15,23,42,0.78)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sede-resenas-modal-title"
+          onClick={() => setVerTodasOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setVerTodasOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: 'min(480px, 100%)',
+              maxHeight: '82vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.45)',
+              boxSizing: 'border-box',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px 16px',
+                borderBottom: '1px solid rgba(255,255,255,0.15)',
+                flexShrink: 0,
+              }}
+            >
+              <span id="sede-resenas-modal-title" style={{ fontWeight: 800, color: '#f8fafc', fontSize: '16px' }}>
+                Todas las reseñas
+              </span>
+              <button
+                type="button"
+                onClick={() => setVerTodasOpen(false)}
+                style={{
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.15)',
+                  color: '#fff',
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  lineHeight: 1,
+                }}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              style={{
+                overflowY: 'auto',
+                padding: '8px 16px 16px',
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
+              {todasLoading ? (
+                <p style={{ margin: 0, color: '#e2e8f0', fontSize: '14px' }}>Cargando…</p>
+              ) : (
+                todasRows.map((row, idx) => (
+                  <ListaResenaCard key={row.id} r={row} isLast={idx === todasRows.length - 1} />
+                ))
+              )}
+              {(payload?.total ?? 0) > 100 ? (
+                <p
+                  style={{
+                    margin: '10px 0 0',
+                    fontSize: '11px',
+                    color: 'rgba(226,232,240,0.65)',
+                    textAlign: 'center',
+                  }}
+                >
+                  Mostrando las 100 reseñas más recientes.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** Perfil público de sede: ruta `/sede/:sedeId` en App.js → solo este componente (no hay SedeVista / SedePerfil). */
 export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { session } = useAuth();
   /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
@@ -1501,6 +2048,12 @@ export default function SedePublica() {
                   </button>
                 ) : null}
               </div>
+
+              <SedeResenasSeccion
+                sedeId={sedeId}
+                accessToken={session?.access_token ?? null}
+                navigate={navigate}
+              />
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
 

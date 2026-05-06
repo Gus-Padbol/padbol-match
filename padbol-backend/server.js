@@ -472,6 +472,161 @@ app.get('/api/sedes/:id', async (req, res) => {
   }
 });
 
+function nombreAutorResenaDesdePerfil(row) {
+  if (!row) return 'Jugador';
+  const n = String(row.nombre || '').trim();
+  const a = String(row.apellido || '').trim();
+  const full = [n, a].filter(Boolean).join(' ');
+  if (full) return full;
+  const al = String(row.alias || '').trim();
+  if (al) return al.startsWith('@') ? al : `@${al}`;
+  return 'Jugador';
+}
+
+/** Lista de filas `sede_resenas` + join lógico a `jugadores_perfil` (foto y nombre). */
+async function enrichSedeResenasConPerfil(reviews) {
+  const rows = Array.isArray(reviews) ? reviews : [];
+  const uids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+  let map = {};
+  if (uids.length) {
+    const { data: perfiles, error } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, foto_url, nombre, apellido, alias')
+      .in('user_id', uids);
+    if (error) console.warn('enrichSedeResenasConPerfil jugadores_perfil:', error.message);
+    (perfiles || []).forEach((p) => {
+      if (p?.user_id) map[p.user_id] = p;
+    });
+  }
+  return rows.map((r) => {
+    const p = map[r.user_id];
+    return {
+      id: r.id,
+      estrellas: r.estrellas,
+      comentario: r.comentario,
+      created_at: r.created_at,
+      autor: {
+        nombre: nombreAutorResenaDesdePerfil(p),
+        foto_url: p?.foto_url ? String(p.foto_url).trim() || null : null,
+      },
+    };
+  });
+}
+
+/**
+ * GET reseñas de una sede: promedio, total, página (orden por más recientes).
+ * Query: limit (default 5, max 100), offset (default 0).
+ * Con Bearer: incluye `ya_reseño` si el usuario ya publicó en esta sede.
+ */
+app.get('/api/sedes/:id/resenas', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    const limitRaw = parseInt(String(req.query.limit ?? '5'), 10);
+    const offsetRaw = parseInt(String(req.query.offset ?? '0'), 10);
+    const limit = Number.isFinite(limitRaw) ? Math.min(100, Math.max(1, limitRaw)) : 5;
+    const offset = Number.isFinite(offsetRaw) ? Math.max(0, offsetRaw) : 0;
+
+    const { data: sedeRow, error: sedeErr } = await supabase.from('sedes').select('id').eq('id', id).maybeSingle();
+    if (sedeErr) throw sedeErr;
+    if (!sedeRow) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    const { data: allStars, error: e1 } = await supabase.from('sede_resenas').select('estrellas').eq('sede_id', id);
+    if (e1) throw e1;
+    const total = allStars?.length ?? 0;
+    const promedio =
+      total > 0
+        ? Math.round((allStars.reduce((s, r) => s + Number(r.estrellas), 0) / total) * 10) / 10
+        : null;
+
+    const { data: pageRows, error: e2 } = await supabase
+      .from('sede_resenas')
+      .select('id, estrellas, comentario, user_id, created_at')
+      .eq('sede_id', id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (e2) throw e2;
+
+    const resenas = await enrichSedeResenasConPerfil(pageRows || []);
+
+    let ya_reseño = false;
+    const user = await authUserFromBearer(req);
+    if (user?.id) {
+      const { data: mine } = await supabase
+        .from('sede_resenas')
+        .select('id')
+        .eq('sede_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      ya_reseño = Boolean(mine);
+    }
+
+    res.json({ promedio, total, resenas, ya_reseño });
+  } catch (err) {
+    console.error('❌ Error GET /api/sedes/:id/resenas:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST reseña (jugador logueado, una por sede).
+ * Body: { estrellas: 1-5, comentario?: string (max 200) }
+ */
+app.post('/api/sedes/:id/resenas', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) {
+      return res.status(401).json({ error: 'Iniciá sesión para dejar una reseña' });
+    }
+
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+
+    const { data: sedeRow, error: sedeErr } = await supabase.from('sedes').select('id').eq('id', id).maybeSingle();
+    if (sedeErr) throw sedeErr;
+    if (!sedeRow) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    const estrellas = parseInt(String(req.body?.estrellas), 10);
+    if (!Number.isFinite(estrellas) || estrellas < 1 || estrellas > 5) {
+      return res.status(400).json({ error: 'Las estrellas deben ser un número entre 1 y 5' });
+    }
+    const comentario = String(req.body?.comentario ?? '').trim();
+    if (comentario.length > 200) {
+      return res.status(400).json({ error: 'El comentario no puede superar los 200 caracteres' });
+    }
+
+    const { data: dup } = await supabase
+      .from('sede_resenas')
+      .select('id')
+      .eq('sede_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (dup) {
+      return res.status(409).json({ error: 'Ya dejaste una reseña en esta sede' });
+    }
+
+    const { data: inserted, error: insErr } = await supabase
+      .from('sede_resenas')
+      .insert([{ sede_id: id, user_id: user.id, estrellas, comentario }])
+      .select('id, estrellas, comentario, user_id, created_at')
+      .single();
+    if (insErr) throw insErr;
+
+    const [enriched] = await enrichSedeResenasConPerfil(inserted ? [inserted] : []);
+    res.status(201).json(enriched || null);
+  } catch (err) {
+    console.error('❌ Error POST /api/sedes/:id/resenas:', err.message);
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Ya dejaste una reseña en esta sede' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET disponibilidad
 app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
   try {
