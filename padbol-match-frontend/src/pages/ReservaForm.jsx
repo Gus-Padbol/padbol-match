@@ -116,6 +116,70 @@ function fechaMaxReservaISO() {
   return `${y}-${m}-${day}`;
 }
 
+/** Intento “reservar desde la sede más cercana por geo” (pantalla 1 → perfil → /reservar?sedeId=). */
+const RESERVA_GEO_MAS_CERCANA_SESSION_KEY = 'reserva_geo_mas_cercana_sede_v1';
+const RESERVA_GEO_MAS_CERCANA_MAX_MS = 30 * 60 * 1000;
+
+/** Evita que Strict Mode quite la etiqueta al consumir sessionStorage dos veces. */
+let reservaGeoMasCercanaAppliedStableKey = '';
+
+function writeReservaGeoMasCercanaIntent(sedeId, pais) {
+  try {
+    sessionStorage.setItem(
+      RESERVA_GEO_MAS_CERCANA_SESSION_KEY,
+      JSON.stringify({
+        sedeId: Number(sedeId),
+        pais: String(pais || '').trim(),
+        ts: Date.now(),
+      })
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearReservaGeoMasCercanaIntent() {
+  try {
+    sessionStorage.removeItem(RESERVA_GEO_MAS_CERCANA_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function peekReservaGeoMasCercanaIntent() {
+  try {
+    const raw = sessionStorage.getItem(RESERVA_GEO_MAS_CERCANA_SESSION_KEY);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    if (o == null || o.sedeId == null || o.pais == null) return null;
+    const ts = Number(o.ts) || 0;
+    if (Date.now() - ts > RESERVA_GEO_MAS_CERCANA_MAX_MS) {
+      sessionStorage.removeItem(RESERVA_GEO_MAS_CERCANA_SESSION_KEY);
+      return null;
+    }
+    return { sedeId: Number(o.sedeId), pais: String(o.pais || '').trim(), ts };
+  } catch {
+    try {
+      sessionStorage.removeItem(RESERVA_GEO_MAS_CERCANA_SESSION_KEY);
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+}
+
+function tryConsumeReservaGeoMasCercanaIntent(sedeId, paisSede) {
+  const intent = peekReservaGeoMasCercanaIntent();
+  if (!intent) return false;
+  const p = String(paisSede || '').trim();
+  if (Number(intent.sedeId) !== Number(sedeId) || intent.pais !== p) {
+    clearReservaGeoMasCercanaIntent();
+    return false;
+  }
+  clearReservaGeoMasCercanaIntent();
+  return true;
+}
+
 /** Pantalla 2 solo si `?sedeId=` está en la URL. `ultima_sede` en localStorage no abre el calendario directo (siempre elegir sede / perfil primero). */
 function readPrimedSedeReserva() {
   const emptyFiltros = { pais: '', ciudad: '', sede_id: '' };
@@ -218,6 +282,8 @@ export default function ReservaForm() {
     );
   }, [pantalla]);
 
+  const [mostrarEtiquetaSedeMasCercanaGeo, setMostrarEtiquetaSedeMasCercanaGeo] = useState(false);
+
   const sedesFiltradasPorPais = useMemo(() => {
     if (!filtros.pais) return [];
     return sedes.filter((sede) => String(sede.pais || '').trim() === String(filtros.pais).trim());
@@ -237,6 +303,28 @@ export default function ReservaForm() {
     }
     return bestId;
   }, [geoReserva, sedesFiltradasPorPais]);
+
+  useEffect(() => {
+    if (pantalla !== 2 || !sedeSeleccionada) {
+      if (pantalla !== 2) {
+        reservaGeoMasCercanaAppliedStableKey = '';
+        setMostrarEtiquetaSedeMasCercanaGeo(false);
+      }
+      return;
+    }
+    const sid = Number(sedeSeleccionada.id);
+    const p = String(sedeSeleccionada.pais || '').trim();
+    const stableKey = `${sid}|${p}`;
+    if (tryConsumeReservaGeoMasCercanaIntent(sid, p)) {
+      reservaGeoMasCercanaAppliedStableKey = stableKey;
+      setMostrarEtiquetaSedeMasCercanaGeo(true);
+      return;
+    }
+    if (reservaGeoMasCercanaAppliedStableKey === stableKey) {
+      return;
+    }
+    setMostrarEtiquetaSedeMasCercanaGeo(false);
+  }, [pantalla, sedeSeleccionada]);
 
   const handleReservaBack = useCallback(() => {
     if (pantalla === 1) {
@@ -339,6 +427,7 @@ export default function ReservaForm() {
 
     const sede = sedes.find((s) => Number(s.id) === id);
     if (!sede) {
+      clearReservaGeoMasCercanaIntent();
       setFiltros({ pais: '', ciudad: '', sede_id: '' });
       setPantalla(1);
       navigate('/reservar', { replace: true });
@@ -567,6 +656,7 @@ export default function ReservaForm() {
   }, [pantalla]);
 
   const selectPais = useCallback((pais) => {
+    clearReservaGeoMasCercanaIntent();
     setFiltros({ pais, ciudad: '', sede_id: '' });
     if (pais) {
       const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
@@ -576,9 +666,22 @@ export default function ReservaForm() {
     }
   }, [sedes]);
 
-  const abrirPerfilPublicoSedeDesdeCard = useCallback((sede) => {
-    navigate(`/sede/${encodeURIComponent(String(sede.id))}`);
-  }, [navigate]);
+  const abrirPerfilPublicoSedeDesdeCard = useCallback(
+    (sede) => {
+      const esMasCercanaPorGeo =
+        geoReserva.status === 'granted' &&
+        sedeReservaMasCercanaId != null &&
+        Number(sede.id) === Number(sedeReservaMasCercanaId) &&
+        String(filtros.pais || '').trim() === String(sede.pais || '').trim();
+      if (esMasCercanaPorGeo) {
+        writeReservaGeoMasCercanaIntent(sede.id, sede.pais);
+      } else {
+        clearReservaGeoMasCercanaIntent();
+      }
+      navigate(`/sede/${encodeURIComponent(String(sede.id))}`);
+    },
+    [navigate, geoReserva.status, sedeReservaMasCercanaId, filtros.pais]
+  );
 
   const prevPaisCardsRef = useRef(null);
   const [reservaCardsWave, setReservaCardsWave] = useState(0);
@@ -602,6 +705,7 @@ export default function ReservaForm() {
   }, [sedes, paisesOrdenados, filtros.pais, selectPais]);
 
   const clearPais = useCallback(() => {
+    clearReservaGeoMasCercanaIntent();
     setFiltros({ pais: '', ciudad: '', sede_id: '' });
     setCiudades([]);
   }, []);
@@ -1052,9 +1156,14 @@ export default function ReservaForm() {
           }}
         >
         <div className="reserva-card">
-          <h1 style={{ margin: 0, marginBottom: '20px' }}>
+          <h1 style={{ margin: 0, marginBottom: mostrarEtiquetaSedeMasCercanaGeo ? '8px' : '20px' }}>
             📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
           </h1>
+          {mostrarEtiquetaSedeMasCercanaGeo && sedeSeleccionada ? (
+            <p className="reserva-p2-sede-mas-cercana" role="status">
+              📍 Sede más cercana a vos
+            </p>
+          ) : null}
 
           {sedeSeleccionada && (
           <p style={{ color: '#666', marginBottom: '30px', textAlign: 'center' }}>

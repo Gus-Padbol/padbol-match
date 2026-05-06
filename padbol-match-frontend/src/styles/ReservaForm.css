@@ -338,6 +338,15 @@
   margin-bottom: 30px;
 }
 
+.reserva-card .reserva-p2-sede-mas-cercana {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #059669;
+  letter-spacing: 0.02em;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
