@@ -14,7 +14,12 @@ import {
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { RESERVA_FORM_RESTORE_KEY, saveReservaReturnUrl } from '../utils/reservaReturnUrl';
+import {
+  RESERVA_FORM_RESTORE_KEY,
+  RESERVA_FORM_RESTORE_VERSION,
+  saveReservaFormSessionState,
+  saveReservaReturnUrl,
+} from '../utils/reservaReturnUrl';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
 import {
@@ -366,9 +371,12 @@ export default function ReservaForm() {
       navigate({ pathname: '/reservar', search: `?${next.toString()}` }, { replace: true });
       setError('');
     } else {
-      setFormData((prev) =>
-        prev.fecha ? prev : { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' }
-      );
+      setFormData((prev) => ({
+        ...prev,
+        fecha: fechaQ || prev.fecha || todayLocalISO(),
+        hora: horaQ || '',
+        cancha: canchaQ || '',
+      }));
       setPantalla(2);
       if (sp.has('rw')) {
         const next = createSearchParams({ sedeId: String(id) });
@@ -377,14 +385,9 @@ export default function ReservaForm() {
     }
   }, [sedes, initialSedeId, location.search, navigate]);
 
-  // Tras login: restaurar sede/fecha/hora/cancha guardados al pedir login desde la selección de cancha.
+  // Tras login: restaurar estado guardado en sessionStorage (v2 o legacy) antes de redirigir a login.
   useEffect(() => {
-    if (sedes.length < 1) {
-      return;
-    }
-    if (authLoading) {
-      return;
-    }
+    if (sedes.length < 1 || authLoading) return;
     let raw;
     try {
       raw = sessionStorage.getItem(RESERVA_FORM_RESTORE_KEY);
@@ -392,6 +395,7 @@ export default function ReservaForm() {
       return;
     }
     if (!raw) return;
+
     let data;
     try {
       data = JSON.parse(raw);
@@ -403,56 +407,144 @@ export default function ReservaForm() {
       }
       return;
     }
+
+    const clearKey = () => {
+      try {
+        sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
+      } catch (_) {
+        /* ignore */
+      }
+    };
+
+    const mergeFiltrosForm = (filt, fd, sedeObj) => {
+      const pais = String(filt?.pais || sedeObj?.pais || '').trim();
+      const ciudad = String(filt?.ciudad || sedeObj?.ciudad || '').trim();
+      const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
+      setCiudades(ciudadesDelPais);
+      if (sedeObj) {
+        setFiltros({ pais, ciudad, sede_id: Number(sedeObj.id) });
+      } else {
+        setFiltros({
+          pais: pais || '',
+          ciudad: ciudad || '',
+          sede_id: filt?.sede_id === '' || filt?.sede_id == null ? '' : filt.sede_id,
+        });
+      }
+      setFormData((prev) => ({
+        ...prev,
+        ...fd,
+        fecha:
+          fd.fecha != null && String(fd.fecha).trim()
+            ? String(fd.fecha).trim()
+            : prev.fecha || todayLocalISO(),
+        hora: fd.hora != null ? String(fd.hora).trim() : prev.hora || '',
+        cancha: fd.cancha != null && String(fd.cancha).trim() ? String(fd.cancha).trim() : prev.cancha || '',
+        codigoPais: fd.codigoPais != null ? String(fd.codigoPais) : prev.codigoPais,
+        numeroTel: fd.numeroTel != null ? String(fd.numeroTel) : prev.numeroTel,
+      }));
+    };
+
+    if (data?.v === RESERVA_FORM_RESTORE_VERSION) {
+      const filt = data.filtros && typeof data.filtros === 'object' ? data.filtros : {};
+      const fd = data.formData && typeof data.formData === 'object' ? data.formData : {};
+      const sid = filt.sede_id;
+      const sedeObj =
+        sid !== '' && sid != null && String(sid).trim() !== ''
+          ? sedes.find((s) => Number(s.id) === Number(sid))
+          : null;
+
+      if (sid !== '' && sid != null && String(sid).trim() !== '' && !sedeObj) {
+        clearKey();
+        return;
+      }
+
+      const fecha = fd.fecha != null ? String(fd.fecha).trim() : '';
+      const hora = fd.hora != null ? String(fd.hora).trim() : '';
+      const cancha = fd.cancha != null ? String(fd.cancha).trim() : '';
+      const full = Boolean(sedeObj && fecha && hora && cancha);
+
+      if (full) {
+        clearKey();
+        mergeFiltrosForm(filt, fd, sedeObj);
+        setPantalla(4);
+        navigate(
+          {
+            pathname: '/reservar',
+            search: `?${createSearchParams({
+              sedeId: String(sedeObj.id),
+              fecha,
+              hora,
+              canchaId: cancha,
+            }).toString()}`,
+          },
+          { replace: true }
+        );
+        setError('');
+        return;
+      }
+
+      if (sedeObj) {
+        clearKey();
+        mergeFiltrosForm(filt, fd, sedeObj);
+        setPantalla(2);
+        const params = { sedeId: String(sedeObj.id) };
+        if (fecha) params.fecha = fecha;
+        navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` }, { replace: true });
+        setError('');
+        return;
+      }
+
+      clearKey();
+      mergeFiltrosForm(filt, fd, null);
+      setPantalla(Number(data.pantalla) === 1 ? 1 : 2);
+      navigate({ pathname: '/reservar', search: '' }, { replace: true });
+      setError('');
+      return;
+    }
+
     const sid = data?.filtros?.sede_id;
     const fecha = data?.fecha != null ? String(data.fecha).trim() : '';
     const hora = data?.hora != null ? String(data.hora).trim() : '';
     const cancha = data?.cancha != null ? String(data.cancha).trim() : '';
-    if (sid === '' || sid == null || !fecha || !hora || !cancha) {
-      try {
-        sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
-      } catch (_) {
-        /* ignore */
-      }
+
+    if (sid === '' || sid == null) {
+      clearKey();
       return;
     }
     const sedeObj = sedes.find((s) => Number(s.id) === Number(sid));
     if (!sedeObj) {
-      try {
-        sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
-      } catch (_) {
-        /* ignore */
-      }
+      clearKey();
       return;
     }
-    try {
-      sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
-    } catch (_) {
-      /* ignore */
+    const filt = data.filtros && typeof data.filtros === 'object' ? data.filtros : {};
+    const fdLegacy = { fecha, hora, cancha };
+
+    if (fecha && hora && cancha) {
+      clearKey();
+      mergeFiltrosForm(filt, fdLegacy, sedeObj);
+      setPantalla(4);
+      navigate(
+        {
+          pathname: '/reservar',
+          search: `?${createSearchParams({
+            sedeId: String(sedeObj.id),
+            fecha,
+            hora,
+            canchaId: cancha,
+          }).toString()}`,
+        },
+        { replace: true }
+      );
+      setError('');
+      return;
     }
-    const pais = String(data.filtros?.pais || sedeObj.pais || '').trim();
-    const ciudad = String(data.filtros?.ciudad || sedeObj.ciudad || '').trim();
-    const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
-    setCiudades(ciudadesDelPais);
-    setFiltros({ pais, ciudad, sede_id: Number(sedeObj.id) });
-    setFormData((prev) => ({
-      ...prev,
-      fecha,
-      hora,
-      cancha,
-    }));
-    setPantalla(4);
-    navigate(
-      {
-        pathname: '/reservar',
-        search: `?${createSearchParams({
-          sedeId: String(sedeObj.id),
-          fecha,
-          hora,
-          canchaId: cancha,
-        }).toString()}`,
-      },
-      { replace: false }
-    );
+
+    clearKey();
+    mergeFiltrosForm(filt, fdLegacy, sedeObj);
+    setPantalla(2);
+    const params = { sedeId: String(sedeObj.id) };
+    if (fecha) params.fecha = fecha;
+    navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` }, { replace: true });
     setError('');
   }, [sedes.length, sedes, authLoading, navigate]);
 
@@ -708,21 +800,11 @@ export default function ReservaForm() {
   const handlePagarConMP = async () => {
     if (authLoading) return;
     if (!session?.user) {
-      try {
-        const reservaRestorePayload = {
-          filtros: {
-            pais: filtros.pais,
-            ciudad: filtros.ciudad,
-            sede_id: filtros.sede_id,
-          },
-          fecha: formData.fecha,
-          hora: formData.hora,
-          cancha: String(formData.cancha),
-        };
-        sessionStorage.setItem(RESERVA_FORM_RESTORE_KEY, JSON.stringify(reservaRestorePayload));
-      } catch (_) {
-        /* ignore */
-      }
+      saveReservaFormSessionState({
+        pantalla: 4,
+        filtros,
+        formData,
+      });
       saveReservaReturnUrl({
         sedeId: filtros.sede_id,
         fecha: formData.fecha,
@@ -1073,24 +1155,11 @@ export default function ReservaForm() {
                       onClick={async () => {
                         const { data } = await supabase.auth.getSession();
                         if (!data?.session?.user) {
-                          try {
-                            const reservaRestorePayload = {
-                              filtros: {
-                                pais: filtros.pais,
-                                ciudad: filtros.ciudad,
-                                sede_id: filtros.sede_id,
-                              },
-                              fecha: formData.fecha,
-                              hora: formData.hora,
-                              cancha: String(c.num),
-                            };
-                            sessionStorage.setItem(
-                              RESERVA_FORM_RESTORE_KEY,
-                              JSON.stringify(reservaRestorePayload)
-                            );
-                          } catch (_) {
-                            /* ignore */
-                          }
+                          saveReservaFormSessionState({
+                            pantalla: 2,
+                            filtros,
+                            formData: { ...formData, cancha: String(c.num) },
+                          });
                           saveReservaReturnUrl({
                             sedeId: filtros.sede_id,
                             fecha: formData.fecha,

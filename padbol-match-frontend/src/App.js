@@ -193,7 +193,9 @@ function AppRoutes() {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        maxWidth: '100%',
+        maxWidth: 900,
+        marginLeft: 'auto',
+        marginRight: 'auto',
         boxSizing: 'border-box',
       }}
     >

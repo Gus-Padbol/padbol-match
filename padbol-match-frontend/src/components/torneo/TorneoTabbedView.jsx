@@ -522,7 +522,7 @@ export default function TorneoTabbedView({
     for (let pos = 4; pos <= 10; pos += 1) {
       const f = byPos[pos];
       if (f) rows.push({ ...f, vacio: false });
-      else rows.push({ posicion: pos, equipoNombre: '', jugadorLineas: [], puntos: null, vacio: true });
+      else rows.push({ posicion: pos, equipoNombre: '', jugadorLineas: [], jugadores: [], puntos: null, vacio: true });
     }
     return rows;
   }, [resultadosFilas]);
@@ -1087,23 +1087,27 @@ export default function TorneoTabbedView({
                   )}
                 </div>
                 {!sinEquipo ? (
-                  <div className="podium-player-avatars" aria-hidden>
+                  <div className="podium-player-avatars">
                     {(Array.isArray(fila.jugadores) ? fila.jugadores : [])
                       .slice(0, 4)
                       .map((p, idx) => {
                         const a = avatarJugadorPodio(p);
+                        const nombreJug = String(p?.nombre || p?.name || a.label || 'Jugador').trim() || 'Jugador';
                         return (
-                          <div
+                          <button
                             key={`${a.label}-${idx}`}
+                            type="button"
                             className="podium-player-avatar-wrap"
                             style={{ zIndex: idx + 1 }}
+                            onClick={() => abrirPreviewJugador(p)}
+                            aria-label={`Ver ${nombreJug}`}
                           >
                             {a.foto ? (
                               <img src={a.foto} alt="" className="podium-player-avatar" loading="lazy" referrerPolicy="no-referrer" />
                             ) : (
                               <span className="podium-player-avatar-fallback">{a.initial}</span>
                             )}
-                          </div>
+                          </button>
                         );
                       })}
                   </div>
@@ -1128,8 +1132,7 @@ export default function TorneoTabbedView({
         <div className="clasificacion-final-lista">
           {clasificacionFinalFilasCompletas.map((f) => {
             const vacio = Boolean(f.vacio);
-            const jugTxt =
-              !vacio && Array.isArray(f.jugadorLineas) && f.jugadorLineas.length ? f.jugadorLineas.join(' · ') : '—';
+            const jugadoresRow = Array.isArray(f.jugadores) ? f.jugadores : [];
             const nombre = vacio || !String(f.equipoNombre || '').trim() ? '—' : f.equipoNombre;
             const ptsTxt =
               vacio || f.puntos == null || f.puntos === '' || Number.isNaN(Number(f.puntos))
@@ -1139,7 +1142,22 @@ export default function TorneoTabbedView({
               <div key={f.posicion} className="clasificacion-final-fila">
                 <span className="clasificacion-final-pos">{f.posicion}</span>
                 <span className={`clasificacion-final-equipo${vacio ? ' clasificacion-final-mute' : ''}`}>{nombre}</span>
-                <span className={`clasificacion-final-jug${vacio ? ' clasificacion-final-mute' : ''}`}>{jugTxt}</span>
+                <span className={`clasificacion-final-jug clasificacion-final-jug--chips${vacio ? ' clasificacion-final-mute' : ''}`}>
+                  {!vacio && jugadoresRow.length ? (
+                    jugadoresRow.slice(0, 4).map((p, idx) => (
+                      <button
+                        key={`${f.posicion}-${p?.id ?? p?.jugador_id ?? idx}-${jugadorEtiquetaConArroba(p)}`}
+                        type="button"
+                        className="clasificacion-final-jug-chip"
+                        onClick={() => abrirPreviewJugador(p)}
+                      >
+                        {jugadorEtiquetaConArroba(p)}
+                      </button>
+                    ))
+                  ) : (
+                    '—'
+                  )}
+                </span>
                 <span className={`clasificacion-final-pts${vacio ? ' clasificacion-final-mute' : ''}`}>{ptsTxt}</span>
               </div>
             );
