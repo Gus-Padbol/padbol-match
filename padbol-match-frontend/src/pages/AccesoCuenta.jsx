@@ -62,6 +62,7 @@ export default function AccesoCuenta() {
   const [regNombre, setRegNombre] = useState('');
   const [regApellido, setRegApellido] = useState('');
   const [regGenero, setRegGenero] = useState('');
+  const [regNotificacionesWhatsapp, setRegNotificacionesWhatsapp] = useState(false);
   const sesionYaRedirigidaRef = useRef(false);
 
   const handleAccesoBack = useCallback(() => {
@@ -123,6 +124,7 @@ export default function AccesoCuenta() {
     setRegNombre('');
     setRegApellido('');
     setRegGenero('');
+    setRegNotificacionesWhatsapp(false);
   }, [modo]);
 
   const handleIngresar = async (e) => {
@@ -205,6 +207,7 @@ export default function AccesoCuenta() {
             nombre: nom,
             apellido: ap,
             genero: gen,
+            notificaciones_whatsapp: regNotificacionesWhatsapp,
           },
         },
       });
@@ -495,6 +498,31 @@ export default function AccesoCuenta() {
               <option value="masculino">Masculino</option>
               <option value="femenino">Femenino</option>
             </select>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                marginBottom: '16px',
+                cursor: busy ? 'default' : 'pointer',
+                color: 'rgba(255,255,255,0.95)',
+                fontSize: '14px',
+                lineHeight: 1.45,
+                fontWeight: 500,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={regNotificacionesWhatsapp}
+                onChange={(e) => setRegNotificacionesWhatsapp(e.target.checked)}
+                disabled={busy}
+                style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0, cursor: busy ? 'default' : 'pointer' }}
+              />
+              <span>
+                Quiero recibir novedades de torneos y promociones por WhatsApp{' '}
+                <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.75)', fontSize: '12px' }}>(opcional)</span>
+              </span>
+            </label>
             <label
               style={{
                 display: 'block',

@@ -1027,6 +1027,17 @@ app.post('/api/torneos/notificar-equipo-completo', async (req, res) => {
       return res.json({ ok: true, skipped: true, reason: 'no_whatsapp_capitan' });
     }
 
+    let permiteNotifTorneoPromo = false;
+    if (creadorUid) {
+      permiteNotifTorneoPromo = await jugadorAceptaNotificacionesTorneoPromoPorUserId(creadorUid);
+    }
+    if (!permiteNotifTorneoPromo && eq.creador_email) {
+      permiteNotifTorneoPromo = await jugadorAceptaNotificacionesTorneoPromoPorEmail(eq.creador_email);
+    }
+    if (!permiteNotifTorneoPromo) {
+      return res.json({ ok: true, skipped: true, reason: 'notificaciones_whatsapp_off' });
+    }
+
     await sendTwilioWhatsAppBodyToRaw(whatsappDest, body);
     res.json({ ok: true });
   } catch (err) {
@@ -1050,6 +1061,13 @@ async function notifyListaEsperaInscripcionAbierta(torneoId, nombreTorneo) {
     const link = `${baseUrl}/torneo/${torneoId}/equipos`;
     const body = `¡Hola! La inscripción a «${tname}» ya está abierta. Entrá acá para inscribirte: ${link}`;
     for (const row of rows || []) {
+      const emailRow = String(row?.email || '').trim().toLowerCase();
+      if (emailRow) {
+        const permite = await jugadorAceptaNotificacionesTorneoPromoPorEmail(emailRow);
+        if (!permite) continue;
+      } else {
+        continue;
+      }
       let dest = String(row?.whatsapp || '').trim();
       if (!dest && row?.email) {
         dest = (await fetchJugadorWhatsappPorEmail(row.email)) || '';
@@ -2664,6 +2682,29 @@ async function fetchJugadorWhatsappPorEmail(email) {
   const { data } = await supabase.from('jugadores_perfil').select('whatsapp').eq('email', em).maybeSingle();
   const w = data?.whatsapp != null ? String(data.whatsapp).trim() : '';
   return w || null;
+}
+
+/** Opt-in `jugadores_perfil.notificaciones_whatsapp`: novedades/promos de torneo (no invitaciones transaccionales). */
+async function jugadorAceptaNotificacionesTorneoPromoPorEmail(emailNorm) {
+  const em = String(emailNorm || '').trim().toLowerCase();
+  if (!em) return false;
+  const { data } = await supabase
+    .from('jugadores_perfil')
+    .select('notificaciones_whatsapp')
+    .eq('email', em)
+    .maybeSingle();
+  return data?.notificaciones_whatsapp === true;
+}
+
+async function jugadorAceptaNotificacionesTorneoPromoPorUserId(uid) {
+  const id = String(uid || '').trim();
+  if (!id) return false;
+  const { data } = await supabase
+    .from('jugadores_perfil')
+    .select('notificaciones_whatsapp')
+    .eq('user_id', id)
+    .maybeSingle();
+  return data?.notificaciones_whatsapp === true;
 }
 
 async function upsertUserRoleAdminClub({ email, nombre, pais, sede_id }) {

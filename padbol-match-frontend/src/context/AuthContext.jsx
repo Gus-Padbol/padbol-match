@@ -70,11 +70,15 @@ async function refreshUserProfile(session, setUserProfile) {
   const nombreMeta = String(meta.nombre || '').trim();
   const apellidoMeta = String(meta.apellido || '').trim();
   const generoMeta = String(meta.genero || '').trim();
+  const nw = meta.notificaciones_whatsapp;
+  const notificacionesWhatsapp =
+    nw === true || nw === 'true' || String(nw || '').toLowerCase() === 'true';
   const insertRow = {
     user_id: userId,
     nombre: nombreMeta || 'Jugador',
     apellido: apellidoMeta || null,
     alias: '',
+    notificaciones_whatsapp: notificacionesWhatsapp,
   };
   if (generoMeta) insertRow.genero = generoMeta;
   if (email) {
