@@ -2233,9 +2233,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   style={{
                     padding: '5px 10px',
                     borderRadius: '999px',
-                    border: active ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
-                    background: active ? '#667eea' : '#fff',
-                    color: active ? '#fff' : '#334155',
+                    border: active ? '1px solid #a5b4fc' : '1px solid rgba(255, 255, 255, 0.55)',
+                    background: active ? '#667eea' : 'transparent',
+                    color: '#fff',
                     cursor: 'pointer',
                     fontSize: '11px',
                     fontWeight: 700,
