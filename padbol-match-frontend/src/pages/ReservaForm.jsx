@@ -402,6 +402,8 @@ export default function ReservaForm() {
   /** Número local en pantalla resumen — controlado aparte de formData para no re-disparar efectos al escribir */
   const [whatsapp, setWhatsapp] = useState('');
   const canchasBloqueRef = useRef(null);
+  /** Evita re-aplicar el deep link `?sedeId=…` cuando solo cambia la referencia de `sedes` (p. ej. refresh GET /api/sedes/:id). */
+  const reservaUrlBootstrapKeyRef = useRef('');
 
   useEffect(() => {
     if (pantalla !== 4) return;
@@ -457,19 +459,26 @@ export default function ReservaForm() {
 
     const sedeIdFromUrl =
       initialSedeId && String(initialSedeId).trim() ? String(initialSedeId).trim() : null;
-    if (!sedeIdFromUrl) return;
+    if (!sedeIdFromUrl) {
+      reservaUrlBootstrapKeyRef.current = '';
+      return;
+    }
 
     const id = parseInt(String(sedeIdFromUrl), 10);
     if (Number.isNaN(id)) return;
 
     const sede = sedes.find((s) => Number(s.id) === id);
     if (!sede) {
+      reservaUrlBootstrapKeyRef.current = '';
       clearReservaGeoMasCercanaIntent();
       setFiltros({ pais: '', ciudad: '', sede_id: '' });
       setPantalla(1);
       navigate('/reservar', { replace: true });
       return;
     }
+
+    const urlBootstrapKey = `${String(id)}|${location.search}`;
+    if (reservaUrlBootstrapKeyRef.current === urlBootstrapKey) return;
 
     const sp = new URLSearchParams(location.search);
     const fechaQ = (sp.get('fecha') || '').trim();
@@ -509,6 +518,7 @@ export default function ReservaForm() {
         navigate({ pathname: '/reservar', search: `?${next.toString()}` }, { replace: true });
       }
     }
+    reservaUrlBootstrapKeyRef.current = urlBootstrapKey;
   }, [sedes, initialSedeId, location.search, navigate]);
 
   // Tras login: restaurar estado guardado en sessionStorage (v2 o legacy) antes de redirigir a login.
