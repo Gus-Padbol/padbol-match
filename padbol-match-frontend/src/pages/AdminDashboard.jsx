@@ -21,7 +21,7 @@ import { FILTROS_ESTADO_TORNEO_PILLS, torneoPasaFiltroEstadoVista } from '../uti
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
-import SorteoGruposModal from '../components/torneo/SorteoGruposModal';
+import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
@@ -783,9 +783,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   }, [apiBaseUrl]);
 
+  /** Sorteo de grupos solo con torneo en inscripción / abierto (antes de `en_curso`). */
   const torneoEstadoPermiteSorteoGrupos = (est) => {
     const e = String(est || '').toLowerCase();
-    return ['abierto', 'inscripcion_abierta', 'en_curso'].includes(e);
+    return e === 'abierto' || e === 'inscripcion_abierta';
   };
 
   const torneosFiltradosAdminEstado = useMemo(
@@ -901,9 +902,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             const equipos  = eqRes.ok  ? await eqRes.json()  : [];
             const partidos = partRes.ok ? await partRes.json() : [];
             const jugados  = partidos.filter(p => p.estado === 'finalizado').length;
-            const tiene_grupos = partidos.some(
+            const tiene_gruposPorPartido = partidos.some(
               (p) => p && p.grupo != null && String(p.grupo).trim() !== ''
             );
+            const tiene_gruposPorEquipo = (Array.isArray(equipos) ? equipos : []).some(
+              (eq) => eq && eq.grupo != null && String(eq.grupo).trim() !== ''
+            );
+            const tiene_grupos = tiene_gruposPorPartido || tiene_gruposPorEquipo;
+            const equipos_confirmados_sorteo = equiposConfirmadosParaSorteo(equipos).length;
             // winner: equipo with highest puntos_ranking (finalizado) or puntos_totales (en_curso)
             const sorted = [...equipos].sort((a, b) =>
               t.estado === 'finalizado'
@@ -917,6 +923,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               total_partidos: partidos.length,
               winner: sorted[0] || null,
               tiene_grupos,
+              equipos_confirmados_sorteo,
             };
           } catch {
             return {
@@ -926,6 +933,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               total_partidos: 0,
               winner: null,
               tiene_grupos: false,
+              equipos_confirmados_sorteo: 0,
             };
           }
         })
@@ -2492,7 +2500,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             torneo.tipo_torneo === 'grupos_knockout' &&
                             torneoEstadoPermiteSorteoGrupos(torneo.estado) &&
                             st &&
-                            !st.tiene_grupos;
+                            !st.tiene_grupos &&
+                            (st.equipos_confirmados_sorteo ?? 0) >= 2;
                           return mostrarSorteo ? (
                             <button
                               type="button"

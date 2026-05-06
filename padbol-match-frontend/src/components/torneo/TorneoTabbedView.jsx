@@ -6,7 +6,7 @@ import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../.
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../JugadorPreviewModal';
-import SorteoGruposModal from './SorteoGruposModal';
+import SorteoGruposModal, { equiposConfirmadosParaSorteo } from './SorteoGruposModal';
 import {
   horasRevelarEquiposTorneo,
   torneoListaEquiposOcultaParaPublico,
@@ -388,11 +388,26 @@ export default function TorneoTabbedView({
     return [...new Set(Object.values(equipoGrupoMap))].sort();
   }, [esGruposKnockout, equipoGrupoMap]);
 
+  /** Sorteo solo antes de fase de partidos: abierto / inscripción, con ≥2 equipos completos confirmados. */
   const puedeMostrarBotonSorteoGrupos =
     adminPuedeSorteoGrupos &&
     esGruposKnockout &&
     grupos.length === 0 &&
-    ['abierto', 'inscripcion_abierta', 'en_curso'].includes(estadoLower);
+    (estadoLower === 'abierto' || estadoLower === 'inscripcion_abierta') &&
+    equiposConfirmadosParaSorteo(equipos).length >= 2;
+
+  const sorteoGruposAutoOpenedRef = useRef(false);
+  useEffect(() => {
+    sorteoGruposAutoOpenedRef.current = false;
+  }, [torneo?.id, grupos.length]);
+
+  useEffect(() => {
+    if (activeTab !== 'grupos') return;
+    if (!puedeMostrarBotonSorteoGrupos) return;
+    if (sorteoGruposAutoOpenedRef.current) return;
+    sorteoGruposAutoOpenedRef.current = true;
+    setSorteoModalOpen(true);
+  }, [activeTab, puedeMostrarBotonSorteoGrupos, torneo?.id, equipos]);
 
   const partidosOrdenados = useMemo(() => {
     return [...partidos].sort((a, b) => {

@@ -11,12 +11,25 @@ function jugadorListo(p) {
   return false;
 }
 
+/** Igual que en TorneoTabbedView: API puede devolver `jugadores` como JSON string. */
+function jugadoresArrayEquipo(eq) {
+  let j = eq?.jugadores;
+  if (typeof j === 'string') {
+    try {
+      j = JSON.parse(j);
+    } catch {
+      j = [];
+    }
+  }
+  return Array.isArray(j) ? j : [];
+}
+
 /** Equipos con cupo completo y sin jugadores pendientes (misma idea que inicio de torneo). */
 export function equiposConfirmadosParaSorteo(equipos) {
   const out = [];
   for (const eq of equipos || []) {
     const cupo = Number(eq?.cupo_maximo || 2);
-    const arr = Array.isArray(eq?.jugadores) ? eq.jugadores : [];
+    const arr = jugadoresArrayEquipo(eq);
     if (arr.length < cupo) continue;
     if (!arr.every(jugadorListo)) continue;
     out.push(eq);
