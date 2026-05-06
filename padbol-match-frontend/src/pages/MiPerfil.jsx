@@ -6,6 +6,9 @@ import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import SedeBusquedaInput from '../components/SedeBusquedaInput';
+import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
@@ -283,6 +286,7 @@ export default function MiPerfil() {
   const fotoPreviewRef = useRef(null);
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
+  const [jugadorPreviewMiCompanero, setJugadorPreviewMiCompanero] = useState(null);
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
 
@@ -421,7 +425,7 @@ export default function MiPerfil() {
     let cancelled = false;
     supabase
       .from('sedes')
-      .select('id, nombre')
+      .select('id, nombre, pais')
       .order('nombre', { ascending: true })
       .then(({ data, error }) => {
         if (cancelled) return;
@@ -2044,23 +2048,19 @@ export default function MiPerfil() {
               />
 
               <label style={guestLabelStyle}>Club habitual</label>
-              <select
-                name="ciudad"
-                value={String(formData.ciudad || '').trim()}
-                onChange={handleChange}
-                style={{ ...guestInputStyle, marginBottom: '14px' }}
-              >
-                <option value="">Seleccioná tu sede habitual</option>
-                {formData.ciudad &&
-                !sedesClubHabitual.some((s) => String(s.nombre) === String(formData.ciudad).trim()) ? (
-                  <option value={String(formData.ciudad).trim()}>{String(formData.ciudad).trim()}</option>
-                ) : null}
-                {sedesClubHabitual.map((s) => (
-                  <option key={s.id} value={s.nombre}>
-                    {s.nombre}
-                  </option>
-                ))}
-              </select>
+              <div style={{ marginBottom: '14px' }}>
+                <SedeBusquedaInput
+                  mode="nombre"
+                  sedes={sedesClubHabitual}
+                  valueNombre={String(formData.ciudad || '').trim()}
+                  onSelectNombre={(nombre) =>
+                    setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
+                  }
+                  placeholder="Buscá tu sede (mín. 2 letras)…"
+                  inputStyle={guestInputStyle}
+                  aria-label="Buscar club habitual"
+                />
+              </div>
 
               <label style={guestLabelStyle}>Fecha de nacimiento</label>
               <input
@@ -2419,9 +2419,7 @@ export default function MiPerfil() {
               <button
                 type="button"
                 onClick={() =>
-                  navigate(
-                    `/jugador/${encodeURIComponent(String(perfilCompaneroDisplay.row.alias).trim())}`
-                  )
+                  setJugadorPreviewMiCompanero(buildJugadorPreviewModalData(perfilCompaneroDisplay.row, null))
                 }
                 style={{
                   background: 'none',
@@ -2439,11 +2437,28 @@ export default function MiPerfil() {
                 {formatAliasConArroba(String(perfilCompaneroDisplay.row.alias).trim())}
               </button>
             ) : perfilCompaneroDisplay?.row ? (
-              <>
+              <button
+                type="button"
+                onClick={() =>
+                  setJugadorPreviewMiCompanero(buildJugadorPreviewModalData(perfilCompaneroDisplay.row, null))
+                }
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0,
+                  cursor: 'pointer',
+                  color: '#5b21b6',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  textDecoration: 'underline',
+                  fontFamily: 'inherit',
+                }}
+              >
                 {nombreCompletoJugadorPerfil(perfilCompaneroDisplay.row) ||
                   perfilCompaneroDisplay.row.nombre ||
                   'Sin definir'}
-              </>
+              </button>
             ) : (
               'Sin definir'
             )}
@@ -2875,23 +2890,19 @@ export default function MiPerfil() {
             />
 
             <label style={labelStyle}>Club habitual</label>
-            <select
-              name="ciudad"
-              value={String(formData.ciudad || '').trim()}
-              onChange={handleChange}
-              style={{ ...inputStyle, marginBottom: '14px' }}
-            >
-              <option value="">Seleccioná tu sede habitual</option>
-              {formData.ciudad &&
-              !sedesClubHabitual.some((s) => String(s.nombre) === String(formData.ciudad).trim()) ? (
-                <option value={String(formData.ciudad).trim()}>{String(formData.ciudad).trim()}</option>
-              ) : null}
-              {sedesClubHabitual.map((s) => (
-                <option key={s.id} value={s.nombre}>
-                  {s.nombre}
-                </option>
-              ))}
-            </select>
+            <div style={{ marginBottom: '14px' }}>
+              <SedeBusquedaInput
+                mode="nombre"
+                sedes={sedesClubHabitual}
+                valueNombre={String(formData.ciudad || '').trim()}
+                onSelectNombre={(nombre) =>
+                  setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
+                }
+                placeholder="Buscá tu sede (mín. 2 letras)…"
+                inputStyle={inputStyle}
+                aria-label="Buscar club habitual"
+              />
+            </div>
 
             <label style={labelStyle}>Compañero habitual</label>
             {companeroSeleccionado ? (
@@ -3589,6 +3600,11 @@ export default function MiPerfil() {
         </div>
       ) : null}
 
+      <JugadorPreviewModal
+        open={Boolean(jugadorPreviewMiCompanero)}
+        onClose={() => setJugadorPreviewMiCompanero(null)}
+        data={jugadorPreviewMiCompanero}
+      />
       <BottomNav />
     </div>
   );

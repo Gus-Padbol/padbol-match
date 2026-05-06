@@ -7,6 +7,8 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { formatNivelTorneo } from '../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
+import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
+import JugadorPreviewModal from '../components/JugadorPreviewModal';
 
 function safeJugadores(eq) {
   let j = eq?.jugadores;
@@ -42,14 +44,10 @@ function mergeJugadorConPerfil(p, perfilPorUserId) {
     foto_url: str(perfil.foto_url) ? perfil.foto_url : p.foto_url,
     alias: str(perfil.alias) ? perfil.alias : p.alias,
     nombre: str(perfil.nombre) ? perfil.nombre : p.nombre,
+    apellido: str(perfil.apellido) ? perfil.apellido : p.apellido,
+    nivel: str(perfil.nivel) ? perfil.nivel : p.nivel,
+    ciudad: str(perfil.ciudad) ? perfil.ciudad : p.ciudad,
   };
-}
-
-function slugJugador(p) {
-  const alias = String(p?.alias || '').trim();
-  if (alias) return alias;
-  const nombre = String(nombreCompletoJugadorPerfil(p) || p?.nombre || 'jugador').trim();
-  return nombre || 'jugador';
 }
 
 function jugadorAliasLabel(p) {
@@ -141,6 +139,7 @@ export default function EquipoPerfil() {
   const [equipo, setEquipo] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [perfilPorUserId, setPerfilPorUserId] = useState({});
+  const [jugadorPreviewPublico, setJugadorPreviewPublico] = useState(null);
 
   const shellStyle = useMemo(
     () => ({
@@ -195,7 +194,7 @@ export default function EquipoPerfil() {
       if (uids.length > 0) {
         const { data: perfiles, error: perfilErr } = await supabase
           .from('jugadores_perfil')
-          .select('user_id, pais, foto_url, alias, nombre')
+          .select('user_id, pais, foto_url, alias, nombre, apellido, nivel, ciudad')
           .in('user_id', uids);
         if (cancelled) return;
         console.log('[EquipoPerfil] jugadores_perfil join resultado', {
@@ -342,7 +341,6 @@ export default function EquipoPerfil() {
                   const fullName = jugadorNombreCompleto(p);
                   const pais = parsePaisDisplay(p);
                   const foto = String(p?.foto_url || '').trim();
-                  const slug = encodeURIComponent(slugJugador(p));
                   const paisTxt =
                     pais &&
                     [pais.flag, pais.name].filter((x) => String(x || '').trim()).join(' ').trim();
@@ -350,7 +348,7 @@ export default function EquipoPerfil() {
                     <button
                       key={`${aliasLabel}-${idx}`}
                       type="button"
-                      onClick={() => navigate(`/jugador/${slug}`)}
+                      onClick={() => setJugadorPreviewPublico(buildJugadorPreviewModalData(p, null))}
                       style={{
                         border: '1px solid #e2e8f0',
                         background: '#fff',
@@ -450,6 +448,11 @@ export default function EquipoPerfil() {
             </>
           )}
       </div>
+      <JugadorPreviewModal
+        open={Boolean(jugadorPreviewPublico)}
+        onClose={() => setJugadorPreviewPublico(null)}
+        data={jugadorPreviewPublico}
+      />
       <BottomNav />
     </div>
   );

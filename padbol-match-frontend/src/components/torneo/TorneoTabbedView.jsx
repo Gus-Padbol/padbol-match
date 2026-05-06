@@ -3,6 +3,8 @@ import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
+import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
+import JugadorPreviewModal from '../JugadorPreviewModal';
 import {
   horasRevelarEquiposTorneo,
   torneoListaEquiposOcultaParaPublico,
@@ -71,15 +73,6 @@ function formatFecha(str) {
   const [y, m, d] = str.split('-');
   const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   return `${parseInt(d, 10)} ${meses[parseInt(m, 10) - 1]} ${y}`;
-}
-
-function slugJugador(raw) {
-  return encodeURIComponent(
-    String(raw || 'jugador')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-  );
 }
 
 function initialFromText(value) {
@@ -314,10 +307,13 @@ export default function TorneoTabbedView({
   bannerAntesTabs = null,
   stickyTop = '110px',
   showTorneoLogo = true,
+  /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
+  jugadorNombreTorneoCtx = null,
 }) {
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
   const resultadosConfettiPlayedRef = useRef(false);
   const [modalEquipo, setModalEquipo] = useState(null);
+  const [jugadorPreview, setJugadorPreview] = useState(null);
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
@@ -343,6 +339,13 @@ export default function TorneoTabbedView({
     !esFinalizado &&
     !hayAlMenosUnResultadoEnPartidos;
   const estadoBadge = useMemo(() => badgeTorneoEstadoPublico(torneo?.estado), [torneo?.estado]);
+
+  const abrirPreviewJugador = useCallback(
+    (p) => {
+      setJugadorPreview(buildJugadorPreviewModalData(p, jugadorNombreTorneoCtx));
+    },
+    [jugadorNombreTorneoCtx]
+  );
 
   useEffect(() => {
     if (!torneo) return;
@@ -655,7 +658,6 @@ export default function TorneoTabbedView({
                     jugadores.map((p, idx) => {
                       const nombreMain = nombreListadoTorneoRanking(p);
                       const al = String(p?.alias || '').trim();
-                      const aliasRuta = String(p?.alias || p?.nombre || 'jugador').trim();
                       const initial = String(nombreMain || '?')
                         .charAt(0)
                         .toUpperCase();
@@ -664,7 +666,7 @@ export default function TorneoTabbedView({
                         <button
                           key={`${equipo.id}-j-${idx}`}
                           type="button"
-                          onClick={() => navigate(`/jugador/${slugJugador(aliasRuta)}`)}
+                          onClick={() => abrirPreviewJugador(p)}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1220,8 +1222,7 @@ export default function TorneoTabbedView({
                   key={i}
                   type="button"
                   onClick={() => {
-                    setModalEquipo(null);
-                    navigate(`/jugador/${slugJugador(String(p?.alias || p?.nombre || 'jugador'))}`);
+                    abrirPreviewJugador(p);
                   }}
                   style={{
                     display: 'flex',
@@ -1312,6 +1313,12 @@ export default function TorneoTabbedView({
           </div>
         </div>
       ) : null}
+
+      <JugadorPreviewModal
+        open={Boolean(jugadorPreview)}
+        onClose={() => setJugadorPreview(null)}
+        data={jugadorPreview}
+      />
     </>
   );
 }

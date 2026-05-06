@@ -20,6 +20,11 @@ import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
 import { clearAdminNavContext } from '../utils/adminNavContext';
+import {
+  fetchJugadoresPerfilPorJugadores,
+  buildJugadorPerfilLookupMaps,
+  normalizeJugadorEmail,
+} from '../utils/jugadorNombreTorneo';
 import '../styles/TorneoVista.css';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -28,7 +33,7 @@ export default function TorneoVista() {
   const { torneoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { session } = useAuth();
+  const { session, userProfile } = useAuth();
   const [modalInscribirseOpen, setModalInscribirseOpen] = useState(false);
   const [listaEsperaEnrolled, setListaEsperaEnrolled] = useState(false);
   const [listaEsperaChecked, setListaEsperaChecked] = useState(false);
@@ -51,7 +56,60 @@ export default function TorneoVista() {
   const [finalizando, setFinalizando] = useState(false);
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
+  const authUserId = useMemo(
+    () => (session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null),
+    [session?.user?.id]
+  );
   const sedeTorneo = torneo ? sedesMap[String(torneo.sede_id)] : null;
+
+  const jugadoresParaLookupVista = useMemo(() => {
+    const out = [];
+    for (const eq of equipos || []) {
+      const arr = Array.isArray(eq?.jugadores) ? eq.jugadores : [];
+      out.push(...arr);
+    }
+    return out;
+  }, [equipos]);
+
+  const perfilFetchKeyVista = useMemo(
+    () =>
+      jugadoresParaLookupVista
+        .map((p) => normalizeJugadorEmail(p))
+        .filter(Boolean)
+        .sort()
+        .join(';'),
+    [jugadoresParaLookupVista]
+  );
+
+  const [perfilMapsVista, setPerfilMapsVista] = useState(() => buildJugadorPerfilLookupMaps([]));
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!jugadoresParaLookupVista.length) {
+        if (!cancelled) setPerfilMapsVista(buildJugadorPerfilLookupMaps([]));
+        return;
+      }
+      const rows = await fetchJugadoresPerfilPorJugadores(jugadoresParaLookupVista);
+      if (cancelled) return;
+      setPerfilMapsVista(buildJugadorPerfilLookupMaps(rows));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [perfilFetchKeyVista]);
+
+  const nombreTorneoCtxVista = useMemo(
+    () => ({
+      perfilByEmailLower: perfilMapsVista.perfilByEmailLower,
+      jugadoresTorneo: [],
+      authSessionEmail: session?.user?.email ?? null,
+      perfilSesion: userProfile,
+      authSession: session,
+      authUserId,
+    }),
+    [perfilMapsVista, session, userProfile, authUserId]
+  );
   const fromAdmin = location.state?.fromAdmin === true;
   const isAdmin = useMemo(
     () =>
@@ -667,6 +725,7 @@ export default function TorneoVista() {
           equiposRevelacionBypass={isAdmin}
           puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
           navigateState={torneoNavStateParaTabbed}
+          jugadorNombreTorneoCtx={nombreTorneoCtxVista}
           clasificacionFinalFilas={clasificacionFinalFilas}
           adminTorneoBar={adminTorneoBar}
           bannerAntesTabs={bannerInscripcionJugador}

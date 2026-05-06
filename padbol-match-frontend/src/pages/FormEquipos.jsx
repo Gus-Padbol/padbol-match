@@ -44,6 +44,8 @@ import {
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
 import TorneoTabbedView from '../components/torneo/TorneoTabbedView';
+import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import '../styles/TorneoVista.css';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
@@ -286,6 +288,7 @@ export default function FormEquipos() {
   const [savingSalirEquipo, setSavingSalirEquipo] = useState(false);
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
   const [modalParticipacionAbierto, setModalParticipacionAbierto] = useState(false);
+  const [jugadorPreviewForm, setJugadorPreviewForm] = useState(null);
   /** Filas `tabla_puntos` del torneo (solo si está finalizado). */
   const [tablaPuntosRows, setTablaPuntosRows] = useState([]);
   const [partidos, setPartidos] = useState([]);
@@ -533,6 +536,26 @@ export default function FormEquipos() {
       authUserId,
     }),
     [perfilMapsTorneo, jugadoresTorneo, session, userProfile, authUserId]
+  );
+
+  const abrirPreviewJugadorForm = useCallback(
+    (p) => setJugadorPreviewForm(buildJugadorPreviewModalData(p, nombreTorneoCtxForm)),
+    [nombreTorneoCtxForm]
+  );
+
+  const btnJugadorNombreStyle = useMemo(
+    () => ({
+      border: 'none',
+      background: 'transparent',
+      padding: 0,
+      margin: 0,
+      font: 'inherit',
+      cursor: 'pointer',
+      color: 'inherit',
+      textDecoration: 'underline',
+      textUnderlineOffset: '2px',
+    }),
+    []
   );
 
   const currentJugador = useMemo(() => {
@@ -1416,7 +1439,9 @@ export default function FormEquipos() {
             ? eq.players.map((p, i) => (
                 <React.Fragment key={`${eq.id}-sum-${i}`}>
                   {i > 0 ? ' - ' : null}
-                  {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+                  <button type="button" onClick={() => abrirPreviewJugadorForm(p)} style={btnJugadorNombreStyle}>
+                    {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+                  </button>
                   {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
                 </React.Fragment>
               ))
@@ -1438,7 +1463,9 @@ export default function FormEquipos() {
                 }}
               >
                 <span style={{ fontWeight: 600, color: '#334155', display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                  <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}</span>
+                  <button type="button" onClick={() => abrirPreviewJugadorForm(p)} style={btnJugadorNombreStyle}>
+                    {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+                  </button>
                   {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
                   {rolTuEquipo ? (
                     <span style={{ fontWeight: 600, color: '#64748b' }}>{rolTuEquipo}</span>
@@ -1544,7 +1571,9 @@ export default function FormEquipos() {
                 }}
               >
                 <div style={{ fontSize: '13px', marginBottom: '6px' }}>
-                  {jugadorNombreTorneoEtiqueta(sol, nombreTorneoCtxForm)}
+                  <button type="button" onClick={() => abrirPreviewJugadorForm(sol)} style={btnJugadorNombreStyle}>
+                    {jugadorNombreTorneoEtiqueta(sol, nombreTorneoCtxForm)}
+                  </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1742,7 +1771,9 @@ export default function FormEquipos() {
           {eq.players.map((p, i) => (
             <React.Fragment key={`${eq.id}-can-${i}`}>
               {i > 0 ? ' · ' : null}
-              {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+              <button type="button" onClick={() => abrirPreviewJugadorForm(p)} style={btnJugadorNombreStyle}>
+                {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+              </button>
               {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
             </React.Fragment>
           ))}
@@ -2078,7 +2109,9 @@ export default function FormEquipos() {
                 {jugadoresConfirmadosInv.length ? (
                   jugadoresConfirmadosInv.map((p, idx) => (
                     <li key={`inv-conf-${idx}`} style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
-                      <span>{jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}</span>
+                      <button type="button" onClick={() => abrirPreviewJugadorForm(p)} style={btnJugadorNombreStyle}>
+                        {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
+                      </button>
                       {inviteEquipoRow && esCapitanJugadorEnFila(p, inviteEquipoRow) ? <CapitanBadgeC /> : null}
                     </li>
                   ))
@@ -2612,6 +2645,7 @@ export default function FormEquipos() {
             equiposRevelacionBypass={esAdminGestionTorneo}
             puedeGestionarEquiposTorneo={puedeGestionarEquiposTorneo}
             navigateState={torneoNavStateForm}
+            jugadorNombreTorneoCtx={nombreTorneoCtxForm}
             showTorneoLogo={false}
             clasificacionFinalFilas={
               torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
@@ -3465,6 +3499,11 @@ export default function FormEquipos() {
           </div>
         ) : null}
       </div>
+      <JugadorPreviewModal
+        open={Boolean(jugadorPreviewForm)}
+        onClose={() => setJugadorPreviewForm(null)}
+        data={jugadorPreviewForm}
+      />
       <BottomNav />
     </div>
     </>

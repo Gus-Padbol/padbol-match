@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -38,6 +38,8 @@ import {
   buildJugadorPerfilLookupMaps,
   normalizeJugadorEmail,
 } from '../utils/jugadorNombreTorneo';
+import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
+import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import {
   buildCreadorJugadorParaEquipo,
   ensureCreadorPrimeroEnLista,
@@ -159,40 +161,12 @@ function jugadorIdLikelyUserId(raw) {
   return s && UUID_AUTH_ID.test(s) ? s : '';
 }
 
-function perfilJugadorDesdeMaps(p, perfilByEmailLower, perfilByUserId) {
-  const em = normalizeJugadorEmail(p);
-  if (em && perfilByEmailLower instanceof Map && perfilByEmailLower.has(em)) {
-    return perfilByEmailLower.get(em);
-  }
-  const uid = jugadorIdLikelyUserId(p?.id);
-  if (uid && perfilByUserId instanceof Map && perfilByUserId.has(uid)) {
-    return perfilByUserId.get(uid);
-  }
-  return null;
-}
-
-function slugParaPerfilPublicoJugador(p, perfilRow, ctx) {
-  const aliasPerfil = perfilRow && String(perfilRow.alias || '').trim();
-  if (aliasPerfil) return aliasPerfil;
-  const aliasP = String(p?.alias || '').trim();
-  if (aliasP) return aliasP;
-  const nom =
-    nombreDisplayJugadorTorneo(p, ctx) ||
-    jugadorNombreTorneoEtiqueta(p, ctx) ||
-    [p?.nombre, p?.apellido].filter(Boolean).join(' ').trim() ||
-    String(p?.nombre || '').trim();
-  return nom ? nom : '';
-}
-
 /**
- * Avatar + nombre (link si hay slug) + 🎖️ capitán; `childrenDebajo` no dispara la navegación.
+ * Avatar + nombre (click → preview) + 🎖️ capitán; `childrenDebajo` no dispara la navegación.
  */
-function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, navigate, childrenDebajo }) {
-  const perfilRow = perfilJugadorDesdeMaps(p, ctx?.perfilByEmailLower, perfilByUserId);
-  const slug = slugParaPerfilPublicoJugador(p, perfilRow, ctx);
-  const path = slug ? `/jugador/${encodeURIComponent(slug)}` : null;
+function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, childrenDebajo, onVerJugador }) {
   const label = jugadorNombreTorneoEtiqueta(p, ctx);
-  const clickable = Boolean(path);
+  const clickable = Boolean(onVerJugador);
 
   return (
     <div
@@ -204,14 +178,14 @@ function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, navigat
         alignItems: 'flex-start',
         cursor: clickable ? 'pointer' : 'default',
       }}
-      role={clickable ? 'link' : undefined}
+      role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
-      onClick={() => clickable && navigate(path)}
+      onClick={() => clickable && onVerJugador(p)}
       onKeyDown={(e) => {
         if (!clickable) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          navigate(path);
+          onVerJugador(p);
         }
       }}
     >
@@ -662,7 +636,7 @@ export default function EquipoVista() {
     (async () => {
       const { data, error } = await supabase
         .from('jugadores_perfil')
-        .select('user_id, nombre, apellido, alias, email, whatsapp, foto_url')
+        .select('user_id, nombre, apellido, alias, email, whatsapp, foto_url, nivel, ciudad')
         .in('user_id', ids);
       if (cancelled) return;
       if (error) {
@@ -774,13 +748,20 @@ export default function EquipoVista() {
   const nombreTorneoCtx = useMemo(
     () => ({
       perfilByEmailLower: perfilMapsJugadores.perfilByEmailLower,
+      perfilByUserId,
       jugadoresTorneo,
       authSessionEmail: session?.user?.email ?? null,
       perfilSesion: userProfile,
       authSession: session,
       authUserId,
     }),
-    [perfilMapsJugadores, jugadoresTorneo, session, userProfile, authUserId]
+    [perfilMapsJugadores, perfilByUserId, jugadoresTorneo, session, userProfile, authUserId]
+  );
+
+  const [jugadorPreviewEq, setJugadorPreviewEq] = useState(null);
+  const abrirPreviewJugadorEq = useCallback(
+    (p) => setJugadorPreviewEq(buildJugadorPreviewModalData(p, nombreTorneoCtx)),
+    [nombreTorneoCtx]
   );
 
   const soyCreador = useMemo(() => {
@@ -1741,7 +1722,7 @@ export default function EquipoVista() {
                       equipo={equipo}
                       ctx={nombreTorneoCtx}
                       perfilByUserId={perfilByUserId}
-                      navigate={navigate}
+                      onVerJugador={abrirPreviewJugadorEq}
                       childrenDebajo={null}
                     />
                   </div>
@@ -1774,7 +1755,7 @@ export default function EquipoVista() {
                       equipo={equipo}
                       ctx={nombreTorneoCtx}
                       perfilByUserId={perfilByUserId}
-                      navigate={navigate}
+                      onVerJugador={abrirPreviewJugadorEq}
                       childrenDebajo={
                         samePerson(p, yo) && !perfilTorneoCompleto ? (
                           <div
@@ -1835,7 +1816,7 @@ export default function EquipoVista() {
                     equipo={equipo}
                     ctx={nombreTorneoCtx}
                     perfilByUserId={perfilByUserId}
-                    navigate={navigate}
+                    onVerJugador={abrirPreviewJugadorEq}
                     childrenDebajo={
                       samePerson(p, yo) && !perfilTorneoCompleto ? (
                         <div
@@ -1867,7 +1848,7 @@ export default function EquipoVista() {
                     equipo={equipo}
                     ctx={nombreTorneoCtx}
                     perfilByUserId={perfilByUserId}
-                    navigate={navigate}
+                    onVerJugador={abrirPreviewJugadorEq}
                     childrenDebajo={
                       samePerson(p, yo) && !perfilTorneoCompleto ? (
                         <div
@@ -2196,7 +2177,22 @@ export default function EquipoVista() {
                     }}
                   >
                     <div style={{ fontWeight: 700, marginBottom: '8px' }}>
-                      {jugadorNombreTorneoEtiqueta(sol, nombreTorneoCtx)}
+                      <button
+                        type="button"
+                        onClick={() => abrirPreviewJugadorEq(sol)}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          padding: 0,
+                          font: 'inherit',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          color: '#2563eb',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {jugadorNombreTorneoEtiqueta(sol, nombreTorneoCtx)}
+                      </button>
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -2389,6 +2385,11 @@ export default function EquipoVista() {
           </div>
         ) : null}
       </div>
+      <JugadorPreviewModal
+        open={Boolean(jugadorPreviewEq)}
+        onClose={() => setJugadorPreviewEq(null)}
+        data={jugadorPreviewEq}
+      />
       <BottomNav />
     </div>
   );

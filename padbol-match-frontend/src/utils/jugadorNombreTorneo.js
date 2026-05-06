@@ -181,7 +181,7 @@ export async function fetchJugadoresPerfilPorJugadores(players) {
     emailsNorm.map(async (em) => {
       const { data, error } = await supabase
         .from('jugadores_perfil')
-        .select('user_id, nombre, apellido, alias, email, whatsapp, foto_url')
+        .select('user_id, nombre, apellido, alias, email, whatsapp, foto_url, nivel, ciudad')
         .ilike('email', em)
         .limit(3);
 

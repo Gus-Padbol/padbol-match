@@ -6,6 +6,8 @@ import {
   formatAliasConArroba,
   esCategoriaPendienteValidacion,
 } from './utils/jugadorPerfil';
+import { buildJugadorPreviewModalData } from './utils/jugadorPreviewModalData';
+import JugadorPreviewModal from './components/JugadorPreviewModal';
 import { hubInstagramColumnWrapStyle } from './constants/hubLayout';
 import { formatNivelTorneo } from './utils/torneoFormatters';
 import { fetchTorneosConPuntosParaPerfil, emojiMedallaPosicionCompacta } from './utils/torneoHistorialPuntosJugador';
@@ -58,6 +60,7 @@ export default function PerfilPublico() {
   const [companeroDisplay, setCompaneroDisplay] = useState(null);
   const [torneosConPuntos, setTorneosConPuntos] = useState([]);
   const [mostrarTodosTorneosPublico, setMostrarTodosTorneosPublico] = useState(false);
+  const [jugadorPreviewCompaneroPublico, setJugadorPreviewCompaneroPublico] = useState(null);
 
   const aliasDecoded = useMemo(() => {
     try {
@@ -110,14 +113,14 @@ export default function PerfilPublico() {
     if (cid) {
       const { data: comp } = await supabase
         .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre')
+        .select('user_id, alias, foto_url, nombre, apellido, nivel, ciudad')
         .eq('user_id', cid)
         .maybeSingle();
       setCompaneroDisplay({ kind: 'habitual', row: comp || null });
     } else if (uid) {
       const { data: comp } = await supabase
         .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre')
+        .select('user_id, alias, foto_url, nombre, apellido, nivel, ciudad')
         .eq('user_id', uid)
         .maybeSingle();
       setCompaneroDisplay({ kind: 'ultimo', row: comp || null });
@@ -457,7 +460,9 @@ export default function PerfilPublico() {
                       <button
                         type="button"
                         onClick={() =>
-                          navigate(`/jugador/${encodeURIComponent(String(companeroDisplay.row.alias).trim())}`)
+                          setJugadorPreviewCompaneroPublico(
+                            buildJugadorPreviewModalData(companeroDisplay.row, null)
+                          )
                         }
                         style={{
                           background: 'none',
@@ -472,11 +477,27 @@ export default function PerfilPublico() {
                         {formatAliasConArroba(String(companeroDisplay.row.alias).trim())}
                       </button>
                     ) : (
-                      <span style={{ fontWeight: 600 }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setJugadorPreviewCompaneroPublico(
+                            buildJugadorPreviewModalData(companeroDisplay.row, null)
+                          )
+                        }
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          color: '#5b21b6',
+                          fontWeight: 700,
+                          textDecoration: 'underline',
+                        }}
+                      >
                         {nombreCompletoJugadorPerfil(companeroDisplay.row) ||
                           companeroDisplay.row.nombre ||
                           'Sin definir'}
-                      </span>
+                      </button>
                     )}
                   </span>
                 ) : (
@@ -768,6 +789,11 @@ export default function PerfilPublico() {
           )}
         </div>
       </div>
+      <JugadorPreviewModal
+        open={Boolean(jugadorPreviewCompaneroPublico)}
+        onClose={() => setJugadorPreviewCompaneroPublico(null)}
+        data={jugadorPreviewCompaneroPublico}
+      />
     </div>
   );
 }
