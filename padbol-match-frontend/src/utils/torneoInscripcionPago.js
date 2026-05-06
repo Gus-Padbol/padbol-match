@@ -1,4 +1,9 @@
-const API_MP_BASE = 'https://padbol-backend.onrender.com';
+function defaultApiBackendBase() {
+  if (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL) {
+    return String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '');
+  }
+  return 'https://padbol-backend.onrender.com';
+}
 
 /** Estado de pago de inscripción del equipo en torneo. */
 export function getEquipoInscripcionEstado(equipo) {
@@ -34,6 +39,28 @@ export function torneoPermiteNuevasInscripciones(torneo) {
 }
 
 /**
+ * Texto legible del tope para confirmar inscripción: `fecha_inicio` a las 00:00 (ART) menos 24 horas.
+ * @returns {string|null}
+ */
+export function textoFechaLimiteConfirmacionInscripcion(torneo) {
+  const fi = torneo?.fecha_inicio;
+  if (!fi) return null;
+  const m = String(fi).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const inicio = new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00-03:00`);
+  if (Number.isNaN(inicio.getTime())) return null;
+  const limite = new Date(inicio.getTime() - 24 * 60 * 60 * 1000);
+  return limite.toLocaleString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/**
  * Crea preferencia MP y redirige al checkout.
  * @returns {{ ok: true } | { ok: false, error: string }}
  */
@@ -44,11 +71,13 @@ export async function iniciarPagoInscripcionTorneo({
   torneoNombre,
   equipoNombre,
   torneo,
+  apiBaseUrl,
 }) {
+  const base = String(apiBaseUrl || '').replace(/\/$/, '') || defaultApiBackendBase();
   const precio = precioInscripcionTorneo(torneo);
   if (!Number.isFinite(precio) || precio <= 0) {
     try {
-      const res = await fetch(`${API_MP_BASE}/api/torneos/confirmar-inscripcion`, {
+      const res = await fetch(`${base}/api/torneos/confirmar-inscripcion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -78,13 +107,18 @@ export async function iniciarPagoInscripcionTorneo({
   };
 
   try {
-    const res = await fetch(`${API_MP_BASE}/api/crear-preferencia`, {
+    const res = await fetch(`${base}/api/crear-preferencia`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         titulo,
         precio,
+        monto: precio,
         moneda,
+        tipo: 'torneo_inscripcion',
+        equipo_id: Number(equipoId),
+        torneo_id: Number(torneoId),
+        email: String(email || '').trim(),
         sedeNombre: String(torneoNombre || 'Padbol Match').slice(0, 40),
         sedeId: Number.isFinite(sedeId) ? sedeId : null,
         reservaData,

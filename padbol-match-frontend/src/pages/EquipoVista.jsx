@@ -24,6 +24,7 @@ import {
   etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
   precioInscripcionTorneo,
+  textoFechaLimiteConfirmacionInscripcion,
   torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
 import useUserRole from '../hooks/useUserRole';
@@ -50,6 +51,12 @@ import {
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
+
+const API_BACKEND_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
 
 const AVATAR_JUGADOR_EQ_SIZE = 36;
 const AVATAR_JUGADOR_EQ_VIOLETA = '#7c3aed';
@@ -1316,6 +1323,11 @@ export default function EquipoVista() {
     inscripcionEstadoEquipo === 'pendiente' &&
     costoInscripcionTorneoEq > 0;
 
+  const textoLimiteConfirmacion = useMemo(
+    () => (torneo ? textoFechaLimiteConfirmacionInscripcion(torneo) : null),
+    [torneo]
+  );
+
   const equipoPageShellStyle = useMemo(
     () => ({
       ...pageBackgroundStyle,
@@ -1359,6 +1371,7 @@ export default function EquipoVista() {
       torneoNombre: torneo.nombre,
       equipoNombre: equipo.nombre,
       torneo,
+      apiBaseUrl: API_BACKEND_BASE,
     });
     setMpInscripcionLoading(false);
     if (!r.ok) {
@@ -1579,7 +1592,26 @@ export default function EquipoVista() {
                       Para confirmar el cupo, cualquier integrante puede pagar la inscripción completa.
                     </p>
                   ) : null}
-                  {inscripcionEstadoEquipo === 'pendiente' && esMiEquipo ? (
+                  {badgePendientePagoEquipoVista && textoLimiteConfirmacion ? (
+                    <div
+                      style={{
+                        margin: '0 0 14px',
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        background: '#fffbeb',
+                        border: '1px solid #fde68a',
+                        color: '#92400e',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      Confirmá tu lugar. Tenés tiempo hasta{' '}
+                      <strong style={{ fontWeight: 800 }}>{textoLimiteConfirmacion}</strong>. Los cupos se asignan
+                      por orden de confirmación. Si no confirmás, el cupo se libera.
+                    </div>
+                  ) : null}
+                  {inscripcionEstadoEquipo === 'pendiente' && esMiEquipo && equipoListoJugar ? (
                     <button
                       type="button"
                       disabled={mpInscripcionLoading}

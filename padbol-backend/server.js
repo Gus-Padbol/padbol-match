@@ -2432,9 +2432,40 @@ app.get('/api/creditos/:email', async (req, res) => {
 // POST /api/crear-preferencia — Mercado Pago Checkout Pro
 app.post('/api/crear-preferencia', async (req, res) => {
   try {
-    const { titulo, precio, moneda, sedeNombre, reservaData, sedeId } = req.body;
-    if (!titulo || !precio) {
-      return res.status(400).json({ error: 'Faltan campos requeridos: titulo, precio' });
+    const b = req.body || {};
+    const {
+      titulo,
+      precio,
+      monto,
+      moneda,
+      sedeNombre,
+      reservaData: reservaDataIn,
+      sedeId,
+      tipo,
+      equipo_id,
+      torneo_id,
+      email,
+    } = b;
+    const unitPrice = Number(monto != null && monto !== '' ? monto : precio);
+    if (!titulo || !Number.isFinite(unitPrice) || unitPrice < 0) {
+      return res.status(400).json({ error: 'Faltan campos requeridos: titulo, precio o monto' });
+    }
+
+    let reservaData = reservaDataIn;
+    const tipoEff = String(reservaDataIn?.tipo || tipo || '').toLowerCase();
+    if (tipoEff === 'torneo_inscripcion') {
+      const eid = parseInt(String(equipo_id ?? reservaDataIn?.equipo_id), 10);
+      const tid = parseInt(String(torneo_id ?? reservaDataIn?.torneo_id), 10);
+      if (!eid || !tid) {
+        return res.status(400).json({ error: 'torneo_inscripcion requiere equipo_id y torneo_id' });
+      }
+      const em = String(email || reservaDataIn?.email || '').trim().toLowerCase();
+      reservaData = {
+        tipo: 'torneo_inscripcion',
+        equipo_id: eid,
+        torneo_id: tid,
+        email: em,
+      };
     }
 
     // Use sede-specific MP token if configured, otherwise fall back to env var
@@ -2459,7 +2490,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
       body: {
         items: [{
           title: titulo,
-          unit_price: Number(precio),
+          unit_price: unitPrice,
           quantity: 1,
           currency_id: moneda || 'ARS',
         }],
@@ -2887,6 +2918,68 @@ Recordá llegar 10 minutos antes.
     }
   } catch (err) {
     console.error('❌ Cron recordatorio - error inesperado:', err.message);
+  }
+}, { timezone: 'America/Argentina/Buenos_Aires' });
+
+/** Inicio del torneo: fecha_inicio (YYYY-MM-DD) a las 00:00 ART. */
+function parseTorneoFechaInicioArt(fechaInicioStr) {
+  const d = String(fechaInicioStr || '').trim();
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const t = new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00-03:00`);
+  return Number.isNaN(t.getTime()) ? null : t;
+}
+
+/** Cierre de inscripción 24h antes del inicio: pasa torneo a en_curso y elimina equipos no confirmados. */
+async function cierreInscripcionTorneos24hAntesInicio() {
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+
+  const { data: torneos, error } = await supabase
+    .from('torneos')
+    .select('id, nombre, fecha_inicio, estado')
+    .in('estado', ['abierto', 'inscripcion_abierta']);
+
+  if (error) throw error;
+  if (!torneos?.length) return;
+
+  for (const t of torneos) {
+    const inicio = parseTorneoFechaInicioArt(t.fecha_inicio);
+    if (!inicio) continue;
+    const limiteCierreInscripcion = new Date(inicio.getTime() - 24 * 60 * 60 * 1000);
+    if (now.getTime() < limiteCierreInscripcion.getTime()) continue;
+
+    console.log(`📅 Cierre inscripción (24h antes del inicio): torneo ${t.id} "${String(t.nombre || '').slice(0, 40)}" → en_curso`);
+
+    const { error: eUp } = await supabase.from('torneos').update({ estado: 'en_curso' }).eq('id', t.id);
+    if (eUp) {
+      console.warn(`⚠️ Torneo ${t.id}: no se pudo actualizar estado:`, eUp.message);
+      continue;
+    }
+
+    const { data: equipos, error: eE } = await supabase
+      .from('equipos')
+      .select('id, inscripcion_estado')
+      .eq('torneo_id', t.id);
+
+    if (eE) {
+      console.warn(`⚠️ Torneo ${t.id}: listar equipos:`, eE.message);
+      continue;
+    }
+
+    for (const eq of equipos || []) {
+      if (String(eq.inscripcion_estado || '').toLowerCase() === 'confirmado') continue;
+      const { error: eDel } = await supabase.from('equipos').delete().eq('id', eq.id);
+      if (eDel) console.warn(`⚠️ Equipo ${eq.id}: no se pudo eliminar:`, eDel.message);
+      else console.log(`  ✓ Equipo ${eq.id} eliminado (inscripción no confirmada)`);
+    }
+  }
+}
+
+cron.schedule('0 * * * *', async () => {
+  try {
+    await cierreInscripcionTorneos24hAntesInicio();
+  } catch (err) {
+    console.error('❌ Cron cierre inscripción torneos (24h antes):', err.message);
   }
 }, { timezone: 'America/Argentina/Buenos_Aires' });
 

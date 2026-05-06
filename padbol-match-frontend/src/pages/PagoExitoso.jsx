@@ -7,7 +7,11 @@ import {
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 
-const API_BASE = 'https://padbol-backend.onrender.com';
+const API_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
 
 export default function PagoExitoso() {
   const navigate = useNavigate();
@@ -34,9 +38,16 @@ export default function PagoExitoso() {
       return;
     }
 
+    let rawRef = extRef;
+    try {
+      rawRef = decodeURIComponent(extRef);
+    } catch {
+      rawRef = extRef;
+    }
+
     let payload;
     try {
-      payload = JSON.parse(extRef);
+      payload = JSON.parse(rawRef);
     } catch {
       savedRef.current = true;
       setSaveError('No se pudo leer los datos del pago.');

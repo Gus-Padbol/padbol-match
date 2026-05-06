@@ -1345,6 +1345,7 @@ export default function FormEquipos() {
       torneoNombre: torneo.nombre,
       equipoNombre: miEquipo.nombre,
       torneo,
+      apiBaseUrl: BACKEND_API_BASE,
     });
     setMpInscripcionLoading(false);
     if (!r.ok) {
