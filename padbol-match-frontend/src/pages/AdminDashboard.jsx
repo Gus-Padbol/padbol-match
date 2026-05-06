@@ -2636,7 +2636,52 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         )}
       </div>}
 
-      {activeTab === 'reservas' && <div className="section">
+      {activeTab === 'reservas' && <>
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
+            Estado de la reserva
+          </div>
+          <div
+            role="group"
+            aria-label="Estado de la reserva"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              whiteSpace: 'nowrap',
+              paddingBottom: '2px',
+            }}
+          >
+            {FILTROS_RESERVA_ADMIN_PILLS.map(({ id, label }) => {
+              const active = filtroPillReservas === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFiltroPillReservas(id)}
+                  style={{
+                    padding: '5px 10px',
+                    borderRadius: '999px',
+                    border: active ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
+                    background: active ? '#667eea' : '#fff',
+                    color: active ? '#fff' : '#334155',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="section">
         {(() => {
           if (isSuperAdmin) {
             const getMonedaCanonica = (reserva) => {
@@ -2716,7 +2761,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             const sedesRows = [...porSede.values()].sort((a, b) => b.reservasCount - a.reservasCount);
 
             return (
-              <div style={{ display: 'grid', gap: '16px' }}>
+              <div style={{ display: 'grid', gap: '16px', minWidth: 0, maxWidth: '100%' }}>
                 <div style={{ display: 'grid', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap', paddingBottom: '2px' }}>
                   {[
@@ -2795,60 +2840,64 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 )}
                 </div>
 
-                <div style={{ marginBottom: '0', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>Estado de la reserva</div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+                    gap: '10px',
+                    minWidth: 0,
+                  }}
+                >
                   <div
-                    role="group"
-                    aria-label="Estado de la reserva"
                     style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      flexWrap: 'nowrap',
-                      gap: '8px',
-                      overflowX: 'auto',
-                      WebkitOverflowScrolling: 'touch',
-                      scrollbarWidth: 'thin',
-                      paddingBottom: '4px',
+                      background: 'white',
+                      borderRadius: '10px',
+                      padding: '14px',
+                      border: '1px solid #e5e7eb',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    {FILTROS_RESERVA_ADMIN_PILLS.map(({ id, label }) => {
-                      const active = filtroPillReservas === id;
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => setFiltroPillReservas(id)}
-                          style={{
-                            flexShrink: 0,
-                            whiteSpace: 'nowrap',
-                            padding: '8px 14px',
-                            borderRadius: '999px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            fontFamily: 'inherit',
-                            cursor: 'pointer',
-                            border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
-                            background: active ? '#667eea' : 'transparent',
-                            color: active ? '#fff' : '#374151',
-                            boxShadow: active ? '0 2px 8px rgba(102, 126, 234, 0.35)' : 'none',
-                          }}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
-                  <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
                     <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Total reservas del período</div>
-                    <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>{reservasPeriodoFiltradas.length}</div>
+                    <div
+                      style={{
+                        color: '#0f172a',
+                        fontSize: '26px',
+                        fontWeight: 900,
+                        marginTop: '6px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {reservasPeriodoFiltradas.length}
+                    </div>
                   </div>
-                  <div style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e5e7eb' }}>
+                  <div
+                    style={{
+                      background: 'white',
+                      borderRadius: '10px',
+                      padding: '14px',
+                      border: '1px solid #e5e7eb',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      boxSizing: 'border-box',
+                    }}
+                  >
                     <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del período</div>
-                    <div style={{ color: '#0f172a', fontSize: '14px', fontWeight: 800, marginTop: '8px', lineHeight: 1.45 }}>
+                    <div
+                      style={{
+                        color: '#0f172a',
+                        fontSize: '14px',
+                        fontWeight: 800,
+                        marginTop: '8px',
+                        lineHeight: 1.45,
+                        wordBreak: 'break-word',
+                        overflowWrap: 'anywhere',
+                      }}
+                    >
                       {fmtIngresos(ingresosMes)}
                     </div>
                   </div>
@@ -2884,7 +2933,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                   </div>
                                 </td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right', color: '#0f172a', fontWeight: 700 }}>{g.reservasCount}</td>
-                                <td style={{ padding: '10px 12px', color: '#334155', fontWeight: 600 }}>{fmtIngresos(g.ingresos)}</td>
+                                <td
+                                  style={{
+                                    padding: '10px 12px',
+                                    color: '#334155',
+                                    fontWeight: 600,
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'anywhere',
+                                    verticalAlign: 'top',
+                                  }}
+                                >
+                                  {fmtIngresos(g.ingresos)}
+                                </td>
                                 <td style={{ padding: '10px 12px', textAlign: 'right' }}>
                                   <button
                                     type="button"
@@ -2933,66 +2993,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', color: 'white', ...extra,
           });
 
-          const pillsBlock = (
-            <div style={{ marginBottom: '14px', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#555', marginBottom: '8px' }}>Estado de la reserva</div>
-              <div
-                role="group"
-                aria-label="Estado de la reserva"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  flexWrap: 'nowrap',
-                  gap: '8px',
-                  overflowX: 'auto',
-                  WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'thin',
-                  paddingBottom: '4px',
-                }}
-              >
-                {FILTROS_RESERVA_ADMIN_PILLS.map(({ id, label }) => {
-                  const active = filtroPillReservas === id;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setFiltroPillReservas(id)}
-                      style={{
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap',
-                        padding: '8px 14px',
-                        borderRadius: '999px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        fontFamily: 'inherit',
-                        cursor: 'pointer',
-                        border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
-                        background: active ? '#667eea' : 'transparent',
-                        color: active ? '#fff' : '#374151',
-                        boxShadow: active ? '0 2px 8px rgba(102, 126, 234, 0.35)' : 'none',
-                      }}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-
           if (sortedRows.length === 0) {
-            return (
-              <>
-                {pillsBlock}
-                <p style={{ color: '#aaa', padding: '10px 0' }}>Sin reservas en este período</p>
-              </>
-            );
+            return <p style={{ color: '#aaa', padding: '10px 0' }}>Sin reservas en este período</p>;
           }
 
           return (
             <>
-              {pillsBlock}
               <div className="reservas-table-wrap">
                 <table className="reservas-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: esAdminNacional ? '880px' : '720px', marginTop: 0 }}>
                   <thead>
@@ -3064,7 +3070,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </>
           );
         })()}
-      </div>}
+        </div>
+      </>}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
         <h2>⚙️ Configuración de Puntos</h2>
