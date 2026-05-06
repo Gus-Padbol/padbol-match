@@ -2654,6 +2654,9 @@ export default function FormEquipos() {
             navigateState={torneoNavStateForm}
             jugadorNombreTorneoCtx={nombreTorneoCtxForm}
             showTorneoLogo={false}
+            apiBaseUrl={BACKEND_API_BASE}
+            adminPuedeSorteoGrupos={mostrarUiAdminFormEquipos}
+            onAfterSorteoGrupos={cargarTodo}
             clasificacionFinalFilas={
               torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
             }

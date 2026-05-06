@@ -119,6 +119,75 @@ async function adminListScopeFromRequest(req) {
   };
 }
 
+function paisAdminCoincideSedeSorteo(paisAdminRaw, paisSedeRaw) {
+  const strip = (p) =>
+    String(p || '')
+      .replace(/^[\p{Emoji_Presentation}\s]+/u, '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  const a = strip(paisAdminRaw);
+  const b = strip(paisSedeRaw);
+  if (!a || !b) return false;
+  return b.includes(a) || a.includes(b);
+}
+
+/** JWT + rol: puede definir sorteo de grupos en un torneo (misma idea que el front). */
+async function assertUsuarioPuedeSortearTorneo(req, torneo) {
+  const user = await authUserFromBearer(req);
+  if (!user?.email) {
+    const e = new Error('Se requiere sesión');
+    e.status = 401;
+    throw e;
+  }
+  const email = String(user.email).trim().toLowerCase();
+  const row = await fetchUserRoleRow(user.email);
+  const rol = row?.role || null;
+  if (isSuperAdminApi(email, rol)) return;
+
+  const tsede = torneo?.sede_id != null && torneo.sede_id !== '' ? Number(torneo.sede_id) : null;
+
+  if (rol === 'admin_club' && row?.sede_id != null && tsede != null && Number(row.sede_id) === tsede) {
+    return;
+  }
+
+  if (rol === 'admin_nacional' && row?.pais && tsede != null) {
+    const { data: sede } = await supabase.from('sedes').select('pais').eq('id', tsede).maybeSingle();
+    if (sede && paisAdminCoincideSedeSorteo(row.pais, sede.pais)) return;
+  }
+
+  const e = new Error('No autorizado para sortear grupos en este torneo');
+  e.status = 403;
+  throw e;
+}
+
+/** Partidos round-robin por grupo con letra A, B, … */
+function partidosDesdeGruposSorteo(gruposIds, torneoId, sedeId) {
+  const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const tid = parseInt(String(torneoId), 10);
+  const sid = sedeId != null && sedeId !== '' ? sedeId : null;
+  const out = [];
+  gruposIds.forEach((arrRaw, gIdx) => {
+    const letra = letras[gIdx] || `G${gIdx + 1}`;
+    const ids = arrRaw.map((id) => parseInt(String(id), 10)).filter((n) => Number.isFinite(n));
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        out.push({
+          torneo_id: tid,
+          equipo_a_id: ids[i],
+          equipo_b_id: ids[j],
+          sede_id: sid,
+          estado: 'pendiente',
+          ronda: 1,
+          grupo: letra,
+        });
+      }
+    }
+  });
+  return out;
+}
+
 // Mercado Pago
 if (!process.env.MP_ACCESS_TOKEN) {
   console.warn('⚠️  MP_ACCESS_TOKEN no está configurado — los pagos fallarán en producción');
@@ -1181,8 +1250,10 @@ app.post('/api/torneos/:id/generar-partidos', async (req, res) => {
         partidosData = generarKnockout(equipos, id, torneo.sede_id);
         break;
       case 'grupos_knockout':
-        partidosData = generarGruposKnockout(equipos, id, torneo.sede_id);
-        break;
+        return res.status(400).json({
+          error:
+            'El formato Grupos + Knockout usa el sorteo manual: POST /api/torneos/:id/sorteo con { grupos: [[ids...], ...] }',
+        });
       default:
         partidosData = generarRoundRobin(equipos, id, torneo.sede_id);
     }
@@ -1199,6 +1270,97 @@ app.post('/api/torneos/:id/generar-partidos', async (req, res) => {
     res.json({ partidos, total: partidos.length, formato: torneo.tipo_torneo });
   } catch (err) {
     console.error('❌ Error generar-partidos:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/torneos/:id/sorteo
+ * Body: { grupos: [[equipo_id, ...], ...] } — partición de equipos; genera partidos de fase de grupos y pasa el torneo a en_curso.
+ */
+app.post('/api/torneos/:id/sorteo', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tid = parseInt(String(id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'id inválido' });
+
+    const { data: torneo, error: tErr } = await supabase.from('torneos').select('*').eq('id', tid).maybeSingle();
+    if (tErr) throw tErr;
+    if (!torneo) return res.status(404).json({ error: 'Torneo no encontrado' });
+
+    await assertUsuarioPuedeSortearTorneo(req, torneo);
+
+    if (String(torneo.tipo_torneo || '') !== 'grupos_knockout') {
+      return res.status(400).json({ error: 'Solo aplica a torneos formato Grupos + Knockout' });
+    }
+
+    const est = String(torneo.estado || '').toLowerCase();
+    if (!['abierto', 'inscripcion_abierta', 'en_curso'].includes(est)) {
+      return res.status(400).json({
+        error: 'El sorteo solo está permitido con inscripción abierta o torneo en curso sin grupos generados',
+      });
+    }
+
+    const { grupos: gruposBody } = req.body || {};
+    if (!Array.isArray(gruposBody) || gruposBody.length < 2) {
+      return res.status(400).json({ error: 'grupos debe ser un array de al menos 2 grupos' });
+    }
+
+    const flat = [];
+    for (const g of gruposBody) {
+      if (!Array.isArray(g) || g.length === 0) {
+        return res.status(400).json({ error: 'Cada grupo debe ser un array no vacío de equipo_id' });
+      }
+      for (const idEq of g) {
+        const n = parseInt(String(idEq), 10);
+        if (!Number.isFinite(n)) return res.status(400).json({ error: 'equipo_id inválido' });
+        flat.push(n);
+      }
+    }
+    const uniq = new Set(flat);
+    if (uniq.size !== flat.length) return res.status(400).json({ error: 'Hay equipos duplicados en la partición' });
+
+    const { data: equiposRows, error: eErr } = await supabase.from('equipos').select('id').eq('torneo_id', tid);
+    if (eErr) throw eErr;
+    const allowed = new Set((equiposRows || []).map((r) => r.id));
+    for (const n of flat) {
+      if (!allowed.has(n)) return res.status(400).json({ error: `El equipo ${n} no pertenece al torneo` });
+    }
+
+    const { data: partidosPrev, error: pExErr } = await supabase
+      .from('partidos')
+      .select('id, grupo')
+      .eq('torneo_id', tid);
+    if (pExErr) throw pExErr;
+    const yaHayGrupos = (partidosPrev || []).some((p) => p.grupo != null && String(p.grupo).trim() !== '');
+    if (yaHayGrupos) {
+      return res.status(409).json({ error: 'Ya existen partidos de fase de grupos. No se puede volver a sortear.' });
+    }
+
+    const partidosData = partidosDesdeGruposSorteo(gruposBody, tid, torneo.sede_id);
+    const { data: inserted, error: insErr } = await supabase.from('partidos').insert(partidosData).select();
+    if (insErr) throw insErr;
+
+    const { data: torneoUpd, error: uErr } = await supabase
+      .from('torneos')
+      .update({ estado: 'en_curso', updated_at: new Date() })
+      .eq('id', tid)
+      .select()
+      .single();
+    if (uErr) throw uErr;
+
+    res.json({
+      ok: true,
+      partidos: inserted,
+      torneo: torneoUpd,
+      total_partidos: Array.isArray(inserted) ? inserted.length : 0,
+    });
+  } catch (err) {
+    const st = err.status;
+    if (st === 401 || st === 403) {
+      return res.status(st).json({ error: err.message });
+    }
+    console.error('❌ POST /api/torneos/:id/sorteo:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

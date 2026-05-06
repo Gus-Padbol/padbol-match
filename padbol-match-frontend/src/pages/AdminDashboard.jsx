@@ -20,6 +20,7 @@ import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { FILTROS_ESTADO_TORNEO_PILLS, torneoPasaFiltroEstadoVista } from '../utils/torneoEstadoFiltroPills';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
+import SorteoGruposModal from '../components/torneo/SorteoGruposModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
@@ -752,6 +753,27 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editTorneoForm, setEditTorneoForm] = useState({});
   const [savingTorneo, setSavingTorneo] = useState(false);
   const [torneoStats, setTorneoStats] = useState({});
+  /** Modal sorteo grupos (lista torneos): { torneo, equipos } */
+  const [sorteoGruposCtx, setSorteoGruposCtx] = useState(null);
+  const [torneoStatsTick, setTorneoStatsTick] = useState(0);
+
+  const abrirModalSorteoGrupos = useCallback(async (torneoRow) => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoRow.id}/equipos`);
+      const equipos = res.ok ? await res.json() : [];
+      setSorteoGruposCtx({
+        torneo: torneoRow,
+        equipos: Array.isArray(equipos) ? equipos : [],
+      });
+    } catch (e) {
+      alert(e?.message || 'No se pudieron cargar los equipos');
+    }
+  }, [apiBaseUrl]);
+
+  const torneoEstadoPermiteSorteoGrupos = (est) => {
+    const e = String(est || '').toLowerCase();
+    return ['abierto', 'inscripcion_abierta', 'en_curso'].includes(e);
+  };
 
   const torneosFiltradosAdminEstado = useMemo(
     () => torneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneoAdmin)),
@@ -866,15 +888,32 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             const equipos  = eqRes.ok  ? await eqRes.json()  : [];
             const partidos = partRes.ok ? await partRes.json() : [];
             const jugados  = partidos.filter(p => p.estado === 'finalizado').length;
+            const tiene_grupos = partidos.some(
+              (p) => p && p.grupo != null && String(p.grupo).trim() !== ''
+            );
             // winner: equipo with highest puntos_ranking (finalizado) or puntos_totales (en_curso)
             const sorted = [...equipos].sort((a, b) =>
               t.estado === 'finalizado'
                 ? (b.puntos_ranking || 0) - (a.puntos_ranking || 0)
                 : (b.puntos_totales || 0) - (a.puntos_totales || 0)
             );
-            return { id: t.id, equipos_count: equipos.length, partidos_jugados: jugados, total_partidos: partidos.length, winner: sorted[0] || null };
+            return {
+              id: t.id,
+              equipos_count: equipos.length,
+              partidos_jugados: jugados,
+              total_partidos: partidos.length,
+              winner: sorted[0] || null,
+              tiene_grupos,
+            };
           } catch {
-            return { id: t.id, equipos_count: 0, partidos_jugados: 0, total_partidos: 0, winner: null };
+            return {
+              id: t.id,
+              equipos_count: 0,
+              partidos_jugados: 0,
+              total_partidos: 0,
+              winner: null,
+              tiene_grupos: false,
+            };
           }
         })
       );
@@ -886,7 +925,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     };
     fetchTorneoStats();
     return () => { cancelled = true; };
-  }, [activeTab, torneos.length, apiBaseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, torneos.length, apiBaseUrl, torneoStatsTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const abrirEditTorneo = (torneo) => {
     setEditandoTorneoId(torneo.id);
@@ -2118,7 +2157,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>
       </>}
 
-      {activeTab === 'torneos' && <div className="section">
+      {activeTab === 'torneos' && <>
+      <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0 }}>📋 Torneos Creados</h2>
           <button
@@ -2401,7 +2441,36 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           );
                           return null;
                         })()}
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 'auto' }}>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 'auto', flexWrap: 'wrap' }}>
+                        {(() => {
+                          const st = torneoStats[torneo.id];
+                          const mostrarSorteo =
+                            isAdmin &&
+                            torneo.tipo_torneo === 'grupos_knockout' &&
+                            torneoEstadoPermiteSorteoGrupos(torneo.estado) &&
+                            st &&
+                            !st.tiene_grupos;
+                          return mostrarSorteo ? (
+                            <button
+                              type="button"
+                              onClick={() => void abrirModalSorteoGrupos(torneo)}
+                              style={{
+                                padding: '6px 12px',
+                                background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                whiteSpace: 'nowrap',
+                              }}
+                              title="Sorteo manual de grupos"
+                            >
+                              Sorteo grupos
+                            </button>
+                          ) : null;
+                        })()}
                         <button
                           onClick={() => navigate(`/torneo/${torneo.id}`, { state: { fromAdmin: true } })}
                           style={{ padding: '6px 14px', background: '#667eea', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
@@ -2435,7 +2504,26 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             })}
           </div>
         )}
-      </div>}
+      </div>
+      <SorteoGruposModal
+        open={Boolean(sorteoGruposCtx)}
+        onClose={() => setSorteoGruposCtx(null)}
+        torneo={sorteoGruposCtx?.torneo}
+        equipos={sorteoGruposCtx?.equipos ?? []}
+        apiBaseUrl={apiBaseUrl}
+        accessToken={session?.access_token}
+        onConfirmed={() => {
+          const tid = sorteoGruposCtx?.torneo?.id;
+          setSorteoGruposCtx(null);
+          if (tid != null) {
+            setTorneos((prev) =>
+              prev.map((t) => (t.id === tid ? { ...t, estado: 'en_curso' } : t))
+            );
+          }
+          setTorneoStatsTick((n) => n + 1);
+        }}
+      />
+      </>}
 
       {activeTab === 'validaciones' && <div className="section">
         <h2>⏳ Jugadores Pendientes de Validación</h2>

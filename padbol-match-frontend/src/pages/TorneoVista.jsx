@@ -170,6 +170,26 @@ export default function TorneoVista() {
 
   const todosEquiposCompletos = equipos.length > 0 && equipos.every(equipoListoParaIniciar);
 
+  const recargarDatosTorneo = useCallback(async () => {
+    const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/api/torneos/${torneoId}`),
+      fetch(`${API_BASE_URL}/api/torneos/${torneoId}/equipos`),
+      fetch(`${API_BASE_URL}/api/torneos/${torneoId}/partidos`),
+      fetch(`${API_BASE_URL}/api/sedes`).catch(() => null),
+    ]);
+    if (torneoRes.ok) setTorneo(await torneoRes.json());
+    if (equiposRes.ok) setEquipos(await equiposRes.json());
+    if (partidosRes.ok) setPartidos(await partidosRes.json());
+    if (sedesRes?.ok) {
+      const sedesData = await sedesRes.json();
+      const nextSedesMap = {};
+      (sedesData || []).forEach((sede) => {
+        nextSedesMap[String(sede.id)] = sede;
+      });
+      setSedesMap(nextSedesMap);
+    }
+  }, [torneoId]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -739,6 +759,9 @@ export default function TorneoVista() {
           bannerAntesTabs={bannerInscripcionJugador}
           stickyTop={hubContentPaddingTopCss(location.pathname)}
           showTorneoLogo={false}
+          apiBaseUrl={API_BASE_URL}
+          adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}
+          onAfterSorteoGrupos={recargarDatosTorneo}
         />
       </div>
       <BottomNav />

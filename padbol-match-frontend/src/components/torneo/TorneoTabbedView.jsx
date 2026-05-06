@@ -6,6 +6,7 @@ import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../.
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../JugadorPreviewModal';
+import SorteoGruposModal from './SorteoGruposModal';
 import {
   horasRevelarEquiposTorneo,
   torneoListaEquiposOcultaParaPublico,
@@ -310,9 +311,15 @@ export default function TorneoTabbedView({
   showTorneoLogo = true,
   /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
   jugadorNombreTorneoCtx = null,
+  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  /** Panel admin / gestión: mostrar sorteo manual en pestaña Grupos. */
+  adminPuedeSorteoGrupos = false,
+  /** Tras confirmar POST /sorteo: recargar torneo, equipos y partidos. */
+  onAfterSorteoGrupos = null,
 }) {
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
   const resultadosConfettiPlayedRef = useRef(false);
+  const [sorteoModalOpen, setSorteoModalOpen] = useState(false);
   const [modalEquipo, setModalEquipo] = useState(null);
   const [jugadorPreview, setJugadorPreview] = useState(null);
   const [showModalResultado, setShowModalResultado] = useState(false);
@@ -380,6 +387,12 @@ export default function TorneoTabbedView({
     if (!esGruposKnockout) return [];
     return [...new Set(Object.values(equipoGrupoMap))].sort();
   }, [esGruposKnockout, equipoGrupoMap]);
+
+  const puedeMostrarBotonSorteoGrupos =
+    adminPuedeSorteoGrupos &&
+    esGruposKnockout &&
+    grupos.length === 0 &&
+    ['abierto', 'inscripcion_abierta', 'en_curso'].includes(estadoLower);
 
   const partidosOrdenados = useMemo(() => {
     return [...partidos].sort((a, b) => {
@@ -828,21 +841,43 @@ export default function TorneoTabbedView({
     if (esGruposKnockout) {
       if (grupos.length === 0) {
         return (
-          <div
-            style={{
-              padding: '24px 16px',
-              marginTop: '8px',
-              background: '#fff',
-              borderRadius: '14px',
-              textAlign: 'center',
-              color: '#475569',
-              fontWeight: 700,
-              fontSize: '15px',
-              lineHeight: 1.55,
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            Los grupos se definirán después del sorteo oficial.
+          <div style={{ marginTop: '8px' }}>
+            {puedeMostrarBotonSorteoGrupos ? (
+              <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setSorteoModalOpen(true)}
+                  style={{
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '15px',
+                    cursor: 'pointer',
+                    boxShadow: '0 6px 20px rgba(79,70,229,0.35)',
+                  }}
+                >
+                  Realizar sorteo
+                </button>
+              </div>
+            ) : null}
+            <div
+              style={{
+                padding: '24px 16px',
+                background: '#fff',
+                borderRadius: '14px',
+                textAlign: 'center',
+                color: '#475569',
+                fontWeight: 700,
+                fontSize: '15px',
+                lineHeight: 1.55,
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              Los grupos se definirán después del sorteo oficial.
+            </div>
           </div>
         );
       }
@@ -1320,6 +1355,19 @@ export default function TorneoTabbedView({
         open={Boolean(jugadorPreview)}
         onClose={() => setJugadorPreview(null)}
         data={jugadorPreview}
+      />
+
+      <SorteoGruposModal
+        open={sorteoModalOpen}
+        onClose={() => setSorteoModalOpen(false)}
+        torneo={torneo}
+        equipos={equipos}
+        apiBaseUrl={apiBaseUrl}
+        accessToken={session?.access_token}
+        onConfirmed={() => {
+          setSorteoModalOpen(false);
+          onAfterSorteoGrupos?.();
+        }}
       />
     </>
   );
