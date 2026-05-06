@@ -172,29 +172,70 @@ export default function TorneoVista() {
   const todosEquiposCompletos = equipos.length > 0 && equipos.every(equipoListoParaIniciar);
 
   const recargarDatosTorneo = useCallback(async () => {
-    const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/api/torneos/${torneoId}`),
-      fetch(`${API_BASE_URL}/api/torneos/${torneoId}/equipos`),
-      fetch(`${API_BASE_URL}/api/torneos/${torneoId}/partidos`),
-      fetch(`${API_BASE_URL}/api/sedes`).catch(() => null),
-    ]);
-    if (torneoRes.ok) setTorneo(await torneoRes.json());
-    if (equiposRes.ok) setEquipos(await equiposRes.json());
-    if (partidosRes.ok) setPartidos(await partidosRes.json());
-    if (sedesRes?.ok) {
-      const sedesData = await sedesRes.json();
-      const nextSedesMap = {};
-      (sedesData || []).forEach((sede) => {
-        nextSedesMap[String(sede.id)] = sede;
-      });
-      setSedesMap(nextSedesMap);
+    try {
+      const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/torneos/${torneoId}`),
+        fetch(`${API_BASE_URL}/api/torneos/${torneoId}/equipos`),
+        fetch(`${API_BASE_URL}/api/torneos/${torneoId}/partidos`),
+        fetch(`${API_BASE_URL}/api/sedes`).catch(() => null),
+      ]);
+      if (torneoRes.ok) {
+        try {
+          const t = await torneoRes.json();
+          if (t && typeof t === 'object' && !t.error) setTorneo(t);
+        } catch (e) {
+          console.error('[TorneoVista] recargar torneo JSON:', e);
+        }
+      }
+      if (equiposRes.ok) {
+        try {
+          const j = await equiposRes.json();
+          if (Array.isArray(j)) setEquipos(j);
+        } catch (e) {
+          console.error('[TorneoVista] recargar equipos JSON:', e);
+        }
+      }
+      if (partidosRes.ok) {
+        try {
+          const j = await partidosRes.json();
+          if (Array.isArray(j)) setPartidos(j);
+        } catch (e) {
+          console.error('[TorneoVista] recargar partidos JSON:', e);
+        }
+      }
+      if (sedesRes?.ok) {
+        try {
+          const sedesData = await sedesRes.json();
+          const nextSedesMap = {};
+          (Array.isArray(sedesData) ? sedesData : []).forEach((sede) => {
+            nextSedesMap[String(sede.id)] = sede;
+          });
+          setSedesMap(nextSedesMap);
+        } catch (e) {
+          console.error('[TorneoVista] recargar sedes JSON:', e);
+        }
+      }
+    } catch (e) {
+      console.error('[TorneoVista] recargarDatosTorneo:', e);
     }
   }, [torneoId]);
 
   useEffect(() => {
     const fetchData = async () => {
+      const MSG_FALLA = 'No pudimos cargar el torneo';
       try {
         setLoading(true);
+        setError(null);
+        const idNum = parseInt(String(torneoId), 10);
+        if (!Number.isFinite(idNum)) {
+          setTorneo(null);
+          setEquipos([]);
+          setPartidos([]);
+          setSedesMap({});
+          setError(MSG_FALLA);
+          return;
+        }
+
         const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
           fetch(`${API_BASE_URL}/api/torneos/${torneoId}`),
           fetch(`${API_BASE_URL}/api/torneos/${torneoId}/equipos`),
@@ -202,20 +243,59 @@ export default function TorneoVista() {
           fetch(`${API_BASE_URL}/api/sedes`).catch(() => null),
         ]);
 
-        if (!torneoRes.ok || !equiposRes.ok || !partidosRes.ok) {
-          throw new Error('Error al cargar datos');
+        let torneoData = null;
+        if (torneoRes.ok) {
+          try {
+            torneoData = await torneoRes.json();
+          } catch (e) {
+            console.error('[TorneoVista] JSON torneo:', e);
+            torneoData = null;
+          }
+        }
+        if (!torneoData || typeof torneoData !== 'object' || torneoData.error != null) {
+          setTorneo(null);
+          setEquipos([]);
+          setPartidos([]);
+          setSedesMap({});
+          setError(MSG_FALLA);
+          return;
         }
 
-        const torneoData = await torneoRes.json();
-        const equiposData = await equiposRes.json();
-        const partidosData = await partidosRes.json();
+        let equiposData = [];
+        if (equiposRes.ok) {
+          try {
+            const j = await equiposRes.json();
+            equiposData = Array.isArray(j) ? j : [];
+          } catch (e) {
+            console.error('[TorneoVista] JSON equipos:', e);
+          }
+        } else {
+          console.warn('[TorneoVista] equipos HTTP', equiposRes.status);
+        }
+
+        let partidosData = [];
+        if (partidosRes.ok) {
+          try {
+            const j = await partidosRes.json();
+            partidosData = Array.isArray(j) ? j : [];
+          } catch (e) {
+            console.error('[TorneoVista] JSON partidos:', e);
+          }
+        } else {
+          console.warn('[TorneoVista] partidos HTTP', partidosRes.status);
+        }
+
         let sedesData = [];
         if (sedesRes?.ok) {
-          sedesData = await sedesRes.json();
+          try {
+            sedesData = await sedesRes.json();
+          } catch (e) {
+            console.error('[TorneoVista] JSON sedes:', e);
+          }
         }
 
         const nextSedesMap = {};
-        (sedesData || []).forEach((sede) => {
+        (Array.isArray(sedesData) ? sedesData : []).forEach((sede) => {
           nextSedesMap[String(sede.id)] = sede;
         });
 
@@ -223,8 +303,14 @@ export default function TorneoVista() {
         setEquipos(equiposData);
         setPartidos(partidosData);
         setSedesMap(nextSedesMap);
+        setError(null);
       } catch (err) {
-        setError(err.message);
+        console.error('[TorneoVista] fetchData:', err);
+        setTorneo(null);
+        setEquipos([]);
+        setPartidos([]);
+        setSedesMap({});
+        setError(MSG_FALLA);
       } finally {
         setLoading(false);
       }
@@ -636,6 +722,16 @@ export default function TorneoVista() {
     return { title, text, url };
   }, [torneo, sedeTorneo, torneoShareUrl]);
 
+  const cerrarModalInscribirse = useCallback(() => setModalInscribirseOpen(false), []);
+  const irACrearEquipoDesdeTorneoVista = useCallback(() => {
+    setModalInscribirseOpen(false);
+    clearAdminNavContext();
+    navigate(`/torneo/${torneoId}/equipos?crear=1`, {
+      replace: true,
+      state: { fromAdmin: false },
+    });
+  }, [navigate, torneoId]);
+
   if (loading) {
     return (
       <div
@@ -666,7 +762,10 @@ export default function TorneoVista() {
       >
         <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="error">
-          Error: {error}
+          <p style={{ margin: 0, fontWeight: 700, fontSize: '16px', color: '#b91c1c' }}>No pudimos cargar el torneo</p>
+          {error && error !== 'No pudimos cargar el torneo' ? (
+            <p style={{ margin: '10px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>{error}</p>
+          ) : null}
         </div>
         <BottomNav />
       </div>
@@ -690,16 +789,6 @@ export default function TorneoVista() {
       </div>
     );
   }
-
-  const cerrarModalInscribirse = useCallback(() => setModalInscribirseOpen(false), []);
-  const irACrearEquipoDesdeTorneoVista = useCallback(() => {
-    setModalInscribirseOpen(false);
-    clearAdminNavContext();
-    navigate(`/torneo/${torneoId}/equipos?crear=1`, {
-      replace: true,
-      state: { fromAdmin: false },
-    });
-  }, [navigate, torneoId]);
 
   return (
     <>
