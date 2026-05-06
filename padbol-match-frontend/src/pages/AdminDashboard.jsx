@@ -2204,6 +2204,50 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </>}
 
       {activeTab === 'torneos' && <>
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
+            Estado del torneo
+          </div>
+          <div
+            role="group"
+            aria-label="Estado del torneo"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              whiteSpace: 'nowrap',
+              paddingBottom: '2px',
+            }}
+          >
+            {FILTROS_ESTADO_TORNEO_PILLS.map(({ id, label }) => {
+              const active = filtroEstadoTorneoAdmin === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFiltroEstadoTorneoAdmin(id)}
+                  style={{
+                    padding: '5px 10px',
+                    borderRadius: '999px',
+                    border: active ? '1px solid #a5b4fc' : '1px solid #cbd5e1',
+                    background: active ? '#667eea' : '#fff',
+                    color: active ? '#fff' : '#334155',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0 }}>📋 Torneos Creados</h2>
@@ -2214,53 +2258,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             + Nuevo Torneo
           </button>
         </div>
-        {torneos.length > 0 ? (
-          <div style={{ marginBottom: '14px', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#555', marginBottom: '8px' }}>Estado del torneo</div>
-            <div
-              role="group"
-              aria-label="Estado del torneo"
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                flexWrap: 'nowrap',
-                gap: '8px',
-                overflowX: 'auto',
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'thin',
-                paddingBottom: '4px',
-              }}
-            >
-              {FILTROS_ESTADO_TORNEO_PILLS.map(({ id, label }) => {
-                const active = filtroEstadoTorneoAdmin === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setFiltroEstadoTorneoAdmin(id)}
-                    style={{
-                      flexShrink: 0,
-                      whiteSpace: 'nowrap',
-                      padding: '8px 14px',
-                      borderRadius: '999px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      fontFamily: 'inherit',
-                      cursor: 'pointer',
-                      border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
-                      background: active ? '#667eea' : 'transparent',
-                      color: active ? '#fff' : '#374151',
-                      boxShadow: active ? '0 2px 8px rgba(102, 126, 234, 0.35)' : 'none',
-                    }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
         {torneos.length === 0 ? (
           <p style={{ color: '#999' }}>Sin torneos</p>
         ) : torneosFiltradosAdminEstado.length === 0 ? (
