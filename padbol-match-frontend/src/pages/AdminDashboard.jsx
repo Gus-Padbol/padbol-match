@@ -121,19 +121,49 @@ function bucketMonedaAdmin(raw) {
   return 'ARS';
 }
 
-/** `fechaISO` = YYYY-MM-DD (reserva o fecha derivada de equipo). */
-function fechaDentroDePeriodoDashboard(fechaISO, now, periodo, fechaDesde, fechaHasta) {
+function startOfWeekMondayLocal(anchorDate) {
+  const t = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate());
+  const day = t.getDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  t.setDate(t.getDate() - diffToMonday);
+  t.setHours(0, 0, 0, 0);
+  return t;
+}
+
+function endOfWeekSundayEndLocal(startMonday) {
+  const t = new Date(startMonday);
+  t.setDate(t.getDate() + 6);
+  t.setHours(23, 59, 59, 999);
+  return t;
+}
+
+/** ISO week-year y número de semana ISO (etiqueta tipo "Semana 18 · 2026"). */
+function isoWeekYearAndNumberLocal(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setHours(12, 0, 0, 0);
+  const dayNr = (x.getDay() + 6) % 7;
+  const thursday = new Date(x);
+  thursday.setDate(x.getDate() + 3 - dayNr);
+  const isoYear = thursday.getFullYear();
+  const jan4 = new Date(isoYear, 0, 4);
+  const jan4MonOffset = (jan4.getDay() + 6) % 7;
+  const week1Monday = new Date(jan4);
+  week1Monday.setDate(jan4.getDate() - jan4MonOffset);
+  week1Monday.setHours(0, 0, 0, 0);
+  const thisMonday = new Date(thursday);
+  thisMonday.setDate(thursday.getDate() - 3);
+  thisMonday.setHours(0, 0, 0, 0);
+  const weekNum = Math.round((thisMonday - week1Monday) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  return { isoYear, weekNum };
+}
+
+/** `fechaISO` = YYYY-MM-DD (reserva o fecha derivada de equipo). `anclaISO` ancla el día/semana/mes/año mostrado. */
+function fechaDentroDePeriodoFinanzas(fechaISO, periodo, fechaDesde, fechaHasta, anclaISO) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaISO || '').trim())) return false;
-  const [y, m, d] = fechaISO.split('-').map(Number);
+  const [y, m, d] = String(fechaISO).trim().split('-').map(Number);
   const fecha = new Date(y, m - 1, d);
   if (Number.isNaN(fecha.getTime())) return false;
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfWeek = new Date(startOfToday);
-  const day = startOfWeek.getDay();
-  const diffToMonday = day === 0 ? 6 : day - 1;
-  startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
   if (periodo === 'rango') {
     const desdeOk = /^\d{4}-\d{2}-\d{2}$/.test(fechaDesde);
     const hastaOk = /^\d{4}-\d{2}-\d{2}$/.test(fechaHasta);
@@ -145,10 +175,128 @@ function fechaDentroDePeriodoDashboard(fechaISO, now, periodo, fechaDesde, fecha
     if (Number.isNaN(desde.getTime()) || Number.isNaN(hasta.getTime())) return false;
     return fecha >= desde && fecha <= hasta;
   }
-  if (periodo === 'hoy') return fecha >= startOfToday && fecha <= now;
-  if (periodo === 'semana') return fecha >= startOfWeek && fecha <= now;
-  if (periodo === 'anio') return fecha >= startOfYear && fecha <= now;
-  return fecha >= startOfMonth && fecha <= now;
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(anclaISO || '').trim())) return false;
+  const [ay, am, ad] = String(anclaISO).trim().split('-').map(Number);
+  const ancla = new Date(ay, am - 1, ad);
+  if (Number.isNaN(ancla.getTime())) return false;
+
+  if (periodo === 'hoy') {
+    const start = new Date(ay, am - 1, ad, 0, 0, 0, 0);
+    const end = new Date(ay, am - 1, ad, 23, 59, 59, 999);
+    return fecha >= start && fecha <= end;
+  }
+  if (periodo === 'semana') {
+    const start = startOfWeekMondayLocal(ancla);
+    const end = endOfWeekSundayEndLocal(start);
+    return fecha >= start && fecha <= end;
+  }
+  if (periodo === 'mes') {
+    const start = new Date(ancla.getFullYear(), ancla.getMonth(), 1);
+    const end = new Date(ancla.getFullYear(), ancla.getMonth() + 1, 0, 23, 59, 59, 999);
+    return fecha >= start && fecha <= end;
+  }
+  if (periodo === 'anio') {
+    const start = new Date(ancla.getFullYear(), 0, 1);
+    const end = new Date(ancla.getFullYear(), 11, 31, 23, 59, 59, 999);
+    return fecha >= start && fecha <= end;
+  }
+  return false;
+}
+
+function labelNavegacionFinanzas(periodo, anclaISO) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(anclaISO || '').trim())) return '—';
+  const [y, m, d] = anclaISO.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  if (Number.isNaN(dt.getTime())) return '—';
+  if (periodo === 'hoy') {
+    return dt
+      .toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      .replace(/^\w/, (c) => c.toUpperCase());
+  }
+  if (periodo === 'semana') {
+    const { isoYear, weekNum } = isoWeekYearAndNumberLocal(dt);
+    return `Semana ${weekNum} · ${isoYear}`;
+  }
+  if (periodo === 'mes') {
+    const s = dt.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  if (periodo === 'anio') return String(y);
+  return '—';
+}
+
+function addToFinanzasAncla(anclaISO, periodo, delta) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(anclaISO || '').trim())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+  const [y, m, d] = anclaISO.split('-').map(Number);
+  const base = new Date(y, m - 1, d);
+  if (periodo === 'hoy') base.setDate(base.getDate() + delta);
+  else if (periodo === 'semana') base.setDate(base.getDate() + 7 * delta);
+  else if (periodo === 'mes') base.setMonth(base.getMonth() + delta);
+  else if (periodo === 'anio') base.setFullYear(base.getFullYear() + delta);
+  const yy = base.getFullYear();
+  const mm = String(base.getMonth() + 1).padStart(2, '0');
+  const dd = String(base.getDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
+function mapEstadoTorneoDesdeApiParaForm(raw) {
+  const e = String(raw || '').toLowerCase().trim();
+  if (e === 'planificacion' || e === 'proximo') return 'proximo';
+  if (e === 'abierto' || e === 'inscripcion_abierta') return 'abierto';
+  if (e === 'en_curso' || e === 'activo') return 'en_curso';
+  if (e === 'finalizado') return 'finalizado';
+  if (e === 'cancelado') return 'cancelado';
+  return 'proximo';
+}
+
+function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
+  if (periodo === 'rango') return null;
+  const label = labelNavegacionFinanzas(periodo, anclaISO);
+  const btn = {
+    border: '1px solid #cbd5e1',
+    background: '#fff',
+    borderRadius: '8px',
+    width: '36px',
+    height: '34px',
+    cursor: 'pointer',
+    fontSize: '18px',
+    lineHeight: 1,
+    color: '#334155',
+    flexShrink: 0,
+  };
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '12px',
+        marginTop: '10px',
+        flexWrap: 'wrap',
+      }}
+    >
+      <button type="button" aria-label="Período anterior" onClick={() => onShift(-1)} style={btn}>
+        ‹
+      </button>
+      <span
+        style={{
+          fontSize: '13px',
+          fontWeight: 700,
+          color: '#334155',
+          minWidth: '140px',
+          textAlign: 'center',
+        }}
+      >
+        {label}
+      </span>
+      <button type="button" aria-label="Período siguiente" onClick={() => onShift(1)} style={btn}>
+        ›
+      </button>
+    </div>
+  );
 }
 
 // "2026-02-26" → "26 Feb 2026"
@@ -332,6 +480,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [superAdminFechaHasta, setSuperAdminFechaHasta] = useState(
     () => new Date().toISOString().slice(0, 10)
   );
+  /** Día ancla para navegar semana/mes/año (e "hoy" como día concreto) en resumen y reservas super admin. */
+  const [finanzasAnclaISO, setFinanzasAnclaISO] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [sedesPendientes, setSedesPendientes] = useState([]);
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
@@ -437,15 +587,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     });
   }, [searchParams]);
 
+  const shiftFinanzasPeriodo = useCallback(
+    (delta) => {
+      setFinanzasAnclaISO((prev) => addToFinanzasAncla(prev, superAdminPeriodo, delta));
+    },
+    [superAdminPeriodo]
+  );
+
   const cifrasFinanzasResumen = useMemo(() => {
-    const now = new Date();
     const inP = (iso) =>
-      fechaDentroDePeriodoDashboard(
+      fechaDentroDePeriodoFinanzas(
         iso,
-        now,
         superAdminPeriodo,
         superAdminFechaDesde,
-        superAdminFechaHasta
+        superAdminFechaHasta,
+        finanzasAnclaISO
       );
 
     const reservasFiltradas = reservas.filter((r) => inP(String(r?.fecha || '').trim()));
@@ -524,6 +680,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     superAdminPeriodo,
     superAdminFechaDesde,
     superAdminFechaHasta,
+    finanzasAnclaISO,
     isSuperAdmin,
     currentEmail,
     esAdminClub,
@@ -737,6 +894,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       nivel_torneo: torneo.nivel_torneo || '',
       categoria:    torneo.categoria    || CATEGORIA_TORNEO_DEFAULT,
       tipo_torneo:  torneo.tipo_torneo  || '',
+      estado:       mapEstadoTorneoDesdeApiParaForm(torneo.estado),
       fecha_inicio: torneo.fecha_inicio || '',
       fecha_fin:    torneo.fecha_fin    || '',
       sede_id:      torneo.sede_id      != null ? String(torneo.sede_id) : '',
@@ -760,6 +918,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         ...editTorneoForm,
         sede_id: editTorneoForm.sede_id ? parseInt(editTorneoForm.sede_id) : null,
         categoria: String(editTorneoForm.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
+        estado: String(editTorneoForm.estado || 'proximo').trim() || 'proximo',
       };
       const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, {
         method: 'PUT',
@@ -1795,7 +1954,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setSuperAdminPeriodo(opt.id)}
+                onClick={() => {
+                  setSuperAdminPeriodo(opt.id);
+                  if (opt.id !== 'rango') {
+                    setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
+                  }
+                }}
                 style={{
                   padding: '5px 10px',
                   borderRadius: '999px',
@@ -1847,7 +2011,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 }}
               />
             </div>
-          ) : null}
+          ) : (
+            <SuperAdminFinanzasPeriodoNav
+              periodo={superAdminPeriodo}
+              anclaISO={finanzasAnclaISO}
+              onShift={shiftFinanzasPeriodo}
+            />
+          )}
         </div>
         <div className="dashboard-grid">
         <div className="card ingresos" style={cifrasFinanzasResumen.tipo === 'sede' ? { gridColumn: '1 / -1' } : undefined}>
@@ -2105,6 +2275,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             ))}
                           </select>
                         </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
+                            Estado (manual)
+                          </label>
+                          <select
+                            style={inp}
+                            value={editTorneoForm.estado || 'proximo'}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, estado: e.target.value }))}
+                          >
+                            <option value="proximo">Próximo</option>
+                            <option value="abierto">Inscripción abierta</option>
+                            <option value="en_curso">En curso</option>
+                            <option value="finalizado">Finalizado</option>
+                            <option value="cancelado">Cancelado</option>
+                          </select>
+                        </div>
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Fecha inicio</label>
                           <input type="date" style={inp} value={editTorneoForm.fecha_inicio} onChange={e => setEditTorneoForm(p => ({ ...p, fecha_inicio: e.target.value }))} />
@@ -2320,7 +2506,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {activeTab === 'reservas' && <div className="section">
         {(() => {
           if (isSuperAdmin) {
-            const now = new Date();
             const getMonedaCanonica = (reserva) => {
               console.log('[Admin] moneda raw', reserva?.moneda);
               const s = String(reserva?.moneda || '').trim().toUpperCase();
@@ -2340,34 +2525,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 return nombreSedeLower.includes(sedeReservaLower) || sedeReservaLower.includes(nombreSedeLower);
               }) || null;
             };
-            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const startOfWeek = new Date(startOfToday);
-            const day = startOfWeek.getDay(); // 0 Sun ... 6 Sat
-            const diffToMonday = day === 0 ? 6 : day - 1;
-            startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const isInPeriodo = (fechaISO) => {
-              if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaISO)) return false;
-              const [y, m, d] = fechaISO.split('-').map(Number);
-              const fecha = new Date(y, m - 1, d);
-              if (Number.isNaN(fecha.getTime())) return false;
-              if (superAdminPeriodo === 'rango') {
-                const desdeOk = /^\d{4}-\d{2}-\d{2}$/.test(superAdminFechaDesde);
-                const hastaOk = /^\d{4}-\d{2}-\d{2}$/.test(superAdminFechaHasta);
-                if (!desdeOk || !hastaOk) return false;
-                const [dy, dm, dd] = superAdminFechaDesde.split('-').map(Number);
-                const [hy, hm, hd] = superAdminFechaHasta.split('-').map(Number);
-                const desde = new Date(dy, dm - 1, dd);
-                const hasta = new Date(hy, hm - 1, hd, 23, 59, 59, 999);
-                if (Number.isNaN(desde.getTime()) || Number.isNaN(hasta.getTime())) return false;
-                return fecha >= desde && fecha <= hasta;
-              }
-              if (superAdminPeriodo === 'hoy') return fecha >= startOfToday && fecha <= now;
-              if (superAdminPeriodo === 'semana') return fecha >= startOfWeek && fecha <= now;
-              if (superAdminPeriodo === 'anio') return fecha >= startOfYear && fecha <= now;
-              return fecha >= startOfMonth && fecha <= now; // mes
-            };
+            const isInPeriodo = (fechaISO) =>
+              fechaDentroDePeriodoFinanzas(
+                fechaISO,
+                superAdminPeriodo,
+                superAdminFechaDesde,
+                superAdminFechaHasta,
+                finanzasAnclaISO
+              );
             const reservasPeriodo = reservas.filter((r) => {
               const f = String(r?.fecha || '').trim();
               return isInPeriodo(f);
@@ -2431,7 +2596,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <button
                       key={opt.id}
                       type="button"
-                      onClick={() => setSuperAdminPeriodo(opt.id)}
+                      onClick={() => {
+                        setSuperAdminPeriodo(opt.id);
+                        if (opt.id !== 'rango') {
+                          setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
+                        }
+                      }}
                       style={{
                         padding: '5px 10px',
                         borderRadius: '999px',
@@ -2483,7 +2653,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       }}
                     />
                   </div>
-                ) : null}
+                ) : (
+                  <SuperAdminFinanzasPeriodoNav
+                    periodo={superAdminPeriodo}
+                    anclaISO={finanzasAnclaISO}
+                    onShift={shiftFinanzasPeriodo}
+                  />
+                )}
                 </div>
 
                 <div style={{ marginBottom: '0', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>

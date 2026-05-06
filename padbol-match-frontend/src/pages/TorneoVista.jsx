@@ -382,6 +382,7 @@ export default function TorneoVista() {
   const mostrarBannerJugadorTorneo =
     !modoAdminExplicitoEnVista &&
     estadoTorneoLower !== 'finalizado' &&
+    estadoTorneoLower !== 'cancelado' &&
     (esListaEsperaTorneo || esInscripcionAbiertaJugador);
   const puedeMostrarIniciarTorneo =
     isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);

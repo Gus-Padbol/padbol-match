@@ -32,9 +32,13 @@ export function esEstadoFinalizadoTorneo(estadoRaw) {
   return estadoTorneoNormalizado(estadoRaw) === 'finalizado';
 }
 
+export function esEstadoCanceladoTorneo(estadoRaw) {
+  return estadoTorneoNormalizado(estadoRaw) === 'cancelado';
+}
+
 /**
  * @param {{ estado?: string } | null} t
- * @param {'todos'|'inscripcion_abierta'|'proximo'|'en_curso'|'finalizado'} filtro
+ * @param {'todos'|'inscripcion_abierta'|'proximo'|'en_curso'|'finalizado'|'cancelado'} filtro
  */
 export function torneoPasaFiltroEstadoVista(t, filtro) {
   if (filtro === 'todos') return true;
@@ -42,6 +46,7 @@ export function torneoPasaFiltroEstadoVista(t, filtro) {
   if (filtro === 'en_curso') return esEstadoEnCursoTorneo(t?.estado);
   if (filtro === 'inscripcion_abierta') return esInscripcionAbiertaTorneo(t?.estado);
   if (filtro === 'proximo') return esProximoTorneo(t?.estado);
+  if (filtro === 'cancelado') return esEstadoCanceladoTorneo(t?.estado);
   return true;
 }
 
@@ -51,4 +56,5 @@ export const FILTROS_ESTADO_TORNEO_PILLS = [
   { id: 'proximo', label: 'Próximo' },
   { id: 'en_curso', label: 'En curso' },
   { id: 'finalizado', label: 'Finalizado' },
+  { id: 'cancelado', label: 'Cancelado' },
 ];

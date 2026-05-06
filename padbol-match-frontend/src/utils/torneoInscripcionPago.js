@@ -30,7 +30,7 @@ export function etiquetaInscripcionEstado(estado) {
 /** Nuevas inscripciones / equipos: solo antes de que el torneo esté en curso o terminado. */
 export function torneoPermiteNuevasInscripciones(torneo) {
   const e = String(torneo?.estado || '').toLowerCase();
-  return e !== 'finalizado' && e !== 'cancelado' && e !== 'en_curso';
+  return e !== 'finalizado' && e !== 'cancelado' && e !== 'en_curso' && e !== 'activo';
 }
 
 /**
