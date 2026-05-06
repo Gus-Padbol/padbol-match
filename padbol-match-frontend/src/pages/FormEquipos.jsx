@@ -18,7 +18,7 @@ import {
   nombreCompletoJugadorPerfil,
 } from '../utils/jugadorPerfil';
 import { setTorneoEquipoActual, clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
-import { setAdminNavContext, tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
+import { tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
 import {
   getEquipoInscripcionEstado,
   etiquetaInscripcionEstado,
@@ -30,7 +30,6 @@ import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRe
 import { getDisplayName } from '../utils/displayName';
 import useUserRole from '../hooks/useUserRole';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
-import { PADBOL_MODO_JUGADOR_CHANGED_EVENT } from '../utils/padbolModoJugador';
 import { mensajeConfirmacionCupoTrasEquipoCompleto } from '../utils/torneoRevelacionEquipos';
 import {
   jugadorNombreTorneoEtiqueta,
@@ -220,18 +219,6 @@ export default function FormEquipos() {
     return { email: authEmail };
   }, [authEmail]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentClienteTorneo);
-
-  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
-  useEffect(() => {
-    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
-    if (typeof window === 'undefined') return undefined;
-    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-    window.addEventListener('storage', bump);
-    return () => {
-      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-      window.removeEventListener('storage', bump);
-    };
-  }, []);
 
   const [perfilLsKey, setPerfilLsKey] = useState(0);
 
@@ -692,10 +679,6 @@ export default function FormEquipos() {
   const torneoFinalizado = torneo?.estado === 'finalizado';
   const flujoInscripcionTorneoActivo = Boolean(torneo && torneoPermiteNuevasInscripciones(torneo));
 
-  useEffect(() => {
-    if (location.state?.fromAdmin === true) setAdminNavContext(true);
-  }, [location.state?.fromAdmin]);
-
   const sedesMapForm = useMemo(() => {
     if (!torneo?.sede_id) return {};
     const nombre = nombreSede || sedeTorneoRow?.nombre;
@@ -722,40 +705,23 @@ export default function FormEquipos() {
         userSedeId,
         userPaisRol,
         fromAdmin: location.state?.fromAdmin === true,
+        enRutaAdmin: false,
       }),
-    [
-      authEmail,
-      torneo,
-      sedeTorneoRow,
-      rol,
-      userSedeId,
-      userPaisRol,
-      location.state?.fromAdmin,
-      padbolModoJugadorRev,
-    ]
+    [authEmail, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, location.state?.fromAdmin]
   );
 
   const puedeGestionarEquiposTorneo = useMemo(
     () =>
       computePuedeGestionarEquiposTorneo({
-        email: authEmail,
         torneo,
         sedeTorneo: sedeTorneoRow,
         rol,
         userSedeId,
         userPaisRol,
         fromAdmin: contextoGestionEquiposTorneo,
+        enRutaAdmin: false,
       }),
-    [
-      authEmail,
-      torneo,
-      sedeTorneoRow,
-      rol,
-      userSedeId,
-      userPaisRol,
-      contextoGestionEquiposTorneo,
-      padbolModoJugadorRev,
-    ]
+    [torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, contextoGestionEquiposTorneo]
   );
 
   /** UI gestión: solo con `state.fromAdmin === true` explícito (no sessionStorage). */

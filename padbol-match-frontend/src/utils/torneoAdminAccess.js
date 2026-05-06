@@ -1,7 +1,7 @@
-import { isPadbolModoJugadorActivo } from './padbolModoJugador';
-
 /**
  * Permisos de gestión de torneo según `user_roles` y sede/nivel del torneo.
+ * El bypass (ver equipos antes de tiempo, barra de gestión, etc.) solo aplica si
+ * `fromAdmin === true` (navigation state) o `enRutaAdmin === true` (pathname /admin).
  */
 
 export function mismoIdSedeTorneo(a, b) {
@@ -52,8 +52,17 @@ const LEGACY_GLOBAL_ADMIN_EMAILS = [
   'sm@padbol.com',
 ];
 
+/** Super admin por email legacy o rol (sin implicar bypass fuera de /admin o `state.fromAdmin`). */
+export function isGlobalSuperAdminEmailOrRole(email, rol) {
+  const em = String(email || '').trim().toLowerCase();
+  if (LEGACY_GLOBAL_ADMIN_EMAILS.includes(em)) return true;
+  if (rol === 'super_admin') return true;
+  return false;
+}
+
 /**
- * Puede usar controles de gestión del torneo (iniciar/finalizar, resultados, gestionar equipos en UI).
+ * Puede usar controles de gestión del torneo (iniciar/finalizar, resultados, revelar equipos, etc.).
+ * Requiere contexto panel: `fromAdmin` o estar en ruta `/admin`.
  */
 export function computeIsAdminEnTorneo({
   email,
@@ -63,24 +72,24 @@ export function computeIsAdminEnTorneo({
   userSedeId,
   userPaisRol,
   fromAdmin,
+  enRutaAdmin = false,
 }) {
-  if (isPadbolModoJugadorActivo({ email, rol })) return false;
+  const adminCtx = Boolean(fromAdmin) || Boolean(enRutaAdmin);
+  if (!adminCtx || !torneo) return false;
+
   const em = String(email || '').trim().toLowerCase();
   if (LEGACY_GLOBAL_ADMIN_EMAILS.includes(em)) return true;
   if (rol === 'super_admin') return true;
-  if (!torneo) return false;
 
   if (rol === 'admin_club' && userSedeId != null && userSedeId !== '') {
     if (mismoIdSedeTorneo(userSedeId, torneo.sede_id)) return true;
   }
 
-  if (fromAdmin) {
-    const cached = readCachedUserRoleData();
-    if (cached?.rol === 'admin_club' && mismoIdSedeTorneo(cached.sedeId, torneo.sede_id)) return true;
-    if (cached?.rol === 'super_admin') return true;
-    if (cached?.rol === 'admin_nacional' && torneoNivelEsNacional(torneo.nivel_torneo) && sedeTorneo) {
-      if (paisAdminCoincideSede(cached.pais, sedeTorneo.pais)) return true;
-    }
+  const cached = readCachedUserRoleData();
+  if (cached?.rol === 'admin_club' && mismoIdSedeTorneo(cached.sedeId, torneo.sede_id)) return true;
+  if (cached?.rol === 'super_admin') return true;
+  if (cached?.rol === 'admin_nacional' && torneoNivelEsNacional(torneo.nivel_torneo) && sedeTorneo) {
+    if (paisAdminCoincideSede(cached.pais, sedeTorneo.pais)) return true;
   }
 
   if (rol === 'admin_nacional' && torneoNivelEsNacional(torneo.nivel_torneo) && sedeTorneo) {
@@ -91,21 +100,19 @@ export function computeIsAdminEnTorneo({
 }
 
 /**
- * Botón "Gestionar" en equipos: solo con contexto admin (panel o flag de sesión) y rol aplicable.
- * `super_admin` / `admin_nacional` no gestionan equipos como jugador sin ese contexto.
+ * Botón "Gestionar" en equipos: mismo contexto admin que {@link computeIsAdminEnTorneo}.
  */
 export function computePuedeGestionarEquiposTorneo({
-  email,
   torneo,
   sedeTorneo,
   rol,
   userSedeId,
   userPaisRol,
   fromAdmin,
+  enRutaAdmin = false,
 }) {
-  if (isPadbolModoJugadorActivo({ email, rol })) return false;
   if (!torneo) return false;
-  const ctx = Boolean(fromAdmin);
+  const ctx = Boolean(fromAdmin) || Boolean(enRutaAdmin);
   if (!ctx) return false;
 
   if (rol === 'super_admin') return true;

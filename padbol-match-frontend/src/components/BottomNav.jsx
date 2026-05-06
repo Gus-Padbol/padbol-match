@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
-import { readAdminNavContext } from '../utils/adminNavContext';
 import {
   HUB_NAV_HEIGHT_PX,
   hubBottomNavFixedTopCss,
@@ -10,10 +9,6 @@ import {
   isHubNavBarHiddenPathname,
   isSedeProfilePathname,
 } from '../constants/hubLayout';
-import {
-  isPadbolModoJugadorActivo,
-  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
-} from '../utils/padbolModoJugador';
 
 const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club'];
 
@@ -46,26 +41,8 @@ const BottomNav = () => {
   const { rol } = useUserRole(currentCliente);
   const rolEffective = rol || readCachedRol();
 
-  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
-  useEffect(() => {
-    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
-    if (typeof window === 'undefined') return undefined;
-    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-    window.addEventListener('storage', bump);
-    return () => {
-      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-      window.removeEventListener('storage', bump);
-    };
-  }, []);
-
-  const modoJugadorActivoBottom = useMemo(
-    () => isPadbolModoJugadorActivo({ email: session?.user?.email, rol: rolEffective }),
-    [session?.user?.email, rolEffective, padbolModoJugadorRev]
-  );
-
   const superAdminBottomNav =
-    !modoJugadorActivoBottom &&
-    (rolEffective === 'super_admin' || superAdminNavEmails.includes(sessionEmailLower));
+    rolEffective === 'super_admin' || superAdminNavEmails.includes(sessionEmailLower);
 
   const path = location.pathname;
   const pathOnly = path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
@@ -76,11 +53,11 @@ const BottomNav = () => {
   /** Panel /admin: siempre barra de admin (nunca Reservar/Torneos jugador). */
   const adminDashboardBottomNav = pathOnly === '/admin' && isPanelAdmin;
 
-  /** Torneo / equipos con contexto admin (desde panel o flag de sesión). */
+  /** Torneo / equipos: barra admin solo con `state.fromAdmin === true` (no sessionStorage). */
   const adminTorneoBottomNav =
     isPanelAdmin &&
     pathOnly.startsWith('/torneo') &&
-    (Boolean(location.state?.fromAdmin) || readAdminNavContext());
+    location.state?.fromAdmin === true;
 
   const adminBottomNavActive = adminDashboardBottomNav || adminTorneoBottomNav;
 

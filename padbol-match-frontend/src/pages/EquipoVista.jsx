@@ -27,13 +27,7 @@ import {
   torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
 import useUserRole from '../hooks/useUserRole';
-import { computeIsAdminEnTorneo } from '../utils/torneoAdminAccess';
-import {
-  isSuperAdminIdentity,
-  isPadbolModoJugadorActivo,
-  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
-} from '../utils/padbolModoJugador';
-import { readAdminNavContext } from '../utils/adminNavContext';
+import { computeIsAdminEnTorneo, isGlobalSuperAdminEmailOrRole } from '../utils/torneoAdminAccess';
 import { getDisplayName } from '../utils/displayName';
 import { authUrlWithRedirect, authLoginRedirectPath } from '../utils/authLoginRedirect';
 import {
@@ -354,23 +348,12 @@ export default function EquipoVista() {
 
   const currentClienteTorneoEq = useMemo(() => (authEmail ? { email: authEmail } : null), [authEmail]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentClienteTorneoEq);
-  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
-  useEffect(() => {
-    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
-    if (typeof window === 'undefined') return undefined;
-    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-    window.addEventListener('storage', bump);
-    return () => {
-      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-      window.removeEventListener('storage', bump);
-    };
-  }, []);
+  const fromAdminStrict = location.state?.fromAdmin === true;
   const isSuperAdmin = useMemo(
-    () =>
-      isSuperAdminIdentity(authEmail, rol) && !isPadbolModoJugadorActivo({ email: authEmail, rol }),
-    [authEmail, rol, padbolModoJugadorRev]
+    () => isGlobalSuperAdminEmailOrRole(authEmail, rol) && fromAdminStrict,
+    [authEmail, rol, fromAdminStrict]
   );
-  const fromAdminNav = Boolean(location.state?.fromAdmin);
+  const fromAdminNav = fromAdminStrict;
   const esAdminGestionTorneoEq = useMemo(
     () =>
       computeIsAdminEnTorneo({
@@ -380,27 +363,19 @@ export default function EquipoVista() {
         rol,
         userSedeId,
         userPaisRol,
-        fromAdmin: fromAdminNav || readAdminNavContext(),
+        fromAdmin: fromAdminStrict,
+        enRutaAdmin: false,
       }),
-    [
-      authEmailLower,
-      torneo,
-      sedeTorneoRow,
-      rol,
-      userSedeId,
-      userPaisRol,
-      fromAdminNav,
-      padbolModoJugadorRev,
-    ]
+    [authEmailLower, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, fromAdminStrict]
   );
 
   const tituloHeaderEquipo = esAdminGestionTorneoEq ? 'Equipo' : 'Mi Equipo';
   const handleBackEquipoVista = () => {
-    if (esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext())) {
+    if (esAdminGestionTorneoEq && fromAdminStrict) {
       navigate('/admin');
       return;
     }
-    if (fromAdminNav && torneo?.id) {
+    if (fromAdminStrict && torneo?.id) {
       navigate(`/torneo/${torneo.id}`, { state: { ...location.state, fromAdmin: true } });
       return;
     }
@@ -1415,7 +1390,7 @@ export default function EquipoVista() {
           showBack
           onBack={handleBackEquipoVista}
           backLabel={
-            esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
+            esAdminGestionTorneoEq && fromAdminStrict ? '← Admin' : '← Volver'
           }
         />
         <div style={equipoColumnWrapStyle}>
@@ -1434,7 +1409,7 @@ export default function EquipoVista() {
           showBack
           onBack={handleBackEquipoVista}
           backLabel={
-            esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
+            esAdminGestionTorneoEq && fromAdminStrict ? '← Admin' : '← Volver'
           }
         />
         <div style={equipoColumnWrapStyle}>
@@ -1454,7 +1429,7 @@ export default function EquipoVista() {
         showBack
         onBack={handleBackEquipoVista}
         backLabel={
-          esAdminGestionTorneoEq && (fromAdminNav || readAdminNavContext()) ? '← Admin' : '← Volver'
+          esAdminGestionTorneoEq && fromAdminStrict ? '← Admin' : '← Volver'
         }
       />
 

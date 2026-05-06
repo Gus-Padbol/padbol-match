@@ -40,13 +40,8 @@ import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
-import useUserRole from '../hooks/useUserRole';
 import { getDisplayName } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
-import {
-  isPadbolModoJugadorActivo,
-  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
-} from '../utils/padbolModoJugador';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -319,29 +314,8 @@ export default function MiPerfil() {
     };
   }, [sessionOwnerEmail, userProfile, session]);
 
-  const currentClienteRole = useMemo(() => {
-    const em = String(session?.user?.email || '').trim();
-    if (!em) return null;
-    return { email: em };
-  }, [session?.user?.email]);
-  const { rol: rolUsuarioPerfil, loading: rolUsuarioPerfilLoading } = useUserRole(currentClienteRole);
-  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
-  useEffect(() => {
-    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
-    if (typeof window === 'undefined') return undefined;
-    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-    window.addEventListener('storage', bump);
-    return () => {
-      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-      window.removeEventListener('storage', bump);
-    };
-  }, []);
-  const ocultarUiJugadorPorAdmin = useMemo(() => {
-    if (rolUsuarioPerfilLoading) return false;
-    if (!['super_admin', 'admin_nacional', 'admin_club'].includes(rolUsuarioPerfil || '')) return false;
-    if (isPadbolModoJugadorActivo({ email: session?.user?.email, rol: rolUsuarioPerfil })) return false;
-    return true;
-  }, [rolUsuarioPerfilLoading, rolUsuarioPerfil, session?.user?.email, padbolModoJugadorRev]);
+  /** Mi perfil: siempre vista jugador (sin ocultar bloques por rol admin). */
+  const ocultarUiJugadorPorAdmin = false;
 
   /** Código país (ej. +54) + número local solo dígitos (sin repetir código en el input) */
   const [waCodigoPais, setWaCodigoPais] = useState('+54');

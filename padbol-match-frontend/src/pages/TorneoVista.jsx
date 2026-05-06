@@ -19,8 +19,7 @@ import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { computeIsAdminEnTorneo, computePuedeGestionarEquiposTorneo } from '../utils/torneoAdminAccess';
-import { PADBOL_MODO_JUGADOR_CHANGED_EVENT } from '../utils/padbolModoJugador';
-import { clearAdminNavContext, setAdminNavContext } from '../utils/adminNavContext';
+import { clearAdminNavContext } from '../utils/adminNavContext';
 import '../styles/TorneoVista.css';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -41,17 +40,6 @@ export default function TorneoVista() {
     return { email: em };
   }, [session?.user?.email]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentCliente);
-  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
-  useEffect(() => {
-    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
-    if (typeof window === 'undefined') return undefined;
-    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-    window.addEventListener('storage', bump);
-    return () => {
-      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-      window.removeEventListener('storage', bump);
-    };
-  }, []);
   const [torneo, setTorneo] = useState(null);
   const [equipos, setEquipos] = useState([]);
   const [sedesMap, setSedesMap] = useState({});
@@ -64,7 +52,7 @@ export default function TorneoVista() {
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const sedeTorneo = torneo ? sedesMap[String(torneo.sede_id)] : null;
-  const fromAdmin = Boolean(location.state?.fromAdmin);
+  const fromAdmin = location.state?.fromAdmin === true;
   const isAdmin = useMemo(
     () =>
       computeIsAdminEnTorneo({
@@ -75,32 +63,24 @@ export default function TorneoVista() {
         userSedeId,
         userPaisRol,
         fromAdmin,
+        enRutaAdmin: false,
       }),
-    [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin, padbolModoJugadorRev]
+    [currentEmail, torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
   );
-  /** Barra violeta y permisos de edición en pestañas: solo con `state.fromAdmin` (no basta ser admin del club sin venir del panel). */
+  /** Barra violeta y permisos de edición en pestañas: solo con `state.fromAdmin === true`. */
   const isAdminGestionEnEstaVista = isAdmin && fromAdmin;
   const puedeGestionarEquiposTorneo = useMemo(
     () =>
       computePuedeGestionarEquiposTorneo({
-        email: currentEmail,
         torneo,
         sedeTorneo,
         rol,
         userSedeId,
         userPaisRol,
-        fromAdmin: location.state?.fromAdmin === true,
+        fromAdmin,
+        enRutaAdmin: false,
       }),
-    [
-      currentEmail,
-      torneo,
-      sedeTorneo,
-      rol,
-      userSedeId,
-      userPaisRol,
-      location.state?.fromAdmin,
-      padbolModoJugadorRev,
-    ]
+    [torneo, sedeTorneo, rol, userSedeId, userPaisRol, fromAdmin]
   );
   const torneoNavState = useMemo(
     () => (fromAdmin || location.state ? { ...(location.state || {}), ...(fromAdmin ? { fromAdmin: true } : {}) } : null),
@@ -109,9 +89,6 @@ export default function TorneoVista() {
   /** No reenviar `fromAdmin` a enlaces de la vista pública (perfiles, equipos en solo lectura). */
   const torneoNavStateParaTabbed = fromAdmin ? torneoNavState : null;
 
-  useEffect(() => {
-    if (location.state?.fromAdmin === true) setAdminNavContext(true);
-  }, [location.state?.fromAdmin]);
   const jugadorEquipoListoParaTorneo = (raw) => {
     const p = typeof raw === 'object' && raw != null ? raw : { nombre: raw, email: '' };
     if (p.estado === 'pendiente') return false;

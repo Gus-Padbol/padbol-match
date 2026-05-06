@@ -6,13 +6,7 @@ import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import { loginRedirectAfterHubEntry } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
-import { readAdminNavContext, clearAdminNavContext } from '../utils/adminNavContext';
-import {
-  isSuperAdminIdentity,
-  isPadbolModoJugadorActivo,
-  setPadbolModoJugador,
-  PADBOL_MODO_JUGADOR_CHANGED_EVENT,
-} from '../utils/padbolModoJugador';
+import { clearAdminNavContext } from '../utils/adminNavContext';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -221,23 +215,7 @@ export default function AppHeader({
     })();
     return rol || cached || fromJwt;
   }, [rol, session?.user?.app_metadata?.role, session?.user?.user_metadata?.role]);
-  const [padbolModoJugadorRev, setPadbolModoJugadorRev] = useState(0);
-  useEffect(() => {
-    const bump = () => setPadbolModoJugadorRev((n) => n + 1);
-    if (typeof window === 'undefined') return undefined;
-    window.addEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-    window.addEventListener('storage', bump);
-    return () => {
-      window.removeEventListener(PADBOL_MODO_JUGADOR_CHANGED_EVENT, bump);
-      window.removeEventListener('storage', bump);
-    };
-  }, []);
-  const modoJugadorActivo = useMemo(
-    () => isPadbolModoJugadorActivo({ email: session?.user?.email, rol: rolEffectiveHeader }),
-    [session?.user?.email, rolEffectiveHeader, padbolModoJugadorRev]
-  );
-  const isPanelAdminUser =
-    ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '') && !modoJugadorActivo;
+  const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
   const [profilesUsernameClubChip, setProfilesUsernameClubChip] = useState('');
   useEffect(() => {
@@ -309,12 +287,11 @@ export default function AppHeader({
 
   const adminFlowSurface = useMemo(() => {
     if (!session?.user || !isPanelAdminUser) return false;
-    const adminContextFlag = readAdminNavContext();
-    const fromAdminNav = Boolean(location.state?.fromAdmin);
     if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
-    if (adminContextFlag || fromAdminNav) return true;
-    if (pathOnly.startsWith('/torneo') && (adminContextFlag || fromAdminNav)) return true;
-    if (pathOnly.startsWith('/equipo/') && (adminContextFlag || fromAdminNav)) return true;
+    const fromAdminNav = location.state?.fromAdmin === true;
+    if (!fromAdminNav) return false;
+    if (pathOnly.startsWith('/torneo')) return true;
+    if (pathOnly.startsWith('/equipo/')) return true;
     return false;
   }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
 
@@ -366,10 +343,9 @@ export default function AppHeader({
     .charAt(0)
     .toUpperCase();
   const esRolAdminHub =
-    !modoJugadorActivo &&
-    (hubAdminRolEver ||
-      ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '') ||
-      (Boolean(roleLoading) && LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(authEmail)));
+    hubAdminRolEver ||
+    ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '') ||
+    (Boolean(roleLoading) && LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(authEmail));
   /** En el hub de inicio (`hubDirectLogin` + /) siempre mostrar ⚙ aunque quede `adminFlowSurface` por contexto; fuera del hub, el atajo se oculta en flujo admin. */
   const showAdminShortcutHub =
     !hideLogoutEffective &&
@@ -434,41 +410,6 @@ export default function AppHeader({
     }
     if (typeof window !== 'undefined') window.history.back();
   };
-
-  const puedeActivarModoJugador =
-    Boolean(session?.user) &&
-    isSuperAdminIdentity(session?.user?.email, rolEffectiveHeader) &&
-    !modoJugadorActivo;
-
-  const modoJugadorActivarBtnStyle = {
-    height: LOGOUT_BTN_SIZE,
-    padding: '0 10px',
-    borderRadius: '999px',
-    border: '1px solid rgba(250,204,21,0.55)',
-    background: 'rgba(250,204,21,0.12)',
-    color: '#fef08a',
-    fontSize: 11,
-    fontWeight: 800,
-    lineHeight: 1,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    whiteSpace: 'nowrap',
-  };
-
-  const modoJugadorActivarButton = puedeActivarModoJugador ? (
-    <button
-      type="button"
-      onClick={() => setPadbolModoJugador(true)}
-      aria-label="Activar modo jugador"
-      title="Navegar sin controles de admin"
-      style={modoJugadorActivarBtnStyle}
-    >
-      Modo jugador
-    </button>
-  ) : null;
 
   const adminShortcutButton =
     showAdminShortcutHub ? (
@@ -707,10 +648,7 @@ export default function AppHeader({
         }}
       >
         {botonAdminIzquierdaEnHub ? (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {adminShortcutButton}
-            {modoJugadorActivarButton}
-          </div>
+          adminShortcutButton
         ) : hubHomeCompactHeader ? (
           <span
             aria-hidden
@@ -908,12 +846,7 @@ export default function AppHeader({
                 </button>
               </div>
             ) : null}
-            {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                {adminShortcutButton}
-                {modoJugadorActivarButton}
-              </div>
-            ) : null}
+            {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
             {showLogout ? (
               <button
                 type="button"
@@ -987,44 +920,6 @@ export default function AppHeader({
         ) : null}
       </div>
       </div>
-      {modoJugadorActivo ? (
-        <div
-          role="status"
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px 14px',
-            padding: '10px 12px',
-            background: '#fef9c3',
-            borderTop: '1px solid #fde047',
-            color: '#713f12',
-            fontSize: '13px',
-            fontWeight: 700,
-            lineHeight: 1.4,
-            textAlign: 'center',
-          }}
-        >
-          <span>Estás en modo jugador — los controles admin están ocultos</span>
-          <button
-            type="button"
-            onClick={() => setPadbolModoJugador(false)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '8px',
-              border: '1px solid #ca8a04',
-              background: '#fff',
-              color: '#713f12',
-              fontWeight: 800,
-              fontSize: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            Volver a modo admin
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }
