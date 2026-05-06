@@ -20,6 +20,7 @@ import {
   solicitarUnirseAEquipoAbierto,
 } from '../../utils/equipoOpenJoin';
 import '../../styles/TorneoVista.css';
+import { TORNEO_BANNER_ANTES_TABS_DATA_SLOT } from '../../utils/torneoReservaLugarCopy';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
 
@@ -313,7 +314,7 @@ export default function TorneoTabbedView({
   equiposTabFooter = null,
   /** Bloque admin (iniciar/finalizar, etc.) encima de las pestañas. */
   adminTorneoBar = null,
-  /** Inscripción jugador: justo debajo de la barra admin y antes de EQUIPOS/GRUPOS/… */
+  /** Inscripción jugador (p. ej. «Reservar mi lugar» en planificación): debajo de la barra admin y antes de pestañas. */
   bannerAntesTabs = null,
   stickyTop = '110px',
   showTorneoLogo = true,
@@ -1704,7 +1705,7 @@ export default function TorneoTabbedView({
 
       {adminTorneoBar}
 
-      {bannerAntesTabs}
+      <div data-torneo-banner-slot={TORNEO_BANNER_ANTES_TABS_DATA_SLOT}>{bannerAntesTabs}</div>
 
       <div
         className="torneo-tabs-sticky"

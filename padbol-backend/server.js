@@ -1259,7 +1259,7 @@ async function notifyListaEsperaInscripcionAbierta(torneoId, nombreTorneo) {
     const tname = String(nombreTorneo || 'el torneo').trim();
     const baseUrl = String(TORNEO_EQUIPOS_INVITE_BASE_URL || FRONTEND_URL || '').replace(/\/$/, '');
     const link = `${baseUrl}/torneo/${torneoId}/equipos`;
-    const body = `¡Hola! La inscripción a «${tname}» ya está abierta. Entrá acá para inscribirte: ${link}`;
+    const body = `🏆 ¡Abrió la inscripción para «${tname}»! Tu lugar está esperando. Inscribite antes de que se agoten los cupos: ${link}`;
     for (const row of rows || []) {
       const emailRow = String(row?.email || '').trim().toLowerCase();
       if (emailRow) {

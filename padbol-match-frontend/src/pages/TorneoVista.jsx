@@ -19,6 +19,12 @@ import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { estadoTorneoNormalizado } from '../utils/torneoEstadoFiltroPills';
 import {
+  TORNEO_RESERVA_LUGAR_BTN,
+  TORNEO_RESERVA_LUGAR_CONFIRM_POST,
+  TORNEO_RESERVA_LUGAR_SUB_BANNER,
+  TORNEO_RESERVA_LUGAR_YA_INSCRITO,
+} from '../utils/torneoReservaLugarCopy';
+import {
   computeIsAdminEnTorneo,
   computePuedeGestionarEquiposTorneo,
   pathnameIsAdminRoute,
@@ -524,7 +530,7 @@ export default function TorneoVista() {
     return null;
   }, [equipos, session?.user?.id, session?.user?.email]);
 
-  const anotarmeListaEspera = useCallback(async () => {
+  const reservarMiLugarTorneo = useCallback(async () => {
     if (!session?.user) {
       navigate(authUrlWithRedirect(`/torneo/${torneoId}`));
       return;
@@ -544,11 +550,9 @@ export default function TorneoVista() {
       const j = await res.json().catch(() => ({}));
       if (res.ok) {
         setListaEsperaEnrolled(true);
-        setListaEsperaMsg(
-          j?.already ? '' : '¡Listo! Te avisamos por WhatsApp cuando abra la inscripción.'
-        );
+        setListaEsperaMsg(j?.already ? '' : TORNEO_RESERVA_LUGAR_CONFIRM_POST);
       } else {
-        alert(j?.error || 'No se pudo anotar en lista de espera');
+        alert(j?.error || 'No se pudo reservar tu lugar');
       }
     } catch (e) {
       alert(e?.message || 'Error de red');
@@ -571,28 +575,26 @@ export default function TorneoVista() {
     if (esListaEsperaTorneo) {
       return (
         <div className="torneo-inscripcion-jugador-banner">
-          <p className="torneo-inscripcion-jugador-banner__sub">
-            La inscripción aún no está abierta. Dejá tus datos y te avisamos por WhatsApp.
-          </p>
+          <p className="torneo-inscripcion-jugador-banner__sub">{TORNEO_RESERVA_LUGAR_SUB_BANNER}</p>
           {listaEsperaMsg ? (
             <p className="torneo-inscripcion-jugador-banner__texto" style={{ marginTop: '10px' }}>
               {listaEsperaMsg}
             </p>
-          ) : null}
-          {listaEsperaEnrolled ? (
+          ) : listaEsperaEnrolled ? (
             <p className="torneo-inscripcion-jugador-banner__texto" style={{ marginTop: '12px' }}>
-              Ya estás en lista de espera ✓
+              {TORNEO_RESERVA_LUGAR_YA_INSCRITO}
             </p>
-          ) : (
+          ) : null}
+          {!listaEsperaEnrolled ? (
             <button
               type="button"
               className="torneo-inscripcion-jugador-banner__cta btn-agregar-jugadores"
-              onClick={() => void anotarmeListaEspera()}
+              onClick={() => void reservarMiLugarTorneo()}
               disabled={session?.user && !listaEsperaChecked}
             >
-              Anotarme en lista de espera
+              {TORNEO_RESERVA_LUGAR_BTN}
             </button>
-          )}
+          ) : null}
         </div>
       );
     }
@@ -634,7 +636,7 @@ export default function TorneoVista() {
     listaEsperaMsg,
     torneoId,
     navigate,
-    anotarmeListaEspera,
+    reservarMiLugarTorneo,
   ]);
 
   /** Solo admin que entró desde el panel (`fromAdmin`): no jugadores ni admin en ruta pública. */
