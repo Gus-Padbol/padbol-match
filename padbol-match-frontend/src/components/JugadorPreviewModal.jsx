@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-/** Modal compacto: foto, nombre, alias, categoría, sede (sin navegar a otra ruta). */
+/** Modal compacto: foto, nombre, @alias, categoría, sede, puntos; opción ir a perfil público. */
 export default function JugadorPreviewModal({ open, onClose, data }) {
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
@@ -90,30 +93,57 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
           <h2 id="jugador-preview-titulo" style={{ margin: '14px 0 0', fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.3 }}>
             {data.nombreCompleto}
           </h2>
+          {data.aliasLabel && data.aliasLabel !== '—' ? (
+            <p style={{ margin: '6px 0 0', fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>{data.aliasLabel}</p>
+          ) : null}
         </div>
 
-        {row('Alias', data.aliasLabel)}
         {row('Categoría', data.categoria)}
         {row('Sede', data.sede)}
+        {data.puntosTotal != null && Number.isFinite(data.puntosTotal) ? row('Puntos', String(data.puntosTotal)) : null}
+        {data.torneosCount != null && Number.isFinite(data.torneosCount) ? row('Torneos', String(data.torneosCount)) : null}
 
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            marginTop: '8px',
-            width: '100%',
-            padding: '12px',
-            borderRadius: '10px',
-            border: 'none',
-            background: '#4f46e5',
-            color: '#fff',
-            fontWeight: 800,
-            fontSize: '15px',
-            cursor: 'pointer',
-          }}
-        >
-          Cerrar
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+          {data.aliasSlug ? (
+            <button
+              type="button"
+              onClick={() => {
+                navigate(`/jugador/${encodeURIComponent(data.aliasSlug)}`);
+                onClose();
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '10px',
+                border: '2px solid #4f46e5',
+                background: '#fff',
+                color: '#4f46e5',
+                fontWeight: 800,
+                fontSize: '15px',
+                cursor: 'pointer',
+              }}
+            >
+              Ver perfil completo
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '10px',
+              border: 'none',
+              background: '#4f46e5',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: '15px',
+              cursor: 'pointer',
+            }}
+          >
+            Cerrar
+          </button>
+        </div>
       </div>
     </div>
   );

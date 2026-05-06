@@ -12,7 +12,9 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
-import { nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
+import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
+import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
+import JugadorPreviewModal from '../components/JugadorPreviewModal';
 
 /** Misma convención que ReservaForm.jsx */
 const API_BASE = (
@@ -114,6 +116,7 @@ export default function Rankings() {
   const debouncedLocalCiudad = useDebouncedValue(localCiudad.trim(), 400);
 
   const [nacionalPais, setNacionalPais] = useState('');
+  const [jugadorPreviewRankings, setJugadorPreviewRankings] = useState(null);
 
   const nombresPaisesOpciones = useMemo(
     () =>
@@ -601,7 +604,25 @@ export default function Rankings() {
 
                       {/* Player info */}
                       <td style={{ ...tdStyle, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: narrow ? '6px' : '10px', minWidth: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setJugadorPreviewRankings(buildJugadorPreviewModalData(player, null))
+                          }
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: narrow ? '6px' : '10px',
+                            minWidth: 0,
+                            width: '100%',
+                            border: 'none',
+                            background: 'transparent',
+                            padding: 0,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            font: 'inherit',
+                          }}
+                        >
                           {player.foto_url ? (
                             <img
                               src={player.foto_url}
@@ -627,11 +648,13 @@ export default function Rankings() {
                             <div style={{ fontSize: narrow ? '12px' : '14px', fontWeight: '600', color: '#111', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {etiquetaRankingJugador(player)}
                             </div>
-                            {player.nivel && !narrow && (
-                              <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{player.nivel}</div>
-                            )}
+                            {String(player.alias || '').trim() ? (
+                              <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {formatAliasConArroba(String(player.alias).trim())}
+                              </div>
+                            ) : null}
                           </div>
-                        </div>
+                        </button>
                       </td>
 
                       {showPaisCol ? (
@@ -680,6 +703,11 @@ export default function Rankings() {
           </div>
         )}
       </div>
+      <JugadorPreviewModal
+        open={Boolean(jugadorPreviewRankings)}
+        onClose={() => setJugadorPreviewRankings(null)}
+        data={jugadorPreviewRankings}
+      />
       <BottomNav />
     </div>
   );

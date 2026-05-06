@@ -20,17 +20,30 @@ function perfilRowDesdeCtx(p, ctx) {
  * @param {object|null} p jugador en JSON de equipo / listado
  * @param {import('./jugadorNombreTorneo').JugadorNombreTorneoCtx & { perfilByUserId?: Map<string, object> }|null} ctx opcional
  */
+function esFilaRankingApi(p) {
+  return (
+    p &&
+    typeof p === 'object' &&
+    typeof p.puntos_total === 'number' &&
+    Number.isFinite(p.puntos_total)
+  );
+}
+
 export function buildJugadorPreviewModalData(p, ctx) {
   if (!p || typeof p !== 'object') {
     return {
       foto_url: '',
       nombreCompleto: '—',
       aliasLabel: '—',
+      aliasSlug: '',
       categoria: '—',
       sede: '—',
+      puntosTotal: null,
+      torneosCount: null,
     };
   }
   const perfRow = perfilRowDesdeCtx(p, ctx);
+  const rankingLike = esFilaRankingApi(p);
 
   const nombreCompleto =
     nombreCompletoJugadorPerfil(perfRow) ||
@@ -45,14 +58,29 @@ export function buildJugadorPreviewModalData(p, ctx) {
     '';
 
   const aliasRaw = String(perfRow?.alias || p.alias || '').trim();
+  const aliasSlug = aliasRaw.replace(/^@+/u, '').trim();
+
   const categoria = String(perfRow?.nivel || p.nivel || '').trim() || '—';
-  const sede = String(perfRow?.ciudad || p.ciudad || '').trim() || '—';
+
+  let sede = String(perfRow?.ciudad || p.ciudad || '').trim() || '—';
+  if (rankingLike) {
+    const pais = String(p.pais || '').trim();
+    sede = pais || '—';
+  }
+
+  const puntosTotal =
+    typeof p.puntos_total === 'number' && Number.isFinite(p.puntos_total) ? p.puntos_total : null;
+  const torneosCount =
+    typeof p.torneos_count === 'number' && Number.isFinite(p.torneos_count) ? p.torneos_count : null;
 
   return {
     foto_url: foto,
     nombreCompleto,
     aliasLabel: aliasRaw ? formatAliasConArroba(aliasRaw) : '—',
+    aliasSlug,
     categoria: categoria || '—',
     sede: sede || '—',
+    puntosTotal,
+    torneosCount,
   };
 }

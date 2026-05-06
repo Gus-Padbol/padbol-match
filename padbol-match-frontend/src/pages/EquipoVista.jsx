@@ -175,11 +175,23 @@ function jugadorIdLikelyUserId(raw) {
   return s && UUID_AUTH_ID.test(s) ? s : '';
 }
 
+function aliasVisibleFilaEquipo(p, perfilByUserId) {
+  let a = String(p?.alias || '').trim();
+  if (a) return a;
+  const uid = jugadorIdLikelyUserId(p?.id);
+  if (uid && perfilByUserId instanceof Map) {
+    const row = perfilByUserId.get(uid);
+    if (row?.alias) a = String(row.alias).trim();
+  }
+  return a;
+}
+
 /**
- * Avatar + nombre (click → preview) + 🎖️ capitán; `childrenDebajo` no dispara la navegación.
+ * Avatar + nombre (click → preview) + @alias + 🎖️ capitán; `childrenDebajo` no dispara la navegación.
  */
 function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, childrenDebajo, onVerJugador }) {
   const label = jugadorNombreTorneoEtiqueta(p, ctx);
+  const aliasRaw = aliasVisibleFilaEquipo(p, perfilByUserId);
   const clickable = Boolean(onVerJugador);
 
   return (
@@ -214,14 +226,7 @@ function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, childre
             minWidth: 0,
           }}
         >
-          <span
-            style={{
-              color: clickable ? '#2563eb' : undefined,
-              textDecoration: clickable ? 'underline' : undefined,
-            }}
-          >
-            {label}
-          </span>
+          <span style={{ color: '#0f172a', textDecoration: 'none' }}>{label}</span>
           {esCapitanJugadorEnFila(p, equipo) ? (
             <span
               title="Capitán"
@@ -232,6 +237,11 @@ function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, childre
             </span>
           ) : null}
         </div>
+        {aliasRaw ? (
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#9ca3af', marginTop: '2px' }}>
+            {formatAliasConArroba(aliasRaw)}
+          </div>
+        ) : null}
         {childrenDebajo != null && childrenDebajo !== false ? (
           <div
             onClick={(e) => e.stopPropagation()}

@@ -888,7 +888,7 @@ export default function TorneoTabbedView({
                           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
                             <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{nombreMain}</span>
                             {al ? (
-                              <span style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb', textDecoration: 'underline' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
                                 {formatAliasConArroba(al)}
                               </span>
                             ) : null}
@@ -1653,35 +1653,78 @@ export default function TorneoTabbedView({
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <h3>{nombreEquipoMostrado(modalEquipo)}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-              {modalJugadores.map((p, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    abrirPreviewJugador(p);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '10px',
-                    padding: '8px',
-                    background: '#f8fafc',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{nombreListadoTorneoRanking(p)}</span>
-                    {String(p?.alias || '').trim() ? (
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb' }}>
-                        {formatAliasConArroba(String(p.alias).trim())}
+              {modalJugadores.map((p, i) => {
+                const fotoM = String(p?.foto_url || '').trim();
+                const alM = String(p?.alias || '').trim();
+                const nm = nombreListadoTorneoRanking(p);
+                const ini = String(nm || '?')
+                  .charAt(0)
+                  .toUpperCase();
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      abrirPreviewJugador(p);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      padding: '8px',
+                      background: '#f8fafc',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    {fotoM ? (
+                      <img
+                        src={fotoM}
+                        alt=""
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          flexShrink: 0,
+                          border: '1px solid #e2e8f0',
+                        }}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                          color: '#fff',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                        aria-hidden
+                      >
+                        {ini}
                       </span>
-                    ) : null}
-                  </span>
-                </button>
-              ))}
+                    )}
+                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
+                      <span style={{ fontWeight: 700, color: '#0f172a' }}>{nm}</span>
+                      {alM ? (
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
+                          {formatAliasConArroba(alM)}
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <div className="modal-buttons" style={{ marginTop: '16px' }}>
               <button type="button" className="btn-cancelar" onClick={() => setModalEquipo(null)}>
