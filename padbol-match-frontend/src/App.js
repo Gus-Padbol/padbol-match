@@ -186,20 +186,7 @@ function AppRoutes() {
   }, [location.pathname]);
 
   return (
-    <div
-      style={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        maxWidth: 900,
-        marginLeft: 'auto',
-        marginRight: 'auto',
-        boxSizing: 'border-box',
-      }}
-    >
-      <Routes>
+    <Routes>
         <Route path="/" element={<UserHome />} />
         <Route path="/hub" element={<UserHome />} />
         <Route path="/inicio" element={<UserHome />} />
@@ -256,8 +243,7 @@ function AppRoutes() {
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </div>
+    </Routes>
   );
 }
 
@@ -266,12 +252,10 @@ function App() {
     <Router>
       <div
         style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
           width: '100%',
-          maxWidth: '100%',
+          maxWidth: '900px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
           boxSizing: 'border-box',
         }}
       >
