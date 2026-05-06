@@ -8,6 +8,7 @@ import {
 } from './utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from './utils/jugadorPreviewModalData';
 import JugadorPreviewModal from './components/JugadorPreviewModal';
+import ShareLinkButton from './components/ShareLinkButton';
 import { hubInstagramColumnWrapStyle } from './constants/hubLayout';
 import { formatNivelTorneo } from './utils/torneoFormatters';
 import { fetchTorneosConPuntosParaPerfil, emojiMedallaPosicionCompacta } from './utils/torneoHistorialPuntosJugador';
@@ -258,6 +259,21 @@ export default function PerfilPublico() {
   /** Federado: solo `perfil.es_federado`. */
   const esFederadoBool = perfil?.es_federado;
 
+  const perfilShareUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !aliasDecoded) return '';
+    return `${window.location.origin}/jugador/${encodeURIComponent(aliasDecoded)}`;
+  }, [aliasDecoded]);
+
+  const perfilShareMeta = useMemo(() => {
+    const aliasTxt = aliasGrande ? formatAliasConArroba(aliasGrande) : '';
+    const nm = String(nombreCompleto || '').trim();
+    const title = nm || aliasTxt || 'Perfil Padbol Match';
+    const head = nm && aliasTxt ? `${nm} — ${aliasTxt}` : nm || aliasTxt || title;
+    const url = perfilShareUrl;
+    const text = url ? `${head}\n\n${url}` : head;
+    return { title, text, url };
+  }, [nombreCompleto, aliasGrande, perfilShareUrl]);
+
   if (loading) {
     return (
       <div style={pageStyle}>
@@ -387,6 +403,19 @@ export default function PerfilPublico() {
               {nombreCompleto || 'Jugador'}
             </h1>
           )}
+
+          {perfilShareUrl ? (
+            <div style={{ margin: '12px auto 0', maxWidth: '280px', width: '100%' }}>
+              <ShareLinkButton
+                shareTitle={perfilShareMeta.title}
+                shareText={perfilShareMeta.text}
+                url={perfilShareMeta.url}
+                style={{ width: '100%' }}
+              >
+                Compartir perfil
+              </ShareLinkButton>
+            </div>
+          ) : null}
 
           {perfil.pais ? (
             <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px', textAlign: 'center', lineHeight: 1.35 }}>

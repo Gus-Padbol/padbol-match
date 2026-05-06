@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import ShareLinkButton from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -857,6 +858,12 @@ export default function SedePublica() {
         const fraseHero = desc || SEDE_HERO_FRASE_DEFAULT;
         const nombreSedeCta = String(sede.nombre || 'esta sede').trim();
         const torneosCtaLabel = `Ver torneos de ${nombreSedeCta}`;
+        const sedeShareUrl =
+          typeof window !== 'undefined' && sedeId
+            ? `${window.location.origin}/sede/${encodeURIComponent(String(sedeId))}`
+            : '';
+        const sedeShareTitle = String(sede.nombre || 'Sede').trim() || 'Sede';
+        const sedeShareText = sedeShareUrl ? `${sedeShareTitle}\n\n${sedeShareUrl}` : sedeShareTitle;
 
         return (
           <>
@@ -1093,7 +1100,28 @@ export default function SedePublica() {
               </div>
             </div>
 
-            <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '14px 8px 6px' }}>
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                padding: '14px 8px 6px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                alignItems: 'stretch',
+              }}
+            >
+              {sedeShareUrl ? (
+                <ShareLinkButton
+                  shareTitle={sedeShareTitle}
+                  shareText={sedeShareText}
+                  url={sedeShareUrl}
+                  style={{ width: '100%' }}
+                >
+                  Compartir sede
+                </ShareLinkButton>
+              ) : null}
               <button
                 type="button"
                 onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}

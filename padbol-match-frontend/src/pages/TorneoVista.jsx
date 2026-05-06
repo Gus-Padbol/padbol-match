@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import ShareLinkButton from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import TorneoTabbedView, {
   jugadorEtiquetaConArroba,
@@ -613,6 +614,28 @@ export default function TorneoVista() {
     []
   );
 
+  const torneoShareUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !torneoId) return '';
+    return `${window.location.origin}/torneo/${encodeURIComponent(String(torneoId))}`;
+  }, [torneoId]);
+
+  const torneoShareMeta = useMemo(() => {
+    const title = String(torneo?.nombre || 'Torneo').trim() || 'Torneo';
+    const sedeNombre = sedeTorneo ? String(sedeTorneo.nombre || '').trim() : '';
+    const fi = String(torneo?.fecha_inicio || '').trim();
+    const ff = String(torneo?.fecha_fin || '').trim();
+    let fechas = '';
+    if (fi && ff) fechas = `${fi} al ${ff}`;
+    else if (fi) fechas = fi;
+    else if (ff) fechas = ff;
+    const lines = [title];
+    if (sedeNombre) lines.push(`Sede: ${sedeNombre}`);
+    if (fechas) lines.push(`Fechas: ${fechas}`);
+    const url = torneoShareUrl;
+    const text = url ? `${lines.join('\n')}\n\n${url}` : lines.join('\n');
+    return { title, text, url };
+  }, [torneo, sedeTorneo, torneoShareUrl]);
+
   if (loading) {
     return (
       <div
@@ -740,6 +763,25 @@ export default function TorneoVista() {
             marginBottom: '10px',
           }}
         />
+        {torneo && torneoShareUrl ? (
+          <div
+            style={{
+              width: '100%',
+              maxWidth: HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
+              margin: '0 auto 14px',
+              boxSizing: 'border-box',
+            }}
+          >
+            <ShareLinkButton
+              shareTitle={torneoShareMeta.title}
+              shareText={torneoShareMeta.text}
+              url={torneoShareMeta.url}
+              style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+            >
+              Compartir torneo
+            </ShareLinkButton>
+          </div>
+        ) : null}
         <TorneoTabbedView
           torneo={torneo}
           equipos={equipos}

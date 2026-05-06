@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import ShareLinkButton from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -1349,6 +1350,20 @@ export default function EquipoVista() {
     []
   );
 
+  const equipoShareUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !equipoIdParam) return '';
+    return `${window.location.origin}/equipo/${encodeURIComponent(String(equipoIdParam))}`;
+  }, [equipoIdParam]);
+
+  const equipoShareMeta = useMemo(() => {
+    const url = equipoShareUrl;
+    const nombreEq = String(equipo?.nombre || '').trim() || 'Mi equipo';
+    const nombreTor = String(torneo?.nombre || '').trim();
+    const title = `${nombreEq} — Padbol Match`;
+    const text = [nombreTor ? `${nombreEq} — Torneo: ${nombreTor}` : nombreEq, url].filter(Boolean).join('\n\n');
+    return { title, text, url };
+  }, [equipo, torneo, equipoShareUrl]);
+
   const confirmarInscripcionDesdeVista = async () => {
     if (!equipo || !torneo) return;
     if (!esMiEquipo) return;
@@ -1550,22 +1565,36 @@ export default function EquipoVista() {
           {!torneoCancelado ? (
             <div style={{ marginBottom: '14px' }}>
               {inscripcionEstadoEquipo === 'confirmado' ? (
-                <span
-                  style={{
-                    display: 'inline-block',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    padding: '5px 12px',
-                    borderRadius: '999px',
-                    background: '#dcfce7',
-                    color: '#166534',
-                    border: '1px solid #86efac',
-                  }}
-                >
-                  Inscripción confirmada
-                </span>
+                <>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      padding: '5px 12px',
+                      borderRadius: '999px',
+                      background: '#dcfce7',
+                      color: '#166534',
+                      border: '1px solid #86efac',
+                    }}
+                  >
+                    Inscripción confirmada
+                  </span>
+                  {equipoShareUrl ? (
+                    <div style={{ marginTop: '12px', maxWidth: '340px' }}>
+                      <ShareLinkButton
+                        shareTitle={equipoShareMeta.title}
+                        shareText={equipoShareMeta.text}
+                        url={equipoShareMeta.url}
+                        style={{ width: '100%' }}
+                      >
+                        Compartir mi equipo
+                      </ShareLinkButton>
+                    </div>
+                  ) : null}
+                </>
               ) : (
                 <>
                   {badgePendientePagoEquipoVista ? (
