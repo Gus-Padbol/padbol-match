@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 import useUserRole from '../hooks/useUserRole';
+import { mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 
 export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol: rolProp = null }) {
   const [sedes, setSedes] = useState([]);
@@ -27,6 +28,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     costo_inscripcion: '',
     cupos_maximos: '',
     horas_revelar_equipos: '48',
+    estado: 'proximo',
     es_multisede: false,
     equipos_por_grupo: '',
     clasificados_por_grupo: '',
@@ -121,6 +123,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       nivel_torneo: formData.nivel_torneo,
       categoria: String(formData.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
       tipo_torneo: formData.tipo_torneo,
+      estado: mapEstadoTorneoFormParaApi(formData.estado || 'proximo'),
       fecha_inicio: formData.fecha_inicio,
       fecha_fin: formData.fecha_fin,
       cantidad_equipos: formData.cantidad_equipos ? parseInt(formData.cantidad_equipos, 10) : null,
@@ -329,6 +332,21 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   <option value="knockout">Knockout (eliminación directa)</option>
                   <option value="grupos_knockout">Grupos + Knockout</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label>Estado inicial del torneo</label>
+                <select name="estado" value={formData.estado} onChange={handleChange}>
+                  <option value="proximo">Próximo</option>
+                  <option value="abierto">Inscripción abierta</option>
+                  <option value="en_curso">En curso</option>
+                  <option value="finalizado">Finalizado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
+                  «Próximo» equivale a planificación; el servidor guarda el valor canónico. Podés abrir inscripción al crear
+                  o editarlo después en el panel.
+                </small>
               </div>
 
               {esGruposKnockout && (

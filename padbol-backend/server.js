@@ -792,6 +792,17 @@ function generarGruposKnockout(equipos, torneoId, sedeId) {
   return partidos;
 }
 
+/** Valores válidos en columna `torneos.estado` (alineado con el admin / TorneoCrear). */
+function normalizeTorneoEstadoForDb(raw) {
+  const e = String(raw ?? '').trim().toLowerCase();
+  if (e === 'proximo' || e === 'planificacion') return 'planificacion';
+  if (e === 'abierto' || e === 'inscripcion_abierta') return 'abierto';
+  if (e === 'en_curso' || e === 'activo') return 'en_curso';
+  if (e === 'finalizado') return 'finalizado';
+  if (e === 'cancelado') return 'cancelado';
+  return null;
+}
+
 // ===== TORNEOS =====
 app.post('/api/torneos', async (req, res) => {
   try {
@@ -812,7 +823,10 @@ app.post('/api/torneos', async (req, res) => {
       equipos_por_grupo,
       clasificados_por_grupo,
       mejores_terceros_clasificados,
+      estado: estadoBody,
     } = req.body;
+
+    const estadoNorm = normalizeTorneoEstadoForDb(estadoBody);
 
     const row = {
       nombre,
@@ -820,7 +834,7 @@ app.post('/api/torneos', async (req, res) => {
       nivel_torneo,
       tipo_torneo,
       categoria: categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre',
-      estado: 'planificacion',
+      estado: estadoNorm || 'planificacion',
       fecha_inicio,
       fecha_fin,
       cantidad_equipos,
@@ -860,6 +874,10 @@ app.post('/api/torneos', async (req, res) => {
       .select();
 
     if (error) throw error;
+    const inserted = Array.isArray(data) ? data[0] : data;
+    if (inserted?.id && String(inserted.estado || '').toLowerCase() === 'abierto') {
+      void notifyListaEsperaInscripcionAbierta(inserted.id, inserted.nombre || row.nombre);
+    }
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1079,7 +1097,10 @@ async function handleTorneoPatchOrPut(req, res) {
       patch.categoria =
         categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre';
     }
-    if (estado !== undefined) patch.estado = estado;
+    if (estado !== undefined) {
+      const estNorm = normalizeTorneoEstadoForDb(estado);
+      if (estNorm) patch.estado = estNorm;
+    }
     if (fecha_inicio !== undefined) patch.fecha_inicio = fecha_inicio;
     if (fecha_fin !== undefined) patch.fecha_fin = fecha_fin;
     if (cupos_maximos !== undefined) {

@@ -20,6 +20,7 @@ import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { FILTROS_ESTADO_TORNEO_PILLS, torneoPasaFiltroEstadoVista } from '../utils/torneoEstadoFiltroPills';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
+import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 import SorteoGruposModal from '../components/torneo/SorteoGruposModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
@@ -244,18 +245,9 @@ function addToFinanzasAncla(anclaISO, periodo, delta) {
   return `${yy}-${mm}-${dd}`;
 }
 
-function mapEstadoTorneoDesdeApiParaForm(raw) {
-  const e = String(raw || '').toLowerCase().trim();
-  if (e === 'planificacion' || e === 'proximo') return 'proximo';
-  if (e === 'abierto' || e === 'inscripcion_abierta') return 'abierto';
-  if (e === 'en_curso' || e === 'activo') return 'en_curso';
-  if (e === 'finalizado') return 'finalizado';
-  if (e === 'cancelado') return 'cancelado';
-  return 'proximo';
-}
-
 function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
-  if (periodo === 'rango') return null;
+  if (periodo === 'rango' || periodo === 'hoy') return null;
+  if (!['semana', 'mes', 'anio'].includes(periodo)) return null;
   const label = labelNavegacionFinanzas(periodo, anclaISO);
   const btn = {
     border: '1px solid #cbd5e1',
@@ -264,8 +256,9 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
     width: '36px',
     height: '34px',
     cursor: 'pointer',
-    fontSize: '18px',
+    fontSize: '17px',
     lineHeight: 1,
+    fontWeight: 800,
     color: '#334155',
     flexShrink: 0,
   };
@@ -281,7 +274,7 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
       }}
     >
       <button type="button" aria-label="Período anterior" onClick={() => onShift(-1)} style={btn}>
-        ‹
+        {'<'}
       </button>
       <span
         style={{
@@ -295,7 +288,7 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
         {label}
       </span>
       <button type="button" aria-label="Período siguiente" onClick={() => onShift(1)} style={btn}>
-        ›
+        {'>'}
       </button>
     </div>
   );
@@ -690,6 +683,26 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     sedesMap,
   ]);
 
+  const resumenHoyYAlertas = useMemo(() => {
+    const now = new Date();
+    const hoyISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const reservasHoy = reservas.filter((r) => String(r?.fecha || '').trim().slice(0, 10) === hoyISO).length;
+    const torneoById = {};
+    torneos.forEach((t) => {
+      torneoById[t.id] = t;
+    });
+    const equiposPendientePago = equiposInscripcionRows.filter((eq) => {
+      if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') return false;
+      const t = torneoById[eq.torneo_id];
+      if (!t) return false;
+      return precioInscripcionTorneo(t) > 0;
+    });
+    return {
+      reservasHoy,
+      equiposPendientePagoCount: equiposPendientePago.length,
+    };
+  }, [reservas, equiposInscripcionRows, torneos]);
+
   const fetchPendientes = async () => {
     setPendientesLoading(true);
     const { data, error } = await supabase
@@ -958,7 +971,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         ...editTorneoForm,
         sede_id: editTorneoForm.sede_id ? parseInt(editTorneoForm.sede_id) : null,
         categoria: String(editTorneoForm.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
-        estado: String(editTorneoForm.estado || 'proximo').trim() || 'proximo',
+        estado: mapEstadoTorneoFormParaApi(editTorneoForm.estado || 'proximo'),
       };
       const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, {
         method: 'PUT',
@@ -2059,6 +2072,39 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               onShift={shiftFinanzasPeriodo}
             />
           )}
+          <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div
+              style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                background: 'rgba(255,255,255,0.14)',
+                border: '1px solid rgba(255,255,255,0.22)',
+                color: 'rgba(255,255,255,0.95)',
+                fontSize: '13px',
+                fontWeight: 700,
+              }}
+            >
+              Reservas de canchas <strong>hoy</strong>: {resumenHoyYAlertas.reservasHoy}
+            </div>
+            {resumenHoyYAlertas.equiposPendientePagoCount > 0 ? (
+              <div
+                role="alert"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: '#fef3c7',
+                  border: '1px solid #fbbf24',
+                  color: '#92400e',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                }}
+              >
+                Atención: hay {resumenHoyYAlertas.equiposPendientePagoCount} equipo
+                {resumenHoyYAlertas.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción{' '}
+                <strong>pendiente de pago</strong> (torneos con costo de inscripción).
+              </div>
+            ) : null}
+          </div>
         </div>
         <div className="dashboard-grid">
         <div className="card ingresos" style={cifrasFinanzasResumen.tipo === 'sede' ? { gridColumn: '1 / -1' } : undefined}>
