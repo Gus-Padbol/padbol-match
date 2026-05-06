@@ -1295,6 +1295,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           precio_turno:     sedeData.precio_turno     ?? '',
           moneda:           sedeData.moneda           || 'ARS',
           descripcion:      sedeData.descripcion      || '',
+          historia:        sedeData.historia != null ? String(sedeData.historia) : '',
           mp_access_token:  sedeData.mp_access_token  || '',
           latitud:          sedeData.latitud  != null ? String(sedeData.latitud)  : '',
           longitud:         sedeData.longitud != null ? String(sedeData.longitud) : '',
@@ -1377,6 +1378,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       precio_turno:     miSedeForm.precio_turno  !== '' ? parseFloat(miSedeForm.precio_turno)  : null,
       moneda:           miSedeForm.moneda           || 'ARS',
       descripcion:      miSedeForm.descripcion      || null,
+      historia:
+        miSedeForm.historia != null && String(miSedeForm.historia).trim() !== ''
+          ? String(miSedeForm.historia).trim().slice(0, 500)
+          : null,
       mp_access_token:  miSedeForm.mp_access_token  || null,
       latitud:          miSedeForm.latitud  !== '' ? parseFloat(miSedeForm.latitud)  : null,
       longitud:         miSedeForm.longitud !== '' ? parseFloat(miSedeForm.longitud) : null,
@@ -1439,6 +1444,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               email_contacto: miSedeForm.email_contacto || null,
               latitud: miSedeForm.latitud !== '' ? parseFloat(miSedeForm.latitud) : null,
               longitud: miSedeForm.longitud !== '' ? parseFloat(miSedeForm.longitud) : null,
+              historia:
+                miSedeForm.historia != null && String(miSedeForm.historia).trim() !== ''
+                  ? String(miSedeForm.historia).trim().slice(0, 500)
+                  : null,
               color_hero_primario: normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95',
               color_hero_secundario: normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED',
               color_borde_hero: normalizeHexSedeAdmin(miSedeForm.color_borde_hero) || '#6D28D9',
@@ -3718,6 +3727,47 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div style={{ textAlign: 'right', fontSize: '12px', color: (miSedeForm.descripcion || '').length >= 280 ? '#dc2626' : '#9ca3af', marginTop: '3px' }}>
                     {(miSedeForm.descripcion || '').length}/300
                   </div>
+                </div>
+              </div>
+              <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555', paddingTop: '8px' }}>
+                  Historia del club
+                </label>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                  <textarea
+                    rows={8}
+                    maxLength={500}
+                    value={miSedeForm.historia || ''}
+                    placeholder="Contá la historia del club, servicios, valores… Se muestra en la sección «Sobre el club» del perfil público."
+                    onChange={(e) =>
+                      setMiSedeForm((p) => ({ ...p, historia: e.target.value.slice(0, 500) }))
+                    }
+                    style={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      padding: '7px 10px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      color: '#333',
+                      resize: 'vertical',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <div
+                    style={{
+                      textAlign: 'right',
+                      fontSize: '12px',
+                      color: (miSedeForm.historia || '').length >= 480 ? '#dc2626' : '#9ca3af',
+                      marginTop: '3px',
+                    }}
+                  >
+                    {(miSedeForm.historia || '').length}/500
+                  </div>
+                  <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#9ca3af', lineHeight: 1.45 }}>
+                    Visible debajo de las fotos en <strong>/sede/…</strong>. La descripción corta de arriba sigue siendo la frase del hero.
+                  </p>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>

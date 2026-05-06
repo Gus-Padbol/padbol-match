@@ -16,6 +16,7 @@ import {
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
+import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
@@ -37,6 +38,18 @@ const SEDE_BTN_RESERVAR_CANCHA_STYLE = {
   boxShadow: '0 4px 14px rgba(22, 163, 74, 0.45)',
   boxSizing: 'border-box',
 };
+
+function formatFechaIsoPublicaSede(iso) {
+  const s = String(iso || '').trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '—';
+  const [y, m, d] = s.split('-').map((n) => parseInt(n, 10));
+  if (![y, m, d].every((n) => Number.isFinite(n))) return '—';
+  return new Date(y, m - 1, d).toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 
 function normalizeHexColor(raw) {
   if (raw == null) return null;
@@ -758,6 +771,57 @@ export default function SedePublica() {
   const [error, setError] = useState('');
   const [fotosGalleryOpen, setFotosGalleryOpen] = useState(false);
   const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
+  const [proximosTorneos, setProximosTorneos] = useState([]);
+  const [proximosTorneosLoading, setProximosTorneosLoading] = useState(false);
+
+  useEffect(() => {
+    if (!sedeId) {
+      setProximosTorneos([]);
+      return;
+    }
+    const id = parseInt(String(sedeId), 10);
+    if (!Number.isFinite(id)) {
+      setProximosTorneos([]);
+      return;
+    }
+    let cancelled = false;
+    setProximosTorneosLoading(true);
+    supabase
+      .from('torneos')
+      .select('id, nombre, fecha_inicio, fecha_fin, estado')
+      .eq('sede_id', id)
+      .order('fecha_inicio', { ascending: true })
+      .limit(48)
+      .then(({ data, error: qErr }) => {
+        if (cancelled) return;
+        if (qErr || !Array.isArray(data)) {
+          setProximosTorneos([]);
+          setProximosTorneosLoading(false);
+          return;
+        }
+        const h = new Date();
+        const hoyISO = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
+        const visibles = data.filter((t) => {
+          const e = String(t?.estado || '').toLowerCase();
+          if (e === 'cancelado') return false;
+          const ff = String(t?.fecha_fin || t?.fecha_inicio || '').trim().slice(0, 10);
+          if (e === 'finalizado' && ff && ff < hoyISO) return false;
+          return true;
+        });
+        setProximosTorneos(visibles.slice(0, 3));
+        setProximosTorneosLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProximosTorneos([]);
+          setProximosTorneosLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sedeId]);
+
   useEffect(() => {
     if (!sedeId) {
       setError('No se recibió un ID de sede.');
@@ -1167,6 +1231,141 @@ export default function SedePublica() {
                   Ver todas las fotos ({fotos.length})
                 </button>
               ) : null}
+
+              <div
+                style={{
+                  marginTop: '6px',
+                  marginBottom: '18px',
+                  padding: '16px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <h2
+                  style={{
+                    margin: '0 0 10px',
+                    fontSize: '17px',
+                    fontWeight: 800,
+                    color: '#f8fafc',
+                  }}
+                >
+                  Sobre el club
+                </h2>
+                <div
+                  style={{
+                    margin: 0,
+                    fontSize: '14px',
+                    lineHeight: 1.55,
+                    color: 'rgba(248,250,252,0.92)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {String(sede.historia || '').trim() ? (
+                    String(sede.historia).trim()
+                  ) : (
+                    <span style={{ fontStyle: 'italic', color: 'rgba(248,250,252,0.55)' }}>
+                      El club aún no cargó una historia en el panel Mi Sede.
+                    </span>
+                  )}
+                </div>
+
+                <h3
+                  style={{
+                    margin: '18px 0 10px',
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    color: '#e2e8f0',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  Próximos torneos
+                </h3>
+                {proximosTorneosLoading ? (
+                  <p style={{ margin: 0, color: 'rgba(248,250,252,0.65)', fontSize: '13px' }}>Cargando torneos…</p>
+                ) : proximosTorneos.length === 0 ? (
+                  <p
+                    style={{
+                      margin: 0,
+                      color: 'rgba(248,250,252,0.55)',
+                      fontSize: '13px',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    No hay torneos próximos para mostrar.
+                  </p>
+                ) : (
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      margin: 0,
+                      padding: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                    }}
+                  >
+                    {proximosTorneos.map((t) => {
+                      const badge = badgeTorneoEstadoPublico(t.estado);
+                      const fi = formatFechaIsoPublicaSede(t.fecha_inicio);
+                      const estadoLabel =
+                        badge?.label ||
+                        (String(t.estado || '').trim() ? String(t.estado).trim() : '—');
+                      return (
+                        <li key={t.id}>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/torneo/${encodeURIComponent(String(t.id))}`)}
+                            style={{
+                              width: '100%',
+                              textAlign: 'left',
+                              padding: '12px 12px',
+                              borderRadius: '12px',
+                              border: '1px solid rgba(255,255,255,0.22)',
+                              background: 'rgba(15,23,42,0.25)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px',
+                              boxSizing: 'border-box',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: 800,
+                                fontSize: '14px',
+                                color: '#f8fafc',
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {String(t.nombre || 'Torneo').trim()}
+                            </span>
+                            <span style={{ fontSize: '13px', color: 'rgba(226,232,240,0.95)' }}>
+                              📅 {fi}
+                            </span>
+                            <span
+                              style={{
+                                alignSelf: 'flex-start',
+                                marginTop: '2px',
+                                padding: '3px 10px',
+                                borderRadius: '999px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                background: badge?.bg || 'rgba(148,163,184,0.35)',
+                                color: badge?.color || '#f1f5f9',
+                              }}
+                            >
+                              {estadoLabel}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
 
