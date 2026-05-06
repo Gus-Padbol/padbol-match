@@ -797,8 +797,9 @@ export default function SedePublica() {
   const handleShareSede = useCallback(async () => {
     if (typeof window === 'undefined' || !sedeId) return;
     const url = `${window.location.origin}/sede/${encodeURIComponent(String(sedeId))}`;
-    const title = String(sede?.nombre || 'Sede').trim() || 'Sede';
-    const text = `${title}\n\n${url}`;
+    const nombreSede = String(sede?.nombre || 'Sede').trim() || 'Sede';
+    const title = nombreSede;
+    const text = `¡Reservá tu cancha en ${nombreSede}! 🏆⚽`;
     if (canUseNavigatorShare()) {
       try {
         await navigator.share({ title, text, url });
