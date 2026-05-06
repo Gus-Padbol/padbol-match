@@ -17,6 +17,10 @@ import {
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
+import {
+  esInscripcionAbiertaTorneo,
+  esProximoTorneo,
+} from '../utils/torneoEstadoFiltroPills';
 
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
@@ -435,19 +439,21 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
   );
 }
 
-function iconWrap(emoji) {
+/** Icono en fila de contacto: integrado al fondo púrpura, sin caja blanca. */
+function iconWrapSedeContacto(emoji) {
   return (
     <span
       style={{
         flexShrink: 0,
-        width: '22px',
-        height: '22px',
-        borderRadius: '6px',
-        background: '#f1f5f9',
+        width: '24px',
+        height: '24px',
+        borderRadius: '8px',
+        background: 'rgba(255,255,255,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '11px',
+        fontSize: '12px',
         lineHeight: 1,
       }}
     >
@@ -631,7 +637,7 @@ function SedeSocialChips({ sede }) {
   );
 }
 
-/** Contacto en una card compacta (~4 líneas). */
+/** Contacto: iconos + texto, mismo lenguaje visual que el bloque «Sobre el club». */
 function CompactContactCard({ sede, horario, hasAddress }) {
   const waNumber = sede.telefono
     ? (() => {
@@ -640,19 +646,19 @@ function CompactContactCard({ sede, horario, hasAddress }) {
       })()
     : '';
 
+  const rowTextStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    minHeight: '24px',
+    fontSize: '13px',
+    color: 'rgba(248,250,252,0.92)',
+    lineHeight: 1.45,
+  };
+
   const line = (icon, content) => (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        minHeight: '22px',
-        fontSize: '12px',
-        color: '#334155',
-        lineHeight: 1.35,
-      }}
-    >
-      {iconWrap(icon)}
+    <div style={rowTextStyle}>
+      {iconWrapSedeContacto(icon)}
       <span style={{ flex: 1, minWidth: 0 }}>{content}</span>
     </div>
   );
@@ -666,25 +672,15 @@ function CompactContactCard({ sede, horario, hasAddress }) {
   if (horario) rows.push(line('⏰', `Abierto ${horario}`));
   if (waNumber) {
     rows.push(
-      <div
-        key="wa-contact"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          minHeight: '22px',
-          fontSize: '12px',
-          color: '#334155',
-          lineHeight: 1.35,
-        }}
-      >
+      <div key="wa-contact" style={rowTextStyle}>
         <span
           style={{
             flexShrink: 0,
-            width: '22px',
-            height: '22px',
-            borderRadius: '6px',
-            background: '#f1f5f9',
+            width: '24px',
+            height: '24px',
+            borderRadius: '8px',
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.2)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -699,7 +695,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
             href={`https://wa.me/${waNumber}`}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#15803d', fontWeight: 600, textDecoration: 'none' }}
+            style={{ color: '#bbf7d0', fontWeight: 700, textDecoration: 'none' }}
           >
             Escribinos por WhatsApp
           </a>
@@ -711,7 +707,10 @@ function CompactContactCard({ sede, horario, hasAddress }) {
     rows.push(
       line(
         '✉️',
-        <a href={`mailto:${sede.email_contacto}`} style={{ color: '#2563eb', textDecoration: 'none', wordBreak: 'break-all' }}>
+        <a
+          href={`mailto:${sede.email_contacto}`}
+          style={{ color: '#bae6fd', fontWeight: 600, textDecoration: 'none', wordBreak: 'break-all' }}
+        >
           {sede.email_contacto}
         </a>
       )
@@ -722,13 +721,10 @@ function CompactContactCard({ sede, horario, hasAddress }) {
     return (
       <div
         style={{
-          background: '#fff',
-          borderRadius: '12px',
-          padding: '12px 14px',
           marginBottom: '14px',
-          fontSize: '12px',
-          color: '#94a3b8',
-          boxShadow: '0 1px 4px rgba(15, 23, 42, 0.06)',
+          fontSize: '13px',
+          color: 'rgba(248,250,252,0.55)',
+          fontStyle: 'italic',
         }}
       >
         Sin información de contacto cargada.
@@ -739,17 +735,23 @@ function CompactContactCard({ sede, horario, hasAddress }) {
   return (
     <div
       style={{
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '10px 12px',
         marginBottom: '14px',
-        boxShadow: '0 1px 4px rgba(15, 23, 42, 0.08)',
-        border: '1px solid #e2e8f0',
         display: 'flex',
         flexDirection: 'column',
-        gap: '6px',
+        gap: '10px',
       }}
     >
+      <h3
+        style={{
+          margin: '4px 0 2px',
+          fontSize: '14px',
+          fontWeight: 800,
+          color: '#e2e8f0',
+          letterSpacing: '0.02em',
+        }}
+      >
+        Contacto y ubicación
+      </h3>
       {rows}
     </div>
   );
@@ -799,16 +801,11 @@ export default function SedePublica() {
           setProximosTorneosLoading(false);
           return;
         }
-        const h = new Date();
-        const hoyISO = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
-        const visibles = data.filter((t) => {
-          const e = String(t?.estado || '').toLowerCase();
-          if (e === 'cancelado') return false;
-          const ff = String(t?.fecha_fin || t?.fecha_inicio || '').trim().slice(0, 10);
-          if (e === 'finalizado' && ff && ff < hoyISO) return false;
-          return true;
-        });
-        setProximosTorneos(visibles.slice(0, 3));
+        const elegibles = data.filter(
+          (t) =>
+            esInscripcionAbiertaTorneo(t?.estado) || esProximoTorneo(t?.estado)
+        );
+        setProximosTorneos(elegibles.slice(0, 2));
         setProximosTorneosLoading(false);
       })
       .catch(() => {
@@ -1294,7 +1291,7 @@ export default function SedePublica() {
                       fontStyle: 'italic',
                     }}
                   >
-                    No hay torneos próximos para mostrar.
+                    No hay torneos con inscripción abierta o en estado próximo en esta sede.
                   </p>
                 ) : (
                   <ul
@@ -1365,6 +1362,29 @@ export default function SedePublica() {
                     })}
                   </ul>
                 )}
+                {!proximosTorneosLoading ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)
+                    }
+                    style={{
+                      marginTop: '14px',
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255,255,255,0.35)',
+                      background: 'rgba(255,255,255,0.12)',
+                      color: '#f8fafc',
+                      fontWeight: 800,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    Ver todos los torneos
+                  </button>
+                ) : null}
               </div>
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
