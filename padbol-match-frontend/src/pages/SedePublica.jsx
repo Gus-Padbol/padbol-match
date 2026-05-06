@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import ShareLinkButton from '../components/ShareLinkButton';
+import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -29,6 +29,16 @@ const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
 const FOTOS_DESTACADAS_MAX = 4;
 
 /** Misma apariencia que el CTA inferior «Reservar cancha» en esta vista. */
+/** CTAs principales: no al borde lateral, centrados. */
+const SEDE_CTA_NARROW_CENTERED = {
+  width: '85%',
+  maxWidth: '100%',
+  marginLeft: 'auto',
+  marginRight: 'auto',
+  display: 'block',
+  boxSizing: 'border-box',
+};
+
 const SEDE_BTN_RESERVAR_CANCHA_STYLE = {
   width: '100%',
   padding: '14px 16px',
@@ -775,6 +785,49 @@ export default function SedePublica() {
   const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
   const [proximosTorneos, setProximosTorneos] = useState([]);
   const [proximosTorneosLoading, setProximosTorneosLoading] = useState(false);
+  const [sedeShareCopied, setSedeShareCopied] = useState(false);
+
+  useEffect(() => {
+    if (!sedeShareCopied) return undefined;
+    const t = window.setTimeout(() => setSedeShareCopied(false), 2200);
+    return () => clearTimeout(t);
+  }, [sedeShareCopied]);
+
+  const handleShareSede = useCallback(async () => {
+    if (typeof window === 'undefined' || !sedeId) return;
+    const url = `${window.location.origin}/sede/${encodeURIComponent(String(sedeId))}`;
+    const title = String(sede?.nombre || 'Sede').trim() || 'Sede';
+    const text = `${title}\n\n${url}`;
+    if (canUseNavigatorShare()) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setSedeShareCopied(true);
+      return;
+    } catch {
+      /* legacy */
+    }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setSedeShareCopied(true);
+    } catch {
+      window.prompt('Copiá este link:', url);
+    }
+  }, [sedeId, sede]);
 
   useEffect(() => {
     if (!sedeId) {
@@ -919,13 +972,6 @@ export default function SedePublica() {
         const fraseHero = desc || SEDE_HERO_FRASE_DEFAULT;
         const nombreSedeCta = String(sede.nombre || 'esta sede').trim();
         const torneosCtaLabel = `Ver torneos de ${nombreSedeCta}`;
-        const sedeShareUrl =
-          typeof window !== 'undefined' && sedeId
-            ? `${window.location.origin}/sede/${encodeURIComponent(String(sedeId))}`
-            : '';
-        const sedeShareTitle = String(sede.nombre || 'Sede').trim() || 'Sede';
-        const sedeShareText = sedeShareUrl ? `${sedeShareTitle}\n\n${sedeShareUrl}` : sedeShareTitle;
-
         return (
           <>
           <div
@@ -987,6 +1033,70 @@ export default function SedePublica() {
                   zIndex: 0,
                 }}
               />
+
+              {typeof window !== 'undefined' && sedeId ? (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    zIndex: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: '4px',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => void handleShareSede()}
+                    aria-label="Compartir sede"
+                    title="Compartir sede"
+                    style={{
+                      pointerEvents: 'auto',
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255,255,255,0.38)',
+                      background: 'rgba(15,23,42,0.32)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      color: heroTextoTituloSede(sede) === '#ffffff' ? '#f8fafc' : '#0f172a',
+                      fontSize: '18px',
+                      lineHeight: 1,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 0,
+                      margin: 0,
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    ⤴
+                  </button>
+                  {sedeShareCopied ? (
+                    <span
+                      role="status"
+                      style={{
+                        pointerEvents: 'none',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        color: '#f8fafc',
+                        background: 'rgba(15,23,42,0.72)',
+                        padding: '4px 8px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.22)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Copiado
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div
                 style={{
@@ -1170,23 +1280,13 @@ export default function SedePublica() {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '10px',
-                alignItems: 'stretch',
+                alignItems: 'center',
               }}
             >
-              {sedeShareUrl ? (
-                <ShareLinkButton
-                  shareTitle={sedeShareTitle}
-                  shareText={sedeShareText}
-                  url={sedeShareUrl}
-                  style={{ width: '100%' }}
-                >
-                  Compartir sede
-                </ShareLinkButton>
-              ) : null}
               <button
                 type="button"
                 onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
-                style={SEDE_BTN_RESERVAR_CANCHA_STYLE}
+                style={{ ...SEDE_BTN_RESERVAR_CANCHA_STYLE, ...SEDE_CTA_NARROW_CENTERED }}
               >
                 ⚽ Reservar cancha
               </button>
@@ -1210,9 +1310,7 @@ export default function SedePublica() {
                     setFotosGalleryOpen(true);
                   }}
                   style={{
-                    display: 'block',
-                    width: '100%',
-                    maxWidth: '100%',
+                    ...SEDE_CTA_NARROW_CENTERED,
                     marginBottom: '16px',
                     padding: '12px 14px',
                     borderRadius: '12px',
@@ -1222,7 +1320,6 @@ export default function SedePublica() {
                     fontWeight: 800,
                     fontSize: '14px',
                     cursor: 'pointer',
-                    boxSizing: 'border-box',
                   }}
                 >
                   Ver todas las fotos ({fotos.length})
@@ -1425,6 +1522,7 @@ export default function SedePublica() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '8px',
+                  alignItems: 'center',
                 }}
               >
                 <button
@@ -1432,7 +1530,7 @@ export default function SedePublica() {
                   onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
                   title={torneosCtaLabel}
                   style={{
-                    width: '100%',
+                    ...SEDE_CTA_NARROW_CENTERED,
                     padding: '12px 16px',
                     background: '#fff',
                     color: '#15803d',
@@ -1441,9 +1539,7 @@ export default function SedePublica() {
                     cursor: 'pointer',
                     fontWeight: 800,
                     fontSize: '14px',
-                    boxSizing: 'border-box',
                     minWidth: 0,
-                    display: 'block',
                     overflow: 'hidden',
                   }}
                 >
@@ -1462,7 +1558,7 @@ export default function SedePublica() {
                 <button
                   type="button"
                   onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
-                  style={SEDE_BTN_RESERVAR_CANCHA_STYLE}
+                  style={{ ...SEDE_BTN_RESERVAR_CANCHA_STYLE, ...SEDE_CTA_NARROW_CENTERED }}
                 >
                   ⚽ Reservar cancha
                 </button>
