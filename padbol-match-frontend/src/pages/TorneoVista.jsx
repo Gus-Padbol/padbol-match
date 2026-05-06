@@ -39,7 +39,7 @@ export default function TorneoVista() {
   const { torneoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, userProfile } = useAuth();
+  const { session, userProfile, loading: authLoading } = useAuth();
   const [modalInscribirseOpen, setModalInscribirseOpen] = useState(false);
   const [listaEsperaEnrolled, setListaEsperaEnrolled] = useState(false);
   const [listaEsperaChecked, setListaEsperaChecked] = useState(false);
@@ -691,60 +691,18 @@ export default function TorneoVista() {
     );
   }
 
+  const cerrarModalInscribirse = useCallback(() => setModalInscribirseOpen(false), []);
+  const irACrearEquipoDesdeTorneoVista = useCallback(() => {
+    setModalInscribirseOpen(false);
+    clearAdminNavContext();
+    navigate(`/torneo/${torneoId}/equipos?crear=1`, {
+      replace: true,
+      state: { fromAdmin: false },
+    });
+  }, [navigate, torneoId]);
+
   return (
     <>
-      {modalInscribirseOpen ? (
-        <div
-          className="torneo-modal-participacion-overlay"
-          role="presentation"
-          onClick={() => setModalInscribirseOpen(false)}
-        >
-          <div
-            className="torneo-modal-participacion-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="torneo-participacion-titulo"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="torneo-participacion-titulo" className="torneo-modal-participacion-titulo">
-              ¿Cómo querés participar?
-            </h2>
-            <button
-              type="button"
-              className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--primaria"
-              onClick={() => {
-                setModalInscribirseOpen(false);
-                clearAdminNavContext();
-                navigate(`/torneo/${torneoId}/equipos?crear=1`, {
-                  replace: true,
-                  state: { fromAdmin: false },
-                });
-              }}
-            >
-              <span className="torneo-modal-participacion-opcion__titulo">Tengo equipo completo</span>
-              <span className="torneo-modal-participacion-opcion__sub">Ya tenemos todos los integrantes</span>
-            </button>
-            <button
-              type="button"
-              className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--secundaria"
-              onClick={() => {
-                setModalInscribirseOpen(false);
-                clearAdminNavContext();
-                navigate(`/torneo/${torneoId}/equipos`, {
-                  replace: true,
-                  state: { fromAdmin: false },
-                });
-              }}
-            >
-              <span className="torneo-modal-participacion-opcion__titulo">Busco compañero/s</span>
-              <span className="torneo-modal-participacion-opcion__sub">Me anoto solo y busco con quién jugar</span>
-            </button>
-            <button type="button" className="torneo-modal-participacion-cerrar" onClick={() => setModalInscribirseOpen(false)}>
-              Cancelar
-            </button>
-          </div>
-        </div>
-      ) : null}
     <div
       className="torneo-vista-container"
       style={{
@@ -804,6 +762,12 @@ export default function TorneoVista() {
           apiBaseUrl={API_BASE_URL}
           adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}
           onAfterSorteoGrupos={recargarDatosTorneo}
+          participacionModalOpen={modalInscribirseOpen}
+          onParticipacionModalClose={cerrarModalInscribirse}
+          onParticipacionIrACrearEquipo={irACrearEquipoDesdeTorneoVista}
+          onParticipacionDespuesUnirme={recargarDatosTorneo}
+          authLoading={authLoading}
+          userProfile={userProfile}
         />
       </div>
       <BottomNav />

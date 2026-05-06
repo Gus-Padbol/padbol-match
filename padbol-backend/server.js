@@ -1979,7 +1979,15 @@ app.get('/api/torneos/:torneo_id/equipos', async (req, res) => {
       }
     });
 
-    const result = (equipos || []).map(eq => ({ ...eq, grupo: grupoMap[eq.id] || null }));
+    const result = (equipos || []).map((eq) => {
+      const tipoEquipo =
+        eq.tipo_equipo != null && String(eq.tipo_equipo).trim() !== ''
+          ? eq.tipo_equipo
+          : eq.tipo != null && String(eq.tipo).trim() !== ''
+            ? eq.tipo
+            : null;
+      return { ...eq, grupo: grupoMap[eq.id] || null, tipo_equipo: tipoEquipo };
+    });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

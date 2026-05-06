@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { HUB_LOGO_CLEARANCE_TOP_PX } from '../../constants/hubLayout';
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
@@ -11,6 +12,13 @@ import {
   horasRevelarEquiposTorneo,
   torneoListaEquiposOcultaParaPublico,
 } from '../../utils/torneoRevelacionEquipos';
+import {
+  equipoAbiertoBuscandoCompanero,
+  findMiEquipoEnLista,
+  findMiSolicitudEquipo,
+  fotoCapitanEquipo,
+  solicitarUnirseAEquipoAbierto,
+} from '../../utils/equipoOpenJoin';
 import '../../styles/TorneoVista.css';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
@@ -316,7 +324,17 @@ export default function TorneoTabbedView({
   adminPuedeSorteoGrupos = false,
   /** Tras confirmar POST /sorteo: recargar torneo, equipos y partidos. */
   onAfterSorteoGrupos = null,
+  /** Modal “¿Cómo querés participar?” (TorneoVista / FormEquipos). */
+  participacionModalOpen = false,
+  onParticipacionModalClose = null,
+  /** Cerrar modal e ir a crear equipo (FormEquipos: vista crear; TorneoVista: ?crear=1). */
+  onParticipacionIrACrearEquipo = null,
+  /** Tras solicitud exitosa a un equipo abierto. */
+  onParticipacionDespuesUnirme = null,
+  authLoading = false,
+  userProfile = null,
 }) {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
   const resultadosConfettiPlayedRef = useRef(false);
   const [sorteoModalOpen, setSorteoModalOpen] = useState(false);
@@ -325,6 +343,11 @@ export default function TorneoTabbedView({
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
+  const [participacionPaso, setParticipacionPaso] = useState('menu');
+  const [equiposBusquedaRaw, setEquiposBusquedaRaw] = useState([]);
+  const [equiposBusquedaLoading, setEquiposBusquedaLoading] = useState(false);
+  const [equiposBusquedaError, setEquiposBusquedaError] = useState(null);
+  const [solicitudPendingId, setSolicitudPendingId] = useState(null);
 
   const estadoLower = String(torneo?.estado || '').toLowerCase();
   const esFinalizado = estadoLower === 'finalizado';
@@ -434,6 +457,129 @@ export default function TorneoTabbedView({
   const sedeTexto = sedeTorneo
     ? `📍 ${sedeTorneo.nombre}${sedeUbicacion ? ` · ${sedeUbicacion}` : ''}`
     : null;
+
+  useEffect(() => {
+    if (!participacionModalOpen) return;
+    setParticipacionPaso('menu');
+    setEquiposBusquedaRaw([]);
+    setEquiposBusquedaError(null);
+    setEquiposBusquedaLoading(false);
+  }, [participacionModalOpen]);
+
+  useEffect(() => {
+    if (!participacionModalOpen || participacionPaso !== 'buscar') return;
+    let cancelled = false;
+    setEquiposBusquedaLoading(true);
+    setEquiposBusquedaError(null);
+    (async () => {
+      try {
+        const url = `${String(apiBaseUrl || '').replace(/\/+$/, '')}/api/torneos/${encodeURIComponent(
+          String(torneoId)
+        )}/equipos`;
+        const res = await fetch(url);
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (!res.ok) {
+          const msg =
+            data && typeof data === 'object' && data.error != null ? String(data.error) : 'No se pudo cargar la lista';
+          setEquiposBusquedaError(msg);
+          setEquiposBusquedaRaw([]);
+          return;
+        }
+        setEquiposBusquedaRaw(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!cancelled) {
+          setEquiposBusquedaError(e?.message || 'Error de red');
+          setEquiposBusquedaRaw([]);
+        }
+      } finally {
+        if (!cancelled) setEquiposBusquedaLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [participacionModalOpen, participacionPaso, apiBaseUrl, torneoId]);
+
+  const equiposParaChequeoMi = useMemo(() => {
+    const m = new Map();
+    (equipos || []).forEach((eq) => {
+      if (eq?.id != null) m.set(eq.id, eq);
+    });
+    (equiposBusquedaRaw || []).forEach((eq) => {
+      if (eq?.id != null) m.set(eq.id, eq);
+    });
+    return [...m.values()];
+  }, [equipos, equiposBusquedaRaw]);
+
+  const miEquipoModal = useMemo(
+    () => (session?.user ? findMiEquipoEnLista(equiposParaChequeoMi, session, userProfile) : null),
+    [equiposParaChequeoMi, session, userProfile]
+  );
+
+  const miSolicitudModal = useMemo(
+    () => (session?.user ? findMiSolicitudEquipo(equiposParaChequeoMi, session, userProfile) : null),
+    [equiposParaChequeoMi, session, userProfile]
+  );
+
+  const equiposAbiertosListado = useMemo(
+    () => (equiposBusquedaRaw || []).filter((eq) => equipoAbiertoBuscandoCompanero(eq)),
+    [equiposBusquedaRaw]
+  );
+
+  const irACrearEquipoDefault = useCallback(() => {
+    if (typeof onParticipacionModalClose === 'function') onParticipacionModalClose();
+    const opts = navigateState != null ? { replace: true, state: navigateState } : { replace: true };
+    navigate(`/torneo/${torneoId}/equipos?crear=1`, opts);
+  }, [navigate, navigateState, onParticipacionModalClose, torneoId]);
+
+  const irACrearEquipoEfectivo = useCallback(() => {
+    if (typeof onParticipacionIrACrearEquipo === 'function') {
+      onParticipacionIrACrearEquipo();
+      return;
+    }
+    irACrearEquipoDefault();
+  }, [onParticipacionIrACrearEquipo, irACrearEquipoDefault]);
+
+  const handleSolicitarUnirme = useCallback(
+    async (equipoRow) => {
+      if (solicitudPendingId != null) return;
+      setSolicitudPendingId(equipoRow.id);
+      try {
+        const r = await solicitarUnirseAEquipoAbierto({
+          equipo: equipoRow,
+          session,
+          userProfile,
+          authLoading,
+          navigate,
+          location,
+          torneoIdForRedirect: torneoId,
+          equiposTorneo: equiposParaChequeoMi,
+        });
+        if (!r.ok) {
+          if (r.message) alert(r.message);
+          return;
+        }
+        setEquiposBusquedaRaw((prev) =>
+          prev.map((eq) => (eq.id === equipoRow.id ? { ...eq, solicitudes: r.nuevasSolicitudes } : eq))
+        );
+        if (typeof onParticipacionDespuesUnirme === 'function') onParticipacionDespuesUnirme();
+      } finally {
+        setSolicitudPendingId(null);
+      }
+    },
+    [
+      solicitudPendingId,
+      session,
+      userProfile,
+      authLoading,
+      navigate,
+      location,
+      torneoId,
+      equiposParaChequeoMi,
+      onParticipacionDespuesUnirme,
+    ]
+  );
 
   const abrirModalResultado = useCallback(
     (partido) => {
@@ -1203,6 +1349,226 @@ export default function TorneoTabbedView({
 
   return (
     <>
+      {participacionModalOpen ? (
+        <div
+          className="torneo-modal-participacion-overlay"
+          role="presentation"
+          onClick={() => {
+            if (typeof onParticipacionModalClose === 'function') onParticipacionModalClose();
+          }}
+        >
+          <div
+            className="torneo-modal-participacion-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={participacionPaso === 'menu' ? 'torneo-participacion-titulo' : undefined}
+            aria-label={participacionPaso === 'buscar' ? 'Equipos abiertos buscando compañero' : undefined}
+            onClick={(e) => e.stopPropagation()}
+            style={
+              participacionPaso === 'buscar'
+                ? { maxWidth: 'min(520px, 100vw)', maxHeight: 'min(88vh, 720px)', display: 'flex', flexDirection: 'column' }
+                : undefined
+            }
+          >
+            {participacionPaso === 'menu' ? (
+              <>
+                <h2 id="torneo-participacion-titulo" className="torneo-modal-participacion-titulo">
+                  ¿Cómo querés participar?
+                </h2>
+                <button
+                  type="button"
+                  className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--primaria"
+                  onClick={irACrearEquipoEfectivo}
+                >
+                  <span className="torneo-modal-participacion-opcion__titulo">Tengo equipo completo</span>
+                  <span className="torneo-modal-participacion-opcion__sub">Ya tenemos todos los integrantes</span>
+                </button>
+                <button
+                  type="button"
+                  className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--secundaria"
+                  onClick={() => setParticipacionPaso('buscar')}
+                >
+                  <span className="torneo-modal-participacion-opcion__titulo">Busco compañero/s</span>
+                  <span className="torneo-modal-participacion-opcion__sub">Me anoto solo y busco con quién jugar</span>
+                </button>
+                <button
+                  type="button"
+                  className="torneo-modal-participacion-cerrar"
+                  onClick={() => {
+                    if (typeof onParticipacionModalClose === 'function') onParticipacionModalClose();
+                  }}
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setParticipacionPaso('menu')}
+                    style={{
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                      borderRadius: '10px',
+                      padding: '8px 12px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      color: '#334155',
+                    }}
+                  >
+                    ← Atrás
+                  </button>
+                  <h2 className="torneo-modal-participacion-titulo" style={{ margin: 0, flex: 1, textAlign: 'center', fontSize: '1.1rem' }}>
+                    Equipos abiertos
+                  </h2>
+                </div>
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  {equiposBusquedaLoading ? (
+                    <p style={{ textAlign: 'center', color: '#64748b', fontWeight: 600, margin: '20px 0' }}>
+                      Cargando equipos…
+                    </p>
+                  ) : equiposBusquedaError ? (
+                    <p style={{ textAlign: 'center', color: '#b91c1c', fontWeight: 700, margin: '16px 0' }}>
+                      {equiposBusquedaError}
+                    </p>
+                  ) : equiposAbiertosListado.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '8px 4px 20px' }}>
+                      <p style={{ color: '#334155', fontWeight: 700, lineHeight: 1.5, margin: '0 0 16px' }}>
+                        No hay equipos buscando compañero. ¿Querés crear el tuyo?
+                      </p>
+                      <button
+                        type="button"
+                        onClick={irACrearEquipoEfectivo}
+                        style={{
+                          padding: '12px 20px',
+                          fontSize: '15px',
+                          fontWeight: 800,
+                          borderRadius: '12px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                          color: 'white',
+                          boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
+                        }}
+                      >
+                        Crear equipo
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '8px' }}>
+                      {equiposAbiertosListado.map((eq) => {
+                        const titulo = nombreEquipoMostrado(eq);
+                        const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
+                        const n = safeJugadores(eq).length;
+                        const fotoCap = fotoCapitanEquipo(eq);
+                        const initial = initialFromText(titulo);
+                        const busy = solicitudPendingId === eq.id;
+                        const yaSoliciteAqui = miSolicitudModal?.id === eq.id;
+                        const bloquearSolicitud = Boolean(miEquipoModal || (miSolicitudModal && miSolicitudModal.id !== eq.id));
+                        return (
+                          <div
+                            key={eq.id}
+                            style={{
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '14px',
+                              padding: '12px 14px',
+                              background: '#f8fafc',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '10px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              {fotoCap ? (
+                                <img
+                                  src={fotoCap}
+                                  alt=""
+                                  style={{
+                                    width: '44px',
+                                    height: '44px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    flexShrink: 0,
+                                    border: '1px solid #e2e8f0',
+                                  }}
+                                />
+                              ) : (
+                                <span
+                                  style={{
+                                    width: '44px',
+                                    height: '44px',
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                                    color: 'white',
+                                    fontSize: '16px',
+                                    fontWeight: 800,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {initial}
+                                </span>
+                              )}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 900, color: '#0f172a', fontSize: '15px', lineHeight: 1.3 }}>
+                                  {titulo}
+                                </div>
+                                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>
+                                  {n} / {cupo} jugadores
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={busy || bloquearSolicitud || yaSoliciteAqui}
+                              onClick={() => void handleSolicitarUnirme(eq)}
+                              style={{
+                                padding: '10px 14px',
+                                fontSize: '14px',
+                                fontWeight: 800,
+                                borderRadius: '10px',
+                                border: 'none',
+                                cursor:
+                                  busy || bloquearSolicitud || yaSoliciteAqui ? 'not-allowed' : 'pointer',
+                                background:
+                                  busy || bloquearSolicitud || yaSoliciteAqui ? '#cbd5e1' : '#2563eb',
+                                color: 'white',
+                                opacity: busy ? 0.85 : 1,
+                              }}
+                            >
+                              {yaSoliciteAqui
+                                ? 'Solicitud enviada'
+                                : bloquearSolicitud
+                                  ? miEquipoModal
+                                    ? 'Ya estás en un equipo'
+                                    : 'Ya tenés una solicitud'
+                                  : busy
+                                    ? 'Enviando…'
+                                    : 'Solicitar unirme'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="torneo-modal-participacion-cerrar"
+                  onClick={() => {
+                    if (typeof onParticipacionModalClose === 'function') onParticipacionModalClose();
+                  }}
+                >
+                  Cerrar
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
       {showTorneoLogo ? (
         <img
           src="/logo-padbol-match.png"

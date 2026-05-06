@@ -1932,16 +1932,10 @@ export default function FormEquipos() {
 
   const cerrarModalParticipacion = useCallback(() => setModalParticipacionAbierto(false), []);
 
-  const modalElegirFormarEquipo = useCallback(() => {
+  const participacionIrACrearDesdeForm = useCallback(() => {
     setModalParticipacionAbierto(false);
     irACrearEquipo();
   }, [irACrearEquipo]);
-
-  const modalElegirYaTengoEquipo = useCallback(() => {
-    setModalParticipacionAbierto(false);
-    if (isMobile) setMobileVista('lista');
-    else setDesktopFlujo('lista');
-  }, [isMobile]);
 
   const btnInscribirseTorneoTabStyle = useMemo(
     () => ({
@@ -2558,36 +2552,6 @@ export default function FormEquipos() {
 
   return (
     <>
-      {modalParticipacionAbierto ? (
-        <div
-          className="torneo-modal-participacion-overlay"
-          role="presentation"
-          onClick={cerrarModalParticipacion}
-        >
-          <div
-            className="torneo-modal-participacion-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="formequipos-participacion-titulo"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="formequipos-participacion-titulo" className="torneo-modal-participacion-titulo">
-              ¿Cómo querés participar?
-            </h2>
-            <button type="button" className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--primaria" onClick={modalElegirFormarEquipo}>
-              <span className="torneo-modal-participacion-opcion__titulo">Tengo equipo completo</span>
-              <span className="torneo-modal-participacion-opcion__sub">Ya tenemos todos los integrantes</span>
-            </button>
-            <button type="button" className="torneo-modal-participacion-opcion torneo-modal-participacion-opcion--secundaria" onClick={modalElegirYaTengoEquipo}>
-              <span className="torneo-modal-participacion-opcion__titulo">Busco compañero/s</span>
-              <span className="torneo-modal-participacion-opcion__sub">Me anoto solo y busco con quién jugar</span>
-            </button>
-            <button type="button" className="torneo-modal-participacion-cerrar" onClick={cerrarModalParticipacion}>
-              Cancelar
-            </button>
-          </div>
-        </div>
-      ) : null}
     <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
 
@@ -2651,6 +2615,12 @@ export default function FormEquipos() {
             apiBaseUrl={BACKEND_API_BASE}
             adminPuedeSorteoGrupos={mostrarUiAdminFormEquipos}
             onAfterSorteoGrupos={cargarTodo}
+            participacionModalOpen={modalParticipacionAbierto}
+            onParticipacionModalClose={cerrarModalParticipacion}
+            onParticipacionIrACrearEquipo={participacionIrACrearDesdeForm}
+            onParticipacionDespuesUnirme={cargarTodo}
+            authLoading={authLoading}
+            userProfile={userProfile}
             clasificacionFinalFilas={
               torneoFinalizado && filasClasificacionFinalizado.length > 0 ? filasClasificacionFinalizado : null
             }
