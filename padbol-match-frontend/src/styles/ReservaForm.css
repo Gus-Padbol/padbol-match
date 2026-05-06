@@ -768,6 +768,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   line-height: 1.25;
 }
 
+.reserva-sede-seleccion .reserva-sede-card-nearby {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #059669;
+  letter-spacing: 0.02em;
+}
+
 .reserva-sede-seleccion .reserva-sede-card-loc {
   margin: 0;
   font-size: 13px;

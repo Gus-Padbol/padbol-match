@@ -19,6 +19,7 @@ import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRe
 import { getDisplayName } from '../utils/displayName';
 import {
   ciudadPaisConBandera,
+  getDistanceKm,
   horarioDisponibleTexto,
   precioDesdeCard,
   primeraFotoSede,
@@ -187,6 +188,50 @@ export default function ReservaForm() {
     }
     return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
   }, [sedes, filtros.sede_id]);
+
+  /** Geolocalización solo en pantalla de elección de sede (p. ej. etiqueta “más cercana”). */
+  const [geoReserva, setGeoReserva] = useState({ status: 'idle', pos: null });
+
+  useEffect(() => {
+    if (pantalla !== 1) {
+      setGeoReserva({ status: 'idle', pos: null });
+      return;
+    }
+    setGeoReserva({ status: 'pending', pos: null });
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoReserva({ status: 'denied', pos: null });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        setGeoReserva({
+          status: 'granted',
+          pos: { lat: pos.coords.latitude, lon: pos.coords.longitude },
+        }),
+      () => setGeoReserva({ status: 'denied', pos: null }),
+      { timeout: 8000, maximumAge: 600000 }
+    );
+  }, [pantalla]);
+
+  const sedesFiltradasPorPais = useMemo(() => {
+    if (!filtros.pais) return [];
+    return sedes.filter((sede) => String(sede.pais || '').trim() === String(filtros.pais).trim());
+  }, [sedes, filtros.pais]);
+
+  const sedeReservaMasCercanaId = useMemo(() => {
+    if (geoReserva.status !== 'granted' || !geoReserva.pos || sedesFiltradasPorPais.length === 0) return null;
+    const { lat, lon } = geoReserva.pos;
+    let bestId = null;
+    let bestKm = Infinity;
+    for (const s of sedesFiltradasPorPais) {
+      const d = getDistanceKm(lat, lon, s.latitud, s.longitud);
+      if (Number.isFinite(d) && d < bestKm) {
+        bestKm = d;
+        bestId = s.id;
+      }
+    }
+    return bestId;
+  }, [geoReserva, sedesFiltradasPorPais]);
 
   const handleReservaBack = useCallback(() => {
     if (pantalla === 1) {
@@ -762,10 +807,6 @@ export default function ReservaForm() {
 
   // PANTALLA 1: País + cards de sedes (rediseño)
   if (pantalla === 1) {
-    const sedesFiltradas = filtros.pais
-      ? sedes.filter((sede) => String(sede.pais || '').trim() === String(filtros.pais).trim())
-      : [];
-
     return (
       <div
         className="reserva-container reserva-sede-seleccion"
@@ -839,15 +880,19 @@ export default function ReservaForm() {
 
           {filtros.pais ? (
             <div key={reservaCardsWave} className="reserva-sede-cards-root">
-              {sedesFiltradas.length === 0 ? (
+              {sedesFiltradasPorPais.length === 0 ? (
                 <p className="reserva-sede-empty-pais">Próximamente en tu país 🌎</p>
               ) : (
                 <ul className="reserva-sede-cards-list">
-                  {sedesFiltradas.map((sede, idx) => {
+                  {sedesFiltradasPorPais.map((sede, idx) => {
                     const foto = primeraFotoSede(sede);
                     const { flag, linea } = ciudadPaisConBandera(sede);
                     const precio = precioDesdeCard(sede);
                     const moneda = String(sede.moneda || 'ARS').trim() || 'ARS';
+                    const esMasCercana =
+                      geoReserva.status === 'granted' &&
+                      sedeReservaMasCercanaId != null &&
+                      Number(sede.id) === Number(sedeReservaMasCercanaId);
                     return (
                       <li
                         key={sede.id}
@@ -865,6 +910,9 @@ export default function ReservaForm() {
                         </div>
                         <div className="reserva-sede-card-body">
                           <h2 className="reserva-sede-card-name">{String(sede.nombre || 'Sede').trim()}</h2>
+                          {esMasCercana ? (
+                            <p className="reserva-sede-card-nearby">Sede más cercana a vos</p>
+                          ) : null}
                           <p className="reserva-sede-card-loc">
                             {flag ? <span className="reserva-sede-card-flag">{flag}</span> : null}
                             <span>{linea}</span>

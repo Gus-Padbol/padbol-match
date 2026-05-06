@@ -1,5 +1,21 @@
 import { precioMinimoFranjas } from './franjasHorarias';
 
+/** Haversine: distancia en km entre dos puntos WGS84. */
+export function getDistanceKm(lat1, lon1, lat2, lon2) {
+  const a1 = Number(lat1);
+  const o1 = Number(lon1);
+  const a2 = Number(lat2);
+  const o2 = Number(lon2);
+  if (![a1, o1, a2, o2].every((x) => Number.isFinite(x))) return Infinity;
+  const R = 6371;
+  const dLat = (a2 - a1) * (Math.PI / 180);
+  const dLon = (o2 - o1) * (Math.PI / 180);
+  const x =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(a1 * (Math.PI / 180)) * Math.cos(a2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
 /** Primera URL de `fotos_urls` o imagen legacy (cards sede en /reservar y hub). */
 export function primeraFotoSede(sede) {
   const arr = sede?.fotos_urls;

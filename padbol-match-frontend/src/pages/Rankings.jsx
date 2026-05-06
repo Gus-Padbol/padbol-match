@@ -4,6 +4,7 @@ import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import SedeBusquedaInput from '../components/SedeBusquedaInput';
+import OpcionListaBusquedaInput from '../components/OpcionListaBusquedaInput';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
@@ -334,6 +335,7 @@ export default function Rankings() {
                 setSelectedSede('');
                 setBusquedaNacionalJugador('');
                 setSelectedPaisFipa('');
+                setSelectedCategoria('');
               }}
               style={{
                 flex: 1,
@@ -431,14 +433,16 @@ export default function Rankings() {
               />
             </div>
           )}
-          <select
+          <OpcionListaBusquedaInput
+            options={CATEGORIAS}
             value={selectedCategoria}
-            onChange={e => setSelectedCategoria(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', fontSize: '13px', background: 'white', color: '#333', minWidth: '160px', cursor: 'pointer' }}
-          >
-            <option value="">Todas las categorías</option>
-            {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+            onChange={setSelectedCategoria}
+            placeholder="Categoría — buscá o elegí…"
+            allLabel="Todas las categorías"
+            debounceMs={280}
+            minChars={0}
+            aria-label="Filtrar ranking por categoría"
+          />
           {(selectedCategoria ||
             (activeTab === 'local' && selectedSede) ||
             (activeTab === 'nacional' && busquedaNacionalJugador.trim()) ||
@@ -464,10 +468,14 @@ export default function Rankings() {
             (debouncedBusquedaNacional.length >= 2
               ? `Filtrando por nombre · ${rankingsFiltrados.length} resultado${rankingsFiltrados.length !== 1 ? 's' : ''}`
               : 'Puntos acumulados en torneos nacionales e internacionales')}
-          {activeTab === 'internacional' &&
-            (selectedPaisFipa
-              ? `País: ${selectedPaisFipa} · ${rankingsFiltrados.length} jugador${rankingsFiltrados.length !== 1 ? 'es' : ''}`
-              : 'Ranking FIPA · Todos los torneos finalizados a nivel mundial')}
+          {activeTab === 'internacional' && (
+            <>
+              {selectedPaisFipa
+                ? `País: ${selectedPaisFipa} · ${rankingsFiltrados.length} jugador${rankingsFiltrados.length !== 1 ? 'es' : ''}`
+                : 'Ranking FIPA · Todos los torneos finalizados a nivel mundial'}
+              {selectedCategoria ? ` · Categoría: ${selectedCategoria}` : ''}
+            </>
+          )}
         </div>
 
         {/* Table card */}

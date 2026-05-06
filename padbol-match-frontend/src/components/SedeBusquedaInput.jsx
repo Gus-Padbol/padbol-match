@@ -71,7 +71,8 @@ export default function SedeBusquedaInput(props) {
       .filter((s) => {
         const n = String(s.nombre || '').toLowerCase();
         const p = String(s.pais || '').toLowerCase();
-        return n.includes(q) || p.includes(q);
+        const c = String(s.ciudad || '').toLowerCase();
+        return n.includes(q) || p.includes(q) || c.includes(q);
       })
       .slice(0, 80);
   }, [sedes, debouncedQ, minChars]);

@@ -425,7 +425,7 @@ export default function MiPerfil() {
     let cancelled = false;
     supabase
       .from('sedes')
-      .select('id, nombre, pais')
+      .select('id, nombre, pais, ciudad')
       .order('nombre', { ascending: true })
       .then(({ data, error }) => {
         if (cancelled) return;
@@ -2057,6 +2057,8 @@ export default function MiPerfil() {
                     setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
                   }
                   placeholder="Buscá tu sede (mín. 2 letras)…"
+                  debounceMs={320}
+                  minChars={2}
                   inputStyle={guestInputStyle}
                   aria-label="Buscar club habitual"
                 />
@@ -2899,6 +2901,8 @@ export default function MiPerfil() {
                   setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
                 }
                 placeholder="Buscá tu sede (mín. 2 letras)…"
+                debounceMs={320}
+                minChars={2}
                 inputStyle={inputStyle}
                 aria-label="Buscar club habitual"
               />
