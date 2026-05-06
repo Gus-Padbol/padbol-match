@@ -4,6 +4,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
@@ -147,6 +148,7 @@ export default function UserHome() {
           maxWidth: 'min(92vw, 360px)',
           objectFit: 'contain',
           objectPosition: 'center center',
+          marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
           marginBottom: '40px',
         }}
       />

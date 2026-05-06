@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { HUB_LOGO_CLEARANCE_TOP_PX } from '../../constants/hubLayout';
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../../utils/torneoFormatters';
@@ -1140,6 +1141,7 @@ export default function TorneoTabbedView({
           alt="Padbol Match"
           style={{
             ...padbolLogoImgStyle,
+            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '8px',
           }}
         />

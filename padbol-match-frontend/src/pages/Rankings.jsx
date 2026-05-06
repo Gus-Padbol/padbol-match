@@ -6,6 +6,7 @@ import BottomNav from '../components/BottomNav';
 import SedeBusquedaInput from '../components/SedeBusquedaInput';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
@@ -318,7 +319,7 @@ export default function Rankings() {
             display: 'block',
             marginLeft: 'auto',
             marginRight: 'auto',
-            paddingTop: '20px',
+            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '14px',
           }}
         />

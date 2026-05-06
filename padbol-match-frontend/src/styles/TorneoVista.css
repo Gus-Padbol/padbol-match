@@ -1,7 +1,10 @@
 .torneo-vista-container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
+  /* padding-top lo fija el inline (hubContentPaddingTopCss); evitar shorthand que compita con React */
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

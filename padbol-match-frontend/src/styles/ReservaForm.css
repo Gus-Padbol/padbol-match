@@ -574,7 +574,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .reserva-sede-seleccion .reserva-sede-hero-logo {
   display: block;
   margin: 0 auto;
-  padding-top: 20px;
+  padding-top: 0;
   height: 110px;
   width: auto;
   max-width: none;

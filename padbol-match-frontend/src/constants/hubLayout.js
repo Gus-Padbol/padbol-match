@@ -12,6 +12,12 @@ export const HUB_CONTENT_PADDING_TOP_PX =
 export const HUB_CONTENT_PADDING_BOTTOM_PX = 24;
 
 /**
+ * Separación extra entre el borde inferior del header fijo (+ BottomNav si aplica)
+ * y el bloque del logo. El despeje principal viene de {@link hubContentPaddingTopCss}.
+ */
+export const HUB_LOGO_CLEARANCE_TOP_PX = 12;
+
+/**
  * Columna principal centrada (estilo feed móvil en desktop): fondo full-bleed, contenido acotado.
  */
 export const HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX = 900;

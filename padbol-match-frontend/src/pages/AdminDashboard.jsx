@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
@@ -1747,6 +1748,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               marginLeft: 'auto',
               marginRight: 'auto',
               height: '110px',
+              marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
               marginBottom: '8px',
               borderRadius: sedeClubHeader?.logo_url ? 12 : padbolLogoImgStyle.borderRadius,
             }}

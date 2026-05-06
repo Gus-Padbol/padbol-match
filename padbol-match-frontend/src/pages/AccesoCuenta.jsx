@@ -8,6 +8,7 @@ import AppHeader from '../components/AppHeader';
 import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_LOGO_CLEARANCE_TOP_PX,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
@@ -265,6 +266,7 @@ export default function AccesoCuenta() {
           alt="Padbol Match"
           style={{
             ...padbolLogoImgStyle,
+            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '4px',
           }}
         />

@@ -10,6 +10,7 @@ import TorneoTabbedView, {
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
+  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
@@ -715,6 +716,7 @@ export default function TorneoVista() {
           alt="Padbol Match"
           style={{
             ...padbolLogoImgStyle,
+            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '10px',
           }}
         />

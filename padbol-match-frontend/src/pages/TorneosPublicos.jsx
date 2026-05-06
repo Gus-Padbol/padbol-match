@@ -5,6 +5,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
@@ -564,6 +565,7 @@ export default function TorneosPublicos() {
           alt="Padbol Match"
           style={{
             ...padbolLogoImgStyle,
+            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '14px',
           }}
         />
