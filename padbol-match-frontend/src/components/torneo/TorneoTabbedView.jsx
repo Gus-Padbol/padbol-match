@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { HUB_LOGO_CLEARANCE_TOP_PX } from '../../constants/hubLayout';
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../../utils/torneoFormatters';
@@ -12,6 +11,7 @@ import {
   horasRevelarEquiposTorneo,
   torneoListaEquiposOcultaParaPublico,
 } from '../../utils/torneoRevelacionEquipos';
+import { canUseNavigatorShare, ShareIconSvg } from '../ShareLinkButton';
 import {
   equipoAbiertoBuscandoCompanero,
   findMiEquipoEnLista,
@@ -333,6 +333,8 @@ export default function TorneoTabbedView({
   onParticipacionDespuesUnirme = null,
   authLoading = false,
   userProfile = null,
+  /** Si viene definido, ícono compartir (esquina superior derecha del bloque título del torneo). */
+  shareTorneoMeta = null,
 }) {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
@@ -348,6 +350,7 @@ export default function TorneoTabbedView({
   const [equiposBusquedaLoading, setEquiposBusquedaLoading] = useState(false);
   const [equiposBusquedaError, setEquiposBusquedaError] = useState(null);
   const [solicitudPendingId, setSolicitudPendingId] = useState(null);
+  const [shareTorneoCopied, setShareTorneoCopied] = useState(false);
 
   const estadoLower = String(torneo?.estado || '').toLowerCase();
   const esFinalizado = estadoLower === 'finalizado';
@@ -457,6 +460,33 @@ export default function TorneoTabbedView({
   const sedeTexto = sedeTorneo
     ? `📍 ${sedeTorneo.nombre}${sedeUbicacion ? ` · ${sedeUbicacion}` : ''}`
     : null;
+
+  useEffect(() => {
+    if (!shareTorneoCopied) return undefined;
+    const t = window.setTimeout(() => setShareTorneoCopied(false), 2200);
+    return () => window.clearTimeout(t);
+  }, [shareTorneoCopied]);
+
+  const handleShareTorneo = useCallback(async () => {
+    if (!shareTorneoMeta?.url) return;
+    const title = String(shareTorneoMeta.title || '').trim();
+    const text = String(shareTorneoMeta.text || '').trim();
+    const u = String(shareTorneoMeta.url || '').trim();
+    if (canUseNavigatorShare()) {
+      try {
+        await navigator.share({ title, text, url: u });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(u);
+      setShareTorneoCopied(true);
+    } catch {
+      window.prompt('Copiá este link:', u);
+    }
+  }, [shareTorneoMeta]);
 
   useEffect(() => {
     if (!participacionModalOpen) return;
@@ -1575,13 +1605,75 @@ export default function TorneoTabbedView({
           alt="Padbol Match"
           style={{
             ...padbolLogoImgStyle,
-            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
+            marginTop: 0,
             marginBottom: '8px',
           }}
         />
       ) : null}
 
-      <div className="torneo-header" style={{ marginTop: showTorneoLogo ? 0 : '8px', marginBottom: '12px', padding: '20px' }}>
+      <div
+        className="torneo-header"
+        style={{
+          position: 'relative',
+          marginTop: showTorneoLogo ? 0 : '8px',
+          marginBottom: '12px',
+          padding: '20px',
+          paddingRight: shareTorneoMeta?.url ? '52px' : '20px',
+        }}
+      >
+        {shareTorneoMeta?.url ? (
+          <>
+            <button
+              type="button"
+              onClick={() => void handleShareTorneo()}
+              aria-label="Compartir torneo"
+              title="Compartir torneo"
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                zIndex: 2,
+                width: '34px',
+                height: '34px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.38)',
+                background: 'rgba(15,23,42,0.28)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+                color: '#ffffff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                margin: 0,
+                boxSizing: 'border-box',
+              }}
+            >
+              <ShareIconSvg width={18} height={18} />
+            </button>
+            {shareTorneoCopied ? (
+              <span
+                role="status"
+                style={{
+                  position: 'absolute',
+                  top: '50px',
+                  right: '8px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#f8fafc',
+                  background: 'rgba(15,23,42,0.82)',
+                  padding: '4px 8px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Copiado
+              </span>
+            ) : null}
+          </>
+        ) : null}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: 'clamp(1.15rem, 4vw, 1.75rem)', margin: 0 }}>🏆 {torneo?.nombre}</h1>
           {estadoBadge ? (

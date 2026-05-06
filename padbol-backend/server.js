@@ -1368,19 +1368,35 @@ app.post('/api/torneos/:id/lista-espera', async (req, res) => {
       .maybeSingle();
     if (tErr) throw tErr;
     if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
-    const te = String(torneoRow.estado || '').toLowerCase();
+    const te = String(torneoRow.estado || '')
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '_')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
     if (te !== 'planificacion' && te !== 'proximo') {
       return res.status(400).json({ error: 'La lista de espera solo aplica antes de abrir inscripción' });
     }
 
-    const { data: perfil, error: pErr } = await supabase
+    const bodyWa = req.body?.whatsapp != null ? String(req.body.whatsapp).trim() : '';
+
+    let { data: perfil, error: pErr } = await supabase
       .from('jugadores_perfil')
-      .select('nombre, whatsapp')
+      .select('nombre, whatsapp, user_id')
       .eq('email', email)
       .maybeSingle();
     if (pErr) throw pErr;
+    if (!perfil?.nombre && user.id) {
+      const r2 = await supabase
+        .from('jugadores_perfil')
+        .select('nombre, whatsapp, user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!r2.error && r2.data) perfil = r2.data;
+    }
     const nombre = perfil?.nombre != null ? String(perfil.nombre).trim() : '';
-    const whatsapp = perfil?.whatsapp != null ? String(perfil.whatsapp).trim() : '';
+    const whatsappDb = perfil?.whatsapp != null ? String(perfil.whatsapp).trim() : '';
+    const whatsapp = bodyWa || whatsappDb;
 
     const { data: exist } = await supabase
       .from('lista_espera_torneos')

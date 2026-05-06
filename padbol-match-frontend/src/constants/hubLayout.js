@@ -89,6 +89,15 @@ export function hubContentPaddingTopCss(pathname) {
 }
 
 /**
+ * Como {@link hubContentPaddingTopCss} más {@link HUB_LOGO_CLEARANCE_TOP_PX} para logos/hero que no queden bajo la barra fija.
+ */
+export function hubContentPaddingTopWithLogoClearanceCss(pathname) {
+  const basePx =
+    hubContentPaddingTopPx(pathname) + APP_HEADER_OUTER_PADDING_PX + HUB_LOGO_CLEARANCE_TOP_PX;
+  return `calc(${basePx}px + env(safe-area-inset-top, 0px))`;
+}
+
+/**
  * Posición `top` del {@link BottomNav} fijo, bajo el AppHeader (misma pila que {@link hubContentPaddingTopCss} sin nav).
  */
 export function hubBottomNavFixedTopCss() {

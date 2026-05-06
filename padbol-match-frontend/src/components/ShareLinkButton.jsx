@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-function ShareIconSvg(props) {
+export function ShareIconSvg(props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import ShareLinkButton from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import TorneoTabbedView, {
   jugadorEtiquetaConArroba,
@@ -11,15 +10,14 @@ import TorneoTabbedView, {
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
-  hubContentPaddingTopCss,
+  hubContentPaddingTopWithLogoClearanceCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
+import { estadoTorneoNormalizado } from '../utils/torneoEstadoFiltroPills';
 import {
   computeIsAdminEnTorneo,
   computePuedeGestionarEquiposTorneo,
@@ -33,7 +31,11 @@ import {
 } from '../utils/jugadorNombreTorneo';
 import '../styles/TorneoVista.css';
 
-const API_BASE_URL = 'https://padbol-backend.onrender.com';
+const apiBaseUrlTorneo = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
 
 export default function TorneoVista() {
   const { torneoId } = useParams();
@@ -174,10 +176,10 @@ export default function TorneoVista() {
   const recargarDatosTorneo = useCallback(async () => {
     try {
       const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/torneos/${torneoId}`),
-        fetch(`${API_BASE_URL}/api/torneos/${torneoId}/equipos`),
-        fetch(`${API_BASE_URL}/api/torneos/${torneoId}/partidos`),
-        fetch(`${API_BASE_URL}/api/sedes`).catch(() => null),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`),
+        fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
       ]);
       if (torneoRes.ok) {
         try {
@@ -237,10 +239,10 @@ export default function TorneoVista() {
         }
 
         const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/torneos/${torneoId}`),
-          fetch(`${API_BASE_URL}/api/torneos/${torneoId}/equipos`),
-          fetch(`${API_BASE_URL}/api/torneos/${torneoId}/partidos`),
-          fetch(`${API_BASE_URL}/api/sedes`).catch(() => null),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`),
+          fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
         ]);
 
         let torneoData = null;
@@ -326,16 +328,17 @@ export default function TorneoVista() {
   }, [torneoId]);
 
   useEffect(() => {
-    const st = String(torneo?.estado || '').toLowerCase();
+    const st = estadoTorneoNormalizado(torneo?.estado);
     if (!session?.access_token || !torneoId || (st !== 'planificacion' && st !== 'proximo')) {
       setListaEsperaChecked(true);
       if (st !== 'planificacion' && st !== 'proximo') setListaEsperaEnrolled(false);
       return;
     }
     let cancelled = false;
+    setListaEsperaChecked(false);
     (async () => {
       try {
-        const r = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}/lista-espera/me`, {
+        const r = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/lista-espera/me`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         const j = await r.json().catch(() => ({}));
@@ -358,7 +361,7 @@ export default function TorneoVista() {
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}`, {
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ estado: 'abierto' }),
@@ -380,7 +383,7 @@ export default function TorneoVista() {
 
   const tidNum = parseInt(String(torneoId), 10);
   useEffect(() => {
-    if (!Number.isFinite(tidNum) || String(torneo?.estado || '').toLowerCase() !== 'finalizado') {
+    if (!Number.isFinite(tidNum) || estadoTorneoNormalizado(torneo?.estado) !== 'finalizado') {
       setTablaPuntosRows([]);
       return;
     }
@@ -440,7 +443,7 @@ export default function TorneoVista() {
     }
     setIniciando(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}`, {
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: 'en_curso' }),
@@ -462,7 +465,7 @@ export default function TorneoVista() {
       return;
     setFinalizando(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}/finalizar`, {
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/finalizar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -485,7 +488,7 @@ export default function TorneoVista() {
     }
   };
 
-  const estadoTorneoLower = String(torneo?.estado || '').toLowerCase();
+  const estadoTorneoLower = estadoTorneoNormalizado(torneo?.estado);
   /** Solo `state.fromAdmin`: el flag de sesión no debe ocultar inscripción a quien entra desde el hub. */
   const modoAdminExplicitoEnVista = fromAdmin;
   const esListaEsperaTorneo =
@@ -525,13 +528,15 @@ export default function TorneoVista() {
     }
     if (!session?.access_token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/torneos/${torneoId}/lista-espera`, {
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/lista-espera`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          whatsapp: String(userProfile?.whatsapp || '').trim() || undefined,
+        }),
       });
       const j = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -545,7 +550,7 @@ export default function TorneoVista() {
     } catch (e) {
       alert(e?.message || 'Error de red');
     }
-  }, [session?.user, session?.access_token, torneoId, navigate]);
+  }, [session?.user, session?.access_token, torneoId, navigate, userProfile?.whatsapp]);
 
   const bannerInscripcionJugador = useMemo(() => {
     if (!torneo || !mostrarBannerJugadorTorneo) return null;
@@ -672,7 +677,7 @@ export default function TorneoVista() {
   ) : null;
   const adminBarFinalizarTorneo =
     isAdminGestionEnEstaVista &&
-    ['en_curso', 'activo'].includes(String(torneo?.estado || '').toLowerCase()) &&
+    ['en_curso', 'activo'].includes(estadoTorneoLower) &&
     partidos.length > 0 &&
     partidos.every((p) => p.estado === 'finalizado') ? (
       <div className="torneo-acciones">
@@ -706,19 +711,11 @@ export default function TorneoVista() {
   }, [torneoId]);
 
   const torneoShareMeta = useMemo(() => {
-    const title = String(torneo?.nombre || 'Torneo').trim() || 'Torneo';
-    const sedeNombre = sedeTorneo ? String(sedeTorneo.nombre || '').trim() : '';
-    const fi = String(torneo?.fecha_inicio || '').trim();
-    const ff = String(torneo?.fecha_fin || '').trim();
-    let fechas = '';
-    if (fi && ff) fechas = `${fi} al ${ff}`;
-    else if (fi) fechas = fi;
-    else if (ff) fechas = ff;
-    const lines = [title];
-    if (sedeNombre) lines.push(`Sede: ${sedeNombre}`);
-    if (fechas) lines.push(`Fechas: ${fechas}`);
+    const nombreTor = String(torneo?.nombre || 'Torneo').trim() || 'Torneo';
+    const sedeNombre = sedeTorneo ? String(sedeTorneo.nombre || '').trim() : 'la sede';
+    const title = nombreTor;
     const url = torneoShareUrl;
-    const text = url ? `${lines.join('\n')}\n\n${url}` : lines.join('\n');
+    const text = `¡Participá en ${nombreTor} en ${sedeNombre}! 🏆⚽ Inscribite acá:`;
     return { title, text, url };
   }, [torneo, sedeTorneo, torneoShareUrl]);
 
@@ -737,7 +734,7 @@ export default function TorneoVista() {
       <div
         style={{
           minHeight: '100vh',
-          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
           paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
           boxSizing: 'border-box',
         }}
@@ -755,7 +752,7 @@ export default function TorneoVista() {
       <div
         style={{
           minHeight: '100vh',
-          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
           paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
           boxSizing: 'border-box',
         }}
@@ -776,7 +773,7 @@ export default function TorneoVista() {
       <div
         style={{
           minHeight: '100vh',
-          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
           paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
           boxSizing: 'border-box',
         }}
@@ -795,40 +792,12 @@ export default function TorneoVista() {
     <div
       className="torneo-vista-container"
       style={{
-        paddingTop: hubContentPaddingTopCss(location.pathname),
+        paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
       <div style={torneoVistaColumnStyle}>
         <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          style={{
-            ...padbolLogoImgStyle,
-            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-            marginBottom: '10px',
-          }}
-        />
-        {torneo && torneoShareUrl ? (
-          <div
-            style={{
-              width: '100%',
-              maxWidth: HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
-              margin: '0 auto 14px',
-              boxSizing: 'border-box',
-            }}
-          >
-            <ShareLinkButton
-              shareTitle={torneoShareMeta.title}
-              shareText={torneoShareMeta.text}
-              url={torneoShareMeta.url}
-              style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
-            >
-              Compartir torneo
-            </ShareLinkButton>
-          </div>
-        ) : null}
         <TorneoTabbedView
           torneo={torneo}
           equipos={equipos}
@@ -846,9 +815,10 @@ export default function TorneoVista() {
           clasificacionFinalFilas={clasificacionFinalFilas}
           adminTorneoBar={adminTorneoBar}
           bannerAntesTabs={bannerInscripcionJugador}
-          stickyTop={hubContentPaddingTopCss(location.pathname)}
-          showTorneoLogo={false}
-          apiBaseUrl={API_BASE_URL}
+          stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname)}
+          showTorneoLogo
+          shareTorneoMeta={torneo && torneoShareUrl ? torneoShareMeta : null}
+          apiBaseUrl={apiBaseUrlTorneo}
           adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}
           onAfterSorteoGrupos={recargarDatosTorneo}
           participacionModalOpen={modalInscribirseOpen}
