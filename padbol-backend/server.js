@@ -1405,9 +1405,23 @@ app.post('/api/torneos/:id/sorteo', async (req, res) => {
 });
 
 // ===== RANKINGS =====
-// GET /api/rankings?scope=local|nacional|internacional&sede_id=X&categoria=Y
+// GET /api/rankings?scope=local|nacional|internacional&sede_id=X&categoria=Y&pais=&provincia=&ciudad=
 app.get('/api/rankings', async (req, res) => {
-  const { scope = 'internacional', sede_id, categoria } = req.query;
+  const {
+    scope = 'internacional',
+    sede_id,
+    categoria,
+    pais,
+    provincia,
+    ciudad,
+  } = req.query;
+
+  const normPais = (s) =>
+    String(s || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
   try {
     // 1. Load finalizado torneos filtered by scope
@@ -1424,8 +1438,30 @@ app.get('/api/rankings', async (req, res) => {
       .eq('estado', 'finalizado')
       .in('nivel_torneo', nivelesPermitidos);
 
-    if (scope === 'local' && sede_id) {
-      torneosQuery = torneosQuery.eq('sede_id', parseInt(sede_id));
+    if (scope === 'local') {
+      const sidRaw = sede_id != null && String(sede_id).trim() !== '' ? parseInt(String(sede_id), 10) : NaN;
+      if (Number.isFinite(sidRaw)) {
+        torneosQuery = torneosQuery.eq('sede_id', sidRaw);
+      } else {
+        const pPais = pais && String(pais).trim();
+        const pProv = provincia && String(provincia).trim();
+        const pCiudad = ciudad && String(ciudad).trim();
+        if (!pPais && !pProv && !pCiudad) {
+          return res.json([]);
+        }
+        let sedesQ = supabase.from('sedes').select('id');
+        if (pPais) sedesQ = sedesQ.ilike('pais', pPais);
+        if (pProv) sedesQ = sedesQ.ilike('provincia', pProv);
+        if (pCiudad) {
+          const safeCiudad = String(pCiudad).replace(/[%_]/g, ' ');
+          sedesQ = sedesQ.ilike('ciudad', `%${safeCiudad}%`);
+        }
+        const { data: sedeRows, error: errSedes } = await sedesQ;
+        if (errSedes) throw errSedes;
+        const ids = (sedeRows || []).map((s) => s.id).filter((id) => id != null);
+        if (!ids.length) return res.json([]);
+        torneosQuery = torneosQuery.in('sede_id', ids);
+      }
     }
 
     const { data: torneos, error: errT } = await torneosQuery;
@@ -1520,6 +1556,12 @@ app.get('/api/rankings', async (req, res) => {
     // 6. Filter by categoria
     let result = Object.values(playerMap);
     if (categoria) result = result.filter(p => p.nivel === categoria);
+
+    // 6b. Nacional: restringir por país del perfil del jugador
+    if (scope === 'nacional' && pais && String(pais).trim()) {
+      const needle = normPais(pais);
+      result = result.filter((pl) => normPais(pl.pais) === needle);
+    }
 
     // 7. Sort by puntos_total desc, then torneos_count desc
     result.sort((a, b) => b.puntos_total - a.puntos_total || b.torneos_count - a.torneos_count);

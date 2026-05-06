@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import SedeBusquedaInput from '../components/SedeBusquedaInput';
 import OpcionListaBusquedaInput from '../components/OpcionListaBusquedaInput';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -35,6 +34,19 @@ function etiquetaRankingJugador(player) {
 }
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+
+/** Mismo aspecto que los filtros anteriores (inputs blancos). */
+const RANKING_FILTER_INPUT_STYLE = {
+  padding: '8px 12px',
+  borderRadius: '8px',
+  border: 'none',
+  fontSize: '13px',
+  background: 'white',
+  color: '#333',
+  minWidth: '160px',
+  width: '100%',
+  boxSizing: 'border-box',
+};
 
 const FLAG_MAP = {};
 [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach(p => {
@@ -87,48 +99,50 @@ export default function Rankings() {
   const [activeTab, setActiveTab] = useState('local');
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
-  const [selectedSede, setSelectedSede] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [rankings, setRankings] = useState([]);
   const [loading, setLoading] = useState(false);
   /** Si el fetch falla (red, timeout, 5xx), mostramos vacío amigable en lugar del mensaje de error técnico. */
   const [rankingSinDatosDisponibles, setRankingSinDatosDisponibles] = useState(false);
-  const [busquedaNacionalJugador, setBusquedaNacionalJugador] = useState('');
-  const debouncedBusquedaNacional = useDebouncedValue(busquedaNacionalJugador.trim(), 320);
-  const [selectedPaisFipa, setSelectedPaisFipa] = useState('');
+  /** País del perfil (jugadores_perfil), para default en Nacional. */
+  const [perfilPais, setPerfilPais] = useState('');
+  const skipNacionalDefaultRef = useRef(false);
 
-  const paisesRankingOpts = useMemo(
+  const [localPais, setLocalPais] = useState('');
+  const [localProvincia, setLocalProvincia] = useState('');
+  const [localCiudad, setLocalCiudad] = useState('');
+  const debouncedLocalCiudad = useDebouncedValue(localCiudad.trim(), 400);
+
+  const [nacionalPais, setNacionalPais] = useState('');
+
+  const nombresPaisesOpciones = useMemo(
     () =>
-      [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].map((p) => ({
-        id: p.nombre,
-        nombre: `${p.bandera} ${p.nombre}`.trim(),
-      })),
+      [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
+        .map((p) => String(p.nombre || '').trim())
+        .filter(Boolean),
     []
   );
 
-  const rankingsFiltrados = useMemo(() => {
-    let rows = rankings;
-    if (activeTab === 'nacional' && debouncedBusquedaNacional.length >= 2) {
-      const q = debouncedBusquedaNacional.toLowerCase();
-      rows = rows.filter((pl) => {
-        const label = etiquetaRankingJugador(pl).toLowerCase();
-        const al = String(pl.alias || '').toLowerCase();
-        const nom = String(pl.nombre || '').toLowerCase();
-        const ap = String(pl.apellido || '').toLowerCase();
-        return label.includes(q) || al.includes(q) || nom.includes(q) || ap.includes(q);
-      });
+  const provinciasLocalOpciones = useMemo(() => {
+    const p = String(localPais || '').trim().toLowerCase();
+    if (!p) return [];
+    const set = new Set();
+    for (const s of sedes) {
+      if (String(s.pais || '').trim().toLowerCase() !== p) continue;
+      const pr = s.provincia != null ? String(s.provincia).trim() : '';
+      if (pr) set.add(pr);
     }
-    if (activeTab === 'internacional' && selectedPaisFipa) {
-      const sel = selectedPaisFipa.toLowerCase();
-      rows = rows.filter((pl) => String(pl.pais || '').toLowerCase().includes(sel));
-    }
-    return rows;
-  }, [rankings, activeTab, debouncedBusquedaNacional, selectedPaisFipa]);
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
+  }, [sedes, localPais]);
 
-  const selectedSedeMeta = useMemo(
-    () => sedes.find((s) => String(s.id) === selectedSede),
-    [sedes, selectedSede]
-  );
+  /** País por defecto al abrir Nacional (perfil), salvo que el usuario haya limpiado. */
+  useEffect(() => {
+    if (activeTab !== 'nacional' || skipNacionalDefaultRef.current) return;
+    if (nacionalPais.trim()) return;
+    const d = String(perfilPais || '').trim();
+    if (!d) return;
+    setNacionalPais(d);
+  }, [activeTab, nacionalPais, perfilPais]);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,23 +185,26 @@ export default function Rankings() {
         if (!user || cancelled) return;
 
         let nivel = null;
+        let paisProf = '';
         const uid = user.id;
         if (uid) {
           const { data: byUid } = await supabase
             .from('jugadores_perfil')
-            .select('nivel')
+            .select('nivel, pais')
             .eq('user_id', uid)
             .maybeSingle();
           nivel = byUid?.nivel != null ? String(byUid.nivel).trim() : '';
+          paisProf = byUid?.pais != null ? String(byUid.pais).trim() : '';
         }
         const email = String(user.email || '').trim().toLowerCase();
-        if (!nivel && email) {
+        if ((!nivel || !paisProf) && email) {
           const { data: byEmail } = await supabase
             .from('jugadores_perfil')
-            .select('nivel')
+            .select('nivel, pais')
             .ilike('email', email)
             .maybeSingle();
-          nivel = byEmail?.nivel != null ? String(byEmail.nivel).trim() : '';
+          if (!nivel && byEmail?.nivel != null) nivel = String(byEmail.nivel).trim();
+          if (!paisProf && byEmail?.pais != null) paisProf = String(byEmail.pais).trim();
         }
 
         if (cancelled) return;
@@ -195,6 +212,8 @@ export default function Rankings() {
         if (n && CATEGORIAS.includes(n)) {
           setSelectedCategoria(n);
         }
+        const pp = String(paisProf || '').trim();
+        if (pp) setPerfilPais(pp);
       } catch {
         /* sin sesión o error de red: se deja "Todas las categorías" */
       }
@@ -209,9 +228,39 @@ export default function Rankings() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
+    if (activeTab === 'local' && !String(localPais || '').trim()) {
+      setLoading(false);
+      setRankingSinDatosDisponibles(false);
+      setRankings([]);
+      return () => {
+        cancelled = true;
+        clearTimeout(timeout);
+        controller.abort();
+      };
+    }
+
+    if (activeTab === 'nacional' && !String(nacionalPais || '').trim()) {
+      setLoading(false);
+      setRankingSinDatosDisponibles(false);
+      setRankings([]);
+      return () => {
+        cancelled = true;
+        clearTimeout(timeout);
+        controller.abort();
+      };
+    }
+
     const params = new URLSearchParams({ scope: activeTab });
-    if (activeTab === 'local' && selectedSede) params.set('sede_id', selectedSede);
     if (selectedCategoria) params.set('categoria', selectedCategoria);
+
+    if (activeTab === 'local') {
+      params.set('pais', String(localPais).trim());
+      if (String(localProvincia || '').trim()) params.set('provincia', String(localProvincia).trim());
+      if (debouncedLocalCiudad) params.set('ciudad', debouncedLocalCiudad);
+    }
+    if (activeTab === 'nacional') {
+      params.set('pais', String(nacionalPais).trim());
+    }
 
     const url = `${apiUrl('/api/rankings')}?${params.toString()}`;
 
@@ -255,7 +304,14 @@ export default function Rankings() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [activeTab, selectedSede, selectedCategoria]);
+  }, [
+    activeTab,
+    selectedCategoria,
+    localPais,
+    localProvincia,
+    debouncedLocalCiudad,
+    nacionalPais,
+  ]);
 
   // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -332,10 +388,12 @@ export default function Rankings() {
               key={tab.id}
               onClick={() => {
                 setActiveTab(tab.id);
-                setSelectedSede('');
-                setBusquedaNacionalJugador('');
-                setSelectedPaisFipa('');
+                setLocalPais('');
+                setLocalProvincia('');
+                setLocalCiudad('');
+                setNacionalPais('');
                 setSelectedCategoria('');
+                skipNacionalDefaultRef.current = tab.id !== 'nacional';
               }}
               style={{
                 flex: 1,
@@ -359,79 +417,65 @@ export default function Rankings() {
         {/* Filters */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {activeTab === 'local' && (
-            <div style={{ minWidth: '200px', flex: '1 1 200px' }}>
-              <SedeBusquedaInput
-                mode="id"
-                sedes={sedes}
-                valueId={selectedSede}
-                onSelectId={(id) => setSelectedSede(id)}
-                formatOption={(s) => `${getFlag(s.pais)} ${s.nombre}`.trim()}
-                placeholder="Buscar sede (mín. 2 letras)…"
-                debounceMs={280}
-                inputStyle={{
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  fontSize: '13px',
-                  background: 'white',
-                  color: '#333',
-                  minWidth: '180px',
+            <>
+              <OpcionListaBusquedaInput
+                options={nombresPaisesOpciones}
+                value={localPais}
+                onChange={(v) => {
+                  setLocalPais(v);
+                  setLocalProvincia('');
                 }}
-                aria-label="Buscar sede para ranking local"
+                placeholder="País…"
+                allLabel="Elegí país"
+                debounceMs={280}
+                minChars={0}
+                inputStyle={RANKING_FILTER_INPUT_STYLE}
+                aria-label="País para ranking local"
               />
-            </div>
+              {localPais ? (
+                <OpcionListaBusquedaInput
+                  options={provinciasLocalOpciones}
+                  value={localProvincia}
+                  onChange={setLocalProvincia}
+                  placeholder="Provincia / estado…"
+                  allLabel="Toda la provincia"
+                  debounceMs={280}
+                  minChars={0}
+                  inputStyle={RANKING_FILTER_INPUT_STYLE}
+                  aria-label="Provincia o estado para ranking local"
+                />
+              ) : null}
+              <div style={{ minWidth: '160px', flex: '1 1 180px' }}>
+                <input
+                  type="text"
+                  value={localCiudad}
+                  onChange={(e) => setLocalCiudad(e.target.value)}
+                  placeholder="Ciudad (opcional)…"
+                  aria-label="Ciudad para ranking local"
+                  autoComplete="off"
+                  style={RANKING_FILTER_INPUT_STYLE}
+                />
+              </div>
+            </>
           )}
           {activeTab === 'local' && sedesLoadError ? (
             <span style={{ fontSize: '12px', color: '#fecaca', alignSelf: 'center' }}>{sedesLoadError}</span>
           ) : null}
           {activeTab === 'nacional' && (
-            <div style={{ minWidth: '200px', flex: '1 1 200px' }}>
-              <input
-                type="search"
-                value={busquedaNacionalJugador}
-                onChange={(e) => setBusquedaNacionalJugador(e.target.value)}
-                placeholder="Buscar jugador (mín. 2 letras)…"
-                aria-label="Buscar jugador en ranking nacional"
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  fontSize: '13px',
-                  background: 'white',
-                  color: '#333',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                }}
-              />
-              {busquedaNacionalJugador.trim().length > 0 && busquedaNacionalJugador.trim().length < 2 ? (
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginTop: '6px' }}>
-                  Escribí al menos 2 caracteres
-                </div>
-              ) : null}
-            </div>
-          )}
-          {activeTab === 'internacional' && (
-            <div style={{ minWidth: '200px', flex: '1 1 200px' }}>
-              <SedeBusquedaInput
-                mode="id"
-                sedes={paisesRankingOpts}
-                valueId={selectedPaisFipa}
-                onSelectId={(id) => setSelectedPaisFipa(id)}
-                formatOption={(s) => s.nombre}
-                placeholder="Buscar país…"
-                debounceMs={280}
-                inputStyle={{
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  fontSize: '13px',
-                  background: 'white',
-                  color: '#333',
-                  minWidth: '180px',
-                }}
-                aria-label="Filtrar ranking FIPA por país"
-              />
-            </div>
+            <OpcionListaBusquedaInput
+              options={nombresPaisesOpciones}
+              value={nacionalPais}
+              onChange={(v) => {
+                skipNacionalDefaultRef.current = !String(v || '').trim();
+                setNacionalPais(v);
+              }}
+              placeholder="País del ranking…"
+              allLabel="Elegí país"
+              debounceMs={280}
+              minChars={0}
+              inputStyle={RANKING_FILTER_INPUT_STYLE}
+              aria-label="País para ranking nacional"
+            />
           )}
           <OpcionListaBusquedaInput
             options={CATEGORIAS}
@@ -441,18 +485,21 @@ export default function Rankings() {
             allLabel="Todas las categorías"
             debounceMs={280}
             minChars={0}
+            inputStyle={RANKING_FILTER_INPUT_STYLE}
             aria-label="Filtrar ranking por categoría"
           />
           {(selectedCategoria ||
-            (activeTab === 'local' && selectedSede) ||
-            (activeTab === 'nacional' && busquedaNacionalJugador.trim()) ||
-            (activeTab === 'internacional' && selectedPaisFipa)) && (
+            (activeTab === 'local' && (localPais || localProvincia || localCiudad.trim())) ||
+            (activeTab === 'nacional' && nacionalPais)) && (
             <button
+              type="button"
               onClick={() => {
                 setSelectedCategoria('');
-                setSelectedSede('');
-                setBusquedaNacionalJugador('');
-                setSelectedPaisFipa('');
+                setLocalPais('');
+                setLocalProvincia('');
+                setLocalCiudad('');
+                setNacionalPais('');
+                skipNacionalDefaultRef.current = true;
               }}
               style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
             >
@@ -463,16 +510,17 @@ export default function Rankings() {
 
         {/* Scope description */}
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginBottom: '12px' }}>
-          {activeTab === 'local'         && (selectedSede ? `Sede seleccionada · ${selectedSedeMeta?.nombre || ''}` : 'Selecciona una sede para ver el ranking local')}
+          {activeTab === 'local' &&
+            (localPais
+              ? `Ranking en clubes de ${[localPais, localProvincia || null, debouncedLocalCiudad || null].filter(Boolean).join(' · ')}`
+              : 'Elegí un país para ver el ranking local (torneos de club en esa zona)')}
           {activeTab === 'nacional' &&
-            (debouncedBusquedaNacional.length >= 2
-              ? `Filtrando por nombre · ${rankingsFiltrados.length} resultado${rankingsFiltrados.length !== 1 ? 's' : ''}`
-              : 'Puntos acumulados en torneos nacionales e internacionales')}
+            (nacionalPais
+              ? `Ranking nacional · ${nacionalPais}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
+              : 'Elegí un país para ver el ranking nacional')}
           {activeTab === 'internacional' && (
             <>
-              {selectedPaisFipa
-                ? `País: ${selectedPaisFipa} · ${rankingsFiltrados.length} jugador${rankingsFiltrados.length !== 1 ? 'es' : ''}`
-                : 'Ranking FIPA · Todos los torneos finalizados a nivel mundial'}
+              Ranking FIPA · torneos internacionales y mundiales finalizados
               {selectedCategoria ? ` · Categoría: ${selectedCategoria}` : ''}
             </>
           )}
@@ -484,6 +532,16 @@ export default function Rankings() {
             <div style={{ padding: '60px', textAlign: 'center', color: '#bbb', fontSize: '15px' }}>
               Cargando rankings...
             </div>
+          ) : (activeTab === 'local' && !localPais.trim()) || (activeTab === 'nacional' && !nacionalPais.trim()) ? (
+            <div style={{ padding: '60px', textAlign: 'center' }}>
+              <div style={{ fontSize: '40px', marginBottom: '12px' }}>📍</div>
+              <div style={{ color: '#9ca3af', fontSize: '15px', fontWeight: '600' }}>
+                {activeTab === 'local' ? 'Elegí un país para el ranking local' : 'Elegí un país para el ranking nacional'}
+              </div>
+              <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
+                Usá los filtros de arriba para cargar la tabla.
+              </div>
+            </div>
           ) : rankings.length === 0 ? (
             <div style={{ padding: '60px', textAlign: 'center' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏆</div>
@@ -492,23 +550,13 @@ export default function Rankings() {
               </div>
               {!rankingSinDatosDisponibles ? (
                 <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
-                  Los puntos se asignan automáticamente al finalizar torneos.
+                  No hay jugadores con puntos para esta combinación de filtros, o los puntos aún no se asignaron.
                 </div>
               ) : (
                 <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
                   No pudimos cargar el ranking en este momento.
                 </div>
               )}
-            </div>
-          ) : rankingsFiltrados.length === 0 ? (
-            <div style={{ padding: '60px', textAlign: 'center' }}>
-              <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔎</div>
-              <div style={{ color: '#9ca3af', fontSize: '15px', fontWeight: '600' }}>
-                Ningún jugador coincide con el filtro
-              </div>
-              <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
-                Probá otra búsqueda o tocá «Limpiar».
-              </div>
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
@@ -537,7 +585,7 @@ export default function Rankings() {
                 </tr>
               </thead>
               <tbody>
-                {rankingsFiltrados.map((player, idx) => {
+                {rankings.map((player, idx) => {
                   const pos  = idx + 1;
                   const flag = getFlag(player.pais);
                   const avatarPx = narrow ? 32 : 38;
@@ -625,10 +673,9 @@ export default function Rankings() {
         </div>
 
         {/* Footer note */}
-        {rankingsFiltrados.length > 0 && (
+        {rankings.length > 0 && (
           <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
-            {rankingsFiltrados.length} jugador{rankingsFiltrados.length !== 1 ? 'es' : ''} mostrado{rankingsFiltrados.length !== 1 ? 's' : ''}
-            {rankings.length !== rankingsFiltrados.length ? ` (${rankings.length} en total)` : ''}
+            {rankings.length} jugador{rankings.length !== 1 ? 'es' : ''} mostrado{rankings.length !== 1 ? 's' : ''}
             {selectedCategoria && ` · Categoría: ${selectedCategoria}`}
           </div>
         )}
