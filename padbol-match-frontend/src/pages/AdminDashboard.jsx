@@ -1769,8 +1769,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <p style={{ margin: '8px 0 0', color: '#94a3b8' }}>Sin sedes en tu alcance.</p>
               ) : isSuperAdmin ? (
                 <p style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: '#0f172a', lineHeight: 1.4 }}>
-                  {p.canchasOcupacionGlobal.ocupadas} cancha{p.canchasOcupacionGlobal.ocupadas === 1 ? '' : 's'} ocupada
-                  {p.canchasOcupacionGlobal.ocupadas === 1 ? '' : 's'} de {p.canchasOcupacionGlobal.totalActivas} totales activas
+                  {p.canchasOcupacionGlobal.ocupadas === 1
+                    ? `1 cancha ocupada de ${p.canchasOcupacionGlobal.totalActivas} totales activas`
+                    : `${p.canchasOcupacionGlobal.ocupadas} canchas ocupadas de ${p.canchasOcupacionGlobal.totalActivas} totales activas`}
                 </p>
               ) : (
                 <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', fontSize: '14px' }}>
