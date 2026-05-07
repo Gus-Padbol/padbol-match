@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.lista_espera_torneos (
   email text NOT NULL,
   nombre text,
   whatsapp text,
+  inscripcion_abierta_notificado_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT lista_espera_torneos_torneo_user UNIQUE (torneo_id, user_id)
 );

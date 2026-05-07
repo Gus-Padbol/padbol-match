@@ -1669,7 +1669,7 @@ app.post('/api/torneos', async (req, res) => {
     if (error) throw error;
     const inserted = Array.isArray(data) ? data[0] : data;
     if (inserted?.id && String(inserted.estado || '').toLowerCase() === 'abierto') {
-      void notifyListaEsperaInscripcionAbierta(inserted.id, inserted.nombre || row.nombre);
+      scheduleNotifyListaEsperaInscripcionAbierta(inserted.id);
     }
     res.json(data);
   } catch (err) {
@@ -1898,28 +1898,60 @@ async function requisitosParaPasarTorneoAEnCurso(torneoId) {
   };
 }
 
-async function notifyListaEsperaInscripcionAbierta(torneoId, nombreTorneo) {
+/** Encola avisos WA a lista de espera; no bloquea el hilo del request. */
+function scheduleNotifyListaEsperaInscripcionAbierta(torneoId) {
+  setImmediate(() => {
+    void notifyListaEsperaInscripcionAbiertaJob(torneoId);
+  });
+}
+
+/**
+ * Jugadores en lista_espera_torneos que aún no recibieron el aviso de apertura.
+ * Mensaje alineado al copy de producto; marca fila tras envío exitoso (idempotencia).
+ */
+async function notifyListaEsperaInscripcionAbiertaJob(torneoId) {
   try {
+    const tid = parseInt(String(torneoId), 10);
+    if (!Number.isFinite(tid)) return;
+
+    const { data: torneoRow, error: tErr } = await supabase
+      .from('torneos')
+      .select('id, nombre, sede_id')
+      .eq('id', tid)
+      .maybeSingle();
+    if (tErr) {
+      console.warn('notify lista espera: torneo', tErr.message);
+      return;
+    }
+    if (!torneoRow) return;
+
+    let nombreSede = 'tu sede';
+    if (torneoRow.sede_id != null) {
+      const { data: sedeRow } = await supabase
+        .from('sedes')
+        .select('nombre')
+        .eq('id', torneoRow.sede_id)
+        .maybeSingle();
+      if (sedeRow?.nombre) nombreSede = String(sedeRow.nombre).trim();
+    }
+
     const { data: rows, error } = await supabase
       .from('lista_espera_torneos')
       .select('id, email, nombre, whatsapp')
-      .eq('torneo_id', torneoId);
+      .eq('torneo_id', tid)
+      .is('inscripcion_abierta_notificado_at', null);
     if (error) {
       console.warn('lista_espera_torneos select:', error.message);
       return;
     }
-    const tname = String(nombreTorneo || 'el torneo').trim();
-    const baseUrl = String(TORNEO_EQUIPOS_INVITE_BASE_URL || FRONTEND_URL || '').replace(/\/$/, '');
-    const link = `${baseUrl}/torneo/${torneoId}/equipos`;
-    const body = `🏆 ¡Abrió la inscripción para «${tname}»! Tu lugar está esperando. Inscribite antes de que se agoten los cupos: ${link}`;
-    for (const row of rows || []) {
-      const emailRow = String(row?.email || '').trim().toLowerCase();
-      if (emailRow) {
-        const permite = await jugadorAceptaNotificacionesTorneoPromoPorEmail(emailRow);
-        if (!permite) continue;
-      } else {
-        continue;
-      }
+    if (!rows?.length) return;
+
+    const nombreTorneo = String(torneoRow.nombre || 'el torneo').trim();
+    const body =
+      `🏆 ¡La inscripción para ${nombreTorneo} en ${nombreSede} ya está abierta! ` +
+      'Entrá a padbolmatch.com para inscribirte con tu compañero. Cupos limitados.';
+
+    for (const row of rows) {
       let dest = String(row?.whatsapp || '').trim();
       if (!dest && row?.email) {
         dest = (await fetchJugadorWhatsappPorEmail(row.email)) || '';
@@ -1927,12 +1959,17 @@ async function notifyListaEsperaInscripcionAbierta(torneoId, nombreTorneo) {
       if (!dest) continue;
       try {
         await sendTwilioWhatsAppBodyToRaw(dest, body);
+        const { error: upErr } = await supabase
+          .from('lista_espera_torneos')
+          .update({ inscripcion_abierta_notificado_at: new Date().toISOString() })
+          .eq('id', row.id);
+        if (upErr) console.warn('lista_espera notificado_at update:', row.id, upErr.message);
       } catch (e) {
         console.warn('WhatsApp lista espera fila', row?.id, e?.message || e);
       }
     }
   } catch (e) {
-    console.warn('notifyListaEsperaInscripcionAbierta:', e?.message || e);
+    console.warn('notifyListaEsperaInscripcionAbiertaJob:', e?.message || e);
   }
 }
 
@@ -2042,13 +2079,9 @@ async function handleTorneoPatchOrPut(req, res) {
     if (error) throw error;
     const row0 = Array.isArray(data) ? data[0] : null;
     const newEst = String(row0?.estado ?? '').toLowerCase();
-    const oldEst = String(prevRow?.estado ?? '').toLowerCase();
-    if (
-      patch.estado !== undefined &&
-      newEst === 'abierto' &&
-      (oldEst === 'planificacion' || oldEst === 'proximo')
-    ) {
-      void notifyListaEsperaInscripcionAbierta(id, row0?.nombre || prevRow?.nombre);
+    const oldNorm = normalizeTorneoEstadoForDb(prevRow?.estado) || 'planificacion';
+    if (patch.estado !== undefined && newEst === 'abierto' && oldNorm === 'planificacion') {
+      scheduleNotifyListaEsperaInscripcionAbierta(id);
     }
     res.json(data);
   } catch (err) {
@@ -5777,7 +5810,7 @@ async function aplicarFechaAperturaInscripcionTorneos() {
 
   if (error) throw error;
   for (const row of updated || []) {
-    void notifyListaEsperaInscripcionAbierta(row.id, row.nombre);
+    scheduleNotifyListaEsperaInscripcionAbierta(row.id);
   }
   if (updated?.length) {
     console.log(`📅 Apertura automática inscripción: ${updated.length} torneo(s)`);
