@@ -1078,6 +1078,130 @@ app.get('/api/sedes/:id', async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/sedes/:id — actualización parcial (JWT).
+ * Permisos: super_admin o admin con alcance que incluya la sede (admin_club / nacional según sedesPermitidasPorScope).
+ */
+app.patch('/api/sedes/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    await assertUsuarioPuedeAdministrarSede(req, id);
+
+    const b = req.body;
+    if (!b || typeof b !== 'object' || Array.isArray(b)) {
+      return res.status(400).json({ error: 'Body JSON inválido' });
+    }
+
+    const patch = {};
+    const hop = (k) => Object.prototype.hasOwnProperty.call(b, k);
+
+    if (hop('nombre')) {
+      const n = String(b.nombre ?? '').trim();
+      if (!n) return res.status(400).json({ error: 'El nombre no puede quedar vacío' });
+      patch.nombre = n;
+    }
+    if (hop('direccion')) patch.direccion = String(b.direccion || '').trim() || null;
+    if (hop('ciudad')) patch.ciudad = String(b.ciudad || '').trim() || null;
+    if (hop('provincia')) patch.provincia = String(b.provincia || '').trim() || null;
+    if (hop('pais')) patch.pais = String(b.pais || '').trim() || null;
+    if (hop('telefono')) patch.telefono = String(b.telefono || '').trim() || null;
+    if (hop('email_contacto')) patch.email_contacto = String(b.email_contacto || '').trim() || null;
+    if (hop('horario_apertura')) patch.horario_apertura = String(b.horario_apertura || '').trim() || null;
+    if (hop('horario_cierre')) patch.horario_cierre = String(b.horario_cierre || '').trim() || null;
+
+    if (hop('precio_turno')) {
+      if (b.precio_turno === null || b.precio_turno === '') {
+        patch.precio_turno = null;
+      } else {
+        const p = Number(String(b.precio_turno).replace(/\./g, '').replace(',', '.'));
+        if (!Number.isFinite(p) || p < 0) {
+          return res.status(400).json({ error: 'precio_turno inválido' });
+        }
+        patch.precio_turno = p;
+      }
+    }
+    if (hop('moneda')) {
+      const m = String(b.moneda || 'ARS').trim().toUpperCase().slice(0, 8);
+      patch.moneda = m || 'ARS';
+    }
+    if (hop('descripcion')) {
+      const d = String(b.descripcion ?? '').trim();
+      patch.descripcion = d ? d.slice(0, 300) : null;
+    }
+    if (hop('historia')) {
+      const h = String(b.historia ?? '').trim();
+      patch.historia = h ? h.slice(0, 500) : null;
+    }
+    if (hop('metodo_pago')) patch.metodo_pago = normalizeMetodoPago(b.metodo_pago);
+    if (hop('stripe_account_id')) patch.stripe_account_id = String(b.stripe_account_id || '').trim() || null;
+    if (hop('mp_access_token')) patch.mp_access_token = String(b.mp_access_token || '').trim() || null;
+    if (hop('pago_manual_instrucciones')) {
+      patch.pago_manual_instrucciones = String(b.pago_manual_instrucciones || '').trim() || null;
+    }
+
+    if (hop('latitud')) {
+      if (b.latitud === null || b.latitud === '') patch.latitud = null;
+      else {
+        const lat = Number(b.latitud);
+        if (!Number.isFinite(lat)) return res.status(400).json({ error: 'latitud inválida' });
+        patch.latitud = lat;
+      }
+    }
+    if (hop('longitud')) {
+      if (b.longitud === null || b.longitud === '') patch.longitud = null;
+      else {
+        const lng = Number(b.longitud);
+        if (!Number.isFinite(lng)) return res.status(400).json({ error: 'longitud inválida' });
+        patch.longitud = lng;
+      }
+    }
+
+    if (hop('instagram')) patch.instagram = String(b.instagram || '').trim() || null;
+    if (hop('facebook')) patch.facebook = String(b.facebook || '').trim() || null;
+    if (hop('tiktok')) patch.tiktok = String(b.tiktok || '').trim() || null;
+    if (hop('twitter')) patch.twitter = String(b.twitter || '').trim() || null;
+    if (hop('youtube')) patch.youtube = String(b.youtube || '').trim() || null;
+    if (hop('website')) patch.website = String(b.website || '').trim() || null;
+
+    if (hop('color_fondo_logo')) {
+      const s = String(b.color_fondo_logo || '').trim().slice(0, 16);
+      patch.color_fondo_logo = s || null;
+    }
+    if (hop('color_hero_primario')) {
+      const s = String(b.color_hero_primario || '').trim().slice(0, 16);
+      patch.color_hero_primario = s || null;
+    }
+    if (hop('color_hero_secundario')) {
+      const s = String(b.color_hero_secundario || '').trim().slice(0, 16);
+      patch.color_hero_secundario = s || null;
+    }
+    if (hop('color_borde_hero')) {
+      const s = String(b.color_borde_hero || '').trim().slice(0, 16);
+      patch.color_borde_hero = s || null;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'Ningún campo reconocido para actualizar' });
+    }
+
+    const { data: updated, error } = await supabase.from('sedes').update(patch).eq('id', id).select('*').single();
+    if (error) throw error;
+    if (!updated) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    res.json({ sede: updated });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) {
+      return res.status(st).json({ error: err.message || String(err) });
+    }
+    console.error('❌ PATCH /api/sedes/:id:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 function nombreAutorResenaDesdePerfil(row) {
   if (!row) return 'Jugador';
   const n = String(row.nombre || '').trim();

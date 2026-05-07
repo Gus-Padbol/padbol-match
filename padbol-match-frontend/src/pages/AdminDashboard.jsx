@@ -199,6 +199,89 @@ function normalizeHexSedeAdmin(raw) {
   return null;
 }
 
+/** Estado de formulario «Mi Sede» desde fila Supabase / API. */
+function sedeDbRowToMiSedeFormState(sedeData) {
+  if (!sedeData) return {};
+  return {
+    nombre: sedeData.nombre || '',
+    direccion: sedeData.direccion || '',
+    ciudad: sedeData.ciudad || '',
+    provincia: sedeData.provincia != null ? String(sedeData.provincia) : '',
+    pais: sedeData.pais || '',
+    telefono: sedeData.telefono || '',
+    email_contacto: sedeData.email_contacto || '',
+    horario_apertura: sedeData.horario_apertura || '',
+    horario_cierre: sedeData.horario_cierre || '',
+    precio_turno: sedeData.precio_turno ?? '',
+    moneda: sedeData.moneda || 'ARS',
+    descripcion: sedeData.descripcion || '',
+    historia: sedeData.historia != null ? String(sedeData.historia) : '',
+    metodo_pago: sedeData.metodo_pago || 'mercadopago',
+    stripe_account_id: sedeData.stripe_account_id || '',
+    mp_access_token: sedeData.mp_access_token || '',
+    pago_manual_instrucciones: sedeData.pago_manual_instrucciones || '',
+    latitud: sedeData.latitud != null ? String(sedeData.latitud) : '',
+    longitud: sedeData.longitud != null ? String(sedeData.longitud) : '',
+    instagram: sedeData.instagram || '',
+    facebook: sedeData.facebook || '',
+    tiktok: sedeData.tiktok || '',
+    twitter: sedeData.twitter || '',
+    youtube: sedeData.youtube || '',
+    website: sedeData.website || '',
+    color_fondo_logo: normalizeHexSedeAdmin(sedeData.color_fondo_logo) || '#000000',
+    color_hero_primario: normalizeHexSedeAdmin(sedeData.color_hero_primario) || '#4C1D95',
+    color_hero_secundario: normalizeHexSedeAdmin(sedeData.color_hero_secundario) || '#7C3AED',
+    color_borde_hero: normalizeHexSedeAdmin(sedeData.color_borde_hero) || '#6D28D9',
+  };
+}
+
+/** Body para PATCH /api/sedes/:id (campos alineados con el panel). */
+function miSedeFormToApiPatchBody(form) {
+  const precioRaw = form.precio_turno;
+  let precio_turno = null;
+  if (precioRaw !== '' && precioRaw != null) {
+    const p = parseFloat(String(precioRaw).replace(/\./g, '').replace(',', '.'));
+    if (Number.isFinite(p)) precio_turno = p;
+  }
+  const latOk = form.latitud !== '' && form.latitud != null && Number.isFinite(parseFloat(form.latitud));
+  const lngOk = form.longitud !== '' && form.longitud != null && Number.isFinite(parseFloat(form.longitud));
+  return {
+    nombre: form.nombre,
+    direccion: form.direccion || null,
+    ciudad: form.ciudad || null,
+    provincia:
+      form.provincia != null && String(form.provincia).trim() !== '' ? String(form.provincia).trim() : null,
+    pais: form.pais || null,
+    telefono: form.telefono || null,
+    email_contacto: form.email_contacto || null,
+    horario_apertura: form.horario_apertura || null,
+    horario_cierre: form.horario_cierre || null,
+    precio_turno,
+    moneda: form.moneda || 'ARS',
+    descripcion: form.descripcion || null,
+    historia:
+      form.historia != null && String(form.historia).trim() !== ''
+        ? String(form.historia).trim().slice(0, 500)
+        : null,
+    metodo_pago: form.metodo_pago || 'mercadopago',
+    stripe_account_id: form.stripe_account_id || null,
+    mp_access_token: form.mp_access_token || null,
+    pago_manual_instrucciones: form.pago_manual_instrucciones || null,
+    latitud: latOk ? parseFloat(form.latitud) : null,
+    longitud: lngOk ? parseFloat(form.longitud) : null,
+    instagram: form.instagram || null,
+    facebook: form.facebook || null,
+    tiktok: form.tiktok || null,
+    twitter: form.twitter || null,
+    youtube: form.youtube || null,
+    website: form.website || null,
+    color_fondo_logo: normalizeHexSedeAdmin(form.color_fondo_logo) || '#000000',
+    color_hero_primario: normalizeHexSedeAdmin(form.color_hero_primario) || '#4C1D95',
+    color_hero_secundario: normalizeHexSedeAdmin(form.color_hero_secundario) || '#7C3AED',
+    color_borde_hero: normalizeHexSedeAdmin(form.color_borde_hero) || '#6D28D9',
+  };
+}
+
 const ADMIN_TABS_ALLOWED = new Set([
   'resumen',
   'torneos',
@@ -2530,6 +2613,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     sedeId: null,
   });
   const [miSedeMsg,     setMiSedeMsg]     = useState('');
+  const [editarSedeModalOpen, setEditarSedeModalOpen] = useState(false);
+  const [editarSedeDraft, setEditarSedeDraft] = useState({});
+  const [editarSedeModalMsg, setEditarSedeModalMsg] = useState('');
   const [canchas,       setCanchas]       = useState([]);
   const [nuevaCancha,   setNuevaCancha]   = useState('');
   const [licenciaForm,  setLicenciaForm]  = useState({ numero_licencia: '', fecha_licencia: '', licencia_activa: true });
@@ -2579,36 +2665,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     ]).then(([{ data: sedeData }, { data: canchasData }]) => {
       if (sedeData) {
         setMiSede(sedeData);
-        setMiSedeForm({
-          nombre:           sedeData.nombre          || '',
-          direccion:        sedeData.direccion        || '',
-          ciudad:           sedeData.ciudad           || '',
-          pais:             sedeData.pais             || '',
-          telefono:         sedeData.telefono         || '',
-          email_contacto:   sedeData.email_contacto  || '',
-          horario_apertura: sedeData.horario_apertura || '',
-          horario_cierre:   sedeData.horario_cierre   || '',
-          precio_turno:     sedeData.precio_turno     ?? '',
-          moneda:           sedeData.moneda           || 'ARS',
-          descripcion:      sedeData.descripcion      || '',
-          historia:        sedeData.historia != null ? String(sedeData.historia) : '',
-          metodo_pago:      sedeData.metodo_pago      || 'mercadopago',
-          stripe_account_id: sedeData.stripe_account_id || '',
-          mp_access_token:  sedeData.mp_access_token  || '',
-          pago_manual_instrucciones: sedeData.pago_manual_instrucciones || '',
-          latitud:          sedeData.latitud  != null ? String(sedeData.latitud)  : '',
-          longitud:         sedeData.longitud != null ? String(sedeData.longitud) : '',
-          instagram:        sedeData.instagram  || '',
-          facebook:         sedeData.facebook   || '',
-          tiktok:           sedeData.tiktok     || '',
-          twitter:          sedeData.twitter    || '',
-          youtube:          sedeData.youtube    || '',
-          website:          sedeData.website    || '',
-          color_fondo_logo: normalizeHexSedeAdmin(sedeData.color_fondo_logo) || '#000000',
-          color_hero_primario: normalizeHexSedeAdmin(sedeData.color_hero_primario) || '#4C1D95',
-          color_hero_secundario: normalizeHexSedeAdmin(sedeData.color_hero_secundario) || '#7C3AED',
-          color_borde_hero: normalizeHexSedeAdmin(sedeData.color_borde_hero) || '#6D28D9',
-        });
+        setMiSedeForm(sedeDbRowToMiSedeFormState(sedeData));
         setLicenciaForm({
           numero_licencia: sedeData.numero_licencia || '',
           fecha_licencia:  sedeData.fecha_licencia  || '',
@@ -2663,45 +2720,39 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   );
 
   const guardarMiSede = async () => {
-    setMiSedeSaving(true); setMiSedeMsg('');
+    if (!sedeId || !session?.access_token) {
+      setMiSedeMsg('⚠️ Iniciá sesión de nuevo.');
+      setTimeout(() => setMiSedeMsg(''), 4000);
+      return;
+    }
+    setMiSedeSaving(true);
+    setMiSedeMsg('');
     const prev = miSede;
-    const { error } = await supabase.from('sedes').update({
-      nombre:           miSedeForm.nombre,
-      direccion:        miSedeForm.direccion        || null,
-      ciudad:           miSedeForm.ciudad           || null,
-      pais:             miSedeForm.pais             || null,
-      telefono:         miSedeForm.telefono         || null,
-      email_contacto:   miSedeForm.email_contacto  || null,
-      horario_apertura: miSedeForm.horario_apertura || null,
-      horario_cierre:   miSedeForm.horario_cierre   || null,
-      precio_turno:     miSedeForm.precio_turno  !== '' ? parseFloat(miSedeForm.precio_turno)  : null,
-      moneda:           miSedeForm.moneda           || 'ARS',
-      descripcion:      miSedeForm.descripcion      || null,
-      historia:
-        miSedeForm.historia != null && String(miSedeForm.historia).trim() !== ''
-          ? String(miSedeForm.historia).trim().slice(0, 500)
-          : null,
-      metodo_pago:      miSedeForm.metodo_pago || 'mercadopago',
-      stripe_account_id: miSedeForm.stripe_account_id || null,
-      mp_access_token:  miSedeForm.mp_access_token  || null,
-      pago_manual_instrucciones: miSedeForm.pago_manual_instrucciones || null,
-      latitud:          miSedeForm.latitud  !== '' ? parseFloat(miSedeForm.latitud)  : null,
-      longitud:         miSedeForm.longitud !== '' ? parseFloat(miSedeForm.longitud) : null,
-      instagram:        miSedeForm.instagram  || null,
-      facebook:         miSedeForm.facebook   || null,
-      tiktok:           miSedeForm.tiktok     || null,
-      twitter:          miSedeForm.twitter    || null,
-      youtube:          miSedeForm.youtube    || null,
-      website:          miSedeForm.website    || null,
-      color_fondo_logo: normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000',
-      color_hero_primario: normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95',
-      color_hero_secundario: normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED',
-      color_borde_hero: normalizeHexSedeAdmin(miSedeForm.color_borde_hero) || '#6D28D9',
-    }).eq('id', sedeId);
+    const body = miSedeFormToApiPatchBody(miSedeForm);
+    let errorMsg = null;
+    let updated = null;
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errorMsg = data.error || res.statusText || 'Error al guardar';
+      } else {
+        updated = data.sede;
+      }
+    } catch (e) {
+      errorMsg = e?.message || String(e);
+    }
     setMiSedeSaving(false);
-    setMiSedeMsg(error ? `⚠️ ${error.message}` : '✅ Sede actualizada');
-    setTimeout(() => setMiSedeMsg(''), 3000);
-    if (!error && prev) {
+    setMiSedeMsg(errorMsg ? `⚠️ ${errorMsg}` : '✅ Sede actualizada');
+    setTimeout(() => setMiSedeMsg(''), errorMsg ? 5000 : 3000);
+    if (!errorMsg && updated && prev) {
       const secret = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_PADBOL_SEDE_CRITICO_NOTIFY_SECRET : '';
       const pushCambio = (campo, a, b) => {
         const sa = a == null || a === '' ? '' : String(a);
@@ -2737,25 +2788,97 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           }),
         }).catch(() => {});
       }
-      setMiSede((p) =>
-        p
-          ? {
-              ...p,
-              nombre: miSedeForm.nombre,
-              direccion: miSedeForm.direccion || null,
-              email_contacto: miSedeForm.email_contacto || null,
-              latitud: miSedeForm.latitud !== '' ? parseFloat(miSedeForm.latitud) : null,
-              longitud: miSedeForm.longitud !== '' ? parseFloat(miSedeForm.longitud) : null,
-              historia:
-                miSedeForm.historia != null && String(miSedeForm.historia).trim() !== ''
-                  ? String(miSedeForm.historia).trim().slice(0, 500)
-                  : null,
-              color_hero_primario: normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95',
-              color_hero_secundario: normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED',
-              color_borde_hero: normalizeHexSedeAdmin(miSedeForm.color_borde_hero) || '#6D28D9',
-            }
-          : p
-      );
+      setMiSede(updated);
+      setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+      setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+    }
+  };
+
+  const abrirModalEditarSede = useCallback(() => {
+    setEditarSedeDraft({ ...miSedeForm });
+    setEditarSedeModalMsg('');
+    setEditarSedeModalOpen(true);
+  }, [miSedeForm]);
+
+  const guardarEditarSedeModal = async () => {
+    if (!sedeId || !session?.access_token) {
+      setEditarSedeModalMsg('Iniciá sesión de nuevo.');
+      return;
+    }
+    setMiSedeSaving(true);
+    setEditarSedeModalMsg('');
+    const prev = miSede;
+    const body = miSedeFormToApiPatchBody(editarSedeDraft);
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      setMiSedeSaving(false);
+      if (!res.ok) {
+        setEditarSedeModalMsg(data.error || res.statusText || 'Error al guardar');
+        return;
+      }
+      const updated = data.sede;
+      if (updated) {
+        setMiSede(updated);
+        setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+        setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+        if (prev) {
+          const secret =
+            typeof import.meta !== 'undefined' ? import.meta.env?.VITE_PADBOL_SEDE_CRITICO_NOTIFY_SECRET : '';
+          const pushCambio = (campo, a, b) => {
+            const sa = a == null || a === '' ? '' : String(a);
+            const sb = b == null || b === '' ? '' : String(b);
+            if (sa !== sb) return { campo, anterior: sa || '—', nuevo: sb || '—' };
+            return null;
+          };
+          const cambios = [
+            pushCambio('nombre', prev.nombre, editarSedeDraft.nombre),
+            pushCambio('dirección / ubicación', prev.direccion, editarSedeDraft.direccion),
+            pushCambio(
+              'latitud',
+              prev.latitud != null && prev.latitud !== '' ? String(prev.latitud) : '',
+              editarSedeDraft.latitud !== '' && Number.isFinite(parseFloat(editarSedeDraft.latitud))
+                ? String(parseFloat(editarSedeDraft.latitud))
+                : ''
+            ),
+            pushCambio(
+              'longitud',
+              prev.longitud != null && prev.longitud !== '' ? String(prev.longitud) : '',
+              editarSedeDraft.longitud !== '' && Number.isFinite(parseFloat(editarSedeDraft.longitud))
+                ? String(parseFloat(editarSedeDraft.longitud))
+                : ''
+            ),
+            pushCambio('email de contacto / admin', prev.email_contacto, editarSedeDraft.email_contacto),
+          ].filter(Boolean);
+          if (secret && cambios.length) {
+            const sedeNombre =
+              String(editarSedeDraft.nombre || prev.nombre || '').trim() || '(sede)';
+            void fetch(`${apiBaseUrl}/api/notify/sede-cambio-critico`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                secret,
+                sedeNombre,
+                actorEmail: currentEmail,
+                cambios,
+              }),
+            }).catch(() => {});
+          }
+        }
+        setEditarSedeModalOpen(false);
+        setMiSedeMsg('✅ Sede actualizada');
+        setTimeout(() => setMiSedeMsg(''), 3000);
+      }
+    } catch (e) {
+      setMiSedeSaving(false);
+      setEditarSedeModalMsg(e?.message || String(e));
     }
   };
 
@@ -4794,6 +4917,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
         <h2>⚙️ Configuración de Puntos</h2>
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '14px 16px',
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            maxWidth: '640px',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
+            <strong>Datos de la sede:</strong> si tenés la pestaña <strong>«Mi Sede»</strong>, usá el botón{' '}
+            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
+            se guardan vía API y se reflejan en el perfil público.
+          </p>
+        </div>
 
         {/* Niveles de torneo + tipos custom unificados */}
         <div style={{ marginBottom: '32px' }}>
@@ -5259,13 +5398,336 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       {/* ── Mi Sede tab ── */}
       {activeTab === 'mi_sede' && puedeVerMiSede && <div className="section admin-mi-sede-form">
-        <h2>🏟️ Mi Sede</h2>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            marginBottom: '8px',
+          }}
+        >
+          <h2 style={{ margin: 0 }}>🏟️ Mi Sede</h2>
+          {!miSedeLoading && miSede ? (
+            <button
+              type="button"
+              onClick={abrirModalEditarSede}
+              style={{
+                padding: '10px 18px',
+                background: 'linear-gradient(135deg, #0ea5e9, #0369a1)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '14px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(14,165,233,0.35)',
+              }}
+            >
+              ✏️ Editar sede
+            </button>
+          ) : null}
+        </div>
 
         {miSedeLoading ? (
           <p style={{ color: '#999' }}>Cargando datos de la sede...</p>
         ) : !miSede ? (
           <p style={{ color: '#f87171' }}>No se encontró información de la sede.</p>
         ) : (<>
+          {editarSedeModalOpen ? (
+            <div
+              role="presentation"
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 10050,
+                background: 'rgba(15,23,42,0.55)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '16px',
+                boxSizing: 'border-box',
+              }}
+              onClick={() => {
+                if (!miSedeSaving) setEditarSedeModalOpen(false);
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="editar-sede-modal-titulo"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: '#fff',
+                  borderRadius: '16px',
+                  maxWidth: '540px',
+                  width: '100%',
+                  maxHeight: 'min(90vh, 760px)',
+                  overflowY: 'auto',
+                  padding: '22px 20px',
+                  boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <h3 id="editar-sede-modal-titulo" style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a' }}>
+                  Editar sede
+                </h3>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                  Datos del perfil público. Al guardar se actualizan en la base y se ven al entrar de nuevo a{' '}
+                  <strong>/sede/…</strong>.
+                </p>
+                {[
+                  { label: 'Nombre del club', k: 'nombre' },
+                  { label: 'Dirección', k: 'direccion' },
+                  { label: 'Ciudad', k: 'ciudad' },
+                  { label: 'Provincia / Estado', k: 'provincia' },
+                  { label: 'País', k: 'pais' },
+                  { label: 'Horario apertura', k: 'horario_apertura', ph: 'Ej: 08:00' },
+                  { label: 'Horario cierre', k: 'horario_cierre', ph: 'Ej: 23:00' },
+                  { label: 'WhatsApp del club', k: 'telefono', ph: 'Sin 0 ni 15' },
+                  { label: 'Email de contacto', k: 'email_contacto' },
+                  { label: 'Latitud', k: 'latitud', ph: '-34.6037' },
+                  { label: 'Longitud', k: 'longitud', ph: '-58.3816' },
+                ].map(({ label, k, ph }) => (
+                  <div key={k} style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                      {label}
+                    </label>
+                    <input
+                      type="text"
+                      value={editarSedeDraft[k] || ''}
+                      placeholder={ph || ''}
+                      onChange={(e) => setEditarSedeDraft((p) => ({ ...p, [k]: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                ))}
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                    Moneda
+                  </label>
+                  <select
+                    value={editarSedeDraft.moneda || 'ARS'}
+                    onChange={(e) => setEditarSedeDraft((p) => ({ ...p, moneda: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                    }}
+                  >
+                    <option value="ARS">ARS</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="BRL">BRL</option>
+                    <option value="CLP">CLP</option>
+                    <option value="UYU">UYU</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                    Precio por turno (90 min)
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={
+                      editarSedeDraft.precio_turno !== '' && editarSedeDraft.precio_turno != null
+                        ? Number(String(editarSedeDraft.precio_turno).replace(/\./g, '')).toLocaleString('es-AR')
+                        : ''
+                    }
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                      setEditarSedeDraft((p) => ({ ...p, precio_turno: digits }));
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                    Descripción del club
+                  </label>
+                  <textarea
+                    rows={4}
+                    maxLength={300}
+                    value={editarSedeDraft.descripcion || ''}
+                    onChange={(e) => setEditarSedeDraft((p) => ({ ...p, descripcion: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                    Historia / Sobre el club
+                  </label>
+                  <textarea
+                    rows={5}
+                    maxLength={500}
+                    value={editarSedeDraft.historia || ''}
+                    onChange={(e) =>
+                      setEditarSedeDraft((p) => ({ ...p, historia: e.target.value.slice(0, 500) }))
+                    }
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                    Método de pago
+                  </label>
+                  <select
+                    value={editarSedeDraft.metodo_pago || 'mercadopago'}
+                    onChange={(e) => setEditarSedeDraft((p) => ({ ...p, metodo_pago: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                    }}
+                  >
+                    <option value="mercadopago">Mercado Pago</option>
+                    <option value="stripe">Stripe</option>
+                    <option value="manual">Pago manual</option>
+                  </select>
+                </div>
+                {String(editarSedeDraft.metodo_pago || '') === 'mercadopago' ? (
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                      Access token MP (opcional)
+                    </label>
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      value={editarSedeDraft.mp_access_token || ''}
+                      onChange={(e) => setEditarSedeDraft((p) => ({ ...p, mp_access_token: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                ) : null}
+                {String(editarSedeDraft.metodo_pago || '') === 'stripe' ? (
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                      Stripe Connect account ID
+                    </label>
+                    <input
+                      type="text"
+                      value={editarSedeDraft.stripe_account_id || ''}
+                      onChange={(e) => setEditarSedeDraft((p) => ({ ...p, stripe_account_id: e.target.value }))}
+                      placeholder="acct_…"
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                ) : null}
+                {String(editarSedeDraft.metodo_pago || '') === 'manual' ? (
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                      Instrucciones de pago manual
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editarSedeDraft.pago_manual_instrucciones || ''}
+                      onChange={(e) =>
+                        setEditarSedeDraft((p) => ({ ...p, pago_manual_instrucciones: e.target.value }))
+                      }
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        resize: 'vertical',
+                        boxSizing: 'border-box',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                  </div>
+                ) : null}
+                {editarSedeModalMsg ? (
+                  <p style={{ color: '#b91c1c', fontSize: '13px', fontWeight: 600, margin: '0 0 12px' }}>{editarSedeModalMsg}</p>
+                ) : null}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => !miSedeSaving && setEditarSedeModalOpen(false)}
+                    disabled={miSedeSaving}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      background: '#f8fafc',
+                      fontWeight: 700,
+                      cursor: miSedeSaving ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void guardarEditarSedeModal()}
+                    disabled={miSedeSaving}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: miSedeSaving ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                      color: '#fff',
+                      fontWeight: 800,
+                      cursor: miSedeSaving ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {miSedeSaving ? 'Guardando…' : 'Guardar cambios'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {/* ── 0. Licencia PADBOL ── */}
           <div style={{ marginBottom: '32px' }}>
@@ -5434,6 +5896,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 { label: 'Nombre del club',        field: 'nombre' },
                 { label: 'Dirección',              field: 'direccion' },
                 { label: 'Ciudad',                 field: 'ciudad' },
+                { label: 'Provincia / Estado',     field: 'provincia' },
                 { label: 'País',                   field: 'pais' },
                 { label: 'WhatsApp del club',       field: 'telefono', placeholder: 'Ej: 2213032019', hint: 'Sin 0 adelante, sin 15' },
                 { label: 'Email de contacto',      field: 'email_contacto' },
