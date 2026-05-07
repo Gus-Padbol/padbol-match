@@ -11,6 +11,8 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { runCheckMorasSedes } from './suscripciones/checkMorasSedes.js';
+import { createCheckSuscripcionActiva } from './suscripciones/checkSuscripcionActiva.js';
 
 dotenv.config();
 
@@ -218,6 +220,13 @@ function isSuperAdminApi(userEmail, role) {
   if (LEGACY_SUPER_ADMIN_EMAILS_API.includes(em)) return true;
   return role === 'super_admin';
 }
+
+const checkSuscripcionActiva = createCheckSuscripcionActiva({
+  supabase,
+  authUserFromBearer,
+  fetchUserRoleRow,
+  isSuperAdminApi,
+});
 
 /** Alineado con el front (user_role_data): quita bandera emoji al comparar país. */
 function normalizeAdminPaisLabel(raw) {
@@ -1198,7 +1207,7 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (!Number.isFinite(id)) {
       return res.status(400).json({ error: 'ID de sede inválido' });
     }
-    await assertUsuarioPuedeAdministrarSede(req, id);
+    const scope = await assertUsuarioPuedeAdministrarSede(req, id);
 
     const b = req.body;
     if (!b || typeof b !== 'object' || Array.isArray(b)) {
@@ -1291,6 +1300,28 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (hop('color_borde_hero')) {
       const s = String(b.color_borde_hero || '').trim().slice(0, 16);
       patch.color_borde_hero = s || null;
+    }
+
+    if (hop('suscripcion_estado')) {
+      if (!scope?.superA) {
+        return res.status(403).json({ error: 'Solo super_admin puede cambiar suscripcion_estado' });
+      }
+      const allowed = new Set([
+        'sin_suscripcion',
+        'pendiente_pago',
+        'activa',
+        'vencida',
+        'cancelada',
+        'cancelado',
+        'aviso',
+        'segundo_aviso',
+        'suspendido',
+      ]);
+      const se = String(b.suscripcion_estado ?? '').trim().toLowerCase();
+      if (!allowed.has(se)) {
+        return res.status(400).json({ error: 'suscripcion_estado inválido' });
+      }
+      patch.suscripcion_estado = se;
     }
 
     if (Object.keys(patch).length === 0) {
@@ -1587,7 +1618,7 @@ app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
 });
 
 // POST reserva
-app.post('/api/reservas', async (req, res) => {
+app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
   try {
     const { sede, fecha, hora, cancha, nombre, email, whatsapp, nivel, precio, estado, duracion } = req.body;
 
@@ -2111,7 +2142,7 @@ function normalizeTorneoCategoriaEdad(raw) {
   return null;
 }
 
-app.post('/api/torneos', async (req, res) => {
+app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
   try {
     const {
       nombre,
@@ -4133,7 +4164,7 @@ async function actualizarUltimoCompaneroDesdeEquipoRow(equipoRow) {
   }
 }
 
-app.post('/api/torneos/:torneo_id/equipos', async (req, res) => {
+app.post('/api/torneos/:torneo_id/equipos', checkSuscripcionActiva, async (req, res) => {
   try {
     const { torneo_id } = req.params;
     const { nombre, sede_id, jugadores } = req.body;
@@ -4169,6 +4200,14 @@ app.post('/api/torneos/:torneo_id/equipos', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+/** Placeholder: si se implementa inscripción bajo esta ruta, ya pasa por verificación de suscripción (sede_id en body). */
+app.post('/api/inscripciones', checkSuscripcionActiva, async (req, res) => {
+  return res.status(404).json({
+    error:
+      'Ruta no disponible. Para inscribir un equipo en un torneo usá POST /api/torneos/:torneo_id/equipos. Si enviás sede_id en el body, la suscripción de esa sede se valida igualmente.',
+  });
 });
 
 app.get('/api/torneos/:torneo_id/equipos', async (req, res) => {
@@ -7302,6 +7341,22 @@ cron.schedule(
     }
   },
   { timezone: TZ_TORNEO_CALENDARIO },
+);
+
+/** 09:00 ART: mora de suscripción (sedes con proximo_cobro vencido, excl. pago manual). */
+cron.schedule(
+  '0 9 * * *',
+  async () => {
+    try {
+      await runCheckMorasSedes({
+        supabase,
+        sendWhatsApp: (to, body) => sendTwilioWhatsAppBodyToRaw(to, body),
+      });
+    } catch (err) {
+      console.error('❌ Cron checkMorasSedes:', err.message);
+    }
+  },
+  { timezone: 'America/Argentina/Buenos_Aires' },
 );
 
 (async () => {

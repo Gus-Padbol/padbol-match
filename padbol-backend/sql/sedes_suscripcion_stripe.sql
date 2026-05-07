@@ -9,5 +9,5 @@ ALTER TABLE public.sedes
 
 COMMENT ON COLUMN public.sedes.stripe_customer_id IS 'Stripe Customer id (cus_...) del club';
 COMMENT ON COLUMN public.sedes.stripe_subscription_id IS 'Stripe Subscription id (sub_...)';
-COMMENT ON COLUMN public.sedes.suscripcion_estado IS 'sin_suscripcion | pendiente_pago | activa | vencida | cancelada';
+COMMENT ON COLUMN public.sedes.suscripcion_estado IS 'sin_suscripcion | pendiente_pago | activa | vencida | cancelada | aviso | segundo_aviso | suspendido | cancelado (mora vía cron + webhooks Stripe)';
 COMMENT ON COLUMN public.sedes.suscripcion_proximo_cobro IS 'Próximo cobro / fin de periodo actual (UTC)';

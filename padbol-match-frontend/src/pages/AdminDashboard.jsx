@@ -66,8 +66,33 @@ function etiquetaSuscripcionEstado(raw) {
   if (v === 'activa') return 'Activa';
   if (v === 'vencida') return 'Vencida';
   if (v === 'pendiente_pago') return 'Pendiente de pago';
-  if (v === 'cancelada') return 'Cancelada';
+  if (v === 'cancelada' || v === 'cancelado') return 'Cancelada';
+  if (v === 'aviso') return 'Aviso (mora)';
+  if (v === 'segundo_aviso') return 'Segundo aviso';
+  if (v === 'suspendido') return 'Suspendida (mora)';
   return 'Sin suscripción';
+}
+
+const SUSCRIPCION_ESTADOS_SUPER_OPTIONS = [
+  { value: 'sin_suscripcion', label: 'Sin suscripción' },
+  { value: 'pendiente_pago', label: 'Pendiente de pago' },
+  { value: 'activa', label: 'Activa' },
+  { value: 'vencida', label: 'Vencida' },
+  { value: 'cancelada', label: 'Cancelada (Stripe)' },
+  { value: 'aviso', label: 'Aviso mora' },
+  { value: 'segundo_aviso', label: 'Segundo aviso mora' },
+  { value: 'suspendido', label: 'Suspendida mora' },
+  { value: 'cancelado', label: 'Cancelada mora (30d)' },
+];
+
+function supportWhatsAppUrlFromEnv() {
+  const raw =
+    typeof process !== 'undefined' && process.env.REACT_APP_SUPPORT_WHATSAPP
+      ? String(process.env.REACT_APP_SUPPORT_WHATSAPP).trim()
+      : '';
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  return `https://wa.me/${digits}`;
 }
 
 function formatProximoCobroAdmin(iso) {
@@ -2638,6 +2663,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [miSedeLoading, setMiSedeLoading] = useState(false);
   const [miSedeForm,    setMiSedeForm]    = useState({});
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
+  const [suscripcionEstadoSuperSavingId, setSuscripcionEstadoSuperSavingId] = useState(null);
   const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
   const [cancelReservaModalId, setCancelReservaModalId] = useState(null);
   const [suscripcionModal, setSuscripcionModal] = useState({
@@ -2990,6 +3016,35 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       }
     },
     [apiBaseUrl, isSuperAdmin, session?.access_token]
+  );
+
+  const guardarSuscripcionEstadoSuper = useCallback(
+    async (sedeRow, nuevoValor) => {
+      if (!isSuperAdmin || !session?.access_token || !sedeRow?.id) return;
+      const id = sedeRow.id;
+      setSuscripcionEstadoSuperSavingId(id);
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/sedes/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ suscripcion_estado: nuevoValor }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(j.error || 'No se pudo actualizar el estado');
+          return;
+        }
+        await fetchData();
+      } catch (e) {
+        alert(e.message || String(e));
+      } finally {
+        setSuscripcionEstadoSuperSavingId(null);
+      }
+    },
+    [apiBaseUrl, fetchData, isSuperAdmin, session?.access_token]
   );
 
   const guardarLicencia = async () => {
@@ -3692,6 +3747,117 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {mensajeExito}
         </div>
       )}
+
+      {esAdminClub && !isSuperAdmin && miSede
+        ? (() => {
+            const se = String(miSede.suscripcion_estado || '').toLowerCase();
+            const waSupport = supportWhatsAppUrlFromEnv();
+            const btnSoporte = (bg) =>
+              waSupport ? (
+                <a
+                  href={waSupport}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    marginTop: '10px',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    background: bg,
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '13px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Contactar soporte
+                </a>
+              ) : null;
+            if (se === 'aviso') {
+              return (
+                <div
+                  role="alert"
+                  style={{
+                    marginBottom: '18px',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    background: '#fef9c3',
+                    border: '1px solid #eab308',
+                    color: '#713f12',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  ⚠️ Tu suscripción venció. Regularizá el pago para evitar interrupciones.
+                </div>
+              );
+            }
+            if (se === 'segundo_aviso') {
+              return (
+                <div
+                  role="alert"
+                  style={{
+                    marginBottom: '18px',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    background: '#ffedd5',
+                    border: '1px solid #ea580c',
+                    color: '#9a3412',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  🔴 Segundo aviso: tu cuenta será suspendida en breve si no regularizás.
+                </div>
+              );
+            }
+            if (se === 'suspendido') {
+              return (
+                <div
+                  role="alert"
+                  style={{
+                    marginBottom: '18px',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    background: '#fee2e2',
+                    border: '1px solid #dc2626',
+                    color: '#991b1b',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  🚫 Cuenta suspendida. Los jugadores no pueden reservar. Contactá soporte.
+                  <div>{btnSoporte('#dc2626')}</div>
+                </div>
+              );
+            }
+            if (se === 'cancelado' || se === 'cancelada') {
+              return (
+                <div
+                  role="alert"
+                  style={{
+                    marginBottom: '18px',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    background: '#450a0a',
+                    border: '1px solid #7f1d1d',
+                    color: '#fecaca',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  ❌ Cuenta cancelada. Contactá soporte para reactivar.
+                  <div>{btnSoporte('#b91c1c')}</div>
+                </div>
+              );
+            }
+            return null;
+          })()
+        : null}
 
       {activeTab === 'resumen' && (esAdminNacional ? (
         <>
@@ -4502,6 +4668,49 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                     <strong>Estado:</strong> {etiquetaSuscripcionEstado(s.suscripcion_estado)}
                                     <br />
                                     <strong>Próximo cobro:</strong> {formatProximoCobroAdmin(s.suscripcion_proximo_cobro)}
+                                  </div>
+                                  <div
+                                    style={{
+                                      marginTop: '10px',
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                    }}
+                                  >
+                                    <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569' }}>
+                                      Cambiar estado (super admin)
+                                    </label>
+                                    <select
+                                      value={String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase()}
+                                      disabled={suscripcionEstadoSuperSavingId === s.id}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        const prev = String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase();
+                                        if (v === prev) return;
+                                        if (!window.confirm(`¿Guardar estado de suscripción como "${v}"?`)) {
+                                          e.target.value = prev;
+                                          return;
+                                        }
+                                        void guardarSuscripcionEstadoSuper(s, v);
+                                      }}
+                                      style={{
+                                        padding: '6px 10px',
+                                        borderRadius: '8px',
+                                        fontSize: '13px',
+                                        border: '1px solid #cbd5e1',
+                                        maxWidth: '100%',
+                                      }}
+                                    >
+                                      {SUSCRIPCION_ESTADOS_SUPER_OPTIONS.map((o) => (
+                                        <option key={o.value} value={o.value}>
+                                          {o.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {suscripcionEstadoSuperSavingId === s.id ? (
+                                      <span style={{ fontSize: '12px', color: '#64748b' }}>Guardando…</span>
+                                    ) : null}
                                   </div>
                                   {String(s.suscripcion_estado || '').toLowerCase() !== 'activa' &&
                                   String(s.suscripcion_estado || '').toLowerCase() !== 'pendiente_pago' ? (
