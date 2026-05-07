@@ -6658,6 +6658,37 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
   }
 });
 
+function normalizeDeportesCanchasSolicitudLicencia(raw) {
+  if (raw == null || typeof raw !== 'object') return null;
+  const allowed = new Set(['padbol', 'padel', 'pickleball', 'otro']);
+  const depIn = Array.isArray(raw.deportes) ? raw.deportes : [];
+  const deportes = [...new Set(depIn.map((x) => String(x || '').trim().toLowerCase()).filter((x) => allowed.has(x)))];
+  const canIn = raw.canchas && typeof raw.canchas === 'object' ? raw.canchas : {};
+  const canchas = {};
+  for (const k of allowed) {
+    if (!Object.prototype.hasOwnProperty.call(canIn, k)) continue;
+    const v = canIn[k];
+    if (v == null || v === '') continue;
+    const n = parseInt(String(v), 10);
+    if (Number.isFinite(n) && n >= 0) canchas[k] = n;
+  }
+  if (!deportes.length && !Object.keys(canchas).length) return null;
+  return { deportes, canchas: Object.keys(canchas).length ? canchas : {} };
+}
+
+function formatoDeportesCanchasWhatsApp(dc) {
+  if (!dc || typeof dc !== 'object') return '—';
+  const labels = { padbol: 'Padbol', padel: 'Pádel', pickleball: 'Pickleball', otro: 'Otro' };
+  const depLabel = (k) => labels[k] || k;
+  const deportes = Array.isArray(dc.deportes) ? dc.deportes : [];
+  const canchas = dc.canchas && typeof dc.canchas === 'object' ? dc.canchas : {};
+  const depPart = deportes.map(depLabel).join(', ') || '—';
+  const canParts = Object.entries(canchas)
+    .filter(([, n]) => n != null && String(n).trim() !== '')
+    .map(([k, n]) => `${depLabel(k)}: ${n}`);
+  return canParts.length ? `${depPart} · Canchas: ${canParts.join('; ')}` : depPart;
+}
+
 /** POST /api/solicitudes-licencia — público: registro de interés para sumar club. */
 app.post('/api/solicitudes-licencia', async (req, res) => {
   try {
@@ -6671,6 +6702,18 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
     if (!club_nombre || !pais || !ciudad || !responsable_nombre || !email || !whatsapp) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
+    const deportesCanchas = normalizeDeportesCanchasSolicitudLicencia(b.deportes_canchas);
+    const cantidadCanchasTotal = (() => {
+      if (deportesCanchas?.canchas && Object.keys(deportesCanchas.canchas).length) {
+        const s = Object.values(deportesCanchas.canchas).reduce((a, n) => a + (Number(n) || 0), 0);
+        return s > 0 ? s : null;
+      }
+      if (b.cantidad_canchas != null && b.cantidad_canchas !== '') {
+        const n = parseInt(String(b.cantidad_canchas), 10);
+        return Number.isFinite(n) ? n : null;
+      }
+      return null;
+    })();
     const payload = {
       club_nombre,
       pais,
@@ -6678,10 +6721,11 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
       responsable_nombre,
       email,
       whatsapp,
-      cantidad_canchas: b.cantidad_canchas != null && b.cantidad_canchas !== '' ? parseInt(String(b.cantidad_canchas), 10) : null,
-      tipo_interes: String(b.tipo_interes || '').trim() || null,
+      cantidad_canchas: cantidadCanchasTotal,
+      tipo_interes: 'Club Afiliado',
       mensaje: String(b.mensaje || '').trim() || null,
       estado: 'pendiente',
+      deportes_canchas: deportesCanchas,
     };
     const { data, error } = await supabase.from('solicitudes_licencia').insert(payload).select('*').single();
     if (error) throw error;
@@ -6696,7 +6740,8 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
         `Email: ${email}\n` +
         `WhatsApp: ${whatsapp}\n` +
         `Interés: ${payload.tipo_interes || '—'}\n` +
-        `Canchas: ${payload.cantidad_canchas ?? '—'}`;
+        `Canchas (total): ${payload.cantidad_canchas ?? '—'}\n` +
+        `Deportes / canchas: ${formatoDeportesCanchasWhatsApp(deportesCanchas)}`;
       await sendTwilioWhatsAppBodyToRaw(toSuper, msg);
     }
     await sendSolicitudLicenciaConfirmacionEmail({
