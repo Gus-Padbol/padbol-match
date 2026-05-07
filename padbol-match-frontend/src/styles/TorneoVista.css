@@ -1186,3 +1186,193 @@ button.podium-player-avatar-wrap {
   color: #94a3b8 !important;
   font-weight: 600;
 }
+
+/* Busca dupla (torneo) */
+.torneo-busca-dupla {
+  margin: 0 0 16px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 2px solid #a855f7;
+  box-shadow: 0 8px 28px rgba(168, 85, 247, 0.18);
+  box-sizing: border-box;
+}
+
+.torneo-busca-dupla__titulo {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #4c1d95;
+  text-align: center;
+}
+
+.torneo-busca-dupla__invites {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.torneo-busca-dupla__invite-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f5f3ff;
+  border: 1px solid #c4b5fd;
+}
+
+.torneo-busca-dupla__invite-text {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.torneo-busca-dupla__invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.torneo-busca-dupla__cta-row {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.torneo-busca-dupla__yo-anunciado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.torneo-busca-dupla__btn-link {
+  border: none;
+  background: none;
+  color: #7c3aed;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+}
+
+.torneo-busca-dupla__btn-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.torneo-busca-dupla__hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+}
+
+.torneo-busca-dupla__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.torneo-busca-dupla__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+}
+
+.torneo-busca-dupla__foto-wrap {
+  flex-shrink: 0;
+}
+
+.torneo-busca-dupla__foto {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.torneo-busca-dupla__foto--placeholder {
+  background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+}
+
+.torneo-busca-dupla__datos {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.torneo-busca-dupla__linea-nombre {
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.torneo-busca-dupla__alias {
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.torneo-busca-dupla__vos {
+  font-weight: 700;
+  color: #15803d;
+}
+
+.torneo-busca-dupla__cat {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.torneo-busca-dupla__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 160px;
+  align-items: stretch;
+}
+
+.torneo-busca-dupla__btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: #e2e8f0;
+  color: #1e293b;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.torneo-busca-dupla__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.torneo-busca-dupla__btn--primary {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #fff;
+}
+
+.torneo-busca-dupla__btn--wa {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+}
+
+.torneo-busca-dupla__sin-wa {
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+}

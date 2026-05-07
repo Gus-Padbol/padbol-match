@@ -1963,6 +1963,136 @@ function normalizeFechaAperturaInscripcionInput(v) {
   return { action: 'set', value: d.toISOString() };
 }
 
+/** Busca dupla: torneo aún no en curso / finalizado y fecha de inicio no pasada (calendario ART). */
+function torneoBackendPermiteBuscaDupla(estadoRaw, fechaInicio) {
+  if (torneoFechaInicioEsAnteriorAHoyArt(fechaInicio)) return false;
+  const n = normalizeTorneoEstadoForDb(estadoRaw);
+  if (!n) return false;
+  if (n === 'finalizado' || n === 'cancelado' || n === 'en_curso') return false;
+  return true;
+}
+
+const BUSCA_DUPLA_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function buscaDuplaEsUuidValido(s) {
+  return BUSCA_DUPLA_UUID_RE.test(String(s || '').trim());
+}
+
+async function usuarioEstaEnAlgunEquipoTorneo(torneoIdNum, userId, emailLower) {
+  const tid = Number(torneoIdNum);
+  const { data: equipos, error } = await supabase
+    .from('equipos')
+    .select('id, jugadores, creador_id')
+    .eq('torneo_id', tid);
+  if (error) throw error;
+  const uid = userId != null ? String(userId) : '';
+  const em = String(emailLower || '').trim().toLowerCase();
+  for (const eq of equipos || []) {
+    if (uid && String(eq.creador_id || '') === uid) return true;
+    const arr = Array.isArray(eq.jugadores) ? eq.jugadores : [];
+    for (const j of arr) {
+      const jid = j?.id != null && String(j.id).trim() !== '' ? String(j.id) : '';
+      if (uid && jid === uid) return true;
+      const je = String(j?.email || '').trim().toLowerCase();
+      if (em && je && je === em) return true;
+    }
+  }
+  return false;
+}
+
+async function obtenerEmailAuthPorUserIdBuscaDupla(userId) {
+  const uid = String(userId || '').trim();
+  if (!buscaDuplaEsUuidValido(uid)) return null;
+  try {
+    const { data, error } = await supabase.auth.admin.getUserById(uid);
+    if (error || !data?.user?.email) return null;
+    return String(data.user.email).trim().toLowerCase() || null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchJugadoresPerfilParaBuscaDupla(userId, emailLower) {
+  const uid = String(userId || '').trim();
+  let q = await supabase
+    .from('jugadores_perfil')
+    .select('user_id, email, nombre, apellido, alias, foto_url, whatsapp, nivel')
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (q.error) throw q.error;
+  let row = q.data;
+  if (!row && emailLower) {
+    const q2 = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, email, nombre, apellido, alias, foto_url, whatsapp, nivel')
+      .ilike('email', String(emailLower).trim())
+      .maybeSingle();
+    if (q2.error) throw q2.error;
+    row = q2.data;
+  }
+  return row;
+}
+
+function nombreCompletoDesdePerfilBuscaDupla(perfil) {
+  const n = [perfil?.nombre, perfil?.apellido].filter(Boolean).join(' ').trim();
+  if (n) return n;
+  return String(perfil?.nombre || '').trim() || 'Jugador';
+}
+
+function buildJugadorJsonEquipoDupla(perfil, userId, emailAuth, rolTag) {
+  const uid = String(userId);
+  const em = String(emailAuth || perfil?.email || '').trim();
+  const jug = {
+    id: uid,
+    email: em,
+    nombre: nombreCompletoDesdePerfilBuscaDupla(perfil),
+    estado: 'confirmado',
+    rol: rolTag,
+  };
+  const aliasTrim = String(perfil?.alias || '').trim();
+  if (aliasTrim) jug.alias = aliasTrim;
+  const foto = String(perfil?.foto_url || '').trim();
+  if (foto) jug.foto_url = foto;
+  return jug;
+}
+
+async function cancelarInvitacionesPendientesBuscaDuplaTorneo(torneoIdNum, userIds) {
+  const ids = [...new Set((userIds || []).map((x) => String(x)).filter(buscaDuplaEsUuidValido))];
+  for (const uid of ids) {
+    await supabase
+      .from('busca_dupla_invitacion')
+      .update({ estado: 'cancelada' })
+      .eq('torneo_id', torneoIdNum)
+      .eq('estado', 'pendiente')
+      .or(`from_user_id.eq.${uid},to_user_id.eq.${uid}`);
+  }
+}
+
+function jugadorRegistradoEnEquipoJsonBuscaDupla(j) {
+  if (!j || typeof j !== 'object') return false;
+  if (String(j.estado || '').toLowerCase() === 'pendiente') return false;
+  if (String(j.email || '').trim()) return true;
+  if (j.id != null && String(j.id).trim() !== '') return true;
+  return false;
+}
+
+function userIdsRegistradosDesdeEquipoRowBuscaDupla(equipoRow) {
+  const out = new Set();
+  const arr = Array.isArray(equipoRow?.jugadores) ? equipoRow.jugadores : [];
+  for (const j of arr) {
+    if (!jugadorRegistradoEnEquipoJsonBuscaDupla(j)) continue;
+    const jid = j.id != null && String(j.id).trim() !== '' ? String(j.id).trim() : '';
+    if (buscaDuplaEsUuidValido(jid)) out.add(jid);
+  }
+  return [...out];
+}
+
+function jugadoresRegistradosCountBuscaDupla(equipoRow) {
+  const arr = Array.isArray(equipoRow?.jugadores) ? equipoRow.jugadores : [];
+  return arr.filter(jugadorRegistradoEnEquipoJsonBuscaDupla).length;
+}
+
 // ===== TORNEOS =====
 app.post('/api/torneos', async (req, res) => {
   try {
@@ -2560,6 +2690,479 @@ app.post('/api/torneos/:id/lista-espera', async (req, res) => {
       throw insErr;
     }
     res.json({ ok: true, already: false });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Busca dupla (por torneo) ─────────────────────────────────────────────
+
+/** Listado público: jugadores anotados en busca dupla + datos de perfil. */
+app.get('/api/torneos/:id/busca-dupla', async (req, res) => {
+  try {
+    const tid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'ID inválido' });
+
+    const { data: rows, error } = await supabase
+      .from('busca_dupla_torneo')
+      .select('user_id, created_at')
+      .eq('torneo_id', tid)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const uids = [...new Set((rows || []).map((r) => String(r.user_id)).filter(buscaDuplaEsUuidValido))];
+    let perfilByUser = {};
+    if (uids.length) {
+      const { data: perfiles, error: pErr } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, nombre, apellido, alias, foto_url, whatsapp, nivel')
+        .in('user_id', uids);
+      if (pErr) throw pErr;
+      (perfiles || []).forEach((p) => {
+        if (p?.user_id) perfilByUser[String(p.user_id)] = p;
+      });
+    }
+
+    const list = (rows || []).map((r) => {
+      const uid = String(r.user_id);
+      const perfil = perfilByUser[uid] || null;
+      const wa = perfil?.whatsapp != null ? String(perfil.whatsapp).trim() : '';
+      return {
+        user_id: uid,
+        created_at: r.created_at,
+        nombre: perfil ? nombreCompletoDesdePerfilBuscaDupla(perfil) : null,
+        apellido: perfil?.apellido != null ? String(perfil.apellido).trim() : '',
+        alias: perfil?.alias != null ? String(perfil.alias).trim() : '',
+        foto_url: perfil?.foto_url != null ? String(perfil.foto_url).trim() : '',
+        categoria: perfil?.nivel != null ? String(perfil.nivel).trim() : '',
+        whatsapp: wa || null,
+      };
+    });
+
+    res.json(list);
+  } catch (err) {
+    const msg = String(err?.message || err);
+    if (/busca_dupla_torneo|Could not find|schema cache|PGRST205|42P01/i.test(msg)) {
+      return res.status(503).json({
+        error:
+          'Falta la tabla busca_dupla_torneo. Ejecutá padbol-backend/sql/busca_dupla_torneo.sql en Supabase.',
+        code: 'BUSCA_DUPLA_TABLE_MISSING',
+      });
+    }
+    res.status(500).json({ error: msg });
+  }
+});
+
+app.get('/api/torneos/:id/busca-dupla/me', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const tid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'ID inválido' });
+
+    const { data, error } = await supabase
+      .from('busca_dupla_torneo')
+      .select('user_id, created_at')
+      .eq('torneo_id', tid)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ enrolled: Boolean(data) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/torneos/:id/busca-dupla', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const email = String(user.email || '').trim().toLowerCase();
+    const tid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'ID inválido' });
+
+    const { data: torneoRow, error: tErr } = await supabase
+      .from('torneos')
+      .select('id, estado, fecha_inicio')
+      .eq('id', tid)
+      .maybeSingle();
+    if (tErr) throw tErr;
+    if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    if (!torneoBackendPermiteBuscaDupla(torneoRow.estado, torneoRow.fecha_inicio)) {
+      return res.status(400).json({ error: 'Este torneo no admite buscar dupla en este momento' });
+    }
+
+    if (await usuarioEstaEnAlgunEquipoTorneo(tid, user.id, email)) {
+      return res.status(400).json({ error: 'Ya tenés equipo en este torneo' });
+    }
+
+    const { error: insErr } = await supabase.from('busca_dupla_torneo').insert({
+      torneo_id: tid,
+      user_id: user.id,
+    });
+    if (insErr) {
+      if (String(insErr.code) === '23505') {
+        return res.json({ ok: true, already: true });
+      }
+      throw insErr;
+    }
+    res.json({ ok: true, already: false });
+  } catch (err) {
+    const msg = String(err?.message || err);
+    if (/busca_dupla_torneo|Could not find|schema cache|PGRST205|42P01/i.test(msg)) {
+      return res.status(503).json({
+        error:
+          'Falta la tabla busca_dupla_torneo. Ejecutá padbol-backend/sql/busca_dupla_torneo.sql en Supabase.',
+        code: 'BUSCA_DUPLA_TABLE_MISSING',
+      });
+    }
+    res.status(500).json({ error: msg });
+  }
+});
+
+app.delete('/api/torneos/:id/busca-dupla/me', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const tid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'ID inválido' });
+
+    const { error } = await supabase
+      .from('busca_dupla_torneo')
+      .delete()
+      .eq('torneo_id', tid)
+      .eq('user_id', user.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/torneos/:id/busca-dupla/invitaciones', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const tid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'ID inválido' });
+    const uid = String(user.id);
+
+    const { data: rows, error } = await supabase
+      .from('busca_dupla_invitacion')
+      .select('id, torneo_id, from_user_id, to_user_id, estado, created_at')
+      .eq('torneo_id', tid)
+      .eq('estado', 'pendiente')
+      .or(`from_user_id.eq.${uid},to_user_id.eq.${uid}`);
+    if (error) throw error;
+
+    const otros = new Set();
+    (rows || []).forEach((r) => {
+      if (String(r.from_user_id) === uid) otros.add(String(r.to_user_id));
+      else otros.add(String(r.from_user_id));
+    });
+    const otroList = [...otros].filter(buscaDuplaEsUuidValido);
+    let perfilByUser = {};
+    if (otroList.length) {
+      const { data: perfiles, error: pErr } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, nombre, apellido, alias, foto_url')
+        .in('user_id', otroList);
+      if (pErr) throw pErr;
+      (perfiles || []).forEach((p) => {
+        if (p?.user_id) perfilByUser[String(p.user_id)] = p;
+      });
+    }
+
+    const enrich = (otroId) => {
+      const p = perfilByUser[String(otroId)] || null;
+      return {
+        otro_user_id: String(otroId),
+        otro_nombre: p ? nombreCompletoDesdePerfilBuscaDupla(p) : null,
+        otro_alias: p?.alias != null ? String(p.alias).trim() : '',
+        otro_foto_url: p?.foto_url != null ? String(p.foto_url).trim() : '',
+      };
+    };
+
+    const recibidas = (rows || [])
+      .filter((r) => String(r.to_user_id) === uid)
+      .map((r) => ({
+        id: r.id,
+        from_user_id: String(r.from_user_id),
+        created_at: r.created_at,
+        ...enrich(r.from_user_id),
+      }));
+    const enviadas = (rows || [])
+      .filter((r) => String(r.from_user_id) === uid)
+      .map((r) => ({
+        id: r.id,
+        to_user_id: String(r.to_user_id),
+        created_at: r.created_at,
+        ...enrich(r.to_user_id),
+      }));
+
+    res.json({ recibidas, enviadas });
+  } catch (err) {
+    const msg = String(err?.message || err);
+    if (/busca_dupla_invitacion|Could not find|schema cache|PGRST205|42P01/i.test(msg)) {
+      return res.status(503).json({
+        error:
+          'Falta la tabla busca_dupla_invitacion. Ejecutá padbol-backend/sql/busca_dupla_torneo.sql en Supabase.',
+        code: 'BUSCA_DUPLA_TABLE_MISSING',
+      });
+    }
+    res.status(500).json({ error: msg });
+  }
+});
+
+app.post('/api/torneos/:id/busca-dupla/invitar', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const email = String(user.email || '').trim().toLowerCase();
+    const tid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'ID inválido' });
+    const toRaw = req.body?.to_user_id ?? req.body?.user_id;
+    const toUid = String(toRaw || '').trim();
+    if (!buscaDuplaEsUuidValido(toUid)) return res.status(400).json({ error: 'to_user_id inválido' });
+    if (toUid === String(user.id)) return res.status(400).json({ error: 'No podés invitarte a vos mismo' });
+
+    const { data: torneoRow, error: tErr } = await supabase
+      .from('torneos')
+      .select('id, estado, fecha_inicio')
+      .eq('id', tid)
+      .maybeSingle();
+    if (tErr) throw tErr;
+    if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    if (!torneoBackendPermiteBuscaDupla(torneoRow.estado, torneoRow.fecha_inicio)) {
+      return res.status(400).json({ error: 'Este torneo no admite invitaciones de dupla ahora' });
+    }
+
+    if (await usuarioEstaEnAlgunEquipoTorneo(tid, user.id, email)) {
+      return res.status(400).json({ error: 'Ya tenés equipo en este torneo' });
+    }
+    if (await usuarioEstaEnAlgunEquipoTorneo(tid, toUid, null)) {
+      return res.status(400).json({ error: 'Ese jugador ya tiene equipo en este torneo' });
+    }
+
+    const { data: yoBusco } = await supabase
+      .from('busca_dupla_torneo')
+      .select('user_id')
+      .eq('torneo_id', tid)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const { data: elOtroBusca } = await supabase
+      .from('busca_dupla_torneo')
+      .select('user_id')
+      .eq('torneo_id', tid)
+      .eq('user_id', toUid)
+      .maybeSingle();
+    if (!yoBusco || !elOtroBusca) {
+      return res.status(400).json({ error: 'Ambos tienen que estar en “busco dupla” para este torneo' });
+    }
+
+    const { data: exist } = await supabase
+      .from('busca_dupla_invitacion')
+      .select('id, estado')
+      .eq('torneo_id', tid)
+      .eq('from_user_id', user.id)
+      .eq('to_user_id', toUid)
+      .maybeSingle();
+    if (exist && String(exist.estado) === 'pendiente') {
+      return res.json({ ok: true, invitation_id: exist.id, existing: true });
+    }
+
+    const { data: inserted, error: insErr } = await supabase
+      .from('busca_dupla_invitacion')
+      .insert({
+        torneo_id: tid,
+        from_user_id: user.id,
+        to_user_id: toUid,
+        estado: 'pendiente',
+      })
+      .select('id')
+      .maybeSingle();
+    if (insErr) {
+      if (String(insErr.code) === '23505') {
+        const { data: ex2 } = await supabase
+          .from('busca_dupla_invitacion')
+          .select('id')
+          .eq('torneo_id', tid)
+          .eq('from_user_id', user.id)
+          .eq('to_user_id', toUid)
+          .maybeSingle();
+        return res.json({ ok: true, invitation_id: ex2?.id, existing: true });
+      }
+      throw insErr;
+    }
+    res.json({ ok: true, invitation_id: inserted?.id, existing: false });
+  } catch (err) {
+    const msg = String(err?.message || err);
+    if (/busca_dupla_invitacion|Could not find|schema cache|PGRST205|42P01/i.test(msg)) {
+      return res.status(503).json({
+        error:
+          'Falta la tabla busca_dupla_invitacion. Ejecutá padbol-backend/sql/busca_dupla_torneo.sql en Supabase.',
+        code: 'BUSCA_DUPLA_TABLE_MISSING',
+      });
+    }
+    res.status(500).json({ error: msg });
+  }
+});
+
+app.post('/api/torneos/:id/busca-dupla/invitaciones/:invId/aceptar', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const emailInv = String(user.email || '').trim().toLowerCase();
+    const tid = parseInt(String(req.params.id), 10);
+    const invId = parseInt(String(req.params.invId), 10);
+    if (!Number.isFinite(tid) || !Number.isFinite(invId)) return res.status(400).json({ error: 'ID inválido' });
+
+    const { data: inv, error: iErr } = await supabase
+      .from('busca_dupla_invitacion')
+      .select('id, torneo_id, from_user_id, to_user_id, estado')
+      .eq('id', invId)
+      .maybeSingle();
+    if (iErr) throw iErr;
+    if (!inv || Number(inv.torneo_id) !== tid) return res.status(404).json({ error: 'Invitación no encontrada' });
+    if (String(inv.estado) !== 'pendiente') return res.status(400).json({ error: 'La invitación ya no está pendiente' });
+    if (String(inv.to_user_id) !== String(user.id)) {
+      return res.status(403).json({ error: 'Solo el invitado puede aceptar' });
+    }
+
+    const fromUid = String(inv.from_user_id);
+    const toUid = String(inv.to_user_id);
+
+    const { data: torneoRow, error: tErr } = await supabase
+      .from('torneos')
+      .select('id, estado, fecha_inicio, nombre')
+      .eq('id', tid)
+      .maybeSingle();
+    if (tErr) throw tErr;
+    if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    if (!torneoBackendPermiteBuscaDupla(torneoRow.estado, torneoRow.fecha_inicio)) {
+      return res.status(400).json({ error: 'Este torneo no admite formar dupla ahora' });
+    }
+
+    if (await usuarioEstaEnAlgunEquipoTorneo(tid, fromUid, null)) {
+      return res.status(400).json({ error: 'Tu compañero ya tiene equipo en este torneo' });
+    }
+    if (await usuarioEstaEnAlgunEquipoTorneo(tid, toUid, emailInv)) {
+      return res.status(400).json({ error: 'Ya tenés equipo en este torneo' });
+    }
+
+    const emailFrom = (await obtenerEmailAuthPorUserIdBuscaDupla(fromUid)) || '';
+    const emailTo = emailInv || (await obtenerEmailAuthPorUserIdBuscaDupla(toUid)) || '';
+
+    const perfilFrom = await fetchJugadoresPerfilParaBuscaDupla(fromUid, emailFrom);
+    const perfilTo = await fetchJugadoresPerfilParaBuscaDupla(toUid, emailTo);
+
+    const jCreador = buildJugadorJsonEquipoDupla(perfilFrom || {}, fromUid, emailFrom, 'creador');
+    const jInvitado = buildJugadorJsonEquipoDupla(perfilTo || {}, toUid, emailTo, '');
+    const jugadores = [jCreador, jInvitado];
+
+    const alias1 = String(jCreador.alias || jCreador.nombre || '').trim() || 'Jugador';
+    const alias2 = String(jInvitado.alias || jInvitado.nombre || '').trim() || 'Jugador';
+    const nombreEquipo = `Dupla ${alias1} · ${alias2}`;
+
+    const insertRow = {
+      nombre: nombreEquipo,
+      tipo_equipo: 'cerrado',
+      torneo_id: tid,
+      creador_id: fromUid,
+      creador_email: emailFrom || null,
+      jugadores,
+      solicitudes: [],
+      cupo_maximo: 2,
+      equipo_abierto: false,
+      puntos_totales: 0,
+    };
+
+    const { data: eqRows, error: eqErr } = await supabase.from('equipos').insert([insertRow]).select();
+    if (eqErr) throw eqErr;
+    const equipoCreado = Array.isArray(eqRows) ? eqRows[0] : eqRows;
+    if (equipoCreado) await actualizarUltimoCompaneroDesdeEquipoRow(equipoCreado);
+
+    await supabase.from('busca_dupla_torneo').delete().eq('torneo_id', tid).eq('user_id', fromUid);
+    await supabase.from('busca_dupla_torneo').delete().eq('torneo_id', tid).eq('user_id', toUid);
+
+    await cancelarInvitacionesPendientesBuscaDuplaTorneo(tid, [fromUid, toUid]);
+
+    await supabase.from('busca_dupla_invitacion').update({ estado: 'aceptada' }).eq('id', invId);
+
+    res.json({ ok: true, equipo: equipoCreado });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/torneos/:id/busca-dupla/invitaciones/:invId/rechazar', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const tid = parseInt(String(req.params.id), 10);
+    const invId = parseInt(String(req.params.invId), 10);
+    if (!Number.isFinite(tid) || !Number.isFinite(invId)) return res.status(400).json({ error: 'ID inválido' });
+
+    const { data: inv, error: iErr } = await supabase
+      .from('busca_dupla_invitacion')
+      .select('id, torneo_id, to_user_id, estado')
+      .eq('id', invId)
+      .maybeSingle();
+    if (iErr) throw iErr;
+    if (!inv || Number(inv.torneo_id) !== tid) return res.status(404).json({ error: 'Invitación no encontrada' });
+    if (String(inv.to_user_id) !== String(user.id)) {
+      return res.status(403).json({ error: 'Solo el invitado puede rechazar' });
+    }
+    if (String(inv.estado) !== 'pendiente') return res.json({ ok: true });
+
+    const { error: uErr } = await supabase
+      .from('busca_dupla_invitacion')
+      .update({ estado: 'rechazada' })
+      .eq('id', invId);
+    if (uErr) throw uErr;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Quita a los jugadores de busca_dupla_torneo cuando el equipo quedó completo (dupla formada por flujo clásico).
+ */
+app.post('/api/torneos/:id/busca-dupla/limpiar-si-dupla-formada', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const email = String(user.email || '').trim().toLowerCase();
+    const tid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'ID inválido' });
+    const equipoId = parseInt(String(req.body?.equipo_id ?? ''), 10);
+    if (!Number.isFinite(equipoId)) return res.status(400).json({ error: 'equipo_id requerido' });
+
+    const { data: eq, error: eErr } = await supabase
+      .from('equipos')
+      .select('id, torneo_id, jugadores, cupo_maximo, creador_id')
+      .eq('id', equipoId)
+      .maybeSingle();
+    if (eErr) throw eErr;
+    if (!eq || Number(eq.torneo_id) !== tid) return res.status(404).json({ error: 'Equipo no encontrado' });
+
+    const enEquipo = await usuarioEstaEnAlgunEquipoTorneo(tid, user.id, email);
+    if (!enEquipo) return res.status(403).json({ error: 'No pertenecés a este equipo' });
+
+    const cupo = Number(eq.cupo_maximo || 2);
+    const nReg = jugadoresRegistradosCountBuscaDupla(eq);
+    if (nReg < cupo || cupo < 2) {
+      return res.json({ ok: true, skipped: true, reason: 'equipo_incompleto' });
+    }
+
+    const uuids = userIdsRegistradosDesdeEquipoRowBuscaDupla(eq);
+    for (const uid of uuids) {
+      await supabase.from('busca_dupla_torneo').delete().eq('torneo_id', tid).eq('user_id', uid);
+    }
+    if (uuids.length) await cancelarInvitacionesPendientesBuscaDuplaTorneo(tid, uuids);
+
+    res.json({ ok: true, removed_user_ids: uuids });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1093,6 +1093,20 @@ export default function FormEquipos() {
     } catch (e) {
       console.warn('[FormEquipos] notify equipo completo', e);
     }
+    if (session?.access_token) {
+      try {
+        await fetch(`${BACKEND_API_BASE}/api/torneos/${torneoId}/busca-dupla/limpiar-si-dupla-formada`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ equipo_id: equipoId }),
+        });
+      } catch (e2) {
+        console.warn('[FormEquipos] busca-dupla limpiar', e2);
+      }
+    }
   }
 
   const aceptarSolicitud = async (equipo, solicitud) => {

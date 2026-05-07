@@ -36,6 +36,7 @@ import {
   buildJugadorPerfilLookupMaps,
   normalizeJugadorEmail,
 } from '../utils/jugadorNombreTorneo';
+import { torneoPermiteNuevasInscripciones } from '../utils/torneoInscripcionPago';
 import '../styles/TorneoVista.css';
 
 const apiBaseUrlTorneo = (
@@ -43,6 +44,12 @@ const apiBaseUrlTorneo = (
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );
+
+function whatsappWebHref(raw) {
+  const d = String(raw || '').replace(/\D/g, '');
+  if (!d) return null;
+  return `https://wa.me/${d}`;
+}
 
 export default function TorneoVista() {
   const { torneoId } = useParams();
@@ -69,6 +76,12 @@ export default function TorneoVista() {
   const [error, setError] = useState(null);
   const [iniciando, setIniciando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [buscaDuplaList, setBuscaDuplaList] = useState([]);
+  const [buscaDuplaEnrolled, setBuscaDuplaEnrolled] = useState(false);
+  const [buscaDuplaInvRecibidas, setBuscaDuplaInvRecibidas] = useState([]);
+  const [buscaDuplaInvEnviadas, setBuscaDuplaInvEnviadas] = useState([]);
+  const [buscaDuplaLoading, setBuscaDuplaLoading] = useState(false);
+  const [buscaDuplaBusy, setBuscaDuplaBusy] = useState(false);
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const authUserId = useMemo(
@@ -174,6 +187,54 @@ export default function TorneoVista() {
   const puedeIniciarTorneoEnCurso =
     !loading && equiposConfirmadosInscripcion >= 2 && tieneFixturePartidos;
 
+  const loadBuscaDupla = useCallback(async () => {
+    const idNum = parseInt(String(torneoId), 10);
+    if (!Number.isFinite(idNum)) return;
+    setBuscaDuplaLoading(true);
+    try {
+      const pub = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla`);
+      if (pub.ok) {
+        const j = await pub.json();
+        setBuscaDuplaList(Array.isArray(j) ? j : []);
+      } else {
+        setBuscaDuplaList([]);
+      }
+      if (session?.access_token) {
+        const [meRes, invRes] = await Promise.all([
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla/me`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla/invitaciones`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }),
+        ]);
+        if (meRes.ok) {
+          const m = await meRes.json().catch(() => ({}));
+          setBuscaDuplaEnrolled(Boolean(m?.enrolled));
+        } else {
+          setBuscaDuplaEnrolled(false);
+        }
+        if (invRes.ok) {
+          const inv = await invRes.json().catch(() => ({}));
+          setBuscaDuplaInvRecibidas(Array.isArray(inv?.recibidas) ? inv.recibidas : []);
+          setBuscaDuplaInvEnviadas(Array.isArray(inv?.enviadas) ? inv.enviadas : []);
+        } else {
+          setBuscaDuplaInvRecibidas([]);
+          setBuscaDuplaInvEnviadas([]);
+        }
+      } else {
+        setBuscaDuplaEnrolled(false);
+        setBuscaDuplaInvRecibidas([]);
+        setBuscaDuplaInvEnviadas([]);
+      }
+    } catch (e) {
+      console.warn('[TorneoVista] busca dupla:', e);
+      setBuscaDuplaList([]);
+    } finally {
+      setBuscaDuplaLoading(false);
+    }
+  }, [torneoId, session?.access_token]);
+
   const recargarDatosTorneo = useCallback(async () => {
     try {
       const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
@@ -221,7 +282,8 @@ export default function TorneoVista() {
     } catch (e) {
       console.error('[TorneoVista] recargarDatosTorneo:', e);
     }
-  }, [torneoId]);
+    await loadBuscaDupla();
+  }, [torneoId, loadBuscaDupla]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -315,12 +377,13 @@ export default function TorneoVista() {
         setSedesMap({});
         setError(MSG_FALLA);
       } finally {
+        await loadBuscaDupla();
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [torneoId]);
+  }, [torneoId, loadBuscaDupla]);
 
   useEffect(() => {
     setListaEsperaChecked(false);
@@ -760,6 +823,123 @@ export default function TorneoVista() {
     });
   }, [navigate, torneoId]);
 
+  const registrarBuscaDupla = useCallback(async () => {
+    if (!session?.access_token) {
+      navigate(authUrlWithRedirect(`/torneo/${torneoId}`));
+      return;
+    }
+    setBuscaDuplaBusy(true);
+    try {
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(j?.error || 'No se pudo anotarte en busca dupla');
+        return;
+      }
+      await recargarDatosTorneo();
+    } finally {
+      setBuscaDuplaBusy(false);
+    }
+  }, [session?.access_token, torneoId, navigate, recargarDatosTorneo]);
+
+  const salirBuscaDupla = useCallback(async () => {
+    if (!session?.access_token) return;
+    setBuscaDuplaBusy(true);
+    try {
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla/me`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(j?.error || 'No se pudo quitar el anuncio');
+        return;
+      }
+      await loadBuscaDupla();
+    } finally {
+      setBuscaDuplaBusy(false);
+    }
+  }, [session?.access_token, torneoId, loadBuscaDupla]);
+
+  const invitarBuscaDupla = useCallback(
+    async (toUserId) => {
+      if (!session?.access_token || !toUserId) return;
+      setBuscaDuplaBusy(true);
+      try {
+        const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla/invitar`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ to_user_id: toUserId }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(j?.error || 'No se pudo enviar la invitación');
+          return;
+        }
+        await loadBuscaDupla();
+      } finally {
+        setBuscaDuplaBusy(false);
+      }
+    },
+    [session?.access_token, torneoId, loadBuscaDupla]
+  );
+
+  const aceptarInvitacionBuscaDupla = useCallback(
+    async (invId) => {
+      if (!session?.access_token || !invId) return;
+      setBuscaDuplaBusy(true);
+      try {
+        const res = await fetch(
+          `${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla/invitaciones/${invId}/aceptar`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        );
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(j?.error || 'No se pudo formar el equipo');
+          return;
+        }
+        await recargarDatosTorneo();
+      } finally {
+        setBuscaDuplaBusy(false);
+      }
+    },
+    [session?.access_token, torneoId, recargarDatosTorneo]
+  );
+
+  const rechazarInvitacionBuscaDupla = useCallback(
+    async (invId) => {
+      if (!session?.access_token || !invId) return;
+      setBuscaDuplaBusy(true);
+      try {
+        const res = await fetch(
+          `${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla/invitaciones/${invId}/rechazar`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        );
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(j?.error || 'No se pudo rechazar');
+          return;
+        }
+        await loadBuscaDupla();
+      } finally {
+        setBuscaDuplaBusy(false);
+      }
+    },
+    [session?.access_token, torneoId, loadBuscaDupla]
+  );
+
   if (loading) {
     return (
       <div
@@ -818,6 +998,136 @@ export default function TorneoVista() {
     );
   }
 
+  const puedePanelBuscaDupla =
+    torneo && !torneoPasadoCalendario && torneoPermiteNuevasInscripciones(torneo);
+
+  const buscaDuplaSeccion =
+    puedePanelBuscaDupla ? (
+      <div className="torneo-busca-dupla">
+        <h3 className="torneo-busca-dupla__titulo">Jugadores buscando dupla</h3>
+        {buscaDuplaInvRecibidas.length > 0 ? (
+          <div className="torneo-busca-dupla__invites">
+            {buscaDuplaInvRecibidas.map((inv) => (
+              <div key={inv.id} className="torneo-busca-dupla__invite-card">
+                <p className="torneo-busca-dupla__invite-text">
+                  <strong>{inv.otro_alias || inv.otro_nombre || 'Un jugador'}</strong> te invitó a formar dupla
+                  para este torneo.
+                </p>
+                <div className="torneo-busca-dupla__invite-actions">
+                  <button
+                    type="button"
+                    className="torneo-busca-dupla__btn torneo-busca-dupla__btn--primary"
+                    disabled={buscaDuplaBusy}
+                    onClick={() => void aceptarInvitacionBuscaDupla(inv.id)}
+                  >
+                    Aceptar y formar equipo
+                  </button>
+                  <button
+                    type="button"
+                    className="torneo-busca-dupla__btn"
+                    disabled={buscaDuplaBusy}
+                    onClick={() => void rechazarInvitacionBuscaDupla(inv.id)}
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {session?.user && !miEquipoEnTorneo ? (
+          <div className="torneo-busca-dupla__cta-row">
+            {!buscaDuplaEnrolled ? (
+              <button
+                type="button"
+                className="torneo-busca-dupla__btn torneo-busca-dupla__btn--primary"
+                disabled={buscaDuplaBusy}
+                onClick={() => void registrarBuscaDupla()}
+              >
+                Busco dupla para este torneo
+              </button>
+            ) : (
+              <div className="torneo-busca-dupla__yo-anunciado">
+                <span>Figurás como buscando dupla.</span>
+                <button
+                  type="button"
+                  className="torneo-busca-dupla__btn-link"
+                  disabled={buscaDuplaBusy}
+                  onClick={() => void salirBuscaDupla()}
+                >
+                  Quitar mi anuncio
+                </button>
+              </div>
+            )}
+          </div>
+        ) : null}
+        {buscaDuplaLoading ? <p className="torneo-busca-dupla__hint">Cargando lista…</p> : null}
+        {!buscaDuplaLoading && buscaDuplaList.length === 0 ? (
+          <p className="torneo-busca-dupla__hint">Todavía no hay jugadores anunciados. Sé el primero.</p>
+        ) : null}
+        {buscaDuplaList.length > 0 ? (
+          <ul className="torneo-busca-dupla__lista">
+            {buscaDuplaList.map((row) => {
+              const wa = whatsappWebHref(row.whatsapp);
+              const esYo = authUserId && row.user_id === authUserId;
+              const nombreMostrar = String(row.nombre || row.alias || 'Jugador').trim() || 'Jugador';
+              return (
+                <li key={row.user_id} className="torneo-busca-dupla__fila">
+                  <div className="torneo-busca-dupla__foto-wrap">
+                    {row.foto_url ? (
+                      <img src={row.foto_url} alt="" className="torneo-busca-dupla__foto" />
+                    ) : (
+                      <div className="torneo-busca-dupla__foto torneo-busca-dupla__foto--placeholder" aria-hidden />
+                    )}
+                  </div>
+                  <div className="torneo-busca-dupla__datos">
+                    <div className="torneo-busca-dupla__linea-nombre">
+                      <strong>{nombreMostrar}</strong>
+                      {row.alias ? <span className="torneo-busca-dupla__alias"> @{row.alias}</span> : null}
+                      {esYo ? <span className="torneo-busca-dupla__vos"> (vos)</span> : null}
+                    </div>
+                    {row.categoria ? (
+                      <div className="torneo-busca-dupla__cat">Categoría: {row.categoria}</div>
+                    ) : null}
+                  </div>
+                  <div className="torneo-busca-dupla__acciones">
+                    {wa ? (
+                      <a
+                        className="torneo-busca-dupla__btn torneo-busca-dupla__btn--wa"
+                        href={wa}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Conectar por WhatsApp
+                      </a>
+                    ) : (
+                      <span className="torneo-busca-dupla__sin-wa">Sin WhatsApp en perfil</span>
+                    )}
+                    {session?.user && authUserId && !esYo && !miEquipoEnTorneo && buscaDuplaEnrolled ? (
+                      <button
+                        type="button"
+                        className="torneo-busca-dupla__btn"
+                        disabled={buscaDuplaBusy}
+                        onClick={() => void invitarBuscaDupla(row.user_id)}
+                      >
+                        Invitar a formar equipo
+                      </button>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+        {buscaDuplaInvEnviadas.length > 0 ? (
+          <p className="torneo-busca-dupla__hint">
+            Invitaciones enviadas pendientes:{' '}
+            {buscaDuplaInvEnviadas.map((i) => i.otro_alias || i.otro_nombre || 'jugador').join(', ')}
+          </p>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <>
     <div
@@ -846,7 +1156,12 @@ export default function TorneoVista() {
           jugadorNombreTorneoCtx={nombreTorneoCtxVista}
           clasificacionFinalFilas={clasificacionFinalFilas}
           adminTorneoBar={adminTorneoBar}
-          bannerAntesTabs={bannerInscripcionJugador}
+          bannerAntesTabs={
+            <>
+              {bannerInscripcionJugador}
+              {buscaDuplaSeccion}
+            </>
+          }
           stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname)}
           showTorneoLogo
           shareTorneoMeta={torneo && torneoShareUrl ? torneoShareMeta : null}
