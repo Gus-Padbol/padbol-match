@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import cron from 'node-cron';
 import multer from 'multer';
+import Stripe from 'stripe';
 
 dotenv.config();
 
@@ -336,6 +337,31 @@ async function adminListScopeFromRequest(req) {
   };
 }
 
+/** Admin (JWT): super_admin o alcance que incluya la sede (mismo criterio que listados). */
+async function assertUsuarioPuedeAdministrarSede(req, sedeIdNum) {
+  const scope = await adminListScopeFromRequest(req);
+  if (!scope) {
+    const e = new Error('No autorizado');
+    e.status = 401;
+    throw e;
+  }
+  if (scope.superA) return scope;
+  const sid = Number(sedeIdNum);
+  if (!Number.isFinite(sid)) {
+    const e = new Error('ID de sede inválido');
+    e.status = 400;
+    throw e;
+  }
+  const allowed = await sedesPermitidasPorScope(scope);
+  const ok = (allowed.sedes || []).some((s) => Number(s.id) === sid);
+  if (!ok) {
+    const e = new Error('No tenés permiso para esta sede');
+    e.status = 403;
+    throw e;
+  }
+  return scope;
+}
+
 function paisAdminCoincideSedeSorteo(paisAdminRaw, paisSedeRaw) {
   const strip = (p) =>
     String(p || '')
@@ -422,6 +448,21 @@ const mpClient = new MercadoPagoConfig({
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://padbol-match.netlify.app';
 if (!process.env.FRONTEND_URL) {
   console.warn(`⚠️  FRONTEND_URL no está configurado — usando fallback: ${FRONTEND_URL}`);
+}
+
+const STRIPE_SECRET_KEY = String(process.env.STRIPE_SECRET_KEY || '').trim();
+const stripeClient = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+if (!STRIPE_SECRET_KEY) {
+  console.warn('⚠️  STRIPE_SECRET_KEY no está configurado — pagos Stripe / Connect no funcionarán');
+}
+
+function getStripeOrThrow() {
+  if (!stripeClient) {
+    const e = new Error('Stripe no está configurado en el servidor');
+    e.status = 503;
+    throw e;
+  }
+  return stripeClient;
 }
 
 // Twilio (desde .env)
@@ -3599,6 +3640,322 @@ app.get('/api/jugador/mis-pagos', async (req, res) => {
   } catch (err) {
     console.error('❌ GET /api/jugador/mis-pagos:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+function stripeMetadataPayload(payloadObj) {
+  const raw = JSON.stringify(payloadObj);
+  if (raw.length <= 500) return { payload_json: raw };
+  const e = new Error(
+    'Los datos de la operación superan el límite permitido. Acortá nombre u otros textos e intentá de nuevo.'
+  );
+  e.status = 400;
+  throw e;
+}
+
+/**
+ * Stripe Connect: un solo PaymentIntent por monto_base + 3 %.
+ * `application_fee_amount` + `transfer_data.destination` envían la base al club y el fee queda en la plataforma.
+ */
+app.post('/api/stripe/crear-payment-intent', async (req, res) => {
+  try {
+    const st = getStripeOrThrow();
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+
+    const b = req.body || {};
+    const sede_id = parseInt(String(b.sede_id), 10);
+    const monto_base = parseInt(String(b.monto_base), 10);
+    const moneda = String(b.moneda || '').trim().toLowerCase();
+    const tipo = String(b.tipo || '').trim().toLowerCase();
+    const descripcion = String(b.descripcion || '').trim();
+    const payload = b.payload;
+
+    if (!Number.isFinite(sede_id) || sede_id <= 0) {
+      return res.status(400).json({ error: 'sede_id inválido' });
+    }
+    if (!Number.isFinite(monto_base) || monto_base <= 0) {
+      return res.status(400).json({ error: 'monto_base inválido' });
+    }
+    if (!moneda || !/^[a-z]{3}$/.test(moneda)) {
+      return res.status(400).json({ error: 'moneda inválida (código ISO de 3 letras, ej. ars, usd)' });
+    }
+    if (!['reserva', 'torneo'].includes(tipo)) {
+      return res.status(400).json({ error: 'tipo debe ser reserva o torneo' });
+    }
+    if (!descripcion) return res.status(400).json({ error: 'descripcion es requerida' });
+    if (!payload || typeof payload !== 'object') {
+      return res.status(400).json({ error: 'payload es requerido (datos de la reserva o inscripción)' });
+    }
+
+    const emailUser = String(authUser.email).trim().toLowerCase();
+    const sedeCfg = await sedePaymentConfigBySedeId(sede_id);
+    if (!sedeCfg) return res.status(404).json({ error: 'Sede no encontrada' });
+    if (normalizeMetodoPago(sedeCfg.metodo_pago) !== 'stripe') {
+      return res.status(400).json({ error: 'Esta sede no tiene configurado el método de pago Stripe' });
+    }
+    const destination = String(sedeCfg.stripe_account_id || '').trim();
+    if (!destination.startsWith('acct_')) {
+      return res.status(400).json({ error: 'La sede no tiene una cuenta Stripe Connect vinculada (onboarding incompleto)' });
+    }
+
+    let payloadNorm;
+    if (tipo === 'reserva') {
+      const em = String(payload.email || '').trim().toLowerCase();
+      if (em !== emailUser) {
+        return res.status(403).json({ error: 'El email de la reserva debe coincidir con tu sesión' });
+      }
+      if (!payload.sede || !payload.fecha || !payload.hora || payload.cancha == null || !payload.nombre || !payload.whatsapp) {
+        return res.status(400).json({ error: 'payload de reserva incompleto' });
+      }
+      payloadNorm = {
+        v: 1,
+        t: 'reserva',
+        sede: String(payload.sede).trim(),
+        fecha: String(payload.fecha).trim(),
+        hora: String(payload.hora).trim(),
+        cancha: parseInt(String(payload.cancha), 10),
+        nombre: String(payload.nombre).trim(),
+        email: em,
+        whatsapp: String(payload.whatsapp).trim(),
+        nivel: String(payload.nivel || 'Principiante').trim(),
+        precio: Number(payload.precio),
+        duracion: parseInt(String(payload.duracion), 10) || 90,
+      };
+      if (payloadNorm.sede !== String(sedeCfg.nombre || '').trim()) {
+        return res.status(400).json({ error: 'La sede del payload no coincide con sede_id' });
+      }
+    } else {
+      const eid = parseInt(String(payload.equipo_id), 10);
+      const tid = parseInt(String(payload.torneo_id), 10);
+      const em = String(payload.email || '').trim().toLowerCase();
+      if (!eid || !tid || !em) {
+        return res.status(400).json({ error: 'payload de torneo incompleto (equipo_id, torneo_id, email)' });
+      }
+      if (em !== emailUser) {
+        return res.status(403).json({ error: 'El email debe coincidir con tu sesión' });
+      }
+      payloadNorm = { v: 1, t: 'torneo', equipo_id: eid, torneo_id: tid, email: em };
+    }
+
+    const metaPayload = stripeMetadataPayload(payloadNorm);
+    const cargo_servicio = Math.round(monto_base * 0.03);
+    const total = monto_base + cargo_servicio;
+    if (!Number.isFinite(cargo_servicio) || cargo_servicio < 0 || total <= 0) {
+      return res.status(400).json({ error: 'Monto total inválido' });
+    }
+
+    const pi = await st.paymentIntents.create({
+      amount: total,
+      currency: moneda,
+      description: descripcion.slice(0, 500),
+      automatic_payment_methods: { enabled: true },
+      application_fee_amount: cargo_servicio,
+      transfer_data: { destination },
+      metadata: {
+        sede_id: String(sede_id),
+        tipo,
+        monto_base: String(monto_base),
+        cargo_servicio: String(cargo_servicio),
+        ...metaPayload,
+      },
+    });
+
+    res.json({
+      client_secret: pi.client_secret,
+      payment_intent_id: pi.id,
+      amount_total: total,
+      monto_base,
+      cargo_servicio,
+      moneda,
+    });
+  } catch (err) {
+    console.error('❌ POST /api/stripe/crear-payment-intent:', err?.message || err);
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message || String(err) });
+  }
+});
+
+app.post('/api/stripe/confirmar-pago', async (req, res) => {
+  try {
+    const st = getStripeOrThrow();
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+    const emailUser = String(authUser.email).trim().toLowerCase();
+
+    const payment_intent_id = String((req.body || {}).payment_intent_id || '').trim();
+    if (!payment_intent_id.startsWith('pi_')) {
+      return res.status(400).json({ error: 'payment_intent_id inválido' });
+    }
+
+    const pi = await st.paymentIntents.retrieve(payment_intent_id);
+    if (pi.status !== 'succeeded') {
+      return res.status(400).json({ error: 'El pago no está confirmado', status: pi.status });
+    }
+
+    const md = pi.metadata || {};
+    const monto_base = parseInt(String(md.monto_base || ''), 10);
+    const cargo = parseInt(String(md.cargo_servicio || ''), 10);
+    const expectedTotal = monto_base + cargo;
+    if (!Number.isFinite(monto_base) || !Number.isFinite(cargo) || pi.amount !== expectedTotal) {
+      console.error('Stripe confirmar-pago: monto inconsistente', { piAmount: pi.amount, expectedTotal, md });
+      return res.status(400).json({ error: 'Datos de pago inconsistentes' });
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(String(md.payload_json || 'null'));
+    } catch {
+      return res.status(400).json({ error: 'Metadata de pago inválida' });
+    }
+    if (!payload || payload.v !== 1) {
+      return res.status(400).json({ error: 'Versión de payload no soportada' });
+    }
+
+    if (payload.t === 'reserva') {
+      if (String(payload.email || '').trim().toLowerCase() !== emailUser) {
+        return res.status(403).json({ error: 'No autorizado a confirmar esta reserva' });
+      }
+      const sede = String(payload.sede || '').trim();
+      const fecha = String(payload.fecha || '').trim();
+      const hora = String(payload.hora || '').trim();
+      const cancha = parseInt(String(payload.cancha), 10);
+
+      const { data: existentes, error: errCheck } = await supabase
+        .from('reservas')
+        .select('id')
+        .eq('sede', sede)
+        .eq('fecha', fecha)
+        .eq('hora', hora)
+        .eq('cancha', cancha);
+      if (errCheck) throw errCheck;
+      if ((existentes || []).length > 0) {
+        return res.status(409).json({ error: 'Este horario ya está reservado' });
+      }
+
+      let duracionMin = parseInt(String(payload.duracion), 10);
+      if (!Number.isFinite(duracionMin) || duracionMin <= 0) {
+        const { data: sedeDur } = await supabase
+          .from('sedes')
+          .select('duracion_reserva_minutos')
+          .eq('nombre', sede)
+          .maybeSingle();
+        duracionMin = parseInt(sedeDur?.duracion_reserva_minutos, 10) || 90;
+      }
+
+      const ins = {
+        sede,
+        fecha,
+        hora,
+        cancha,
+        nombre: String(payload.nombre || '').trim(),
+        email: String(payload.email || '').trim().toLowerCase(),
+        telefono: String(payload.whatsapp || '').trim(),
+        whatsapp: String(payload.whatsapp || '').trim(),
+        nivel: String(payload.nivel || 'Principiante').trim(),
+        precio: parseInt(String(payload.precio), 10),
+        estado: 'confirmada',
+        duracion: duracionMin,
+        ...(authUser.id ? { user_id: authUser.id } : {}),
+      };
+
+      const { data, error } = await supabase.from('reservas').insert([ins]).select();
+      if (error) throw error;
+      sendReservaConfirmadaWhatsAppTwilio({
+        email: ins.email,
+        nombreFallback: ins.nombre,
+        fecha,
+        hora,
+        duracionMinutos: duracionMin,
+        nombreSede: sede,
+      }).catch((errW) => console.warn('⚠️ WhatsApp confirmación reserva:', errW.message));
+      return res.json({ ok: true, tipo: 'reserva', reservation: data?.[0] || null });
+    }
+
+    if (payload.t === 'torneo') {
+      if (String(payload.email || '').trim().toLowerCase() !== emailUser) {
+        return res.status(403).json({ error: 'No autorizado' });
+      }
+      const eid = parseInt(String(payload.equipo_id), 10);
+      const tid = parseInt(String(payload.torneo_id), 10);
+
+      const { data: eq, error: errEq } = await supabase
+        .from('equipos')
+        .select('id, torneo_id, inscripcion_estado')
+        .eq('id', eid)
+        .maybeSingle();
+      if (errEq) throw errEq;
+      if (!eq) return res.status(404).json({ error: 'Equipo no encontrado' });
+      if (Number(eq.torneo_id) !== tid) {
+        return res.status(400).json({ error: 'El equipo no pertenece a ese torneo' });
+      }
+      if (String(eq.inscripcion_estado || '').toLowerCase() === 'confirmado') {
+        return res.json({ ok: true, already: true, tipo: 'torneo' });
+      }
+
+      const { data: torneoRow, error: errTorneo } = await supabase
+        .from('torneos')
+        .select('fecha_inicio')
+        .eq('id', tid)
+        .maybeSingle();
+      if (errTorneo) throw errTorneo;
+      if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+      if (torneoFechaInicioEsAnteriorAHoyArt(torneoRow.fecha_inicio)) {
+        return res.status(400).json({ error: MSG_TORNEO_INSCRIPCION_FECHA_PASADA });
+      }
+
+      const { error: errUp } = await supabase.from('equipos').update({ inscripcion_estado: 'confirmado' }).eq('id', eid);
+      if (errUp) throw errUp;
+      return res.json({ ok: true, tipo: 'torneo' });
+    }
+
+    return res.status(400).json({ error: 'Tipo de operación desconocido' });
+  } catch (err) {
+    console.error('❌ POST /api/stripe/confirmar-pago:', err?.message || err);
+    res.status(err.status || 500).json({ error: err.message || String(err) });
+  }
+});
+
+app.get('/api/stripe/onboarding/:sede_id', async (req, res) => {
+  try {
+    const st = getStripeOrThrow();
+    const sid = parseInt(String(req.params.sede_id), 10);
+    if (!Number.isFinite(sid) || sid <= 0) {
+      return res.status(400).json({ error: 'sede_id inválido' });
+    }
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+
+    const { data: sedeRow, error } = await supabase
+      .from('sedes')
+      .select('id, nombre, stripe_account_id')
+      .eq('id', sid)
+      .maybeSingle();
+    if (error) throw error;
+    if (!sedeRow) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    let accountId = String(sedeRow.stripe_account_id || '').trim();
+    if (!accountId) {
+      const acc = await st.accounts.create({
+        type: 'standard',
+        metadata: { sede_id: String(sid), sede_nombre: String(sedeRow.nombre || '').slice(0, 50) },
+      });
+      accountId = acc.id;
+      const { error: upErr } = await supabase.from('sedes').update({ stripe_account_id: accountId }).eq('id', sid);
+      if (upErr) throw upErr;
+    }
+
+    const base = FRONTEND_URL.replace(/\/$/, '');
+    const returnUrl = `${base}/admin?tab=mi_sede`;
+    const link = await st.accountLinks.create({
+      account: accountId,
+      refresh_url: returnUrl,
+      return_url: returnUrl,
+      type: 'account_onboarding',
+    });
+    res.json({ url: link.url, stripe_account_id: accountId });
+  } catch (err) {
+    console.error('❌ GET /api/stripe/onboarding/:sede_id:', err?.message || err);
+    res.status(err.status || 500).json({ error: err.message || String(err) });
   }
 });
 

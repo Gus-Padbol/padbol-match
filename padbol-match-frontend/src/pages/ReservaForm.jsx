@@ -31,6 +31,8 @@ import {
   primeraFotoSede,
 } from '../utils/sedeCardUi';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 // Returns the correct price for a given sede + time slot.
 // Base desde `sedes` (precio_turno en Supabase, luego legacy precio_por_reserva); luego franjas o mañana/tarde.
@@ -209,6 +211,233 @@ const API_BASE = (
 function apiUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
   return `${API_BASE}${p}`;
+}
+
+/** Monedas sin decimales en Stripe (unidad mínima = unidad principal). */
+const STRIPE_ZERO_DECIMAL = new Set([
+  'bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'ugx', 'vnd', 'vuv', 'xaf', 'xof', 'xpf',
+]);
+
+function amountMainToStripeMinor(amountMain, currency) {
+  const cur = String(currency || 'ars').toLowerCase();
+  const n = Number(amountMain);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  if (STRIPE_ZERO_DECIMAL.has(cur)) return Math.round(n);
+  return Math.round(n * 100);
+}
+
+function stripeMinorToMain(minor, currency) {
+  const cur = String(currency || 'ars').toLowerCase();
+  const m = Number(minor);
+  if (!Number.isFinite(m)) return 0;
+  if (STRIPE_ZERO_DECIMAL.has(cur)) return m;
+  return m / 100;
+}
+
+function formatMoneyMain(amountMain, currencyCode) {
+  const c = String(currencyCode || 'ARS').toUpperCase();
+  try {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: c,
+      maximumFractionDigits: STRIPE_ZERO_DECIMAL.has(c.toLowerCase()) ? 0 : 2,
+    }).format(amountMain);
+  } catch {
+    return `${Number(amountMain).toLocaleString('es-AR')} ${c}`;
+  }
+}
+
+const STRIPE_PUBLISHABLE_KEY =
+  typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
+    ? String(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).trim()
+    : '';
+
+const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null;
+
+function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const handlePay = async () => {
+    if (!stripe || !elements) return;
+    setMsg('');
+    setPaying(true);
+    try {
+      const { error: submitErr } = await elements.submit();
+      if (submitErr) {
+        setMsg(submitErr.message || 'Revisá los datos de la tarjeta');
+        return;
+      }
+      const { error: payErr, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: typeof window !== 'undefined' ? `${window.location.origin}/reservar` : undefined,
+        },
+        redirect: 'if_required',
+      });
+      if (payErr) {
+        setMsg(payErr.message || 'No se pudo procesar el pago');
+        return;
+      }
+      if (paymentIntent?.status !== 'succeeded') {
+        setMsg('El pago no se completó.');
+        return;
+      }
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) {
+        setMsg('Sesión expirada. Iniciá sesión de nuevo.');
+        return;
+      }
+      const res = await fetch(apiUrl('/api/stripe/confirmar-pago'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ payment_intent_id: paymentIntent.id }),
+      });
+      const j = await res.json();
+      if (!res.ok) {
+        setMsg(j.error || 'El pago se acreditó pero no se pudo registrar la reserva. Contactá a la sede.');
+        return;
+      }
+      onPaid(j);
+    } catch (e) {
+      setMsg(e.message || String(e));
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '16px' }}>
+      <PaymentElement />
+      {msg ? (
+        <div className="error-message" style={{ marginTop: '12px' }}>
+          {msg}
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={handlePay}
+        disabled={paying || !stripe}
+        style={{
+          width: '100%',
+          marginTop: '16px',
+          padding: '14px',
+          background: paying || !stripe ? '#aaa' : 'linear-gradient(135deg, #635bff 0%, #0a2540 100%)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          cursor: paying || !stripe ? 'not-allowed' : 'pointer',
+          boxShadow: '0 3px 12px rgba(99,91,255,0.35)',
+        }}
+      >
+        {paying ? 'Procesando…' : 'Pagar ahora'}
+      </button>
+    </div>
+  );
+}
+
+function ReservaStripeSection({
+  sedeId,
+  moneda,
+  montoBaseMinor,
+  descripcion,
+  payload,
+  disabledPrepare,
+  onPaid,
+}) {
+  const [clientSecret, setClientSecret] = useState(null);
+  const [prepErr, setPrepErr] = useState('');
+  const [preparing, setPreparing] = useState(false);
+
+  const prepare = useCallback(async () => {
+    setPrepErr('');
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) {
+      setPrepErr('Iniciá sesión para pagar.');
+      return;
+    }
+    setPreparing(true);
+    try {
+      const res = await fetch(apiUrl('/api/stripe/crear-payment-intent'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          sede_id: sedeId,
+          monto_base: montoBaseMinor,
+          moneda: String(moneda || 'ars').toLowerCase(),
+          tipo: 'reserva',
+          descripcion,
+          payload,
+        }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || 'No se pudo iniciar el pago');
+      if (!j.client_secret) throw new Error('Respuesta inválida del servidor');
+      setClientSecret(j.client_secret);
+    } catch (e) {
+      setPrepErr(e.message || String(e));
+    } finally {
+      setPreparing(false);
+    }
+  }, [sedeId, montoBaseMinor, moneda, descripcion, payload]);
+
+  if (!stripePromise) {
+    return (
+      <div className="error-message" role="alert">
+        Falta configurar <code>REACT_APP_STRIPE_PUBLISHABLE_KEY</code> para pagos con tarjeta.
+      </div>
+    );
+  }
+
+  if (!clientSecret) {
+    return (
+      <div>
+        {prepErr ? (
+          <div className="error-message" style={{ marginBottom: '12px' }}>
+            {prepErr}
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => void prepare()}
+          disabled={preparing || disabledPrepare}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: preparing || disabledPrepare ? '#aaa' : 'linear-gradient(135deg, #635bff 0%, #0a2540 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: preparing || disabledPrepare ? 'not-allowed' : 'pointer',
+            boxShadow: '0 3px 12px rgba(99,91,255,0.35)',
+          }}
+        >
+          {preparing ? 'Preparando…' : 'Continuar al pago con tarjeta'}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <Elements
+      stripe={stripePromise}
+      options={{ clientSecret, locale: 'es' }}
+    >
+      <ReservaStripePayInner
+        clientSecret={clientSecret}
+        onPaid={onPaid}
+      />
+    </Elements>
+  );
 }
 
 /** Solo se ofrecen / muestran las primeras 2 canchas en el flujo de reserva. */
@@ -1379,7 +1608,21 @@ export default function ReservaForm() {
   if (pantalla === 4) {
     const precio = getPrecio(sedeSeleccionada, formData.hora);
     const moneda = sedeSeleccionada?.moneda || 'ARS';
+    const creditoAplicado = 0;
+    const precioFinal = Math.max(0, precio - creditoAplicado);
+    const metodoPagoStripe = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'stripe';
+    const stripeCuentaOk = String(sedeSeleccionada?.stripe_account_id || '').trim().startsWith('acct_');
+    const montoBaseMinor = amountMainToStripeMinor(precioFinal, moneda);
+    const cargoServicioMinor = Math.round(montoBaseMinor * 0.03);
+    const totalMinor = montoBaseMinor + cargoServicioMinor;
     const muestraInputWhatsappResumen = !perfilTelefonoValido(currentCliente);
+    const formParaTelStripe = muestraInputWhatsappResumen ? { ...formData, numeroTel: whatsapp } : formData;
+    const telefonoStripe = telefonoPagoResuelto(
+      currentCliente || { email: '', nombre: '', whatsapp: '' },
+      formParaTelStripe
+    );
+    const duracionReservaMinP4 =
+      parseInt(sedeSeleccionada?.duracion_reserva_minutos, 10) || 90;
     /** Header fijo + margen 24px + notch para que el título del resumen se vea completo en todos los dispositivos. */
     const resumenPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 24}px + env(safe-area-inset-top, 0px))`;
     const resumenPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
@@ -1417,9 +1660,25 @@ export default function ReservaForm() {
             <p style={{ margin: '0 0 8px' }}><strong>👤 Jugador:</strong> {currentCliente?.nombre}</p>
             <p style={{ margin: '0 0 8px' }}><strong>📧 Email:</strong> {currentCliente?.email}</p>
             {precio ? (
-              <p style={{ margin: '12px 0 0', fontSize: '18px', fontWeight: 800, color: '#d32f2f' }}>
-                💰 {Number(precio).toLocaleString('es-AR')} {moneda}
-              </p>
+              metodoPagoStripe ? (
+                <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: '#333' }}>
+                  <p style={{ margin: '0 0 4px' }}>
+                    <strong>Reserva:</strong>{' '}
+                    {formatMoneyMain(stripeMinorToMain(montoBaseMinor, moneda), moneda)}
+                  </p>
+                  <p style={{ margin: '0 0 4px' }}>
+                    <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
+                    {formatMoneyMain(stripeMinorToMain(cargoServicioMinor, moneda), moneda)}
+                  </p>
+                  <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: '#d32f2f' }}>
+                    <strong>Total:</strong> {formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)}
+                  </p>
+                </div>
+              ) : (
+                <p style={{ margin: '12px 0 0', fontSize: '18px', fontWeight: 800, color: '#d32f2f' }}>
+                  💰 {Number(precio).toLocaleString('es-AR')} {moneda}
+                </p>
+              )
             ) : null}
           </div>
 
@@ -1476,26 +1735,69 @@ export default function ReservaForm() {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button
-            type="button"
-            onClick={handlePagarConMP}
-            disabled={mpLoading}
-            style={{
-              width: '100%',
-              padding: '14px',
-              background: mpLoading ? '#aaa' : 'linear-gradient(135deg, #009ee3 0%, #0077c8 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: mpLoading ? 'not-allowed' : 'pointer',
-              boxShadow: '0 3px 12px rgba(0,158,227,0.4)',
-              marginBottom: '12px',
-            }}
-          >
-            {mpLoading ? 'Procesando...' : 'Pagar con Mercado Pago'}
-          </button>
+          {metodoPagoStripe && !stripeCuentaOk ? (
+            <div className="error-message" role="alert" style={{ marginBottom: '12px' }}>
+              Esta sede aún no terminó de conectar Stripe. Elegí otra sede o contactá al club.
+            </div>
+          ) : null}
+
+          {metodoPagoStripe ? (
+            <ReservaStripeSection
+              sedeId={sedeSeleccionada.id}
+              moneda={moneda}
+              montoBaseMinor={montoBaseMinor}
+              descripcion={`Reserva cancha ${formData.cancha} — ${sedeSeleccionada.nombre}`}
+              payload={{
+                sede: sedeSeleccionada.nombre,
+                fecha: formData.fecha,
+                hora: formData.hora,
+                cancha: parseInt(formData.cancha, 10),
+                nombre: currentCliente?.nombre,
+                email: currentCliente?.email,
+                whatsapp: telefonoStripe.whatsappCompleto,
+                nivel: 'Principiante',
+                precio: precioFinal,
+                duracion: duracionReservaMinP4,
+              }}
+              disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk}
+              onPaid={() => {
+                alert('¡Reserva confirmada! Te enviamos los detalles por WhatsApp.');
+                setPantalla(1);
+                setFormData({
+                  fecha: '',
+                  hora: '',
+                  cancha: '',
+                  nombre: '',
+                  email: '',
+                  numeroTel: '',
+                  codigoPais: '+54',
+                });
+                setWhatsapp('');
+                setError('');
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={handlePagarConMP}
+              disabled={mpLoading}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: mpLoading ? '#aaa' : 'linear-gradient(135deg, #009ee3 0%, #0077c8 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: mpLoading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 3px 12px rgba(0,158,227,0.4)',
+                marginBottom: '12px',
+              }}
+            >
+              {mpLoading ? 'Procesando...' : 'Pagar con Mercado Pago'}
+            </button>
+          )}
         </div>
         </div>
         <BottomNav />

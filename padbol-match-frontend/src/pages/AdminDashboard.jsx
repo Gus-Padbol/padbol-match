@@ -2352,6 +2352,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [miSedeLoading, setMiSedeLoading] = useState(false);
   const [miSedeForm,    setMiSedeForm]    = useState({});
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
+  const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
   const [miSedeMsg,     setMiSedeMsg]     = useState('');
   const [canchas,       setCanchas]       = useState([]);
   const [nuevaCancha,   setNuevaCancha]   = useState('');
@@ -2581,6 +2582,30 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       );
     }
   };
+
+  const iniciarStripeOnboarding = useCallback(async () => {
+    if (!sedeId || !session?.access_token) {
+      alert('Iniciá sesión de nuevo para conectar Stripe.');
+      return;
+    }
+    setStripeOnboardingLoading(true);
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/stripe/onboarding/${sedeId}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || 'No se pudo iniciar el enlace de Stripe');
+      if (j.url) {
+        window.location.href = j.url;
+        return;
+      }
+      throw new Error('Respuesta sin URL de onboarding');
+    } catch (e) {
+      alert(e.message || String(e));
+    } finally {
+      setStripeOnboardingLoading(false);
+    }
+  }, [apiBaseUrl, sedeId, session?.access_token]);
 
   const guardarLicencia = async () => {
     setLicenciaSaving(true); setLicenciaMsg('');
@@ -5452,6 +5477,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 ) : null}
                 {String(miSedeForm.metodo_pago || '') === 'stripe' ? (
                   <>
+                    {String(miSedeForm.stripe_account_id || '').trim().startsWith('acct_') ? (
+                      <p
+                        style={{
+                          margin: '0 0 12px',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          background: '#ecfdf5',
+                          border: '1px solid #6ee7b7',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#047857',
+                        }}
+                      >
+                        Stripe conectado ✓
+                      </p>
+                    ) : null}
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
                       Stripe Account ID
                     </label>
@@ -5461,9 +5502,29 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       onChange={e => setMiSedeForm(p => ({ ...p, stripe_account_id: e.target.value }))}
                       style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', marginBottom: '10px', fontFamily: 'monospace' }}
                     />
-                    <button type="button" style={{ marginBottom: '14px', padding: '7px 12px', borderRadius: '8px', border: '1px dashed #94a3b8', background: '#f8fafc', color: '#334155' }}>
-                      Conectar con Stripe (próximamente)
+                    <button
+                      type="button"
+                      onClick={() => void iniciarStripeOnboarding()}
+                      disabled={stripeOnboardingLoading}
+                      style={{
+                        marginBottom: '14px',
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: stripeOnboardingLoading ? '#94a3b8' : 'linear-gradient(135deg, #635bff, #0a2540)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: stripeOnboardingLoading ? 'not-allowed' : 'pointer',
+                        width: '100%',
+                        maxWidth: '320px',
+                      }}
+                    >
+                      {stripeOnboardingLoading ? 'Abriendo Stripe…' : 'Conectar cuenta Stripe'}
                     </button>
+                    <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+                      Te llevamos al onboarding de Stripe (cuenta Standard). Al volver, guardá cambios si editaste otros datos de la sede.
+                    </p>
                   </>
                 ) : null}
                 {String(miSedeForm.metodo_pago || '') === 'manual' ? (
