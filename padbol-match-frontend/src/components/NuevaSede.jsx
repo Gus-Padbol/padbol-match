@@ -47,7 +47,9 @@ const emptyForm = () => ({
   whatsapp: '',
   email_contacto: '',
   numero_licencia: '',
-  fecha_contrato: '',
+  fecha_inicio_contrato: '',
+  fecha_vencimiento_contrato: '',
+  referencia_contrato: '',
   tipo_licencia: 'club_afiliado',
   ciudad_representa: '',
   provincia_representa: '',
@@ -62,9 +64,10 @@ async function fetchWithAuth(url, options = {}) {
   const { data: sess } = await supabase.auth.getSession();
   const token = sess?.session?.access_token;
   if (!token) throw new Error('Sesión no disponible');
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers || {}),
   };
   const res = await fetch(url, { ...options, headers });
@@ -96,6 +99,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [contratoFile, setContratoFile] = useState(null);
 
   const paises = useMemo(() => paisesOpciones(), []);
   const licenciaTipoActual = useMemo(
@@ -117,6 +121,10 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
     }
     if (!form.licenciatario_email.trim()) {
       setErr('El email del licenciatario es obligatorio.');
+      return;
+    }
+    if (!form.fecha_inicio_contrato) {
+      setErr('La fecha de inicio de contrato es obligatoria.');
       return;
     }
     if (licenciaTipoActual.alcance === 'ciudad' && !form.ciudad_representa.trim()) {
@@ -148,7 +156,9 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
         whatsapp: form.whatsapp.trim() || null,
         email_contacto: form.email_contacto.trim() || null,
         numero_licencia: isSuper ? form.numero_licencia.trim() || null : form.numero_licencia.trim() || null,
-        fecha_contrato: form.fecha_contrato || null,
+        fecha_inicio_contrato: form.fecha_inicio_contrato || null,
+        fecha_vencimiento_contrato: form.fecha_vencimiento_contrato || null,
+        referencia_contrato: form.referencia_contrato.trim() || null,
         tipo_licencia: LICENCIA_TIPO_OPTIONS.some((x) => x.id === form.tipo_licencia) ? form.tipo_licencia : 'club_afiliado',
         ciudad_representa: form.ciudad_representa.trim() || null,
         provincia_representa: form.provincia_representa.trim() || null,
@@ -160,10 +170,21 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
       };
 
       if (isSuper) {
-        await fetchWithAuth(`${apiBaseUrl}/api/admin/sedes-directa`, {
+        const created = await fetchWithAuth(`${apiBaseUrl}/api/admin/sedes-directa`, {
           method: 'POST',
           body: JSON.stringify(body),
         });
+        if (created?.sede_id) {
+          const fd = new FormData();
+          fd.append('fecha_inicio', form.fecha_inicio_contrato);
+          if (form.fecha_vencimiento_contrato) fd.append('fecha_vencimiento', form.fecha_vencimiento_contrato);
+          if (form.referencia_contrato.trim()) fd.append('referencia', form.referencia_contrato.trim());
+          if (contratoFile) fd.append('archivo', contratoFile, contratoFile.name || 'contrato');
+          await fetchWithAuth(`${apiBaseUrl}/api/sedes/${created.sede_id}/contrato`, {
+            method: 'POST',
+            body: fd,
+          });
+        }
         setMsg('Sede creada. El licenciatario recibió aviso por WhatsApp (si había teléfono).');
       } else {
         await fetchWithAuth(`${apiBaseUrl}/api/admin/sedes-pendientes`, {
@@ -345,13 +366,40 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               value={form.numero_licencia}
               onChange={(e) => isSuper && setField('numero_licencia', e.target.value)}
             />
-            <label style={{ ...labelStyle, marginTop: 12 }}>Fecha de contrato</label>
+            <label style={{ ...labelStyle, marginTop: 12 }}>Fecha de inicio de contrato *</label>
+            <input
+              required
+              style={inputStyle}
+              type="date"
+              value={form.fecha_inicio_contrato}
+              onChange={(e) => setField('fecha_inicio_contrato', e.target.value)}
+            />
+            <label style={{ ...labelStyle, marginTop: 12 }}>Fecha de vencimiento de contrato</label>
             <input
               style={inputStyle}
               type="date"
-              value={form.fecha_contrato}
-              onChange={(e) => setField('fecha_contrato', e.target.value)}
+              value={form.fecha_vencimiento_contrato}
+              onChange={(e) => setField('fecha_vencimiento_contrato', e.target.value)}
             />
+            <label style={{ ...labelStyle, marginTop: 12 }}>Número o referencia de contrato</label>
+            <input
+              style={inputStyle}
+              value={form.referencia_contrato}
+              onChange={(e) => setField('referencia_contrato', e.target.value)}
+              placeholder="Ej: CT-2026-AR-0012"
+            />
+            <label style={{ ...labelStyle, marginTop: 12 }}>Archivo del contrato (PDF o imagen)</label>
+            <input
+              style={{ ...inputStyle, padding: '8px 10px' }}
+              type="file"
+              accept=".pdf,image/*"
+              onChange={(e) => setContratoFile(e.target.files?.[0] || null)}
+            />
+            {contratoFile ? (
+              <p style={{ margin: '6px 0 0', color: '#475569', fontSize: '12px' }}>
+                Archivo seleccionado: {contratoFile.name}
+              </p>
+            ) : null}
             <label style={{ ...labelStyle, marginTop: 12 }}>Tipo</label>
             <select style={inputStyle} value={form.tipo_licencia} onChange={(e) => setField('tipo_licencia', e.target.value)}>
               {LICENCIA_TIPO_OPTIONS.map((opt) => (

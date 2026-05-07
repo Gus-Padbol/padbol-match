@@ -5,6 +5,7 @@ import twilio from 'twilio';
 import dotenv from 'dotenv';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import cron from 'node-cron';
+import multer from 'multer';
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use(express.json());
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const uploadContrato = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 
 const TZ_TORNEO_CALENDARIO = 'America/Argentina/Buenos_Aires';
 const MSG_TORNEO_INSCRIPCION_FECHA_PASADA =
@@ -737,6 +739,72 @@ app.post('/api/sedes', async (req, res) => {
   } catch (err) {
     console.error('❌ POST /api/sedes:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/sedes/:id/contrato — sube archivo a Storage y registra metadata en contratos_sedes. */
+app.post('/api/sedes/:id/contrato', uploadContrato.single('archivo'), async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const sedeId = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'ID de sede inválido' });
+
+    const { data: sedeRow, error: sedeErr } = await supabase.from('sedes').select('id').eq('id', sedeId).maybeSingle();
+    if (sedeErr) throw sedeErr;
+    if (!sedeRow) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    const fechaInicio = String(req.body?.fecha_inicio || req.body?.fecha_inicio_contrato || '').trim();
+    const fechaVenc = String(req.body?.fecha_vencimiento || req.body?.fecha_vencimiento_contrato || '').trim();
+    const referencia = String(req.body?.referencia || req.body?.referencia_contrato || '').trim() || null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
+      return res.status(400).json({ error: 'fecha_inicio es obligatoria (YYYY-MM-DD)' });
+    }
+
+    let archivoUrl = null;
+    if (req.file?.buffer && req.file.originalname) {
+      const safeName = String(req.file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `contratos/${sedeId}/${Date.now()}_${safeName}`;
+      const up = await supabase.storage.from('contratos').upload(path, req.file.buffer, {
+        contentType: req.file.mimetype || 'application/octet-stream',
+        upsert: false,
+      });
+      if (up.error) throw up.error;
+      const pub = supabase.storage.from('contratos').getPublicUrl(path);
+      archivoUrl = pub?.data?.publicUrl || null;
+    }
+
+    const payload = {
+      sede_id: sedeId,
+      fecha_inicio: fechaInicio,
+      fecha_vencimiento: /^\d{4}-\d{2}-\d{2}$/.test(fechaVenc) ? fechaVenc : null,
+      referencia,
+      archivo_url: archivoUrl,
+    };
+    const { data, error } = await supabase.from('contratos_sedes').insert(payload).select('*').single();
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err) {
+    console.error('❌ POST /api/sedes/:id/contrato:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** GET /api/contratos-sedes — super_admin: contratos (último por sede para panel). */
+app.get('/api/contratos-sedes', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const rawIds = String(req.query.sede_ids || '')
+      .split(',')
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => Number.isFinite(n));
+    let q = supabase.from('contratos_sedes').select('*').order('created_at', { ascending: false });
+    if (rawIds.length) q = q.in('sede_id', rawIds);
+    const { data, error } = await q;
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('❌ GET /api/contratos-sedes:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
@@ -3831,7 +3899,7 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
       whatsapp: b.whatsapp || null,
       email_contacto: b.email_contacto || null,
       numero_licencia: b.numero_licencia || null,
-      fecha_contrato: b.fecha_contrato || null,
+      fecha_contrato: b.fecha_inicio_contrato || b.fecha_contrato || null,
       tipo_licencia: ['club_afiliado', 'padbol_point', 'master_ciudad', 'master_provincia', 'master_pais'].includes(String(b.tipo_licencia || '').trim())
         ? String(b.tipo_licencia).trim()
         : 'club_afiliado',
@@ -3906,7 +3974,7 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
       telefono: b.whatsapp || null,
       email_contacto: b.email_contacto || null,
       numero_licencia: b.numero_licencia || null,
-      fecha_licencia: b.fecha_contrato || null,
+      fecha_licencia: b.fecha_inicio_contrato || b.fecha_contrato || null,
       licencia_activa: true,
       franjas_horarias: [],
       fotos_destacadas: [],

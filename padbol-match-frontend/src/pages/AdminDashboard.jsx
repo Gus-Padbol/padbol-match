@@ -605,6 +605,18 @@ function formatoIngresosHoyMultimoneda(porMoneda) {
   return parts.length ? parts.join(' · ') : '$ 0 (sin ingresos registrados)';
 }
 
+function contratoBadgeData(contrato) {
+  const fv = String(contrato?.fecha_vencimiento || '').trim();
+  if (!fv) return { label: 'Vigente', bg: '#16a34a', color: '#fff' };
+  const now = new Date();
+  const venc = new Date(`${fv}T23:59:59`);
+  if (Number.isNaN(venc.getTime())) return { label: 'Vigente', bg: '#16a34a', color: '#fff' };
+  const days = Math.ceil((venc.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+  if (days < 0) return { label: 'Vencido', bg: '#dc2626', color: '#fff' };
+  if (days <= 30) return { label: 'Por vencer', bg: '#f59e0b', color: '#111827' };
+  return { label: 'Vigente', bg: '#16a34a', color: '#fff' };
+}
+
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
@@ -650,6 +662,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
   const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
   const [sedesMap, setSedesMap] = useState({});
+  const [contratosBySedeId, setContratosBySedeId] = useState({});
+  const [sedeDetalleAbiertoId, setSedeDetalleAbiertoId] = useState(null);
   /** Equipos de torneos en alcance (para ingresos por inscripción confirmada). */
   const [equiposInscripcionRows, setEquiposInscripcionRows] = useState([]);
   /** sede_id → { total, activas } para ocupación de canchas. */
@@ -1169,6 +1183,26 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const resumenOperativoSecciones = useMemo(() => {
     const p = resumenPanelDiario;
+    const alertasContratosPorVencer = isSuperAdmin
+      ? Object.values(contratosBySedeId || {})
+          .map((c) => {
+            const fv = String(c?.fecha_vencimiento || '').trim();
+            if (!fv) return null;
+            const venc = new Date(`${fv}T23:59:59`);
+            if (Number.isNaN(venc.getTime())) return null;
+            const days = Math.ceil((venc.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+            if (days < 0 || days > 30) return null;
+            const sede = sedesMap[String(c.sede_id)] || {};
+            return {
+              sedeId: c.sede_id,
+              sedeNombre: String(sede?.nombre || `Sede ${c.sede_id}`),
+              fecha_vencimiento: fv,
+              days,
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.days - b.days)
+      : [];
     const btnTorneo = {
       marginTop: '8px',
       padding: '6px 12px',
@@ -1196,6 +1230,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       (p.alertasEquiposTorneoProximoSinConfirmar || []).length > 0 ||
       (p.alertasTorneosMenosDosConfirmados || []).length > 0 ||
       (p.alertasTorneoSinSorteo48h || []).length > 0 ||
+      alertasContratosPorVencer.length > 0 ||
       (puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0);
 
     return (
@@ -1367,6 +1402,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </button>
                 </div>
               ))}
+              {alertasContratosPorVencer.map((a) => (
+                <div key={`contr-${a.sedeId}`} role="alert" style={alertBox('#fef3c7', '#fbbf24', '#92400e')}>
+                  <strong>Contrato por vencer:</strong> {a.sedeNombre} vence el {formatFecha(a.fecha_vencimiento)} (
+                  {a.days} día{a.days === 1 ? '' : 's'}).
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1374,6 +1415,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     );
   }, [
     resumenPanelDiario,
+    contratosBySedeId,
+    sedesMap,
+    isSuperAdmin,
     navigate,
     puedeVerSedesPendientes,
     sedesPendientesLoading,
@@ -1821,6 +1865,31 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         nextSedesMap[s.id] = s;
       });
       setSedesMap(nextSedesMap);
+      if (isSuperAdmin) {
+        const sidList = Object.keys(nextSedesMap).map((k) => Number(k)).filter((n) => Number.isFinite(n));
+        if (sidList.length > 0) {
+          try {
+            const contratosRes = await fetch(
+              `${apiBaseUrl}/api/contratos-sedes?sede_ids=${encodeURIComponent(sidList.join(','))}`,
+              { headers: { ...listAuthHeaders } }
+            );
+            const contratosJson = await contratosRes.json().catch(() => []);
+            if (contratosRes.ok && Array.isArray(contratosJson)) {
+              const map = {};
+              for (const c of contratosJson) {
+                const sid = Number(c?.sede_id);
+                if (!Number.isFinite(sid)) continue;
+                if (!map[sid]) map[sid] = c;
+              }
+              setContratosBySedeId(map);
+            }
+          } catch {
+            /* noop */
+          }
+        } else {
+          setContratosBySedeId({});
+        }
+      }
       console.log('[Admin] sedesMap', nextSedesMap);
 
       const resRes = await fetch(`${apiBaseUrl}/api/reservas`, { headers: { ...listAuthHeaders } });
@@ -3490,57 +3559,94 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).map((s) => {
                     const flagS = sedeFlag(s);
                     const licActiva = s.licencia_activa === true && s.numero_licencia;
+                    const open = Number(sedeDetalleAbiertoId) === Number(s.id);
+                    const contrato = contratosBySedeId[Number(s.id)] || null;
+                    const badge = contratoBadgeData(contrato);
                     return (
-                      <tr key={s.id}>
-                        <td style={{ fontWeight: 700 }}>
-                          {flagS ? `${flagS} ` : ''}
-                          {String(s.nombre || '').trim() || '—'}
-                        </td>
-                        <td>{String(s.ciudad || '').trim() || '—'}</td>
-                        {isSuperAdmin ? (
-                          <td>{String(s.pais || '').trim() || '—'}</td>
-                        ) : null}
-                        {isSuperAdmin ? (
-                          <td style={{ fontSize: '12px' }}>
-                            {String(s.email_contacto || '').trim() || '—'}
-                            {' · '}
-                            {String(s.telefono || '').trim() || '—'}
+                      <React.Fragment key={s.id}>
+                        <tr>
+                          <td style={{ fontWeight: 700 }}>
+                            {flagS ? `${flagS} ` : ''}
+                            {String(s.nombre || '').trim() || '—'}
+                            {isSuperAdmin ? (
+                              <button
+                                type="button"
+                                onClick={() => setSedeDetalleAbiertoId((prev) => (Number(prev) === Number(s.id) ? null : s.id))}
+                                style={{ marginLeft: '8px', padding: '2px 8px', fontSize: '11px' }}
+                              >
+                                {open ? 'Ocultar' : 'Detalle'}
+                              </button>
+                            ) : null}
                           </td>
+                          <td>{String(s.ciudad || '').trim() || '—'}</td>
+                          {isSuperAdmin ? (
+                            <td>{String(s.pais || '').trim() || '—'}</td>
+                          ) : null}
+                          {isSuperAdmin ? (
+                            <td style={{ fontSize: '12px' }}>
+                              {String(s.email_contacto || '').trim() || '—'}
+                              {' · '}
+                              {String(s.telefono || '').trim() || '—'}
+                            </td>
+                          ) : null}
+                          <td>
+                            {licActiva ? (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  background: '#dcfce7',
+                                  color: '#166534',
+                                }}
+                              >
+                                Activa · {String(s.numero_licencia).trim()}
+                              </span>
+                            ) : s.numero_licencia ? (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  background: '#fee2e2',
+                                  color: '#991b1b',
+                                }}
+                              >
+                                Inactiva
+                              </span>
+                            ) : (
+                              <span style={{ color: '#64748b', fontSize: '13px' }}>Sin licencia</span>
+                            )}
+                          </td>
+                        </tr>
+                        {isSuperAdmin && open ? (
+                          <tr>
+                            <td colSpan={5} style={{ background: '#f8fafc', padding: '10px 12px' }}>
+                              <div style={{ display: 'grid', gap: '6px' }}>
+                                <div style={{ fontWeight: 800, color: '#334155' }}>Contrato</div>
+                                <div style={{ fontSize: '13px' }}>
+                                  <strong>Inicio:</strong> {contrato?.fecha_inicio || '—'} · <strong>Vencimiento:</strong>{' '}
+                                  {contrato?.fecha_vencimiento || '—'} · <strong>Referencia:</strong> {contrato?.referencia || '—'}
+                                </div>
+                                <div>
+                                  <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '999px', background: badge.bg, color: badge.color, fontSize: '12px', fontWeight: 700 }}>
+                                    {badge.label}
+                                  </span>
+                                  {contrato?.archivo_url ? (
+                                    <a href={contrato.archivo_url} target="_blank" rel="noreferrer" style={{ marginLeft: '10px', fontSize: '13px' }}>
+                                      Descargar contrato
+                                    </a>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
                         ) : null}
-                        <td>
-                          {licActiva ? (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                padding: '4px 10px',
-                                borderRadius: '999px',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                background: '#dcfce7',
-                                color: '#166534',
-                              }}
-                            >
-                              Activa · {String(s.numero_licencia).trim()}
-                            </span>
-                          ) : s.numero_licencia ? (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                padding: '4px 10px',
-                                borderRadius: '999px',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                background: '#fee2e2',
-                                color: '#991b1b',
-                              }}
-                            >
-                              Inactiva
-                            </span>
-                          ) : (
-                            <span style={{ color: '#64748b', fontSize: '13px' }}>Sin licencia</span>
-                          )}
-                        </td>
-                      </tr>
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
