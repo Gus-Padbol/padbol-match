@@ -54,7 +54,15 @@ export function formatCategoriaTorneo(c) {
   return v;
 }
 
-/** `torneos.genero_competencia`: masculino | femenino | mixto */
+/** Lectura unificada: columna nueva `tipo_competencia` o legacy `genero_competencia`. */
+export function torneoTipoCompetenciaDb(t) {
+  if (t && typeof t === 'object') {
+    return String(t.tipo_competencia || t.genero_competencia || '').trim();
+  }
+  return String(t || '').trim();
+}
+
+/** Competencia del torneo: masculino | femenino | mixto */
 export function formatGeneroCompetenciaTorneo(raw) {
   const v = String(raw || '').trim().toLowerCase();
   if (!v) return '—';

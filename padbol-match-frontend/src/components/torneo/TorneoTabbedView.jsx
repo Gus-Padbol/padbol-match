@@ -2,7 +2,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
-import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../../utils/torneoFormatters';
+import {
+  formatNivelTorneo,
+  formatTipoTorneo,
+  formatCategoriaTorneo,
+  formatGeneroCompetenciaTorneo,
+  formatCategoriaEdadTorneo,
+  torneoTipoCompetenciaDb,
+} from '../../utils/torneoFormatters';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../JugadorPreviewModal';
@@ -1883,7 +1890,9 @@ export default function TorneoTabbedView({
         {sedeTexto ? <p>{sedeTexto}</p> : null}
         <p>
           {formatNivelTorneo(torneo?.nivel_torneo)} • {formatCategoriaTorneo(torneo?.categoria)} •{' '}
-          {formatTipoTorneo(torneo?.tipo_torneo)} • {formatFecha(torneo?.fecha_inicio)} a {formatFecha(torneo?.fecha_fin)}
+          {formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}
+          {formatCategoriaEdadTorneo(torneo?.categoria_edad)} • {formatTipoTorneo(torneo?.tipo_torneo)} •{' '}
+          {formatFecha(torneo?.fecha_inicio)} a {formatFecha(torneo?.fecha_fin)}
         </p>
       </div>
 

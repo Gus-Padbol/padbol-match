@@ -1218,8 +1218,8 @@ export default function MiPerfil() {
         fe.apellido = 'Completá tu apellido.';
       }
       const genReg = String(formData.genero || '').trim();
-      if (!genReg || !['masculino', 'femenino', 'otro'].includes(genReg)) {
-        fe.genero = 'Seleccioná género (Masculino, Femenino u Otro).';
+      if (!genReg || !['masculino', 'femenino', 'otro', 'open'].includes(genReg)) {
+        fe.genero = 'Seleccioná género (Masculino, Femenino, Otro u Open).';
       }
       if (!String(formData.lateralidad || '').trim()) {
         fe.lateralidad = 'Seleccioná lateralidad.';
@@ -1435,8 +1435,8 @@ export default function MiPerfil() {
       const fe = {};
       if (!nombreTrim) fe.nombre = 'Completá tu nombre.';
       if (!apellidoTrim) fe.apellido = 'Completá tu apellido.';
-      if (!genTrim || !['masculino', 'femenino', 'otro'].includes(genTrim)) {
-        fe.genero = 'Seleccioná género (Masculino, Femenino u Otro).';
+      if (!genTrim || !['masculino', 'femenino', 'otro', 'open'].includes(genTrim)) {
+        fe.genero = 'Seleccioná género (Masculino, Femenino, Otro u Open).';
       }
       if (!String(formData.nivel || '').trim()) fe.nivel = 'Seleccioná tu categoría.';
       if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Seleccioná lateralidad.';
@@ -1846,6 +1846,7 @@ export default function MiPerfil() {
                 <option value="masculino">Masculino</option>
                 <option value="femenino">Femenino</option>
                 <option value="otro">Otro</option>
+                <option value="open">Open</option>
               </select>
               {regErrP('genero')}
 
@@ -2675,7 +2676,9 @@ export default function MiPerfil() {
                       ? 'Femenino'
                       : perfil.genero === 'otro'
                         ? 'Otro'
-                        : '—'
+                        : perfil.genero === 'open'
+                          ? 'Open'
+                          : '—'
                 }
               />
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
@@ -2775,6 +2778,7 @@ export default function MiPerfil() {
               <option value="masculino">Masculino</option>
               <option value="femenino">Femenino</option>
               <option value="otro">Otro</option>
+              <option value="open">Open</option>
             </select>
             {fichErrP('genero')}
 

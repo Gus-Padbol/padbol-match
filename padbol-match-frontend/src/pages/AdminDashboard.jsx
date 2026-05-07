@@ -31,7 +31,14 @@ import {
   esFiltroTorneoEstadoTodos,
   torneoPasaFiltroEstadoVista,
 } from '../utils/torneoEstadoFiltroPills';
-import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo, formatGeneroCompetenciaTorneo, formatCategoriaEdadTorneo } from '../utils/torneoFormatters';
+import {
+  formatNivelTorneo,
+  formatTipoTorneo,
+  formatCategoriaTorneo,
+  formatGeneroCompetenciaTorneo,
+  formatCategoriaEdadTorneo,
+  torneoTipoCompetenciaDb,
+} from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 import {
@@ -2235,7 +2242,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       nombre:       torneo.nombre       || '',
       nivel_torneo: torneo.nivel_torneo || '',
       categoria:    torneo.categoria    || CATEGORIA_TORNEO_DEFAULT,
-      genero_competencia: torneo.genero_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT,
+      tipo_competencia: torneo.tipo_competencia || torneo.genero_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT,
       categoria_edad: torneo.categoria_edad || TORNEO_CATEGORIA_EDAD_DEFAULT,
       tipo_torneo:  torneo.tipo_torneo  || '',
       estado:       mapEstadoTorneoDesdeApiParaForm(torneo.estado),
@@ -2414,16 +2421,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       }
       setTorneos(tornData);
 
+      const torneoIds =
+        tornData.length > 0
+          ? tornData.map((t) => t.id).filter((id) => Number.isFinite(Number(id)))
+          : [];
+
       let eqIns = [];
-      if (tornData.length > 0) {
-        const tids = tornData.map((t) => t.id).filter((id) => Number.isFinite(Number(id)));
-        if (tids.length > 0) {
-          const { data: eqd, error: eqErr } = await supabase
-            .from('equipos')
-            .select('torneo_id, inscripcion_estado, updated_at, created_at')
-            .in('torneo_id', tids);
-          if (!eqErr && Array.isArray(eqd)) eqIns = eqd;
-        }
+      if (torneoIds.length > 0) {
+        const { data: eqd, error: eqErr } = await supabase
+          .from('equipos')
+          .select('torneo_id, inscripcion_estado, updated_at, created_at')
+          .in('torneo_id', torneoIds);
+        if (!eqErr && Array.isArray(eqd)) eqIns = eqd;
       }
       setEquiposInscripcionRows(eqIns);
 
@@ -2444,8 +2453,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setCanchasResumenPorSede(canchasMap);
 
       const partidosCnt = {};
-      if (tids.length > 0) {
-        const { data: prows } = await supabase.from('partidos').select('torneo_id').in('torneo_id', tids);
+      if (torneoIds.length > 0) {
+        const { data: prows } = await supabase.from('partidos').select('torneo_id').in('torneo_id', torneoIds);
         for (const row of prows || []) {
           const tid = row.torneo_id;
           partidosCnt[tid] = (partidosCnt[tid] || 0) + 1;
@@ -4086,8 +4095,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Tipo de competencia</label>
                           <select
                             style={inp}
-                            value={editTorneoForm.genero_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT}
-                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, genero_competencia: e.target.value }))}
+                            value={editTorneoForm.tipo_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, tipo_competencia: e.target.value }))}
                           >
                             {TORNEO_GENERO_COMPETENCIA_OPTIONS.map((o) => (
                               <option key={o.value} value={o.value}>{o.label}</option>
@@ -4239,7 +4248,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
                           : null}
                         <span style={badge('#f0fdf4', '#166534')}>{formatCategoriaTorneo(torneo.categoria)}</span>
-                        <span style={badge('#fef9c3', '#854d0e')}>{formatGeneroCompetenciaTorneo(torneo.genero_competencia)}</span>
+                        <span style={badge('#fef9c3', '#854d0e')}>{formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))}</span>
                         <span style={badge('#e0f2fe', '#0369a1')}>{formatCategoriaEdadTorneo(torneo.categoria_edad)}</span>
                         {torneo.tipo_torneo
                           ? <span style={badge(formatoColor.bg, formatoColor.color)}>{formatTipoTorneo(torneo.tipo_torneo)}</span>

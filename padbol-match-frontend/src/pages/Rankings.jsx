@@ -14,7 +14,7 @@ import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
 import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
-import { TORNEO_CATEGORIA_EDAD_OPTIONS, TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
+import { TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
 
 function etiquetaRankingJugador(player) {
   if (!player) return '—';
@@ -23,6 +23,7 @@ function etiquetaRankingJugador(player) {
   return String(player.nombre || '').trim() || '—';
 }
 
+const SCOPE_NIVELES_RANKING = {
   local: ['club', 'club_oficial', 'club_no_oficial'],
   nacional: ['nacional'],
   internacional: ['internacional', 'mundial'],
@@ -38,9 +39,9 @@ function normPaisRanking(s) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-function torneoPasaFiltroGeneroRanking(t, filtro) {
+function torneoPasaFiltroTipoCompetenciaRanking(t, filtro) {
   if (!filtro) return true;
-  const g = String(t.genero_competencia || '').trim().toLowerCase();
+  const g = String(t.tipo_competencia || t.genero_competencia || '').trim().toLowerCase();
   if (!g) return true;
   if (filtro === 'mixto') return g === 'mixto';
   if (filtro === 'masculino') return g === 'masculino' || g === 'mixto';
@@ -48,22 +49,15 @@ function torneoPasaFiltroGeneroRanking(t, filtro) {
   return true;
 }
 
-function torneoPasaFiltroEdadRanking(t, filtro) {
-  if (!filtro) return true;
-  const c = String(t.categoria_edad || '').trim().toLowerCase();
-  if (!c) return true;
-  return c === filtro;
-}
-
 /**
  * Misma lógica que GET /api/rankings en el backend; consulta directa a Supabase desde el cliente.
  */
-async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria, generoCompetencia, categoriaEdad }) {
+async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria, tipoCompetencia }) {
   const nivelesPermitidos = SCOPE_NIVELES_RANKING[scope] || SCOPE_NIVELES_RANKING.internacional;
 
   let torneosQuery = supabase
     .from('torneos')
-    .select('id, sede_id, nivel_torneo, nombre, genero_competencia, categoria_edad')
+    .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, genero_competencia')
     .eq('estado', 'finalizado')
     .in('nivel_torneo', nivelesPermitidos);
 
@@ -91,9 +85,7 @@ async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria
   if (errT) throw errT;
   if (!torneosRaw?.length) return [];
 
-  const torneos = torneosRaw.filter(
-    (t) => torneoPasaFiltroGeneroRanking(t, generoCompetencia) && torneoPasaFiltroEdadRanking(t, categoriaEdad)
-  );
+  const torneos = torneosRaw.filter((t) => torneoPasaFiltroTipoCompetenciaRanking(t, tipoCompetencia));
   if (!torneos.length) return [];
 
   const torneoIds = torneos.map((t) => t.id);
@@ -476,7 +468,6 @@ export default function Rankings() {
   const [sedesLoadError, setSedesLoadError] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
   const [selectedGeneroTorneo, setSelectedGeneroTorneo] = useState('');
-  const [selectedCategoriaEdad, setSelectedCategoriaEdad] = useState('');
   const [rankings, setRankings] = useState([]);
   const [loading, setLoading] = useState(false);
   /** Si el fetch falla (red, timeout, 5xx), mostramos vacío amigable en lugar del mensaje de error técnico. */
@@ -556,8 +547,7 @@ export default function Rankings() {
           provincia: activeTab === 'local' ? localProvincia : '',
           ciudad: activeTab === 'local' ? localCiudad : '',
           categoria: selectedCategoria,
-          generoCompetencia: selectedGeneroTorneo,
-          categoriaEdad: selectedCategoriaEdad,
+          tipoCompetencia: selectedGeneroTorneo,
         });
         if (cancelled) return;
         setRankingSinDatosDisponibles(false);
@@ -575,7 +565,7 @@ export default function Rankings() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, selectedCategoria, selectedGeneroTorneo, selectedCategoriaEdad, localPais, localProvincia, localCiudad, nacionalPais]);
+  }, [activeTab, selectedCategoria, selectedGeneroTorneo, localPais, localProvincia, localCiudad, nacionalPais]);
 
   // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -658,7 +648,6 @@ export default function Rankings() {
                 setNacionalPais('');
                 setSelectedCategoria('');
                 setSelectedGeneroTorneo('');
-                setSelectedCategoriaEdad('');
               }}
               style={{
                 flex: 1,
@@ -767,28 +756,10 @@ export default function Rankings() {
                 options={TORNEO_GENERO_COMPETENCIA_OPTIONS}
                 ariaLabel="Filtrar ranking por tipo de competencia del torneo"
               />
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.88)',
-                  marginBottom: '8px',
-                  marginTop: '10px',
-                }}
-              >
-                Categoría de edad (torneo)
-              </div>
-              <TorneoMetaPills
-                value={selectedCategoriaEdad}
-                onChange={setSelectedCategoriaEdad}
-                options={TORNEO_CATEGORIA_EDAD_OPTIONS}
-                ariaLabel="Filtrar ranking por categoría de edad del torneo"
-              />
             </div>
           )}
           {(selectedCategoria ||
             selectedGeneroTorneo ||
-            selectedCategoriaEdad ||
             (activeTab === 'local' && (localPais || localProvincia || localCiudad)) ||
             (activeTab === 'nacional' && nacionalPais)) && (
             <button
@@ -796,7 +767,6 @@ export default function Rankings() {
               onClick={() => {
                 setSelectedCategoria('');
                 setSelectedGeneroTorneo('');
-                setSelectedCategoriaEdad('');
                 setLocalPais('');
                 setLocalProvincia('');
                 setLocalCiudad('');
