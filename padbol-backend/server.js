@@ -1324,6 +1324,61 @@ app.post('/api/torneos/notificar-equipo-completo', async (req, res) => {
   }
 });
 
+const MIN_EQUIPOS_INSCRIPCION_CONFIRMADA_PARA_EN_CURSO = 2;
+
+/**
+ * Condiciones para pasar un torneo a `en_curso` vía PATCH/PUT (no aplica a generar-partidos / sorteo).
+ * @returns {{ ok: boolean, equipos_confirmados_count: number, partidos_count: number, mensaje: string }}
+ */
+async function requisitosParaPasarTorneoAEnCurso(torneoId) {
+  const tid = parseInt(String(torneoId), 10);
+  if (!Number.isFinite(tid)) {
+    return {
+      ok: false,
+      equipos_confirmados_count: 0,
+      partidos_count: 0,
+      mensaje: 'Identificador de torneo inválido.',
+    };
+  }
+
+  const { data: equipos, error: eEq } = await supabase
+    .from('equipos')
+    .select('id, inscripcion_estado')
+    .eq('torneo_id', tid);
+  if (eEq) throw eEq;
+
+  const equipos_confirmados_count = (equipos || []).filter(
+    (eq) => String(eq.inscripcion_estado || '').toLowerCase() === 'confirmado',
+  ).length;
+
+  const { count, error: ePt } = await supabase
+    .from('partidos')
+    .select('id', { count: 'exact', head: true })
+    .eq('torneo_id', tid);
+  if (ePt) throw ePt;
+  const partidos_count = typeof count === 'number' ? count : 0;
+
+  const faltas = [];
+  if (equipos_confirmados_count < MIN_EQUIPOS_INSCRIPCION_CONFIRMADA_PARA_EN_CURSO) {
+    faltas.push(
+      `Se requieren al menos ${MIN_EQUIPOS_INSCRIPCION_CONFIRMADA_PARA_EN_CURSO} equipos con inscripción confirmada (hay ${equipos_confirmados_count}).`,
+    );
+  }
+  if (partidos_count < 1) {
+    faltas.push(
+      'No hay partidos generados. Realizá el sorteo de grupos o generá el fixture antes de iniciar el torneo.',
+    );
+  }
+
+  const ok = faltas.length === 0;
+  return {
+    ok,
+    equipos_confirmados_count,
+    partidos_count,
+    mensaje: ok ? '' : faltas.join(' '),
+  };
+}
+
 async function notifyListaEsperaInscripcionAbierta(torneoId, nombreTorneo) {
   try {
     const { data: rows, error } = await supabase
@@ -1411,6 +1466,25 @@ async function handleTorneoPatchOrPut(req, res) {
           const superA = isSuperAdminApi(user.email, rowRole?.role);
           if (!superA && !torneoTransicionEstadoPermitidaNonSuper(prevNorm, estNorm)) {
             return res.status(403).json({ error: 'Transición de estado no permitida' });
+          }
+          if (estNorm === 'en_curso' && prevNorm !== 'en_curso') {
+            let reqIni;
+            try {
+              reqIni = await requisitosParaPasarTorneoAEnCurso(id);
+            } catch (e) {
+              console.error('[torneo] requisitos en_curso:', e?.message || e);
+              return res.status(500).json({ error: e?.message || 'Error al validar requisitos del torneo' });
+            }
+            if (!reqIni.ok) {
+              return res.status(400).json({
+                error: reqIni.mensaje,
+                iniciar_torneo: {
+                  equipos_confirmados: reqIni.equipos_confirmados_count,
+                  min_equipos_confirmados: MIN_EQUIPOS_INSCRIPCION_CONFIRMADA_PARA_EN_CURSO,
+                  partidos_generados: reqIni.partidos_count,
+                },
+              });
+            }
           }
           patch.estado = estNorm;
         }
@@ -3479,6 +3553,20 @@ async function cierreInscripcionTorneos24hAntesInicio() {
     if (!inicio) continue;
     const limiteCierreInscripcion = new Date(inicio.getTime() - 24 * 60 * 60 * 1000);
     if (now.getTime() < limiteCierreInscripcion.getTime()) continue;
+
+    let reqIni;
+    try {
+      reqIni = await requisitosParaPasarTorneoAEnCurso(t.id);
+    } catch (e) {
+      console.warn(`⚠️ Torneo ${t.id}: validación inicio automático:`, e?.message || e);
+      continue;
+    }
+    if (!reqIni.ok) {
+      console.warn(
+        `⚠️ Torneo ${t.id} "${String(t.nombre || '').slice(0, 40)}": no se aplicó cierre automático a en_curso — ${reqIni.mensaje}`,
+      );
+      continue;
+    }
 
     console.log(`📅 Cierre inscripción (24h antes del inicio): torneo ${t.id} "${String(t.nombre || '').slice(0, 40)}" → en_curso`);
 

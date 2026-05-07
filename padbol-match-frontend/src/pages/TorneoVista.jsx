@@ -162,22 +162,16 @@ export default function TorneoVista() {
   /** No reenviar `fromAdmin` a enlaces de la vista pública (perfiles, equipos en solo lectura). */
   const torneoNavStateParaTabbed = fromAdmin ? torneoNavState : null;
 
-  const jugadorEquipoListoParaTorneo = (raw) => {
-    const p = typeof raw === 'object' && raw != null ? raw : { nombre: raw, email: '' };
-    if (p.estado === 'pendiente') return false;
-    if (String(p.email || '').trim()) return true;
-    if (p.id != null && p.id !== '') return true;
-    return false;
-  };
-
-  const equipoListoParaIniciar = (eq) => {
-    const cupo = Number(eq.cupo_maximo || 2);
-    const arr = Array.isArray(eq?.jugadores) ? eq.jugadores : [];
-    if (arr.length < cupo) return false;
-    return arr.every(jugadorEquipoListoParaTorneo);
-  };
-
-  const todosEquiposCompletos = equipos.length > 0 && equipos.every(equipoListoParaIniciar);
+  const equiposConfirmadosInscripcion = useMemo(
+    () =>
+      (equipos || []).filter(
+        (eq) => String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado',
+      ).length,
+    [equipos],
+  );
+  const tieneFixturePartidos = partidos.length > 0;
+  const puedeIniciarTorneoEnCurso =
+    !loading && equiposConfirmadosInscripcion >= 2 && tieneFixturePartidos;
 
   const recargarDatosTorneo = useCallback(async () => {
     try {
@@ -437,12 +431,10 @@ export default function TorneoVista() {
   }, [tablaPuntosRows, equipos]);
 
   const iniciarTorneo = async () => {
-    const avisoIncompleto = !todosEquiposCompletos
-      ? 'Algunos equipos aún no están completos. '
-      : '';
+    if (!puedeIniciarTorneoEnCurso) return;
     if (
       !window.confirm(
-        `${avisoIncompleto}¿Iniciar el torneo? Se cerrará la inscripción y el estado pasará a «en curso».`
+        '¿Iniciar el torneo? Se cerrará la inscripción y el estado pasará a «en curso».'
       )
     ) {
       return;
@@ -460,7 +452,12 @@ export default function TorneoVista() {
         setTorneo((prev) => ({ ...prev, estado: 'en_curso' }));
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err?.error || 'Error al iniciar el torneo');
+        const det = err?.iniciar_torneo;
+        let msg = err?.error || 'Error al iniciar el torneo';
+        if (det && typeof det.equipos_confirmados === 'number') {
+          msg += `\n\nEquipos confirmados: ${det.equipos_confirmados} (mín. ${det.min_equipos_confirmados ?? 2}). Partidos generados: ${det.partidos_generados ?? 0}.`;
+        }
+        alert(msg);
       }
     } catch (err) {
       alert('Error: ' + err.message);
@@ -665,16 +662,27 @@ export default function TorneoVista() {
     ) : null;
   const adminBarIniciarTorneo = isAdminGestionEnEstaVista && puedeMostrarIniciarTorneo ? (
     <div className="torneo-acciones torneo-acciones--sobre-violeta">
-      {!todosEquiposCompletos ? (
-        <p className="torneo-iniciar-aviso">
-          Faltan equipos completos para iniciar. Podés iniciar igual para cerrar inscripción.
-        </p>
+      {!loading && !puedeIniciarTorneoEnCurso ? (
+        <>
+          {equiposConfirmadosInscripcion < 2 ? (
+            <p className="torneo-iniciar-aviso" role="status">
+              Faltan equipos confirmados: necesitás al menos 2 equipos con inscripción confirmada (ahora hay{' '}
+              {equiposConfirmadosInscripcion}).
+            </p>
+          ) : null}
+          {!tieneFixturePartidos ? (
+            <p className="torneo-iniciar-aviso" role="status">
+              Falta el sorteo o el fixture: generá los partidos del torneo (por ejemplo sorteo de grupos en el panel
+              admin, o la generación de fixture) antes de pasar a «en curso».
+            </p>
+          ) : null}
+        </>
       ) : null}
       <button
         type="button"
         className="btn-iniciar-torneo btn-iniciar-torneo--sobre-violeta"
         onClick={() => void iniciarTorneo()}
-        disabled={iniciando}
+        disabled={iniciando || !puedeIniciarTorneoEnCurso}
       >
         {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
       </button>
