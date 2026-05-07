@@ -179,7 +179,7 @@ function esCreadorEquipoOMiAuth(eq, authEmailTrim, usuarioBasico, authUserId) {
 
 export default function FormEquipos() {
   const { id } = useParams();
-  const { session, loading: authLoading, userProfile } = useAuth();
+  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
   const torneoId = parseInt(id, 10);
   const navigate = useNavigate();
   const location = useLocation();
@@ -297,6 +297,12 @@ export default function FormEquipos() {
   const [modalParticipacionAbierto, setModalParticipacionAbierto] = useState(false);
   const [jugadorPreviewForm, setJugadorPreviewForm] = useState(null);
   const [modalJugadorBuscar, setModalJugadorBuscar] = useState(null);
+  const [buscaCompaneroLocal, setBuscaCompaneroLocal] = useState(false);
+  const [buscaCompaneroSaving, setBuscaCompaneroSaving] = useState(false);
+
+  useEffect(() => {
+    setBuscaCompaneroLocal(Boolean(userProfile?.busca_companero));
+  }, [userProfile?.busca_companero]);
   /** Filas `tabla_puntos` del torneo (solo si está finalizado). */
   const [tablaPuntosRows, setTablaPuntosRows] = useState([]);
   const [partidos, setPartidos] = useState([]);
@@ -2828,6 +2834,62 @@ export default function FormEquipos() {
           >
             {!miEquipoLleno ? (
               <>
+                {session?.user && authUserId ? (
+                  <div
+                    style={{
+                      marginBottom: '14px',
+                      padding: '12px 14px',
+                      background: '#f8fafc',
+                      borderRadius: '10px',
+                      border: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        cursor: buscaCompaneroSaving ? 'wait' : 'pointer',
+                        margin: 0,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={buscaCompaneroLocal}
+                        disabled={buscaCompaneroSaving}
+                        onChange={async (e) => {
+                          const next = e.target.checked;
+                          if (!authUserId) return;
+                          setBuscaCompaneroLocal(next);
+                          setBuscaCompaneroSaving(true);
+                          const { error } = await supabase
+                            .from('jugadores_perfil')
+                            .update({ busca_companero: next })
+                            .eq('user_id', authUserId);
+                          if (error) {
+                            setBuscaCompaneroLocal(!next);
+                            alert(error.message || 'No se pudo guardar');
+                          } else {
+                            await refreshSession();
+                            try {
+                              window.dispatchEvent(new CustomEvent(PERFIL_CHANGE_EVENT));
+                            } catch {
+                              /* ignore */
+                            }
+                          }
+                          setBuscaCompaneroSaving(false);
+                        }}
+                        style={{ width: '18px', height: '18px', flexShrink: 0, marginTop: '2px' }}
+                      />
+                      <span style={{ fontSize: '14px', lineHeight: 1.45, color: '#0f172a' }}>
+                        <span style={{ fontWeight: 800 }}>Busco compañero</span>
+                        <span style={{ display: 'block', fontWeight: 500, color: '#64748b', fontSize: '13px', marginTop: '4px' }}>
+                          Visible en el inicio para jugadores de tu misma sede (se guarda en tu perfil).
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                ) : null}
                 <div style={{ fontWeight: 700, marginBottom: '10px', color: '#111' }}>Agregar compañero</div>
                 <input
                   type="search"

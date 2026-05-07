@@ -399,6 +399,7 @@ export default function MiPerfil() {
     numero_fipa: '',
     es_federado: false,
     mostrar_torneos_jugados: false,
+    busca_companero: false,
   });
 
   const [companeroBusqueda, setCompaneroBusqueda] = useState('');
@@ -779,6 +780,7 @@ export default function MiPerfil() {
           numero_fipa: data.numero_fipa || '',
           es_federado: data.es_federado || false,
           mostrar_torneos_jugados: Boolean(data.mostrar_torneos_jugados),
+          busca_companero: Boolean(data.busca_companero),
         });
         {
           const wa =
@@ -1287,6 +1289,7 @@ export default function MiPerfil() {
         instagram_url: instagramUrlFromHandle(formData.instagram),
         companero_id: null,
         mostrar_torneos_jugados: false,
+        busca_companero: false,
       };
 
       const { error: jpErr } = await supabase.from('jugadores_perfil').upsert(
@@ -1420,6 +1423,7 @@ export default function MiPerfil() {
           perfil?.ultimo_companero_id != null && String(perfil.ultimo_companero_id).trim()
             ? String(perfil.ultimo_companero_id).trim()
             : null,
+        busca_companero: !!formData.busca_companero,
       };
 
       const userId = session?.user?.id ?? null;
@@ -2633,6 +2637,10 @@ export default function MiPerfil() {
                 </span>
               } />
               <Row label="Lateralidad" value={perfil.lateralidad} />
+              <Row
+                label="Busco compañero"
+                value={perfil.busca_companero ? 'Sí · visible en tu sede' : 'No'}
+              />
               {fechaNacimientoDesdeDb(perfil.fecha_nacimiento) && (
                 <Row
                   label="Fecha de nacimiento"
@@ -2846,6 +2854,22 @@ export default function MiPerfil() {
             </label>
             <p style={{ color: '#666', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
               No revela nombres de torneos ni resultados; solo el total si activás esta opción.
+            </p>
+
+            <label style={{ ...labelStyle, display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                name="busca_companero"
+                checked={!!formData.busca_companero}
+                onChange={handleChange}
+                style={{ width: '18px', height: '18px', flexShrink: 0, marginTop: '2px' }}
+              />
+              <span style={{ fontWeight: 600, lineHeight: 1.4 }}>
+                Busco compañero: aparecer en el inicio para jugadores de mi club habitual (misma sede).
+              </span>
+            </label>
+            <p style={{ color: '#666', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
+              Necesitás tener club habitual o sede en tu ficha. Otros te contactan por WhatsApp si tenés número en el perfil o en una reserva.
             </p>
 
             <label style={labelStyle}>WhatsApp</label>
@@ -3276,6 +3300,7 @@ export default function MiPerfil() {
                       numero_fipa: perfil?.numero_fipa || '',
                       es_federado: perfil?.es_federado || false,
                       mostrar_torneos_jugados: Boolean(perfil?.mostrar_torneos_jugados),
+                      busca_companero: Boolean(perfil?.busca_companero),
                     };
                   });
                 }}

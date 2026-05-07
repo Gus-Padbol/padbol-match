@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -10,7 +10,13 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
+import { PERFIL_CHANGE_EVENT, formatAliasConArroba } from '../utils/jugadorPerfil';
+import { buildWhatsAppMeUrl, primerNombreSaludo } from '../utils/whatsappContactUrl';
+
+const MATCHMAKING_API_BASE =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
 
 function esPlaceholderJugador(s) {
   return String(s || '').trim().toLowerCase() === 'jugador';
@@ -44,6 +50,10 @@ export default function UserHome() {
   const location = useLocation();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+  const [jugadoresDisponibles, setJugadoresDisponibles] = useState([]);
+  const [matchmakingNeedsClub, setMatchmakingNeedsClub] = useState(false);
+  const [matchmakingCargando, setMatchmakingCargando] = useState(false);
+  const [matchmakingError, setMatchmakingError] = useState('');
   /** Nombre para el saludo: se fija una sola vez al tener perfil listo (evita parpadeo por re-renders). */
   const [nombreFinal, setNombreFinal] = useState(null);
 
@@ -54,6 +64,49 @@ export default function UserHome() {
     window.addEventListener(PERFIL_CHANGE_EVENT, onPerfil);
     return () => window.removeEventListener(PERFIL_CHANGE_EVENT, onPerfil);
   }, [refreshSession]);
+
+  const accessToken = session?.access_token ?? null;
+
+  useEffect(() => {
+    if (!accessToken) {
+      setJugadoresDisponibles([]);
+      setMatchmakingNeedsClub(false);
+      setMatchmakingError('');
+      setMatchmakingCargando(false);
+      return;
+    }
+    let cancelled = false;
+    setMatchmakingCargando(true);
+    setMatchmakingError('');
+    (async () => {
+      try {
+        const res = await fetch(`${MATCHMAKING_API_BASE}/api/jugadores/disponibles-matchmaking`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const j = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (!res.ok) {
+          setJugadoresDisponibles([]);
+          setMatchmakingNeedsClub(false);
+          setMatchmakingError(typeof j?.error === 'string' ? j.error : 'No se pudieron cargar los jugadores');
+          return;
+        }
+        setJugadoresDisponibles(Array.isArray(j?.jugadores) ? j.jugadores : []);
+        setMatchmakingNeedsClub(Boolean(j?.needsClub));
+      } catch (e) {
+        if (!cancelled) {
+          setJugadoresDisponibles([]);
+          setMatchmakingNeedsClub(false);
+          setMatchmakingError('No se pudieron cargar los jugadores');
+        }
+      } finally {
+        if (!cancelled) setMatchmakingCargando(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, userProfile?.busca_companero, userProfile?.ciudad, userProfile?.sede_id]);
 
   useEffect(() => {
     if (session?.user) return;
@@ -96,6 +149,16 @@ export default function UserHome() {
     { label: 'Ranking', icon: '🥇', action: () => navigate('/rankings') },
     { label: 'Perfil', icon: '👤', action: () => navigate('/mi-perfil') },
   ];
+
+  const hayListaMatchmaking = session?.user && (matchmakingCargando || jugadoresDisponibles.length > 0 || matchmakingNeedsClub || matchmakingError);
+
+  const mensajeWaMatchmaking = useMemo(
+    () => (nombreDestino) => {
+      const n = primerNombreSaludo(nombreDestino) || 'Jugador';
+      return `Hola ${n}, te vi en Padbol Match buscando compañero. ¿Jugamos juntos?`;
+    },
+    []
+  );
 
   return (
     <div
@@ -195,6 +258,151 @@ export default function UserHome() {
             </p>
           ) : null}
         </div>
+
+        {hayListaMatchmaking ? (
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              margin: '0 auto 20px auto',
+              background: 'rgba(255,255,255,0.14)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              borderRadius: '16px',
+              padding: '16px 16px 14px',
+              boxSizing: 'border-box',
+              color: 'white',
+            }}
+          >
+            <h2
+              style={{
+                margin: '0 0 10px 0',
+                fontSize: '17px',
+                fontWeight: 800,
+                textAlign: 'center',
+                color: 'white',
+              }}
+            >
+              Jugadores disponibles
+            </h2>
+            {matchmakingError ? (
+              <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#fecaca', textAlign: 'center' }}>
+                {matchmakingError}
+              </p>
+            ) : null}
+            {matchmakingNeedsClub && !matchmakingCargando ? (
+              <p style={{ margin: '0 0 12px 0', fontSize: '13px', opacity: 0.92, textAlign: 'center', lineHeight: 1.45 }}>
+                Completá tu <strong>club habitual</strong> en Mi perfil para ver jugadores de tu sede que buscan compañero.
+              </p>
+            ) : null}
+            {matchmakingCargando ? (
+              <p style={{ margin: 0, fontSize: '14px', textAlign: 'center', opacity: 0.85 }}>Cargando…</p>
+            ) : jugadoresDisponibles.length === 0 && !matchmakingNeedsClub ? (
+              <p style={{ margin: 0, fontSize: '14px', textAlign: 'center', opacity: 0.88 }}>
+                Por ahora no hay jugadores buscando compañero en tu sede.
+              </p>
+            ) : (
+              <ul
+                style={{
+                  listStyle: 'none',
+                  margin: 0,
+                  padding: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  maxHeight: 'min(52vh, 360px)',
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                {jugadoresDisponibles.map((j) => {
+                  const aliasTxt = j.alias ? formatAliasConArroba(j.alias) : '';
+                  const cat = j.categoria || '—';
+                  const foto = String(j.foto_url || '').trim();
+                  const waUrl = j.whatsapp_me_digits
+                    ? buildWhatsAppMeUrl(j.whatsapp_me_digits, mensajeWaMatchmaking(j.nombre))
+                    : null;
+                  const inicial = String(j.nombre || '?')
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase();
+                  return (
+                    <li
+                      key={String(j.user_id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px',
+                        background: 'rgba(0,0,0,0.12)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                      }}
+                    >
+                      {foto ? (
+                        <img
+                          src={foto}
+                          alt=""
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          aria-hidden
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 900,
+                            fontSize: '18px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {inicial}
+                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 800, fontSize: '15px', lineHeight: 1.25 }}>{j.nombre}</div>
+                        {aliasTxt ? (
+                          <div style={{ fontSize: '13px', opacity: 0.9, marginTop: '2px' }}>{aliasTxt}</div>
+                        ) : null}
+                        <div style={{ fontSize: '12px', opacity: 0.85, marginTop: '4px' }}>Categoría: {cat}</div>
+                        {waUrl ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-block',
+                              marginTop: '8px',
+                              padding: '8px 12px',
+                              borderRadius: '10px',
+                              background: '#25D366',
+                              color: '#fff',
+                              fontWeight: 800,
+                              fontSize: '13px',
+                              textDecoration: 'none',
+                            }}
+                          >
+                            Contactar por WhatsApp
+                          </a>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ) : null}
 
         <div
           style={{

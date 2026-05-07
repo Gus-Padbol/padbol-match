@@ -2246,6 +2246,143 @@ app.get('/api/jugadores/buscar', async (req, res) => {
   }
 });
 
+function whatsappDigitsOnly(raw) {
+  if (raw == null) return '';
+  const s = String(raw).trim();
+  if (!s) return '';
+  return s.replace(/\D/g, '');
+}
+
+async function fetchWhatsappDesdeReservasPorUserOEmail(userId, email) {
+  if (userId) {
+    const { data: rows } = await supabase
+      .from('reservas')
+      .select('whatsapp')
+      .eq('user_id', userId)
+      .not('whatsapp', 'is', null)
+      .order('id', { ascending: false })
+      .limit(1);
+    const w = rows?.[0]?.whatsapp != null ? String(rows[0].whatsapp).trim() : '';
+    if (w) return w;
+  }
+  const em = String(email || '').trim();
+  if (em) {
+    const { data: rows2 } = await supabase
+      .from('reservas')
+      .select('whatsapp')
+      .ilike('email', em)
+      .not('whatsapp', 'is', null)
+      .order('id', { ascending: false })
+      .limit(1);
+    const w2 = rows2?.[0]?.whatsapp != null ? String(rows2[0].whatsapp).trim() : '';
+    if (w2) return w2;
+  }
+  return '';
+}
+
+function normClubLabel(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+/**
+ * Jugadores con busca_companero en la misma sede que el usuario (JWT).
+ * WhatsApp: perfil primero; si falta, última reserva con número (user_id o email).
+ */
+app.get('/api/jugadores/disponibles-matchmaking', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) {
+      return res.status(401).json({ error: 'Se requiere sesión' });
+    }
+    const viewerUid = String(user.id).trim();
+
+    let me = null;
+    const rMe = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, sede_id, ciudad, email')
+      .eq('user_id', viewerUid)
+      .maybeSingle();
+    if (!rMe.error) me = rMe.data;
+    if (!me && user.email) {
+      const r2 = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, sede_id, ciudad, email')
+        .ilike('email', String(user.email).trim())
+        .maybeSingle();
+      if (!r2.error) me = r2.data;
+    }
+
+    const sedeIdMe = me?.sede_id != null && me.sede_id !== '' ? Number(me.sede_id) : NaN;
+    const ciudadMe = String(me?.ciudad || '').trim();
+
+    if (!(Number.isFinite(sedeIdMe) && sedeIdMe > 0) && !ciudadMe) {
+      return res.json({ jugadores: [], needsClub: true });
+    }
+
+    const { data: rawList, error: listErr } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, nombre, apellido, alias, foto_url, nivel, ciudad, sede_id, whatsapp, email')
+      .eq('busca_companero', true)
+      .limit(500);
+    if (listErr) throw listErr;
+
+    const viewerSedeIds = new Set();
+    if (Number.isFinite(sedeIdMe) && sedeIdMe > 0) viewerSedeIds.add(sedeIdMe);
+    if (ciudadMe) {
+      const { data: sedeRows } = await supabase.from('sedes').select('id').ilike('nombre', ciudadMe);
+      for (const r of sedeRows || []) {
+        const id = r?.id != null ? Number(r.id) : NaN;
+        if (Number.isFinite(id) && id > 0) viewerSedeIds.add(id);
+      }
+    }
+
+    const ciudadMeNorm = normClubLabel(ciudadMe);
+
+    const listIn = (rawList || []).filter((c) => {
+      const uid = c?.user_id != null ? String(c.user_id).trim() : '';
+      if (!uid || uid === viewerUid) return false;
+      const sid = c?.sede_id != null && c.sede_id !== '' ? Number(c.sede_id) : NaN;
+      if (viewerSedeIds.size > 0 && Number.isFinite(sid) && sid > 0 && viewerSedeIds.has(sid)) return true;
+      if (ciudadMeNorm && normClubLabel(c?.ciudad) === ciudadMeNorm) return true;
+      return false;
+    });
+
+    const out = [];
+    for (const row of listIn) {
+      const uid = row.user_id;
+      let wa = row.whatsapp != null ? String(row.whatsapp).trim() : '';
+      if (!wa) {
+        wa = await fetchWhatsappDesdeReservasPorUserOEmail(uid, row.email);
+      }
+      const digits = whatsappDigitsOnly(wa);
+      const nombreCompleto = [String(row.nombre || '').trim(), String(row.apellido || '').trim()]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      const nombre =
+        nombreCompleto ||
+        String(row.alias || '').trim() ||
+        'Jugador';
+      out.push({
+        user_id: uid,
+        nombre,
+        alias: row.alias != null && String(row.alias).trim() ? String(row.alias).trim() : null,
+        foto_url: row.foto_url || null,
+        categoria: row.nivel != null && String(row.nivel).trim() ? String(row.nivel).trim() : null,
+        whatsapp_me_digits: digits.length >= 8 ? digits : null,
+      });
+    }
+
+    res.json({ jugadores: out, needsClub: false });
+  } catch (err) {
+    console.error('GET /api/jugadores/disponibles-matchmaking', err);
+    res.status(500).json({ error: err?.message || String(err) });
+  }
+});
+
 app.get('/api/jugadores/:id', async (req, res) => {
   try {
     const { id } = req.params;
