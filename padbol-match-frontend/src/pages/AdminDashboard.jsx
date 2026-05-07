@@ -21,7 +21,7 @@ import {
   FILTROS_ESTADO_TORNEO_PILLS,
   esEstadoCanceladoTorneo,
   esEstadoFinalizadoTorneo,
-  normalizeTorneoFiltroEstadoPill,
+  esFiltroTorneoEstadoTodos,
   torneoPasaFiltroEstadoVista,
 } from '../utils/torneoEstadoFiltroPills';
 import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
@@ -911,10 +911,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   const torneosFiltradosAdminEstado = useMemo(() => {
-    const f = normalizeTorneoFiltroEstadoPill(filtroEstadoTorneoAdmin);
-    if (f === 'todos' || f === 'todas' || f === '') {
-      return torneos;
-    }
+    if (esFiltroTorneoEstadoTodos(filtroEstadoTorneoAdmin)) return torneos;
     return torneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneoAdmin));
   }, [torneos, filtroEstadoTorneoAdmin]);
 
