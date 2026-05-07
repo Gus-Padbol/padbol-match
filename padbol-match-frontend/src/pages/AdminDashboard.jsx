@@ -872,6 +872,174 @@ function contratoBadgeData(contrato) {
   return { label: 'Vigente', bg: '#16a34a', color: '#fff' };
 }
 
+function sedeLicenciaChip(s) {
+  const licActiva = s.licencia_activa === true && s.numero_licencia;
+  if (licActiva) {
+    return (
+      <span
+        style={{
+          display: 'inline-block',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          fontSize: '12px',
+          fontWeight: 700,
+          background: '#dcfce7',
+          color: '#166534',
+        }}
+      >
+        Activa · {String(s.numero_licencia).trim()}
+      </span>
+    );
+  }
+  if (s.numero_licencia) {
+    return (
+      <span
+        style={{
+          display: 'inline-block',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          fontSize: '12px',
+          fontWeight: 700,
+          background: '#fee2e2',
+          color: '#991b1b',
+        }}
+      >
+        Inactiva
+      </span>
+    );
+  }
+  return <span style={{ color: '#64748b', fontSize: '13px' }}>Sin licencia</span>;
+}
+
+/** Panel contrato + suscripción (super admin, detalle expandido) — compartido tabla / tarjeta móvil. */
+function SedeSuperDetallePanel({
+  s,
+  contrato,
+  badge,
+  suscripcionEstadoSuperSavingId,
+  guardarSuscripcionEstadoSuper,
+  activarSuscripcionStripeSede,
+}) {
+  return (
+    <div style={{ display: 'grid', gap: '14px' }}>
+      <div style={{ display: 'grid', gap: '6px' }}>
+        <div style={{ fontWeight: 800, color: '#334155' }}>Contrato</div>
+        <div style={{ fontSize: '13px' }}>
+          <strong>Inicio:</strong> {contrato?.fecha_inicio || '—'} · <strong>Vencimiento:</strong>{' '}
+          {contrato?.fecha_vencimiento || '—'} · <strong>Referencia:</strong> {contrato?.referencia || '—'}
+        </div>
+        <div>
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '4px 10px',
+              borderRadius: '999px',
+              background: badge.bg,
+              color: badge.color,
+              fontSize: '12px',
+              fontWeight: 700,
+            }}
+          >
+            {badge.label}
+          </span>
+          {contrato?.archivo_url ? (
+            <a href={contrato.archivo_url} target="_blank" rel="noreferrer" style={{ marginLeft: '10px', fontSize: '13px' }}>
+              Descargar contrato
+            </a>
+          ) : null}
+        </div>
+      </div>
+      <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'grid', gap: '8px' }}>
+        <div style={{ fontWeight: 800, color: '#334155' }}>Suscripción Padbol Match (Stripe)</div>
+        <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
+          <strong>Estado:</strong> {etiquetaSuscripcionEstado(s.suscripcion_estado)}
+          <br />
+          <strong>Próximo cobro:</strong> {formatProximoCobroAdmin(s.suscripcion_proximo_cobro)}
+        </div>
+        <div
+          style={{
+            marginTop: '10px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569' }}>Cambiar estado (super admin)</label>
+          <select
+            value={String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase()}
+            disabled={suscripcionEstadoSuperSavingId === s.id}
+            onChange={(e) => {
+              const v = e.target.value;
+              const prev = String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase();
+              if (v === prev) return;
+              if (!window.confirm(`¿Guardar estado de suscripción como "${v}"?`)) {
+                e.target.value = prev;
+                return;
+              }
+              void guardarSuscripcionEstadoSuper(s, v);
+            }}
+            style={{
+              padding: '6px 10px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              border: '1px solid #cbd5e1',
+              maxWidth: '100%',
+            }}
+          >
+            {SUSCRIPCION_ESTADOS_SUPER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {suscripcionEstadoSuperSavingId === s.id ? (
+            <span style={{ fontSize: '12px', color: '#64748b' }}>Guardando…</span>
+          ) : null}
+        </div>
+        {String(s.suscripcion_estado || '').toLowerCase() !== 'activa' &&
+        String(s.suscripcion_estado || '').toLowerCase() !== 'pendiente_pago' ? (
+          <button
+            type="button"
+            onClick={() => void activarSuscripcionStripeSede(s)}
+            style={{
+              justifySelf: 'start',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #635bff, #0a2540)',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
+          >
+            Activar suscripción
+          </button>
+        ) : String(s.suscripcion_estado || '').toLowerCase() === 'pendiente_pago' ? (
+          <button
+            type="button"
+            onClick={() => void activarSuscripcionStripeSede(s)}
+            style={{
+              justifySelf: 'start',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#ca8a04',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
+          >
+            Completar pago (tarjeta)
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
@@ -4562,205 +4730,152 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 : 'No hay sedes que coincidan con tu alcance nacional.'}
             </p>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="reservas-table">
-                <thead>
-                  <tr>
-                    <th>Sede</th>
-                    <th>Ciudad</th>
-                    {isSuperAdmin ? <th>País</th> : null}
-                    {isSuperAdmin ? <th>Contacto</th> : null}
-                    <th>Licencia</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).map((s) => {
-                    const flagS = sedeFlag(s);
-                    const licActiva = s.licencia_activa === true && s.numero_licencia;
-                    const open = Number(sedeDetalleAbiertoId) === Number(s.id);
-                    const contrato = contratosBySedeId[Number(s.id)] || null;
-                    const badge = contratoBadgeData(contrato);
-                    return (
-                      <React.Fragment key={s.id}>
-                        <tr>
-                          <td style={{ fontWeight: 700 }}>
-                            {flagS ? `${flagS} ` : ''}
-                            {String(s.nombre || '').trim() || '—'}
-                            {isSuperAdmin ? (
-                              <button
-                                type="button"
-                                onClick={() => setSedeDetalleAbiertoId((prev) => (Number(prev) === Number(s.id) ? null : s.id))}
-                                style={{ marginLeft: '8px', padding: '2px 8px', fontSize: '11px' }}
-                              >
-                                {open ? 'Ocultar' : 'Detalle'}
-                              </button>
-                            ) : null}
-                          </td>
-                          <td>{String(s.ciudad || '').trim() || '—'}</td>
-                          {isSuperAdmin ? (
-                            <td>{String(s.pais || '').trim() || '—'}</td>
-                          ) : null}
-                          {isSuperAdmin ? (
-                            <td style={{ fontSize: '12px' }}>
-                              {String(s.email_contacto || '').trim() || '—'}
-                              {' · '}
-                              {String(s.telefono || '').trim() || '—'}
-                            </td>
-                          ) : null}
-                          <td>
-                            {licActiva ? (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '4px 10px',
-                                  borderRadius: '999px',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  background: '#dcfce7',
-                                  color: '#166534',
-                                }}
-                              >
-                                Activa · {String(s.numero_licencia).trim()}
-                              </span>
-                            ) : s.numero_licencia ? (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '4px 10px',
-                                  borderRadius: '999px',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  background: '#fee2e2',
-                                  color: '#991b1b',
-                                }}
-                              >
-                                Inactiva
-                              </span>
-                            ) : (
-                              <span style={{ color: '#64748b', fontSize: '13px' }}>Sin licencia</span>
-                            )}
-                          </td>
-                        </tr>
-                        {isSuperAdmin && open ? (
+            <>
+              <div className="sedes-admin-table-wrap" style={{ overflowX: 'auto' }}>
+                <table className="reservas-table sedes-admin-sedes-table">
+                  <thead>
+                    <tr>
+                      <th>Sede</th>
+                      <th>Ciudad</th>
+                      {isSuperAdmin ? <th>País</th> : null}
+                      {isSuperAdmin ? <th>Contacto</th> : null}
+                      <th>Licencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).map((s) => {
+                      const flagS = sedeFlag(s);
+                      const open = Number(sedeDetalleAbiertoId) === Number(s.id);
+                      const contrato = contratosBySedeId[Number(s.id)] || null;
+                      const badge = contratoBadgeData(contrato);
+                      return (
+                        <React.Fragment key={s.id}>
                           <tr>
-                            <td colSpan={5} style={{ background: '#f8fafc', padding: '10px 12px' }}>
-                              <div style={{ display: 'grid', gap: '14px' }}>
-                                <div style={{ display: 'grid', gap: '6px' }}>
-                                  <div style={{ fontWeight: 800, color: '#334155' }}>Contrato</div>
-                                  <div style={{ fontSize: '13px' }}>
-                                    <strong>Inicio:</strong> {contrato?.fecha_inicio || '—'} · <strong>Vencimiento:</strong>{' '}
-                                    {contrato?.fecha_vencimiento || '—'} · <strong>Referencia:</strong> {contrato?.referencia || '—'}
-                                  </div>
-                                  <div>
-                                    <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '999px', background: badge.bg, color: badge.color, fontSize: '12px', fontWeight: 700 }}>
-                                      {badge.label}
-                                    </span>
-                                    {contrato?.archivo_url ? (
-                                      <a href={contrato.archivo_url} target="_blank" rel="noreferrer" style={{ marginLeft: '10px', fontSize: '13px' }}>
-                                        Descargar contrato
-                                      </a>
-                                    ) : null}
-                                  </div>
-                                </div>
-                                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'grid', gap: '8px' }}>
-                                  <div style={{ fontWeight: 800, color: '#334155' }}>Suscripción Padbol Match (Stripe)</div>
-                                  <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
-                                    <strong>Estado:</strong> {etiquetaSuscripcionEstado(s.suscripcion_estado)}
-                                    <br />
-                                    <strong>Próximo cobro:</strong> {formatProximoCobroAdmin(s.suscripcion_proximo_cobro)}
-                                  </div>
-                                  <div
-                                    style={{
-                                      marginTop: '10px',
-                                      display: 'flex',
-                                      flexWrap: 'wrap',
-                                      alignItems: 'center',
-                                      gap: '8px',
-                                    }}
-                                  >
-                                    <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569' }}>
-                                      Cambiar estado (super admin)
-                                    </label>
-                                    <select
-                                      value={String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase()}
-                                      disabled={suscripcionEstadoSuperSavingId === s.id}
-                                      onChange={(e) => {
-                                        const v = e.target.value;
-                                        const prev = String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase();
-                                        if (v === prev) return;
-                                        if (!window.confirm(`¿Guardar estado de suscripción como "${v}"?`)) {
-                                          e.target.value = prev;
-                                          return;
-                                        }
-                                        void guardarSuscripcionEstadoSuper(s, v);
-                                      }}
-                                      style={{
-                                        padding: '6px 10px',
-                                        borderRadius: '8px',
-                                        fontSize: '13px',
-                                        border: '1px solid #cbd5e1',
-                                        maxWidth: '100%',
-                                      }}
-                                    >
-                                      {SUSCRIPCION_ESTADOS_SUPER_OPTIONS.map((o) => (
-                                        <option key={o.value} value={o.value}>
-                                          {o.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    {suscripcionEstadoSuperSavingId === s.id ? (
-                                      <span style={{ fontSize: '12px', color: '#64748b' }}>Guardando…</span>
-                                    ) : null}
-                                  </div>
-                                  {String(s.suscripcion_estado || '').toLowerCase() !== 'activa' &&
-                                  String(s.suscripcion_estado || '').toLowerCase() !== 'pendiente_pago' ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => void activarSuscripcionStripeSede(s)}
-                                      style={{
-                                        justifySelf: 'start',
-                                        padding: '8px 16px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: 'linear-gradient(135deg, #635bff, #0a2540)',
-                                        color: '#fff',
-                                        fontWeight: 700,
-                                        fontSize: '13px',
-                                        cursor: 'pointer',
-                                      }}
-                                    >
-                                      Activar suscripción
-                                    </button>
-                                  ) : String(s.suscripcion_estado || '').toLowerCase() === 'pendiente_pago' ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => void activarSuscripcionStripeSede(s)}
-                                      style={{
-                                        justifySelf: 'start',
-                                        padding: '8px 16px',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: '#ca8a04',
-                                        color: '#fff',
-                                        fontWeight: 700,
-                                        fontSize: '13px',
-                                        cursor: 'pointer',
-                                      }}
-                                    >
-                                      Completar pago (tarjeta)
-                                    </button>
-                                  ) : null}
-                                </div>
-                              </div>
+                            <td style={{ fontWeight: 700 }}>
+                              {flagS ? `${flagS} ` : ''}
+                              {String(s.nombre || '').trim() || '—'}
+                              {isSuperAdmin ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setSedeDetalleAbiertoId((prev) => (Number(prev) === Number(s.id) ? null : s.id))}
+                                  style={{ marginLeft: '8px', padding: '2px 8px', fontSize: '11px' }}
+                                >
+                                  {open ? 'Ocultar' : 'Detalle'}
+                                </button>
+                              ) : null}
                             </td>
+                            <td>{String(s.ciudad || '').trim() || '—'}</td>
+                            {isSuperAdmin ? <td>{String(s.pais || '').trim() || '—'}</td> : null}
+                            {isSuperAdmin ? (
+                              <td style={{ fontSize: '12px' }}>
+                                {String(s.email_contacto || '').trim() || '—'}
+                                {' · '}
+                                {String(s.telefono || '').trim() || '—'}
+                              </td>
+                            ) : null}
+                            <td>{sedeLicenciaChip(s)}</td>
                           </tr>
-                        ) : null}
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {isSuperAdmin && open ? (
+                            <tr>
+                              <td colSpan={5} style={{ background: '#f8fafc', padding: '10px 12px' }}>
+                                <SedeSuperDetallePanel
+                                  s={s}
+                                  contrato={contrato}
+                                  badge={badge}
+                                  suscripcionEstadoSuperSavingId={suscripcionEstadoSuperSavingId}
+                                  guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
+                                  activarSuscripcionStripeSede={activarSuscripcionStripeSede}
+                                />
+                              </td>
+                            </tr>
+                          ) : null}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="sedes-admin-mobile-cards">
+                {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).map((s) => {
+                  const flagS = sedeFlag(s);
+                  const open = Number(sedeDetalleAbiertoId) === Number(s.id);
+                  const contrato = contratosBySedeId[Number(s.id)] || null;
+                  const badge = contratoBadgeData(contrato);
+                  const email = String(s.email_contacto || '').trim();
+                  const pais = String(s.pais || '').trim();
+                  const ciudad = String(s.ciudad || '').trim();
+                  const locLine = [pais || null, ciudad || null].filter(Boolean).join(' · ') || '—';
+                  return (
+                    <div key={s.id} className="sede-admin-card">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                        <span style={{ fontSize: '1.35rem', lineHeight: 1.2, flexShrink: 0 }} aria-hidden>
+                          {flagS || ''}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 800, fontSize: '15px', color: '#111827', wordBreak: 'break-word' }}>
+                            {String(s.nombre || '').trim() || '—'}
+                          </div>
+                          <div style={{ marginTop: '4px', fontSize: '13px', color: '#64748b', lineHeight: 1.4 }}>
+                            {locLine}
+                          </div>
+                          {email ? (
+                            <div style={{ marginTop: '6px', fontSize: '13px' }}>
+                              <a href={`mailto:${email}`} style={{ color: '#4f46e5', wordBreak: 'break-all' }}>
+                                {email}
+                              </a>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div style={{ marginTop: '10px' }}>{sedeLicenciaChip(s)}</div>
+                      {isSuperAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => setSedeDetalleAbiertoId((prev) => (Number(prev) === Number(s.id) ? null : s.id))}
+                          style={{
+                            marginTop: '10px',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            background: '#f8fafc',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {open ? 'Ocultar detalle' : 'Detalle'}
+                        </button>
+                      ) : null}
+                      {isSuperAdmin && open ? (
+                        <div
+                          style={{
+                            marginTop: '12px',
+                            paddingTop: '12px',
+                            borderTop: '1px solid #e2e8f0',
+                            background: '#f8fafc',
+                            marginLeft: '-4px',
+                            marginRight: '-4px',
+                            paddingLeft: '12px',
+                            paddingRight: '12px',
+                            paddingBottom: '12px',
+                            borderRadius: '0 0 8px 8px',
+                          }}
+                        >
+                          <SedeSuperDetallePanel
+                            s={s}
+                            contrato={contrato}
+                            badge={badge}
+                            suscripcionEstadoSuperSavingId={suscripcionEstadoSuperSavingId}
+                            guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
+                            activarSuscripcionStripeSede={activarSuscripcionStripeSede}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -5301,29 +5416,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </>}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
-        <h2>⚙️ Configuración de Puntos</h2>
-        <div
-          style={{
-            marginBottom: '20px',
-            padding: '14px 16px',
-            background: 'rgba(255,255,255,0.08)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.12)',
-            maxWidth: '640px',
-          }}
-        >
-          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
-            <strong>Datos de la sede:</strong> si tenés la pestaña <strong>«Mi Sede»</strong>, usá el botón{' '}
-            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
-            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
-            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
-            se ofrecen en el flujo de reservas público.
-          </p>
-        </div>
-
-        {/* Niveles de torneo + tipos custom unificados */}
+        <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>⚙️ Configuración de Puntos</h2>
+        {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
         <div style={{ marginBottom: '32px' }}>
-          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '10px', fontSize: '16px' }}>
             Puntos base por nivel de torneo
           </h3>
           <table style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
@@ -5450,6 +5546,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div
+          style={{
+            marginBottom: '24px',
+            padding: '14px 16px',
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            maxWidth: '640px',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
+            <strong>Datos de la sede:</strong> si tenés la pestaña <strong>«Mi Sede»</strong>, usá el botón{' '}
+            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
+            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
+            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
+            se ofrecen en el flujo de reservas público.
+          </p>
         </div>
 
         {/* Distribución por posición */}
