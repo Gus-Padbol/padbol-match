@@ -505,6 +505,85 @@ function filaDentroDelAlcanceSedes(row, sedesData) {
   return nombreSet.has(sn);
 }
 
+function sedeIdDesdeNombreReserva(nombreReserva, sedesMap) {
+  const n = String(nombreReserva || '').trim().toLowerCase();
+  if (!n) return null;
+  for (const s of Object.values(sedesMap || {})) {
+    if (String(s.nombre || '').trim().toLowerCase() === n) return s.id;
+  }
+  return null;
+}
+
+/** Fecha local YYYY-MM-DD + minutos desde medianoche en Argentina. */
+function ahoraArgentinaPartes() {
+  const d = new Date();
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
+  const get = (t) => parts.find((p) => p.type === t)?.value || '';
+  const y = parseInt(get('year'), 10);
+  const mo = parseInt(get('month'), 10);
+  const da = parseInt(get('day'), 10);
+  const hh = parseInt(get('hour'), 10);
+  const mi = parseInt(get('minute'), 10);
+  const hoyISO = `${y}-${String(mo).padStart(2, '0')}-${String(da).padStart(2, '0')}`;
+  return { hoyISO, minutesNow: hh * 60 + mi };
+}
+
+function minutosInicioReserva(horaRaw) {
+  const startHora = String(horaRaw || '').split(' - ')[0].trim() || '00:00';
+  const m = /^(\d{1,2}):(\d{2})/.exec(startHora);
+  if (!m) return 0;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+/** Misma fecha calendario en ART, no cancelada, hora actual ∈ [inicio, fin). */
+function reservaActivaAhoraArgentina(r, ctx) {
+  const fecha = String(r?.fecha || '').trim().slice(0, 10);
+  if (fecha !== ctx.hoyISO) return false;
+  const est = String(r?.estado || '').trim().toLowerCase();
+  if (est === 'cancelada' || r?.cancelada) return false;
+  const dur = parseInt(r?.duracion, 10);
+  const duracion = Number.isFinite(dur) && dur > 0 ? dur : 90;
+  const start = minutosInicioReserva(r?.hora);
+  const end = start + duracion;
+  return ctx.minutesNow >= start && ctx.minutesNow < end;
+}
+
+function sortReservasHoyAsc(arr) {
+  const key = (r) => {
+    const f = String(r?.fecha || '').trim();
+    const start = String(r?.hora || '').split(' - ')[0].trim() || '00:00';
+    const hm = /^\d{1,2}:\d{2}/.test(start) ? start.slice(0, 5).padStart(5, '0') : '00:00';
+    return `${f}T${hm}`;
+  };
+  return [...arr].sort((a, b) => key(a).localeCompare(key(b)));
+}
+
+function torneoProximoSinEmpezar(t) {
+  const e = String(t?.estado || '').toLowerCase();
+  if (e === 'finalizado' || e === 'cancelado') return false;
+  if (e === 'en_curso' || e === 'activo') return false;
+  return true;
+}
+
+function formatoIngresosHoyMultimoneda(porMoneda) {
+  const MON = ['ARS', 'USD', 'EUR'];
+  const parts = MON.filter((m) => (Number(porMoneda[m]) || 0) > 0).map((m) => {
+    const n = Number(porMoneda[m]) || 0;
+    if (m === 'ARS') return `$ ${n.toLocaleString('es-AR')} ARS`;
+    if (m === 'USD') return `US$ ${n.toLocaleString('en-US')} USD`;
+    return `€ ${n.toLocaleString('de-DE')} EUR`;
+  });
+  return parts.length ? parts.join(' · ') : '$ 0 (sin ingresos registrados)';
+}
+
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
@@ -552,6 +631,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [sedesMap, setSedesMap] = useState({});
   /** Equipos de torneos en alcance (para ingresos por inscripción confirmada). */
   const [equiposInscripcionRows, setEquiposInscripcionRows] = useState([]);
+  /** sede_id → { total, activas } para ocupación de canchas. */
+  const [canchasResumenPorSede, setCanchasResumenPorSede] = useState({});
+  const [partidosCountByTorneoId, setPartidosCountByTorneoId] = useState({});
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -780,14 +862,62 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     sedesMap,
   ]);
 
-  const resumenHoyYAlertas = useMemo(() => {
+  const resumenPanelDiario = useMemo(() => {
+    const ctx = ahoraArgentinaPartes();
+    const hoyISO = ctx.hoyISO;
     const now = new Date();
-    const hoyISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const reservasHoy = reservas.filter((r) => String(r?.fecha || '').trim().slice(0, 10) === hoyISO).length;
     const torneoById = {};
     torneos.forEach((t) => {
       torneoById[t.id] = t;
     });
+
+    const reservasHoyLista = reservas.filter((r) => String(r?.fecha || '').trim().slice(0, 10) === hoyISO);
+    const reservasHoy = reservasHoyLista.length;
+    const reservasHoyOrdenadas = sortReservasHoyAsc(reservasHoyLista);
+
+    const ingresosHoyPorMoneda = { ARS: 0, USD: 0, EUR: 0 };
+    for (const r of reservasHoyLista) {
+      const est = String(r?.estado || '').trim().toLowerCase();
+      if (est === 'cancelada') continue;
+      const sid = sedeIdDesdeNombreReserva(r.sede, sedesMap);
+      const sedeRow = sid != null ? sedesMap[String(sid)] : null;
+      const mon = bucketMonedaAdmin(sedeRow?.moneda || 'ARS');
+      ingresosHoyPorMoneda[mon] += Number(r.precio) || 0;
+    }
+    const ingresosHoyTexto = formatoIngresosHoyMultimoneda(ingresosHoyPorMoneda);
+
+    const ocupadasPorSede = {};
+    for (const r of reservasHoyLista) {
+      if (!reservaActivaAhoraArgentina(r, ctx)) continue;
+      const sid = sedeIdDesdeNombreReserva(r.sede, sedesMap);
+      if (sid == null) continue;
+      const ck = String(r.cancha != null ? r.cancha : '').trim();
+      if (!ck) continue;
+      const sk = String(sid);
+      if (!ocupadasPorSede[sk]) ocupadasPorSede[sk] = new Set();
+      ocupadasPorSede[sk].add(ck);
+    }
+
+    const ocupacionSedes = [];
+    const sedeKeys = new Set([...Object.keys(canchasResumenPorSede || {}), ...Object.keys(ocupadasPorSede || {})]);
+    for (const sk of sedeKeys) {
+      const stats = canchasResumenPorSede[sk] || { total: 0, activas: 0 };
+      const setO = ocupadasPorSede[sk] || new Set();
+      const ocupadas = setO.size;
+      const totalActivas = stats.activas ?? 0;
+      const disponibles = Math.max(0, totalActivas - ocupadas);
+      const sedeRow = sedesMap[sk];
+      ocupacionSedes.push({
+        sedeId: sk,
+        nombre: String(sedeRow?.nombre || '').trim() || `Sede ${sk}`,
+        ocupadas,
+        disponibles,
+        totalActivas,
+        sinCanchasRegistradas: totalActivas === 0 && stats.total === 0,
+      });
+    }
+    ocupacionSedes.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
     const equiposPendientePago = equiposInscripcionRows.filter((eq) => {
       if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') return false;
       const t = torneoById[eq.torneo_id];
@@ -817,12 +947,301 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       })
       .filter((a) => a.count > 0);
 
+    const sinConfirmProximos = {};
+    for (const eq of equiposInscripcionRows) {
+      if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') continue;
+      const t = torneoById[eq.torneo_id];
+      if (!t || !torneoProximoSinEmpezar(t)) continue;
+      const tid = Number(eq.torneo_id);
+      if (!Number.isFinite(tid)) continue;
+      sinConfirmProximos[tid] = (sinConfirmProximos[tid] || 0) + 1;
+    }
+    const alertasEquiposTorneoProximoSinConfirmar = Object.entries(sinConfirmProximos)
+      .map(([tidStr, count]) => {
+        const tid = Number(tidStr);
+        const t = torneoById[tid];
+        return {
+          torneoId: tid,
+          nombre: String(t?.nombre || 'Torneo').trim() || 'Torneo',
+          count: Number(count) || 0,
+        };
+      })
+      .filter((a) => a.count > 0)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+    const confirmadosPorTorneo = {};
+    for (const eq of equiposInscripcionRows) {
+      if (String(eq?.inscripcion_estado || '').toLowerCase() !== 'confirmado') continue;
+      confirmadosPorTorneo[eq.torneo_id] = (confirmadosPorTorneo[eq.torneo_id] || 0) + 1;
+    }
+    const alertasTorneosMenosDosConfirmados = [];
+    for (const t of torneos) {
+      if (!torneoEstadoInscripcionAbiertaAdmin(t)) continue;
+      const c = confirmadosPorTorneo[t.id] || 0;
+      if (c < 2) {
+        alertasTorneosMenosDosConfirmados.push({
+          torneoId: t.id,
+          nombre: String(t.nombre || '').trim() || 'Torneo',
+          confirmados: c,
+        });
+      }
+    }
+    alertasTorneosMenosDosConfirmados.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+    const alertasTorneoSinSorteo48h = [];
+    for (const t of torneos) {
+      const inicio = parseLocalDayStartFromIsoDate(t.fecha_inicio);
+      if (!inicio) continue;
+      const ms = inicio.getTime() - now.getTime();
+      if (ms <= 0 || ms > MS_48H) continue;
+      const pc =
+        partidosCountByTorneoId[t.id] ??
+        partidosCountByTorneoId[String(t.id)] ??
+        0;
+      if (pc < 1) {
+        alertasTorneoSinSorteo48h.push({
+          torneoId: t.id,
+          nombre: String(t.nombre || '').trim() || 'Torneo',
+          fecha_inicio: t.fecha_inicio,
+        });
+      }
+    }
+    alertasTorneoSinSorteo48h.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
     return {
+      hoyISO,
+      fechaLabelHoy: formatFechaDia(hoyISO),
       reservasHoy,
+      reservasHoyOrdenadas,
+      ingresosHoyTexto,
+      ocupacionSedes,
       equiposPendientePagoCount: equiposPendientePago.length,
       alertasEquiposSinConfirmarCierre48h,
+      alertasEquiposTorneoProximoSinConfirmar,
+      alertasTorneosMenosDosConfirmados,
+      alertasTorneoSinSorteo48h,
     };
-  }, [reservas, equiposInscripcionRows, torneos]);
+  }, [
+    reservas,
+    torneos,
+    equiposInscripcionRows,
+    sedesMap,
+    canchasResumenPorSede,
+    partidosCountByTorneoId,
+  ]);
+
+  const resumenOperativoSecciones = useMemo(() => {
+    const p = resumenPanelDiario;
+    const btnTorneo = {
+      marginTop: '8px',
+      padding: '6px 12px',
+      fontSize: '12px',
+      fontWeight: 700,
+      border: 'none',
+      borderRadius: '8px',
+      background: '#4f46e5',
+      color: '#fff',
+      cursor: 'pointer',
+    };
+    const alertBox = (bg, border, color) => ({
+      padding: '10px 14px',
+      borderRadius: '10px',
+      background: bg,
+      border: `1px solid ${border}`,
+      color,
+      fontSize: '13px',
+      fontWeight: 700,
+      marginBottom: '8px',
+    });
+    const tieneAlertaOperativa =
+      (p.equiposPendientePagoCount || 0) > 0 ||
+      (p.alertasEquiposSinConfirmarCierre48h || []).length > 0 ||
+      (p.alertasEquiposTorneoProximoSinConfirmar || []).length > 0 ||
+      (p.alertasTorneosMenosDosConfirmados || []).length > 0 ||
+      (p.alertasTorneoSinSorteo48h || []).length > 0 ||
+      (puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0);
+
+    return (
+      <>
+        <div className="section" style={{ marginBottom: '18px', color: '#1e293b' }}>
+          <h2 style={{ marginTop: 0, color: '#334155' }}>Hoy</h2>
+          <p style={{ margin: '0 0 12px', color: '#64748b', fontSize: '14px' }}>{p.fechaLabelHoy}</p>
+          <div style={{ display: 'grid', gap: '14px' }}>
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Reservas ({p.reservasHoy})
+              </div>
+              {p.reservasHoyOrdenadas.length === 0 ? (
+                <p style={{ margin: '8px 0 0', color: '#94a3b8' }}>No hay reservas para hoy.</p>
+              ) : (
+                <ul
+                  style={{
+                    margin: '8px 0 0',
+                    padding: '0 0 0 18px',
+                    maxHeight: '240px',
+                    overflowY: 'auto',
+                    fontSize: '14px',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {p.reservasHoyOrdenadas.map((r) => (
+                    <li key={r.id ?? `${r.fecha}-${r.hora}-${r.cancha}-${r.email}`} style={{ marginBottom: '6px' }}>
+                      <span style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+                        <span>
+                          <strong>{horaRango(r.hora, r.duracion)}</strong>
+                          {' · '}
+                          Cancha {r.cancha}
+                          {' · '}
+                          {String(r.nombre || '').trim() || '—'}
+                        </span>
+                        <EstadoBadge reserva={r} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Ingresos del día (por moneda de cada sede)
+              </div>
+              <p style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{p.ingresosHoyTexto}</p>
+              <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                Suma de precios de reservas de hoy no canceladas.
+              </p>
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Canchas ahora (hora Argentina)
+              </div>
+              {p.ocupacionSedes.length === 0 ? (
+                <p style={{ margin: '8px 0 0', color: '#94a3b8' }}>Sin sedes en tu alcance.</p>
+              ) : (
+                <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', fontSize: '14px' }}>
+                  {p.ocupacionSedes.map((row) => (
+                    <li
+                      key={row.sedeId}
+                      style={{
+                        marginBottom: '10px',
+                        padding: '10px 12px',
+                        background: '#f8fafc',
+                        borderRadius: '10px',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <strong>{row.nombre}</strong>
+                      {row.sinCanchasRegistradas ? (
+                        <div style={{ marginTop: '6px', color: '#b45309', fontSize: '13px' }}>
+                          Sin canchas cargadas en el sistema. Registralas en «Mi sede» para ver ocupación vs disponibles.
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: '6px', color: '#334155' }}>
+                          Ocupadas ahora: <strong>{row.ocupadas}</strong> · Disponibles:{' '}
+                          <strong>{row.disponibles}</strong> · Total canchas activas: <strong>{row.totalActivas}</strong>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="section" style={{ marginBottom: '18px', color: '#1e293b' }}>
+          <h2 style={{ marginTop: 0, color: '#334155' }}>Alertas</h2>
+          {!tieneAlertaOperativa ? (
+            <p style={{ margin: 0, color: '#94a3b8' }}>Sin alertas prioritarias.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0 ? (
+                <div role="alert" style={alertBox('#fee2e2', '#f87171', '#991b1b')}>
+                  {sedesPendientes.length} sede{sedesPendientes.length === 1 ? '' : 's'} pendiente
+                  {sedesPendientes.length === 1 ? '' : 's'} de aprobación
+                </div>
+              ) : null}
+
+              {p.alertasEquiposTorneoProximoSinConfirmar.length > 0
+                ? p.alertasEquiposTorneoProximoSinConfirmar.map((a) => (
+                    <div key={`prox-${a.torneoId}`} role="alert" style={alertBox('#ffedd5', '#fb923c', '#9a3412')}>
+                      <strong>Torneo próximo:</strong> {a.count} equipo{a.count === 1 ? '' : 's'} sin inscripción confirmada en «
+                      {a.nombre}».
+                      <button
+                        type="button"
+                        style={btnTorneo}
+                        onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
+                      >
+                        Ver torneo
+                      </button>
+                    </div>
+                  ))
+                : null}
+
+              {p.alertasTorneosMenosDosConfirmados.length > 0
+                ? p.alertasTorneosMenosDosConfirmados.map((a) => (
+                    <div key={`menos2-${a.torneoId}`} role="alert" style={alertBox('#fef3c7', '#fbbf24', '#92400e')}>
+                      <strong>Inscripción abierta:</strong> «{a.nombre}» tiene solo {a.confirmados} equipo
+                      {a.confirmados === 1 ? '' : 's'} confirmado{a.confirmados === 1 ? '' : 's'} (mínimo 2 para iniciar con
+                      validaciones actuales).
+                      <button
+                        type="button"
+                        style={btnTorneo}
+                        onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
+                      >
+                        Ver torneo
+                      </button>
+                    </div>
+                  ))
+                : null}
+
+              {p.alertasTorneoSinSorteo48h.length > 0
+                ? p.alertasTorneoSinSorteo48h.map((a) => (
+                    <div key={`sorteo-${a.torneoId}`} role="alert" style={alertBox('#fce7f3', '#f472b6', '#9d174d')}>
+                      <strong>Arranca pronto:</strong> «{a.nombre}» ({formatFecha(a.fecha_inicio)}) — sin partidos generados
+                      (sorteo/fixture pendiente) y el inicio es en menos de 48 horas.
+                      <button
+                        type="button"
+                        style={btnTorneo}
+                        onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
+                      >
+                        Ver torneo
+                      </button>
+                    </div>
+                  ))
+                : null}
+
+              {p.equiposPendientePagoCount > 0 ? (
+                <div role="alert" style={alertBox('#fef3c7', '#fbbf24', '#92400e')}>
+                  Hay {p.equiposPendientePagoCount} equipo{p.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción{' '}
+                  <strong>pendiente de pago</strong> en torneos con costo.
+                </div>
+              ) : null}
+
+              {p.alertasEquiposSinConfirmarCierre48h.map((a) => (
+                <div key={`cierre-${a.torneoId}`} role="alert" style={alertBox('#ffedd5', '#fb923c', '#9a3412')}>
+                  {a.count} equipo{a.count === 1 ? '' : 's'} sin confirmar en «{a.nombre}» — inscripción cierra en menos de
+                  48h (fecha de inicio del torneo).
+                  <button
+                    type="button"
+                    style={btnTorneo}
+                    onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
+                  >
+                    Ver torneo
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }, [
+    resumenPanelDiario,
+    navigate,
+    puedeVerSedesPendientes,
+    sedesPendientesLoading,
+    sedesPendientes,
+  ]);
 
   const fetchPendientes = async () => {
     setPendientesLoading(true);
@@ -1316,6 +1735,32 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         }
       }
       setEquiposInscripcionRows(eqIns);
+
+      const canchasMap = {};
+      if (sedesAlcance.length > 0) {
+        const sidList = sedesAlcance.map((s) => s.id).filter((id) => id != null && id !== '');
+        if (sidList.length > 0) {
+          const { data: canRows } = await supabase.from('canchas').select('sede_id, estado').in('sede_id', sidList);
+          for (const row of canRows || []) {
+            const sid = String(row.sede_id);
+            if (!canchasMap[sid]) canchasMap[sid] = { total: 0, activas: 0 };
+            canchasMap[sid].total += 1;
+            const est = String(row.estado || 'activa').toLowerCase();
+            if (est !== 'inactiva') canchasMap[sid].activas += 1;
+          }
+        }
+      }
+      setCanchasResumenPorSede(canchasMap);
+
+      const partidosCnt = {};
+      if (tids.length > 0) {
+        const { data: prows } = await supabase.from('partidos').select('torneo_id').in('torneo_id', tids);
+        for (const row of prows || []) {
+          const tid = row.torneo_id;
+          partidosCnt[tid] = (partidosCnt[tid] || 0) + 1;
+        }
+      }
+      setPartidosCountByTorneoId(partidosCnt);
 
       setLoading(false);
     } catch (err) {
@@ -2229,27 +2674,31 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </p>
             </div>
           ) : (
-            <div className="dashboard-grid">
-              <div className="card reservas">
-                <h2>Total sedes</h2>
-                <p className="count">{sedesNacionalLista.length}</p>
-                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Clubes en tu país</p>
+            <>
+              <div className="dashboard-grid">
+                <div className="card reservas">
+                  <h2>Total sedes</h2>
+                  <p className="count">{sedesNacionalLista.length}</p>
+                  <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Clubes en tu país</p>
+                </div>
+                <div className="card torneos">
+                  <h2>Total jugadores</h2>
+                  <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
+                  <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Fichas con país coincidente</p>
+                </div>
+                <div className="card torneos">
+                  <h2>Torneos activos</h2>
+                  <p className="count">{torneosActivosNacionalCount}</p>
+                  <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
+                </div>
               </div>
-              <div className="card torneos">
-                <h2>Total jugadores</h2>
-                <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
-                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Fichas con país coincidente</p>
-              </div>
-              <div className="card torneos">
-                <h2>Torneos activos</h2>
-                <p className="count">{torneosActivosNacionalCount}</p>
-                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
-              </div>
-            </div>
+              {resumenOperativoSecciones}
+            </>
           )}
         </>
       ) : (
         <>
+        {resumenOperativoSecciones}
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
             Período del resumen financiero
@@ -2426,84 +2875,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <p className="count">{torneos.length}</p>
         </div>
       </div>
-
-        <div
-          style={{
-            marginTop: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            maxWidth: '720px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-          }}
-        >
-          <div
-            style={{
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: 'rgba(255,255,255,0.14)',
-              border: '1px solid rgba(255,255,255,0.22)',
-              color: 'rgba(255,255,255,0.95)',
-              fontSize: '13px',
-              fontWeight: 700,
-            }}
-          >
-            Reservas de hoy: {resumenHoyYAlertas.reservasHoy}
-          </div>
-          {resumenHoyYAlertas.equiposPendientePagoCount > 0 ? (
-            <div
-              role="alert"
-              style={{
-                padding: '10px 14px',
-                borderRadius: '10px',
-                background: '#fef3c7',
-                border: '1px solid #fbbf24',
-                color: '#92400e',
-                fontSize: '13px',
-                fontWeight: 700,
-              }}
-            >
-              Atención: hay {resumenHoyYAlertas.equiposPendientePagoCount} equipo
-              {resumenHoyYAlertas.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción{' '}
-              <strong>pendiente de pago</strong> (torneos con costo de inscripción).
-            </div>
-          ) : null}
-          {resumenHoyYAlertas.alertasEquiposSinConfirmarCierre48h.map((a) => (
-            <div
-              key={a.torneoId}
-              role="alert"
-              style={{
-                padding: '10px 14px',
-                borderRadius: '10px',
-                background: '#ffedd5',
-                border: '1px solid #fb923c',
-                color: '#9a3412',
-                fontSize: '13px',
-                fontWeight: 700,
-              }}
-            >
-              {a.count} equipo{a.count === 1 ? '' : 's'} sin confirmar en {a.nombre}
-            </div>
-          ))}
-          {puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0 ? (
-            <div
-              role="alert"
-              style={{
-                padding: '10px 14px',
-                borderRadius: '10px',
-                background: '#fee2e2',
-                border: '1px solid #f87171',
-                color: '#991b1b',
-                fontSize: '13px',
-                fontWeight: 700,
-              }}
-            >
-              {sedesPendientes.length} sede{sedesPendientes.length === 1 ? '' : 's'} pendiente
-              {sedesPendientes.length === 1 ? '' : 's'} de aprobación
-            </div>
-          ) : null}
-        </div>
         </>
       ))}
 
