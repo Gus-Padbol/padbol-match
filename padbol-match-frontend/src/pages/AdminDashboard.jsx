@@ -469,6 +469,27 @@ const FLAG_MAP = {};
 [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach(p => {
   FLAG_MAP[p.nombre.toLowerCase()] = p.bandera;
 });
+const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
+  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim() }))
+  .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
+
+const NUEVA_SEDE_FORM_INICIAL = {
+  nombre: '',
+  pais: '',
+  provincia: '',
+  ciudad: '',
+  direccion: '',
+  email_contacto: '',
+  telefono: '',
+  horario_apertura: '',
+  horario_cierre: '',
+  precio_turno: '',
+  moneda: 'ARS',
+  canchas_activas: '',
+  google_maps_url: '',
+  latitud: '',
+  longitud: '',
+};
 
 function sedeFlag(sede) {
   if (!sede?.pais) return '';
@@ -639,6 +660,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editFormData, setEditFormData] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
   const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab')));
+  const [nuevaSedeModalOpen, setNuevaSedeModalOpen] = useState(false);
+  const [nuevaSedeForm, setNuevaSedeForm] = useState(NUEVA_SEDE_FORM_INICIAL);
+  const [nuevaSedeSaving, setNuevaSedeSaving] = useState(false);
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
@@ -1346,6 +1370,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     );
   }, [esAdminNacional, sedesMap]);
 
+  const sedesSuperAdminLista = useMemo(() => {
+    if (!isSuperAdmin) return [];
+    return Object.values(sedesMap || {}).sort((a, b) =>
+      String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' })
+    );
+  }, [isSuperAdmin, sedesMap]);
+
   useEffect(() => {
     if (!esAdminNacional) {
       setJugadoresFederadosPais([]);
@@ -1637,15 +1668,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       let allSedesRows = [];
       try {
-        const { data: sedesRows, error: sedesErr } = await supabase
-          .from('sedes')
-          .select('id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia');
-        if (!sedesErr) {
-          allSedesRows = sedesRows || [];
-          if (isSuperAdmin) {
-            console.log('[Admin] sedes para super admin', allSedesRows);
-          } else {
-            console.log('[Admin] sedes cargadas', allSedesRows);
+        if (isSuperAdmin) {
+          const sedesRes = await fetch(`${apiBaseUrl}/api/sedes/todas`, { headers: { ...listAuthHeaders } });
+          const sedesJson = await sedesRes.json().catch(() => []);
+          if (!sedesRes.ok) throw new Error(sedesJson?.error || sedesRes.statusText);
+          allSedesRows = Array.isArray(sedesJson) ? sedesJson : [];
+        } else {
+          const { data: sedesRows, error: sedesErr } = await supabase
+            .from('sedes')
+            .select('id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia');
+          if (!sedesErr) {
+            allSedesRows = sedesRows || [];
           }
         }
       } catch { /* sedes opcionales */ }
@@ -1768,6 +1801,77 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setLoading(false);
     }
   };
+
+  const abrirNuevaSedeModal = useCallback(() => {
+    setNuevaSedeForm(NUEVA_SEDE_FORM_INICIAL);
+    setNuevaSedeModalOpen(true);
+  }, []);
+
+  const cerrarNuevaSedeModal = useCallback(() => {
+    if (nuevaSedeSaving) return;
+    setNuevaSedeModalOpen(false);
+  }, [nuevaSedeSaving]);
+
+  const onNuevaSedeField = useCallback((field, value) => {
+    setNuevaSedeForm((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const crearNuevaSede = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    if (!String(nuevaSedeForm.nombre || '').trim()) {
+      alert('El nombre de la sede es obligatorio.');
+      return;
+    }
+    if (!String(nuevaSedeForm.pais || '').trim()) {
+      alert('El país es obligatorio.');
+      return;
+    }
+    if (!String(nuevaSedeForm.ciudad || '').trim()) {
+      alert('La ciudad es obligatoria.');
+      return;
+    }
+
+    setNuevaSedeSaving(true);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+      const res = await fetch(`${apiBaseUrl}/api/sedes`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          ...nuevaSedeForm,
+          precio_turno:
+            nuevaSedeForm.precio_turno != null && String(nuevaSedeForm.precio_turno).trim() !== ''
+              ? Number(nuevaSedeForm.precio_turno)
+              : null,
+          canchas_activas:
+            nuevaSedeForm.canchas_activas != null && String(nuevaSedeForm.canchas_activas).trim() !== ''
+              ? parseInt(String(nuevaSedeForm.canchas_activas), 10)
+              : null,
+          latitud:
+            nuevaSedeForm.latitud != null && String(nuevaSedeForm.latitud).trim() !== ''
+              ? Number(nuevaSedeForm.latitud)
+              : null,
+          longitud:
+            nuevaSedeForm.longitud != null && String(nuevaSedeForm.longitud).trim() !== ''
+              ? Number(nuevaSedeForm.longitud)
+              : null,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText || 'No se pudo crear la sede');
+
+      setSedesMap((prev) => ({ ...prev, [j.id]: j }));
+      setNuevaSedeModalOpen(false);
+      setNuevaSedeForm(NUEVA_SEDE_FORM_INICIAL);
+      setMensajeExito(`✅ Sede "${String(j.nombre || '').trim() || 'nueva sede'}" creada`);
+      setTimeout(() => setMensajeExito(''), 4000);
+    } catch (e) {
+      alert(e?.message || 'No se pudo crear la sede');
+    } finally {
+      setNuevaSedeSaving(false);
+    }
+  }, [apiBaseUrl, isSuperAdmin, nuevaSedeForm, session?.access_token]);
 
   const iniciarEdicion = (reserva) => {
     setEditandoId(reserva.id);
@@ -2403,6 +2507,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ]
     : [
         { id: 'resumen', label: '📊 Resumen' },
+        ...(isSuperAdmin ? [{ id: 'sedes', label: '🏟️ Sedes' }] : []),
         { id: 'torneos', label: '🏆 Torneos' },
         { id: 'reservas', label: '⚽ Reservas' },
         { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
@@ -2565,7 +2670,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
         }}
       >
-      {(isSuperAdmin || esAdminNacional) && (
+      {isSuperAdmin && ['resumen', 'sedes'].includes(activeTab) && (
         <div
           style={{
             display: 'flex',
@@ -2579,7 +2684,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         >
           <button
             type="button"
-            onClick={() => navigate('/admin/nueva-sede')}
+            onClick={abrirNuevaSedeModal}
             style={{
               padding: '10px 16px',
               borderRadius: '10px',
@@ -2592,7 +2697,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               boxShadow: '0 4px 14px rgba(21,128,61,0.35)',
             }}
           >
-            {isSuperAdmin ? '➕ Nueva Sede' : '➕ Solicitar Nueva Sede'}
+            ➕ Nueva sede
           </button>
         </div>
       )}
@@ -3263,11 +3368,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       />
       </>}
 
-      {activeTab === 'sedes' && esAdminNacional && (
+      {activeTab === 'sedes' && (esAdminNacional || isSuperAdmin) && (
         <div className="section">
-          <h2>Sedes en tu país</h2>
-          {sedesNacionalLista.length === 0 ? (
-            <p style={{ color: '#999' }}>No hay sedes que coincidan con tu alcance nacional.</p>
+          <h2>{isSuperAdmin ? 'Sedes registradas' : 'Sedes en tu país'}</h2>
+          {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).length === 0 ? (
+            <p style={{ color: '#999' }}>
+              {isSuperAdmin
+                ? 'No hay sedes creadas todavía.'
+                : 'No hay sedes que coincidan con tu alcance nacional.'}
+            </p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table className="reservas-table">
@@ -3275,11 +3384,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <tr>
                     <th>Sede</th>
                     <th>Ciudad</th>
+                    {isSuperAdmin ? <th>País</th> : null}
+                    {isSuperAdmin ? <th>Contacto</th> : null}
                     <th>Licencia</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sedesNacionalLista.map((s) => {
+                  {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).map((s) => {
                     const flagS = sedeFlag(s);
                     const licActiva = s.licencia_activa === true && s.numero_licencia;
                     return (
@@ -3289,6 +3400,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           {String(s.nombre || '').trim() || '—'}
                         </td>
                         <td>{String(s.ciudad || '').trim() || '—'}</td>
+                        {isSuperAdmin ? (
+                          <td>{String(s.pais || '').trim() || '—'}</td>
+                        ) : null}
+                        {isSuperAdmin ? (
+                          <td style={{ fontSize: '12px' }}>
+                            {String(s.email_contacto || '').trim() || '—'}
+                            {' · '}
+                            {String(s.telefono || '').trim() || '—'}
+                          </td>
+                        ) : null}
                         <td>
                           {licActiva ? (
                             <span
@@ -5026,6 +5147,103 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>}
       </div>
       </div>
+
+      {nuevaSedeModalOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Crear nueva sede"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 19000,
+            background: 'rgba(15, 23, 42, 0.72)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget) cerrarNuevaSedeModal();
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '640px',
+              maxHeight: '88vh',
+              overflowY: 'auto',
+              background: '#fff',
+              borderRadius: '16px',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
+              padding: '18px',
+              boxSizing: 'border-box',
+            }}
+            onClick={(ev) => ev.stopPropagation()}
+          >
+            <h3 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Nueva sede</h3>
+            <p style={{ margin: '8px 0 16px', fontSize: '13px', color: '#64748b' }}>
+              Completá los datos básicos para crear la sede y verla al instante en gestión.
+            </p>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              <input type="text" placeholder="Nombre de la sede *" value={nuevaSedeForm.nombre} onChange={(e) => onNuevaSedeField('nombre', e.target.value)} />
+              <select value={nuevaSedeForm.pais} onChange={(e) => onNuevaSedeField('pais', e.target.value)}>
+                <option value="">País *</option>
+                {PAISES_SEDE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <input type="text" placeholder="Provincia / Estado" value={nuevaSedeForm.provincia} onChange={(e) => onNuevaSedeField('provincia', e.target.value)} />
+              <input type="text" placeholder="Ciudad *" value={nuevaSedeForm.ciudad} onChange={(e) => onNuevaSedeField('ciudad', e.target.value)} />
+              <input type="text" placeholder="Dirección" value={nuevaSedeForm.direccion} onChange={(e) => onNuevaSedeField('direccion', e.target.value)} />
+              <input type="email" placeholder="Email de contacto" value={nuevaSedeForm.email_contacto} onChange={(e) => onNuevaSedeField('email_contacto', e.target.value)} />
+              <input type="text" placeholder="Teléfono / WhatsApp" value={nuevaSedeForm.telefono} onChange={(e) => onNuevaSedeField('telefono', e.target.value)} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <input type="time" value={nuevaSedeForm.horario_apertura} onChange={(e) => onNuevaSedeField('horario_apertura', e.target.value)} />
+                <input type="time" value={nuevaSedeForm.horario_cierre} onChange={(e) => onNuevaSedeField('horario_cierre', e.target.value)} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
+                <input type="number" min="0" placeholder="Precio por turno" value={nuevaSedeForm.precio_turno} onChange={(e) => onNuevaSedeField('precio_turno', e.target.value)} />
+                <select value={nuevaSedeForm.moneda} onChange={(e) => onNuevaSedeField('moneda', e.target.value)}>
+                  <option value="ARS">ARS</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+              <input type="number" min="0" placeholder="Cantidad de canchas activas" value={nuevaSedeForm.canchas_activas} onChange={(e) => onNuevaSedeField('canchas_activas', e.target.value)} />
+              <input type="url" placeholder="Google Maps URL" value={nuevaSedeForm.google_maps_url} onChange={(e) => onNuevaSedeField('google_maps_url', e.target.value)} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <input type="number" step="any" placeholder="Latitud" value={nuevaSedeForm.latitud} onChange={(e) => onNuevaSedeField('latitud', e.target.value)} />
+                <input type="number" step="any" placeholder="Longitud" value={nuevaSedeForm.longitud} onChange={(e) => onNuevaSedeField('longitud', e.target.value)} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+              <button type="button" onClick={cerrarNuevaSedeModal} disabled={nuevaSedeSaving}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void crearNuevaSede()}
+                disabled={nuevaSedeSaving}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: '#16a34a',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: nuevaSedeSaving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {nuevaSedeSaving ? 'Creando...' : 'Crear sede'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {logoCropOpen && logoCropSrc ? (
         <div

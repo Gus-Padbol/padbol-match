@@ -557,6 +557,111 @@ app.get('/api/sedes', async (req, res) => {
   }
 });
 
+function parseLatLngFromMapsUrl(rawUrl) {
+  const src = String(rawUrl || '').trim();
+  if (!src) return { latitud: null, longitud: null };
+  const directMatch = src.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+  if (directMatch) {
+    return { latitud: Number(directMatch[1]), longitud: Number(directMatch[2]) };
+  }
+  try {
+    const u = new URL(src);
+    const q = u.searchParams.get('q') || u.searchParams.get('ll') || '';
+    const qm = q.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+    if (qm) return { latitud: Number(qm[1]), longitud: Number(qm[2]) };
+    const at = src.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+    if (at) return { latitud: Number(at[1]), longitud: Number(at[2]) };
+  } catch {
+    /* ignore malformed URLs */
+  }
+  return { latitud: null, longitud: null };
+}
+
+/** GET /api/sedes/todas — super_admin: devuelve todas las sedes con campos completos. */
+app.get('/api/sedes/todas', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    const role = rowRole?.role || null;
+    if (!isSuperAdminApi(user.email, role)) {
+      return res.status(403).json({ error: 'Solo super admin' });
+    }
+    const { data, error } = await supabase.from('sedes').select('*').order('id', { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('❌ GET /api/sedes/todas:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/sedes — super_admin: crea una sede manualmente para gestión. */
+app.post('/api/sedes', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    const role = rowRole?.role || null;
+    if (!isSuperAdminApi(user.email, role)) {
+      return res.status(403).json({ error: 'Solo super admin' });
+    }
+
+    const b = req.body || {};
+    const nombre = String(b.nombre || '').trim();
+    const ciudad = String(b.ciudad || '').trim();
+    const pais = String(b.pais || '').trim();
+    if (!nombre) return res.status(400).json({ error: 'Nombre de la sede obligatorio' });
+    if (!ciudad) return res.status(400).json({ error: 'Ciudad obligatoria' });
+    if (!pais) return res.status(400).json({ error: 'País obligatorio' });
+
+    const latitudBody = b.latitud != null && String(b.latitud).trim() !== '' ? Number(b.latitud) : null;
+    const longitudBody = b.longitud != null && String(b.longitud).trim() !== '' ? Number(b.longitud) : null;
+    const mapsParsed = parseLatLngFromMapsUrl(b.google_maps_url || b.maps_url || b.googleMapsUrl || '');
+    const latitud = Number.isFinite(latitudBody) ? latitudBody : mapsParsed.latitud;
+    const longitud = Number.isFinite(longitudBody) ? longitudBody : mapsParsed.longitud;
+
+    const precioTurno = b.precio_turno != null && b.precio_turno !== '' ? Number(b.precio_turno) : null;
+    const canchasActivas = b.canchas_activas != null && b.canchas_activas !== '' ? parseInt(String(b.canchas_activas), 10) : null;
+    const payload = {
+      nombre,
+      pais,
+      provincia: String(b.provincia || b.estado || '').trim() || null,
+      ciudad,
+      direccion: String(b.direccion || '').trim() || null,
+      email_contacto: String(b.email_contacto || '').trim() || null,
+      telefono: String(b.telefono || b.whatsapp || '').trim() || null,
+      horario_apertura: String(b.horario_apertura || '').trim() || null,
+      horario_cierre: String(b.horario_cierre || '').trim() || null,
+      precio_turno: Number.isFinite(precioTurno) ? precioTurno : null,
+      moneda: String(b.moneda || 'ARS').trim().toUpperCase() || 'ARS',
+      latitud: Number.isFinite(latitud) ? latitud : null,
+      longitud: Number.isFinite(longitud) ? longitud : null,
+      google_maps_url: String(b.google_maps_url || b.maps_url || '').trim() || null,
+    };
+
+    const { data: created, error } = await supabase.from('sedes').insert(payload).select('*').single();
+    if (error) throw error;
+
+    if (Number.isFinite(canchasActivas) && canchasActivas > 0) {
+      const rows = Array.from({ length: canchasActivas }, (_, idx) => ({
+        sede_id: created.id,
+        nombre: `Cancha ${idx + 1}`,
+        estado: 'activa',
+      }));
+      const { error: canErr } = await supabase.from('canchas').insert(rows);
+      if (canErr) {
+        console.warn(`⚠️ POST /api/sedes: sede creada (${created.id}) pero canchas no insertadas:`, canErr.message);
+      }
+    }
+
+    res.status(201).json(created);
+  } catch (err) {
+    console.error('❌ POST /api/sedes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** Una sede con todos los campos de `sedes` (precio_turno, franjas, etc.) para reserva / detalle. */
 app.get('/api/sedes/:id', async (req, res) => {
   try {
