@@ -745,11 +745,16 @@ export default function ReservaForm() {
     }
   }, [filtros.pais]);
 
+  /** Si solo hay un país en datos, pre-seleccionarlo en pantalla 1.
+   * No llamar a {@link selectPais} cuando ya hay `sede_id` (p. ej. `?sedeId=` en URL / estado inicial):
+   * `selectPais` hace `setFiltros({ ..., sede_id: '' })` y en el mismo ciculo que el bootstrap de URL
+   * borraba la sede → sin sede → horarios/canchas vacíos y sensación de “vuelta atrás” en bucle. */
   useEffect(() => {
     if (sedes.length === 0 || paisesOrdenados.length !== 1) return;
     const only = paisesOrdenados[0];
+    if (filtros.sede_id !== '' && filtros.sede_id != null) return;
     if (String(filtros.pais || '').trim() !== only) selectPais(only);
-  }, [sedes, paisesOrdenados, filtros.pais, selectPais]);
+  }, [sedes, paisesOrdenados, filtros.pais, filtros.sede_id, selectPais]);
 
   const clearPais = useCallback(() => {
     clearReservaGeoMasCercanaIntent();
