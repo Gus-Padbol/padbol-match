@@ -86,7 +86,7 @@ export function construirGruposSorteo(confirmedIds, numGrupos, cabezaIdsOrden) {
 const LETRAS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 /**
- * Modal: sorteo manual de grupos con cabezas de serie y vista previa.
+ * Modal: sorteo de grupos — automático (animación o rápido) o manual (arrastrar a grupos), cabezas de serie y POST único.
  */
 export default function SorteoGruposModal({
   open,
@@ -105,6 +105,12 @@ export default function SorteoGruposModal({
   const [animacionSorteo, setAnimacionSorteo] = useState(null);
   const [confirmando, setConfirmando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  /** 'animacion' | 'rapido' | 'manual' */
+  const [tipoSorteo, setTipoSorteo] = useState('animacion');
+  /** Partición manual: `numGrupos` arrays de ids de equipo */
+  const [gruposManuales, setGruposManuales] = useState([]);
+  /** Como máximo una cabeza por grupo (solo resaltado UI; el POST sigue siendo `grupos`) */
+  const [cabezaPorGrupo, setCabezaPorGrupo] = useState([]);
 
   const confirmados = useMemo(() => equiposConfirmadosParaSorteo(equipos), [equipos]);
   const confirmadosIds = useMemo(
@@ -135,7 +141,71 @@ export default function SorteoGruposModal({
     setNumGrupos(defaultGruposCount);
     setNumCabezas(0);
     setModoCabezas('ranking');
+    setTipoSorteo('animacion');
   }, [open, defaultGruposCount]);
+
+  useEffect(() => {
+    if (!open || tipoSorteo !== 'manual') return;
+    setGruposManuales(Array.from({ length: numGrupos }, () => []));
+    setCabezaPorGrupo(Array.from({ length: numGrupos }, () => null));
+    setPreview(null);
+    setAnimacionSorteo(null);
+  }, [open, tipoSorteo, numGrupos]);
+
+  const unassignedManual = useMemo(() => {
+    if (tipoSorteo !== 'manual') return [];
+    const enGrupos = new Set(gruposManuales.flat());
+    return confirmadosIds.filter((id) => !enGrupos.has(id));
+  }, [tipoSorteo, gruposManuales, confirmadosIds]);
+
+  const manualValid = useMemo(() => {
+    if (tipoSorteo !== 'manual') return false;
+    if (!Array.isArray(gruposManuales) || gruposManuales.length !== numGrupos) return false;
+    const flat = gruposManuales.flat();
+    if (flat.length !== confirmadosIds.length) return false;
+    const s = new Set(flat);
+    if (s.size !== flat.length) return false;
+    for (const id of confirmadosIds) {
+      if (!s.has(id)) return false;
+    }
+    if (!gruposManuales.every((g) => Array.isArray(g) && g.length >= 1)) return false;
+    return true;
+  }, [tipoSorteo, gruposManuales, confirmadosIds, numGrupos]);
+
+  useEffect(() => {
+    if (tipoSorteo !== 'manual') return;
+    if (!Array.isArray(gruposManuales) || gruposManuales.length !== numGrupos) return;
+    setCabezaPorGrupo((prev) =>
+      Array.from({ length: numGrupos }, (_, gi) => {
+        const cabezaId = gi < prev.length ? prev[gi] : null;
+        if (cabezaId == null) return null;
+        return gruposManuales[gi].includes(cabezaId) ? cabezaId : null;
+      })
+    );
+  }, [tipoSorteo, gruposManuales, numGrupos]);
+
+  const moverEquipoAGrupo = useCallback((equipoId, grupoDestino) => {
+    setGruposManuales((prev) => {
+      const next = prev.map((g) => g.filter((x) => x !== equipoId));
+      if (grupoDestino === null || grupoDestino === undefined) {
+        return next;
+      }
+      const gi = Number(grupoDestino);
+      if (Number.isFinite(gi) && gi >= 0 && gi < next.length) {
+        next[gi] = [...next[gi], equipoId];
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleCabezaManual = useCallback((grupoIndex, equipoId) => {
+    setCabezaPorGrupo((prev) => {
+      const next = [...prev];
+      if (next[grupoIndex] === equipoId) next[grupoIndex] = null;
+      else next[grupoIndex] = equipoId;
+      return next;
+    });
+  }, []);
 
   const rankingIds = useMemo(() => {
     const copy = [...confirmados];
@@ -235,7 +305,15 @@ export default function SorteoGruposModal({
     }
   };
 
+  const canConfirm =
+    tipoSorteo === 'manual' ? manualValid && !confirmando : Boolean(preview) && !confirmando;
+
   const confirmar = async () => {
+    if (tipoSorteo === 'manual') {
+      if (!manualValid) return;
+      await confirmarConGrupos(gruposManuales.map((g) => [...g]));
+      return;
+    }
     if (!preview) return;
     await confirmarConGrupos(preview);
   };
@@ -280,7 +358,7 @@ export default function SorteoGruposModal({
         style={{
           background: '#fff',
           borderRadius: '16px',
-          maxWidth: '520px',
+          maxWidth: tipoSorteo === 'manual' ? 'min(960px, 96vw)' : '520px',
           width: '100%',
           maxHeight: 'min(92vh, 720px)',
           overflow: 'hidden',
@@ -325,6 +403,7 @@ export default function SorteoGruposModal({
                   const v = parseInt(e.target.value, 10);
                   setNumGrupos(v);
                   setPreview(null);
+                  setAnimacionSorteo(null);
                 }}
                 style={{
                   width: '100%',
@@ -342,159 +421,437 @@ export default function SorteoGruposModal({
                 ))}
               </select>
 
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                Cabezas de serie (uno por grupo, hasta {Math.min(numGrupos, confirmados.length)})
-              </label>
-              <select
-                value={numCabezas}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setNumCabezas(v);
-                  setOrdenManualCabezas([]);
-                  setPreview(null);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  marginBottom: '12px',
-                  fontSize: '14px',
-                }}
-              >
-                {Array.from({ length: Math.min(numGrupos, confirmados.length) + 1 }, (_, i) => i).map((n) => (
-                  <option key={n} value={n}>
-                    {n === 0 ? 'Sin cabezas (todo aleatorio)' : `${n} cabeza${n > 1 ? 's' : ''}`}
-                  </option>
-                ))}
-              </select>
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>
+                  Método de sorteo
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                    gap: '10px',
+                  }}
+                >
+                  {[
+                    {
+                      id: 'animacion',
+                      titulo: 'Automático con animación',
+                      desc: 'Bolillas y sorteo en pantalla',
+                    },
+                    {
+                      id: 'rapido',
+                      titulo: 'Automático rápido',
+                      desc: 'Vista previa al instante',
+                    },
+                    {
+                      id: 'manual',
+                      titulo: 'Sorteo manual',
+                      desc: 'Arrastrá equipos a cada grupo',
+                    },
+                  ].map((op) => (
+                    <button
+                      key={op.id}
+                      type="button"
+                      onClick={() => {
+                        setTipoSorteo(op.id);
+                        setPreview(null);
+                        setAnimacionSorteo(null);
+                      }}
+                      style={{
+                        padding: '12px 10px',
+                        borderRadius: '12px',
+                        border: tipoSorteo === op.id ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                        background: tipoSorteo === op.id ? '#eef2ff' : '#f8fafc',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        minHeight: '72px',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
+                        {op.titulo}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#64748b', lineHeight: 1.35 }}>{op.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {numCabezas > 0 ? (
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Modo cabezas</div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      name="modoCab"
-                      checked={modoCabezas === 'ranking'}
-                      onChange={() => {
-                        setModoCabezas('ranking');
-                        setPreview(null);
-                      }}
-                    />
-                    <span style={{ fontSize: '13px' }}>Por ranking (puntos_totales en el torneo)</span>
+              {tipoSorteo !== 'manual' ? (
+                <>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                    Cabezas de serie (uno por grupo, hasta {Math.min(numGrupos, confirmados.length)})
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      name="modoCab"
-                      checked={modoCabezas === 'manual'}
-                      onChange={() => {
-                        setModoCabezas('manual');
-                        setOrdenManualCabezas([]);
-                        setPreview(null);
-                      }}
-                    />
-                    <span style={{ fontSize: '13px' }}>Manual (tocá en orden)</span>
-                  </label>
-                  {modoCabezas === 'manual' ? (
-                    <div style={{ marginTop: '10px' }}>
-                      <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 8px' }}>
-                        Elegí hasta {Math.min(numCabezas, numGrupos)} equipos en orden (1.º → grupo A, 2.º → B…)
-                      </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {confirmados.map((eq) => {
-                          const active = ordenManualCabezas.includes(eq.id);
-                          const pos = ordenManualCabezas.indexOf(eq.id);
-                          return (
-                            <button
-                              key={eq.id}
-                              type="button"
-                              onClick={() => {
-                                toggleOrdenManualCabeza(eq.id);
-                                setPreview(null);
-                              }}
-                              style={{
-                                padding: '6px 10px',
-                                borderRadius: '999px',
-                                border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
-                                background: active ? '#eef2ff' : '#f8fafc',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                color: '#1e293b',
-                              }}
-                            >
-                              {active ? `${pos + 1}. ` : ''}
-                              {labelEquipo(eq)}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOrdenManualCabezas([]);
-                          setPreview(null);
-                        }}
-                        style={{
-                          marginTop: '8px',
-                          fontSize: '12px',
-                          color: '#4f46e5',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontWeight: 700,
-                        }}
-                      >
-                        Limpiar orden manual
-                      </button>
+                  <select
+                    value={numCabezas}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setNumCabezas(v);
+                      setOrdenManualCabezas([]);
+                      setPreview(null);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      marginBottom: '12px',
+                      fontSize: '14px',
+                    }}
+                  >
+                    {Array.from({ length: Math.min(numGrupos, confirmados.length) + 1 }, (_, i) => i).map((n) => (
+                      <option key={n} value={n}>
+                        {n === 0 ? 'Sin cabezas (todo aleatorio)' : `${n} cabeza${n > 1 ? 's' : ''}`}
+                      </option>
+                    ))}
+                  </select>
+
+                  {numCabezas > 0 ? (
+                    <div style={{ marginBottom: '12px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>Modo cabezas</div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="modoCab"
+                          checked={modoCabezas === 'ranking'}
+                          onChange={() => {
+                            setModoCabezas('ranking');
+                            setPreview(null);
+                          }}
+                        />
+                        <span style={{ fontSize: '13px' }}>Por ranking (puntos_totales en el torneo)</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="modoCab"
+                          checked={modoCabezas === 'manual'}
+                          onChange={() => {
+                            setModoCabezas('manual');
+                            setOrdenManualCabezas([]);
+                            setPreview(null);
+                          }}
+                        />
+                        <span style={{ fontSize: '13px' }}>Manual (tocá en orden)</span>
+                      </label>
+                      {modoCabezas === 'manual' ? (
+                        <div style={{ marginTop: '10px' }}>
+                          <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 8px' }}>
+                            Elegí hasta {Math.min(numCabezas, numGrupos)} equipos en orden (1.º → grupo A, 2.º → B…)
+                          </p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {confirmados.map((eq) => {
+                              const active = ordenManualCabezas.includes(eq.id);
+                              const pos = ordenManualCabezas.indexOf(eq.id);
+                              return (
+                                <button
+                                  key={eq.id}
+                                  type="button"
+                                  onClick={() => {
+                                    toggleOrdenManualCabeza(eq.id);
+                                    setPreview(null);
+                                  }}
+                                  style={{
+                                    padding: '6px 10px',
+                                    borderRadius: '999px',
+                                    border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                                    background: active ? '#eef2ff' : '#f8fafc',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    color: '#1e293b',
+                                  }}
+                                >
+                                  {active ? `${pos + 1}. ` : ''}
+                                  {labelEquipo(eq)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOrdenManualCabezas([]);
+                              setPreview(null);
+                            }}
+                            style={{
+                              marginTop: '8px',
+                              fontSize: '12px',
+                              color: '#4f46e5',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontWeight: 700,
+                            }}
+                          >
+                            Limpiar orden manual
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
+
+                  {tipoSorteo === 'animacion' ? (
+                    <button
+                      type="button"
+                      disabled={confirmando}
+                      onClick={iniciarSorteoAnimado}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: confirmando ? '#94a3b8' : 'linear-gradient(135deg,#0f172a,#1e3a5f)',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: '15px',
+                        cursor: confirmando ? 'not-allowed' : 'pointer',
+                        marginBottom: '10px',
+                        boxShadow: confirmando ? 'none' : '0 4px 20px rgba(201, 162, 39, 0.25)',
+                      }}
+                    >
+                      ⭐ Iniciar sorteo con animación
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={confirmando}
+                      onClick={ejecutarSortearVistaPrevia}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: confirmando ? '#94a3b8' : 'linear-gradient(135deg,#334155,#475569)',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: '14px',
+                        cursor: confirmando ? 'not-allowed' : 'pointer',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      Generar sorteo automático (rápido)
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div style={{ marginBottom: '14px' }}>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.45 }}>
+                    Arrastrá equipos a un grupo o usá el menú «Mover a…». Tocá un equipo dentro del grupo para marcarlo
+                    como cabeza de serie (dorado). Cada grupo debe tener al menos un equipo. Sin pendientes para confirmar.
+                  </p>
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const raw = e.dataTransfer.getData('text/plain');
+                      const id = parseInt(raw, 10);
+                      if (Number.isFinite(id)) moverEquipoAGrupo(id, null);
+                    }}
+                    style={{
+                      minHeight: '56px',
+                      marginBottom: '12px',
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: '2px dashed #cbd5e1',
+                      background: '#f8fafc',
+                      fontSize: '12px',
+                      color: '#64748b',
+                    }}
+                  >
+                    <strong style={{ color: '#334155' }}>Sin asignar</strong> — soltá acá para quitar de un grupo (
+                    {unassignedManual.length} equipo{unassignedManual.length === 1 ? '' : 's'})
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: '1 1 200px',
+                        minWidth: '180px',
+                        maxWidth: '100%',
+                      }}
+                    >
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#3730a3', marginBottom: '8px' }}>
+                        Equipos sin grupo
+                      </div>
+                      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {unassignedManual.map((eid) => {
+                          const eq = confirmados.find((e) => e.id === eid);
+                          return (
+                            <li
+                              key={eid}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', String(eid));
+                                e.dataTransfer.effectAllowed = 'move';
+                              }}
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: '10px',
+                                border: '1px solid #e2e8f0',
+                                background: '#fff',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                                cursor: 'grab',
+                              }}
+                            >
+                              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+                                {eq ? labelEquipo(eq) : `Equipo #${eid}`}
+                              </span>
+                              <select
+                                aria-label={`Asignar ${eq ? labelEquipo(eq) : eid} a grupo`}
+                                defaultValue=""
+                                onChange={(ev) => {
+                                  const v = parseInt(ev.target.value, 10);
+                                  ev.target.value = '';
+                                  if (Number.isFinite(v)) moverEquipoAGrupo(eid, v);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '6px 8px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '12px',
+                                }}
+                              >
+                                <option value="">Mover a grupo…</option>
+                                {Array.from({ length: numGrupos }, (_, gi) => (
+                                  <option key={gi} value={gi}>
+                                    Grupo {LETRAS[gi] || gi + 1}
+                                  </option>
+                                ))}
+                              </select>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                    <div
+                      style={{
+                        flex: '2 1 320px',
+                        minWidth: '220px',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                        gap: '10px',
+                      }}
+                    >
+                      {gruposManuales.map((grupoIds, gi) => (
+                        <div
+                          key={gi}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const raw = e.dataTransfer.getData('text/plain');
+                            const id = parseInt(raw, 10);
+                            if (Number.isFinite(id)) moverEquipoAGrupo(id, gi);
+                          }}
+                          style={{
+                            minHeight: '120px',
+                            padding: '10px',
+                            borderRadius: '12px',
+                            border: '2px solid #c7d2fe',
+                            background: '#f5f3ff',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#4338ca', marginBottom: '8px' }}>
+                            Grupo {LETRAS[gi] || gi + 1}
+                          </div>
+                          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {grupoIds.map((eid) => {
+                              const eq = confirmados.find((e) => e.id === eid);
+                              const esCabeza = cabezaPorGrupo[gi] === eid;
+                              return (
+                                <li key={eid}>
+                                  <button
+                                    type="button"
+                                    draggable
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.setData('text/plain', String(eid));
+                                      e.dataTransfer.effectAllowed = 'move';
+                                    }}
+                                    onClick={() => toggleCabezaManual(gi, eid)}
+                                    style={{
+                                      width: '100%',
+                                      textAlign: 'left',
+                                      padding: '8px 10px',
+                                      borderRadius: '10px',
+                                      border: esCabeza ? '2px solid #ca8a04' : '1px solid #e2e8f0',
+                                      background: esCabeza
+                                        ? 'linear-gradient(135deg,#fef9c3,#fde68a)'
+                                        : '#ffffff',
+                                      fontSize: '12px',
+                                      fontWeight: 700,
+                                      color: '#1e293b',
+                                      cursor: 'pointer',
+                                      boxSizing: 'border-box',
+                                    }}
+                                  >
+                                    {esCabeza ? '★ ' : ''}
+                                    {eq ? labelEquipo(eq) : `Equipo #${eid}`}
+                                  </button>
+                                  <select
+                                    aria-label={`Mover ${eq ? labelEquipo(eq) : eid}`}
+                                    defaultValue={String(gi)}
+                                    onChange={(ev) => {
+                                      const v = parseInt(ev.target.value, 10);
+                                      ev.target.value = String(gi);
+                                      if (Number.isFinite(v) && v !== gi) moverEquipoAGrupo(eid, v);
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      marginTop: '4px',
+                                      padding: '4px 6px',
+                                      borderRadius: '6px',
+                                      border: '1px solid #cbd5e1',
+                                      fontSize: '11px',
+                                    }}
+                                  >
+                                    {Array.from({ length: numGrupos }, (_, j) => (
+                                      <option key={j} value={j}>
+                                        Grupo {LETRAS[j] || j + 1}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {!manualValid && unassignedManual.length === 0 && gruposManuales.some((g) => g.length === 0) ? (
+                    <p style={{ color: '#b45309', fontSize: '12px', fontWeight: 700, margin: '10px 0 0' }}>
+                      Ningún grupo puede quedar vacío.
+                    </p>
+                  ) : null}
+                  {unassignedManual.length > 0 ? (
+                    <p style={{ color: '#b91c1c', fontSize: '12px', fontWeight: 700, margin: '10px 0 0' }}>
+                      Faltan asignar {unassignedManual.length} equipo{unassignedManual.length === 1 ? '' : 's'}.
+                    </p>
+                  ) : null}
                 </div>
-              ) : null}
+              )}
 
-              <button
-                type="button"
-                disabled={confirmando}
-                onClick={iniciarSorteoAnimado}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: confirmando ? '#94a3b8' : 'linear-gradient(135deg,#0f172a,#1e3a5f)',
-                  color: '#fff',
-                  fontWeight: 800,
-                  fontSize: '15px',
-                  cursor: confirmando ? 'not-allowed' : 'pointer',
-                  marginBottom: '10px',
-                  boxShadow: confirmando ? 'none' : '0 4px 20px rgba(201, 162, 39, 0.25)',
-                }}
-              >
-                ⭐ Iniciar sorteo
-              </button>
-              <button
-                type="button"
-                disabled={confirmando}
-                onClick={ejecutarSortearVistaPrevia}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  background: '#f8fafc',
-                  color: '#475569',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  cursor: confirmando ? 'not-allowed' : 'pointer',
-                  marginBottom: '14px',
-                }}
-              >
-                Vista previa sin animación
-              </button>
-
-              {preview && preview.length ? (
+              {tipoSorteo !== 'manual' && preview && preview.length ? (
                 <div style={{ background: '#f1f5f9', borderRadius: '12px', padding: '12px 14px', marginBottom: '12px' }}>
                   <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Vista previa</div>
                   {preview.map((grupoIds, gi) => (
@@ -546,16 +903,16 @@ export default function SorteoGruposModal({
           </button>
           <button
             type="button"
-            disabled={!preview || confirmando}
+            disabled={!canConfirm}
             onClick={() => void confirmar()}
             style={{
               padding: '10px 16px',
               borderRadius: '10px',
               border: 'none',
-              background: preview && !confirmando ? '#16a34a' : '#94a3b8',
+              background: canConfirm ? '#16a34a' : '#94a3b8',
               color: '#fff',
               fontWeight: 800,
-              cursor: preview && !confirmando ? 'pointer' : 'not-allowed',
+              cursor: canConfirm ? 'pointer' : 'not-allowed',
             }}
           >
             {confirmando ? 'Guardando…' : 'Confirmar sorteo'}
