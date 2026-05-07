@@ -16,6 +16,13 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
+import {
+  TORNEO_GENERO_COMPETENCIA_DEFAULT,
+  TORNEO_GENERO_COMPETENCIA_OPTIONS,
+  TORNEO_CATEGORIA_EDAD_DEFAULT,
+  TORNEO_CATEGORIA_EDAD_OPTIONS,
+} from '../constants/torneoCompetencia';
+import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
   FILTROS_ESTADO_TORNEO_PILLS,
@@ -24,7 +31,7 @@ import {
   esFiltroTorneoEstadoTodos,
   torneoPasaFiltroEstadoVista,
 } from '../utils/torneoEstadoFiltroPills';
-import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../utils/torneoFormatters';
+import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo, formatGeneroCompetenciaTorneo, formatCategoriaEdadTorneo } from '../utils/torneoFormatters';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 import {
@@ -39,7 +46,7 @@ import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+const CATEGORIAS = CATEGORIAS_NIVEL_TODAS;
 
 const STRIPE_PUBLISHABLE_ADMIN =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -2228,6 +2235,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       nombre:       torneo.nombre       || '',
       nivel_torneo: torneo.nivel_torneo || '',
       categoria:    torneo.categoria    || CATEGORIA_TORNEO_DEFAULT,
+      genero_competencia: torneo.genero_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT,
+      categoria_edad: torneo.categoria_edad || TORNEO_CATEGORIA_EDAD_DEFAULT,
       tipo_torneo:  torneo.tipo_torneo  || '',
       estado:       mapEstadoTorneoDesdeApiParaForm(torneo.estado),
       fecha_inicio: torneo.fecha_inicio || '',
@@ -4074,6 +4083,30 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           </select>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Tipo de competencia</label>
+                          <select
+                            style={inp}
+                            value={editTorneoForm.genero_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, genero_competencia: e.target.value }))}
+                          >
+                            {TORNEO_GENERO_COMPETENCIA_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Categoría de edad</label>
+                          <select
+                            style={inp}
+                            value={editTorneoForm.categoria_edad || TORNEO_CATEGORIA_EDAD_DEFAULT}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, categoria_edad: e.target.value }))}
+                          >
+                            {TORNEO_CATEGORIA_EDAD_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Categoría *</label>
                           <select
                             style={inp}
@@ -4206,6 +4239,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
                           : null}
                         <span style={badge('#f0fdf4', '#166534')}>{formatCategoriaTorneo(torneo.categoria)}</span>
+                        <span style={badge('#fef9c3', '#854d0e')}>{formatGeneroCompetenciaTorneo(torneo.genero_competencia)}</span>
+                        <span style={badge('#e0f2fe', '#0369a1')}>{formatCategoriaEdadTorneo(torneo.categoria_edad)}</span>
                         {torneo.tipo_torneo
                           ? <span style={badge(formatoColor.bg, formatoColor.color)}>{formatTipoTorneo(torneo.tipo_torneo)}</span>
                           : null}

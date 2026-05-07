@@ -210,8 +210,8 @@ export default function AccesoCuenta() {
       setErrorMsg('Completá tu apellido.');
       return;
     }
-    if (gen !== 'masculino' && gen !== 'femenino') {
-      setErrorMsg('Seleccioná género (Masculino o Femenino).');
+    if (gen !== 'masculino' && gen !== 'femenino' && gen !== 'otro') {
+      setErrorMsg('Seleccioná género (Masculino, Femenino u Otro).');
       return;
     }
     setBusy(true);
@@ -515,6 +515,7 @@ export default function AccesoCuenta() {
               <option value="">— Elegir —</option>
               <option value="masculino">Masculino</option>
               <option value="femenino">Femenino</option>
+              <option value="otro">Otro</option>
             </select>
             <label
               style={{

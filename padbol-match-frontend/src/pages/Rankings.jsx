@@ -13,6 +13,8 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
+import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
+import { TORNEO_CATEGORIA_EDAD_OPTIONS, TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
 
 function etiquetaRankingJugador(player) {
   if (!player) return '—';
@@ -21,9 +23,6 @@ function etiquetaRankingJugador(player) {
   return String(player.nombre || '').trim() || '—';
 }
 
-const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
-
-const SCOPE_NIVELES_RANKING = {
   local: ['club', 'club_oficial', 'club_no_oficial'],
   nacional: ['nacional'],
   internacional: ['internacional', 'mundial'],
@@ -39,15 +38,32 @@ function normPaisRanking(s) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+function torneoPasaFiltroGeneroRanking(t, filtro) {
+  if (!filtro) return true;
+  const g = String(t.genero_competencia || '').trim().toLowerCase();
+  if (!g) return true;
+  if (filtro === 'mixto') return g === 'mixto';
+  if (filtro === 'masculino') return g === 'masculino' || g === 'mixto';
+  if (filtro === 'femenino') return g === 'femenino' || g === 'mixto';
+  return true;
+}
+
+function torneoPasaFiltroEdadRanking(t, filtro) {
+  if (!filtro) return true;
+  const c = String(t.categoria_edad || '').trim().toLowerCase();
+  if (!c) return true;
+  return c === filtro;
+}
+
 /**
  * Misma lógica que GET /api/rankings en el backend; consulta directa a Supabase desde el cliente.
  */
-async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria }) {
+async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria, generoCompetencia, categoriaEdad }) {
   const nivelesPermitidos = SCOPE_NIVELES_RANKING[scope] || SCOPE_NIVELES_RANKING.internacional;
 
   let torneosQuery = supabase
     .from('torneos')
-    .select('id, sede_id, nivel_torneo, nombre')
+    .select('id, sede_id, nivel_torneo, nombre, genero_competencia, categoria_edad')
     .eq('estado', 'finalizado')
     .in('nivel_torneo', nivelesPermitidos);
 
@@ -71,9 +87,14 @@ async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria
     }
   }
 
-  const { data: torneos, error: errT } = await torneosQuery;
+  const { data: torneosRaw, error: errT } = await torneosQuery;
   if (errT) throw errT;
-  if (!torneos?.length) return [];
+  if (!torneosRaw?.length) return [];
+
+  const torneos = torneosRaw.filter(
+    (t) => torneoPasaFiltroGeneroRanking(t, generoCompetencia) && torneoPasaFiltroEdadRanking(t, categoriaEdad)
+  );
+  if (!torneos.length) return [];
 
   const torneoIds = torneos.map((t) => t.id);
 
@@ -384,7 +405,7 @@ function CategoriaPills({ value, onChange, ariaLabel }) {
       >
         Todos
       </button>
-      {CATEGORIAS.map((c) => {
+      {CATEGORIAS_NIVEL_TODAS.map((c) => {
         const active = value === c;
         return (
           <button
@@ -406,6 +427,47 @@ function CategoriaPills({ value, onChange, ariaLabel }) {
   );
 }
 
+function TorneoMetaPills({ value, onChange, options, ariaLabel }) {
+  return (
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}
+    >
+      <button
+        type="button"
+        onClick={() => onChange('')}
+        style={{
+          ...RANKING_PILL_BASE,
+          background: !value ? '#667eea' : '#fff',
+          color: !value ? '#fff' : '#1e293b',
+          borderColor: !value ? '#667eea' : '#e2e8f0',
+        }}
+      >
+        Todos
+      </button>
+      {options.map((o) => {
+        const active = value === o.value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onChange(o.value)}
+            style={{
+              ...RANKING_PILL_BASE,
+              background: active ? '#667eea' : '#fff',
+              color: active ? '#fff' : '#1e293b',
+              borderColor: active ? '#667eea' : '#e2e8f0',
+            }}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Rankings() {
   const location = useLocation();
   const narrow = useMediaNarrow(520);
@@ -413,6 +475,8 @@ export default function Rankings() {
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
+  const [selectedGeneroTorneo, setSelectedGeneroTorneo] = useState('');
+  const [selectedCategoriaEdad, setSelectedCategoriaEdad] = useState('');
   const [rankings, setRankings] = useState([]);
   const [loading, setLoading] = useState(false);
   /** Si el fetch falla (red, timeout, 5xx), mostramos vacío amigable en lugar del mensaje de error técnico. */
@@ -492,6 +556,8 @@ export default function Rankings() {
           provincia: activeTab === 'local' ? localProvincia : '',
           ciudad: activeTab === 'local' ? localCiudad : '',
           categoria: selectedCategoria,
+          generoCompetencia: selectedGeneroTorneo,
+          categoriaEdad: selectedCategoriaEdad,
         });
         if (cancelled) return;
         setRankingSinDatosDisponibles(false);
@@ -509,7 +575,7 @@ export default function Rankings() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, selectedCategoria, localPais, localProvincia, localCiudad, nacionalPais]);
+  }, [activeTab, selectedCategoria, selectedGeneroTorneo, selectedCategoriaEdad, localPais, localProvincia, localCiudad, nacionalPais]);
 
   // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -591,6 +657,8 @@ export default function Rankings() {
                 setLocalCiudad('');
                 setNacionalPais('');
                 setSelectedCategoria('');
+                setSelectedGeneroTorneo('');
+                setSelectedCategoriaEdad('');
               }}
               style={{
                 flex: 1,
@@ -682,15 +750,53 @@ export default function Rankings() {
                 onChange={setSelectedCategoria}
                 ariaLabel="Filtrar ranking por categoría"
               />
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.88)',
+                  marginBottom: '8px',
+                  marginTop: '4px',
+                }}
+              >
+                Tipo de competencia (torneo)
+              </div>
+              <TorneoMetaPills
+                value={selectedGeneroTorneo}
+                onChange={setSelectedGeneroTorneo}
+                options={TORNEO_GENERO_COMPETENCIA_OPTIONS}
+                ariaLabel="Filtrar ranking por tipo de competencia del torneo"
+              />
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.88)',
+                  marginBottom: '8px',
+                  marginTop: '10px',
+                }}
+              >
+                Categoría de edad (torneo)
+              </div>
+              <TorneoMetaPills
+                value={selectedCategoriaEdad}
+                onChange={setSelectedCategoriaEdad}
+                options={TORNEO_CATEGORIA_EDAD_OPTIONS}
+                ariaLabel="Filtrar ranking por categoría de edad del torneo"
+              />
             </div>
           )}
           {(selectedCategoria ||
+            selectedGeneroTorneo ||
+            selectedCategoriaEdad ||
             (activeTab === 'local' && (localPais || localProvincia || localCiudad)) ||
             (activeTab === 'nacional' && nacionalPais)) && (
             <button
               type="button"
               onClick={() => {
                 setSelectedCategoria('');
+                setSelectedGeneroTorneo('');
+                setSelectedCategoriaEdad('');
                 setLocalPais('');
                 setLocalProvincia('');
                 setLocalCiudad('');

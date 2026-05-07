@@ -9,7 +9,7 @@ import {
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
-import { formatNivelTorneo, formatTipoTorneo } from '../utils/torneoFormatters';
+import { formatNivelTorneo, formatTipoTorneo, formatGeneroCompetenciaTorneo, formatCategoriaEdadTorneo } from '../utils/torneoFormatters';
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
@@ -480,6 +480,8 @@ export default function TorneosPublicos() {
                 <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
                 <Row icon="🏆" label={formatTipoTorneo(t.tipo_torneo)} />
                 <Row icon="⭐" label={formatNivelTorneo(t.nivel_torneo)} />
+                <Row icon="⚧" label={`Competencia: ${formatGeneroCompetenciaTorneo(t.genero_competencia)}`} />
+                <Row icon="🎂" label={`Edad: ${formatCategoriaEdadTorneo(t.categoria_edad)}`} />
                 {(() => {
                   const max =
                     t.cupos_maximos != null && String(t.cupos_maximos).trim() !== ''

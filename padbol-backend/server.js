@@ -2094,6 +2094,23 @@ function jugadoresRegistradosCountBuscaDupla(equipoRow) {
 }
 
 // ===== TORNEOS =====
+
+const TORNEO_GENERO_COMP_VALID = new Set(['masculino', 'femenino', 'mixto']);
+const TORNEO_CATEGORIA_EDAD_VALID = new Set(['sub_18', 'open', 'master_40', 'master_50']);
+
+function normalizeTorneoGeneroCompetencia(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (!s) return null;
+  return TORNEO_GENERO_COMP_VALID.has(s) ? s : null;
+}
+
+function normalizeTorneoCategoriaEdad(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (!s) return null;
+  if (TORNEO_CATEGORIA_EDAD_VALID.has(s)) return s;
+  return null;
+}
+
 app.post('/api/torneos', async (req, res) => {
   try {
     const {
@@ -2115,9 +2132,13 @@ app.post('/api/torneos', async (req, res) => {
       mejores_terceros_clasificados,
       estado: estadoBody,
       fecha_apertura_inscripcion: fechaAperturaBody,
+      genero_competencia: generoCompBody,
+      categoria_edad: categoriaEdadBody,
     } = req.body;
 
     const estadoNorm = normalizeTorneoEstadoForDb(estadoBody);
+    const genComp = normalizeTorneoGeneroCompetencia(generoCompBody);
+    const catEdad = normalizeTorneoCategoriaEdad(categoriaEdadBody);
 
     const row = {
       nombre,
@@ -2125,6 +2146,8 @@ app.post('/api/torneos', async (req, res) => {
       nivel_torneo,
       tipo_torneo,
       categoria: categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre',
+      genero_competencia: genComp,
+      categoria_edad: catEdad,
       estado: estadoNorm || 'planificacion',
       fecha_inicio,
       fecha_fin,
@@ -2494,6 +2517,8 @@ async function handleTorneoPatchOrPut(req, res) {
       horas_revelar_equipos,
       costo_inscripcion,
       fecha_apertura_inscripcion: fechaAperturaPatch,
+      genero_competencia: generoCompetenciaPatch,
+      categoria_edad: categoriaEdadPatch,
     } = req.body;
 
     const { data: prevRow, error: prevErr } = await supabase
@@ -2577,6 +2602,28 @@ async function handleTorneoPatchOrPut(req, res) {
       }
       if (fap.action === 'set') {
         patch.fecha_apertura_inscripcion = fap.value;
+      }
+    }
+    if (generoCompetenciaPatch !== undefined) {
+      if (generoCompetenciaPatch === null || generoCompetenciaPatch === '') {
+        patch.genero_competencia = null;
+      } else {
+        const g = normalizeTorneoGeneroCompetencia(generoCompetenciaPatch);
+        if (!g) {
+          return res.status(400).json({ error: 'genero_competencia inválido (masculino, femenino, mixto)' });
+        }
+        patch.genero_competencia = g;
+      }
+    }
+    if (categoriaEdadPatch !== undefined) {
+      if (categoriaEdadPatch === null || categoriaEdadPatch === '') {
+        patch.categoria_edad = null;
+      } else {
+        const ce = normalizeTorneoCategoriaEdad(categoriaEdadPatch);
+        if (!ce) {
+          return res.status(400).json({ error: 'categoria_edad inválida (sub_18, open, master_40, master_50)' });
+        }
+        patch.categoria_edad = ce;
       }
     }
 
@@ -3335,6 +3382,24 @@ app.post('/api/torneos/:id/sorteo', async (req, res) => {
 });
 
 // ===== RANKINGS =====
+
+function torneoPasaFiltroGeneroRankingApi(t, filtro) {
+  if (!filtro) return true;
+  const g = String(t.genero_competencia || '').trim().toLowerCase();
+  if (!g) return true;
+  if (filtro === 'mixto') return g === 'mixto';
+  if (filtro === 'masculino') return g === 'masculino' || g === 'mixto';
+  if (filtro === 'femenino') return g === 'femenino' || g === 'mixto';
+  return true;
+}
+
+function torneoPasaFiltroEdadRankingApi(t, filtro) {
+  if (!filtro) return true;
+  const c = String(t.categoria_edad || '').trim().toLowerCase();
+  if (!c) return true;
+  return c === filtro;
+}
+
 // GET /api/rankings?scope=local|nacional|internacional&sede_id=X&categoria=Y&pais=&provincia=&ciudad=
 app.get('/api/rankings', async (req, res) => {
   const {
@@ -3344,8 +3409,12 @@ app.get('/api/rankings', async (req, res) => {
     pais,
     provincia,
     ciudad,
+    genero_competencia: generoCompQ,
+    categoria_edad: categoriaEdadQ,
   } = req.query;
 
+  const genCompFilt = String(generoCompQ || '').trim().toLowerCase();
+  const catEdadFilt = String(categoriaEdadQ || '').trim().toLowerCase();
   const normPais = (s) =>
     String(s || '')
       .trim()
@@ -3364,7 +3433,7 @@ app.get('/api/rankings', async (req, res) => {
 
     let torneosQuery = supabase
       .from('torneos')
-      .select('id, sede_id, nivel_torneo, nombre')
+      .select('id, sede_id, nivel_torneo, nombre, genero_competencia, categoria_edad')
       .eq('estado', 'finalizado')
       .in('nivel_torneo', nivelesPermitidos);
 
@@ -3394,11 +3463,17 @@ app.get('/api/rankings', async (req, res) => {
       }
     }
 
-    const { data: torneos, error: errT } = await torneosQuery;
+    const { data: torneosRaw, error: errT } = await torneosQuery;
     if (errT) throw errT;
-    if (!torneos?.length) return res.json([]);
+    if (!torneosRaw?.length) return res.json([]);
 
-    const torneoIds = torneos.map(t => t.id);
+    const torneos = torneosRaw.filter(
+      (t) =>
+        torneoPasaFiltroGeneroRankingApi(t, genCompFilt) && torneoPasaFiltroEdadRankingApi(t, catEdadFilt)
+    );
+    if (!torneos.length) return res.json([]);
+
+    const torneoIds = torneos.map((t) => t.id);
 
     // 2. Load tabla_puntos for those torneos
     const { data: puntos, error: errP } = await supabase

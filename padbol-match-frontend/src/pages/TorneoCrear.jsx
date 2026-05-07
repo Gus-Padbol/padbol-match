@@ -10,6 +10,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
+import {
+  TORNEO_GENERO_COMPETENCIA_DEFAULT,
+  TORNEO_GENERO_COMPETENCIA_OPTIONS,
+  TORNEO_CATEGORIA_EDAD_DEFAULT,
+  TORNEO_CATEGORIA_EDAD_OPTIONS,
+} from '../constants/torneoCompetencia';
 import useUserRole from '../hooks/useUserRole';
 import { mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 
@@ -21,6 +27,8 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     sede_id: '',
     nivel_torneo: 'club',
     categoria: CATEGORIA_TORNEO_DEFAULT,
+    genero_competencia: TORNEO_GENERO_COMPETENCIA_DEFAULT,
+    categoria_edad: TORNEO_CATEGORIA_EDAD_DEFAULT,
     tipo_torneo: 'round_robin',
     fecha_inicio: '',
     fecha_fin: '',
@@ -123,6 +131,8 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       sede_id: formData.es_multisede ? null : parseInt(formData.sede_id, 10),
       nivel_torneo: formData.nivel_torneo,
       categoria: String(formData.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
+      genero_competencia: String(formData.genero_competencia || '').trim() || TORNEO_GENERO_COMPETENCIA_DEFAULT,
+      categoria_edad: String(formData.categoria_edad || '').trim() || TORNEO_CATEGORIA_EDAD_DEFAULT,
       tipo_torneo: formData.tipo_torneo,
       estado: mapEstadoTorneoFormParaApi(formData.estado || 'proximo'),
       fecha_inicio: formData.fecha_inicio,
@@ -325,6 +335,37 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   )}
                 </div>
               )}
+
+              <div className="form-group">
+                <label>Tipo de competencia *</label>
+                <select
+                  name="genero_competencia"
+                  value={formData.genero_competencia}
+                  onChange={handleChange}
+                  required aria-label="Tipo de competencia del torneo"
+                >
+                  {TORNEO_GENERO_COMPETENCIA_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
+                  Masculino, Femenino o Mixto (quién puede inscribirse en este torneo).
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label>Categoría de edad *</label>
+                <select
+                  name="categoria_edad"
+                  value={formData.categoria_edad}
+                  onChange={handleChange}
+                  required aria-label="Categoría de edad del torneo"
+                >
+                  {TORNEO_CATEGORIA_EDAD_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
 
               <div className="form-group">
                 <label>Categoría *</label>

@@ -53,3 +53,24 @@ export function formatCategoriaTorneo(c) {
   if (v === 'Libre') return 'Libre (todas las categorías)';
   return v;
 }
+
+/** `torneos.genero_competencia`: masculino | femenino | mixto */
+export function formatGeneroCompetenciaTorneo(raw) {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return '—';
+  if (v === 'masculino') return 'Masculino';
+  if (v === 'femenino') return 'Femenino';
+  if (v === 'mixto') return 'Mixto';
+  return capitalizeFirstAfterUnderscores(raw);
+}
+
+/** `torneos.categoria_edad`: sub_18 | open | master_40 | master_50 */
+export function formatCategoriaEdadTorneo(raw) {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return '—';
+  if (v === 'sub_18') return 'Sub 18';
+  if (v === 'open') return 'Open';
+  if (v === 'master_40') return 'Máster +40';
+  if (v === 'master_50') return 'Máster +50';
+  return capitalizeFirstAfterUnderscores(raw);
+}

@@ -47,12 +47,11 @@ import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
+import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
 const MSG_CUENTA_Y_FICHA_OK = 'Cuenta creada y ficha guardada correctamente';
-
-const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
 /** Bucket público en Supabase Storage para fotos de perfil (`jugadores_perfil.foto_url`). */
 const AVATAR_STORAGE_BUCKET = 'avatars';
@@ -392,7 +391,7 @@ export default function MiPerfil() {
     genero: '',
     apodo: '',
     lateralidad: 'Diestro',
-    nivel: '5ta',
+    nivel: 'Principiante',
     pais: '',
     localidad: '',
     ciudad: '',
@@ -424,6 +423,14 @@ export default function MiPerfil() {
   const [aliasSugerenciasCargando, setAliasSugerenciasCargando] = useState(false);
   const aliasCheckSeqRef = useRef(0);
   const nombreSaludoSuggestSeqRef = useRef(0);
+
+  useEffect(() => {
+    setFormData((prev) => {
+      const opts = categoriasNivelPorGenero(prev.genero);
+      if (!prev.nivel || opts.includes(prev.nivel)) return prev;
+      return { ...prev, nivel: 'Principiante' };
+    });
+  }, [formData.genero]);
 
   const nivelTorneoScope = useMemo(
     () => normalizeNivelTorneoScope(torneoPerfil?.nivel_torneo),
@@ -776,7 +783,7 @@ export default function MiPerfil() {
             String(data.apodo ?? '').trim() ||
             (data.nombre_saludo != null ? String(data.nombre_saludo) : ''),
           lateralidad: data.lateralidad || 'Diestro',
-          nivel: data.nivel || '5ta',
+          nivel: data.nivel || 'Principiante',
           pais: data.pais || '',
           localidad: data.localidad != null ? String(data.localidad) : '',
           ciudad: data.ciudad || '',
@@ -1057,7 +1064,7 @@ export default function MiPerfil() {
           email: owner,
           nombre: getDisplayName(userProfile, session) || 'Jugador',
           whatsapp: String(userProfile?.whatsapp || '').trim() || null,
-          nivel: '5ta',
+          nivel: 'Principiante',
           lateralidad: 'Diestro',
           pendiente_validacion: true,
           foto_url: fotoUrlGuardada,
@@ -1105,7 +1112,7 @@ export default function MiPerfil() {
       persistJugadorPerfil({
         nombre: nomF,
         apellido: apF,
-        categoria: String(rowAfter?.nivel || formData.nivel || '5ta').trim(),
+        categoria: String(rowAfter?.nivel || formData.nivel || 'Principiante').trim(),
         whatsapp: String(rowAfter?.whatsapp || userProfile?.whatsapp || '').trim(),
         email: owner,
         foto_url: fotoUrlGuardada,
@@ -1159,7 +1166,7 @@ export default function MiPerfil() {
         persistJugadorPerfil({
           nombre: na.nombre || String(perfil.nombre || '').trim() || 'Jugador',
           apellido: na.apellido,
-          categoria: String(perfil.nivel || formData.nivel || '5ta').trim(),
+          categoria: String(perfil.nivel || formData.nivel || 'Principiante').trim(),
           whatsapp: String(perfil.whatsapp || userProfile?.whatsapp || '').trim(),
           email: owner,
           foto_url: fotoVal || '',
@@ -1211,8 +1218,8 @@ export default function MiPerfil() {
         fe.apellido = 'Completá tu apellido.';
       }
       const genReg = String(formData.genero || '').trim();
-      if (!genReg || (genReg !== 'masculino' && genReg !== 'femenino')) {
-        fe.genero = 'Seleccioná género (Masculino o Femenino).';
+      if (!genReg || !['masculino', 'femenino', 'otro'].includes(genReg)) {
+        fe.genero = 'Seleccioná género (Masculino, Femenino u Otro).';
       }
       if (!String(formData.lateralidad || '').trim()) {
         fe.lateralidad = 'Seleccioná lateralidad.';
@@ -1428,8 +1435,8 @@ export default function MiPerfil() {
       const fe = {};
       if (!nombreTrim) fe.nombre = 'Completá tu nombre.';
       if (!apellidoTrim) fe.apellido = 'Completá tu apellido.';
-      if (!genTrim || (genTrim !== 'masculino' && genTrim !== 'femenino')) {
-        fe.genero = 'Seleccioná género (Masculino o Femenino).';
+      if (!genTrim || !['masculino', 'femenino', 'otro'].includes(genTrim)) {
+        fe.genero = 'Seleccioná género (Masculino, Femenino u Otro).';
       }
       if (!String(formData.nivel || '').trim()) fe.nivel = 'Seleccioná tu categoría.';
       if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Seleccioná lateralidad.';
@@ -1838,6 +1845,7 @@ export default function MiPerfil() {
                 <option value="">— Elegir —</option>
                 <option value="masculino">Masculino</option>
                 <option value="femenino">Femenino</option>
+                <option value="otro">Otro</option>
               </select>
               {regErrP('genero')}
 
@@ -2123,7 +2131,7 @@ export default function MiPerfil() {
                 }}
                 style={{ ...guestInputStyle, marginBottom: regErr('categoria') ? '6px' : '14px', border: regBorder('categoria') }}
               >
-                {CATEGORIAS.map((c) => (
+                {categoriasNivelPorGenero(formData.genero).map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -2665,7 +2673,9 @@ export default function MiPerfil() {
                     ? 'Masculino'
                     : perfil.genero === 'femenino'
                       ? 'Femenino'
-                      : '—'
+                      : perfil.genero === 'otro'
+                        ? 'Otro'
+                        : '—'
                 }
               />
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
@@ -2764,6 +2774,7 @@ export default function MiPerfil() {
               <option value="">— Elegir —</option>
               <option value="masculino">Masculino</option>
               <option value="femenino">Femenino</option>
+              <option value="otro">Otro</option>
             </select>
             {fichErrP('genero')}
 
@@ -3006,7 +3017,7 @@ export default function MiPerfil() {
               onChange={handleChange}
               style={{ ...inputStyle, border: fichBorder('nivel') }}
             >
-              {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+              {categoriasNivelPorGenero(formData.genero).map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             {fichErrP('nivel')}
             <p style={{ color: '#f59e0b', fontSize: '12px', marginTop: '2px', marginBottom: '14px' }}>

@@ -143,7 +143,7 @@ export async function ensureJugadorPerfilRowForEmail(email) {
     email: em,
     nombre: full,
     whatsapp: wa,
-    nivel: String(jp?.categoria || jp?.nivel || '5ta').trim() || '5ta',
+    nivel: String(jp?.categoria || jp?.nivel || 'Principiante').trim() || 'Principiante',
     lateralidad: 'Diestro',
     pendiente_validacion: true,
     es_federado: false,
