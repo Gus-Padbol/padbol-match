@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
-import { formatAliasConArroba } from '../utils/jugadorPerfil';
+import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 import { loginRedirectAfterHubEntry, authRegisterUrlFromHub } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
@@ -377,6 +377,8 @@ export default function AppHeader({
     (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
 
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
+  /** Torneo / equipo desde el panel: sin chip @ a la derecha; volver = avatar + nombre (no texto «← Admin»). */
+  const adminTorneoEquipoDesdePanel = adminFlowSurface && !isOnAdmin;
   const miPerfilLogoutSpacing =
     showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
@@ -405,6 +407,7 @@ export default function AppHeader({
   /** Chip identidad en la barra grid: nunca en hub inicio con `hubDirectLogin` (chip solo en /admin vía layout minimal o en rutas admin/torneo fuera del hub raíz). */
   const jugadorChipEnHeaderGrid =
     Boolean(session?.user) &&
+    !adminTorneoEquipoDesdePanel &&
     ((hubDirectLogin && muestraChipUsuarioHubDerecha) ||
       (adminFlowSurface && !(hubDirectLogin && hubInicioPath)));
 
@@ -583,6 +586,13 @@ export default function AppHeader({
     if (em) return em.charAt(0).toUpperCase();
     return '?';
   }, [userProfile?.nombre, session?.user?.email]);
+
+  /** Texto junto al avatar en «volver al panel» (torneo/equipo desde admin): nombre + apellido como en el resto de la app. */
+  const adminPanelBackNombreLinea = useMemo(() => {
+    const full = nombreCompletoJugadorPerfil(userProfile).trim();
+    if (full) return full;
+    return getDisplayName(userProfile, session);
+  }, [userProfile, session]);
 
   /** Ruta /admin: siempre barra compacta con sesión (refuerzo si falta el prop). */
   const useAdminMinimalLayout =
@@ -1037,14 +1047,84 @@ export default function AppHeader({
             }}
           />
         ) : showBack ? (
-          <button
-            type="button"
-            onClick={handleBack}
-            style={{ ...btnVolver, flexShrink: 0 }}
-            aria-label="Volver atrás"
-          >
-            {displayBackLabel}
-          </button>
+          adminFlowSurface ? (
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label={pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? 'Volver al inicio' : 'Volver al panel de administración'}
+              title={pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? 'Inicio' : 'Panel admin'}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                maxWidth: 'min(52vw, 240px)',
+                padding: '4px 10px 4px 4px',
+                borderRadius: '999px',
+                border: '1px solid rgba(255,255,255,0.28)',
+                background: 'rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                flexShrink: 1,
+                minWidth: 0,
+              }}
+            >
+              {hubFotoUrl ? (
+                <img
+                  src={hubFotoUrl}
+                  alt=""
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                    border: '1px solid rgba(255,255,255,0.25)',
+                  }}
+                />
+              ) : (
+                <span
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: '#fff',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {adminMinimalInicial}
+                </span>
+              )}
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
+                  textAlign: 'left',
+                  lineHeight: 1.2,
+                }}
+              >
+                {adminPanelBackNombreLinea}
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleBack}
+              style={{ ...btnVolver, flexShrink: 0 }}
+              aria-label="Volver atrás"
+            >
+              {displayBackLabel}
+            </button>
+          )
         ) : (
           <span
             aria-hidden
