@@ -814,6 +814,7 @@ function EstrellasSoloLectura({ value }) {
 }
 
 function EstrellasInteractivas({ value, onChange, disabled }) {
+  const v = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
   return (
     <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }} role="group" aria-label="Calificación en estrellas">
       {[1, 2, 3, 4, 5].map((n) => (
@@ -823,7 +824,7 @@ function EstrellasInteractivas({ value, onChange, disabled }) {
           disabled={disabled}
           onClick={() => onChange(n)}
           aria-label={`${n} de 5 estrellas`}
-          aria-pressed={value >= n}
+          aria-pressed={v >= n}
           style={{
             border: 'none',
             background: 'transparent',
@@ -831,7 +832,7 @@ function EstrellasInteractivas({ value, onChange, disabled }) {
             fontSize: '26px',
             lineHeight: 1,
             padding: 0,
-            color: value >= n ? '#fbbf24' : 'rgba(248,250,252,0.28)',
+            color: v >= n ? '#fbbf24' : 'rgba(248,250,252,0.28)',
           }}
         >
           ★
@@ -928,10 +929,12 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
   const [verTodasOpen, setVerTodasOpen] = useState(false);
   const [todasRows, setTodasRows] = useState([]);
   const [todasLoading, setTodasLoading] = useState(false);
-  const [estrellasForm, setEstrellasForm] = useState(5);
+  /** 0 = aún no eligió estrellas (no se envía hasta que elija al menos 1). */
+  const [estrellasForm, setEstrellasForm] = useState(0);
   const [comentarioForm, setComentarioForm] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formMsg, setFormMsg] = useState('');
+  const [formModalOpen, setFormModalOpen] = useState(false);
 
   const loadResenas = useCallback(async () => {
     if (!Number.isFinite(idNum)) return;
@@ -965,6 +968,22 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
     void loadResenas();
   }, [loadResenas]);
 
+  useEffect(() => {
+    if (!formModalOpen) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setFormModalOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [formModalOpen]);
+
+  const openFormResena = useCallback(() => {
+    setFormMsg('');
+    setEstrellasForm(0);
+    setComentarioForm('');
+    setFormModalOpen(true);
+  }, []);
+
   const openVerTodas = useCallback(async () => {
     if (!Number.isFinite(idNum)) return;
     setVerTodasOpen(true);
@@ -996,6 +1015,11 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
     e.preventDefault();
     if (!accessToken) return;
     setFormMsg('');
+    const est = parseInt(String(estrellasForm), 10);
+    if (!Number.isFinite(est) || est < 1 || est > 5) {
+      setFormMsg('Elegí una calificación de 1 a 5 estrellas.');
+      return;
+    }
     setSubmitting(true);
     try {
       const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas`), {
@@ -1004,7 +1028,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ estrellas: estrellasForm, comentario: comentarioForm.trim() }),
+        body: JSON.stringify({ estrellas: est, comentario: comentarioForm.trim() }),
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -1018,8 +1042,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
         throw new Error(friendly);
       }
       setComentarioForm('');
-      setEstrellasForm(5);
-      setFormMsg('¡Gracias por tu reseña!');
+      setEstrellasForm(0);
+      setFormModalOpen(false);
+      setFormMsg('');
       await loadResenas();
     } catch (e2) {
       setFormMsg(e2.message || 'No se pudo enviar');
@@ -1111,90 +1136,26 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
               Ya dejaste tu reseña en esta sede. ¡Gracias!
             </p>
           ) : (
-            <form
-              onSubmit={submitResena}
-              style={{
-                marginBottom: '16px',
-                padding: '12px',
-                borderRadius: '12px',
-                background: 'rgba(15,23,42,0.28)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                boxSizing: 'border-box',
-              }}
-            >
-              <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#e2e8f0' }}>
-                Tu calificación
-              </div>
-              <EstrellasInteractivas value={estrellasForm} onChange={setEstrellasForm} disabled={submitting} />
-              <label
-                style={{ display: 'block', marginTop: '12px', fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}
-                htmlFor="sede-resena-comentario"
-              >
-                Comentario (opcional, máx. {RESENA_MAX_CHARS} caracteres)
-              </label>
-              <textarea
-                id="sede-resena-comentario"
-                value={comentarioForm}
-                maxLength={RESENA_MAX_CHARS}
-                disabled={submitting}
-                onChange={(e) => setComentarioForm(e.target.value)}
-                rows={3}
+            <div style={{ marginBottom: '16px' }}>
+              <button
+                type="button"
+                onClick={openFormResena}
                 style={{
                   width: '100%',
-                  marginTop: '6px',
-                  boxSizing: 'border-box',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(15,23,42,0.45)',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  background: 'rgba(255,255,255,0.14)',
                   color: '#f8fafc',
-                  padding: '10px',
-                  fontSize: '13px',
-                  resize: 'vertical',
-                  minHeight: '72px',
-                }}
-              />
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '8px',
-                  flexWrap: 'wrap',
-                  gap: '8px',
+                  fontWeight: 800,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  boxSizing: 'border-box',
                 }}
               >
-                <span style={{ fontSize: '11px', color: 'rgba(226,232,240,0.55)' }}>
-                  {comentarioForm.length}/{RESENA_MAX_CHARS}
-                </span>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: '#22c55e',
-                    color: '#fff',
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    cursor: submitting ? 'wait' : 'pointer',
-                  }}
-                >
-                  {submitting ? 'Enviando…' : 'Publicar reseña'}
-                </button>
-              </div>
-              {formMsg ? (
-                <p
-                  style={{
-                    margin: '10px 0 0',
-                    fontSize: '12px',
-                    color: formMsg.startsWith('¡') ? '#bbf7d0' : '#fecaca',
-                  }}
-                >
-                  {formMsg}
-                </p>
-              ) : null}
-            </form>
+                Dejar una reseña
+              </button>
+            </div>
           )}
 
           {lista.length === 0 ? (
@@ -1336,6 +1297,170 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
               ) : null}
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {formModalOpen ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 55,
+            background: 'rgba(15,23,42,0.78)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sede-resena-form-title"
+          onClick={() => {
+            if (!submitting) setFormModalOpen(false);
+          }}
+        >
+          <form
+            onSubmit={submitResena}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(420px, 100%)',
+              padding: '18px 16px 16px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.45)',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: '10px',
+                marginBottom: '14px',
+              }}
+            >
+              <span id="sede-resena-form-title" style={{ fontWeight: 800, color: '#f8fafc', fontSize: '16px' }}>
+                Tu reseña
+              </span>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => setFormModalOpen(false)}
+                style={{
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.15)',
+                  color: '#fff',
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '10px',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  fontSize: '20px',
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+            </div>
+            <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'rgba(226,232,240,0.85)', lineHeight: 1.4 }}>
+              Elegí las estrellas y, si querés, escribí un comentario. Solo se publica cuando tocás «Publicar reseña».
+            </p>
+            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#e2e8f0' }}>
+              Calificación <span style={{ color: '#fecaca' }}>*</span>
+            </div>
+            <EstrellasInteractivas value={estrellasForm} onChange={setEstrellasForm} disabled={submitting} />
+            <label
+              style={{ display: 'block', marginTop: '14px', fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}
+              htmlFor="sede-resena-comentario-modal"
+            >
+              Comentario (opcional, máx. {RESENA_MAX_CHARS} caracteres)
+            </label>
+            <textarea
+              id="sede-resena-comentario-modal"
+              value={comentarioForm}
+              maxLength={RESENA_MAX_CHARS}
+              disabled={submitting}
+              onChange={(e) => setComentarioForm(e.target.value)}
+              rows={3}
+              style={{
+                width: '100%',
+                marginTop: '6px',
+                boxSizing: 'border-box',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(15,23,42,0.45)',
+                color: '#f8fafc',
+                padding: '10px',
+                fontSize: '13px',
+                resize: 'vertical',
+                minHeight: '72px',
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '12px',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <span style={{ fontSize: '11px', color: 'rgba(226,232,240,0.55)' }}>
+                {comentarioForm.length}/{RESENA_MAX_CHARS}
+              </span>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => setFormModalOpen(false)}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    background: 'transparent',
+                    color: '#e2e8f0',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#22c55e',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '13px',
+                    cursor: submitting ? 'wait' : 'pointer',
+                  }}
+                >
+                  {submitting ? 'Enviando…' : 'Publicar reseña'}
+                </button>
+              </div>
+            </div>
+            {formMsg ? (
+              <p
+                style={{
+                  margin: '12px 0 0',
+                  fontSize: '12px',
+                  color: formMsg.startsWith('¡') ? '#bbf7d0' : '#fecaca',
+                }}
+              >
+                {formMsg}
+              </p>
+            ) : null}
+          </form>
         </div>
       ) : null}
     </div>
