@@ -1376,3 +1376,58 @@ button.podium-player-avatar-wrap {
   color: #94a3b8;
   text-align: center;
 }
+
+/* Dictado de resultado de partido (modal) */
+.torneo-voice-mic-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  min-height: 56px;
+  padding: 14px 18px;
+  margin: 0;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.torneo-voice-mic-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.torneo-voice-mic-btn__icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.torneo-voice-mic-btn__label {
+  line-height: 1.25;
+  text-align: left;
+}
+
+.torneo-voice-mic-btn--listening {
+  animation: torneo-voice-mic-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes torneo-voice-mic-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(79, 70, 229, 0);
+  }
+}

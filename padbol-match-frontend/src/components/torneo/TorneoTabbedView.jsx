@@ -31,7 +31,7 @@ import '../../styles/TorneoVista.css';
 import { TORNEO_BANNER_ANTES_TABS_DATA_SLOT } from '../../utils/torneoReservaLugarCopy';
 import {
   getSpeechRecognitionConstructor,
-  parseMarcadorVozPartido,
+  parseMarcadorVozPartidoCompleto,
   speechRecognitionDisponible,
 } from '../../utils/speechResultadoPartido';
 
@@ -360,15 +360,19 @@ export default function TorneoTabbedView({
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
+  /** Flujo voz: idle | listening | processing | confirm */
+  const [voicePhase, setVoicePhase] = useState('idle');
   const [voiceListening, setVoiceListening] = useState(false);
+  const [voiceInterimText, setVoiceInterimText] = useState('');
   const [voiceError, setVoiceError] = useState(null);
   const [voicePending, setVoicePending] = useState(null);
-  const resultadoRef = useRef(resultado);
+  const [voiceSaving, setVoiceSaving] = useState(false);
   const selectedPartidoRef = useRef(selectedPartido);
+  const equiposRef = useRef([]);
   const miEquipoTorneoRef = useRef(null);
   const voiceRecognitionRef = useRef(null);
-  resultadoRef.current = resultado;
   selectedPartidoRef.current = selectedPartido;
+  equiposRef.current = equipos;
   const [participacionPaso, setParticipacionPaso] = useState('menu');
   const [equiposBusquedaRaw, setEquiposBusquedaRaw] = useState([]);
   const [equiposBusquedaLoading, setEquiposBusquedaLoading] = useState(false);
@@ -683,6 +687,9 @@ export default function TorneoTabbedView({
       setVoiceError(null);
       setVoicePending(null);
       setVoiceListening(false);
+      setVoicePhase('idle');
+      setVoiceInterimText('');
+      setVoiceSaving(false);
       setShowModalResultado(true);
     },
     [isAdmin, puedeCargarResultados]
@@ -699,6 +706,8 @@ export default function TorneoTabbedView({
 
     setVoiceError(null);
     setVoicePending(null);
+    setVoicePhase('listening');
+    setVoiceInterimText('');
 
     try {
       if (voiceRecognitionRef.current) {
@@ -721,40 +730,61 @@ export default function TorneoTabbedView({
     voiceRecognitionRef.current = rec;
     rec.lang = 'es-AR';
     rec.continuous = false;
-    rec.interimResults = false;
+    rec.interimResults = true;
     rec.maxAlternatives = 1;
 
     rec.onresult = (ev) => {
-      const text = ev.results?.[0]?.[0]?.transcript || '';
+      let line = '';
+      for (let i = 0; i < ev.results.length; i += 1) {
+        line += ev.results[i][0]?.transcript || '';
+      }
+      const trimmed = line.trim();
+      setVoiceInterimText(trimmed);
+      const last = ev.results[ev.results.length - 1];
+      if (!last?.isFinal) return;
+
+      setVoiceListening(false);
+      setVoicePhase('processing');
+
       const partido = selectedPartidoRef.current;
-      if (!partido) return;
-      const parsed = parseMarcadorVozPartido({
-        transcript: text,
-        equipoAId: partido.equipo_a_id,
-        equipoBId: partido.equipo_b_id,
-        miEquipoId: miEquipoTorneoRef.current,
-      });
-      if (!parsed.ok) {
-        setVoiceError(parsed.error || 'No se entendió el marcador.');
-        setVoicePending(null);
+      const eqs = equiposRef.current || [];
+      if (!partido) {
+        setVoicePhase('idle');
         return;
       }
-      const r0 = resultadoRef.current;
-      const tKey = !String(r0.set1 || '').trim()
-        ? 'set1'
-        : !String(r0.set2 || '').trim()
-          ? 'set2'
-          : 'set3';
-      setVoicePending({
-        setAB: parsed.setAB,
-        transcript: parsed.transcript,
-        targetKey: tKey,
-      });
+
+      const parsed = parseMarcadorVozPartidoCompleto(trimmed);
+      const mA = equipoPorId(eqs, partido.equipo_a_id);
+      const mB = equipoPorId(eqs, partido.equipo_b_id);
+      const nameA = nombreEquipoMostrado(mA || {});
+      const nameB = nombreEquipoMostrado(mB || {});
+
+      if (!parsed.ok) {
+        setVoiceError(parsed.error || 'No se pudo interpretar el marcador.');
+        setVoicePending(null);
+        setVoicePhase('idle');
+        setVoiceInterimText('');
+        return;
+      }
+
+      const winnerName = parsed.winnerSide === 'A' ? nameA : nameB;
       setVoiceError(null);
+      setVoicePending({
+        norm: parsed.norm,
+        winnerSide: parsed.winnerSide,
+        nameA,
+        nameB,
+        winnerName,
+        resumenSets: parsed.resumenSets,
+        transcript: parsed.transcript,
+      });
+      setVoicePhase('confirm');
+      setVoiceInterimText('');
     };
 
     rec.onerror = (ev) => {
       setVoiceListening(false);
+      setVoicePhase('idle');
       const code = ev?.error || '';
       if (code === 'aborted') return;
       const msg =
@@ -766,7 +796,9 @@ export default function TorneoTabbedView({
       setVoiceError(msg);
     };
 
-    rec.onend = () => setVoiceListening(false);
+    rec.onend = () => {
+      setVoiceListening(false);
+    };
 
     try {
       rec.start();
@@ -774,56 +806,90 @@ export default function TorneoTabbedView({
     } catch (e) {
       setVoiceError(e?.message || 'No se pudo iniciar el micrófono.');
       setVoiceListening(false);
+      setVoicePhase('idle');
     }
   }, []);
 
-  const confirmarVozPendiente = useCallback(() => {
-    if (!voicePending) return;
-    const { targetKey, setAB } = voicePending;
-    setResultado((prev) => ({ ...prev, [targetKey]: normalizeSetInput(setAB) }));
+  const repetirVozResultado = useCallback(() => {
+    try {
+      if (voiceRecognitionRef.current) voiceRecognitionRef.current.abort();
+    } catch {
+      /* ignore */
+    }
+    voiceRecognitionRef.current = null;
     setVoicePending(null);
     setVoiceError(null);
-  }, [voicePending]);
+    setVoicePhase('idle');
+    setVoiceInterimText('');
+    setVoiceListening(false);
+  }, []);
 
-  const guardarResultado = async () => {
-    if (!selectedPartido) return;
-    if (!puedeCargarResultados) {
-      alert('Iniciá el torneo para comenzar a cargar resultados.');
-      return;
-    }
-    const norm = {
-      set1: normalizeSetInput(resultado.set1),
-      set2: normalizeSetInput(resultado.set2),
-      set3: normalizeSetInput(resultado.set3),
-    };
-    const sets = [norm.set1, norm.set2, norm.set3].filter((s) => s.trim());
-    if (sets.length < 2) {
-      alert('Mínimo 2 sets requeridos');
-      return;
-    }
-    try {
-      const base = String(apiBaseUrl || '').replace(/\/+$/, '');
-      const res = await fetch(`${base}/api/partidos/${selectedPartido.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          estado: 'finalizado',
-          resultado: JSON.stringify(norm),
-        }),
-      });
-      if (res.ok) {
-        setPartidos((prev) =>
-          prev.map((p) =>
-            p.id === selectedPartido.id ? { ...p, estado: 'finalizado', resultado: JSON.stringify(norm) } : p
-          )
-        );
-        setShowModalResultado(false);
-        setSelectedPartido(null);
+  const guardarResultado = useCallback(
+    async (normOverride = null) => {
+      if (!selectedPartido) return;
+      if (!puedeCargarResultados) {
+        alert('Iniciá el torneo para comenzar a cargar resultados.');
+        return;
       }
-    } catch (err) {
-      alert('Error al guardar: ' + err.message);
+      const norm = normOverride
+        ? {
+            set1: normalizeSetInput(normOverride.set1),
+            set2: normalizeSetInput(normOverride.set2),
+            set3: normalizeSetInput(normOverride.set3 || ''),
+          }
+        : {
+            set1: normalizeSetInput(resultado.set1),
+            set2: normalizeSetInput(resultado.set2),
+            set3: normalizeSetInput(resultado.set3),
+          };
+      const sets = [norm.set1, norm.set2, norm.set3].filter((s) => s.trim());
+      if (sets.length < 2) {
+        alert('Mínimo 2 sets requeridos');
+        return;
+      }
+      try {
+        const base = String(apiBaseUrl || '').replace(/\/+$/, '');
+        const res = await fetch(`${base}/api/partidos/${selectedPartido.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            estado: 'finalizado',
+            resultado: JSON.stringify(norm),
+          }),
+        });
+        if (res.ok) {
+          setPartidos((prev) =>
+            prev.map((p) =>
+              p.id === selectedPartido.id ? { ...p, estado: 'finalizado', resultado: JSON.stringify(norm) } : p
+            )
+          );
+          setResultado(norm);
+          setShowModalResultado(false);
+          setSelectedPartido(null);
+          setVoicePending(null);
+          setVoicePhase('idle');
+          setVoiceInterimText('');
+          setVoiceError(null);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          alert(data.error || res.statusText || 'No se pudo guardar');
+        }
+      } catch (err) {
+        alert('Error al guardar: ' + err.message);
+      }
+    },
+    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, setPartidos]
+  );
+
+  const confirmarVozYGuardar = useCallback(async () => {
+    if (!voicePending?.norm) return;
+    setVoiceSaving(true);
+    try {
+      await guardarResultado(voicePending.norm);
+    } finally {
+      setVoiceSaving(false);
     }
-  };
+  }, [voicePending, guardarResultado]);
 
   const resultadosFilas = useMemo(() => {
     if (clasificacionFinalFilas && clasificacionFinalFilas.length > 0) return clasificacionFinalFilas;
@@ -2061,6 +2127,11 @@ export default function TorneoTabbedView({
             } catch {
               /* ignore */
             }
+            setVoicePending(null);
+            setVoicePhase('idle');
+            setVoiceInterimText('');
+            setVoiceError(null);
+            setVoiceListening(false);
             setShowModalResultado(false);
           }}
         >
@@ -2080,27 +2151,57 @@ export default function TorneoTabbedView({
               <div style={{ marginBottom: '14px' }}>
                 <button
                   type="button"
-                  className="btn-guardar"
+                  className={`torneo-voice-mic-btn${voiceListening ? ' torneo-voice-mic-btn--listening' : ''}`}
                   onClick={() => startVoiceResultado()}
-                  disabled={voiceListening}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    opacity: voiceListening ? 0.75 : 1,
-                  }}
+                  disabled={
+                    voiceListening || voicePhase === 'processing' || voiceSaving || voicePhase === 'confirm'
+                  }
                 >
-                  <span aria-hidden>🎤</span>
-                  {voiceListening ? 'Escuchando…' : 'Dictar set por voz'}
+                  <span className="torneo-voice-mic-btn__icon" aria-hidden>
+                    🎤
+                  </span>
+                  <span className="torneo-voice-mic-btn__label">
+                    {voicePhase === 'processing'
+                      ? 'Procesando…'
+                      : voiceListening
+                        ? 'Escuchando…'
+                        : 'Dictar resultado (una frase)'}
+                  </span>
                 </button>
-                <span style={{ marginLeft: '10px', fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
-                  Español (AR)
-                </span>
-                <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
-                  Ej.: «ganamos seis a cuatro» o «perdimos tres a seis». Se usa el primer set vacío; si ya están los
-                  tres, se propone cambiar el Set 3. Sin «ganamos»/«perdimos», el primer número es el equipo de la
-                  izquierda (A).
+                <p style={{ margin: '10px 0 0', fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                  Español (Argentina) · Una sola frase con todos los sets
                 </p>
+                <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+                  Decí los games de cada set en orden: primero el equipo de la izquierda (A), luego el de la derecha (B).
+                  Ejemplos: «6 4, 3 6, 7 5» · «6 4 3 6» (2 sets) · «6 4 6 2» (2-0). Mejor de 3: hace falta un ganador
+                  a 2 sets (2-0 o 2-1).
+                </p>
+                {(voiceListening || voicePhase === 'processing') ? (
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      padding: '12px 14px',
+                      background: '#f1f5f9',
+                      borderRadius: '12px',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                      minHeight: '48px',
+                    }}
+                  >
+                    <span style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                      {voicePhase === 'processing' ? 'Procesando' : 'Reconocido'}
+                    </span>
+                    {voicePhase === 'processing' ? (
+                      <span>Interpretando marcador…</span>
+                    ) : voiceInterimText ? (
+                      voiceInterimText
+                    ) : (
+                      <span style={{ color: '#94a3b8' }}>Hablando…</span>
+                    )}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <p
@@ -2119,59 +2220,83 @@ export default function TorneoTabbedView({
             )}
 
             {voiceError ? (
-              <p
-                role="alert"
-                style={{
-                  margin: '0 0 12px',
-                  padding: '10px 12px',
-                  background: '#fef2f2',
-                  color: '#b91c1c',
-                  borderRadius: '10px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                }}
-              >
-                {voiceError}
-              </p>
+              <div style={{ margin: '0 0 12px' }}>
+                <p
+                  role="alert"
+                  style={{
+                    margin: 0,
+                    padding: '10px 12px',
+                    background: '#fef2f2',
+                    color: '#b91c1c',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {voiceError}
+                </p>
+                <button
+                  type="button"
+                  className="btn-guardar"
+                  style={{ marginTop: '10px', width: '100%', minHeight: '48px', fontSize: '15px', fontWeight: 800 }}
+                  onClick={() => {
+                    setVoiceError(null);
+                    startVoiceResultado();
+                  }}
+                >
+                  Repetir dictado
+                </button>
+              </div>
             ) : null}
 
-            {voicePending ? (
+            {voicePending && voicePhase === 'confirm' ? (
               <div
                 style={{
                   marginBottom: '16px',
-                  padding: '14px 14px',
+                  padding: '16px 16px',
                   background: '#eef2ff',
                   border: '1px solid #c7d2fe',
                   borderRadius: '12px',
                 }}
               >
-                <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800, color: '#1e1b4b' }}>
-                  ¿Confirmás el resultado {voicePending.setAB} para{' '}
-                  {voicePending.targetKey === 'set1'
-                    ? 'Set 1'
-                    : voicePending.targetKey === 'set2'
-                      ? 'Set 2'
-                      : 'Set 3'}
-                  ?
+                <p style={{ margin: '0 0 6px', fontSize: '13px', fontWeight: 800, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Confirmar resultado
                 </p>
+                <p style={{ margin: '0 0 10px', fontSize: '16px', fontWeight: 800, color: '#1e1b4b', lineHeight: 1.35 }}>
+                  <strong>{voicePending.nameA}</strong>
+                  <span style={{ color: '#64748b', fontWeight: 700 }}> vs </span>
+                  <strong>{voicePending.nameB}</strong>
+                </p>
+                <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, color: '#312e81' }}>
+                  {voicePending.resumenSets}
+                </p>
+                <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800, color: '#15803d' }}>
+                  Ganador del partido: {voicePending.winnerName}
+                </p>
+                <p style={{ margin: '0 0 14px', fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>¿Confirmás?</p>
                 {voicePending.transcript ? (
-                  <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#6366f1', fontStyle: 'italic' }}>
+                  <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#6366f1', fontStyle: 'italic' }}>
                     Escuchado: «{voicePending.transcript}»
                   </p>
                 ) : null}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                  <button type="button" className="btn-guardar" onClick={confirmarVozPendiente}>
-                    Confirmar
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="btn-guardar"
+                    disabled={voiceSaving}
+                    style={{ width: '100%', minHeight: '52px', fontSize: '16px', fontWeight: 800 }}
+                    onClick={() => void confirmarVozYGuardar()}
+                  >
+                    {voiceSaving ? 'Guardando…' : 'CONFIRMAR'}
                   </button>
                   <button
                     type="button"
                     className="btn-cancelar"
-                    onClick={() => {
-                      setVoicePending(null);
-                      setVoiceError(null);
-                    }}
+                    disabled={voiceSaving}
+                    style={{ width: '100%', minHeight: '52px', fontSize: '16px', fontWeight: 700 }}
+                    onClick={repetirVozResultado}
                   >
-                    Volver a intentar
+                    REPETIR
                   </button>
                 </div>
               </div>
@@ -2223,6 +2348,11 @@ export default function TorneoTabbedView({
                   } catch {
                     /* ignore */
                   }
+                  setVoicePending(null);
+                  setVoicePhase('idle');
+                  setVoiceInterimText('');
+                  setVoiceError(null);
+                  setVoiceListening(false);
                   setShowModalResultado(false);
                 }}
               >
