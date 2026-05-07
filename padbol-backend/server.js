@@ -3,10 +3,11 @@ import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
 import twilio from 'twilio';
 import dotenv from 'dotenv';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import cron from 'node-cron';
 import multer from 'multer';
 import Stripe from 'stripe';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -4327,6 +4328,375 @@ async function handleStripeBillingWebhook(req, res) {
 
 app.post('/api/stripe/webhook', async (req, res) => {
   await handleStripeBillingWebhook(req, res);
+});
+
+// ─── Mercado Pago: webhooks producción (firma, idempotencia, auditoría) ─────
+
+function sleepMs(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function runWithRetries(fn, { retries = 3, delayMs = 60_000 } = {}) {
+  let lastErr;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      console.warn(`⚠️ MP webhook reintento ${i + 1}/${retries}:`, e?.message || e);
+      if (i < retries - 1) await sleepMs(delayMs);
+    }
+  }
+  throw lastErr;
+}
+
+async function insertWebhookLog({ source, event_type, payload, mp_payment_id = null }) {
+  try {
+    const row = {
+      source,
+      event_type: event_type != null ? String(event_type) : null,
+      payload: payload && typeof payload === 'object' ? payload : { raw: String(payload) },
+      procesado: false,
+      ...(mp_payment_id ? { mp_payment_id: String(mp_payment_id) } : {}),
+    };
+    const { data, error } = await supabase.from('webhook_logs').insert(row).select('id').single();
+    if (error) throw error;
+    return data?.id || null;
+  } catch (e) {
+    console.error('❌ webhook_logs insert:', e?.message || e);
+    return null;
+  }
+}
+
+async function markWebhookLogDone(logId, extra = {}) {
+  if (!logId) return;
+  try {
+    const patch = { procesado: true, ...extra };
+    await supabase.from('webhook_logs').update(patch).eq('id', logId);
+  } catch (e) {
+    console.warn('webhook_logs update:', e?.message || e);
+  }
+}
+
+function verifyMercadoPagoWebhookSignature(req) {
+  const secret = String(process.env.MERCADOPAGO_WEBHOOK_SECRET || process.env.MP_WEBHOOK_SECRET || '').trim();
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('❌ MERCADOPAGO_WEBHOOK_SECRET requerido en producción para validar webhooks MP');
+      return false;
+    }
+    console.warn('⚠️ Webhook MP: sin MERCADOPAGO_WEBHOOK_SECRET — firma omitida (solo desarrollo)');
+    return true;
+  }
+  const xSig = req.headers['x-signature'] || req.headers['X-Signature'];
+  const xRid = req.headers['x-request-id'] || req.headers['X-Request-Id'];
+  if (!xSig || !xRid) return false;
+  const dataIdRaw =
+    req.query?.['data.id'] ??
+    (String(req.query?.topic || '').toLowerCase() === 'payment' && req.query?.id ? req.query.id : null) ??
+    req.body?.data?.id ??
+    '';
+  const dataID = String(dataIdRaw);
+  let ts;
+  let v1;
+  for (const part of String(xSig).split(',')) {
+    const [k, ...rest] = part.split('=');
+    const key = String(k || '').trim();
+    const val = rest.join('=').trim();
+    if (key === 'ts') ts = val;
+    else if (key === 'v1') v1 = val;
+  }
+  if (!ts || !v1) return false;
+  let manifest = '';
+  if (dataID) manifest += `id:${dataID};`;
+  manifest += `request-id:${xRid};ts:${ts};`;
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(manifest);
+  const sha = hmac.digest('hex');
+  try {
+    const a = Buffer.from(sha, 'hex');
+    const b = Buffer.from(String(v1).trim(), 'hex');
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+function extractMercadoPagoPaymentId(req) {
+  const q = req.query || {};
+  if (String(q.topic || '').toLowerCase() === 'payment' && q.id) {
+    return String(q.id).trim();
+  }
+  const b = req.body || {};
+  if (String(b.type || '').toLowerCase() === 'payment' && b.data?.id != null) {
+    return String(b.data.id).trim();
+  }
+  if (String(b.action || '').startsWith('payment.') && b.data?.id != null) {
+    return String(b.data.id).trim();
+  }
+  return null;
+}
+
+async function fetchMercadoPagoPaymentById(paymentId) {
+  const id = String(paymentId || '').trim();
+  if (!id) throw new Error('payment id vacío');
+  const tokens = [];
+  const main = String(process.env.MP_ACCESS_TOKEN || '').trim();
+  if (main) tokens.push(main);
+  try {
+    const { data: sedes } = await supabase
+      .from('sedes')
+      .select('mp_access_token')
+      .not('mp_access_token', 'is', null);
+    for (const s of sedes || []) {
+      const t = String(s.mp_access_token || '').trim();
+      if (t && !tokens.includes(t)) tokens.push(t);
+    }
+  } catch {
+    /* noop */
+  }
+  if (!tokens.length) throw new Error('Ningún MP_ACCESS_TOKEN configurado');
+  let lastErr;
+  for (const token of tokens) {
+    try {
+      const client = new MercadoPagoConfig({ accessToken: token });
+      const api = new Payment(client);
+      const data = await api.get({ id });
+      if (data && data.id != null) return data;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('No se pudo obtener el pago en Mercado Pago');
+}
+
+async function mpPaymentApprovedAlreadyProcessed(paymentId) {
+  const pid = String(paymentId || '').trim();
+  if (!pid) return false;
+  const { data, error } = await supabase
+    .from('webhook_logs')
+    .select('id')
+    .eq('source', 'mercadopago')
+    .eq('procesado', true)
+    .eq('mp_payment_id', pid)
+    .limit(1)
+    .maybeSingle();
+  if (error) return false;
+  return Boolean(data?.id);
+}
+
+function parseMercadoPagoExternalReference(raw) {
+  let s = String(raw || '').trim();
+  if (!s) return null;
+  try {
+    s = decodeURIComponent(s);
+  } catch {
+    /* keep */
+  }
+  try {
+    const o = JSON.parse(s);
+    return o && typeof o === 'object' ? o : null;
+  } catch {
+    return null;
+  }
+}
+
+async function crearReservaConfirmadaDesdePayloadMp(payload) {
+  const { sede, fecha, hora, cancha, nombre, email, whatsapp, nivel, precio, duracion } = payload;
+  if (!sede || !fecha || !hora || cancha == null || !nombre || !email || !whatsapp) {
+    throw new Error('Payload de reserva incompleto');
+  }
+  const { data: existentes, error: errCheck } = await supabase
+    .from('reservas')
+    .select('id')
+    .eq('sede', sede)
+    .eq('fecha', fecha)
+    .eq('hora', hora)
+    .eq('cancha', parseInt(String(cancha), 10));
+  if (errCheck) throw errCheck;
+  if (existentes && existentes.length > 0) {
+    return { ok: true, duplicate: true };
+  }
+  let duracionMin = duracion != null && duracion !== '' ? parseInt(duracion, 10) : null;
+  if (!Number.isFinite(duracionMin) || duracionMin <= 0) {
+    const { data: sedeDur } = await supabase
+      .from('sedes')
+      .select('duracion_reserva_minutos')
+      .eq('nombre', sede)
+      .maybeSingle();
+    duracionMin = parseInt(sedeDur?.duracion_reserva_minutos, 10) || 90;
+  }
+  const { data, error } = await supabase
+    .from('reservas')
+    .insert([
+      {
+        sede,
+        fecha,
+        hora,
+        cancha: parseInt(String(cancha), 10),
+        nombre,
+        email: String(email).trim().toLowerCase(),
+        telefono: whatsapp,
+        whatsapp,
+        nivel: nivel || 'Principiante',
+        precio: parseInt(String(precio), 10),
+        estado: 'confirmada',
+        duracion: duracionMin,
+      },
+    ])
+    .select();
+  if (error) throw error;
+  sendReservaConfirmadaWhatsAppTwilio({
+    email: String(email).trim().toLowerCase(),
+    nombreFallback: nombre,
+    fecha,
+    hora,
+    duracionMinutos: duracionMin,
+    nombreSede: sede,
+  }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva (webhook MP):', err.message));
+  return { ok: true, data };
+}
+
+async function confirmarTorneoInscripcionDesdePayloadMp(payload) {
+  const eid = parseInt(String(payload.equipo_id), 10);
+  const tid = parseInt(String(payload.torneo_id), 10);
+  if (!eid || !tid) throw new Error('Payload torneo_inscripcion incompleto');
+  const { data: eq, error: errEq } = await supabase
+    .from('equipos')
+    .select('id, torneo_id, inscripcion_estado')
+    .eq('id', eid)
+    .maybeSingle();
+  if (errEq) throw errEq;
+  if (!eq) throw new Error('Equipo no encontrado');
+  if (Number(eq.torneo_id) !== tid) throw new Error('El equipo no pertenece a ese torneo');
+  if (String(eq.inscripcion_estado || '').toLowerCase() === 'confirmado') {
+    return { ok: true, already: true };
+  }
+  const { data: torneoRow, error: errTorneo } = await supabase
+    .from('torneos')
+    .select('fecha_inicio')
+    .eq('id', tid)
+    .maybeSingle();
+  if (errTorneo) throw errTorneo;
+  if (!torneoRow) throw new Error('Torneo no encontrado');
+  if (torneoFechaInicioEsAnteriorAHoyArt(torneoRow.fecha_inicio)) {
+    throw new Error(MSG_TORNEO_INSCRIPCION_FECHA_PASADA);
+  }
+  const { error: errUp } = await supabase.from('equipos').update({ inscripcion_estado: 'confirmado' }).eq('id', eid);
+  if (errUp) throw errUp;
+  return { ok: true };
+}
+
+async function liberarSlotReservaPendienteMp(payload) {
+  if (!payload || String(payload.tipo || '').toLowerCase() === 'torneo_inscripcion') return;
+  const sede = String(payload.sede || '').trim();
+  const fecha = String(payload.fecha || '').trim();
+  const hora = String(payload.hora || '').trim();
+  const cancha = parseInt(String(payload.cancha), 10);
+  if (!sede || !fecha || !hora || !Number.isFinite(cancha)) return;
+  const { error } = await supabase
+    .from('reservas')
+    .delete()
+    .eq('sede', sede)
+    .eq('fecha', fecha)
+    .eq('hora', hora)
+    .eq('cancha', cancha)
+    .in('estado', ['pendiente_pago_mercadopago', 'pendiente_mercadopago']);
+  if (error) console.warn('⚠️ liberar slot MP:', error.message);
+}
+
+async function procesarPagoMercadoPagoWebhook(logId, paymentId) {
+  const payment = await fetchMercadoPagoPaymentById(paymentId);
+  const pid = String(payment?.id ?? paymentId);
+  const status = String(payment?.status || '').toLowerCase();
+  await supabase.from('webhook_logs').update({ mp_payment_id: pid }).eq('id', logId);
+
+  if (status === 'approved') {
+    if (await mpPaymentApprovedAlreadyProcessed(pid)) {
+      await markWebhookLogDone(logId, { mp_payment_id: pid });
+      console.log(`✓ MP webhook: pago ${pid} ya procesado (idempotencia)`);
+      return;
+    }
+    const ext = parseMercadoPagoExternalReference(payment.external_reference);
+    if (!ext) {
+      throw new Error('external_reference vacío o inválido');
+    }
+    const tipo = String(ext.tipo || '').toLowerCase();
+    if (tipo === 'torneo_inscripcion') {
+      await confirmarTorneoInscripcionDesdePayloadMp(ext);
+    } else {
+      await crearReservaConfirmadaDesdePayloadMp(ext);
+    }
+    await markWebhookLogDone(logId, { mp_payment_id: pid });
+    console.log(`✓ MP webhook: pago ${pid} approved → confirmado`);
+    return;
+  }
+
+  if (['pending', 'in_process', 'authorized'].includes(status)) {
+    await markWebhookLogDone(logId, { mp_payment_id: pid });
+    console.log(`ℹ️ MP webhook: pago ${pid} estado ${status} — sin confirmar`);
+    return;
+  }
+
+  if (['rejected', 'cancelled'].includes(status)) {
+    const ext = parseMercadoPagoExternalReference(payment.external_reference);
+    if (ext) await liberarSlotReservaPendienteMp(ext);
+    await markWebhookLogDone(logId, { mp_payment_id: pid });
+    console.log(`✓ MP webhook: pago ${pid} ${status} — slot pendiente liberado si existía`);
+    return;
+  }
+
+  await markWebhookLogDone(logId, { mp_payment_id: pid });
+  console.log(`ℹ️ MP webhook: pago ${pid} estado ${status || '—'} — sin acción`);
+}
+
+/** Healthcheck / validación URL en panel MP */
+app.get('/api/pagos/webhook', (req, res) => {
+  res.status(200).send('ok');
+});
+
+app.post('/api/pagos/webhook', async (req, res) => {
+  const eventType = req.body?.action || req.body?.type || req.query?.topic || 'unknown';
+  const logPayload = {
+    body: req.body,
+    query: req.query,
+    headers: {
+      'x-signature': req.headers['x-signature'] ? '[set]' : null,
+      'x-request-id': req.headers['x-request-id'] || null,
+    },
+  };
+  const logId = await insertWebhookLog({
+    source: 'mercadopago',
+    event_type: String(eventType),
+    payload: logPayload,
+  });
+
+  if (!verifyMercadoPagoWebhookSignature(req)) {
+    console.warn('❌ Webhook MP: firma inválida o faltante');
+    return res.status(401).send('Invalid signature');
+  }
+
+  const paymentId = extractMercadoPagoPaymentId(req);
+  if (!paymentId) {
+    await markWebhookLogDone(logId);
+    return res.status(200).json({ received: true, ignored: 'no payment id' });
+  }
+
+  res.status(200).json({ received: true });
+
+  setImmediate(() => {
+    void (async () => {
+      try {
+        await runWithRetries(() => procesarPagoMercadoPagoWebhook(logId, paymentId), {
+          retries: 3,
+          delayMs: 60_000,
+        });
+      } catch (e) {
+        console.error('❌ MP webhook: falló tras reintentos:', e?.message || e);
+      }
+    })();
+  });
 });
 
 // POST /api/crear-preferencia — Mercado Pago Checkout Pro
