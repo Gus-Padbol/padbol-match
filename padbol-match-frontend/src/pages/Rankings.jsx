@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import OpcionListaBusquedaInput from '../components/OpcionListaBusquedaInput';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
@@ -16,18 +15,6 @@ import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/juga
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
 
-/** Misma convención que ReservaForm.jsx */
-const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
-);
-
-function apiUrl(path) {
-  const p = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE}${p}`;
-}
-
 function etiquetaRankingJugador(player) {
   if (!player) return '—';
   const main = nombreCompletoJugadorPerfil(player);
@@ -36,6 +23,167 @@ function etiquetaRankingJugador(player) {
 }
 
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+
+const SCOPE_NIVELES_RANKING = {
+  local: ['club', 'club_oficial', 'club_no_oficial'],
+  nacional: ['nacional'],
+  internacional: ['internacional', 'mundial'],
+};
+
+const PERFIL_EMAIL_CHUNK = 120;
+
+function normPaisRanking(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Misma lógica que GET /api/rankings en el backend; consulta directa a Supabase desde el cliente.
+ */
+async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria }) {
+  const nivelesPermitidos = SCOPE_NIVELES_RANKING[scope] || SCOPE_NIVELES_RANKING.internacional;
+
+  let torneosQuery = supabase
+    .from('torneos')
+    .select('id, sede_id, nivel_torneo, nombre')
+    .eq('estado', 'finalizado')
+    .in('nivel_torneo', nivelesPermitidos);
+
+  if (scope === 'local') {
+    const pPais = pais && String(pais).trim();
+    const pProv = provincia && String(provincia).trim();
+    const pCiudad = ciudad && String(ciudad).trim();
+    if (pPais || pProv || pCiudad) {
+      let sedesQ = supabase.from('sedes').select('id');
+      if (pPais) sedesQ = sedesQ.ilike('pais', pPais);
+      if (pProv) sedesQ = sedesQ.ilike('provincia', pProv);
+      if (pCiudad) {
+        const safeCiudad = String(pCiudad).replace(/[%_]/g, ' ');
+        sedesQ = sedesQ.ilike('ciudad', `%${safeCiudad}%`);
+      }
+      const { data: sedeRows, error: errSedes } = await sedesQ;
+      if (errSedes) throw errSedes;
+      const ids = (sedeRows || []).map((s) => s.id).filter((id) => id != null);
+      if (!ids.length) return [];
+      torneosQuery = torneosQuery.in('sede_id', ids);
+    }
+  }
+
+  const { data: torneos, error: errT } = await torneosQuery;
+  if (errT) throw errT;
+  if (!torneos?.length) return [];
+
+  const torneoIds = torneos.map((t) => t.id);
+
+  const { data: puntos, error: errP } = await supabase
+    .from('tabla_puntos')
+    .select('torneo_id, equipo_id, posicion, puntos')
+    .in('torneo_id', torneoIds);
+  if (errP) throw errP;
+  if (!puntos?.length) return [];
+
+  const equipoIds = [...new Set(puntos.map((p) => p.equipo_id))];
+  const { data: equipos, error: errE } = await supabase
+    .from('equipos')
+    .select('id, nombre, jugadores')
+    .in('id', equipoIds);
+  if (errE) throw errE;
+
+  const equipoMap = {};
+  (equipos || []).forEach((e) => {
+    equipoMap[e.id] = e;
+  });
+
+  const playerMap = {};
+
+  puntos.forEach((p) => {
+    const equipo = equipoMap[p.equipo_id];
+    if (!equipo) return;
+    const jugadores = Array.isArray(equipo.jugadores) ? equipo.jugadores : [];
+
+    if (jugadores.length === 0) {
+      const key = `equipo:${equipo.id}`;
+      if (!playerMap[key]) {
+        playerMap[key] = {
+          nombre: equipo.nombre,
+          email: null,
+          pais: null,
+          foto_url: null,
+          nivel: null,
+          sede_id: null,
+          equipo_nombre: equipo.nombre,
+          puntos_total: 0,
+          torneos_count: 0,
+        };
+      }
+      playerMap[key].puntos_total += p.puntos;
+      playerMap[key].torneos_count += 1;
+    } else {
+      jugadores.forEach((j) => {
+        const key = j.email || j.nombre;
+        if (!key) return;
+        if (!playerMap[key]) {
+          playerMap[key] = {
+            nombre: j.nombre || key,
+            apellido: j.apellido != null && String(j.apellido).trim() ? String(j.apellido).trim() : null,
+            alias: j.alias != null && String(j.alias).trim() ? String(j.alias).trim() : null,
+            email: j.email || null,
+            pais: null,
+            foto_url: null,
+            nivel: null,
+            sede_id: null,
+            equipo_nombre: equipo.nombre,
+            puntos_total: 0,
+            torneos_count: 0,
+          };
+        }
+        playerMap[key].puntos_total += p.puntos;
+        playerMap[key].torneos_count += 1;
+      });
+    }
+  });
+
+  const emails = Object.values(playerMap)
+    .map((pl) => pl.email)
+    .filter(Boolean);
+  for (let i = 0; i < emails.length; i += PERFIL_EMAIL_CHUNK) {
+    const chunk = emails.slice(i, i + PERFIL_EMAIL_CHUNK);
+    const { data: perfiles, error: errPF } = await supabase
+      .from('jugadores_perfil')
+      .select('email, nombre, apellido, alias, pais, foto_url, sede_id, nivel')
+      .in('email', chunk);
+    if (errPF) throw errPF;
+    (perfiles || []).forEach((perfil) => {
+      const entry = playerMap[perfil.email];
+      if (!entry) return;
+      entry.foto_url = perfil.foto_url || null;
+      entry.pais = perfil.pais || null;
+      entry.nivel = perfil.nivel || null;
+      entry.sede_id = perfil.sede_id || null;
+      entry.nombre = perfil.nombre || entry.nombre;
+      const ap = perfil.apellido != null && String(perfil.apellido).trim() ? String(perfil.apellido).trim() : '';
+      if (ap) entry.apellido = ap;
+      const al = perfil.alias != null && String(perfil.alias).trim() ? String(perfil.alias).trim() : '';
+      if (al) entry.alias = al;
+    });
+  }
+
+  let result = Object.values(playerMap);
+  const cat = String(categoria || '').trim();
+  if (cat) result = result.filter((pl) => pl.nivel === cat);
+
+  if (scope === 'nacional' && pais && String(pais).trim()) {
+    const needle = normPaisRanking(pais);
+    result = result.filter((pl) => normPaisRanking(pl.pais) === needle);
+  }
+
+  result.sort((a, b) => b.puntos_total - a.puntos_total || b.torneos_count - a.torneos_count);
+
+  return result;
+}
 
 /** Mismo aspecto que los filtros anteriores (inputs blancos). */
 const RANKING_FILTER_INPUT_STYLE = {
@@ -86,13 +234,91 @@ function useMediaNarrow(maxWidth = 520) {
   return narrow;
 }
 
-function useDebouncedValue(value, ms) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = window.setTimeout(() => setDebounced(value), ms);
-    return () => window.clearTimeout(t);
-  }, [value, ms]);
-  return debounced;
+const RANKING_PILL_BASE = {
+  padding: '8px 14px',
+  borderRadius: '999px',
+  border: '2px solid rgba(255,255,255,0.35)',
+  background: 'rgba(255,255,255,0.12)',
+  color: 'rgba(255,255,255,0.92)',
+  fontSize: '12px',
+  fontWeight: 700,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+};
+
+function RankingFilterSelect({ label, value, onChange, options, disabled, ariaLabel }) {
+  return (
+    <label
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        minWidth: '130px',
+        flex: '1 1 150px',
+      }}
+    >
+      <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>{label}</span>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={ariaLabel}
+        style={{
+          ...RANKING_FILTER_INPUT_STYLE,
+          opacity: disabled ? 0.55 : 1,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+        }}
+      >
+        <option value="">Todos</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function CategoriaPills({ value, onChange, ariaLabel }) {
+  return (
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}
+    >
+      <button
+        type="button"
+        onClick={() => onChange('')}
+        style={{
+          ...RANKING_PILL_BASE,
+          background: !value ? 'white' : 'rgba(255,255,255,0.12)',
+          color: !value ? '#3b2f6e' : 'rgba(255,255,255,0.92)',
+          borderColor: !value ? 'white' : 'rgba(255,255,255,0.35)',
+        }}
+      >
+        Todos
+      </button>
+      {CATEGORIAS.map((c) => {
+        const active = value === c;
+        return (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            style={{
+              ...RANKING_PILL_BASE,
+              background: active ? 'white' : 'rgba(255,255,255,0.12)',
+              color: active ? '#3b2f6e' : 'rgba(255,255,255,0.92)',
+              borderColor: active ? 'white' : 'rgba(255,255,255,0.35)',
+            }}
+          >
+            {c}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function Rankings() {
@@ -106,24 +332,20 @@ export default function Rankings() {
   const [loading, setLoading] = useState(false);
   /** Si el fetch falla (red, timeout, 5xx), mostramos vacío amigable en lugar del mensaje de error técnico. */
   const [rankingSinDatosDisponibles, setRankingSinDatosDisponibles] = useState(false);
-  /** País del perfil (jugadores_perfil), para default en Nacional. */
-  const [perfilPais, setPerfilPais] = useState('');
-  const skipNacionalDefaultRef = useRef(false);
 
   const [localPais, setLocalPais] = useState('');
   const [localProvincia, setLocalProvincia] = useState('');
   const [localCiudad, setLocalCiudad] = useState('');
-  const debouncedLocalCiudad = useDebouncedValue(localCiudad.trim(), 400);
 
   const [nacionalPais, setNacionalPais] = useState('');
   const [jugadorPreviewRankings, setJugadorPreviewRankings] = useState(null);
 
-  const nombresPaisesOpciones = useMemo(
+  const paisesDesdeSedes = useMemo(
     () =>
-      [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
-        .map((p) => String(p.nombre || '').trim())
-        .filter(Boolean),
-    []
+      [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, 'es')
+      ),
+    [sedes]
   );
 
   const provinciasLocalOpciones = useMemo(() => {
@@ -138,88 +360,33 @@ export default function Rankings() {
     return [...set].sort((a, b) => a.localeCompare(b, 'es'));
   }, [sedes, localPais]);
 
-  /** País por defecto al abrir Nacional (perfil), salvo que el usuario haya limpiado. */
-  useEffect(() => {
-    if (activeTab !== 'nacional' || skipNacionalDefaultRef.current) return;
-    if (nacionalPais.trim()) return;
-    const d = String(perfilPais || '').trim();
-    if (!d) return;
-    setNacionalPais(d);
-  }, [activeTab, nacionalPais, perfilPais]);
+  const ciudadesLocalOpciones = useMemo(() => {
+    const p = String(localPais || '').trim().toLowerCase();
+    if (!p) return [];
+    const prov = String(localProvincia || '').trim();
+    const set = new Set();
+    for (const s of sedes) {
+      if (String(s.pais || '').trim().toLowerCase() !== p) continue;
+      if (prov && String(s.provincia || '').trim() !== prov) continue;
+      const c = String(s.ciudad || '').trim();
+      if (c) set.add(c);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
+  }, [sedes, localPais, localProvincia]);
 
   useEffect(() => {
     let cancelled = false;
     setSedesLoadError('');
-    fetch(apiUrl('/api/sedes'))
-      .then(async (res) => {
-        const text = await res.text();
-        if (cancelled) return;
-        if (!res.ok) {
-          setSedes([]);
-          setSedesLoadError('No se pudieron cargar las sedes.');
-          return;
-        }
-        try {
-          const data = JSON.parse(text);
-          setSedes(Array.isArray(data) ? data : []);
-        } catch {
-          setSedes([]);
-          setSedesLoadError('Respuesta inválida al cargar sedes.');
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSedes([]);
-          setSedesLoadError('Error de red al cargar sedes.');
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  /** Si hay sesión, aplicar categoría del perfil (`nivel`) al filtro cuando exista en la lista. */
-  useEffect(() => {
-    let cancelled = false;
     (async () => {
-      try {
-        const { data: auth } = await supabase.auth.getUser();
-        const user = auth?.user;
-        if (!user || cancelled) return;
-
-        let nivel = null;
-        let paisProf = '';
-        const uid = user.id;
-        if (uid) {
-          const { data: byUid } = await supabase
-            .from('jugadores_perfil')
-            .select('nivel, pais')
-            .eq('user_id', uid)
-            .maybeSingle();
-          nivel = byUid?.nivel != null ? String(byUid.nivel).trim() : '';
-          paisProf = byUid?.pais != null ? String(byUid.pais).trim() : '';
-        }
-        const email = String(user.email || '').trim().toLowerCase();
-        if ((!nivel || !paisProf) && email) {
-          const { data: byEmail } = await supabase
-            .from('jugadores_perfil')
-            .select('nivel, pais')
-            .ilike('email', email)
-            .maybeSingle();
-          if (!nivel && byEmail?.nivel != null) nivel = String(byEmail.nivel).trim();
-          if (!paisProf && byEmail?.pais != null) paisProf = String(byEmail.pais).trim();
-        }
-
-        if (cancelled) return;
-        const n = String(nivel || '').trim();
-        if (n && CATEGORIAS.includes(n)) {
-          setSelectedCategoria(n);
-        }
-        const pp = String(paisProf || '').trim();
-        if (pp) setPerfilPais(pp);
-      } catch {
-        /* sin sesión o error de red: se deja "Todas las categorías" */
+      const { data, error } = await supabase.from('sedes').select('id, nombre, pais, provincia, ciudad');
+      if (cancelled) return;
+      if (error) {
+        console.error('[Rankings] sedes', error);
+        setSedes([]);
+        setSedesLoadError('No se pudieron cargar las sedes.');
+        return;
       }
+      setSedes(Array.isArray(data) ? data : []);
     })();
     return () => {
       cancelled = true;
@@ -228,73 +395,25 @@ export default function Rankings() {
 
   useEffect(() => {
     let cancelled = false;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    if (activeTab === 'local' && !String(localPais || '').trim()) {
-      setLoading(false);
-      setRankingSinDatosDisponibles(false);
-      setRankings([]);
-      return () => {
-        cancelled = true;
-        clearTimeout(timeout);
-        controller.abort();
-      };
-    }
-
-    if (activeTab === 'nacional' && !String(nacionalPais || '').trim()) {
-      setLoading(false);
-      setRankingSinDatosDisponibles(false);
-      setRankings([]);
-      return () => {
-        cancelled = true;
-        clearTimeout(timeout);
-        controller.abort();
-      };
-    }
-
-    const params = new URLSearchParams({ scope: activeTab });
-    if (selectedCategoria) params.set('categoria', selectedCategoria);
-
-    if (activeTab === 'local') {
-      params.set('pais', String(localPais).trim());
-      if (String(localProvincia || '').trim()) params.set('provincia', String(localProvincia).trim());
-      if (debouncedLocalCiudad) params.set('ciudad', debouncedLocalCiudad);
-    }
-    if (activeTab === 'nacional') {
-      params.set('pais', String(nacionalPais).trim());
-    }
-
-    const url = `${apiUrl('/api/rankings')}?${params.toString()}`;
-
     setLoading(true);
     setRankingSinDatosDisponibles(false);
     setRankings([]);
 
     (async () => {
       try {
-        const res = await fetch(url, { signal: controller.signal });
-        const text = await res.text();
+        const data = await fetchRankingsSupabase({
+          scope: activeTab,
+          pais: activeTab === 'local' ? localPais : activeTab === 'nacional' ? nacionalPais : '',
+          provincia: activeTab === 'local' ? localProvincia : '',
+          ciudad: activeTab === 'local' ? localCiudad : '',
+          categoria: selectedCategoria,
+        });
         if (cancelled) return;
-
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          setRankingSinDatosDisponibles(true);
-          setRankings([]);
-          return;
-        }
-
-        if (!res.ok) {
-          setRankingSinDatosDisponibles(true);
-          setRankings(Array.isArray(data) ? data : []);
-          return;
-        }
         setRankingSinDatosDisponibles(false);
         setRankings(Array.isArray(data) ? data : []);
-      } catch (err) {
+      } catch (e) {
         if (cancelled) return;
+        console.error('[Rankings] fetchRankingsSupabase', e);
         setRankingSinDatosDisponibles(true);
         setRankings([]);
       } finally {
@@ -304,17 +423,8 @@ export default function Rankings() {
 
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
-      controller.abort();
     };
-  }, [
-    activeTab,
-    selectedCategoria,
-    localPais,
-    localProvincia,
-    debouncedLocalCiudad,
-    nacionalPais,
-  ]);
+  }, [activeTab, selectedCategoria, localPais, localProvincia, localCiudad, nacionalPais]);
 
   // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -396,7 +506,6 @@ export default function Rankings() {
                 setLocalCiudad('');
                 setNacionalPais('');
                 setSelectedCategoria('');
-                skipNacionalDefaultRef.current = tab.id !== 'nacional';
               }}
               style={{
                 flex: 1,
@@ -417,82 +526,79 @@ export default function Rankings() {
           ))}
         </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        {/* Filtros: Local = país → provincia → ciudad (dropdowns) + categoría (pills); Nacional = país + categoría; FIPA = solo categoría */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '12px' }}>
           {activeTab === 'local' && (
-            <>
-              <OpcionListaBusquedaInput
-                options={nombresPaisesOpciones}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <RankingFilterSelect
+                label="País"
                 value={localPais}
                 onChange={(v) => {
                   setLocalPais(v);
                   setLocalProvincia('');
+                  setLocalCiudad('');
                 }}
-                placeholder="País…"
-                allLabel="Elegí país"
-                debounceMs={280}
-                minChars={0}
-                inputStyle={RANKING_FILTER_INPUT_STYLE}
-                aria-label="País para ranking local"
+                options={paisesDesdeSedes}
+                disabled={paisesDesdeSedes.length === 0}
+                ariaLabel="País para ranking local"
               />
-              {localPais ? (
-                <OpcionListaBusquedaInput
-                  options={provinciasLocalOpciones}
-                  value={localProvincia}
-                  onChange={setLocalProvincia}
-                  placeholder="Provincia / estado…"
-                  allLabel="Toda la provincia"
-                  debounceMs={280}
-                  minChars={0}
-                  inputStyle={RANKING_FILTER_INPUT_STYLE}
-                  aria-label="Provincia o estado para ranking local"
-                />
-              ) : null}
-              <div style={{ minWidth: '160px', flex: '1 1 180px' }}>
-                <input
-                  type="text"
-                  value={localCiudad}
-                  onChange={(e) => setLocalCiudad(e.target.value)}
-                  placeholder="Ciudad (opcional)…"
-                  aria-label="Ciudad para ranking local"
-                  autoComplete="off"
-                  style={RANKING_FILTER_INPUT_STYLE}
-                />
-              </div>
-            </>
+              <RankingFilterSelect
+                label="Provincia"
+                value={localProvincia}
+                onChange={(v) => {
+                  setLocalProvincia(v);
+                  setLocalCiudad('');
+                }}
+                options={provinciasLocalOpciones}
+                disabled={!localPais.trim() || provinciasLocalOpciones.length === 0}
+                ariaLabel="Provincia para ranking local"
+              />
+              <RankingFilterSelect
+                label="Ciudad"
+                value={localCiudad}
+                onChange={setLocalCiudad}
+                options={ciudadesLocalOpciones}
+                disabled={!localPais.trim() || ciudadesLocalOpciones.length === 0}
+                ariaLabel="Ciudad para ranking local"
+              />
+            </div>
           )}
           {activeTab === 'local' && sedesLoadError ? (
-            <span style={{ fontSize: '12px', color: '#fecaca', alignSelf: 'center' }}>{sedesLoadError}</span>
+            <span style={{ fontSize: '12px', color: '#fecaca' }}>{sedesLoadError}</span>
           ) : null}
           {activeTab === 'nacional' && (
-            <OpcionListaBusquedaInput
-              options={nombresPaisesOpciones}
-              value={nacionalPais}
-              onChange={(v) => {
-                skipNacionalDefaultRef.current = !String(v || '').trim();
-                setNacionalPais(v);
-              }}
-              placeholder="País del ranking…"
-              allLabel="Elegí país"
-              debounceMs={280}
-              minChars={0}
-              inputStyle={RANKING_FILTER_INPUT_STYLE}
-              aria-label="País para ranking nacional"
-            />
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <RankingFilterSelect
+                label="País"
+                value={nacionalPais}
+                onChange={setNacionalPais}
+                options={paisesDesdeSedes}
+                disabled={paisesDesdeSedes.length === 0}
+                ariaLabel="País para ranking nacional"
+              />
+            </div>
           )}
-          <OpcionListaBusquedaInput
-            options={CATEGORIAS}
-            value={selectedCategoria}
-            onChange={setSelectedCategoria}
-            placeholder="Categoría — buscá o elegí…"
-            allLabel="Todas las categorías"
-            debounceMs={280}
-            minChars={0}
-            inputStyle={RANKING_FILTER_INPUT_STYLE}
-            aria-label="Filtrar ranking por categoría"
-          />
+          {(activeTab === 'local' || activeTab === 'nacional' || activeTab === 'internacional') && (
+            <div>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.88)',
+                  marginBottom: '8px',
+                }}
+              >
+                Categoría
+              </div>
+              <CategoriaPills
+                value={selectedCategoria}
+                onChange={setSelectedCategoria}
+                ariaLabel="Filtrar ranking por categoría"
+              />
+            </div>
+          )}
           {(selectedCategoria ||
-            (activeTab === 'local' && (localPais || localProvincia || localCiudad.trim())) ||
+            (activeTab === 'local' && (localPais || localProvincia || localCiudad)) ||
             (activeTab === 'nacional' && nacionalPais)) && (
             <button
               type="button"
@@ -502,11 +608,20 @@ export default function Rankings() {
                 setLocalProvincia('');
                 setLocalCiudad('');
                 setNacionalPais('');
-                skipNacionalDefaultRef.current = true;
               }}
-              style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
+              style={{
+                alignSelf: 'flex-start',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: '600',
+              }}
             >
-              ✕ Limpiar
+              ✕ Limpiar filtros
             </button>
           )}
         </div>
@@ -514,13 +629,13 @@ export default function Rankings() {
         {/* Scope description */}
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginBottom: '12px' }}>
           {activeTab === 'local' &&
-            (localPais
-              ? `Ranking en clubes de ${[localPais, localProvincia || null, debouncedLocalCiudad || null].filter(Boolean).join(' · ')}`
-              : 'Elegí un país para ver el ranking local (torneos de club en esa zona)')}
+            (localPais || localProvincia || localCiudad
+              ? `Ranking local · ${[localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · ')}`
+              : 'Ranking local · torneos de club finalizados (filtrá por ubicación o dejá Todos)')}
           {activeTab === 'nacional' &&
             (nacionalPais
               ? `Ranking nacional · ${nacionalPais}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
-              : 'Elegí un país para ver el ranking nacional')}
+              : 'Ranking nacional · todos los países o elegí uno para filtrar jugadores por país del perfil')}
           {activeTab === 'internacional' && (
             <>
               Ranking FIPA · torneos internacionales y mundiales finalizados
@@ -534,16 +649,6 @@ export default function Rankings() {
           {loading ? (
             <div style={{ padding: '60px', textAlign: 'center', color: '#bbb', fontSize: '15px' }}>
               Cargando rankings...
-            </div>
-          ) : (activeTab === 'local' && !localPais.trim()) || (activeTab === 'nacional' && !nacionalPais.trim()) ? (
-            <div style={{ padding: '60px', textAlign: 'center' }}>
-              <div style={{ fontSize: '40px', marginBottom: '12px' }}>📍</div>
-              <div style={{ color: '#9ca3af', fontSize: '15px', fontWeight: '600' }}>
-                {activeTab === 'local' ? 'Elegí un país para el ranking local' : 'Elegí un país para el ranking nacional'}
-              </div>
-              <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
-                Usá los filtros de arriba para cargar la tabla.
-              </div>
             </div>
           ) : rankings.length === 0 ? (
             <div style={{ padding: '60px', textAlign: 'center' }}>
