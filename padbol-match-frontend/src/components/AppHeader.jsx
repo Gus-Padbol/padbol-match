@@ -278,6 +278,15 @@ export default function AppHeader({
         .replace(/\/+$/, '') || '/',
     [location.pathname]
   );
+
+  /** En landing y /unirse sin sesión no se muestra la lupa (evita buscar en vistas de marketing). */
+  const showHeaderSearch = useMemo(() => {
+    const p = pathOnly;
+    const rutasSoloConSesion = p === '/' || p === '/unirse' || p === '/join';
+    if (rutasSoloConSesion) return Boolean(session?.user);
+    return true;
+  }, [pathOnly, session?.user]);
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
@@ -457,11 +466,27 @@ export default function AppHeader({
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
   useEffect(() => {
+    if (!showHeaderSearch) {
+      setSearchOpen(false);
+    }
+  }, [showHeaderSearch]);
+
+  useEffect(() => {
+    if (!searchOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [searchOpen]);
+
+  useEffect(() => {
     if (!searchOpen) return undefined;
     const handleDocClick = (ev) => {
       if (!searchWrapRef.current) return;
       if (!searchWrapRef.current.contains(ev.target)) {
         setSearchOpen(false);
+        setSearchTerm('');
       }
     };
     document.addEventListener('mousedown', handleDocClick);
@@ -580,96 +605,224 @@ export default function AppHeader({
     </div>
   );
 
-  const searchUiBlock = (
+  const closeSearchPanel = () => {
+    setSearchOpen(false);
+    setSearchTerm('');
+  };
+
+  const searchUiBlock = !showHeaderSearch ? null : (
     <div ref={searchWrapRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
       {searchOpen ? (
-        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 'min(92vw, 520px)', zIndex: 13000 }}>
-          <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 14px 34px rgba(2,6,23,0.25)', border: '1px solid #e2e8f0', padding: '10px' }}>
-            <input
-              autoFocus
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar jugadores, torneos o sedes…"
-              style={{ width: '100%', boxSizing: 'border-box', borderRadius: '10px', border: '1px solid #cbd5e1', padding: '10px 12px', fontSize: '14px', marginBottom: '8px' }}
-            />
-            {String(searchTerm || '').trim().length < 3 ? (
-              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Escribí al menos 3 caracteres.</div>
-            ) : searchLoading ? (
-              <div style={{ fontSize: '12px', color: '#64748b' }}>Buscando…</div>
-            ) : (
-              <div style={{ display: 'grid', gap: '6px' }}>
-                {renderSearchResultsSection(
-                  'Jugadores',
-                  searchResults.jugadores,
-                  (j, i) => (
-                    <button
-                      key={`j-${i}-${j.alias}`}
-                      type="button"
-                      onClick={() => {
-                        setSearchOpen(false);
-                        navigate(`/jugador/${encodeURIComponent(String(j.alias || '').trim())}`);
-                      }}
-                      style={{ width: '100%', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', textAlign: 'left' }}
-                    >
-                      {j.foto_url ? <img src={j.foto_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} /> : <span style={{ width: 24, height: 24, borderRadius: '50%', background: '#e2e8f0' }} />}
-                      <span style={{ fontSize: '12px', color: '#0f172a' }}>
-                        {String(j.nombre || '').trim() || String(j.nombre_completo || '').trim() || 'Jugador'} · {formatAliasConArroba(j.alias)} · {j.nivel || '—'}
-                      </span>
-                    </button>
-                  ),
-                  () => {
-                    setSearchOpen(false);
-                    navigate('/rankings');
-                  }
-                )}
-                {renderSearchResultsSection(
-                  'Torneos',
-                  searchResults.torneos,
-                  (t, i) => (
-                    <button
-                      key={`t-${i}-${t.id}`}
-                      type="button"
-                      onClick={() => {
-                        setSearchOpen(false);
-                        navigate(`/torneo/${t.id}`);
-                      }}
-                      style={{ width: '100%', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', textAlign: 'left' }}
-                    >
-                      <span style={{ fontSize: '12px', color: '#0f172a' }}>
-                        {t.nombre} · {t.sede_nombre || 'Sin sede'} · {String(t.fecha_inicio || '').slice(0, 10)} · {t.estado || '—'}
-                      </span>
-                    </button>
-                  ),
-                  () => {
-                    setSearchOpen(false);
-                    navigate('/torneos');
-                  }
-                )}
-                {renderSearchResultsSection(
-                  'Sedes',
-                  searchResults.sedes,
-                  (s, i) => (
-                    <button
-                      key={`s-${i}-${s.id}`}
-                      type="button"
-                      onClick={() => {
-                        setSearchOpen(false);
-                        navigate(`/sede/${s.id}`);
-                      }}
-                      style={{ width: '100%', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', textAlign: 'left' }}
-                    >
-                      <span style={{ fontSize: '12px', color: '#0f172a' }}>
-                        {s.nombre} · {s.ciudad || '—'} · {s.pais || '—'}
-                      </span>
-                    </button>
-                  ),
-                  () => {
-                    setSearchOpen(false);
-                    navigate('/sedes');
-                  }
-                )}
-              </div>
-            )}
+        <div
+          role="presentation"
+          onClick={closeSearchPanel}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 12990,
+            background: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding:
+              'max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px))',
+            boxSizing: 'border-box',
+            touchAction: 'none',
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Buscar en Padbol Match"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight:
+                'min(85vh, calc(100svh - max(24px, env(safe-area-inset-top, 0px)) - max(24px, env(safe-area-inset-bottom, 0px))))',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#fff',
+              borderRadius: '14px',
+              boxShadow: '0 14px 34px rgba(2,6,23,0.25)',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px',
+                borderBottom: '1px solid #e2e8f0',
+              }}
+            >
+              <input
+                autoFocus
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar jugadores, torneos o sedes…"
+                enterKeyHint="search"
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  boxSizing: 'border-box',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  padding: '10px 12px',
+                  fontSize: '16px',
+                }}
+              />
+              <button
+                type="button"
+                onClick={closeSearchPanel}
+                aria-label="Cerrar búsqueda"
+                style={{
+                  flexShrink: 0,
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#f1f5f9',
+                  color: '#334155',
+                  fontSize: 22,
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
+                padding: '10px 12px 14px',
+              }}
+            >
+              {String(searchTerm || '').trim().length < 3 ? (
+                <div style={{ fontSize: '13px', color: '#94a3b8' }}>Escribí al menos 3 caracteres.</div>
+              ) : searchLoading ? (
+                <div style={{ fontSize: '13px', color: '#64748b' }}>Buscando…</div>
+              ) : (
+                <div style={{ display: 'grid', gap: '6px' }}>
+                  {renderSearchResultsSection(
+                    'Jugadores',
+                    searchResults.jugadores,
+                    (j, i) => (
+                      <button
+                        key={`j-${i}-${j.alias}`}
+                        type="button"
+                        onClick={() => {
+                          closeSearchPanel();
+                          navigate(`/jugador/${encodeURIComponent(String(j.alias || '').trim())}`);
+                        }}
+                        style={{
+                          width: '100%',
+                          border: 'none',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 0',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {j.foto_url ? (
+                          <img src={j.foto_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ width: 24, height: 24, borderRadius: '50%', background: '#e2e8f0' }} />
+                        )}
+                        <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                          {String(j.nombre || '').trim() || String(j.nombre_completo || '').trim() || 'Jugador'} ·{' '}
+                          {formatAliasConArroba(j.alias)} · {j.nivel || '—'}
+                        </span>
+                      </button>
+                    ),
+                    () => {
+                      closeSearchPanel();
+                      navigate('/rankings');
+                    }
+                  )}
+                  {renderSearchResultsSection(
+                    'Torneos',
+                    searchResults.torneos,
+                    (t, i) => (
+                      <button
+                        key={`t-${i}-${t.id}`}
+                        type="button"
+                        onClick={() => {
+                          closeSearchPanel();
+                          navigate(`/torneo/${t.id}`);
+                        }}
+                        style={{
+                          width: '100%',
+                          border: 'none',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 0',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                          {t.nombre} · {t.sede_nombre || 'Sin sede'} · {String(t.fecha_inicio || '').slice(0, 10)} · {t.estado || '—'}
+                        </span>
+                      </button>
+                    ),
+                    () => {
+                      closeSearchPanel();
+                      navigate('/torneos');
+                    }
+                  )}
+                  {renderSearchResultsSection(
+                    'Sedes',
+                    searchResults.sedes,
+                    (s, i) => (
+                      <button
+                        key={`s-${i}-${s.id}`}
+                        type="button"
+                        onClick={() => {
+                          closeSearchPanel();
+                          navigate(`/sede/${s.id}`);
+                        }}
+                        style={{
+                          width: '100%',
+                          border: 'none',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 0',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                          {s.nombre} · {s.ciudad || '—'} · {s.pais || '—'}
+                        </span>
+                      </button>
+                    ),
+                    () => {
+                      closeSearchPanel();
+                      navigate('/sedes');
+                    }
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ) : null}
