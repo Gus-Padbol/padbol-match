@@ -899,6 +899,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   /** sede_id → { total, activas } para ocupación de canchas. */
   const [canchasResumenPorSede, setCanchasResumenPorSede] = useState({});
   const [partidosCountByTorneoId, setPartidosCountByTorneoId] = useState({});
+  /** Debe declararse antes de `dashboardFinanciero` (useMemo) — ese memo lee equipos_count por torneo. */
+  const [torneoStats, setTorneoStats] = useState({});
+  const [torneoStatsTick, setTorneoStatsTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -1977,10 +1980,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editandoTorneoId, setEditandoTorneoId] = useState(null);
   const [editTorneoForm, setEditTorneoForm] = useState({});
   const [savingTorneo, setSavingTorneo] = useState(false);
-  const [torneoStats, setTorneoStats] = useState({});
   /** Modal sorteo grupos (lista torneos): { torneo, equipos } */
   const [sorteoGruposCtx, setSorteoGruposCtx] = useState(null);
-  const [torneoStatsTick, setTorneoStatsTick] = useState(0);
 
   const abrirModalSorteoGrupos = useCallback(async (torneoRow) => {
     try {
