@@ -15,6 +15,7 @@ import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/juga
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
 import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
 import { TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
+import { torneoTipoCompetenciaDb } from '../utils/torneoFormatters';
 
 function etiquetaRankingJugador(player) {
   if (!player) return '—';
@@ -41,7 +42,9 @@ function normPaisRanking(s) {
 
 function torneoPasaFiltroTipoCompetenciaRanking(t, filtro) {
   if (!filtro) return true;
-  const g = String(t.tipo_competencia || t.genero_competencia || '').trim().toLowerCase();
+  const g = String(torneoTipoCompetenciaDb(t) || '')
+    .trim()
+    .toLowerCase();
   if (!g) return true;
   if (filtro === 'mixto') return g === 'mixto';
   if (filtro === 'masculino') return g === 'masculino' || g === 'mixto';
@@ -57,7 +60,7 @@ async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria
 
   let torneosQuery = supabase
     .from('torneos')
-    .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, genero_competencia')
+    .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, tipo_torneo_genero, genero_competencia, categoria_edad')
     .eq('estado', 'finalizado')
     .in('nivel_torneo', nivelesPermitidos);
 
@@ -748,13 +751,13 @@ export default function Rankings() {
                   marginTop: '4px',
                 }}
               >
-                Tipo de competencia (torneo)
+                Tipo de torneo
               </div>
               <TorneoMetaPills
                 value={selectedGeneroTorneo}
                 onChange={setSelectedGeneroTorneo}
                 options={TORNEO_GENERO_COMPETENCIA_OPTIONS}
-                ariaLabel="Filtrar ranking por tipo de competencia del torneo"
+                ariaLabel="Filtrar ranking por tipo de torneo (Masculino, Femenino o Mixto)"
               />
             </div>
           )}

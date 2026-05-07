@@ -54,10 +54,10 @@ export function formatCategoriaTorneo(c) {
   return v;
 }
 
-/** Lectura unificada: columna nueva `tipo_competencia` o legacy `genero_competencia`. */
+/** Lectura unificada: `tipo_competencia`, columna `tipo_torneo_genero` (alias en BD) o legacy `genero_competencia`. */
 export function torneoTipoCompetenciaDb(t) {
   if (t && typeof t === 'object') {
-    return String(t.tipo_competencia || t.genero_competencia || '').trim();
+    return String(t.tipo_competencia || t.tipo_torneo_genero || t.genero_competencia || '').trim();
   }
   return String(t || '').trim();
 }

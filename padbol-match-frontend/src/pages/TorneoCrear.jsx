@@ -337,19 +337,19 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
               )}
 
               <div className="form-group">
-                <label>Tipo de competencia *</label>
+                <label>Tipo de torneo (Masculino / Femenino / Mixto) *</label>
                 <select
                   name="tipo_competencia"
                   value={formData.tipo_competencia}
                   onChange={handleChange}
-                  required aria-label="Tipo de competencia del torneo"
+                  required aria-label="Tipo de torneo del torneo"
                 >
                   {TORNEO_TIPO_COMPETENCIA_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                  Masculino, Femenino o Mixto (quién puede inscribirse en este torneo).
+                  Quién puede inscribirse (Masculino, Femenino o Mixto). Distinto del formato (Round Robin, etc.).
                 </small>
               </div>
 

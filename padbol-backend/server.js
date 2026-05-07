@@ -2317,11 +2317,17 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       fecha_apertura_inscripcion: fechaAperturaBody,
       tipo_competencia: tipoCompBody,
       genero_competencia: legacyGeneroCompBody,
+      tipo_torneo_genero: tipoTorneoGeneroBody,
       categoria_edad: categoriaEdadBody,
     } = req.body;
 
     const estadoNorm = normalizeTorneoEstadoForDb(estadoBody);
-    const tipoCompRaw = tipoCompBody !== undefined ? tipoCompBody : legacyGeneroCompBody;
+    const tipoCompRaw =
+      tipoCompBody !== undefined
+        ? tipoCompBody
+        : legacyGeneroCompBody !== undefined
+          ? legacyGeneroCompBody
+          : tipoTorneoGeneroBody;
     const tipoComp = normalizeTorneoTipoCompetencia(tipoCompRaw) ?? 'masculino';
     const catEdad = normalizeTorneoCategoriaEdad(categoriaEdadBody) ?? 'open';
 
@@ -2332,6 +2338,7 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       tipo_torneo,
       categoria: categoria != null && String(categoria).trim() ? String(categoria).trim() : 'Libre',
       tipo_competencia: tipoComp,
+      tipo_torneo_genero: tipoComp,
       categoria_edad: catEdad,
       estado: estadoNorm || 'planificacion',
       fecha_inicio,
@@ -2704,6 +2711,7 @@ async function handleTorneoPatchOrPut(req, res) {
       fecha_apertura_inscripcion: fechaAperturaPatch,
       tipo_competencia: tipoCompetenciaPatch,
       genero_competencia: legacyGeneroCompPatch,
+      tipo_torneo_genero: tipoTorneoGeneroPatch,
       categoria_edad: categoriaEdadPatch,
     } = req.body;
 
@@ -2790,16 +2798,23 @@ async function handleTorneoPatchOrPut(req, res) {
         patch.fecha_apertura_inscripcion = fap.value;
       }
     }
-    if (tipoCompetenciaPatch !== undefined || legacyGeneroCompPatch !== undefined) {
-      const raw = tipoCompetenciaPatch !== undefined ? tipoCompetenciaPatch : legacyGeneroCompPatch;
+    if (tipoCompetenciaPatch !== undefined || legacyGeneroCompPatch !== undefined || tipoTorneoGeneroPatch !== undefined) {
+      const raw =
+        tipoCompetenciaPatch !== undefined
+          ? tipoCompetenciaPatch
+          : legacyGeneroCompPatch !== undefined
+            ? legacyGeneroCompPatch
+            : tipoTorneoGeneroPatch;
       if (raw === null || raw === '') {
         patch.tipo_competencia = null;
+        patch.tipo_torneo_genero = null;
       } else {
         const g = normalizeTorneoTipoCompetencia(raw);
         if (!g) {
           return res.status(400).json({ error: 'tipo_competencia inválido (masculino, femenino, mixto)' });
         }
         patch.tipo_competencia = g;
+        patch.tipo_torneo_genero = g;
       }
     }
     if (categoriaEdadPatch !== undefined) {
@@ -3571,7 +3586,9 @@ app.post('/api/torneos/:id/sorteo', async (req, res) => {
 // ===== RANKINGS =====
 
 function torneoRowTipoCompetencia(t) {
-  return String(t?.tipo_competencia || t?.genero_competencia || '').trim().toLowerCase();
+  return String(t?.tipo_competencia || t?.tipo_torneo_genero || t?.genero_competencia || '')
+    .trim()
+    .toLowerCase();
 }
 
 function torneoPasaFiltroGeneroRankingApi(t, filtro) {
@@ -3616,7 +3633,7 @@ app.get('/api/rankings', async (req, res) => {
 
     let torneosQuery = supabase
       .from('torneos')
-      .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, genero_competencia, categoria_edad')
+      .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, tipo_torneo_genero, genero_competencia, categoria_edad')
       .eq('estado', 'finalizado')
       .in('nivel_torneo', nivelesPermitidos);
 

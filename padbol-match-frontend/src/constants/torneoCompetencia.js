@@ -1,6 +1,7 @@
 /**
- * Tipo de competencia del torneo: Masculino / Femenino / Mixto.
- * Columna en BD: `tipo_competencia` (no confundir con `tipo_torneo` = formato round robin, etc.).
+ * Tipo de torneo por género de competencia: Masculino / Femenino / Mixto.
+ * Columna canónica en BD: `tipo_competencia`. Columna espejo opcional: `tipo_torneo_genero` (mismo valor).
+ * No confundir con `tipo_torneo` = formato del fixture (round_robin, grupos_knockout, etc.).
  */
 export const TORNEO_TIPO_COMPETENCIA_DEFAULT = 'masculino';
 

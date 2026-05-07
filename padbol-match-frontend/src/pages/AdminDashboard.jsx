@@ -23,7 +23,7 @@ import {
   TORNEO_CATEGORIA_EDAD_DEFAULT,
   TORNEO_CATEGORIA_EDAD_OPTIONS,
 } from '../constants/torneoCompetencia';
-import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
+import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
   FILTROS_ESTADO_TORNEO_PILLS,
@@ -53,8 +53,6 @@ import { getCroppedImgBlob } from '../utils/cropImage';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-
-const CATEGORIAS = CATEGORIAS_NIVEL_TODAS;
 
 const STRIPE_PUBLISHABLE_ADMIN =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -2302,7 +2300,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setPendientesLoading(true);
     const { data, error } = await supabase
       .from('jugadores_perfil')
-      .select('email, nombre, pais, nivel')
+      .select('email, nombre, pais, nivel, genero')
       .eq('pendiente_validacion', true)
       .order('nombre');
     if (!error) setPendientes(data || []);
@@ -2716,7 +2714,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       nombre:       torneo.nombre       || '',
       nivel_torneo: torneo.nivel_torneo || '',
       categoria:    torneo.categoria    || CATEGORIA_TORNEO_DEFAULT,
-      tipo_competencia: torneo.tipo_competencia || torneo.genero_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT,
+      tipo_competencia: torneoTipoCompetenciaDb(torneo) || TORNEO_GENERO_COMPETENCIA_DEFAULT,
       categoria_edad: torneo.categoria_edad || TORNEO_CATEGORIA_EDAD_DEFAULT,
       tipo_torneo:  torneo.tipo_torneo  || '',
       estado:       mapEstadoTorneoDesdeApiParaForm(torneo.estado),
@@ -4650,7 +4648,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           </select>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Tipo de competencia</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Tipo de torneo (M / F / Mixto)</label>
                           <select
                             style={inp}
                             value={editTorneoForm.tipo_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT}
@@ -5190,6 +5188,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div style={{ flex: 1, minWidth: '180px' }}>
                     <strong style={{ fontSize: '15px' }}>{jugador.nombre}</strong>
                     <div style={{ color: '#888', fontSize: '12px', marginTop: '2px' }}>{jugador.email}</div>
+                    <div style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>
+                      Género: {String(jugador.genero || '').trim() || '—'}
+                    </div>
                     <div style={{ marginTop: '5px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {flag && <span style={{ fontSize: '18px' }}>{flag}</span>}
                       <span style={{ background: '#fffde7', border: '1px solid #ffc107', color: '#7c5b00', borderRadius: '12px', padding: '2px 10px', fontSize: '12px', fontWeight: 'bold' }}>
@@ -5222,7 +5223,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           onChange={e => setValidacionState(prev => ({ ...prev, [jugador.email]: { ...prev[jugador.email], categoria: e.target.value } }))}
                           style={{ padding: '7px 10px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '13px' }}
                         >
-                          {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+                          {categoriasNivelPorGenero(jugador.genero).map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
                         </select>
                         <button
                           disabled={vs.saving}

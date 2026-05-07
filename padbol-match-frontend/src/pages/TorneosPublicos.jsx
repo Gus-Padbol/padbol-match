@@ -486,7 +486,7 @@ export default function TorneosPublicos() {
                 <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
                 <Row icon="🏆" label={formatTipoTorneo(t.tipo_torneo)} />
                 <Row icon="⭐" label={formatNivelTorneo(t.nivel_torneo)} />
-                <Row icon="⚧" label={`Competencia: ${formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(t))}`} />
+                <Row icon="⚧" label={`Tipo de torneo: ${formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(t))}`} />
                 <Row icon="🎂" label={`Edad: ${formatCategoriaEdadTorneo(t.categoria_edad)}`} />
                 {(() => {
                   const max =
