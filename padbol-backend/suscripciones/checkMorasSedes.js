@@ -1,6 +1,6 @@
 /**
  * Cron diario (safety net): escala suscripcion_estado por mora según suscripcion_proximo_cobro.
- * No modifica metodo_pago = manual. Solo avanza estados (nunca retrocede).
+ * No modifica metodo_pago = manual. No procesa sedes ya cancelado (mora). Solo avanza (nunca retrocede).
  */
 
 function normalizeMetodoPago(raw) {
@@ -48,76 +48,13 @@ function mensajeWhatsApp(nuevoEstado, nombreSede) {
     case 'aviso':
       return `⚠️ Hola ${nombre}, tu suscripción a Padbol Match venció. Regularizá tu pago para continuar operando sin interrupciones.`;
     case 'segundo_aviso':
-      return `🔴 ${nombre}, segundo aviso: llevas 7 días sin renovar tu suscripción. En 8 días tu cuenta será suspendida.`;
+      return `🔴 ${nombre}, segundo aviso: 7 días sin renovar. En 8 días tu cuenta será suspendida.`;
     case 'suspendido':
-      return `🚫 ${nombre}, tu cuenta fue suspendida por falta de pago. Tus jugadores no pueden reservar ni inscribirse. Contactá soporte: soporte@padbolmatch.com`;
+      return `🚫 ${nombre}, cuenta suspendida por falta de pago. Tus jugadores no pueden reservar. Contactá soporte: soporte@padbolmatch.com`;
     case 'cancelado':
-      return `❌ ${nombre}, tu cuenta fue cancelada. Contactá soporte para reactivarla: soporte@padbolmatch.com`;
+      return `❌ ${nombre}, cuenta cancelada. Contactá soporte para reactivarla: soporte@padbolmatch.com`;
     default:
       return '';
-  }
-}
-
-function asuntoEmail(nuevoEstado, nombreSede) {
-  const nombre = String(nombreSede || 'Club').trim();
-  const base = `[Padbol Match] ${nombre} — `;
-  switch (nuevoEstado) {
-    case 'aviso':
-      return `${base}suscripción vencida`;
-    case 'segundo_aviso':
-      return `${base}segundo aviso de mora`;
-    case 'suspendido':
-      return `${base}cuenta suspendida`;
-    case 'cancelado':
-      return `${base}cuenta cancelada por mora`;
-    default:
-      return `${base}actualización de suscripción`;
-  }
-}
-
-function cuerpoEmailHtml(nuevoEstado, nombreSede) {
-  const nombre = String(nombreSede || 'tu club').replace(/</g, '&lt;');
-  const p = (html) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.5">${html}</p>`;
-  const lines = {
-    aviso: [
-      `Hola <strong>${nombre}</strong>,`,
-      'Tu suscripción a Padbol Match está vencida. Regularizá el pago para continuar operando sin interrupciones.',
-    ],
-    segundo_aviso: [
-      `Hola <strong>${nombre}</strong>,`,
-      'Segundo aviso: llevás 7 días sin renovar la suscripción. En 8 días la cuenta puede quedar suspendida.',
-    ],
-    suspendido: [
-      `Hola <strong>${nombre}</strong>,`,
-      'Tu cuenta fue suspendida por falta de pago. Los jugadores no pueden reservar ni inscribirse en torneos.',
-      'Escribinos: <a href="mailto:soporte@padbolmatch.com">soporte@padbolmatch.com</a>',
-    ],
-    cancelado: [
-      `Hola <strong>${nombre}</strong>,`,
-      'Tu cuenta fue cancelada por mora prolongada. Para reactivarla, contactá soporte:',
-      '<a href="mailto:soporte@padbolmatch.com">soporte@padbolmatch.com</a>',
-    ],
-  };
-  const arr = lines[nuevoEstado] || ['Actualización de suscripción Padbol Match.'];
-  return `<div style="font-family:system-ui,sans-serif;max-width:560px">${arr.map((t) => p(t)).join('')}</div>`;
-}
-
-async function enviarEmailResend({ to, subject, html }) {
-  const apiKey = String(process.env.RESEND_API_KEY || '').trim();
-  const from = String(process.env.RESEND_FROM_EMAIL || 'Padbol Match <no-reply@padbolmatch.com>').trim();
-  const em = String(to || '').trim().toLowerCase();
-  if (!apiKey || !em) return;
-  try {
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to: [em], subject, html }),
-    });
-  } catch (e) {
-    console.warn('⚠️ checkMorasSedes email:', e?.message || e);
   }
 }
 
@@ -127,11 +64,11 @@ async function enviarEmailResend({ to, subject, html }) {
  * @param {(to: string, body: string) => Promise<void>} opts.sendWhatsApp
  * @param {Date} [opts.now]
  */
-export async function runCheckMorasSedes({ supabase, sendWhatsApp, now = new Date() }) {
+export async function checkMorasSedes({ supabase, sendWhatsApp, now = new Date() }) {
   const nowIso = now.toISOString();
   const { data: rows, error } = await supabase
     .from('sedes')
-    .select('id, nombre, telefono, email_contacto, suscripcion_estado, suscripcion_proximo_cobro, metodo_pago')
+    .select('id, nombre, telefono, suscripcion_estado, suscripcion_proximo_cobro, metodo_pago')
     .not('suscripcion_proximo_cobro', 'is', null)
     .lt('suscripcion_proximo_cobro', nowIso);
 
@@ -145,6 +82,8 @@ export async function runCheckMorasSedes({ supabase, sendWhatsApp, now = new Dat
     if (normalizeMetodoPago(row.metodo_pago) === 'manual') continue;
 
     const estAct = String(row.suscripcion_estado || '').trim().toLowerCase();
+    if (estAct === 'cancelado') continue;
+
     const prox = row.suscripcion_proximo_cobro;
     const proxTime = new Date(prox).getTime();
     if (!Number.isFinite(proxTime) || proxTime >= now.getTime()) continue;
@@ -152,11 +91,11 @@ export async function runCheckMorasSedes({ supabase, sendWhatsApp, now = new Dat
     const dias = diasMoraDesdeProximoCobro(prox, now);
     const nuevo = estadoMoraDesdeDias(dias);
     if (!nuevo) continue;
+    if (nuevo === estAct) continue;
 
     const rActual = rankSuscripcionParaMora(estAct);
     const rNuevo = rankSuscripcionParaMora(nuevo);
     if (rNuevo <= rActual) continue;
-    if (String(row.suscripcion_estado || '').trim().toLowerCase() === nuevo) continue;
 
     const { error: upErr } = await supabase.from('sedes').update({ suscripcion_estado: nuevo }).eq('id', row.id);
     if (upErr) {
@@ -174,16 +113,11 @@ export async function runCheckMorasSedes({ supabase, sendWhatsApp, now = new Dat
         console.warn(`⚠️ checkMorasSedes WA sede ${row.id}:`, e?.message || e);
       }
     }
-    const mail = String(row.email_contacto || '').trim().toLowerCase();
-    if (mail) {
-      await enviarEmailResend({
-        to: mail,
-        subject: asuntoEmail(nuevo, row.nombre),
-        html: cuerpoEmailHtml(nuevo, row.nombre),
-      });
-    }
   }
 
   if (actualizados) console.log(`📋 checkMorasSedes: ${actualizados} sede(s) actualizadas`);
   return { ok: true, actualizados };
 }
+
+/** @deprecated usar checkMorasSedes */
+export const runCheckMorasSedes = checkMorasSedes;

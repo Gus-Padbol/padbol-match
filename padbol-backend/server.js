@@ -11,7 +11,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { runCheckMorasSedes } from './suscripciones/checkMorasSedes.js';
+import { checkMorasSedes } from './suscripciones/checkMorasSedes.js';
 import { createCheckSuscripcionActiva } from './suscripciones/checkSuscripcionActiva.js';
 
 dotenv.config();
@@ -1307,15 +1307,15 @@ app.patch('/api/sedes/:id', async (req, res) => {
         return res.status(403).json({ error: 'Solo super_admin puede cambiar suscripcion_estado' });
       }
       const allowed = new Set([
-        'sin_suscripcion',
-        'pendiente_pago',
         'activa',
-        'vencida',
-        'cancelada',
-        'cancelado',
         'aviso',
         'segundo_aviso',
         'suspendido',
+        'cancelado',
+        'sin_suscripcion',
+        'pendiente_pago',
+        'vencida',
+        'cancelada',
       ]);
       const se = String(b.suscripcion_estado ?? '').trim().toLowerCase();
       if (!allowed.has(se)) {
@@ -4164,7 +4164,7 @@ async function actualizarUltimoCompaneroDesdeEquipoRow(equipoRow) {
   }
 }
 
-app.post('/api/torneos/:torneo_id/equipos', checkSuscripcionActiva, async (req, res) => {
+app.post('/api/torneos/:torneo_id/equipos', async (req, res) => {
   try {
     const { torneo_id } = req.params;
     const { nombre, sede_id, jugadores } = req.body;
@@ -7348,7 +7348,7 @@ cron.schedule(
   '0 9 * * *',
   async () => {
     try {
-      await runCheckMorasSedes({
+      await checkMorasSedes({
         supabase,
         sendWhatsApp: (to, body) => sendTwilioWhatsAppBodyToRaw(to, body),
       });

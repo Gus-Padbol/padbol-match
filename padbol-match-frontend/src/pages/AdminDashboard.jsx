@@ -73,22 +73,25 @@ function etiquetaSuscripcionEstado(raw) {
   return 'Sin suscripción';
 }
 
-const SUSCRIPCION_ESTADOS_SUPER_OPTIONS = [
-  { value: 'sin_suscripcion', label: 'Sin suscripción' },
-  { value: 'pendiente_pago', label: 'Pendiente de pago' },
+/** Selector manual super_admin en detalle de sede (mora + operativo). */
+const SUSCRIPCION_SELECTOR_SUPER_SEDE = [
   { value: 'activa', label: 'Activa' },
-  { value: 'vencida', label: 'Vencida' },
-  { value: 'cancelada', label: 'Cancelada (Stripe)' },
-  { value: 'aviso', label: 'Aviso mora' },
-  { value: 'segundo_aviso', label: 'Segundo aviso mora' },
-  { value: 'suspendido', label: 'Suspendida mora' },
-  { value: 'cancelado', label: 'Cancelada mora (30d)' },
+  { value: 'aviso', label: 'Aviso (mora)' },
+  { value: 'segundo_aviso', label: 'Segundo aviso' },
+  { value: 'suspendido', label: 'Suspendida' },
+  { value: 'cancelado', label: 'Cancelada' },
 ];
+
+const SUSCRIPCION_SELECTOR_SUPER_VALUES = new Set(SUSCRIPCION_SELECTOR_SUPER_SEDE.map((o) => o.value));
 
 function supportWhatsAppUrlFromEnv() {
   const raw =
-    typeof process !== 'undefined' && process.env.REACT_APP_SUPPORT_WHATSAPP
-      ? String(process.env.REACT_APP_SUPPORT_WHATSAPP).trim()
+    typeof process !== 'undefined'
+      ? String(
+          process.env.REACT_APP_SUPPORT_WHATSAPP ||
+            process.env.SUPPORT_WHATSAPP ||
+            '',
+        ).trim()
       : '';
   const digits = raw.replace(/\D/g, '');
   if (!digits) return null;
@@ -967,14 +970,18 @@ function SedeSuperDetallePanel({
         >
           <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569' }}>Cambiar estado (super admin)</label>
           <select
-            value={String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase()}
+            value={(() => {
+              const cur = String(s.suscripcion_estado || '').trim().toLowerCase();
+              if (SUSCRIPCION_SELECTOR_SUPER_VALUES.has(cur)) return cur;
+              return cur || 'activa';
+            })()}
             disabled={suscripcionEstadoSuperSavingId === s.id}
             onChange={(e) => {
               const v = e.target.value;
-              const prev = String(s.suscripcion_estado || 'sin_suscripcion').toLowerCase();
+              const prev = String(s.suscripcion_estado || '').trim().toLowerCase();
               if (v === prev) return;
               if (!window.confirm(`¿Guardar estado de suscripción como "${v}"?`)) {
-                e.target.value = prev;
+                e.target.value = SUSCRIPCION_SELECTOR_SUPER_VALUES.has(prev) ? prev : SUSCRIPCION_SELECTOR_SUPER_SEDE[0].value;
                 return;
               }
               void guardarSuscripcionEstadoSuper(s, v);
@@ -987,11 +994,25 @@ function SedeSuperDetallePanel({
               maxWidth: '100%',
             }}
           >
-            {SUSCRIPCION_ESTADOS_SUPER_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
+            {(() => {
+              const cur = String(s.suscripcion_estado || '').trim().toLowerCase();
+              const extra =
+                cur && !SUSCRIPCION_SELECTOR_SUPER_VALUES.has(cur) ? (
+                  <option key="__actual" value={cur}>
+                    {etiquetaSuscripcionEstado(s.suscripcion_estado)} (actual)
+                  </option>
+                ) : null;
+              return (
+                <>
+                  {extra}
+                  {SUSCRIPCION_SELECTOR_SUPER_SEDE.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </>
+              );
+            })()}
           </select>
           {suscripcionEstadoSuperSavingId === s.id ? (
             <span style={{ fontSize: '12px', color: '#64748b' }}>Guardando…</span>
@@ -3938,7 +3959,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     textDecoration: 'none',
                   }}
                 >
-                  Contactar soporte
+                  WhatsApp soporte
                 </a>
               ) : null;
             if (se === 'aviso') {

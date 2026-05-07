@@ -1,9 +1,9 @@
 /**
- * Bloquea operaciones de jugadores/club si la sede está suspendida o cancelada (mora / Stripe).
+ * Bloquea operaciones si la sede tiene suscripcion_estado suspendido o cancelado (mora).
  * Super admin no es bloqueado.
  */
 
-const BLOQUEADOS = new Set(['suspendido', 'cancelado', 'cancelada']);
+const BLOQUEADOS = new Set(['suspendido', 'cancelado']);
 
 function pathSinQuery(url) {
   return String(url || '').split('?')[0];
@@ -35,15 +35,6 @@ export function createCheckSuscripcionActiva({ supabase, authUserFromBearer, fet
       } else if (p === '/api/inscripciones' && req.method === 'POST') {
         const sid = parseInt(String(req.body?.sede_id ?? ''), 10);
         sedeId = Number.isFinite(sid) ? sid : null;
-      } else {
-        const m = /^\/api\/torneos\/(\d+)\/equipos$/.exec(p);
-        if (m && req.method === 'POST') {
-          const tid = parseInt(m[1], 10);
-          const { data: t, error } = await supabase.from('torneos').select('sede_id').eq('id', tid).maybeSingle();
-          if (error) throw error;
-          const sid = t?.sede_id != null ? parseInt(String(t.sede_id), 10) : NaN;
-          sedeId = Number.isFinite(sid) ? sid : null;
-        }
       }
 
       if (!sedeId) return next();
@@ -58,9 +49,9 @@ export function createCheckSuscripcionActiva({ supabase, authUserFromBearer, fet
       if (BLOQUEADOS.has(est)) {
         return res.status(403).json({
           error:
-            est === 'cancelado' || est === 'cancelada'
-              ? 'La sede tiene la suscripción cancelada. No se pueden crear reservas ni inscripciones hasta regularizar con soporte.'
-              : 'La sede tiene la cuenta suspendida por falta de pago. No se pueden crear reservas ni inscripciones.',
+            est === 'cancelado'
+              ? 'La sede tiene la suscripción cancelada. No se pueden crear reservas ni torneos hasta regularizar con soporte.'
+              : 'La sede tiene la cuenta suspendida por falta de pago. No se pueden crear reservas ni torneos.',
           suscripcion_estado: est,
         });
       }
