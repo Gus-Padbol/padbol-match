@@ -47,6 +47,7 @@ import {
 } from '../utils/jugadorNombreTorneo';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import ModalJugador, { hintFromBuscarRow } from '../components/ModalJugador';
 import {
   buildCreadorJugadorParaEquipo,
   ensureCreadorPrimeroEnLista,
@@ -737,6 +738,7 @@ export default function EquipoVista() {
   );
 
   const [jugadorPreviewEq, setJugadorPreviewEq] = useState(null);
+  const [modalJugadorInvitar, setModalJugadorInvitar] = useState(null);
   const abrirPreviewJugadorEq = useCallback(
     (p) => setJugadorPreviewEq(buildJugadorPreviewModalData(p, nombreTorneoCtx)),
     [nombreTorneoCtx]
@@ -2103,72 +2105,86 @@ export default function EquipoVista() {
                   const busy = invitarAgregandoUserId === uid;
                   return (
                     <li key={uid || row.email}>
-                      <button
-                        type="button"
-                        disabled={busy || tieneEquipoTorneo}
-                        title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : undefined}
-                        onClick={() => void agregarJugadorInvitadoDesdePerfil(row)}
+                      <div
                         style={{
                           width: '100%',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '12px',
+                          gap: '10px',
                           padding: '10px 12px',
                           textAlign: 'left',
                           borderRadius: '12px',
                           border: '1px solid #e2e8f0',
                           background: '#f8fafc',
-                          cursor: busy || tieneEquipoTorneo ? 'default' : 'pointer',
                           opacity: busy ? 0.7 : tieneEquipoTorneo ? 0.72 : 1,
+                          boxSizing: 'border-box',
                         }}
                       >
-                        <div
-                          aria-hidden
+                        <button
+                          type="button"
+                          onClick={() => setModalJugadorInvitar(hintFromBuscarRow(row))}
                           style={{
-                            width: 44,
-                            height: 44,
-                            flexShrink: 0,
-                            borderRadius: '50%',
-                            overflow: 'hidden',
-                            background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_VIOLETA,
+                            flex: 1,
+                            minWidth: 0,
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
+                            gap: '12px',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            fontFamily: 'inherit',
+                            padding: 0,
                           }}
                         >
-                          {foto ? (
-                            <img
-                              src={foto}
-                              alt=""
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                objectPosition: 'top center',
-                              }}
-                              loading="lazy"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <span style={{ color: '#fff', fontWeight: 800, fontSize: '16px' }}>
-                              {String(nom || '?')
-                                .trim()
-                                .charAt(0)
-                                .toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>{nom}</div>
-                          {al ? (
-                            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>
-                              {formatAliasConArroba(al)}
-                            </div>
-                          ) : null}
-                          <div style={{ fontSize: '12px', color: '#15803d', marginTop: '4px', fontWeight: 700 }}>
-                            {tieneEquipoTorneo ? 'No disponible para este equipo' : 'Tocá para sumar al equipo'}
+                          <div
+                            aria-hidden
+                            style={{
+                              width: 44,
+                              height: 44,
+                              flexShrink: 0,
+                              borderRadius: '50%',
+                              overflow: 'hidden',
+                              background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_VIOLETA,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {foto ? (
+                              <img
+                                src={foto}
+                                alt=""
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  objectPosition: 'top center',
+                                }}
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <span style={{ color: '#fff', fontWeight: 800, fontSize: '16px' }}>
+                                {String(nom || '?')
+                                  .trim()
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </span>
+                            )}
                           </div>
-                        </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>{nom}</div>
+                            {al ? (
+                              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>
+                                {formatAliasConArroba(al)}
+                              </div>
+                            ) : null}
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+                              {tieneEquipoTorneo ? 'No disponible para este equipo' : 'Tocá el nombre para ver la ficha'}
+                            </div>
+                          </div>
+                        </button>
                         <span
                           style={{
                             flexShrink: 0,
@@ -2181,14 +2197,34 @@ export default function EquipoVista() {
                             background: badgeBg,
                             color: badgeColor,
                             border: `1px solid ${tieneEquipoTorneo ? '#fecaca' : '#bfdbfe'}`,
-                            maxWidth: '120px',
+                            maxWidth: '100px',
                             textAlign: 'center',
                             lineHeight: 1.25,
                           }}
                         >
                           {badgeLabel}
                         </span>
-                      </button>
+                        <button
+                          type="button"
+                          disabled={busy || tieneEquipoTorneo}
+                          title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : 'Sumar al equipo'}
+                          onClick={() => void agregarJugadorInvitadoDesdePerfil(row)}
+                          style={{
+                            flexShrink: 0,
+                            padding: '10px 12px',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: tieneEquipoTorneo ? '#e2e8f0' : '#4f46e5',
+                            color: tieneEquipoTorneo ? '#94a3b8' : '#fff',
+                            cursor: busy || tieneEquipoTorneo ? 'default' : 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          Sumar
+                        </button>
+                      </div>
                     </li>
                   );
                 })}
@@ -2455,6 +2491,11 @@ export default function EquipoVista() {
           </div>
         ) : null}
       </div>
+      <ModalJugador
+        open={Boolean(modalJugadorInvitar)}
+        onClose={() => setModalJugadorInvitar(null)}
+        hint={modalJugadorInvitar}
+      />
       <JugadorPreviewModal
         open={Boolean(jugadorPreviewEq)}
         onClose={() => setJugadorPreviewEq(null)}

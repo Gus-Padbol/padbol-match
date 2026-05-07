@@ -50,6 +50,7 @@ import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { CapitanBadgeC, esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
 import TorneoTabbedView from '../components/torneo/TorneoTabbedView';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import ModalJugador, { hintFromBuscarRow } from '../components/ModalJugador';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import '../styles/TorneoVista.css';
 
@@ -295,6 +296,7 @@ export default function FormEquipos() {
   const [mpInscripcionLoading, setMpInscripcionLoading] = useState(false);
   const [modalParticipacionAbierto, setModalParticipacionAbierto] = useState(false);
   const [jugadorPreviewForm, setJugadorPreviewForm] = useState(null);
+  const [modalJugadorBuscar, setModalJugadorBuscar] = useState(null);
   /** Filas `tabla_puntos` del torneo (solo si está finalizado). */
   const [tablaPuntosRows, setTablaPuntosRows] = useState([]);
   const [partidos, setPartidos] = useState([]);
@@ -2866,72 +2868,83 @@ export default function FormEquipos() {
                       const badgeBg = tieneEquipoTorneo ? '#fee2e2' : '#dbeafe';
                       const badgeColor = tieneEquipoTorneo ? '#991b1b' : '#1e40af';
                       return (
-                        <button
+                        <div
                           key={uid || al || nom}
-                          type="button"
-                          disabled={saving || tieneEquipoTorneo}
-                          title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : undefined}
-                          onClick={() => void agregarCompaneroDesdePerfil(row)}
                           style={{
                             width: '100%',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '10px',
+                            gap: '8px',
                             padding: '10px 12px',
-                            border: 'none',
                             borderBottom: '1px solid #e2e8f0',
                             background: 'transparent',
-                            cursor: saving || tieneEquipoTorneo ? 'default' : 'pointer',
-                            textAlign: 'left',
-                            fontFamily: 'inherit',
                             opacity: tieneEquipoTorneo ? 0.72 : 1,
+                            boxSizing: 'border-box',
                           }}
                         >
-                          {foto ? (
-                            <img
-                              src={foto}
-                              alt=""
-                              style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                flexShrink: 0,
-                              }}
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <span
-                              style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '50%',
-                                background: 'linear-gradient(135deg,#667eea,#764ba2)',
-                                color: '#fff',
-                                fontWeight: 800,
-                                fontSize: '14px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {String(nom || '?')
-                                .trim()
-                                .charAt(0)
-                                .toUpperCase()}
-                            </span>
-                          )}
-                          <span style={{ minWidth: 0, flex: 1 }}>
-                            <span style={{ display: 'block', fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
-                              {nom}
-                            </span>
-                            {al ? (
-                              <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                                @{al}
+                          <button
+                            type="button"
+                            onClick={() => setModalJugadorBuscar(hintFromBuscarRow(row))}
+                            style={{
+                              flex: 1,
+                              minWidth: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              fontFamily: 'inherit',
+                              padding: 0,
+                            }}
+                          >
+                            {foto ? (
+                              <img
+                                src={foto}
+                                alt=""
+                                style={{
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '50%',
+                                  objectFit: 'cover',
+                                  flexShrink: 0,
+                                }}
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <span
+                                style={{
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '50%',
+                                  background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                                  color: '#fff',
+                                  fontWeight: 800,
+                                  fontSize: '14px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {String(nom || '?')
+                                  .trim()
+                                  .charAt(0)
+                                  .toUpperCase()}
                               </span>
-                            ) : null}
-                          </span>
+                            )}
+                            <span style={{ minWidth: 0, flex: 1 }}>
+                              <span style={{ display: 'block', fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
+                                {nom}
+                              </span>
+                              {al ? (
+                                <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                                  @{al}
+                                </span>
+                              ) : null}
+                            </span>
+                          </button>
                           <span
                             style={{
                               flexShrink: 0,
@@ -2944,14 +2957,34 @@ export default function FormEquipos() {
                               background: badgeBg,
                               color: badgeColor,
                               border: `1px solid ${tieneEquipoTorneo ? '#fecaca' : '#bfdbfe'}`,
-                              maxWidth: '120px',
+                              maxWidth: '100px',
                               textAlign: 'center',
                               lineHeight: 1.25,
                             }}
                           >
                             {badgeLabel}
                           </span>
-                        </button>
+                          <button
+                            type="button"
+                            disabled={saving || tieneEquipoTorneo}
+                            title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : 'Sumar al equipo'}
+                            onClick={() => void agregarCompaneroDesdePerfil(row)}
+                            style={{
+                              flexShrink: 0,
+                              padding: '8px 10px',
+                              fontSize: '12px',
+                              fontWeight: 800,
+                              borderRadius: '8px',
+                              border: 'none',
+                              background: tieneEquipoTorneo ? '#e2e8f0' : '#4f46e5',
+                              color: tieneEquipoTorneo ? '#94a3b8' : '#fff',
+                              cursor: saving || tieneEquipoTorneo ? 'default' : 'pointer',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            Sumar
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -3498,6 +3531,11 @@ export default function FormEquipos() {
           </div>
         ) : null}
       </div>
+      <ModalJugador
+        open={Boolean(modalJugadorBuscar)}
+        onClose={() => setModalJugadorBuscar(null)}
+        hint={modalJugadorBuscar}
+      />
       <JugadorPreviewModal
         open={Boolean(jugadorPreviewForm)}
         onClose={() => setJugadorPreviewForm(null)}

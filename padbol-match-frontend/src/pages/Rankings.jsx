@@ -12,8 +12,7 @@ import {
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
-import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
-import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
 
 function etiquetaRankingJugador(player) {
   if (!player) return '—';
@@ -338,7 +337,7 @@ export default function Rankings() {
   const [localCiudad, setLocalCiudad] = useState('');
 
   const [nacionalPais, setNacionalPais] = useState('');
-  const [jugadorPreviewRankings, setJugadorPreviewRankings] = useState(null);
+  const [modalJugadorRankings, setModalJugadorRankings] = useState(null);
 
   const paisesDesdeSedes = useMemo(
     () =>
@@ -711,9 +710,7 @@ export default function Rankings() {
                       <td style={{ ...tdStyle, minWidth: 0 }}>
                         <button
                           type="button"
-                          onClick={() =>
-                            setJugadorPreviewRankings(buildJugadorPreviewModalData(player, null))
-                          }
+                          onClick={() => setModalJugadorRankings(hintFromRankingPlayer(player))}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -808,10 +805,10 @@ export default function Rankings() {
           </div>
         )}
       </div>
-      <JugadorPreviewModal
-        open={Boolean(jugadorPreviewRankings)}
-        onClose={() => setJugadorPreviewRankings(null)}
-        data={jugadorPreviewRankings}
+      <ModalJugador
+        open={Boolean(modalJugadorRankings)}
+        onClose={() => setModalJugadorRankings(null)}
+        hint={modalJugadorRankings}
       />
       <BottomNav />
     </div>
