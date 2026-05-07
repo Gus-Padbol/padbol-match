@@ -7,6 +7,17 @@ const CONTACT_MAIL = 'mailto:hola@padbolmatch.com';
 const instagramUrl =
   (typeof import.meta !== 'undefined' && String(import.meta.env?.VITE_PADBOL_INSTAGRAM_URL || '').trim()) || IG_DEFAULT;
 
+/** Contraste sobre fondo oscuro (App.css fuerza h2/h3 en #1a1a1a si no hay color inline). */
+const c = {
+  title: '#FFFFFF',
+  titleSoft: '#E2E8F0',
+  body: '#CBD5E1',
+  muted: '#94A3B8',
+  accentStat: '#C4B5FD',
+  footerLink: '#E2E8F0',
+  footerDot: 'rgba(226, 232, 240, 0.35)',
+};
+
 const shell = {
   minHeight: '100vh',
   width: '100%',
@@ -14,7 +25,7 @@ const shell = {
   boxSizing: 'border-box',
   overflowX: 'hidden',
   background: 'linear-gradient(180deg, #0b1020 0%, #151832 38%, #1a1040 100%)',
-  color: 'rgba(248, 250, 252, 0.96)',
+  color: c.body,
 };
 
 const section = {
@@ -66,8 +77,17 @@ function StepCard({ icon, title, text }) {
       <div style={{ fontSize: 'clamp(36px, 9vw, 44px)', lineHeight: 1, marginBottom: '12px' }} aria-hidden>
         {icon}
       </div>
-      <h3 style={{ margin: '0 0 8px', fontSize: 'clamp(1rem, 3.5vw, 1.1rem)', fontWeight: 800 }}>{title}</h3>
-      <p style={{ margin: 0, fontSize: 'clamp(0.88rem, 3.2vw, 0.95rem)', color: 'rgba(226, 232, 240, 0.88)', lineHeight: 1.5 }}>
+      <h3
+        style={{
+          margin: '0 0 8px',
+          fontSize: 'clamp(1rem, 3.5vw, 1.1rem)',
+          fontWeight: 800,
+          color: c.titleSoft,
+        }}
+      >
+        {title}
+      </h3>
+      <p style={{ margin: 0, fontSize: 'clamp(0.88rem, 3.2vw, 0.95rem)', color: c.body, lineHeight: 1.5 }}>
         {text}
       </p>
     </div>
@@ -77,8 +97,8 @@ function StepCard({ icon, title, text }) {
 function Stat({ value, label }) {
   return (
     <div style={{ textAlign: 'center', minWidth: 0 }}>
-      <div style={{ fontSize: 'clamp(1.35rem, 5vw, 1.75rem)', fontWeight: 900, color: '#a5b4fc', lineHeight: 1.2 }}>{value}</div>
-      <div style={{ fontSize: 'clamp(0.78rem, 2.8vw, 0.85rem)', color: 'rgba(226, 232, 240, 0.75)', marginTop: '4px' }}>{label}</div>
+      <div style={{ fontSize: 'clamp(1.35rem, 5vw, 1.75rem)', fontWeight: 900, color: c.accentStat, lineHeight: 1.2 }}>{value}</div>
+      <div style={{ fontSize: 'clamp(0.78rem, 2.8vw, 0.85rem)', color: c.muted, marginTop: '4px' }}>{label}</div>
     </div>
   );
 }
@@ -107,7 +127,7 @@ export default function LandingPage() {
               fontSize: 'clamp(1.05rem, 4vw, 1.35rem)',
               fontWeight: 700,
               lineHeight: 1.35,
-              color: 'rgba(248, 250, 252, 0.95)',
+              color: c.titleSoft,
               maxWidth: '520px',
               marginLeft: 'auto',
               marginRight: 'auto',
@@ -135,7 +155,15 @@ export default function LandingPage() {
       </header>
 
       <section style={{ ...section, paddingTop: 'clamp(36px, 10vw, 56px)', paddingBottom: 'clamp(24px, 6vw, 40px)' }}>
-        <h2 style={{ fontSize: 'clamp(1.25rem, 4.5vw, 1.5rem)', fontWeight: 900, margin: '0 0 clamp(18px, 4vw, 24px)', textAlign: 'center' }}>
+        <h2
+          style={{
+            fontSize: 'clamp(1.25rem, 4.5vw, 1.5rem)',
+            fontWeight: 900,
+            margin: '0 0 clamp(18px, 4vw, 24px)',
+            textAlign: 'center',
+            color: c.title,
+          }}
+        >
           Cómo funciona
         </h2>
         <div
@@ -159,7 +187,15 @@ export default function LandingPage() {
         }}
       >
         <div style={{ ...card, maxWidth: '100%' }}>
-          <h2 style={{ fontSize: 'clamp(1.2rem, 4.2vw, 1.45rem)', fontWeight: 900, margin: '0 0 12px', textAlign: 'center' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.2rem, 4.2vw, 1.45rem)',
+              fontWeight: 900,
+              margin: '0 0 12px',
+              textAlign: 'center',
+              color: c.title,
+            }}
+          >
             El deporte
           </h2>
           <p
@@ -167,7 +203,7 @@ export default function LandingPage() {
               margin: '0 0 22px',
               fontSize: 'clamp(0.92rem, 3.4vw, 1rem)',
               lineHeight: 1.6,
-              color: 'rgba(226, 232, 240, 0.9)',
+              color: c.body,
               textAlign: 'center',
             }}
           >
@@ -192,7 +228,15 @@ export default function LandingPage() {
 
       <section style={{ ...section, paddingBottom: 'clamp(36px, 9vw, 56px)' }}>
         <div style={{ ...card, background: 'rgba(99, 102, 241, 0.12)', borderColor: 'rgba(165, 180, 252, 0.25)' }}>
-          <h2 style={{ fontSize: 'clamp(1.2rem, 4.2vw, 1.45rem)', fontWeight: 900, margin: '0 0 14px', textAlign: 'center' }}>
+          <h2
+            style={{
+              fontSize: 'clamp(1.2rem, 4.2vw, 1.45rem)',
+              fontWeight: 900,
+              margin: '0 0 14px',
+              textAlign: 'center',
+              color: c.title,
+            }}
+          >
             Para clubes
           </h2>
           <ul
@@ -201,7 +245,7 @@ export default function LandingPage() {
               paddingLeft: '1.15rem',
               fontSize: 'clamp(0.9rem, 3.3vw, 0.98rem)',
               lineHeight: 1.55,
-              color: 'rgba(226, 232, 240, 0.92)',
+              color: c.body,
             }}
           >
             <li style={{ marginBottom: '8px' }}>Más visibilidad y reservas online para tus canchas</li>
@@ -243,41 +287,41 @@ export default function LandingPage() {
               marginBottom: '14px',
             }}
           >
-            <Link to="/torneos" style={{ color: '#c7d2fe', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+            <Link to="/torneos" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
               Torneos
             </Link>
-            <span style={{ color: 'rgba(255,255,255,0.25)' }} aria-hidden>
+            <span style={{ color: c.footerDot }} aria-hidden>
               ·
             </span>
-            <Link to="/rankings" style={{ color: '#c7d2fe', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+            <Link to="/rankings" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
               Ranking
             </Link>
-            <span style={{ color: 'rgba(255,255,255,0.25)' }} aria-hidden>
+            <span style={{ color: c.footerDot }} aria-hidden>
               ·
             </span>
-            <Link to="/sedes" style={{ color: '#c7d2fe', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+            <Link to="/sedes" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
               Sedes
             </Link>
-            <span style={{ color: 'rgba(255,255,255,0.25)' }} aria-hidden>
+            <span style={{ color: c.footerDot }} aria-hidden>
               ·
             </span>
             <a
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#c7d2fe', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}
+              style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}
             >
               Instagram
             </a>
-            <span style={{ color: 'rgba(255,255,255,0.25)' }} aria-hidden>
+            <span style={{ color: c.footerDot }} aria-hidden>
               ·
             </span>
-            <a href={CONTACT_MAIL} style={{ color: '#c7d2fe', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+            <a href={CONTACT_MAIL} style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
               Contacto
             </a>
           </div>
         </nav>
-        <p style={{ margin: 0, textAlign: 'center', fontSize: '0.8rem', color: 'rgba(148, 163, 184, 0.9)' }}>
+        <p style={{ margin: 0, textAlign: 'center', fontSize: '0.8rem', color: c.muted }}>
           © {new Date().getFullYear()} Padbol Match
         </p>
       </footer>
