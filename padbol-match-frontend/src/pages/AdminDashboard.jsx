@@ -1505,6 +1505,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     ocupacionSedes.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
+    const canchasOcupacionGlobal = ocupacionSedes.reduce(
+      (acc, row) => ({
+        ocupadas: acc.ocupadas + (Number(row.ocupadas) || 0),
+        totalActivas: acc.totalActivas + (Number(row.totalActivas) || 0),
+      }),
+      { ocupadas: 0, totalActivas: 0 }
+    );
+
     const equiposPendientePago = equiposInscripcionRows.filter((eq) => {
       if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') return false;
       const t = torneoById[eq.torneo_id];
@@ -1602,6 +1610,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       reservasHoyOrdenadas,
       ingresosHoyTexto,
       ocupacionSedes,
+      canchasOcupacionGlobal,
       equiposPendientePagoCount: equiposPendientePago.length,
       alertasEquiposSinConfirmarCierre48h,
       alertasEquiposTorneoProximoSinConfirmar,
@@ -1758,6 +1767,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
               {p.ocupacionSedes.length === 0 ? (
                 <p style={{ margin: '8px 0 0', color: '#94a3b8' }}>Sin sedes en tu alcance.</p>
+              ) : isSuperAdmin ? (
+                <p style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: '#0f172a', lineHeight: 1.4 }}>
+                  {p.canchasOcupacionGlobal.ocupadas} cancha{p.canchasOcupacionGlobal.ocupadas === 1 ? '' : 's'} ocupada
+                  {p.canchasOcupacionGlobal.ocupadas === 1 ? '' : 's'} de {p.canchasOcupacionGlobal.totalActivas} totales activas
+                </p>
               ) : (
                 <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', fontSize: '14px' }}>
                   {p.ocupacionSedes.map((row) => (
