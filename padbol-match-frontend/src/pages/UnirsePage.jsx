@@ -24,6 +24,18 @@ const DEPORTES_OPCIONES = [
 const DEPORTES_INICIAL = { padbol: false, padel: false, pickleball: false, otro: false };
 const CANCHAS_INICIAL = { padbol: '', padel: '', pickleball: '', otro: '' };
 
+const TIPO_INSTALACION = [
+  { value: 'indoor', label: 'Indoor' },
+  { value: 'outdoor', label: 'Outdoor' },
+  { value: 'mixto', label: 'Mixto' },
+];
+
+const CARGO_RESPONSABLE = [
+  { value: 'propietario', label: 'Propietario' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'otro', label: 'Otro' },
+];
+
 function countries() {
   const m = new Map();
   [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach((p) => {
@@ -36,24 +48,67 @@ function normalizeWs(s) {
   return String(s || '').trim();
 }
 
+function getInitialForm() {
+  return {
+    club_nombre: '',
+    club_direccion: '',
+    pais: 'Argentina',
+    ciudad: '',
+    provincia_estado: '',
+    club_telefono: '',
+    club_email: '',
+    club_web: '',
+    tipo_instalacion: 'mixto',
+    horario_apertura: '',
+    horario_cierre: '',
+    deportes: { ...DEPORTES_INICIAL },
+    canchas_por_deporte: { ...CANCHAS_INICIAL },
+    responsable_nombre: '',
+    responsable_cargo: 'manager',
+    email: '',
+    email_confirm: '',
+    whatsapp: '',
+    whatsapp_confirm: '',
+    nombre_legal: '',
+    numero_fiscal: '',
+    fiscal_misma_que_club: true,
+    direccion_fiscal: '',
+    pais_fiscal: 'Argentina',
+    mensaje: '',
+  };
+}
+
+function FormSection({ title, subtitle, children }) {
+  return (
+    <section
+      style={{
+        border: '1px solid #e2e8f0',
+        borderRadius: '14px',
+        padding: '20px 18px',
+        marginBottom: '20px',
+        background: '#f8fafc',
+        boxSizing: 'border-box',
+      }}
+    >
+      <h2 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+        {title}
+      </h2>
+      {subtitle ? (
+        <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>{subtitle}</p>
+      ) : (
+        <div style={{ marginBottom: 14 }} />
+      )}
+      {children}
+    </section>
+  );
+}
+
 export default function UnirsePage() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
-  const [form, setForm] = useState({
-    club_nombre: '',
-    pais: 'Argentina',
-    ciudad: '',
-    responsable_nombre: '',
-    email: '',
-    email_confirm: '',
-    whatsapp: '',
-    whatsapp_confirm: '',
-    deportes: { ...DEPORTES_INICIAL },
-    canchas_por_deporte: { ...CANCHAS_INICIAL },
-    mensaje: '',
-  });
+  const [form, setForm] = useState(getInitialForm);
   const paises = useMemo(() => countries(), []);
 
   const onField = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -73,23 +128,41 @@ export default function UnirsePage() {
     e.preventDefault();
     setErr('');
     setMsg('');
-    if (!form.club_nombre.trim() || !form.pais.trim() || !form.ciudad.trim() || !form.responsable_nombre.trim() || !form.email.trim() || !form.whatsapp.trim()) {
-      setErr('Completá todos los campos obligatorios.');
+
+    if (
+      !form.club_nombre.trim() ||
+      !form.club_direccion.trim() ||
+      !form.pais.trim() ||
+      !form.ciudad.trim() ||
+      !form.horario_apertura.trim() ||
+      !form.horario_cierre.trim() ||
+      !form.responsable_nombre.trim() ||
+      !form.email.trim() ||
+      !form.whatsapp.trim()
+    ) {
+      setErr('Completá todos los campos obligatorios marcados con *.');
       return;
     }
+
+    const deportesSel = DEPORTES_OPCIONES.filter((d) => form.deportes[d.key]).map((d) => d.key);
+    if (deportesSel.length === 0) {
+      setErr('Seleccioná al menos un deporte disponible en tu instalación.');
+      return;
+    }
+
     const em = form.email.trim().toLowerCase();
     const em2 = form.email_confirm.trim().toLowerCase();
     if (em !== em2) {
-      setErr('Los emails no coinciden. Revisá el campo “Repetir email”.');
+      setErr('Los emails del responsable no coinciden.');
       return;
     }
     const wa = normalizeWs(form.whatsapp);
     const wa2 = normalizeWs(form.whatsapp_confirm);
     if (wa !== wa2) {
-      setErr('Los números de WhatsApp no coinciden. Revisá “Repetir WhatsApp”.');
+      setErr('Los números de WhatsApp no coinciden.');
       return;
     }
-    const deportesSel = DEPORTES_OPCIONES.filter((d) => form.deportes[d.key]).map((d) => d.key);
+
     const canchas = {};
     for (const k of deportesSel) {
       const raw = form.canchas_por_deporte[k];
@@ -98,41 +171,45 @@ export default function UnirsePage() {
         if (Number.isFinite(n) && n >= 0) canchas[k] = n;
       }
     }
-    const deportes_canchas =
-      deportesSel.length || Object.keys(canchas).length ? { deportes: deportesSel, canchas } : null;
+    const deportes_canchas = { deportes: deportesSel, canchas };
+
+    const clubEmailTrim = form.club_email.trim().toLowerCase();
+    const body = {
+      club_nombre: form.club_nombre.trim(),
+      club_direccion: form.club_direccion.trim(),
+      pais: form.pais.trim(),
+      ciudad: form.ciudad.trim(),
+      provincia_estado: form.provincia_estado.trim() || null,
+      club_telefono: form.club_telefono.trim() || null,
+      club_email: clubEmailTrim || null,
+      club_web: form.club_web.trim() || null,
+      tipo_instalacion: form.tipo_instalacion,
+      horario_apertura: form.horario_apertura.trim(),
+      horario_cierre: form.horario_cierre.trim(),
+      deportes_canchas,
+      responsable_nombre: form.responsable_nombre.trim(),
+      responsable_cargo: form.responsable_cargo,
+      email: em,
+      whatsapp: wa,
+      nombre_legal: form.nombre_legal.trim() || null,
+      numero_fiscal: form.numero_fiscal.trim() || null,
+      fiscal_misma_que_club: form.fiscal_misma_que_club,
+      direccion_fiscal: form.fiscal_misma_que_club ? null : form.direccion_fiscal.trim() || null,
+      pais_fiscal: form.pais_fiscal.trim() || null,
+      mensaje: form.mensaje.trim() || null,
+    };
 
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/api/solicitudes-licencia`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          club_nombre: form.club_nombre.trim(),
-          pais: form.pais.trim(),
-          ciudad: form.ciudad.trim(),
-          responsable_nombre: form.responsable_nombre.trim(),
-          email: em,
-          whatsapp: wa,
-          mensaje: form.mensaje.trim() || null,
-          deportes_canchas,
-        }),
+        body: JSON.stringify(body),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || res.statusText);
       setMsg('Solicitud enviada. Te contactaremos pronto.');
-      setForm((p) => ({
-        ...p,
-        club_nombre: '',
-        ciudad: '',
-        responsable_nombre: '',
-        email: '',
-        email_confirm: '',
-        whatsapp: '',
-        whatsapp_confirm: '',
-        deportes: { ...DEPORTES_INICIAL },
-        canchas_por_deporte: { ...CANCHAS_INICIAL },
-        mensaje: '',
-      }));
+      setForm(getInitialForm());
     } catch (e2) {
       setErr(e2?.message || 'No se pudo enviar la solicitud');
     } finally {
@@ -142,26 +219,27 @@ export default function UnirsePage() {
 
   const inputStyle = {
     width: '100%',
-    maxWidth: '520px',
-    padding: '10px 12px',
+    padding: '11px 12px',
     borderRadius: '10px',
     border: '1px solid #cbd5e1',
-    fontSize: '15px',
+    fontSize: '16px',
     boxSizing: 'border-box',
+    background: '#fff',
   };
-  const labelStyle = { display: 'block', fontWeight: 700, color: '#1e293b', marginBottom: '6px', fontSize: '14px' };
+  const labelStyle = { display: 'block', fontWeight: 700, color: '#334155', marginBottom: '6px', fontSize: '13px' };
+  const rowGap = { marginTop: 14 };
 
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg,#667eea,#764ba2)',
+        background: 'linear-gradient(160deg, #1e1b4b 0%, #4c1d95 40%, #7c3aed 100%)',
         paddingTop: hubContentPaddingTopCss('/unirse'),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
     >
-      <AppHeader title="Unirse" onBack={() => navigate(-1)} />
-      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '16px' }}>
+      <AppHeader title="Alta de club" onBack={() => navigate(-1)} />
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px' }}>
         <img
           src="/logo-padbol-match.png"
           alt="Padbol Match"
@@ -174,114 +252,150 @@ export default function UnirsePage() {
             borderRadius: '16px',
             padding: '22px 20px',
             marginBottom: '16px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
             boxSizing: 'border-box',
           }}
         >
           <h1
             style={{
-              color: '#312e81',
-              margin: '0 0 12px',
-              fontSize: 'clamp(1.35rem, 4vw, 1.65rem)',
+              color: '#0f172a',
+              margin: '0 0 10px',
+              fontSize: 'clamp(1.35rem, 4vw, 1.75rem)',
               fontWeight: 900,
               textAlign: 'center',
-              lineHeight: 1.25,
+              lineHeight: 1.2,
             }}
           >
             Sumá tu club a Padbol Match
           </h1>
           <p style={{ color: '#475569', margin: '0 0 16px', lineHeight: 1.55, fontSize: '15px', textAlign: 'center' }}>
-            Padbol Match es la plataforma para gestionar tu club: reservas online, torneos, rankings y visibilidad
-            frente a jugadores. Centralizá la operación diaria y ofrecé una experiencia moderna a tu comunidad.
+            Completa los datos de tu instalación como en las plataformas profesionales: información del club, responsable
+            y datos fiscales. Te ayudamos a activar reservas, torneos y visibilidad para jugadores.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
             <span
               style={{
                 display: 'inline-block',
                 background: 'linear-gradient(135deg,#22c55e,#16a34a)',
                 color: '#fff',
                 fontWeight: 800,
-                fontSize: '14px',
+                fontSize: '13px',
                 padding: '8px 14px',
                 borderRadius: '999px',
-                boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
               }}
             >
               30 días gratis sin tarjeta
             </span>
+            <span style={{ fontSize: '15px', fontWeight: 800, color: '#4c1d95' }}>{PRECIO_MENSUAL_USD}</span>
           </div>
-          <p
-            style={{
-              margin: '0 0 8px',
-              textAlign: 'center',
-              fontSize: '1.35rem',
-              fontWeight: 800,
-              color: '#1e293b',
-            }}
-          >
-            {PRECIO_MENSUAL_USD}
-          </p>
-          <p style={{ margin: 0, textAlign: 'center', fontSize: '14px', color: '#64748b', lineHeight: 1.45 }}>
-            Después del período de prueba, elegís mensual o anual
+          <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+            Después del período de prueba, elegís mensual o anual · Modalidad única:{' '}
+            <strong>Club Afiliado</strong> (otros planes los define el equipo Padbol).
           </p>
         </section>
 
-        {err ? <div style={{ background: '#fef2f2', color: '#991b1b', padding: '10px 12px', borderRadius: 10, marginBottom: 10 }}>{err}</div> : null}
-        {msg ? <div style={{ background: '#ecfdf5', color: '#065f46', padding: '10px 12px', borderRadius: 10, marginBottom: 10 }}>{msg}</div> : null}
+        {err ? (
+          <div
+            style={{
+              background: '#fef2f2',
+              color: '#991b1b',
+              padding: '12px 14px',
+              borderRadius: 12,
+              marginBottom: 12,
+              fontSize: '14px',
+              lineHeight: 1.45,
+            }}
+          >
+            {err}
+          </div>
+        ) : null}
+        {msg ? (
+          <div
+            style={{
+              background: '#ecfdf5',
+              color: '#065f46',
+              padding: '12px 14px',
+              borderRadius: 12,
+              marginBottom: 12,
+              fontSize: '14px',
+            }}
+          >
+            {msg}
+          </div>
+        ) : null}
 
-        <form onSubmit={onSubmit} style={{ background: '#fff', borderRadius: '14px', padding: '18px', boxSizing: 'border-box' }}>
-          <p style={{ margin: '0 0 14px', fontSize: '14px', color: '#64748b', lineHeight: 1.45 }}>
-            <strong style={{ color: '#334155' }}>Modalidad:</strong> Club Afiliado. Otros planes los asigna el equipo
-            Padbol desde el panel.
-          </p>
+        <form
+          onSubmit={onSubmit}
+          style={{
+            background: '#fff',
+            borderRadius: '16px',
+            padding: '22px 18px 24px',
+            boxSizing: 'border-box',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+          }}
+        >
+          <FormSection
+            title="Datos del club"
+            subtitle="Información de la instalación que verán los jugadores y usaremos para contactarte."
+          >
+            <label style={labelStyle}>Nombre del club *</label>
+            <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
 
-          <label style={labelStyle}>Nombre del club *</label>
-          <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
+            <label style={{ ...labelStyle, ...rowGap }}>Dirección completa *</label>
+            <input
+              style={inputStyle}
+              value={form.club_direccion}
+              onChange={(e) => onField('club_direccion', e.target.value)}
+              placeholder="Calle, número, piso, código postal…"
+              required
+            />
 
-          <label style={{ ...labelStyle, marginTop: 12 }}>País *</label>
-          <select style={inputStyle} value={form.pais} onChange={(e) => onField('pais', e.target.value)} required>
-            {paises.map((p) => (
-              <option key={p.nombre} value={p.nombre}>
-                {p.bandera ? `${p.bandera} ` : ''}{p.nombre}
-              </option>
-            ))}
-          </select>
+            <label style={{ ...labelStyle, ...rowGap }}>Ciudad *</label>
+            <input style={inputStyle} value={form.ciudad} onChange={(e) => onField('ciudad', e.target.value)} required />
 
-          <label style={{ ...labelStyle, marginTop: 12 }}>Ciudad *</label>
-          <input style={inputStyle} value={form.ciudad} onChange={(e) => onField('ciudad', e.target.value)} required />
+            <label style={{ ...labelStyle, ...rowGap }}>Provincia / Estado</label>
+            <input style={inputStyle} value={form.provincia_estado} onChange={(e) => onField('provincia_estado', e.target.value)} />
 
-          <label style={{ ...labelStyle, marginTop: 12 }}>Nombre del responsable *</label>
-          <input style={inputStyle} value={form.responsable_nombre} onChange={(e) => onField('responsable_nombre', e.target.value)} required />
+            <label style={{ ...labelStyle, ...rowGap }}>País *</label>
+            <select style={inputStyle} value={form.pais} onChange={(e) => onField('pais', e.target.value)} required>
+              {paises.map((p) => (
+                <option key={p.nombre} value={p.nombre}>
+                  {p.bandera ? `${p.bandera} ` : ''}{p.nombre}
+                </option>
+              ))}
+            </select>
 
-          <label style={{ ...labelStyle, marginTop: 12 }}>Email *</label>
-          <input type="email" style={inputStyle} value={form.email} onChange={(e) => onField('email', e.target.value)} required autoComplete="email" />
+            <label style={{ ...labelStyle, ...rowGap }}>Teléfono del club</label>
+            <input style={inputStyle} value={form.club_telefono} onChange={(e) => onField('club_telefono', e.target.value)} placeholder="+54…" inputMode="tel" />
 
-          <label style={{ ...labelStyle, marginTop: 12 }}>Repetir email *</label>
-          <input
-            type="email"
-            style={inputStyle}
-            value={form.email_confirm}
-            onChange={(e) => onField('email_confirm', e.target.value)}
-            required
-            autoComplete="off"
-          />
+            <label style={{ ...labelStyle, ...rowGap }}>Email del club</label>
+            <input type="email" style={inputStyle} value={form.club_email} onChange={(e) => onField('club_email', e.target.value)} autoComplete="off" />
 
-          <label style={{ ...labelStyle, marginTop: 12 }}>WhatsApp (código país) *</label>
-          <input style={inputStyle} value={form.whatsapp} onChange={(e) => onField('whatsapp', e.target.value)} placeholder="+549..." required autoComplete="tel" />
+            <label style={{ ...labelStyle, ...rowGap }}>Sitio web</label>
+            <input style={inputStyle} value={form.club_web} onChange={(e) => onField('club_web', e.target.value)} placeholder="https://…" inputMode="url" />
 
-          <label style={{ ...labelStyle, marginTop: 12 }}>Repetir WhatsApp *</label>
-          <input
-            style={inputStyle}
-            value={form.whatsapp_confirm}
-            onChange={(e) => onField('whatsapp_confirm', e.target.value)}
-            placeholder="+549..."
-            required
-            autoComplete="off"
-          />
+            <label style={{ ...labelStyle, ...rowGap }}>Tipo de instalación *</label>
+            <select style={inputStyle} value={form.tipo_instalacion} onChange={(e) => onField('tipo_instalacion', e.target.value)} required>
+              {TIPO_INSTALACION.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
 
-          <fieldset style={{ border: 'none', margin: '16px 0 0', padding: 0 }}>
-            <legend style={{ ...labelStyle, marginBottom: 8 }}>Tipo de deporte (podés marcar varios)</legend>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginTop: 14 }}>
+              <div>
+                <label style={labelStyle}>Horario apertura *</label>
+                <input type="time" style={inputStyle} value={form.horario_apertura} onChange={(e) => onField('horario_apertura', e.target.value)} required />
+              </div>
+              <div>
+                <label style={labelStyle}>Horario cierre *</label>
+                <input type="time" style={inputStyle} value={form.horario_cierre} onChange={(e) => onField('horario_cierre', e.target.value)} required />
+              </div>
+            </div>
+
+            <p style={{ ...labelStyle, marginTop: 18, marginBottom: 8 }}>Deportes disponibles * (uno o más)</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {DEPORTES_OPCIONES.map((d) => (
                 <label
                   key={d.key}
@@ -300,15 +414,15 @@ export default function UnirsePage() {
                     onChange={(e) => onDeporteToggle(d.key, e.target.checked)}
                     style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }}
                   />
-                  <span>
+                  <span style={{ flex: 1 }}>
                     <strong>{d.label}</strong>
                     {form.deportes[d.key] ? (
                       <span style={{ display: 'block', marginTop: 8 }}>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>Canchas (opcional)</span>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Cantidad de canchas (opcional)</span>
                         <input
                           type="number"
                           min="0"
-                          style={{ ...inputStyle, marginTop: 6, maxWidth: '200px' }}
+                          style={{ ...inputStyle, marginTop: 6, maxWidth: '220px' }}
                           value={form.canchas_por_deporte[d.key]}
                           onChange={(e) => onCanchaDeporte(d.key, e.target.value)}
                           placeholder="Ej. 4"
@@ -319,29 +433,120 @@ export default function UnirsePage() {
                 </label>
               ))}
             </div>
-          </fieldset>
+          </FormSection>
 
-          <label style={{ ...labelStyle, marginTop: 16 }}>Mensaje adicional</label>
-          <textarea rows={4} style={{ ...inputStyle, maxWidth: '100%', resize: 'vertical' }} value={form.mensaje} onChange={(e) => onField('mensaje', e.target.value)} />
+          <FormSection title="Datos del responsable" subtitle="Persona de contacto principal para la cuenta y la activación.">
+            <label style={labelStyle}>Nombre completo *</label>
+            <input style={inputStyle} value={form.responsable_nombre} onChange={(e) => onField('responsable_nombre', e.target.value)} required />
+
+            <label style={{ ...labelStyle, ...rowGap }}>Cargo *</label>
+            <select style={inputStyle} value={form.responsable_cargo} onChange={(e) => onField('responsable_cargo', e.target.value)} required>
+              {CARGO_RESPONSABLE.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+
+            <label style={{ ...labelStyle, ...rowGap }}>Email *</label>
+            <input type="email" style={inputStyle} value={form.email} onChange={(e) => onField('email', e.target.value)} required autoComplete="email" />
+
+            <label style={{ ...labelStyle, ...rowGap }}>Repetir email *</label>
+            <input
+              type="email"
+              style={inputStyle}
+              value={form.email_confirm}
+              onChange={(e) => onField('email_confirm', e.target.value)}
+              required
+              autoComplete="off"
+            />
+
+            <label style={{ ...labelStyle, ...rowGap }}>WhatsApp (con código de país) *</label>
+            <input style={inputStyle} value={form.whatsapp} onChange={(e) => onField('whatsapp', e.target.value)} placeholder="+549…" required autoComplete="tel" />
+
+            <label style={{ ...labelStyle, ...rowGap }}>Repetir WhatsApp *</label>
+            <input
+              style={inputStyle}
+              value={form.whatsapp_confirm}
+              onChange={(e) => onField('whatsapp_confirm', e.target.value)}
+              placeholder="+549…"
+              required
+              autoComplete="off"
+            />
+          </FormSection>
+
+          <FormSection
+            title="Datos legales y fiscales"
+            subtitle="Opcional pero recomendado para facturación y contrato. Podés completarlo más adelante si lo preferís."
+          >
+            <label style={labelStyle}>Nombre legal de la empresa o persona</label>
+            <input style={inputStyle} value={form.nombre_legal} onChange={(e) => onField('nombre_legal', e.target.value)} />
+
+            <label style={{ ...labelStyle, ...rowGap }}>Número fiscal (NIF / CIF / RUT / CUIT…)</label>
+            <input style={inputStyle} value={form.numero_fiscal} onChange={(e) => onField('numero_fiscal', e.target.value)} placeholder="Según tu país" />
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                marginTop: 16,
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#334155',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={form.fiscal_misma_que_club}
+                onChange={(e) => onField('fiscal_misma_que_club', e.target.checked)}
+                style={{ width: 18, height: 18 }}
+              />
+              La dirección fiscal es la misma que la del club
+            </label>
+
+            <label style={{ ...labelStyle, ...rowGap }}>Dirección fiscal</label>
+            <input
+              style={{ ...inputStyle, opacity: form.fiscal_misma_que_club ? 0.55 : 1 }}
+              value={form.direccion_fiscal}
+              onChange={(e) => onField('direccion_fiscal', e.target.value)}
+              disabled={form.fiscal_misma_que_club}
+              placeholder={form.fiscal_misma_que_club ? 'Marcá “misma que el club” arriba' : 'Solo si difiere del club'}
+            />
+
+            <label style={{ ...labelStyle, ...rowGap }}>País fiscal</label>
+            <select style={inputStyle} value={form.pais_fiscal} onChange={(e) => onField('pais_fiscal', e.target.value)}>
+              {paises.map((p) => (
+                <option key={`f-${p.nombre}`} value={p.nombre}>
+                  {p.bandera ? `${p.bandera} ` : ''}{p.nombre}
+                </option>
+              ))}
+            </select>
+          </FormSection>
+
+          <label style={{ ...labelStyle, marginTop: 4 }}>Comentarios adicionales</label>
+          <textarea rows={3} style={{ ...inputStyle, resize: 'vertical', maxWidth: '100%' }} value={form.mensaje} onChange={(e) => onField('mensaje', e.target.value)} />
 
           <button
             type="submit"
             disabled={saving}
             style={{
-              marginTop: '16px',
+              marginTop: '22px',
               width: '100%',
-              maxWidth: '520px',
-              padding: '13px 16px',
+              padding: '15px 18px',
               border: 'none',
-              borderRadius: '10px',
-              background: '#4f46e5',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
               color: '#fff',
               fontWeight: 800,
-              fontSize: '15px',
+              fontSize: '16px',
               cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.85 : 1,
+              boxShadow: '0 8px 24px rgba(79, 70, 229, 0.35)',
             }}
           >
-            {saving ? 'Enviando…' : 'Enviar solicitud'}
+            {saving ? 'Enviando…' : 'Enviar solicitud de alta'}
           </button>
         </form>
       </div>

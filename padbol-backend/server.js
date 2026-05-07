@@ -6689,20 +6689,115 @@ function formatoDeportesCanchasWhatsApp(dc) {
   return canParts.length ? `${depPart} · Canchas: ${canParts.join('; ')}` : depPart;
 }
 
+function normalizeTipoInstalacionSolicitud(v) {
+  const x = String(v || '').trim().toLowerCase();
+  if (x === 'indoor' || x === 'outdoor' || x === 'mixto') return x;
+  return null;
+}
+
+function labelTipoInstalacionWa(key) {
+  const m = { indoor: 'Indoor', outdoor: 'Outdoor', mixto: 'Mixto' };
+  return m[key] || key || '—';
+}
+
+function normalizeResponsableCargoSolicitud(v) {
+  const x = String(v || '').trim().toLowerCase();
+  if (x === 'propietario' || x === 'manager' || x === 'otro') return x;
+  return null;
+}
+
+function labelResponsableCargoWa(key) {
+  const m = { propietario: 'Propietario', manager: 'Manager', otro: 'Otro' };
+  return m[key] || key || '—';
+}
+
+function buildWhatsAppSolicitudLicenciaCompleta(payload, deportesCanchas) {
+  const orDash = (v) => (v != null && String(v).trim() !== '' ? String(v).trim() : '—');
+  const fiscalDir =
+    payload.fiscal_misma_que_club === true
+      ? 'Igual que la dirección del club'
+      : orDash(payload.direccion_fiscal);
+  const lines = [
+    '🏟️ Nueva solicitud — Club Afiliado',
+    '',
+    '▸ DATOS DEL CLUB',
+    `Nombre: ${orDash(payload.club_nombre)}`,
+    `Dirección: ${orDash(payload.club_direccion)}`,
+    `Ciudad: ${orDash(payload.ciudad)}`,
+    `Provincia / Estado: ${orDash(payload.provincia_estado)}`,
+    `País: ${orDash(payload.pais)}`,
+    `Tel. club: ${orDash(payload.club_telefono)}`,
+    `Email club: ${orDash(payload.club_email)}`,
+    `Web: ${orDash(payload.club_web)}`,
+    `Instalación: ${labelTipoInstalacionWa(payload.tipo_instalacion)}`,
+    `Horario: ${orDash(payload.horario_apertura)} – ${orDash(payload.horario_cierre)}`,
+    `Deportes / canchas: ${formatoDeportesCanchasWhatsApp(deportesCanchas)}`,
+    `Canchas (total calculado): ${payload.cantidad_canchas ?? '—'}`,
+    '',
+    '▸ RESPONSABLE',
+    `Nombre: ${orDash(payload.responsable_nombre)}`,
+    `Cargo: ${labelResponsableCargoWa(payload.responsable_cargo)}`,
+    `Email: ${orDash(payload.email)}`,
+    `WhatsApp: ${orDash(payload.whatsapp)}`,
+    '',
+    '▸ DATOS LEGALES / FISCALES',
+    `Nombre legal: ${orDash(payload.nombre_legal)}`,
+    `Número fiscal: ${orDash(payload.numero_fiscal)}`,
+    `Dirección fiscal: ${fiscalDir}`,
+    `País fiscal: ${orDash(payload.pais_fiscal)}`,
+    '',
+    '▸ NOTAS',
+    orDash(payload.mensaje),
+  ];
+  return lines.join('\n');
+}
+
 /** POST /api/solicitudes-licencia — público: registro de interés para sumar club. */
 app.post('/api/solicitudes-licencia', async (req, res) => {
   try {
     const b = req.body || {};
     const club_nombre = String(b.club_nombre || '').trim();
+    const club_direccion = String(b.club_direccion || '').trim();
     const pais = String(b.pais || '').trim();
     const ciudad = String(b.ciudad || '').trim();
+    const provincia_estado = String(b.provincia_estado || '').trim() || null;
+    const club_telefono = String(b.club_telefono || '').trim() || null;
+    const club_email = String(b.club_email || '').trim().toLowerCase() || null;
+    const club_web = String(b.club_web || '').trim() || null;
+    const tipo_instalacion = normalizeTipoInstalacionSolicitud(b.tipo_instalacion);
+    const horario_apertura = String(b.horario_apertura || '').trim();
+    const horario_cierre = String(b.horario_cierre || '').trim();
     const responsable_nombre = String(b.responsable_nombre || '').trim();
+    const responsable_cargo = normalizeResponsableCargoSolicitud(b.responsable_cargo);
     const email = String(b.email || '').trim().toLowerCase();
     const whatsapp = String(b.whatsapp || '').trim();
-    if (!club_nombre || !pais || !ciudad || !responsable_nombre || !email || !whatsapp) {
+    const nombre_legal = String(b.nombre_legal || '').trim() || null;
+    const numero_fiscal = String(b.numero_fiscal || '').trim() || null;
+    const fiscal_misma_que_club = Boolean(b.fiscal_misma_que_club);
+    const direccion_fiscal = fiscal_misma_que_club ? null : String(b.direccion_fiscal || '').trim() || null;
+    const pais_fiscal = String(b.pais_fiscal || '').trim() || null;
+
+    if (
+      !club_nombre ||
+      !club_direccion ||
+      !pais ||
+      !ciudad ||
+      !tipo_instalacion ||
+      !horario_apertura ||
+      !horario_cierre ||
+      !responsable_nombre ||
+      !responsable_cargo ||
+      !email ||
+      !whatsapp
+    ) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
+
     const deportesCanchas = normalizeDeportesCanchasSolicitudLicencia(b.deportes_canchas);
+    if (!deportesCanchas || !Array.isArray(deportesCanchas.deportes) || deportesCanchas.deportes.length === 0) {
+      return res.status(400).json({ error: 'Seleccioná al menos un deporte disponible' });
+    }
+
     const cantidadCanchasTotal = (() => {
       if (deportesCanchas?.canchas && Object.keys(deportesCanchas.canchas).length) {
         const s = Object.values(deportesCanchas.canchas).reduce((a, n) => a + (Number(n) || 0), 0);
@@ -6714,13 +6809,28 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
       }
       return null;
     })();
+
     const payload = {
       club_nombre,
+      club_direccion,
       pais,
       ciudad,
+      provincia_estado,
+      club_telefono,
+      club_email,
+      club_web,
+      tipo_instalacion,
+      horario_apertura,
+      horario_cierre,
       responsable_nombre,
+      responsable_cargo,
       email,
       whatsapp,
+      nombre_legal,
+      numero_fiscal,
+      direccion_fiscal,
+      fiscal_misma_que_club: fiscal_misma_que_club === true,
+      pais_fiscal,
       cantidad_canchas: cantidadCanchasTotal,
       tipo_interes: 'Club Afiliado',
       mensaje: String(b.mensaje || '').trim() || null,
@@ -6732,16 +6842,7 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
 
     const toSuper = resolveSuperAdminNotifyWhatsAppTo();
     if (toSuper) {
-      const msg =
-        `🏟️ Nueva solicitud de licencia\n` +
-        `Club: ${club_nombre}\n` +
-        `País/Ciudad: ${pais} · ${ciudad}\n` +
-        `Responsable: ${responsable_nombre}\n` +
-        `Email: ${email}\n` +
-        `WhatsApp: ${whatsapp}\n` +
-        `Interés: ${payload.tipo_interes || '—'}\n` +
-        `Canchas (total): ${payload.cantidad_canchas ?? '—'}\n` +
-        `Deportes / canchas: ${formatoDeportesCanchasWhatsApp(deportesCanchas)}`;
+      const msg = buildWhatsAppSolicitudLicenciaCompleta(payload, deportesCanchas);
       await sendTwilioWhatsAppBodyToRaw(toSuper, msg);
     }
     await sendSolicitudLicenciaConfirmacionEmail({
