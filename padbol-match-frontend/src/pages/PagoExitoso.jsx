@@ -6,6 +6,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { clearMpReservaPendingSlot } from '../utils/reservaReturnUrl';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -92,10 +93,12 @@ export default function PagoExitoso() {
       .then((r) => r.json().then((d) => ({ ok: r.ok, status: r.status, data: d })))
       .then(({ ok, status: httpStatus, data }) => {
         if (ok) {
+          clearMpReservaPendingSlot();
           const created = Array.isArray(data) ? data[0] : data;
           setReserva({ ...payload, id: created?.id });
           setPagoKind('reserva');
         } else if (httpStatus === 409) {
+          clearMpReservaPendingSlot();
           setReserva(payload);
           setPagoKind('reserva');
         } else {

@@ -1816,6 +1816,49 @@ app.delete('/api/reservas/:id', async (req, res) => {
   }
 });
 
+/**
+ * Libera turnos ocupados solo por reservas pendientes de pago (manual / MP),
+ * para que otro usuario pueda reservar el mismo slot.
+ * Body: { sede, fecha, hora, cancha, email? } — si viene email, solo filas con ese email.
+ */
+app.post('/api/reservas/liberar-slot-pendiente', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const sede = String(b.sede || '').trim();
+    const fecha = String(b.fecha || '').trim();
+    const hora = String(b.hora || '').trim();
+    const cancha = parseInt(String(b.cancha), 10);
+    const emailNorm = b.email != null ? String(b.email).trim().toLowerCase() : '';
+    if (!sede || !fecha || !hora || !Number.isFinite(cancha)) {
+      return res.status(400).json({ error: 'Faltan sede, fecha, hora o cancha' });
+    }
+    const estadosPend = ['pendiente_pago_manual', 'pendiente_pago_mercadopago', 'pendiente_mercadopago'];
+    let q = supabase
+      .from('reservas')
+      .select('id')
+      .eq('sede', sede)
+      .eq('fecha', fecha)
+      .eq('hora', hora)
+      .eq('cancha', cancha)
+      .in('estado', estadosPend);
+    if (emailNorm) {
+      q = q.eq('email', emailNorm);
+    }
+    const { data: rows, error: selErr } = await q;
+    if (selErr) throw selErr;
+    const ids = (rows || []).map((r) => r.id).filter((id) => id != null);
+    if (!ids.length) {
+      return res.json({ ok: true, deleted: 0 });
+    }
+    const { error: delErr } = await supabase.from('reservas').delete().in('id', ids);
+    if (delErr) throw delErr;
+    res.json({ ok: true, deleted: ids.length });
+  } catch (err) {
+    console.error('❌ POST /api/reservas/liberar-slot-pendiente:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

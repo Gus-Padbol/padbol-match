@@ -164,3 +164,55 @@ export function saveReservaReturnUrl(extraQuery) {
     /* ignore */
   }
 }
+
+/** Antes de ir a Checkout Pro: recuperar turno en pago-fallido y liberar slot pendiente. */
+export const MP_RESERVA_PENDING_KEY = 'padbol_mp_reserva_pending';
+
+export function saveMpReservaPendingSlot(data) {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(MP_RESERVA_PENDING_KEY, JSON.stringify(data));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readMpReservaPendingSlot() {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = sessionStorage.getItem(MP_RESERVA_PENDING_KEY);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    return o && typeof o === 'object' ? o : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearMpReservaPendingSlot() {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem(MP_RESERVA_PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearReservaFlowSessionStorage() {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
+    sessionStorage.removeItem(MP_RESERVA_PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearReservaReturnLocalStorage() {
+  try {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(RESERVA_RETURN_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}

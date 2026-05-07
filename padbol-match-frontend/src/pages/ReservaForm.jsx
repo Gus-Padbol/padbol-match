@@ -19,6 +19,10 @@ import {
   RESERVA_FORM_RESTORE_VERSION,
   saveReservaFormSessionState,
   saveReservaReturnUrl,
+  saveMpReservaPendingSlot,
+  clearMpReservaPendingSlot,
+  clearReservaFlowSessionStorage,
+  clearReservaReturnLocalStorage,
 } from '../utils/reservaReturnUrl';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName } from '../utils/displayName';
@@ -610,16 +614,6 @@ export default function ReservaForm() {
     setMostrarEtiquetaSedeMasCercanaGeo(false);
   }, [pantalla, sedeSeleccionada]);
 
-  const handleReservaBack = useCallback(() => {
-    if (pantalla === 1) {
-      navigate('/', { replace: true });
-      return;
-    }
-    const sid = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;
-    if (sid) navigate(`/sede/${sid}`);
-    else window.history.back();
-  }, [pantalla, filtros.sede_id, navigate]);
-
   const paisesOrdenados = useMemo(
     () => [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort(),
     [sedes]
@@ -646,6 +640,61 @@ export default function ReservaForm() {
   const [horariosUltimaConsulta, setHorariosUltimaConsulta] = useState({ sedeId: '', fecha: '' });
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
+
+  const irAModificarReservaDesdeResumen = useCallback(() => {
+    setPantalla(2);
+    setError('');
+    const sid = filtros.sede_id !== '' && filtros.sede_id != null ? String(filtros.sede_id) : '';
+    if (sid && formData.fecha) {
+      const p = { sedeId: sid, fecha: formData.fecha };
+      if (formData.hora) p.hora = formData.hora;
+      if (formData.cancha != null && String(formData.cancha).trim() !== '') p.canchaId = String(formData.cancha);
+      navigate({ pathname: '/reservar', search: `?${createSearchParams(p).toString()}` }, { replace: true });
+    }
+  }, [filtros.sede_id, formData.fecha, formData.hora, formData.cancha, navigate]);
+
+  const handleCancelarReservaDesdeResumen = useCallback(async () => {
+    if (!window.confirm('¿Cancelar la reserva y salir?')) return;
+    try {
+      if (sedeSeleccionada && formData.fecha && formData.hora && formData.cancha != null) {
+        const body = {
+          sede: sedeSeleccionada.nombre,
+          fecha: formData.fecha,
+          hora: formData.hora,
+          cancha: parseInt(String(formData.cancha), 10),
+        };
+        if (session?.user?.email) body.email = String(session.user.email).trim().toLowerCase();
+        await fetch(apiUrl('/api/reservas/liberar-slot-pendiente'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+    } catch {
+      /* liberar es best-effort */
+    }
+    clearReservaFlowSessionStorage();
+    clearReservaReturnLocalStorage();
+    clearMpReservaPendingSlot();
+    const sidRaw = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;
+    if (session?.user) navigate('/hub', { replace: true });
+    else if (sidRaw) navigate(`/sede/${sidRaw}`, { replace: true });
+    else navigate('/reservar', { replace: true });
+  }, [sedeSeleccionada, formData.fecha, formData.hora, formData.cancha, filtros.sede_id, session?.user, navigate]);
+
+  const handleReservaBack = useCallback(() => {
+    if (pantalla === 1) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if (pantalla === 4) {
+      irAModificarReservaDesdeResumen();
+      return;
+    }
+    const sid = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;
+    if (sid) navigate(`/sede/${sid}`);
+    else window.history.back();
+  }, [pantalla, filtros.sede_id, navigate, irAModificarReservaDesdeResumen]);
   /** Número local en pantalla resumen — controlado aparte de formData para no re-disparar efectos al escribir */
   const [whatsapp, setWhatsapp] = useState('');
   const canchasBloqueRef = useRef(null);
@@ -1282,6 +1331,14 @@ export default function ReservaForm() {
       const data = await res.json();
       if (res.ok && data.init_point) {
         localStorage.setItem('ultima_sede', String(filtros.sede_id));
+        saveMpReservaPendingSlot({
+          sede: sedeSeleccionada.nombre,
+          fecha: formData.fecha,
+          hora: formData.hora,
+          cancha: parseInt(String(formData.cancha), 10),
+          email: String(ccEff.email || '').trim().toLowerCase(),
+          sedeId: sedeSeleccionada.id,
+        });
         window.location.href = data.init_point;
       } else if (res.ok && data.manual_payment) {
         const msgManual = [
@@ -1754,6 +1811,50 @@ export default function ReservaForm() {
             ❌ Menos de 24hs de anticipación: sin devolución
           </div>
 
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              marginBottom: '18px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={irAModificarReservaDesdeResumen}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '2px solid #6366f1',
+                background: 'rgba(99, 102, 241, 0.12)',
+                color: '#3730a3',
+                fontWeight: 800,
+                fontSize: '15px',
+                cursor: 'pointer',
+              }}
+            >
+              Modificar reserva
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleCancelarReservaDesdeResumen()}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '1px solid #cbd5e1',
+                background: '#f8fafc',
+                color: '#64748b',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+
           {error && <div className="error-message">{error}</div>}
 
           {metodoPagoStripe && !stripeCuentaOk ? (
@@ -1782,6 +1883,7 @@ export default function ReservaForm() {
               }}
               disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk}
               onPaid={() => {
+                clearMpReservaPendingSlot();
                 alert('¡Reserva confirmada! Te enviamos los detalles por WhatsApp.');
                 setPantalla(1);
                 setFormData({

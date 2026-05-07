@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useCallback } from 'react';
+import { useNavigate, useLocation, createSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
@@ -9,10 +9,75 @@ import {
 import AppButton from '../components/AppButton';
 import * as T from '../theme/designTokens';
 import { cardStyle } from '../theme/uiStyles';
+import { useAuth } from '../context/AuthContext';
+import {
+  readMpReservaPendingSlot,
+  clearMpReservaPendingSlot,
+  clearReservaFlowSessionStorage,
+  clearReservaReturnLocalStorage,
+} from '../utils/reservaReturnUrl';
+
+const API_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
+
+function reservarUrlFromPending(pending) {
+  if (!pending?.sedeId) return '/reservar';
+  const p = { sedeId: String(pending.sedeId) };
+  if (pending.fecha) p.fecha = String(pending.fecha);
+  if (pending.hora) p.hora = String(pending.hora);
+  if (pending.cancha != null && String(pending.cancha).trim() !== '') p.canchaId = String(pending.cancha);
+  return `/reservar?${createSearchParams(p).toString()}`;
+}
 
 export default function PagoFallido() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { session } = useAuth();
+  const [busy, setBusy] = useState(false);
+
+  const pending = readMpReservaPendingSlot();
+
+  const onIntentarDeNuevo = useCallback(() => {
+    const p = readMpReservaPendingSlot();
+    const dest = p ? reservarUrlFromPending(p) : '/reservar';
+    navigate(dest, { replace: true });
+  }, [navigate]);
+
+  const onCancelarReserva = useCallback(async () => {
+    setBusy(true);
+    const p = readMpReservaPendingSlot();
+    try {
+      if (p?.sede && p.fecha && p.hora && p.cancha != null) {
+        const body = {
+          sede: String(p.sede).trim(),
+          fecha: String(p.fecha).trim(),
+          hora: String(p.hora).trim(),
+          cancha: parseInt(String(p.cancha), 10),
+        };
+        if (p.email) body.email = String(p.email).trim().toLowerCase();
+        await fetch(`${API_BASE}/api/reservas/liberar-slot-pendiente`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+    } catch {
+      /* best-effort */
+    } finally {
+      clearMpReservaPendingSlot();
+      clearReservaFlowSessionStorage();
+      clearReservaReturnLocalStorage();
+      const sid = p?.sedeId != null ? Number(p.sedeId) : null;
+      if (session?.user) navigate('/hub', { replace: true });
+      else if (sid) navigate(`/sede/${sid}`, { replace: true });
+      else navigate('/reservar', { replace: true });
+      setBusy(false);
+    }
+  }, [navigate, session?.user]);
+
   return (
     <div
       style={{
@@ -43,24 +108,42 @@ export default function PagoFallido() {
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}>❌</div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: T.colorErrorDark, marginBottom: '8px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }} aria-hidden>
+            ❌
+          </div>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: T.colorErrorDark, marginBottom: '12px' }}>
             El pago no se completó
           </h1>
-          <p style={{ color: T.colorTextMuted, fontSize: '15px', lineHeight: 1.6, marginBottom: '24px' }}>
-            No se realizó ningún cobro y tu reserva no fue registrada. Puedes intentarlo de nuevo cuando quieras.
+          <p style={{ color: T.colorTextMuted, fontSize: '15px', lineHeight: 1.65, marginBottom: '20px' }}>
+            El pago no se completó. Podés intentarlo de nuevo o cancelar la reserva.
           </p>
 
-          <AppButton
-            variant="primary"
-            onClick={() => navigate('/reservar')}
-            style={{
-              background: `linear-gradient(135deg, ${T.colorError}, ${T.colorErrorDark})`,
-              boxShadow: '0 4px 14px rgba(185, 28, 28, 0.35)',
-            }}
-          >
-            Intentar de nuevo
-          </AppButton>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <AppButton
+              variant="primary"
+              onClick={onIntentarDeNuevo}
+              disabled={busy}
+              style={{
+                background: `linear-gradient(135deg, ${T.colorError}, ${T.colorErrorDark})`,
+                boxShadow: '0 4px 14px rgba(185, 28, 28, 0.35)',
+              }}
+            >
+              Intentar de nuevo
+            </AppButton>
+            <AppButton
+              variant="secondary"
+              onClick={() => void onCancelarReserva()}
+              disabled={busy}
+              style={{
+                background: '#f1f5f9',
+                color: T.colorText,
+                boxShadow: 'none',
+                border: `1px solid ${T.colorTextMuted}`,
+              }}
+            >
+              {busy ? 'Procesando…' : 'Cancelar reserva'}
+            </AppButton>
+          </div>
         </div>
       </div>
       <BottomNav />
