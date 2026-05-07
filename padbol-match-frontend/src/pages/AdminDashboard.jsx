@@ -2356,6 +2356,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [nuevoTipo,          setNuevoTipo]          = useState({ nombre: '', puntos: 0 });
   const [editandoTipoId,     setEditandoTipoId]     = useState(null);
   const [editandoTipoData,   setEditandoTipoData]   = useState({ nombre: '', puntos: 0 });
+  const [planPricingRows, setPlanPricingRows] = useState([]);
+  const [planPricingLoading, setPlanPricingLoading] = useState(false);
+  const [planPricingEditId, setPlanPricingEditId] = useState(null);
+  const [planPricingEditValue, setPlanPricingEditValue] = useState('');
+  const [planPricingSavingId, setPlanPricingSavingId] = useState(null);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
@@ -2405,6 +2410,62 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setTimeout(() => setConfigMsg(''), 3000);
     }
   };
+
+  useEffect(() => {
+    if (!isSuperAdmin || activeTab !== 'config') return;
+    let cancelled = false;
+    setPlanPricingLoading(true);
+    fetch(`${apiBaseUrl}/api/plan-pricing`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        setPlanPricingRows(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPlanPricingRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPlanPricingLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isSuperAdmin, activeTab, apiBaseUrl]);
+
+  const guardarPrecioPlanPricing = useCallback(
+    async (id, precioStr) => {
+      if (!session?.access_token) {
+        alert('Iniciá sesión para guardar.');
+        return;
+      }
+      setPlanPricingSavingId(id);
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/plan-pricing/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ precio_usd: precioStr }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || 'No se pudo guardar');
+        const plan = j.plan;
+        if (plan?.id != null) {
+          setPlanPricingRows((prev) =>
+            prev.map((r) => (Number(r.id) === Number(plan.id) ? { ...r, ...plan } : r)),
+          );
+        }
+        setPlanPricingEditId(null);
+        setPlanPricingEditValue('');
+      } catch (e) {
+        alert(e.message || String(e));
+      } finally {
+        setPlanPricingSavingId(null);
+      }
+    },
+    [apiBaseUrl, session?.access_token],
+  );
 
   useEffect(() => {
     if (activeTab !== 'torneos' || torneos.length === 0) return;
@@ -5567,6 +5628,170 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div style={{ marginBottom: '28px' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '10px', fontSize: '16px' }}>Planes y Precios</h3>
+          <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.45 }}>
+            Precio mensual en USD según la cantidad de canchas del club. Solo super admin puede editar.
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table
+              style={{
+                width: '100%',
+                maxWidth: '640px',
+                borderCollapse: 'collapse',
+                background: 'white',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              }}
+            >
+              <thead>
+                <tr style={{ background: '#312e81', color: '#fff' }}>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>Nombre</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>Canchas</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600 }}>Precio USD/mes</th>
+                  <th style={{ padding: '10px 16px', width: '96px' }} />
+                </tr>
+              </thead>
+              <tbody>
+                {planPricingLoading ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '14px', textAlign: 'center', color: '#64748b' }}>
+                      Cargando…
+                    </td>
+                  </tr>
+                ) : planPricingRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '14px', textAlign: 'center', color: '#64748b' }}>
+                      No hay planes. Ejecutá el SQL <code style={{ fontSize: '12px' }}>plan_pricing.sql</code> en Supabase.
+                    </td>
+                  </tr>
+                ) : (
+                  planPricingRows.map((p, idx) => {
+                    const maxV = p.canchas_max;
+                    const rango =
+                      maxV == null || maxV === ''
+                        ? `${p.canchas_min}+`
+                        : Number(p.canchas_min) === Number(maxV)
+                          ? `${p.canchas_min}`
+                          : `${p.canchas_min}–${maxV}`;
+                    const isEditing = Number(planPricingEditId) === Number(p.id);
+                    const precioNum = Number(p.precio_usd);
+                    return (
+                      <tr
+                        key={p.id}
+                        style={{
+                          borderBottom: idx === planPricingRows.length - 1 ? 'none' : '1px solid #eee',
+                          background: idx % 2 === 0 ? '#fafafa' : '#fff',
+                        }}
+                      >
+                        <td style={{ padding: '10px 16px', fontWeight: 700, color: '#1e293b' }}>{p.nombre}</td>
+                        <td style={{ padding: '10px 16px', color: '#334155', fontSize: '14px' }}>{rango}</td>
+                        <td style={{ padding: '10px 16px', textAlign: 'right', verticalAlign: 'middle' }}>
+                          {isEditing ? (
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-end',
+                                gap: '8px',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={planPricingEditValue}
+                                onChange={(e) => setPlanPricingEditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') void guardarPrecioPlanPricing(p.id, planPricingEditValue);
+                                }}
+                                style={{
+                                  width: '104px',
+                                  padding: '6px 8px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '14px',
+                                }}
+                              />
+                              <button
+                                type="button"
+                                disabled={planPricingSavingId === p.id}
+                                onClick={() => void guardarPrecioPlanPricing(p.id, planPricingEditValue)}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '6px',
+                                  border: 'none',
+                                  background: planPricingSavingId === p.id ? '#94a3b8' : '#16a34a',
+                                  color: '#fff',
+                                  fontWeight: 700,
+                                  fontSize: '12px',
+                                  cursor: planPricingSavingId === p.id ? 'not-allowed' : 'pointer',
+                                }}
+                              >
+                                {planPricingSavingId === p.id ? '…' : 'Guardar'}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={planPricingSavingId === p.id}
+                                onClick={() => {
+                                  setPlanPricingEditId(null);
+                                  setPlanPricingEditValue('');
+                                }}
+                                style={{
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #cbd5e1',
+                                  background: '#f8fafc',
+                                  fontSize: '12px',
+                                  fontWeight: 600,
+                                  cursor: planPricingSavingId === p.id ? 'not-allowed' : 'pointer',
+                                }}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ fontWeight: 700, color: '#312e81', fontSize: '15px' }}>
+                              {Number.isFinite(precioNum) ? precioNum.toFixed(2) : '—'}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                          {!isEditing ? (
+                            <button
+                              type="button"
+                              title="Editar precio"
+                              aria-label="Editar precio"
+                              onClick={() => {
+                                setPlanPricingEditId(p.id);
+                                setPlanPricingEditValue(
+                                  p.precio_usd != null && p.precio_usd !== '' ? String(p.precio_usd) : '',
+                                );
+                              }}
+                              style={{
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                border: '1px solid #c4b5fd',
+                                background: '#eef2ff',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                              }}
+                            >
+                              ✏️
+                            </button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div

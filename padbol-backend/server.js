@@ -1036,6 +1036,80 @@ app.get('/api/sedes/todas', async (req, res) => {
   }
 });
 
+/** Planes de precio por tramo de canchas (tabla plan_pricing). */
+async function fetchPlanesPricingActivos(client = supabase) {
+  const { data, error } = await client
+    .from('plan_pricing')
+    .select('*')
+    .eq('activo', true)
+    .order('canchas_min', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Devuelve el plan activo y precio USD para una cantidad de canchas, o null.
+ * @param {import('@supabase/supabase-js').SupabaseClient} client
+ * @param {number} cantidad
+ */
+async function getPlanParaCanchas(client, cantidad) {
+  const n = Math.max(0, Math.floor(Number(cantidad) || 0));
+  const list = await fetchPlanesPricingActivos(client);
+  for (const p of list) {
+    const min = Number(p.canchas_min);
+    const maxRaw = p.canchas_max;
+    const max = maxRaw == null || maxRaw === '' ? null : Number(maxRaw);
+    if (!Number.isFinite(min) || min < 0) continue;
+    if (n < min) continue;
+    if (max != null && Number.isFinite(max) && n > max) continue;
+    return { plan: p, precio_usd: Number(p.precio_usd) };
+  }
+  return null;
+}
+
+/** GET /api/plan-pricing — planes activos ordenados por canchas_min. */
+app.get('/api/plan-pricing', async (req, res) => {
+  try {
+    const rows = await fetchPlanesPricingActivos();
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ GET /api/plan-pricing:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** PATCH /api/plan-pricing/:id — super_admin: actualiza precio_usd. */
+app.patch('/api/plan-pricing/:id', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const rowRole = await fetchUserRoleRow(user.email);
+    if (!isSuperAdminApi(user.email, rowRole?.role)) {
+      return res.status(403).json({ error: 'Solo super admin' });
+    }
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+    const raw = req.body?.precio_usd;
+    const precio = raw != null && raw !== '' ? Number(String(raw).replace(',', '.')) : NaN;
+    if (!Number.isFinite(precio) || precio < 0) {
+      return res.status(400).json({ error: 'precio_usd inválido' });
+    }
+    const rounded = Math.round(precio * 100) / 100;
+    const { data, error } = await supabase
+      .from('plan_pricing')
+      .update({ precio_usd: rounded })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Plan no encontrado' });
+    res.json({ plan: data });
+  } catch (err) {
+    console.error('❌ PATCH /api/plan-pricing/:id:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** POST /api/sedes — super_admin: crea una sede manualmente para gestión. */
 app.post('/api/sedes', async (req, res) => {
   try {
