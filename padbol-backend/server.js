@@ -2139,8 +2139,8 @@ app.post('/api/torneos', async (req, res) => {
 
     const estadoNorm = normalizeTorneoEstadoForDb(estadoBody);
     const tipoCompRaw = tipoCompBody !== undefined ? tipoCompBody : legacyGeneroCompBody;
-    const tipoComp = normalizeTorneoTipoCompetencia(tipoCompRaw);
-    const catEdad = normalizeTorneoCategoriaEdad(categoriaEdadBody);
+    const tipoComp = normalizeTorneoTipoCompetencia(tipoCompRaw) ?? 'masculino';
+    const catEdad = normalizeTorneoCategoriaEdad(categoriaEdadBody) ?? 'open';
 
     const row = {
       nombre,
