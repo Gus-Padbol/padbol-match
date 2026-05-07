@@ -34,6 +34,7 @@ import {
 } from '../utils/torneoEstadoTransiciones';
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
+import * as XLSX from 'xlsx';
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
 const MAX_FOTOS_SEDE = 20;
@@ -609,6 +610,21 @@ function formatoIngresosHoyMultimoneda(porMoneda) {
   return parts.length ? parts.join(' · ') : '$ 0 (sin ingresos registrados)';
 }
 
+function labelPeriodoFinanciero(periodo) {
+  if (periodo === 'hoy') return 'hoy';
+  if (periodo === 'semana') return 'semana';
+  if (periodo === 'mes') return 'mes';
+  if (periodo === 'anio') return 'anio';
+  return 'rango';
+}
+
+function ymdToLabelShort(iso) {
+  const s = String(iso || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const [, m, d] = s.split('-');
+  return `${d}/${m}`;
+}
+
 function contratoBadgeData(contrato) {
   const fv = String(contrato?.fecha_vencimiento || '').trim();
   if (!fv) return { label: 'Vigente', bg: '#16a34a', color: '#fff' };
@@ -1067,6 +1083,158 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     sedeId,
     sedesMap,
   ]);
+
+  const dashboardFinanciero = useMemo(() => {
+    const inP = (iso) =>
+      fechaDentroDePeriodoFinanzas(
+        iso,
+        superAdminPeriodo,
+        superAdminFechaDesde,
+        superAdminFechaHasta,
+        finanzasAnclaISO
+      );
+    const torneoById = {};
+    torneos.forEach((t) => {
+      torneoById[t.id] = t;
+    });
+    const sedeByNombreLower = {};
+    Object.values(sedesMap || {}).forEach((s) => {
+      const k = String(s?.nombre || '').trim().toLowerCase();
+      if (k) sedeByNombreLower[k] = s;
+    });
+    const reservasPeriodo = reservas.filter((r) => inP(String(r?.fecha || '').slice(0, 10)));
+    const fechaInscripcionEquipo = (eq) => String(eq?.updated_at || eq?.created_at || '').slice(0, 10);
+    const inscripcionesPeriodo = equiposInscripcionRows.filter(
+      (eq) => String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado' && inP(fechaInscripcionEquipo(eq))
+    );
+    const porDia = {};
+    const addDay = (iso, mon, amount) => {
+      const d = String(iso || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+      if (!porDia[d]) porDia[d] = { ARS: 0, USD: 0, EUR: 0 };
+      porDia[d][mon] = (porDia[d][mon] || 0) + (Number(amount) || 0);
+    };
+    const reservasDetalle = reservasPeriodo.map((r) => {
+      const sedeRow = sedeByNombreLower[String(r?.sede || '').trim().toLowerCase()] || null;
+      const mon = bucketMonedaAdmin(sedeRow?.moneda || r?.moneda || 'ARS');
+      const precio = Number(r?.precio) || 0;
+      addDay(String(r?.fecha || '').slice(0, 10), mon, precio);
+      return { ...r, moneda_calc: mon, precio_calc: precio };
+    });
+    const torneosDetalle = inscripcionesPeriodo.map((eq) => {
+      const t = torneoById[eq?.torneo_id] || null;
+      const mon = bucketMonedaAdmin(t?.moneda || 'ARS');
+      const ingreso = precioInscripcionTorneo(t);
+      addDay(fechaInscripcionEquipo(eq), mon, ingreso);
+      return {
+        torneo_id: eq?.torneo_id,
+        nombre: t?.nombre || `Torneo #${eq?.torneo_id ?? ''}`,
+        fecha: t?.fecha_inicio || '',
+        equipos: torneoStats[t?.id]?.equipos_count ?? 0,
+        ingreso,
+        moneda: mon,
+        estado: t?.estado || '',
+      };
+    });
+    const totalTx = reservasDetalle.length + torneosDetalle.length;
+    const totalMontoBase = isSuperAdmin
+      ? ['ARS', 'USD', 'EUR'].reduce((acc, k) => acc + (Number(cifrasFinanzasResumen?.total?.[k]) || 0), 0)
+      : Number(cifrasFinanzasResumen?.total) || 0;
+    const ticketPromedio = totalTx > 0 ? totalMontoBase / totalTx : 0;
+    const dailyRows = Object.keys(porDia)
+      .sort((a, b) => a.localeCompare(b))
+      .map((d) => ({
+        fecha: d,
+        total:
+          (Number(porDia[d].ARS) || 0) +
+          (Number(porDia[d].USD) || 0) +
+          (Number(porDia[d].EUR) || 0),
+      }));
+    const maxDaily = dailyRows.reduce((m, r) => Math.max(m, r.total), 0);
+    return {
+      reservasDetalle,
+      torneosDetalle,
+      totalTransacciones: totalTx,
+      ticketPromedio,
+      dailyRows,
+      maxDaily,
+    };
+  }, [
+    reservas,
+    torneos,
+    sedesMap,
+    equiposInscripcionRows,
+    superAdminPeriodo,
+    superAdminFechaDesde,
+    superAdminFechaHasta,
+    finanzasAnclaISO,
+    torneoStats,
+    isSuperAdmin,
+    cifrasFinanzasResumen,
+  ]);
+
+  const exportarFinanzasExcel = useCallback(() => {
+    try {
+      const wb = XLSX.utils.book_new();
+      const periodoNombre = labelPeriodoFinanciero(superAdminPeriodo);
+      const resumenRows = isSuperAdmin
+        ? [
+            {
+              periodo: periodoNombre,
+              total_ars: Number(cifrasFinanzasResumen?.total?.ARS) || 0,
+              total_usd: Number(cifrasFinanzasResumen?.total?.USD) || 0,
+              total_eur: Number(cifrasFinanzasResumen?.total?.EUR) || 0,
+              reservas_ars: Number(cifrasFinanzasResumen?.porFuente?.reservas?.ARS) || 0,
+              reservas_usd: Number(cifrasFinanzasResumen?.porFuente?.reservas?.USD) || 0,
+              reservas_eur: Number(cifrasFinanzasResumen?.porFuente?.reservas?.EUR) || 0,
+              torneos_ars: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.ARS) || 0,
+              torneos_usd: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.USD) || 0,
+              torneos_eur: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.EUR) || 0,
+              transacciones: dashboardFinanciero.totalTransacciones,
+              ticket_promedio: Number(dashboardFinanciero.ticketPromedio.toFixed(2)),
+            },
+          ]
+        : [
+            {
+              periodo: periodoNombre,
+              moneda: cifrasFinanzasResumen?.moneda || 'ARS',
+              total: Number(cifrasFinanzasResumen?.total) || 0,
+              reservas: Number(cifrasFinanzasResumen?.reservas) || 0,
+              torneos: Number(cifrasFinanzasResumen?.inscripciones) || 0,
+              transacciones: dashboardFinanciero.totalTransacciones,
+              ticket_promedio: Number(dashboardFinanciero.ticketPromedio.toFixed(2)),
+            },
+          ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenRows), 'Resumen');
+
+      const reservasRows = dashboardFinanciero.reservasDetalle.map((r) => ({
+        fecha: String(r?.fecha || '').slice(0, 10),
+        hora: horaRango(r?.hora, r?.duracion),
+        cancha: r?.cancha ?? '',
+        jugador: r?.nombre || '',
+        monto: Number(r?.precio_calc) || 0,
+        moneda: r?.moneda_calc || 'ARS',
+        estado: r?.estado || '',
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reservasRows), 'Reservas');
+
+      const torneosRows = dashboardFinanciero.torneosDetalle.map((t) => ({
+        nombre: t.nombre,
+        fecha: String(t.fecha || '').slice(0, 10),
+        equipos: t.equipos ?? 0,
+        ingresos: Number(t.ingreso) || 0,
+        moneda: t.moneda || 'ARS',
+        estado: t.estado || '',
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(torneosRows), 'Torneos');
+
+      const nombre = `financiero_${periodoNombre}_${String(finanzasAnclaISO || '').slice(0, 10) || 'reporte'}.xlsx`;
+      XLSX.writeFile(wb, nombre);
+    } catch (e) {
+      console.error('[AdminDashboard] exportarFinanzasExcel:', e);
+      alert('No se pudo generar el Excel.');
+    }
+  }, [superAdminPeriodo, isSuperAdmin, cifrasFinanzasResumen, dashboardFinanciero, finanzasAnclaISO]);
 
   const resumenPanelDiario = useMemo(() => {
     const ctx = ahoraArgentinaPartes();
@@ -3228,6 +3396,68 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <div className="card torneos">
           <h2>Total Torneos</h2>
           <p className="count">{torneos.length}</p>
+        </div>
+      </div>
+      <div
+        className="section"
+        style={{
+          marginTop: '16px',
+          background: '#fff',
+          borderRadius: '14px',
+          padding: '16px',
+          boxShadow: '0 10px 26px rgba(15,23,42,0.12)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <h2 style={{ margin: 0, color: '#0f172a' }}>💰 Financiero</h2>
+          <button
+            type="button"
+            onClick={exportarFinanzasExcel}
+            style={{
+              border: 'none',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              background: '#0f766e',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Exportar
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '10px', marginTop: '12px' }}>
+          <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px' }}>
+            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700 }}>Transacciones</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>{dashboardFinanciero.totalTransacciones}</div>
+          </div>
+          <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px' }}>
+            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700 }}>Ticket promedio</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
+              {isSuperAdmin ? Number(dashboardFinanciero.ticketPromedio || 0).toLocaleString('es-AR') : `$ ${Number(dashboardFinanciero.ticketPromedio || 0).toLocaleString('es-AR')} ${cifrasFinanzasResumen.moneda || 'ARS'}`}
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: '14px' }}>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, marginBottom: '8px' }}>Ingresos por día</div>
+          {dashboardFinanciero.dailyRows.length === 0 ? (
+            <div style={{ fontSize: '13px', color: '#94a3b8' }}>Sin movimientos en el período seleccionado.</div>
+          ) : (
+            <div style={{ display: 'grid', gap: '6px' }}>
+              {dashboardFinanciero.dailyRows.map((row) => {
+                const pct = dashboardFinanciero.maxDaily > 0 ? Math.max(4, (row.total / dashboardFinanciero.maxDaily) * 100) : 0;
+                return (
+                  <div key={row.fecha} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: '#475569', fontWeight: 700 }}>{ymdToLabelShort(row.fecha)}</span>
+                    <div style={{ height: '12px', borderRadius: '999px', background: '#e2e8f0', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#6366f1,#0ea5e9)' }} />
+                    </div>
+                    <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: 700 }}>{Number(row.total).toLocaleString('es-AR')}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
         </>
