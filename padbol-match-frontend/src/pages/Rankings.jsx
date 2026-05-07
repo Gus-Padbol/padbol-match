@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
@@ -184,19 +184,6 @@ async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria
   return result;
 }
 
-/** Mismo aspecto que los filtros anteriores (inputs blancos). */
-const RANKING_FILTER_INPUT_STYLE = {
-  padding: '8px 12px',
-  borderRadius: '8px',
-  border: 'none',
-  fontSize: '13px',
-  background: 'white',
-  color: '#333',
-  minWidth: '160px',
-  width: '100%',
-  boxSizing: 'border-box',
-};
-
 const FLAG_MAP = {};
 [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach(p => {
   FLAG_MAP[p.nombre.toLowerCase()] = p.bandera;
@@ -207,6 +194,14 @@ function getFlag(pais) {
   const p = pais.trim();
   if ([...p][0]?.match(/\p{Emoji_Presentation}/u)) return [...p][0];
   return FLAG_MAP[p.toLowerCase()] || '';
+}
+
+function countryLabelWithFlag(rawPais) {
+  const p = String(rawPais || '').trim();
+  if (!p) return '';
+  const maybe = getFlag(p);
+  if (maybe && p.startsWith(maybe)) return p;
+  return maybe ? `${maybe} ${p}` : p;
 }
 
 const TABS = [
@@ -236,45 +231,136 @@ function useMediaNarrow(maxWidth = 520) {
 const RANKING_PILL_BASE = {
   padding: '8px 14px',
   borderRadius: '999px',
-  border: '2px solid rgba(255,255,255,0.35)',
-  background: 'rgba(255,255,255,0.12)',
-  color: 'rgba(255,255,255,0.92)',
-  fontSize: '12px',
+  border: '1px solid #e2e8f0',
+  background: '#fff',
+  color: '#1e293b',
+  fontSize: '13px',
   fontWeight: 700,
   cursor: 'pointer',
   fontFamily: 'inherit',
 };
 
-function RankingFilterSelect({ label, value, onChange, options, disabled, ariaLabel }) {
+function RankingFilterDropdown({ label, value, onChange, options, disabled, ariaLabel, renderOptionLabel }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (ev) => {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(ev.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  const selectedText = value
+    ? (renderOptionLabel ? renderOptionLabel(value) : value)
+    : 'Todos';
+
   return (
     <label
+      ref={rootRef}
       style={{
         display: 'flex',
         flexDirection: 'column',
         gap: '4px',
         minWidth: '130px',
         flex: '1 1 150px',
+        position: 'relative',
       }}
     >
       <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>{label}</span>
-      <select
-        value={value}
+      <button
+        type="button"
         disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
+        onClick={() => setOpen((v) => !v)}
         aria-label={ariaLabel}
         style={{
-          ...RANKING_FILTER_INPUT_STYLE,
+          width: '100%',
+          minHeight: '40px',
+          padding: '9px 12px',
+          borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.28)',
+          fontSize: '13px',
+          background: 'rgba(15,23,42,0.42)',
+          color: '#f8fafc',
+          boxSizing: 'border-box',
+          textAlign: 'left',
           opacity: disabled ? 0.55 : 1,
           cursor: disabled ? 'not-allowed' : 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
         }}
       >
-        <option value="">Todos</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedText}</span>
+        <span aria-hidden style={{ fontSize: '12px', opacity: 0.9 }}>▾</span>
+      </button>
+      {open && !disabled ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            right: 0,
+            zIndex: 70,
+            borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(15,23,42,0.92)',
+            backdropFilter: 'blur(6px)',
+            boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
+            maxHeight: '240px',
+            overflowY: 'auto',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              onChange('');
+              setOpen(false);
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: 'none',
+              background: !value ? 'rgba(99,102,241,0.28)' : 'transparent',
+              color: '#fff',
+              textAlign: 'left',
+              cursor: 'pointer',
+              fontSize: '13px',
+            }}
+          >
+            Todos
+          </button>
+          {options.map((o) => {
+            const active = value === o;
+            return (
+              <button
+                key={o}
+                type="button"
+                onClick={() => {
+                  onChange(o);
+                  setOpen(false);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: 'none',
+                  background: active ? 'rgba(99,102,241,0.28)' : 'transparent',
+                  color: '#fff',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
+              >
+                {renderOptionLabel ? renderOptionLabel(o) : o}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </label>
   );
 }
@@ -291,9 +377,9 @@ function CategoriaPills({ value, onChange, ariaLabel }) {
         onClick={() => onChange('')}
         style={{
           ...RANKING_PILL_BASE,
-          background: !value ? 'white' : 'rgba(255,255,255,0.12)',
-          color: !value ? '#3b2f6e' : 'rgba(255,255,255,0.92)',
-          borderColor: !value ? 'white' : 'rgba(255,255,255,0.35)',
+          background: !value ? '#667eea' : '#fff',
+          color: !value ? '#fff' : '#1e293b',
+          borderColor: !value ? '#667eea' : '#e2e8f0',
         }}
       >
         Todos
@@ -307,9 +393,9 @@ function CategoriaPills({ value, onChange, ariaLabel }) {
             onClick={() => onChange(c)}
             style={{
               ...RANKING_PILL_BASE,
-              background: active ? 'white' : 'rgba(255,255,255,0.12)',
-              color: active ? '#3b2f6e' : 'rgba(255,255,255,0.92)',
-              borderColor: active ? 'white' : 'rgba(255,255,255,0.35)',
+              background: active ? '#667eea' : '#fff',
+              color: active ? '#fff' : '#1e293b',
+              borderColor: active ? '#667eea' : '#e2e8f0',
             }}
           >
             {c}
@@ -529,7 +615,7 @@ export default function Rankings() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '12px' }}>
           {activeTab === 'local' && (
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <RankingFilterSelect
+              <RankingFilterDropdown
                 label="País"
                 value={localPais}
                 onChange={(v) => {
@@ -540,8 +626,9 @@ export default function Rankings() {
                 options={paisesDesdeSedes}
                 disabled={paisesDesdeSedes.length === 0}
                 ariaLabel="País para ranking local"
+                renderOptionLabel={countryLabelWithFlag}
               />
-              <RankingFilterSelect
+              <RankingFilterDropdown
                 label="Provincia"
                 value={localProvincia}
                 onChange={(v) => {
@@ -552,7 +639,7 @@ export default function Rankings() {
                 disabled={!localPais.trim() || provinciasLocalOpciones.length === 0}
                 ariaLabel="Provincia para ranking local"
               />
-              <RankingFilterSelect
+              <RankingFilterDropdown
                 label="Ciudad"
                 value={localCiudad}
                 onChange={setLocalCiudad}
@@ -567,13 +654,14 @@ export default function Rankings() {
           ) : null}
           {activeTab === 'nacional' && (
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <RankingFilterSelect
+              <RankingFilterDropdown
                 label="País"
                 value={nacionalPais}
                 onChange={setNacionalPais}
                 options={paisesDesdeSedes}
                 disabled={paisesDesdeSedes.length === 0}
                 ariaLabel="País para ranking nacional"
+                renderOptionLabel={countryLabelWithFlag}
               />
             </div>
           )}
@@ -633,7 +721,7 @@ export default function Rankings() {
               : 'Ranking local · torneos de club finalizados (filtrá por ubicación o dejá Todos)')}
           {activeTab === 'nacional' &&
             (nacionalPais
-              ? `Ranking nacional · ${nacionalPais}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
+              ? `Ranking nacional · ${countryLabelWithFlag(nacionalPais)}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
               : 'Ranking nacional · todos los países o elegí uno para filtrar jugadores por país del perfil')}
           {activeTab === 'internacional' && (
             <>
