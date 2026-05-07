@@ -17,6 +17,7 @@ import {
   torneoPasaFiltroEstadoVista,
   esEstadoFinalizadoTorneo,
 } from '../utils/torneoEstadoFiltroPills';
+import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import { getDistanceKm } from '../utils/sedeCardUi';
 
 function closestSedeId(userPos, sedesList) {
@@ -57,7 +58,7 @@ function normalizeSearchText(s) {
 }
 
 function badgeEstadoTorneoListado(t) {
-  if (esEstadoFinalizadoTorneo(t?.estado)) {
+  if (torneoFechaInicioEsPasadaCalendario(t?.fecha_inicio) || esEstadoFinalizadoTorneo(t?.estado)) {
     return { label: 'Finalizado', bg: '#dc2626', color: '#fff' };
   }
   const b = badgeTorneoEstadoPublico(t.estado);

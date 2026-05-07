@@ -53,6 +53,39 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const TZ_TORNEO_CALENDARIO = 'America/Argentina/Buenos_Aires';
+const MSG_TORNEO_INSCRIPCION_FECHA_PASADA =
+  'Este torneo ya finalizó o su fecha de juego ha pasado';
+
+function ymdTodayInTorneoTz() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ_TORNEO_CALENDARIO,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === 'year')?.value;
+  const mo = parts.find((p) => p.type === 'month')?.value;
+  const da = parts.find((p) => p.type === 'day')?.value;
+  if (!y || !mo || !da) return null;
+  return `${y}-${mo}-${da}`;
+}
+
+function torneoFechaInicioYmdFromStr(fechaInicioStr) {
+  const d = String(fechaInicioStr || '').trim();
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return `${m[1]}-${m[2]}-${m[3]}`;
+}
+
+/** Calendario ART: `fecha_inicio` (YYYY-MM-DD) estrictamente anterior a hoy. */
+function torneoFechaInicioEsAnteriorAHoyArt(fechaInicioStr) {
+  const inicio = torneoFechaInicioYmdFromStr(fechaInicioStr);
+  const hoy = ymdTodayInTorneoTz();
+  if (!inicio || !hoy) return false;
+  return inicio < hoy;
+}
+
 /**
  * Reseñas por sede en PostgREST: la tabla expuesta en este proyecto es `public.resenas`
  * (no `sede_resenas`; el OpenAPI de Supabase lista `resenas`).
@@ -1245,6 +1278,17 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
       return res.json({ ok: true, already: true });
     }
 
+    const { data: torneoRow, error: errTorneo } = await supabase
+      .from('torneos')
+      .select('fecha_inicio')
+      .eq('id', tid)
+      .maybeSingle();
+    if (errTorneo) throw errTorneo;
+    if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    if (torneoFechaInicioEsAnteriorAHoyArt(torneoRow.fecha_inicio)) {
+      return res.status(400).json({ error: MSG_TORNEO_INSCRIPCION_FECHA_PASADA });
+    }
+
     const { error: errUp } = await supabase
       .from('equipos')
       .update({ inscripcion_estado: 'confirmado' })
@@ -1570,11 +1614,14 @@ app.post('/api/torneos/:id/lista-espera', async (req, res) => {
 
     const { data: torneoRow, error: tErr } = await supabase
       .from('torneos')
-      .select('id, estado, nombre')
+      .select('id, estado, nombre, fecha_inicio')
       .eq('id', id)
       .maybeSingle();
     if (tErr) throw tErr;
     if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    if (torneoFechaInicioEsAnteriorAHoyArt(torneoRow.fecha_inicio)) {
+      return res.status(400).json({ error: MSG_TORNEO_INSCRIPCION_FECHA_PASADA });
+    }
     const te = String(torneoRow.estado || '')
       .toLowerCase()
       .trim()
@@ -2532,6 +2579,18 @@ app.post('/api/torneos/:torneo_id/equipos', async (req, res) => {
     const { torneo_id } = req.params;
     const { nombre, sede_id, jugadores } = req.body;
 
+    const tidNum = parseInt(String(torneo_id), 10);
+    const { data: torneoRow, error: tErr } = await supabase
+      .from('torneos')
+      .select('id, fecha_inicio')
+      .eq('id', tidNum)
+      .maybeSingle();
+    if (tErr) throw tErr;
+    if (!torneoRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    if (torneoFechaInicioEsAnteriorAHoyArt(torneoRow.fecha_inicio)) {
+      return res.status(400).json({ error: MSG_TORNEO_INSCRIPCION_FECHA_PASADA });
+    }
+
     const { data, error } = await supabase
       .from('equipos')
       .insert([{
@@ -3179,6 +3238,16 @@ app.post('/api/crear-preferencia', async (req, res) => {
       if (!eid || !tid) {
         return res.status(400).json({ error: 'torneo_inscripcion requiere equipo_id y torneo_id' });
       }
+      const { data: torneoRow, error: tErr } = await supabase
+        .from('torneos')
+        .select('fecha_inicio')
+        .eq('id', tid)
+        .maybeSingle();
+      if (tErr) throw tErr;
+      if (!torneoRow) return res.status(400).json({ error: 'Torneo no encontrado' });
+      if (torneoFechaInicioEsAnteriorAHoyArt(torneoRow.fecha_inicio)) {
+        return res.status(400).json({ error: MSG_TORNEO_INSCRIPCION_FECHA_PASADA });
+      }
       const em = String(email || reservaDataIn?.email || '').trim().toLowerCase();
       reservaData = {
         tipo: 'torneo_inscripcion',
@@ -3666,11 +3735,38 @@ Recordá llegar 10 minutos antes.
 
 /** Inicio del torneo: fecha_inicio (YYYY-MM-DD) a las 00:00 ART. */
 function parseTorneoFechaInicioArt(fechaInicioStr) {
-  const d = String(fechaInicioStr || '').trim();
-  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return null;
-  const t = new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00-03:00`);
+  const ymd = torneoFechaInicioYmdFromStr(fechaInicioStr);
+  if (!ymd) return null;
+  const [y, mo, da] = ymd.split('-');
+  const t = new Date(`${y}-${mo}-${da}T00:00:00-03:00`);
   return Number.isNaN(t.getTime()) ? null : t;
+}
+
+/** Cada hora: pasar a finalizado torneos con fecha de juego ya pasada (calendario ART). */
+async function marcarTorneosFinalizadosPorFechaInicioPasada() {
+  const hoy = ymdTodayInTorneoTz();
+  if (!hoy) return;
+
+  const { data: torneos, error } = await supabase
+    .from('torneos')
+    .select('id, nombre, fecha_inicio, estado')
+    .in('estado', ['proximo', 'inscripcion_abierta', 'en_curso']);
+
+  if (error) throw error;
+
+  for (const t of torneos || []) {
+    const inicio = torneoFechaInicioYmdFromStr(t.fecha_inicio);
+    if (!inicio || inicio >= hoy) continue;
+
+    const { error: eUp } = await supabase.from('torneos').update({ estado: 'finalizado' }).eq('id', t.id);
+    if (eUp) {
+      console.warn(`⚠️ Torneo ${t.id}: no se pudo marcar finalizado:`, eUp.message);
+    } else {
+      console.log(
+        `📅 Torneo ${t.id} "${String(t.nombre || '').slice(0, 40)}" → finalizado (fecha_inicio pasada, era «${t.estado}»)`,
+      );
+    }
+  }
 }
 
 /** Cierre de inscripción 24h antes del inicio: pasa torneo a en_curso y elimina equipos no confirmados. */
@@ -3760,13 +3856,22 @@ cron.schedule('*/10 * * * *', async () => {
   }
 }, { timezone: 'America/Argentina/Buenos_Aires' });
 
-cron.schedule('0 * * * *', async () => {
-  try {
-    await cierreInscripcionTorneos24hAntesInicio();
-  } catch (err) {
-    console.error('❌ Cron cierre inscripción torneos (24h antes):', err.message);
-  }
-}, { timezone: 'America/Argentina/Buenos_Aires' });
+cron.schedule(
+  '0 * * * *',
+  async () => {
+    try {
+      await marcarTorneosFinalizadosPorFechaInicioPasada();
+    } catch (err) {
+      console.error('❌ Cron marcar torneos finalizados por fecha_inicio:', err.message);
+    }
+    try {
+      await cierreInscripcionTorneos24hAntesInicio();
+    } catch (err) {
+      console.error('❌ Cron cierre inscripción torneos (24h antes):', err.message);
+    }
+  },
+  { timezone: TZ_TORNEO_CALENDARIO },
+);
 
 app.listen(PORT, () => {
   console.log(`🚀 Padbol Match API running on port ${PORT}`);

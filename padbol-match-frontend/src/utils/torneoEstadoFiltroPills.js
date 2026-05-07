@@ -1,3 +1,5 @@
+import { torneoFechaInicioEsPasadaCalendario } from './torneoFechaInicioArt';
+
 /**
  * Filtro por estado de torneo (pills en TorneosPublicos y AdminDashboard).
  * Alineado con estados en BD / API.
@@ -88,10 +90,11 @@ export function esFiltroTorneoEstadoTodos(filtroRaw) {
 export function torneoPasaFiltroEstadoVista(t, filtro) {
   if (esFiltroTorneoEstadoTodos(filtro)) return true;
   const f = normalizeTorneoFiltroEstadoPill(filtro);
-  if (f === 'finalizado') return esEstadoFinalizadoTorneo(t?.estado);
-  if (f === 'en_curso') return esEstadoEnCursoTorneo(t?.estado);
-  if (f === 'inscripcion_abierta') return esInscripcionAbiertaTorneo(t?.estado);
-  if (f === 'proximo') return esProximoTorneo(t?.estado);
+  const pasadoCal = torneoFechaInicioEsPasadaCalendario(t?.fecha_inicio);
+  if (f === 'finalizado') return esEstadoFinalizadoTorneo(t?.estado) || pasadoCal;
+  if (f === 'en_curso') return esEstadoEnCursoTorneo(t?.estado) && !pasadoCal;
+  if (f === 'inscripcion_abierta') return esInscripcionAbiertaTorneo(t?.estado) && !pasadoCal;
+  if (f === 'proximo') return esProximoTorneo(t?.estado) && !pasadoCal;
   if (f === 'cancelado') return esEstadoCanceladoTorneo(t?.estado);
   return true;
 }

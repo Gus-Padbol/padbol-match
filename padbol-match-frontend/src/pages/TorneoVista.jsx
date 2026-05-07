@@ -18,6 +18,7 @@ import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { estadoTorneoNormalizado } from '../utils/torneoEstadoFiltroPills';
+import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import {
   TORNEO_RESERVA_LUGAR_BTN,
   TORNEO_RESERVA_LUGAR_CONFIRM_POST,
@@ -495,6 +496,10 @@ export default function TorneoVista() {
   };
 
   const estadoTorneoLower = estadoTorneoNormalizado(torneo?.estado);
+  const torneoPasadoCalendario = useMemo(
+    () => torneoFechaInicioEsPasadaCalendario(torneo?.fecha_inicio),
+    [torneo?.fecha_inicio],
+  );
   /** Solo `state.fromAdmin`: el flag de sesión no debe ocultar inscripción a quien entra desde el hub. */
   const modoAdminExplicitoEnVista = fromAdmin;
   const esListaEsperaTorneo =
@@ -503,6 +508,7 @@ export default function TorneoVista() {
     estadoTorneoLower === 'abierto' || estadoTorneoLower === 'inscripcion_abierta';
   const mostrarBannerJugadorTorneo =
     !modoAdminExplicitoEnVista &&
+    !torneoPasadoCalendario &&
     estadoTorneoLower !== 'finalizado' &&
     estadoTorneoLower !== 'cancelado' &&
     (esListaEsperaTorneo || esInscripcionAbiertaJugador);
@@ -557,7 +563,17 @@ export default function TorneoVista() {
   }, [session?.user, session?.access_token, torneoId, navigate, userProfile?.whatsapp]);
 
   const bannerInscripcionJugador = useMemo(() => {
-    if (!torneo || !mostrarBannerJugadorTorneo) return null;
+    if (!torneo) return null;
+    if (torneoPasadoCalendario && !modoAdminExplicitoEnVista) {
+      return (
+        <div className="torneo-inscripcion-jugador-banner">
+          <p className="torneo-inscripcion-jugador-banner__texto" role="status">
+            Torneo finalizado
+          </p>
+        </div>
+      );
+    }
+    if (!mostrarBannerJugadorTorneo) return null;
 
     if (session?.user && miEquipoEnTorneo && esInscripcionAbiertaJugador) {
       return (
@@ -622,6 +638,8 @@ export default function TorneoVista() {
     return null;
   }, [
     torneo,
+    torneoPasadoCalendario,
+    modoAdminExplicitoEnVista,
     session?.user,
     session?.access_token,
     mostrarBannerJugadorTorneo,
@@ -835,7 +853,7 @@ export default function TorneoVista() {
           apiBaseUrl={apiBaseUrlTorneo}
           adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}
           onAfterSorteoGrupos={recargarDatosTorneo}
-          participacionModalOpen={modalInscribirseOpen}
+          participacionModalOpen={modalInscribirseOpen && !torneoPasadoCalendario}
           onParticipacionModalClose={cerrarModalInscribirse}
           onParticipacionIrACrearEquipo={irACrearEquipoDesdeTorneoVista}
           onParticipacionDespuesUnirme={recargarDatosTorneo}
