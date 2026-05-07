@@ -229,9 +229,48 @@
   margin-top: 8px;
 }
 
+/* Filtros país/ciudad: solo mobile, encima de tarjetas sedes super_admin */
+.sedes-admin-mobile-filters {
+  display: none;
+}
+
 @media (max-width: 767px) {
   .sedes-admin-table-wrap {
     display: none !important;
+  }
+
+  .sedes-admin-mobile-filters {
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 2px;
+  }
+
+  .sedes-admin-mobile-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .sedes-admin-mobile-filter-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .sedes-admin-mobile-filter-select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    font-size: 16px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #0f172a;
   }
 
   .sedes-admin-mobile-cards {

@@ -1091,6 +1091,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [sedesMap, setSedesMap] = useState({});
   const [contratosBySedeId, setContratosBySedeId] = useState({});
   const [sedeDetalleAbiertoId, setSedeDetalleAbiertoId] = useState(null);
+  /** Filtros in-memory para tarjetas móvil de sedes (super_admin; clase CSS max-width 767px). */
+  const [sedeMobileFiltroPais, setSedeMobileFiltroPais] = useState('');
+  const [sedeMobileFiltroCiudad, setSedeMobileFiltroCiudad] = useState('');
   /** Equipos de torneos en alcance (para ingresos por inscripción confirmada). */
   const [equiposInscripcionRows, setEquiposInscripcionRows] = useState([]);
   /** sede_id → { total, activas } para ocupación de canchas. */
@@ -2235,6 +2238,38 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' })
     );
   }, [isSuperAdmin, sedesMap]);
+
+  const sedesSuperAdminPaisesUnicos = useMemo(() => {
+    if (!isSuperAdmin) return [];
+    const set = new Set();
+    for (const s of sedesSuperAdminLista) {
+      const p = String(s?.pais || '').trim();
+      if (p) set.add(p);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  }, [isSuperAdmin, sedesSuperAdminLista]);
+
+  const sedesSuperAdminCiudadesOpciones = useMemo(() => {
+    if (!isSuperAdmin) return [];
+    const base = sedeMobileFiltroPais
+      ? sedesSuperAdminLista.filter((s) => String(s?.pais || '').trim() === sedeMobileFiltroPais)
+      : sedesSuperAdminLista;
+    const set = new Set();
+    for (const s of base) {
+      const c = String(s?.ciudad || '').trim();
+      if (c) set.add(c);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  }, [isSuperAdmin, sedesSuperAdminLista, sedeMobileFiltroPais]);
+
+  const sedesSuperAdminListaMobileFiltrada = useMemo(() => {
+    if (!isSuperAdmin) return sedesSuperAdminLista;
+    return sedesSuperAdminLista.filter((s) => {
+      if (sedeMobileFiltroPais && String(s?.pais || '').trim() !== sedeMobileFiltroPais) return false;
+      if (sedeMobileFiltroCiudad && String(s?.ciudad || '').trim() !== sedeMobileFiltroCiudad) return false;
+      return true;
+    });
+  }, [isSuperAdmin, sedesSuperAdminLista, sedeMobileFiltroPais, sedeMobileFiltroCiudad]);
 
   useEffect(() => {
     if (!esAdminNacional) {
@@ -4802,8 +4837,53 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </tbody>
                 </table>
               </div>
+              {isSuperAdmin ? (
+                <div className="sedes-admin-mobile-filters">
+                  <label className="sedes-admin-mobile-filter-field">
+                    <span className="sedes-admin-mobile-filter-label">País</span>
+                    <select
+                      value={sedeMobileFiltroPais}
+                      onChange={(e) => {
+                        setSedeMobileFiltroPais(e.target.value);
+                        setSedeMobileFiltroCiudad('');
+                      }}
+                      className="sedes-admin-mobile-filter-select"
+                      aria-label="Filtrar sedes por país"
+                    >
+                      <option value="">Todos</option>
+                      {sedesSuperAdminPaisesUnicos.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="sedes-admin-mobile-filter-field">
+                    <span className="sedes-admin-mobile-filter-label">Ciudad</span>
+                    <select
+                      value={sedeMobileFiltroCiudad}
+                      onChange={(e) => setSedeMobileFiltroCiudad(e.target.value)}
+                      className="sedes-admin-mobile-filter-select"
+                      aria-label="Filtrar sedes por ciudad"
+                    >
+                      <option value="">Todos</option>
+                      {sedesSuperAdminCiudadesOpciones.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
               <div className="sedes-admin-mobile-cards">
-                {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).map((s) => {
+                {(isSuperAdmin ? sedesSuperAdminListaMobileFiltrada : sedesNacionalLista).length === 0 &&
+                (isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).length > 0 ? (
+                  <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: 14 }}>
+                    No hay sedes que coincidan con el filtro.
+                  </p>
+                ) : null}
+                {(isSuperAdmin ? sedesSuperAdminListaMobileFiltrada : sedesNacionalLista).map((s) => {
                   const flagS = sedeFlag(s);
                   const open = Number(sedeDetalleAbiertoId) === Number(s.id);
                   const contrato = contratosBySedeId[Number(s.id)] || null;
