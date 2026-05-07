@@ -178,13 +178,20 @@ async function authUserFromBearer(req) {
 async function fetchUserRoleRow(email) {
   const em = String(email || '').trim().toLowerCase();
   if (!em) return null;
-  const { data, error } = await supabase
+  let q = await supabase
     .from('user_roles')
-    .select('role, sede_id, nombre, pais')
+    .select('role, alcance, sede_id, nombre, pais, provincia, ciudad')
     .eq('email', em)
     .maybeSingle();
-  if (error) return null;
-  return data;
+  if (q.error && /colum|column/i.test(String(q.error.message || ''))) {
+    q = await supabase
+      .from('user_roles')
+      .select('role, sede_id, nombre, pais')
+      .eq('email', em)
+      .maybeSingle();
+  }
+  if (q.error) return null;
+  return q.data;
 }
 
 function isSuperAdminApi(userEmail, role) {
@@ -199,6 +206,62 @@ function normalizeAdminPaisLabel(raw) {
   return String(raw).replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim();
 }
 
+function normalizeGeoText(raw) {
+  return String(raw || '')
+    .replace(/^[\p{Emoji_Presentation}\s]*/u, '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function resolveAlcanceFromRoleRow(row) {
+  const raw = String(row?.alcance || '').trim().toLowerCase();
+  if (['sede', 'ciudad', 'provincia', 'pais', 'global'].includes(raw)) return raw;
+  const role = String(row?.role || '').trim().toLowerCase();
+  if (role === 'super_admin') return 'global';
+  if (role === 'admin_nacional') return 'pais';
+  if (role === 'admin_club') return 'sede';
+  return null;
+}
+
+async function sedesPermitidasPorScope(scope) {
+  if (!scope) return { mode: 'none', sedes: [] };
+  if (scope.superA || scope.alcance === 'global') {
+    const { data, error } = await supabase.from('sedes').select('*');
+    if (error) throw error;
+    return { mode: 'global', sedes: data || [] };
+  }
+  const alcance = scope.alcance || 'sede';
+  if (alcance === 'sede' && scope.sedeId != null) {
+    const { data, error } = await supabase.from('sedes').select('*').eq('id', scope.sedeId);
+    if (error) throw error;
+    return { mode: 'sede', sedes: data || [] };
+  }
+  const { data: allSedes, error } = await supabase.from('sedes').select('*');
+  if (error) throw error;
+  const rows = allSedes || [];
+  if (alcance === 'ciudad' && scope.ciudadNorm) {
+    return {
+      mode: 'ciudad',
+      sedes: rows.filter((s) => normalizeGeoText(s.ciudad) === scope.ciudadNorm),
+    };
+  }
+  if (alcance === 'provincia' && scope.provinciaNorm) {
+    return {
+      mode: 'provincia',
+      sedes: rows.filter((s) => normalizeGeoText(s.provincia) === scope.provinciaNorm),
+    };
+  }
+  if (alcance === 'pais' && scope.paisNorm) {
+    return {
+      mode: 'pais',
+      sedes: rows.filter((s) => normalizeGeoText(s.pais) === scope.paisNorm),
+    };
+  }
+  return { mode: alcance, sedes: [] };
+}
+
 /**
  * JWT (Authorization Bearer) + fila `user_roles` en Supabase.
  * Sin Bearer válido → null (listados sin filtro de rol, compat. anónima).
@@ -209,13 +272,23 @@ async function adminListScopeFromRequest(req) {
   const email = String(user.email).trim().toLowerCase();
   const row = await fetchUserRoleRow(user.email);
   const rol = row?.role || null;
+  const alcance = resolveAlcanceFromRoleRow(row);
   const sedeIdRaw = row?.sede_id;
   const sedeId = sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
+  const ciudadNorm = normalizeGeoText(row?.ciudad || '');
+  const provinciaNorm = normalizeGeoText(row?.provincia || '');
+  const paisNorm = normalizeGeoText(row?.pais || '');
   return {
     email,
     rol,
+    alcance,
     sedeId: Number.isFinite(sedeId) ? sedeId : null,
     pais: row?.pais || null,
+    ciudad: row?.ciudad || null,
+    provincia: row?.provincia || null,
+    ciudadNorm,
+    provinciaNorm,
+    paisNorm,
     superA: isSuperAdminApi(email, rol),
     row,
     authUserId: user.id ?? null,
@@ -250,14 +323,19 @@ async function assertUsuarioPuedeSortearTorneo(req, torneo) {
   if (isSuperAdminApi(email, rol)) return;
 
   const tsede = torneo?.sede_id != null && torneo.sede_id !== '' ? Number(torneo.sede_id) : null;
-
-  if (rol === 'admin_club' && row?.sede_id != null && tsede != null && Number(row.sede_id) === tsede) {
-    return;
-  }
-
-  if (rol === 'admin_nacional' && row?.pais && tsede != null) {
-    const { data: sede } = await supabase.from('sedes').select('pais').eq('id', tsede).maybeSingle();
-    if (sede && paisAdminCoincideSedeSorteo(row.pais, sede.pais)) return;
+  if (tsede != null) {
+    const scope = {
+      rol,
+      alcance: resolveAlcanceFromRoleRow(row),
+      sedeId: row?.sede_id != null && row.sede_id !== '' ? Number(row.sede_id) : null,
+      paisNorm: normalizeGeoText(row?.pais || ''),
+      provinciaNorm: normalizeGeoText(row?.provincia || ''),
+      ciudadNorm: normalizeGeoText(row?.ciudad || ''),
+      superA: false,
+    };
+    const allowed = await sedesPermitidasPorScope(scope);
+    const ids = new Set((allowed.sedes || []).map((s) => Number(s.id)).filter((id) => Number.isFinite(id)));
+    if (ids.has(tsede)) return;
   }
 
   const e = new Error('No autorizado para sortear grupos en este torneo');
@@ -954,47 +1032,26 @@ app.post('/api/reservas', async (req, res) => {
   }
 });
 
-// GET reservas — con Bearer: super_admin / emails legacy → todas; admin_club → sede; admin_nacional → sedes del país
+// GET reservas — con Bearer aplica alcance: sede / ciudad / provincia / país / global.
 app.get('/api/reservas', async (req, res) => {
   try {
     const scope = await adminListScopeFromRequest(req);
     const logLine = scope
-      ? { rol: scope.rol, email: scope.email, sedeId: scope.sedeId }
-      : { rol: null, email: null, sedeId: null };
+      ? { rol: scope.rol, alcance: scope.alcance, email: scope.email, sedeId: scope.sedeId }
+      : { rol: null, alcance: null, email: null, sedeId: null };
     console.log('GET /reservas:', logLine);
 
     let query = supabase.from('reservas').select('*');
 
     if (scope) {
-      if (scope.superA) {
+      if (scope.superA || scope.alcance === 'global') {
         // sin filtro
-      } else if (scope.rol === 'admin_club' && scope.sedeId != null) {
-        const { data: sedeRow, error: se } = await supabase
-          .from('sedes')
-          .select('nombre')
-          .eq('id', scope.sedeId)
-          .maybeSingle();
-        if (se) throw se;
-        const nombre = String(sedeRow?.nombre || '').trim();
-        if (!nombre) {
-          return res.json([]);
-        }
-        query = query.eq('sede', nombre);
-      } else if (scope.rol === 'admin_nacional' && scope.pais) {
-        const paisAdmin = normalizeAdminPaisLabel(scope.pais);
-        const { data: sedesAll, error: e2 } = await supabase.from('sedes').select('nombre, pais');
-        if (e2) throw e2;
+      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional') {
+        const allowed = await sedesPermitidasPorScope(scope);
         const nombres = [
-          ...new Set(
-            (sedesAll || [])
-              .filter((s) => s.pais && String(s.pais).includes(paisAdmin))
-              .map((s) => String(s.nombre || '').trim())
-              .filter(Boolean)
-          ),
+          ...new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean)),
         ];
-        if (nombres.length === 0) {
-          return res.json([]);
-        }
+        if (!nombres.length) return res.json([]);
         query = query.in('sede', nombres);
       } else if (scope.authUserId) {
         query = query.eq('user_id', scope.authUserId);
@@ -1304,28 +1361,21 @@ app.get('/api/torneos', async (req, res) => {
   try {
     const scope = await adminListScopeFromRequest(req);
     const logLine = scope
-      ? { rol: scope.rol, email: scope.email, sedeId: scope.sedeId }
-      : { rol: null, email: null, sedeId: null };
+      ? { rol: scope.rol, alcance: scope.alcance, email: scope.email, sedeId: scope.sedeId }
+      : { rol: null, alcance: null, email: null, sedeId: null };
     console.log('GET /torneos:', logLine);
 
     let query = supabase.from('torneos').select('*');
 
     if (scope) {
-      if (scope.superA) {
+      if (scope.superA || scope.alcance === 'global') {
         // sin filtro
-      } else if (scope.rol === 'admin_club' && scope.sedeId != null) {
-        query = query.eq('sede_id', scope.sedeId);
-      } else if (scope.rol === 'admin_nacional' && scope.pais) {
-        const paisAdmin = normalizeAdminPaisLabel(scope.pais);
-        const { data: sedesAll, error: e2 } = await supabase.from('sedes').select('id, pais');
-        if (e2) throw e2;
-        const ids = (sedesAll || [])
-          .filter((s) => s.pais && String(s.pais).includes(paisAdmin))
-          .map((s) => s.id)
+      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional') {
+        const allowed = await sedesPermitidasPorScope(scope);
+        const ids = (allowed.sedes || [])
+          .map((s) => s?.id)
           .filter((id) => id != null);
-        if (ids.length === 0) {
-          return res.json([]);
-        }
+        if (!ids.length) return res.json([]);
         query = query.in('sede_id', ids);
       } else {
         return res.json([]);
@@ -3462,8 +3512,11 @@ async function upsertUserRoleAdminClub({ email, nombre, pais, sede_id }) {
   const payload = {
     email: em,
     role: 'admin_club',
+    alcance: 'sede',
     nombre: nombre || null,
     pais: pais || null,
+    ciudad: null,
+    provincia: null,
     sede_id,
     torneos_oficiales_habilitados: false,
   };
@@ -3473,8 +3526,11 @@ async function upsertUserRoleAdminClub({ email, nombre, pais, sede_id }) {
       .from('user_roles')
       .update({
         role: 'admin_club',
+        alcance: 'sede',
         nombre: payload.nombre,
         pais: payload.pais,
+        ciudad: null,
+        provincia: null,
         sede_id: payload.sede_id,
         torneos_oficiales_habilitados: false,
       })
@@ -3484,6 +3540,138 @@ async function upsertUserRoleAdminClub({ email, nombre, pais, sede_id }) {
   const { error } = await supabase.from('user_roles').insert(payload);
   return error || null;
 }
+
+async function assertSuperAdminReq(req) {
+  const user = await authUserFromBearer(req);
+  if (!user?.email) {
+    const e = new Error('No autorizado');
+    e.status = 401;
+    throw e;
+  }
+  const rowRole = await fetchUserRoleRow(user.email);
+  const role = rowRole?.role || null;
+  if (!isSuperAdminApi(user.email, role)) {
+    const e = new Error('Solo super admin');
+    e.status = 403;
+    throw e;
+  }
+  return { user, roleRow: rowRole };
+}
+
+/** GET /api/admin/sedes-alcance — admin autenticado: metadatos de alcance y sedes habilitadas. */
+app.get('/api/admin/sedes-alcance', async (req, res) => {
+  try {
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope) return res.status(401).json({ error: 'No autorizado' });
+    const allowed = await sedesPermitidasPorScope(scope);
+    res.json({
+      rol: scope.rol,
+      alcance: scope.alcance,
+      pais: scope.pais || null,
+      provincia: scope.provincia || null,
+      ciudad: scope.ciudad || null,
+      sede_id: scope.sedeId ?? null,
+      sedes: allowed.sedes || [],
+    });
+  } catch (err) {
+    console.error('❌ GET /api/admin/sedes-alcance:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/roles — super_admin: lista admins + alcance + asignación geográfica. */
+app.get('/api/admin/roles', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const { data: rolesRows, error: rErr } = await supabase
+      .from('user_roles')
+      .select('email, nombre, role, alcance, sede_id, ciudad, provincia, pais')
+      .in('role', ['admin_club', 'admin_nacional', 'super_admin'])
+      .order('email', { ascending: true });
+    if (rErr) throw rErr;
+    const sedeIds = [...new Set((rolesRows || []).map((r) => r.sede_id).filter((id) => id != null))];
+    let sedesMap = {};
+    if (sedeIds.length) {
+      const { data: sedes, error: sErr } = await supabase.from('sedes').select('id, nombre').in('id', sedeIds);
+      if (sErr) throw sErr;
+      for (const s of sedes || []) sedesMap[s.id] = s;
+    }
+    const rows = (rolesRows || []).map((r) => ({
+      ...r,
+      alcance: resolveAlcanceFromRoleRow(r),
+      sede_nombre: r.sede_id != null ? String(sedesMap[r.sede_id]?.nombre || '').trim() || null : null,
+    }));
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ GET /api/admin/roles:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/roles — super_admin: asigna/actualiza rol + alcance. */
+app.post('/api/admin/roles', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase();
+    const role = String(b.role || '').trim().toLowerCase();
+    const alcance = String(b.alcance || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email obligatorio' });
+    if (!['admin_club', 'admin_nacional'].includes(role)) return res.status(400).json({ error: 'Rol inválido' });
+    if (!['sede', 'ciudad', 'provincia', 'pais'].includes(alcance)) {
+      return res.status(400).json({ error: 'Alcance inválido' });
+    }
+    const sedeId = b.sede_id != null && String(b.sede_id).trim() !== '' ? Number(b.sede_id) : null;
+    const ciudad = String(b.ciudad || '').trim() || null;
+    const provincia = String(b.provincia || '').trim() || null;
+    const pais = String(b.pais || '').trim() || null;
+    if (alcance === 'sede' && !Number.isFinite(sedeId)) {
+      return res.status(400).json({ error: 'sede_id es obligatorio para alcance sede' });
+    }
+    if (alcance === 'ciudad' && !ciudad) return res.status(400).json({ error: 'Ciudad obligatoria' });
+    if (alcance === 'provincia' && !provincia) return res.status(400).json({ error: 'Provincia obligatoria' });
+    if (alcance === 'pais' && !pais) return res.status(400).json({ error: 'País obligatorio' });
+
+    const payload = {
+      email,
+      role,
+      alcance,
+      nombre: String(b.nombre || '').trim() || null,
+      sede_id: alcance === 'sede' ? sedeId : null,
+      ciudad: alcance === 'ciudad' ? ciudad : null,
+      provincia: alcance === 'provincia' ? provincia : null,
+      pais: alcance === 'pais' ? pais : null,
+      torneos_oficiales_habilitados: role === 'admin_nacional',
+    };
+    const { data: existing } = await supabase.from('user_roles').select('email').eq('email', email).maybeSingle();
+    let r;
+    if (existing?.email) {
+      r = await supabase.from('user_roles').update(payload).eq('email', email).select('*').single();
+    } else {
+      r = await supabase.from('user_roles').insert(payload).select('*').single();
+    }
+    if (r.error) throw r.error;
+    res.json(r.data);
+  } catch (err) {
+    console.error('❌ POST /api/admin/roles:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** DELETE /api/admin/roles/:email — super_admin: revoca rol admin. */
+app.delete('/api/admin/roles/:email', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const email = String(req.params.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email inválido' });
+    const { error } = await supabase.from('user_roles').delete().eq('email', email);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ DELETE /api/admin/roles/:email:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
 
 function mapPendingRowToSedeInsert(row) {
   return {

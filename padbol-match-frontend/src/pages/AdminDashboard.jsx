@@ -682,6 +682,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const [sedesPendientes, setSedesPendientes] = useState([]);
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
+  const [adminScopeMeta, setAdminScopeMeta] = useState(null);
+  const [adminRolesRows, setAdminRolesRows] = useState([]);
+  const [adminRolesLoading, setAdminRolesLoading] = useState(false);
+  const [adminRoleModalOpen, setAdminRoleModalOpen] = useState(false);
+  const [adminRoleSaving, setAdminRoleSaving] = useState(false);
+  const [adminRoleForm, setAdminRoleForm] = useState({
+    email: '',
+    nombre: '',
+    role: 'admin_club',
+    alcance: 'sede',
+    sede_id: '',
+    ciudad: '',
+    provincia: '',
+    pais: '',
+  });
 
   const cargarSedesPendientes = useCallback(async () => {
     if (!puedeVerSedesPendientes) return;
@@ -703,6 +718,97 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setSedesPendientesLoading(false);
     }
   }, [apiBaseUrl, puedeVerSedesPendientes]);
+
+  const cargarRolesAdmin = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    setAdminRolesLoading(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/roles`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const j = await res.json().catch(() => []);
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setAdminRolesRows(Array.isArray(j) ? j : []);
+    } catch (e) {
+      console.error('[AdminDashboard] roles admin:', e);
+      setAdminRolesRows([]);
+    } finally {
+      setAdminRolesLoading(false);
+    }
+  }, [apiBaseUrl, isSuperAdmin]);
+
+  const abrirModalAsignarRol = useCallback(() => {
+    setAdminRoleForm({
+      email: '',
+      nombre: '',
+      role: 'admin_club',
+      alcance: 'sede',
+      sede_id: '',
+      ciudad: '',
+      provincia: '',
+      pais: '',
+    });
+    setAdminRoleModalOpen(true);
+  }, []);
+
+  const guardarRolAdmin = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    if (!String(adminRoleForm.email || '').trim()) {
+      alert('Email obligatorio');
+      return;
+    }
+    setAdminRoleSaving(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/roles`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...adminRoleForm,
+          email: String(adminRoleForm.email || '').trim().toLowerCase(),
+          sede_id: adminRoleForm.sede_id ? Number(adminRoleForm.sede_id) : null,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setAdminRoleModalOpen(false);
+      setMensajeExito('✅ Rol asignado/actualizado');
+      setTimeout(() => setMensajeExito(''), 3500);
+      void cargarRolesAdmin();
+      void fetchData();
+    } catch (e) {
+      alert(e?.message || 'No se pudo guardar el rol');
+    } finally {
+      setAdminRoleSaving(false);
+    }
+  }, [adminRoleForm, apiBaseUrl, isSuperAdmin, cargarRolesAdmin]);
+
+  const revocarRolAdmin = useCallback(async (email) => {
+    if (!isSuperAdmin) return;
+    if (!window.confirm(`¿Revocar rol de ${email}?`)) return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/roles/${encodeURIComponent(String(email || '').trim())}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setMensajeExito('Rol revocado');
+      setTimeout(() => setMensajeExito(''), 3500);
+      void cargarRolesAdmin();
+      void fetchData();
+    } catch (e) {
+      alert(e?.message || 'No se pudo revocar el rol');
+    }
+  }, [apiBaseUrl, isSuperAdmin, cargarRolesAdmin]);
 
   const aprobarSedePendiente = useCallback(
     async (id) => {
@@ -764,6 +870,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       void cargarSedesPendientes();
     }
   }, [activeTab, puedeVerSedesPendientes, cargarSedesPendientes]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    if (activeTab === 'config' || activeTab === 'resumen') {
+      void cargarRolesAdmin();
+    }
+  }, [activeTab, isSuperAdmin, cargarRolesAdmin]);
 
   useEffect(() => {
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
@@ -1667,12 +1780,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         : {};
 
       let allSedesRows = [];
+      let sedesAlcance = [];
+      let scopeMeta = null;
       try {
         if (isSuperAdmin) {
           const sedesRes = await fetch(`${apiBaseUrl}/api/sedes/todas`, { headers: { ...listAuthHeaders } });
           const sedesJson = await sedesRes.json().catch(() => []);
           if (!sedesRes.ok) throw new Error(sedesJson?.error || sedesRes.statusText);
           allSedesRows = Array.isArray(sedesJson) ? sedesJson : [];
+          sedesAlcance = allSedesRows;
+          scopeMeta = { rol: 'super_admin', alcance: 'global', sedes: allSedesRows };
         } else {
           const { data: sedesRows, error: sedesErr } = await supabase
             .from('sedes')
@@ -1680,35 +1797,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           if (!sedesErr) {
             allSedesRows = sedesRows || [];
           }
+          try {
+            const scopeRes = await fetch(`${apiBaseUrl}/api/admin/sedes-alcance`, { headers: { ...listAuthHeaders } });
+            const scopeJson = await scopeRes.json().catch(() => ({}));
+            if (scopeRes.ok && Array.isArray(scopeJson?.sedes)) {
+              sedesAlcance = scopeJson.sedes;
+              scopeMeta = scopeJson;
+            }
+          } catch {
+            /* noop */
+          }
         }
       } catch { /* sedes opcionales */ }
-
-      /** Sedes del alcance del rol (para filtrar reservas/torneos). Super: todas. */
-      let sedesAlcance = [];
-      if (isSuperAdmin) {
-        sedesAlcance = allSedesRows;
-      } else if (esAdminClub && sedeId != null && sedeId !== '') {
+      setAdminScopeMeta(scopeMeta);
+      if (!isSuperAdmin && sedesAlcance.length === 0 && esAdminClub && sedeId != null && sedeId !== '') {
         sedesAlcance = allSedesRows.filter((s) => mismoIdSede(s.id, sedeId));
-      } else if (esAdminNacional) {
-        const roleData = (() => {
-          try {
-            return JSON.parse(localStorage.getItem('user_role_data') || '{}');
-          } catch {
-            return {};
-          }
-        })();
-        const paisAdmin = roleData.pais
-          ? String(roleData.pais).replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim()
-          : '';
-        if (paisAdmin) {
-          sedesAlcance = allSedesRows.filter(
-            (s) => s.pais && String(s.pais).includes(paisAdmin)
-          );
-        } else {
-          sedesAlcance = [];
-        }
-      } else {
-        sedesAlcance = [];
       }
 
       /** Mapa de sedes: super ve todas las sedes (nombres en torneos de cualquier sede); el resto solo su alcance. */
@@ -2768,38 +2871,32 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               fontWeight: 600,
             }}
           >
-            {paisAdminNacional
-              ? `País asignado: ${paisAdminNacional}`
-              : 'Sin país en tu rol: cargá el país en user_roles para ver el alcance.'}
+            {`Alcance: ${String(adminScopeMeta?.alcance || 'pais')}${
+              adminScopeMeta?.ciudad ? ` · Ciudad: ${adminScopeMeta.ciudad}` : ''
+            }${adminScopeMeta?.provincia ? ` · Provincia: ${adminScopeMeta.provincia}` : ''}${
+              adminScopeMeta?.pais ? ` · País: ${adminScopeMeta.pais}` : ''
+            }`}
           </div>
-          {!paisAdminNacional ? (
-            <div className="section" style={{ background: '#fff8e1', border: '1px solid #ffc107' }}>
-              <p style={{ margin: 0, color: '#5d4037' }}>
-                Contactá a un super admin para que tu usuario nacional tenga el campo <strong>país</strong> en la base.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="dashboard-grid">
-                <div className="card reservas">
-                  <h2>Total sedes</h2>
-                  <p className="count">{sedesNacionalLista.length}</p>
-                  <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Clubes en tu país</p>
-                </div>
-                <div className="card torneos">
-                  <h2>Total jugadores</h2>
-                  <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
-                  <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Fichas con país coincidente</p>
-                </div>
-                <div className="card torneos">
-                  <h2>Torneos activos</h2>
-                  <p className="count">{torneosActivosNacionalCount}</p>
-                  <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
-                </div>
+          <>
+            <div className="dashboard-grid">
+              <div className="card reservas">
+                <h2>Total sedes</h2>
+                <p className="count">{sedesNacionalLista.length}</p>
+                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Clubes dentro de tu alcance</p>
               </div>
-              {resumenOperativoSecciones}
-            </>
-          )}
+              <div className="card torneos">
+                <h2>Total jugadores</h2>
+                <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
+                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Fichas en tu alcance</p>
+              </div>
+              <div className="card torneos">
+                <h2>Torneos activos</h2>
+                <p className="count">{torneosActivosNacionalCount}</p>
+                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
+              </div>
+            </div>
+            {resumenOperativoSecciones}
+          </>
         </>
       ) : (
         <>
@@ -4189,6 +4286,79 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           );
         })()}
 
+        <div style={{ marginBottom: '32px' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+            Gestión de Administradores
+          </h3>
+          <div style={{ marginBottom: '10px' }}>
+            <button
+              type="button"
+              onClick={abrirModalAsignarRol}
+              style={{
+                padding: '9px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #22c55e, #15803d)',
+                color: '#fff',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Asignar rol
+            </button>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
+              <thead>
+                <tr style={{ background: '#312e81', color: '#fff' }}>
+                  <th style={{ padding: '8px' }}>Nombre</th>
+                  <th style={{ padding: '8px' }}>Email</th>
+                  <th style={{ padding: '8px' }}>Rol</th>
+                  <th style={{ padding: '8px' }}>Alcance</th>
+                  <th style={{ padding: '8px' }}>Asignación</th>
+                  <th style={{ padding: '8px' }}>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adminRolesLoading ? (
+                  <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center' }}>Cargando…</td></tr>
+                ) : adminRolesRows.length === 0 ? (
+                  <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>Sin administradores registrados</td></tr>
+                ) : (
+                  adminRolesRows.map((row) => (
+                    <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px' }}>{row.nombre || '—'}</td>
+                      <td style={{ padding: '8px', fontSize: '12px' }}>{row.email}</td>
+                      <td style={{ padding: '8px' }}>{row.role || '—'}</td>
+                      <td style={{ padding: '8px' }}>{row.alcance || '—'}</td>
+                      <td style={{ padding: '8px', fontSize: '12px' }}>
+                        {row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
+                        {row.alcance === 'ciudad' ? row.ciudad || '—' : null}
+                        {row.alcance === 'provincia' ? row.provincia || '—' : null}
+                        {row.alcance === 'pais' ? row.pais || '—' : null}
+                        {row.alcance === 'global' ? 'Global' : null}
+                      </td>
+                      <td style={{ padding: '8px' }}>
+                        {row.role === 'super_admin' ? (
+                          <span style={{ color: '#64748b', fontSize: '12px' }}>—</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void revocarRolAdmin(row.email)}
+                            style={{ padding: '4px 9px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer' }}
+                          >
+                            Revocar rol
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Save button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
           <button
@@ -5147,6 +5317,72 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>}
       </div>
       </div>
+
+      {adminRoleModalOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Asignar rol admin"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 18950,
+            background: 'rgba(15, 23, 42, 0.72)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget && !adminRoleSaving) setAdminRoleModalOpen(false);
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: '540px', background: '#fff', borderRadius: '14px', padding: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '19px', color: '#0f172a' }}>Asignar rol</h3>
+            <p style={{ margin: '6px 0 12px', fontSize: '13px', color: '#64748b' }}>Buscar usuario por email y definir alcance geográfico.</p>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              <input type="email" placeholder="Email del usuario" value={adminRoleForm.email} onChange={(e) => setAdminRoleForm((p) => ({ ...p, email: e.target.value }))} />
+              <input type="text" placeholder="Nombre (opcional)" value={adminRoleForm.nombre} onChange={(e) => setAdminRoleForm((p) => ({ ...p, nombre: e.target.value }))} />
+              <select value={adminRoleForm.role} onChange={(e) => setAdminRoleForm((p) => ({ ...p, role: e.target.value }))}>
+                <option value="admin_club">admin_club</option>
+                <option value="admin_nacional">admin_nacional</option>
+              </select>
+              <select value={adminRoleForm.alcance} onChange={(e) => setAdminRoleForm((p) => ({ ...p, alcance: e.target.value }))}>
+                <option value="sede">sede</option>
+                <option value="ciudad">ciudad</option>
+                <option value="provincia">provincia</option>
+                <option value="pais">pais</option>
+              </select>
+              {adminRoleForm.alcance === 'sede' ? (
+                <select value={adminRoleForm.sede_id} onChange={(e) => setAdminRoleForm((p) => ({ ...p, sede_id: e.target.value }))}>
+                  <option value="">Seleccionar sede</option>
+                  {Object.values(sedesMap || {}).map((s) => (
+                    <option key={s.id} value={s.id}>{sedeFlag(s) ? `${sedeFlag(s)} ` : ''}{s.nombre}</option>
+                  ))}
+                </select>
+              ) : null}
+              {adminRoleForm.alcance === 'ciudad' ? (
+                <input type="text" placeholder="Ciudad" value={adminRoleForm.ciudad} onChange={(e) => setAdminRoleForm((p) => ({ ...p, ciudad: e.target.value }))} />
+              ) : null}
+              {adminRoleForm.alcance === 'provincia' ? (
+                <input type="text" placeholder="Provincia / Estado" value={adminRoleForm.provincia} onChange={(e) => setAdminRoleForm((p) => ({ ...p, provincia: e.target.value }))} />
+              ) : null}
+              {adminRoleForm.alcance === 'pais' ? (
+                <select value={adminRoleForm.pais} onChange={(e) => setAdminRoleForm((p) => ({ ...p, pais: e.target.value }))}>
+                  <option value="">Seleccionar país</option>
+                  {PAISES_SEDE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+              ) : null}
+            </div>
+            <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button type="button" onClick={() => setAdminRoleModalOpen(false)} disabled={adminRoleSaving}>Cancelar</button>
+              <button type="button" onClick={() => void guardarRolAdmin()} disabled={adminRoleSaving} style={{ padding: '8px 14px', border: 'none', borderRadius: '7px', background: '#16a34a', color: '#fff' }}>
+                {adminRoleSaving ? 'Guardando…' : 'Guardar rol'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {nuevaSedeModalOpen ? (
         <div
