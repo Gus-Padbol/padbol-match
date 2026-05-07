@@ -9,6 +9,7 @@ import {
 import { buildJugadorPreviewModalData } from './utils/jugadorPreviewModalData';
 import JugadorPreviewModal from './components/JugadorPreviewModal';
 import ShareLinkButton from './components/ShareLinkButton';
+import JugadorQrModal from './components/JugadorQrModal';
 import { hubInstagramColumnWrapStyle } from './constants/hubLayout';
 import { formatNivelTorneo } from './utils/torneoFormatters';
 import { fetchTorneosConPuntosParaPerfil, emojiMedallaPosicionCompacta } from './utils/torneoHistorialPuntosJugador';
@@ -62,6 +63,7 @@ export default function PerfilPublico() {
   const [torneosConPuntos, setTorneosConPuntos] = useState([]);
   const [mostrarTodosTorneosPublico, setMostrarTodosTorneosPublico] = useState(false);
   const [jugadorPreviewCompaneroPublico, setJugadorPreviewCompaneroPublico] = useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const aliasDecoded = useMemo(() => {
     try {
@@ -404,8 +406,8 @@ export default function PerfilPublico() {
             </h1>
           )}
 
-          {perfilShareUrl ? (
-            <div style={{ margin: '12px auto 0', maxWidth: '280px', width: '100%' }}>
+          <div style={{ margin: '12px auto 0', maxWidth: '280px', width: '100%', display: 'grid', gap: '8px' }}>
+            {perfilShareUrl ? (
               <ShareLinkButton
                 shareTitle={perfilShareMeta.title}
                 shareText={perfilShareMeta.text}
@@ -414,8 +416,24 @@ export default function PerfilPublico() {
               >
                 Compartir perfil
               </ShareLinkButton>
-            </div>
-          ) : null}
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setQrOpen(true)}
+              style={{
+                width: '100%',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '10px 12px',
+                background: '#0f172a',
+                color: '#fff',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Mi QR
+            </button>
+          </div>
 
           {perfil.pais ? (
             <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px', textAlign: 'center', lineHeight: 1.35 }}>
@@ -822,6 +840,13 @@ export default function PerfilPublico() {
         open={Boolean(jugadorPreviewCompaneroPublico)}
         onClose={() => setJugadorPreviewCompaneroPublico(null)}
         data={jugadorPreviewCompaneroPublico}
+      />
+      <JugadorQrModal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        alias={aliasGrande || aliasDecoded}
+        nombre={nombreCompleto || 'Jugador'}
+        fotoUrl={fotoUrlPerfil}
       />
     </div>
   );

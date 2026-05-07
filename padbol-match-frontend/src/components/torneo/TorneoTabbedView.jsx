@@ -6,6 +6,7 @@ import { formatNivelTorneo, formatTipoTorneo, formatCategoriaTorneo } from '../.
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../JugadorPreviewModal';
+import JugadorQrModal from '../JugadorQrModal';
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from './SorteoGruposModal';
 import {
   horasRevelarEquiposTorneo,
@@ -343,6 +344,7 @@ export default function TorneoTabbedView({
   const [sorteoModalOpen, setSorteoModalOpen] = useState(false);
   const [modalEquipo, setModalEquipo] = useState(null);
   const [jugadorPreview, setJugadorPreview] = useState(null);
+  const [jugadorQrData, setJugadorQrData] = useState(null);
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
@@ -381,6 +383,19 @@ export default function TorneoTabbedView({
     },
     [jugadorNombreTorneoCtx]
   );
+
+  const abrirQrJugador = useCallback((p) => {
+    const alias = String(p?.alias || '').trim();
+    if (!alias) {
+      alert('Este jugador no tiene alias público.');
+      return;
+    }
+    setJugadorQrData({
+      alias,
+      nombre: nombreListadoTorneoRanking(p) || 'Jugador',
+      fotoUrl: String(p?.foto_url || '').trim(),
+    });
+  }, []);
 
   useEffect(() => {
     if (!torneo) return;
@@ -877,62 +892,86 @@ export default function TorneoTabbedView({
                         .toUpperCase();
                       const foto = String(p?.foto_url || '').trim();
                       return (
-                        <button
+                        <div
                           key={`${equipo.id}-j-${idx}`}
-                          type="button"
-                          onClick={() => abrirPreviewJugador(p)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            padding: '4px 0',
-                            textAlign: 'left',
-                          }}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}
                         >
-                          {foto ? (
-                            <img
-                              src={foto}
-                              alt=""
+                          <button
+                            type="button"
+                            onClick={() => abrirPreviewJugador(p)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              padding: '4px 0',
+                              textAlign: 'left',
+                              flex: 1,
+                              minWidth: 0,
+                            }}
+                          >
+                            {foto ? (
+                              <img
+                                src={foto}
+                                alt=""
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '50%',
+                                  objectFit: 'cover',
+                                  flexShrink: 0,
+                                  border: '1px solid #e2e8f0',
+                                }}
+                              />
+                            ) : (
+                              <span
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '50%',
+                                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                                  color: 'white',
+                                  fontSize: '11px',
+                                  fontWeight: 800,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {initial}
+                              </span>
+                            )}
+                            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{nombreMain}</span>
+                              {al ? (
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
+                                  {formatAliasConArroba(al)}
+                                </span>
+                              ) : null}
+                            </span>
+                          </button>
+                          {puedeGestionarEquiposTorneo ? (
+                            <button
+                              type="button"
+                              title="Ver QR"
+                              onClick={() => abrirQrJugador(p)}
                               style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                flexShrink: 0,
-                                border: '1px solid #e2e8f0',
-                              }}
-                            />
-                          ) : (
-                            <span
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                                color: 'white',
-                                fontSize: '11px',
-                                fontWeight: 800,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                border: '1px solid #cbd5e1',
+                                background: '#fff',
+                                borderRadius: '8px',
+                                padding: '4px 8px',
+                                fontSize: '14px',
+                                cursor: 'pointer',
                                 flexShrink: 0,
                               }}
                             >
-                              {initial}
-                            </span>
-                          )}
-                          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{nombreMain}</span>
-                            {al ? (
-                              <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
-                                {formatAliasConArroba(al)}
-                              </span>
-                            ) : null}
-                          </span>
-                        </button>
+                              QR
+                            </button>
+                          ) : null}
+                        </div>
                       );
                     })
                   )}
@@ -1762,68 +1801,99 @@ export default function TorneoTabbedView({
                   .charAt(0)
                   .toUpperCase();
                 return (
-                  <button
+                  <div
                     key={i}
-                    type="button"
-                    onClick={() => {
-                      abrirPreviewJugador(p);
-                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
+                      gap: '8px',
                       border: '1px solid #e2e8f0',
                       borderRadius: '10px',
                       padding: '8px',
                       background: '#f8fafc',
-                      cursor: 'pointer',
-                      textAlign: 'left',
                     }}
                   >
-                    {fotoM ? (
-                      <img
-                        src={fotoM}
-                        alt=""
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          flexShrink: 0,
-                          border: '1px solid #e2e8f0',
-                        }}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <span
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                          color: '#fff',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                        aria-hidden
-                      >
-                        {ini}
-                      </span>
-                    )}
-                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
-                      <span style={{ fontWeight: 700, color: '#0f172a' }}>{nm}</span>
-                      {alM ? (
-                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
-                          {formatAliasConArroba(alM)}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        abrirPreviewJugador(p);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        flex: 1,
+                        minWidth: 0,
+                        padding: 0,
+                      }}
+                    >
+                      {fotoM ? (
+                        <img
+                          src={fotoM}
+                          alt=""
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            flexShrink: 0,
+                            border: '1px solid #e2e8f0',
+                          }}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <span
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                            color: '#fff',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                          aria-hidden
+                        >
+                          {ini}
                         </span>
-                      ) : null}
-                    </span>
-                  </button>
+                      )}
+                      <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
+                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{nm}</span>
+                        {alM ? (
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
+                            {formatAliasConArroba(alM)}
+                          </span>
+                        ) : null}
+                      </span>
+                    </button>
+                    {puedeGestionarEquiposTorneo ? (
+                      <button
+                        type="button"
+                        title="Ver QR"
+                        onClick={() => abrirQrJugador(p)}
+                        style={{
+                          border: '1px solid #cbd5e1',
+                          background: '#fff',
+                          borderRadius: '8px',
+                          padding: '4px 8px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      >
+                        QR
+                      </button>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>
@@ -1898,6 +1968,13 @@ export default function TorneoTabbedView({
         open={Boolean(jugadorPreview)}
         onClose={() => setJugadorPreview(null)}
         data={jugadorPreview}
+      />
+      <JugadorQrModal
+        open={Boolean(jugadorQrData)}
+        onClose={() => setJugadorQrData(null)}
+        alias={jugadorQrData?.alias}
+        nombre={jugadorQrData?.nombre}
+        fotoUrl={jugadorQrData?.fotoUrl}
       />
 
       <SorteoGruposModal
