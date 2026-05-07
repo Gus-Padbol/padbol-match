@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getDisplayName } from '../utils/displayName';
-import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
+import { headerNombreVisible } from '../utils/displayName';
+import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import { loginRedirectAfterHubEntry, authRegisterUrlFromHub } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
@@ -48,95 +48,6 @@ function emailEsLegacyAdminHub(emailRaw) {
   return LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(email);
 }
 
-function esNombrePlaceholderJugador(s) {
-  return String(s || '').trim().toLowerCase() === 'jugador';
-}
-
-function primeraPalabraHandle(s) {
-  const t = String(s || '').trim();
-  if (!t) return '';
-  return t.split(/\s+/).filter(Boolean)[0] || '';
-}
-
-/** `@` + primera palabra del perfil (jugador) para chip en panel admin (admin_nacional). */
-function etiquetaArrobaPrimerNombrePerfil(userProfile, sessionUser) {
-  const meta = sessionUser?.user_metadata || {};
-  let raw =
-    (!esNombrePlaceholderJugador(userProfile?.nombre)
-      ? primeraPalabraHandle(userProfile?.nombre)
-      : '') ||
-    primeraPalabraHandle(userProfile?.nombre_completo) ||
-    primeraPalabraHandle(meta.full_name) ||
-    primeraPalabraHandle(meta.name) ||
-    '';
-  const email = String(sessionUser?.email || '').trim().toLowerCase();
-  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
-  if (!raw && local) raw = local;
-  if (!raw) raw = 'Usuario';
-  const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-  return `@${cap}`;
-}
-
-/**
- * Chip panel admin para `admin_club`: prioridad `alias` → `username` en `profiles` → `username` jugador / metadata → nombre → email local.
- * Ej.: alias "Juampi" → "@Juampi"
- */
-function etiquetaArrobaAdminClubChip(userProfile, sessionUser, profilesUsernameFromDb = '') {
-  const meta = sessionUser?.user_metadata || {};
-  const strip = (s) => String(s || '').trim().replace(/^@+/u, '');
-  const aliasSrc = strip(userProfile?.alias);
-  const profUser = strip(profilesUsernameFromDb);
-  const jpUser = strip(userProfile?.username);
-  const metaUser = strip(meta.alias || meta.username || meta.preferred_username);
-  const email = String(sessionUser?.email || '').trim().toLowerCase();
-  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
-
-  let raw = '';
-  for (const c of [aliasSrc, profUser, jpUser, metaUser]) {
-    if (c) {
-      raw = primeraPalabraHandle(c) || c;
-      break;
-    }
-  }
-  if (!raw && !esNombrePlaceholderJugador(userProfile?.nombre)) {
-    raw =
-      primeraPalabraHandle(userProfile?.nombre) ||
-      primeraPalabraHandle(userProfile?.nombre_completo) ||
-      '';
-  }
-  if (!raw && local) raw = local;
-  if (!raw) raw = 'Usuario';
-  const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-  return `@${cap}`;
-}
-
-function etiquetaChipSuperAdminPanelMinimal(userProfile, sessionUser) {
-  const email = String(sessionUser?.email || '').trim().toLowerCase();
-  const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
-  const alias = String(userProfile?.alias || '').trim();
-  if (alias) {
-    const h = primeraPalabraHandle(alias.replace(/^@+/u, ''));
-    if (h) return `@${h.charAt(0).toUpperCase()}${h.slice(1).toLowerCase()}`;
-  }
-  const meta = sessionUser?.user_metadata || {};
-  let raw =
-    (!esNombrePlaceholderJugador(userProfile?.nombre)
-      ? primeraPalabraHandle(userProfile?.nombre)
-      : '') ||
-    primeraPalabraHandle(userProfile?.nombre_completo) ||
-    primeraPalabraHandle(meta.full_name) ||
-    primeraPalabraHandle(meta.name) ||
-    '';
-  if (email === PADBOL_SUPER_ADMIN_EMAIL && (!raw || raw.toLowerCase() === local)) {
-    raw = 'Gus';
-  }
-  if (!raw && local) raw = local;
-  if (!raw) raw = 'Usuario';
-  const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-  return `@${cap}`;
-}
-
-/** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
 function readCachedRolHeader() {
   try {
     return JSON.parse(localStorage.getItem('user_role_data') || '{}')?.rol || null;
@@ -145,6 +56,7 @@ function readCachedRolHeader() {
   }
 }
 
+/** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
 function hubChipNavigatePath(rolActual, roleLoading) {
   if (ADMIN_ROLES_CHIP.includes(rolActual || '')) return '/admin';
   if (roleLoading) {
@@ -226,30 +138,6 @@ export default function AppHeader({
   }, [rol, session?.user?.app_metadata?.role, session?.user?.user_metadata?.role]);
   const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
-  const [profilesUsernameClubChip, setProfilesUsernameClubChip] = useState('');
-  useEffect(() => {
-    if (rol !== 'admin_club' || !session?.user?.id) {
-      setProfilesUsernameClubChip('');
-      return undefined;
-    }
-    let cancelled = false;
-    supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', session.user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (!error && data?.username != null && String(data.username).trim()) {
-          setProfilesUsernameClubChip(String(data.username).trim());
-        } else {
-          setProfilesUsernameClubChip('');
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [rol, session?.user?.id]);
 
   useEffect(() => {
     if (rol !== 'admin_club' || !sedeId) {
@@ -301,7 +189,7 @@ export default function AppHeader({
     return titleStr;
   }, [pathOnly, location.state?.fromAdmin, titleStr]);
 
-  /** Rutas del hub jugador (/, /hub, …): aquí nunca va el chip @alias; sí ⚙ Admin + ⏻ para admins. */
+  /** Rutas del hub jugador (/, /hub, …): chip con apodo o nombre real; sí ⚙ Admin + ⏻ para admins. */
   const hubInicioPath =
     pathOnly === '/' ||
     pathOnly === '/inicio' ||
@@ -322,24 +210,21 @@ export default function AppHeader({
   const showLogout = !hideLogoutEffective && Boolean(session?.user);
   const loginFromHubUrl = `/login?redirect=${encodeURIComponent(loginRedirectAfterHubEntry(location))}`;
   const registerFromHubUrl = authRegisterUrlFromHub(location);
-  const hubNombreCorto = (() => {
-    const alias = String(userProfile?.alias || '').trim();
-    if (alias) return formatAliasConArroba(alias);
-    const full = String(getDisplayName(userProfile, session) || '').trim();
-    if (full) {
-      const first = full.split(/\s+/).filter(Boolean)[0];
-      if (first) return first;
+  const hubNombreCorto = useMemo(() => {
+    const base = headerNombreVisible(userProfile, session);
+    const email = String(session?.user?.email || '').trim().toLowerCase();
+    if (email === PADBOL_SUPER_ADMIN_EMAIL) {
+      const local = email.includes('@') ? email.split('@')[0].toLowerCase() : '';
+      const b = String(base || '').trim().toLowerCase();
+      if (!base || b === local || b === 'jugador') return 'Gus';
     }
-    const em = String(session?.user?.email || '').trim();
-    return em || 'Cuenta';
-  })();
+    return base;
+  }, [userProfile, session]);
+
   const hubChipLabel = useMemo(() => {
     if (!session?.user || roleLoading) return hubNombreCorto;
     const r = rolEffectiveHeader || '';
     if (adminFlowSurface) {
-      if (r === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
-      if (r === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
-      if (r === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
       return hubNombreCorto;
     }
     if (r === 'super_admin') return 'Super Admin';
@@ -353,8 +238,6 @@ export default function AppHeader({
     adminSedeNombre,
     hubNombreCorto,
     adminFlowSurface,
-    userProfile,
-    profilesUsernameClubChip,
   ]);
 
   const hubChipNavPath = useMemo(
@@ -567,32 +450,26 @@ export default function AppHeader({
     };
   }, [contentMaxWidth]);
 
-  /** Panel admin: chip solo identidad jugador (@Gus / @Juampi), mismo criterio que el hub; usa rol efectivo (JWT/caché) para no quedar en “Admin” mientras carga user_roles. */
+  /** Panel admin: chip con apodo o nombre real (mismo criterio que el hub); nunca `alias`. */
   const adminMinimalRolCorto = useMemo(() => {
     if (!session?.user) return '';
     const r = rolEffectiveHeader || '';
     if (roleLoading && !r) return '…';
-    if (r === 'super_admin') return etiquetaChipSuperAdminPanelMinimal(userProfile, session.user);
-    if (r === 'admin_club') return etiquetaArrobaAdminClubChip(userProfile, session.user, profilesUsernameClubChip);
-    if (r === 'admin_nacional') return etiquetaArrobaPrimerNombrePerfil(userProfile, session.user);
+    if (r === 'super_admin' || r === 'admin_club' || r === 'admin_nacional') return hubNombreCorto;
     return 'Admin';
-  }, [session?.user, roleLoading, rolEffectiveHeader, userProfile, profilesUsernameClubChip]);
+  }, [session?.user, roleLoading, rolEffectiveHeader, hubNombreCorto]);
 
-  /** Inicial desde `nombre` del perfil (no alias); fallback email. */
+  /** Inicial desde el mismo texto que el chip del header. */
   const adminMinimalInicial = useMemo(() => {
-    const n = String(userProfile?.nombre || '').trim();
-    if (n) return n.charAt(0).toUpperCase();
+    const linea = String(hubNombreCorto || '').trim();
+    if (linea) return linea.charAt(0).toUpperCase();
     const em = String(session?.user?.email || '').trim();
     if (em) return em.charAt(0).toUpperCase();
     return '?';
-  }, [userProfile?.nombre, session?.user?.email]);
+  }, [hubNombreCorto, session?.user?.email]);
 
-  /** Texto junto al avatar en «volver al panel» (torneo/equipo desde admin): nombre + apellido como en el resto de la app. */
-  const adminPanelBackNombreLinea = useMemo(() => {
-    const full = nombreCompletoJugadorPerfil(userProfile).trim();
-    if (full) return full;
-    return getDisplayName(userProfile, session);
-  }, [userProfile, session]);
+  /** Texto junto al avatar en «volver al panel» (torneo/equipo desde admin): apodo o nombre real. */
+  const adminPanelBackNombreLinea = useMemo(() => hubNombreCorto, [hubNombreCorto]);
 
   /** Ruta /admin: siempre barra compacta con sesión (refuerzo si falta el prop). */
   const useAdminMinimalLayout =

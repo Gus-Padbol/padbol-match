@@ -1,5 +1,15 @@
 import { nombreCompletoJugadorPerfil } from './jugadorPerfil';
 
+function esNombrePlaceholderJugador(s) {
+  return String(s || '').trim().toLowerCase() === 'jugador';
+}
+
+function capitalizarPrimeraLetraSaludo(s) {
+  const t = String(s || '').trim();
+  if (!t) return '';
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 function looksLikeEmailStr(s) {
   return typeof s === 'string' && s.includes('@');
 }
@@ -49,4 +59,44 @@ export function nombreDesdeSesionSinEmail(perfil, session, nombreFallback = '') 
   const local = parteLocalEmailLower(em);
   if (local && fb.toLowerCase() === local) return '';
   return fb;
+}
+
+/**
+ * Nombre legal o de registro sin usar `alias`: perfil Supabase y, si falta, metadata de auth.
+ */
+function nombreRealDesdePerfilOauth(perfil, session) {
+  const em = String(session?.user?.email || perfil?.email || '').trim();
+  let fromDb = nombreDesdeSesionSinEmail(perfil, session, '');
+  if (fromDb && esNombrePlaceholderJugador(fromDb)) fromDb = '';
+  if (fromDb) return fromDb;
+
+  const meta = session?.user?.user_metadata || {};
+  const full = String(meta.full_name || '').trim();
+  const local = parteLocalEmailLower(em);
+  if (full && !looksLikeEmailStr(full) && !(local && full.toLowerCase() === local)) return full;
+
+  const n = String(meta.nombre || '').trim();
+  const a = String(meta.apellido || '').trim();
+  const joined = [n, a].filter(Boolean).join(' ').trim();
+  if (joined && !esNombrePlaceholderJugador(joined)) return joined;
+
+  const nameMeta = String(meta.name || '').trim();
+  if (nameMeta && !looksLikeEmailStr(nameMeta) && !(local && nameMeta.toLowerCase() === local)) return nameMeta;
+
+  return '';
+}
+
+/**
+ * Texto de identidad en el header: `jugadores_perfil.apodo` si existe;
+ * si no, nombre real (tabla o metadata de auth). No usa `alias`.
+ */
+export function headerNombreVisible(perfil, session) {
+  const apodo = String(perfil?.apodo ?? '').trim();
+  if (apodo) return capitalizarPrimeraLetraSaludo(apodo);
+
+  const real = nombreRealDesdePerfilOauth(perfil, session);
+  if (real) return real;
+
+  const em = String(session?.user?.email || perfil?.email || '').trim();
+  return em || 'Cuenta';
 }
