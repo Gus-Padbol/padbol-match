@@ -19,6 +19,7 @@ import TorneoVista from './pages/TorneoVista';
 import Rankings from './pages/Rankings';
 import TorneosPublicos from './pages/TorneosPublicos';
 import SedePublica from './pages/SedePublica';
+import UnirsePage from './pages/UnirsePage';
 import SedesPublicas from './pages/SedesPublicas';
 import EquipoPerfil from './pages/EquipoPerfil';
 import PagoExitoso from './pages/PagoExitoso';
@@ -210,6 +211,8 @@ function AppRoutes() {
         <Route path="/torneo/:torneoId" element={<TorneoVista />} />
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/sedes" element={<SedesPublicas />} />
+        <Route path="/unirse" element={<UnirsePage />} />
+        <Route path="/join" element={<Navigate to="/unirse" replace />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
         <Route path="/mi-perfil" element={<MiPerfil />} />
         <Route path="/jugador/:alias" element={<PerfilPublico />} />

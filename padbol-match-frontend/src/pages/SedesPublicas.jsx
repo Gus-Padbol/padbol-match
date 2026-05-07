@@ -319,6 +319,23 @@ export default function SedesPublicas() {
             })}
           </div>
         )}
+        <div style={{ marginTop: '22px', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/unirse')}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '999px',
+              border: '1px solid rgba(255,255,255,0.45)',
+              background: 'rgba(255,255,255,0.14)',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            ¿Querés sumar tu club?
+          </button>
+        </div>
       </div>
       <BottomNav />
     </div>

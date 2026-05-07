@@ -96,6 +96,7 @@ const ADMIN_TABS_ALLOWED = new Set([
   'sedes_pendientes',
   'sedes',
   'jugadores',
+  'solicitudes',
 ]);
 
 /** Torneos que siguen “en juego” a nivel operativo (no finalizados ni cancelados). */
@@ -699,6 +700,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const [sedesPendientes, setSedesPendientes] = useState([]);
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
+  const [solicitudesLicencia, setSolicitudesLicencia] = useState([]);
+  const [solicitudesLicenciaLoading, setSolicitudesLicenciaLoading] = useState(false);
   const [adminScopeMeta, setAdminScopeMeta] = useState(null);
   const [adminRolesRows, setAdminRolesRows] = useState([]);
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
@@ -735,6 +738,48 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setSedesPendientesLoading(false);
     }
   }, [apiBaseUrl, puedeVerSedesPendientes]);
+
+  const cargarSolicitudesLicencia = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    setSolicitudesLicenciaLoading(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=pendiente`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const j = await res.json().catch(() => []);
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setSolicitudesLicencia(Array.isArray(j) ? j : []);
+    } catch (e) {
+      console.error('[AdminDashboard] solicitudes licencia:', e);
+      setSolicitudesLicencia([]);
+    } finally {
+      setSolicitudesLicenciaLoading(false);
+    }
+  }, [apiBaseUrl, isSuperAdmin]);
+
+  const rechazarSolicitudLicencia = useCallback(async (id) => {
+    const motivo = window.prompt('Motivo del rechazo (opcional):');
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia/${id}/rechazar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motivo: motivo || '' }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setMensajeExito('Solicitud rechazada');
+      setTimeout(() => setMensajeExito(''), 3000);
+      void cargarSolicitudesLicencia();
+    } catch (e) {
+      alert(e?.message || 'No se pudo rechazar la solicitud');
+    }
+  }, [apiBaseUrl, cargarSolicitudesLicencia]);
 
   const cargarRolesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -883,10 +928,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   useEffect(() => {
     if (!puedeVerSedesPendientes) return;
-    if (activeTab === 'sedes_pendientes' || activeTab === 'resumen') {
+    if (activeTab === 'sedes_pendientes' || activeTab === 'resumen' || activeTab === 'solicitudes') {
       void cargarSedesPendientes();
     }
   }, [activeTab, puedeVerSedesPendientes, cargarSedesPendientes]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    if (activeTab === 'solicitudes' || activeTab === 'resumen') {
+      void cargarSolicitudesLicencia();
+    }
+  }, [activeTab, isSuperAdmin, cargarSolicitudesLicencia]);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
@@ -2711,6 +2763,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     : [
         { id: 'resumen', label: '📊 Resumen' },
         ...(isSuperAdmin ? [{ id: 'sedes', label: '🏟️ Sedes' }] : []),
+        ...(isSuperAdmin ? [{ id: 'solicitudes', label: '📝 Solicitudes' }] : []),
         { id: 'torneos', label: '🏆 Torneos' },
         { id: 'reservas', label: '⚽ Reservas' },
         { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
@@ -4616,6 +4669,69 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     >
                       ❌ Rechazar
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'solicitudes' && isSuperAdmin && (
+        <div className="section" style={{ maxWidth: '980px', margin: '0 auto' }}>
+          <h2 style={{ color: '#fff', textAlign: 'center', marginBottom: '18px' }}>📝 Solicitudes de licencia</h2>
+          {solicitudesLicenciaLoading ? (
+            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>Cargando…</p>
+          ) : solicitudesLicencia.length === 0 ? (
+            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>No hay solicitudes pendientes.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {solicitudesLicencia.map((s) => (
+                <div
+                  key={s.id}
+                  style={{
+                    background: '#fff',
+                    borderRadius: '14px',
+                    padding: '16px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    color: '#1e293b',
+                  }}
+                >
+                  <div style={{ fontWeight: 800, fontSize: '18px', marginBottom: '8px' }}>{s.club_nombre || 'Club sin nombre'}</div>
+                  <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#475569' }}>
+                    <div><strong>País/Ciudad:</strong> {s.pais || '—'} · {s.ciudad || '—'}</div>
+                    <div><strong>Responsable:</strong> {s.responsable_nombre || '—'}</div>
+                    <div><strong>Email:</strong> {s.email || '—'}</div>
+                    <div><strong>WhatsApp:</strong> {s.whatsapp || '—'}</div>
+                    <div><strong>Tipo interés:</strong> {s.tipo_interes || '—'} · <strong>Canchas:</strong> {s.cantidad_canchas ?? '—'}</div>
+                    {s.mensaje ? <div><strong>Mensaje:</strong> {s.mensaje}</div> : null}
+                    <div style={{ marginTop: 6, fontSize: '12px', color: '#64748b' }}>
+                      Solicitud #{s.id} · {s.created_at ? new Date(s.created_at).toLocaleString('es-AR') : ''}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/admin/nueva-sede', { state: { prefillSolicitud: s } })}
+                      style={{ padding: '9px 14px', borderRadius: '10px', border: 'none', background: '#16a34a', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      ✅ Aprobar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void rechazarSolicitudLicencia(s.id)}
+                      style={{ padding: '9px 14px', borderRadius: '10px', border: 'none', background: '#dc2626', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      ❌ Rechazar
+                    </button>
+                    <a
+                      href={`https://wa.me/${String(s.whatsapp || '').replace(/[^\d]/g, '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ padding: '9px 14px', borderRadius: '10px', background: '#0f766e', color: '#fff', fontWeight: 700, textDecoration: 'none' }}
+                    >
+                      💬 Contactar
+                    </a>
                   </div>
                 </div>
               ))}

@@ -3651,6 +3651,37 @@ async function fetchJugadorWhatsappPorEmail(email) {
   return w || null;
 }
 
+async function sendSolicitudLicenciaConfirmacionEmail({ toEmail, clubNombre, responsableNombre }) {
+  const apiKey = String(process.env.RESEND_API_KEY || '').trim();
+  const from = String(process.env.RESEND_FROM_EMAIL || 'Padbol Match <no-reply@padbolmatch.com>').trim();
+  const to = String(toEmail || '').trim().toLowerCase();
+  if (!apiKey || !to) return;
+  const bodyHtml = `
+    <p>Hola ${String(responsableNombre || '').trim() || 'club'},</p>
+    <p>Recibimos tu solicitud para sumar <strong>${String(clubNombre || '').trim() || 'tu club'}</strong> a Padbol Match.</p>
+    <p>Nuestro equipo la revisará y te contactará por email o WhatsApp.</p>
+    <p>¡Gracias por tu interés!</p>
+    <p><strong>PADBOL Match</strong></p>
+  `;
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: 'Recibimos tu solicitud para unirte a Padbol Match',
+        html: bodyHtml,
+      }),
+    });
+  } catch (e) {
+    console.warn('⚠️ Email confirmación solicitud licencia:', e?.message || e);
+  }
+}
+
 /** Opt-in `jugadores_perfil.notificaciones_whatsapp`: novedades/promos de torneo (no invitaciones transaccionales). */
 async function jugadorAceptaNotificacionesTorneoPromoPorEmail(emailNorm) {
   const em = String(emailNorm || '').trim().toLowerCase();
@@ -4122,6 +4153,95 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
   } catch (err) {
     console.error('❌ POST /api/admin/sedes-directa:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/solicitudes-licencia — público: registro de interés para sumar club. */
+app.post('/api/solicitudes-licencia', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const club_nombre = String(b.club_nombre || '').trim();
+    const pais = String(b.pais || '').trim();
+    const ciudad = String(b.ciudad || '').trim();
+    const responsable_nombre = String(b.responsable_nombre || '').trim();
+    const email = String(b.email || '').trim().toLowerCase();
+    const whatsapp = String(b.whatsapp || '').trim();
+    if (!club_nombre || !pais || !ciudad || !responsable_nombre || !email || !whatsapp) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+    const payload = {
+      club_nombre,
+      pais,
+      ciudad,
+      responsable_nombre,
+      email,
+      whatsapp,
+      cantidad_canchas: b.cantidad_canchas != null && b.cantidad_canchas !== '' ? parseInt(String(b.cantidad_canchas), 10) : null,
+      tipo_interes: String(b.tipo_interes || '').trim() || null,
+      mensaje: String(b.mensaje || '').trim() || null,
+      estado: 'pendiente',
+    };
+    const { data, error } = await supabase.from('solicitudes_licencia').insert(payload).select('*').single();
+    if (error) throw error;
+
+    const toSuper = resolveSuperAdminNotifyWhatsAppTo();
+    if (toSuper) {
+      const msg =
+        `🏟️ Nueva solicitud de licencia\n` +
+        `Club: ${club_nombre}\n` +
+        `País/Ciudad: ${pais} · ${ciudad}\n` +
+        `Responsable: ${responsable_nombre}\n` +
+        `Email: ${email}\n` +
+        `WhatsApp: ${whatsapp}\n` +
+        `Interés: ${payload.tipo_interes || '—'}\n` +
+        `Canchas: ${payload.cantidad_canchas ?? '—'}`;
+      await sendTwilioWhatsAppBodyToRaw(toSuper, msg);
+    }
+    await sendSolicitudLicenciaConfirmacionEmail({
+      toEmail: email,
+      clubNombre: club_nombre,
+      responsableNombre: responsable_nombre,
+    });
+
+    res.status(201).json({ ok: true, id: data?.id });
+  } catch (err) {
+    console.error('❌ POST /api/solicitudes-licencia:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/solicitudes-licencia — super_admin lista (por estado). */
+app.get('/api/admin/solicitudes-licencia', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const estado = String(req.query.estado || 'pendiente').trim().toLowerCase();
+    let q = supabase.from('solicitudes_licencia').select('*').order('created_at', { ascending: false });
+    if (estado && estado !== 'todas' && estado !== 'todos') q = q.eq('estado', estado);
+    const { data, error } = await q;
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('❌ GET /api/admin/solicitudes-licencia:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/solicitudes-licencia/:id/rechazar — super_admin */
+app.post('/api/admin/solicitudes-licencia/:id/rechazar', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+    const motivo = String(req.body?.motivo || '').trim() || null;
+    const { error } = await supabase
+      .from('solicitudes_licencia')
+      .update({ estado: 'rechazada', motivo_rechazo: motivo })
+      .eq('id', id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ POST /api/admin/solicitudes-licencia/:id/rechazar:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 

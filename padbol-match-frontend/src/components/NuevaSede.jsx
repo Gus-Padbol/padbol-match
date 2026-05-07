@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
@@ -86,6 +86,7 @@ async function fetchWithAuth(url, options = {}) {
  */
 export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useAuth();
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -114,6 +115,26 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const setField = useCallback((k, v) => {
     setForm((prev) => ({ ...prev, [k]: v }));
   }, []);
+
+  useEffect(() => {
+    const pre = location.state?.prefillSolicitud;
+    if (!pre || typeof pre !== 'object') return;
+    setForm((prev) => ({
+      ...prev,
+      nombre: String(pre.club_nombre || '').trim() || prev.nombre,
+      pais: String(pre.pais || '').trim() || prev.pais,
+      ciudad: String(pre.ciudad || '').trim() || prev.ciudad,
+      licenciatario_nombre: String(pre.responsable_nombre || '').trim() || prev.licenciatario_nombre,
+      licenciatario_email: String(pre.email || '').trim().toLowerCase() || prev.licenciatario_email,
+      licenciatario_telefono: String(pre.whatsapp || '').trim() || prev.licenciatario_telefono,
+      tipo_licencia:
+        String(pre.tipo_interes || '').toLowerCase().includes('master')
+          ? 'master_pais'
+          : String(pre.tipo_interes || '').toLowerCase().includes('point')
+          ? 'padbol_point'
+          : prev.tipo_licencia,
+    }));
+  }, [location.state]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
