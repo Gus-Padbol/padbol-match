@@ -1339,17 +1339,17 @@ export default function AppHeader({
                   type="button"
                   onClick={() => navigate(registerFromHubUrl)}
                   style={{
-                    padding: '8px 12px',
+                    padding: '10px 16px',
                     borderRadius: '999px',
                     border: 'none',
-                    background: '#ffffff',
-                    color: '#4f46e5',
-                    fontSize: 12,
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    color: '#fff',
+                    fontSize: 13,
                     fontWeight: 800,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+                    boxShadow: '0 4px 16px rgba(34, 197, 94, 0.45)',
                   }}
                 >
                   Registrarse
