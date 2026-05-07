@@ -1,3 +1,5 @@
 .env
 .stripe-subscription-price-id
 .env.stripe-subscription
+
+node_modules/
