@@ -944,10 +944,10 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
       if (!r.ok) {
         const raw = String(body.error || '');
         const friendly =
-          body.code === 'SEDE_RESENAS_TABLE_MISSING'
+          body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
             ? raw
-            : /schema cache|sede_resenas/i.test(raw)
-              ? 'Las reseñas no están disponibles: en Supabase debe existir la tabla public.sede_resenas (ASCII, sin tilde). Ejecutá padbol-backend/sql/create_sede_resenas.sql.'
+            : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
+              ? 'Las reseñas no están disponibles: en Supabase debe existir y exponerse la tabla public.resenas. Ejecutá padbol-backend/sql/resenas_sedes.sql.'
               : raw || `Error ${r.status}`;
         throw new Error(friendly);
       }
@@ -976,10 +976,10 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
       if (!r.ok) {
         const raw = String(body.error || '');
         const friendly =
-          body.code === 'SEDE_RESENAS_TABLE_MISSING'
+          body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
             ? raw
-            : /schema cache|sede_resenas/i.test(raw)
-              ? 'Las reseñas no están disponibles (tabla public.sede_resenas).'
+            : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
+              ? 'Las reseñas no están disponibles (tabla public.resenas).'
               : raw || `Error ${r.status}`;
         throw new Error(friendly);
       }
@@ -1009,10 +1009,10 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
       if (!r.ok) {
         const raw = String(body.error || '');
         const friendly =
-          body.code === 'SEDE_RESENAS_TABLE_MISSING'
+          body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
             ? raw
-            : /schema cache|sede_resenas/i.test(raw)
-              ? 'Las reseñas no están disponibles: creá la tabla public.sede_resenas en Supabase (ver create_sede_resenas.sql).'
+            : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
+              ? 'Las reseñas no están disponibles: creá o actualizá public.resenas en Supabase (ver resenas_sedes.sql).'
               : raw || `Error ${r.status}`;
         throw new Error(friendly);
       }

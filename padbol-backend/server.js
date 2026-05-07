@@ -54,15 +54,24 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /**
- * Reseñas de sede en Postgres/PostgREST: siempre ASCII `sede_resenas` (n sin tilde).
- * No usar `sede_reseñas` u otros identificadores con ñ para evitar problemas de encoding.
+ * Reseñas por sede en PostgREST: la tabla expuesta en este proyecto es `public.resenas`
+ * (no `sede_resenas`; el OpenAPI de Supabase lista `resenas`).
  */
-const SEDE_RESENAS_TABLE = 'sede_resenas';
+const PUBLIC_RESENAS_TABLE = 'resenas';
 
-function isSedeResenasTableConfigError(err) {
+const RESENAS_SELECT_ROW = 'id, estrellas, comentario, user_id, created_at, nombre';
+const RESENAS_SELECT_ROW_FALLBACK = 'id, estrellas, comentario, user_id, created_at';
+
+function isResenasPublicTableConfigError(err) {
   const msg = String(err?.message || err || '').toLowerCase();
-  if (!msg.includes('sede_resenas')) return false;
   const code = String(err?.code || '');
+  const mentionsResenas =
+    msg.includes('public.resenas') ||
+    msg.includes("'resenas'") ||
+    msg.includes('"resenas"') ||
+    msg.includes('sede_resenas') ||
+    /\bresenas\b/.test(msg);
+  if (!mentionsResenas) return false;
   return (
     msg.includes('schema cache') ||
     msg.includes('could not find the table') ||
@@ -71,13 +80,47 @@ function isSedeResenasTableConfigError(err) {
   );
 }
 
-function respondSedeResenasUnavailable(res, err) {
-  console.error('❌ Tabla reseñas sede no disponible:', err?.message || err);
+function respondResenasPublicUnavailable(res, err) {
+  console.error('❌ Tabla public.resenas no disponible:', err?.message || err);
   return res.status(503).json({
     error:
-      'Las reseñas no están disponibles: falta la tabla public.sede_resenas en Supabase. Ejecutá el SQL padbol-backend/sql/create_sede_resenas.sql (nombre con n ASCII, sin tilde).',
-    code: 'SEDE_RESENAS_TABLE_MISSING',
+      'Las reseñas no están disponibles: falta o no está expuesta la tabla public.resenas. Ejecutá padbol-backend/sql/resenas_sedes.sql en el SQL Editor de Supabase.',
+    code: 'RESENAS_TABLE_MISSING',
   });
+}
+
+async function selectResenasRowsForSede(sedeId, offset, limit) {
+  const end = offset + limit - 1;
+  let r = await supabase
+    .from(PUBLIC_RESENAS_TABLE)
+    .select(RESENAS_SELECT_ROW)
+    .eq('sede_id', sedeId)
+    .order('created_at', { ascending: false })
+    .range(offset, end);
+  if (r.error && String(r.error.message || '').includes('nombre')) {
+    r = await supabase
+      .from(PUBLIC_RESENAS_TABLE)
+      .select(RESENAS_SELECT_ROW_FALLBACK)
+      .eq('sede_id', sedeId)
+      .order('created_at', { ascending: false })
+      .range(offset, end);
+  }
+  return r;
+}
+
+async function fetchNombreAutorResenaInsert(user) {
+  const uid = user?.id;
+  if (!uid) return 'Jugador';
+  const email = String(user.email || '').trim().toLowerCase();
+  let perfil = null;
+  const q1 = await supabase.from('jugadores_perfil').select('nombre, apellido, alias').eq('user_id', uid).maybeSingle();
+  if (!q1.error) perfil = q1.data;
+  if (!perfil?.nombre && email) {
+    const q2 = await supabase.from('jugadores_perfil').select('nombre, apellido, alias').eq('email', email).maybeSingle();
+    if (!q2.error) perfil = q2.data;
+  }
+  const n = nombreAutorResenaDesdePerfil(perfil);
+  return n && String(n).trim() ? String(n).trim() : 'Jugador';
 }
 
 // ─── JWT + user_roles (GET torneos/reservas con alcance, rutas /api/admin/*) ──
@@ -527,13 +570,14 @@ async function enrichSedeResenasConPerfil(reviews) {
   }
   return rows.map((r) => {
     const p = map[r.user_id];
+    const nombreGuardado = String(r.nombre ?? '').trim();
     return {
       id: r.id,
       estrellas: r.estrellas,
       comentario: r.comentario,
       created_at: r.created_at,
       autor: {
-        nombre: nombreAutorResenaDesdePerfil(p),
+        nombre: nombreGuardado || nombreAutorResenaDesdePerfil(p),
         foto_url: p?.foto_url ? String(p.foto_url).trim() || null : null,
       },
     };
@@ -560,7 +604,7 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
     if (sedeErr) throw sedeErr;
     if (!sedeRow) return res.status(404).json({ error: 'Sede no encontrada' });
 
-    const { data: allStars, error: e1 } = await supabase.from(SEDE_RESENAS_TABLE).select('estrellas').eq('sede_id', id);
+    const { data: allStars, error: e1 } = await supabase.from(PUBLIC_RESENAS_TABLE).select('estrellas').eq('sede_id', id);
     if (e1) throw e1;
     const total = allStars?.length ?? 0;
     const promedio =
@@ -568,12 +612,7 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
         ? Math.round((allStars.reduce((s, r) => s + Number(r.estrellas), 0) / total) * 10) / 10
         : null;
 
-    const { data: pageRows, error: e2 } = await supabase
-      .from(SEDE_RESENAS_TABLE)
-      .select('id, estrellas, comentario, user_id, created_at')
-      .eq('sede_id', id)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+    const { data: pageRows, error: e2 } = await selectResenasRowsForSede(id, offset, limit);
     if (e2) throw e2;
 
     const resenas = await enrichSedeResenasConPerfil(pageRows || []);
@@ -582,7 +621,7 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
     const user = await authUserFromBearer(req);
     if (user?.id) {
       const { data: mine } = await supabase
-        .from(SEDE_RESENAS_TABLE)
+        .from(PUBLIC_RESENAS_TABLE)
         .select('id')
         .eq('sede_id', id)
         .eq('user_id', user.id)
@@ -592,7 +631,7 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
 
     res.json({ promedio, total, resenas, ya_reseño });
   } catch (err) {
-    if (isSedeResenasTableConfigError(err)) return respondSedeResenasUnavailable(res, err);
+    if (isResenasPublicTableConfigError(err)) return respondResenasPublicUnavailable(res, err);
     console.error('❌ Error GET /api/sedes/:id/resenas:', err.message);
     res.status(500).json({ error: err.message });
   }
@@ -628,7 +667,7 @@ app.post('/api/sedes/:id/resenas', async (req, res) => {
     }
 
     const { data: dup } = await supabase
-      .from(SEDE_RESENAS_TABLE)
+      .from(PUBLIC_RESENAS_TABLE)
       .select('id')
       .eq('sede_id', id)
       .eq('user_id', user.id)
@@ -637,17 +676,27 @@ app.post('/api/sedes/:id/resenas', async (req, res) => {
       return res.status(409).json({ error: 'Ya dejaste una reseña en esta sede' });
     }
 
-    const { data: inserted, error: insErr } = await supabase
-      .from(SEDE_RESENAS_TABLE)
-      .insert([{ sede_id: id, user_id: user.id, estrellas, comentario }])
-      .select('id, estrellas, comentario, user_id, created_at')
+    const nombreAutor = await fetchNombreAutorResenaInsert(user);
+    let insertPayload = { sede_id: id, user_id: user.id, estrellas, comentario, nombre: nombreAutor };
+    let { data: inserted, error: insErr } = await supabase
+      .from(PUBLIC_RESENAS_TABLE)
+      .insert([insertPayload])
+      .select(RESENAS_SELECT_ROW)
       .single();
+    if (insErr && String(insErr.message || '').includes('nombre')) {
+      insertPayload = { sede_id: id, user_id: user.id, estrellas, comentario };
+      ({ data: inserted, error: insErr } = await supabase
+        .from(PUBLIC_RESENAS_TABLE)
+        .insert([insertPayload])
+        .select(RESENAS_SELECT_ROW_FALLBACK)
+        .single());
+    }
     if (insErr) throw insErr;
 
     const [enriched] = await enrichSedeResenasConPerfil(inserted ? [inserted] : []);
     res.status(201).json(enriched || null);
   } catch (err) {
-    if (isSedeResenasTableConfigError(err)) return respondSedeResenasUnavailable(res, err);
+    if (isResenasPublicTableConfigError(err)) return respondResenasPublicUnavailable(res, err);
     console.error('❌ Error POST /api/sedes/:id/resenas:', err.message);
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Ya dejaste una reseña en esta sede' });
