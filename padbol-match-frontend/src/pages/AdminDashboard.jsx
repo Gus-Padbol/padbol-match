@@ -406,6 +406,9 @@ function horaRango(hora, duracion) {
 
 // Returns a JSX status badge for a reserva
 function EstadoBadge({ reserva }) {
+  if (String(reserva.estado || '').toLowerCase() === 'pendiente_pago_manual') {
+    return <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap', fontWeight: 700 }}>🟡 Pago manual pendiente</span>;
+  }
   if (reserva.estado === 'cancelada' || reserva.cancelada) {
     return <span style={{ background: '#fee2e2', color: '#991b1b', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>❌ Cancelada</span>;
   }
@@ -430,7 +433,7 @@ const FILTROS_RESERVA_ADMIN_PILLS = [
 function bucketEstadoReservaAdmin(estadoRaw) {
   const e = String(estadoRaw || '').trim().toLowerCase();
   if (e === 'cancelada') return 'canceladas';
-  if (e === 'reservada') return 'pendientes';
+  if (e === 'reservada' || e === 'pendiente_pago_manual') return 'pendientes';
   if (e === 'confirmada' || e === 'completada') return 'confirmadas';
   return 'pendientes';
 }
@@ -2079,6 +2082,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   };
 
+  const confirmarPagoManualReserva = async (reservaId) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/reservas/${reservaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'confirmada' }),
+      });
+      if (response.ok) {
+        setMensajeExito('✅ Pago manual confirmado');
+        setTimeout(() => {
+          fetchData();
+          setMensajeExito('');
+        }, 900);
+      } else {
+        const j = await response.json().catch(() => ({}));
+        alert(j.error || 'No se pudo confirmar el pago manual');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
   const cancelarReserva = async (reservaId) => {
     if (!window.confirm('¿Cancelar esta reserva?')) return;
 
@@ -2170,7 +2195,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           moneda:           sedeData.moneda           || 'ARS',
           descripcion:      sedeData.descripcion      || '',
           historia:        sedeData.historia != null ? String(sedeData.historia) : '',
+          metodo_pago:      sedeData.metodo_pago      || 'mercadopago',
+          stripe_account_id: sedeData.stripe_account_id || '',
           mp_access_token:  sedeData.mp_access_token  || '',
+          pago_manual_instrucciones: sedeData.pago_manual_instrucciones || '',
           latitud:          sedeData.latitud  != null ? String(sedeData.latitud)  : '',
           longitud:         sedeData.longitud != null ? String(sedeData.longitud) : '',
           instagram:        sedeData.instagram  || '',
@@ -2256,7 +2284,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         miSedeForm.historia != null && String(miSedeForm.historia).trim() !== ''
           ? String(miSedeForm.historia).trim().slice(0, 500)
           : null,
+      metodo_pago:      miSedeForm.metodo_pago || 'mercadopago',
+      stripe_account_id: miSedeForm.stripe_account_id || null,
       mp_access_token:  miSedeForm.mp_access_token  || null,
+      pago_manual_instrucciones: miSedeForm.pago_manual_instrucciones || null,
       latitud:          miSedeForm.latitud  !== '' ? parseFloat(miSedeForm.latitud)  : null,
       longitud:         miSedeForm.longitud !== '' ? parseFloat(miSedeForm.longitud) : null,
       instagram:        miSedeForm.instagram  || null,
@@ -4141,6 +4172,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <td style={{ padding: '6px 8px' }}>
                             <select value={editFormData.estado || 'reservada'} onChange={e => setEditFormData({ ...editFormData, estado: e.target.value })} style={{ padding: '4px 6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', width: '100%' }}>
                               <option value="reservada">📋 Reservada</option>
+                              <option value="pendiente_pago_manual">🟡 Pendiente pago manual</option>
                               <option value="confirmada">🟢 Confirmada</option>
                               <option value="completada">✅ Completada</option>
                               <option value="cancelada">❌ Cancelada</option>
@@ -4165,6 +4197,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>${(r.precio || 30000).toLocaleString('es-AR')}</td>
                           <td style={{ padding: '6px 8px' }}>
                             <div style={{ display: 'flex', gap: '4px' }}>
+                              {String(r.estado || '').toLowerCase() === 'pendiente_pago_manual' && (esAdminClub || isSuperAdmin) ? (
+                                <button
+                                  type="button"
+                                  onClick={() => confirmarPagoManualReserva(r.id)}
+                                  style={BTN({ background: '#f59e0b' })}
+                                >
+                                  Confirmar pago
+                                </button>
+                              ) : null}
                               <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>✏️ Editar</button>
                               <button type="button" onClick={() => cancelarReserva(r.id)} style={BTN({ background: '#d32f2f' })}>🗑️</button>
                             </div>
@@ -5034,27 +5075,67 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
 
-          {/* ── 3. Mercado Pago ── */}
+          {/* ── 3. Método de pago ── */}
           {(esAdminClub || isSuperAdmin) && (
             <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>💳 Mercado Pago</h3>
+              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>💳 Método de pago</h3>
               <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '480px' }}>
-                <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#555', lineHeight: 1.5 }}>
-                  Ingresa el Access Token de tu cuenta de Mercado Pago para recibir los pagos directamente en tu cuenta.
-                </p>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
-                  Access Token de MP
-                </label>
-                <input
-                  type="password"
-                  value={miSedeForm.mp_access_token || ''}
-                  placeholder="APP_USR-..."
-                  onChange={e => setMiSedeForm(p => ({ ...p, mp_access_token: e.target.value }))}
-                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', fontFamily: 'monospace', marginBottom: '14px' }}
-                />
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>Método</label>
+                <select
+                  value={miSedeForm.metodo_pago || 'mercadopago'}
+                  onChange={e => setMiSedeForm(p => ({ ...p, metodo_pago: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', marginBottom: '12px' }}
+                >
+                  <option value="mercadopago">Mercado Pago</option>
+                  <option value="stripe">Stripe</option>
+                  <option value="manual">Manual (transferencia o efectivo)</option>
+                </select>
+                {String(miSedeForm.metodo_pago || 'mercadopago') === 'mercadopago' ? (
+                  <>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                      Access Token de MP
+                    </label>
+                    <input
+                      type="password"
+                      value={miSedeForm.mp_access_token || ''}
+                      placeholder="APP_USR-..."
+                      onChange={e => setMiSedeForm(p => ({ ...p, mp_access_token: e.target.value }))}
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', fontFamily: 'monospace', marginBottom: '14px' }}
+                    />
+                  </>
+                ) : null}
+                {String(miSedeForm.metodo_pago || '') === 'stripe' ? (
+                  <>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                      Stripe Account ID
+                    </label>
+                    <input
+                      value={miSedeForm.stripe_account_id || ''}
+                      placeholder="acct_..."
+                      onChange={e => setMiSedeForm(p => ({ ...p, stripe_account_id: e.target.value }))}
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', marginBottom: '10px', fontFamily: 'monospace' }}
+                    />
+                    <button type="button" style={{ marginBottom: '14px', padding: '7px 12px', borderRadius: '8px', border: '1px dashed #94a3b8', background: '#f8fafc', color: '#334155' }}>
+                      Conectar con Stripe (próximamente)
+                    </button>
+                  </>
+                ) : null}
+                {String(miSedeForm.metodo_pago || '') === 'manual' ? (
+                  <>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                      Instrucciones para el jugador
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={miSedeForm.pago_manual_instrucciones || ''}
+                      onChange={e => setMiSedeForm(p => ({ ...p, pago_manual_instrucciones: e.target.value }))}
+                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', marginBottom: '14px', resize: 'vertical' }}
+                    />
+                  </>
+                ) : null}
                 <button onClick={guardarMiSede} disabled={miSedeSaving}
                   style={{ padding: '8px 20px', background: miSedeSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                  {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar token'}
+                  {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar método de pago'}
                 </button>
               </div>
             </div>

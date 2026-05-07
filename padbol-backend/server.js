@@ -208,6 +208,45 @@ function normalizeAdminPaisLabel(raw) {
   return String(raw).replace(/^[\p{Emoji_Presentation}\s]*/u, '').trim();
 }
 
+function normalizeMetodoPago(raw) {
+  const v = String(raw || '').trim().toLowerCase();
+  if (v === 'stripe') return 'stripe';
+  if (v === 'manual') return 'manual';
+  return 'mercadopago';
+}
+
+async function sedePaymentConfigBySedeId(sedeId) {
+  const sid = Number(sedeId);
+  if (!Number.isFinite(sid)) return null;
+  const { data, error } = await supabase
+    .from('sedes')
+    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, pago_manual_instrucciones')
+    .eq('id', sid)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    ...data,
+    metodo_pago: normalizeMetodoPago(data.metodo_pago),
+  };
+}
+
+async function sedePaymentConfigByNombre(sedeNombre) {
+  const n = String(sedeNombre || '').trim();
+  if (!n) return null;
+  const { data, error } = await supabase
+    .from('sedes')
+    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, pago_manual_instrucciones')
+    .eq('nombre', n)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    ...data,
+    metodo_pago: normalizeMetodoPago(data.metodo_pago),
+  };
+}
+
 function normalizeGeoText(raw) {
   return String(raw || '')
     .replace(/^[\p{Emoji_Presentation}\s]*/u, '')
@@ -715,6 +754,10 @@ app.post('/api/sedes', async (req, res) => {
       horario_cierre: String(b.horario_cierre || '').trim() || null,
       precio_turno: Number.isFinite(precioTurno) ? precioTurno : null,
       moneda: String(b.moneda || 'ARS').trim().toUpperCase() || 'ARS',
+      metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
+      stripe_account_id: String(b.stripe_account_id || '').trim() || null,
+      mp_access_token: String(b.mp_access_token || '').trim() || null,
+      pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
       latitud: Number.isFinite(latitud) ? latitud : null,
       longitud: Number.isFinite(longitud) ? longitud : null,
       google_maps_url: String(b.google_maps_url || b.maps_url || '').trim() || null,
@@ -3480,17 +3523,74 @@ app.post('/api/crear-preferencia', async (req, res) => {
       };
     }
 
+    const sedeCfg = sedeId ? await sedePaymentConfigBySedeId(sedeId) : null;
+    const metodoPago = normalizeMetodoPago(sedeCfg?.metodo_pago || 'mercadopago');
+    const instruccionesManual = String(sedeCfg?.pago_manual_instrucciones || '').trim();
+
+    if (metodoPago === 'manual') {
+      if (tipoEff === 'torneo_inscripcion') {
+        return res.json({
+          manual_payment: true,
+          instructions: instruccionesManual || 'Coordiná el pago manual con la sede para confirmar la inscripción.',
+          status: 'pendiente_pago_manual',
+          tipo: 'torneo_inscripcion',
+        });
+      }
+      const r = reservaData && typeof reservaData === 'object' ? reservaData : null;
+      if (!r) {
+        return res.status(400).json({ error: 'Para pago manual se requiere reservaData' });
+      }
+      const payloadReserva = {
+        sede: r.sede,
+        fecha: r.fecha,
+        hora: r.hora,
+        cancha: r.cancha,
+        nombre: r.nombre,
+        email: r.email,
+        whatsapp: r.whatsapp,
+        nivel: r.nivel || 'Principiante',
+        precio: Number(r.precio) || unitPrice,
+        estado: 'pendiente_pago_manual',
+        duracion: r.duracion,
+      };
+      const { data: taken, error: chkErr } = await supabase
+        .from('reservas')
+        .select('id')
+        .eq('sede', payloadReserva.sede)
+        .eq('fecha', payloadReserva.fecha)
+        .eq('hora', payloadReserva.hora)
+        .eq('cancha', parseInt(String(payloadReserva.cancha), 10));
+      if (chkErr) throw chkErr;
+      if ((taken || []).length > 0) {
+        return res.status(409).json({ error: 'Este horario ya está reservado' });
+      }
+      const { data: reservaCreada, error: resErr } = await supabase.from('reservas').insert([payloadReserva]).select().single();
+      if (resErr) throw resErr;
+      return res.json({
+        manual_payment: true,
+        instructions: instruccionesManual || 'Transferí/aboná en sede y compartí comprobante por WhatsApp.',
+        reservation: reservaCreada,
+      });
+    }
+
+    if (metodoPago === 'stripe') {
+      const stripeAccountId =
+        String(sedeCfg?.stripe_account_id || '').trim() ||
+        String(process.env.STRIPE_ACCOUNT_ID || '').trim() ||
+        null;
+      return res.json({
+        stripe_checkout_pending: true,
+        provider: 'stripe',
+        stripe_account_id: stripeAccountId,
+        message:
+          'Stripe Connect está en implementación. Mientras tanto usá Mercado Pago o pago manual en esta sede.',
+      });
+    }
+
     // Use sede-specific MP token if configured, otherwise fall back to env var
     let client = mpClient;
-    if (sedeId) {
-      const { data: sedeRow } = await supabase
-        .from('sedes')
-        .select('mp_access_token')
-        .eq('id', sedeId)
-        .maybeSingle();
-      if (sedeRow?.mp_access_token) {
-        client = new MercadoPagoConfig({ accessToken: sedeRow.mp_access_token });
-      }
+    if (sedeCfg?.mp_access_token) {
+      client = new MercadoPagoConfig({ accessToken: sedeCfg.mp_access_token });
     }
 
     // Embed full reservation data as JSON in external_reference so
@@ -3853,6 +3953,10 @@ function mapPendingRowToSedeInsert(row) {
     horario_cierre: row.horario_cierre || null,
     precio_turno: row.precio_base != null && row.precio_base !== '' ? Number(row.precio_base) : null,
     moneda: row.moneda || 'ARS',
+    metodo_pago: normalizeMetodoPago(row.metodo_pago || 'mercadopago'),
+    stripe_account_id: row.stripe_account_id || null,
+    mp_access_token: row.mp_access_token || null,
+    pago_manual_instrucciones: row.pago_manual_instrucciones || null,
     telefono: row.whatsapp || null,
     email_contacto: row.email_contacto || null,
     numero_licencia: row.numero_licencia || null,
@@ -3898,6 +4002,10 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
       moneda: b.moneda || 'ARS',
       whatsapp: b.whatsapp || null,
       email_contacto: b.email_contacto || null,
+      metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
+      stripe_account_id: String(b.stripe_account_id || '').trim() || null,
+      mp_access_token: String(b.mp_access_token || '').trim() || null,
+      pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
       numero_licencia: b.numero_licencia || null,
       fecha_contrato: b.fecha_inicio_contrato || b.fecha_contrato || null,
       tipo_licencia: ['club_afiliado', 'padbol_point', 'master_ciudad', 'master_provincia', 'master_pais'].includes(String(b.tipo_licencia || '').trim())
@@ -3971,6 +4079,10 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
       horario_cierre: b.horario_cierre || null,
       precio_turno: b.precio_base != null && b.precio_base !== '' ? Number(b.precio_base) : null,
       moneda: b.moneda || 'ARS',
+      metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
+      stripe_account_id: String(b.stripe_account_id || '').trim() || null,
+      mp_access_token: String(b.mp_access_token || '').trim() || null,
+      pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
       telefono: b.whatsapp || null,
       email_contacto: b.email_contacto || null,
       numero_licencia: b.numero_licencia || null,

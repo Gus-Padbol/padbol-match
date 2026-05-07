@@ -50,6 +50,10 @@ const emptyForm = () => ({
   fecha_inicio_contrato: '',
   fecha_vencimiento_contrato: '',
   referencia_contrato: '',
+  metodo_pago: 'mercadopago',
+  stripe_account_id: '',
+  mp_access_token: '',
+  pago_manual_instrucciones: '',
   tipo_licencia: 'club_afiliado',
   ciudad_representa: '',
   provincia_representa: '',
@@ -159,6 +163,10 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
         fecha_inicio_contrato: form.fecha_inicio_contrato || null,
         fecha_vencimiento_contrato: form.fecha_vencimiento_contrato || null,
         referencia_contrato: form.referencia_contrato.trim() || null,
+        metodo_pago: form.metodo_pago,
+        stripe_account_id: form.stripe_account_id.trim() || null,
+        mp_access_token: form.mp_access_token.trim() || null,
+        pago_manual_instrucciones: form.pago_manual_instrucciones.trim() || null,
         tipo_licencia: LICENCIA_TIPO_OPTIONS.some((x) => x.id === form.tipo_licencia) ? form.tipo_licencia : 'club_afiliado',
         ciudad_representa: form.ciudad_representa.trim() || null,
         provincia_representa: form.provincia_representa.trim() || null,
@@ -441,6 +449,52 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
                     </option>
                   ))}
                 </select>
+              </>
+            ) : null}
+            <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '16px 0 12px' }} />
+            <h3 style={{ margin: '0 0 10px', fontSize: '15px', color: '#0f172a' }}>Método de pago</h3>
+            <label style={labelStyle}>Método</label>
+            <select style={inputStyle} value={form.metodo_pago} onChange={(e) => setField('metodo_pago', e.target.value)}>
+              <option value="mercadopago">Mercado Pago</option>
+              <option value="stripe">Stripe</option>
+              <option value="manual">Manual (transferencia o efectivo)</option>
+            </select>
+            {form.metodo_pago === 'mercadopago' ? (
+              <>
+                <label style={{ ...labelStyle, marginTop: 12 }}>Access Token Mercado Pago</label>
+                <input
+                  type="password"
+                  style={inputStyle}
+                  value={form.mp_access_token}
+                  onChange={(e) => setField('mp_access_token', e.target.value)}
+                  placeholder="APP_USR-..."
+                />
+              </>
+            ) : null}
+            {form.metodo_pago === 'stripe' ? (
+              <>
+                <label style={{ ...labelStyle, marginTop: 12 }}>Stripe Account ID</label>
+                <input
+                  style={inputStyle}
+                  value={form.stripe_account_id}
+                  onChange={(e) => setField('stripe_account_id', e.target.value)}
+                  placeholder="acct_..."
+                />
+                <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#64748b' }}>
+                  Conectar con Stripe (próximamente). Por ahora guardamos el Account ID manualmente.
+                </p>
+              </>
+            ) : null}
+            {form.metodo_pago === 'manual' ? (
+              <>
+                <label style={{ ...labelStyle, marginTop: 12 }}>Instrucciones para el jugador</label>
+                <textarea
+                  rows={4}
+                  style={{ ...inputStyle, maxWidth: '100%', resize: 'vertical' }}
+                  value={form.pago_manual_instrucciones}
+                  onChange={(e) => setField('pago_manual_instrucciones', e.target.value)}
+                  placeholder="Ej: Transferir a CBU ... y enviar comprobante por WhatsApp."
+                />
               </>
             ) : null}
           </div>

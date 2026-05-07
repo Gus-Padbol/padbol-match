@@ -1033,6 +1033,21 @@ export default function ReservaForm() {
       if (res.ok && data.init_point) {
         localStorage.setItem('ultima_sede', String(filtros.sede_id));
         window.location.href = data.init_point;
+      } else if (res.ok && data.manual_payment) {
+        const msgManual = [
+          'Reserva creada con estado pendiente de pago manual.',
+          data.instructions ? `Instrucciones: ${data.instructions}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n\n');
+        alert(msgManual);
+        setPantalla(1);
+        setFormData({ fecha: '', hora: '', cancha: '', nombre: '', email: '', numeroTel: '' });
+        setWhatsapp('');
+        setMpLoading(false);
+      } else if (res.ok && data.stripe_checkout_pending) {
+        setError(data.message || 'Stripe Connect está en implementación para esta sede.');
+        setMpLoading(false);
       } else {
         setError(data.error || 'No se pudo iniciar el pago');
         setMpLoading(false);

@@ -129,6 +129,21 @@ export async function iniciarPagoInscripcionTorneo({
       window.location.href = data.init_point;
       return { ok: true };
     }
+    if (res.ok && data.manual_payment) {
+      return {
+        ok: false,
+        manual: true,
+        error:
+          data.instructions ||
+          'La sede maneja pago manual. Coordiná con el club para confirmar la inscripción.',
+      };
+    }
+    if (res.ok && data.stripe_checkout_pending) {
+      return {
+        ok: false,
+        error: data.message || 'Stripe Connect aún no está disponible para esta sede.',
+      };
+    }
     return { ok: false, error: data.error || 'No se pudo iniciar el pago' };
   } catch (e) {
     return { ok: false, error: e?.message || 'Error de conexión' };
