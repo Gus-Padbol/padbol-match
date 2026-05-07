@@ -35,7 +35,119 @@ import {
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import * as XLSX from 'xlsx';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+
 const CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+
+const STRIPE_PUBLISHABLE_ADMIN =
+  typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
+    ? String(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).trim()
+    : '';
+const stripePromiseAdmin = STRIPE_PUBLISHABLE_ADMIN ? loadStripe(STRIPE_PUBLISHABLE_ADMIN) : null;
+
+function etiquetaSuscripcionEstado(raw) {
+  const v = String(raw || 'sin_suscripcion').toLowerCase();
+  if (v === 'activa') return 'Activa';
+  if (v === 'vencida') return 'Vencida';
+  if (v === 'pendiente_pago') return 'Pendiente de pago';
+  if (v === 'cancelada') return 'Cancelada';
+  return 'Sin suscripción';
+}
+
+function formatProximoCobroAdmin(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch {
+    return '—';
+  }
+}
+
+function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const pay = async () => {
+    if (!stripe || !elements) return;
+    setMsg('');
+    setBusy(true);
+    try {
+      const { error: sErr } = await elements.submit();
+      if (sErr) {
+        setMsg(sErr.message || 'Revisá los datos');
+        return;
+      }
+      const { error: pErr, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: typeof window !== 'undefined' ? `${window.location.origin}/admin` : undefined,
+        },
+        redirect: 'if_required',
+      });
+      if (pErr) {
+        setMsg(pErr.message || 'No se pudo cobrar');
+        return;
+      }
+      if (paymentIntent?.status !== 'succeeded') {
+        setMsg('El pago no se completó.');
+        return;
+      }
+      onSuccess();
+    } catch (e) {
+      setMsg(e.message || String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '12px' }}>
+      <PaymentElement />
+      {msg ? (
+        <p style={{ color: '#b91c1c', fontSize: '13px', marginTop: '10px' }}>{msg}</p>
+      ) : null}
+      <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={() => void pay()}
+          disabled={busy || !stripe}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '8px',
+            border: 'none',
+            background: busy || !stripe ? '#94a3b8' : '#635bff',
+            color: '#fff',
+            fontWeight: 700,
+            cursor: busy || !stripe ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {busy ? 'Procesando…' : 'Confirmar pago'}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={busy}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '8px',
+            border: '1px solid #cbd5e1',
+            background: '#fff',
+            fontWeight: 600,
+            cursor: busy ? 'not-allowed' : 'pointer',
+          }}
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const MAX_FOTOS_SEDE = 20;
 
@@ -1426,6 +1538,39 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           .filter(Boolean)
           .sort((a, b) => a.days - b.days)
       : [];
+    const MS_7D = 7 * 24 * 60 * 60 * 1000;
+    const alertasSuscripcionBilling = isSuperAdmin
+      ? Object.values(sedesMap || {}).flatMap((sedeRow) => {
+          const est = String(sedeRow?.suscripcion_estado || 'sin_suscripcion').toLowerCase();
+          const prox = sedeRow?.suscripcion_proximo_cobro
+            ? new Date(sedeRow.suscripcion_proximo_cobro).getTime()
+            : NaN;
+          const now = Date.now();
+          if (est === 'vencida') {
+            return [
+              {
+                tipo: 'vencida',
+                sedeNombre: String(sedeRow?.nombre || `Sede ${sedeRow?.id}`).trim(),
+                sedeId: sedeRow?.id,
+              },
+            ];
+          }
+          if (est === 'activa' && Number.isFinite(prox)) {
+            const ms = prox - now;
+            if (ms >= 0 && ms <= MS_7D) {
+              return [
+                {
+                  tipo: 'proxima',
+                  sedeNombre: String(sedeRow?.nombre || `Sede ${sedeRow?.id}`).trim(),
+                  sedeId: sedeRow?.id,
+                  fecha: sedeRow.suscripcion_proximo_cobro,
+                },
+              ];
+            }
+          }
+          return [];
+        })
+      : [];
     const btnTorneo = {
       marginTop: '8px',
       padding: '6px 12px',
@@ -1454,6 +1599,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       (p.alertasTorneosMenosDosConfirmados || []).length > 0 ||
       (p.alertasTorneoSinSorteo48h || []).length > 0 ||
       alertasContratosPorVencer.length > 0 ||
+      alertasSuscripcionBilling.length > 0 ||
       (puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0);
 
     return (
@@ -1631,6 +1777,29 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   {a.days} día{a.days === 1 ? '' : 's'}).
                 </div>
               ))}
+              {alertasSuscripcionBilling.map((a) =>
+                a.tipo === 'vencida' ? (
+                  <div key={`sub-v-${a.sedeId}`} role="alert" style={alertBox('#fee2e2', '#f87171', '#991b1b')}>
+                    <strong>Suscripción vencida:</strong> {a.sedeNombre} — revisá el pago en Stripe o reactivá desde Sedes.
+                    <button
+                      type="button"
+                      style={btnTorneo}
+                      onClick={() => {
+                        setActiveTab('sedes');
+                        sessionStorage.setItem('adminActiveTab', 'sedes');
+                        navigate(`/admin?tab=sedes`, { replace: true });
+                      }}
+                    >
+                      Ir a Sedes
+                    </button>
+                  </div>
+                ) : (
+                  <div key={`sub-p-${a.sedeId}`} role="alert" style={alertBox('#e0e7ff', '#818cf8', '#3730a3')}>
+                    <strong>Suscripción por cobrar:</strong> {a.sedeNombre} — próximo cobro{' '}
+                    {formatProximoCobroAdmin(a.fecha)}.
+                  </div>
+                )
+              )}
             </div>
           )}
         </div>
@@ -1642,6 +1811,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     sedesMap,
     isSuperAdmin,
     navigate,
+    setActiveTab,
     puedeVerSedesPendientes,
     sedesPendientesLoading,
     sedesPendientes,
@@ -2353,6 +2523,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [miSedeForm,    setMiSedeForm]    = useState({});
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
   const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
+  const [suscripcionModal, setSuscripcionModal] = useState({
+    open: false,
+    clientSecret: null,
+    sedeNombre: '',
+    sedeId: null,
+  });
   const [miSedeMsg,     setMiSedeMsg]     = useState('');
   const [canchas,       setCanchas]       = useState([]);
   const [nuevaCancha,   setNuevaCancha]   = useState('');
@@ -2606,6 +2782,44 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setStripeOnboardingLoading(false);
     }
   }, [apiBaseUrl, sedeId, session?.access_token]);
+
+  const activarSuscripcionStripeSede = useCallback(
+    async (sedeRow) => {
+      if (!isSuperAdmin || !session?.access_token || !sedeRow?.id) return;
+      if (!STRIPE_PUBLISHABLE_ADMIN) {
+        alert('Falta REACT_APP_STRIPE_PUBLISHABLE_KEY en el frontend.');
+        return;
+      }
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/stripe/suscripcion/crear`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ sede_id: sedeRow.id }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(j.error || 'No se pudo iniciar la suscripción');
+          return;
+        }
+        if (!j.client_secret) {
+          alert('Stripe no devolvió client_secret. Revisá el precio y la suscripción en el dashboard de Stripe.');
+          return;
+        }
+        setSuscripcionModal({
+          open: true,
+          clientSecret: j.client_secret,
+          sedeNombre: String(sedeRow.nombre || '').trim(),
+          sedeId: sedeRow.id,
+        });
+      } catch (e) {
+        alert(e.message || String(e));
+      }
+    },
+    [apiBaseUrl, isSuperAdmin, session?.access_token]
+  );
 
   const guardarLicencia = async () => {
     setLicenciaSaving(true); setLicenciaMsg('');
@@ -3965,20 +4179,68 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         {isSuperAdmin && open ? (
                           <tr>
                             <td colSpan={5} style={{ background: '#f8fafc', padding: '10px 12px' }}>
-                              <div style={{ display: 'grid', gap: '6px' }}>
-                                <div style={{ fontWeight: 800, color: '#334155' }}>Contrato</div>
-                                <div style={{ fontSize: '13px' }}>
-                                  <strong>Inicio:</strong> {contrato?.fecha_inicio || '—'} · <strong>Vencimiento:</strong>{' '}
-                                  {contrato?.fecha_vencimiento || '—'} · <strong>Referencia:</strong> {contrato?.referencia || '—'}
+                              <div style={{ display: 'grid', gap: '14px' }}>
+                                <div style={{ display: 'grid', gap: '6px' }}>
+                                  <div style={{ fontWeight: 800, color: '#334155' }}>Contrato</div>
+                                  <div style={{ fontSize: '13px' }}>
+                                    <strong>Inicio:</strong> {contrato?.fecha_inicio || '—'} · <strong>Vencimiento:</strong>{' '}
+                                    {contrato?.fecha_vencimiento || '—'} · <strong>Referencia:</strong> {contrato?.referencia || '—'}
+                                  </div>
+                                  <div>
+                                    <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '999px', background: badge.bg, color: badge.color, fontSize: '12px', fontWeight: 700 }}>
+                                      {badge.label}
+                                    </span>
+                                    {contrato?.archivo_url ? (
+                                      <a href={contrato.archivo_url} target="_blank" rel="noreferrer" style={{ marginLeft: '10px', fontSize: '13px' }}>
+                                        Descargar contrato
+                                      </a>
+                                    ) : null}
+                                  </div>
                                 </div>
-                                <div>
-                                  <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '999px', background: badge.bg, color: badge.color, fontSize: '12px', fontWeight: 700 }}>
-                                    {badge.label}
-                                  </span>
-                                  {contrato?.archivo_url ? (
-                                    <a href={contrato.archivo_url} target="_blank" rel="noreferrer" style={{ marginLeft: '10px', fontSize: '13px' }}>
-                                      Descargar contrato
-                                    </a>
+                                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'grid', gap: '8px' }}>
+                                  <div style={{ fontWeight: 800, color: '#334155' }}>Suscripción Padbol Match (Stripe)</div>
+                                  <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
+                                    <strong>Estado:</strong> {etiquetaSuscripcionEstado(s.suscripcion_estado)}
+                                    <br />
+                                    <strong>Próximo cobro:</strong> {formatProximoCobroAdmin(s.suscripcion_proximo_cobro)}
+                                  </div>
+                                  {String(s.suscripcion_estado || '').toLowerCase() !== 'activa' &&
+                                  String(s.suscripcion_estado || '').toLowerCase() !== 'pendiente_pago' ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => void activarSuscripcionStripeSede(s)}
+                                      style={{
+                                        justifySelf: 'start',
+                                        padding: '8px 16px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: 'linear-gradient(135deg, #635bff, #0a2540)',
+                                        color: '#fff',
+                                        fontWeight: 700,
+                                        fontSize: '13px',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      Activar suscripción
+                                    </button>
+                                  ) : String(s.suscripcion_estado || '').toLowerCase() === 'pendiente_pago' ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => void activarSuscripcionStripeSede(s)}
+                                      style={{
+                                        justifySelf: 'start',
+                                        padding: '8px 16px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: '#ca8a04',
+                                        color: '#fff',
+                                        fontWeight: 700,
+                                        fontSize: '13px',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      Completar pago (tarjeta)
+                                    </button>
                                   ) : null}
                                 </div>
                               </div>
@@ -6071,6 +6333,68 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 {nuevaSedeSaving ? 'Creando...' : 'Crear sede'}
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {suscripcionModal.open && suscripcionModal.clientSecret && stripePromiseAdmin ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Pago suscripción Padbol Match"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 19999,
+            background: 'rgba(15, 23, 42, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget) {
+              setSuscripcionModal({ open: false, clientSecret: null, sedeNombre: '', sedeId: null });
+            }
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              background: '#fff',
+              borderRadius: '16px',
+              padding: '20px',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
+              boxSizing: 'border-box',
+            }}
+            onClick={(ev) => ev.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
+              Suscripción Padbol Match
+            </h3>
+            <p style={{ margin: '0 0 14px', fontSize: '14px', color: '#64748b', lineHeight: 1.45 }}>
+              {String(suscripcionModal.sedeNombre || '').trim() || 'Sede'} — cargá la tarjeta para el débito mensual automático.
+            </p>
+            <Elements
+              stripe={stripePromiseAdmin}
+              options={{ clientSecret: suscripcionModal.clientSecret, locale: 'es' }}
+            >
+              <AdminSuscripcionPayInner
+                clientSecret={suscripcionModal.clientSecret}
+                onSuccess={() => {
+                  setSuscripcionModal({ open: false, clientSecret: null, sedeNombre: '', sedeId: null });
+                  void fetchData();
+                  alert(
+                    'Pago procesado. El estado «Activa» y la fecha de próximo cobro se actualizarán cuando Stripe envíe el webhook (unos segundos).'
+                  );
+                }}
+                onClose={() =>
+                  setSuscripcionModal({ open: false, clientSecret: null, sedeNombre: '', sedeId: null })
+                }
+              />
+            </Elements>
           </div>
         </div>
       ) : null}

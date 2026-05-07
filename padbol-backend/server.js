@@ -7,8 +7,13 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import cron from 'node-cron';
 import multer from 'multer';
 import Stripe from 'stripe';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const PORT = 3001;
@@ -48,7 +53,17 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true
 }));
-app.use(express.json());
+app.use(
+  express.json({
+    limit: '2mb',
+    verify: (req, res, buf) => {
+      const u = req.originalUrl || '';
+      if (u.startsWith('/api/stripe/webhook')) {
+        req.rawBody = buf;
+      }
+    },
+  })
+);
 
 // Supabase (desde .env)
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -463,6 +478,158 @@ function getStripeOrThrow() {
     throw e;
   }
   return stripeClient;
+}
+
+/**
+ * Asegura Product + Price mensual para Billing. Orden: env → archivo cache → buscar en Stripe → crear.
+ * Persiste en `.stripe-subscription-price-id`, intenta añadir a `.env` en cwd, o crea `.env.stripe-subscription`.
+ */
+async function ensureStripeSubscriptionPriceId() {
+  const fromEnv = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();
+  if (fromEnv.startsWith('price_')) return fromEnv;
+
+  const cacheFile = path.join(__dirname, '.stripe-subscription-price-id');
+  try {
+    const cached = fs.readFileSync(cacheFile, 'utf8').trim();
+    if (cached.startsWith('price_')) {
+      process.env.STRIPE_SUBSCRIPTION_PRICE_ID = cached;
+      return cached;
+    }
+  } catch {
+    /* sin cache */
+  }
+
+  if (!stripeClient) {
+    console.warn(
+      '⚠️ STRIPE_SUBSCRIPTION_PRICE_ID no definido y sin STRIPE_SECRET_KEY: no se puede crear el precio de suscripción'
+    );
+    return null;
+  }
+
+  const listed = await stripeClient.products.list({ limit: 100, active: true });
+  const existingProd = (listed.data || []).find((p) => p.metadata?.padbol_match_subscription === '1');
+  let productId = existingProd?.id;
+  if (!productId) {
+    const p = await stripeClient.products.create({
+      name: 'Suscripción Padbol Match',
+      metadata: { padbol_match_subscription: '1' },
+    });
+    productId = p.id;
+    console.log(`✓ Stripe Product «Suscripción Padbol Match»: ${productId}`);
+  }
+
+  const priceList = await stripeClient.prices.list({ product: productId, active: true, limit: 30 });
+  const monthly = (priceList.data || []).find(
+    (pr) => pr.type === 'recurring' && pr.recurring?.interval === 'month'
+  );
+  let priceId = monthly?.id;
+  if (!priceId) {
+    const unitAmount = parseInt(String(process.env.STRIPE_SUBSCRIPTION_UNIT_AMOUNT || '1000'), 10);
+    const currency = String(process.env.STRIPE_SUBSCRIPTION_CURRENCY || 'usd').toLowerCase();
+    const pr = await stripeClient.prices.create({
+      product: productId,
+      unit_amount: Number.isFinite(unitAmount) && unitAmount > 0 ? unitAmount : 1000,
+      currency,
+      recurring: { interval: 'month' },
+    });
+    priceId = pr.id;
+    console.log(
+      `✓ Stripe Price recurrente mensual: ${priceId} (${Number.isFinite(unitAmount) && unitAmount > 0 ? unitAmount : 1000} ${currency})`
+    );
+  }
+
+  process.env.STRIPE_SUBSCRIPTION_PRICE_ID = priceId;
+  try {
+    fs.writeFileSync(cacheFile, `${priceId}\n`, 'utf8');
+  } catch (e) {
+    console.warn('⚠️ No se pudo escribir .stripe-subscription-price-id:', e?.message || e);
+  }
+
+  const envPath = path.join(process.cwd(), '.env');
+  try {
+    if (fs.existsSync(envPath)) {
+      let raw = fs.readFileSync(envPath, 'utf8');
+      if (!/^\s*STRIPE_SUBSCRIPTION_PRICE_ID\s*=/m.test(raw)) {
+        raw = `${raw.replace(/\s*$/, '')}\nSTRIPE_SUBSCRIPTION_PRICE_ID=${priceId}\n`;
+        fs.writeFileSync(envPath, raw, 'utf8');
+        console.log(`✓ STRIPE_SUBSCRIPTION_PRICE_ID añadido a .env`);
+      }
+    } else {
+      const stub = path.join(__dirname, '.env.stripe-subscription');
+      fs.writeFileSync(stub, `STRIPE_SUBSCRIPTION_PRICE_ID=${priceId}\n`, 'utf8');
+      console.log(`✓ Creado ${stub} — copiá STRIPE_SUBSCRIPTION_PRICE_ID al entorno de producción`);
+    }
+  } catch (e) {
+    console.warn('⚠️ No se pudo actualizar .env:', e?.message || e);
+  }
+
+  return priceId;
+}
+
+function getStripeSubscriptionPriceIdOrThrow() {
+  const id = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();
+  if (!id.startsWith('price_')) {
+    const e = new Error(
+      'Precio de suscripción no disponible. Configurá STRIPE_SUBSCRIPTION_PRICE_ID o reiniciá el servidor tras crear el Product/Price.'
+    );
+    e.status = 503;
+    throw e;
+  }
+  return id;
+}
+
+async function fetchAdminClubEmailForSede(sedeIdNum) {
+  const sid = Number(sedeIdNum);
+  const { data: row, error } = await supabase
+    .from('user_roles')
+    .select('email')
+    .eq('role', 'admin_club')
+    .eq('sede_id', sid)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  const em = row?.email != null ? String(row.email).trim().toLowerCase() : '';
+  return em || null;
+}
+
+async function resolveSedeIdFromStripeContext({ subscriptionId, customerId }) {
+  const sidMeta = async (subId) => {
+    if (!subId) return null;
+    try {
+      const st = getStripeOrThrow();
+      const sub = await st.subscriptions.retrieve(String(subId));
+      const raw = sub?.metadata?.sede_id;
+      const n = parseInt(String(raw), 10);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    } catch {
+      return null;
+    }
+  };
+
+  if (subscriptionId) {
+    const fromSub = await sidMeta(subscriptionId);
+    if (fromSub) return fromSub;
+  }
+  const cust = String(customerId || '').trim();
+  if (cust.startsWith('cus_')) {
+    const { data, error } = await supabase.from('sedes').select('id').eq('stripe_customer_id', cust).limit(1).maybeSingle();
+    if (!error && data?.id != null) return Number(data.id);
+  }
+  return null;
+}
+
+async function sendSuscripcionPagoFallidoWhatsApp({ sedeNombre, sedeId }) {
+  const to = resolveSuperAdminNotifyWhatsAppTo();
+  if (!to || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    console.warn('⚠️ Suscripción: no se pudo avisar por WhatsApp (Twilio o SUPER_ADMIN_NOTIFY_WHATSAPP)');
+    return;
+  }
+  const body =
+    `⚠️ Suscripción Padbol Match: pago fallido\n` +
+    `Sede: ${String(sedeNombre || '').trim() || '—'} (id ${sedeId})\n` +
+    `Revisá Stripe y el panel de sedes.`;
+  await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
+  console.log(`✓ WhatsApp super_admin: pago suscripción fallido (sede ${sedeId})`);
 }
 
 // Twilio (desde .env)
@@ -3959,6 +4126,209 @@ app.get('/api/stripe/onboarding/:sede_id', async (req, res) => {
   }
 });
 
+/** Super admin: inicia suscripción mensual Padbol Match (Stripe Billing) y devuelve client_secret del primer pago. */
+app.post('/api/stripe/suscripcion/crear', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const st = getStripeOrThrow();
+    const priceId = getStripeSubscriptionPriceIdOrThrow();
+    const sid = parseInt(String((req.body || {}).sede_id), 10);
+    if (!Number.isFinite(sid) || sid <= 0) {
+      return res.status(400).json({ error: 'sede_id inválido' });
+    }
+
+    const { data: sedeRow, error: sErr } = await supabase
+      .from('sedes')
+      .select('id, nombre, email_contacto, stripe_customer_id, stripe_subscription_id')
+      .eq('id', sid)
+      .maybeSingle();
+    if (sErr) throw sErr;
+    if (!sedeRow) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    let adminEmail = await fetchAdminClubEmailForSede(sid);
+    if (!adminEmail) {
+      adminEmail = String(sedeRow.email_contacto || '').trim().toLowerCase();
+    }
+    if (!adminEmail || !adminEmail.includes('@')) {
+      return res.status(400).json({
+        error:
+          'No hay email de admin_club ni email_contacto válido. Asigná un admin al club o completá el contacto de la sede.',
+      });
+    }
+
+    const existingSub = String(sedeRow.stripe_subscription_id || '').trim();
+    if (existingSub.startsWith('sub_')) {
+      const sub = await st.subscriptions.retrieve(existingSub, {
+        expand: ['latest_invoice.payment_intent'],
+      });
+      if (sub.status === 'active' || sub.status === 'trialing') {
+        return res.status(400).json({
+          error: 'La sede ya tiene una suscripción en curso',
+          subscription_status: sub.status,
+        });
+      }
+      if (sub.status === 'incomplete' || sub.status === 'past_due' || sub.status === 'unpaid') {
+        const inv = sub.latest_invoice;
+        const piRaw = inv && typeof inv === 'object' ? inv.payment_intent : null;
+        const pi =
+          typeof piRaw === 'string' ? await st.paymentIntents.retrieve(piRaw) : piRaw;
+        if (pi?.client_secret) {
+          return res.json({
+            client_secret: pi.client_secret,
+            subscription_id: sub.id,
+            customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
+          });
+        }
+      }
+    }
+
+    let customerId = String(sedeRow.stripe_customer_id || '').trim();
+    if (!customerId.startsWith('cus_')) {
+      const cust = await st.customers.create({
+        email: adminEmail,
+        metadata: { sede_id: String(sid) },
+      });
+      customerId = cust.id;
+      const { error: cuErr } = await supabase.from('sedes').update({ stripe_customer_id: customerId }).eq('id', sid);
+      if (cuErr) throw cuErr;
+    }
+
+    const subscription = await st.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      metadata: { sede_id: String(sid) },
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+    });
+
+    const inv = subscription.latest_invoice;
+    const pi = inv && typeof inv === 'object' ? inv.payment_intent : null;
+    const paymentIntent = typeof pi === 'string' ? await st.paymentIntents.retrieve(pi) : pi;
+    const clientSecret = paymentIntent?.client_secret || null;
+
+    const { error: upErr } = await supabase
+      .from('sedes')
+      .update({
+        stripe_subscription_id: subscription.id,
+        suscripcion_estado: 'pendiente_pago',
+      })
+      .eq('id', sid);
+    if (upErr) throw upErr;
+
+    res.json({
+      client_secret: clientSecret,
+      subscription_id: subscription.id,
+      customer_id: customerId,
+    });
+  } catch (err) {
+    console.error('❌ POST /api/stripe/suscripcion/crear:', err?.message || err);
+    res.status(err.status || 500).json({ error: err.message || String(err) });
+  }
+});
+
+async function handleStripeBillingWebhook(req, res) {
+  const secret = String(process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+  if (!secret) {
+    console.error('❌ STRIPE_WEBHOOK_SECRET no configurado');
+    return res.status(500).send('webhook no configurado');
+  }
+  const sig = req.headers['stripe-signature'];
+  const buf = req.rawBody;
+  if (!Buffer.isBuffer(buf)) {
+    return res.status(400).send('raw body requerido');
+  }
+  let event;
+  try {
+    event = getStripeOrThrow().webhooks.constructEvent(buf, sig, secret);
+  } catch (err) {
+    console.error('❌ Webhook Stripe firma:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    switch (event.type) {
+      case 'invoice.payment_succeeded': {
+        const inv = event.data.object;
+        const subId = inv.subscription ? String(inv.subscription) : null;
+        const customerId = inv.customer ? String(inv.customer) : null;
+        const sedeId = await resolveSedeIdFromStripeContext({ subscriptionId: subId, customerId });
+        if (!sedeId) {
+          console.warn('⚠️ invoice.payment_succeeded: sede no encontrada', { subId, customerId });
+          break;
+        }
+        const st = getStripeOrThrow();
+        let periodEndIso = null;
+        if (subId) {
+          const sub = await st.subscriptions.retrieve(subId);
+          if (sub.current_period_end) {
+            periodEndIso = new Date(sub.current_period_end * 1000).toISOString();
+          }
+        }
+        const { error } = await supabase
+          .from('sedes')
+          .update({
+            suscripcion_estado: 'activa',
+            suscripcion_proximo_cobro: periodEndIso,
+            ...(subId ? { stripe_subscription_id: subId } : {}),
+          })
+          .eq('id', sedeId);
+        if (error) throw error;
+        console.log(`✓ Webhook invoice.payment_succeeded → suscripción activa sede ${sedeId}`);
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const inv = event.data.object;
+        const subId = inv.subscription ? String(inv.subscription) : null;
+        const customerId = inv.customer ? String(inv.customer) : null;
+        const sedeId = await resolveSedeIdFromStripeContext({ subscriptionId: subId, customerId });
+        if (!sedeId) {
+          console.warn('⚠️ invoice.payment_failed: sede no encontrada');
+          break;
+        }
+        const { data: sedeNombreRow } = await supabase.from('sedes').select('nombre').eq('id', sedeId).maybeSingle();
+        const { error } = await supabase.from('sedes').update({ suscripcion_estado: 'vencida' }).eq('id', sedeId);
+        if (error) throw error;
+        await sendSuscripcionPagoFallidoWhatsApp({
+          sedeNombre: sedeNombreRow?.nombre,
+          sedeId,
+        });
+        console.log(`✓ Webhook invoice.payment_failed → vencida sede ${sedeId}`);
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        const subId = sub.id;
+        const customerId = sub.customer ? String(sub.customer) : null;
+        const sedeId = await resolveSedeIdFromStripeContext({ subscriptionId: subId, customerId });
+        if (!sedeId) break;
+        const { error } = await supabase
+          .from('sedes')
+          .update({
+            suscripcion_estado: 'cancelada',
+            suscripcion_proximo_cobro: null,
+            stripe_subscription_id: null,
+            licencia_activa: false,
+          })
+          .eq('id', sedeId);
+        if (error) throw error;
+        console.log(`✓ Webhook customer.subscription.deleted → sede ${sedeId} inactiva (licencia off)`);
+        break;
+      }
+      default:
+        break;
+    }
+  } catch (e) {
+    console.error('❌ Webhook Stripe handler:', e?.message || e);
+    return res.status(500).json({ error: String(e?.message || e) });
+  }
+  res.json({ received: true });
+}
+
+app.post('/api/stripe/webhook', async (req, res) => {
+  await handleStripeBillingWebhook(req, res);
+});
+
 // POST /api/crear-preferencia — Mercado Pago Checkout Pro
 app.post('/api/crear-preferencia', async (req, res) => {
   try {
@@ -5069,8 +5439,19 @@ cron.schedule(
   { timezone: TZ_TORNEO_CALENDARIO },
 );
 
-app.listen(PORT, () => {
-  console.log(`🚀 Padbol Match API running on port ${PORT}`);
-  console.log(`📊 Supabase: ${SUPABASE_URL}`);
-  console.log(`💬 Twilio WhatsApp: whatsapp:+14155238886`);
-});
+(async () => {
+  try {
+    await ensureStripeSubscriptionPriceId();
+  } catch (e) {
+    console.error('❌ Inicialización precio suscripción Stripe:', e?.message || e);
+  }
+  app.listen(PORT, () => {
+    console.log(`🚀 Padbol Match API running on port ${PORT}`);
+    console.log(`📊 Supabase: ${SUPABASE_URL}`);
+    console.log(`💬 Twilio WhatsApp: whatsapp:+14155238886`);
+    const subPrice = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();
+    if (subPrice.startsWith('price_')) {
+      console.log(`💳 Stripe Billing: STRIPE_SUBSCRIPTION_PRICE_ID=${subPrice}`);
+    }
+  });
+})();
