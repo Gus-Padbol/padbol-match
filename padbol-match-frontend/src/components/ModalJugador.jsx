@@ -4,6 +4,11 @@ import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 
+const API_BASE_MODAL =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
+
 const FLAG_MAP = {};
 [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach((p) => {
   FLAG_MAP[p.nombre.toLowerCase()] = p.bandera;
@@ -81,6 +86,8 @@ export default function ModalJugador({ open, onClose, hint }) {
   const [resolved, setResolved] = useState(null);
   const [sedeNombre, setSedeNombre] = useState('');
   const [loading, setLoading] = useState(false);
+  const [statsMini, setStatsMini] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(false);
   const hintRef = useRef(hint);
   hintRef.current = hint;
 
@@ -162,6 +169,45 @@ export default function ModalJugador({ open, onClose, hint }) {
       cancelled = true;
     };
   }, [open, loadKey]);
+
+  useEffect(() => {
+    if (!open) {
+      setStatsMini(null);
+      setLoadingStats(false);
+      return undefined;
+    }
+    const al = stripAliasSlug(resolved?.alias || hint?.alias || '');
+    if (!al) {
+      setStatsMini(null);
+      setLoadingStats(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setLoadingStats(true);
+    setStatsMini(null);
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_MODAL}/api/jugador/${encodeURIComponent(al)}/estadisticas`);
+        if (cancelled) return;
+        if (!res.ok) {
+          setStatsMini(null);
+          return;
+        }
+        const j = await res.json();
+        if (!cancelled) setStatsMini(j);
+      } catch (e) {
+        if (!cancelled) {
+          console.warn('[ModalJugador] estadisticas', e);
+          setStatsMini(null);
+        }
+      } finally {
+        if (!cancelled) setLoadingStats(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, resolved?.alias, hint?.alias]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -307,6 +353,37 @@ export default function ModalJugador({ open, onClose, hint }) {
             </div>
 
             {rowLine('Categoría', categoria === '—' ? null : categoria)}
+            {loadingStats ? (
+              <div style={{ marginBottom: '12px', fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>
+                Cargando estadísticas…
+              </div>
+            ) : statsMini ? (
+              <div
+                style={{
+                  marginBottom: '14px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '13px',
+                  color: '#475569',
+                  fontWeight: 600,
+                  lineHeight: 1.45,
+                }}
+              >
+                <span>
+                  Torneos jugados:{' '}
+                  <strong style={{ color: '#0f172a' }}>{statsMini.torneos_jugados ?? 0}</strong>
+                </span>
+                <span style={{ margin: '0 8px', color: '#cbd5e1' }}>|</span>
+                <span>
+                  Win rate:{' '}
+                  <strong style={{ color: '#0f172a' }}>
+                    {Number(statsMini.partidos_jugados) > 0 ? `${statsMini.win_rate_pct ?? 0}%` : '—'}
+                  </strong>
+                </span>
+              </div>
+            ) : null}
             {rowLine('Sede / club', sedeTxt === '—' ? null : sedeTxt)}
             <div style={{ marginBottom: '12px' }}>
               <div

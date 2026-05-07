@@ -19,6 +19,11 @@ import {
   contarTorneosUnicosConPuntos,
 } from './utils/perfilPuntosResumen';
 
+const API_BASE_PERFIL =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
+
 function instagramHandleFromStored(raw) {
   const s = String(raw ?? '').trim();
   if (!s) return '';
@@ -64,6 +69,8 @@ export default function PerfilPublico() {
   const [mostrarTodosTorneosPublico, setMostrarTodosTorneosPublico] = useState(false);
   const [jugadorPreviewCompaneroPublico, setJugadorPreviewCompaneroPublico] = useState(null);
   const [qrOpen, setQrOpen] = useState(false);
+  /** Respuesta GET /api/jugador/:alias/estadisticas o null mientras carga / sin datos */
+  const [estadisticas, setEstadisticas] = useState(null);
 
   const aliasDecoded = useMemo(() => {
     try {
@@ -84,6 +91,7 @@ export default function PerfilPublico() {
     setPerfil(null);
     setCompaneroDisplay(null);
     setTorneosConPuntos([]);
+    setEstadisticas(null);
 
     const { data: rows, error } = await supabase.from('jugadores_perfil').select('*').ilike('alias', a).limit(8);
 
@@ -110,6 +118,35 @@ export default function PerfilPublico() {
     console.log('[PerfilPublico] jugadores_perfil fila usada', match);
 
     setPerfil(match);
+
+    const aliasSlug = String(match.alias || '').trim();
+    const statsEmpty = {
+      torneos_jugados: 0,
+      torneos_ganados: 0,
+      partidos_jugados: 0,
+      partidos_ganados: 0,
+      win_rate_pct: 0,
+      puntos_ranking_total: 0,
+      sede_habitual: null,
+    };
+    if (aliasSlug) {
+      try {
+        const resSt = await fetch(
+          `${API_BASE_PERFIL}/api/jugador/${encodeURIComponent(aliasSlug)}/estadisticas`
+        );
+        if (resSt.ok) {
+          const j = await resSt.json();
+          setEstadisticas({ ...statsEmpty, ...j });
+        } else {
+          setEstadisticas(statsEmpty);
+        }
+      } catch (e) {
+        console.warn('[PerfilPublico] estadisticas', e);
+        setEstadisticas(statsEmpty);
+      }
+    } else {
+      setEstadisticas(statsEmpty);
+    }
 
     const cid = match.companero_id != null ? String(match.companero_id).trim() : '';
     const uid = match.ultimo_companero_id != null ? String(match.ultimo_companero_id).trim() : '';
@@ -677,6 +714,108 @@ export default function PerfilPublico() {
             </div>
           </div>
         </div>
+
+        {estadisticas ? (
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '18px 20px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+              marginBottom: '14px',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+            }}
+          >
+            <h2
+              style={{
+                margin: '0 0 14px',
+                fontSize: '16px',
+                color: '#334155',
+                fontWeight: 800,
+                borderBottom: '1px solid #e5e7eb',
+                paddingBottom: '8px',
+              }}
+            >
+              Estadísticas
+            </h2>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: '10px',
+              }}
+            >
+              {[
+                {
+                  k: 'torneos',
+                  label: 'Torneos',
+                  value: `${estadisticas.torneos_jugados}`,
+                  sub:
+                    estadisticas.torneos_ganados > 0
+                      ? `${estadisticas.torneos_ganados} ganado${estadisticas.torneos_ganados === 1 ? '' : 's'}`
+                      : 'Finalizados',
+                },
+                {
+                  k: 'partidos',
+                  label: 'Partidos',
+                  value: `${estadisticas.partidos_jugados}`,
+                  sub:
+                    estadisticas.partidos_jugados > 0
+                      ? `${estadisticas.partidos_ganados} victorias`
+                      : 'En torneos finalizados',
+                },
+                {
+                  k: 'win',
+                  label: 'Win rate',
+                  value:
+                    estadisticas.partidos_jugados > 0 ? `${estadisticas.win_rate_pct}%` : '—',
+                  sub: 'Victorias / jugados',
+                },
+                {
+                  k: 'pts',
+                  label: 'Puntos ranking',
+                  value: `${estadisticas.puntos_ranking_total}`,
+                  sub: 'Total acumulado',
+                },
+              ].map((c) => (
+                <div
+                  key={c.k}
+                  style={{
+                    background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
+                    borderRadius: '12px',
+                    padding: '14px 12px',
+                    border: '1px solid #e2e8f0',
+                    textAlign: 'center',
+                    minWidth: 0,
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                    {c.label}
+                  </div>
+                  <div style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', marginTop: '6px', lineHeight: 1.15 }}>
+                    {c.value}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>{c.sub}</div>
+                </div>
+              ))}
+            </div>
+            {estadisticas.sede_habitual?.nombre ? (
+              <p
+                style={{
+                  margin: '14px 0 0',
+                  fontSize: '13px',
+                  color: '#475569',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                }}
+              >
+                Sede habitual: <span style={{ color: '#0f172a' }}>{estadisticas.sede_habitual.nombre}</span>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         {tieneAlgunoPuntosPorAlcance(puntosAlcancePublico) || perfil?.mostrar_torneos_jugados ? (
           <div

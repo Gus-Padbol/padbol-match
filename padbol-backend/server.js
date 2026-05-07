@@ -3844,6 +3844,235 @@ app.get('/api/jugador/mis-pagos', async (req, res) => {
   }
 });
 
+// ─── Perfil público: estadísticas de rendimiento (alias) ───────────────────────
+
+function normalizeEmailStrStats(raw) {
+  if (raw == null || raw === '') return '';
+  return String(raw).replace(/\s/g, '').trim().toLowerCase();
+}
+
+function nombreCompletoPerfilStatsLower(perfil) {
+  if (!perfil || typeof perfil !== 'object') return '';
+  const n = String(perfil.nombre || '').trim().toLowerCase();
+  const a = String(perfil.apellido || '').trim().toLowerCase();
+  return `${n}${n && a ? ' ' : ''}${a}`.trim();
+}
+
+function normalizeJugadorEquipoStats(p) {
+  if (!p || typeof p !== 'object') return null;
+  return {
+    id: p.id != null && p.id !== '' ? String(p.id) : null,
+    email: normalizeEmailStrStats(p.email),
+    alias: String(p.alias || '').trim().toLowerCase(),
+    nombre: String(p.nombre || '').trim().toLowerCase(),
+  };
+}
+
+function jugadorEnEquipoStats(jugadoresArr, perfil) {
+  if (!Array.isArray(jugadoresArr) || !perfil) return false;
+  const uid = String(perfil.user_id || '').trim();
+  const em = normalizeEmailStrStats(perfil.email);
+  const rawEm = String(perfil.email || '').trim().toLowerCase();
+  const al = String(perfil.alias || '').trim().toLowerCase();
+  const nomFull = nombreCompletoPerfilStatsLower(perfil) || String(perfil.nombre || '').trim().toLowerCase();
+
+  for (const raw of jugadoresArr) {
+    const p = normalizeJugadorEquipoStats(raw);
+    if (!p) continue;
+    const pid = raw?.id != null && String(raw.id).trim() !== '' ? String(raw.id).trim() : '';
+    if (uid && pid && pid === uid) return true;
+    const emailJugadorLower = String(raw?.email || '').trim().toLowerCase();
+    if (rawEm && emailJugadorLower && emailJugadorLower === rawEm) return true;
+    if (em && p.email && p.email === em) return true;
+    if (rawEm && p.email && p.email === rawEm) return true;
+    if (al && p.alias && p.alias === al) return true;
+    if (nomFull && p.nombre && p.nombre === nomFull) return true;
+  }
+  return false;
+}
+
+async function fetchJugadoresPerfilByAliasSlug(aliasDecoded) {
+  const a = String(aliasDecoded || '').trim();
+  if (!a) return null;
+  const { data: rows, error } = await supabase.from('jugadores_perfil').select('*').ilike('alias', a).limit(8);
+  if (error) throw error;
+  const list = Array.isArray(rows) ? rows : [];
+  const aLower = a.toLowerCase();
+  return (
+    list.find((r) => String(r.alias || '').trim().toLowerCase() === aLower) || (list.length === 1 ? list[0] : null)
+  );
+}
+
+function partidoEquipoGanadorId(partido) {
+  if (!partido || String(partido.estado || '').toLowerCase() !== 'finalizado' || !partido.resultado) return null;
+  let res;
+  try {
+    res = typeof partido.resultado === 'string' ? JSON.parse(partido.resultado) : partido.resultado;
+  } catch {
+    return null;
+  }
+  const sets = [res?.set1, res?.set2, res?.set3].filter(Boolean);
+  if (!sets.length) return null;
+  let sgA = 0;
+  let sgB = 0;
+  for (const set of sets) {
+    const parts = String(set).split('-').map((x) => Number(String(x).trim()));
+    const a = parts[0];
+    const b = parts[1];
+    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+    if (a > b) sgA++;
+    else sgB++;
+  }
+  if (sgA === sgB) return null;
+  return sgA > sgB ? partido.equipo_a_id : partido.equipo_b_id;
+}
+
+async function computeEstadisticasJugadorPublico(perfil) {
+  const { data: equiposRows, error: eqErr } = await supabase.from('equipos').select('id, torneo_id, jugadores');
+  if (eqErr) throw eqErr;
+
+  const misEquipos = (equiposRows || []).filter((eq) => jugadorEnEquipoStats(eq.jugadores, perfil));
+  const misTorneoIds = [...new Set(misEquipos.map((e) => e.torneo_id).filter((x) => x != null))];
+  if (!misTorneoIds.length) {
+    return {
+      torneos_jugados: 0,
+      torneos_ganados: 0,
+      partidos_jugados: 0,
+      partidos_ganados: 0,
+      win_rate_pct: 0,
+      puntos_ranking_total: 0,
+      sede_habitual: null,
+    };
+  }
+
+  const { data: torneosRows, error: tErr } = await supabase
+    .from('torneos')
+    .select('id, estado, sede_id')
+    .in('id', misTorneoIds);
+  if (tErr) throw tErr;
+
+  const torneoById = {};
+  (torneosRows || []).forEach((t) => {
+    torneoById[t.id] = t;
+  });
+
+  const finalTorneoIds = new Set(
+    (torneosRows || [])
+      .filter((t) => String(t.estado || '').toLowerCase() === 'finalizado')
+      .map((t) => t.id),
+  );
+
+  const equiposFinalizados = misEquipos.filter((eq) => finalTorneoIds.has(eq.torneo_id));
+  const torneosJugadosSet = new Set(equiposFinalizados.map((e) => e.torneo_id));
+  const torneos_jugados = torneosJugadosSet.size;
+
+  const equipoIdPorTorneo = new Map();
+  for (const eq of equiposFinalizados) {
+    equipoIdPorTorneo.set(Number(eq.torneo_id), eq.id);
+  }
+
+  const misEquipoIdsFinal = [...new Set(equiposFinalizados.map((e) => e.id))];
+  const fArr = [...finalTorneoIds];
+
+  let puntos_ranking_total = 0;
+  let torneos_ganados = 0;
+  if (fArr.length && misEquipoIdsFinal.length) {
+    const { data: tpRows, error: tpErr } = await supabase
+      .from('tabla_puntos')
+      .select('torneo_id, equipo_id, posicion, puntos')
+      .in('torneo_id', fArr)
+      .in('equipo_id', misEquipoIdsFinal);
+    if (tpErr) throw tpErr;
+    const ganadosSet = new Set();
+    for (const row of tpRows || []) {
+      const tid = row.torneo_id;
+      const eid = row.equipo_id;
+      if (equipoIdPorTorneo.get(Number(tid)) !== eid) continue;
+      const pts = Number(row.puntos) || 0;
+      puntos_ranking_total += pts;
+      if (Number(row.posicion) === 1) ganadosSet.add(tid);
+    }
+    torneos_ganados = ganadosSet.size;
+  }
+
+  let partidos_jugados = 0;
+  let partidos_ganados = 0;
+  if (fArr.length) {
+    const { data: partidosRows, error: pErr } = await supabase
+      .from('partidos')
+      .select('id, torneo_id, estado, resultado, equipo_a_id, equipo_b_id')
+      .in('torneo_id', fArr)
+      .eq('estado', 'finalizado');
+    if (pErr) throw pErr;
+    for (const p of partidosRows || []) {
+      const myEq = equipoIdPorTorneo.get(Number(p.torneo_id));
+      if (!myEq) continue;
+      if (p.equipo_a_id !== myEq && p.equipo_b_id !== myEq) continue;
+      partidos_jugados++;
+      const winId = partidoEquipoGanadorId(p);
+      if (winId != null && winId === myEq) partidos_ganados++;
+    }
+  }
+
+  const win_rate_pct =
+    partidos_jugados > 0 ? Math.round((partidos_ganados / partidos_jugados) * 1000) / 10 : 0;
+
+  const sedeCount = new Map();
+  for (const tid of torneosJugadosSet) {
+    const t = torneoById[tid];
+    const sid = t?.sede_id;
+    if (sid == null) continue;
+    sedeCount.set(sid, (sedeCount.get(sid) || 0) + 1);
+  }
+  let sede_habitual = null;
+  if (sedeCount.size > 0) {
+    let bestSid = null;
+    let bestN = 0;
+    for (const [sid, n] of sedeCount) {
+      if (n > bestN) {
+        bestN = n;
+        bestSid = sid;
+      }
+    }
+    if (bestSid != null) {
+      const { data: sedeRow } = await supabase.from('sedes').select('id, nombre').eq('id', bestSid).maybeSingle();
+      if (sedeRow?.nombre) {
+        sede_habitual = { sede_id: bestSid, nombre: String(sedeRow.nombre).trim(), torneos_en_sede: bestN };
+      }
+    }
+  }
+
+  return {
+    torneos_jugados,
+    torneos_ganados,
+    partidos_jugados,
+    partidos_ganados,
+    win_rate_pct,
+    puntos_ranking_total,
+    sede_habitual,
+  };
+}
+
+/** GET /api/jugador/:alias/estadisticas — stats públicas (torneos finalizados). Debe ir después de rutas fijas como /api/jugador/mis-pagos. */
+app.get('/api/jugador/:alias/estadisticas', async (req, res) => {
+  try {
+    let raw = String(req.params.alias || '').trim();
+    if (!raw) return res.status(400).json({ error: 'Alias requerido' });
+    try {
+      raw = decodeURIComponent(raw);
+    } catch {
+      /* keep */
+    }
+    const perfil = await fetchJugadoresPerfilByAliasSlug(raw);
+    if (!perfil) return res.status(404).json({ error: 'Jugador no encontrado' });
+    const stats = await computeEstadisticasJugadorPublico(perfil);
+    res.json(stats);
+  } catch (err) {
+    console.error('❌ GET /api/jugador/:alias/estadisticas:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 function stripeMetadataPayload(payloadObj) {
   const raw = JSON.stringify(payloadObj);
   if (raw.length <= 500) return { payload_json: raw };
