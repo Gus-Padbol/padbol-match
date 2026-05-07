@@ -62,12 +62,6 @@ const initialState = () => ({
   email_contacto: '',
   telefonoCodigo: '+54',
   telefonoLocal: '',
-  metodo_pago: 'mercadopago',
-  precio_turno: '',
-  moneda: 'ARS',
-  google_maps_url: '',
-  latitud: '',
-  longitud: '',
 });
 
 export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, accessToken, onSuccess }) {
@@ -148,10 +142,6 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-      const precioNum =
-        st.precio_turno != null && String(st.precio_turno).trim() !== '' ? Number(String(st.precio_turno).replace(',', '.')) : null;
-      const lat = st.latitud != null && String(st.latitud).trim() !== '' ? Number(st.latitud) : null;
-      const lng = st.longitud != null && String(st.longitud).trim() !== '' ? Number(st.longitud) : null;
 
       const body = {
         nombre: String(st.nombre || '').trim(),
@@ -161,12 +151,12 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
         direccion: String(st.direccion || '').trim() || null,
         email_contacto: String(st.email_contacto || '').trim().toLowerCase(),
         telefono: telefonoFull,
-        metodo_pago: st.metodo_pago,
-        precio_turno: Number.isFinite(precioNum) ? precioNum : null,
-        moneda: String(st.moneda || 'ARS').trim().toUpperCase() || 'ARS',
-        google_maps_url: String(st.google_maps_url || '').trim() || null,
-        latitud: Number.isFinite(lat) ? lat : null,
-        longitud: Number.isFinite(lng) ? lng : null,
+        metodo_pago: 'mercadopago',
+        precio_turno: null,
+        moneda: 'ARS',
+        google_maps_url: null,
+        latitud: null,
+        longitud: null,
         horario_apertura: null,
         horario_cierre: null,
         cantidad_canchas: totalCanchas,
@@ -434,6 +424,9 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
 
         {st.step === 3 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ margin: 0, fontSize: 14, color: '#64748b', lineHeight: 1.45 }}>
+              Precio, mapa, método de pago y el resto los configura el admin del club desde su panel después del alta.
+            </p>
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
               Email de contacto *
               <input
@@ -470,78 +463,6 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
                   autoComplete="tel-national"
                 />
               </div>
-            </div>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
-              Método de pago
-              <select
-                value={st.metodo_pago}
-                onChange={(e) => setField('metodo_pago', e.target.value)}
-                style={{ ...inputBase, marginTop: 8 }}
-              >
-                <option value="mercadopago">Mercado Pago</option>
-                <option value="stripe">Stripe</option>
-                <option value="manual">Manual</option>
-              </select>
-            </label>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <label style={{ fontWeight: 700, fontSize: 14, color: '#334155', flex: '2 1 200px', minWidth: 0 }}>
-                Precio por turno
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  value={st.precio_turno}
-                  onChange={(e) => setField('precio_turno', e.target.value)}
-                  placeholder="Opcional"
-                  style={{ ...inputBase, marginTop: 8 }}
-                />
-              </label>
-              <label style={{ fontWeight: 700, fontSize: 14, color: '#334155', flex: '1 1 120px', minWidth: 0 }}>
-                Moneda
-                <select
-                  value={st.moneda}
-                  onChange={(e) => setField('moneda', e.target.value)}
-                  style={{ ...inputBase, marginTop: 8 }}
-                >
-                  <option value="ARS">ARS</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </label>
-            </div>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
-              Google Maps URL
-              <input
-                type="url"
-                value={st.google_maps_url}
-                onChange={(e) => setField('google_maps_url', e.target.value)}
-                placeholder="https://maps.google.com/..."
-                style={{ ...inputBase, marginTop: 8 }}
-              />
-            </label>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <label style={{ fontWeight: 700, fontSize: 14, color: '#334155', flex: 1, minWidth: 0 }}>
-                Latitud (opcional)
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={st.latitud}
-                  onChange={(e) => setField('latitud', e.target.value)}
-                  placeholder="-34.60"
-                  style={{ ...inputBase, marginTop: 8 }}
-                />
-              </label>
-              <label style={{ fontWeight: 700, fontSize: 14, color: '#334155', flex: 1, minWidth: 0 }}>
-                Longitud (opcional)
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={st.longitud}
-                  onChange={(e) => setField('longitud', e.target.value)}
-                  placeholder="-58.38"
-                  style={{ ...inputBase, marginTop: 8 }}
-                />
-              </label>
             </div>
           </div>
         ) : null}
