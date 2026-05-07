@@ -48,7 +48,7 @@ function RegistroToMiPerfilRedirect() {
   return <Navigate to={buildMiPerfilRegistroUrl(r)} replace />;
 }
 
-/** Solo `/auth` con callback (hash/query de proveedor). `redirect` solo no abre login aquí — usar `/login`. */
+/** `/auth` con callback (hash/query de proveedor) o con `?modo=registro` / `?login=1`. Sin eso, redirige a `/` — para login normal usar `/login`. */
 function authLocationShowsLoginScreen(search, hash) {
   const h = hash || '';
   if (h.length > 1) return true;
@@ -62,7 +62,10 @@ function authLocationShowsLoginScreen(search, hash) {
       sp.has('error_description') ||
       sp.has('token_hash') ||
       sp.has('type') ||
-      sp.get('login') === '1'
+      sp.get('login') === '1' ||
+      sp.get('modo') === 'registro' ||
+      sp.get('modo') === 'register' ||
+      sp.get('registro') === '1'
     );
   } catch {
     return true;

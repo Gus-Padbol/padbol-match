@@ -21,3 +21,9 @@ export function loginRedirectAfterHubEntry(location) {
   if (hubRoots.includes(path)) return '/';
   return authLoginRedirectPath(location);
 }
+
+/** `/login` con formulario de alta activo y mismo `redirect` que el login desde hub. */
+export function authRegisterUrlFromHub(location) {
+  const redirect = encodeURIComponent(loginRedirectAfterHubEntry(location));
+  return `/login?modo=registro&redirect=${redirect}`;
+}

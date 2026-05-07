@@ -45,11 +45,25 @@ function PasswordEyeIcon({ revealed }) {
   );
 }
 
+/** `?modo=registro` | `?modo=register` | `?registro=1` abre el formulario de alta en `/login`. */
+function readModoDesdeSearch(search) {
+  try {
+    const q = String(search || '').replace(/^\?/, '');
+    const sp = new URLSearchParams(q);
+    const m = sp.get('modo');
+    if (m === 'registro' || m === 'register' || sp.get('registro') === '1') return 'register';
+  } catch {
+    /* ignore */
+  }
+  return 'login';
+}
+
 export default function AccesoCuenta() {
   const navigate = useNavigate();
   const location = useLocation();
   const { refreshSession, session, loading } = useAuth();
-  const [modo, setModo] = useState('login');
+
+  const [modo, setModo] = useState(() => readModoDesdeSearch(location.search));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
@@ -107,6 +121,10 @@ export default function AccesoCuenta() {
     },
     [navigate, refreshSession, location.search]
   );
+
+  useEffect(() => {
+    setModo(readModoDesdeSearch(location.search));
+  }, [location.search]);
 
   useEffect(() => {
     if (loading || !session?.user || sesionYaRedirigidaRef.current) return;
