@@ -7166,12 +7166,10 @@ app.get('/api/admin/sedes-pendientes', async (req, res) => {
     if (!isSuperAdminApi(user.email, role)) {
       return res.status(403).json({ error: 'Solo super admin' });
     }
-    const estado = String(req.query.estado || 'pendiente').trim() || 'pendiente';
-    const { data, error } = await supabase
-      .from('sedes_pendientes')
-      .select('*')
-      .eq('estado', estado)
-      .order('created_at', { ascending: false });
+    const estado = String(req.query.estado || 'pendiente').trim().toLowerCase();
+    let q = supabase.from('sedes_pendientes').select('*').order('created_at', { ascending: false });
+    if (estado && estado !== 'todas' && estado !== 'todos') q = q.eq('estado', estado);
+    const { data, error } = await q;
     if (error) throw error;
     res.json(data || []);
   } catch (err) {

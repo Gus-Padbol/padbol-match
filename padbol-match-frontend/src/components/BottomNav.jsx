@@ -125,12 +125,12 @@ const BottomNav = () => {
     ...(superAdminBottomNav
       ? [
           {
-            label: 'Sedes pend.',
-            icon: '🏟️',
-            path: '/admin?tab=sedes_pendientes',
+            label: 'Solicitudes',
+            icon: '📝',
+            path: '/admin?tab=solicitudes',
             match: (p) => {
               const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-              return x === '/admin' && adminTabActivo === 'sedes_pendientes';
+              return x === '/admin' && adminTabActivo === 'solicitudes';
             },
           },
           {

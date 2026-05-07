@@ -333,7 +333,6 @@ const ADMIN_TABS_ALLOWED = new Set([
   'validaciones',
   'mi_sede',
   'config',
-  'sedes_pendientes',
   'sedes',
   'jugadores',
   'solicitudes',
@@ -345,8 +344,20 @@ function torneoConsideradoActivoPanelNacional(t) {
 }
 
 function sanitizeAdminActiveTab(raw) {
-  const t = String(raw || '').trim();
+  const t0 = String(raw || '').trim();
+  const t = t0 === 'sedes_pendientes' ? 'solicitudes' : t0;
   return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
+}
+
+/** Valor de query `estado` para GET admin (todas = sin filtro). */
+function mapFiltroSolicitudesTabToApiEstado(filt) {
+  const f = String(filt || '').trim().toLowerCase();
+  if (f === 'todos' || f === 'todas') return 'todas';
+  return f || 'pendiente';
+}
+
+function waDigitsForUrl(raw) {
+  return String(raw || '').replace(/\D/g, '') || '';
 }
 
 /** Pills de filtro: inactivo blanco + borde gris; activo #667eea + texto blanco (Resumen, Torneos, Reservas). */
@@ -1129,6 +1140,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
   const [solicitudesLicencia, setSolicitudesLicencia] = useState([]);
   const [solicitudesLicenciaLoading, setSolicitudesLicenciaLoading] = useState(false);
+  /** Filtro unificado Solicitudes (tab); default pendiente para priorizar acción. */
+  const [solicitudesFiltroEstado, setSolicitudesFiltroEstado] = useState('pendiente');
+  const [solicitudDetalleExpandidoKey, setSolicitudDetalleExpandidoKey] = useState(null);
+  /** Conteos solo con GET pendiente (alerta Resumen; no depende del filtro de la tab Solicitudes). */
+  const [snapPendienteSedes, setSnapPendienteSedes] = useState(0);
+  const [snapPendienteLic, setSnapPendienteLic] = useState(0);
   const [adminScopeMeta, setAdminScopeMeta] = useState(null);
   const [adminRolesRows, setAdminRolesRows] = useState([]);
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
@@ -1145,68 +1162,113 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     pais: '',
   });
 
-  const cargarSedesPendientes = useCallback(async () => {
-    if (!puedeVerSedesPendientes) return;
-    setSedesPendientesLoading(true);
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token;
-      if (!token) throw new Error('Sin sesión');
-      const res = await fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=pendiente`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const j = await res.json().catch(() => []);
-      if (!res.ok) throw new Error(j.error || res.statusText);
-      setSedesPendientes(Array.isArray(j) ? j : []);
-    } catch (e) {
-      console.error('[AdminDashboard] sedes pendientes:', e);
-      setSedesPendientes([]);
-    } finally {
-      setSedesPendientesLoading(false);
-    }
-  }, [apiBaseUrl, puedeVerSedesPendientes]);
+  const cargarSedesPendientes = useCallback(
+    async (estadoQuery = 'pendiente') => {
+      if (!puedeVerSedesPendientes) return;
+      setSedesPendientesLoading(true);
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (!token) throw new Error('Sin sesión');
+        const eq = String(estadoQuery || 'pendiente').trim().toLowerCase();
+        const res = await fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=${encodeURIComponent(eq)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const j = await res.json().catch(() => []);
+        if (!res.ok) throw new Error(j.error || res.statusText);
+        const rows = Array.isArray(j) ? j : [];
+        setSedesPendientes(rows);
+        if (eq === 'pendiente') setSnapPendienteSedes(rows.length);
+      } catch (e) {
+        console.error('[AdminDashboard] sedes pendientes:', e);
+        setSedesPendientes([]);
+        if (String(estadoQuery || '').toLowerCase() === 'pendiente') setSnapPendienteSedes(0);
+      } finally {
+        setSedesPendientesLoading(false);
+      }
+    },
+    [apiBaseUrl, puedeVerSedesPendientes]
+  );
 
-  const cargarSolicitudesLicencia = useCallback(async () => {
-    if (!isSuperAdmin) return;
-    setSolicitudesLicenciaLoading(true);
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token;
-      if (!token) throw new Error('Sin sesión');
-      const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=pendiente`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const j = await res.json().catch(() => []);
-      if (!res.ok) throw new Error(j?.error || res.statusText);
-      setSolicitudesLicencia(Array.isArray(j) ? j : []);
-    } catch (e) {
-      console.error('[AdminDashboard] solicitudes licencia:', e);
-      setSolicitudesLicencia([]);
-    } finally {
-      setSolicitudesLicenciaLoading(false);
-    }
-  }, [apiBaseUrl, isSuperAdmin]);
+  const cargarSolicitudesLicencia = useCallback(
+    async (estadoQuery = 'pendiente') => {
+      if (!isSuperAdmin) return;
+      setSolicitudesLicenciaLoading(true);
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (!token) throw new Error('Sin sesión');
+        const eq = String(estadoQuery || 'pendiente').trim().toLowerCase();
+        const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=${encodeURIComponent(eq)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const j = await res.json().catch(() => []);
+        if (!res.ok) throw new Error(j?.error || res.statusText);
+        const rows = Array.isArray(j) ? j : [];
+        setSolicitudesLicencia(rows);
+        if (eq === 'pendiente') setSnapPendienteLic(rows.length);
+      } catch (e) {
+        console.error('[AdminDashboard] solicitudes licencia:', e);
+        setSolicitudesLicencia([]);
+        if (String(estadoQuery || '').toLowerCase() === 'pendiente') setSnapPendienteLic(0);
+      } finally {
+        setSolicitudesLicenciaLoading(false);
+      }
+    },
+    [apiBaseUrl, isSuperAdmin]
+  );
 
-  const rechazarSolicitudLicencia = useCallback(async (id) => {
-    const motivo = window.prompt('Motivo del rechazo (opcional):');
+  const refreshSnapPendientesOnly = useCallback(async () => {
+    if (!puedeVerSedesPendientes || !isSuperAdmin) return;
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
-      if (!token) throw new Error('Sin sesión');
-      const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia/${id}/rechazar`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ motivo: motivo || '' }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || res.statusText);
-      setMensajeExito('Solicitud rechazada');
-      setTimeout(() => setMensajeExito(''), 3000);
-      void cargarSolicitudesLicencia();
-    } catch (e) {
-      alert(e?.message || 'No se pudo rechazar la solicitud');
+      if (!token) return;
+      const [r1, r2] = await Promise.all([
+        fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=pendiente`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=pendiente`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      const j1 = await r1.json().catch(() => []);
+      const j2 = await r2.json().catch(() => []);
+      setSnapPendienteSedes(Array.isArray(j1) ? j1.length : 0);
+      setSnapPendienteLic(Array.isArray(j2) ? j2.length : 0);
+    } catch {
+      /* noop */
     }
-  }, [apiBaseUrl, cargarSolicitudesLicencia]);
+  }, [apiBaseUrl, isSuperAdmin, puedeVerSedesPendientes]);
+
+  const refetchSolicitudesTabLists = useCallback(() => {
+    if (!isSuperAdmin || activeTab !== 'solicitudes') return;
+    const apiEst = mapFiltroSolicitudesTabToApiEstado(solicitudesFiltroEstado);
+    void cargarSedesPendientes(apiEst);
+    void cargarSolicitudesLicencia(apiEst);
+  }, [activeTab, isSuperAdmin, solicitudesFiltroEstado, cargarSedesPendientes, cargarSolicitudesLicencia]);
+
+  const rechazarSolicitudLicencia = useCallback(
+    async (id) => {
+      const motivo = window.prompt('Motivo del rechazo (opcional):');
+      if (motivo == null) return;
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (!token) throw new Error('Sin sesión');
+        const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia/${id}/rechazar`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ motivo: motivo || '' }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j?.error || res.statusText);
+        setMensajeExito('Solicitud rechazada');
+        setTimeout(() => setMensajeExito(''), 3000);
+        void refreshSnapPendientesOnly();
+        refetchSolicitudesTabLists();
+      } catch (e) {
+        alert(e?.message || 'No se pudo rechazar la solicitud');
+      }
+    },
+    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
+  );
 
   const cargarRolesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -1313,14 +1375,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || res.statusText);
         setMensajeExito('✅ Sede aprobada');
-        void cargarSedesPendientes();
         void fetchData();
+        void refreshSnapPendientesOnly();
+        refetchSolicitudesTabLists();
         setTimeout(() => setMensajeExito(''), 4000);
       } catch (e) {
         alert(e.message || String(e));
       }
     },
-    [apiBaseUrl, cargarSedesPendientes]
+    // fetchData se declara más abajo; se invoca solo al hacer clic (no incluir en deps).
+    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
   );
 
   const rechazarSedePendiente = useCallback(
@@ -1344,28 +1408,79 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || res.statusText);
         setMensajeExito('Solicitud rechazada.');
-        void cargarSedesPendientes();
+        void refreshSnapPendientesOnly();
+        refetchSolicitudesTabLists();
         setTimeout(() => setMensajeExito(''), 4000);
       } catch (e) {
         alert(e.message || String(e));
       }
     },
-    [apiBaseUrl, cargarSedesPendientes]
+    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
   );
 
   useEffect(() => {
     if (!puedeVerSedesPendientes) return;
-    if (activeTab === 'sedes_pendientes' || activeTab === 'resumen' || activeTab === 'solicitudes') {
-      void cargarSedesPendientes();
+    if (activeTab === 'resumen') {
+      void cargarSedesPendientes('pendiente');
+    } else if (activeTab === 'solicitudes') {
+      void cargarSedesPendientes(mapFiltroSolicitudesTabToApiEstado(solicitudesFiltroEstado));
     }
-  }, [activeTab, puedeVerSedesPendientes, cargarSedesPendientes]);
+  }, [activeTab, puedeVerSedesPendientes, cargarSedesPendientes, solicitudesFiltroEstado]);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
-    if (activeTab === 'solicitudes' || activeTab === 'resumen') {
-      void cargarSolicitudesLicencia();
+    if (activeTab === 'resumen') {
+      void cargarSolicitudesLicencia('pendiente');
+    } else if (activeTab === 'solicitudes') {
+      void cargarSolicitudesLicencia(mapFiltroSolicitudesTabToApiEstado(solicitudesFiltroEstado));
     }
-  }, [activeTab, isSuperAdmin, cargarSolicitudesLicencia]);
+  }, [activeTab, isSuperAdmin, cargarSolicitudesLicencia, solicitudesFiltroEstado]);
+
+  const solicitudesUnificadas = useMemo(() => {
+    const rows = [];
+    for (const sp of sedesPendientes || []) {
+      const estado = String(sp?.estado || 'pendiente').toLowerCase();
+      rows.push({
+        kind: 'sede_nacional',
+        id: sp.id,
+        idKey: `sn-${sp.id}`,
+        estado,
+        created_at: sp.created_at,
+        clubNombre: String(sp.nombre || '').trim() || '—',
+        pais: String(sp.pais || '').trim() || '—',
+        ciudad: String(sp.ciudad || '').trim() || '—',
+        responsableNombre: String(sp.licenciatario_nombre || '').trim() || '—',
+        email: String(sp.licenciatario_email || '').trim() || '—',
+        whatsapp: String(sp.licenciatario_telefono || sp.whatsapp || '').trim() || '',
+        rawNacional: sp,
+      });
+    }
+    for (const s of solicitudesLicencia || []) {
+      const estado = String(s?.estado || 'pendiente').toLowerCase();
+      rows.push({
+        kind: 'licencia_web',
+        id: s.id,
+        idKey: `lw-${s.id}`,
+        estado,
+        created_at: s.created_at,
+        clubNombre: String(s.club_nombre || '').trim() || '—',
+        pais: String(s.pais || '').trim() || '—',
+        ciudad: String(s.ciudad || '').trim() || '—',
+        responsableNombre: String(s.responsable_nombre || '').trim() || '—',
+        email: String(s.email || '').trim() || '—',
+        whatsapp: String(s.whatsapp || '').trim() || '',
+        tipoInteres: s.tipo_interes,
+        cantidadCanchas: s.cantidad_canchas,
+        mensaje: s.mensaje,
+        rawLicencia: s,
+      });
+    }
+    return rows.sort((a, b) => {
+      const ta = new Date(a.created_at || 0).getTime();
+      const tb = new Date(b.created_at || 0).getTime();
+      return tb - ta;
+    });
+  }, [sedesPendientes, solicitudesLicencia]);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
@@ -1908,7 +2023,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       (p.alertasTorneoSinSorteo48h || []).length > 0 ||
       alertasContratosPorVencer.length > 0 ||
       alertasSuscripcionBilling.length > 0 ||
-      (puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0);
+      (isSuperAdmin && snapPendienteSedes + snapPendienteLic > 0);
 
     return (
       <>
@@ -2009,10 +2124,24 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <p style={{ margin: 0, color: '#94a3b8' }}>Sin alertas prioritarias.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {puedeVerSedesPendientes && !sedesPendientesLoading && sedesPendientes.length > 0 ? (
+              {isSuperAdmin && snapPendienteSedes + snapPendienteLic > 0 ? (
                 <div role="alert" style={alertBox('#fee2e2', '#f87171', '#991b1b')}>
-                  {sedesPendientes.length} sede{sedesPendientes.length === 1 ? '' : 's'} pendiente
-                  {sedesPendientes.length === 1 ? '' : 's'} de aprobación
+                  {snapPendienteSedes + snapPendienteLic === 1
+                    ? '1 solicitud pendiente'
+                    : `${snapPendienteSedes + snapPendienteLic} solicitudes pendientes`}{' '}
+                  (alta nacional o interés web). Revisalas en «Solicitudes».
+                  <button
+                    type="button"
+                    style={{ ...btnTorneo, marginLeft: '10px' }}
+                    onClick={() => {
+                      setSolicitudesFiltroEstado('pendiente');
+                      setActiveTab('solicitudes');
+                      sessionStorage.setItem('adminActiveTab', 'solicitudes');
+                      navigate('/admin?tab=solicitudes', { replace: true });
+                    }}
+                  >
+                    Ir a Solicitudes
+                  </button>
                 </div>
               ) : null}
 
@@ -2127,8 +2256,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     navigate,
     setActiveTab,
     puedeVerSedesPendientes,
-    sedesPendientesLoading,
-    sedesPendientes,
+    isSuperAdmin,
+    snapPendienteSedes,
+    snapPendienteLic,
+    setSolicitudesFiltroEstado,
   ]);
 
   const fetchPendientes = async () => {
@@ -3713,7 +3844,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         { id: 'reservas', label: '⚽ Reservas' },
         { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
         ...(puedeVerMiSede ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
-        ...(puedeVerSedesPendientes ? [{ id: 'sedes_pendientes', label: '🏟️ Sedes pendientes' }] : []),
         ...(puedeVerConfig ? [{ id: 'config', label: '⚙️ Config' }] : []),
       ];
 
@@ -5997,153 +6127,266 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       </div>}
 
-      {/* ── Sedes pendientes (super admin) ── */}
-      {activeTab === 'sedes_pendientes' && puedeVerSedesPendientes && (
-        <div className="section" style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h2 style={{ color: '#fff', textAlign: 'center', marginBottom: '18px' }}>🏟️ Sedes pendientes de aprobación</h2>
-          {sedesPendientesLoading ? (
-            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>Cargando…</p>
-          ) : sedesPendientes.length === 0 ? (
-            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>No hay solicitudes pendientes.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {sedesPendientes.map((sp) => (
-                <div
-                  key={sp.id}
-                  style={{
-                    background: '#fff',
-                    borderRadius: '14px',
-                    padding: '18px',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    color: '#1e293b',
-                  }}
-                >
-                  <div style={{ fontWeight: 800, fontSize: '18px', marginBottom: '10px' }}>{sp.nombre}</div>
-                  <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#475569' }}>
-                    <div>
-                      <strong>País:</strong> {sp.pais || '—'} · <strong>Ciudad:</strong> {sp.ciudad || '—'}
-                    </div>
-                    <div>
-                      <strong>Dirección:</strong> {sp.direccion || '—'}
-                    </div>
-                    <div>
-                      <strong>Horario:</strong> {sp.horario_apertura || '—'} — {sp.horario_cierre || '—'}
-                    </div>
-                    <div>
-                      <strong>Precio / moneda:</strong> {sp.precio_base ?? '—'} {sp.moneda || ''}
-                    </div>
-                    <div>
-                      <strong>WhatsApp / email sede:</strong> {sp.whatsapp || '—'} · {sp.email_contacto || '—'}
-                    </div>
-                    <div>
-                      <strong>Licencia:</strong> {sp.numero_licencia || '—'} · {sp.fecha_contrato || '—'} ·{' '}
-                      {sp.tipo_licencia || '—'}
-                    </div>
-                    <div style={{ marginTop: '8px' }}>
-                      <strong>Licenciatario:</strong> {sp.licenciatario_nombre || '—'} ({sp.licenciatario_email || '—'}) ·{' '}
-                      {sp.licenciatario_telefono || '—'} · {sp.licenciatario_pais || '—'}
-                    </div>
-                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
-                      Solicitud #{sp.id} · Enviada por {sp.created_by || '—'} · {sp.created_at ? new Date(sp.created_at).toLocaleString('es-AR') : ''}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      onClick={() => void aprobarSedePendiente(sp.id)}
-                      style={{
-                        padding: '10px 16px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: '#16a34a',
-                        color: '#fff',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      ✅ Aprobar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void rechazarSedePendiente(sp.id)}
-                      style={{
-                        padding: '10px 16px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: '#dc2626',
-                        color: '#fff',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      ❌ Rechazar
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* ── Solicitudes (super admin): altas nacionales + interés web, unificado ── */}
       {activeTab === 'solicitudes' && isSuperAdmin && (
         <div className="section" style={{ maxWidth: '980px', margin: '0 auto' }}>
-          <h2 style={{ color: '#fff', textAlign: 'center', marginBottom: '18px' }}>📝 Solicitudes de licencia</h2>
-          {solicitudesLicenciaLoading ? (
+          <h2 style={{ color: '#fff', textAlign: 'center', marginBottom: '8px' }}>📝 Solicitudes</h2>
+          <p style={{ color: '#e2e8f0', textAlign: 'center', marginBottom: '16px', fontSize: '14px' }}>
+            Altas enviadas por admin nacional e interés desde la web. Filtrá por estado; las aprobadas y rechazadas siguen
+            visibles.
+          </p>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              justifyContent: 'center',
+              marginBottom: '18px',
+            }}
+          >
+            {[
+              { id: 'todos', label: 'Todos' },
+              { id: 'pendiente', label: 'Pendiente' },
+              { id: 'aprobada', label: 'Aprobada' },
+              { id: 'rechazada', label: 'Rechazada' },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSolicitudesFiltroEstado(opt.id)}
+                style={adminFilterPillButtonStyle(solicitudesFiltroEstado === opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {sedesPendientesLoading || solicitudesLicenciaLoading ? (
             <p style={{ color: '#e2e8f0', textAlign: 'center' }}>Cargando…</p>
-          ) : solicitudesLicencia.length === 0 ? (
-            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>No hay solicitudes pendientes.</p>
+          ) : solicitudesUnificadas.length === 0 ? (
+            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>No hay solicitudes con este filtro.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {solicitudesLicencia.map((s) => (
-                <div
-                  key={s.id}
-                  style={{
-                    background: '#fff',
-                    borderRadius: '14px',
-                    padding: '16px',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    color: '#1e293b',
-                  }}
-                >
-                  <div style={{ fontWeight: 800, fontSize: '18px', marginBottom: '8px' }}>{s.club_nombre || 'Club sin nombre'}</div>
-                  <div style={{ fontSize: '13px', lineHeight: 1.6, color: '#475569' }}>
-                    <div><strong>País/Ciudad:</strong> {s.pais || '—'} · {s.ciudad || '—'}</div>
-                    <div><strong>Responsable:</strong> {s.responsable_nombre || '—'}</div>
-                    <div><strong>Email:</strong> {s.email || '—'}</div>
-                    <div><strong>WhatsApp:</strong> {s.whatsapp || '—'}</div>
-                    <div><strong>Tipo interés:</strong> {s.tipo_interes || '—'} · <strong>Canchas:</strong> {s.cantidad_canchas ?? '—'}</div>
-                    {s.mensaje ? <div><strong>Mensaje:</strong> {s.mensaje}</div> : null}
-                    <div style={{ marginTop: 6, fontSize: '12px', color: '#64748b' }}>
-                      Solicitud #{s.id} · {s.created_at ? new Date(s.created_at).toLocaleString('es-AR') : ''}
+              {solicitudesUnificadas.map((row) => {
+                const pendiente = row.estado === 'pendiente';
+                const wa = waDigitsForUrl(row.whatsapp);
+                const estadoLabel =
+                  row.estado === 'aprobada' ? 'Aprobada' : row.estado === 'rechazada' ? 'Rechazada' : 'Pendiente';
+                const estadoChipBg =
+                  row.estado === 'aprobada' ? '#dcfce7' : row.estado === 'rechazada' ? '#fee2e2' : '#fef9c3';
+                const estadoChipColor =
+                  row.estado === 'aprobada' ? '#166534' : row.estado === 'rechazada' ? '#991b1b' : '#854d0e';
+                const origenLabel = row.kind === 'sede_nacional' ? 'Alta nacional' : 'Interés web';
+                const sp = row.kind === 'sede_nacional' ? row.rawNacional : null;
+                return (
+                  <div
+                    key={row.idKey}
+                    style={{
+                      background: '#fff',
+                      borderRadius: '14px',
+                      padding: '16px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      color: '#1e293b',
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      <span style={{ fontWeight: 800, fontSize: '18px', flex: '1 1 200px' }}>{row.clubNombre}</span>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          padding: '4px 10px',
+                          borderRadius: '999px',
+                          background: estadoChipBg,
+                          color: estadoChipColor,
+                        }}
+                      >
+                        {estadoLabel}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          padding: '4px 10px',
+                          borderRadius: '999px',
+                          background: '#e0e7ff',
+                          color: '#3730a3',
+                        }}
+                      >
+                        {origenLabel}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '13px', lineHeight: 1.65, color: '#475569' }}>
+                      <div>
+                        <strong>País:</strong> {row.pais} · <strong>Ciudad:</strong> {row.ciudad}
+                      </div>
+                      <div>
+                        <strong>Responsable:</strong> {row.responsableNombre}
+                      </div>
+                      <div>
+                        <strong>Email:</strong>{' '}
+                        {row.email && row.email !== '—' ? (
+                          <a href={`mailto:${encodeURIComponent(row.email)}`} style={{ color: '#4f46e5' }}>
+                            {row.email}
+                          </a>
+                        ) : (
+                          '—'
+                        )}
+                      </div>
+                      <div>
+                        <strong>WhatsApp:</strong> {row.whatsapp || '—'}
+                      </div>
+                      {row.kind === 'licencia_web' ? (
+                        <div>
+                          <strong>Tipo interés:</strong> {row.tipoInteres || '—'} · <strong>Canchas:</strong>{' '}
+                          {row.cantidadCanchas ?? '—'}
+                        </div>
+                      ) : null}
+                      {row.kind === 'licencia_web' && row.mensaje ? (
+                        <div>
+                          <strong>Mensaje:</strong> {row.mensaje}
+                        </div>
+                      ) : null}
+                      <div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+                        #{row.id} · {row.created_at ? new Date(row.created_at).toLocaleString('es-AR') : '—'}
+                      </div>
+                    </div>
+                    {row.kind === 'sede_nacional' && sp ? (
+                      <div style={{ marginTop: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSolicitudDetalleExpandidoKey((k) => (k === row.idKey ? null : row.idKey))
+                          }
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            background: '#f8fafc',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {solicitudDetalleExpandidoKey === row.idKey ? 'Ocultar detalle' : 'Más datos (alta nacional)'}
+                        </button>
+                        {solicitudDetalleExpandidoKey === row.idKey ? (
+                          <div
+                            style={{
+                              marginTop: '10px',
+                              padding: '12px',
+                              background: '#f8fafc',
+                              borderRadius: '10px',
+                              fontSize: '13px',
+                              lineHeight: 1.6,
+                              color: '#475569',
+                            }}
+                          >
+                            <div>
+                              <strong>Dirección:</strong> {sp.direccion || '—'}
+                            </div>
+                            <div>
+                              <strong>Horario:</strong> {sp.horario_apertura || '—'} — {sp.horario_cierre || '—'}
+                            </div>
+                            <div>
+                              <strong>Precio / moneda:</strong> {sp.precio_base ?? '—'} {sp.moneda || ''}
+                            </div>
+                            <div>
+                              <strong>WhatsApp / email sede:</strong> {sp.whatsapp || '—'} · {sp.email_contacto || '—'}
+                            </div>
+                            <div>
+                              <strong>Licencia:</strong> {sp.numero_licencia || '—'} · {sp.fecha_contrato || '—'} ·{' '}
+                              {sp.tipo_licencia || '—'}
+                            </div>
+                            <div>
+                              <strong>Licenciatario país:</strong> {sp.licenciatario_pais || '—'}
+                            </div>
+                            <div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+                              Enviada por {sp.created_by || '—'}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {pendiente && row.kind === 'sede_nacional' ? (
+                        <button
+                          type="button"
+                          onClick={() => void aprobarSedePendiente(row.id)}
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: '#16a34a',
+                            color: '#fff',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ✅ Aprobar
+                        </button>
+                      ) : null}
+                      {pendiente && row.kind === 'licencia_web' ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate('/admin/nueva-sede', { state: { prefillSolicitud: row.rawLicencia } })}
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: '#16a34a',
+                            color: '#fff',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ✅ Aprobar (crear sede)
+                        </button>
+                      ) : null}
+                      {pendiente ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            row.kind === 'sede_nacional'
+                              ? void rechazarSedePendiente(row.id)
+                              : void rechazarSolicitudLicencia(row.id)
+                          }
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: '#dc2626',
+                            color: '#fff',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ❌ Rechazar
+                        </button>
+                      ) : null}
+                      {wa ? (
+                        <a
+                          href={`https://wa.me/${wa}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            background: '#0f766e',
+                            color: '#fff',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            display: 'inline-block',
+                          }}
+                        >
+                          💬 Contactar
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Sin número para WhatsApp</span>
+                      )}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/admin/nueva-sede', { state: { prefillSolicitud: s } })}
-                      style={{ padding: '9px 14px', borderRadius: '10px', border: 'none', background: '#16a34a', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      ✅ Aprobar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void rechazarSolicitudLicencia(s.id)}
-                      style={{ padding: '9px 14px', borderRadius: '10px', border: 'none', background: '#dc2626', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      ❌ Rechazar
-                    </button>
-                    <a
-                      href={`https://wa.me/${String(s.whatsapp || '').replace(/[^\d]/g, '')}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ padding: '9px 14px', borderRadius: '10px', background: '#0f766e', color: '#fff', fontWeight: 700, textDecoration: 'none' }}
-                    >
-                      💬 Contactar
-                    </a>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
