@@ -163,7 +163,7 @@ export default function LandingPage() {
               marginRight: 'auto',
             }}
           >
-            La plataforma deportiva más avanzada del planeta
+            Nació con Padbol. Hoy es para todos los deportes.
           </p>
           <p
             style={{
@@ -177,7 +177,36 @@ export default function LandingPage() {
               marginRight: 'auto',
             }}
           >
-            Reservas, torneos y ranking global para cualquier deporte, en cualquier país.
+            La plataforma que lleva el Padbol al mundo, y abre sus puertas al Pádel, Pickleball, Fútbol y más.
+          </p>
+          <p
+            style={{
+              margin: 'clamp(8px, 2vw, 12px) 0 0',
+              fontSize: 'clamp(1.35rem, 5vw, 1.75rem)',
+              lineHeight: 1.2,
+              letterSpacing: '0.12em',
+              textAlign: 'center',
+            }}
+            aria-label="Deportes"
+          >
+            <span aria-hidden>⚽</span>{' '}
+            <span aria-hidden>🎾</span>{' '}
+            <span aria-hidden>🏓</span>
+          </p>
+          <p
+            style={{
+              margin: 'clamp(10px, 2.5vw, 14px) 0 0',
+              fontSize: 'clamp(0.85rem, 3vw, 0.95rem)',
+              fontWeight: 700,
+              lineHeight: 1.4,
+              color: c.muted,
+              maxWidth: 'min(92vw, 520px)',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              textAlign: 'center',
+            }}
+          >
+            La plataforma deportiva más avanzada del planeta.
           </p>
           <div
             style={{
@@ -244,6 +273,19 @@ export default function LandingPage() {
           </h2>
           <p
             style={{
+              margin: '0 0 10px',
+              fontSize: 'clamp(0.92rem, 3.4vw, 1rem)',
+              lineHeight: 1.65,
+              color: c.body,
+              textAlign: 'center',
+              fontWeight: 700,
+            }}
+          >
+            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>Deportes soportados:</strong> Padbol, Pádel, Pickleball,
+            Fútbol y más.
+          </p>
+          <p
+            style={{
               margin: '0 0 22px',
               fontSize: 'clamp(0.92rem, 3.4vw, 1rem)',
               lineHeight: 1.65,
@@ -289,30 +331,17 @@ export default function LandingPage() {
           </h2>
           <p
             style={{
-              margin: '0 0 14px',
+              margin: '0 0 20px',
               fontSize: 'clamp(0.92rem, 3.35vw, 1rem)',
-              lineHeight: 1.55,
+              lineHeight: 1.65,
               color: c.body,
               textAlign: 'center',
               fontWeight: 600,
             }}
           >
-            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>Padbol, Pádel, Pickleball, Tenis, Fútbol</strong>
-            {' '}y más: tu disciplina, nuestra plataforma.
+            Reservas online, torneos, ranking, comunidad de jugadores, herramientas de cobro y presencia en el mapa oficial
+            de Padbol Match. Tu disciplina, tu sede, tu ciudad.
           </p>
-          <ul
-            style={{
-              margin: '0 0 20px',
-              paddingLeft: '1.15rem',
-              fontSize: 'clamp(0.9rem, 3.3vw, 0.98rem)',
-              lineHeight: 1.55,
-              color: c.body,
-            }}
-          >
-            <li style={{ marginBottom: '8px' }}>Más visibilidad y reservas online para tus canchas</li>
-            <li style={{ marginBottom: '8px' }}>Gestión de torneos, rankings y comunidad de jugadores</li>
-            <li>Herramientas de cobro y presencia en el mapa oficial de Padbol Match</li>
-          </ul>
           <div style={{ textAlign: 'center' }}>
             <Link
               to="/unirse"
