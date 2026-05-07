@@ -3541,6 +3541,105 @@ async function upsertUserRoleAdminClub({ email, nombre, pais, sede_id }) {
   return error || null;
 }
 
+function randomTemporaryPassword() {
+  return `Padbol#${Math.random().toString(36).slice(2, 8)}${Date.now().toString().slice(-4)}`;
+}
+
+function licenciaRoleAssignment(payload, sedeId) {
+  const tipo = String(payload?.tipo_licencia || 'club_afiliado').trim().toLowerCase();
+  if (tipo === 'master_ciudad') {
+    return {
+      role: 'admin_nacional',
+      alcance: 'ciudad',
+      sede_id: null,
+      ciudad: String(payload?.ciudad_representa || payload?.ciudad || '').trim() || null,
+      provincia: null,
+      pais: null,
+    };
+  }
+  if (tipo === 'master_provincia') {
+    return {
+      role: 'admin_nacional',
+      alcance: 'provincia',
+      sede_id: null,
+      ciudad: null,
+      provincia: String(payload?.provincia_representa || payload?.provincia || '').trim() || null,
+      pais: null,
+    };
+  }
+  if (tipo === 'master_pais') {
+    return {
+      role: 'admin_nacional',
+      alcance: 'pais',
+      sede_id: null,
+      ciudad: null,
+      provincia: null,
+      pais: String(payload?.pais_representa || payload?.licenciatario_pais || payload?.pais || '').trim() || null,
+    };
+  }
+  return {
+    role: 'admin_club',
+    alcance: 'sede',
+    sede_id: sedeId,
+    ciudad: null,
+    provincia: null,
+    pais: String(payload?.licenciatario_pais || payload?.pais || '').trim() || null,
+  };
+}
+
+async function upsertUserRoleLicenciaAsignada({ email, nombre, payload, sedeId }) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return new Error('Email licenciatario vacío');
+  const a = licenciaRoleAssignment(payload, sedeId);
+  if (a.alcance === 'ciudad' && !a.ciudad) return new Error('Falta ciudad_representa para alcance ciudad');
+  if (a.alcance === 'provincia' && !a.provincia) return new Error('Falta provincia_representa para alcance provincia');
+  if (a.alcance === 'pais' && !a.pais) return new Error('Falta pais_representa para alcance pais');
+
+  const row = {
+    email: em,
+    role: a.role,
+    alcance: a.alcance,
+    nombre: String(nombre || '').trim() || null,
+    sede_id: a.sede_id ?? null,
+    ciudad: a.ciudad ?? null,
+    provincia: a.provincia ?? null,
+    pais: a.pais ?? null,
+    torneos_oficiales_habilitados: a.role === 'admin_nacional',
+  };
+  const { data: ex } = await supabase.from('user_roles').select('email').eq('email', em).maybeSingle();
+  if (ex?.email) {
+    const { error } = await supabase.from('user_roles').update(row).eq('email', em);
+    return error || null;
+  }
+  const { error } = await supabase.from('user_roles').insert(row);
+  return error || null;
+}
+
+async function ensureLicenciatarioAuthUserAndWelcomeEmail(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return { created: false, tempPassword: null };
+  const tempPassword = randomTemporaryPassword();
+  let created = false;
+  const cr = await supabase.auth.admin.createUser({
+    email: em,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: { temp_password: true },
+  });
+  if (cr.error) {
+    const msg = String(cr.error?.message || '').toLowerCase();
+    if (!msg.includes('already') && !msg.includes('exists') && String(cr.error?.status || '') !== '422') {
+      throw cr.error;
+    }
+  } else {
+    created = true;
+  }
+  await supabase.auth.resetPasswordForEmail(em, {
+    redirectTo: `${FRONTEND_URL}/login`,
+  });
+  return { created, tempPassword };
+}
+
 async function assertSuperAdminReq(req) {
   const user = await authUserFromBearer(req);
   if (!user?.email) {
@@ -3733,14 +3832,28 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
       email_contacto: b.email_contacto || null,
       numero_licencia: b.numero_licencia || null,
       fecha_contrato: b.fecha_contrato || null,
-      tipo_licencia: b.tipo_licencia === 'padbol_point' ? 'padbol_point' : 'club_afiliado',
+      tipo_licencia: ['club_afiliado', 'padbol_point', 'master_ciudad', 'master_provincia', 'master_pais'].includes(String(b.tipo_licencia || '').trim())
+        ? String(b.tipo_licencia).trim()
+        : 'club_afiliado',
+      ciudad_representa: b.ciudad_representa || null,
+      provincia_representa: b.provincia_representa || null,
+      pais_representa: b.pais_representa || null,
       licenciatario_nombre: b.licenciatario_nombre || null,
       licenciatario_email: licEmail,
       licenciatario_telefono: b.licenciatario_telefono || null,
       licenciatario_pais: b.licenciatario_pais || null,
     };
 
-    const { data: ins, error } = await supabase.from('sedes_pendientes').insert(insert).select('id').single();
+    let { data: ins, error } = await supabase.from('sedes_pendientes').insert(insert).select('id').single();
+    if (error && /ciudad_representa|provincia_representa|pais_representa/i.test(String(error.message || ''))) {
+      const legacyInsert = { ...insert };
+      delete legacyInsert.ciudad_representa;
+      delete legacyInsert.provincia_representa;
+      delete legacyInsert.pais_representa;
+      const retry = await supabase.from('sedes_pendientes').insert(legacyInsert).select('id').single();
+      ins = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
 
     const toSuper = resolveSuperAdminNotifyWhatsAppTo();
@@ -3762,7 +3875,7 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
   }
 });
 
-/** POST /api/admin/sedes-directa — super_admin: inserta sede activa + user_roles admin_club. */
+/** POST /api/admin/sedes-directa — super_admin: inserta sede + user_roles según tipo de licencia. */
 app.post('/api/admin/sedes-directa', async (req, res) => {
   try {
     const user = await authUserFromBearer(req);
@@ -3803,26 +3916,29 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
     if (sedeErr) throw sedeErr;
     const sedeId = sedeRow.id;
 
-    const urErr = await upsertUserRoleAdminClub({
+    const urErr = await upsertUserRoleLicenciaAsignada({
       email: licEmail,
       nombre: String(b.licenciatario_nombre || '').trim() || null,
-      pais: b.licenciatario_pais || b.pais || null,
-      sede_id: sedeId,
+      payload: b,
+      sedeId,
     });
     if (urErr) {
       await supabase.from('sedes').delete().eq('id', sedeId);
       throw urErr;
     }
 
+    const authProvision = await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail);
+
     const waLic = b.licenciatario_telefono || b.whatsapp;
     if (waLic) {
       const msg =
         `🎉 Bienvenido a PADBOL Match. Tu sede "${nombre}" está activa.\n` +
-        `Ingresá al panel: padbolmatch.com/admin`;
+        `Ingresá al panel: padbolmatch.com/admin\n` +
+        `${authProvision?.created ? 'Revisá tu email para configurar acceso y cambiar la contraseña temporal.' : 'Si ya tenías cuenta, revisá tu email para restablecer contraseña.'}`;
       await sendTwilioWhatsAppBodyToRaw(waLic, msg);
     }
 
-    res.json({ ok: true, sede_id: sedeId });
+    res.json({ ok: true, sede_id: sedeId, auth_user_created: Boolean(authProvision?.created) });
   } catch (err) {
     console.error('❌ POST /api/admin/sedes-directa:', err.message);
     res.status(500).json({ error: err.message });
@@ -3881,16 +3997,18 @@ app.post('/api/admin/sedes-pendientes/:id/aprobar', async (req, res) => {
       await supabase.from('sedes').delete().eq('id', sedeId);
       return res.status(400).json({ error: 'Solicitud sin email de licenciatario' });
     }
-    const urErr = await upsertUserRoleAdminClub({
+    const urErr = await upsertUserRoleLicenciaAsignada({
       email: licEmail,
       nombre: pend.licenciatario_nombre || null,
-      pais: pend.licenciatario_pais || pend.pais || null,
-      sede_id: sedeId,
+      payload: pend,
+      sedeId,
     });
     if (urErr) {
       await supabase.from('sedes').delete().eq('id', sedeId);
       throw urErr;
     }
+
+    await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail);
 
     await supabase.from('sedes_pendientes').update({ estado: 'aprobada' }).eq('id', id);
 

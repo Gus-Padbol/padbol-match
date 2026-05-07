@@ -21,8 +21,16 @@ function paisesOpciones() {
   [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach((p) => {
     if (p?.nombre) map.set(p.nombre, p);
   });
-  return [...map.keys()].sort((a, b) => a.localeCompare(b, 'es'));
+  return [...map.values()].sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
 }
+
+const LICENCIA_TIPO_OPTIONS = [
+  { id: 'club_afiliado', label: 'Club Afiliado', alcance: 'sede' },
+  { id: 'padbol_point', label: 'Padbol Point Franquicia', alcance: 'sede' },
+  { id: 'master_ciudad', label: 'Master Ciudad', alcance: 'ciudad' },
+  { id: 'master_provincia', label: 'Master Provincia / Estado', alcance: 'provincia' },
+  { id: 'master_pais', label: 'Master País / Nacional', alcance: 'pais' },
+];
 
 const emptyForm = () => ({
   nombre: '',
@@ -41,6 +49,9 @@ const emptyForm = () => ({
   numero_licencia: '',
   fecha_contrato: '',
   tipo_licencia: 'club_afiliado',
+  ciudad_representa: '',
+  provincia_representa: '',
+  pais_representa: 'Argentina',
   licenciatario_nombre: '',
   licenciatario_email: '',
   licenciatario_telefono: '',
@@ -87,6 +98,10 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const [err, setErr] = useState('');
 
   const paises = useMemo(() => paisesOpciones(), []);
+  const licenciaTipoActual = useMemo(
+    () => LICENCIA_TIPO_OPTIONS.find((x) => x.id === form.tipo_licencia) || LICENCIA_TIPO_OPTIONS[0],
+    [form.tipo_licencia]
+  );
 
   const setField = useCallback((k, v) => {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -102,6 +117,18 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
     }
     if (!form.licenciatario_email.trim()) {
       setErr('El email del licenciatario es obligatorio.');
+      return;
+    }
+    if (licenciaTipoActual.alcance === 'ciudad' && !form.ciudad_representa.trim()) {
+      setErr('Para Master Ciudad debés indicar la ciudad que representa.');
+      return;
+    }
+    if (licenciaTipoActual.alcance === 'provincia' && !form.provincia_representa.trim()) {
+      setErr('Para Master Provincia debés indicar la provincia/estado que representa.');
+      return;
+    }
+    if (licenciaTipoActual.alcance === 'pais' && !form.pais_representa.trim()) {
+      setErr('Para Master País debés indicar el país que representa.');
       return;
     }
     setSending(true);
@@ -122,7 +149,10 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
         email_contacto: form.email_contacto.trim() || null,
         numero_licencia: isSuper ? form.numero_licencia.trim() || null : form.numero_licencia.trim() || null,
         fecha_contrato: form.fecha_contrato || null,
-        tipo_licencia: form.tipo_licencia === 'padbol_point' ? 'padbol_point' : 'club_afiliado',
+        tipo_licencia: LICENCIA_TIPO_OPTIONS.some((x) => x.id === form.tipo_licencia) ? form.tipo_licencia : 'club_afiliado',
+        ciudad_representa: form.ciudad_representa.trim() || null,
+        provincia_representa: form.provincia_representa.trim() || null,
+        pais_representa: form.pais_representa.trim() || null,
         licenciatario_nombre: form.licenciatario_nombre.trim() || null,
         licenciatario_email: form.licenciatario_email.trim().toLowerCase(),
         licenciatario_telefono: form.licenciatario_telefono.trim() || null,
@@ -257,8 +287,8 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
             <label style={{ ...labelStyle, marginTop: 12 }}>País</label>
             <select style={inputStyle} value={form.pais} onChange={(e) => setField('pais', e.target.value)}>
               {paises.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+                <option key={p.nombre} value={p.nombre}>
+                  {p.bandera ? `${p.bandera} ` : ''}{p.nombre}
                 </option>
               ))}
             </select>
@@ -324,9 +354,47 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
             />
             <label style={{ ...labelStyle, marginTop: 12 }}>Tipo</label>
             <select style={inputStyle} value={form.tipo_licencia} onChange={(e) => setField('tipo_licencia', e.target.value)}>
-              <option value="club_afiliado">Club Afiliado</option>
-              <option value="padbol_point">Padbol Point</option>
+              {LICENCIA_TIPO_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
+            <p style={{ margin: '8px 0 0', color: '#475569', fontSize: '12px', fontWeight: 600 }}>
+              Alcance resultante: {licenciaTipoActual.alcance}
+            </p>
+            {licenciaTipoActual.alcance === 'ciudad' ? (
+              <>
+                <label style={{ ...labelStyle, marginTop: 12 }}>Ciudad que representa</label>
+                <input
+                  style={inputStyle}
+                  value={form.ciudad_representa}
+                  onChange={(e) => setField('ciudad_representa', e.target.value)}
+                />
+              </>
+            ) : null}
+            {licenciaTipoActual.alcance === 'provincia' ? (
+              <>
+                <label style={{ ...labelStyle, marginTop: 12 }}>Provincia / Estado que representa</label>
+                <input
+                  style={inputStyle}
+                  value={form.provincia_representa}
+                  onChange={(e) => setField('provincia_representa', e.target.value)}
+                />
+              </>
+            ) : null}
+            {licenciaTipoActual.alcance === 'pais' ? (
+              <>
+                <label style={{ ...labelStyle, marginTop: 12 }}>País que representa</label>
+                <select style={inputStyle} value={form.pais_representa} onChange={(e) => setField('pais_representa', e.target.value)}>
+                  {paises.map((p) => (
+                    <option key={`rep-${p.nombre}`} value={p.nombre}>
+                      {p.bandera ? `${p.bandera} ` : ''}{p.nombre}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : null}
           </div>
 
           <div style={sectionStyle}>
@@ -350,8 +418,8 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               onChange={(e) => setField('licenciatario_pais', e.target.value)}
             >
               {paises.map((p) => (
-                <option key={`l-${p}`} value={p}>
-                  {p}
+                <option key={`l-${p.nombre}`} value={p.nombre}>
+                  {p.bandera ? `${p.bandera} ` : ''}{p.nombre}
                 </option>
               ))}
             </select>
