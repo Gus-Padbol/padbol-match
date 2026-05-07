@@ -941,7 +941,16 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
     try {
       const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas?limit=5&offset=0`), { headers });
       const body = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(body.error || `Error ${r.status}`);
+      if (!r.ok) {
+        const raw = String(body.error || '');
+        const friendly =
+          body.code === 'SEDE_RESENAS_TABLE_MISSING'
+            ? raw
+            : /schema cache|sede_resenas/i.test(raw)
+              ? 'Las reseñas no están disponibles: en Supabase debe existir la tabla public.sede_resenas (ASCII, sin tilde). Ejecutá padbol-backend/sql/create_sede_resenas.sql.'
+              : raw || `Error ${r.status}`;
+        throw new Error(friendly);
+      }
       setPayload(body);
     } catch (e) {
       setErr(e.message || 'Error');
@@ -964,7 +973,16 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
     try {
       const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas?limit=100&offset=0`), { headers });
       const body = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(body.error || `Error ${r.status}`);
+      if (!r.ok) {
+        const raw = String(body.error || '');
+        const friendly =
+          body.code === 'SEDE_RESENAS_TABLE_MISSING'
+            ? raw
+            : /schema cache|sede_resenas/i.test(raw)
+              ? 'Las reseñas no están disponibles (tabla public.sede_resenas).'
+              : raw || `Error ${r.status}`;
+        throw new Error(friendly);
+      }
       setTodasRows(Array.isArray(body.resenas) ? body.resenas : []);
     } catch {
       setTodasRows([]);
@@ -988,7 +1006,16 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
         body: JSON.stringify({ estrellas: estrellasForm, comentario: comentarioForm.trim() }),
       });
       const body = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(body.error || `Error ${r.status}`);
+      if (!r.ok) {
+        const raw = String(body.error || '');
+        const friendly =
+          body.code === 'SEDE_RESENAS_TABLE_MISSING'
+            ? raw
+            : /schema cache|sede_resenas/i.test(raw)
+              ? 'Las reseñas no están disponibles: creá la tabla public.sede_resenas en Supabase (ver create_sede_resenas.sql).'
+              : raw || `Error ${r.status}`;
+        throw new Error(friendly);
+      }
       setComentarioForm('');
       setEstrellasForm(5);
       setFormMsg('¡Gracias por tu reseña!');
