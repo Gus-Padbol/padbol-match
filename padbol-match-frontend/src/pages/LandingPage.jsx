@@ -19,6 +19,7 @@ const c = {
 };
 
 const shell = {
+  position: 'relative',
   minHeight: '100vh',
   width: '100%',
   maxWidth: '100%',
@@ -26,6 +27,21 @@ const shell = {
   overflowX: 'hidden',
   background: 'linear-gradient(180deg, #0b1020 0%, #151832 38%, #1a1040 100%)',
   color: c.body,
+};
+
+const btnLoginTop = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '13px',
+  fontWeight: 600,
+  color: c.titleSoft,
+  textDecoration: 'none',
+  padding: '8px 14px',
+  borderRadius: '999px',
+  border: '1px solid rgba(255, 255, 255, 0.22)',
+  background: 'rgba(255, 255, 255, 0.06)',
+  boxSizing: 'border-box',
 };
 
 const section = {
@@ -106,7 +122,21 @@ function Stat({ value, label }) {
 export default function LandingPage() {
   return (
     <div style={shell}>
-      <header style={{ ...section, paddingTop: 'clamp(28px, 8vw, 48px)', paddingBottom: 'clamp(8px, 3vw, 16px)' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
+          paddingRight: 'clamp(16px, 4vw, 24px)',
+          paddingLeft: 'clamp(16px, 4vw, 24px)',
+          paddingBottom: '4px',
+        }}
+      >
+        <Link to="/login" style={btnLoginTop}>
+          Iniciar sesión
+        </Link>
+      </div>
+      <header style={{ ...section, paddingTop: 'clamp(12px, 5vw, 32px)', paddingBottom: 'clamp(8px, 3vw, 16px)' }}>
         <div style={{ textAlign: 'center' }}>
           <img
             src="/logo-padbol-match.png"
@@ -144,8 +174,8 @@ export default function LandingPage() {
               marginTop: 'clamp(22px, 5vw, 32px)',
             }}
           >
-            <Link to="/reservar" style={btnPrimary}>
-              Reservar cancha
+            <Link to="/hub" style={btnPrimary}>
+              Explorar Padbol Match
             </Link>
             <Link to="/unirse" style={btnSecondary}>
               Unirme como club
