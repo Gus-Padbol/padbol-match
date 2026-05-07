@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/displayName';
@@ -26,6 +26,15 @@ const LOGOUT_BTN_SIZE = 34;
 const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club'];
 
 const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
+
+function SearchIconSvg({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+      <path d="M20 20L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 /** Misma lista que en torneo admin: mientras carga `user_roles`, el hub ya oculta chip para estos emails. */
 const LEGACY_GLOBAL_ADMIN_EMAILS_HEADER = [
@@ -269,6 +278,11 @@ export default function AppHeader({
         .replace(/\/+$/, '') || '/',
     [location.pathname]
   );
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState({ jugadores: [], torneos: [], sedes: [] });
+  const searchWrapRef = useRef(null);
 
   /** /torneo/:id/equipos sin venir del panel: mismo ancho hub, título corto "Equipos". */
   const headerTitleDisplay = useMemo(() => {
@@ -442,6 +456,76 @@ export default function AppHeader({
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
 
+  useEffect(() => {
+    if (!searchOpen) return undefined;
+    const handleDocClick = (ev) => {
+      if (!searchWrapRef.current) return;
+      if (!searchWrapRef.current.contains(ev.target)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleDocClick);
+    return () => document.removeEventListener('mousedown', handleDocClick);
+  }, [searchOpen]);
+
+  useEffect(() => {
+    const q = String(searchTerm || '').trim();
+    if (!searchOpen || q.length < 3) {
+      setSearchResults({ jugadores: [], torneos: [], sedes: [] });
+      setSearchLoading(false);
+      return undefined;
+    }
+    setSearchLoading(true);
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const qLike = `%${q}%`;
+        const jugadoresP = supabase
+          .from('jugadores_perfil')
+          .select('alias, nombre, apellido, foto_url, nivel, nombre_completo')
+          .or(`nombre.ilike.${qLike},apellido.ilike.${qLike},alias.ilike.${qLike},nombre_completo.ilike.${qLike}`)
+          .limit(3);
+        const torneosP = supabase
+          .from('torneos')
+          .select('id, nombre, fecha_inicio, estado, sede_id')
+          .ilike('nombre', qLike)
+          .order('fecha_inicio', { ascending: false })
+          .limit(3);
+        const sedesP = supabase
+          .from('sedes')
+          .select('id, nombre, ciudad, pais')
+          .or(`nombre.ilike.${qLike},ciudad.ilike.${qLike}`)
+          .limit(3);
+        const [jRes, tRes, sRes] = await Promise.all([jugadoresP, torneosP, sedesP]);
+        const torneosRows = Array.isArray(tRes.data) ? tRes.data : [];
+        const sedeIds = [...new Set(torneosRows.map((r) => r?.sede_id).filter((id) => id != null))];
+        let sedesById = {};
+        if (sedeIds.length) {
+          const { data: sedesRows } = await supabase.from('sedes').select('id, nombre').in('id', sedeIds);
+          sedesById = Object.fromEntries((sedesRows || []).map((s) => [String(s.id), s.nombre]));
+        }
+        if (!cancelled) {
+          setSearchResults({
+            jugadores: (jRes.data || []).filter((r) => String(r?.alias || '').trim()),
+            torneos: torneosRows.map((r) => ({
+              ...r,
+              sede_nombre: sedesById[String(r.sede_id)] || '',
+            })),
+            sedes: sRes.data || [],
+          });
+        }
+      } catch {
+        if (!cancelled) setSearchResults({ jugadores: [], torneos: [], sedes: [] });
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [searchTerm, searchOpen]);
+
   const headerInnerMaxStyle = useMemo(() => {
     const n = contentMaxWidth == null || contentMaxWidth === '' ? NaN : Number(contentMaxWidth);
     if (!Number.isFinite(n) || n <= 0) return null;
@@ -477,6 +561,145 @@ export default function AppHeader({
   /** Ruta /admin: siempre barra compacta con sesión (refuerzo si falta el prop). */
   const useAdminMinimalLayout =
     adminPanelMinimalHeader || (Boolean(session?.user) && isOnAdmin);
+
+  const renderSearchResultsSection = (titleTxt, rows, renderRow, onViewAll) => (
+    <div style={{ padding: '6px 0', borderBottom: '1px solid #e2e8f0' }}>
+      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 800, marginBottom: '4px' }}>{titleTxt}</div>
+      {rows.length === 0 ? (
+        <div style={{ fontSize: '12px', color: '#94a3b8' }}>Sin resultados</div>
+      ) : (
+        rows.map(renderRow)
+      )}
+      <button
+        type="button"
+        onClick={onViewAll}
+        style={{ marginTop: '4px', background: 'transparent', border: 'none', color: '#2563eb', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+      >
+        Ver todos
+      </button>
+    </div>
+  );
+
+  const searchUiBlock = (
+    <div ref={searchWrapRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      {searchOpen ? (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 'min(92vw, 520px)', zIndex: 13000 }}>
+          <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 14px 34px rgba(2,6,23,0.25)', border: '1px solid #e2e8f0', padding: '10px' }}>
+            <input
+              autoFocus
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar jugadores, torneos o sedes…"
+              style={{ width: '100%', boxSizing: 'border-box', borderRadius: '10px', border: '1px solid #cbd5e1', padding: '10px 12px', fontSize: '14px', marginBottom: '8px' }}
+            />
+            {String(searchTerm || '').trim().length < 3 ? (
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>Escribí al menos 3 caracteres.</div>
+            ) : searchLoading ? (
+              <div style={{ fontSize: '12px', color: '#64748b' }}>Buscando…</div>
+            ) : (
+              <div style={{ display: 'grid', gap: '6px' }}>
+                {renderSearchResultsSection(
+                  'Jugadores',
+                  searchResults.jugadores,
+                  (j, i) => (
+                    <button
+                      key={`j-${i}-${j.alias}`}
+                      type="button"
+                      onClick={() => {
+                        setSearchOpen(false);
+                        navigate(`/jugador/${encodeURIComponent(String(j.alias || '').trim())}`);
+                      }}
+                      style={{ width: '100%', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      {j.foto_url ? <img src={j.foto_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} /> : <span style={{ width: 24, height: 24, borderRadius: '50%', background: '#e2e8f0' }} />}
+                      <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                        {String(j.nombre || '').trim() || String(j.nombre_completo || '').trim() || 'Jugador'} · {formatAliasConArroba(j.alias)} · {j.nivel || '—'}
+                      </span>
+                    </button>
+                  ),
+                  () => {
+                    setSearchOpen(false);
+                    navigate('/rankings');
+                  }
+                )}
+                {renderSearchResultsSection(
+                  'Torneos',
+                  searchResults.torneos,
+                  (t, i) => (
+                    <button
+                      key={`t-${i}-${t.id}`}
+                      type="button"
+                      onClick={() => {
+                        setSearchOpen(false);
+                        navigate(`/torneo/${t.id}`);
+                      }}
+                      style={{ width: '100%', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                        {t.nombre} · {t.sede_nombre || 'Sin sede'} · {String(t.fecha_inicio || '').slice(0, 10)} · {t.estado || '—'}
+                      </span>
+                    </button>
+                  ),
+                  () => {
+                    setSearchOpen(false);
+                    navigate('/torneos');
+                  }
+                )}
+                {renderSearchResultsSection(
+                  'Sedes',
+                  searchResults.sedes,
+                  (s, i) => (
+                    <button
+                      key={`s-${i}-${s.id}`}
+                      type="button"
+                      onClick={() => {
+                        setSearchOpen(false);
+                        navigate(`/sede/${s.id}`);
+                      }}
+                      style={{ width: '100%', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                        {s.nombre} · {s.ciudad || '—'} · {s.pais || '—'}
+                      </span>
+                    </button>
+                  ),
+                  () => {
+                    setSearchOpen(false);
+                    navigate('/sedes');
+                  }
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => {
+          setSearchOpen((v) => !v);
+          if (searchOpen) setSearchTerm('');
+        }}
+        aria-label="Buscar"
+        title="Buscar"
+        style={{
+          width: LOGOUT_BTN_SIZE,
+          height: LOGOUT_BTN_SIZE,
+          padding: 0,
+          borderRadius: '50%',
+          border: 'none',
+          background: 'rgba(255,255,255,0.1)',
+          color: '#e2e8f0',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <SearchIconSvg size={16} />
+      </button>
+    </div>
+  );
 
   if (useAdminMinimalLayout) {
     const adminMinimalRow = (
@@ -553,6 +776,7 @@ export default function AppHeader({
         ) : (
           <span aria-hidden style={{ width: 32, height: 32, flexShrink: 0 }} />
         )}
+        {searchUiBlock}
         {showLogout && session?.user ? (
           <button
             type="button"
@@ -755,15 +979,14 @@ export default function AppHeader({
           justifySelf: hubDirectLogin && !session?.user && !authLoading ? 'end' : undefined,
         }}
       >
-        {showLogout || showAdminShortcutHub ? (
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
-            }}
-          >
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
+          }}
+        >
             {jugadorChipEnHeaderGrid ? (
               <div
                 style={{
@@ -847,6 +1070,7 @@ export default function AppHeader({
               </div>
             ) : null}
             {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
+            {searchUiBlock}
             {showLogout ? (
               <button
                 type="button"
@@ -875,49 +1099,38 @@ export default function AppHeader({
               >
                 ⏻
               </button>
+            ) : hubDirectLogin && !session?.user && !authLoading ? (
+              <button
+                type="button"
+                onClick={() => navigate(loginFromHubUrl)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(148,163,184,0.35)',
+                  background: 'rgba(148,163,184,0.2)',
+                  color: '#e2e8f0',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                Iniciar sesión
+              </button>
+            ) : hubDirectLogin && !session?.user && authLoading ? (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.65)',
+                  padding: '8px 4px',
+                }}
+              >
+                …
+              </span>
             ) : null}
           </div>
-        ) : hubDirectLogin && !session?.user && !authLoading ? (
-          <button
-            type="button"
-            onClick={() => navigate(loginFromHubUrl)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '999px',
-              border: '1px solid rgba(148,163,184,0.35)',
-              background: 'rgba(148,163,184,0.2)',
-              color: '#e2e8f0',
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              marginLeft: 'auto',
-            }}
-          >
-            Iniciar sesión
-          </button>
-        ) : hubDirectLogin && !session?.user && authLoading ? (
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'rgba(255,255,255,0.65)',
-              padding: '8px 4px',
-            }}
-          >
-            …
-          </span>
-        ) : !hideLogoutEffective ? (
-          <span
-            aria-hidden
-            style={{
-              width: LOGOUT_BTN_SIZE,
-              height: LOGOUT_BTN_SIZE,
-              flexShrink: 0,
-            }}
-          />
-        ) : null}
       </div>
       </div>
     </div>
