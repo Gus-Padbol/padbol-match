@@ -154,16 +154,30 @@ export default function LandingPage() {
           <p
             style={{
               margin: 'clamp(16px, 4vw, 24px) 0 0',
-              fontSize: 'clamp(1.05rem, 4vw, 1.35rem)',
-              fontWeight: 700,
-              lineHeight: 1.35,
-              color: c.titleSoft,
-              maxWidth: '520px',
+              fontSize: 'clamp(1.12rem, 4.2vw, 1.45rem)',
+              fontWeight: 800,
+              lineHeight: 1.3,
+              color: c.title,
+              maxWidth: 'min(92vw, 640px)',
               marginLeft: 'auto',
               marginRight: 'auto',
             }}
           >
-            La plataforma oficial del deporte más explosivo del mundo
+            La plataforma deportiva más avanzada del planeta
+          </p>
+          <p
+            style={{
+              margin: 'clamp(12px, 3vw, 16px) 0 0',
+              fontSize: 'clamp(0.95rem, 3.5vw, 1.05rem)',
+              fontWeight: 600,
+              lineHeight: 1.45,
+              color: c.titleSoft,
+              maxWidth: 'min(92vw, 560px)',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+            }}
+          >
+            Reservas, torneos y ranking global para cualquier deporte, en cualquier país.
           </p>
           <div
             style={{
@@ -226,19 +240,23 @@ export default function LandingPage() {
               color: c.title,
             }}
           >
-            El deporte
+            De Padbol al mundo
           </h2>
           <p
             style={{
               margin: '0 0 22px',
               fontSize: 'clamp(0.92rem, 3.4vw, 1rem)',
-              lineHeight: 1.6,
+              lineHeight: 1.65,
               color: c.body,
               textAlign: 'center',
             }}
           >
-            Padbol combina fútbol, tenis y vóley en una cancha cerrada con red: partidos dinámicos, rápidos y para todos los
-            niveles. Padbol Match conecta jugadores con sedes licenciadas y torneos en toda la región.
+            Padbol Match{' '}
+            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>nació con Padbol</strong>
+            {' '}—el deporte que fusiona fútbol, tenis y vóley en una cancha cerrada con red— y{' '}
+            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>hoy abre sus puertas a todos los deportes</strong>
+            . Construimos una infraestructura internacional de primer nivel: misma exigencia de producto, misma ambición
+            global. Conectamos clubes y jugadores sin fronteras, con herramientas pensadas para competir a escala mundial.
           </p>
           <div
             style={{
@@ -269,6 +287,19 @@ export default function LandingPage() {
           >
             Para clubes
           </h2>
+          <p
+            style={{
+              margin: '0 0 14px',
+              fontSize: 'clamp(0.92rem, 3.35vw, 1rem)',
+              lineHeight: 1.55,
+              color: c.body,
+              textAlign: 'center',
+              fontWeight: 600,
+            }}
+          >
+            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>Padbol, Pádel, Pickleball, Tenis, Fútbol</strong>
+            {' '}y más: tu disciplina, nuestra plataforma.
+          </p>
           <ul
             style={{
               margin: '0 0 20px',
