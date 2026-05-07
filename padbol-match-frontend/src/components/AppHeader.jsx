@@ -167,9 +167,10 @@ export default function AppHeader({
     [location.pathname]
   );
 
-  /** En landing y /unirse sin sesión no se muestra la lupa (evita buscar en vistas de marketing). */
+  /** Panel admin: sin buscador global. Landing /unirse sin sesión: tampoco. Resto: lupa visible. */
   const showHeaderSearch = useMemo(() => {
     const p = pathOnly;
+    if (p === '/admin' || p.startsWith('/admin/')) return false;
     const rutasSoloConSesion = p === '/' || p === '/unirse' || p === '/join';
     if (rutasSoloConSesion) return Boolean(session?.user);
     return true;
