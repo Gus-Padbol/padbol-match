@@ -61,18 +61,23 @@ export const FILTROS_ESTADO_TORNEO_PILLS = [
   { id: 'cancelado', label: 'Cancelado' },
 ];
 
-/** Ids de pills que filtran por un estado concreto (todo lo demás = sin filtro / «Todos»). */
+/** Id normalizado de la primera pill = «sin filtrar por estado» (convención: siempre la de «Todos»). */
+const TORNEO_FILTRO_PILL_ID_TODOS = normalizeTorneoFiltroEstadoPill(FILTROS_ESTADO_TORNEO_PILLS[0]?.id ?? 'todos');
+
+/** Ids de pills que filtran por un estado de torneo concreto (todas menos la primera). */
 const TORNEO_FILTRO_ESTADO_IDS_CON_ESTADO = new Set(
-  FILTROS_ESTADO_TORNEO_PILLS.map((p) => p.id).filter((id) => id && id !== 'todos')
+  FILTROS_ESTADO_TORNEO_PILLS.slice(1).map((p) => normalizeTorneoFiltroEstadoPill(p.id)).filter(Boolean)
 );
 
 /**
  * true = no aplicar filtro por estado (pill «Todos», vacío, alias o valor no reconocido).
+ * Nunca se compara esto con `torneo.estado` de la BD (allí no existe «Todos»).
  */
 export function esFiltroTorneoEstadoTodos(filtroRaw) {
   const f = normalizeTorneoFiltroEstadoPill(filtroRaw);
   if (!f) return true;
   if (f === 'todas' || f === 'all') return true;
+  if (f === TORNEO_FILTRO_PILL_ID_TODOS) return true;
   return !TORNEO_FILTRO_ESTADO_IDS_CON_ESTADO.has(f);
 }
 
