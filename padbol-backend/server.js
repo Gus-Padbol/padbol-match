@@ -3474,6 +3474,134 @@ app.get('/api/creditos/:email', async (req, res) => {
   }
 });
 
+function equipoIncluyeUsuario(equipo, user) {
+  const em = String(user?.email || '').trim().toLowerCase();
+  const uid = String(user?.id || '').trim();
+  if (!em && !uid) return false;
+  const creadorEmail = String(equipo?.creador_email || '').trim().toLowerCase();
+  if (em && creadorEmail && creadorEmail === em) return true;
+  const jugadores = Array.isArray(equipo?.jugadores) ? equipo.jugadores : [];
+  return jugadores.some((p) => {
+    const pe = String(p?.email || '').trim().toLowerCase();
+    const puid = String(p?.user_id || p?.id || '').trim();
+    if (em && pe && pe === em) return true;
+    if (uid && puid && puid === uid) return true;
+    return false;
+  });
+}
+
+// GET /api/jugador/mis-pagos — historial de pagos (reservas + torneos)
+app.get('/api/jugador/mis-pagos', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+    const emailNorm = String(user.email || '').trim().toLowerCase();
+    const uid = String(user.id || '').trim();
+
+    let reservasData = [];
+    if (uid) {
+      const { data, error } = await supabase
+        .from('reservas')
+        .select('id, fecha, hora, sede, precio, moneda, estado, user_id')
+        .eq('user_id', uid)
+        .neq('estado', 'cancelada')
+        .order('fecha', { ascending: false })
+        .limit(400);
+      if (error) throw error;
+      reservasData = Array.isArray(data) ? data : [];
+    } else {
+      const { data, error } = await supabase
+        .from('reservas')
+        .select('id, fecha, hora, sede, precio, moneda, estado, email')
+        .ilike('email', emailNorm)
+        .neq('estado', 'cancelada')
+        .order('fecha', { ascending: false })
+        .limit(400);
+      if (error) throw error;
+      reservasData = Array.isArray(data) ? data : [];
+    }
+
+    const { data: equiposRows, error: eqErr } = await supabase
+      .from('equipos')
+      .select('id, torneo_id, nombre, jugadores, creador_email, inscripcion_estado, created_at, updated_at')
+      .eq('inscripcion_estado', 'confirmado')
+      .order('updated_at', { ascending: false })
+      .limit(1500);
+    if (eqErr) throw eqErr;
+    const equiposMios = (Array.isArray(equiposRows) ? equiposRows : []).filter((eq) =>
+      equipoIncluyeUsuario(eq, user)
+    );
+
+    const tids = [...new Set(equiposMios.map((e) => e.torneo_id).filter(Boolean))];
+    const torneosById = {};
+    const sedeById = {};
+    if (tids.length) {
+      const { data: torRows, error: tErr } = await supabase
+        .from('torneos')
+        .select('id, nombre, fecha_inicio, estado, sede_id, precio_inscripcion, monto_inscripcion, moneda')
+        .in('id', tids);
+      if (tErr) throw tErr;
+      (torRows || []).forEach((t) => {
+        torneosById[t.id] = t;
+      });
+      const sedeIds = [...new Set((torRows || []).map((t) => t?.sede_id).filter(Boolean))];
+      if (sedeIds.length) {
+        const { data: sRows } = await supabase.from('sedes').select('id, nombre').in('id', sedeIds);
+        (sRows || []).forEach((s) => {
+          sedeById[s.id] = s.nombre;
+        });
+      }
+    }
+
+    const pagosReservas = reservasData.map((r) => ({
+      tipo: 'reserva',
+      id: r.id,
+      fecha: String(r?.fecha || '').slice(0, 10),
+      hora: String(r?.hora || '').trim(),
+      sede: String(r?.sede || '').trim() || null,
+      monto: Number(r?.precio) || 0,
+      moneda: String(r?.moneda || 'ARS').trim().toUpperCase(),
+      estado: String(r?.estado || '').trim() || 'confirmada',
+    }));
+
+    const pagosTorneos = equiposMios.map((eq) => {
+      const t = torneosById[eq.torneo_id] || {};
+      const montoRaw = t.monto_inscripcion != null && t.monto_inscripcion !== '' ? t.monto_inscripcion : t.precio_inscripcion;
+      return {
+        tipo: 'torneo',
+        id: eq.id,
+        torneo_id: eq.torneo_id,
+        torneo_nombre: String(t?.nombre || eq?.nombre || '').trim() || `Torneo #${eq.torneo_id}`,
+        fecha: String(t?.fecha_inicio || eq?.updated_at || eq?.created_at || '').slice(0, 10),
+        sede: t?.sede_id ? sedeById[t.sede_id] || null : null,
+        monto: Number(montoRaw) || 0,
+        moneda: String(t?.moneda || 'ARS').trim().toUpperCase(),
+        estado: String(t?.estado || 'confirmado').trim(),
+      };
+    });
+
+    const pagos = [...pagosReservas, ...pagosTorneos].sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
+    const totalPorMoneda = { ARS: 0, USD: 0, EUR: 0 };
+    pagos.forEach((p) => {
+      const mon = ['ARS', 'USD', 'EUR'].includes(String(p.moneda || '').toUpperCase())
+        ? String(p.moneda || '').toUpperCase()
+        : 'ARS';
+      totalPorMoneda[mon] = (totalPorMoneda[mon] || 0) + (Number(p.monto) || 0);
+    });
+
+    res.json({
+      pagos,
+      reservas: pagosReservas,
+      torneos: pagosTorneos,
+      total_por_moneda: totalPorMoneda,
+      total_transacciones: pagos.length,
+    });
+  } catch (err) {
+    console.error('❌ GET /api/jugador/mis-pagos:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/crear-preferencia — Mercado Pago Checkout Pro
 app.post('/api/crear-preferencia', async (req, res) => {
   try {

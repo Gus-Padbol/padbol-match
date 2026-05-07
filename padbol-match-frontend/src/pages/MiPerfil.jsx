@@ -260,6 +260,10 @@ export default function MiPerfil() {
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
   const [misReservasColapsado, setMisReservasColapsado] = useState(true);
+  const [misPagos, setMisPagos] = useState([]);
+  const [misPagosLoading, setMisPagosLoading] = useState(false);
+  const [misPagosTipo, setMisPagosTipo] = useState('todos'); // todos | reservas | torneos
+  const [misPagosPeriodo, setMisPagosPeriodo] = useState('todo'); // mes | tres_meses | todo
   const [torneosConPuntosMiPerfil, setTorneosConPuntosMiPerfil] = useState([]);
   const [mostrarTodosTorneosMiPerfil, setMostrarTodosTorneosMiPerfil] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -697,6 +701,7 @@ export default function MiPerfil() {
     fetchPerfil();
     fetchReservas();
     fetchCreditos();
+    fetchMisPagos();
   }, [sessionOwnerEmail, session?.user?.id, location.search, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -869,6 +874,36 @@ export default function MiPerfil() {
     [torneosConPuntosMiPerfil]
   );
 
+  const misPagosFiltrados = useMemo(() => {
+    const now = new Date();
+    return (misPagos || []).filter((p) => {
+      const tipoOk =
+        misPagosTipo === 'todos' ||
+        (misPagosTipo === 'reservas' && p.tipo === 'reserva') ||
+        (misPagosTipo === 'torneos' && p.tipo === 'torneo');
+      if (!tipoOk) return false;
+      if (misPagosPeriodo === 'todo') return true;
+      const fecha = String(p?.fecha || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return false;
+      const dt = new Date(`${fecha}T00:00:00`);
+      const months = misPagosPeriodo === 'mes' ? 1 : 3;
+      const since = new Date(now);
+      since.setMonth(since.getMonth() - months);
+      return dt >= since;
+    });
+  }, [misPagos, misPagosTipo, misPagosPeriodo]);
+
+  const totalGastadoHistorico = useMemo(() => {
+    const total = { ARS: 0, USD: 0, EUR: 0 };
+    (misPagos || []).forEach((p) => {
+      const mon = ['ARS', 'USD', 'EUR'].includes(String(p?.moneda || '').toUpperCase())
+        ? String(p.moneda).toUpperCase()
+        : 'ARS';
+      total[mon] += Number(p?.monto) || 0;
+    });
+    return total;
+  }, [misPagos]);
+
   const fetchCreditos = async () => {
     if (!sessionOwnerEmail) return;
     try {
@@ -879,6 +914,33 @@ export default function MiPerfil() {
       setCreditItems(data.creditos || []);
     } catch {
       // fail silently — credits are informational
+    }
+  };
+
+  const fetchMisPagos = async () => {
+    if (!sessionOwnerEmail) {
+      setMisPagos([]);
+      return;
+    }
+    setMisPagosLoading(true);
+    try {
+      const sess = (await supabase.auth.getSession())?.data?.session || session;
+      const token = sess?.access_token;
+      if (!token) {
+        setMisPagos([]);
+        return;
+      }
+      const res = await fetch(`${API_BASE_URL}/api/jugador/mis-pagos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setMisPagos(Array.isArray(j?.pagos) ? j.pagos : []);
+    } catch (e) {
+      console.warn('[MiPerfil] mis pagos', e);
+      setMisPagos([]);
+    } finally {
+      setMisPagosLoading(false);
     }
   };
 
@@ -1561,6 +1623,7 @@ export default function MiPerfil() {
         alert('✅ Reserva cancelada. La cancelación fue realizada con menos de 24hs de anticipación — no genera crédito.');
       }
       await fetchReservas();
+      await fetchMisPagos();
     } catch (err) {
       alert('Error: ' + err.message);
     } finally {
@@ -3452,6 +3515,109 @@ export default function MiPerfil() {
           ) : null}
         </div>
       ) : null}
+
+      {/* Mis pagos */}
+      <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '14px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+        <h3 style={{ margin: '2px 0 10px', color: '#1f2937', fontSize: '17px' }}>💳 Mis pagos</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+          {[
+            { id: 'todos', label: 'Todos' },
+            { id: 'reservas', label: 'Reservas' },
+            { id: 'torneos', label: 'Torneos' },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setMisPagosTipo(opt.id)}
+              style={{
+                padding: '7px 12px',
+                borderRadius: '999px',
+                border: misPagosTipo === opt.id ? 'none' : '1px solid #cbd5e1',
+                background: misPagosTipo === opt.id ? '#4f46e5' : '#fff',
+                color: misPagosTipo === opt.id ? '#fff' : '#334155',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {[
+            { id: 'mes', label: 'Último mes' },
+            { id: 'tres_meses', label: 'Últimos 3 meses' },
+            { id: 'todo', label: 'Todo' },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setMisPagosPeriodo(opt.id)}
+              style={{
+                padding: '7px 12px',
+                borderRadius: '999px',
+                border: misPagosPeriodo === opt.id ? 'none' : '1px solid #cbd5e1',
+                background: misPagosPeriodo === opt.id ? '#0f766e' : '#fff',
+                color: misPagosPeriodo === opt.id ? '#fff' : '#334155',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: '10px', fontSize: '13px', color: '#334155', fontWeight: 700 }}>
+          Total gastado histórico:{' '}
+          {['ARS', 'USD', 'EUR']
+            .filter((m) => Number(totalGastadoHistorico[m]) > 0)
+            .map((m) => `${Number(totalGastadoHistorico[m]).toLocaleString('es-AR')} ${m}`)
+            .join(' · ') || '0'}
+        </div>
+
+        {misPagosLoading ? (
+          <p style={{ color: '#64748b', margin: '6px 0' }}>Cargando pagos…</p>
+        ) : misPagosFiltrados.length === 0 ? (
+          <p style={{ color: '#94a3b8', margin: '6px 0' }}>No hay pagos para el filtro seleccionado.</p>
+        ) : (
+          <>
+            <div style={{ marginTop: '4px', marginBottom: '6px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>Reservas pagadas</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '7px', marginBottom: '10px' }}>
+              {misPagosFiltrados.filter((p) => p.tipo === 'reserva').map((p) => (
+                <div key={`p-r-${p.id}-${p.fecha}`} style={{ background: '#fff', borderRadius: '8px', padding: '9px 11px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#1f2937' }}>
+                    📅 {p.fecha || '—'} · ⏰ {p.hora || '—'} · {p.sede || 'Sede'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>
+                    {Number(p.monto || 0).toLocaleString('es-AR')} {p.moneda || 'ARS'} · {p.estado || 'confirmada'}
+                  </div>
+                </div>
+              ))}
+              {misPagosFiltrados.filter((p) => p.tipo === 'reserva').length === 0 ? (
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Sin reservas pagadas.</div>
+              ) : null}
+            </div>
+
+            <div style={{ marginTop: '4px', marginBottom: '6px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>Torneos pagados</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+              {misPagosFiltrados.filter((p) => p.tipo === 'torneo').map((p) => (
+                <div key={`p-t-${p.id}-${p.fecha}`} style={{ background: '#fff', borderRadius: '8px', padding: '9px 11px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#1f2937' }}>
+                    🏆 {p.torneo_nombre || 'Torneo'} · 📅 {p.fecha || '—'} · {p.sede || 'Sede'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>
+                    {Number(p.monto || 0).toLocaleString('es-AR')} {p.moneda || 'ARS'} · {p.estado || 'confirmado'}
+                  </div>
+                </div>
+              ))}
+              {misPagosFiltrados.filter((p) => p.tipo === 'torneo').length === 0 ? (
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Sin torneos pagados.</div>
+              ) : null}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Historial de Reservas */}
       <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '12px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
