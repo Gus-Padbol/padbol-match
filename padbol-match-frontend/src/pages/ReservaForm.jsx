@@ -443,6 +443,24 @@ function ReservaStripeSection({
 /** Solo se ofrecen / muestran las primeras 2 canchas en el flujo de reserva. */
 const MAX_CANCHAS_RESERVA_UI = 2;
 
+/** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. */
+function slotsReservaDesdeSede(sedeData) {
+  const active = sedeData?.canchas_activas;
+  if (Array.isArray(active) && active.length > 0) {
+    const sorted = [...active].sort((a, b) => Number(a.numero) - Number(b.numero));
+    return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
+      numero: Number(x.numero),
+      nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
+    }));
+  }
+  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
+  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
+  return Array.from({ length: n }, (_, i) => ({
+    numero: i + 1,
+    nombre: `Cancha ${i + 1}`,
+  }));
+}
+
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1049,8 +1067,8 @@ export default function ReservaForm() {
       }
 
       const duracion = sedeData.duracion_reserva_minutos || 90;
-      const totalCanchasSede = Math.max(1, Number(sedeData.cantidad_canchas) || 2);
-      const canchasEnOferta = Math.min(totalCanchasSede, MAX_CANCHAS_RESERVA_UI);
+      const slotsOferta = slotsReservaDesdeSede(sedeData);
+      const numsSlots = slotsOferta.map((s) => s.numero);
 
       const todosLosHorarios = [];
 
@@ -1069,16 +1087,16 @@ export default function ReservaForm() {
             const mFin = slotEndMins;
             const horaFin = String(hFin).padStart(2, '0') + ':' + String(mFin).padStart(2, '0');
 
-            // Solo canchas 1..canchasEnOferta: si ninguna libre, no listar el horario
+            // Solo slots ofertados (activos): si ninguno libre, no listar el horario
             const ocupadasNums = Array.isArray(reservadas)
               ? reservadas
-                .filter((r) => r.hora === horaInicio && r.cancha >= 1 && r.cancha <= canchasEnOferta)
+                .filter((r) => r.hora === horaInicio && numsSlots.includes(r.cancha))
                 .map((r) => r.cancha)
               : [];
             const ocupadas = new Set(ocupadasNums).size;
-            const libres = canchasEnOferta - ocupadas;
+            const libres = numsSlots.length - ocupadas;
 
-            // Add slot only if at least one of las primeras canchasEnOferta está libre
+            // Add slot only if al menos un slot ofertado está libre
             if (libres > 0) {
               todosLosHorarios.push({
                 horario: `${horaInicio} - ${horaFin}`,
@@ -1136,11 +1154,14 @@ export default function ReservaForm() {
       const reservadas = await response.json();
 
       const ocupadas = Array.isArray(reservadas) ? reservadas.filter(r => r.hora === hora).map(r => r.cancha) : [];
-      const totalSede = Math.max(1, Number(sedeSeleccionada.cantidad_canchas) || 2);
-      const total = Math.min(totalSede, MAX_CANCHAS_RESERVA_UI);
+      const slots = slotsReservaDesdeSede(sedeSeleccionada);
 
       setCanchasDisponibles(
-        Array.from({ length: total }, (_, i) => ({ num: i + 1, libre: !ocupadas.includes(i + 1) }))
+        slots.map((s) => ({
+          num: s.numero,
+          label: s.nombre,
+          libre: !ocupadas.includes(s.numero),
+        }))
       );
     } catch {
       setError('Error al buscar canchas disponibles');
@@ -1588,7 +1609,7 @@ export default function ReservaForm() {
                         marginBottom: '2px',
                       }}
                     >
-                      Cancha {c.num} {c.libre ? '✅ Disponible' : '🔴 Reservada'}
+                      {c.label || `Cancha ${c.num}`} {c.libre ? '✅ Disponible' : '🔴 Reservada'}
                     </button>
                   ))}
                 </div>

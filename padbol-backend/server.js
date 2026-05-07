@@ -378,6 +378,109 @@ async function assertUsuarioPuedeAdministrarSede(req, sedeIdNum) {
   return scope;
 }
 
+function normalizeEstadoCancha(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (s === 'inactiva' || s === 'inactive' || s === 'false') return 'inactiva';
+  return 'activa';
+}
+
+function canchasConNumeroReserva(rows) {
+  const list = Array.isArray(rows) ? [...rows] : [];
+  list.sort((a, b) => Number(a.id) - Number(b.id));
+  return list.map((c, i) => {
+    const o = c.orden != null && c.orden !== '' ? Number(c.orden) : NaN;
+    const numero_reserva = Number.isFinite(o) && o > 0 ? o : i + 1;
+    return { ...c, numero_reserva };
+  });
+}
+
+async function fetchCanchasRowsForSede(sedeId) {
+  const sid = Number(sedeId);
+  if (!Number.isFinite(sid)) return [];
+  const { data, error } = await supabase
+    .from('canchas')
+    .select('id, sede_id, nombre, estado, descripcion, orden')
+    .eq('sede_id', sid)
+    .order('id', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function numerosCanchaActivasParaReservaPorSedeId(sedeId) {
+  const rows = await fetchCanchasRowsForSede(sedeId);
+  if (!rows.length) return null;
+  const enriched = canchasConNumeroReserva(rows);
+  return enriched
+    .filter((c) => normalizeEstadoCancha(c.estado) === 'activa')
+    .map((c) => c.numero_reserva)
+    .sort((a, b) => a - b);
+}
+
+async function assertCanchaPermitidaParaReservaPorNombreSede(sedeNombre, canchaNum) {
+  const nombre = String(sedeNombre || '').trim();
+  const n = parseInt(String(canchaNum), 10);
+  if (!nombre || !Number.isFinite(n)) {
+    const e = new Error('Datos de cancha inválidos');
+    e.status = 400;
+    throw e;
+  }
+  const { data: sedeRow, error } = await supabase
+    .from('sedes')
+    .select('id, cantidad_canchas')
+    .eq('nombre', nombre)
+    .maybeSingle();
+  if (error) throw error;
+  if (!sedeRow) {
+    const e = new Error('Sede no encontrada');
+    e.status = 404;
+    throw e;
+  }
+  const sid = Number(sedeRow.id);
+  const activas = await numerosCanchaActivasParaReservaPorSedeId(sid);
+  if (activas == null) {
+    const max = Math.max(1, Number(sedeRow.cantidad_canchas) || 2);
+    if (n < 1 || n > max) {
+      const e = new Error('Número de cancha no disponible en esta sede');
+      e.status = 400;
+      throw e;
+    }
+    return;
+  }
+  if (!activas.includes(n)) {
+    const e = new Error('Esta cancha no está disponible para reservas');
+    e.status = 400;
+    throw e;
+  }
+}
+
+function sedeResponseConCanchasActivas(sedeRow, canchasRows) {
+  if (!sedeRow || !canchasRows?.length) return sedeRow;
+  const enriched = canchasConNumeroReserva(canchasRows);
+  const activas = enriched.filter((c) => normalizeEstadoCancha(c.estado) === 'activa');
+  return {
+    ...sedeRow,
+    canchas_activas: activas
+      .map((c) => ({
+        numero: c.numero_reserva,
+        nombre: String(c.nombre || `Cancha ${c.numero_reserva}`).trim(),
+      }))
+      .sort((a, b) => a.numero - b.numero),
+  };
+}
+
+function enrichSingleCanchaAdminDto(row, allRowsSameSede) {
+  const enriched = canchasConNumeroReserva(allRowsSameSede);
+  const hit = enriched.find((c) => Number(c.id) === Number(row.id));
+  return {
+    id: row.id,
+    sede_id: row.sede_id,
+    nombre: String(row.nombre || '').trim(),
+    estado: normalizeEstadoCancha(row.estado),
+    descripcion: row.descripcion != null && String(row.descripcion).trim() !== '' ? String(row.descripcion).trim() : null,
+    orden: hit ? hit.numero_reserva : null,
+  };
+}
+
 function paisAdminCoincideSedeSorteo(paisAdminRaw, paisSedeRaw) {
   const strip = (p) =>
     String(p || '')
@@ -1071,7 +1174,14 @@ app.get('/api/sedes/:id', async (req, res) => {
     if (error) throw error;
     if (!sede) return res.status(404).json({ error: 'Sede no encontrada' });
     console.log('Precio sede:', sede.precio_turno);
-    res.json(sede);
+    let out = sede;
+    try {
+      const cr = await fetchCanchasRowsForSede(id);
+      if (cr.length) out = sedeResponseConCanchasActivas(sede, cr);
+    } catch (e) {
+      console.warn('GET /api/sedes/:id canchas_activas:', e?.message || e);
+    }
+    res.json(out);
   } catch (err) {
     console.error('❌ Error GET /api/sedes/:id:', err.message);
     res.status(500).json({ error: err.message });
@@ -1198,6 +1308,99 @@ app.patch('/api/sedes/:id', async (req, res) => {
       return res.status(st).json({ error: err.message || String(err) });
     }
     console.error('❌ PATCH /api/sedes/:id:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+/** Listado de canchas (JWT: admin de la sede o super_admin). */
+app.get('/api/sedes/:id/canchas', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID de sede inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, id);
+    const rows = await fetchCanchasRowsForSede(id);
+    const canchas = rows.map((r) => enrichSingleCanchaAdminDto(r, rows));
+    res.json({ canchas });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/sedes/:id/canchas:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+/** Alta de cancha (JWT). Body: nombre, estado?, descripcion? */
+app.post('/api/sedes/:id/canchas', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID de sede inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, id);
+    const b = req.body || {};
+    const nombre = String(b.nombre || '').trim();
+    if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+    const estado = normalizeEstadoCancha(b.estado != null ? b.estado : 'activa');
+    const descripcion =
+      b.descripcion != null && String(b.descripcion).trim() !== '' ? String(b.descripcion).trim() : null;
+
+    const existing = await fetchCanchasRowsForSede(id);
+    const enriched = canchasConNumeroReserva(existing);
+    const nextOrden =
+      enriched.length > 0 ? Math.max(...enriched.map((c) => c.numero_reserva)) + 1 : 1;
+
+    const insertPayload = { sede_id: id, nombre, estado, orden: nextOrden };
+    if (descripcion) insertPayload.descripcion = descripcion;
+
+    const { data: created, error } = await supabase.from('canchas').insert(insertPayload).select('*').single();
+    if (error) throw error;
+    const all = await fetchCanchasRowsForSede(id);
+    res.status(201).json({ cancha: enrichSingleCanchaAdminDto(created, all) });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/sedes/:id/canchas:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+/** Actualización parcial de cancha (JWT). Body: nombre?, estado?, descripcion? */
+app.patch('/api/canchas/:id', async (req, res) => {
+  try {
+    const cid = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(cid)) return res.status(400).json({ error: 'ID de cancha inválido' });
+    const { data: row, error: e1 } = await supabase.from('canchas').select('id, sede_id').eq('id', cid).maybeSingle();
+    if (e1) throw e1;
+    if (!row) return res.status(404).json({ error: 'Cancha no encontrada' });
+    await assertUsuarioPuedeAdministrarSede(req, row.sede_id);
+
+    const b = req.body || {};
+    if (!b || typeof b !== 'object' || Array.isArray(b)) {
+      return res.status(400).json({ error: 'Body JSON inválido' });
+    }
+    const patch = {};
+    const hop = (k) => Object.prototype.hasOwnProperty.call(b, k);
+    if (hop('nombre')) {
+      const n = String(b.nombre ?? '').trim();
+      if (!n) return res.status(400).json({ error: 'El nombre no puede quedar vacío' });
+      patch.nombre = n;
+    }
+    if (hop('estado')) patch.estado = normalizeEstadoCancha(b.estado);
+    if (hop('descripcion')) {
+      patch.descripcion =
+        b.descripcion == null || String(b.descripcion).trim() === '' ? null : String(b.descripcion).trim();
+    }
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'Ningún campo reconocido para actualizar' });
+    }
+
+    const { data: updated, error } = await supabase.from('canchas').update(patch).eq('id', cid).select('*').single();
+    if (error) throw error;
+    if (!updated) return res.status(404).json({ error: 'Cancha no encontrada' });
+    const all = await fetchCanchasRowsForSede(row.sede_id);
+    res.json({ cancha: enrichSingleCanchaAdminDto(updated, all) });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ PATCH /api/canchas/:id:', err?.message || err);
     res.status(500).json({ error: err.message || String(err) });
   }
 });
@@ -1403,6 +1606,8 @@ app.post('/api/reservas', async (req, res) => {
         ? authUser.id
         : null;
 
+    await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
+
     // Verificar double-booking
     const { data: existentes, error: errCheck } = await supabase
       .from('reservas')
@@ -1471,6 +1676,10 @@ app.post('/api/reservas', async (req, res) => {
 
     res.json(data);
   } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) {
+      return res.status(st).json({ error: err.message || String(err) });
+    }
     console.error('❌ Error POST reserva:', err.message);
     res.status(500).json({ error: err.message });
   }
@@ -4279,6 +4488,12 @@ app.post('/api/stripe/crear-payment-intent', async (req, res) => {
       if (payloadNorm.sede !== String(sedeCfg.nombre || '').trim()) {
         return res.status(400).json({ error: 'La sede del payload no coincide con sede_id' });
       }
+      try {
+        await assertCanchaPermitidaParaReservaPorNombreSede(payloadNorm.sede, payloadNorm.cancha);
+      } catch (e) {
+        const st = e.status || 400;
+        return res.status(st).json({ error: e.message || String(e) });
+      }
     } else {
       const eid = parseInt(String(payload.equipo_id), 10);
       const tid = parseInt(String(payload.torneo_id), 10);
@@ -4374,6 +4589,13 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
       const fecha = String(payload.fecha || '').trim();
       const hora = String(payload.hora || '').trim();
       const cancha = parseInt(String(payload.cancha), 10);
+
+      try {
+        await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
+      } catch (e) {
+        const st = e.status || 400;
+        return res.status(st).json({ error: e.message || String(e) });
+      }
 
       const { data: existentes, error: errCheck } = await supabase
         .from('reservas')
@@ -4893,6 +5115,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
   if (!sede || !fecha || !hora || cancha == null || !nombre || !email || !whatsapp) {
     throw new Error('Payload de reserva incompleto');
   }
+  await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
   const { data: existentes, error: errCheck } = await supabase
     .from('reservas')
     .select('id')
@@ -5175,6 +5398,15 @@ app.post('/api/crear-preferencia', async (req, res) => {
       if ((taken || []).length > 0) {
         return res.status(409).json({ error: 'Este horario ya está reservado' });
       }
+      try {
+        await assertCanchaPermitidaParaReservaPorNombreSede(
+          String(payloadReserva.sede || '').trim(),
+          payloadReserva.cancha
+        );
+      } catch (e) {
+        const st = e.status || 400;
+        return res.status(st).json({ error: e.message || String(e) });
+      }
       const { data: reservaCreada, error: resErr } = await supabase.from('reservas').insert([payloadReserva]).select().single();
       if (resErr) throw resErr;
       return res.json({
@@ -5207,6 +5439,19 @@ app.post('/api/crear-preferencia', async (req, res) => {
     // Embed full reservation data as JSON in external_reference so
     // PagoExitoso can create the reservation after payment is approved.
     const externalReference = reservaData ? JSON.stringify(reservaData) : '';
+
+    if (reservaData && typeof reservaData === 'object' && tipoEff !== 'torneo_inscripcion') {
+      const rdSede = reservaData.sede;
+      const rdCancha = reservaData.cancha;
+      if (rdSede && rdCancha != null) {
+        try {
+          await assertCanchaPermitidaParaReservaPorNombreSede(String(rdSede).trim(), rdCancha);
+        } catch (e) {
+          const st = e.status || 400;
+          return res.status(st).json({ error: e.message || String(e) });
+        }
+      }
+    }
 
     const preference = new Preference(client);
     const response = await preference.create({

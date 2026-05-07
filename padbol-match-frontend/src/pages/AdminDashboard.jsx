@@ -2617,7 +2617,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editarSedeDraft, setEditarSedeDraft] = useState({});
   const [editarSedeModalMsg, setEditarSedeModalMsg] = useState('');
   const [canchas,       setCanchas]       = useState([]);
-  const [nuevaCancha,   setNuevaCancha]   = useState('');
+  const [canchaModalOpen, setCanchaModalOpen] = useState(false);
+  const [canchaModalMode, setCanchaModalMode] = useState('add');
+  const [canchaEditId, setCanchaEditId] = useState(null);
+  const [canchaModalDraft, setCanchaModalDraft] = useState({ nombre: '', estado: 'activa', descripcion: '' });
+  const [canchaModalMsg, setCanchaModalMsg] = useState('');
+  const [canchaApiBusy, setCanchaApiBusy] = useState(false);
   const [licenciaForm,  setLicenciaForm]  = useState({ numero_licencia: '', fecha_licencia: '', licencia_activa: true });
   const [licenciaSaving,setLicenciaSaving]= useState(false);
   const [licenciaMsg,   setLicenciaMsg]   = useState('');
@@ -2659,36 +2664,45 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
     setMiSedeLoading(true);
+    const headers = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
     Promise.all([
       supabase.from('sedes').select('*').eq('id', sedeId).maybeSingle(),
-      supabase.from('canchas').select('*').eq('sede_id', sedeId).order('nombre'),
-    ]).then(([{ data: sedeData }, { data: canchasData }]) => {
-      if (sedeData) {
-        setMiSede(sedeData);
-        setMiSedeForm(sedeDbRowToMiSedeFormState(sedeData));
-        setLicenciaForm({
-          numero_licencia: sedeData.numero_licencia || '',
-          fecha_licencia:  sedeData.fecha_licencia  || '',
-          licencia_activa: sedeData.licencia_activa ?? true,
-        });
-        setLogoUrl(sedeData.logo_url || '');
-        const todasFotos = Array.isArray(sedeData.fotos_urls)
-          ? sedeData.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
-          : [];
-        setFotosUrls(todasFotos);
-        const destRaw = Array.isArray(sedeData.fotos_destacadas) ? sedeData.fotos_destacadas : [];
-        setFotosDestacadas(
-          destRaw
-            .map((u) => String(u || '').trim())
-            .filter((u) => todasFotos.includes(u))
-            .slice(0, 4)
-        );
-        setFranjasHorarias(normalizeFranjasHorarias(sedeData.franjas_horarias));
-      }
-      setCanchas(canchasData || []);
-      setMiSedeLoading(false);
-    }).catch(() => setMiSedeLoading(false));
-  }, [activeTab, sedeId]); // eslint-disable-line react-hooks/exhaustive-deps
+      session?.access_token
+        ? fetch(`${apiBaseUrl}/api/sedes/${sedeId}/canchas`, { headers }).then(async (r) => {
+            const j = await r.json().catch(() => ({}));
+            return { ok: r.ok, j };
+          })
+        : Promise.resolve({ ok: false, j: {} }),
+    ])
+      .then(([{ data: sedeData }, canRes]) => {
+        if (sedeData) {
+          setMiSede(sedeData);
+          setMiSedeForm(sedeDbRowToMiSedeFormState(sedeData));
+          setLicenciaForm({
+            numero_licencia: sedeData.numero_licencia || '',
+            fecha_licencia: sedeData.fecha_licencia || '',
+            licencia_activa: sedeData.licencia_activa ?? true,
+          });
+          setLogoUrl(sedeData.logo_url || '');
+          const todasFotos = Array.isArray(sedeData.fotos_urls)
+            ? sedeData.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
+            : [];
+          setFotosUrls(todasFotos);
+          const destRaw = Array.isArray(sedeData.fotos_destacadas) ? sedeData.fotos_destacadas : [];
+          setFotosDestacadas(
+            destRaw
+              .map((u) => String(u || '').trim())
+              .filter((u) => todasFotos.includes(u))
+              .slice(0, 4)
+          );
+          setFranjasHorarias(normalizeFranjasHorarias(sedeData.franjas_horarias));
+        }
+        const list = canRes.ok && Array.isArray(canRes.j?.canchas) ? canRes.j.canchas : [];
+        setCanchas(list);
+        setMiSedeLoading(false);
+      })
+      .catch(() => setMiSedeLoading(false));
+  }, [activeTab, sedeId, apiBaseUrl, session?.access_token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!sedeId || !esAdminClub) return;
@@ -3232,18 +3246,120 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setFotosDestacadas((prev) => prev.filter((u) => u !== url));
   };
 
-  const agregarCancha = async () => {
-    const nombre = nuevaCancha.trim();
-    if (!nombre) return;
-    const { data, error } = await supabase.from('canchas').insert({ sede_id: sedeId, nombre, estado: 'activa' }).select().single();
-    if (!error && data) { setCanchas(prev => [...prev, data]); setNuevaCancha(''); }
-    else if (error) alert('Error al agregar cancha: ' + error.message);
+  const abrirModalCanchaNueva = useCallback(() => {
+    setCanchaModalMode('add');
+    setCanchaEditId(null);
+    setCanchaModalDraft({ nombre: '', estado: 'activa', descripcion: '' });
+    setCanchaModalMsg('');
+    setCanchaModalOpen(true);
+  }, []);
+
+  const abrirModalCanchaEditar = useCallback((c) => {
+    setCanchaModalMode('edit');
+    setCanchaEditId(c.id);
+    setCanchaModalDraft({
+      nombre: c.nombre || '',
+      estado: c.estado === 'inactiva' ? 'inactiva' : 'activa',
+      descripcion: c.descripcion || '',
+    });
+    setCanchaModalMsg('');
+    setCanchaModalOpen(true);
+  }, []);
+
+  const guardarCanchaModal = async () => {
+    if (!sedeId || !session?.access_token) {
+      setCanchaModalMsg('Iniciá sesión de nuevo.');
+      return;
+    }
+    const nombre = String(canchaModalDraft.nombre || '').trim();
+    if (!nombre) {
+      setCanchaModalMsg('El nombre es obligatorio.');
+      return;
+    }
+    setCanchaApiBusy(true);
+    setCanchaModalMsg('');
+    try {
+      if (canchaModalMode === 'add') {
+        const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}/canchas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            nombre,
+            estado: canchaModalDraft.estado === 'inactiva' ? 'inactiva' : 'activa',
+            descripcion: String(canchaModalDraft.descripcion || '').trim() || null,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        setCanchaApiBusy(false);
+        if (!res.ok) {
+          setCanchaModalMsg(data.error || res.statusText || 'Error al crear');
+          return;
+        }
+        if (data.cancha) setCanchas((prev) => [...prev, data.cancha].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)));
+        setCanchaModalOpen(false);
+        return;
+      }
+      const cid = canchaEditId;
+      if (!cid) {
+        setCanchaApiBusy(false);
+        return;
+      }
+      const res = await fetch(`${apiBaseUrl}/api/canchas/${cid}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          nombre,
+          estado: canchaModalDraft.estado === 'inactiva' ? 'inactiva' : 'activa',
+          descripcion: String(canchaModalDraft.descripcion || '').trim() || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setCanchaApiBusy(false);
+      if (!res.ok) {
+        setCanchaModalMsg(data.error || res.statusText || 'Error al guardar');
+        return;
+      }
+      if (data.cancha) {
+        setCanchas((prev) =>
+          prev.map((c) => (c.id === data.cancha.id ? { ...c, ...data.cancha } : c))
+        );
+      }
+      setCanchaModalOpen(false);
+    } catch (e) {
+      setCanchaApiBusy(false);
+      setCanchaModalMsg(e?.message || String(e));
+    }
   };
 
-  const toggleCanchaEstado = async (cancha) => {
-    const nuevoEstado = cancha.estado === 'activa' ? 'inactiva' : 'activa';
-    const { error } = await supabase.from('canchas').update({ estado: nuevoEstado }).eq('id', cancha.id);
-    if (!error) setCanchas(prev => prev.map(c => c.id === cancha.id ? { ...c, estado: nuevoEstado } : c));
+  const toggleCanchaEstado = async (canchaRow) => {
+    if (!session?.access_token) return;
+    const nuevoEstado = canchaRow.estado === 'activa' ? 'inactiva' : 'activa';
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/canchas/${canchaRow.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || 'No se pudo cambiar el estado');
+        return;
+      }
+      if (data.cancha) {
+        setCanchas((prev) => prev.map((c) => (c.id === canchaRow.id ? { ...c, ...data.cancha } : c)));
+      }
+    } catch (e) {
+      alert(e?.message || String(e));
+    }
   };
 
   const handleVolverHubDesdeAdmin = () => {
@@ -4930,7 +5046,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
             <strong>Datos de la sede:</strong> si tenés la pestaña <strong>«Mi Sede»</strong>, usá el botón{' '}
             <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
-            se guardan vía API y se reflejan en el perfil público.
+            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
+            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
+            se ofrecen en el flujo de reservas público.
           </p>
         </div>
 
@@ -5729,6 +5847,137 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           ) : null}
 
+          {canchaModalOpen ? (
+            <div
+              role="presentation"
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 10020,
+                background: 'rgba(15, 23, 42, 0.55)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '16px',
+                boxSizing: 'border-box',
+              }}
+              onClick={() => !canchaApiBusy && setCanchaModalOpen(false)}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="cancha-modal-title"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: '100%',
+                  maxWidth: '420px',
+                  background: '#fff',
+                  borderRadius: '14px',
+                  padding: '22px',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <h3 id="cancha-modal-title" style={{ margin: '0 0 16px', fontSize: '17px', color: '#0f172a' }}>
+                  {canchaModalMode === 'add' ? 'Agregar cancha' : 'Editar cancha'}
+                </h3>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  value={canchaModalDraft.nombre}
+                  onChange={(e) => setCanchaModalDraft((p) => ({ ...p, nombre: e.target.value }))}
+                  placeholder='Ej: Cancha 1'
+                  style={{
+                    width: '100%',
+                    padding: '9px 11px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    marginBottom: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                  Estado
+                </label>
+                <select
+                  value={canchaModalDraft.estado === 'inactiva' ? 'inactiva' : 'activa'}
+                  onChange={(e) => setCanchaModalDraft((p) => ({ ...p, estado: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '9px 11px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    marginBottom: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <option value="activa">Activa (visible en reservas)</option>
+                  <option value="inactiva">Inactiva (no reservable)</option>
+                </select>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                  Descripción (opcional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={canchaModalDraft.descripcion}
+                  onChange={(e) => setCanchaModalDraft((p) => ({ ...p, descripcion: e.target.value }))}
+                  placeholder="Notas internas o para el equipo…"
+                  style={{
+                    width: '100%',
+                    padding: '9px 11px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    resize: 'vertical',
+                    marginBottom: '12px',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                  }}
+                />
+                {canchaModalMsg ? (
+                  <p style={{ color: '#b91c1c', fontSize: '13px', fontWeight: 600, margin: '0 0 12px' }}>{canchaModalMsg}</p>
+                ) : null}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => !canchaApiBusy && setCanchaModalOpen(false)}
+                    disabled={canchaApiBusy}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      background: '#f8fafc',
+                      fontWeight: 700,
+                      cursor: canchaApiBusy ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void guardarCanchaModal()}
+                    disabled={canchaApiBusy}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: canchaApiBusy ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                      color: '#fff',
+                      fontWeight: 800,
+                      cursor: canchaApiBusy ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {canchaApiBusy ? 'Guardando…' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {/* ── 0. Licencia PADBOL ── */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>🔐 Licencia PADBOL</h3>
@@ -6306,37 +6555,85 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
 
-          {/* ── 5. Canchas ── */}
+          {/* ── 5. Mis Canchas ── */}
           <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Canchas</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '480px' }}>
+            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>⚽ Mis Canchas</h3>
+            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '640px' }}>
+              <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+                Las canchas <strong>inactivas</strong> no aparecen como opción en las reservas públicas. El número en
+                la primera columna es el que usa el sistema de reservas para esa cancha.
+              </p>
               {canchas.length === 0 ? (
                 <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '16px' }}>No hay canchas registradas para esta sede.</p>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
                   <thead>
                     <tr style={{ background: '#f5f5f5' }}>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#555' }}>Cancha</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#555', width: '110px' }}>Estado</th>
-                      <th style={{ padding: '8px 12px', width: '90px' }}></th>
+                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555', width: '48px' }}>#</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#555' }}>Nombre</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555' }}>Nota</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#555', width: '100px' }}>Estado</th>
+                      <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#555' }}></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {canchas.map(c => (
+                    {canchas.map((c) => (
                       <tr key={c.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                        <td style={{ padding: '10px 10px', fontSize: '13px', color: '#64748b', fontWeight: 700 }}>{c.orden ?? '—'}</td>
                         <td style={{ padding: '10px 12px', fontSize: '14px', color: '#333' }}>{c.nombre}</td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <span style={{
-                            padding: '3px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
-                            background: c.estado === 'activa' ? '#dcfce7' : '#fee2e2',
-                            color:      c.estado === 'activa' ? '#16a34a' : '#dc2626',
-                          }}>
-                            {c.estado === 'activa' ? '✓ Activa' : '✗ Inactiva'}
-                          </span>
+                        <td style={{ padding: '10px 12px', fontSize: '12px', color: '#64748b', maxWidth: '180px' }}>
+                          {c.descripcion ? (
+                            <span title={c.descripcion}>{c.descripcion.length > 48 ? `${c.descripcion.slice(0, 48)}…` : c.descripcion}</span>
+                          ) : (
+                            '—'
+                          )}
                         </td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <button onClick={() => toggleCanchaEstado(c)}
-                            style={{ padding: '4px 10px', background: c.estado === 'activa' ? '#fee2e2' : '#dcfce7', color: c.estado === 'activa' ? '#dc2626' : '#16a34a', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+                          <span
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              background: c.estado === 'activa' ? '#dcfce7' : '#fee2e2',
+                              color: c.estado === 'activa' ? '#16a34a' : '#dc2626',
+                            }}
+                          >
+                            {c.estado === 'activa' ? 'Activa' : 'Inactiva'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => abrirModalCanchaEditar(c)}
+                            style={{
+                              padding: '4px 10px',
+                              marginRight: '6px',
+                              background: '#e0e7ff',
+                              color: '#3730a3',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCanchaEstado(c)}
+                            style={{
+                              padding: '4px 10px',
+                              background: c.estado === 'activa' ? '#fee2e2' : '#dcfce7',
+                              color: c.estado === 'activa' ? '#dc2626' : '#16a34a',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            }}
+                          >
                             {c.estado === 'activa' ? 'Desactivar' : 'Activar'}
                           </button>
                         </td>
@@ -6345,17 +6642,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </tbody>
                 </table>
               )}
-              {/* Add court */}
-              <div className="admin-mi-sede-field-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <input type="text" placeholder="Ej: Cancha 3" value={nuevaCancha}
-                  onChange={e => setNuevaCancha(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') agregarCancha(); }}
-                  style={{ flex: 1, minWidth: 0, maxWidth: '100%', width: '100%', padding: '7px 10px', border: '1.5px solid #a5b4fc', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box' }} />
-                <button onClick={agregarCancha}
-                  style={{ padding: '7px 16px', background: 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', whiteSpace: 'nowrap' }}>
-                  + Agregar
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={abrirModalCanchaNueva}
+                style={{
+                  padding: '10px 18px',
+                  background: 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                }}
+              >
+                + Agregar cancha
+              </button>
             </div>
           </div>
 
