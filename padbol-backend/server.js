@@ -1137,14 +1137,24 @@ app.post('/api/sedes', async (req, res) => {
 
     const precioTurno = b.precio_turno != null && b.precio_turno !== '' ? Number(b.precio_turno) : null;
     const canchasActivas = b.canchas_activas != null && b.canchas_activas !== '' ? parseInt(String(b.canchas_activas), 10) : null;
+    const cantidadCanchasTotal =
+      b.cantidad_canchas != null && String(b.cantidad_canchas).trim() !== ''
+        ? parseInt(String(b.cantidad_canchas), 10)
+        : null;
+    const skipAutogenCanchas = Boolean(b.skip_autogen_canchas);
+    const emailContacto = String(b.email_contacto || '').trim();
+    const telefonoBody = String(b.telefono || b.whatsapp || '').trim();
+    if (!emailContacto) return res.status(400).json({ error: 'Email de contacto obligatorio' });
+    if (!telefonoBody) return res.status(400).json({ error: 'Teléfono / WhatsApp obligatorio' });
+
     const payload = {
       nombre,
       pais,
       provincia: String(b.provincia || b.estado || '').trim() || null,
       ciudad,
       direccion: String(b.direccion || '').trim() || null,
-      email_contacto: String(b.email_contacto || '').trim() || null,
-      telefono: String(b.telefono || b.whatsapp || '').trim() || null,
+      email_contacto: emailContacto,
+      telefono: telefonoBody,
       horario_apertura: String(b.horario_apertura || '').trim() || null,
       horario_cierre: String(b.horario_cierre || '').trim() || null,
       precio_turno: Number.isFinite(precioTurno) ? precioTurno : null,
@@ -1157,11 +1167,14 @@ app.post('/api/sedes', async (req, res) => {
       longitud: Number.isFinite(longitud) ? longitud : null,
       google_maps_url: String(b.google_maps_url || b.maps_url || '').trim() || null,
     };
+    if (Number.isFinite(cantidadCanchasTotal) && cantidadCanchasTotal >= 0) {
+      payload.cantidad_canchas = cantidadCanchasTotal;
+    }
 
     const { data: created, error } = await supabase.from('sedes').insert(payload).select('*').single();
     if (error) throw error;
 
-    if (Number.isFinite(canchasActivas) && canchasActivas > 0) {
+    if (!skipAutogenCanchas && Number.isFinite(canchasActivas) && canchasActivas > 0) {
       const rows = Array.from({ length: canchasActivas }, (_, idx) => ({
         sede_id: created.id,
         nombre: `Cancha ${idx + 1}`,
@@ -1176,6 +1189,71 @@ app.post('/api/sedes', async (req, res) => {
     res.status(201).json(created);
   } catch (err) {
     console.error('❌ POST /api/sedes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const DEPORTES_SEDE_VALID = new Set(['padbol', 'padel', 'pickleball', 'futbol', 'tenis', 'basquet', 'otro']);
+
+/** GET /api/sedes/:id/deportes — filas canchas_por_deporte (JWT admin de la sede o super_admin). */
+app.get('/api/sedes/:id/deportes', async (req, res) => {
+  try {
+    const sedeId = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'ID de sede inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sedeId);
+    const { data, error } = await supabase
+      .from('canchas_por_deporte')
+      .select('id, sede_id, deporte, cantidad, activo, created_at')
+      .eq('sede_id', sedeId)
+      .order('deporte', { ascending: true });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/sedes/:id/deportes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/sedes/:id/deportes — reemplaza deportes/cantidades (JWT admin de la sede o super_admin).
+ * Body: { deportes: [{ deporte: 'padbol', cantidad: 2 }, ...] }
+ */
+app.post('/api/sedes/:id/deportes', async (req, res) => {
+  try {
+    const sedeId = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'ID de sede inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sedeId);
+    const arr = Array.isArray(req.body?.deportes) ? req.body.deportes : null;
+    if (!arr || arr.length === 0) {
+      return res.status(400).json({ error: 'deportes debe ser un array no vacío' });
+    }
+    const rows = [];
+    for (const raw of arr) {
+      const dep = String(raw?.deporte || '').trim().toLowerCase();
+      const n = parseInt(String(raw?.cantidad ?? ''), 10);
+      if (!DEPORTES_SEDE_VALID.has(dep)) {
+        return res.status(400).json({ error: `Deporte no permitido: ${dep || '(vacío)'}` });
+      }
+      if (!Number.isFinite(n) || n < 0) {
+        return res.status(400).json({ error: `Cantidad inválida para ${dep}` });
+      }
+      if (n === 0) continue;
+      rows.push({ sede_id: sedeId, deporte: dep, cantidad: n, activo: true });
+    }
+    if (!rows.length) {
+      return res.status(400).json({ error: 'Al menos un deporte con cantidad mayor a 0' });
+    }
+    const { error: delErr } = await supabase.from('canchas_por_deporte').delete().eq('sede_id', sedeId);
+    if (delErr) throw delErr;
+    const { data: ins, error: insErr } = await supabase.from('canchas_por_deporte').insert(rows).select('*');
+    if (insErr) throw insErr;
+    res.status(201).json({ deportes: ins || [] });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/sedes/:id/deportes:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

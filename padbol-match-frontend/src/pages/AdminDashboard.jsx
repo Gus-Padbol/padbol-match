@@ -3,6 +3,7 @@ import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
@@ -716,24 +717,6 @@ const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim() }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
-const NUEVA_SEDE_FORM_INICIAL = {
-  nombre: '',
-  pais: '',
-  provincia: '',
-  ciudad: '',
-  direccion: '',
-  email_contacto: '',
-  telefono: '',
-  horario_apertura: '',
-  horario_cierre: '',
-  precio_turno: '',
-  moneda: 'ARS',
-  canchas_activas: '',
-  google_maps_url: '',
-  latitud: '',
-  longitud: '',
-};
-
 function sedeFlag(sede) {
   if (!sede?.pais) return '';
   const pais = sede.pais.trim();
@@ -1122,8 +1105,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [mensajeExito, setMensajeExito] = useState('');
   const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab')));
   const [nuevaSedeModalOpen, setNuevaSedeModalOpen] = useState(false);
-  const [nuevaSedeForm, setNuevaSedeForm] = useState(NUEVA_SEDE_FORM_INICIAL);
-  const [nuevaSedeSaving, setNuevaSedeSaving] = useState(false);
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
@@ -2761,75 +2742,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   const abrirNuevaSedeModal = useCallback(() => {
-    setNuevaSedeForm(NUEVA_SEDE_FORM_INICIAL);
     setNuevaSedeModalOpen(true);
   }, []);
 
   const cerrarNuevaSedeModal = useCallback(() => {
-    if (nuevaSedeSaving) return;
     setNuevaSedeModalOpen(false);
-  }, [nuevaSedeSaving]);
-
-  const onNuevaSedeField = useCallback((field, value) => {
-    setNuevaSedeForm((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  const crearNuevaSede = useCallback(async () => {
-    if (!isSuperAdmin) return;
-    if (!String(nuevaSedeForm.nombre || '').trim()) {
-      alert('El nombre de la sede es obligatorio.');
-      return;
-    }
-    if (!String(nuevaSedeForm.pais || '').trim()) {
-      alert('El país es obligatorio.');
-      return;
-    }
-    if (!String(nuevaSedeForm.ciudad || '').trim()) {
-      alert('La ciudad es obligatoria.');
-      return;
-    }
-
-    setNuevaSedeSaving(true);
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrl}/api/sedes`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          ...nuevaSedeForm,
-          precio_turno:
-            nuevaSedeForm.precio_turno != null && String(nuevaSedeForm.precio_turno).trim() !== ''
-              ? Number(nuevaSedeForm.precio_turno)
-              : null,
-          canchas_activas:
-            nuevaSedeForm.canchas_activas != null && String(nuevaSedeForm.canchas_activas).trim() !== ''
-              ? parseInt(String(nuevaSedeForm.canchas_activas), 10)
-              : null,
-          latitud:
-            nuevaSedeForm.latitud != null && String(nuevaSedeForm.latitud).trim() !== ''
-              ? Number(nuevaSedeForm.latitud)
-              : null,
-          longitud:
-            nuevaSedeForm.longitud != null && String(nuevaSedeForm.longitud).trim() !== ''
-              ? Number(nuevaSedeForm.longitud)
-              : null,
-        }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || res.statusText || 'No se pudo crear la sede');
-
-      setSedesMap((prev) => ({ ...prev, [j.id]: j }));
-      setNuevaSedeModalOpen(false);
-      setNuevaSedeForm(NUEVA_SEDE_FORM_INICIAL);
-      setMensajeExito(`✅ Sede "${String(j.nombre || '').trim() || 'nueva sede'}" creada`);
-      setTimeout(() => setMensajeExito(''), 4000);
-    } catch (e) {
-      alert(e?.message || 'No se pudo crear la sede');
-    } finally {
-      setNuevaSedeSaving(false);
-    }
-  }, [apiBaseUrl, isSuperAdmin, nuevaSedeForm, session?.access_token]);
+  const onNuevaSedeCreada = (j) => {
+    setSedesMap((prev) => ({ ...prev, [j.id]: j }));
+    setMensajeExito(`✅ Sede "${String(j.nombre || '').trim() || 'nueva sede'}" creada`);
+    setTimeout(() => setMensajeExito(''), 4000);
+    void fetchData();
+  };
 
   const iniciarEdicion = (reserva) => {
     setEditandoId(reserva.id);
@@ -7636,100 +7561,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ) : null}
 
       {nuevaSedeModalOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Crear nueva sede"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 19000,
-            background: 'rgba(15, 23, 42, 0.72)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            boxSizing: 'border-box',
-          }}
-          onClick={(ev) => {
-            if (ev.target === ev.currentTarget) cerrarNuevaSedeModal();
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: '640px',
-              maxHeight: '88vh',
-              overflowY: 'auto',
-              background: '#fff',
-              borderRadius: '16px',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
-              padding: '18px',
-              boxSizing: 'border-box',
-            }}
-            onClick={(ev) => ev.stopPropagation()}
-          >
-            <h3 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Nueva sede</h3>
-            <p style={{ margin: '8px 0 16px', fontSize: '13px', color: '#64748b' }}>
-              Completá los datos básicos para crear la sede y verla al instante en gestión.
-            </p>
-            <div style={{ display: 'grid', gap: '10px' }}>
-              <input type="text" placeholder="Nombre de la sede *" value={nuevaSedeForm.nombre} onChange={(e) => onNuevaSedeField('nombre', e.target.value)} />
-              <select value={nuevaSedeForm.pais} onChange={(e) => onNuevaSedeField('pais', e.target.value)}>
-                <option value="">País *</option>
-                {PAISES_SEDE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <input type="text" placeholder="Provincia / Estado" value={nuevaSedeForm.provincia} onChange={(e) => onNuevaSedeField('provincia', e.target.value)} />
-              <input type="text" placeholder="Ciudad *" value={nuevaSedeForm.ciudad} onChange={(e) => onNuevaSedeField('ciudad', e.target.value)} />
-              <input type="text" placeholder="Dirección" value={nuevaSedeForm.direccion} onChange={(e) => onNuevaSedeField('direccion', e.target.value)} />
-              <input type="email" placeholder="Email de contacto" value={nuevaSedeForm.email_contacto} onChange={(e) => onNuevaSedeField('email_contacto', e.target.value)} />
-              <input type="text" placeholder="Teléfono / WhatsApp" value={nuevaSedeForm.telefono} onChange={(e) => onNuevaSedeField('telefono', e.target.value)} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <input type="time" value={nuevaSedeForm.horario_apertura} onChange={(e) => onNuevaSedeField('horario_apertura', e.target.value)} />
-                <input type="time" value={nuevaSedeForm.horario_cierre} onChange={(e) => onNuevaSedeField('horario_cierre', e.target.value)} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
-                <input type="number" min="0" placeholder="Precio por turno" value={nuevaSedeForm.precio_turno} onChange={(e) => onNuevaSedeField('precio_turno', e.target.value)} />
-                <select value={nuevaSedeForm.moneda} onChange={(e) => onNuevaSedeField('moneda', e.target.value)}>
-                  <option value="ARS">ARS</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </div>
-              <input type="number" min="0" placeholder="Cantidad de canchas activas" value={nuevaSedeForm.canchas_activas} onChange={(e) => onNuevaSedeField('canchas_activas', e.target.value)} />
-              <input type="url" placeholder="Google Maps URL" value={nuevaSedeForm.google_maps_url} onChange={(e) => onNuevaSedeField('google_maps_url', e.target.value)} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <input type="number" step="any" placeholder="Latitud" value={nuevaSedeForm.latitud} onChange={(e) => onNuevaSedeField('latitud', e.target.value)} />
-                <input type="number" step="any" placeholder="Longitud" value={nuevaSedeForm.longitud} onChange={(e) => onNuevaSedeField('longitud', e.target.value)} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-              <button type="button" onClick={cerrarNuevaSedeModal} disabled={nuevaSedeSaving}>
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => void crearNuevaSede()}
-                disabled={nuevaSedeSaving}
-                style={{
-                  padding: '9px 16px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: '#16a34a',
-                  color: '#fff',
-                  fontWeight: 700,
-                  cursor: nuevaSedeSaving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {nuevaSedeSaving ? 'Creando...' : 'Crear sede'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <NuevaSedeSuperBottomSheet
+          open={nuevaSedeModalOpen}
+          onClose={cerrarNuevaSedeModal}
+          apiBaseUrl={apiBaseUrl}
+          accessToken={session?.access_token}
+          onSuccess={(j) => onNuevaSedeCreada(j)}
+        />
       ) : null}
 
       <ConfirmCancelReservaModal
