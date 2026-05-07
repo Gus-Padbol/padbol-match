@@ -8,6 +8,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import SedeBusquedaInput from '../components/SedeBusquedaInput';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -293,6 +294,7 @@ export default function MiPerfil() {
   const fotoPreviewRef = useRef(null);
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
+  const [reservaCancelModal, setReservaCancelModal] = useState(null);
   const [jugadorPreviewMiCompanero, setJugadorPreviewMiCompanero] = useState(null);
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
@@ -1607,7 +1609,6 @@ export default function MiPerfil() {
   const handleCancelar = async (r) => {
     const owner = sessionOwnerEmail;
     if (!owner) return;
-    if (!window.confirm('¿Cancelar reserva? Si faltan más de 24hs recibirás un crédito.')) return;
     setCancelando(r.id);
     try {
       const resp = await fetch(`${API_BASE_URL}/api/cancelar-reserva`, {
@@ -3710,7 +3711,7 @@ export default function MiPerfil() {
                     {canCancel ? (
                       <button
                         type="button"
-                        onClick={() => handleCancelar(r)}
+                        onClick={() => setReservaCancelModal(r)}
                         disabled={cancelando === r.id}
                         style={{ fontSize: '11px', padding: '6px 10px', border: '1px solid #fca5a5', borderRadius: '6px', background: '#fff', color: '#dc2626', cursor: 'pointer', fontWeight: 600, opacity: cancelando === r.id ? 0.6 : 1 }}
                       >
@@ -3756,6 +3757,20 @@ export default function MiPerfil() {
       ) : null}
 
       </div>
+
+      <ConfirmCancelReservaModal
+        open={!!reservaCancelModal}
+        title="¿Cancelar la reserva?"
+        message="Si faltan más de 24 horas de anticipación recibirás un crédito en tu cuenta."
+        confirmLabel="Sí, cancelar reserva"
+        dismissLabel="No, mantener la reserva"
+        onDismiss={() => setReservaCancelModal(null)}
+        onConfirm={() => {
+          const r = reservaCancelModal;
+          setReservaCancelModal(null);
+          if (r) void handleCancelar(r);
+        }}
+      />
 
       {fotoAccionModalOpen ? (
         <div

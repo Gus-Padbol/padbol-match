@@ -7,6 +7,7 @@ import {
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import AppButton from '../components/AppButton';
+import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import * as T from '../theme/designTokens';
 import { cardStyle } from '../theme/uiStyles';
 import { useAuth } from '../context/AuthContext';
@@ -37,6 +38,7 @@ export default function PagoFallido() {
   const location = useLocation();
   const { session } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [cancelReservaModalOpen, setCancelReservaModalOpen] = useState(false);
 
   const pending = readMpReservaPendingSlot();
 
@@ -132,7 +134,7 @@ export default function PagoFallido() {
             </AppButton>
             <AppButton
               variant="secondary"
-              onClick={() => void onCancelarReserva()}
+              onClick={() => setCancelReservaModalOpen(true)}
               disabled={busy}
               style={{
                 background: '#f1f5f9',
@@ -141,11 +143,24 @@ export default function PagoFallido() {
                 border: `1px solid ${T.colorTextMuted}`,
               }}
             >
-              {busy ? 'Procesando…' : 'Cancelar reserva'}
+              Cancelar reserva
             </AppButton>
           </div>
         </div>
       </div>
+      <ConfirmCancelReservaModal
+        open={cancelReservaModalOpen}
+        title="¿Cancelar la reserva?"
+        message="Se liberará el turno pendiente y vas a salir del flujo de pago."
+        confirmLabel="Sí, cancelar reserva"
+        dismissLabel="Seguir en esta pantalla"
+        busy={busy}
+        onDismiss={() => setCancelReservaModalOpen(false)}
+        onConfirm={() => {
+          setCancelReservaModalOpen(false);
+          void onCancelarReserva();
+        }}
+      />
       <BottomNav />
     </div>
   );

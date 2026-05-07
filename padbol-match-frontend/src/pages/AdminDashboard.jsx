@@ -33,6 +33,7 @@ import {
   validarCambioEstadoTorneoAdminGuardar,
 } from '../utils/torneoEstadoTransiciones';
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
+import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
@@ -2577,9 +2578,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   };
 
-  const cancelarReserva = async (reservaId) => {
-    if (!window.confirm('¿Cancelar esta reserva?')) return;
-
+  const ejecutarCancelarReservaAdmin = async (reservaId) => {
     try {
       const response = await fetch(`${apiBaseUrl}/api/reservas/${reservaId}`, {
         method: 'DELETE',
@@ -2606,6 +2605,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [miSedeForm,    setMiSedeForm]    = useState({});
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
   const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
+  const [cancelReservaModalId, setCancelReservaModalId] = useState(null);
   const [suscripcionModal, setSuscripcionModal] = useState({
     open: false,
     clientSecret: null,
@@ -5016,7 +5016,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 </button>
                               ) : null}
                               <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>✏️ Editar</button>
-                              <button type="button" onClick={() => cancelarReserva(r.id)} style={BTN({ background: '#d32f2f' })}>🗑️</button>
+                              <button type="button" onClick={() => setCancelReservaModalId(r.id)} style={BTN({ background: '#d32f2f' })}>🗑️</button>
                             </div>
                           </td>
                         </tr>
@@ -7101,6 +7101,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
         </div>
       ) : null}
+
+      <ConfirmCancelReservaModal
+        open={cancelReservaModalId != null}
+        title="¿Cancelar esta reserva?"
+        dismissLabel="Volver al panel"
+        onDismiss={() => setCancelReservaModalId(null)}
+        onConfirm={() => {
+          const id = cancelReservaModalId;
+          setCancelReservaModalId(null);
+          if (id != null) void ejecutarCancelarReservaAdmin(id);
+        }}
+      />
 
       {suscripcionModal.open && suscripcionModal.clientSecret && stripePromiseAdmin ? (
         <div

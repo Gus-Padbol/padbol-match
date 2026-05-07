@@ -5,6 +5,7 @@ import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants
 import AppHeader from '../components/AppHeader';
 import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
+import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -640,6 +641,7 @@ export default function ReservaForm() {
   const [horariosUltimaConsulta, setHorariosUltimaConsulta] = useState({ sedeId: '', fecha: '' });
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
+  const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
 
   const irAModificarReservaDesdeResumen = useCallback(() => {
     setPantalla(2);
@@ -654,7 +656,6 @@ export default function ReservaForm() {
   }, [filtros.sede_id, formData.fecha, formData.hora, formData.cancha, navigate]);
 
   const handleCancelarReservaDesdeResumen = useCallback(async () => {
-    if (!window.confirm('¿Cancelar la reserva y salir?')) return;
     try {
       if (sedeSeleccionada && formData.fecha && formData.hora && formData.cancha != null) {
         const body = {
@@ -1838,7 +1839,7 @@ export default function ReservaForm() {
             </button>
             <button
               type="button"
-              onClick={() => void handleCancelarReservaDesdeResumen()}
+              onClick={() => setCancelReservaDesdeResumenOpen(true)}
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -1923,6 +1924,18 @@ export default function ReservaForm() {
           )}
         </div>
         </div>
+        <ConfirmCancelReservaModal
+          open={cancelReservaDesdeResumenOpen}
+          title="¿Cancelar la reserva y salir?"
+          message="Vas a salir del flujo y se liberará el turno si estaba reservado."
+          confirmLabel="Sí, cancelar reserva"
+          dismissLabel="Volver al resumen"
+          onDismiss={() => setCancelReservaDesdeResumenOpen(false)}
+          onConfirm={() => {
+            setCancelReservaDesdeResumenOpen(false);
+            void handleCancelarReservaDesdeResumen();
+          }}
+        />
         <BottomNav />
       </div>
     );
