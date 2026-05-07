@@ -588,6 +588,26 @@
   animation: slideIn 0.3s ease;
 }
 
+/* Modal «Cargar resultado»: en mobile el overlay centraba el bloque y cortaba el título; scroll interno + tope al viewport. Desktop: sin cambios (min-width 641px). */
+@media (max-width: 640px) {
+  .modal-overlay.modal-overlay--cargar-resultado-mobile {
+    align-items: flex-start;
+    justify-content: center;
+    padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+      max(16px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
+  }
+
+  .modal-content.modal-content--cargar-resultado {
+    max-height: min(90vh, 90dvh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    margin-top: 0;
+    margin-bottom: auto;
+  }
+}
+
 @keyframes slideIn {
   from {
     transform: translateY(-50px);

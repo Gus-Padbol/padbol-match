@@ -2120,7 +2120,7 @@ export default function TorneoTabbedView({
 
       {showModalResultado && selectedPartido ? (
         <div
-          className="modal-overlay"
+          className="modal-overlay modal-overlay--cargar-resultado-mobile"
           onClick={() => {
             try {
               if (voiceRecognitionRef.current) voiceRecognitionRef.current.stop();
@@ -2135,7 +2135,7 @@ export default function TorneoTabbedView({
             setShowModalResultado(false);
           }}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content modal-content--cargar-resultado" onClick={(e) => e.stopPropagation()}>
             <h3>Cargar resultado</h3>
             {(() => {
               const mA = equipoPorId(equipos, selectedPartido.equipo_a_id);
