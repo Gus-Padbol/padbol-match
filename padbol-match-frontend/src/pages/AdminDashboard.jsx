@@ -2505,7 +2505,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           ) : null}
         </div>
         </>
-      )}
+      ))}
 
       {activeTab === 'torneos' && <>
         <div style={{ marginBottom: '18px' }}>

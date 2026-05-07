@@ -804,6 +804,7 @@ export default function TorneoVista() {
       <div style={torneoVistaColumnStyle}>
         <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <TorneoTabbedView
+          key={String(torneoId)}
           torneo={torneo}
           equipos={equipos}
           partidos={partidos}

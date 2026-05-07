@@ -744,6 +744,14 @@ export default function TorneoTabbedView({
     return t;
   }, [muestraTabLlave, esFinalizado]);
 
+  useEffect(() => {
+    const validIds = tabs.map((x) => x.id);
+    if (!validIds.length) return;
+    if (!validIds.includes(activeTab)) {
+      setActiveTab(defaultTabId(torneo?.estado));
+    }
+  }, [tabs, activeTab, torneo?.estado, torneo?.id]);
+
   const horasRevelarEquiposMsg = useMemo(
     () => String(horasRevelarEquiposTorneo(torneo)),
     [torneo?.horas_revelar_equipos]
@@ -1368,11 +1376,11 @@ export default function TorneoTabbedView({
       case 'fixture':
         return renderTabFixture();
       case 'llave':
-        return renderTabLlave();
+        return muestraTabLlave ? renderTabLlave() : renderTabEquipos();
       case 'resultados':
-        return esFinalizado ? renderTabResultados() : null;
+        return esFinalizado ? renderTabResultados() : renderTabEquipos();
       default:
-        return null;
+        return renderTabEquipos();
     }
   };
 
