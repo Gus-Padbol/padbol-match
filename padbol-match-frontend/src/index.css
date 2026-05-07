@@ -34,7 +34,9 @@ html {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  /* Por encima de sticky internos (≈20) y de overlays locales (≈1000); por debajo de modales globales (≥10k). */
   z-index: 1002;
+  isolation: isolate;
   padding-top: calc(8px + constant(safe-area-inset-top));
   padding-top: calc(8px + env(safe-area-inset-top, 0px));
 }

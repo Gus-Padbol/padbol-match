@@ -6,9 +6,9 @@ import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 import AppHeader from '../components/AppHeader';
 import {
-  HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
@@ -230,7 +230,7 @@ export default function AccesoCuenta() {
     }
   };
 
-  const accesoPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 16}px + env(safe-area-inset-top, 0px))`;
+  const accesoPaddingTop = hubContentPaddingTopCss(location.pathname);
   const accesoPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
 
   return (

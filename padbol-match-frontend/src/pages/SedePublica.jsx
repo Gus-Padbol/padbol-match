@@ -12,6 +12,7 @@ import BottomNav from '../components/BottomNav';
 import {
   APP_HEADER_OUTER_PADDING_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_FIXED_CHROME_SLACK_PX,
   hubContentPaddingTopCss,
   hubContentPaddingTopPx,
   hubInstagramColumnWrapStyle,
@@ -1350,7 +1351,7 @@ export default function SedePublica() {
   /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
-      `calc(${hubContentPaddingTopPx(location.pathname) + APP_HEADER_OUTER_PADDING_PX}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
+      `calc(${hubContentPaddingTopPx(location.pathname) + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
     [location.pathname]
   );
   const [sede, setSede] = useState(null);

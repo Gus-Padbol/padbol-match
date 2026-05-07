@@ -5,6 +5,11 @@
 export const HUB_APP_HEADER_HEIGHT_PX = 56;
 /** Padding vertical del AppHeader (8px arriba + 8px abajo, alineado con AppHeader.jsx). */
 export const APP_HEADER_OUTER_PADDING_PX = 16;
+/**
+ * Margen extra bajo el bloque fijo medido (bordes, tipografía, iOS): evita que logos/hero
+ * queden visualmente bajo {@link AppHeader} cuando el chrome real supera unos píxeles al cálculo.
+ */
+export const HUB_FIXED_CHROME_SLACK_PX = 8;
 export const HUB_NAV_HEIGHT_PX = 54;
 export const HUB_CONTENT_PADDING_TOP_PX =
   HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
@@ -85,7 +90,7 @@ export function appHeaderStackHeightCss() {
  */
 export function hubContentPaddingTopCss(pathname) {
   const basePx = hubContentPaddingTopPx(pathname);
-  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX}px + env(safe-area-inset-top, 0px))`;
+  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px))`;
 }
 
 /**
@@ -93,7 +98,10 @@ export function hubContentPaddingTopCss(pathname) {
  */
 export function hubContentPaddingTopWithLogoClearanceCss(pathname) {
   const basePx =
-    hubContentPaddingTopPx(pathname) + APP_HEADER_OUTER_PADDING_PX + HUB_LOGO_CLEARANCE_TOP_PX;
+    hubContentPaddingTopPx(pathname) +
+    APP_HEADER_OUTER_PADDING_PX +
+    HUB_LOGO_CLEARANCE_TOP_PX +
+    HUB_FIXED_CHROME_SLACK_PX;
   return `calc(${basePx}px + env(safe-area-inset-top, 0px))`;
 }
 
