@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import SorteoAnimado from './SorteoAnimado';
 
 function labelEquipo(eq) {
   return String(eq?.nombre || '').trim() || `Equipo #${eq?.id ?? '?'}`;
@@ -46,8 +47,13 @@ function shuffleInPlace(arr) {
   return a;
 }
 
-/** @param {number[]} confirmedIds @param {number} numGrupos @param {number[]} cabezaIdsOrden  */
-export function construirGruposSorteo(confirmedIds, numGrupos, cabezaIdsOrden) {
+/**
+ * @param {number[]} confirmedIds
+ * @param {number} numGrupos
+ * @param {number[]} cabezaIdsOrden
+ * @returns {{ grupos: number[][], secuencia: { id: number, groupIndex: number }[], idsCabezas: number[] }}
+ */
+export function construirGruposSorteoConOrden(confirmedIds, numGrupos, cabezaIdsOrden) {
   const grupos = Array.from({ length: numGrupos }, () => []);
   const seen = new Set();
   const cabezas = (cabezaIdsOrden || []).filter((id) => {
@@ -61,12 +67,20 @@ export function construirGruposSorteo(confirmedIds, numGrupos, cabezaIdsOrden) {
   const cabSet = new Set(cabezas);
   const rest = confirmedIds.filter((id) => !cabSet.has(id));
   shuffleInPlace(rest);
+  const secuencia = [];
   let idx = 0;
   for (const id of rest) {
-    grupos[idx % numGrupos].push(id);
+    const gi = idx % numGrupos;
+    grupos[gi].push(id);
+    secuencia.push({ id, groupIndex: gi });
     idx += 1;
   }
-  return grupos;
+  return { grupos, secuencia, idsCabezas: cabezas };
+}
+
+/** @param {number[]} confirmedIds @param {number} numGrupos @param {number[]} cabezaIdsOrden  */
+export function construirGruposSorteo(confirmedIds, numGrupos, cabezaIdsOrden) {
+  return construirGruposSorteoConOrden(confirmedIds, numGrupos, cabezaIdsOrden).grupos;
 }
 
 const LETRAS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -88,6 +102,7 @@ export default function SorteoGruposModal({
   const [modoCabezas, setModoCabezas] = useState('ranking');
   const [ordenManualCabezas, setOrdenManualCabezas] = useState([]);
   const [preview, setPreview] = useState(null);
+  const [animacionSorteo, setAnimacionSorteo] = useState(null);
   const [confirmando, setConfirmando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -114,6 +129,7 @@ export default function SorteoGruposModal({
   useEffect(() => {
     if (!open) return;
     setPreview(null);
+    setAnimacionSorteo(null);
     setErrorMsg('');
     setOrdenManualCabezas([]);
     setNumGrupos(defaultGruposCount);
@@ -134,33 +150,49 @@ export default function SorteoGruposModal({
     return ordenManualCabezas.slice(0, cap);
   }, [modoCabezas, numCabezas, numGrupos, confirmadosIds.length, rankingIds, ordenManualCabezas]);
 
-  const ejecutarSortear = useCallback(() => {
+  const validarAntesSorteo = useCallback(() => {
     setErrorMsg('');
     if (confirmadosIds.length < 2) {
       setErrorMsg('Se necesitan al menos 2 equipos confirmados.');
-      return;
+      return false;
     }
     if (numGrupos < 2 || numGrupos > maxGrupos) {
       setErrorMsg('Cantidad de grupos inválida.');
-      return;
+      return false;
     }
     if (modoCabezas === 'manual') {
       if (ordenManualCabezas.length < Math.min(numCabezas, numGrupos)) {
         setErrorMsg('Elegí las cabezas de serie en orden (tocá cada equipo).');
-        return;
+        return false;
       }
     }
-    const g = construirGruposSorteo(confirmadosIds, numGrupos, cabezaIdsParaSortear);
-    setPreview(g);
+    return true;
   }, [
-    confirmadosIds,
+    confirmadosIds.length,
     numGrupos,
     maxGrupos,
     modoCabezas,
-    ordenManualCabezas,
+    ordenManualCabezas.length,
     numCabezas,
+    ordenManualCabezas,
     cabezaIdsParaSortear,
   ]);
+
+  const iniciarSorteoAnimado = useCallback(() => {
+    if (!validarAntesSorteo()) return;
+    const { grupos, secuencia, idsCabezas } = construirGruposSorteoConOrden(
+      confirmadosIds,
+      numGrupos,
+      cabezaIdsParaSortear
+    );
+    setPreview(grupos);
+    setAnimacionSorteo({ grupos, secuencia, idsCabezas });
+  }, [validarAntesSorteo, confirmadosIds, numGrupos, cabezaIdsParaSortear]);
+
+  const ejecutarSortearVistaPrevia = useCallback(() => {
+    if (!validarAntesSorteo()) return;
+    setPreview(construirGruposSorteo(confirmadosIds, numGrupos, cabezaIdsParaSortear));
+  }, [validarAntesSorteo, confirmadosIds, numGrupos, cabezaIdsParaSortear]);
 
   const toggleOrdenManualCabeza = useCallback(
     (id) => {
@@ -175,8 +207,8 @@ export default function SorteoGruposModal({
     [numCabezas, numGrupos]
   );
 
-  const confirmar = async () => {
-    if (!preview || !torneo?.id || !apiBaseUrl) return;
+  const confirmarConGrupos = async (gruposPayload) => {
+    if (!gruposPayload || !torneo?.id || !apiBaseUrl) return;
     setErrorMsg('');
     setConfirmando(true);
     try {
@@ -185,7 +217,7 @@ export default function SorteoGruposModal({
       const res = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/torneos/${torneo.id}/sorteo`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ grupos: preview }),
+        body: JSON.stringify({ grupos: gruposPayload }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -195,6 +227,7 @@ export default function SorteoGruposModal({
       onConfirmed?.(data);
       onClose?.();
       setPreview(null);
+      setAnimacionSorteo(null);
     } catch (e) {
       setErrorMsg(e?.message || 'Error de red');
     } finally {
@@ -202,9 +235,29 @@ export default function SorteoGruposModal({
     }
   };
 
+  const confirmar = async () => {
+    if (!preview) return;
+    await confirmarConGrupos(preview);
+  };
+
   if (!open) return null;
 
   return (
+    <>
+    {animacionSorteo ? (
+      <SorteoAnimado
+        open
+        torneoNombre={String(torneo?.nombre || '').trim() || `Torneo #${torneo?.id}`}
+        equipos={equipos}
+        idsCabezas={animacionSorteo.idsCabezas}
+        numGrupos={numGrupos}
+        secuencia={animacionSorteo.secuencia}
+        gruposFinales={animacionSorteo.grupos}
+        onComplete={(grupos) => void confirmarConGrupos(grupos)}
+        onCancel={() => setAnimacionSorteo(null)}
+        playSound
+      />
+    ) : null}
     <div
       role="presentation"
       style={{
@@ -403,21 +456,42 @@ export default function SorteoGruposModal({
 
               <button
                 type="button"
-                onClick={ejecutarSortear}
+                disabled={confirmando}
+                onClick={iniciarSorteoAnimado}
                 style={{
                   width: '100%',
                   padding: '12px',
                   borderRadius: '12px',
                   border: 'none',
-                  background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+                  background: confirmando ? '#94a3b8' : 'linear-gradient(135deg,#0f172a,#1e3a5f)',
                   color: '#fff',
                   fontWeight: 800,
                   fontSize: '15px',
-                  cursor: 'pointer',
+                  cursor: confirmando ? 'not-allowed' : 'pointer',
+                  marginBottom: '10px',
+                  boxShadow: confirmando ? 'none' : '0 4px 20px rgba(201, 162, 39, 0.25)',
+                }}
+              >
+                ⭐ Iniciar sorteo
+              </button>
+              <button
+                type="button"
+                disabled={confirmando}
+                onClick={ejecutarSortearVistaPrevia}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  color: '#475569',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: confirmando ? 'not-allowed' : 'pointer',
                   marginBottom: '14px',
                 }}
               >
-                Sortear (vista previa)
+                Vista previa sin animación
               </button>
 
               {preview && preview.length ? (
@@ -489,5 +563,6 @@ export default function SorteoGruposModal({
         </div>
       </div>
     </div>
+    </>
   );
 }
