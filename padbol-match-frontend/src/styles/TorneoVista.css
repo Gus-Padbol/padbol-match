@@ -588,6 +588,17 @@
   animation: slideIn 0.3s ease;
 }
 
+@keyframes slideInCargarResultadoMobile {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 /* Modal «Cargar resultado»: en mobile el overlay centraba el bloque y cortaba el título; scroll interno + tope al viewport. Desktop: sin cambios (min-width 641px). */
 @media (max-width: 640px) {
   .modal-overlay.modal-overlay--cargar-resultado-mobile {
@@ -596,15 +607,23 @@
     padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
       max(16px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
     box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   .modal-content.modal-content--cargar-resultado {
-    max-height: min(90vh, 90dvh);
+    align-self: flex-start;
+    flex-shrink: 0;
+    max-height: 90vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     box-sizing: border-box;
     margin-top: 0;
     margin-bottom: auto;
+    /* Evita slideIn global (translateY -50px) que recorta el título arriba en mobile. */
+    animation: slideInCargarResultadoMobile 0.25s ease;
   }
 }
 
