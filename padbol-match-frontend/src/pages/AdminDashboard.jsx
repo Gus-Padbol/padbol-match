@@ -728,12 +728,48 @@ const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim() }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
+/** Par U+1F1E6–U+1F1FF al inicio = bandera regional (ej. 🇦🇷 son 2 code points). */
+function esIndicadorRegionalChar(ch) {
+  if (!ch) return false;
+  const cp = ch.codePointAt(0);
+  return cp >= 0x1f1e6 && cp <= 0x1f1ff;
+}
+
+function banderaRegionalAlInicio(pais) {
+  const s = String(pais || '').trim();
+  if (!s) return '';
+  const cps = [...s];
+  if (cps.length >= 2 && esIndicadorRegionalChar(cps[0]) && esIndicadorRegionalChar(cps[1])) {
+    return `${cps[0]}${cps[1]}`;
+  }
+  return '';
+}
+
+/** Quita el par RI inicial si existe (para mostrar solo el nombre o matchear FLAG_MAP). */
+function paisTextoSinBanderaInicial(pais) {
+  const s = String(pais || '').trim();
+  const cps = [...s];
+  if (cps.length >= 2 && esIndicadorRegionalChar(cps[0]) && esIndicadorRegionalChar(cps[1])) {
+    return cps.slice(2).join('').trim();
+  }
+  return s;
+}
+
+/** Texto visible en `<option>` del filtro móvil: siempre bandera + nombre cuando exista en el mapa o ya venga en el valor. */
+function etiquetaPaisFiltroMobile(valorRaw) {
+  const raw = String(valorRaw || '').trim();
+  if (!raw) return '';
+  const sinBandera = paisTextoSinBanderaInicial(raw);
+  const flag = banderaRegionalAlInicio(raw) || FLAG_MAP[sinBandera.toLowerCase()] || FLAG_MAP[raw.toLowerCase()] || '';
+  const nombre = sinBandera || raw;
+  return flag ? `${flag} ${nombre}`.trim() : nombre;
+}
+
 function sedeFlag(sede) {
   if (!sede?.pais) return '';
   const pais = sede.pais.trim();
-  // Already starts with a flag emoji (multi-char emoji code point)
-  if ([...pais][0]?.match(/\p{Emoji_Presentation}/u)) return [...pais][0];
-  // Plain country name — look it up
+  const regional = banderaRegionalAlInicio(pais);
+  if (regional) return regional;
   return FLAG_MAP[pais.toLowerCase()] || '';
 }
 
@@ -4983,7 +5019,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <option value="">Todos</option>
                       {sedesSuperAdminPaisesUnicos.map((p) => (
                         <option key={p} value={p}>
-                          {p}
+                          {etiquetaPaisFiltroMobile(p)}
                         </option>
                       ))}
                     </select>
