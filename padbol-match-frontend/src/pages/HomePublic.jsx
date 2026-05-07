@@ -49,8 +49,8 @@ export default function HomePublic() {
         <p
           style={{
             margin: 0,
-            width: headlineBand,
-            maxWidth: '128px',
+            width: '100%',
+            maxWidth: '280px',
             color: 'white',
             fontSize: 'clamp(1.28rem, 5vw, 1.62rem)',
             fontWeight: 900,

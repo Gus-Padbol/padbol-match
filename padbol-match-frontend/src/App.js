@@ -27,6 +27,7 @@ import PagoFallido from './pages/PagoFallido';
 import useUserRole from './hooks/useUserRole';
 import EquipoVista from './pages/EquipoVista';
 import UserHome from './pages/UserHome';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -74,6 +75,51 @@ function AuthRoute() {
     return <Navigate to="/" replace />;
   }
   return <AccesoCuenta />;
+}
+
+/** `/` para visitantes: landing. Con sesión → hub (home habitual). */
+function RootHomeRoute() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(180deg, #0b1020 0%, #151832 100%)',
+          color: 'rgba(248, 250, 252, 0.92)',
+          fontWeight: 600,
+          fontSize: '15px',
+          boxSizing: 'border-box',
+          padding: 24,
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            width: 36,
+            height: 36,
+            marginRight: 14,
+            border: '3px solid rgba(255,255,255,0.2)',
+            borderTopColor: '#a5b4fc',
+            borderRadius: '50%',
+            animation: 'rootHomeSpin 0.75s linear infinite',
+          }}
+        />
+        Cargando…
+        <style>{`@keyframes rootHomeSpin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (session?.user) {
+    return <Navigate to="/hub" replace />;
+  }
+
+  return <LandingPage />;
 }
 
 function AdminDashboardGate() {
@@ -188,7 +234,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-        <Route path="/" element={<UserHome />} />
+        <Route path="/" element={<RootHomeRoute />} />
         <Route path="/hub" element={<UserHome />} />
         <Route path="/inicio" element={<UserHome />} />
         <Route path="/home" element={<UserHome />} />
