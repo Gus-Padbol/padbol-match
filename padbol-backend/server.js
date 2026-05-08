@@ -2381,6 +2381,76 @@ function normalizeTorneoCategoriaEdad(raw) {
   return null;
 }
 
+const MAX_WHATSAPP_JUGADORES_NUEVO_TORNEO = 50;
+
+/**
+ * Tras crear un torneo: avisa por WhatsApp (Twilio) a jugadores con sede habitual = sede del torneo,
+ * opt-in notificaciones_whatsapp y número cargado. Máx. 50 destinos; no bloquea el POST.
+ */
+async function notifyJugadoresPerfilSedeNuevoTorneoWhatsApp(torneoRow) {
+  try {
+    const sedeIdRaw = torneoRow?.sede_id;
+    const sedeId = sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
+    if (!Number.isFinite(sedeId)) return;
+
+    const { data: sedeRow, error: sedeErr } = await supabase
+      .from('sedes')
+      .select('nombre')
+      .eq('id', sedeId)
+      .maybeSingle();
+    if (sedeErr) {
+      console.warn('⚠️ Nuevo torneo WhatsApp: sede', sedeErr.message);
+      return;
+    }
+    const nombreSede = String(sedeRow?.nombre || '').trim() || 'tu club';
+    const nombreTorneo = String(torneoRow?.nombre || '').trim() || 'Torneo';
+    const fiRaw = torneoRow?.fecha_inicio;
+    const fiStr =
+      fiRaw != null && String(fiRaw).trim()
+        ? String(fiRaw).trim().slice(0, 10)
+        : '';
+    const fechaTxt = fiStr && /^\d{4}-\d{2}-\d{2}$/.test(fiStr) ? formatFechaReservaConfirmacion(fiStr) : fiStr || '—';
+
+    const body =
+      `🏆 ¡Nuevo torneo en ${nombreSede}! ${nombreTorneo} — ${fechaTxt}. Inscríbete en padbolmatch.com`;
+
+    const { data: perfiles, error: jpErr } = await supabase
+      .from('jugadores_perfil')
+      .select('whatsapp')
+      .eq('sede_id', sedeId)
+      .eq('notificaciones_whatsapp', true)
+      .limit(120);
+
+    if (jpErr) {
+      console.warn('⚠️ Nuevo torneo WhatsApp: jugadores_perfil', jpErr.message);
+      return;
+    }
+
+    const seenTo = new Set();
+    let sent = 0;
+    for (const p of perfiles || []) {
+      if (sent >= MAX_WHATSAPP_JUGADORES_NUEVO_TORNEO) break;
+      const raw = p?.whatsapp != null ? String(p.whatsapp).trim() : '';
+      if (!raw) continue;
+      const toNorm = normalizePhoneToE164ForTwilioWhatsApp(raw);
+      if (!toNorm) continue;
+      if (seenTo.has(toNorm)) continue;
+      seenTo.add(toNorm);
+      try {
+        await sendTwilioWhatsAppBodyToRaw(raw, body);
+        sent += 1;
+      } catch (e) {
+        console.warn('⚠️ Nuevo torneo WhatsApp envío falló:', e?.message || e);
+      }
+    }
+    if (sent > 0) {
+      console.log(`✓ Nuevo torneo ${torneoRow?.id}: WhatsApp a ${sent} jugador(es) (sede ${sedeId})`);
+    }
+  } catch (e) {
+    console.warn('⚠️ notifyJugadoresPerfilSedeNuevoTorneoWhatsApp:', e?.message || e);
+  }
+}
+
 app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
   try {
     const {
@@ -2479,6 +2549,9 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
     if (inserted?.id && String(inserted.estado || '').toLowerCase() === 'abierto') {
       scheduleNotifyListaEsperaInscripcionAbierta(inserted.id);
     }
+    void notifyJugadoresPerfilSedeNuevoTorneoWhatsApp(inserted).catch((e) =>
+      console.warn('⚠️ Nuevo torneo WhatsApp (async):', e?.message || e),
+    );
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
