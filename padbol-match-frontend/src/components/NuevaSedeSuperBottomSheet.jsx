@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Autocomplete } from '@react-google-maps/api';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 
@@ -99,7 +98,10 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [placesInputValue, setPlacesInputValue] = useState('');
-  const autocompleteRef = useRef(null);
+  /** Input DOM al que se adjunta `google.maps.places.Autocomplete`. */
+  const direccionInputRef = useRef(null);
+  /** Instancia devuelta por `new google.maps.places.Autocomplete(...)` (cleanup de listeners). */
+  const googlePlacesAutocompleteRef = useRef(null);
   const { isLoaded: placesLoaded, placesEnabled } = useGooglePlaces();
 
   useEffect(() => {
@@ -234,9 +236,8 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
     }
   }, [apiBaseUrl, accessToken, onClose, onSuccess, st, totalCanchas]);
 
-  const handlePlaceChanged = useCallback(() => {
+  const applyPlaceFromGoogle = useCallback((place) => {
     try {
-      const place = autocompleteRef.current?.getPlace?.();
       if (!place) return;
       const comps = Array.isArray(place.address_components) ? place.address_components : [];
       const route = componentByType(comps, 'route')?.long_name || '';
@@ -251,11 +252,13 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
       const postalCode = componentByType(comps, 'postal_code')?.long_name || '';
       const formattedAddress = String(place.formatted_address || '').trim();
       const direccionCompuesta = [route, streetNumber].filter(Boolean).join(' ').trim();
-      const direccionFinal = direccionCompuesta || formattedAddress || placesInputValue.trim();
+      const typedFallback = String(direccionInputRef.current?.value || '').trim();
+      const direccionFinal = direccionCompuesta || formattedAddress || typedFallback;
       const lat = typeof place.geometry?.location?.lat === 'function' ? place.geometry.location.lat() : null;
       const lng = typeof place.geometry?.location?.lng === 'function' ? place.geometry.location.lng() : null;
       const mappedCountry = mapCountryToPaisOption(countryLong);
 
+      setPlacesInputValue(direccionFinal);
       setSt((prev) => ({
         ...prev,
         direccion: direccionFinal || prev.direccion,
@@ -269,7 +272,42 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
     } catch {
       /* ignore */
     }
-  }, [placesInputValue]);
+  }, []);
+
+  useEffect(() => {
+    if (!placesEnabled || !placesLoaded || !open || st.step !== 1) {
+      const ac = googlePlacesAutocompleteRef.current;
+      if (ac && typeof window !== 'undefined' && window.google?.maps?.event) {
+        window.google.maps.event.clearInstanceListeners(ac);
+      }
+      googlePlacesAutocompleteRef.current = null;
+      return undefined;
+    }
+
+    const input = direccionInputRef.current;
+    const Places = window.google?.maps?.places;
+    if (!input || !Places?.Autocomplete) return undefined;
+
+    const ac = new Places.Autocomplete(input, {
+      fields: ['address_components', 'formatted_address', 'geometry'],
+      types: ['address'],
+    });
+    googlePlacesAutocompleteRef.current = ac;
+
+    const listener = ac.addListener('place_changed', () => {
+      const place = ac.getPlace();
+      if (!place) return;
+      applyPlaceFromGoogle(place);
+    });
+
+    return () => {
+      listener?.remove();
+      if (googlePlacesAutocompleteRef.current && window.google?.maps?.event) {
+        window.google.maps.event.clearInstanceListeners(googlePlacesAutocompleteRef.current);
+      }
+      googlePlacesAutocompleteRef.current = null;
+    };
+  }, [placesEnabled, placesLoaded, open, st.step, applyPlaceFromGoogle]);
 
   if (!open) return null;
 
@@ -402,29 +440,19 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
               Dirección *
               {placesEnabled && placesLoaded ? (
-                <Autocomplete
-                  onLoad={(ac) => {
-                    autocompleteRef.current = ac;
+                <input
+                  ref={direccionInputRef}
+                  type="text"
+                  value={placesInputValue}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPlacesInputValue(v);
+                    setField('direccion', v);
                   }}
-                  onPlaceChanged={handlePlaceChanged}
-                  options={{
-                    fields: ['address_components', 'formatted_address', 'geometry'],
-                    types: ['address'],
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={placesInputValue}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setPlacesInputValue(v);
-                      setField('direccion', v);
-                    }}
-                    placeholder="Buscá una dirección real"
-                    style={{ ...inputBase, marginTop: 8 }}
-                    autoComplete="street-address"
-                  />
-                </Autocomplete>
+                  placeholder="Buscá una dirección real"
+                  style={{ ...inputBase, marginTop: 8 }}
+                  autoComplete="off"
+                />
               ) : (
                 <input
                   type="text"
