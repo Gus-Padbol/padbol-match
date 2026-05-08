@@ -7466,6 +7466,12 @@ function labelResponsableCargoWa(key) {
   return m[key] || key || '—';
 }
 
+function labelTipoInteresSolicitudWa(v) {
+  const s = String(v || '').trim();
+  if (!s || s === 'pendiente_definicion') return 'Pendiente definición';
+  return s;
+}
+
 function buildWhatsAppSolicitudLicenciaCompleta(payload, deportesCanchas) {
   const orDash = (v) => (v != null && String(v).trim() !== '' ? String(v).trim() : '—');
   const fiscalDir =
@@ -7473,7 +7479,7 @@ function buildWhatsAppSolicitudLicenciaCompleta(payload, deportesCanchas) {
       ? 'Igual que la dirección del club'
       : orDash(payload.direccion_fiscal);
   const lines = [
-    '🏟️ Nueva solicitud — Club Afiliado',
+    `🏟️ Nueva solicitud — ${labelTipoInteresSolicitudWa(payload.tipo_interes)}`,
     '',
     '▸ DATOS DEL CLUB',
     `Nombre: ${orDash(payload.nombre_club || payload.club_nombre)}`,
@@ -7565,13 +7571,7 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
       return null;
     })();
 
-    const TIPO_INTERES_SOLICITUD_VALID = new Set([
-      'Club Afiliado',
-      'Padbol Point Franquicia',
-      'Master Nacional',
-    ]);
-    const tipoInteresRaw = String(b.tipo_interes || '').trim();
-    const tipo_interes = TIPO_INTERES_SOLICITUD_VALID.has(tipoInteresRaw) ? tipoInteresRaw : 'Club Afiliado';
+    const tipo_interes = 'pendiente_definicion';
 
     const payload = {
       nombre_club: club_nombre,
@@ -7652,6 +7652,38 @@ app.post('/api/admin/solicitudes-licencia/:id/rechazar', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ POST /api/admin/solicitudes-licencia/:id/rechazar:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+const TIPO_INTERES_ASIGNABLE_SOLICITUD = new Set([
+  'Club Afiliado',
+  'Padbol Point Franquicia',
+  'Master Nacional',
+]);
+
+/** POST /api/admin/solicitudes-licencia/:id/tipo-interes — super_admin: asigna tipo antes de crear sede. */
+app.post('/api/admin/solicitudes-licencia/:id/tipo-interes', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+    const raw = String(req.body?.tipo_interes || '').trim();
+    if (!TIPO_INTERES_ASIGNABLE_SOLICITUD.has(raw)) {
+      return res.status(400).json({ error: 'tipo_interes inválido' });
+    }
+    const { data, error } = await supabase
+      .from('solicitudes_licencia')
+      .update({ tipo_interes: raw })
+      .eq('id', id)
+      .eq('estado', 'pendiente')
+      .select('*')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Solicitud no encontrada o ya no pendiente' });
+    res.json(data);
+  } catch (err) {
+    console.error('❌ POST /api/admin/solicitudes-licencia/:id/tipo-interes:', err.message);
     res.status(err.status || 500).json({ error: err.message });
   }
 });

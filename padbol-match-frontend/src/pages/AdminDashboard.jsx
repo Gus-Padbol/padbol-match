@@ -72,6 +72,14 @@ function etiquetaSuscripcionEstado(raw) {
   return 'Sin suscripción';
 }
 
+const TIPO_INTERES_APROBAR_SOLICITUD_LIC = ['Club Afiliado', 'Padbol Point Franquicia', 'Master Nacional'];
+
+function etiquetaTipoInteresSolicitudLicencia(v) {
+  const s = String(v || '').trim();
+  if (!s || s === 'pendiente_definicion') return 'Pendiente definición';
+  return s;
+}
+
 /** Selector manual super_admin en detalle de sede (mora + operativo). */
 const SUSCRIPCION_SELECTOR_SUPER_SEDE = [
   { value: 'activa', label: 'Activa' },
@@ -1221,6 +1229,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
   const [solicitudesLicencia, setSolicitudesLicencia] = useState([]);
   const [solicitudesLicenciaLoading, setSolicitudesLicenciaLoading] = useState(false);
+  /** Modal al aprobar solicitud web: super_admin elige tipo_interes antes de ir a Nueva sede. */
+  const [licApruebaTipoModal, setLicApruebaTipoModal] = useState(null);
+  const [licApruebaTipoSaving, setLicApruebaTipoSaving] = useState(false);
   /** Filtro unificado Solicitudes (tab); default pendiente para priorizar acción. */
   const [solicitudesFiltroEstado, setSolicitudesFiltroEstado] = useState('pendiente');
   const [solicitudDetalleExpandidoKey, setSolicitudDetalleExpandidoKey] = useState(null);
@@ -1388,6 +1399,37 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     },
     [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
   );
+
+  const abrirModalAprobarLicenciaWeb = useCallback((rawLicencia) => {
+    const rawTipo = String(rawLicencia?.tipo_interes || '').trim();
+    const pickDefault = TIPO_INTERES_APROBAR_SOLICITUD_LIC.includes(rawTipo) ? rawTipo : 'Club Afiliado';
+    setLicApruebaTipoModal({ rawLicencia, tipoInteresSeleccionado: pickDefault });
+  }, []);
+
+  const confirmarTipoYContinuarAprobarLicenciaWeb = useCallback(async () => {
+    if (!licApruebaTipoModal?.rawLicencia) return;
+    const id = licApruebaTipoModal.rawLicencia.id;
+    const tipo = licApruebaTipoModal.tipoInteresSeleccionado;
+    setLicApruebaTipoSaving(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia/${id}/tipo-interes`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo_interes: tipo }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setLicApruebaTipoModal(null);
+      navigate('/admin/nueva-sede', { state: { prefillSolicitud: j } });
+    } catch (e) {
+      alert(e?.message || 'No se pudo guardar el tipo de interés');
+    } finally {
+      setLicApruebaTipoSaving(false);
+    }
+  }, [apiBaseUrl, licApruebaTipoModal, navigate]);
 
   const cargarRolesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -7056,7 +7098,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </div>
                       {row.kind === 'licencia_web' ? (
                         <div>
-                          <strong>Tipo interés:</strong> {row.tipoInteres || '—'} · <strong>Canchas:</strong>{' '}
+                          <strong>Tipo interés:</strong> {etiquetaTipoInteresSolicitudLicencia(row.tipoInteres)} ·{' '}
+                          <strong>Canchas:</strong>{' '}
                           {row.cantidadCanchas ?? '—'}
                         </div>
                       ) : null}
@@ -7147,7 +7190,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       {pendiente && row.kind === 'licencia_web' ? (
                         <button
                           type="button"
-                          onClick={() => navigate('/admin/nueva-sede', { state: { prefillSolicitud: row.rawLicencia } })}
+                          onClick={() => abrirModalAprobarLicenciaWeb(row.rawLicencia)}
                           style={{
                             padding: '10px 16px',
                             borderRadius: '10px',
@@ -8635,6 +8678,103 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </div>}
       </div>
       </div>
+
+      {licApruebaTipoModal ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Asignar tipo de interés"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 18960,
+            background: 'rgba(15, 23, 42, 0.72)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget && !licApruebaTipoSaving) setLicApruebaTipoModal(null);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 440,
+              background: '#fff',
+              borderRadius: 16,
+              padding: '22px 20px',
+              boxShadow: '0 20px 50px rgba(15,23,42,0.25)',
+              color: '#0f172a',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800 }}>Tipo de interés</h3>
+            <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
+              El club no eligió el modelo en el formulario público. Asigná el tipo antes de crear la sede.
+            </p>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: 8 }}>
+              Modelo de licencia
+            </label>
+            <select
+              value={licApruebaTipoModal.tipoInteresSeleccionado}
+              onChange={(e) =>
+                setLicApruebaTipoModal((p) => (p ? { ...p, tipoInteresSeleccionado: e.target.value } : p))
+              }
+              disabled={licApruebaTipoSaving}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: '1px solid #cbd5e1',
+                fontSize: 15,
+                marginBottom: 18,
+                boxSizing: 'border-box',
+              }}
+            >
+              {TIPO_INTERES_APROBAR_SOLICITUD_LIC.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                disabled={licApruebaTipoSaving}
+                onClick={() => setLicApruebaTipoModal(null)}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 10,
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  fontWeight: 700,
+                  cursor: licApruebaTipoSaving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={licApruebaTipoSaving}
+                onClick={() => void confirmarTipoYContinuarAprobarLicenciaWeb()}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: licApruebaTipoSaving ? '#94a3b8' : '#16a34a',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: licApruebaTipoSaving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {licApruebaTipoSaving ? 'Guardando…' : 'Continuar a crear sede'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {adminRoleModalOpen ? (
         <div

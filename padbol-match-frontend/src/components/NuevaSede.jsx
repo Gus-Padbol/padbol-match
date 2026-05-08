@@ -127,12 +127,13 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
       licenciatario_nombre: String(pre.responsable_nombre || '').trim() || prev.licenciatario_nombre,
       licenciatario_email: String(pre.email || '').trim().toLowerCase() || prev.licenciatario_email,
       licenciatario_telefono: String(pre.whatsapp || '').trim() || prev.licenciatario_telefono,
-      tipo_licencia:
-        String(pre.tipo_interes || '').toLowerCase().includes('master')
-          ? 'master_pais'
-          : String(pre.tipo_interes || '').toLowerCase().includes('point')
-          ? 'padbol_point'
-          : prev.tipo_licencia,
+      tipo_licencia: (() => {
+        const t = String(pre.tipo_interes || '').trim().toLowerCase();
+        if (!t || t === 'pendiente_definicion') return prev.tipo_licencia;
+        if (t.includes('master')) return 'master_pais';
+        if (t.includes('point')) return 'padbol_point';
+        return prev.tipo_licencia;
+      })(),
     }));
   }, [location.state]);
 
