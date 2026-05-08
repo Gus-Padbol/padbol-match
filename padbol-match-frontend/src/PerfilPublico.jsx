@@ -1042,6 +1042,15 @@ export default function PerfilPublico() {
         onClose={() => setQrOpen(false)}
         alias={aliasGrande || aliasDecoded}
         nombre={nombreCompleto || 'Jugador'}
+        apodo={
+          (() => {
+            const raw = String(perfil?.apodo ?? '').trim();
+            if (raw) return raw.startsWith('@') ? raw : `@${raw.replace(/^@+/, '')}`;
+            return aliasGrande ? formatAliasConArroba(aliasGrande) : '';
+          })()
+        }
+        categoria={nivelPerfilTexto}
+        sede={clubCiudadTrim || localidadTrim}
         fotoUrl={fotoUrlPerfil}
       />
     </div>

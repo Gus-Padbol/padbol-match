@@ -412,18 +412,37 @@ export default function TorneoTabbedView({
     [jugadorNombreTorneoCtx]
   );
 
-  const abrirQrJugador = useCallback((p) => {
-    const alias = String(p?.alias || '').trim();
-    if (!alias) {
-      alert('Este jugador no tiene alias público.');
-      return;
-    }
-    setJugadorQrData({
-      alias,
-      nombre: nombreListadoTorneoRanking(p) || 'Jugador',
-      fotoUrl: String(p?.foto_url || '').trim(),
-    });
-  }, []);
+  const abrirQrJugador = useCallback(
+    (p) => {
+      const alias = String(p?.alias || '').trim();
+      if (!alias) {
+        alert('Este jugador no tiene alias público.');
+        return;
+      }
+      const preview = buildJugadorPreviewModalData(p, jugadorNombreTorneoCtx);
+      const nombreLinea =
+        preview.nombreCompleto && preview.nombreCompleto !== '—'
+          ? preview.nombreCompleto
+          : nombreListadoTorneoRanking(p) || 'Jugador';
+      const apodoLinea =
+        preview.aliasLabel && preview.aliasLabel !== '—' ? preview.aliasLabel : '';
+      const cat =
+        preview.categoria && preview.categoria !== '—'
+          ? preview.categoria
+          : String(p?.nivel || '').trim();
+      const sedeLinea =
+        preview.sede && preview.sede !== '—' ? preview.sede : String(p?.ciudad || '').trim();
+      setJugadorQrData({
+        alias,
+        nombre: nombreLinea,
+        apodo: apodoLinea,
+        categoria: cat,
+        sede: sedeLinea,
+        fotoUrl: String(p?.foto_url || preview.foto_url || '').trim(),
+      });
+    },
+    [jugadorNombreTorneoCtx]
+  );
 
   useEffect(() => {
     if (!torneo) return;
@@ -2497,6 +2516,9 @@ export default function TorneoTabbedView({
         onClose={() => setJugadorQrData(null)}
         alias={jugadorQrData?.alias}
         nombre={jugadorQrData?.nombre}
+        apodo={jugadorQrData?.apodo}
+        categoria={jugadorQrData?.categoria}
+        sede={jugadorQrData?.sede}
         fotoUrl={jugadorQrData?.fotoUrl}
       />
 
