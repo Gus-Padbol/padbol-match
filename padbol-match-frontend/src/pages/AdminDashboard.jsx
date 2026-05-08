@@ -1510,7 +1510,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setInviteClubModalOpen(false);
       setInviteClubForm({ email: '', nombre_club: '', pais: '' });
       if (j.email_sent === false) {
-        setMensajeExito('Invitación creada (no se pudo enviar el email; configurá RESEND o reenviá desde la lista).');
+        setMensajeExito('Invitación creada (no se pudo enviar el email; configura RESEND o reenvía desde la lista).');
       } else {
         setMensajeExito('✉️ Invitación enviada');
       }
@@ -2919,7 +2919,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarTorneo = async (torneoId) => {
     if (!String(editTorneoForm.categoria || '').trim()) {
-      alert('Seleccioná la categoría del torneo');
+      alert('Selecciona la categoría del torneo');
       return;
     }
     const origRow = torneos.find((t) => t.id === torneoId);
@@ -3686,7 +3686,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       return;
     }
     if (!String(file.type || '').startsWith('image/')) {
-      setLogoMsg('⚠️ Elegí una imagen');
+      setLogoMsg('⚠️ Elige una imagen');
       return;
     }
     setLogoMsg('');
@@ -3778,7 +3778,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     const toProcess = picked.slice(0, espacio);
     if (picked.length > espacio) {
-      setFotosMsg(`Solo podés agregar ${espacio} ${espacio === 1 ? 'foto más' : 'fotos más'}.`);
+      setFotosMsg(`Solo puedes agregar ${espacio} ${espacio === 1 ? 'foto más' : 'fotos más'}.`);
     } else {
       setFotosMsg('');
     }
@@ -3875,7 +3875,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (i >= 0) return prev.filter((u) => u !== url);
       if (prev.length >= 4) {
         window.setTimeout(() => {
-          setFotosDestacadasMsg('Ya tenés 4 fotos en el carrusel. Quitá una para agregar otra');
+          setFotosDestacadasMsg('Ya tienes 4 fotos en el carrusel. Quita una para agregar otra');
           window.setTimeout(() => setFotosDestacadasMsg(''), 4000);
         }, 0);
         return prev;
@@ -4396,7 +4396,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     lineHeight: 1.45,
                   }}
                 >
-                  🚫 Cuenta suspendida. Los jugadores no pueden reservar. Contactá soporte.
+                  🚫 Cuenta suspendida. Los jugadores no pueden reservar. Contacta soporte.
                   <div>{btnSoporte('#dc2626')}</div>
                 </div>
               );
@@ -4417,7 +4417,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     lineHeight: 1.45,
                   }}
                 >
-                  ❌ Cuenta cancelada. Contactá soporte para reactivar.
+                  ❌ Cuenta cancelada. Contacta soporte para reactivar.
                   <div>{btnSoporte('#b91c1c')}</div>
                 </div>
               );
@@ -4902,7 +4902,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                   </select>
                                   {!isSuperAdmin && opts.length === 2 ? (
                                     <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>
-                                      Desde «Próximo» solo podés pasar a «Inscripción abierta». Lo demás se hace desde la vista del torneo.
+                                      Desde «Próximo» solo puedes pasar a «Inscripción abierta». Lo demás se hace desde la vista del torneo.
                                     </div>
                                   ) : null}
                                 </>
@@ -6475,7 +6475,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           }}
         >
           <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
-            <strong>Datos de la sede:</strong> si tenés la pestaña <strong>«Mi Sede»</strong>, usá el botón{' '}
+            <strong>Datos de la sede:</strong> si tienes la pestaña <strong>«Mi Sede»</strong>, usa el botón{' '}
             <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
             se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
             <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
@@ -7830,7 +7830,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 </div>
               </div>
-              <p style={{ margin: '14px 0 0', fontSize: '12px', color: '#94a3b8' }}>Guardá los cambios con «Guardar cambios» en Información general.</p>
+              <p style={{ margin: '14px 0 0', fontSize: '12px', color: '#94a3b8' }}>Guarda los cambios con «Guardar cambios» en Información general.</p>
             </div>
           </div>
 
@@ -8194,7 +8194,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       {stripeOnboardingLoading ? 'Abriendo Stripe…' : 'Conectar cuenta Stripe'}
                     </button>
                     <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-                      Te llevamos al onboarding de Stripe (cuenta Standard). Al volver, guardá cambios si editaste otros datos de la sede.
+                      Te llevamos al onboarding de Stripe (cuenta Standard). Al volver, guarda cambios si editaste otros datos de la sede.
                     </p>
                   </>
                 ) : null}
@@ -8516,7 +8516,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#6366f1' }}>{fotosUploadLabel}</p>
             ) : null}
             <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-              Marcá hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). Guardá con el botón inferior.
+              Marca hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). Guarda con el botón inferior.
             </p>
             {fotosUrls.length === 0 ? (
               <p style={{ color: '#aaa', fontSize: '13px', margin: 0 }}>No hay fotos cargadas aún.</p>
@@ -8627,7 +8627,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             ) : null}
             {fotosMsg ? <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: fotosMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{fotosMsg}</p> : null}
             <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#9ca3af' }}>
-              Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos. En iPhone, si varias a la vez no suben, usá «+ Agregar una foto».
+              Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos. En iPhone, si varias a la vez no suben, usa «+ Agregar una foto».
             </p>
           </div>
         </div>}
@@ -9079,7 +9079,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               Suscripción Padbol Match
             </h3>
             <p style={{ margin: '0 0 14px', fontSize: '14px', color: '#64748b', lineHeight: 1.45 }}>
-              {String(suscripcionModal.sedeNombre || '').trim() || 'Sede'} — cargá la tarjeta para el débito mensual automático.
+              {String(suscripcionModal.sedeNombre || '').trim() || 'Sede'} — carga la tarjeta para el débito mensual automático.
             </p>
             <Elements
               stripe={stripePromiseAdmin}
@@ -9137,7 +9137,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #e2e8f0' }}>
               <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>Recortar logo</h3>
               <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                Mové y hacé zoom para encuadrar el logo. Se guardará como JPG en buena calidad.
+                Mueve y haz zoom para encuadrar el logo. Se guardará como JPG en buena calidad.
               </p>
             </div>
             <div style={{ position: 'relative', width: '100%', height: 'min(56vh, 360px)', background: '#0f172a' }}>

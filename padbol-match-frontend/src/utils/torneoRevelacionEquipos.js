@@ -56,5 +56,5 @@ export function mensajeConfirmacionCupoTrasEquipoCompleto(torneo) {
       });
     }
   }
-  return `Confirmá tu lugar. Tenés tiempo hasta ${hasta}. Los cupos se asignan por orden de confirmación. Si no confirmás, el cupo se libera.`;
+  return `Confirma tu lugar. Tienes tiempo hasta ${hasta}. Los cupos se asignan por orden de confirmación. Si no confirmas, el cupo se libera.`;
 }

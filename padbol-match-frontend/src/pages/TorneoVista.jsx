@@ -642,7 +642,7 @@ export default function TorneoVista() {
       return (
         <div className="torneo-inscripcion-jugador-banner">
           <p className="torneo-inscripcion-jugador-banner__texto">
-            ✓ Ya sos parte del equipo {nombreEquipoMostrado(miEquipoEnTorneo)}
+            ✓ Ya eres parte del equipo {nombreEquipoMostrado(miEquipoEnTorneo)}
           </p>
         </div>
       );
@@ -679,7 +679,7 @@ export default function TorneoVista() {
       return (
         <div className="torneo-inscripcion-jugador-banner">
           <p className="torneo-inscripcion-jugador-banner__sub">
-            Inscripción abierta. Elegí cómo querés participar.
+            Inscripción abierta. Elige cómo quieres participar.
           </p>
           <button
             type="button"
@@ -747,7 +747,7 @@ export default function TorneoVista() {
         <>
           {equiposConfirmadosInscripcion < 2 ? (
             <p className="torneo-iniciar-aviso" role="status">
-              Faltan equipos confirmados: necesitás al menos 2 equipos con inscripción confirmada (ahora hay{' '}
+              Faltan equipos confirmados: necesitas al menos 2 equipos con inscripción confirmada (ahora hay{' '}
               {equiposConfirmadosInscripcion}).
             </p>
           ) : null}

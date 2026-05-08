@@ -218,7 +218,7 @@ function AdminDashboardGate() {
       }}
     >
       <p style={{ margin: 0, fontSize: '17px', fontWeight: 600, maxWidth: 360 }}>
-        No tenés permisos para acceder al panel
+        No tienes permisos para acceder al panel
       </p>
       <button
         type="button"

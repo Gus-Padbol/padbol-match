@@ -41,7 +41,7 @@ export function mensajeEstadoTorneoSoloLecturaAdmin(estadoApiRaw, isSuperAdmin) 
   const label = ALL_ESTADO_FORM_OPTIONS.find((o) => o.value === fv)?.label || fv;
   const b = bucketEstadoTorneoApi(estadoApiRaw);
   if (b === 'abi') {
-    return `Estado: ${label}. No se cambia desde el panel: usá «Iniciar torneo» en la vista del torneo (equipos y sorteo).`;
+    return `Estado: ${label}. No se cambia desde el panel: usa «Iniciar torneo» en la vista del torneo (equipos y sorteo).`;
   }
   if (b === 'cur') {
     return `Estado: ${label}. Se finaliza al registrar el resultado de la final (o con la acción de finalizar en la vista del torneo).`;
@@ -66,5 +66,5 @@ export function validarCambioEstadoTorneoAdminGuardar({
   const nextForm = String(estadoFormNuevo || 'proximo').toLowerCase().trim();
   if (prevForm === nextForm) return null;
   if (prevForm === 'proximo' && nextForm === 'abierto') return null;
-  return 'Transición de estado no permitida: desde «Próximo» solo podés pasar a «Inscripción abierta»; el resto se gestiona desde la vista del torneo.';
+  return 'Transición de estado no permitida: desde «Próximo» solo puedes pasar a «Inscripción abierta»; el resto se gestiona desde la vista del torneo.';
 }

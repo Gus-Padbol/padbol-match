@@ -1017,7 +1017,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
     setFormMsg('');
     const est = parseInt(String(estrellasForm), 10);
     if (!Number.isFinite(est) || est < 1 || est > 5) {
-      setFormMsg('Elegí una calificación de 1 a 5 estrellas.');
+      setFormMsg('Elige una calificación de 1 a 5 estrellas.');
       return;
     }
     setSubmitting(true);
@@ -1367,7 +1367,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
               </button>
             </div>
             <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'rgba(226,232,240,0.85)', lineHeight: 1.4 }}>
-              Elegí las estrellas y, si querés, escribí un comentario. Solo se publica cuando tocás «Publicar reseña».
+              Elige las estrellas y, si quieres, escribe un comentario. Solo se publica cuando tocas «Publicar reseña».
             </p>
             <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#e2e8f0' }}>
               Calificación <span style={{ color: '#fecaca' }}>*</span>
@@ -1499,7 +1499,7 @@ export default function SedePublica() {
     const url = `${window.location.origin}/sede/${encodeURIComponent(String(sedeId))}`;
     const nombreSede = String(sede?.nombre || 'Sede').trim() || 'Sede';
     const title = nombreSede;
-    const text = `¡Reservá tu cancha en ${nombreSede}! 🏆⚽`;
+    const text = `¡Reserva tu cancha en ${nombreSede}! 🏆⚽`;
     if (canUseNavigatorShare()) {
       try {
         await navigator.share({ title, text, url });

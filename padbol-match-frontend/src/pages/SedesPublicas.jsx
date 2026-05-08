@@ -312,7 +312,7 @@ export default function SedesPublicas() {
                       textAlign: 'center',
                     }}
                   >
-                    Tocá la tarjeta para ver la sede
+                    Toca la tarjeta para ver la sede
                   </div>
                 </div>
               );
@@ -333,7 +333,7 @@ export default function SedesPublicas() {
               cursor: 'pointer',
             }}
           >
-            ¿Querés sumar tu club?
+            ¿Quieres sumar tu club?
           </button>
         </div>
       </div>

@@ -193,7 +193,7 @@ export function parseMarcadorVozPartidoCompleto(transcript) {
   if (nums.length % 2 !== 0) {
     return {
       ok: false,
-      error: 'Falta un número para completar el último set (necesitás pares: A y B por set).',
+      error: 'Falta un número para completar el último set (necesitas pares: A y B por set).',
       transcript: raw,
     };
   }

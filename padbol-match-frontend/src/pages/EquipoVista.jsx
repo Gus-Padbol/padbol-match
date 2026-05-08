@@ -764,7 +764,7 @@ export default function EquipoVista() {
     const nombreTorneo = String(torneo?.nombre || '').trim() || 'Padbol';
     const nombreSede = String(nombreSedeTorneo || '').trim() || 'la sede del torneo';
     const nombreEquipo = String(equipo?.nombre || '').trim() || 'nuestro equipo';
-    const mensaje = `¡Hola! Te invito a jugar juntos el torneo de Padbol ${nombreTorneo} en ${nombreSede}. Somos el equipo ${nombreEquipo}. ¡Confirmá tu lugar y nos vemos en la cancha! 🎯 ${link}`;
+    const mensaje = `¡Hola! Te invito a jugar juntos el torneo de Padbol ${nombreTorneo} en ${nombreSede}. Somos el equipo ${nombreEquipo}. ¡Confirma tu lugar y nos vemos en la cancha! 🎯 ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   }, [equipoIdParam, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
 
@@ -1075,7 +1075,7 @@ export default function EquipoVista() {
       torneo.estado !== 'finalizado' &&
       insEq !== 'confirmado';
     if (!puedeEditarPlantel) {
-      alert('No podés quitar jugadores: la inscripción del equipo ya está confirmada.');
+      alert('No puedes quitar jugadores: la inscripción del equipo ya está confirmada.');
       return;
     }
 
@@ -1174,7 +1174,7 @@ export default function EquipoVista() {
       torneo.estado !== 'finalizado' &&
       insEq !== 'confirmado';
     if (equipo.equipo_abierto === false && !puedeEditarPlantel) {
-      alert('Equipo cerrado: solo podés invitar con el link; no se suman jugadores desde la búsqueda.');
+      alert('Equipo cerrado: solo puedes invitar con el link; no se suman jugadores desde la búsqueda.');
       return;
     }
     if (row?.disponibilidad === 'tiene_equipo') {
@@ -1184,7 +1184,7 @@ export default function EquipoVista() {
     const uid = row?.user_id != null && row.user_id !== '' ? String(row.user_id) : '';
     const email = String(row.email || '').trim().toLowerCase();
     if (!email || !uid) {
-      alert('Ese perfil no tiene email vinculado. Usá «Invitar por WhatsApp».');
+      alert('Ese perfil no tiene email vinculado. Usa «Invitar por WhatsApp».');
       return;
     }
     let fullRow = row;
@@ -1269,7 +1269,7 @@ export default function EquipoVista() {
     const eid = equipoIdParam;
     if (!eid) return '';
     const link = `https://padbol-match-9abn.vercel.app/equipo/${encodeURIComponent(eid)}`;
-    const txt = `¡Hola! Te invito a unirte a mi equipo en PADBOL Match. Entrá con este link: ${link}`;
+    const txt = `¡Hola! Te invito a unirte a mi equipo en PADBOL Match. Entra con este link: ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(txt)}`;
   }, [equipoIdParam]);
 
@@ -1637,9 +1637,9 @@ export default function EquipoVista() {
                         lineHeight: 1.55,
                       }}
                     >
-                      Confirmá tu lugar. Tenés tiempo hasta{' '}
+                      Confirma tu lugar. Tienes tiempo hasta{' '}
                       <strong style={{ fontWeight: 800 }}>{textoLimiteConfirmacion}</strong>. Los cupos se asignan
-                      por orden de confirmación. Si no confirmás, el cupo se libera.
+                      por orden de confirmación. Si no confirmas, el cupo se libera.
                     </div>
                   ) : null}
                   {inscripcionEstadoEquipo === 'pendiente' && esMiEquipo && equipoListoJugar ? (
@@ -2049,12 +2049,12 @@ export default function EquipoVista() {
                   borderRadius: '10px',
                 }}
               >
-                Equipo completo: podés quitar a un jugador (excepto el capitán) y sumar otro con la búsqueda, mientras la
+                Equipo completo: puedes quitar a un jugador (excepto el capitán) y sumar otro con la búsqueda, mientras la
                 inscripción no esté confirmada.
               </p>
             ) : null}
             <p style={{ margin: '0 0 12px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-              Buscá por nombre, apellido o alias (mínimo 2 caracteres). Misma búsqueda que en la inscripción al torneo.
+              Busca por nombre, apellido o alias (mínimo 2 caracteres). Misma búsqueda que en la inscripción al torneo.
             </p>
             <input
               type="search"
@@ -2079,7 +2079,7 @@ export default function EquipoVista() {
             ) : null}
             {!invitarBuscando && invitarJugadorDebounced.length >= 2 && invitarOpciones.length === 0 ? (
               <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b' }}>
-                No hay coincidencias. Podés invitar por WhatsApp.
+                No hay coincidencias. Puedes invitar por WhatsApp.
               </p>
             ) : null}
             {invitarOpciones.length > 0 ? (
@@ -2181,7 +2181,7 @@ export default function EquipoVista() {
                               </div>
                             ) : null}
                             <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
-                              {tieneEquipoTorneo ? 'No disponible para este equipo' : 'Tocá el nombre para ver la ficha'}
+                              {tieneEquipoTorneo ? 'No disponible para este equipo' : 'Toca el nombre para ver la ficha'}
                             </div>
                           </div>
                         </button>
@@ -2238,7 +2238,7 @@ export default function EquipoVista() {
               }}
             >
               <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: T.colorTextMuted }}>
-                También podés
+                También puedes
               </p>
               <a
                 href={invitarPadbolMatchWhatsappHref}

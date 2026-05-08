@@ -131,7 +131,7 @@ export default function InvitarAdminClubPage() {
           boxSizing: 'border-box',
         }}
       >
-        Completá los datos de tu club para activar tu panel de administración.
+        Completa los datos de tu club para activar tu panel de administración.
       </div>
       <NuevaSedeSuperBottomSheet
         open={sheetOpen}

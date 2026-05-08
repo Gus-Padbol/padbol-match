@@ -232,7 +232,7 @@ export default function SorteoGruposModal({
     }
     if (modoCabezas === 'manual') {
       if (ordenManualCabezas.length < Math.min(numCabezas, numGrupos)) {
-        setErrorMsg('Elegí las cabezas de serie en orden (tocá cada equipo).');
+        setErrorMsg('Elige las cabezas de serie en orden (toca cada equipo).');
         return false;
       }
     }
@@ -446,7 +446,7 @@ export default function SorteoGruposModal({
                     {
                       id: 'manual',
                       titulo: 'Sorteo manual',
-                      desc: 'Arrastrá equipos a cada grupo',
+                      desc: 'Arrastra equipos a cada grupo',
                     },
                   ].map((op) => (
                     <button
@@ -535,12 +535,12 @@ export default function SorteoGruposModal({
                             setPreview(null);
                           }}
                         />
-                        <span style={{ fontSize: '13px' }}>Manual (tocá en orden)</span>
+                        <span style={{ fontSize: '13px' }}>Manual (toca en orden)</span>
                       </label>
                       {modoCabezas === 'manual' ? (
                         <div style={{ marginTop: '10px' }}>
                           <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 8px' }}>
-                            Elegí hasta {Math.min(numCabezas, numGrupos)} equipos en orden (1.º → grupo A, 2.º → B…)
+                            Elige hasta {Math.min(numCabezas, numGrupos)} equipos en orden (1.º → grupo A, 2.º → B…)
                           </p>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {confirmados.map((eq) => {
@@ -640,7 +640,7 @@ export default function SorteoGruposModal({
               ) : (
                 <div style={{ marginBottom: '14px' }}>
                   <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.45 }}>
-                    Arrastrá equipos a un grupo o usá el menú «Mover a…». Tocá un equipo dentro del grupo para marcarlo
+                    Arrastra equipos a un grupo o usa el menú «Mover a…». Toca un equipo dentro del grupo para marcarlo
                     como cabeza de serie (dorado). Cada grupo debe tener al menos un equipo. Sin pendientes para confirmar.
                   </p>
                   <div

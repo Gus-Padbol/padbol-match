@@ -203,21 +203,21 @@ export default function AccesoCuenta() {
     const ap = String(regApellido || '').trim();
     const gen = String(regGenero || '').trim();
     if (!nom) {
-      setErrorMsg('Completá tu nombre.');
+      setErrorMsg('Completa tu nombre.');
       return;
     }
     if (!ap) {
-      setErrorMsg('Completá tu apellido.');
+      setErrorMsg('Completa tu apellido.');
       return;
     }
     if (gen !== 'masculino' && gen !== 'femenino' && gen !== 'otro' && gen !== 'open') {
-      setErrorMsg('Seleccioná género (Masculino, Femenino, Otro u Open).');
+      setErrorMsg('Selecciona género (Masculino, Femenino, Otro u Open).');
       return;
     }
     const waLoc = digitsOnly(regWaLocal);
     const waLoc2 = digitsOnly(regWaConfirmLocal);
     if (!whatsappNacionalValido(waLoc)) {
-      setErrorMsg('Ingresá un WhatsApp válido (número local, mínimo 10 dígitos, sin repetir el código de país).');
+      setErrorMsg('Ingresa un WhatsApp válido (número local, mínimo 10 dígitos, sin repetir el código de país).');
       return;
     }
     if (waLoc !== waLoc2) {
@@ -226,7 +226,7 @@ export default function AccesoCuenta() {
     }
     const waDigitsFull = buildFullWhatsDigits(regWaCodigoPais, waLoc);
     if (!whatsappDigitsValido(waDigitsFull)) {
-      setErrorMsg('Completá un WhatsApp válido.');
+      setErrorMsg('Completa un WhatsApp válido.');
       return;
     }
     const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
@@ -632,7 +632,7 @@ export default function AccesoCuenta() {
               />
             </div>
             <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', marginTop: 0, marginBottom: '10px', lineHeight: 1.4 }}>
-              Elegí el país (bandera + código) y escribí solo tu número local. Se guarda en formato internacional.
+              Elige el país (bandera + código) y escribe solo tu número local. Se guarda en formato internacional.
             </p>
             <label
               style={{
@@ -651,7 +651,7 @@ export default function AccesoCuenta() {
               inputMode="numeric"
               value={regWaConfirmLocal}
               onChange={(e) => setRegWaConfirmLocal(digitsOnly(e.target.value))}
-              placeholder="Repetí el mismo número local"
+              placeholder="Repite el mismo número local"
               disabled={busy}
               autoComplete="tel-national"
               style={{

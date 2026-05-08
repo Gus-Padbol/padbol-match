@@ -136,7 +136,7 @@ export default function UserHome() {
     });
   }, [session?.user, authLoading, profileLoading, userProfile]);
 
-  const sufijo = '¿Qué querés hacer hoy?';
+  const sufijo = '¿Qué quieres hacer hoy?';
   const lineaSaludo = !session?.user
     ? `¡Hola! ${sufijo}`
     : nombreFinal
@@ -254,7 +254,7 @@ export default function UserHome() {
                 lineHeight: 1.45,
               }}
             >
-              Podés explorar sin registrarte
+              Puedes explorar sin registrarte
             </p>
           ) : null}
         </div>
@@ -291,7 +291,7 @@ export default function UserHome() {
             ) : null}
             {matchmakingNeedsClub && !matchmakingCargando ? (
               <p style={{ margin: '0 0 12px 0', fontSize: '13px', opacity: 0.92, textAlign: 'center', lineHeight: 1.45 }}>
-                Completá tu <strong>club habitual</strong> en Mi perfil para ver jugadores de tu sede que buscan compañero.
+                Completa tu <strong>club habitual</strong> en Mi perfil para ver jugadores de tu sede que buscan compañero.
               </p>
             ) : null}
             {matchmakingCargando ? (

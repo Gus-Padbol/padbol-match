@@ -163,19 +163,19 @@ export default function NuevaSedeSuperBottomSheet({
   const goNext = useCallback(() => {
     if (st.step === 1) {
       if (!String(st.nombre || '').trim()) {
-        alert('Completá el nombre de la sede.');
+        alert('Completa el nombre de la sede.');
         return;
       }
       if (!String(st.direccion || '').trim()) {
-        alert('Completá la dirección.');
+        alert('Completa la dirección.');
         return;
       }
       if (!String(st.pais || '').trim()) {
-        alert('Seleccioná el país.');
+        alert('Selecciona el país.');
         return;
       }
       if (!String(st.ciudad || '').trim()) {
-        alert('Completá la ciudad.');
+        alert('Completa la ciudad.');
         return;
       }
       setSt((p) => ({ ...p, step: 2 }));
@@ -183,7 +183,7 @@ export default function NuevaSedeSuperBottomSheet({
     }
     if (st.step === 2) {
       if (totalCanchas <= 0) {
-        alert('Seleccioná al menos un deporte e indicá la cantidad de canchas (mayor a 0).');
+        alert('Selecciona al menos un deporte e indica la cantidad de canchas (mayor a 0).');
         return;
       }
       setSt((p) => ({ ...p, step: 3 }));
@@ -489,7 +489,7 @@ export default function NuevaSedeSuperBottomSheet({
                     setPlacesInputValue(v);
                     setField('direccion', v);
                   }}
-                  placeholder="Buscá una dirección real"
+                  placeholder="Busca una dirección real"
                   style={{ ...inputBase, marginTop: 8 }}
                   autoComplete="off"
                 />
@@ -499,7 +499,7 @@ export default function NuevaSedeSuperBottomSheet({
                   value={st.direccion}
                   onChange={(e) => setField('direccion', e.target.value)}
                   placeholder={
-                    placesEnabled ? 'Cargando Google Places…' : 'Configurá REACT_APP_GOOGLE_PLACES_KEY'
+                    placesEnabled ? 'Cargando Google Places…' : 'Configura REACT_APP_GOOGLE_PLACES_KEY'
                   }
                   style={{ ...inputBase, marginTop: 8 }}
                   autoComplete="street-address"
@@ -512,7 +512,7 @@ export default function NuevaSedeSuperBottomSheet({
         {st.step === 2 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ margin: 0, fontSize: 14, color: '#475569', lineHeight: 1.45 }}>
-              Marcá los deportes que ofrece el club e indicá cuántas canchas tiene de cada uno.
+              Marca los deportes que ofrece el club e indica cuántas canchas tiene de cada uno.
             </p>
             {DEPORTES_CATALOGO.map((d) => {
               const checked = Object.prototype.hasOwnProperty.call(st.canchasPorDeporte, d.key);
@@ -587,7 +587,7 @@ export default function NuevaSedeSuperBottomSheet({
                 ) : totalCanchas > 0 ? (
                   'No hay un plan configurado para esta cantidad. Revisá plan_pricing en Supabase.'
                 ) : (
-                  'Elegí deportes y cantidades para ver el plan.'
+                  'Elige deportes y cantidades para ver el plan.'
                 )}
               </div>
               <p style={{ margin: '10px 0 0', fontSize: 12, color: '#64748b' }}>

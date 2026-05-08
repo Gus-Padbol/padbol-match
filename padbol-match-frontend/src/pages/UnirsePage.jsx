@@ -338,13 +338,13 @@ export default function UnirsePage() {
       !form.email.trim() ||
       !form.whatsapp.trim()
     ) {
-      setErr('Completá todos los campos obligatorios marcados con *.');
+      setErr('Completa todos los campos obligatorios marcados con *.');
       return;
     }
 
     const deportesSel = DEPORTES_OPCIONES.filter((d) => form.deportes[d.key]).map((d) => d.key);
     if (deportesSel.length === 0) {
-      setErr('Seleccioná al menos un deporte disponible en tu instalación.');
+      setErr('Selecciona al menos un deporte disponible en tu instalación.');
       return;
     }
 
@@ -466,7 +466,7 @@ export default function UnirsePage() {
               lineHeight: 1.2,
             }}
           >
-            Sumá tu club a Padbol Match
+            Suma tu club a Padbol Match
           </h1>
           <p style={{ color: '#475569', margin: '0 0 16px', lineHeight: 1.55, fontSize: '15px', textAlign: 'center' }}>
             Completa los datos de tu instalación como en las plataformas profesionales: información del club, responsable
@@ -489,7 +489,7 @@ export default function UnirsePage() {
             <span style={{ fontSize: '15px', fontWeight: 800, color: '#4c1d95' }}>{PRECIO_MENSUAL_USD}</span>
           </div>
           <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-            Después del período de prueba, elegís mensual o anual. En el formulario indicá el{' '}
+            Después del período de prueba, puedes elegir facturación mensual o anual. En el formulario indica el{' '}
             <strong>tipo de interés</strong> que mejor encaje con tu club (Club Afiliado, Padbol Point o Master Nacional).
           </p>
         </section>
@@ -677,7 +677,7 @@ export default function UnirsePage() {
                     setPlacesInputValue(v);
                     onField('club_direccion', v);
                   }}
-                  placeholder="Buscá calle y número (Google Places)"
+                  placeholder="Busca calle y número (Google Places)"
                   autoComplete="street-address"
                   required
                 />
@@ -692,7 +692,7 @@ export default function UnirsePage() {
                   onField('club_direccion', v);
                 }}
                 placeholder={
-                  placesEnabled ? 'Cargando Google Places…' : 'Configurá REACT_APP_GOOGLE_PLACES_KEY para autocompletar'
+                  placesEnabled ? 'Cargando Google Places…' : 'Configura REACT_APP_GOOGLE_PLACES_KEY para autocompletar'
                 }
                 autoComplete="street-address"
                 required
@@ -700,7 +700,7 @@ export default function UnirsePage() {
             )}
             {!placesEnabled ? (
               <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
-                Sin clave de Google Places podés escribir la dirección a mano; igual se envía el texto ingresado.
+                Sin clave de Google Places puedes escribir la dirección a mano; igual se envía el texto ingresado.
               </p>
             ) : null}
 
@@ -822,7 +822,7 @@ export default function UnirsePage() {
 
           <FormSection
             title="Datos legales y fiscales"
-            subtitle="Opcional pero recomendado para facturación y contrato. Podés completarlo más adelante si lo preferís."
+            subtitle="Opcional pero recomendado para facturación y contrato. Puedes completarlo más adelante si lo preferís."
           >
             <label style={labelStyle}>Nombre legal de la empresa o persona</label>
             <input style={inputStyle} value={form.nombre_legal} onChange={(e) => onField('nombre_legal', e.target.value)} />
@@ -857,7 +857,7 @@ export default function UnirsePage() {
               value={form.direccion_fiscal}
               onChange={(e) => onField('direccion_fiscal', e.target.value)}
               disabled={form.fiscal_misma_que_club}
-              placeholder={form.fiscal_misma_que_club ? 'Marcá “misma que el club” arriba' : 'Solo si difiere del club'}
+              placeholder={form.fiscal_misma_que_club ? 'Marca “misma que el club” arriba' : 'Solo si difiere del club'}
             />
 
             <label style={{ ...labelStyle, ...rowGap }}>País fiscal</label>

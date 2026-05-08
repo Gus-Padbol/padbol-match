@@ -304,7 +304,7 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
       });
       const j = await res.json();
       if (!res.ok) {
-        setMsg(j.error || 'El pago se acreditó pero no se pudo registrar la reserva. Contactá a la sede.');
+        setMsg(j.error || 'El pago se acreditó pero no se pudo registrar la reserva. Contacta a la sede.');
         return;
       }
       onPaid(j);
@@ -1396,8 +1396,8 @@ export default function ReservaForm() {
               className="reserva-sede-hero-logo"
               style={{ marginTop: HUB_LOGO_CLEARANCE_TOP_PX }}
             />
-            <h1 className="reserva-sede-hero-title">Reservá tu cancha</h1>
-            <p className="reserva-sede-hero-sub">Elegí tu sede y horario favorito</p>
+            <h1 className="reserva-sede-hero-title">Reserva tu cancha</h1>
+            <p className="reserva-sede-hero-sub">Elige tu sede y horario favorito</p>
           </header>
 
           {sedesLoadError ? (
@@ -1407,7 +1407,7 @@ export default function ReservaForm() {
           ) : null}
 
           <label className="reserva-sede-pais-question" htmlFor="reserva-pais-select">
-            ¿Dónde querés jugar?
+            ¿Dónde quieres jugar?
           </label>
           <div className="reserva-sede-pais-pill-shell">
             <span className="reserva-sede-pais-pill-icon" aria-hidden>
@@ -1421,7 +1421,7 @@ export default function ReservaForm() {
               <select
                 id="reserva-pais-select"
                 className="reserva-sede-pais-pill-select"
-                aria-label="¿Dónde querés jugar?"
+                aria-label="¿Dónde quieres jugar?"
                 value={filtros.pais || ''}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -1429,7 +1429,7 @@ export default function ReservaForm() {
                   else selectPais(v);
                 }}
               >
-                <option value="">Elegí un país…</option>
+                <option value="">Elige un país…</option>
                 {paisesOrdenados.map((p) => (
                   <option key={p} value={p}>
                     {etiquetaPaisReservaSelector(p)}
@@ -1557,7 +1557,7 @@ export default function ReservaForm() {
 
           <form>
             <div className="form-group">
-              <label style={{ display: 'block', marginBottom: '10px' }}>Elegí el día</label>
+              <label style={{ display: 'block', marginBottom: '10px' }}>Elige el día</label>
               <ReservaCalendarioMes
                 selectedIso={formData.fecha}
                 minIso={todayLocalISO()}
@@ -1860,7 +1860,7 @@ export default function ReservaForm() {
 
           {metodoPagoStripe && !stripeCuentaOk ? (
             <div className="error-message" role="alert" style={{ marginBottom: '12px' }}>
-              Esta sede aún no terminó de conectar Stripe. Elegí otra sede o contactá al club.
+              Esta sede aún no terminó de conectar Stripe. Elige otra sede o contacta al club.
             </div>
           ) : null}
 

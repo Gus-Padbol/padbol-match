@@ -611,7 +611,7 @@ export default function AppHeader({
               }}
             >
               {String(searchTerm || '').trim().length < 3 ? (
-                <div style={{ fontSize: '13px', color: '#94a3b8' }}>Escribí al menos 3 caracteres.</div>
+                <div style={{ fontSize: '13px', color: '#94a3b8' }}>Escribe al menos 3 caracteres.</div>
               ) : searchLoading ? (
                 <div style={{ fontSize: '13px', color: '#64748b' }}>Buscando…</div>
               ) : (

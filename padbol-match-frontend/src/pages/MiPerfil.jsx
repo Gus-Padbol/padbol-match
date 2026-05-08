@@ -643,7 +643,7 @@ export default function MiPerfil() {
     return () => clearTimeout(handle);
   }, [editando, esRegistroSinSesion, formData.alias, session?.user?.id]);
 
-  /** Sugerencias de alias desde «¿Cómo querés que te llamemos?» (disponibilidad en jugadores_perfil). */
+  /** Sugerencias de alias desde «¿Cómo quieres que te llamemos?» (disponibilidad en jugadores_perfil). */
   useEffect(() => {
     if (!editando && !esRegistroSinSesion) {
       setAliasSuggestions([]);
@@ -932,7 +932,7 @@ export default function MiPerfil() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!String(file.type || '').startsWith('image/')) {
-      setErrorMsg('Elegí un archivo de imagen.');
+      setErrorMsg('Elige un archivo de imagen.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -1146,17 +1146,17 @@ export default function MiPerfil() {
       const nom = String(nombreRegistroTorneo || '').trim();
       const apellReg = String(apellidoRegistroTorneo || '').trim();
       if (!nom) {
-        fe.nombre = 'Completá tu nombre.';
+        fe.nombre = 'Completa tu nombre.';
       }
       if (!apellReg) {
-        fe.apellido = 'Completá tu apellido.';
+        fe.apellido = 'Completa tu apellido.';
       }
       const genReg = String(formData.genero || '').trim();
       if (!genReg || !['masculino', 'femenino', 'otro', 'open'].includes(genReg)) {
-        fe.genero = 'Seleccioná género (Masculino, Femenino, Otro u Open).';
+        fe.genero = 'Selecciona género (Masculino, Femenino, Otro u Open).';
       }
       if (!String(formData.lateralidad || '').trim()) {
-        fe.lateralidad = 'Seleccioná lateralidad.';
+        fe.lateralidad = 'Selecciona lateralidad.';
       }
 
       const emRaw = emailRegistro.trim();
@@ -1183,7 +1183,7 @@ export default function MiPerfil() {
       const wa = formatWhatsAppE164(waCodigoPais, local);
 
       if (!String(formData.nivel || '').trim()) {
-        fe.categoria = 'Seleccioná tu categoría.';
+        fe.categoria = 'Selecciona tu categoría.';
       }
 
       if (!passRegistroTorneo && !passRegistroTorneo2) {
@@ -1212,7 +1212,7 @@ export default function MiPerfil() {
       const aliasReg = String(formData.alias || '').trim();
       if (aliasReg && (aliasDuplicado || aliasVerificando)) {
         setErrorMsg(
-          aliasVerificando ? 'Esperá un momento mientras verificamos el alias.' : 'Este alias ya está en uso, elegí otro.'
+          aliasVerificando ? 'Espera un momento mientras verificamos el alias.' : 'Este alias ya está en uso, elige otro.'
         );
         return;
       }
@@ -1224,7 +1224,7 @@ export default function MiPerfil() {
           .ilike('alias', lit)
           .limit(1);
         if (!dupRegErr && Array.isArray(dupReg) && dupReg.length > 0) {
-          setErrorMsg('Este alias ya está en uso, elegí otro.');
+          setErrorMsg('Este alias ya está en uso, elige otro.');
           return;
         }
       }
@@ -1367,20 +1367,20 @@ export default function MiPerfil() {
       const apellidoTrim = String(formData.apellido || '').trim();
       const genTrim = String(formData.genero || '').trim();
       const fe = {};
-      if (!nombreTrim) fe.nombre = 'Completá tu nombre.';
-      if (!apellidoTrim) fe.apellido = 'Completá tu apellido.';
+      if (!nombreTrim) fe.nombre = 'Completa tu nombre.';
+      if (!apellidoTrim) fe.apellido = 'Completa tu apellido.';
       if (!genTrim || !['masculino', 'femenino', 'otro', 'open'].includes(genTrim)) {
-        fe.genero = 'Seleccioná género (Masculino, Femenino, Otro u Open).';
+        fe.genero = 'Selecciona género (Masculino, Femenino, Otro u Open).';
       }
-      if (!String(formData.nivel || '').trim()) fe.nivel = 'Seleccioná tu categoría.';
-      if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Seleccioná lateralidad.';
+      if (!String(formData.nivel || '').trim()) fe.nivel = 'Selecciona tu categoría.';
+      if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Selecciona lateralidad.';
       if (Object.keys(fe).length) {
         setFichaFieldErrors(fe);
         return;
       }
 
       if (String(formData.alias || '').trim() && aliasDuplicado) {
-        setErrorMsg('Este alias ya está en uso, elegí otro.');
+        setErrorMsg('Este alias ya está en uso, elige otro.');
         return;
       }
       if (String(formData.alias || '').trim() && aliasVerificando) {
@@ -1446,7 +1446,7 @@ export default function MiPerfil() {
           .neq('user_id', String(userId))
           .limit(1);
         if (!dupErr && Array.isArray(dupRows) && dupRows.length > 0) {
-          setErrorMsg('Este alias ya está en uso, elegí otro.');
+          setErrorMsg('Este alias ya está en uso, elige otro.');
           return;
         }
       }
@@ -1783,7 +1783,7 @@ export default function MiPerfil() {
               </select>
               {regErrP('genero')}
 
-              <label style={guestLabelStyle}>¿Cómo querés que te llamemos?</label>
+              <label style={guestLabelStyle}>¿Cómo quieres que te llamemos?</label>
               <input
                 type="text"
                 name="apodo"
@@ -1960,7 +1960,7 @@ export default function MiPerfil() {
                 />
               </div>
               <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.4 }}>
-                Elegí país (bandera + código) y escribí solo el número local (mín. 10 dígitos). Se guarda en formato internacional.
+                Elige país (bandera + código) y escribe solo el número local (mín. 10 dígitos). Se guarda en formato internacional.
               </p>
               {regErrP('whatsapp')}
 
@@ -2114,7 +2114,7 @@ export default function MiPerfil() {
                   onSelectNombre={(nombre) =>
                     setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
                   }
-                  placeholder="Buscá tu sede (mín. 2 letras)…"
+                  placeholder="Busca tu sede (mín. 2 letras)…"
                   debounceMs={320}
                   minChars={2}
                   inputStyle={guestInputStyle}
@@ -2141,7 +2141,7 @@ export default function MiPerfil() {
                 style={{ ...guestInputStyle, marginBottom: '14px' }}
               />
 
-              <label style={{ ...guestLabelStyle, marginBottom: '8px' }}>¿Sos federado?</label>
+              <label style={{ ...guestLabelStyle, marginBottom: '8px' }}>¿Eres federado?</label>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
                 <button
                   type="button"
@@ -2265,7 +2265,7 @@ export default function MiPerfil() {
           }}
         >
           <p style={{ margin: '0 0 12px', padding: 0 }}>
-            ⚠️ Tu perfil está incompleto. Completá tus datos para aparecer bien en torneos y rankings.
+            ⚠️ Tu perfil está incompleto. Completa tus datos para aparecer bien en torneos y rankings.
           </p>
           <button
             type="button"
@@ -2593,7 +2593,7 @@ export default function MiPerfil() {
               />
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row
-                label="¿Cómo querés que te llamemos?"
+                label="¿Cómo quieres que te llamemos?"
                 value={
                   String(perfil?.apodo || '').trim() ||
                   String(perfil?.nombre_saludo || '').trim() ||
@@ -2692,7 +2692,7 @@ export default function MiPerfil() {
             </select>
             {fichErrP('genero')}
 
-            <label style={labelStyle}>¿Cómo querés que te llamemos?</label>
+            <label style={labelStyle}>¿Cómo quieres que te llamemos?</label>
             <input
               type="text"
               name="apodo"
@@ -2708,7 +2708,7 @@ export default function MiPerfil() {
             {aliasSuggestions.length > 0 ? (
               <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                  Sugerencias de alias (tocá para usar)
+                  Sugerencias de alias (toca para usar)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {aliasSuggestions.map(({ texto, libre }) => (
@@ -2778,7 +2778,7 @@ export default function MiPerfil() {
                   lineHeight: 1.35,
                 }}
               >
-                ✗ Ya está en uso — elegí otro u otra sugerencia.
+                ✗ Ya está en uso — elige otro u otra sugerencia.
               </p>
             ) : null}
 
@@ -2858,7 +2858,7 @@ export default function MiPerfil() {
               </span>
             </label>
             <p style={{ color: '#666', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
-              Necesitás tener club habitual o sede en tu ficha. Otros te contactan por WhatsApp si tenés número en el perfil o en una reserva.
+              Necesitas tener club habitual o sede en tu ficha. Otros te contactan por WhatsApp si tienes número en el perfil o en una reserva.
             </p>
 
             <label style={labelStyle}>WhatsApp</label>
@@ -2886,7 +2886,7 @@ export default function MiPerfil() {
               />
             </div>
             <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '14px', lineHeight: 1.4 }}>
-              Elegí país (bandera + código) y el número local (mín. 10 dígitos). Se guarda en formato internacional.
+              Elige país (bandera + código) y el número local (mín. 10 dígitos). Se guarda en formato internacional.
             </p>
 
             <label style={labelStyle}>Lateralidad {reqAst}</label>
@@ -2972,7 +2972,7 @@ export default function MiPerfil() {
                 onSelectNombre={(nombre) =>
                   setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
                 }
-                placeholder="Buscá tu sede (mín. 2 letras)…"
+                placeholder="Busca tu sede (mín. 2 letras)…"
                 debounceMs={320}
                 minChars={2}
                 inputStyle={inputStyle}
@@ -3175,7 +3175,7 @@ export default function MiPerfil() {
             <label style={labelStyle}>N° FIPA (número de federación)</label>
             <input type="text" name="numero_fipa" placeholder="Ej: 12345" value={formData.numero_fipa} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
-            <label style={{ ...labelStyle, marginBottom: '8px' }}>¿Sos federado?</label>
+            <label style={{ ...labelStyle, marginBottom: '8px' }}>¿Eres federado?</label>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
               <button type="button" onClick={() => setFormData(prev => ({ ...prev, es_federado: true }))}
                 style={{ flex: 1, padding: '10px', border: '2px solid', borderColor: formData.es_federado ? '#388e3c' : '#ddd', background: formData.es_federado ? '#e8f5e9' : 'white', color: formData.es_federado ? '#388e3c' : '#666', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
@@ -3546,7 +3546,7 @@ export default function MiPerfil() {
           role="dialog"
           aria-modal="true"
           aria-labelledby={fotoAccionModalStep === 'menu' ? 'mi-perfil-foto-accion-titulo' : undefined}
-          aria-label={fotoAccionModalStep === 'avatars' ? 'Elegí un avatar predeterminado' : undefined}
+          aria-label={fotoAccionModalStep === 'avatars' ? 'Elige un avatar predeterminado' : undefined}
           style={{
             position: 'fixed',
             inset: 0,
@@ -3629,7 +3629,7 @@ export default function MiPerfil() {
                 >
                   Usar avatar
                   <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, opacity: 0.9, marginTop: '4px' }}>
-                    Elegí un dibujo predeterminado
+                    Elige un dibujo predeterminado
                   </span>
                 </button>
                 <button
@@ -3703,7 +3703,7 @@ export default function MiPerfil() {
                     ← Atrás
                   </button>
                   <h3 style={{ margin: 0, flex: 1, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', textAlign: 'center' }}>
-                    Elegí un avatar
+                    Elige un avatar
                   </h3>
                 </div>
                 <div
@@ -3782,7 +3782,7 @@ export default function MiPerfil() {
                 Recortar foto
               </h3>
               <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                Mové la imagen con el dedo y pellizcá para acercar o alejar. Confirmá cuando quede bien el rostro.
+                Mueve la imagen con el dedo y pellizca para acercar o alejar. Confirma cuando quede bien el rostro.
               </p>
             </div>
             <div

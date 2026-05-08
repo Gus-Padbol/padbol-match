@@ -2143,7 +2143,7 @@ export default function FormEquipos() {
                 </p>
               ) : equipoCerradoNoSolicitudes ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#b45309', lineHeight: 1.45 }}>
-                  Este equipo es cerrado: no acepta solicitudes. Contactá al capitán para que te sume.
+                  Este equipo es cerrado: no acepta solicitudes. Contacta al capitán para que te sume.
                 </p>
               ) : llenoInv ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#64748b' }}>
@@ -2801,14 +2801,14 @@ export default function FormEquipos() {
             }}
           >
             <div style={{ marginBottom: '12px', lineHeight: 1.45 }}>
-              Ya sos parte del equipo <strong>{miEquipo.nombre}</strong>
+              Ya eres parte del equipo <strong>{miEquipo.nombre}</strong>
               {soyCreadorMiEquipo ? (
                 <span style={{ display: 'block', marginTop: '6px', fontSize: '13px', fontWeight: 600, opacity: 0.92 }}>
-                  {ICONO_CAPITAN} Sos capitán del equipo
+                  {ICONO_CAPITAN} Eres capitán del equipo
                 </span>
               ) : (
                 <span style={{ display: 'block', marginTop: '6px', fontSize: '13px', fontWeight: 600, opacity: 0.92 }}>
-                  Sos miembro del equipo
+                  Eres miembro del equipo
                 </span>
               )}
             </div>
@@ -3066,7 +3066,7 @@ export default function FormEquipos() {
                   </div>
                 ) : companeroBusqueda.trim().length >= 2 ? (
                   <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#64748b' }}>
-                    No hay coincidencias en el buscador. Podés invitar por WhatsApp.
+                    No hay coincidencias en el buscador. Puedes invitar por WhatsApp.
                   </p>
                 ) : null}
               </>
@@ -3139,7 +3139,7 @@ export default function FormEquipos() {
                 }}
               >
                 <p style={{ margin: '0 0 10px', color: 'rgba(255,255,255,0.95)', fontSize: '15px', fontWeight: 600 }}>
-                  ¿No encontrás equipo?
+                  ¿No encuentras equipo?
                 </p>
                 <button
                   type="button"
@@ -3322,7 +3322,7 @@ export default function FormEquipos() {
                 }}
               >
                 <p style={{ margin: '0 0 10px', color: 'rgba(255,255,255,0.95)', fontSize: '15px', fontWeight: 600 }}>
-                  ¿No encontrás equipo?
+                  ¿No encuentras equipo?
                 </p>
                 <button
                   type="button"
@@ -3462,7 +3462,7 @@ export default function FormEquipos() {
                       }}
                     >
                       <p style={{ margin: '0 0 10px', color: '#4338ca', fontSize: '15px', fontWeight: 600 }}>
-                        ¿No encontrás equipo?
+                        ¿No encuentras equipo?
                       </p>
                       <button
                         type="button"

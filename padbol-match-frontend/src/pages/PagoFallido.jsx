@@ -117,7 +117,7 @@ export default function PagoFallido() {
             El pago no se completó
           </h1>
           <p style={{ color: T.colorTextMuted, fontSize: '15px', lineHeight: 1.65, marginBottom: '20px' }}>
-            El pago no se completó. Podés intentarlo de nuevo o cancelar la reserva.
+            El pago no se completó. Puedes intentarlo de nuevo o cancelar la reserva.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

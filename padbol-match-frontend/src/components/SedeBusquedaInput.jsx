@@ -124,7 +124,7 @@ export default function SedeBusquedaInput(props) {
         }}
       />
       {debouncedQ.length > 0 && debouncedQ.length < minChars ? (
-        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>Escribí al menos {minChars} caracteres</div>
+        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>Escribe al menos {minChars} caracteres</div>
       ) : null}
       {showList ? (
         <ul

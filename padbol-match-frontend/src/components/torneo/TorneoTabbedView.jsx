@@ -338,7 +338,7 @@ export default function TorneoTabbedView({
   adminPuedeSorteoGrupos = false,
   /** Tras confirmar POST /sorteo: recargar torneo, equipos y partidos. */
   onAfterSorteoGrupos = null,
-  /** Modal “¿Cómo querés participar?” (TorneoVista / FormEquipos). */
+  /** Modal “¿Cómo quieres participar?” (TorneoVista / FormEquipos). */
   participacionModalOpen = false,
   onParticipacionModalClose = null,
   /** Cerrar modal e ir a crear equipo (FormEquipos: vista crear; TorneoVista: ?crear=1). */
@@ -1744,7 +1744,7 @@ export default function TorneoTabbedView({
             {participacionPaso === 'menu' ? (
               <>
                 <h2 id="torneo-participacion-titulo" className="torneo-modal-participacion-titulo">
-                  ¿Cómo querés participar?
+                  ¿Cómo quieres participar?
                 </h2>
                 <button
                   type="button"
@@ -1806,7 +1806,7 @@ export default function TorneoTabbedView({
                   ) : equiposAbiertosListado.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '8px 4px 20px' }}>
                       <p style={{ color: '#334155', fontWeight: 700, lineHeight: 1.5, margin: '0 0 16px' }}>
-                        No hay equipos buscando compañero. ¿Querés crear el tuyo?
+                        No hay equipos buscando compañero. ¿Quieres crear el tuyo?
                       </p>
                       <button
                         type="button"
@@ -1915,7 +1915,7 @@ export default function TorneoTabbedView({
                                 : bloquearSolicitud
                                   ? miEquipoModal
                                     ? 'Ya estás en un equipo'
-                                    : 'Ya tenés una solicitud'
+                                    : 'Ya tienes una solicitud'
                                   : busy
                                     ? 'Enviando…'
                                     : 'Solicitar unirme'}
@@ -2298,7 +2298,7 @@ export default function TorneoTabbedView({
                   fontWeight: 600,
                 }}
               >
-                Tu navegador no permite dictado por voz. Usá los campos de abajo.
+                Tu navegador no permite dictado por voz. Usa los campos de abajo.
               </p>
             )}
 
@@ -2356,7 +2356,7 @@ export default function TorneoTabbedView({
                 <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800, color: '#15803d' }}>
                   Ganador del partido: {voicePending.winnerName}
                 </p>
-                <p style={{ margin: '0 0 14px', fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>¿Confirmás?</p>
+                <p style={{ margin: '0 0 14px', fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>¿Confirmas?</p>
                 {voicePending.transcript ? (
                   <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#6366f1', fontStyle: 'italic' }}>
                     Escuchado: «{voicePending.transcript}»

@@ -92,7 +92,7 @@ export default function OpcionListaBusquedaInput({
       />
       {minChars > 0 && text.trim().length > 0 && text.trim().length < minChars ? (
         <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginTop: '6px' }}>
-          Escribí al menos {minChars} caracteres
+          Escribe al menos {minChars} caracteres
         </div>
       ) : null}
       {showList ? (

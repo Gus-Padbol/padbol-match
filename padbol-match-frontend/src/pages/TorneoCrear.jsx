@@ -115,7 +115,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       return;
     }
     if (!String(formData.categoria || '').trim()) {
-      setError('Seleccioná la categoría del torneo');
+      setError('Selecciona la categoría del torneo');
       setLoading(false);
       return;
     }
@@ -170,12 +170,12 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       const cp = parseInt(String(formData.clasificados_por_grupo), 10);
       const mt = parseInt(String(formData.mejores_terceros_clasificados), 10);
       if (!Number.isFinite(ep) || ep < 2) {
-        setError('Indicá equipos por grupo (mínimo 2)');
+        setError('Indica equipos por grupo (mínimo 2)');
         setLoading(false);
         return;
       }
       if (!Number.isFinite(cp) || cp < 1) {
-        setError('Indicá clasificados por grupo (mínimo 1)');
+        setError('Indica clasificados por grupo (mínimo 1)');
         setLoading(false);
         return;
       }
@@ -397,7 +397,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   <option value="cancelado">Cancelado</option>
                 </select>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                  «Próximo» equivale a planificación; el servidor guarda el valor canónico. Podés abrir inscripción al crear
+                  «Próximo» equivale a planificación; el servidor guarda el valor canónico. Puedes abrir inscripción al crear
                   o editarlo después en el panel.
                 </small>
               </div>
@@ -454,7 +454,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   onChange={handleChange}
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                  Si lo completás, el sistema pasa el torneo a «Inscripción abierta» en esa fecha y hora (torneo en
+                  Si lo completas, el sistema pasa el torneo a «Inscripción abierta» en esa fecha y hora (torneo en
                   planificación).
                 </small>
               </div>
@@ -538,7 +538,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   step="1"
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Hasta entonces, en la pestaña Equipos los jugadores ven un mensaje en lugar de la lista (los admins del torneo siempre ven los equipos). Podés cambiar este valor desde el panel.
+                  Hasta entonces, en la pestaña Equipos los jugadores ven un mensaje en lugar de la lista (los admins del torneo siempre ven los equipos). Puedes cambiar este valor desde el panel.
                 </small>
               </div>
 

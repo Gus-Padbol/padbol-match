@@ -243,7 +243,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   if (!puede) {
     return (
       <div style={{ minHeight: '100vh', padding: 24, color: '#fff', textAlign: 'center' }}>
-        No tenés permiso para esta sección.
+        No tienes permiso para esta sección.
         <button type="button" style={{ marginTop: 16, padding: '10px 16px' }} onClick={() => navigate('/admin')}>
           Volver al panel
         </button>

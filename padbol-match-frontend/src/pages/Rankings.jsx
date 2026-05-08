@@ -819,7 +819,7 @@ export default function Rankings() {
           {activeTab === 'nacional' &&
             (nacionalPais
               ? `Ranking nacional · ${countryLabelWithFlag(nacionalPais)}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
-              : 'Ranking nacional · todos los países o elegí uno para filtrar jugadores por país del perfil')}
+              : 'Ranking nacional · todos los países o elige uno para filtrar jugadores por país del perfil')}
           {activeTab === 'internacional' && (
             <>
               Ranking FIPA · torneos internacionales y mundiales finalizados
