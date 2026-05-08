@@ -251,7 +251,7 @@ function puedeMostrarComprobanteMp(r) {
 export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, refreshSession, signOutAndClear } = useAuth();
+  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
   const [searchParams] = useSearchParams();
   const torneoIdPerfil = searchParams.get('id');
   const redirectAfterAuth = searchParams.get('redirect') || '';
@@ -3574,36 +3574,6 @@ export default function MiPerfil() {
           </div>
         ) : null}
       </div>
-
-      {sessionOwnerEmail ? (
-        <div style={{ marginTop: '20px', marginBottom: '12px' }}>
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await signOutAndClear();
-                navigate('/', { replace: true });
-              } catch (e) {
-                console.error(e);
-              }
-            }}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              border: '2px solid rgba(148, 163, 184, 0.85)',
-              background: 'transparent',
-              color: 'rgba(248, 250, 252, 0.95)',
-              fontWeight: 600,
-              fontSize: '14px',
-              cursor: 'pointer',
-              boxSizing: 'border-box',
-            }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      ) : null}
 
       </div>
 
