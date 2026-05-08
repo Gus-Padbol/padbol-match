@@ -1,6 +1,6 @@
 /**
- * Envía eventos de negocio a Make.com sin bloquear el flujo principal.
- * Si el webhook no está configurado o falla la llamada, solo registra warning.
+ * Webhook secundario para automatizaciones en Make.
+ * Nunca interrumpe el flujo principal ante error o ausencia de configuración.
  */
 export async function sendMakeEvent(eventType, data = {}) {
   const webhookUrl = String(process.env.MAKE_WEBHOOK_URL || '').trim();

@@ -13,7 +13,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkMorasSedes } from './suscripciones/checkMorasSedes.js';
 import { createCheckSuscripcionActiva } from './suscripciones/checkSuscripcionActiva.js';
-import { sendMakeEvent } from './utils/makeWebhook.js';
+import { sendMakeEvent } from './make/sendMakeEvent.js';
 
 dotenv.config();
 
@@ -1187,6 +1187,19 @@ app.post('/api/sedes', async (req, res) => {
       }
     }
 
+    const deportesBody = Array.isArray(b.deportes)
+      ? b.deportes
+      : Array.isArray(b.deportes_canchas?.deportes)
+        ? b.deportes_canchas.deportes
+        : null;
+    void sendMakeEvent('sede_creada', {
+      nombre_sede: String(created?.nombre || nombre || '').trim() || null,
+      pais: String(created?.pais || pais || '').trim() || null,
+      ciudad: String(created?.ciudad || ciudad || '').trim() || null,
+      email_contacto: String(created?.email_contacto || emailContacto || '').trim().toLowerCase() || null,
+      deportes: deportesBody,
+    });
+
     res.status(201).json(created);
   } catch (err) {
     console.error('❌ POST /api/sedes:', err.message);
@@ -1859,18 +1872,23 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
     }
 
     const createdReserva = Array.isArray(data) ? data[0] : data;
-    void sendMakeEvent('reserva_creada', {
-      nombre: String(createdReserva?.nombre || nombre || '').trim() || null,
-      email: String(createdReserva?.email || email || '').trim().toLowerCase() || null,
-      telefono: String(createdReserva?.telefono || createdReserva?.whatsapp || whatsapp || '').trim() || null,
-      sede: String(createdReserva?.sede || sede || '').trim() || null,
-      fecha: createdReserva?.fecha || fecha || null,
-      hora: createdReserva?.hora || hora || null,
-      cancha: createdReserva?.cancha ?? (cancha != null ? parseInt(cancha, 10) : null),
-      monto: createdReserva?.precio ?? (precio != null ? parseInt(precio, 10) : null),
-      metodo_pago: createdReserva?.metodo_pago ?? null,
-      estado: String(createdReserva?.estado || estadoFinal || '').trim() || null,
-    });
+    const estReserva = String(createdReserva?.estado || estadoFinal || '').trim().toLowerCase();
+    if (estReserva === 'confirmada' || estReserva === 'pendiente_pago_manual') {
+      void sendMakeEvent('reserva_confirmada', {
+        nombre: String(createdReserva?.nombre || nombre || '').trim() || null,
+        email: String(createdReserva?.email || email || '').trim().toLowerCase() || null,
+        telefono: String(createdReserva?.telefono || createdReserva?.whatsapp || whatsapp || '').trim() || null,
+        sede: String(createdReserva?.sede || sede || '').trim() || null,
+        fecha: createdReserva?.fecha || fecha || null,
+        hora: createdReserva?.hora || hora || null,
+        cancha: createdReserva?.cancha ?? (cancha != null ? parseInt(cancha, 10) : null),
+        monto: createdReserva?.precio ?? (precio != null ? parseInt(precio, 10) : null),
+        metodo_pago:
+          String(createdReserva?.estado || '').toLowerCase() === 'pendiente_pago_manual'
+            ? 'manual'
+            : (createdReserva?.metodo_pago ?? null),
+      });
+    }
 
     res.json(data);
   } catch (err) {
@@ -2407,15 +2425,6 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
     if (inserted?.id && String(inserted.estado || '').toLowerCase() === 'abierto') {
       scheduleNotifyListaEsperaInscripcionAbierta(inserted.id);
     }
-    const authUser = await authUserFromBearer(req).catch(() => null);
-    void sendMakeEvent('torneo_creado', {
-      nombre_torneo: String(inserted?.nombre || nombre || '').trim() || null,
-      sede_id: inserted?.sede_id ?? (sede_id ?? null),
-      tipo_torneo: String(inserted?.tipo_torneo || tipo_torneo || '').trim() || null,
-      fecha_inicio: inserted?.fecha_inicio || fecha_inicio || null,
-      admin_email:
-        String(authUser?.email || inserted?.created_by || created_by || '').trim().toLowerCase() || null,
-    });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2515,6 +2524,7 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
       .eq('id', eid);
 
     if (errUp) throw errUp;
+    await sendInscripcionTorneoMakeEvent({ equipoId: eid, torneoId: tid });
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ POST /api/torneos/confirmar-inscripcion:', err.message);
@@ -5587,6 +5597,15 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
 
       const { data, error } = await supabase.from('reservas').insert([ins]).select();
       if (error) throw error;
+      const createdReserva = Array.isArray(data) ? data[0] : null;
+      void sendMakeEvent('pago_exitoso', {
+        nombre: ins.nombre || null,
+        email: ins.email || null,
+        sede: ins.sede || null,
+        monto: createdReserva?.precio ?? ins.precio ?? null,
+        metodo_pago: 'stripe',
+        reserva_id: createdReserva?.id ?? null,
+      });
       sendReservaConfirmadaWhatsAppTwilio({
         email: ins.email,
         nombreFallback: ins.nombre,
@@ -5632,6 +5651,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
 
       const { error: errUp } = await supabase.from('equipos').update({ inscripcion_estado: 'confirmado' }).eq('id', eid);
       if (errUp) throw errUp;
+      await sendInscripcionTorneoMakeEvent({ equipoId: eid, torneoId: tid, emailHint: emailUser });
       return res.json({ ok: true, tipo: 'torneo' });
     }
 
@@ -5833,6 +5853,20 @@ async function handleStripeBillingWebhook(req, res) {
           })
           .eq('id', sedeId);
         if (error) throw error;
+        const monto = Number(inv.amount_paid ?? inv.amount_due ?? 0) / 100;
+        const { data: sedePago } = await supabase
+          .from('sedes')
+          .select('nombre, email_contacto')
+          .eq('id', sedeId)
+          .maybeSingle();
+        void sendMakeEvent('pago_exitoso', {
+          nombre: String(sedePago?.nombre || '').trim() || null,
+          email: String(sedePago?.email_contacto || '').trim().toLowerCase() || null,
+          sede: String(sedePago?.nombre || '').trim() || null,
+          monto: Number.isFinite(monto) ? monto : null,
+          metodo_pago: 'stripe',
+          reserva_id: null,
+        });
         console.log(`✓ Webhook invoice.payment_succeeded → suscripción activa sede ${sedeId}`);
         break;
       }
@@ -6106,6 +6140,15 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     ])
     .select();
   if (error) throw error;
+  const createdReserva = Array.isArray(data) ? data[0] : null;
+  void sendMakeEvent('pago_exitoso', {
+    nombre: String(nombre || '').trim() || null,
+    email: String(email || '').trim().toLowerCase() || null,
+    sede: String(sede || '').trim() || null,
+    monto: createdReserva?.precio ?? (precio != null ? parseInt(String(precio), 10) : null),
+    metodo_pago: 'mercadopago',
+    reserva_id: createdReserva?.id ?? null,
+  });
   sendReservaConfirmadaWhatsAppTwilio({
     email: String(email).trim().toLowerCase(),
     nombreFallback: nombre,
@@ -6115,6 +6158,41 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     nombreSede: sede,
   }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva (webhook MP):', err.message));
   return { ok: true, data };
+}
+
+async function sendInscripcionTorneoMakeEvent({ equipoId, torneoId, emailHint = '' }) {
+  const eid = parseInt(String(equipoId), 10);
+  const tid = parseInt(String(torneoId), 10);
+  if (!eid || !tid) return;
+  try {
+    const [{ data: eq }, { data: torneo }] = await Promise.all([
+      supabase
+        .from('equipos')
+        .select('id, nombre, creador_email')
+        .eq('id', eid)
+        .maybeSingle(),
+      supabase
+        .from('torneos')
+        .select('id, nombre, fecha_inicio, sede_id')
+        .eq('id', tid)
+        .maybeSingle(),
+    ]);
+    if (!eq || !torneo) return;
+    let sedeNombre = null;
+    if (torneo.sede_id != null) {
+      const { data: sede } = await supabase.from('sedes').select('nombre').eq('id', torneo.sede_id).maybeSingle();
+      sedeNombre = String(sede?.nombre || '').trim() || null;
+    }
+    void sendMakeEvent('inscripcion_torneo', {
+      nombre: String(eq.nombre || '').trim() || null,
+      email: String(emailHint || eq.creador_email || '').trim().toLowerCase() || null,
+      torneo: String(torneo.nombre || '').trim() || null,
+      sede: sedeNombre,
+      fecha_torneo: torneo.fecha_inicio || null,
+    });
+  } catch {
+    /* ignore Make sideflow data fetch errors */
+  }
 }
 
 async function confirmarTorneoInscripcionDesdePayloadMp(payload) {
@@ -6144,6 +6222,7 @@ async function confirmarTorneoInscripcionDesdePayloadMp(payload) {
   }
   const { error: errUp } = await supabase.from('equipos').update({ inscripcion_estado: 'confirmado' }).eq('id', eid);
   if (errUp) throw errUp;
+  await sendInscripcionTorneoMakeEvent({ equipoId: eid, torneoId: tid, emailHint: payload?.email });
   return { ok: true };
 }
 
@@ -6640,10 +6719,11 @@ async function ensureLicenciatarioAuthUserAndWelcomeEmail(email, opts = {}) {
     created = true;
   }
   if (created) {
-    void sendMakeEvent('usuario_registrado', {
+    void sendMakeEvent('jugador_registrado', {
       email: em,
       nombre: String(opts?.nombre || '').trim() || null,
       pais: String(opts?.pais || '').trim() || null,
+      ciudad: String(opts?.ciudad || '').trim() || null,
     });
   }
   await supabase.auth.resetPasswordForEmail(em, {
@@ -6954,6 +7034,7 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
     const authProvision = await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail, {
       nombre: String(b.licenciatario_nombre || '').trim() || null,
       pais: String(b.pais || '').trim() || null,
+      ciudad: String(b.ciudad || '').trim() || null,
     });
 
     const waLic = b.licenciatario_telefono || b.whatsapp;
@@ -7271,6 +7352,7 @@ app.post('/api/admin/sedes-pendientes/:id/aprobar', async (req, res) => {
     await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail, {
       nombre: String(pend.licenciatario_nombre || '').trim() || null,
       pais: String(pend.pais || '').trim() || null,
+      ciudad: String(pend.ciudad || '').trim() || null,
     });
 
     await supabase.from('sedes_pendientes').update({ estado: 'aprobada' }).eq('id', id);
