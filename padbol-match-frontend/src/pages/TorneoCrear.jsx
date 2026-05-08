@@ -506,7 +506,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   step="1"
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Monto total por equipo (ARS u otra moneda de la sede en Mercado Pago). Dejá vacío o 0 si no hay costo.
+                  Monto total por equipo (ARS u otra moneda de la sede en Mercado Pago). Deja vacío o 0 si no hay costo.
                 </small>
               </div>
 

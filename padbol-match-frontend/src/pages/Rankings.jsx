@@ -815,7 +815,7 @@ export default function Rankings() {
           {activeTab === 'local' &&
             (localPais || localProvincia || localCiudad
               ? `Ranking local · ${[localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · ')}`
-              : 'Ranking local · torneos de club finalizados (filtrá por ubicación o dejá Todos)')}
+              : 'Ranking local · torneos de club finalizados (filtrá por ubicación o deja Todos)')}
           {activeTab === 'nacional' &&
             (nacionalPais
               ? `Ranking nacional · ${countryLabelWithFlag(nacionalPais)}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`

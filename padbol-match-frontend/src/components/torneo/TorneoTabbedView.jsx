@@ -525,7 +525,7 @@ export default function TorneoTabbedView({
       await navigator.clipboard.writeText(u);
       setShareTorneoCopied(true);
     } catch {
-      window.prompt('Copiá este link:', u);
+      window.prompt('Copia este link:', u);
     }
   }, [shareTorneoMeta]);
 
@@ -679,7 +679,7 @@ export default function TorneoTabbedView({
       if (!isAdmin) return;
       if (partido.estado === 'finalizado') return;
       if (!puedeCargarResultados) {
-        alert('Iniciá el torneo para comenzar a cargar resultados.');
+        alert('Inicia el torneo para comenzar a cargar resultados.');
         return;
       }
       setSelectedPartido(partido);
@@ -828,7 +828,7 @@ export default function TorneoTabbedView({
     async (normOverride = null) => {
       if (!selectedPartido) return;
       if (!puedeCargarResultados) {
-        alert('Iniciá el torneo para comenzar a cargar resultados.');
+        alert('Inicia el torneo para comenzar a cargar resultados.');
         return;
       }
       const norm = normOverride
@@ -1428,7 +1428,7 @@ export default function TorneoTabbedView({
             lineHeight: 1.45,
           }}
         >
-          Iniciá el torneo para comenzar a cargar resultados.
+          Inicia el torneo para comenzar a cargar resultados.
         </p>
       ) : null}
       {partidosOrdenados.length === 0 ? (

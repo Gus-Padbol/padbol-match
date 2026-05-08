@@ -71,7 +71,7 @@ export default function ShareLinkButton({
       document.body.removeChild(ta);
       setCopiedMsg(true);
     } catch {
-      window.prompt('Copiá este link:', link);
+      window.prompt('Copia este link:', link);
     }
   }, []);
 

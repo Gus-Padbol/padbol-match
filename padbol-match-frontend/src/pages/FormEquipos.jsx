@@ -2139,7 +2139,7 @@ export default function FormEquipos() {
               </ul>
               {!session?.user ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#475569' }}>
-                  Iniciá sesión para confirmar tu lugar.
+                  Inicia sesión para confirmar tu lugar.
                 </p>
               ) : equipoCerradoNoSolicitudes ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#b45309', lineHeight: 1.45 }}>

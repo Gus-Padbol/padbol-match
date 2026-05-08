@@ -1071,7 +1071,7 @@ export default function MiPerfil() {
       const owner = sessionOwnerEmail;
       const userId = session?.user?.id ?? null;
       if (!owner || !userId) {
-        setErrorMsg('Iniciá sesión para cambiar la foto.');
+        setErrorMsg('Inicia sesión para cambiar la foto.');
         return;
       }
       if (!perfil) {

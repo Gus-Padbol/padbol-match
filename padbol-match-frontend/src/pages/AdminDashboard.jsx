@@ -2803,7 +2803,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const guardarPrecioPlanPricing = useCallback(
     async (id, precioStr) => {
       if (!session?.access_token) {
-        alert('Iniciá sesión para guardar.');
+        alert('Inicia sesión para guardar.');
         return;
       }
       setPlanPricingSavingId(id);
@@ -3357,7 +3357,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarMiSede = async () => {
     if (!sedeId || !session?.access_token) {
-      setMiSedeMsg('⚠️ Iniciá sesión de nuevo.');
+      setMiSedeMsg('⚠️ Inicia sesión de nuevo.');
       setTimeout(() => setMiSedeMsg(''), 4000);
       return;
     }
@@ -3438,7 +3438,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarEditarSedeModal = async () => {
     if (!sedeId || !session?.access_token) {
-      setEditarSedeModalMsg('Iniciá sesión de nuevo.');
+      setEditarSedeModalMsg('Inicia sesión de nuevo.');
       return;
     }
     setMiSedeSaving(true);
@@ -3520,7 +3520,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const iniciarStripeOnboarding = useCallback(async () => {
     if (!sedeId || !session?.access_token) {
-      alert('Iniciá sesión de nuevo para conectar Stripe.');
+      alert('Inicia sesión de nuevo para conectar Stripe.');
       return;
     }
     setStripeOnboardingLoading(true);
@@ -3919,7 +3919,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarCanchaModal = async () => {
     if (!sedeId || !session?.access_token) {
-      setCanchaModalMsg('Iniciá sesión de nuevo.');
+      setCanchaModalMsg('Inicia sesión de nuevo.');
       return;
     }
     const nombre = String(canchaModalDraft.nombre || '').trim();
@@ -6625,7 +6625,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 ) : planPricingRows.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ padding: '14px', textAlign: 'center', color: '#64748b' }}>
-                      No hay planes. Ejecutá el SQL <code style={{ fontSize: '12px' }}>plan_pricing.sql</code> en Supabase.
+                      No hay planes. Ejecuta el SQL <code style={{ fontSize: '12px' }}>plan_pricing.sql</code> en Supabase.
                     </td>
                   </tr>
                 ) : (

@@ -294,7 +294,7 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
       if (!token) {
-        setMsg('Sesión expirada. Iniciá sesión de nuevo.');
+        setMsg('Sesión expirada. Inicia sesión de nuevo.');
         return;
       }
       const res = await fetch(apiUrl('/api/stripe/confirmar-pago'), {
@@ -365,7 +365,7 @@ function ReservaStripeSection({
     const { data: sess } = await supabase.auth.getSession();
     const token = sess?.session?.access_token;
     if (!token) {
-      setPrepErr('Iniciá sesión para pagar.');
+      setPrepErr('Inicia sesión para pagar.');
       return;
     }
     setPreparing(true);
@@ -1472,7 +1472,7 @@ export default function ReservaForm() {
                         <div className="reserva-sede-card-body">
                           <h2 className="reserva-sede-card-name">{String(sede.nombre || 'Sede').trim()}</h2>
                           {esMasCercana ? (
-                            <p className="reserva-sede-card-nearby">Sede más cercana a vos</p>
+                            <p className="reserva-sede-card-nearby">Sede más cercana a ti</p>
                           ) : null}
                           <p className="reserva-sede-card-loc">
                             {flag ? <span className="reserva-sede-card-flag">{flag}</span> : null}
@@ -1536,7 +1536,7 @@ export default function ReservaForm() {
           </h1>
           {mostrarEtiquetaSedeMasCercanaGeo && sedeSeleccionada ? (
             <p className="reserva-p2-sede-mas-cercana" role="status">
-              📍 Sede más cercana a vos
+              📍 Sede más cercana a ti
             </p>
           ) : null}
 

@@ -351,7 +351,7 @@ function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
           fontWeight: 600,
         }}
       >
-        Deslizá hacia los lados para cambiar de foto
+        Desliza hacia los lados para cambiar de foto
       </p>
     </div>
   );
@@ -951,7 +951,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
           body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
             ? raw
             : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
-              ? 'Las reseñas no están disponibles: en Supabase debe existir y exponerse la tabla public.resenas. Ejecutá padbol-backend/sql/resenas_sedes.sql.'
+              ? 'Las reseñas no están disponibles: en Supabase debe existir y exponerse la tabla public.resenas. Ejecuta padbol-backend/sql/resenas_sedes.sql.'
               : raw || `Error ${r.status}`;
         throw new Error(friendly);
       }
@@ -1127,7 +1127,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
                   fontSize: 'inherit',
                 }}
               >
-                Iniciá sesión
+                Inicia sesión
               </button>{' '}
               para dejar tu reseña.
             </p>
@@ -1527,7 +1527,7 @@ export default function SedePublica() {
       document.body.removeChild(ta);
       setSedeShareCopied(true);
     } catch {
-      window.prompt('Copiá este link:', url);
+      window.prompt('Copia este link:', url);
     }
   }, [sedeId, sede]);
 
