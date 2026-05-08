@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Autocomplete } from '@react-google-maps/api';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
@@ -149,6 +149,26 @@ const CARGO_RESPONSABLE = [
   { value: 'otro', label: 'Otro' },
 ];
 
+const TIPO_INTERES_OPTIONS = [
+  {
+    value: 'Club Afiliado',
+    label: 'Club Afiliado',
+    descripcion:
+      'Acceso a la plataforma con suscripción mensual fija. Gestioná reservas, torneos y ranking.',
+  },
+  {
+    value: 'Padbol Point Franquicia',
+    label: 'Padbol Point Franquicia',
+    descripcion:
+      'Modelo de franquicia con porcentaje sobre reservas y torneos. Incluye soporte operativo de PADBOL.',
+  },
+  {
+    value: 'Master Nacional',
+    label: 'Master Nacional',
+    descripcion: 'Licencia para gestionar y representar a Padbol Match en tu país.',
+  },
+];
+
 function countries() {
   const m = new Map();
   [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach((p) => {
@@ -191,6 +211,7 @@ function getInitialForm() {
     direccion_fiscal: '',
     pais_fiscal: 'Argentina',
     mensaje: '',
+    tipo_interes: 'Club Afiliado',
   };
 }
 
@@ -230,6 +251,21 @@ export default function UnirsePage() {
   const paises = useMemo(() => countries(), []);
 
   const { isLoaded: placesLoaded, placesEnabled } = useGooglePlaces();
+
+  const [unirseVistaMobile, setUnirseVistaMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const apply = () => setUnirseVistaMobile(Boolean(mq.matches));
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  const tipoInteresDescripcion = useMemo(() => {
+    const hit = TIPO_INTERES_OPTIONS.find((o) => o.value === form.tipo_interes);
+    return hit?.descripcion || TIPO_INTERES_OPTIONS[0].descripcion;
+  }, [form.tipo_interes]);
 
   const paisIso2 = PAIS_NOMBRE_A_ISO2[form.pais] || null;
 
@@ -359,6 +395,7 @@ export default function UnirsePage() {
       direccion_fiscal: form.fiscal_misma_que_club ? null : form.direccion_fiscal.trim() || null,
       pais_fiscal: form.pais_fiscal.trim() || null,
       mensaje: form.mensaje.trim() || null,
+      tipo_interes: form.tipo_interes,
     };
 
     setSaving(true);
@@ -452,8 +489,8 @@ export default function UnirsePage() {
             <span style={{ fontSize: '15px', fontWeight: 800, color: '#4c1d95' }}>{PRECIO_MENSUAL_USD}</span>
           </div>
           <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-            Después del período de prueba, elegís mensual o anual · Modalidad única:{' '}
-            <strong>Club Afiliado</strong> (otros planes los define el equipo Padbol).
+            Después del período de prueba, elegís mensual o anual. En el formulario indicá el{' '}
+            <strong>tipo de interés</strong> que mejor encaje con tu club (Club Afiliado, Padbol Point o Master Nacional).
           </p>
         </section>
 
@@ -501,6 +538,94 @@ export default function UnirsePage() {
             title="Datos del club"
             subtitle="Información de la instalación que verán los jugadores y usaremos para contactarte."
           >
+            <label style={labelStyle}>Tipo de interés *</label>
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 10,
+                marginBottom: unirseVistaMobile ? 6 : 10,
+              }}
+            >
+              <select
+                style={{ ...inputStyle, flex: '1 1 auto', minWidth: 0, marginBottom: 0 }}
+                value={form.tipo_interes}
+                onChange={(e) => onField('tipo_interes', e.target.value)}
+                required
+                aria-describedby="unirse-tipo-interes-desc"
+              >
+                {TIPO_INTERES_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              {!unirseVistaMobile ? (
+                <>
+                  <span
+                    title={tipoInteresDescripcion}
+                    tabIndex={0}
+                    role="note"
+                    style={{
+                      flexShrink: 0,
+                      width: 36,
+                      height: 44,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 10,
+                      border: '1px solid #cbd5e1',
+                      background: '#f1f5f9',
+                      color: '#475569',
+                      fontWeight: 800,
+                      fontSize: 16,
+                      cursor: 'help',
+                      lineHeight: 1,
+                      boxSizing: 'border-box',
+                    }}
+                    aria-label={`Qué significa ${form.tipo_interes}: ${tipoInteresDescripcion}`}
+                  >
+                    ⓘ
+                  </span>
+                  <span
+                    id="unirse-tipo-interes-desc"
+                    style={{
+                      position: 'absolute',
+                      width: 1,
+                      height: 1,
+                      padding: 0,
+                      margin: -1,
+                      overflow: 'hidden',
+                      clip: 'rect(0,0,0,0)',
+                      whiteSpace: 'nowrap',
+                      border: 0,
+                    }}
+                  >
+                    {tipoInteresDescripcion}
+                  </span>
+                </>
+              ) : null}
+            </div>
+            {unirseVistaMobile ? (
+              <p
+                id="unirse-tipo-interes-desc"
+                style={{
+                  margin: '0 0 14px',
+                  fontSize: '13px',
+                  color: '#475569',
+                  lineHeight: 1.45,
+                  padding: '10px 12px',
+                  background: '#f1f5f9',
+                  borderRadius: 10,
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                {tipoInteresDescripcion}
+              </p>
+            ) : null}
+
             <label style={labelStyle}>Nombre del club *</label>
             <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
 

@@ -7565,6 +7565,14 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
       return null;
     })();
 
+    const TIPO_INTERES_SOLICITUD_VALID = new Set([
+      'Club Afiliado',
+      'Padbol Point Franquicia',
+      'Master Nacional',
+    ]);
+    const tipoInteresRaw = String(b.tipo_interes || '').trim();
+    const tipo_interes = TIPO_INTERES_SOLICITUD_VALID.has(tipoInteresRaw) ? tipoInteresRaw : 'Club Afiliado';
+
     const payload = {
       nombre_club: club_nombre,
       club_direccion,
@@ -7587,7 +7595,7 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
       fiscal_misma_que_club: fiscal_misma_que_club === true,
       pais_fiscal,
       cantidad_canchas: cantidadCanchasTotal,
-      tipo_interes: 'Club Afiliado',
+      tipo_interes,
       mensaje: String(b.mensaje || '').trim() || null,
       estado: 'pendiente',
       deportes_canchas: deportesCanchas,
