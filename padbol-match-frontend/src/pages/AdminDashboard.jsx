@@ -913,6 +913,74 @@ function sortReservasHoyAsc(arr) {
   return [...arr].sort((a, b) => key(a).localeCompare(key(b)));
 }
 
+/** Igual criterio que en backend (`normalizeEstadoCancha`). */
+function normalizeEstadoCanchaAdminDash(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (s === 'inactiva' || s === 'inactive' || s === 'false') return 'inactiva';
+  return 'activa';
+}
+
+function canchasConNumeroReservaAdminDash(rows) {
+  const list = Array.isArray(rows) ? [...rows] : [];
+  list.sort((a, b) => Number(a.id) - Number(b.id));
+  return list.map((c, i) => {
+    const o = c.orden != null && c.orden !== '' ? Number(c.orden) : NaN;
+    const numero_reserva = Number.isFinite(o) && o > 0 ? o : i + 1;
+    return { ...c, numero_reserva };
+  });
+}
+
+function parseHorarioHoraEnteraAdminDash(raw, defaultH) {
+  const s = String(raw || '').trim();
+  const m = /^(\d{1,2})/.exec(s);
+  if (!m) return defaultH;
+  const h = parseInt(m[1], 10);
+  return Number.isFinite(h) ? Math.min(23, Math.max(0, h)) : defaultH;
+}
+
+/** Inicio "HH:MM" desde `hora` tipo "10:00 - 11:30". */
+function normalizeHoraInicioReservaAdminDash(horaRaw) {
+  const t = String(horaRaw || '').split(' - ')[0].trim();
+  const m = /^(\d{1,2}):(\d{2})/.exec(t);
+  if (!m) return '';
+  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+  const mi = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+  return `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+}
+
+function minutosDesdeMedianocheHHMMAdminDash(hhmm) {
+  const m = /^(\d{2}):(\d{2})$/.exec(String(hhmm || '').trim());
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+function minutosInicioReservaAdminDash(r) {
+  const s = normalizeHoraInicioReservaAdminDash(r?.hora);
+  return minutosDesdeMedianocheHHMMAdminDash(s);
+}
+
+/** Inicios de turno posibles desde ahora hasta el cierre (ART), misma grilla que ReservaForm. */
+function futureSlotStartsArtAdminDash(sedeRow, ctx) {
+  const horaApertura = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_apertura, 10);
+  const horaCierre = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_cierre, 23);
+  const duracion = parseInt(sedeRow?.duracion_reserva_minutos, 10) || 90;
+  const { minutesNow } = ctx;
+  const out = [];
+  for (let h = horaApertura; h < horaCierre; h += 1) {
+    for (let m = 0; m < 60; m += duracion) {
+      const slotEndMinutes = m + duracion;
+      const slotEndHours = h + Math.floor(slotEndMinutes / 60);
+      const slotEndMins = slotEndMinutes % 60;
+      if (slotEndHours < horaCierre || (slotEndHours === horaCierre && slotEndMins === 0)) {
+        const horaInicio = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        const startMin = h * 60 + m;
+        if (startMin >= minutesNow) out.push(horaInicio);
+      }
+    }
+  }
+  return out;
+}
+
 function torneoProximoSinEmpezar(t) {
   const e = String(t?.estado || '').toLowerCase();
   if (e === 'finalizado' || e === 'cancelado') return false;
@@ -1200,6 +1268,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [equiposInscripcionRows, setEquiposInscripcionRows] = useState([]);
   /** sede_id → { total, activas } para ocupación de canchas. */
   const [canchasResumenPorSede, setCanchasResumenPorSede] = useState({});
+  /** sede_id → filas cancha (id, nombre, estado, orden, numero_reserva) para resumen admin_club. */
+  const [canchasDetallePorSede, setCanchasDetallePorSede] = useState({});
   const [partidosCountByTorneoId, setPartidosCountByTorneoId] = useState({});
   /** Debe declararse antes de `dashboardFinanciero` (useMemo) — ese memo lee equipos_count por torneo. */
   const [torneoStats, setTorneoStats] = useState({});
@@ -2232,6 +2302,89 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     partidosCountByTorneoId,
   ]);
 
+  /** Vista cancha por cancha (admin_club): solo datos ya en `reservas`, `sedesMap` y `canchasDetallePorSede`. */
+  const misCanchasHoyAdminClub = useMemo(() => {
+    if (!esAdminClub || sedeId == null || sedeId === '') return null;
+    const ctx = ahoraArgentinaPartes();
+    const hoyISO = ctx.hoyISO;
+    const sid = String(sedeId);
+    const sedeRow = sedesMap[sid];
+    if (!sedeRow) return null;
+
+    const reservasHoySede = reservas.filter((r) => {
+      if (String(r?.fecha || '').trim().slice(0, 10) !== hoyISO) return false;
+      const rSid = sedeIdDesdeNombreReserva(r.sede, sedesMap);
+      if (rSid == null || String(rSid) !== sid) return false;
+      return true;
+    });
+    const reservasHoyActivas = reservasHoySede.filter(
+      (r) => String(r?.estado || '').trim().toLowerCase() !== 'cancelada'
+    );
+
+    const stats = canchasResumenPorSede[sid] || { total: 0, activas: 0 };
+    const detalleRaw = canchasDetallePorSede[sid] || [];
+    let filasCancha = detalleRaw
+      .filter((c) => normalizeEstadoCanchaAdminDash(c.estado) !== 'inactiva')
+      .map((c) => ({
+        id: c.id,
+        numero: Number(c.numero_reserva),
+        nombre: String(c.nombre || '').trim() || `Cancha ${c.numero_reserva}`,
+      }))
+      .sort((a, b) => a.numero - b.numero);
+    if (!filasCancha.length && stats.activas > 0) {
+      filasCancha = Array.from({ length: stats.activas }, (_, i) => ({
+        id: null,
+        numero: i + 1,
+        nombre: `Cancha ${i + 1}`,
+      }));
+    }
+
+    const futureSlots = futureSlotStartsArtAdminDash(sedeRow, ctx);
+
+    const rows = filasCancha.map((fc) => {
+      const n = fc.numero;
+      const listCancha = reservasHoyActivas.filter((r) => parseInt(String(r.cancha), 10) === n);
+      const ocupados = listCancha.length;
+      let disponibles = null;
+      if (futureSlots.length) {
+        const takenStarts = new Set(
+          listCancha.map((r) => normalizeHoraInicioReservaAdminDash(r.hora)).filter(Boolean)
+        );
+        disponibles = futureSlots.filter((hhmm) => !takenStarts.has(hhmm)).length;
+      }
+
+      const proximas = listCancha
+        .map((r) => {
+          const mm = minutosInicioReservaAdminDash(r);
+          return { r, mm };
+        })
+        .filter((x) => x.mm != null && x.mm >= ctx.minutesNow)
+        .sort((a, b) => a.mm - b.mm);
+      const prox = proximas[0]?.r;
+      let proximaTexto = 'Sin reservas hoy';
+      if (prox) {
+        proximaTexto = `${horaRango(prox.hora, prox.duracion)} · ${String(prox.nombre || '').trim() || String(prox.email || '').trim() || 'Reserva'}`;
+      } else if (ocupados > 0) {
+        proximaTexto = 'Sin próximas reservas hoy';
+      }
+
+      return {
+        ...fc,
+        ocupados,
+        disponibles,
+        proximaTexto,
+      };
+    });
+
+    return {
+      fechaLabel: formatFechaDia(hoyISO),
+      nombreSede: String(sedeRow.nombre || '').trim() || 'Mi sede',
+      sinCanchasActivas: filasCancha.length === 0,
+      rows,
+      totalReservasHoySede: reservasHoyActivas.length,
+    };
+  }, [esAdminClub, sedeId, reservas, sedesMap, canchasDetallePorSede, canchasResumenPorSede]);
+
   const resumenOperativoSecciones = useMemo(() => {
     const p = resumenPanelDiario;
     const alertasContratosPorVencer = isSuperAdmin
@@ -3078,7 +3231,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         } else {
           const { data: sedesRows, error: sedesErr } = await supabase
             .from('sedes')
-            .select('id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia');
+            .select(
+              'id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia, horario_apertura, horario_cierre, duracion_reserva_minutos'
+            );
           if (!sedesErr) {
             allSedesRows = sedesRows || [];
           }
@@ -3185,20 +3340,33 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setEquiposInscripcionRows(eqIns);
 
       const canchasMap = {};
+      const detallePorSede = {};
       if (sedesAlcance.length > 0) {
         const sidList = sedesAlcance.map((s) => s.id).filter((id) => id != null && id !== '');
         if (sidList.length > 0) {
-          const { data: canRows } = await supabase.from('canchas').select('sede_id, estado').in('sede_id', sidList);
+          const { data: canRows } = await supabase
+            .from('canchas')
+            .select('id, sede_id, nombre, estado, orden')
+            .in('sede_id', sidList)
+            .order('id', { ascending: true });
+          const bySede = {};
           for (const row of canRows || []) {
             const sid = String(row.sede_id);
-            if (!canchasMap[sid]) canchasMap[sid] = { total: 0, activas: 0 };
-            canchasMap[sid].total += 1;
-            const est = String(row.estado || 'activa').toLowerCase();
-            if (est !== 'inactiva') canchasMap[sid].activas += 1;
+            if (!bySede[sid]) bySede[sid] = [];
+            bySede[sid].push(row);
+          }
+          for (const sid of Object.keys(bySede)) {
+            const enriched = canchasConNumeroReservaAdminDash(bySede[sid]);
+            detallePorSede[sid] = enriched;
+            canchasMap[sid] = {
+              total: enriched.length,
+              activas: enriched.filter((c) => normalizeEstadoCanchaAdminDash(c.estado) !== 'inactiva').length,
+            };
           }
         }
       }
       setCanchasResumenPorSede(canchasMap);
+      setCanchasDetallePorSede(detallePorSede);
 
       const partidosCnt = {};
       if (torneoIds.length > 0) {
@@ -4647,6 +4815,62 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ) : (
         <>
         {resumenOperativoSecciones}
+        {esAdminClub && misCanchasHoyAdminClub ? (
+          <div
+            className="section"
+            style={{
+              marginBottom: '18px',
+              background: '#fff',
+              borderRadius: '14px',
+              padding: '16px 18px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+              color: '#1e293b',
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '6px', color: '#334155', fontSize: '18px' }}>Mis canchas hoy</h2>
+            <p style={{ margin: '0 0 14px', color: '#64748b', fontSize: '13px', fontWeight: 600 }}>
+              {misCanchasHoyAdminClub.nombreSede} · {misCanchasHoyAdminClub.fechaLabel}
+            </p>
+            {misCanchasHoyAdminClub.sinCanchasActivas ? (
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px', fontWeight: 600 }}>
+                Sin canchas activas cargadas. Configuralas en «Mi sede».
+              </p>
+            ) : misCanchasHoyAdminClub.totalReservasHoySede === 0 ? (
+              <p style={{ margin: '0 0 12px', color: '#64748b', fontSize: '14px', fontWeight: 700 }}>Sin reservas hoy</p>
+            ) : null}
+            {!misCanchasHoyAdminClub.sinCanchasActivas ? (
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {misCanchasHoyAdminClub.rows.map((row) => (
+                  <li
+                    key={row.id != null ? `c-${row.id}` : `c-num-${row.numero}`}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px', marginBottom: '6px' }}>
+                      {row.nombre}
+                      <span style={{ color: '#64748b', fontWeight: 700, fontSize: '13px', marginLeft: '8px' }}>
+                        (n.º {row.numero})
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5 }}>
+                      <span style={{ color: '#64748b', fontWeight: 700 }}>Slots ocupados hoy:</span> {row.ocupados}
+                      <span style={{ margin: '0 10px', color: '#cbd5e1' }}>|</span>
+                      <span style={{ color: '#64748b', fontWeight: 700 }}>Slots disponibles hoy:</span>{' '}
+                      {row.disponibles == null ? '—' : row.disponibles}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#334155', marginTop: '6px', fontWeight: 600 }}>
+                      <span style={{ color: '#64748b', fontWeight: 700 }}>Próxima reserva:</span> {row.proximaTexto}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
             Período del resumen financiero
