@@ -83,20 +83,6 @@ export default function AccesoCuenta() {
     navigate(-1);
   }, [navigate]);
 
-  /** WebKit dispara `animationstart` al autocompletar (ver AccesoCuenta.css); evita que el layout quede desplazado. */
-  useEffect(() => {
-    const onAnimationStart = (ev) => {
-      if (ev.animationName !== 'pm-acceso-autofill') return;
-      const t = ev.target;
-      if (!(t instanceof HTMLElement) || !t.classList.contains('acceso-cuenta-input')) return;
-      window.requestAnimationFrame(() => {
-        window.scrollTo({ top: 0 });
-      });
-    };
-    window.addEventListener('animationstart', onAnimationStart, true);
-    return () => window.removeEventListener('animationstart', onAnimationStart, true);
-  }, []);
-
   const afterLogin = useCallback(
     async (sessionArg) => {
       const s = sessionArg ?? null;
@@ -253,6 +239,7 @@ export default function AccesoCuenta() {
 
   return (
     <div
+      className="acceso-cuenta-page"
       style={{
         minHeight: 'auto',
         width: '100%',

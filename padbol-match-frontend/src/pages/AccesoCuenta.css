@@ -8,10 +8,13 @@
   }
 }
 
-input.acceso-cuenta-input:-webkit-autofill,
-input.acceso-cuenta-input:-webkit-autofill:hover,
-input.acceso-cuenta-input:-webkit-autofill:focus,
-input.acceso-cuenta-input:-webkit-autofill:active {
+/* Solo el estado base autofill: :hover/:focus/:active disparan animationstart al usar el dropdown del navegador y rompían el scroll. */
+input.acceso-cuenta-input:-webkit-autofill {
   animation-name: pm-acceso-autofill;
   animation-duration: 0.001s;
+}
+
+/* Evita scroll suave del documento al enfocar el email (p. ej. sugerencias de autocompletado). */
+.acceso-cuenta-page {
+  scroll-behavior: auto;
 }
