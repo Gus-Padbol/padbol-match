@@ -121,7 +121,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
     if (!pre || typeof pre !== 'object') return;
     setForm((prev) => ({
       ...prev,
-      nombre: String(pre.club_nombre || '').trim() || prev.nombre,
+      nombre: String(pre.nombre_club || pre.club_nombre || '').trim() || prev.nombre,
       pais: String(pre.pais || '').trim() || prev.pais,
       ciudad: String(pre.ciudad || '').trim() || prev.ciudad,
       licenciatario_nombre: String(pre.responsable_nombre || '').trim() || prev.licenciatario_nombre,

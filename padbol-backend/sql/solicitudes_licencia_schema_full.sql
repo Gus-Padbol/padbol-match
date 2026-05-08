@@ -6,7 +6,7 @@
 
 CREATE TABLE IF NOT EXISTS public.solicitudes_licencia (
   id bigserial PRIMARY KEY,
-  club_nombre text NOT NULL,
+  nombre_club text NOT NULL,
   pais text NOT NULL,
   ciudad text NOT NULL,
   responsable_nombre text NOT NULL,

@@ -1674,7 +1674,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         idKey: `lw-${s.id}`,
         estado,
         created_at: s.created_at,
-        clubNombre: String(s.club_nombre || '').trim() || '—',
+        clubNombre: String(s.nombre_club || s.club_nombre || '').trim() || '—',
         pais: String(s.pais || '').trim() || '—',
         ciudad: String(s.ciudad || '').trim() || '—',
         responsableNombre: String(s.responsable_nombre || '').trim() || '—',

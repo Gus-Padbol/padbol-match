@@ -7476,7 +7476,7 @@ function buildWhatsAppSolicitudLicenciaCompleta(payload, deportesCanchas) {
     '🏟️ Nueva solicitud — Club Afiliado',
     '',
     '▸ DATOS DEL CLUB',
-    `Nombre: ${orDash(payload.club_nombre)}`,
+    `Nombre: ${orDash(payload.nombre_club || payload.club_nombre)}`,
     `Dirección: ${orDash(payload.club_direccion)}`,
     `Ciudad: ${orDash(payload.ciudad)}`,
     `Provincia / Estado: ${orDash(payload.provincia_estado)}`,
@@ -7511,7 +7511,7 @@ function buildWhatsAppSolicitudLicenciaCompleta(payload, deportesCanchas) {
 app.post('/api/solicitudes-licencia', async (req, res) => {
   try {
     const b = req.body || {};
-    const club_nombre = String(b.club_nombre || '').trim();
+    const club_nombre = String(b.club_nombre || b.nombre_club || '').trim();
     const club_direccion = String(b.club_direccion || '').trim();
     const pais = String(b.pais || '').trim();
     const ciudad = String(b.ciudad || '').trim();
@@ -7566,7 +7566,7 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
     })();
 
     const payload = {
-      club_nombre,
+      nombre_club: club_nombre,
       club_direccion,
       pais,
       ciudad,
