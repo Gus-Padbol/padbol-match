@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
@@ -26,6 +27,32 @@ const inputBase = {
   border: '1px solid #cbd5e1',
   WebkitAppearance: 'none',
 };
+
+const GOOGLE_LIBRARIES = ['places'];
+
+function normalizeText(v) {
+  return String(v || '')
+    .replace(/^[\p{Emoji_Presentation}\s]+/u, '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function mapCountryToPaisOption(countryName) {
+  const cn = normalizeText(countryName);
+  if (!cn) return '';
+  const hit = PAISES_SEDE_OPTIONS.find((opt) => {
+    const labelNorm = normalizeText(opt.label);
+    if (!labelNorm) return false;
+    return labelNorm.includes(cn) || cn.includes(labelNorm);
+  });
+  return hit?.value || '';
+}
+
+function componentByType(parts, type) {
+  return (parts || []).find((p) => Array.isArray(p.types) && p.types.includes(type)) || null;
+}
 
 function matchPlanForTotal(planes, total) {
   const n = Math.max(0, Math.floor(Number(total) || 0));
@@ -57,6 +84,9 @@ const initialState = () => ({
   provincia: '',
   ciudad: '',
   direccion: '',
+  codigo_postal: '',
+  latitud: null,
+  longitud: null,
   /** dep key -> string count */
   canchasPorDeporte: {},
   email_contacto: '',
@@ -69,10 +99,20 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
   const [planPricing, setPlanPricing] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [placesInputValue, setPlacesInputValue] = useState('');
+  const autocompleteRef = useRef(null);
+  const placesKey = String(process.env.REACT_APP_GOOGLE_PLACES_KEY || '').trim();
+  const placesEnabled = Boolean(placesKey);
+  const { isLoaded: placesLoaded } = useJsApiLoader({
+    id: 'padbol-google-places',
+    googleMapsApiKey: placesKey || 'disabled',
+    libraries: GOOGLE_LIBRARIES,
+  });
 
   useEffect(() => {
     if (!open) return;
     setSt(initialState());
+    setPlacesInputValue('');
     setPlanPricingLoading(true);
     fetch(`${apiBaseUrl}/api/plan-pricing`)
       .then((r) => r.json())
@@ -80,6 +120,10 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
       .catch(() => setPlanPricing([]))
       .finally(() => setPlanPricingLoading(false));
   }, [open, apiBaseUrl]);
+
+  useEffect(() => {
+    setPlacesInputValue(String(st.direccion || ''));
+  }, [st.direccion]);
 
   const setField = useCallback((key, val) => {
     setSt((prev) => ({ ...prev, [key]: val }));
@@ -102,6 +146,10 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
     if (st.step === 1) {
       if (!String(st.nombre || '').trim()) {
         alert('Completá el nombre de la sede.');
+        return;
+      }
+      if (!String(st.direccion || '').trim()) {
+        alert('Completá la dirección.');
         return;
       }
       if (!String(st.pais || '').trim()) {
@@ -155,8 +203,8 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
         precio_turno: null,
         moneda: 'ARS',
         google_maps_url: null,
-        latitud: null,
-        longitud: null,
+        latitud: st.latitud != null ? Number(st.latitud) : null,
+        longitud: st.longitud != null ? Number(st.longitud) : null,
         horario_apertura: null,
         horario_cierre: null,
         cantidad_canchas: totalCanchas,
@@ -192,6 +240,43 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
       setSaving(false);
     }
   }, [apiBaseUrl, accessToken, onClose, onSuccess, st, totalCanchas]);
+
+  const handlePlaceChanged = useCallback(() => {
+    try {
+      const place = autocompleteRef.current?.getPlace?.();
+      if (!place) return;
+      const comps = Array.isArray(place.address_components) ? place.address_components : [];
+      const route = componentByType(comps, 'route')?.long_name || '';
+      const streetNumber = componentByType(comps, 'street_number')?.long_name || '';
+      const city =
+        componentByType(comps, 'locality')?.long_name ||
+        componentByType(comps, 'postal_town')?.long_name ||
+        componentByType(comps, 'administrative_area_level_2')?.long_name ||
+        '';
+      const province = componentByType(comps, 'administrative_area_level_1')?.long_name || '';
+      const countryLong = componentByType(comps, 'country')?.long_name || '';
+      const postalCode = componentByType(comps, 'postal_code')?.long_name || '';
+      const formattedAddress = String(place.formatted_address || '').trim();
+      const direccionCompuesta = [route, streetNumber].filter(Boolean).join(' ').trim();
+      const direccionFinal = direccionCompuesta || formattedAddress || placesInputValue.trim();
+      const lat = typeof place.geometry?.location?.lat === 'function' ? place.geometry.location.lat() : null;
+      const lng = typeof place.geometry?.location?.lng === 'function' ? place.geometry.location.lng() : null;
+      const mappedCountry = mapCountryToPaisOption(countryLong);
+
+      setSt((prev) => ({
+        ...prev,
+        direccion: direccionFinal || prev.direccion,
+        ciudad: city || prev.ciudad,
+        provincia: province || prev.provincia,
+        pais: mappedCountry || prev.pais,
+        codigo_postal: postalCode || prev.codigo_postal || '',
+        latitud: Number.isFinite(lat) ? lat : prev.latitud,
+        longitud: Number.isFinite(lng) ? lng : prev.longitud,
+      }));
+    } catch {
+      /* ignore */
+    }
+  }, [placesInputValue]);
 
   if (!open) return null;
 
@@ -322,14 +407,43 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
               />
             </label>
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
-              Dirección
-              <input
-                type="text"
-                value={st.direccion}
-                onChange={(e) => setField('direccion', e.target.value)}
-                placeholder="Calle y número"
-                style={{ ...inputBase, marginTop: 8 }}
-              />
+              Dirección *
+              {placesEnabled && placesLoaded ? (
+                <Autocomplete
+                  onLoad={(ac) => {
+                    autocompleteRef.current = ac;
+                  }}
+                  onPlaceChanged={handlePlaceChanged}
+                  options={{
+                    fields: ['address_components', 'formatted_address', 'geometry'],
+                    types: ['address'],
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={placesInputValue}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setPlacesInputValue(v);
+                      setField('direccion', v);
+                    }}
+                    placeholder="Buscá una dirección real"
+                    style={{ ...inputBase, marginTop: 8 }}
+                    autoComplete="street-address"
+                  />
+                </Autocomplete>
+              ) : (
+                <input
+                  type="text"
+                  value={st.direccion}
+                  onChange={(e) => setField('direccion', e.target.value)}
+                  placeholder={
+                    placesEnabled ? 'Cargando Google Places…' : 'Configurá REACT_APP_GOOGLE_PLACES_KEY'
+                  }
+                  style={{ ...inputBase, marginTop: 8 }}
+                  autoComplete="street-address"
+                />
+              )}
             </label>
           </div>
         ) : null}
