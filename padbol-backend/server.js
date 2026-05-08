@@ -7525,9 +7525,9 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
     const club_telefono = String(b.club_telefono || '').trim() || null;
     const club_email = String(b.club_email || '').trim().toLowerCase() || null;
     const club_web = String(b.club_web || '').trim() || null;
-    const tipo_instalacion = normalizeTipoInstalacionSolicitud(b.tipo_instalacion);
-    const horario_apertura = String(b.horario_apertura || '').trim();
-    const horario_cierre = String(b.horario_cierre || '').trim();
+    const tipo_instalacion = normalizeTipoInstalacionSolicitud(b.tipo_instalacion) || null;
+    const horario_apertura = String(b.horario_apertura || '').trim() || null;
+    const horario_cierre = String(b.horario_cierre || '').trim() || null;
     const responsable_nombre = String(b.responsable_nombre || '').trim();
     const responsable_cargo = normalizeResponsableCargoSolicitud(b.responsable_cargo);
     const email = String(b.email || '').trim().toLowerCase();
@@ -7543,9 +7543,9 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
       !club_direccion ||
       !pais ||
       !ciudad ||
-      !tipo_instalacion ||
-      !horario_apertura ||
-      !horario_cierre ||
+      !provincia_estado ||
+      !club_telefono ||
+      !club_email ||
       !responsable_nombre ||
       !responsable_cargo ||
       !email ||

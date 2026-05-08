@@ -1,121 +1,8 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Autocomplete } from '@react-google-maps/api';
-import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import AppHeader from '../components/AppHeader';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
-
-/** ISO 3166-1 alpha-2 para componentRestrictions de Places (por nombre del selector). */
-const PAIS_NOMBRE_A_ISO2 = {
-  Argentina: 'ar',
-  España: 'es',
-  Italia: 'it',
-  Francia: 'fr',
-  Alemania: 'de',
-  Rumania: 'ro',
-  Austria: 'at',
-  'Estados Unidos': 'us',
-  Brasil: 'br',
-  Uruguay: 'uy',
-  Chile: 'cl',
-  Colombia: 'co',
-  México: 'mx',
-  Australia: 'au',
-  Bélgica: 'be',
-  Bolivia: 'bo',
-  Canadá: 'ca',
-  China: 'cn',
-  Croacia: 'hr',
-  Ecuador: 'ec',
-  Grecia: 'gr',
-  Honduras: 'hn',
-  Hungría: 'hu',
-  Israel: 'il',
-  Japón: 'jp',
-  Marruecos: 'ma',
-  Noruega: 'no',
-  'Países Bajos': 'nl',
-  Paraguay: 'py',
-  Perú: 'pe',
-  Polonia: 'pl',
-  Portugal: 'pt',
-  'Reino Unido': 'gb',
-  Rusia: 'ru',
-  Serbia: 'rs',
-  Suecia: 'se',
-  Suiza: 'ch',
-  Turquía: 'tr',
-  Ucrania: 'ua',
-  Venezuela: 've',
-};
-
-/** long_name de Google (p. ej. en inglés) → mismo value que el selector de país. */
-const GOOGLE_LONG_TO_NOMBRE = {
-  argentina: 'Argentina',
-  spain: 'España',
-  italy: 'Italia',
-  france: 'Francia',
-  germany: 'Alemania',
-  romania: 'Rumania',
-  austria: 'Austria',
-  'united states': 'Estados Unidos',
-  brazil: 'Brasil',
-  uruguay: 'Uruguay',
-  chile: 'Chile',
-  colombia: 'Colombia',
-  mexico: 'México',
-  australia: 'Australia',
-  belgium: 'Bélgica',
-  bolivia: 'Bolivia',
-  canada: 'Canadá',
-  china: 'China',
-  croatia: 'Croacia',
-  ecuador: 'Ecuador',
-  greece: 'Grecia',
-  honduras: 'Honduras',
-  hungary: 'Hungría',
-  israel: 'Israel',
-  japan: 'Japón',
-  morocco: 'Marruecos',
-  norway: 'Noruega',
-  netherlands: 'Países Bajos',
-  paraguay: 'Paraguay',
-  peru: 'Perú',
-  poland: 'Polonia',
-  portugal: 'Portugal',
-  'united kingdom': 'Reino Unido',
-  russia: 'Rusia',
-  serbia: 'Serbia',
-  sweden: 'Suecia',
-  switzerland: 'Suiza',
-  turkey: 'Turquía',
-  ukraine: 'Ucrania',
-  venezuela: 'Venezuela',
-};
-
-function normalizeText(v) {
-  return String(v || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
-function componentByType(parts, type) {
-  return (parts || []).find((p) => Array.isArray(p.types) && p.types.includes(type)) || null;
-}
-
-function googleCountryToFormPais(countryLong) {
-  const raw = String(countryLong || '').trim();
-  if (!raw) return '';
-  const n = normalizeText(raw);
-  const fromSyn = GOOGLE_LONG_TO_NOMBRE[n];
-  if (fromSyn) return fromSyn;
-  const lista = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
-  const hit = lista.find((p) => normalizeText(p.nombre) === n);
-  return hit?.nombre || '';
-}
 
 const API_BASE =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -136,12 +23,6 @@ const DEPORTES_OPCIONES = [
 
 const DEPORTES_INICIAL = { padbol: false, padel: false, pickleball: false, otro: false };
 const CANCHAS_INICIAL = { padbol: '', padel: '', pickleball: '', otro: '' };
-
-const TIPO_INSTALACION = [
-  { value: 'indoor', label: 'Indoor' },
-  { value: 'outdoor', label: 'Outdoor' },
-  { value: 'mixto', label: 'Mixto' },
-];
 
 const CARGO_RESPONSABLE = [
   { value: 'propietario', label: 'Propietario' },
@@ -165,18 +46,12 @@ function getInitialForm() {
   return {
     club_nombre: '',
     club_direccion: '',
-    /** Coordenadas del último lugar elegido en Places (no se envían al backend con el esquema actual). */
-    latitud: null,
-    longitud: null,
     pais: 'Argentina',
     ciudad: '',
     provincia_estado: '',
     club_telefono: '',
     club_email: '',
     club_web: '',
-    tipo_instalacion: 'mixto',
-    horario_apertura: '',
-    horario_cierre: '',
     deportes: { ...DEPORTES_INICIAL },
     canchas_por_deporte: { ...CANCHAS_INICIAL },
     responsable_nombre: '',
@@ -225,55 +100,9 @@ export default function UnirsePage() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [form, setForm] = useState(getInitialForm);
-  const [placesInputValue, setPlacesInputValue] = useState('');
-  const autocompleteRef = useRef(null);
   const paises = useMemo(() => countries(), []);
 
-  const { isLoaded: placesLoaded, placesEnabled } = useGooglePlaces();
-
-  const paisIso2 = PAIS_NOMBRE_A_ISO2[form.pais] || null;
-
   const onField = (k, v) => setForm((p) => ({ ...p, [k]: v }));
-
-  const handlePlaceChanged = useCallback(() => {
-    const ac = autocompleteRef.current;
-    if (!ac) return;
-    try {
-      const place = ac.getPlace();
-      if (!place?.address_components) return;
-      const comps = place.address_components;
-      const route = componentByType(comps, 'route')?.long_name || '';
-      const streetNumber = componentByType(comps, 'street_number')?.long_name || '';
-      const city =
-        componentByType(comps, 'locality')?.long_name ||
-        componentByType(comps, 'postal_town')?.long_name ||
-        componentByType(comps, 'administrative_area_level_2')?.long_name ||
-        '';
-      const province = componentByType(comps, 'administrative_area_level_1')?.long_name || '';
-      const countryLong = componentByType(comps, 'country')?.long_name || '';
-      const formattedAddress = String(place.formatted_address || '').trim();
-      const direccionCompuesta = [route, streetNumber].filter(Boolean).join(' ').trim();
-      const direccionFinal = direccionCompuesta || formattedAddress || '';
-      const latRaw = place.geometry?.location?.lat();
-      const lngRaw = place.geometry?.location?.lng();
-      const lat = typeof latRaw === 'number' && Number.isFinite(latRaw) ? latRaw : null;
-      const lng = typeof lngRaw === 'number' && Number.isFinite(lngRaw) ? lngRaw : null;
-      const mappedPais = googleCountryToFormPais(countryLong);
-
-      setForm((prev) => ({
-        ...prev,
-        club_direccion: direccionFinal || prev.club_direccion,
-        ciudad: city || prev.ciudad,
-        provincia_estado: province || prev.provincia_estado,
-        pais: mappedPais || prev.pais,
-        latitud: lat,
-        longitud: lng,
-      }));
-      setPlacesInputValue(direccionFinal || '');
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   const onDeporteToggle = (key, checked) => {
     setForm((p) => ({
@@ -296,8 +125,9 @@ export default function UnirsePage() {
       !form.club_direccion.trim() ||
       !form.pais.trim() ||
       !form.ciudad.trim() ||
-      !form.horario_apertura.trim() ||
-      !form.horario_cierre.trim() ||
+      !form.provincia_estado.trim() ||
+      !form.club_telefono.trim() ||
+      !form.club_email.trim() ||
       !form.responsable_nombre.trim() ||
       !form.email.trim() ||
       !form.whatsapp.trim()
@@ -345,9 +175,9 @@ export default function UnirsePage() {
       club_telefono: form.club_telefono.trim() || null,
       club_email: clubEmailTrim || null,
       club_web: form.club_web.trim() || null,
-      tipo_instalacion: form.tipo_instalacion,
-      horario_apertura: form.horario_apertura.trim(),
-      horario_cierre: form.horario_cierre.trim(),
+      tipo_instalacion: null,
+      horario_apertura: null,
+      horario_cierre: null,
       deportes_canchas,
       responsable_nombre: form.responsable_nombre.trim(),
       responsable_cargo: form.responsable_cargo,
@@ -372,7 +202,6 @@ export default function UnirsePage() {
       if (!res.ok) throw new Error(j.error || res.statusText);
       setMsg('Solicitud enviada. Te contactaremos pronto.');
       setForm(getInitialForm());
-      setPlacesInputValue('');
     } catch (e2) {
       setErr(e2?.message || 'No se pudo enviar la solicitud');
     } finally {
@@ -432,8 +261,8 @@ export default function UnirsePage() {
             Suma tu club a Padbol Match
           </h1>
           <p style={{ color: '#475569', margin: '0 0 16px', lineHeight: 1.55, fontSize: '15px', textAlign: 'center' }}>
-            Completa los datos de tu instalación como en las plataformas profesionales: información del club, responsable
-            y datos fiscales. Te ayudamos a activar reservas, torneos y visibilidad para jugadores.
+            Dejanos los datos básicos del club y un contacto. Horarios, tipo de instalación y el resto de la ficha los
+            completás después desde tu panel.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
             <span
@@ -504,24 +333,7 @@ export default function UnirsePage() {
             <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
 
             <label style={{ ...labelStyle, ...rowGap }}>País *</label>
-            <select
-              style={inputStyle}
-              value={form.pais}
-              onChange={(e) => {
-                const next = e.target.value;
-                setPlacesInputValue('');
-                setForm((p) => ({
-                  ...p,
-                  pais: next,
-                  club_direccion: '',
-                  ciudad: '',
-                  provincia_estado: '',
-                  latitud: null,
-                  longitud: null,
-                }));
-              }}
-              required
-            >
+            <select style={inputStyle} value={form.pais} onChange={(e) => onField('pais', e.target.value)} required>
               {paises.map((p) => (
                 <option key={p.nombre} value={p.nombre}>
                   {p.bandera ? `${p.bandera} ` : ''}{p.nombre}
@@ -530,88 +342,43 @@ export default function UnirsePage() {
             </select>
 
             <label style={{ ...labelStyle, ...rowGap }}>Dirección *</label>
-            {placesEnabled && placesLoaded ? (
-              <Autocomplete
-                key={form.pais}
-                onLoad={(ac) => {
-                  autocompleteRef.current = ac;
-                }}
-                onPlaceChanged={handlePlaceChanged}
-                options={{
-                  ...(paisIso2 ? { componentRestrictions: { country: paisIso2 } } : {}),
-                  fields: ['address_components', 'formatted_address', 'geometry'],
-                  types: ['address'],
-                }}
-              >
-                <input
-                  style={inputStyle}
-                  value={placesInputValue}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setPlacesInputValue(v);
-                    onField('club_direccion', v);
-                  }}
-                  placeholder="Busca calle y número (Google Places)"
-                  autoComplete="street-address"
-                  required
-                />
-              </Autocomplete>
-            ) : (
-              <input
-                style={inputStyle}
-                value={placesInputValue}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setPlacesInputValue(v);
-                  onField('club_direccion', v);
-                }}
-                placeholder={
-                  placesEnabled ? 'Cargando Google Places…' : 'Configura REACT_APP_GOOGLE_PLACES_KEY para autocompletar'
-                }
-                autoComplete="street-address"
-                required
-              />
-            )}
-            {!placesEnabled ? (
-              <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
-                Sin clave de Google Places puedes escribir la dirección a mano; igual se envía el texto ingresado.
-              </p>
-            ) : null}
+            <input
+              style={inputStyle}
+              value={form.club_direccion}
+              onChange={(e) => onField('club_direccion', e.target.value)}
+              placeholder="Calle, número, barrio, referencias…"
+              autoComplete="street-address"
+              required
+            />
 
             <label style={{ ...labelStyle, ...rowGap }}>Ciudad *</label>
             <input style={inputStyle} value={form.ciudad} onChange={(e) => onField('ciudad', e.target.value)} required />
 
-            <label style={{ ...labelStyle, ...rowGap }}>Provincia / Estado</label>
-            <input style={inputStyle} value={form.provincia_estado} onChange={(e) => onField('provincia_estado', e.target.value)} />
+            <label style={{ ...labelStyle, ...rowGap }}>Provincia / Estado *</label>
+            <input style={inputStyle} value={form.provincia_estado} onChange={(e) => onField('provincia_estado', e.target.value)} required />
 
-            <label style={{ ...labelStyle, ...rowGap }}>Teléfono del club</label>
-            <input style={inputStyle} value={form.club_telefono} onChange={(e) => onField('club_telefono', e.target.value)} placeholder="+54…" inputMode="tel" />
+            <label style={{ ...labelStyle, ...rowGap }}>Teléfono del club *</label>
+            <input
+              style={inputStyle}
+              value={form.club_telefono}
+              onChange={(e) => onField('club_telefono', e.target.value)}
+              placeholder="+54…"
+              inputMode="tel"
+              required
+            />
 
-            <label style={{ ...labelStyle, ...rowGap }}>Email del club</label>
-            <input type="email" style={inputStyle} value={form.club_email} onChange={(e) => onField('club_email', e.target.value)} autoComplete="off" />
+            <label style={{ ...labelStyle, ...rowGap }}>Email del club *</label>
+            <input
+              type="email"
+              style={inputStyle}
+              value={form.club_email}
+              onChange={(e) => onField('club_email', e.target.value)}
+              autoComplete="email"
+              required
+            />
 
-            <label style={{ ...labelStyle, ...rowGap }}>Sitio web</label>
+            <label style={{ ...labelStyle, ...rowGap }}>Sitio web (opcional)</label>
             <input style={inputStyle} value={form.club_web} onChange={(e) => onField('club_web', e.target.value)} placeholder="https://…" inputMode="url" />
-
-            <label style={{ ...labelStyle, ...rowGap }}>Tipo de instalación *</label>
-            <select style={inputStyle} value={form.tipo_instalacion} onChange={(e) => onField('tipo_instalacion', e.target.value)} required>
-              {TIPO_INSTALACION.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginTop: 14 }}>
-              <div>
-                <label style={labelStyle}>Horario apertura *</label>
-                <input type="time" style={inputStyle} value={form.horario_apertura} onChange={(e) => onField('horario_apertura', e.target.value)} required />
-              </div>
-              <div>
-                <label style={labelStyle}>Horario cierre *</label>
-                <input type="time" style={inputStyle} value={form.horario_cierre} onChange={(e) => onField('horario_cierre', e.target.value)} required />
-              </div>
-            </div>
 
             <p style={{ ...labelStyle, marginTop: 18, marginBottom: 8 }}>Deportes disponibles * (uno o más)</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
