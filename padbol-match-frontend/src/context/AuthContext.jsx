@@ -81,6 +81,8 @@ async function refreshUserProfile(session, setUserProfile) {
     notificaciones_whatsapp: notificacionesWhatsapp,
   };
   if (generoMeta) insertRow.genero = generoMeta;
+  const waMeta = String(meta.whatsapp || '').trim();
+  if (waMeta) insertRow.whatsapp = waMeta;
   if (email) {
     insertRow.email = email;
   }

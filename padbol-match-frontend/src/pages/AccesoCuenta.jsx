@@ -13,6 +13,14 @@ import {
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { RESERVA_RETURN_STORAGE_KEY, resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
+import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
+import {
+  digitsOnly,
+  formatWhatsAppE164,
+  whatsappNacionalValido,
+  whatsappDigitsValido,
+  buildFullWhatsDigits,
+} from '../utils/authIdentidad';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -77,6 +85,9 @@ export default function AccesoCuenta() {
   const [regApellido, setRegApellido] = useState('');
   const [regGenero, setRegGenero] = useState('');
   const [regNotificacionesWhatsapp, setRegNotificacionesWhatsapp] = useState(false);
+  const [regWaCodigoPais, setRegWaCodigoPais] = useState('+54');
+  const [regWaLocal, setRegWaLocal] = useState('');
+  const [regWaConfirmLocal, setRegWaConfirmLocal] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
 
   const handleAccesoBack = useCallback(() => {
@@ -129,6 +140,9 @@ export default function AccesoCuenta() {
     setRegApellido('');
     setRegGenero('');
     setRegNotificacionesWhatsapp(false);
+    setRegWaCodigoPais('+54');
+    setRegWaLocal('');
+    setRegWaConfirmLocal('');
   }, [modo]);
 
   const handleIngresar = async (e) => {
@@ -200,6 +214,22 @@ export default function AccesoCuenta() {
       setErrorMsg('Seleccioná género (Masculino, Femenino, Otro u Open).');
       return;
     }
+    const waLoc = digitsOnly(regWaLocal);
+    const waLoc2 = digitsOnly(regWaConfirmLocal);
+    if (!whatsappNacionalValido(waLoc)) {
+      setErrorMsg('Ingresá un WhatsApp válido (número local, mínimo 10 dígitos, sin repetir el código de país).');
+      return;
+    }
+    if (waLoc !== waLoc2) {
+      setErrorMsg('Los números de WhatsApp no coinciden.');
+      return;
+    }
+    const waDigitsFull = buildFullWhatsDigits(regWaCodigoPais, waLoc);
+    if (!whatsappDigitsValido(waDigitsFull)) {
+      setErrorMsg('Completá un WhatsApp válido.');
+      return;
+    }
+    const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
     setBusy(true);
     try {
       const { data, error } = await handleAuthOnce({
@@ -212,6 +242,7 @@ export default function AccesoCuenta() {
             apellido: ap,
             genero: gen,
             notificaciones_whatsapp: regNotificacionesWhatsapp,
+            whatsapp: waE164,
           },
         },
       });
@@ -548,6 +579,81 @@ export default function AccesoCuenta() {
               type="email"
               autoComplete="email"
               inputMode="email"
+              style={{
+                width: '100%',
+                padding: '14px',
+                marginBottom: '14px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                boxSizing: 'border-box',
+                fontSize: '16px',
+                background: '#ffffff',
+              }}
+            />
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
+                marginBottom: '6px',
+              }}
+            >
+              WhatsApp <span style={{ color: '#fecaca' }}>*</span>
+            </label>
+            <div style={{ marginBottom: '6px' }}>
+              <TelefonoPaisCodigoRow
+                codigoValue={regWaCodigoPais}
+                onCodigoChange={setRegWaCodigoPais}
+                localValue={regWaLocal}
+                onLocalChange={(v) => setRegWaLocal(digitsOnly(v))}
+                disabled={busy}
+                placeholderLocal="Ej: 9112345678"
+                selectStyle={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '16px',
+                  background: '#ffffff',
+                  minWidth: 120,
+                }}
+                inputStyle={{
+                  width: '100%',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  boxSizing: 'border-box',
+                  fontSize: '16px',
+                  background: '#ffffff',
+                }}
+              />
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', marginTop: 0, marginBottom: '10px', lineHeight: 1.4 }}>
+              Elegí el país (bandera + código) y escribí solo tu número local. Se guarda en formato internacional.
+            </p>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.92)',
+                marginBottom: '6px',
+              }}
+            >
+              Confirmar WhatsApp <span style={{ color: '#fecaca' }}>*</span>
+            </label>
+            <input
+              className="acceso-cuenta-input"
+              type="tel"
+              inputMode="numeric"
+              value={regWaConfirmLocal}
+              onChange={(e) => setRegWaConfirmLocal(digitsOnly(e.target.value))}
+              placeholder="Repetí el mismo número local"
+              disabled={busy}
+              autoComplete="tel-national"
               style={{
                 width: '100%',
                 padding: '14px',

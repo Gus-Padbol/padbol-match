@@ -7,6 +7,7 @@ import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import SedeBusquedaInput from '../components/SedeBusquedaInput';
+import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
@@ -375,11 +376,6 @@ export default function MiPerfil() {
     if (!String(p.nivel || '').trim()) return true;
     return false;
   }, [perfil]);
-
-  const opcionesCodigoWhatsApp = useMemo(
-    () => [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS],
-    []
-  );
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -1932,25 +1928,20 @@ export default function MiPerfil() {
               <label style={guestLabelStyle}>
                 WhatsApp {reqAst}
               </label>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  gap: '8px',
-                  alignItems: 'stretch',
-                  marginBottom: '6px',
-                  width: '100%',
-                }}
-              >
-                <select
-                  value={waCodigoPais}
-                  onChange={(e) => {
-                    setWaCodigoPais(e.target.value);
+              <div style={{ marginBottom: '6px', width: '100%' }}>
+                <TelefonoPaisCodigoRow
+                  codigoValue={waCodigoPais}
+                  onCodigoChange={(v) => {
+                    setWaCodigoPais(v);
                     setRegistroFieldErrors((p) => ({ ...p, whatsapp: '', whatsappConfirma: '' }));
                   }}
-                  title="País / código"
-                  aria-label="Código de país"
-                  style={{
+                  localValue={waNumeroLocal}
+                  onLocalChange={(v) => {
+                    setWaNumeroLocal(digitsOnly(v));
+                    setRegistroFieldErrors((p) => ({ ...p, whatsapp: '', whatsappConfirma: '' }));
+                  }}
+                  placeholderLocal="Ej: 2211234567"
+                  selectStyle={{
                     ...guestInputStyle,
                     flex: '0 0 auto',
                     minWidth: '108px',
@@ -1959,35 +1950,17 @@ export default function MiPerfil() {
                     cursor: 'pointer',
                     border: regBorder('whatsapp'),
                   }}
-                >
-                  {opcionesCodigoWhatsApp.map((p) => (
-                    <option key={`${p.nombre}-${p.codigo}`} value={p.codigo} title={p.nombre}>
-                      {p.bandera} {p.codigo}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  value={waNumeroLocal}
-                  onChange={(e) => {
-                    setWaNumeroLocal(digitsOnly(e.target.value));
-                    setRegistroFieldErrors((p) => ({ ...p, whatsapp: '', whatsappConfirma: '' }));
-                  }}
-                  placeholder="Ej: 2211234567"
-                  aria-label="Número de celular sin código de país"
-                  style={{
+                  inputStyle={{
                     ...guestInputStyle,
                     flex: '1 1 0',
                     minWidth: 0,
                     marginBottom: 0,
                     border: regBorder('whatsapp'),
                   }}
-                  autoComplete="tel-national"
                 />
               </div>
               <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.4 }}>
-                Obligatorio. Por defecto Argentina (+54): solo escribí tu número local (mínimo 10 dígitos), sin +54. Se guarda como +54…
+                Elegí país (bandera + código) y escribí solo el número local (mín. 10 dígitos). Se guarda en formato internacional.
               </p>
               {regErrP('whatsapp')}
 
@@ -2889,22 +2862,14 @@ export default function MiPerfil() {
             </p>
 
             <label style={labelStyle}>WhatsApp</label>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '8px',
-                alignItems: 'stretch',
-                marginBottom: '6px',
-                width: '100%',
-              }}
-            >
-              <select
-                value={waCodigoPais}
-                onChange={(e) => setWaCodigoPais(e.target.value)}
-                title="País / código"
-                aria-label="Código de país"
-                style={{
+            <div style={{ marginBottom: '6px', width: '100%' }}>
+              <TelefonoPaisCodigoRow
+                codigoValue={waCodigoPais}
+                onCodigoChange={setWaCodigoPais}
+                localValue={waNumeroLocal}
+                onLocalChange={(v) => setWaNumeroLocal(digitsOnly(v))}
+                placeholderLocal="Ej: 91123456789"
+                selectStyle={{
                   ...inputStyle,
                   flex: '0 0 auto',
                   minWidth: '108px',
@@ -2912,31 +2877,16 @@ export default function MiPerfil() {
                   marginBottom: 0,
                   cursor: 'pointer',
                 }}
-              >
-                {opcionesCodigoWhatsApp.map((p) => (
-                  <option key={`${p.nombre}-${p.codigo}`} value={p.codigo} title={p.nombre}>
-                    {p.bandera} {p.codigo}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                inputMode="numeric"
-                value={waNumeroLocal}
-                onChange={(e) => setWaNumeroLocal(digitsOnly(e.target.value))}
-                placeholder="Ej: 91123456789"
-                aria-label="Número local sin código de país"
-                style={{
+                inputStyle={{
                   ...inputStyle,
                   flex: '1 1 0',
                   minWidth: 0,
                   marginBottom: 0,
                 }}
-                autoComplete="tel-national"
               />
             </div>
             <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '14px', lineHeight: 1.4 }}>
-              Obligatorio. Por defecto Argentina (+54): solo el número local (mínimo 10 dígitos), sin repetir +54. Se guarda como +54…
+              Elegí país (bandera + código) y el número local (mín. 10 dígitos). Se guarda en formato internacional.
             </p>
 
             <label style={labelStyle}>Lateralidad {reqAst}</label>
