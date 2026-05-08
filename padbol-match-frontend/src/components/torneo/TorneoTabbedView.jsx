@@ -34,6 +34,7 @@ import {
   parseMarcadorVozPartidoCompleto,
   speechRecognitionDisponible,
 } from '../../utils/speechResultadoPartido';
+import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresExcel';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
 
@@ -334,6 +335,8 @@ export default function TorneoTabbedView({
   /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
   jugadorNombreTorneoCtx = null,
   apiBaseUrl = 'https://padbol-backend.onrender.com',
+  /** super_admin / admin_club (panel): exportar jugadores del torneo a Excel. */
+  puedeExportarJugadoresExcel = false,
   /** Panel admin / gestión: mostrar sorteo manual en pestaña Grupos. */
   adminPuedeSorteoGrupos = false,
   /** Tras confirmar POST /sorteo: recargar torneo, equipos y partidos. */
@@ -507,6 +510,14 @@ export default function TorneoTabbedView({
     const t = window.setTimeout(() => setShareTorneoCopied(false), 2200);
     return () => window.clearTimeout(t);
   }, [shareTorneoCopied]);
+
+  const handleExportarJugadoresExcel = useCallback(() => {
+    downloadTorneoJugadoresXlsx({
+      torneo,
+      equipos,
+      jugadorNombreTorneoCtx,
+    });
+  }, [torneo, equipos, jugadorNombreTorneoCtx]);
 
   const handleShareTorneo = useCallback(async () => {
     if (!shareTorneoMeta?.url) return;
@@ -2046,6 +2057,36 @@ export default function TorneoTabbedView({
       </div>
 
       {adminTorneoBar}
+
+      {puedeExportarJugadoresExcel ? (
+        <div
+          style={{
+            marginBottom: '12px',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            flexWrap: 'wrap',
+            gap: '8px',
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleExportarJugadoresExcel}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '10px',
+              border: '1px solid #15803d',
+              background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: '14px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.35)',
+            }}
+          >
+            📥 Exportar jugadores
+          </button>
+        </div>
+      ) : null}
 
       <div data-torneo-banner-slot={TORNEO_BANNER_ANTES_TABS_DATA_SLOT}>{bannerAntesTabs}</div>
 

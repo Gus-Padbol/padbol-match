@@ -34,6 +34,7 @@ import {
   computeIsAdminEnTorneo,
   computePuedeGestionarEquiposTorneo,
   pathnameIsAdminRoute,
+  puedeExportarJugadoresTorneoExcel,
 } from '../utils/torneoAdminAccess';
 import { mensajeConfirmacionCupoTrasEquipoCompleto } from '../utils/torneoRevelacionEquipos';
 import {
@@ -752,6 +753,11 @@ export default function FormEquipos() {
 
   /** UI gestión: solo con `state.fromAdmin === true` explícito (no sessionStorage). */
   const mostrarUiAdminFormEquipos = esAdminGestionTorneo && location.state?.fromAdmin === true;
+
+  const puedeExportarJugadoresExcelForm = useMemo(
+    () => mostrarUiAdminFormEquipos && puedeExportarJugadoresTorneoExcel({ email: authEmail, rol }),
+    [mostrarUiAdminFormEquipos, authEmail, rol]
+  );
 
   const torneoNavStateForm = useMemo(() => {
     const base =
@@ -2635,6 +2641,7 @@ export default function FormEquipos() {
             jugadorNombreTorneoCtx={nombreTorneoCtxForm}
             showTorneoLogo={false}
             apiBaseUrl={BACKEND_API_BASE}
+            puedeExportarJugadoresExcel={puedeExportarJugadoresExcelForm}
             adminPuedeSorteoGrupos={mostrarUiAdminFormEquipos}
             onAfterSorteoGrupos={cargarTodo}
             participacionModalOpen={modalParticipacionAbierto}

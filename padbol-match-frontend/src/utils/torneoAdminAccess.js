@@ -109,6 +109,16 @@ export function computeIsAdminEnTorneo({
 }
 
 /**
+ * Exportar lista de jugadores del torneo a Excel: solo `super_admin` y `admin_club`
+ * (más emails/rol legacy globales vía {@link isGlobalSuperAdminEmailOrRole}).
+ */
+export function puedeExportarJugadoresTorneoExcel({ email, rol }) {
+  if (isGlobalSuperAdminEmailOrRole(email, rol)) return true;
+  const r = String(rol || '').trim();
+  return r === 'super_admin' || r === 'admin_club';
+}
+
+/**
  * Botón "Gestionar" en equipos: mismo contexto admin que {@link computeIsAdminEnTorneo}.
  */
 export function computePuedeGestionarEquiposTorneo({

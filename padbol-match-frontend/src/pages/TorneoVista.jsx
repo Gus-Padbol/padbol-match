@@ -29,6 +29,7 @@ import {
   computeIsAdminEnTorneo,
   computePuedeGestionarEquiposTorneo,
   pathnameIsAdminRoute,
+  puedeExportarJugadoresTorneoExcel,
 } from '../utils/torneoAdminAccess';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import {
@@ -156,6 +157,12 @@ export default function TorneoVista() {
   );
   /** Barra violeta y permisos de edición en pestañas: solo con `state.fromAdmin === true`. */
   const isAdminGestionEnEstaVista = isAdmin && fromAdmin;
+  const puedeExportarJugadoresExcelVista = useMemo(
+    () =>
+      isAdminGestionEnEstaVista &&
+      puedeExportarJugadoresTorneoExcel({ email: currentEmail, rol }),
+    [isAdminGestionEnEstaVista, currentEmail, rol]
+  );
   const puedeGestionarEquiposTorneo = useMemo(
     () =>
       computePuedeGestionarEquiposTorneo({
@@ -1166,6 +1173,7 @@ export default function TorneoVista() {
           showTorneoLogo
           shareTorneoMeta={torneo && torneoShareUrl ? torneoShareMeta : null}
           apiBaseUrl={apiBaseUrlTorneo}
+          puedeExportarJugadoresExcel={puedeExportarJugadoresExcelVista}
           adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}
           onAfterSorteoGrupos={recargarDatosTorneo}
           participacionModalOpen={modalInscribirseOpen && !torneoPasadoCalendario}
