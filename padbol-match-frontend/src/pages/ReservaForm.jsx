@@ -36,6 +36,7 @@ import {
   primeraFotoSede,
 } from '../utils/sedeCardUi';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
+import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
@@ -805,7 +806,7 @@ export default function ReservaForm() {
     } else {
       setFormData((prev) => ({
         ...prev,
-        fecha: fechaQ || prev.fecha || todayLocalISO(),
+        fecha: fechaQ || prev.fecha || ymdHoyParaReservaSede(sede),
         hora: horaQ || '',
         cancha: canchaQ || '',
       }));
@@ -869,7 +870,7 @@ export default function ReservaForm() {
         fecha:
           fd.fecha != null && String(fd.fecha).trim()
             ? String(fd.fecha).trim()
-            : prev.fecha || todayLocalISO(),
+            : prev.fecha || ymdHoyParaReservaSede(sedeObj),
         hora: fd.hora != null ? String(fd.hora).trim() : prev.hora || '',
         cancha: fd.cancha != null && String(fd.cancha).trim() ? String(fd.cancha).trim() : prev.cancha || '',
         codigoPais: fd.codigoPais != null ? String(fd.codigoPais) : prev.codigoPais,
@@ -984,11 +985,12 @@ export default function ReservaForm() {
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
     if (pantalla !== 2 || !filtros.sede_id) return;
+    const sedeRow = sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
     setFormData((prev) => {
       if (prev.fecha) return prev;
-      return { ...prev, fecha: todayLocalISO(), hora: '', cancha: '' };
+      return { ...prev, fecha: ymdHoyParaReservaSede(sedeRow), hora: '', cancha: '' };
     });
-  }, [pantalla, filtros.sede_id]);
+  }, [pantalla, filtros.sede_id, sedes]);
 
   // Pantalla 4 (resumen/pago): al aterrizar —p. ej. tras login— el scroll suele quedar abajo; subir al inicio.
   useEffect(() => {
@@ -1119,6 +1121,8 @@ export default function ReservaForm() {
       const duracion = sedeData.duracion_reserva_minutos || 90;
       const slotsOferta = slotsReservaDesdeSede(sedeData);
       const numsSlots = slotsOferta.map((s) => s.numero);
+      const hoyCalendarioNegocio = ymdHoyParaReservaSede(sedeData);
+      const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
 
       const todosLosHorarios = [];
 
@@ -1148,6 +1152,12 @@ export default function ReservaForm() {
 
             // Add slot only if al menos un slot ofertado está libre
             if (libres > 0) {
+              if (filtrarSlotsPasadosHoy) {
+                const slotStartMs = slotStartMsParaReservaSede(fecha, horaInicio, sedeData);
+                if (slotStartMs != null && slotStartMs <= Date.now()) {
+                  continue;
+                }
+              }
               todosLosHorarios.push({
                 horario: `${horaInicio} - ${horaFin}`,
                 hora: horaInicio,
@@ -1512,7 +1522,7 @@ export default function ReservaForm() {
 
   // PANTALLA 2: fecha → horarios → canchas en una sola vista con scroll (revelación progresiva)
   if (pantalla === 2) {
-    const hoyIso = todayLocalISO();
+    const hoyIso = ymdHoyParaReservaSede(sedeSeleccionada);
     return (
       <div className="reserva-container" style={{
         paddingTop: reservaPaddingTopCss,
@@ -1560,7 +1570,7 @@ export default function ReservaForm() {
               <label style={{ display: 'block', marginBottom: '10px' }}>Elige el día</label>
               <ReservaCalendarioMes
                 selectedIso={formData.fecha}
-                minIso={todayLocalISO()}
+                minIso={ymdHoyParaReservaSede(sedeSeleccionada)}
                 maxIso={fechaMaxReservaISO()}
                 todayIso={hoyIso}
                 onSelectDay={handleSelectFecha}

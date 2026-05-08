@@ -93,6 +93,61 @@ function ymdTodayInTorneoTz() {
   return `${y}-${mo}-${da}`;
 }
 
+function sedePaisEsArgentinaReserva(pais) {
+  const p = String(pais || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  return p === 'argentina' || p.startsWith('argentina ');
+}
+
+/** Inicio del slot en ms UTC (fecha/hora = calendario de negocio en Buenos Aires; zona IANA sin DST desde 2009 = UTC−3). */
+function reservaSlotStartMsArgentina(fechaYmd, horaStr) {
+  const fy = String(fechaYmd || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fy)) return null;
+  const fh = String(horaStr || '').trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!fh) return null;
+  const h = String(parseInt(fh[1], 10)).padStart(2, '0');
+  const min = String(parseInt(fh[2], 10)).padStart(2, '0');
+  return new Date(`${fy}T${h}:${min}:00-03:00`).getTime();
+}
+
+/** Sedes Argentina: no permitir fecha u hora ya pasadas según America/Argentina/Buenos_Aires (no UTC del servidor). */
+async function assertReservaHorarioNoPasadoSiSedeArgentina(sedeNombre, fecha, hora) {
+  const nombre = String(sedeNombre || '').trim();
+  if (!nombre) return;
+  const { data: row, error } = await supabase
+    .from('sedes')
+    .select('pais')
+    .eq('nombre', nombre)
+    .maybeSingle();
+  if (error) throw error;
+  if (!sedePaisEsArgentinaReserva(row?.pais)) return;
+
+  const f = String(fecha || '').trim();
+  const hoyArt = ymdTodayInTorneoTz();
+  if (!hoyArt) return;
+  if (f < hoyArt) {
+    const e = new Error('La fecha de la reserva ya pasó');
+    e.status = 400;
+    throw e;
+  }
+  if (f !== hoyArt) return;
+
+  const slotMs = reservaSlotStartMsArgentina(f, hora);
+  if (slotMs == null || !Number.isFinite(slotMs)) {
+    const e = new Error('Hora de reserva inválida');
+    e.status = 400;
+    throw e;
+  }
+  if (slotMs <= Date.now()) {
+    const e = new Error('Este horario ya no está disponible');
+    e.status = 400;
+    throw e;
+  }
+}
+
 function torneoFechaInicioYmdFromStr(fechaInicioStr) {
   const d = String(fechaInicioStr || '').trim();
   const m = d.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -1802,6 +1857,7 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
         : null;
 
     await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
+    await assertReservaHorarioNoPasadoSiSedeArgentina(sede, fecha, hora);
 
     // Verificar double-booking
     const { data: existentes, error: errCheck } = await supabase
@@ -5550,6 +5606,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
 
       try {
         await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
+        await assertReservaHorarioNoPasadoSiSedeArgentina(sede, fecha, hora);
       } catch (e) {
         const st = e.status || 400;
         return res.status(st).json({ error: e.message || String(e) });
@@ -6098,6 +6155,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     throw new Error('Payload de reserva incompleto');
   }
   await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
+  await assertReservaHorarioNoPasadoSiSedeArgentina(sede, fecha, hora);
   const { data: existentes, error: errCheck } = await supabase
     .from('reservas')
     .select('id')
@@ -6439,6 +6497,11 @@ app.post('/api/crear-preferencia', async (req, res) => {
         await assertCanchaPermitidaParaReservaPorNombreSede(
           String(payloadReserva.sede || '').trim(),
           payloadReserva.cancha
+        );
+        await assertReservaHorarioNoPasadoSiSedeArgentina(
+          String(payloadReserva.sede || '').trim(),
+          String(payloadReserva.fecha || '').trim(),
+          String(payloadReserva.hora || '').trim()
         );
       } catch (e) {
         const st = e.status || 400;
