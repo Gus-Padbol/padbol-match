@@ -565,13 +565,11 @@ function partidosDesdeGruposSorteo(gruposIds, torneoId, sedeId) {
   return out;
 }
 
-// Mercado Pago
+// Mercado Pago: cada sede usa su propio `mp_access_token` en DB (panel Mi sede).
+// `MP_ACCESS_TOKEN` en entorno solo se usa como respaldo al consultar webhooks / pagos legacy.
 if (!process.env.MP_ACCESS_TOKEN) {
-  console.warn('⚠️  MP_ACCESS_TOKEN no está configurado — los pagos fallarán en producción');
+  console.warn('⚠️  MP_ACCESS_TOKEN global no definido — webhooks MP pueden no resolver pagos antiguos');
 }
-const mpClient = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN || '',
-});
 
 // Frontend URL for MP redirect callbacks
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://padbol-match.netlify.app';
@@ -6361,6 +6359,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
 
     let reservaData = reservaDataIn;
     const tipoEff = String(reservaDataIn?.tipo || tipo || '').toLowerCase();
+    let torneoSedeIdForCfg = null;
     if (tipoEff === 'torneo_inscripcion') {
       const eid = parseInt(String(equipo_id ?? reservaDataIn?.equipo_id), 10);
       const tid = parseInt(String(torneo_id ?? reservaDataIn?.torneo_id), 10);
@@ -6369,13 +6368,16 @@ app.post('/api/crear-preferencia', async (req, res) => {
       }
       const { data: torneoRow, error: tErr } = await supabase
         .from('torneos')
-        .select('fecha_inicio')
+        .select('fecha_inicio, sede_id')
         .eq('id', tid)
         .maybeSingle();
       if (tErr) throw tErr;
       if (!torneoRow) return res.status(400).json({ error: 'Torneo no encontrado' });
       if (torneoFechaInicioEsAnteriorAHoyArt(torneoRow.fecha_inicio)) {
         return res.status(400).json({ error: MSG_TORNEO_INSCRIPCION_FECHA_PASADA });
+      }
+      if (torneoRow.sede_id != null && Number.isFinite(Number(torneoRow.sede_id))) {
+        torneoSedeIdForCfg = Number(torneoRow.sede_id);
       }
       const em = String(email || reservaDataIn?.email || '').trim().toLowerCase();
       reservaData = {
@@ -6386,7 +6388,13 @@ app.post('/api/crear-preferencia', async (req, res) => {
       };
     }
 
-    const sedeCfg = sedeId ? await sedePaymentConfigBySedeId(sedeId) : null;
+    const sidNum = Number(sedeId);
+    const effectiveSedeId =
+      Number.isFinite(sidNum) && sidNum > 0 ? sidNum : torneoSedeIdForCfg != null ? torneoSedeIdForCfg : null;
+    let sedeCfg = effectiveSedeId ? await sedePaymentConfigBySedeId(effectiveSedeId) : null;
+    if (!sedeCfg && reservaData && typeof reservaData === 'object' && reservaData.sede) {
+      sedeCfg = await sedePaymentConfigByNombre(String(reservaData.sede).trim());
+    }
     const metodoPago = normalizeMetodoPago(sedeCfg?.metodo_pago || 'mercadopago');
     const instruccionesManual = String(sedeCfg?.pago_manual_instrucciones || '').trim();
 
@@ -6446,10 +6454,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
     }
 
     if (metodoPago === 'stripe') {
-      const stripeAccountId =
-        String(sedeCfg?.stripe_account_id || '').trim() ||
-        String(process.env.STRIPE_ACCOUNT_ID || '').trim() ||
-        null;
+      const stripeAccountId = String(sedeCfg?.stripe_account_id || '').trim() || null;
       return res.json({
         stripe_checkout_pending: true,
         provider: 'stripe',
@@ -6459,11 +6464,14 @@ app.post('/api/crear-preferencia', async (req, res) => {
       });
     }
 
-    // Use sede-specific MP token if configured, otherwise fall back to env var
-    let client = mpClient;
-    if (sedeCfg?.mp_access_token) {
-      client = new MercadoPagoConfig({ accessToken: sedeCfg.mp_access_token });
+    const mpTokSede = String(sedeCfg?.mp_access_token || '').trim();
+    if (!mpTokSede) {
+      return res.status(400).json({
+        error:
+          'Esta sede no tiene configurado Mercado Pago. En Admin → Mi sede → Configuración de pagos, ingresá el Access Token de la cuenta del club.',
+      });
     }
+    const client = new MercadoPagoConfig({ accessToken: mpTokSede });
 
     // Embed full reservation data as JSON in external_reference so
     // PagoExitoso can create the reservation after payment is approved.

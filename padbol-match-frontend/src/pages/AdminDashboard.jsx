@@ -295,7 +295,9 @@ function miSedeFormToApiPatchBody(form) {
   }
   const latOk = form.latitud !== '' && form.latitud != null && Number.isFinite(parseFloat(form.latitud));
   const lngOk = form.longitud !== '' && form.longitud != null && Number.isFinite(parseFloat(form.longitud));
-  return {
+  const mpTrim = String(form.mp_access_token ?? '').trim();
+  const stripeTrim = String(form.stripe_account_id ?? '').trim();
+  const out = {
     nombre: form.nombre,
     direccion: form.direccion || null,
     ciudad: form.ciudad || null,
@@ -314,8 +316,6 @@ function miSedeFormToApiPatchBody(form) {
         ? String(form.historia).trim().slice(0, 500)
         : null,
     metodo_pago: form.metodo_pago || 'mercadopago',
-    stripe_account_id: form.stripe_account_id || null,
-    mp_access_token: form.mp_access_token || null,
     pago_manual_instrucciones: form.pago_manual_instrucciones || null,
     latitud: latOk ? parseFloat(form.latitud) : null,
     longitud: lngOk ? parseFloat(form.longitud) : null,
@@ -330,6 +330,9 @@ function miSedeFormToApiPatchBody(form) {
     color_hero_secundario: normalizeHexSedeAdmin(form.color_hero_secundario) || '#7C3AED',
     color_borde_hero: normalizeHexSedeAdmin(form.color_borde_hero) || '#6D28D9',
   };
+  if (mpTrim) out.mp_access_token = mpTrim;
+  if (stripeTrim) out.stripe_account_id = stripeTrim;
+  return out;
 }
 
 const ADMIN_TABS_ALLOWED = new Set([
@@ -3277,6 +3280,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     sedeId: null,
   });
   const [miSedeMsg,     setMiSedeMsg]     = useState('');
+  const [pagosMpPanelAbierto, setPagosMpPanelAbierto] = useState(false);
+  const [pagosStripePanelAbierto, setPagosStripePanelAbierto] = useState(false);
+  const [pagosParcialSaving, setPagosParcialSaving] = useState(false);
   const [editarSedeModalOpen, setEditarSedeModalOpen] = useState(false);
   const [editarSedeDraft, setEditarSedeDraft] = useState({});
   const [editarSedeModalMsg, setEditarSedeModalMsg] = useState('');
@@ -3471,6 +3477,46 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
     }
   };
+
+  const guardarSedeCamposPagosParcial = useCallback(
+    async (partial) => {
+      if (!sedeId || !session?.access_token) {
+        setMiSedeMsg('⚠️ Inicia sesión de nuevo.');
+        setTimeout(() => setMiSedeMsg(''), 4000);
+        return false;
+      }
+      setPagosParcialSaving(true);
+      setMiSedeMsg('');
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(partial),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        const updated = data.sede;
+        if (updated) {
+          setMiSede(updated);
+          setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+          setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+        }
+        setMiSedeMsg('✅ Pagos actualizados');
+        setTimeout(() => setMiSedeMsg(''), 3000);
+        return true;
+      } catch (e) {
+        setMiSedeMsg(`⚠️ ${e?.message || String(e)}`);
+        setTimeout(() => setMiSedeMsg(''), 5000);
+        return false;
+      } finally {
+        setPagosParcialSaving(false);
+      }
+    },
+    [apiBaseUrl, sedeId, session?.access_token]
+  );
 
   const abrirModalEditarSede = useCallback(() => {
     setEditarSedeDraft({ ...miSedeForm });
@@ -8160,87 +8206,244 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
 
-          {/* ── 3. Método de pago ── */}
+          {/* ── 3. Configuración de pagos (MP / Stripe por sede) ── */}
           {(esAdminClub || isSuperAdmin) && (
             <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>💳 Método de pago</h3>
-              <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '480px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>Método</label>
-                <select
-                  value={miSedeForm.metodo_pago || 'mercadopago'}
-                  onChange={e => setMiSedeForm(p => ({ ...p, metodo_pago: e.target.value }))}
-                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', marginBottom: '12px' }}
+              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>💳 Configuración de pagos</h3>
+              <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '520px' }}>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+                  Cada sede cobra con su propia cuenta. Mercado Pago usa el Access Token de tu aplicación MP; Stripe usa el
+                  Account ID (acct_…) para cuentas internacionales.
+                </p>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    marginBottom: '12px',
+                  }}
                 >
-                  <option value="mercadopago">Mercado Pago</option>
-                  <option value="stripe">Stripe</option>
-                  <option value="manual">Manual (transferencia o efectivo)</option>
-                </select>
-                {String(miSedeForm.metodo_pago || 'mercadopago') === 'mercadopago' ? (
-                  <>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Mercado Pago
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
+                      {Boolean(String(miSede?.mp_access_token || '').trim()) ? 'Conectado ✅' : 'Sin configurar ⚠️'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPagosMpPanelAbierto((v) => !v)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: '#fff',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      color: '#334155',
+                    }}
+                  >
+                    {pagosMpPanelAbierto ? 'Ocultar' : 'Conectar Mercado Pago'}
+                  </button>
+                </div>
+                {pagosMpPanelAbierto ? (
+                  <div style={{ marginBottom: '18px', paddingLeft: '4px' }}>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
-                      Access Token de MP
+                      Access Token de Mercado Pago
                     </label>
                     <input
                       type="password"
+                      autoComplete="off"
                       value={miSedeForm.mp_access_token || ''}
-                      placeholder="APP_USR-..."
-                      onChange={e => setMiSedeForm(p => ({ ...p, mp_access_token: e.target.value }))}
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', fontFamily: 'monospace', marginBottom: '14px' }}
+                      placeholder={Boolean(String(miSede?.mp_access_token || '').trim()) ? 'Token actual guardado — ingresa uno nuevo para reemplazar' : 'APP_USR-...'}
+                      onChange={(e) => setMiSedeForm((p) => ({ ...p, mp_access_token: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        color: '#333',
+                        boxSizing: 'border-box',
+                        fontFamily: 'monospace',
+                        marginBottom: '10px',
+                      }}
                     />
-                  </>
+                    <button
+                      type="button"
+                      disabled={pagosParcialSaving || !String(miSedeForm.mp_access_token || '').trim()}
+                      onClick={() =>
+                        void guardarSedeCamposPagosParcial({
+                          mp_access_token: String(miSedeForm.mp_access_token || '').trim(),
+                        }).then((ok) => {
+                          if (ok) setPagosMpPanelAbierto(false);
+                        })
+                      }
+                      style={{
+                        padding: '8px 18px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background:
+                          pagosParcialSaving || !String(miSedeForm.mp_access_token || '').trim() ? '#94a3b8' : '#16a34a',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: pagosParcialSaving || !String(miSedeForm.mp_access_token || '').trim() ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {pagosParcialSaving ? 'Guardando…' : 'Guardar token Mercado Pago'}
+                    </button>
+                  </div>
                 ) : null}
-                {String(miSedeForm.metodo_pago || '') === 'stripe' ? (
-                  <>
-                    {String(miSedeForm.stripe_account_id || '').trim().startsWith('acct_') ? (
-                      <p
-                        style={{
-                          margin: '0 0 12px',
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          background: '#ecfdf5',
-                          border: '1px solid #6ee7b7',
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: '#047857',
-                        }}
-                      >
-                        Stripe conectado ✓
-                      </p>
-                    ) : null}
+
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Stripe
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
+                      {String(miSede?.stripe_account_id || '')
+                        .trim()
+                        .startsWith('acct_')
+                        ? 'Conectado ✅'
+                        : 'Sin configurar ⚠️'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPagosStripePanelAbierto((v) => !v)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      background: '#fff',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      color: '#334155',
+                    }}
+                  >
+                    {pagosStripePanelAbierto ? 'Ocultar' : 'Conectar Stripe'}
+                  </button>
+                </div>
+                {pagosStripePanelAbierto ? (
+                  <div style={{ marginBottom: '18px', paddingLeft: '4px' }}>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
                       Stripe Account ID
                     </label>
                     <input
                       value={miSedeForm.stripe_account_id || ''}
                       placeholder="acct_..."
-                      onChange={e => setMiSedeForm(p => ({ ...p, stripe_account_id: e.target.value }))}
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', marginBottom: '10px', fontFamily: 'monospace' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void iniciarStripeOnboarding()}
-                      disabled={stripeOnboardingLoading}
+                      onChange={(e) => setMiSedeForm((p) => ({ ...p, stripe_account_id: e.target.value }))}
                       style={{
-                        marginBottom: '14px',
-                        padding: '10px 16px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        background: stripeOnboardingLoading ? '#94a3b8' : 'linear-gradient(135deg, #635bff, #0a2540)',
-                        color: 'white',
-                        fontWeight: 700,
-                        fontSize: '13px',
-                        cursor: stripeOnboardingLoading ? 'not-allowed' : 'pointer',
                         width: '100%',
-                        maxWidth: '320px',
+                        padding: '8px 10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        color: '#333',
+                        boxSizing: 'border-box',
+                        marginBottom: '10px',
+                        fontFamily: 'monospace',
                       }}
-                    >
-                      {stripeOnboardingLoading ? 'Abriendo Stripe…' : 'Conectar cuenta Stripe'}
-                    </button>
-                    <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-                      Te llevamos al onboarding de Stripe (cuenta Standard). Al volver, guarda cambios si editaste otros datos de la sede.
+                    />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                      <button
+                        type="button"
+                        disabled={pagosParcialSaving || !String(miSedeForm.stripe_account_id || '').trim()}
+                        onClick={() =>
+                          void guardarSedeCamposPagosParcial({
+                            stripe_account_id: String(miSedeForm.stripe_account_id || '').trim(),
+                          }).then((ok) => {
+                            if (ok) setPagosStripePanelAbierto(false);
+                          })
+                        }
+                        style={{
+                          padding: '8px 18px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background:
+                            pagosParcialSaving || !String(miSedeForm.stripe_account_id || '').trim()
+                              ? '#94a3b8'
+                              : '#16a34a',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          cursor:
+                            pagosParcialSaving || !String(miSedeForm.stripe_account_id || '').trim()
+                              ? 'not-allowed'
+                              : 'pointer',
+                        }}
+                      >
+                        {pagosParcialSaving ? 'Guardando…' : 'Guardar Stripe Account ID'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void iniciarStripeOnboarding()}
+                        disabled={stripeOnboardingLoading}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: stripeOnboardingLoading ? '#94a3b8' : 'linear-gradient(135deg, #635bff, #0a2540)',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          cursor: stripeOnboardingLoading ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {stripeOnboardingLoading ? 'Abriendo Stripe…' : 'Onboarding Stripe (alternativa)'}
+                      </button>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+                      Podés pegar manualmente el <code style={{ fontSize: '11px' }}>acct_…</code> o usar el onboarding; al volver, comprobá que el ID quedó guardado.
                     </p>
-                  </>
+                  </div>
                 ) : null}
+
+                <hr style={{ border: 0, borderTop: '1px solid #e2e8f0', margin: '18px 0' }} />
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                  Método de cobro para reservas y torneos
+                </label>
+                <select
+                  value={miSedeForm.metodo_pago || 'mercadopago'}
+                  onChange={(e) => setMiSedeForm((p) => ({ ...p, metodo_pago: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    color: '#333',
+                    boxSizing: 'border-box',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <option value="mercadopago">Mercado Pago</option>
+                  <option value="stripe">Stripe</option>
+                  <option value="manual">Manual (transferencia o efectivo)</option>
+                </select>
                 {String(miSedeForm.metodo_pago || '') === 'manual' ? (
                   <>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
@@ -8249,14 +8452,42 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <textarea
                       rows={4}
                       value={miSedeForm.pago_manual_instrucciones || ''}
-                      onChange={e => setMiSedeForm(p => ({ ...p, pago_manual_instrucciones: e.target.value }))}
-                      style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box', marginBottom: '14px', resize: 'vertical' }}
+                      onChange={(e) => setMiSedeForm((p) => ({ ...p, pago_manual_instrucciones: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        color: '#333',
+                        boxSizing: 'border-box',
+                        marginBottom: '14px',
+                        resize: 'vertical',
+                      }}
                     />
                   </>
                 ) : null}
-                <button onClick={guardarMiSede} disabled={miSedeSaving}
-                  style={{ padding: '8px 20px', background: miSedeSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                  {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar método de pago'}
+                <button
+                  type="button"
+                  onClick={() =>
+                    void guardarSedeCamposPagosParcial({
+                      metodo_pago: miSedeForm.metodo_pago || 'mercadopago',
+                      pago_manual_instrucciones: String(miSedeForm.pago_manual_instrucciones || '').trim() || null,
+                    })
+                  }
+                  disabled={pagosParcialSaving}
+                  style={{
+                    padding: '8px 20px',
+                    background: pagosParcialSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: pagosParcialSaving ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                  }}
+                >
+                  {pagosParcialSaving ? '⏳ Guardando...' : '💾 Guardar método e instrucciones'}
                 </button>
               </div>
             </div>
