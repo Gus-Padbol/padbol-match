@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { headerNombreVisible } from '../utils/displayName';
 import { formatAliasConArroba } from '../utils/jugadorPerfil';
-import { loginRedirectAfterHubEntry, authRegisterUrlFromHub } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { clearAdminNavContext } from '../utils/adminNavContext';
@@ -209,8 +208,6 @@ export default function AppHeader({
 
   const authEmail = String(session?.user?.email || '').trim().toLowerCase();
   const showLogout = !hideLogoutEffective && Boolean(session?.user);
-  const loginFromHubUrl = `/login?redirect=${encodeURIComponent(loginRedirectAfterHubEntry(location))}`;
-  const registerFromHubUrl = authRegisterUrlFromHub(location);
   const hubNombreCorto = useMemo(() => {
     const base = headerNombreVisible(userProfile, session);
     const email = String(session?.user?.email || '').trim().toLowerCase();
@@ -1212,45 +1209,25 @@ export default function AppHeader({
                 ⏻
               </button>
             ) : hubDirectLogin && !session?.user && !authLoading ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => navigate(registerFromHubUrl)}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: '999px',
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                    color: '#fff',
-                    fontSize: 13,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 16px rgba(34, 197, 94, 0.45)',
-                  }}
-                >
-                  Registrarse
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate(loginFromHubUrl)}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '999px',
-                    border: '1px solid rgba(148,163,184,0.35)',
-                    background: 'rgba(148,163,184,0.2)',
-                    color: '#e2e8f0',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                  }}
-                >
-                  Iniciar sesión
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => navigate('/auth')}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '999px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 16px rgba(34, 197, 94, 0.45)',
+                }}
+              >
+                Ingresar
+              </button>
             ) : hubDirectLogin && !session?.user && authLoading ? (
               <span
                 style={{

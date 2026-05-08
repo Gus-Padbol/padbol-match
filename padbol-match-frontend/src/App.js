@@ -48,20 +48,21 @@ function RegistroToMiPerfilRedirect() {
   return <Navigate to={buildMiPerfilRegistroUrl(r)} replace />;
 }
 
-/** `/auth` con callback (hash/query de proveedor) o con `?modo=registro` / `?login=1`. Sin eso, redirige a `/` — para login normal usar `/login`. */
+/** `/auth` con callback (hash/query de proveedor), `?modo=registro` / `?login=1`, o `?redirect=` interno. Sin eso (salvo URL vacía), redirige a `/`. */
 function authLocationShowsLoginScreen(search, hash) {
   const h = hash || '';
   if (h.length > 1) return true;
   const qs = search || '';
   if (qs.length <= 1) return false;
   try {
-    const sp = new URLSearchParams(qs);
+    const sp = new URLSearchParams(qs.startsWith('?') ? qs.slice(1) : qs);
     return (
       sp.has('code') ||
       sp.has('error') ||
       sp.has('error_description') ||
       sp.has('token_hash') ||
       sp.has('type') ||
+      sp.has('redirect') ||
       sp.get('login') === '1' ||
       sp.get('modo') === 'registro' ||
       sp.get('modo') === 'register' ||
@@ -72,8 +73,17 @@ function authLocationShowsLoginScreen(search, hash) {
   }
 }
 
+function authRouteIsBare(search, hash) {
+  const q = String(search || '').replace(/^\?/, '');
+  const h = hash || '';
+  return q.length === 0 && h.length <= 1;
+}
+
 function AuthRoute() {
   const { search, hash } = useLocation();
+  if (authRouteIsBare(search, hash)) {
+    return <AccesoCuenta />;
+  }
   if (!authLocationShowsLoginScreen(search, hash)) {
     return <Navigate to="/" replace />;
   }

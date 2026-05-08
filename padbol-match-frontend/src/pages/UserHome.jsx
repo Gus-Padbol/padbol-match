@@ -9,7 +9,6 @@ import {
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
-import { authRegisterUrlFromHub } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
 import { PERFIL_CHANGE_EVENT, formatAliasConArroba } from '../utils/jugadorPerfil';
 import { buildWhatsAppMeUrl, primerNombreSaludo } from '../utils/whatsappContactUrl';
@@ -245,39 +244,18 @@ export default function UserHome() {
             {lineaSaludo}
           </h1>
           {!authLoading && !session?.user ? (
-            <>
-              <p
-                style={{
-                  textAlign: 'center',
-                  margin: '12px 0 0 0',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#ffffff',
-                  lineHeight: 1.45,
-                }}
-              >
-                Podés explorar sin registrarte
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate(authRegisterUrlFromHub(location))}
-                style={{
-                  width: '100%',
-                  marginTop: '14px',
-                  padding: '13px 16px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                  color: '#fff',
-                  fontWeight: 800,
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 22px rgba(34, 197, 94, 0.45)',
-                }}
-              >
-                Registrarse
-              </button>
-            </>
+            <p
+              style={{
+                textAlign: 'center',
+                margin: '12px 0 0 0',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#ffffff',
+                lineHeight: 1.45,
+              }}
+            >
+              Podés explorar sin registrarte
+            </p>
           ) : null}
         </div>
 
