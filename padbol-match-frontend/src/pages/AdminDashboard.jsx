@@ -3329,6 +3329,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const logoCropPixelsRef = useRef(null);
   const colorFondoLogoSaveTimerRef = useRef(null);
   const adminTabsStripRef = useRef(null);
+  const adminMainScrollRef = useRef(null);
+  const [miSedeNavActive, setMiSedeNavActive] = useState('info');
+  const miSedeNavItems = useMemo(() => {
+    const items = [
+      { id: 'info', label: 'Info del club' },
+      { id: 'canchas', label: 'Canchas' },
+      { id: 'horarios', label: 'Horarios' },
+    ];
+    if (esAdminClub || isSuperAdmin) items.push({ id: 'pagos', label: 'Configuración de pagos' });
+    items.push({ id: 'contrato', label: 'Contrato' });
+    return items;
+  }, [esAdminClub, isSuperAdmin]);
+  const scrollToMiSedeSection = useCallback((sectionId) => {
+    if (typeof document === 'undefined') return;
+    document.getElementById(`admin-mi-sede-${sectionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
@@ -3351,6 +3367,35 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, [loading]);
+
+  useEffect(() => {
+    if (activeTab !== 'mi_sede' || !miSede || miSedeLoading) return;
+    const root = adminMainScrollRef.current;
+    if (!root || typeof IntersectionObserver === 'undefined') return;
+    const elements = miSedeNavItems
+      .map((x) => document.getElementById(`admin-mi-sede-${x.id}`))
+      .filter(Boolean);
+    if (!elements.length) return;
+    const pickActive = (entries) => {
+      const visible = entries
+        .filter((e) => e.isIntersecting && e.target?.id)
+        .map((e) => ({
+          key: String(e.target.id).replace(/^admin-mi-sede-/, ''),
+          ratio: e.intersectionRatio,
+          top: e.boundingClientRect.top,
+        }));
+      if (!visible.length) return;
+      visible.sort((a, b) => b.ratio - a.ratio || a.top - b.top);
+      setMiSedeNavActive(visible[0].key);
+    };
+    const obs = new IntersectionObserver(pickActive, {
+      root,
+      rootMargin: '-10% 0px -52% 0px',
+      threshold: [0, 0.08, 0.2, 0.35, 0.55],
+    });
+    elements.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [activeTab, miSede, miSedeLoading, miSedeNavItems]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
@@ -4221,6 +4266,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     >
       <AppHeader title="" showBack={false} adminPanelMinimalHeader />
       <div
+        ref={adminMainScrollRef}
         style={{
           flex: 1,
           minHeight: 0,
@@ -7855,6 +7901,42 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           ) : null}
 
+          <div className="admin-mi-sede-layout">
+            <aside className="admin-mi-sede-sidebar" aria-label="Secciones Mi Sede">
+              {miSedeNavItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={
+                    miSedeNavActive === item.id
+                      ? 'admin-mi-sede-nav-btn admin-mi-sede-nav-btn--active'
+                      : 'admin-mi-sede-nav-btn'
+                  }
+                  onClick={() => scrollToMiSedeSection(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </aside>
+            <div className="admin-mi-sede-main">
+              <nav className="admin-mi-sede-nav-mobile" aria-label="Secciones Mi Sede">
+                {miSedeNavItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={
+                      miSedeNavActive === item.id
+                        ? 'admin-mi-sede-nav-pill admin-mi-sede-nav-pill--active'
+                        : 'admin-mi-sede-nav-pill'
+                    }
+                    onClick={() => scrollToMiSedeSection(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+
+          <div id="admin-mi-sede-info">
           {/* ── 0. Licencia PADBOL ── */}
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>🔐 Licencia PADBOL</h3>
@@ -8123,9 +8205,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
             </div>
           </div>
+          </div>
 
           {/* ── 2. Precios ── */}
-          <div style={{ marginBottom: '32px' }}>
+          <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Precios</h3>
             <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
               <div className="admin-mi-sede-field-row admin-mi-sede-precio-base" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -8299,7 +8382,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           {/* ── 3. Configuración de pagos (MP / Stripe por sede) ── */}
           {(esAdminClub || isSuperAdmin) && (
-            <div style={{ marginBottom: '32px' }}>
+            <div id="admin-mi-sede-pagos" style={{ marginBottom: '32px' }}>
               <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>💳 Configuración de pagos</h3>
               <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '520px' }}>
                 <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
@@ -8618,7 +8701,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
 
           {/* ── 5. Mis Canchas ── */}
-          <div style={{ marginBottom: '32px' }}>
+          <div id="admin-mi-sede-canchas" style={{ marginBottom: '32px' }}>
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>⚽ Mis Canchas</h3>
             <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '640px' }}>
               <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
@@ -8723,10 +8806,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
 
+            </div>
+          </div>
+
         </>)}
 
         {/* ── 4. Fotos ── always visible when tab is active */}
-        {!miSedeLoading && <div style={{ marginBottom: '32px' }}>
+        {!miSedeLoading && <div id="admin-mi-sede-contrato" style={{ marginBottom: '32px' }}>
           <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>📸 Fotos</h3>
 
           {/* Logo */}
