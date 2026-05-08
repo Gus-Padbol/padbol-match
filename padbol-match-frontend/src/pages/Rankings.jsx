@@ -258,6 +258,9 @@ const TABS = [
   { id: 'internacional', label: '🌐 Internacional FIPA'  },
 ];
 
+/** Categorías mostradas solo en el tab Internacional FIPA (sin Principiante ni 5ta–3ra). */
+const CATEGORIAS_INTERNACIONAL_FIPA = ['2da', '1ra', 'Elite'];
+
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 /** Pantalla estrecha: menos columnas y padding para evitar scroll horizontal en la tabla. */
@@ -276,38 +279,37 @@ function useMediaNarrow(maxWidth = 520) {
   return narrow;
 }
 
-/** `<select>` compacto alineado con RankingFilterDropdown (fondo oscuro del hub). */
-const RANKING_COMPACT_SELECT_STYLE = {
+/** Fila de filtro dentro del bottom sheet (fondo claro). */
+const RANKING_SHEET_FILTER_ROW = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+  marginBottom: '18px',
+};
+
+const RANKING_SHEET_SELECT_STYLE = {
   width: '100%',
   minWidth: 0,
-  minHeight: '40px',
-  padding: '9px 12px',
+  minHeight: '44px',
+  padding: '10px 12px',
   borderRadius: '10px',
-  border: '1px solid rgba(255,255,255,0.28)',
-  fontSize: '13px',
+  border: '1px solid #cbd5e1',
+  fontSize: '15px',
   fontWeight: 600,
-  background: 'rgba(15,23,42,0.42)',
-  color: '#f8fafc',
+  background: '#f8fafc',
+  color: '#0f172a',
   boxSizing: 'border-box',
   cursor: 'pointer',
   outline: 'none',
   fontFamily: 'inherit',
 };
 
-const RANKING_COMPACT_FILTER_CELL = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '4px',
-  minWidth: '130px',
-  flex: '1 1 160px',
-  maxWidth: '280px',
-};
-
-function RankingFilterDropdown({ label, value, onChange, options, disabled, ariaLabel, renderOptionLabel }) {
+function RankingFilterDropdown({ label, value, onChange, options, disabled, ariaLabel, renderOptionLabel, variant = 'hub' }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const labelId = useId();
   const listId = useId();
+  const isSheet = variant === 'sheet';
 
   useEffect(() => {
     if (!open) return undefined;
@@ -323,6 +325,15 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
     ? (renderOptionLabel ? renderOptionLabel(value) : value)
     : 'Todos';
 
+  const labelColor = isSheet ? '#475569' : 'rgba(255,255,255,0.88)';
+  const btnBorder = isSheet ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.28)';
+  const btnBg = isSheet ? '#f8fafc' : 'rgba(15,23,42,0.42)';
+  const btnColor = isSheet ? '#0f172a' : '#f8fafc';
+  const panelBorder = isSheet ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.2)';
+  const panelBg = isSheet ? '#ffffff' : 'rgba(15,23,42,0.92)';
+  const optColor = isSheet ? '#0f172a' : '#fff';
+  const optActiveBg = isSheet ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.28)';
+
   return (
     <div
       ref={rootRef}
@@ -330,12 +341,12 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
         display: 'flex',
         flexDirection: 'column',
         gap: '4px',
-        minWidth: '130px',
-        flex: '1 1 150px',
+        minWidth: 0,
+        width: '100%',
         position: 'relative',
       }}
     >
-      <span id={labelId} style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+      <span id={labelId} style={{ fontSize: '12px', fontWeight: 700, color: labelColor }}>
         {label}
       </span>
       <button
@@ -348,13 +359,13 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
         aria-controls={open ? listId : undefined}
         style={{
           width: '100%',
-          minHeight: '40px',
+          minHeight: '44px',
           padding: '9px 12px',
           borderRadius: '10px',
-          border: '1px solid rgba(255,255,255,0.28)',
-          fontSize: '13px',
-          background: 'rgba(15,23,42,0.42)',
-          color: '#f8fafc',
+          border: btnBorder,
+          fontSize: isSheet ? '15px' : '13px',
+          background: btnBg,
+          color: btnColor,
           boxSizing: 'border-box',
           textAlign: 'left',
           opacity: disabled ? 0.55 : 1,
@@ -379,12 +390,12 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
             top: 'calc(100% + 6px)',
             left: 0,
             right: 0,
-            zIndex: 70,
+            zIndex: 80,
             borderRadius: '10px',
-            border: '1px solid rgba(255,255,255,0.2)',
-            background: 'rgba(15,23,42,0.92)',
-            backdropFilter: 'blur(6px)',
-            boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
+            border: panelBorder,
+            background: panelBg,
+            backdropFilter: isSheet ? undefined : 'blur(6px)',
+            boxShadow: '0 10px 24px rgba(0,0,0,0.18)',
             maxHeight: '240px',
             overflowY: 'auto',
           }}
@@ -401,11 +412,11 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
               width: '100%',
               padding: '10px 12px',
               border: 'none',
-              background: !value ? 'rgba(99,102,241,0.28)' : 'transparent',
-              color: '#fff',
+              background: !value ? optActiveBg : 'transparent',
+              color: optColor,
               textAlign: 'left',
               cursor: 'pointer',
-              fontSize: '13px',
+              fontSize: '15px',
             }}
           >
             Todos
@@ -426,11 +437,11 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
                   width: '100%',
                   padding: '10px 12px',
                   border: 'none',
-                  background: active ? 'rgba(99,102,241,0.28)' : 'transparent',
-                  color: '#fff',
+                  background: active ? optActiveBg : 'transparent',
+                  color: optColor,
                   textAlign: 'left',
                   cursor: 'pointer',
-                  fontSize: '13px',
+                  fontSize: '15px',
                 }}
               >
                 {renderOptionLabel ? renderOptionLabel(o) : o}
@@ -463,6 +474,10 @@ export default function Rankings() {
   const [nacionalPais, setNacionalPais] = useState('');
   const [modalJugadorRankings, setModalJugadorRankings] = useState(null);
 
+  const [rankingFilterSheetOpen, setRankingFilterSheetOpen] = useState(false);
+  /** Borrador de filtros mientras el panel está abierto; al cerrar sin Aplicar se descarta. */
+  const [rankingFilterSheetDraft, setRankingFilterSheetDraft] = useState(null);
+
   const paisesDesdeSedes = useMemo(
     () =>
       [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort((a, b) =>
@@ -471,8 +486,44 @@ export default function Rankings() {
     [sedes]
   );
 
-  const provinciasLocalOpciones = useMemo(() => {
-    const p = String(localPais || '').trim().toLowerCase();
+  const rankingActiveFilterCount = useMemo(() => {
+    if (activeTab === 'local') {
+      let n = 0;
+      if (String(localPais || '').trim()) n += 1;
+      if (String(localProvincia || '').trim()) n += 1;
+      if (String(localCiudad || '').trim()) n += 1;
+      if (String(selectedCategoria || '').trim()) n += 1;
+      if (String(selectedGeneroTorneo || '').trim()) n += 1;
+      return n;
+    }
+    if (activeTab === 'nacional') {
+      let n = 0;
+      if (String(nacionalPais || '').trim()) n += 1;
+      if (String(selectedCategoria || '').trim()) n += 1;
+      if (String(selectedGeneroTorneo || '').trim()) n += 1;
+      return n;
+    }
+    if (activeTab === 'internacional') {
+      let n = 0;
+      if (String(selectedCategoria || '').trim()) n += 1;
+      if (String(selectedGeneroTorneo || '').trim()) n += 1;
+      return n;
+    }
+    return 0;
+  }, [
+    activeTab,
+    localPais,
+    localProvincia,
+    localCiudad,
+    nacionalPais,
+    selectedCategoria,
+    selectedGeneroTorneo,
+  ]);
+
+  const provinciasSheetOpciones = useMemo(() => {
+    const d = rankingFilterSheetDraft;
+    if (!d) return [];
+    const p = String(d.localPais || '').trim().toLowerCase();
     if (!p) return [];
     const set = new Set();
     for (const s of sedes) {
@@ -481,12 +532,14 @@ export default function Rankings() {
       if (pr) set.add(pr);
     }
     return [...set].sort((a, b) => a.localeCompare(b, 'es'));
-  }, [sedes, localPais]);
+  }, [sedes, rankingFilterSheetDraft]);
 
-  const ciudadesLocalOpciones = useMemo(() => {
-    const p = String(localPais || '').trim().toLowerCase();
+  const ciudadesSheetOpciones = useMemo(() => {
+    const d = rankingFilterSheetDraft;
+    if (!d) return [];
+    const p = String(d.localPais || '').trim().toLowerCase();
     if (!p) return [];
-    const prov = String(localProvincia || '').trim();
+    const prov = String(d.localProvincia || '').trim();
     const set = new Set();
     for (const s of sedes) {
       if (String(s.pais || '').trim().toLowerCase() !== p) continue;
@@ -495,9 +548,83 @@ export default function Rankings() {
       if (c) set.add(c);
     }
     return [...set].sort((a, b) => a.localeCompare(b, 'es'));
-  }, [sedes, localPais, localProvincia]);
+  }, [sedes, rankingFilterSheetDraft]);
 
-  const etiquetaProvinciaLocal = useMemo(() => rankingEtiquetaProvinciaSegunPais(localPais), [localPais]);
+  const etiquetaProvinciaSheet = useMemo(
+    () => rankingEtiquetaProvinciaSegunPais(rankingFilterSheetDraft?.localPais),
+    [rankingFilterSheetDraft?.localPais]
+  );
+
+  const openRankingFilterSheet = () => {
+    setRankingFilterSheetDraft({
+      localPais,
+      localProvincia,
+      localCiudad,
+      nacionalPais,
+      selectedCategoria,
+      selectedGeneroTorneo,
+    });
+    setRankingFilterSheetOpen(true);
+  };
+
+  const discardRankingFilterSheet = () => {
+    setRankingFilterSheetOpen(false);
+    setRankingFilterSheetDraft(null);
+  };
+
+  const patchRankingFilterSheetDraft = (patch) => {
+    setRankingFilterSheetDraft((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      if (Object.prototype.hasOwnProperty.call(patch, 'localPais')) {
+        next.localProvincia = '';
+        next.localCiudad = '';
+      }
+      if (Object.prototype.hasOwnProperty.call(patch, 'localProvincia')) {
+        next.localCiudad = '';
+      }
+      return next;
+    });
+  };
+
+  const applyRankingFilterSheet = () => {
+    if (!rankingFilterSheetDraft) return;
+    let cat = rankingFilterSheetDraft.selectedCategoria;
+    if (activeTab === 'internacional' && cat && !CATEGORIAS_INTERNACIONAL_FIPA.includes(cat)) {
+      cat = '';
+    }
+    setLocalPais(rankingFilterSheetDraft.localPais);
+    setLocalProvincia(rankingFilterSheetDraft.localProvincia);
+    setLocalCiudad(rankingFilterSheetDraft.localCiudad);
+    setNacionalPais(rankingFilterSheetDraft.nacionalPais);
+    setSelectedCategoria(cat);
+    setSelectedGeneroTorneo(rankingFilterSheetDraft.selectedGeneroTorneo);
+    setRankingFilterSheetOpen(false);
+    setRankingFilterSheetDraft(null);
+  };
+
+  const clearRankingFilterSheetDraft = () => {
+    setRankingFilterSheetDraft({
+      localPais: '',
+      localProvincia: '',
+      localCiudad: '',
+      nacionalPais: '',
+      selectedCategoria: '',
+      selectedGeneroTorneo: '',
+    });
+  };
+
+  useEffect(() => {
+    if (!rankingFilterSheetOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setRankingFilterSheetOpen(false);
+        setRankingFilterSheetDraft(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [rankingFilterSheetOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -626,6 +753,8 @@ export default function Rankings() {
             <button
               key={tab.id}
               onClick={() => {
+                setRankingFilterSheetOpen(false);
+                setRankingFilterSheetDraft(null);
                 setActiveTab(tab.id);
                 setLocalPais('');
                 setLocalProvincia('');
@@ -653,131 +782,32 @@ export default function Rankings() {
           ))}
         </div>
 
-        {/* Filtros: Local = país → provincia → ciudad; categoría y tipo de torneo = selects compactos */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '12px' }}>
-          {activeTab === 'local' && (
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <RankingFilterDropdown
-                label="País"
-                value={localPais}
-                onChange={(v) => {
-                  setLocalPais(v);
-                  setLocalProvincia('');
-                  setLocalCiudad('');
-                }}
-                options={paisesDesdeSedes}
-                disabled={paisesDesdeSedes.length === 0}
-                ariaLabel="País para ranking local"
-                renderOptionLabel={countryLabelWithFlag}
-              />
-              <RankingFilterDropdown
-                label={etiquetaProvinciaLocal}
-                value={localProvincia}
-                onChange={(v) => {
-                  setLocalProvincia(v);
-                  setLocalCiudad('');
-                }}
-                options={provinciasLocalOpciones}
-                disabled={!localPais.trim()}
-                ariaLabel={`${etiquetaProvinciaLocal} para ranking local`}
-              />
-              <RankingFilterDropdown
-                label="Ciudad"
-                value={localCiudad}
-                onChange={setLocalCiudad}
-                options={ciudadesLocalOpciones}
-                disabled={!localPais.trim() || ciudadesLocalOpciones.length === 0}
-                ariaLabel="Ciudad para ranking local"
-              />
-            </div>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+          <button
+            type="button"
+            onClick={openRankingFilterSheet}
+            aria-label="Abrir filtros del ranking"
+            style={{
+              alignSelf: 'flex-start',
+              padding: '10px 16px',
+              borderRadius: '12px',
+              border: rankingActiveFilterCount > 0 ? '2px solid rgba(255,255,255,0.95)' : '1px solid rgba(255,255,255,0.35)',
+              background:
+                rankingActiveFilterCount > 0
+                  ? 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.22) 100%)'
+                  : 'rgba(255,255,255,0.14)',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: rankingActiveFilterCount > 0 ? '0 4px 14px rgba(0,0,0,0.2)' : 'none',
+            }}
+          >
+            🔍 Filtrar{rankingActiveFilterCount > 0 ? ` (${rankingActiveFilterCount})` : ''}
+          </button>
           {activeTab === 'local' && sedesLoadError ? (
             <span style={{ fontSize: '12px', color: '#fecaca' }}>{sedesLoadError}</span>
           ) : null}
-          {activeTab === 'nacional' && (
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <RankingFilterDropdown
-                label="País"
-                value={nacionalPais}
-                onChange={setNacionalPais}
-                options={paisesDesdeSedes}
-                disabled={paisesDesdeSedes.length === 0}
-                ariaLabel="País para ranking nacional"
-                renderOptionLabel={countryLabelWithFlag}
-              />
-            </div>
-          )}
-          {(activeTab === 'local' || activeTab === 'nacional' || activeTab === 'internacional') && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end' }}>
-              <div style={RANKING_COMPACT_FILTER_CELL}>
-                <label htmlFor="ranking-filtro-categoria" style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
-                  Categoría
-                </label>
-                <select
-                  id="ranking-filtro-categoria"
-                  value={selectedCategoria}
-                  onChange={(e) => setSelectedCategoria(e.target.value)}
-                  aria-label="Filtrar ranking por categoría"
-                  style={RANKING_COMPACT_SELECT_STYLE}
-                >
-                  <option value="">Todos</option>
-                  {CATEGORIAS_NIVEL_TODAS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div style={RANKING_COMPACT_FILTER_CELL}>
-                <label htmlFor="ranking-filtro-tipo-torneo" style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
-                  Tipo de torneo
-                </label>
-                <select
-                  id="ranking-filtro-tipo-torneo"
-                  value={selectedGeneroTorneo}
-                  onChange={(e) => setSelectedGeneroTorneo(e.target.value)}
-                  aria-label="Filtrar ranking por tipo de torneo (Masculino, Femenino o Mixto)"
-                  style={RANKING_COMPACT_SELECT_STYLE}
-                >
-                  <option value="">Todos</option>
-                  {TORNEO_GENERO_COMPETENCIA_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-          {(selectedCategoria ||
-            selectedGeneroTorneo ||
-            (activeTab === 'local' && (localPais || localProvincia || localCiudad)) ||
-            (activeTab === 'nacional' && nacionalPais)) && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCategoria('');
-                setSelectedGeneroTorneo('');
-                setLocalPais('');
-                setLocalProvincia('');
-                setLocalCiudad('');
-                setNacionalPais('');
-              }}
-              style={{
-                alignSelf: 'flex-start',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontSize: '13px',
-                cursor: 'pointer',
-                fontWeight: '600',
-              }}
-            >
-              ✕ Limpiar filtros
-            </button>
-          )}
         </div>
 
         {/* Scope description */}
@@ -960,6 +990,226 @@ export default function Rankings() {
           </div>
         )}
       </div>
+
+      {rankingFilterSheetOpen && rankingFilterSheetDraft ? (
+        <div
+          role="presentation"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.5)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            alignItems: 'stretch',
+            padding: 0,
+            boxSizing: 'border-box',
+          }}
+          onClick={discardRankingFilterSheet}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ranking-filters-sheet-title"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: '18px 18px 0 0',
+              maxHeight: 'min(88vh, 640px)',
+              overflowY: 'auto',
+              paddingLeft: 'max(18px, env(safe-area-inset-left, 0px))',
+              paddingRight: 'max(18px, env(safe-area-inset-right, 0px))',
+              paddingTop: '10px',
+              paddingBottom: 'max(18px, env(safe-area-inset-bottom, 0px))',
+              boxShadow: '0 -8px 32px rgba(0,0,0,0.18)',
+            }}
+          >
+            <div
+              aria-hidden
+              style={{
+                width: '40px',
+                height: '4px',
+                borderRadius: '2px',
+                background: '#e2e8f0',
+                margin: '0 auto 14px',
+              }}
+            />
+            <h2
+              id="ranking-filters-sheet-title"
+              style={{ margin: '0 0 18px', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}
+            >
+              Filtros
+            </h2>
+
+            {activeTab === 'local' ? (
+              <>
+                <div style={RANKING_SHEET_FILTER_ROW}>
+                  <RankingFilterDropdown
+                    variant="sheet"
+                    label="País"
+                    value={rankingFilterSheetDraft.localPais}
+                    onChange={(v) => patchRankingFilterSheetDraft({ localPais: v })}
+                    options={paisesDesdeSedes}
+                    disabled={paisesDesdeSedes.length === 0}
+                    ariaLabel="País para ranking local"
+                    renderOptionLabel={countryLabelWithFlag}
+                  />
+                </div>
+                {String(rankingFilterSheetDraft.localPais || '').trim() ? (
+                  <div style={RANKING_SHEET_FILTER_ROW}>
+                    <RankingFilterDropdown
+                      variant="sheet"
+                      label={etiquetaProvinciaSheet}
+                      value={rankingFilterSheetDraft.localProvincia}
+                      onChange={(v) => patchRankingFilterSheetDraft({ localProvincia: v })}
+                      options={provinciasSheetOpciones}
+                      disabled={!String(rankingFilterSheetDraft.localPais || '').trim()}
+                      ariaLabel={`${etiquetaProvinciaSheet} para ranking local`}
+                    />
+                  </div>
+                ) : null}
+                {String(rankingFilterSheetDraft.localProvincia || '').trim() ? (
+                  <div style={RANKING_SHEET_FILTER_ROW}>
+                    <label
+                      htmlFor="ranking-sheet-local-ciudad"
+                      style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}
+                    >
+                      Ciudad
+                    </label>
+                    <select
+                      id="ranking-sheet-local-ciudad"
+                      value={rankingFilterSheetDraft.localCiudad}
+                      onChange={(e) => patchRankingFilterSheetDraft({ localCiudad: e.target.value })}
+                      aria-label="Ciudad para ranking local"
+                      style={RANKING_SHEET_SELECT_STYLE}
+                    >
+                      <option value="">Todos</option>
+                      {ciudadesSheetOpciones.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+
+            {activeTab === 'nacional' ? (
+              <div style={RANKING_SHEET_FILTER_ROW}>
+                <RankingFilterDropdown
+                  variant="sheet"
+                  label="País"
+                  value={rankingFilterSheetDraft.nacionalPais}
+                  onChange={(v) => patchRankingFilterSheetDraft({ nacionalPais: v })}
+                  options={paisesDesdeSedes}
+                  disabled={paisesDesdeSedes.length === 0}
+                  ariaLabel="País para ranking nacional"
+                  renderOptionLabel={countryLabelWithFlag}
+                />
+              </div>
+            ) : null}
+
+            <div style={RANKING_SHEET_FILTER_ROW}>
+              <label
+                htmlFor="ranking-sheet-categoria"
+                style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}
+              >
+                Categoría
+              </label>
+              <select
+                id="ranking-sheet-categoria"
+                value={rankingFilterSheetDraft.selectedCategoria}
+                onChange={(e) =>
+                  patchRankingFilterSheetDraft({ selectedCategoria: e.target.value })
+                }
+                aria-label="Filtrar ranking por categoría"
+                style={RANKING_SHEET_SELECT_STYLE}
+              >
+                <option value="">Todos</option>
+                {(activeTab === 'internacional' ? CATEGORIAS_INTERNACIONAL_FIPA : CATEGORIAS_NIVEL_TODAS).map(
+                  (c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+
+            <div style={{ ...RANKING_SHEET_FILTER_ROW, marginBottom: '8px' }}>
+              <label
+                htmlFor="ranking-sheet-tipo-torneo"
+                style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}
+              >
+                Tipo de torneo
+              </label>
+              <select
+                id="ranking-sheet-tipo-torneo"
+                value={rankingFilterSheetDraft.selectedGeneroTorneo}
+                onChange={(e) =>
+                  patchRankingFilterSheetDraft({ selectedGeneroTorneo: e.target.value })
+                }
+                aria-label="Filtrar ranking por tipo de torneo (Masculino, Femenino o Mixto)"
+                style={RANKING_SHEET_SELECT_STYLE}
+              >
+                <option value="">Todos</option>
+                {TORNEO_GENERO_COMPETENCIA_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                marginTop: '8px',
+                paddingTop: '16px',
+                borderTop: '1px solid #e2e8f0',
+              }}
+            >
+              <button
+                type="button"
+                onClick={applyRankingFilterSheet}
+                style={{
+                  minHeight: '48px',
+                  fontSize: '16px',
+                  fontWeight: 800,
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: '#4f46e5',
+                  color: '#fff',
+                  cursor: 'pointer',
+                }}
+              >
+                Aplicar
+              </button>
+              <button
+                type="button"
+                onClick={clearRankingFilterSheetDraft}
+                style={{
+                  minHeight: '44px',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  color: '#475569',
+                  cursor: 'pointer',
+                }}
+              >
+                Limpiar todo
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <ModalJugador
         open={Boolean(modalJugadorRankings)}
         onClose={() => setModalJugadorRankings(null)}
