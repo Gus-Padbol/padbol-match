@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
@@ -220,6 +220,38 @@ function countryLabelWithFlag(rawPais) {
   return maybe ? `${maybe} ${p}` : p;
 }
 
+/** Normaliza nombre de país (quita bandera inicial, minúsculas, sin acentos). */
+function normalizeNombrePaisRanking(s) {
+  return String(s || '')
+    .replace(/^[\p{Emoji_Presentation}\uFE0F\s]+/u, '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Etiqueta del filtro subnacional según país (español).
+ * Argentina → Provincia · EE. UU. → Estado · España → Región · resto → Estado / Región
+ */
+function rankingEtiquetaProvinciaSegunPais(paisRaw) {
+  const raw = String(paisRaw || '').trim();
+  if (!raw) return 'Provincia';
+  const n = normalizeNombrePaisRanking(raw);
+  if (!n) return 'Provincia';
+  if (n === 'argentina' || n.startsWith('argentina')) return 'Provincia';
+  if (
+    n.includes('estados unidos') ||
+    n === 'usa' ||
+    n.replace(/\s+/g, '') === 'eeuu' ||
+    n.startsWith('ee. uu')
+  ) {
+    return 'Estado';
+  }
+  if (n === 'espana' || n === 'españa' || n.startsWith('espana') || n.startsWith('españa')) return 'Región';
+  return 'Estado / Región';
+}
+
 const TABS = [
   { id: 'local',         label: '🏟️ Local'              },
   { id: 'nacional',      label: '🌍 Nacional'            },
@@ -274,6 +306,8 @@ const RANKING_COMPACT_FILTER_CELL = {
 function RankingFilterDropdown({ label, value, onChange, options, disabled, ariaLabel, renderOptionLabel }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
+  const labelId = useId();
+  const listId = useId();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -290,7 +324,7 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
     : 'Todos';
 
   return (
-    <label
+    <div
       ref={rootRef}
       style={{
         display: 'flex',
@@ -301,12 +335,17 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
         position: 'relative',
       }}
     >
-      <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>{label}</span>
+      <span id={labelId} style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+        {label}
+      </span>
       <button
         type="button"
         disabled={disabled}
+        id={`${listId}-trigger`}
         onClick={() => setOpen((v) => !v)}
         aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
         style={{
           width: '100%',
           minHeight: '40px',
@@ -331,6 +370,10 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
       </button>
       {open && !disabled ? (
         <div
+          id={listId}
+          role="listbox"
+          aria-labelledby={labelId}
+          onMouseDown={(e) => e.stopPropagation()}
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
@@ -348,6 +391,8 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
         >
           <button
             type="button"
+            role="option"
+            aria-selected={!value}
             onClick={() => {
               onChange('');
               setOpen(false);
@@ -371,6 +416,8 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
               <button
                 key={o}
                 type="button"
+                role="option"
+                aria-selected={active}
                 onClick={() => {
                   onChange(o);
                   setOpen(false);
@@ -392,7 +439,7 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
           })}
         </div>
       ) : null}
-    </label>
+    </div>
   );
 }
 
@@ -449,6 +496,8 @@ export default function Rankings() {
     }
     return [...set].sort((a, b) => a.localeCompare(b, 'es'));
   }, [sedes, localPais, localProvincia]);
+
+  const etiquetaProvinciaLocal = useMemo(() => rankingEtiquetaProvinciaSegunPais(localPais), [localPais]);
 
   useEffect(() => {
     let cancelled = false;
@@ -622,15 +671,15 @@ export default function Rankings() {
                 renderOptionLabel={countryLabelWithFlag}
               />
               <RankingFilterDropdown
-                label="Provincia"
+                label={etiquetaProvinciaLocal}
                 value={localProvincia}
                 onChange={(v) => {
                   setLocalProvincia(v);
                   setLocalCiudad('');
                 }}
                 options={provinciasLocalOpciones}
-                disabled={!localPais.trim() || provinciasLocalOpciones.length === 0}
-                ariaLabel="Provincia para ranking local"
+                disabled={!localPais.trim()}
+                ariaLabel={`${etiquetaProvinciaLocal} para ranking local`}
               />
               <RankingFilterDropdown
                 label="Ciudad"
