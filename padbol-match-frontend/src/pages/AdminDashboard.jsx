@@ -6993,7 +6993,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <div className="section" style={{ maxWidth: '980px', margin: '0 auto' }}>
           <h2 style={{ color: '#fff', textAlign: 'center', marginBottom: '8px' }}>📝 Solicitudes</h2>
           <p style={{ color: '#e2e8f0', textAlign: 'center', marginBottom: '16px', fontSize: '14px' }}>
-            Altas enviadas por admin nacional e interés desde la web. Filtrá por estado; las aprobadas y rechazadas siguen
+            Altas enviadas por admin nacional e interés desde la web. Filtra por estado; las aprobadas y rechazadas siguen
             visibles.
           </p>
           <div

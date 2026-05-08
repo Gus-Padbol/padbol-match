@@ -1084,7 +1084,7 @@ export default function TorneoVista() {
                     <div className="torneo-busca-dupla__linea-nombre">
                       <strong>{nombreMostrar}</strong>
                       {row.alias ? <span className="torneo-busca-dupla__alias"> @{row.alias}</span> : null}
-                      {esYo ? <span className="torneo-busca-dupla__vos"> (vos)</span> : null}
+                      {esYo ? <span className="torneo-busca-dupla__vos"> (tú)</span> : null}
                     </div>
                     {row.categoria ? (
                       <div className="torneo-busca-dupla__cat">Categoría: {row.categoria}</div>
