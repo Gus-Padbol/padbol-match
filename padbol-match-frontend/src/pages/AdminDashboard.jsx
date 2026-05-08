@@ -1231,6 +1231,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [adminRolesRows, setAdminRolesRows] = useState([]);
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
   const [adminRoleModalOpen, setAdminRoleModalOpen] = useState(false);
+  const [adminRoleAssignMobile, setAdminRoleAssignMobile] = useState(false);
   const [adminRoleSaving, setAdminRoleSaving] = useState(false);
   const [adminRoleForm, setAdminRoleForm] = useState({
     email: '',
@@ -1242,6 +1243,38 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     provincia: '',
     pais: '',
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const apply = () => setAdminRoleAssignMobile(Boolean(mq.matches));
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  const setAdminRoleTipoMobile = useCallback((role) => {
+    setAdminRoleForm((p) => {
+      if (role === 'admin_club') {
+        return {
+          ...p,
+          role,
+          alcance: 'sede',
+          pais: '',
+          ciudad: '',
+          provincia: '',
+        };
+      }
+      return {
+        ...p,
+        role,
+        alcance: 'pais',
+        sede_id: '',
+        ciudad: '',
+        provincia: '',
+      };
+    });
+  }, []);
 
   const cargarSedesPendientes = useCallback(
     async (estadoQuery = 'pendiente') => {
@@ -8401,58 +8434,282 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             zIndex: 18950,
             background: 'rgba(15, 23, 42, 0.72)',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: adminRoleAssignMobile ? 'flex-end' : 'center',
             justifyContent: 'center',
-            padding: '16px',
+            padding: adminRoleAssignMobile ? 0 : '16px',
           }}
           onClick={(ev) => {
             if (ev.target === ev.currentTarget && !adminRoleSaving) setAdminRoleModalOpen(false);
           }}
         >
-          <div style={{ width: '100%', maxWidth: '540px', background: '#fff', borderRadius: '14px', padding: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '19px', color: '#0f172a' }}>Asignar rol</h3>
-            <p style={{ margin: '6px 0 12px', fontSize: '13px', color: '#64748b' }}>Buscar usuario por email y definir alcance geográfico.</p>
-            <div style={{ display: 'grid', gap: '10px' }}>
-              <input type="email" placeholder="Email del usuario" value={adminRoleForm.email} onChange={(e) => setAdminRoleForm((p) => ({ ...p, email: e.target.value }))} />
-              <input type="text" placeholder="Nombre (opcional)" value={adminRoleForm.nombre} onChange={(e) => setAdminRoleForm((p) => ({ ...p, nombre: e.target.value }))} />
-              <select value={adminRoleForm.role} onChange={(e) => setAdminRoleForm((p) => ({ ...p, role: e.target.value }))}>
-                <option value="admin_club">admin_club</option>
-                <option value="admin_nacional">admin_nacional</option>
-              </select>
-              <select value={adminRoleForm.alcance} onChange={(e) => setAdminRoleForm((p) => ({ ...p, alcance: e.target.value }))}>
-                <option value="sede">sede</option>
-                <option value="ciudad">ciudad</option>
-                <option value="provincia">provincia</option>
-                <option value="pais">pais</option>
-              </select>
-              {adminRoleForm.alcance === 'sede' ? (
-                <select value={adminRoleForm.sede_id} onChange={(e) => setAdminRoleForm((p) => ({ ...p, sede_id: e.target.value }))}>
-                  <option value="">Seleccionar sede</option>
-                  {Object.values(sedesMap || {}).map((s) => (
-                    <option key={s.id} value={s.id}>{sedeFlag(s) ? `${sedeFlag(s)} ` : ''}{s.nombre}</option>
-                  ))}
-                </select>
-              ) : null}
-              {adminRoleForm.alcance === 'ciudad' ? (
-                <input type="text" placeholder="Ciudad" value={adminRoleForm.ciudad} onChange={(e) => setAdminRoleForm((p) => ({ ...p, ciudad: e.target.value }))} />
-              ) : null}
-              {adminRoleForm.alcance === 'provincia' ? (
-                <input type="text" placeholder="Provincia / Estado" value={adminRoleForm.provincia} onChange={(e) => setAdminRoleForm((p) => ({ ...p, provincia: e.target.value }))} />
-              ) : null}
-              {adminRoleForm.alcance === 'pais' ? (
-                <select value={adminRoleForm.pais} onChange={(e) => setAdminRoleForm((p) => ({ ...p, pais: e.target.value }))}>
-                  <option value="">Seleccionar país</option>
-                  {PAISES_SEDE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-              ) : null}
+          {adminRoleAssignMobile ? (
+            <div
+              style={{
+                width: '100%',
+                height: '85vh',
+                maxHeight: '85vh',
+                background: '#fff',
+                borderTopLeftRadius: '16px',
+                borderTopRightRadius: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                boxShadow: '0 -8px 32px rgba(15, 23, 42, 0.2)',
+              }}
+            >
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  padding: '16px 16px 8px',
+                }}
+              >
+                <h3 style={{ margin: '0 0 4px', fontSize: '18px', color: '#0f172a' }}>Asignar rol</h3>
+                <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#64748b', lineHeight: 1.4 }}>
+                  Email del usuario y alcance según el tipo de admin.
+                </p>
+                <div style={{ display: 'grid', gap: '14px' }}>
+                  <label style={{ display: 'grid', gap: '6px', margin: 0 }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Email</span>
+                    <input
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder="correo@ejemplo.com"
+                      value={adminRoleForm.email}
+                      onChange={(e) => setAdminRoleForm((p) => ({ ...p, email: e.target.value }))}
+                      style={{
+                        minHeight: 48,
+                        fontSize: 16,
+                        padding: '0 14px',
+                        borderRadius: 12,
+                        border: '1px solid #cbd5e1',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </label>
+                  <label style={{ display: 'grid', gap: '6px', margin: 0 }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Nombre (opcional)</span>
+                    <input
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Nombre"
+                      value={adminRoleForm.nombre}
+                      onChange={(e) => setAdminRoleForm((p) => ({ ...p, nombre: e.target.value }))}
+                      style={{
+                        minHeight: 48,
+                        fontSize: 16,
+                        padding: '0 14px',
+                        borderRadius: 12,
+                        border: '1px solid #cbd5e1',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </label>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: 8 }}>Rol</span>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      {[
+                        { value: 'admin_club', title: 'Admin club', hint: 'admin_club' },
+                        { value: 'admin_nacional', title: 'Admin nacional', hint: 'admin_nacional' },
+                      ].map((opt) => {
+                        const sel = adminRoleForm.role === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setAdminRoleTipoMobile(opt.value)}
+                            style={{
+                              flex: 1,
+                              minHeight: 52,
+                              padding: '10px 12px',
+                              borderRadius: 12,
+                              border: sel ? '2px solid #4f46e5' : '2px solid #e2e8f0',
+                              background: sel ? 'linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%)' : '#f8fafc',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 2,
+                            }}
+                          >
+                            <span style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{opt.title}</span>
+                            <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>{opt.hint}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {adminRoleForm.role === 'admin_club' ? (
+                    <div>
+                      <span style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: 8 }}>Sede</span>
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        {sedesSuperAdminLista.map((s) => {
+                          const flag = sedeFlag(s);
+                          const sel = String(adminRoleForm.sede_id || '') === String(s.id);
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => setAdminRoleForm((p) => ({ ...p, sede_id: String(s.id) }))}
+                              style={{
+                                minHeight: 56,
+                                padding: '12px 14px',
+                                borderRadius: 12,
+                                border: sel ? '2px solid #4f46e5' : '2px solid #e2e8f0',
+                                background: sel ? '#eef2ff' : '#fff',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 12,
+                                textAlign: 'left',
+                                width: '100%',
+                                boxSizing: 'border-box',
+                              }}
+                            >
+                              <span style={{ fontSize: 28, lineHeight: 1 }} aria-hidden>{flag || '🏢'}</span>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', flex: 1 }}>{s.nombre || `Sede ${s.id}`}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                  {adminRoleForm.role === 'admin_nacional' ? (
+                    <div>
+                      <span style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: 8 }}>País</span>
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        {PAISES_SEDE_OPTIONS.map((opt) => {
+                          const sel = adminRoleForm.pais === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setAdminRoleForm((p) => ({ ...p, pais: opt.value }))}
+                              style={{
+                                minHeight: 56,
+                                padding: '12px 14px',
+                                borderRadius: 12,
+                                border: sel ? '2px solid #4f46e5' : '2px solid #e2e8f0',
+                                background: sel ? '#eef2ff' : '#fff',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 12,
+                                textAlign: 'left',
+                                width: '100%',
+                                boxSizing: 'border-box',
+                              }}
+                            >
+                              <span style={{ fontSize: 28, lineHeight: 1 }} aria-hidden>{banderaRegionalAlInicio(opt.label) || '🇺🇳'}</span>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', flex: 1 }}>{paisTextoSinBanderaInicial(opt.label)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+              <div
+                style={{
+                  flexShrink: 0,
+                  padding: '12px 16px calc(12px + env(safe-area-inset-bottom, 0px))',
+                  borderTop: '1px solid #e2e8f0',
+                  display: 'flex',
+                  gap: 12,
+                  background: '#fff',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setAdminRoleModalOpen(false)}
+                  disabled={adminRoleSaving}
+                  style={{
+                    flex: 1,
+                    minHeight: 52,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    borderRadius: 12,
+                    border: '2px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#334155',
+                    cursor: adminRoleSaving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void guardarRolAdmin()}
+                  disabled={adminRoleSaving}
+                  style={{
+                    flex: 1,
+                    minHeight: 52,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    borderRadius: 12,
+                    border: 'none',
+                    background: adminRoleSaving ? '#86efac' : '#16a34a',
+                    color: '#fff',
+                    cursor: adminRoleSaving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {adminRoleSaving ? 'Guardando…' : 'Guardar rol'}
+                </button>
+              </div>
             </div>
-            <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" onClick={() => setAdminRoleModalOpen(false)} disabled={adminRoleSaving}>Cancelar</button>
-              <button type="button" onClick={() => void guardarRolAdmin()} disabled={adminRoleSaving} style={{ padding: '8px 14px', border: 'none', borderRadius: '7px', background: '#16a34a', color: '#fff' }}>
-                {adminRoleSaving ? 'Guardando…' : 'Guardar rol'}
-              </button>
+          ) : (
+            <div style={{ width: '100%', maxWidth: '540px', background: '#fff', borderRadius: '14px', padding: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '19px', color: '#0f172a' }}>Asignar rol</h3>
+              <p style={{ margin: '6px 0 12px', fontSize: '13px', color: '#64748b' }}>Buscar usuario por email y definir alcance geográfico.</p>
+              <div style={{ display: 'grid', gap: '10px' }}>
+                <input type="email" placeholder="Email del usuario" value={adminRoleForm.email} onChange={(e) => setAdminRoleForm((p) => ({ ...p, email: e.target.value }))} />
+                <input type="text" placeholder="Nombre (opcional)" value={adminRoleForm.nombre} onChange={(e) => setAdminRoleForm((p) => ({ ...p, nombre: e.target.value }))} />
+                <select value={adminRoleForm.role} onChange={(e) => setAdminRoleForm((p) => ({ ...p, role: e.target.value }))}>
+                  <option value="admin_club">admin_club</option>
+                  <option value="admin_nacional">admin_nacional</option>
+                </select>
+                <select value={adminRoleForm.alcance} onChange={(e) => setAdminRoleForm((p) => ({ ...p, alcance: e.target.value }))}>
+                  <option value="sede">sede</option>
+                  <option value="ciudad">ciudad</option>
+                  <option value="provincia">provincia</option>
+                  <option value="pais">pais</option>
+                </select>
+                {adminRoleForm.alcance === 'sede' ? (
+                  <select value={adminRoleForm.sede_id} onChange={(e) => setAdminRoleForm((p) => ({ ...p, sede_id: e.target.value }))}>
+                    <option value="">Seleccionar sede</option>
+                    {Object.values(sedesMap || {}).map((s) => (
+                      <option key={s.id} value={s.id}>{sedeFlag(s) ? `${sedeFlag(s)} ` : ''}{s.nombre}</option>
+                    ))}
+                  </select>
+                ) : null}
+                {adminRoleForm.alcance === 'ciudad' ? (
+                  <input type="text" placeholder="Ciudad" value={adminRoleForm.ciudad} onChange={(e) => setAdminRoleForm((p) => ({ ...p, ciudad: e.target.value }))} />
+                ) : null}
+                {adminRoleForm.alcance === 'provincia' ? (
+                  <input type="text" placeholder="Provincia / Estado" value={adminRoleForm.provincia} onChange={(e) => setAdminRoleForm((p) => ({ ...p, provincia: e.target.value }))} />
+                ) : null}
+                {adminRoleForm.alcance === 'pais' ? (
+                  <select value={adminRoleForm.pais} onChange={(e) => setAdminRoleForm((p) => ({ ...p, pais: e.target.value }))}>
+                    <option value="">Seleccionar país</option>
+                    {PAISES_SEDE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                ) : null}
+              </div>
+              <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button type="button" onClick={() => setAdminRoleModalOpen(false)} disabled={adminRoleSaving}>Cancelar</button>
+                <button type="button" onClick={() => void guardarRolAdmin()} disabled={adminRoleSaving} style={{ padding: '8px 14px', border: 'none', borderRadius: '7px', background: '#16a34a', color: '#fff' }}>
+                  {adminRoleSaving ? 'Guardando…' : 'Guardar rol'}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       ) : null}
 
