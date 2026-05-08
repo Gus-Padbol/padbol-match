@@ -331,6 +331,8 @@ const ADMIN_TABS_ALLOWED = new Set([
   'validaciones',
   'mi_sede',
   'config',
+  'planes',
+  'roles',
   'sedes',
   'jugadores',
   'solicitudes',
@@ -1563,7 +1565,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   useEffect(() => {
     if (!isSuperAdmin) return;
-    if (activeTab === 'config' || activeTab === 'resumen') {
+    if (activeTab === 'roles' || activeTab === 'resumen') {
       void cargarRolesAdmin();
     }
   }, [activeTab, isSuperAdmin, cargarRolesAdmin]);
@@ -2645,7 +2647,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   useEffect(() => {
-    if (!isSuperAdmin || activeTab !== 'config') return;
+    if (!isSuperAdmin || activeTab !== 'planes') return;
     let cancelled = false;
     setPlanPricingLoading(true);
     fetch(`${apiBaseUrl}/api/plan-pricing`)
@@ -3930,7 +3932,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         { id: 'reservas', label: '⚽ Reservas' },
         { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
         ...(puedeVerMiSede ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
-        ...(puedeVerConfig ? [{ id: 'config', label: '⚙️ Config' }] : []),
+        ...(puedeVerConfig
+          ? [
+              { id: 'config', label: '⚙️ Config' },
+              { id: 'planes', label: '💳 Planes' },
+              { id: 'roles', label: '👥 Roles' },
+            ]
+          : []),
       ];
 
   const sedeClubHeader =
@@ -6323,8 +6331,134 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </table>
         </div>
 
-        <div style={{ marginBottom: '28px' }}>
-          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '10px', fontSize: '16px' }}>Planes y Precios</h3>
+        <div
+          style={{
+            marginBottom: '24px',
+            padding: '14px 16px',
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            maxWidth: '640px',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
+            <strong>Datos de la sede:</strong> si tenés la pestaña <strong>«Mi Sede»</strong>, usá el botón{' '}
+            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
+            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
+            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
+            se ofrecen en el flujo de reservas público.
+          </p>
+        </div>
+
+        {/* Distribución por posición */}
+        {(() => {
+          const todosNiveles = STANDARD_KEYS
+            .filter(key => !configNivelesHidden.has(key))
+            .map(key => ({ value: key, label: configNivelesLabels[key] || key, pts: configNiveles[key] ?? 0 }))
+            .concat(configTiposCustom.map(t => ({ value: t.id, label: t.nombre, pts: t.puntos })));
+          const totalPts = todosNiveles.find(n => n.value === previewNivel)?.pts
+            ?? todosNiveles[0]?.pts ?? 0;
+          const pctSum = [1,2,3,4,5,6,7,8,9,10].reduce((acc, pos) => acc + (configPosiciones[pos] ?? 0), 0);
+          const pctDiff = pctSum - 100;
+          return (
+            <div style={{ marginBottom: '28px' }}>
+              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+                Distribución de puntos por posición
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  Previsualizar con:
+                </label>
+                <select value={previewNivel} onChange={e => setPreviewNivel(e.target.value)}
+                  style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: '600', color: '#3b2f6e', background: 'white', cursor: 'pointer' }}>
+                  {todosNiveles.map(n => (
+                    <option key={n.value} value={n.value}>{n.label} ({n.pts} pts totales)</option>
+                  ))}
+                </select>
+              </div>
+              <table style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                <thead>
+                  <tr style={{ background: '#3b2f6e', color: 'white' }}>
+                    <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Posición</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px' }}>% del total</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap' }}>Puntos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[1,2,3,4,5,6,7,8,9,10].map((pos, i) => {
+                    const pct = configPosiciones[pos] ?? 0;
+                    const pts = Math.round((pct / 100) * totalPts);
+                    return (
+                      <tr key={pos} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : 'white' }}>
+                        <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333' }}>
+                          {pos === 1 ? '🥇 1ro' : pos === 2 ? '🥈 2do' : pos === 3 ? '🥉 3ro' : `${pos}°`}
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
+                          <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <input type="number" min="0" max="100" value={pct}
+                              onChange={e => setConfigPosiciones(prev => ({ ...prev, [pos]: parseInt(e.target.value) || 0 }))}
+                              style={{ width: '70px', padding: '5px 24px 5px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', textAlign: 'right', fontWeight: 'bold', color: '#3b2f6e' }} />
+                            <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#999', pointerEvents: 'none' }}>%</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'right', width: '100px', verticalAlign: 'middle', fontSize: '15px', fontWeight: 'bold', color: pts > 0 ? '#3b2f6e' : '#ccc', whiteSpace: 'nowrap' }}>
+                          {pts > 0 ? pts : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {/* Percentage sum indicator */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                marginTop: '10px', padding: '7px 14px', borderRadius: '8px',
+                background: pctDiff === 0 ? 'rgba(22,163,74,0.15)' : pctDiff > 0 ? 'rgba(220,38,38,0.12)' : 'rgba(234,88,12,0.12)',
+                border: `1.5px solid ${pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c'}`,
+              }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
+                  Total: {pctSum}%
+                </span>
+                <span style={{ fontSize: '12px', color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
+                  {pctDiff === 0 ? '✓ Distribución completa' : pctDiff > 0 ? `⚠ Excede por ${pctDiff}%` : `Faltan ${-pctDiff}%`}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Save button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
+          <button
+            onClick={guardarConfig}
+            disabled={configSaving}
+            style={{
+              padding: '12px 28px',
+              background: configSaving ? '#a78bfa' : 'linear-gradient(135deg, #7c3aed, #4c1d95)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: configSaving ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              fontSize: '15px',
+              boxShadow: '0 2px 8px rgba(124,58,237,0.4)',
+              opacity: configSaving ? 0.8 : 1,
+            }}
+          >
+            {configSaving ? '⏳ Guardando...' : '💾 Guardar configuración'}
+          </button>
+          {configMsg && (
+            <span style={{ fontSize: '14px', fontWeight: '600', color: configMsg.startsWith('✅') ? '#86efac' : '#fde68a' }}>
+              {configMsg}
+            </span>
+          )}
+        </div>
+
+      </div>}
+
+      {activeTab === 'planes' && puedeVerConfig && (
+        <div className="section">
+          <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>💳 Planes y Precios</h2>
           <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.45 }}>
             Precio mensual en USD según la cantidad de canchas del club. Solo super admin puede editar.
           </p>
@@ -6486,204 +6620,85 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </table>
           </div>
         </div>
+      )}
 
-        <div
-          style={{
-            marginBottom: '24px',
-            padding: '14px 16px',
-            background: 'rgba(255,255,255,0.08)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.12)',
-            maxWidth: '640px',
-          }}
-        >
-          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
-            <strong>Datos de la sede:</strong> si tenés la pestaña <strong>«Mi Sede»</strong>, usá el botón{' '}
-            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
-            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
-            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
-            se ofrecen en el flujo de reservas público.
-          </p>
-        </div>
-
-        {/* Distribución por posición */}
-        {(() => {
-          const todosNiveles = STANDARD_KEYS
-            .filter(key => !configNivelesHidden.has(key))
-            .map(key => ({ value: key, label: configNivelesLabels[key] || key, pts: configNiveles[key] ?? 0 }))
-            .concat(configTiposCustom.map(t => ({ value: t.id, label: t.nombre, pts: t.puntos })));
-          const totalPts = todosNiveles.find(n => n.value === previewNivel)?.pts
-            ?? todosNiveles[0]?.pts ?? 0;
-          const pctSum = [1,2,3,4,5,6,7,8,9,10].reduce((acc, pos) => acc + (configPosiciones[pos] ?? 0), 0);
-          const pctDiff = pctSum - 100;
-          return (
-            <div style={{ marginBottom: '28px' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
-                Distribución de puntos por posición
-              </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  Previsualizar con:
-                </label>
-                <select value={previewNivel} onChange={e => setPreviewNivel(e.target.value)}
-                  style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: '600', color: '#3b2f6e', background: 'white', cursor: 'pointer' }}>
-                  {todosNiveles.map(n => (
-                    <option key={n.value} value={n.value}>{n.label} ({n.pts} pts totales)</option>
-                  ))}
-                </select>
-              </div>
-              <table style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+      {activeTab === 'roles' && puedeVerConfig && (
+        <div className="section">
+          <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>👥 Roles</h2>
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+              Gestión de Administradores
+            </h3>
+            <div style={{ marginBottom: '10px' }}>
+              <button
+                type="button"
+                onClick={abrirModalAsignarRol}
+                style={{
+                  padding: '9px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #22c55e, #15803d)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Asignar rol
+              </button>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
                 <thead>
-                  <tr style={{ background: '#3b2f6e', color: 'white' }}>
-                    <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Posición</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px' }}>% del total</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap' }}>Puntos</th>
+                  <tr style={{ background: '#312e81', color: '#fff' }}>
+                    <th style={{ padding: '8px' }}>Nombre</th>
+                    <th style={{ padding: '8px' }}>Email</th>
+                    <th style={{ padding: '8px' }}>Rol</th>
+                    <th style={{ padding: '8px' }}>Alcance</th>
+                    <th style={{ padding: '8px' }}>Asignación</th>
+                    <th style={{ padding: '8px' }}>Acción</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[1,2,3,4,5,6,7,8,9,10].map((pos, i) => {
-                    const pct = configPosiciones[pos] ?? 0;
-                    const pts = Math.round((pct / 100) * totalPts);
-                    return (
-                      <tr key={pos} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : 'white' }}>
-                        <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333' }}>
-                          {pos === 1 ? '🥇 1ro' : pos === 2 ? '🥈 2do' : pos === 3 ? '🥉 3ro' : `${pos}°`}
+                  {adminRolesLoading ? (
+                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center' }}>Cargando…</td></tr>
+                  ) : adminRolesRows.length === 0 ? (
+                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>Sin administradores registrados</td></tr>
+                  ) : (
+                    adminRolesRows.map((row) => (
+                      <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0' }}>
+                        <td style={{ padding: '8px' }}>{row.nombre || '—'}</td>
+                        <td style={{ padding: '8px', fontSize: '12px' }}>{row.email}</td>
+                        <td style={{ padding: '8px' }}>{row.role || '—'}</td>
+                        <td style={{ padding: '8px' }}>{row.alcance || '—'}</td>
+                        <td style={{ padding: '8px', fontSize: '12px' }}>
+                          {row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
+                          {row.alcance === 'ciudad' ? row.ciudad || '—' : null}
+                          {row.alcance === 'provincia' ? row.provincia || '—' : null}
+                          {row.alcance === 'pais' ? row.pais || '—' : null}
+                          {row.alcance === 'global' ? 'Global' : null}
                         </td>
-                        <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
-                          <div style={{ position: 'relative', display: 'inline-block' }}>
-                            <input type="number" min="0" max="100" value={pct}
-                              onChange={e => setConfigPosiciones(prev => ({ ...prev, [pos]: parseInt(e.target.value) || 0 }))}
-                              style={{ width: '70px', padding: '5px 24px 5px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', textAlign: 'right', fontWeight: 'bold', color: '#3b2f6e' }} />
-                            <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#999', pointerEvents: 'none' }}>%</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right', width: '100px', verticalAlign: 'middle', fontSize: '15px', fontWeight: 'bold', color: pts > 0 ? '#3b2f6e' : '#ccc', whiteSpace: 'nowrap' }}>
-                          {pts > 0 ? pts : '—'}
+                        <td style={{ padding: '8px' }}>
+                          {row.role === 'super_admin' ? (
+                            <span style={{ color: '#64748b', fontSize: '12px' }}>—</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void revocarRolAdmin(row.email)}
+                              style={{ padding: '4px 9px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer' }}
+                            >
+                              Revocar rol
+                            </button>
+                          )}
                         </td>
                       </tr>
-                    );
-                  })}
+                    ))
+                  )}
                 </tbody>
               </table>
-              {/* Percentage sum indicator */}
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                marginTop: '10px', padding: '7px 14px', borderRadius: '8px',
-                background: pctDiff === 0 ? 'rgba(22,163,74,0.15)' : pctDiff > 0 ? 'rgba(220,38,38,0.12)' : 'rgba(234,88,12,0.12)',
-                border: `1.5px solid ${pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c'}`,
-              }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
-                  Total: {pctSum}%
-                </span>
-                <span style={{ fontSize: '12px', color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
-                  {pctDiff === 0 ? '✓ Distribución completa' : pctDiff > 0 ? `⚠ Excede por ${pctDiff}%` : `Faltan ${-pctDiff}%`}
-                </span>
-              </div>
             </div>
-          );
-        })()}
-
-        <div style={{ marginBottom: '32px' }}>
-          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
-            Gestión de Administradores
-          </h3>
-          <div style={{ marginBottom: '10px' }}>
-            <button
-              type="button"
-              onClick={abrirModalAsignarRol}
-              style={{
-                padding: '9px 14px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #22c55e, #15803d)',
-                color: '#fff',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              Asignar rol
-            </button>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
-              <thead>
-                <tr style={{ background: '#312e81', color: '#fff' }}>
-                  <th style={{ padding: '8px' }}>Nombre</th>
-                  <th style={{ padding: '8px' }}>Email</th>
-                  <th style={{ padding: '8px' }}>Rol</th>
-                  <th style={{ padding: '8px' }}>Alcance</th>
-                  <th style={{ padding: '8px' }}>Asignación</th>
-                  <th style={{ padding: '8px' }}>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {adminRolesLoading ? (
-                  <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center' }}>Cargando…</td></tr>
-                ) : adminRolesRows.length === 0 ? (
-                  <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>Sin administradores registrados</td></tr>
-                ) : (
-                  adminRolesRows.map((row) => (
-                    <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '8px' }}>{row.nombre || '—'}</td>
-                      <td style={{ padding: '8px', fontSize: '12px' }}>{row.email}</td>
-                      <td style={{ padding: '8px' }}>{row.role || '—'}</td>
-                      <td style={{ padding: '8px' }}>{row.alcance || '—'}</td>
-                      <td style={{ padding: '8px', fontSize: '12px' }}>
-                        {row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
-                        {row.alcance === 'ciudad' ? row.ciudad || '—' : null}
-                        {row.alcance === 'provincia' ? row.provincia || '—' : null}
-                        {row.alcance === 'pais' ? row.pais || '—' : null}
-                        {row.alcance === 'global' ? 'Global' : null}
-                      </td>
-                      <td style={{ padding: '8px' }}>
-                        {row.role === 'super_admin' ? (
-                          <span style={{ color: '#64748b', fontSize: '12px' }}>—</span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => void revocarRolAdmin(row.email)}
-                            style={{ padding: '4px 9px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer' }}
-                          >
-                            Revocar rol
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
           </div>
         </div>
-
-        {/* Save button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
-          <button
-            onClick={guardarConfig}
-            disabled={configSaving}
-            style={{
-              padding: '12px 28px',
-              background: configSaving ? '#a78bfa' : 'linear-gradient(135deg, #7c3aed, #4c1d95)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: configSaving ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              fontSize: '15px',
-              boxShadow: '0 2px 8px rgba(124,58,237,0.4)',
-              opacity: configSaving ? 0.8 : 1,
-            }}
-          >
-            {configSaving ? '⏳ Guardando...' : '💾 Guardar configuración'}
-          </button>
-          {configMsg && (
-            <span style={{ fontSize: '14px', fontWeight: '600', color: configMsg.startsWith('✅') ? '#86efac' : '#fde68a' }}>
-              {configMsg}
-            </span>
-          )}
-        </div>
-
-      </div>}
+      )}
 
       {/* ── Solicitudes (super admin): altas nacionales + interés web, unificado ── */}
       {activeTab === 'solicitudes' && isSuperAdmin && (
