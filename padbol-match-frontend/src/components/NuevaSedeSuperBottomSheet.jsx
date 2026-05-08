@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
+import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
@@ -27,8 +28,6 @@ const inputBase = {
   border: '1px solid #cbd5e1',
   WebkitAppearance: 'none',
 };
-
-const GOOGLE_LIBRARIES = ['places'];
 
 function normalizeText(v) {
   return String(v || '')
@@ -101,13 +100,7 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
   const [saving, setSaving] = useState(false);
   const [placesInputValue, setPlacesInputValue] = useState('');
   const autocompleteRef = useRef(null);
-  const placesKey = String(process.env.REACT_APP_GOOGLE_PLACES_KEY || '').trim();
-  const placesEnabled = Boolean(placesKey);
-  const { isLoaded: placesLoaded } = useJsApiLoader({
-    id: 'padbol-google-places',
-    googleMapsApiKey: placesKey || 'disabled',
-    libraries: GOOGLE_LIBRARIES,
-  });
+  const { isLoaded: placesLoaded, placesEnabled } = useGooglePlaces();
 
   useEffect(() => {
     if (!open) return;

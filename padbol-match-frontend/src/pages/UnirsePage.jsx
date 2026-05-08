@@ -1,11 +1,10 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
+import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import AppHeader from '../components/AppHeader';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
-
-const GOOGLE_LIBRARIES = ['places'];
 
 /** ISO 3166-1 alpha-2 para componentRestrictions de Places (por nombre del selector). */
 const PAIS_NOMBRE_A_ISO2 = {
@@ -230,13 +229,7 @@ export default function UnirsePage() {
   const autocompleteRef = useRef(null);
   const paises = useMemo(() => countries(), []);
 
-  const placesKey = String(process.env.REACT_APP_GOOGLE_PLACES_KEY || '').trim();
-  const placesEnabled = Boolean(placesKey);
-  const { isLoaded: placesLoaded } = useJsApiLoader({
-    id: 'padbol-google-places',
-    googleMapsApiKey: placesKey || 'disabled',
-    libraries: GOOGLE_LIBRARIES,
-  });
+  const { isLoaded: placesLoaded, placesEnabled } = useGooglePlaces();
 
   const paisIso2 = PAIS_NOMBRE_A_ISO2[form.pais] || null;
 
