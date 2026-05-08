@@ -6,6 +6,7 @@ import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { clearAdminNavContext } from '../utils/adminNavContext';
+import { isJugadorHubShellPathname } from '../constants/hubLayout';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -166,14 +167,20 @@ export default function AppHeader({
     [location.pathname]
   );
 
-  /** Panel admin: sin buscador global. Landing /unirse sin sesión: tampoco. Resto: lupa visible. */
+  const jugadorHubShellPath = useMemo(() => isJugadorHubShellPathname(pathOnly), [pathOnly]);
+
+  /**
+   * Lupa: hub principal (con sesión), rutas donde antes era global, excepto shell del jugador logueado
+   * (Ranking / Reservar / Torneos / Mi perfil), donde solo debe verse foto + apodo.
+   */
   const showHeaderSearch = useMemo(() => {
     const p = pathOnly;
     if (p === '/admin' || p.startsWith('/admin/')) return false;
+    if (session?.user && jugadorHubShellPath) return false;
     const rutasSoloConSesion = p === '/' || p === '/unirse' || p === '/join';
     if (rutasSoloConSesion) return Boolean(session?.user);
     return true;
-  }, [pathOnly, session?.user]);
+  }, [pathOnly, session?.user, jugadorHubShellPath]);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -221,6 +228,9 @@ export default function AppHeader({
 
   const hubChipLabel = useMemo(() => {
     if (!session?.user || roleLoading) return hubNombreCorto;
+    if (jugadorHubShellPath && !adminFlowSurface) {
+      return hubNombreCorto;
+    }
     const r = rolEffectiveHeader || '';
     if (adminFlowSurface) {
       return hubNombreCorto;
@@ -232,6 +242,7 @@ export default function AppHeader({
   }, [
     session?.user,
     roleLoading,
+    jugadorHubShellPath,
     rolEffectiveHeader,
     adminSedeNombre,
     hubNombreCorto,
@@ -243,6 +254,14 @@ export default function AppHeader({
     [rolEffectiveHeader, roleLoading]
   );
 
+  /** En shell jugador siempre ir a perfil (no al panel aunque el rol sea admin). */
+  const hubChipNavPathEffective = useMemo(() => {
+    if (session?.user && jugadorHubShellPath && !adminFlowSurface) {
+      return '/mi-perfil';
+    }
+    return hubChipNavPath;
+  }, [session?.user, jugadorHubShellPath, adminFlowSurface, hubChipNavPath]);
+
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
   const hubInicial = String(hubNombreCorto || '?')
     .charAt(0)
@@ -251,10 +270,11 @@ export default function AppHeader({
     hubAdminRolEver ||
     ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '') ||
     (Boolean(roleLoading) && LEGACY_GLOBAL_ADMIN_EMAILS_HEADER.includes(authEmail));
-  /** En el hub de inicio (`hubDirectLogin` + /) siempre mostrar ⚙ aunque quede `adminFlowSurface` por contexto; fuera del hub, el atajo se oculta en flujo admin. */
+  /** En el hub de inicio (`hubDirectLogin` + /) siempre mostrar ⚙ aunque quede `adminFlowSurface` por contexto; fuera del hub, el atajo se oculta en flujo admin. Nunca en shell Ranking/Reservar/Torneos/Mi perfil. */
   const showAdminShortcutHub =
     !hideLogoutEffective &&
     esRolAdminHub &&
+    !jugadorHubShellPath &&
     (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
 
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
@@ -285,12 +305,14 @@ export default function AppHeader({
   const adminHubInicioCompacto = hubHomeCompactHeader && showAdminShortcutHub;
   const shouldHideHubCenterTitle = adminHubInicioCompacto || hideHubCenterTitle;
 
-  /** Chip identidad en la barra grid: nunca en hub inicio con `hubDirectLogin` (chip solo en /admin vía layout minimal o en rutas admin/torneo fuera del hub raíz). */
+  /** Chip identidad en la barra grid: nunca en hub inicio con `hubDirectLogin` (chip solo en /admin vía layout minimal o en rutas admin/torneo fuera del hub raíz). Incluye shell jugador (Ranking, Reservar, Torneos, Mi perfil). */
   const jugadorChipEnHeaderGrid =
     Boolean(session?.user) &&
     !adminTorneoEquipoDesdePanel &&
+    !adminPanelMinimalHeader &&
     ((hubDirectLogin && muestraChipUsuarioHubDerecha) ||
-      (adminFlowSurface && !(hubDirectLogin && hubInicioPath)));
+      (adminFlowSurface && !(hubDirectLogin && hubInicioPath)) ||
+      jugadorHubShellPath);
 
   const displayBackLabel = useMemo(() => {
     if (backLabel) return backLabel;
@@ -1108,10 +1130,18 @@ export default function AppHeader({
                 <button
                   type="button"
                   onClick={() => {
-                    navigate(adminFlowSurface ? '/admin' : hubChipNavPath);
+                    navigate(adminFlowSurface ? '/admin' : hubChipNavPathEffective);
                   }}
-                  aria-label={adminFlowSurface ? 'Ir al panel de administración' : hubChipNavPath === '/admin' ? 'Ir al panel de administración' : 'Ir a mi perfil'}
-                  title={adminFlowSurface ? 'Panel admin' : hubChipNavPath === '/admin' ? 'Panel admin' : 'Mi perfil'}
+                  aria-label={
+                    adminFlowSurface
+                      ? 'Ir al panel de administración'
+                      : hubChipNavPathEffective === '/admin'
+                        ? 'Ir al panel de administración'
+                        : 'Ir a mi perfil'
+                  }
+                  title={
+                    adminFlowSurface ? 'Panel admin' : hubChipNavPathEffective === '/admin' ? 'Panel admin' : 'Mi perfil'
+                  }
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',

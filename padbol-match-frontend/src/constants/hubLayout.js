@@ -57,6 +57,20 @@ export function isHubNavBarHiddenPathname(pathname) {
   return false;
 }
 
+/**
+ * Rutas de la barra inferior del jugador (Ranking, Reservar, Torneos, Mi perfil):
+ * mismo criterio de identidad en header que el hub, sin lupa ni atajo ⚙ Admin.
+ */
+export function isJugadorHubShellPathname(pathname) {
+  let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
+  pathOnly = pathOnly.replace(/\/+$/, '') || '/';
+  if (pathOnly === '/rankings') return true;
+  if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
+  if (pathOnly === '/torneos') return true;
+  if (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/')) return true;
+  return false;
+}
+
 /** Perfil público de sede: barra hub visible con fondo semitransparente. */
 export function isSedeProfilePathname(pathname) {
   let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
