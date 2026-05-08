@@ -771,6 +771,45 @@ function sedeFlag(sede) {
   return FLAG_MAP[pais.toLowerCase()] || '';
 }
 
+/** Filtro país super admin: valor del `<select>` vs `sede.pais` de la reserva. */
+function mismoPaisFiltroAdmin(paisRow, paisFiltroValor) {
+  const want = String(paisFiltroValor || '').trim();
+  if (!want) return true;
+  const p = String(paisRow || '').trim();
+  if (!p) return false;
+  const a = paisTextoSinBanderaInicial(p).toLowerCase();
+  const b = paisTextoSinBanderaInicial(want).toLowerCase();
+  if (a === b) return true;
+  return p.toLowerCase() === want.toLowerCase();
+}
+
+function comisionPadbolTresPorcientoPorMoneda(ingresosPorMoneda) {
+  const out = {};
+  ['ARS', 'USD', 'EUR'].forEach((m) => {
+    const n = Number(ingresosPorMoneda?.[m]) || 0;
+    if (n > 0) out[m] = Math.round(n * 0.03 * 100) / 100;
+  });
+  return out;
+}
+
+function fmtIngresosSuperAdmin(obj) {
+  const MONEDA_ORDEN = ['ARS', 'USD', 'EUR'];
+  const keys = Object.keys(obj || {});
+  const ordered = [
+    ...MONEDA_ORDEN.filter((m) => keys.includes(m)),
+    ...keys.filter((m) => !MONEDA_ORDEN.includes(m)),
+  ];
+  const parts = ordered
+    .filter((m) => (Number(obj?.[m]) || 0) > 0)
+    .map((m) => `${m} ${(Number(obj?.[m]) || 0).toLocaleString('es-AR')}`);
+  return parts.length ? parts.join(' · ') : 'Sin ingresos en el período';
+}
+
+/** Clave numérica solo para ordenar filas con varias monedas (ingresos ≈ suma nominal). */
+function ingresoTotalOrdenRanking(ingresosObj) {
+  return (Number(ingresosObj?.ARS) || 0) + (Number(ingresosObj?.USD) || 0) + (Number(ingresosObj?.EUR) || 0);
+}
+
 /** Misma sede aunque una API devuelva `sede_id` numérico y otra string (p. ej. 1 vs "1"). */
 function mismoIdSede(a, b) {
   if (a == null || b == null || b === '') return false;
@@ -1158,8 +1197,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [pendientesLoading, setPendientesLoading] = useState(true);
   // keyed by player email: { open: bool, categoria: string, saving: bool }
   const [validacionState, setValidacionState] = useState({});
-  // keyed by sede name for super-admin reservas detail expand/collapse
-  const [superAdminReservasOpen, setSuperAdminReservasOpen] = useState({});
+  /** Vista Reservas super_admin: resumen global vs ranking de clubes. */
+  const [reservasSuperSubVista, setReservasSuperSubVista] = useState('principal');
+  const [superReservasFiltroPais, setSuperReservasFiltroPais] = useState('');
+  const [rankingFiltroCiudad, setRankingFiltroCiudad] = useState('');
+  const [rankingFiltroNombreClub, setRankingFiltroNombreClub] = useState('');
+  const [rankingOrden, setRankingOrden] = useState({ campo: 'reservas', dir: 'desc' });
+  /** Fila del ranking con detalle expandido (mismo listado que antes "Ver detalle"). */
+  const [rankingDetalleSedeKey, setRankingDetalleSedeKey] = useState(null);
   const [superAdminPeriodo, setSuperAdminPeriodo] = useState('hoy'); // hoy | semana | mes | anio | rango
   const [superAdminFechaDesde, setSuperAdminFechaDesde] = useState(
     () => new Date().toISOString().slice(0, 10)
@@ -1542,6 +1587,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       return t;
     });
   }, [searchParams]);
+
+  useEffect(() => {
+    if (activeTab !== 'reservas') {
+      setReservasSuperSubVista('principal');
+      setRankingDetalleSedeKey(null);
+    }
+  }, [activeTab]);
 
   const shiftFinanzasPeriodo = useCallback(
     (delta) => {
@@ -5283,7 +5335,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         {(() => {
           if (isSuperAdmin) {
             const getMonedaCanonica = (reserva) => {
-              console.log('[Admin] moneda raw', reserva?.moneda);
               const s = String(reserva?.moneda || '').trim().toUpperCase();
               if (!s) return 'ARS';
               if (s.includes('EUR') || s.includes('€')) return 'EUR';
@@ -5294,12 +5345,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const sedeReserva = String(reserva?.sede || '').trim();
               if (!sedeReserva) return null;
               const sedeReservaLower = sedeReserva.toLowerCase();
-              return Object.values(sedesMap || {}).find((s) => {
-                const nombreSede = String(s?.nombre || '').trim();
-                if (!nombreSede) return false;
-                const nombreSedeLower = nombreSede.toLowerCase();
-                return nombreSedeLower.includes(sedeReservaLower) || sedeReservaLower.includes(nombreSedeLower);
-              }) || null;
+              return (
+                Object.values(sedesMap || {}).find((s) => {
+                  const nombreSede = String(s?.nombre || '').trim();
+                  if (!nombreSede) return false;
+                  const nombreSedeLower = nombreSede.toLowerCase();
+                  return nombreSedeLower.includes(sedeReservaLower) || sedeReservaLower.includes(nombreSedeLower);
+                }) || null
+              );
             };
             const isInPeriodo = (fechaISO) =>
               fechaDentroDePeriodoFinanzas(
@@ -5309,18 +5362,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 superAdminFechaHasta,
                 finanzasAnclaISO
               );
-            const reservasPeriodo = reservas.filter((r) => {
-              const f = String(r?.fecha || '').trim();
-              return isInPeriodo(f);
-            });
-            const reservasPeriodoFiltradas = reservasPeriodo.filter((r) => reservaPasaFiltroEstadoPill(r, filtroPillReservas));
+            const reservasPeriodo = reservas.filter((r) => isInPeriodo(String(r?.fecha || '').trim()));
+            const reservasPeriodoFiltradas = reservasPeriodo.filter((r) =>
+              reservaPasaFiltroEstadoPill(r, filtroPillReservas)
+            );
 
             const ingresosMes = {};
             const porSede = new Map();
             reservasPeriodoFiltradas.forEach((r) => {
               const sedeNombre = String(r?.sede || 'Sin sede').trim() || 'Sin sede';
               const sedeInfo = resolveSedeDesdeReserva(r) || {};
-              console.log('[Admin] sede de reserva', r?.sede, 'sedeInfo', sedeInfo);
               const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
               const ciudad = String(sedeInfo?.ciudad || '').trim() || 'Sin definir';
               const moneda = getMonedaCanonica({ moneda: sedeInfo?.moneda || r?.moneda });
@@ -5343,25 +5394,60 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               g.rows.push(r);
             });
 
-            const MONEDA_ORDEN = ['ARS', 'USD', 'EUR'];
-            const fmtIngresos = (obj) => {
-              const keys = Object.keys(obj || {});
-              const ordered = [
-                ...MONEDA_ORDEN.filter((m) => keys.includes(m)),
-                ...keys.filter((m) => !MONEDA_ORDEN.includes(m)),
-              ];
-              const parts = ordered
-                .filter((m) => (Number(obj?.[m]) || 0) > 0)
-                .map((m) => `${m} ${(Number(obj?.[m]) || 0).toLocaleString('es-AR')}`);
-              return parts.length ? parts.join(' · ') : 'Sin ingresos en el período';
-            };
+            const reservasResumenPais = reservasPeriodoFiltradas.filter((r) => {
+              const sedeInfo = resolveSedeDesdeReserva(r);
+              return mismoPaisFiltroAdmin(sedeInfo?.pais, superReservasFiltroPais);
+            });
+            const ingresosResumenPais = {};
+            reservasResumenPais.forEach((r) => {
+              const sedeInfo = resolveSedeDesdeReserva(r) || {};
+              const moneda = getMonedaCanonica({ moneda: sedeInfo?.moneda || r?.moneda });
+              const precio = Number(r?.precio) || 0;
+              ingresosResumenPais[moneda] = (ingresosResumenPais[moneda] || 0) + precio;
+            });
+            const comisionPmResumen = comisionPadbolTresPorcientoPorMoneda(ingresosResumenPais);
 
-            const sedesRows = [...porSede.values()].sort((a, b) => b.reservasCount - a.reservasCount);
+            const paisesOpts = [
+              ...new Set(
+                Object.values(sedesMap || {})
+                  .map((s) => String(s.pais || '').trim())
+                  .filter(Boolean)
+              ),
+            ].sort((a, b) => a.localeCompare(b, 'es'));
 
-            return (
-              <div style={{ display: 'grid', gap: '16px', minWidth: 0, maxWidth: '100%' }}>
-                <div style={{ display: 'grid', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap', paddingBottom: '2px' }}>
+            const qClub = rankingFiltroNombreClub.trim().toLowerCase();
+            const qCiudad = rankingFiltroCiudad.trim().toLowerCase();
+            let sedesRanking = [...porSede.values()].filter((g) => {
+              if (!mismoPaisFiltroAdmin(g.pais, superReservasFiltroPais)) return false;
+              if (qCiudad && !String(g.ciudad || '').toLowerCase().includes(qCiudad)) return false;
+              if (qClub && !String(g.sede || '').toLowerCase().includes(qClub)) return false;
+              return true;
+            });
+            const dirMul = rankingOrden.dir === 'asc' ? 1 : -1;
+            sedesRanking = [...sedesRanking].sort((a, b) => {
+              if (rankingOrden.campo === 'ingresos') {
+                return (ingresoTotalOrdenRanking(a.ingresos) - ingresoTotalOrdenRanking(b.ingresos)) * dirMul;
+              }
+              return (a.reservasCount - b.reservasCount) * dirMul;
+            });
+
+            const rankingGrupoDetalle =
+              rankingDetalleSedeKey != null ? porSede.get(rankingDetalleSedeKey) : null;
+
+            const periodoReservasSuperRow = (
+              <div style={{ display: 'grid', gap: '8px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    flexWrap: 'nowrap',
+                    overflowX: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                    whiteSpace: 'nowrap',
+                    paddingBottom: '2px',
+                  }}
+                >
                   {[
                     { id: 'hoy', label: 'Hoy' },
                     { id: 'semana', label: 'Esta semana' },
@@ -5426,12 +5512,300 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     onShift={shiftFinanzasPeriodo}
                   />
                 )}
+              </div>
+            );
+
+            const sortHeaderBtn = (campo, label) => {
+              const active = rankingOrden.campo === campo;
+              const arrow = active ? (rankingOrden.dir === 'desc' ? ' ↓' : ' ↑') : '';
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRankingOrden((prev) =>
+                      prev.campo !== campo
+                        ? { campo, dir: 'desc' }
+                        : { campo, dir: prev.dir === 'desc' ? 'asc' : 'desc' }
+                    )
+                  }
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    padding: 0,
+                    margin: 0,
+                    font: 'inherit',
+                    fontWeight: 800,
+                    color: '#475569',
+                    cursor: 'pointer',
+                    textDecoration: active ? 'underline' : 'none',
+                  }}
+                >
+                  {label}
+                  {arrow}
+                </button>
+              );
+            };
+
+            if (reservasSuperSubVista === 'ranking') {
+              return (
+                <div style={{ display: 'grid', gap: '16px', minWidth: 0, maxWidth: '100%' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReservasSuperSubVista('principal');
+                      setRankingDetalleSedeKey(null);
+                    }}
+                    style={{
+                      justifySelf: 'start',
+                      padding: '10px 16px',
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5e1',
+                      background: '#fff',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      color: '#334155',
+                    }}
+                  >
+                    ← Volver
+                  </button>
+                  <h2 style={{ margin: 0, fontSize: '22px', color: '#f8fafc', fontWeight: 900 }}>
+                    Ranking de clubes
+                  </h2>
+                  {periodoReservasSuperRow}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gap: '12px',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+                    }}
+                  >
+                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                      País
+                      <select
+                        value={superReservasFiltroPais}
+                        onChange={(e) => setSuperReservasFiltroPais(e.target.value)}
+                        style={{
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          fontSize: '15px',
+                          color: '#334155',
+                          background: '#fff',
+                        }}
+                      >
+                        <option value="">Todos los países</option>
+                        {paisesOpts.map((p) => (
+                          <option key={p} value={p}>
+                            {etiquetaPaisFiltroMobile(p)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                      Ciudad
+                      <input
+                        type="text"
+                        value={rankingFiltroCiudad}
+                        onChange={(e) => setRankingFiltroCiudad(e.target.value)}
+                        placeholder="Filtrar por ciudad"
+                        style={{
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          fontSize: '15px',
+                          color: '#334155',
+                          background: '#fff',
+                        }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                      Nombre del club
+                      <input
+                        type="text"
+                        value={rankingFiltroNombreClub}
+                        onChange={(e) => setRankingFiltroNombreClub(e.target.value)}
+                        placeholder="Buscar sede"
+                        style={{
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          fontSize: '15px',
+                          color: '#334155',
+                          background: '#fff',
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {sedesRanking.length === 0 ? (
+                    <p style={{ color: '#94a3b8', padding: '10px 0', margin: 0 }}>Sin datos para estos filtros.</p>
+                  ) : (
+                    <div
+                      style={{
+                        background: 'white',
+                        borderRadius: '10px',
+                        border: '1px solid #e5e7eb',
+                        overflow: 'auto',
+                      }}
+                    >
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '520px' }}>
+                        <thead>
+                          <tr style={{ background: '#f8fafc' }}>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                              Sede
+                            </th>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                              País
+                            </th>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                              Ciudad
+                            </th>
+                            <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                              {sortHeaderBtn('reservas', 'Reservas')}
+                            </th>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                              {sortHeaderBtn('ingresos', 'Ingresos')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sedesRanking.map((g) => {
+                            const sel = rankingDetalleSedeKey === g.sede;
+                            return (
+                              <tr
+                                key={g.sede}
+                                onClick={() =>
+                                  setRankingDetalleSedeKey((k) => (k === g.sede ? null : g.sede))
+                                }
+                                style={{
+                                  borderTop: '1px solid #f1f5f9',
+                                  cursor: 'pointer',
+                                  background: sel ? '#eef2ff' : undefined,
+                                }}
+                              >
+                                <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{g.sede}</td>
+                                <td style={{ padding: '10px 12px', color: '#475569' }}>
+                                  {(() => {
+                                    const flag = sedeFlag({ pais: g.pais });
+                                    return flag ? `${flag} ${g.pais}` : g.pais;
+                                  })()}
+                                </td>
+                                <td style={{ padding: '10px 12px', color: '#475569' }}>{g.ciudad}</td>
+                                <td
+                                  style={{
+                                    padding: '10px 12px',
+                                    textAlign: 'right',
+                                    color: '#0f172a',
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  {g.reservasCount}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: '10px 12px',
+                                    color: '#334155',
+                                    fontWeight: 600,
+                                    wordBreak: 'break-word',
+                                  }}
+                                >
+                                  {fmtIngresosSuperAdmin(g.ingresos)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {rankingGrupoDetalle ? (
+                    <div
+                      style={{
+                        background: '#f8fafc',
+                        borderRadius: '10px',
+                        border: '1px solid #e2e8f0',
+                        padding: '12px',
+                      }}
+                    >
+                      <div style={{ fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>
+                        Detalle · {rankingGrupoDetalle.sede}
+                      </div>
+                      <div style={{ display: 'grid', gap: '6px' }}>
+                        {sortReservasFechaHoraDesc(rankingGrupoDetalle.rows).map((r) => (
+                          <div
+                            key={r.id}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '100px 130px 52px minmax(88px, 1fr) 120px 92px',
+                              gap: '8px',
+                              alignItems: 'center',
+                              fontSize: '12px',
+                              color: '#334155',
+                              background: '#fff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '6px',
+                              padding: '6px 8px',
+                            }}
+                          >
+                            <span>{r.fecha || '—'}</span>
+                            <span>{horaRango(r.hora, r.duracion)}</span>
+                            <span style={{ textAlign: 'center' }}>{r.cancha ?? '—'}</span>
+                            <span
+                              style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {r.nombre || '—'}
+                            </span>
+                            <span>
+                              <EstadoBadge reserva={r} />
+                            </span>
+                            <span style={{ textAlign: 'right', fontWeight: 700 }}>
+                              ${(Number(r.precio) || 0).toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
+              );
+            }
+
+            return (
+              <div style={{ display: 'grid', gap: '16px', minWidth: 0, maxWidth: '100%' }}>
+                {periodoReservasSuperRow}
+                <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                  País
+                  <select
+                    value={superReservasFiltroPais}
+                    onChange={(e) => setSuperReservasFiltroPais(e.target.value)}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '15px',
+                      color: '#334155',
+                      background: '#fff',
+                      maxWidth: '400px',
+                    }}
+                  >
+                    <option value="">Todos los países</option>
+                    {paisesOpts.map((p) => (
+                      <option key={p} value={p}>
+                        {etiquetaPaisFiltroMobile(p)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
                     gap: '10px',
                     minWidth: 0,
                   }}
@@ -5443,23 +5817,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       padding: '14px',
                       border: '1px solid #e5e7eb',
                       minWidth: 0,
-                      maxWidth: '100%',
-                      overflow: 'hidden',
                       boxSizing: 'border-box',
                     }}
                   >
-                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Total reservas del período</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>
+                      Total reservas del período
+                    </div>
                     <div
                       style={{
                         color: '#0f172a',
                         fontSize: '26px',
                         fontWeight: 900,
                         marginTop: '6px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
                       }}
                     >
-                      {reservasPeriodoFiltradas.length}
+                      {reservasResumenPais.length}
                     </div>
                   </div>
                   <div
@@ -5469,12 +5841,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       padding: '14px',
                       border: '1px solid #e5e7eb',
                       minWidth: 0,
-                      maxWidth: '100%',
-                      overflow: 'hidden',
                       boxSizing: 'border-box',
                     }}
                   >
-                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>Ingresos del período</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>
+                      Total facturado (reservas)
+                    </div>
                     <div
                       style={{
                         color: '#0f172a',
@@ -5483,97 +5855,83 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         marginTop: '8px',
                         lineHeight: 1.45,
                         wordBreak: 'break-word',
-                        overflowWrap: 'anywhere',
                       }}
                     >
-                      {fmtIngresos(ingresosMes)}
+                      {fmtIngresosSuperAdmin(ingresosResumenPais)}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      background: 'white',
+                      borderRadius: '10px',
+                      padding: '14px',
+                      border: '1px solid #e5e7eb',
+                      minWidth: 0,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>
+                      Padbol Match (3% comisión)
+                    </div>
+                    <div
+                      style={{
+                        color: '#0f172a',
+                        fontSize: '14px',
+                        fontWeight: 800,
+                        marginTop: '8px',
+                        lineHeight: 1.45,
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {fmtIngresosSuperAdmin(comisionPmResumen)}
                     </div>
                   </div>
                 </div>
 
-                {sedesRows.length === 0 ? (
-                  <p style={{ color: '#aaa', padding: '10px 0', margin: 0 }}>Sin reservas en este período</p>
-                ) : (
-                  <div style={{ background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ background: '#f8fafc' }}>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Sede + País</th>
-                          <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Reservas del período</th>
-                          <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>Ingresos del período</th>
-                          <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sedesRows.map((g) => {
-                          const open = !!superAdminReservasOpen[g.sede];
-                          return (
-                            <React.Fragment key={g.sede}>
-                              <tr style={{ borderTop: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '10px 12px', color: '#475569' }}>
-                                  <div style={{ fontWeight: 700, color: '#0f172a' }}>{g.sede}</div>
-                                  <div style={{ marginTop: '2px', fontSize: '11px', color: '#94a3b8' }}>{g.ciudad}</div>
-                                  <div style={{ marginTop: '2px' }}>
-                                    {(() => {
-                                      const flag = sedeFlag({ pais: g.pais });
-                                      return flag ? `${flag} ${g.pais}` : g.pais;
-                                    })()}
-                                  </div>
-                                </td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right', color: '#0f172a', fontWeight: 700 }}>{g.reservasCount}</td>
-                                <td
-                                  style={{
-                                    padding: '10px 12px',
-                                    color: '#334155',
-                                    fontWeight: 600,
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'anywhere',
-                                    verticalAlign: 'top',
-                                  }}
-                                >
-                                  {fmtIngresos(g.ingresos)}
-                                </td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => setSuperAdminReservasOpen((prev) => ({ ...prev, [g.sede]: !open }))}
-                                    style={{ padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: '#334155' }}
-                                  >
-                                    {open ? 'Ocultar detalle' : 'Ver detalle →'}
-                                  </button>
-                                </td>
-                              </tr>
-                              {open ? (
-                                <tr>
-                                  <td colSpan={4} style={{ padding: '10px 12px', background: '#f8fafc' }}>
-                                    <div style={{ display: 'grid', gap: '6px' }}>
-                                      {sortReservasFechaHoraDesc(g.rows).map((r) => (
-                                        <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '100px 130px 52px minmax(88px, 1fr) 120px 92px', gap: '8px', alignItems: 'center', fontSize: '12px', color: '#334155', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
-                                          <span>{r.fecha || '—'}</span>
-                                          <span>{horaRango(r.hora, r.duracion)}</span>
-                                          <span style={{ textAlign: 'center' }}>{r.cancha ?? '—'}</span>
-                                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.nombre || '—'}</span>
-                                          <span><EstadoBadge reserva={r} /></span>
-                                          <span style={{ textAlign: 'right', fontWeight: 700 }}>${(Number(r.precio) || 0).toLocaleString('es-AR')}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </td>
-                                </tr>
-                              ) : null}
-                            </React.Fragment>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReservasSuperSubVista('ranking');
+                    setRankingDetalleSedeKey(null);
+                  }}
+                  style={{
+                    padding: '14px 20px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  📊 Ver ranking de clubes
+                </button>
+
+                {reservasResumenPais.length === 0 ? (
+                  <p style={{ color: '#94a3b8', padding: '4px 0', margin: 0 }}>
+                    Sin reservas en este período para el filtro elegido.
+                  </p>
+                ) : null}
               </div>
             );
           }
 
+          const isInPeriodoClub = (fechaISO) =>
+            fechaDentroDePeriodoFinanzas(
+              fechaISO,
+              superAdminPeriodo,
+              superAdminFechaDesde,
+              superAdminFechaHasta,
+              finanzasAnclaISO
+            );
           const sortedRows = sortReservasFechaHoraDesc(
-            reservas.filter((r) => reservaPasaFiltroEstadoPill(r, filtroPillReservas))
+            reservas.filter(
+              (r) =>
+                reservaPasaFiltroEstadoPill(r, filtroPillReservas) &&
+                isInPeriodoClub(String(r?.fecha || '').trim())
+            )
           );
 
           const BTN = (extra) => ({
@@ -5581,12 +5939,173 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', color: 'white', ...extra,
           });
 
+          const mostrarResumenClubNacional = esAdminClub || esAdminNacional;
+          const periodoNavClubReservas = (
+            <div style={{ display: 'grid', gap: '8px', marginBottom: mostrarResumenClubNacional ? '14px' : 0 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexWrap: 'nowrap',
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  whiteSpace: 'nowrap',
+                  paddingBottom: '2px',
+                }}
+              >
+                {[
+                  { id: 'hoy', label: 'Hoy' },
+                  { id: 'semana', label: 'Esta semana' },
+                  { id: 'mes', label: 'Este mes' },
+                  { id: 'anio', label: 'Este año' },
+                  { id: 'rango', label: 'Rango' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setSuperAdminPeriodo(opt.id);
+                      if (opt.id !== 'rango') {
+                        setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
+                      }
+                    }}
+                    style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {superAdminPeriodo === 'rango' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <input
+                    type="date"
+                    value={superAdminFechaDesde}
+                    onChange={(e) => setSuperAdminFechaDesde(e.target.value)}
+                    aria-label="Desde"
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '16px',
+                      color: '#334155',
+                      background: '#fff',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <input
+                    type="date"
+                    value={superAdminFechaHasta}
+                    onChange={(e) => setSuperAdminFechaHasta(e.target.value)}
+                    aria-label="Hasta"
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '16px',
+                      color: '#334155',
+                      background: '#fff',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              ) : (
+                <SuperAdminFinanzasPeriodoNav
+                  periodo={superAdminPeriodo}
+                  anclaISO={finanzasAnclaISO}
+                  onShift={shiftFinanzasPeriodo}
+                />
+              )}
+            </div>
+          );
+
+          const totalFactResClub = sortedRows.reduce((acc, r) => acc + (Number(r?.precio) || 0), 0);
+          const monResClub = bucketMonedaAdmin(
+            (cifrasFinanzasResumen && cifrasFinanzasResumen.moneda) ||
+              (sedeId != null && sedeId !== '' ? sedesMap[String(sedeId)]?.moneda : null) ||
+              'ARS'
+          );
+          const comisClubPm = Math.round(totalFactResClub * 0.03 * 100) / 100;
+
+          const tarjetasClubReservas = mostrarResumenClubNacional ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+                gap: '10px',
+                marginBottom: '16px',
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  border: '1px solid #e5e7eb',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>
+                  Total reservas del período
+                </div>
+                <div style={{ color: '#0f172a', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>
+                  {sortedRows.length}
+                </div>
+              </div>
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  border: '1px solid #e5e7eb',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>
+                  Total facturado (reservas)
+                </div>
+                <div style={{ color: '#0f172a', fontSize: '16px', fontWeight: 800, marginTop: '8px' }}>
+                  {monResClub}{' '}
+                  {totalFactResClub.toLocaleString('es-AR', { maximumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  border: '1px solid #e5e7eb',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>
+                  Padbol Match (3% comisión)
+                </div>
+                <div style={{ color: '#0f172a', fontSize: '16px', fontWeight: 800, marginTop: '8px' }}>
+                  {monResClub}{' '}
+                  {comisClubPm.toLocaleString('es-AR', { maximumFractionDigits: 2 })}
+                </div>
+              </div>
+            </div>
+          ) : null;
+
           if (sortedRows.length === 0) {
-            return <p style={{ color: '#aaa', padding: '10px 0' }}>Sin reservas en este período</p>;
+            return (
+              <>
+                {mostrarResumenClubNacional ? periodoNavClubReservas : null}
+                {tarjetasClubReservas}
+                <p style={{ color: '#aaa', padding: '10px 0' }}>Sin reservas en este período</p>
+              </>
+            );
           }
 
           return (
             <>
+              {mostrarResumenClubNacional ? periodoNavClubReservas : null}
+              {tarjetasClubReservas}
               <div className="reservas-table-wrap">
                 <table className="reservas-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: esAdminNacional ? '880px' : '720px', marginTop: 0 }}>
                   <thead>
