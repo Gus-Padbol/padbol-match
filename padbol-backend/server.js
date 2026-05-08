@@ -6864,6 +6864,366 @@ app.delete('/api/admin/roles/:email', async (req, res) => {
   }
 });
 
+// ─── Invitaciones admin club (super_admin → email con link público) ─────────
+
+const INVITACION_ADMIN_HORAS_VALIDEZ = 48;
+
+function generarTokenInvitacionAdmin() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+async function sendInvitacionAdminClubEmail({ toEmail, inviteUrl, nombreClub, paisLabel }) {
+  const apiKey = String(process.env.RESEND_API_KEY || '').trim();
+  const from = String(process.env.RESEND_FROM_EMAIL || 'Padbol Match <no-reply@padbolmatch.com>').trim();
+  const to = String(toEmail || '').trim().toLowerCase();
+  if (!apiKey || !to) {
+    console.warn('⚠️ Invitación admin club: sin RESEND_API_KEY o email vacío — no se envía mail');
+    return false;
+  }
+  const club = String(nombreClub || '').trim();
+  const pais = String(paisLabel || '').trim();
+  const bodyHtml = `
+    <p>Hola,</p>
+    <p>Te invitaron a ser <strong>administrador de club</strong> en Padbol Match.</p>
+    ${club ? `<p><strong>Club sugerido:</strong> ${club}</p>` : ''}
+    ${pais ? `<p><strong>País:</strong> ${pais}</p>` : ''}
+    <p>Completá el alta de tu sede en el siguiente enlace (válido ${INVITACION_ADMIN_HORAS_VALIDEZ} horas):</p>
+    <p><a href="${inviteUrl}" style="font-weight:700;color:#4f46e5;">Completar alta de sede</a></p>
+    <p>Si el botón no funciona, copiá y pegá esta URL en el navegador:<br/><span style="word-break:break-all;font-size:13px;">${inviteUrl}</span></p>
+    <p><strong>PADBOL Match</strong></p>
+  `;
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: 'Invitación para administrar tu club en Padbol Match',
+        html: bodyHtml,
+      }),
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      console.warn('⚠️ Resend invitación admin:', r.status, t);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn('⚠️ Email invitación admin club:', e?.message || e);
+    return false;
+  }
+}
+
+function invitacionAdminUrl(token) {
+  const base = String(FRONTEND_URL || '').replace(/\/$/, '');
+  return `${base}/invitar-admin-club/${encodeURIComponent(token)}`;
+}
+
+async function insertDeportesSedeSinAuth(sedeId, deportesArr) {
+  const arr = Array.isArray(deportesArr) ? deportesArr : null;
+  if (!arr || arr.length === 0) {
+    const e = new Error('deportes debe ser un array no vacío');
+    e.status = 400;
+    throw e;
+  }
+  const rows = [];
+  for (const raw of arr) {
+    const dep = String(raw?.deporte || '').trim().toLowerCase();
+    const n = parseInt(String(raw?.cantidad ?? ''), 10);
+    if (!DEPORTES_SEDE_VALID.has(dep)) {
+      const e = new Error(`Deporte no permitido: ${dep || '(vacío)'}`);
+      e.status = 400;
+      throw e;
+    }
+    if (!Number.isFinite(n) || n < 0) {
+      const e = new Error(`Cantidad inválida para ${dep}`);
+      e.status = 400;
+      throw e;
+    }
+    if (n === 0) continue;
+    rows.push({ sede_id: sedeId, deporte: dep, cantidad: n, activo: true });
+  }
+  if (!rows.length) {
+    const e = new Error('Al menos un deporte con cantidad mayor a 0');
+    e.status = 400;
+    throw e;
+  }
+  const { error: delErr } = await supabase.from('canchas_por_deporte').delete().eq('sede_id', sedeId);
+  if (delErr) throw delErr;
+  const { data: ins, error: insErr } = await supabase.from('canchas_por_deporte').insert(rows).select('*');
+  if (insErr) throw insErr;
+  return ins || [];
+}
+
+/** GET /api/admin/invitaciones-admin — super_admin: invitaciones (filtro ?estado=pendiente). */
+app.get('/api/admin/invitaciones-admin', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const est = String(req.query?.estado || '').trim().toLowerCase();
+    let q = supabase.from('invitaciones_admin').select('id, email, pais, nombre_club, estado, created_at, expires_at, sede_id').order('created_at', { ascending: false }).limit(300);
+    if (est && ['pendiente', 'completada', 'expirada', 'cancelada'].includes(est)) {
+      q = q.eq('estado', est);
+    }
+    const { data, error } = await q;
+    if (error) throw error;
+    res.json(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error('❌ GET /api/admin/invitaciones-admin:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/invitaciones-admin — super_admin: crea invitación y envía email. */
+app.post('/api/admin/invitaciones-admin', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase();
+    const pais = String(b.pais || '').trim();
+    if (!email) return res.status(400).json({ error: 'Email obligatorio' });
+    if (!pais) return res.status(400).json({ error: 'País obligatorio' });
+    const nombreClub = String(b.nombre_club || '').trim() || null;
+
+    await supabase
+      .from('invitaciones_admin')
+      .update({ estado: 'cancelada' })
+      .eq('email', email)
+      .eq('estado', 'pendiente');
+
+    const token = generarTokenInvitacionAdmin();
+    const expiresAt = new Date(Date.now() + INVITACION_ADMIN_HORAS_VALIDEZ * 3600 * 1000).toISOString();
+    const { data: row, error: insErr } = await supabase
+      .from('invitaciones_admin')
+      .insert({
+        email,
+        token,
+        pais,
+        nombre_club: nombreClub,
+        estado: 'pendiente',
+        expires_at: expiresAt,
+      })
+      .select('id, email, pais, nombre_club, estado, created_at, expires_at, sede_id')
+      .single();
+    if (insErr) throw insErr;
+
+    const url = invitacionAdminUrl(token);
+    const mailed = await sendInvitacionAdminClubEmail({
+      toEmail: email,
+      inviteUrl: url,
+      nombreClub,
+      paisLabel: pais,
+    });
+    res.status(201).json({ ...row, email_sent: mailed });
+  } catch (err) {
+    console.error('❌ POST /api/admin/invitaciones-admin:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/invitaciones-admin/:id/reenviar — super_admin: reenvía email (renueva token si expiró). */
+app.post('/api/admin/invitaciones-admin/:id/reenviar', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'ID inválido' });
+    const { data: row, error: fErr } = await supabase.from('invitaciones_admin').select('*').eq('id', id).maybeSingle();
+    if (fErr) throw fErr;
+    if (!row?.id) return res.status(404).json({ error: 'Invitación no encontrada' });
+    if (row.estado !== 'pendiente') {
+      return res.status(400).json({ error: 'Solo se puede reenviar invitaciones pendientes' });
+    }
+    const now = Date.now();
+    const expMs = row.expires_at ? new Date(row.expires_at).getTime() : 0;
+    let token = row.token;
+    let expiresAt = row.expires_at;
+    if (!Number.isFinite(expMs) || expMs <= now) {
+      token = generarTokenInvitacionAdmin();
+      expiresAt = new Date(Date.now() + INVITACION_ADMIN_HORAS_VALIDEZ * 3600 * 1000).toISOString();
+      const { error: uErr } = await supabase
+        .from('invitaciones_admin')
+        .update({ token, expires_at: expiresAt })
+        .eq('id', id)
+        .eq('estado', 'pendiente');
+      if (uErr) throw uErr;
+    }
+    const url = invitacionAdminUrl(token);
+    const mailed = await sendInvitacionAdminClubEmail({
+      toEmail: row.email,
+      inviteUrl: url,
+      nombreClub: row.nombre_club,
+      paisLabel: row.pais,
+    });
+    res.json({ ok: true, email_sent: mailed, expires_at: expiresAt });
+  } catch (err) {
+    console.error('❌ POST /api/admin/invitaciones-admin/:id/reenviar:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/** GET /api/invitacion/:token — público: valida token y devuelve datos para el formulario. */
+app.get('/api/invitacion/:token', async (req, res) => {
+  try {
+    const token = String(req.params.token || '').trim();
+    if (!token || token.length < 16) return res.status(404).json({ error: 'Invitación no encontrada' });
+    const { data: row, error } = await supabase.from('invitaciones_admin').select('*').eq('token', token).maybeSingle();
+    if (error) throw error;
+    if (!row?.id) return res.status(404).json({ error: 'Invitación no encontrada' });
+    if (row.estado !== 'pendiente') {
+      return res.status(410).json({ error: 'Esta invitación ya no está activa', estado: row.estado });
+    }
+    const expMs = row.expires_at ? new Date(row.expires_at).getTime() : 0;
+    if (Number.isFinite(expMs) && expMs <= Date.now()) {
+      await supabase.from('invitaciones_admin').update({ estado: 'expirada' }).eq('id', row.id).eq('estado', 'pendiente');
+      return res.status(410).json({ error: 'Invitación expirada' });
+    }
+    res.json({
+      valid: true,
+      email: row.email,
+      pais: row.pais,
+      nombre_club: row.nombre_club || '',
+      expires_at: row.expires_at,
+    });
+  } catch (err) {
+    console.error('❌ GET /api/invitacion/:token:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/invitacion/:token/completar — público: crea sede, deportes, rol admin_club, cierra invitación. */
+app.post('/api/invitacion/:token/completar', async (req, res) => {
+  try {
+    const token = String(req.params.token || '').trim();
+    if (!token || token.length < 16) return res.status(404).json({ error: 'Invitación no encontrada' });
+    const { data: inv, error: iErr } = await supabase.from('invitaciones_admin').select('*').eq('token', token).maybeSingle();
+    if (iErr) throw iErr;
+    if (!inv?.id) return res.status(404).json({ error: 'Invitación no encontrada' });
+    if (inv.estado !== 'pendiente') {
+      return res.status(410).json({ error: 'Esta invitación ya no está activa', estado: inv.estado });
+    }
+    const expMs = inv.expires_at ? new Date(inv.expires_at).getTime() : 0;
+    if (Number.isFinite(expMs) && expMs <= Date.now()) {
+      await supabase.from('invitaciones_admin').update({ estado: 'expirada' }).eq('id', inv.id).eq('estado', 'pendiente');
+      return res.status(410).json({ error: 'Invitación expirada' });
+    }
+
+    const b = req.body || {};
+    const emailInv = String(inv.email || '').trim().toLowerCase();
+    const emailContacto = String(b.email_contacto || '').trim().toLowerCase();
+    if (!emailContacto || emailContacto !== emailInv) {
+      return res.status(400).json({ error: 'El email de contacto debe coincidir con el de la invitación' });
+    }
+
+    const nombre = String(b.nombre || '').trim();
+    const ciudad = String(b.ciudad || '').trim();
+    const pais = String(b.pais || '').trim();
+    if (!nombre) return res.status(400).json({ error: 'Nombre de la sede obligatorio' });
+    if (!ciudad) return res.status(400).json({ error: 'Ciudad obligatoria' });
+    if (!pais) return res.status(400).json({ error: 'País obligatorio' });
+
+    const latitudBody = b.latitud != null && String(b.latitud).trim() !== '' ? Number(b.latitud) : null;
+    const longitudBody = b.longitud != null && String(b.longitud).trim() !== '' ? Number(b.longitud) : null;
+    const mapsParsed = parseLatLngFromMapsUrl(b.google_maps_url || b.maps_url || b.googleMapsUrl || '');
+    const latitud = Number.isFinite(latitudBody) ? latitudBody : mapsParsed.latitud;
+    const longitud = Number.isFinite(longitudBody) ? longitudBody : mapsParsed.longitud;
+    const precioTurno = b.precio_turno != null && b.precio_turno !== '' ? Number(b.precio_turno) : null;
+    const cantidadCanchasTotal =
+      b.cantidad_canchas != null && String(b.cantidad_canchas).trim() !== ''
+        ? parseInt(String(b.cantidad_canchas), 10)
+        : null;
+    const skipAutogenCanchas = Boolean(b.skip_autogen_canchas);
+    const telefonoBody = String(b.telefono || b.whatsapp || '').trim();
+    if (!telefonoBody) return res.status(400).json({ error: 'Teléfono / WhatsApp obligatorio' });
+
+    const payload = {
+      nombre,
+      pais,
+      provincia: String(b.provincia || b.estado || '').trim() || null,
+      ciudad,
+      direccion: String(b.direccion || '').trim() || null,
+      email_contacto: emailContacto,
+      telefono: telefonoBody,
+      horario_apertura: String(b.horario_apertura || '').trim() || null,
+      horario_cierre: String(b.horario_cierre || '').trim() || null,
+      precio_turno: Number.isFinite(precioTurno) ? precioTurno : null,
+      moneda: String(b.moneda || 'ARS').trim().toUpperCase() || 'ARS',
+      metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
+      stripe_account_id: String(b.stripe_account_id || '').trim() || null,
+      mp_access_token: String(b.mp_access_token || '').trim() || null,
+      pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
+      latitud: Number.isFinite(latitud) ? latitud : null,
+      longitud: Number.isFinite(longitud) ? longitud : null,
+      google_maps_url: String(b.google_maps_url || b.maps_url || '').trim() || null,
+    };
+    if (Number.isFinite(cantidadCanchasTotal) && cantidadCanchasTotal >= 0) {
+      payload.cantidad_canchas = cantidadCanchasTotal;
+    }
+
+    const { data: created, error: sedeErr } = await supabase.from('sedes').insert(payload).select('*').single();
+    if (sedeErr) throw sedeErr;
+    const sedeId = created.id;
+
+    try {
+      const deportesArr = Array.isArray(b.deportes) ? b.deportes : [];
+      await insertDeportesSedeSinAuth(sedeId, deportesArr);
+    } catch (depErr) {
+      await supabase.from('sedes').delete().eq('id', sedeId);
+      throw depErr;
+    }
+
+    const nombreAdmin = String(b.nombre_admin || '').trim() || null;
+    const urErr = await upsertUserRoleAdminClub({
+      email: emailInv,
+      nombre: nombreAdmin,
+      pais,
+      sede_id: sedeId,
+    });
+    if (urErr) {
+      await supabase.from('canchas_por_deporte').delete().eq('sede_id', sedeId);
+      await supabase.from('sedes').delete().eq('id', sedeId);
+      throw new Error(urErr.message || String(urErr));
+    }
+
+    const { error: upInvErr } = await supabase
+      .from('invitaciones_admin')
+      .update({ estado: 'completada', sede_id: sedeId })
+      .eq('id', inv.id)
+      .eq('estado', 'pendiente');
+    if (upInvErr) {
+      console.error('⚠️ Invitación no actualizada tras crear sede:', upInvErr.message);
+    }
+
+    try {
+      await ensureLicenciatarioAuthUserAndWelcomeEmail(emailInv, {
+        nombre: nombreAdmin,
+        pais,
+        ciudad,
+      });
+    } catch (authErr) {
+      console.warn('⚠️ Alta sede por invitación: provisión auth:', authErr?.message || authErr);
+    }
+
+    void sendMakeEvent('sede_creada', {
+      nombre_sede: String(created?.nombre || nombre || '').trim() || null,
+      pais: String(created?.pais || pais || '').trim() || null,
+      ciudad: String(created?.ciudad || ciudad || '').trim() || null,
+      email_contacto: emailContacto,
+      deportes: Array.isArray(b.deportes) ? b.deportes : null,
+      origen: 'invitacion_admin_club',
+    });
+
+    res.status(201).json({ ok: true, sede: created, sede_id: sedeId });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/invitacion/:token/completar:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function mapPendingRowToSedeInsert(row) {
   return {
     nombre: String(row.nombre || '').trim(),

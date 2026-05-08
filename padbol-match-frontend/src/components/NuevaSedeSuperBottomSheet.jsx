@@ -92,7 +92,17 @@ const initialState = () => ({
   telefonoLocal: '',
 });
 
-export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, accessToken, onSuccess }) {
+export default function NuevaSedeSuperBottomSheet({
+  open,
+  onClose,
+  apiBaseUrl,
+  accessToken,
+  onSuccess,
+  /** Si está definido, el guardado usa POST /api/invitacion/:token/completar (sin JWT). */
+  inviteToken = null,
+  /** { email, pais, nombre_club } desde GET /api/invitacion/:token */
+  invitePrefill = null,
+}) {
   const [st, setSt] = useState(initialState);
   const [planPricing, setPlanPricing] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
@@ -103,10 +113,23 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
   /** Instancia devuelta por `new google.maps.places.Autocomplete(...)` (cleanup de listeners). */
   const googlePlacesAutocompleteRef = useRef(null);
   const { isLoaded: placesLoaded, placesEnabled } = useGooglePlaces();
+  const invitePrefillKey = inviteToken
+    ? `${invitePrefill?.email || ''}|${invitePrefill?.pais || ''}|${invitePrefill?.nombre_club || ''}`
+    : '';
 
   useEffect(() => {
     if (!open) return;
-    setSt(initialState());
+    const base = initialState();
+    if (inviteToken && invitePrefill) {
+      setSt({
+        ...base,
+        nombre: String(invitePrefill.nombre_club || '').trim() || base.nombre,
+        pais: String(invitePrefill.pais || '').trim() || base.pais,
+        email_contacto: String(invitePrefill.email || '').trim().toLowerCase() || base.email_contacto,
+      });
+    } else {
+      setSt(base);
+    }
     setPlacesInputValue('');
     setPlanPricingLoading(true);
     fetch(`${apiBaseUrl}/api/plan-pricing`)
@@ -114,7 +137,7 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
       .then((data) => setPlanPricing(Array.isArray(data) ? data : []))
       .catch(() => setPlanPricing([]))
       .finally(() => setPlanPricingLoading(false));
-  }, [open, apiBaseUrl]);
+  }, [open, apiBaseUrl, inviteToken, invitePrefillKey]);
 
   useEffect(() => {
     setPlacesInputValue(String(st.direccion || ''));
@@ -206,16 +229,32 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
         skip_autogen_canchas: true,
       };
 
-      const res = await fetch(`${apiBaseUrl}/api/sedes`, { method: 'POST', headers, body: JSON.stringify(body) });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || 'No se pudo crear la sede');
-
       const deportesPayload = [];
       for (const d of DEPORTES_CATALOGO) {
         const raw = st.canchasPorDeporte[d.key];
         const n = parseInt(String(raw || ''), 10);
         if (Number.isFinite(n) && n > 0) deportesPayload.push({ deporte: d.key, cantidad: n });
       }
+
+      if (inviteToken) {
+        const res = await fetch(`${apiBaseUrl}/api/invitacion/${encodeURIComponent(inviteToken)}/completar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...body,
+            deportes: deportesPayload,
+          }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j?.error || 'No se pudo completar el alta');
+        onSuccess?.(j.sede || j, j.deportes || deportesPayload);
+        onClose?.();
+        return;
+      }
+
+      const res = await fetch(`${apiBaseUrl}/api/sedes`, { method: 'POST', headers, body: JSON.stringify(body) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || 'No se pudo crear la sede');
 
       const res2 = await fetch(`${apiBaseUrl}/api/sedes/${j.id}/deportes`, {
         method: 'POST',
@@ -234,7 +273,7 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
     } finally {
       setSaving(false);
     }
-  }, [apiBaseUrl, accessToken, onClose, onSuccess, st, totalCanchas]);
+  }, [apiBaseUrl, accessToken, inviteToken, onClose, onSuccess, st, totalCanchas]);
 
   const applyPlaceFromGoogle = useCallback((place) => {
     try {
@@ -345,10 +384,11 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
       >
         <div style={{ minWidth: 0 }}>
           <h2 id="nueva-sede-sheet-title" style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>
-            Nueva sede
+            {inviteToken ? 'Completar alta de tu sede' : 'Nueva sede'}
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: 14, color: '#64748b', fontWeight: 600 }}>
             Paso {st.step} de 3
+            {inviteToken ? ' · invitación Padbol Match' : ''}
           </p>
         </div>
         <button
@@ -560,7 +600,9 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
         {st.step === 3 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ margin: 0, fontSize: 14, color: '#64748b', lineHeight: 1.45 }}>
-              Precio, mapa, método de pago y el resto los configura el admin del club desde su panel después del alta.
+              {inviteToken
+                ? 'El email debe ser el mismo que recibió la invitación. Después del alta podrás ingresar al panel como admin del club (revisá tu correo para definir contraseña).'
+                : 'Precio, mapa, método de pago y el resto los configura el admin del club desde su panel después del alta.'}
             </p>
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
               Email de contacto *
@@ -570,7 +612,12 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
                 value={st.email_contacto}
                 onChange={(e) => setField('email_contacto', e.target.value)}
                 placeholder="contacto@club.com"
-                style={{ ...inputBase, marginTop: 8 }}
+                readOnly={Boolean(inviteToken)}
+                style={{
+                  ...inputBase,
+                  marginTop: 8,
+                  ...(inviteToken ? { background: '#f1f5f9', color: '#475569' } : {}),
+                }}
                 autoComplete="email"
               />
             </label>
@@ -673,7 +720,7 @@ export default function NuevaSedeSuperBottomSheet({ open, onClose, apiBaseUrl, a
                 cursor: saving ? 'not-allowed' : 'pointer',
               }}
             >
-              {saving ? 'Creando…' : 'Crear sede'}
+              {saving ? 'Guardando…' : inviteToken ? 'Guardar sede y activar mi rol' : 'Crear sede'}
             </button>
           )}
         </div>

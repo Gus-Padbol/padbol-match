@@ -32,6 +32,7 @@ import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
 import NuevaSede from './components/NuevaSede';
+import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import { getDisplayName } from './utils/displayName';
@@ -271,6 +272,7 @@ function AppRoutes() {
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/sedes" element={<SedesPublicas />} />
         <Route path="/unirse" element={<UnirsePage />} />
+        <Route path="/invitar-admin-club/:token" element={<InvitarAdminClubPage />} />
         <Route path="/join" element={<Navigate to="/unirse" replace />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
         <Route path="/mi-perfil" element={<MiPerfil />} />

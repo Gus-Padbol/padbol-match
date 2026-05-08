@@ -1243,6 +1243,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     provincia: '',
     pais: '',
   });
+  const [adminInvitacionesRows, setAdminInvitacionesRows] = useState([]);
+  const [adminInvitacionesLoading, setAdminInvitacionesLoading] = useState(false);
+  const [inviteClubModalOpen, setInviteClubModalOpen] = useState(false);
+  const [inviteClubSaving, setInviteClubSaving] = useState(false);
+  const [inviteClubForm, setInviteClubForm] = useState({ email: '', nombre_club: '', pais: '' });
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -1453,6 +1458,98 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   }, [adminRoleForm, apiBaseUrl, isSuperAdmin, cargarRolesAdmin]);
 
+  const cargarInvitacionesAdmin = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    setAdminInvitacionesLoading(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/invitaciones-admin?estado=pendiente`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const j = await res.json().catch(() => []);
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setAdminInvitacionesRows(Array.isArray(j) ? j : []);
+    } catch (e) {
+      console.error('[AdminDashboard] invitaciones admin:', e);
+      setAdminInvitacionesRows([]);
+    } finally {
+      setAdminInvitacionesLoading(false);
+    }
+  }, [apiBaseUrl, isSuperAdmin]);
+
+  const enviarInvitacionClub = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    const email = String(inviteClubForm.email || '').trim().toLowerCase();
+    const pais = String(inviteClubForm.pais || '').trim();
+    if (!email) {
+      alert('Email obligatorio');
+      return;
+    }
+    if (!pais) {
+      alert('País obligatorio');
+      return;
+    }
+    setInviteClubSaving(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/invitaciones-admin`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          pais,
+          nombre_club: String(inviteClubForm.nombre_club || '').trim() || null,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setInviteClubModalOpen(false);
+      setInviteClubForm({ email: '', nombre_club: '', pais: '' });
+      if (j.email_sent === false) {
+        setMensajeExito('Invitación creada (no se pudo enviar el email; configurá RESEND o reenviá desde la lista).');
+      } else {
+        setMensajeExito('✉️ Invitación enviada');
+      }
+      setTimeout(() => setMensajeExito(''), 4000);
+      void cargarInvitacionesAdmin();
+    } catch (e) {
+      alert(e?.message || 'No se pudo crear la invitación');
+    } finally {
+      setInviteClubSaving(false);
+    }
+  }, [apiBaseUrl, cargarInvitacionesAdmin, inviteClubForm, isSuperAdmin]);
+
+  const reenviarInvitacionClub = useCallback(
+    async (id) => {
+      if (!isSuperAdmin || !id) return;
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (!token) throw new Error('Sin sesión');
+        const res = await fetch(`${apiBaseUrl}/api/admin/invitaciones-admin/${encodeURIComponent(id)}/reenviar`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j?.error || res.statusText);
+        if (j.email_sent === false) {
+          alert('No se pudo enviar el email (revisá RESEND).');
+        } else {
+          setMensajeExito('✉️ Invitación reenviada');
+          setTimeout(() => setMensajeExito(''), 3500);
+        }
+        void cargarInvitacionesAdmin();
+      } catch (e) {
+        alert(e?.message || 'No se pudo reenviar');
+      }
+    },
+    [apiBaseUrl, cargarInvitacionesAdmin, isSuperAdmin],
+  );
+
   const revocarRolAdmin = useCallback(async (email) => {
     if (!isSuperAdmin) return;
     if (!window.confirm(`¿Revocar rol de ${email}?`)) return;
@@ -1601,7 +1698,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (activeTab === 'roles' || activeTab === 'resumen') {
       void cargarRolesAdmin();
     }
-  }, [activeTab, isSuperAdmin, cargarRolesAdmin]);
+    if (activeTab === 'roles') {
+      void cargarInvitacionesAdmin();
+    }
+  }, [activeTab, isSuperAdmin, cargarInvitacionesAdmin, cargarRolesAdmin]);
 
   useEffect(() => {
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
@@ -6658,6 +6758,119 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {activeTab === 'roles' && puedeVerConfig && (
         <div className="section">
           <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>👥 Roles</h2>
+          <div style={{ marginBottom: '28px' }}>
+            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+              Invitaciones a nuevos clubes
+            </h3>
+            <p style={{ color: 'rgba(226,232,240,0.95)', fontSize: '13px', margin: '0 0 10px', maxWidth: '720px', lineHeight: 1.45 }}>
+              Enviá un enlace al futuro admin para que cargue su sede. Hasta que complete el formulario verás el estado{' '}
+              <strong>Invitado - pendiente de alta</strong>.
+            </p>
+            <div style={{ marginBottom: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setInviteClubForm({ email: '', nombre_club: '', pais: '' });
+                  setInviteClubModalOpen(true);
+                }}
+                style={{
+                  padding: '9px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #6366f1, #4338ca)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                ✉️ Invitar nuevo club
+              </button>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
+                <thead>
+                  <tr style={{ background: '#312e81', color: '#fff' }}>
+                    <th style={{ padding: '8px' }}>Email</th>
+                    <th style={{ padding: '8px' }}>Club (sugerido)</th>
+                    <th style={{ padding: '8px' }}>País</th>
+                    <th style={{ padding: '8px' }}>Estado</th>
+                    <th style={{ padding: '8px' }}>Vence</th>
+                    <th style={{ padding: '8px' }}>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adminInvitacionesLoading ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '10px', textAlign: 'center' }}>
+                        Cargando…
+                      </td>
+                    </tr>
+                  ) : adminInvitacionesRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>
+                        No hay invitaciones pendientes
+                      </td>
+                    </tr>
+                  ) : (
+                    adminInvitacionesRows.map((inv) => {
+                      const estadoLabel =
+                        inv.estado === 'pendiente'
+                          ? 'Invitado - pendiente de alta'
+                          : inv.estado === 'completada'
+                            ? 'Completada'
+                            : inv.estado === 'expirada'
+                              ? 'Expirada'
+                              : inv.estado === 'cancelada'
+                                ? 'Cancelada'
+                                : inv.estado || '—';
+                      let venceTxt = '—';
+                      try {
+                        if (inv.expires_at) {
+                          venceTxt = new Date(inv.expires_at).toLocaleString('es-AR', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          });
+                        }
+                      } catch {
+                        venceTxt = '—';
+                      }
+                      return (
+                        <tr key={inv.id} style={{ borderTop: '1px solid #e2e8f0' }}>
+                          <td style={{ padding: '8px', fontSize: '12px' }}>{inv.email}</td>
+                          <td style={{ padding: '8px' }}>{inv.nombre_club || '—'}</td>
+                          <td style={{ padding: '8px', fontSize: '12px' }}>{inv.pais || '—'}</td>
+                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600 }}>{estadoLabel}</td>
+                          <td style={{ padding: '8px', fontSize: '12px' }}>{venceTxt}</td>
+                          <td style={{ padding: '8px' }}>
+                            {inv.estado === 'pendiente' ? (
+                              <button
+                                type="button"
+                                onClick={() => void reenviarInvitacionClub(inv.id)}
+                                style={{
+                                  padding: '4px 9px',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  background: '#4f46e5',
+                                  color: '#fff',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                Reenviar email
+                              </button>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '12px' }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div style={{ marginBottom: '32px' }}>
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
               Gestión de Administradores
@@ -8710,6 +8923,99 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
             </div>
           )}
+        </div>
+      ) : null}
+
+      {inviteClubModalOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Invitar nuevo club"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 18940,
+            background: 'rgba(15, 23, 42, 0.72)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget && !inviteClubSaving) setInviteClubModalOpen(false);
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: '480px', background: '#fff', borderRadius: '14px', padding: '18px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>✉️ Invitar nuevo club</h3>
+            <p style={{ margin: '8px 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+              Se enviará un email con un enlace para completar el alta de la sede (48 hs).
+            </p>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                Email del futuro admin *
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={inviteClubForm.email}
+                  onChange={(e) => setInviteClubForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="admin@club.com"
+                  style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                />
+              </label>
+              <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                Nombre del club (opcional)
+                <input
+                  type="text"
+                  value={inviteClubForm.nombre_club}
+                  onChange={(e) => setInviteClubForm((p) => ({ ...p, nombre_club: e.target.value }))}
+                  placeholder="Ej: Club Padbol Norte"
+                  style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                />
+              </label>
+              <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                País *
+                <select
+                  value={inviteClubForm.pais}
+                  onChange={(e) => setInviteClubForm((p) => ({ ...p, pais: e.target.value }))}
+                  style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                >
+                  <option value="">Seleccionar país</option>
+                  {PAISES_SEDE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => !inviteClubSaving && setInviteClubModalOpen(false)}
+                disabled={inviteClubSaving}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: inviteClubSaving ? 'not-allowed' : 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void enviarInvitacionClub()}
+                disabled={inviteClubSaving}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: inviteClubSaving ? '#94a3b8' : '#4f46e5',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: inviteClubSaving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {inviteClubSaving ? 'Enviando…' : 'Enviar invitación'}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
 
