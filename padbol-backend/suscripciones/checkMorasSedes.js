@@ -2,6 +2,7 @@
  * Cron diario (safety net): escala suscripcion_estado por mora según suscripcion_proximo_cobro.
  * No modifica metodo_pago = manual. No procesa sedes ya cancelado (mora). Solo avanza (nunca retrocede).
  */
+import { sendMakeEvent } from '../utils/makeWebhook.js';
 
 function normalizeMetodoPago(raw) {
   const v = String(raw || '').trim().toLowerCase();
@@ -104,6 +105,13 @@ export async function checkMorasSedes({ supabase, sendWhatsApp, now = new Date()
     }
     actualizados += 1;
     console.log(`✓ Mora sede ${row.id} (${row.nombre}): ${estAct} → ${nuevo} (${dias} días)`);
+    void sendMakeEvent('sede_estado_suscripcion', {
+      sede_id: row.id ?? null,
+      nombre_sede: String(row.nombre || '').trim() || null,
+      estado_anterior: estAct || null,
+      estado_nuevo: nuevo || null,
+      dias_mora: dias ?? null,
+    });
 
     const wa = mensajeWhatsApp(nuevo, row.nombre);
     if (wa && typeof sendWhatsApp === 'function') {

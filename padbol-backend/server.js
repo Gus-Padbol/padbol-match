@@ -13,6 +13,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkMorasSedes } from './suscripciones/checkMorasSedes.js';
 import { createCheckSuscripcionActiva } from './suscripciones/checkSuscripcionActiva.js';
+import { sendMakeEvent } from './utils/makeWebhook.js';
 
 dotenv.config();
 
@@ -1857,6 +1858,20 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
       }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva:', err.message));
     }
 
+    const createdReserva = Array.isArray(data) ? data[0] : data;
+    void sendMakeEvent('reserva_creada', {
+      nombre: String(createdReserva?.nombre || nombre || '').trim() || null,
+      email: String(createdReserva?.email || email || '').trim().toLowerCase() || null,
+      telefono: String(createdReserva?.telefono || createdReserva?.whatsapp || whatsapp || '').trim() || null,
+      sede: String(createdReserva?.sede || sede || '').trim() || null,
+      fecha: createdReserva?.fecha || fecha || null,
+      hora: createdReserva?.hora || hora || null,
+      cancha: createdReserva?.cancha ?? (cancha != null ? parseInt(cancha, 10) : null),
+      monto: createdReserva?.precio ?? (precio != null ? parseInt(precio, 10) : null),
+      metodo_pago: createdReserva?.metodo_pago ?? null,
+      estado: String(createdReserva?.estado || estadoFinal || '').trim() || null,
+    });
+
     res.json(data);
   } catch (err) {
     const st = err.status || 500;
@@ -2392,6 +2407,15 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
     if (inserted?.id && String(inserted.estado || '').toLowerCase() === 'abierto') {
       scheduleNotifyListaEsperaInscripcionAbierta(inserted.id);
     }
+    const authUser = await authUserFromBearer(req).catch(() => null);
+    void sendMakeEvent('torneo_creado', {
+      nombre_torneo: String(inserted?.nombre || nombre || '').trim() || null,
+      sede_id: inserted?.sede_id ?? (sede_id ?? null),
+      tipo_torneo: String(inserted?.tipo_torneo || tipo_torneo || '').trim() || null,
+      fecha_inicio: inserted?.fecha_inicio || fecha_inicio || null,
+      admin_email:
+        String(authUser?.email || inserted?.created_by || created_by || '').trim().toLowerCase() || null,
+    });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -6596,7 +6620,7 @@ async function upsertUserRoleLicenciaAsignada({ email, nombre, payload, sedeId }
   return error || null;
 }
 
-async function ensureLicenciatarioAuthUserAndWelcomeEmail(email) {
+async function ensureLicenciatarioAuthUserAndWelcomeEmail(email, opts = {}) {
   const em = String(email || '').trim().toLowerCase();
   if (!em) return { created: false, tempPassword: null };
   const tempPassword = randomTemporaryPassword();
@@ -6614,6 +6638,13 @@ async function ensureLicenciatarioAuthUserAndWelcomeEmail(email) {
     }
   } else {
     created = true;
+  }
+  if (created) {
+    void sendMakeEvent('usuario_registrado', {
+      email: em,
+      nombre: String(opts?.nombre || '').trim() || null,
+      pais: String(opts?.pais || '').trim() || null,
+    });
   }
   await supabase.auth.resetPasswordForEmail(em, {
     redirectTo: `${FRONTEND_URL}/login`,
@@ -6920,7 +6951,10 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
       throw urErr;
     }
 
-    const authProvision = await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail);
+    const authProvision = await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail, {
+      nombre: String(b.licenciatario_nombre || '').trim() || null,
+      pais: String(b.pais || '').trim() || null,
+    });
 
     const waLic = b.licenciatario_telefono || b.whatsapp;
     if (waLic) {
@@ -7234,7 +7268,10 @@ app.post('/api/admin/sedes-pendientes/:id/aprobar', async (req, res) => {
       throw urErr;
     }
 
-    await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail);
+    await ensureLicenciatarioAuthUserAndWelcomeEmail(licEmail, {
+      nombre: String(pend.licenciatario_nombre || '').trim() || null,
+      pais: String(pend.pais || '').trim() || null,
+    });
 
     await supabase.from('sedes_pendientes').update({ estado: 'aprobada' }).eq('id', id);
 

@@ -1,0 +1,35 @@
+/**
+ * Envía eventos de negocio a Make.com sin bloquear el flujo principal.
+ * Si el webhook no está configurado o falla la llamada, solo registra warning.
+ */
+export async function sendMakeEvent(eventType, data = {}) {
+  const webhookUrl = String(process.env.MAKE_WEBHOOK_URL || '').trim();
+  if (!webhookUrl) {
+    console.warn('⚠️ MAKE_WEBHOOK_URL no configurada; evento omitido:', eventType);
+    return;
+  }
+
+  const event = String(eventType || '').trim();
+  if (!event) {
+    console.warn('⚠️ sendMakeEvent sin eventType; evento omitido');
+    return;
+  }
+
+  const payload =
+    data && typeof data === 'object' && !Array.isArray(data)
+      ? { event, timestamp: new Date().toISOString(), ...data }
+      : { event, timestamp: new Date().toISOString() };
+
+  try {
+    const resp = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      console.warn(`⚠️ Make webhook respondió ${resp.status} para evento "${event}"`);
+    }
+  } catch (err) {
+    console.warn(`⚠️ Error enviando evento "${event}" a Make:`, err?.message || err);
+  }
+}
