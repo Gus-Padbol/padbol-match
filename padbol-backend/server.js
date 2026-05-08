@@ -5347,7 +5347,102 @@ function partidoEquipoGanadorId(partido) {
   return sgA > sgB ? partido.equipo_a_id : partido.equipo_b_id;
 }
 
+function formatDeporteEstadisticaSlug(slug) {
+  const s = String(slug || '').trim().toLowerCase();
+  if (!s) return null;
+  return s
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function tsPartidoOrdenEstadisticas(p, torneo) {
+  const u = p?.updated_at ? Date.parse(p.updated_at) : NaN;
+  if (Number.isFinite(u)) return u;
+  const fin = torneo?.fecha_fin ? Date.parse(`${String(torneo.fecha_fin).trim()}T12:00:00`) : NaN;
+  const ini = torneo?.fecha_inicio ? Date.parse(`${String(torneo.fecha_inicio).trim()}T12:00:00`) : NaN;
+  const t0 = Number.isFinite(fin) ? fin : Number.isFinite(ini) ? ini : 0;
+  const ronda = Number(p?.ronda) || 0;
+  const id = Number(p?.id) || 0;
+  const tid = Number(p?.torneo_id) || 0;
+  return t0 + tid * 1e9 + ronda * 1e6 + id;
+}
+
+function rachaVictoriasDesdeUltimosPartidos(resultadosOrdenAsc) {
+  if (!resultadosOrdenAsc.length) return 0;
+  if (!resultadosOrdenAsc[resultadosOrdenAsc.length - 1].win) return 0;
+  let n = 0;
+  for (let i = resultadosOrdenAsc.length - 1; i >= 0; i--) {
+    if (resultadosOrdenAsc[i].win) n += 1;
+    else break;
+  }
+  return n;
+}
+
+function mejorResultadoLabelDesdePosicion(bestPos) {
+  if (!Number.isFinite(bestPos) || bestPos === Infinity) return null;
+  if (bestPos <= 1) return 'Campeón';
+  if (bestPos === 2) return 'Finalista';
+  if (bestPos <= 4) return 'Semifinalista';
+  return null;
+}
+
+async function deportePrincipalPorSedeIdsStats(supabaseClient, sedeIds) {
+  const ids = [...new Set((sedeIds || []).filter((x) => x != null))].map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0);
+  if (!ids.length) return new Map();
+  const { data, error } = await supabaseClient
+    .from('canchas_por_deporte')
+    .select('sede_id, deporte, cantidad, activo')
+    .in('sede_id', ids);
+  if (error) {
+    console.warn('deportePrincipalPorSedeIdsStats:', error.message || error);
+    return new Map();
+  }
+  const best = new Map();
+  for (const row of data || []) {
+    if (row && row.activo === false) continue;
+    const sid = row.sede_id;
+    const c = Number(row.cantidad) || 0;
+    const dep = String(row.deporte || '').trim().toLowerCase();
+    if (!dep) continue;
+    const prev = best.get(sid);
+    if (!prev || c > prev.cantidad) best.set(sid, { deporte: dep, cantidad: c });
+  }
+  return best;
+}
+
+async function sedeMasFrecuentadaDesdeReservasStats(supabaseClient, perfil) {
+  const userIdStats = String(perfil.user_id || '').trim();
+  if (!userIdStats) return null;
+  const { data: resvRows, error: rvErr } = await supabaseClient.from('reservas').select('sede, estado').eq('user_id', userIdStats);
+  if (rvErr) {
+    console.warn('sedeMasFrecuentadaDesdeReservasStats:', rvErr.message || rvErr);
+    return null;
+  }
+  const m = new Map();
+  for (const r of resvRows || []) {
+    const es = String(r.estado || '').toLowerCase();
+    if (es === 'cancelada') continue;
+    const nome = String(r.sede || '').trim();
+    if (!nome) continue;
+    m.set(nome, (m.get(nome) || 0) + 1);
+  }
+  if (!m.size) return null;
+  let bestName = null;
+  let bestC = 0;
+  for (const [nome, c] of m) {
+    if (c > bestC) {
+      bestC = c;
+      bestName = nome;
+    }
+  }
+  return bestName ? { nombre: bestName, reservas_en_sede: bestC } : null;
+}
+
 async function computeEstadisticasJugadorPublico(perfil) {
+  const sede_mas_frecuentada_reservas = await sedeMasFrecuentadaDesdeReservasStats(supabase, perfil);
+
   const { data: equiposRows, error: eqErr } = await supabase.from('equipos').select('id, torneo_id, jugadores');
   if (eqErr) throw eqErr;
 
@@ -5362,12 +5457,16 @@ async function computeEstadisticasJugadorPublico(perfil) {
       win_rate_pct: 0,
       puntos_ranking_total: 0,
       sede_habitual: null,
+      racha_victorias_consecutivas: 0,
+      mejor_resultado: null,
+      deporte_mas_jugado: null,
+      sede_mas_frecuentada_reservas,
     };
   }
 
   const { data: torneosRows, error: tErr } = await supabase
     .from('torneos')
-    .select('id, estado, sede_id')
+    .select('id, estado, sede_id, fecha_inicio, fecha_fin')
     .in('id', misTorneoIds);
   if (tErr) throw tErr;
 
@@ -5396,6 +5495,7 @@ async function computeEstadisticasJugadorPublico(perfil) {
 
   let puntos_ranking_total = 0;
   let torneos_ganados = 0;
+  let mejor_posicion_torneo = Infinity;
   if (fArr.length && misEquipoIdsFinal.length) {
     const { data: tpRows, error: tpErr } = await supabase
       .from('tabla_puntos')
@@ -5411,16 +5511,19 @@ async function computeEstadisticasJugadorPublico(perfil) {
       const pts = Number(row.puntos) || 0;
       puntos_ranking_total += pts;
       if (Number(row.posicion) === 1) ganadosSet.add(tid);
+      const posN = Number(row.posicion);
+      if (Number.isFinite(posN) && posN >= 1) mejor_posicion_torneo = Math.min(mejor_posicion_torneo, posN);
     }
     torneos_ganados = ganadosSet.size;
   }
 
   let partidos_jugados = 0;
   let partidos_ganados = 0;
+  const partidosParaRacha = [];
   if (fArr.length) {
     const { data: partidosRows, error: pErr } = await supabase
       .from('partidos')
-      .select('id, torneo_id, estado, resultado, equipo_a_id, equipo_b_id')
+      .select('id, torneo_id, estado, resultado, equipo_a_id, equipo_b_id, ronda, grupo, updated_at')
       .in('torneo_id', fArr)
       .eq('estado', 'finalizado');
     if (pErr) throw pErr;
@@ -5430,9 +5533,16 @@ async function computeEstadisticasJugadorPublico(perfil) {
       if (p.equipo_a_id !== myEq && p.equipo_b_id !== myEq) continue;
       partidos_jugados++;
       const winId = partidoEquipoGanadorId(p);
-      if (winId != null && winId === myEq) partidos_ganados++;
+      const win = winId != null && winId === myEq;
+      if (win) partidos_ganados++;
+      const tmeta = torneoById[p.torneo_id];
+      partidosParaRacha.push({ p, torneo: tmeta, win });
     }
+    partidosParaRacha.sort((a, b) => tsPartidoOrdenEstadisticas(a.p, a.torneo) - tsPartidoOrdenEstadisticas(b.p, b.torneo));
   }
+
+  const racha_victorias_consecutivas = rachaVictoriasDesdeUltimosPartidos(partidosParaRacha.map((x) => ({ win: x.win })));
+  const mejor_resultado = mejorResultadoLabelDesdePosicion(mejor_posicion_torneo);
 
   const win_rate_pct =
     partidos_jugados > 0 ? Math.round((partidos_ganados / partidos_jugados) * 1000) / 10 : 0;
@@ -5462,6 +5572,29 @@ async function computeEstadisticasJugadorPublico(perfil) {
     }
   }
 
+  let deporte_mas_jugado = null;
+  const sedeIdsDeporte = [...torneosJugadosSet].map((tid) => torneoById[tid]?.sede_id).filter((x) => x != null);
+  const depMap = await deportePrincipalPorSedeIdsStats(supabase, sedeIdsDeporte);
+  const deporteFreq = new Map();
+  for (const tid of torneosJugadosSet) {
+    const sid = torneoById[tid]?.sede_id;
+    if (sid == null) continue;
+    const dep = depMap.get(sid)?.deporte;
+    if (!dep) continue;
+    deporteFreq.set(dep, (deporteFreq.get(dep) || 0) + 1);
+  }
+  if (deporteFreq.size > 0) {
+    let bestDep = null;
+    let bestDn = 0;
+    for (const [dep, n] of deporteFreq) {
+      if (n > bestDn || (n === bestDn && dep < String(bestDep || '\uffff'))) {
+        bestDn = n;
+        bestDep = dep;
+      }
+    }
+    deporte_mas_jugado = formatDeporteEstadisticaSlug(bestDep);
+  }
+
   return {
     torneos_jugados,
     torneos_ganados,
@@ -5470,6 +5603,10 @@ async function computeEstadisticasJugadorPublico(perfil) {
     win_rate_pct,
     puntos_ranking_total,
     sede_habitual,
+    racha_victorias_consecutivas,
+    mejor_resultado,
+    deporte_mas_jugado,
+    sede_mas_frecuentada_reservas,
   };
 }
 

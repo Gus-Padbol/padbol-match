@@ -128,6 +128,10 @@ export default function PerfilPublico() {
       win_rate_pct: 0,
       puntos_ranking_total: 0,
       sede_habitual: null,
+      racha_victorias_consecutivas: 0,
+      mejor_resultado: null,
+      deporte_mas_jugado: null,
+      sede_mas_frecuentada_reservas: null,
     };
     if (aliasSlug) {
       try {
@@ -750,16 +754,16 @@ export default function PerfilPublico() {
               {[
                 {
                   k: 'torneos',
-                  label: 'Torneos',
+                  label: 'Torneos jugados',
                   value: `${estadisticas.torneos_jugados}`,
                   sub:
                     estadisticas.torneos_ganados > 0
                       ? `${estadisticas.torneos_ganados} ganado${estadisticas.torneos_ganados === 1 ? '' : 's'}`
-                      : 'Finalizados',
+                      : 'Torneos finalizados',
                 },
                 {
                   k: 'partidos',
-                  label: 'Partidos',
+                  label: 'Partidos jugados',
                   value: `${estadisticas.partidos_jugados}`,
                   sub:
                     estadisticas.partidos_jugados > 0
@@ -776,8 +780,48 @@ export default function PerfilPublico() {
                 {
                   k: 'pts',
                   label: 'Puntos ranking',
-                  value: `${estadisticas.puntos_ranking_total}`,
-                  sub: 'Total acumulado',
+                  value:
+                    Number(estadisticas.puntos_ranking_total) > 0
+                      ? `${estadisticas.puntos_ranking_total}`
+                      : '—',
+                  sub: 'Total acumulado (tabla)',
+                },
+                {
+                  k: 'racha',
+                  label: 'Racha actual',
+                  value:
+                    estadisticas.racha_victorias_consecutivas > 0
+                      ? `${estadisticas.racha_victorias_consecutivas}`
+                      : '—',
+                  sub:
+                    estadisticas.racha_victorias_consecutivas > 0
+                      ? `Partido${estadisticas.racha_victorias_consecutivas === 1 ? '' : 's'} ganado${
+                          estadisticas.racha_victorias_consecutivas === 1 ? '' : 's'
+                        } seguidos`
+                      : 'Sin racha activa',
+                },
+                {
+                  k: 'mejor',
+                  label: 'Mejor resultado',
+                  value: estadisticas.mejor_resultado || '—',
+                  sub: 'Mejor torneo (tabla)',
+                },
+                {
+                  k: 'deporte',
+                  label: 'Deporte más jugado',
+                  value: estadisticas.deporte_mas_jugado || '—',
+                  sub: 'Por sede del torneo',
+                },
+                {
+                  k: 'sedeRes',
+                  label: 'Sede más frecuentada',
+                  value: estadisticas.sede_mas_frecuentada_reservas?.nombre || '—',
+                  sub:
+                    estadisticas.sede_mas_frecuentada_reservas?.reservas_en_sede != null
+                      ? `${estadisticas.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
+                          estadisticas.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
+                        }`
+                      : 'Por reservas',
                 },
               ].map((c) => (
                 <div
@@ -811,9 +855,22 @@ export default function PerfilPublico() {
                   fontWeight: 600,
                 }}
               >
-                Sede habitual: <span style={{ color: '#0f172a' }}>{estadisticas.sede_habitual.nombre}</span>
+                Sede habitual (torneos):{' '}
+                <span style={{ color: '#0f172a' }}>{estadisticas.sede_habitual.nombre}</span>
               </p>
-            ) : null}
+            ) : (
+              <p
+                style={{
+                  margin: '14px 0 0',
+                  fontSize: '13px',
+                  color: '#94a3b8',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                }}
+              >
+                Sede habitual (torneos): —
+              </p>
+            )}
           </div>
         ) : null}
 

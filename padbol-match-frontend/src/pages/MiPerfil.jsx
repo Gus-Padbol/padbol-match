@@ -874,6 +874,40 @@ export default function MiPerfil() {
     [torneosConPuntosMiPerfil]
   );
 
+  /** Misma respuesta que GET /api/jugador/:alias/estadisticas (backend). */
+  const [estadisticasMiPerfil, setEstadisticasMiPerfil] = useState(null);
+  const [estadisticasMiPerfilLoading, setEstadisticasMiPerfilLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const alias = String(perfil?.alias || '').trim();
+    if (!alias) {
+      setEstadisticasMiPerfil(null);
+      setEstadisticasMiPerfilLoading(false);
+      return undefined;
+    }
+    setEstadisticasMiPerfilLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/jugador/${encodeURIComponent(alias)}/estadisticas`);
+        if (cancelled) return;
+        if (res.ok) {
+          const j = await res.json();
+          setEstadisticasMiPerfil(j && typeof j === 'object' ? j : null);
+        } else {
+          setEstadisticasMiPerfil(null);
+        }
+      } catch {
+        if (!cancelled) setEstadisticasMiPerfil(null);
+      } finally {
+        if (!cancelled) setEstadisticasMiPerfilLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [perfil?.alias]);
+
   const fetchCreditos = async () => {
     if (!sessionOwnerEmail) return;
     try {
@@ -3300,17 +3334,111 @@ export default function MiPerfil() {
         </div>
       )}
 
-      {/* Estadísticas: puntos por alcance + opcional torneos jugados (sin resumen de reservas / sede favorita). */}
-      {(() => {
+      {/* Estadísticas: puntos por alcance + resumen backend (torneos finalizados, racha, reservas, etc.). */}
+      {perfil && typeof perfil === 'object' ? (() => {
         const flagTorneosPub = editando ? !!formData.mostrar_torneos_jugados : !!perfil?.mostrar_torneos_jugados;
         const hayPuntosNivel = tieneAlgunoPuntosPorAlcance(puntosAlcanceMiPerfil);
-        const hayBloque = hayPuntosNivel || flagTorneosPub;
-        if (!hayBloque) return null;
+        const st = estadisticasMiPerfil && typeof estadisticasMiPerfil === 'object' ? estadisticasMiPerfil : {};
+        const aliasStats = String(perfil?.alias || '').trim();
+        const gridItems = [
+          {
+            k: 'torneos',
+            label: 'Torneos jugados',
+            value: estadisticasMiPerfilLoading ? '…' : `${Number(st.torneos_jugados) || 0}`,
+            sub:
+              !aliasStats
+                ? 'Definí tu alias público'
+                : Number(st.torneos_ganados) > 0
+                  ? `${st.torneos_ganados} ganado${Number(st.torneos_ganados) === 1 ? '' : 's'}`
+                  : 'Torneos finalizados',
+          },
+          {
+            k: 'partidos',
+            label: 'Partidos jugados',
+            value: estadisticasMiPerfilLoading ? '…' : `${Number(st.partidos_jugados) || 0}`,
+            sub:
+              !aliasStats
+                ? '—'
+                : Number(st.partidos_jugados) > 0
+                  ? `${Number(st.partidos_ganados) || 0} victorias`
+                  : 'En torneos finalizados',
+          },
+          {
+            k: 'win',
+            label: 'Win rate',
+            value:
+              estadisticasMiPerfilLoading || !aliasStats
+                ? '—'
+                : Number(st.partidos_jugados) > 0
+                  ? `${st.win_rate_pct}%`
+                  : '—',
+            sub: 'Victorias / jugados',
+          },
+          {
+            k: 'pts',
+            label: 'Puntos ranking',
+            value:
+              estadisticasMiPerfilLoading || !aliasStats
+                ? '—'
+                : Number(st.puntos_ranking_total) > 0
+                  ? `${st.puntos_ranking_total}`
+                  : '—',
+            sub: 'Total tabla de puntos',
+          },
+          {
+            k: 'racha',
+            label: 'Racha actual',
+            value:
+              estadisticasMiPerfilLoading || !aliasStats
+                ? '—'
+                : Number(st.racha_victorias_consecutivas) > 0
+                  ? `${st.racha_victorias_consecutivas}`
+                  : '—',
+            sub:
+              !aliasStats
+                ? '—'
+                : Number(st.racha_victorias_consecutivas) > 0
+                  ? `Partido${Number(st.racha_victorias_consecutivas) === 1 ? '' : 's'} ganado${
+                      Number(st.racha_victorias_consecutivas) === 1 ? '' : 's'
+                    } seguidos`
+                  : 'Sin racha activa',
+          },
+          {
+            k: 'mejor',
+            label: 'Mejor resultado',
+            value:
+              estadisticasMiPerfilLoading || !aliasStats ? '—' : st.mejor_resultado || '—',
+            sub: 'Mejor torneo (tabla)',
+          },
+          {
+            k: 'deporte',
+            label: 'Deporte más jugado',
+            value:
+              estadisticasMiPerfilLoading || !aliasStats ? '—' : st.deporte_mas_jugado || '—',
+            sub: 'Por sede del torneo',
+          },
+          {
+            k: 'sedeRes',
+            label: 'Sede más frecuentada',
+            value:
+              estadisticasMiPerfilLoading || !aliasStats
+                ? '—'
+                : st.sede_mas_frecuentada_reservas?.nombre || '—',
+            sub:
+              !aliasStats
+                ? '—'
+                : st.sede_mas_frecuentada_reservas?.reservas_en_sede != null
+                  ? `${st.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
+                      st.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
+                    }`
+                  : 'Por reservas',
+          },
+        ];
         return (
           <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>📊 Estadísticas</h4>
             {hayPuntosNivel ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: flagTorneosPub ? '14px' : 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
                 {puntosAlcanceMiPerfil.club > 0 ? (
                   <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
                     📍 Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.club}</span>
@@ -3327,15 +3455,65 @@ export default function MiPerfil() {
                   </div>
                 ) : null}
               </div>
+            ) : (
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
+                Puntos ranking (por alcance):{' '}
+                <span style={{ color: '#94a3b8' }}>—</span>
+              </p>
+            )}
+            {!aliasStats ? (
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#92400e', fontWeight: 600 }}>
+                Definí tu alias público en la ficha para calcular torneos, partidos y racha.
+              </p>
             ) : null}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: '10px',
+              }}
+            >
+              {gridItems.map((c) => (
+                <div
+                  key={c.k}
+                  style={{
+                    background: 'linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)',
+                    borderRadius: '12px',
+                    padding: '14px 12px',
+                    border: '1px solid #e2e8f0',
+                    textAlign: 'center',
+                    minWidth: 0,
+                  }}
+                >
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{c.label}</div>
+                  <div style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', marginTop: '6px', lineHeight: 1.15 }}>{c.value}</div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>{c.sub}</div>
+                </div>
+              ))}
+            </div>
+            <p
+              style={{
+                margin: '14px 0 0',
+                fontSize: '13px',
+                color: estadisticasMiPerfilLoading ? '#94a3b8' : '#475569',
+                textAlign: 'center',
+                fontWeight: 600,
+              }}
+            >
+              Sede habitual (torneos):{' '}
+              <span style={{ color: '#0f172a' }}>
+                {estadisticasMiPerfilLoading ? '…' : st.sede_habitual?.nombre || '—'}
+              </span>
+            </p>
             {flagTorneosPub ? (
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: 0 }}>
-                🏆 Torneos jugados: <span style={{ color: '#15803d' }}>{torneosUnicosConPuntosMiPerfil}</span>
-              </div>
+              <p style={{ margin: '10px 0 0', fontSize: '12px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
+                En tu perfil público también se muestran torneos con puntos:{' '}
+                <span style={{ color: '#15803d' }}>{torneosUnicosConPuntosMiPerfil}</span>
+              </p>
             ) : null}
           </div>
         );
-      })()}
+      })() : null}
 
       {torneosConPuntosMiPerfil.length > 0 && !ocultarUiJugadorPorAdmin ? (
         <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
