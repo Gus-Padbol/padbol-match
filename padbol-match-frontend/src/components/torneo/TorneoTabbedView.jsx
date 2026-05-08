@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
@@ -1439,6 +1439,88 @@ export default function TorneoTabbedView({
     </div>
   );
 
+  const nombreLlaveSlot = (partido, lado) => {
+    const id = lado === 'a' ? partido.equipo_a_id : partido.equipo_b_id;
+    if (id == null || id === '') return 'Por definir';
+    const eq = equipoPorId(equipos, id);
+    return nombreEquipoMostrado(eq || {});
+  };
+
+  const renderBracketMatchCard = (partido) => {
+    const na = nombreLlaveSlot(partido, 'a');
+    const nb = nombreLlaveSlot(partido, 'b');
+    const fin = partido.estado === 'finalizado';
+    const { sgA, sgB } = fin ? contarSetsGanados(partido) : { sgA: 0, sgB: 0 };
+    const ganaA = fin && sgA > sgB;
+    const ganaB = fin && sgB > sgA;
+    const setsList = fin ? parseResultadoSets(partido) : [];
+    const setsTxt = setsList.length > 0 ? setsList.join(', ') : null;
+    const fh = partido.fecha_hora
+      ? new Date(partido.fecha_hora).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
+      : null;
+    const click = puedeCargarResultados ? () => abrirModalResultado(partido) : undefined;
+    return (
+      <div
+        key={partido.id}
+        className={`torneo-bracket-card${puedeCargarResultados ? ' torneo-bracket-card--clickable' : ''}`}
+        onClick={click}
+        role={click ? 'button' : undefined}
+      >
+        <div className={`torneo-bracket-team${ganaA ? ' torneo-bracket-team--winner' : ''}${na === 'Por definir' ? ' torneo-bracket-team--tbd' : ''}`}>
+          <span className="torneo-bracket-team-name">{na}</span>
+          {ganaA ? <span className="torneo-bracket-winner-mark">✓</span> : null}
+        </div>
+        <div className="torneo-bracket-vs">vs</div>
+        <div className={`torneo-bracket-team${ganaB ? ' torneo-bracket-team--winner' : ''}${nb === 'Por definir' ? ' torneo-bracket-team--tbd' : ''}`}>
+          <span className="torneo-bracket-team-name">{nb}</span>
+          {ganaB ? <span className="torneo-bracket-winner-mark">✓</span> : null}
+        </div>
+        {fin && setsTxt ? <div className="torneo-bracket-score">{setsTxt}</div> : null}
+        {!fin && fh ? <div className="torneo-bracket-meta">{fh}</div> : null}
+      </div>
+    );
+  };
+
+  const bracketConnectorSvg = (isPair) => (
+    <div className="torneo-bracket-connector" aria-hidden>
+      {isPair ? (
+        <svg className="torneo-bracket-connector-svg" viewBox="0 0 24 100" preserveAspectRatio="none">
+          <path
+            d="M 0 25 L 10 25 L 10 50 M 0 75 L 10 75 L 10 50 M 10 50 L 24 50"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ) : (
+        <svg className="torneo-bracket-connector-svg" viewBox="0 0 24 100" preserveAspectRatio="none">
+          <path
+            d="M 0 50 L 24 50"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
+    </div>
+  );
+
+  const filasLlavePorRonda = (indiceRonda, plist) => {
+    if (indiceRonda === 0) {
+      const rows = [];
+      for (let i = 0; i < plist.length; i += 2) {
+        rows.push(plist.slice(i, i + 2));
+      }
+      return rows;
+    }
+    return plist.map((p) => [p]);
+  };
+
   const renderTabLlave = () => {
     if (!muestraTabLlave) return null;
     if (!hayLlaveConPartidos) {
@@ -1462,46 +1544,47 @@ export default function TorneoTabbedView({
         </div>
       );
     }
+    const ultimaIdx = rondasLlave.length - 1;
     return (
-      <div style={{ overflowX: 'auto', padding: '8px 0' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', minWidth: 'min-content' }}>
-          {rondasLlave.map(({ ronda, partidos: plist }) => (
-            <div key={ronda} style={{ flex: '0 0 auto', width: 200 }}>
-              <div style={{ fontWeight: 900, fontSize: '12px', color: '#64748b', marginBottom: '10px', textAlign: 'center' }}>
-                Ronda {ronda}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {plist.map((partido) => {
-                  const eqA = equipoPorId(equipos, partido.equipo_a_id);
-                  const eqB = equipoPorId(equipos, partido.equipo_b_id);
-                  const na = nombreEquipoMostrado(eqA || {});
-                  const nb = nombreEquipoMostrado(eqB || {});
-                  const fin = partido.estado === 'finalizado';
-                  const { sgA, sgB } = fin ? contarSetsGanados(partido) : { sgA: 0, sgB: 0 };
-                  const ganaA = fin && sgA > sgB;
-                  const ganaB = fin && sgB > sgA;
-                  const setsTxt = fin ? parseResultadoSets(partido).join(', ') : '—';
-                  return (
-                    <div
-                      key={partido.id}
-                      style={{
-                        background: '#fff',
-                        borderRadius: '12px',
-                        padding: '10px',
-                        border: '1px solid #e2e8f0',
-                        fontSize: '12px',
-                      }}
-                    >
-                      <div style={{ fontWeight: ganaA ? 900 : 600, color: ganaA ? '#15803d' : '#334155' }}>{na}</div>
-                      <div style={{ textAlign: 'center', color: '#94a3b8', margin: '4px 0' }}>vs</div>
-                      <div style={{ fontWeight: ganaB ? 900 : 600, color: ganaB ? '#15803d' : '#334155' }}>{nb}</div>
-                      {fin ? <div style={{ marginTop: '8px', color: '#64748b', fontWeight: 600 }}>{setsTxt}</div> : null}
+      <div className="torneo-bracket-scroll">
+        <div className="torneo-bracket-track">
+          {rondasLlave.map(({ ronda, partidos: plist }, colIdx) => {
+            const isLastCol = colIdx === ultimaIdx;
+            const rows = filasLlavePorRonda(colIdx, plist);
+            return (
+              <Fragment key={ronda}>
+                <div className="torneo-bracket-col">
+                  <div className="torneo-bracket-ronda-label">Ronda {ronda}</div>
+                  {isLastCol && plist.length === 1 ? (
+                    <div className="torneo-bracket-col-body torneo-bracket-col-body--final">
+                      {plist[0] ? renderBracketMatchCard(plist[0]) : null}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+                  ) : isLastCol ? (
+                    <div className="torneo-bracket-col-body">
+                      {rows.map((row, rowIdx) => (
+                        <div key={row.map((p) => p.id).join('-') || `row-${rowIdx}`} className="torneo-bracket-row torneo-bracket-row--terminal">
+                          <div className="torneo-bracket-row-cards">
+                            {row.map((p) => renderBracketMatchCard(p))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="torneo-bracket-col-body">
+                      {rows.map((row, rowIdx) => (
+                        <div key={row.map((p) => p.id).join('-') || `row-${rowIdx}`} className="torneo-bracket-row">
+                          <div className="torneo-bracket-row-cards">
+                            {row.map((p) => renderBracketMatchCard(p))}
+                          </div>
+                          {bracketConnectorSvg(row.length >= 2)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Fragment>
+            );
+          })}
         </div>
       </div>
     );
