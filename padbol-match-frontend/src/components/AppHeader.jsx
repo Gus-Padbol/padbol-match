@@ -249,18 +249,11 @@ export default function AppHeader({
     adminFlowSurface,
   ]);
 
+  /** Destino del chip: admins (rol en DB/caché/JWT) → /admin; jugadores → /mi-perfil; también en shell Ranking/Reservar/Torneos/Perfil. */
   const hubChipNavPath = useMemo(
     () => hubChipNavigatePath(rolEffectiveHeader, roleLoading),
     [rolEffectiveHeader, roleLoading]
   );
-
-  /** En shell jugador siempre ir a perfil (no al panel aunque el rol sea admin). */
-  const hubChipNavPathEffective = useMemo(() => {
-    if (session?.user && jugadorHubShellPath && !adminFlowSurface) {
-      return '/mi-perfil';
-    }
-    return hubChipNavPath;
-  }, [session?.user, jugadorHubShellPath, adminFlowSurface, hubChipNavPath]);
 
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
   const hubInicial = String(hubNombreCorto || '?')
@@ -1130,17 +1123,17 @@ export default function AppHeader({
                 <button
                   type="button"
                   onClick={() => {
-                    navigate(adminFlowSurface ? '/admin' : hubChipNavPathEffective);
+                    navigate(adminFlowSurface ? '/admin' : hubChipNavPath);
                   }}
                   aria-label={
                     adminFlowSurface
                       ? 'Ir al panel de administración'
-                      : hubChipNavPathEffective === '/admin'
+                      : hubChipNavPath === '/admin'
                         ? 'Ir al panel de administración'
                         : 'Ir a mi perfil'
                   }
                   title={
-                    adminFlowSurface ? 'Panel admin' : hubChipNavPathEffective === '/admin' ? 'Panel admin' : 'Mi perfil'
+                    adminFlowSurface ? 'Panel admin' : hubChipNavPath === '/admin' ? 'Panel admin' : 'Mi perfil'
                   }
                   style={{
                     display: 'inline-flex',
