@@ -1,0 +1,122 @@
+.admin-club-onboarding-root {
+  position: fixed;
+  inset: 0;
+  z-index: 20100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-bottom, 0px)) 16px 24px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .admin-club-onboarding-root {
+    align-items: center;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.admin-club-onboarding-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  pointer-events: auto;
+}
+
+.admin-club-onboarding-spotlight {
+  position: fixed;
+  z-index: 20101;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 9999px rgba(15, 23, 42, 0.45),
+    0 0 0 3px rgba(255, 255, 255, 0.95),
+    0 8px 32px rgba(79, 70, 229, 0.35);
+  pointer-events: none;
+  transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+.admin-club-onboarding-card {
+  position: relative;
+  z-index: 20102;
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px 20px 18px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22);
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.admin-club-onboarding-title {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.admin-club-onboarding-body {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.admin-club-onboarding-meta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.admin-club-onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-club-onboarding-nav-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.admin-club-onboarding-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.admin-club-onboarding-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-club-onboarding-btn--primary {
+  background: linear-gradient(135deg, #4f46e5, #3730a3);
+  color: #fff;
+}
+
+.admin-club-onboarding-btn--secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.admin-club-onboarding-btn--ghost {
+  background: transparent;
+  color: #64748b;
+  align-self: flex-start;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.admin-club-onboarding-btn--ghost:hover {
+  color: #0f172a;
+}

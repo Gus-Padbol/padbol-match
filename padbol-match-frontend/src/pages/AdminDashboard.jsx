@@ -48,6 +48,7 @@ import {
   validarCambioEstadoTorneoAdminGuardar,
 } from '../utils/torneoEstadoTransiciones';
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
+import AdminClubOnboardingTour, { readOnboardingDone } from '../components/AdminClubOnboardingTour';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import * as XLSX from 'xlsx';
@@ -1266,6 +1267,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [inviteClubModalOpen, setInviteClubModalOpen] = useState(false);
   const [inviteClubSaving, setInviteClubSaving] = useState(false);
   const [inviteClubForm, setInviteClubForm] = useState({ email: '', nombre_club: '', pais: '' });
+  const [adminClubOnboardingOpen, setAdminClubOnboardingOpen] = useState(false);
+
+  useEffect(() => {
+    if (!esAdminClub || loading) return;
+    if (readOnboardingDone()) return;
+    const t = window.setTimeout(() => setAdminClubOnboardingOpen(true), 450);
+    return () => window.clearTimeout(t);
+  }, [esAdminClub, loading]);
+
+  const applyOnboardingTab = useCallback(
+    (tabId) => {
+      const id = sanitizeAdminActiveTab(tabId);
+      setActiveTab(id);
+      try {
+        sessionStorage.setItem('adminActiveTab', id);
+      } catch {
+        /* ignore */
+      }
+      navigate(`/admin?tab=${encodeURIComponent(id)}`, { replace: true });
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -4420,6 +4443,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         {TABS.map(tab => (
           <button
             key={tab.id}
+            type="button"
+            data-admin-tour-tab={tab.id}
             onClick={() => {
               setActiveTab(tab.id);
               sessionStorage.setItem('adminActiveTab', tab.id);
@@ -9761,6 +9786,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
         </div>
+      ) : null}
+
+      {esAdminClub ? (
+        <AdminClubOnboardingTour
+          open={adminClubOnboardingOpen}
+          onClose={() => setAdminClubOnboardingOpen(false)}
+          applyTab={applyOnboardingTab}
+          tabsStripRef={adminTabsStripRef}
+          puedeVerMiSede={puedeVerMiSede}
+        />
       ) : null}
     </div>
   );
