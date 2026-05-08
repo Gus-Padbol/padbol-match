@@ -244,16 +244,31 @@ function useMediaNarrow(maxWidth = 520) {
   return narrow;
 }
 
-const RANKING_PILL_BASE = {
-  padding: '8px 14px',
-  borderRadius: '999px',
-  border: '1px solid #e2e8f0',
-  background: '#fff',
-  color: '#1e293b',
+/** `<select>` compacto alineado con RankingFilterDropdown (fondo oscuro del hub). */
+const RANKING_COMPACT_SELECT_STYLE = {
+  width: '100%',
+  minWidth: 0,
+  minHeight: '40px',
+  padding: '9px 12px',
+  borderRadius: '10px',
+  border: '1px solid rgba(255,255,255,0.28)',
   fontSize: '13px',
-  fontWeight: 700,
+  fontWeight: 600,
+  background: 'rgba(15,23,42,0.42)',
+  color: '#f8fafc',
+  boxSizing: 'border-box',
   cursor: 'pointer',
+  outline: 'none',
   fontFamily: 'inherit',
+};
+
+const RANKING_COMPACT_FILTER_CELL = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
+  minWidth: '130px',
+  flex: '1 1 160px',
+  maxWidth: '280px',
 };
 
 function RankingFilterDropdown({ label, value, onChange, options, disabled, ariaLabel, renderOptionLabel }) {
@@ -378,88 +393,6 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
         </div>
       ) : null}
     </label>
-  );
-}
-
-function CategoriaPills({ value, onChange, ariaLabel }) {
-  return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}
-    >
-      <button
-        type="button"
-        onClick={() => onChange('')}
-        style={{
-          ...RANKING_PILL_BASE,
-          background: !value ? '#667eea' : '#fff',
-          color: !value ? '#fff' : '#1e293b',
-          borderColor: !value ? '#667eea' : '#e2e8f0',
-        }}
-      >
-        Todos
-      </button>
-      {CATEGORIAS_NIVEL_TODAS.map((c) => {
-        const active = value === c;
-        return (
-          <button
-            key={c}
-            type="button"
-            onClick={() => onChange(c)}
-            style={{
-              ...RANKING_PILL_BASE,
-              background: active ? '#667eea' : '#fff',
-              color: active ? '#fff' : '#1e293b',
-              borderColor: active ? '#667eea' : '#e2e8f0',
-            }}
-          >
-            {c}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function TorneoMetaPills({ value, onChange, options, ariaLabel }) {
-  return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}
-    >
-      <button
-        type="button"
-        onClick={() => onChange('')}
-        style={{
-          ...RANKING_PILL_BASE,
-          background: !value ? '#667eea' : '#fff',
-          color: !value ? '#fff' : '#1e293b',
-          borderColor: !value ? '#667eea' : '#e2e8f0',
-        }}
-      >
-        Todos
-      </button>
-      {options.map((o) => {
-        const active = value === o.value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => onChange(o.value)}
-            style={{
-              ...RANKING_PILL_BASE,
-              background: active ? '#667eea' : '#fff',
-              color: active ? '#fff' : '#1e293b',
-              borderColor: active ? '#667eea' : '#e2e8f0',
-            }}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
   );
 }
 
@@ -671,7 +604,7 @@ export default function Rankings() {
           ))}
         </div>
 
-        {/* Filtros: Local = país → provincia → ciudad (dropdowns) + categoría (pills); Nacional = país + categoría; FIPA = solo categoría */}
+        {/* Filtros: Local = país → provincia → ciudad; categoría y tipo de torneo = selects compactos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '12px' }}>
           {activeTab === 'local' && (
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -726,39 +659,45 @@ export default function Rankings() {
             </div>
           )}
           {(activeTab === 'local' || activeTab === 'nacional' || activeTab === 'internacional') && (
-            <div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.88)',
-                  marginBottom: '8px',
-                }}
-              >
-                Categoría
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end' }}>
+              <div style={RANKING_COMPACT_FILTER_CELL}>
+                <label htmlFor="ranking-filtro-categoria" style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                  Categoría
+                </label>
+                <select
+                  id="ranking-filtro-categoria"
+                  value={selectedCategoria}
+                  onChange={(e) => setSelectedCategoria(e.target.value)}
+                  aria-label="Filtrar ranking por categoría"
+                  style={RANKING_COMPACT_SELECT_STYLE}
+                >
+                  <option value="">Todos</option>
+                  {CATEGORIAS_NIVEL_TODAS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <CategoriaPills
-                value={selectedCategoria}
-                onChange={setSelectedCategoria}
-                ariaLabel="Filtrar ranking por categoría"
-              />
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.88)',
-                  marginBottom: '8px',
-                  marginTop: '4px',
-                }}
-              >
-                Tipo de torneo
+              <div style={RANKING_COMPACT_FILTER_CELL}>
+                <label htmlFor="ranking-filtro-tipo-torneo" style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+                  Tipo de torneo
+                </label>
+                <select
+                  id="ranking-filtro-tipo-torneo"
+                  value={selectedGeneroTorneo}
+                  onChange={(e) => setSelectedGeneroTorneo(e.target.value)}
+                  aria-label="Filtrar ranking por tipo de torneo (Masculino, Femenino o Mixto)"
+                  style={RANKING_COMPACT_SELECT_STYLE}
+                >
+                  <option value="">Todos</option>
+                  {TORNEO_GENERO_COMPETENCIA_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <TorneoMetaPills
-                value={selectedGeneroTorneo}
-                onChange={setSelectedGeneroTorneo}
-                options={TORNEO_GENERO_COMPETENCIA_OPTIONS}
-                ariaLabel="Filtrar ranking por tipo de torneo (Masculino, Femenino o Mixto)"
-              />
             </div>
           )}
           {(selectedCategoria ||
