@@ -1466,6 +1466,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   });
   const [adminInvitacionesRows, setAdminInvitacionesRows] = useState([]);
   const [adminInvitacionesLoading, setAdminInvitacionesLoading] = useState(false);
+  /** GET /api/admin/analytics-globales (solo super_admin, mismo ciclo que fetchData). */
+  const [analyticsGlobales, setAnalyticsGlobales] = useState(null);
   const [inviteClubModalOpen, setInviteClubModalOpen] = useState(false);
   const [inviteAdminModalStep, setInviteAdminModalStep] = useState('tipo');
   const [inviteAdminTipo, setInviteAdminTipo] = useState(null);
@@ -3562,9 +3564,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       }
       setPartidosCountByTorneoId(partidosCnt);
 
+      if (isSuperAdmin && session?.access_token) {
+        try {
+          const ar = await fetch(`${apiBaseUrl}/api/admin/analytics-globales`, {
+            headers: { ...listAuthHeaders },
+          });
+          const j = await ar.json().catch(() => null);
+          if (ar.ok && j && typeof j === 'object' && !Array.isArray(j)) {
+            setAnalyticsGlobales(j);
+          } else {
+            setAnalyticsGlobales(null);
+          }
+        } catch {
+          setAnalyticsGlobales(null);
+        }
+      } else {
+        setAnalyticsGlobales(null);
+      }
+
       setLoading(false);
     } catch (err) {
       console.error('Error:', err);
+      setAnalyticsGlobales(null);
       setLoading(false);
     }
   };
@@ -5055,6 +5076,105 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </>
       ) : (
         <>
+        {isSuperAdmin ? (
+          <div
+            className="section"
+            style={{
+              marginBottom: '22px',
+              background: '#fff',
+              borderRadius: '14px',
+              padding: '18px 20px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+              color: '#1e293b',
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '14px', color: '#334155', fontSize: '18px' }}>
+              Analytics globales
+            </h2>
+            {!analyticsGlobales ? (
+              <p style={{ margin: 0, color: '#64748b', fontSize: '14px', fontWeight: 600 }}>Cargando métricas…</p>
+            ) : (
+              <>
+                <div className="dashboard-grid" style={{ marginBottom: '18px' }}>
+                  <div className="card reservas" style={{ padding: '22px 18px' }}>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Jugadores registrados</h2>
+                    <p className="count" style={{ fontSize: '2.2rem' }}>
+                      {(Number(analyticsGlobales.jugadores_registrados_total) || 0).toLocaleString('es-AR')}
+                    </p>
+                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Perfiles en la plataforma</p>
+                  </div>
+                  <div className="card torneos" style={{ padding: '22px 18px' }}>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Jugadores nuevos (este mes)</h2>
+                    <p className="count" style={{ fontSize: '2.2rem' }}>
+                      {(Number(analyticsGlobales.jugadores_nuevos_este_mes) || 0).toLocaleString('es-AR')}
+                    </p>
+                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>
+                      Mes calendario UTC · {new Date().toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="card ingresos" style={{ padding: '22px 18px' }}>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Sedes activas</h2>
+                    <p className="count" style={{ fontSize: '2.2rem' }}>
+                      {(Number(analyticsGlobales.sedes_activas_total) || 0).toLocaleString('es-AR')}
+                    </p>
+                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Licencia activa con número asignado</p>
+                  </div>
+                  <div className="card torneos" style={{ padding: '22px 18px' }}>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Torneos finalizados</h2>
+                    <p className="count" style={{ fontSize: '2.2rem' }}>
+                      {(Number(analyticsGlobales.torneos_finalizados_total) || 0).toLocaleString('es-AR')}
+                    </p>
+                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Estado finalizado (histórico)</p>
+                  </div>
+                  <div className="card reservas" style={{ padding: '22px 18px' }}>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Reservas (últimos 30 días)</h2>
+                    <p className="count" style={{ fontSize: '2.2rem' }}>
+                      {(Number(analyticsGlobales.reservas_ultimo_mes_total) || 0).toLocaleString('es-AR')}
+                    </p>
+                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Por fecha de creación del registro</p>
+                  </div>
+                  <div className="card ingresos" style={{ padding: '22px 18px' }}>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Deporte más popular</h2>
+                    <p className="count" style={{ fontSize: '1.65rem', lineHeight: 1.25, wordBreak: 'break-word' }}>
+                      {String(analyticsGlobales.deporte_mas_popular?.label || '—')}
+                    </p>
+                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>
+                      {(Number(analyticsGlobales.deporte_mas_popular?.torneos_creados) || 0).toLocaleString('es-AR')}{' '}
+                      torneos (por deporte al crear)
+                    </p>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    borderTop: '1px solid #e2e8f0',
+                    paddingTop: '14px',
+                    marginTop: '4px',
+                  }}
+                >
+                  <h3 style={{ margin: '0 0 10px', fontSize: '15px', color: '#475569', fontWeight: 800 }}>
+                    Sedes por país (top 5)
+                  </h3>
+                  {Array.isArray(analyticsGlobales.sedes_por_pais_top5) &&
+                  analyticsGlobales.sedes_por_pais_top5.length > 0 ? (
+                    <ol style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '14px', lineHeight: 1.65 }}>
+                      {analyticsGlobales.sedes_por_pais_top5.map((row) => (
+                        <li key={String(row.pais)}>
+                          <strong>{String(row.pais)}</strong>
+                          <span style={{ color: '#64748b', fontWeight: 600 }}>
+                            {' '}
+                            — {(Number(row.cantidad) || 0).toLocaleString('es-AR')} sedes
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>Sin datos de país en sedes.</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
         {resumenOperativoSecciones}
         {esAdminClub && misCanchasHoyAdminClub ? (
           <div

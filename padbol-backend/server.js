@@ -7651,6 +7651,101 @@ async function assertSuperAdminReq(req) {
   return { user, roleRow: rowRole };
 }
 
+/** Top países por cantidad de sedes (todas las filas `sedes`). */
+function topPaisesPorCantidadSedes(sedesRows, limit = 5) {
+  const map = {};
+  for (const s of sedesRows || []) {
+    const p = String(s?.pais || '').trim() || 'Sin país';
+    map[p] = (map[p] || 0) + 1;
+  }
+  return Object.entries(map)
+    .map(([pais, cantidad]) => ({ pais, cantidad }))
+    .sort((a, b) => b.cantidad - a.cantidad || a.pais.localeCompare(b.pais, 'es'))
+    .slice(0, limit);
+}
+
+/** Deporte con más filas en `torneos` (empate → orden léxico del deporte). */
+function deporteMasPopularDesdeTorneos(torneosRows) {
+  const map = {};
+  for (const t of torneosRows || []) {
+    const raw = String(t?.deporte || '').trim().toLowerCase();
+    const key = raw || '(sin deporte)';
+    map[key] = (map[key] || 0) + 1;
+  }
+  const sorted = Object.entries(map).sort(
+    (a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'es')
+  );
+  const [deporteKey, n] = sorted[0] || [null, 0];
+  if (!deporteKey || n === 0) {
+    return { deporte: null, torneos_creados: 0, label: '—' };
+  }
+  if (deporteKey === '(sin deporte)') {
+    return { deporte: null, torneos_creados: n, label: 'Sin deporte' };
+  }
+  const label = deporteKey.charAt(0).toUpperCase() + deporteKey.slice(1);
+  return { deporte: deporteKey, torneos_creados: n, label };
+}
+
+/**
+ * GET /api/admin/analytics-globales — super_admin: métricas agregadas (Supabase).
+ */
+app.get('/api/admin/analytics-globales', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const now = new Date();
+    const monthStartUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+    const monthStartIso = monthStartUtc.toISOString();
+    const thirtyDaysAgoIso = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [
+      jugTotal,
+      jugMes,
+      sedesRowsRes,
+      tornFin,
+      resMes,
+      tornDep,
+    ] = await Promise.all([
+      supabase.from('jugadores_perfil').select('*', { count: 'exact', head: true }),
+      supabase.from('jugadores_perfil').select('*', { count: 'exact', head: true }).gte('created_at', monthStartIso),
+      supabase.from('sedes').select('pais, licencia_activa, numero_licencia').limit(10000),
+      supabase.from('torneos').select('*', { count: 'exact', head: true }).eq('estado', 'finalizado'),
+      supabase.from('reservas').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgoIso),
+      supabase.from('torneos').select('deporte').limit(50000),
+    ]);
+
+    if (jugTotal.error) throw jugTotal.error;
+    if (jugMes.error) throw jugMes.error;
+    if (sedesRowsRes.error) throw sedesRowsRes.error;
+    if (tornFin.error) throw tornFin.error;
+    if (resMes.error) throw resMes.error;
+    if (tornDep.error) throw tornDep.error;
+
+    const sedesRows = sedesRowsRes.data || [];
+    const sedesActivasTotal = sedesRows.filter(
+      (s) => s.licencia_activa === true && String(s.numero_licencia || '').trim() !== ''
+    ).length;
+
+    res.json({
+      jugadores_registrados_total: jugTotal.count ?? 0,
+      jugadores_nuevos_este_mes: jugMes.count ?? 0,
+      sedes_activas_total: sedesActivasTotal,
+      sedes_por_pais_top5: topPaisesPorCantidadSedes(sedesRows, 5),
+      torneos_finalizados_total: tornFin.count ?? 0,
+      reservas_ultimo_mes_total: resMes.count ?? 0,
+      deporte_mas_popular: deporteMasPopularDesdeTorneos(tornDep.data || []),
+      meta: {
+        jugadores_nuevos_periodo: 'mes_calendario_utc',
+        reservas_periodo: 'ultimos_30_dias',
+      },
+    });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/admin/analytics-globales:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** GET /api/admin/sedes-alcance — admin autenticado: metadatos de alcance y sedes habilitadas. */
 app.get('/api/admin/sedes-alcance', async (req, res) => {
   try {
