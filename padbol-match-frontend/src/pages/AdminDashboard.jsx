@@ -2114,7 +2114,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const totalMontoBase = isSuperAdmin
       ? ['ARS', 'USD', 'EUR'].reduce((acc, k) => acc + (Number(cifrasFinanzasResumen?.total?.[k]) || 0), 0)
       : Number(cifrasFinanzasResumen?.total) || 0;
-    const ticketPromedio = totalTx > 0 ? totalMontoBase / totalTx : 0;
+    const ticketPromedio = totalTx > 0 ? Math.round(totalMontoBase / totalTx) : 0;
     const dailyRows = Object.keys(porDia)
       .sort((a, b) => a.localeCompare(b))
       .map((d) => ({
@@ -2165,7 +2165,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               torneos_usd: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.USD) || 0,
               torneos_eur: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.EUR) || 0,
               transacciones: dashboardFinanciero.totalTransacciones,
-              ticket_promedio: Number(dashboardFinanciero.ticketPromedio.toFixed(2)),
+              ticket_promedio: Math.round(Number(dashboardFinanciero.ticketPromedio) || 0),
             },
           ]
         : [
@@ -2176,7 +2176,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               reservas: Number(cifrasFinanzasResumen?.reservas) || 0,
               torneos: Number(cifrasFinanzasResumen?.inscripciones) || 0,
               transacciones: dashboardFinanciero.totalTransacciones,
-              ticket_promedio: Number(dashboardFinanciero.ticketPromedio.toFixed(2)),
+              ticket_promedio: Math.round(Number(dashboardFinanciero.ticketPromedio) || 0),
             },
           ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenRows), 'Resumen');
@@ -5168,7 +5168,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px' }}>
             <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700 }}>Ticket promedio</div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
-              {isSuperAdmin ? Number(dashboardFinanciero.ticketPromedio || 0).toLocaleString('es-AR') : `$ ${Number(dashboardFinanciero.ticketPromedio || 0).toLocaleString('es-AR')} ${cifrasFinanzasResumen.moneda || 'ARS'}`}
+              {isSuperAdmin
+                ? Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })
+                : `$ ${Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })} ${cifrasFinanzasResumen.moneda || 'ARS'}`}
             </div>
           </div>
         </div>
