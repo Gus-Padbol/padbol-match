@@ -45,7 +45,7 @@ import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
-import { getDisplayName } from '../utils/displayName';
+import { getDisplayName, headerNombreVisible } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
@@ -2293,15 +2293,21 @@ export default function MiPerfil() {
   );
 
   const nombreCompletoTitulo = getDisplayName(userProfile || perfil, session);
-  const aliasTituloGrande = editando
+  const aliasLineaSecundaria = editando
     ? String(formData.alias || '').trim()
     : String(perfil?.alias || '').trim();
-  const textoNombreColumnas = perfil
-    ? [String(perfil.nombre || '').trim(), String(perfil.apellido || '').trim()].filter(Boolean).join(' ').trim()
-    : '';
-  const nombreDebajoAlias = editando
-    ? [String(formData.nombre || '').trim(), String(formData.apellido || '').trim()].filter(Boolean).join(' ').trim()
-    : textoNombreColumnas || nombreCompletoTitulo;
+  /** Misma jerarquía que el chip del header: apodo → nombre real (no alias). */
+  const perfilParaTituloPrincipal = editando
+    ? {
+        ...(perfil && typeof perfil === 'object' ? perfil : {}),
+        apodo: String(formData.apodo || '').trim(),
+        nombre: String(formData.nombre || '').trim(),
+        apellido: String(formData.apellido || '').trim(),
+        email: perfil?.email || session?.user?.email,
+      }
+    : userProfile || perfil;
+  const tituloPrincipalDebajoFoto =
+    headerNombreVisible(perfilParaTituloPrincipal, session) || nombreCompletoTitulo || 'Jugador';
 
   return (
     <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
@@ -2505,28 +2511,29 @@ export default function MiPerfil() {
           </button>
         ) : null}
 
-        {aliasTituloGrande ? (
-          <>
-            <h2 style={{ margin: '2px 0 4px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>
-              {formatAliasConArroba(aliasTituloGrande)}
-            </h2>
-            <p
-              style={{
-                margin: '0 0 6px',
-                fontSize: '13px',
-                color: '#94a3b8',
-                fontWeight: 400,
-                lineHeight: 1.35,
-              }}
-            >
-              {nombreDebajoAlias || '—'}
-            </p>
-          </>
-        ) : (
-          <h2 style={{ margin: '2px 0 6px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>
-            {nombreCompletoTitulo || 'Jugador'}
-          </h2>
-        )}
+        <h2
+          style={{
+            margin: aliasLineaSecundaria ? '2px 0 4px' : '2px 0 6px',
+            fontSize: '22px',
+            fontWeight: 'bold',
+            color: '#222',
+          }}
+        >
+          {tituloPrincipalDebajoFoto}
+        </h2>
+        {aliasLineaSecundaria ? (
+          <p
+            style={{
+              margin: '0 0 6px',
+              fontSize: '13px',
+              color: '#94a3b8',
+              fontWeight: 400,
+              lineHeight: 1.35,
+            }}
+          >
+            {formatAliasConArroba(aliasLineaSecundaria)}
+          </p>
+        ) : null}
 
         {perfil?.pais && (
           <p style={{ margin: '0 0 4px', fontSize: '16px' }}>
