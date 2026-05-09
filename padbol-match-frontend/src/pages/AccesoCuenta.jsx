@@ -7,6 +7,7 @@ import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 import AppHeader from '../components/AppHeader';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
@@ -300,7 +301,12 @@ export default function AccesoCuenta() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Acceso" showBack={muestreBotonVolverAcceso} onBack={handleAccesoBack} />
+      <AppHeader
+        title="Acceso"
+        showBack={muestreBotonVolverAcceso}
+        onBack={handleAccesoBack}
+        contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}
+      />
       <div
         style={{
           marginBottom: '20px',

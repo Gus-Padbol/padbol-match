@@ -6,7 +6,7 @@ import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { clearAdminNavContext } from '../utils/adminNavContext';
-import { isJugadorHubShellPathname } from '../constants/hubLayout';
+import { HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX, isJugadorHubShellPathname } from '../constants/hubLayout';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -450,11 +450,14 @@ export default function AppHeader({
     };
   }, [searchTerm, searchOpen]);
 
-  /** Solo desktop: max-width vía CSS (`.app-header-inner--max-body`). Valor distinto al default → variable CSS. */
+  /** Solo desktop: max-width vía CSS (`.app-header-inner--max-body`), alineado al cuerpo (~900px). */
   const headerInnerCssVarStyle = useMemo(() => {
-    const n = contentMaxWidth == null || contentMaxWidth === '' ? NaN : Number(contentMaxWidth);
-    if (!Number.isFinite(n) || n <= 0) return undefined;
-    return { '--pm-header-inner-max': `${n}px` };
+    const resolved =
+      contentMaxWidth === null || contentMaxWidth === undefined || contentMaxWidth === ''
+        ? HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX
+        : Number(contentMaxWidth);
+    if (!Number.isFinite(resolved) || resolved <= 0) return undefined;
+    return { '--pm-header-inner-max': `${resolved}px` };
   }, [contentMaxWidth]);
 
   /** Panel admin: chip con apodo o nombre real (mismo criterio que el hub); nunca `alias`. */

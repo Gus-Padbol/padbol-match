@@ -6,6 +6,7 @@ import AppHeader from '../components/AppHeader';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
@@ -4595,7 +4596,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="" showBack={false} adminPanelMinimalHeader />
+        <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         Cargando...
       </div>
     );
@@ -4671,7 +4672,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="" showBack={false} adminPanelMinimalHeader />
+      <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
       <div
         ref={adminMainScrollRef}
         style={{
@@ -7486,7 +7487,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {activeTab === 'config' && puedeVerConfig && <div className="section">
         <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>⚙️ Configuración de Puntos</h2>
         {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
-        <div style={{ marginBottom: '12px' }}>
+        <div style={{ marginBottom: '4px' }}>
           <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
             Puntos base por nivel de torneo
           </h3>
@@ -7627,8 +7628,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           const pctSum = [1,2,3,4,5,6,7,8,9,10].reduce((acc, pos) => acc + (configPosiciones[pos] ?? 0), 0);
           const pctDiff = pctSum - 100;
           return (
-            <div style={{ marginBottom: '18px' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
+            <div style={{ marginBottom: '12px' }}>
+              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: '4px', marginBottom: '8px', fontSize: '16px' }}>
                 Distribución de puntos por posición
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
