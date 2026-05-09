@@ -25,7 +25,27 @@ import {
 } from '../utils/torneoEstadoFiltroPills';
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import { getDistanceKm } from '../utils/sedeCardUi';
-import { resumenDeporteFormatoTorneo } from '../utils/torneoDeporteFormato';
+import {
+  etiquetaDeporteTorneo,
+  normalizeTorneoDeporte,
+  resolveFormatoEquipoTorneo,
+  TORNEO_DEPORTE_PADBOL,
+  TORNEO_DEPORTE_PADEL,
+  TORNEO_DEPORTE_PICKLEBALL,
+  TORNEO_FORMATO_SINGLES,
+} from '../utils/torneoDeporteFormato';
+
+function formatoEquipoLineaTorneoPublico(t) {
+  const f = resolveFormatoEquipoTorneo(t);
+  return f === TORNEO_FORMATO_SINGLES ? 'Singles (1v1)' : 'Dobles (2v2)';
+}
+
+const FILTROS_DEPORTE_TORNEO_PUBLICO = [
+  { id: 'todos', label: 'Todos' },
+  { id: TORNEO_DEPORTE_PADBOL, label: 'Padbol' },
+  { id: TORNEO_DEPORTE_PADEL, label: 'Pádel' },
+  { id: TORNEO_DEPORTE_PICKLEBALL, label: 'Pickleball' },
+];
 
 function closestSedeId(userPos, sedesList) {
   let bestId = null;
@@ -116,6 +136,8 @@ export default function TorneosPublicos() {
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
   const torneoSearchInputRef = useRef(null);
   const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('todos');
+  /** Filtro en memoria: todos | padbol | padel | pickleball */
+  const [filtroDeporteTorneo, setFiltroDeporteTorneo] = useState('todos');
   /** Conteo de equipos con inscripción confirmada por torneo_id (para cupos disponibles en card). */
   const [equiposConfirmadosPorTorneoId, setEquiposConfirmadosPorTorneoId] = useState({});
 
@@ -274,9 +296,14 @@ export default function TorneosPublicos() {
     return torneos.filter((t) => Number(t.sede_id) === Number(focusSedeId));
   }, [sedeFiltroId, nearMode, filterActive, focusSedeId, torneos]);
 
+  const torneosTrasFiltroDeporte = useMemo(() => {
+    if (filtroDeporteTorneo === 'todos') return displayedTorneos;
+    return displayedTorneos.filter((t) => normalizeTorneoDeporte(t.deporte) === filtroDeporteTorneo);
+  }, [displayedTorneos, filtroDeporteTorneo]);
+
   const torneosTrasFiltroEstado = useMemo(
-    () => displayedTorneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneo)),
-    [displayedTorneos, filtroEstadoTorneo]
+    () => torneosTrasFiltroDeporte.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneo)),
+    [torneosTrasFiltroDeporte, filtroEstadoTorneo]
   );
 
   const torneosPorBusqueda = useMemo(() => {
@@ -355,7 +382,40 @@ export default function TorneosPublicos() {
         </div>
       );
     }
-    if (displayedTorneos.length > 0 && torneosTrasFiltroEstado.length === 0) {
+    if (displayedTorneos.length > 0 && torneosTrasFiltroDeporte.length === 0) {
+      return (
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '18px',
+            color: '#4b5563',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+          }}
+        >
+          No hay torneos de este deporte con los filtros actuales.
+          <div style={{ marginTop: '12px' }}>
+            <button
+              type="button"
+              onClick={() => setFiltroDeporteTorneo('todos')}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: 'white',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Ver todos los deportes
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (torneosTrasFiltroDeporte.length > 0 && torneosTrasFiltroEstado.length === 0) {
       return (
         <div
           style={{
@@ -449,6 +509,24 @@ export default function TorneosPublicos() {
                   </div>
 
                   <h3 style={{ margin: 0, color: '#111827', lineHeight: 1.2 }}>{t.nombre || 'Sin nombre'}</h3>
+                  {normalizeTorneoDeporte(t.deporte) !== TORNEO_DEPORTE_PADBOL ? (
+                    <div style={{ marginTop: '8px' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          borderRadius: '999px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          background: '#ede9fe',
+                          color: '#5b21b6',
+                          border: '1px solid #c4b5fd',
+                        }}
+                      >
+                        {etiquetaDeporteTorneo(t.deporte)}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
 
                 <span
@@ -485,7 +563,7 @@ export default function TorneosPublicos() {
                   }
                 />
                 <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
-                <Row icon="🎾" label={resumenDeporteFormatoTorneo(t)} />
+                <Row icon="🎾" label={formatoEquipoLineaTorneoPublico(t)} />
                 <Row icon="🏆" label={formatTipoTorneo(t.tipo_torneo)} />
                 <Row icon="⭐" label={formatNivelTorneo(t.nivel_torneo)} />
                 <Row icon="⚧" label={`Tipo de torneo: ${formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(t))}`} />
@@ -528,6 +606,7 @@ export default function TorneosPublicos() {
     loading,
     torneos.length,
     displayedTorneos.length,
+    torneosTrasFiltroDeporte.length,
     torneosTrasFiltroEstado.length,
     torneosPorBusqueda.length,
     torneosOrdenados,
@@ -644,6 +723,61 @@ export default function TorneosPublicos() {
 
         {!loading && torneos.length > 0 ? (
           <div style={{ marginBottom: '14px' }}>
+            <div style={{ marginBottom: '12px' }}>
+              <div
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.88)',
+                  marginBottom: '8px',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                Deporte
+              </div>
+              <div
+                role="group"
+                aria-label="Deporte del torneo"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  flexWrap: 'nowrap',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'thin',
+                  paddingBottom: '4px',
+                }}
+              >
+                {FILTROS_DEPORTE_TORNEO_PUBLICO.map(({ id, label }) => {
+                  const active = filtroDeporteTorneo === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setFiltroDeporteTorneo(id)}
+                      style={{
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                        padding: '8px 14px',
+                        borderRadius: '999px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        border: active ? '1px solid #667eea' : '1px solid rgba(255,255,255,0.45)',
+                        background: active ? '#667eea' : 'transparent',
+                        color: active ? '#fff' : 'rgba(255,255,255,0.92)',
+                        boxShadow: active ? '0 2px 10px rgba(0,0,0,0.12)' : 'none',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div style={{ marginBottom: '10px' }}>
               <div
                 style={{
