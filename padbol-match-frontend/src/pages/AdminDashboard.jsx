@@ -5991,7 +5991,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </label>
                 </div>
               ) : null}
-              {isSuperAdmin && sedesSuperAdminListaFiltrada.length > 0 ? (
+              {isSuperAdmin &&
+              sedesSuperAdminListaFiltrada.length > 0 &&
+              sedesSuperAdminPaginacion.totalPages > 1 ? (
                 <div
                   className="sedes-admin-sedes-pagination"
                   style={{
