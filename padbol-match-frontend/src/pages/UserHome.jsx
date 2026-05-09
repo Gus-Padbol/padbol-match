@@ -10,8 +10,26 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
+import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
 import { PERFIL_CHANGE_EVENT, formatAliasConArroba } from '../utils/jugadorPerfil';
+import { isPwaStandalone } from '../utils/isPwaStandalone';
 import { buildWhatsAppMeUrl, primerNombreSaludo } from '../utils/whatsappContactUrl';
+
+const hubPwaInstallButtonStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '14px',
+  fontWeight: 700,
+  color: '#1e293b',
+  padding: '12px 20px',
+  borderRadius: '12px',
+  border: 'none',
+  background: '#ffffff',
+  boxShadow: '0 8px 22px rgba(0,0,0,0.18)',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+};
 
 const MATCHMAKING_API_BASE =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -471,6 +489,40 @@ export default function UserHome() {
         </button>
       </div>
       </div>
+
+      {!isPwaStandalone() ? (
+        <div
+          style={{
+            marginTop: 'auto',
+            flexShrink: 0,
+            width: '100%',
+            boxSizing: 'border-box',
+            paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
+            paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
+            paddingTop: '20px',
+            paddingBottom: '8px',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '420px',
+              margin: '0 auto',
+              padding: '14px 16px 16px',
+              borderRadius: '14px',
+              background: 'rgba(255,255,255,0.14)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+              color: '#fff',
+            }}
+          >
+            <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, lineHeight: 1.45, opacity: 0.95 }}>
+              Instalá Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
+            </p>
+            <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
+          </div>
+        </div>
+      ) : null}
       </div>
       <BottomNav />
     </div>
