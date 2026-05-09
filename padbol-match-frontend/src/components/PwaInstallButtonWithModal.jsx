@@ -17,32 +17,6 @@ const btnStyle = {
   fontFamily: 'inherit',
 };
 
-function StepRow({ n, children }) {
-  return (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '14px', fontSize: '14px', lineHeight: 1.5, color: '#334155' }}>
-      <span
-        aria-hidden
-        style={{
-          flexShrink: 0,
-          width: '28px',
-          height: '28px',
-          borderRadius: '999px',
-          background: '#eef2ff',
-          color: '#4338ca',
-          fontWeight: 800,
-          fontSize: '13px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {n}
-      </span>
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
-    </div>
-  );
-}
-
 export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp } = {}) {
   const [open, setOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -119,15 +93,15 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="pwa-install-title" style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a' }}>
-              Instalar Padbol Match
-            </h2>
-            <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-              Instalá la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
-            </p>
-
             {deferredPrompt ? (
-              <div>
+              <>
+                <h2 id="pwa-install-title" style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a' }}>
+                  Instalar Padbol Match
+                </h2>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                  Instalá la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
+                </p>
+                <div>
                 <p style={{ margin: '0 0 14px', fontSize: '14px', color: '#334155', lineHeight: 1.55 }}>
                   En <strong>Android</strong> (Chrome o navegador compatible) podés usar el instalador del sistema:
                 </p>
@@ -154,31 +128,26 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                   Si preferís hacerlo a mano: menú <strong>⋮</strong> del navegador → <strong>Instalar aplicación</strong> o{' '}
                   <strong>Añadir a la pantalla principal</strong>.
                 </p>
-              </div>
+                </div>
+              </>
             ) : ios ? (
-              <div>
-                <p style={{ margin: '0 0 14px', fontSize: '14px', color: '#334155', lineHeight: 1.55 }}>
-                  En <strong>iPhone o iPad</strong> la instalación se hace desde Safari con estos pasos:
+              <>
+                <h2 id="pwa-install-title" style={{ margin: '0 0 12px', fontSize: '18px', color: '#0f172a' }}>
+                  Instalá Padbol Match
+                </h2>
+                <p style={{ margin: 0, fontSize: '15px', color: '#334155', lineHeight: 1.5 }}>
+                  {`Tocá el botón Compartir ↑ en Safari y luego 'Agregar a inicio'.`}
                 </p>
-                <StepRow n={1}>
-                  Abrí <strong>padbolmatch.com</strong> en <strong>Safari</strong> (no en la vista previa de Instagram u otra app; tocá “Abrir en Safari” si hace falta).
-                </StepRow>
-                <StepRow n={2}>
-                  Tocá el botón <strong>Compartir</strong>{' '}
-                  <span aria-hidden style={{ fontSize: '18px', verticalAlign: 'middle' }}>
-                    ⬆️
-                  </span>{' '}
-                  en la barra inferior.
-                </StepRow>
-                <StepRow n={3}>
-                  En el menú, buscá <strong>Agregar a inicio</strong> o <strong>Add to Home Screen</strong> y tocala.
-                </StepRow>
-                <StepRow n={4}>
-                  Confirmá el nombre <strong>Padbol Match</strong> y tocá <strong>Agregar</strong>. Listo: el icono queda en tu pantalla de inicio.
-                </StepRow>
-              </div>
+              </>
             ) : (
-              <div>
+              <>
+                <h2 id="pwa-install-title" style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a' }}>
+                  Instalar Padbol Match
+                </h2>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                  Instalá la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
+                </p>
+                <div>
                 <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#334155', lineHeight: 1.55 }}>
                   En <strong>Chrome</strong> o <strong>Edge</strong> (escritorio o Android), abrí el menú <strong>⋮</strong> y elegí{' '}
                   <strong>Instalar Padbol Match…</strong> o <strong>Instalar aplicación</strong>.
@@ -186,7 +155,8 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                 <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
                   Si no ves la opción, puede que el navegador aún no ofrezca instalación en este dispositivo; probá con Chrome actualizado o volvé más tarde.
                 </p>
-              </div>
+                </div>
+              </>
             )}
 
             <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
