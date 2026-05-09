@@ -1384,6 +1384,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
+  const [busquedaValidaciones, setBusquedaValidaciones] = useState('');
+  const [busquedaRolesAdmin, setBusquedaRolesAdmin] = useState('');
   // keyed by player email: { open: bool, categoria: string, saving: bool }
   const [validacionState, setValidacionState] = useState({});
   /** Vista Reservas super_admin: resumen global vs ranking de clubes. */
@@ -1945,6 +1947,24 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       return tb - ta;
     });
   }, [sedesPendientes, solicitudesLicencia]);
+
+  const pendientesFiltradosValidaciones = useMemo(() => {
+    const q = String(busquedaValidaciones || '').trim().toLowerCase();
+    if (!q) return pendientes;
+    return pendientes.filter((j) => {
+      const bits = [j.nombre, j.apellido, j.email].map((x) => String(x || '').trim().toLowerCase());
+      return bits.some((b) => b.includes(q));
+    });
+  }, [pendientes, busquedaValidaciones]);
+
+  const adminRolesRowsFiltrados = useMemo(() => {
+    const q = String(busquedaRolesAdmin || '').trim().toLowerCase();
+    if (!q) return adminRolesRows;
+    return adminRolesRows.filter((row) => {
+      const bits = [row.nombre, row.email].map((x) => String(x || '').trim().toLowerCase());
+      return bits.some((b) => b.includes(q));
+    });
+  }, [adminRolesRows, busquedaRolesAdmin]);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
@@ -2823,7 +2843,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setPendientesLoading(true);
     const { data, error } = await supabase
       .from('jugadores_perfil')
-      .select('email, nombre, pais, nivel, genero')
+      .select('email, nombre, apellido, pais, nivel, genero')
       .eq('pendiente_validacion', true)
       .order('nombre');
     if (!error) setPendientes(data || []);
@@ -6062,15 +6082,45 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         ) : pendientes.length === 0 ? (
           <p style={{ color: '#999' }}>No hay jugadores pendientes de validación.</p>
         ) : (
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {pendientes.map(jugador => {
+          <>
+            <div style={{ marginBottom: '14px', maxWidth: '420px' }}>
+              <label htmlFor="admin-busqueda-validaciones" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '6px' }}>
+                Buscar por nombre, apellido o email
+              </label>
+              <input
+                id="admin-busqueda-validaciones"
+                type="search"
+                value={busquedaValidaciones}
+                onChange={(e) => setBusquedaValidaciones(e.target.value)}
+                placeholder="Ej. García o @gmail"
+                autoComplete="off"
+                style={{
+                  width: '100%',
+                  maxWidth: '400px',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '15px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            {pendientesFiltradosValidaciones.length === 0 ? (
+              <p style={{ color: '#999' }}>Ningún jugador coincide con la búsqueda.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: '12px' }}>
+            {pendientesFiltradosValidaciones.map(jugador => {
               const flag = (jugador.pais || '').split(' ')[0];
               const vs = validacionState[jugador.email] || {};
+              const nombreMostrar = [String(jugador.nombre || '').trim(), String(jugador.apellido || '').trim()]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
               return (
                 <div key={jugador.email} style={{ background: 'white', border: '1px solid #ffe082', borderRadius: '8px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: '180px' }}>
-                    <strong style={{ fontSize: '15px' }}>{jugador.nombre}</strong>
+                    <strong style={{ fontSize: '15px' }}>{nombreMostrar || jugador.nombre || '—'}</strong>
                     <div style={{ color: '#888', fontSize: '12px', marginTop: '2px' }}>{jugador.email}</div>
                     <div style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>
                       Género: {String(jugador.genero || '').trim() || '—'}
@@ -6124,7 +6174,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
               );
             })}
-          </div>
+              </div>
+            )}
+          </>
         )}
       </div>}
 
@@ -7763,7 +7815,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
               Gestión de Administradores
             </h3>
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ marginBottom: '10px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
               <button
                 type="button"
                 onClick={abrirModalAsignarRol}
@@ -7779,6 +7831,27 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               >
                 Asignar rol
               </button>
+              <div style={{ flex: '1 1 220px', minWidth: '180px', maxWidth: '400px' }}>
+                <label htmlFor="admin-busqueda-roles" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(226,232,240,0.95)', marginBottom: '4px' }}>
+                  Buscar por nombre o email
+                </label>
+                <input
+                  id="admin-busqueda-roles"
+                  type="search"
+                  value={busquedaRolesAdmin}
+                  onChange={(e) => setBusquedaRolesAdmin(e.target.value)}
+                  placeholder="Nombre o email"
+                  autoComplete="off"
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #c4b5fd',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
@@ -7797,8 +7870,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center' }}>Cargando…</td></tr>
                   ) : adminRolesRows.length === 0 ? (
                     <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>Sin administradores registrados</td></tr>
+                  ) : adminRolesRowsFiltrados.length === 0 ? (
+                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>Ningún administrador coincide con la búsqueda.</td></tr>
                   ) : (
-                    adminRolesRows.map((row) => (
+                    adminRolesRowsFiltrados.map((row) => (
                       <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '8px' }}>{row.nombre || '—'}</td>
                         <td style={{ padding: '8px', fontSize: '12px' }}>{row.email}</td>
