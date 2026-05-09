@@ -25,6 +25,7 @@ import {
 } from '../constants/torneoCompetencia';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
+import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
   FILTROS_ESTADO_TORNEO_PILLS,
   esEstadoCanceladoTorneo,
@@ -387,12 +388,19 @@ function adminReservaJugadorWhatsappWaMeUrl(storedWhatsApp) {
   return d ? `https://wa.me/${d}` : '';
 }
 
+function hrefPerfilPublicoDesdeReservaAdmin(reserva) {
+  const slug = String(reserva?.jugador_perfil_public_slug || '').trim();
+  if (slug) return `/jugador/${encodeURIComponent(slug)}`;
+  return pathJugadorPerfilPublico({ user_id: reserva?.user_id });
+}
+
 /** Nombre + email + WhatsApp de ficha (`jugador_whatsapp_perfil`) en listado/detalle reservas admin. */
 function AdminReservaJugadorContacto({ reserva }) {
   const email = String(reserva.email || '').trim();
   const waPerfil = String(reserva.jugador_whatsapp_perfil || '').trim();
   const waUrl = adminReservaJugadorWhatsappWaMeUrl(waPerfil);
   const nombre = String(reserva.nombre || '').trim() || '—';
+  const perfilHref = hrefPerfilPublicoDesdeReservaAdmin(reserva);
   return (
     <div style={{ overflow: 'hidden', minWidth: 0, lineHeight: 1.4 }}>
       <div
@@ -450,6 +458,19 @@ function AdminReservaJugadorContacto({ reserva }) {
             }}
           >
             📱 WhatsApp
+          </a>
+        </div>
+      ) : null}
+      {perfilHref ? (
+        <div style={{ fontSize: '12px', marginTop: '6px' }}>
+          <a
+            href={perfilHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{ color: '#4f46e5', fontWeight: 700, textDecoration: 'underline' }}
+          >
+            Ver perfil
           </a>
         </div>
       ) : null}
@@ -2843,7 +2864,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setPendientesLoading(true);
     const { data, error } = await supabase
       .from('jugadores_perfil')
-      .select('email, nombre, apellido, pais, nivel, genero')
+      .select('email, nombre, apellido, alias, user_id, pais, nivel, genero')
       .eq('pendiente_validacion', true)
       .order('nombre');
     if (!error) setPendientes(data || []);
@@ -3014,7 +3035,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         const pat = `%${paisAdminNacional}%`;
         const { data, error } = await supabase
           .from('jugadores_perfil')
-          .select('email, nombre, apellido, alias, pais, nivel, foto_url, es_federado')
+          .select('email, nombre, apellido, alias, user_id, pais, nivel, foto_url, es_federado')
           .ilike('pais', pat)
           .order('nombre');
         if (cancelled) return;
@@ -6051,6 +6072,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <th>Email</th>
                     <th>Categoría</th>
                     <th>País (ficha)</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>Perfil</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -6059,12 +6081,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       .filter(Boolean)
                       .join(' ')
                       .trim();
+                    const perfilFed = pathJugadorPerfilPublico(j);
                     return (
                       <tr key={j.email || `${j.nombre}-${j.apellido}`}>
                         <td style={{ fontWeight: 700 }}>{nom || String(j.alias || '').trim() || '—'}</td>
                         <td style={{ fontSize: '13px' }}>{String(j.email || '').trim() || '—'}</td>
                         <td>{String(j.nivel || '').trim() || '—'}</td>
                         <td>{String(j.pais || '').trim() || '—'}</td>
+                        <td style={{ fontSize: '13px' }}>
+                          {perfilFed ? (
+                            <a href={perfilFed} target="_blank" rel="noopener noreferrer" style={{ color: '#4f46e5', fontWeight: 700 }}>
+                              Ver perfil
+                            </a>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -6116,6 +6148,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 .filter(Boolean)
                 .join(' ')
                 .trim();
+              const perfilPathVal = pathJugadorPerfilPublico(jugador);
               return (
                 <div key={jugador.email} style={{ background: 'white', border: '1px solid #ffe082', borderRadius: '8px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
                   {/* Info */}
@@ -6135,6 +6168,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
                   {/* Actions */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                    {perfilPathVal ? (
+                      <a
+                        href={perfilPathVal}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          padding: '7px 12px',
+                          background: '#f1f5f9',
+                          color: '#334155',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '5px',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        Ver perfil
+                      </a>
+                    ) : null}
                     <button
                       disabled={vs.saving}
                       onClick={() => aprobarJugador(jugador.email)}

@@ -2075,47 +2075,76 @@ const RESERVAS_JUGADOR_WHATSAPP_CHUNK = 120;
  * Lista de reservas (admin): agrega `jugador_whatsapp_perfil` desde `jugadores_perfil.whatsapp`
  * por `user_id` y, si falta, por `email` (coincidencia exacta en email normalizado a minúsculas).
  */
+function slugJugadorPerfilPublicoDesdeReservaEnrich(r, perfMatch) {
+  const alias = String(perfMatch?.alias || '').trim();
+  if (alias) return alias;
+  const uidRes = r?.user_id != null ? String(r.user_id).trim() : '';
+  if (esUuidAuthProbableJugadorSlug(uidRes)) return uidRes;
+  const uidPerf = perfMatch?.user_id != null ? String(perfMatch.user_id).trim() : '';
+  if (esUuidAuthProbableJugadorSlug(uidPerf)) return uidPerf;
+  return '';
+}
+
 async function enrichReservasConJugadorWhatsappPerfil(clienteSupa, rows) {
   if (!Array.isArray(rows) || rows.length === 0) return rows;
   const userIds = [...new Set(rows.map((r) => r?.user_id).filter(Boolean))];
-  const waByUserId = new Map();
+  const perfByUserId = new Map();
   for (let i = 0; i < userIds.length; i += RESERVAS_JUGADOR_WHATSAPP_CHUNK) {
     const chunk = userIds.slice(i, i + RESERVAS_JUGADOR_WHATSAPP_CHUNK);
-    const { data, error } = await clienteSupa.from('jugadores_perfil').select('user_id, whatsapp').in('user_id', chunk);
+    const { data, error } = await clienteSupa
+      .from('jugadores_perfil')
+      .select('user_id, whatsapp, alias')
+      .in('user_id', chunk);
     if (error) {
       console.warn('enrichReservas jugador_whatsapp (user_id):', error.message);
       continue;
     }
     for (const p of data || []) {
-      const wa = String(p?.whatsapp || '').trim();
-      if (p?.user_id && wa) waByUserId.set(p.user_id, wa);
+      if (!p?.user_id) continue;
+      perfByUserId.set(p.user_id, {
+        wa: String(p?.whatsapp || '').trim(),
+        alias: String(p?.alias || '').trim(),
+        user_id: p.user_id,
+      });
     }
   }
 
   const emails = [
     ...new Set(rows.map((r) => String(r?.email || '').trim().toLowerCase()).filter((e) => e.includes('@'))),
   ];
-  const waByEmail = new Map();
+  const perfByEmail = new Map();
   for (let i = 0; i < emails.length; i += RESERVAS_JUGADOR_WHATSAPP_CHUNK) {
     const chunk = emails.slice(i, i + RESERVAS_JUGADOR_WHATSAPP_CHUNK);
-    const { data, error } = await clienteSupa.from('jugadores_perfil').select('email, whatsapp').in('email', chunk);
+    const { data, error } = await clienteSupa
+      .from('jugadores_perfil')
+      .select('email, whatsapp, alias, user_id')
+      .in('email', chunk);
     if (error) {
       console.warn('enrichReservas jugador_whatsapp (email):', error.message);
       continue;
     }
     for (const p of data || []) {
-      const wa = String(p?.whatsapp || '').trim();
       const em = String(p?.email || '').trim().toLowerCase();
-      if (em && wa) waByEmail.set(em, wa);
+      if (!em) continue;
+      perfByEmail.set(em, {
+        wa: String(p?.whatsapp || '').trim(),
+        alias: String(p?.alias || '').trim(),
+        user_id: p?.user_id,
+      });
     }
   }
 
   return rows.map((r) => {
     const uid = r?.user_id;
     const em = String(r?.email || '').trim().toLowerCase();
-    let jugador_whatsapp_perfil = uid ? waByUserId.get(uid) || '' : '';
-    if (!jugador_whatsapp_perfil && em) jugador_whatsapp_perfil = waByEmail.get(em) || '';
-    return { ...r, jugador_whatsapp_perfil: jugador_whatsapp_perfil || null };
+    const pm = (uid && perfByUserId.get(uid)) || (em && perfByEmail.get(em)) || null;
+    const jugador_whatsapp_perfil = pm ? String(pm.wa || '').trim() : '';
+    const slug = slugJugadorPerfilPublicoDesdeReservaEnrich(r, pm);
+    return {
+      ...r,
+      jugador_whatsapp_perfil: jugador_whatsapp_perfil || null,
+      jugador_perfil_public_slug: slug || null,
+    };
   });
 }
 
@@ -5692,6 +5721,10 @@ function jugadorEnEquipoStats(jugadoresArr, perfil) {
   return false;
 }
 
+function esUuidAuthProbableJugadorSlug(s) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || '').trim());
+}
+
 async function fetchJugadoresPerfilByAliasSlug(aliasDecoded) {
   const a = String(aliasDecoded || '').trim();
   if (!a) return null;
@@ -5699,9 +5732,15 @@ async function fetchJugadoresPerfilByAliasSlug(aliasDecoded) {
   if (error) throw error;
   const list = Array.isArray(rows) ? rows : [];
   const aLower = a.toLowerCase();
-  return (
-    list.find((r) => String(r.alias || '').trim().toLowerCase() === aLower) || (list.length === 1 ? list[0] : null)
-  );
+  const byAlias =
+    list.find((r) => String(r.alias || '').trim().toLowerCase() === aLower) || (list.length === 1 ? list[0] : null);
+  if (byAlias) return byAlias;
+  if (esUuidAuthProbableJugadorSlug(a)) {
+    const { data: byUid, error: uErr } = await supabase.from('jugadores_perfil').select('*').eq('user_id', a).maybeSingle();
+    if (uErr) throw uErr;
+    return byUid || null;
+  }
+  return null;
 }
 
 function partidoEquipoGanadorId(partido) {

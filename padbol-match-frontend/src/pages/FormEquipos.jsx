@@ -54,6 +54,7 @@ import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ModalJugador, { hintFromBuscarRow } from '../components/ModalJugador';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import { esTorneoSingles, jugadoresMinimosEquipoTorneo } from '../utils/torneoDeporteFormato';
+import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import '../styles/TorneoVista.css';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
@@ -103,9 +104,27 @@ function normalizePlayer(p) {
   };
 }
 
-function pathSegmentJugadorPublico(p) {
-  const raw = String(p?.alias || '').trim() || String(p?.nombre || '').trim() || 'jugador';
-  return encodeURIComponent(raw.toLowerCase().replace(/\s+/g, '-'));
+function LinkVerPerfilJugadorPublico({ jugador, style }) {
+  const href = pathJugadorPerfilPublico(jugador);
+  if (!href) return null;
+  const base = {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#4f46e5',
+    textDecoration: 'underline',
+    whiteSpace: 'nowrap',
+  };
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      style={{ ...base, ...style }}
+    >
+      Ver perfil
+    </a>
+  );
 }
 
 function getPlayers(eq) {
@@ -1487,6 +1506,7 @@ export default function FormEquipos() {
                     {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
                   </button>
                   {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
+                  <LinkVerPerfilJugadorPublico jugador={p} style={{ marginLeft: '4px' }} />
                 </React.Fragment>
               ))
             : 'Sin jugadores'}
@@ -1511,6 +1531,7 @@ export default function FormEquipos() {
                     {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
                   </button>
                   {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
+                  <LinkVerPerfilJugadorPublico jugador={p} style={{ marginLeft: '6px' }} />
                   {rolTuEquipo ? (
                     <span style={{ fontWeight: 600, color: '#64748b' }}>{rolTuEquipo}</span>
                   ) : null}
@@ -1614,10 +1635,11 @@ export default function FormEquipos() {
                   marginBottom: '8px',
                 }}
               >
-                <div style={{ fontSize: '13px', marginBottom: '6px' }}>
+                <div style={{ fontSize: '13px', marginBottom: '6px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
                   <button type="button" onClick={() => abrirPreviewJugadorForm(sol)} style={btnJugadorNombreStyle}>
                     {jugadorNombreTorneoEtiqueta(sol, nombreTorneoCtxForm)}
                   </button>
+                  <LinkVerPerfilJugadorPublico jugador={sol} style={{ fontSize: '12px' }} />
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1840,6 +1862,7 @@ export default function FormEquipos() {
                 {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
               </button>
               {esCapitanJugadorEnFila(p, eq) ? <CapitanBadgeC /> : null}
+              <LinkVerPerfilJugadorPublico jugador={p} style={{ marginLeft: '4px' }} />
             </React.Fragment>
           ))}
         </div>
@@ -2167,11 +2190,12 @@ export default function FormEquipos() {
               <ul style={{ margin: '0 0 16px', paddingLeft: '20px', color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>
                 {jugadoresConfirmadosInv.length ? (
                   jugadoresConfirmadosInv.map((p, idx) => (
-                    <li key={`inv-conf-${idx}`} style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <li key={`inv-conf-${idx}`} style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px' }}>
                       <button type="button" onClick={() => abrirPreviewJugadorForm(p)} style={btnJugadorNombreStyle}>
                         {jugadorNombreTorneoEtiqueta(p, nombreTorneoCtxForm)}
                       </button>
                       {inviteEquipoRow && esCapitanJugadorEnFila(p, inviteEquipoRow) ? <CapitanBadgeC /> : null}
+                      <LinkVerPerfilJugadorPublico jugador={p} />
                     </li>
                   ))
                 ) : (

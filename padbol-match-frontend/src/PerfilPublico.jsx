@@ -105,9 +105,18 @@ export default function PerfilPublico() {
     }
     const list = Array.isArray(rows) ? rows : [];
     const aLower = a.toLowerCase();
-    const match =
+    let match =
       list.find((r) => String(r.alias || '').trim().toLowerCase() === aLower) ||
       (list.length === 1 ? list[0] : null);
+
+    if (!match && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(a)) {
+      const { data: byUid, error: uErr } = await supabase.from('jugadores_perfil').select('*').eq('user_id', a).maybeSingle();
+      if (uErr) {
+        console.error('[PerfilPublico] user_id', uErr);
+      } else {
+        match = byUid || null;
+      }
+    }
 
     if (!match) {
       setPerfil(null);
@@ -119,7 +128,11 @@ export default function PerfilPublico() {
 
     setPerfil(match);
 
-    const aliasSlug = String(match.alias || '').trim();
+    const aliasSlug =
+      String(match.alias || '').trim() ||
+      (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(match.user_id || '').trim())
+        ? String(match.user_id).trim()
+        : '');
     const statsEmpty = {
       torneos_jugados: 0,
       torneos_ganados: 0,
