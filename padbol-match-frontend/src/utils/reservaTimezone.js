@@ -1,6 +1,13 @@
+import { DateTime } from 'luxon';
 import { ymdTodayTorneoTz } from './torneoFechaInicioArt';
 
-/** Sedes en Argentina: calendario y “hora actual” vs slots usan America/Argentina/Buenos_Aires. */
+function normalizeSedeTz(sede) {
+  const raw = String(sede?.timezone || '').trim();
+  if (!raw) return null;
+  return DateTime.now().setZone(raw).isValid ? raw : null;
+}
+
+/** Sedes en Argentina (sin columna timezone): calendario ART. */
 export function sedePaisEsArgentina(sede) {
   const p = String(sede?.pais || '')
     .trim()
@@ -10,8 +17,10 @@ export function sedePaisEsArgentina(sede) {
   return p === 'argentina' || p.startsWith('argentina ');
 }
 
-/** YYYY-MM-DD de “hoy” para la reserva según sede (ART si Argentina; si no, calendario del navegador). */
+/** YYYY-MM-DD de “hoy” para la reserva según sede (`timezone` IANA o fallback). */
 export function ymdHoyParaReservaSede(sede) {
+  const tz = normalizeSedeTz(sede);
+  if (tz) return DateTime.now().setZone(tz).toFormat('yyyy-LL-dd');
   if (sedePaisEsArgentina(sede)) {
     return ymdTodayTorneoTz() || ymdLocalBrowser();
   }
@@ -27,9 +36,8 @@ function ymdLocalBrowser() {
 }
 
 /**
- * Instantáneo UTC del inicio del slot en la fecha calendario de negocio.
- * Argentina: wall clock en Buenos Aires (IANA = UTC−3 sin DST desde 2009).
- * Otras sedes: mismo YYYY-MM-DD + HH:mm interpretado en hora local del navegador.
+ * Instantáneo UTC del inicio del slot en la fecha calendario de negocio de la sede.
+ * Usa `sede.timezone` (IANA) cuando existe; si no, ART para Argentina; si no, hora local del navegador.
  */
 export function slotStartMsParaReservaSede(fechaYmd, horaHHMM, sede) {
   const fy = String(fechaYmd || '').trim();
@@ -38,6 +46,17 @@ export function slotStartMsParaReservaSede(fechaYmd, horaHHMM, sede) {
   const h = parseInt(tm[1], 10);
   const min = parseInt(tm[2], 10);
   if (!Number.isFinite(h) || !Number.isFinite(min)) return null;
+
+  const tz = normalizeSedeTz(sede);
+  if (tz) {
+    const [yy, mo, dd] = fy.split('-').map((x) => parseInt(x, 10));
+    const dt = DateTime.fromObject(
+      { year: yy, month: mo, day: dd, hour: h, minute: min, second: 0 },
+      { zone: tz },
+    );
+    return dt.isValid ? dt.toMillis() : null;
+  }
+
   if (sedePaisEsArgentina(sede)) {
     const hs = String(h).padStart(2, '0');
     const ms = String(min).padStart(2, '0');

@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url';
 import { checkMorasSedes } from './suscripciones/checkMorasSedes.js';
 import { createCheckSuscripcionActiva } from './suscripciones/checkSuscripcionActiva.js';
 import { sendMakeEvent } from './make/sendMakeEvent.js';
+import { DateTime } from 'luxon';
 
 dotenv.config();
 
@@ -93,49 +94,85 @@ function ymdTodayInTorneoTz() {
   return `${y}-${mo}-${da}`;
 }
 
-function sedePaisEsArgentinaReserva(pais) {
-  const p = String(pais || '')
+const TZ_SEDE_DEFAULT = 'America/Argentina/Buenos_Aires';
+
+function normalizePaisKeyReserva(pais) {
+  return String(pais || '')
     .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
-  return p === 'argentina' || p.startsWith('argentina ');
 }
 
-/** Inicio del slot en ms UTC (fecha/hora = calendario de negocio en Buenos Aires; zona IANA sin DST desde 2009 = UTC−3). */
-function reservaSlotStartMsArgentina(fechaYmd, horaStr) {
-  const fy = String(fechaYmd || '').trim();
+function normalizeCiudadKeyReserva(ciudad) {
+  return String(ciudad || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Valida IANA; si no, default AR. */
+function normalizeSedeTimezone(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return TZ_SEDE_DEFAULT;
+  const probe = DateTime.now().setZone(s);
+  return probe.isValid ? s : TZ_SEDE_DEFAULT;
+}
+
+function inferTimezoneFromCiudadPais(ciudad, pais) {
+  const c = normalizeCiudadKeyReserva(ciudad);
+  const p = normalizePaisKeyReserva(pais);
+  if (c === 'miami') return 'America/New_York';
+  if (c === 'madrid') return 'Europe/Madrid';
+  if (p.includes('argentina')) return TZ_SEDE_DEFAULT;
+  return TZ_SEDE_DEFAULT;
+}
+
+/** yyyy-LL-dd en la zona IANA de la sede. */
+function ymdTodayInSedeTimezone(iana) {
+  const z = normalizeSedeTimezone(iana);
+  return DateTime.now().setZone(z).toFormat('yyyy-LL-dd');
+}
+
+/** Inicio del slot (fecha + HH:mm en pared local de la sede) como ms UTC. */
+function reservaWallStartUtcMs(fechaYmd, horaStr, zone) {
+  const fy = String(fechaYmd || '').trim().slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fy)) return null;
   const fh = String(horaStr || '').trim().match(/^(\d{1,2}):(\d{2})/);
   if (!fh) return null;
-  const h = String(parseInt(fh[1], 10)).padStart(2, '0');
-  const min = String(parseInt(fh[2], 10)).padStart(2, '0');
-  return new Date(`${fy}T${h}:${min}:00-03:00`).getTime();
+  const z = normalizeSedeTimezone(zone);
+  const [yy, mo, dd] = fy.split('-').map((x) => parseInt(x, 10));
+  const dt = DateTime.fromObject(
+    { year: yy, month: mo, day: dd, hour: parseInt(fh[1], 10), minute: parseInt(fh[2], 10), second: 0 },
+    { zone: z },
+  );
+  return dt.isValid ? dt.toMillis() : null;
 }
 
-/** Sedes Argentina: no permitir fecha u hora ya pasadas según America/Argentina/Buenos_Aires (no UTC del servidor). */
-async function assertReservaHorarioNoPasadoSiSedeArgentina(sedeNombre, fecha, hora) {
+/** No permitir fecha u hora ya pasadas según `sedes.timezone` (fallback ciudad/país / ART). */
+async function assertReservaHorarioNoPasadoParaSede(sedeNombre, fecha, hora) {
   const nombre = String(sedeNombre || '').trim();
   if (!nombre) return;
   const { data: row, error } = await supabase
     .from('sedes')
-    .select('pais')
+    .select('timezone, ciudad, pais')
     .eq('nombre', nombre)
     .maybeSingle();
   if (error) throw error;
-  if (!sedePaisEsArgentinaReserva(row?.pais)) return;
+  const tz = normalizeSedeTimezone(row?.timezone || inferTimezoneFromCiudadPais(row?.ciudad, row?.pais));
 
-  const f = String(fecha || '').trim();
-  const hoyArt = ymdTodayInTorneoTz();
-  if (!hoyArt) return;
-  if (f < hoyArt) {
+  const f = String(fecha || '').trim().slice(0, 10);
+  const hoySede = ymdTodayInSedeTimezone(tz);
+  if (!hoySede) return;
+  if (f < hoySede) {
     const e = new Error('La fecha de la reserva ya pasó');
     e.status = 400;
     throw e;
   }
-  if (f !== hoyArt) return;
+  if (f !== hoySede) return;
 
-  const slotMs = reservaSlotStartMsArgentina(f, hora);
+  const slotMs = reservaWallStartUtcMs(f, hora, tz);
   if (slotMs == null || !Number.isFinite(slotMs)) {
     const e = new Error('Hora de reserva inválida');
     e.status = 400;
@@ -1201,11 +1238,18 @@ app.post('/api/sedes', async (req, res) => {
     if (!emailContacto) return res.status(400).json({ error: 'Email de contacto obligatorio' });
     if (!telefonoBody) return res.status(400).json({ error: 'Teléfono / WhatsApp obligatorio' });
 
+    const timezoneSede = normalizeSedeTimezone(
+      b.timezone != null && String(b.timezone).trim()
+        ? String(b.timezone).trim()
+        : inferTimezoneFromCiudadPais(ciudad, pais),
+    );
+
     const payload = {
       nombre,
       pais,
       provincia: String(b.provincia || b.estado || '').trim() || null,
       ciudad,
+      timezone: timezoneSede,
       direccion: String(b.direccion || '').trim() || null,
       email_contacto: emailContacto,
       telefono: telefonoBody,
@@ -1445,6 +1489,7 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (hop('ciudad')) patch.ciudad = String(b.ciudad || '').trim() || null;
     if (hop('provincia')) patch.provincia = String(b.provincia || '').trim() || null;
     if (hop('pais')) patch.pais = String(b.pais || '').trim() || null;
+    if (hop('timezone')) patch.timezone = normalizeSedeTimezone(b.timezone);
     if (hop('telefono')) patch.telefono = String(b.telefono || '').trim() || null;
     if (hop('email_contacto')) patch.email_contacto = String(b.email_contacto || '').trim() || null;
     if (hop('horario_apertura')) patch.horario_apertura = String(b.horario_apertura || '').trim() || null;
@@ -1857,7 +1902,7 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
         : null;
 
     await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
-    await assertReservaHorarioNoPasadoSiSedeArgentina(sede, fecha, hora);
+    await assertReservaHorarioNoPasadoParaSede(sede, fecha, hora);
 
     // Verificar double-booking
     const { data: existentes, error: errCheck } = await supabase
@@ -5037,10 +5082,17 @@ app.post('/api/cancelar-reserva', async (req, res) => {
     if (!reserva) return res.status(404).json({ error: 'Reserva no encontrada o no pertenece a este usuario' });
     if (reserva.estado === 'cancelada') return res.status(409).json({ error: 'La reserva ya está cancelada' });
 
-    // Check if reservation is more than 24h away (Argentina UTC-3)
-    const reservaDt = new Date(`${reserva.fecha}T${reserva.hora}:00-03:00`);
-    const nowAR     = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
-    const horasHasta = (reservaDt - nowAR) / (1000 * 60 * 60);
+    const { data: sedeTzRow } = await supabase
+      .from('sedes')
+      .select('timezone, ciudad, pais')
+      .eq('nombre', reserva.sede)
+      .maybeSingle();
+    const tzCancel = normalizeSedeTimezone(
+      sedeTzRow?.timezone || inferTimezoneFromCiudadPais(sedeTzRow?.ciudad, sedeTzRow?.pais),
+    );
+    const startMs = reservaWallStartUtcMs(String(reserva.fecha || '').trim(), String(reserva.hora || '').trim(), tzCancel);
+    const horasHasta =
+      startMs != null && Number.isFinite(startMs) ? (startMs - Date.now()) / (1000 * 60 * 60) : -Infinity;
     const eligibleForCredit = horasHasta > 24;
 
     // Mark as cancelled
@@ -5102,7 +5154,7 @@ Si necesitás ayuda, escribinos por WhatsApp.
         .catch(err => console.warn('⚠️ WhatsApp cancelación no enviado:', err.message));
     }
 
-    console.log(`✓ Reserva ${reservaId} cancelada — crédito: ${credito ? credito.id : 'no'}`);;
+    console.log(`✓ Reserva ${reservaId} cancelada — crédito: ${credito ? credito.id : 'no'}`);
     res.json({ success: true, eligibleForCredit: credito !== null, credito });
   } catch (err) {
     console.error('❌ Error POST /api/cancelar-reserva:', err.message);
@@ -5816,7 +5868,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
 
       try {
         await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
-        await assertReservaHorarioNoPasadoSiSedeArgentina(sede, fecha, hora);
+        await assertReservaHorarioNoPasadoParaSede(sede, fecha, hora);
       } catch (e) {
         const st = e.status || 400;
         return res.status(st).json({ error: e.message || String(e) });
@@ -6365,7 +6417,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     throw new Error('Payload de reserva incompleto');
   }
   await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
-  await assertReservaHorarioNoPasadoSiSedeArgentina(sede, fecha, hora);
+  await assertReservaHorarioNoPasadoParaSede(sede, fecha, hora);
   const { data: existentes, error: errCheck } = await supabase
     .from('reservas')
     .select('id')
@@ -6708,7 +6760,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
           String(payloadReserva.sede || '').trim(),
           payloadReserva.cancha
         );
-        await assertReservaHorarioNoPasadoSiSedeArgentina(
+        await assertReservaHorarioNoPasadoParaSede(
           String(payloadReserva.sede || '').trim(),
           String(payloadReserva.fecha || '').trim(),
           String(payloadReserva.hora || '').trim()
@@ -7419,11 +7471,18 @@ app.post('/api/invitacion/:token/completar', async (req, res) => {
     const telefonoBody = String(b.telefono || b.whatsapp || '').trim();
     if (!telefonoBody) return res.status(400).json({ error: 'Teléfono / WhatsApp obligatorio' });
 
+    const timezoneInv = normalizeSedeTimezone(
+      b.timezone != null && String(b.timezone).trim()
+        ? String(b.timezone).trim()
+        : inferTimezoneFromCiudadPais(ciudad, pais),
+    );
+
     const payload = {
       nombre,
       pais,
       provincia: String(b.provincia || b.estado || '').trim() || null,
       ciudad,
+      timezone: timezoneInv,
       direccion: String(b.direccion || '').trim() || null,
       email_contacto: emailContacto,
       telefono: telefonoBody,
@@ -7506,12 +7565,20 @@ app.post('/api/invitacion/:token/completar', async (req, res) => {
 });
 
 function mapPendingRowToSedeInsert(row) {
+  const ciudadP = row.ciudad || null;
+  const paisP = row.pais || null;
+  const tz = normalizeSedeTimezone(
+    row.timezone != null && String(row.timezone).trim()
+      ? String(row.timezone).trim()
+      : inferTimezoneFromCiudadPais(ciudadP, paisP),
+  );
   return {
     nombre: String(row.nombre || '').trim(),
     direccion: row.direccion || null,
-    ciudad: row.ciudad || null,
+    ciudad: ciudadP,
     provincia: row.provincia || null,
-    pais: row.pais || null,
+    pais: paisP,
+    timezone: tz,
     latitud: row.latitud != null ? Number(row.latitud) : null,
     longitud: row.longitud != null ? Number(row.longitud) : null,
     horario_apertura: row.horario_apertura || null,
@@ -7638,6 +7705,11 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
       ciudad: b.ciudad || null,
       provincia: b.provincia || null,
       pais: b.pais || null,
+      timezone: normalizeSedeTimezone(
+        b.timezone != null && String(b.timezone).trim()
+          ? String(b.timezone).trim()
+          : inferTimezoneFromCiudadPais(b.ciudad, b.pais),
+      ),
       latitud: b.latitud != null && b.latitud !== '' ? Number(b.latitud) : null,
       longitud: b.longitud != null && b.longitud !== '' ? Number(b.longitud) : null,
       horario_apertura: b.horario_apertura || null,
@@ -8102,48 +8174,60 @@ app.post('/api/admin/sedes-pendientes/:id/rechazar', async (req, res) => {
   }
 });
 
-// ─── Cron: WhatsApp reminder 1 hour before reservation ──────────────────────
+// ─── Cron: WhatsApp reminder ~1 hour before reservation (por zona de cada sede) ─
 cron.schedule('*/5 * * * *', async () => {
   try {
-    // Current time in Argentina (UTC-3)
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
-
-    // Target: exactly 1 hour from now
-    const target = new Date(now.getTime() + 60 * 60 * 1000);
-    const targetFecha = target.toISOString().slice(0, 10); // YYYY-MM-DD
-    const targetHora  = target.toTimeString().slice(0, 5);  // HH:MM
-
     const { data: reservas, error } = await supabase
       .from('reservas')
       .select('*')
-      .eq('fecha', targetFecha)
-      .eq('hora', targetHora)
       .eq('estado', 'confirmada')
-      .eq('recordatorio_enviado', false);
+      .eq('recordatorio_enviado', false)
+      .limit(800);
 
     if (error) {
       console.error('❌ Cron recordatorio - error Supabase:', error.message);
       return;
     }
+    if (!reservas?.length) return;
 
-    if (!reservas || reservas.length === 0) return;
+    const sedesNombres = [...new Set(reservas.map((r) => String(r.sede || '').trim()).filter(Boolean))];
+    const tzByNombre = {};
+    if (sedesNombres.length) {
+      const { data: sedesRows, error: se } = await supabase
+        .from('sedes')
+        .select('nombre, timezone, ciudad, pais, direccion')
+        .in('nombre', sedesNombres);
+      if (se) {
+        console.error('❌ Cron recordatorio - sedes:', se.message);
+        return;
+      }
+      for (const s of sedesRows || []) {
+        const nm = String(s.nombre || '').trim();
+        if (!nm) continue;
+        tzByNombre[nm] = {
+          tz: normalizeSedeTimezone(s.timezone || inferTimezoneFromCiudadPais(s.ciudad, s.pais)),
+          direccion: s.direccion || null,
+        };
+      }
+    }
 
-    console.log(`⏰ Cron: ${reservas.length} recordatorio(s) para ${targetFecha} ${targetHora}`);
-
+    let enviados = 0;
     for (const r of reservas) {
       try {
-        // Fetch sede address
-        const { data: sedeRow } = await supabase
-          .from('sedes')
-          .select('direccion')
-          .eq('nombre', r.sede)
-          .maybeSingle();
+        const sedeNom = String(r.sede || '').trim();
+        const meta = tzByNombre[sedeNom] || { tz: TZ_SEDE_DEFAULT, direccion: null };
+        const z = meta.tz;
+        const startMs = reservaWallStartUtcMs(String(r.fecha || '').trim(), String(r.hora || '').trim(), z);
+        if (startMs == null || !Number.isFinite(startMs)) continue;
+
+        const minsUntil = (startMs - Date.now()) / (1000 * 60);
+        if (minsUntil < 55 || minsUntil > 65) continue;
 
         const body =
 `🎾 *¡Te esperamos en ${r.sede}!*
 
 Tu reserva es en 1 hora:
-⏰ ${r.hora}hs${sedeRow?.direccion ? `\n📍 ${sedeRow.direccion}` : ''}
+⏰ ${r.hora}hs${meta.direccion ? `\n📍 ${meta.direccion}` : ''}
 
 Recordá llegar 10 minutos antes.
 💬 Ante cualquier consulta escribinos por WhatsApp.
@@ -8151,20 +8235,17 @@ Recordá llegar 10 minutos antes.
 *PADBOL MATCH*`;
 
         const digits = String(r.whatsapp).replace(/\D/g, '');
-        const to     = `whatsapp:+${digits}`;
+        const to = `whatsapp:+${digits}`;
         await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
+        enviados += 1;
         console.log(`✓ Recordatorio enviado a ${to} (reserva ${r.id})`);
 
-        // Mark as sent
-        await supabase
-          .from('reservas')
-          .update({ recordatorio_enviado: true })
-          .eq('id', r.id);
-
+        await supabase.from('reservas').update({ recordatorio_enviado: true }).eq('id', r.id);
       } catch (err) {
         console.warn(`⚠️ Recordatorio reserva ${r.id} fallido:`, err.message);
       }
     }
+    if (enviados) console.log(`⏰ Cron recordatorio: ${enviados} enviado(s) en este ciclo`);
   } catch (err) {
     console.error('❌ Cron recordatorio - error inesperado:', err.message);
   }

@@ -37,6 +37,37 @@ function normalizeText(v) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+const TZ_SEDE_DEFAULT = 'America/Argentina/Buenos_Aires';
+
+/** Opciones IANA según país (etiqueta del select de país incluye bandera + nombre). */
+function timezoneOptionsForPais(paisLabel) {
+  const key = normalizeText(paisLabel);
+  if (!key) return [{ value: TZ_SEDE_DEFAULT, label: 'Argentina (ART)' }];
+  if (key.includes('argentina')) {
+    return [{ value: TZ_SEDE_DEFAULT, label: 'Argentina — America/Argentina/Buenos_Aires' }];
+  }
+  if (key.includes('estados unidos') || key.includes('united states') || /\busa\b/.test(key)) {
+    return [
+      { value: 'America/New_York', label: 'Este (Miami, NY) — America/New_York' },
+      { value: 'America/Chicago', label: 'Centro — America/Chicago' },
+      { value: 'America/Denver', label: 'Montaña — America/Denver' },
+      { value: 'America/Los_Angeles', label: 'Pacífico — America/Los_Angeles' },
+    ];
+  }
+  if (key.includes('espana') || key.includes('spain')) {
+    return [{ value: 'Europe/Madrid', label: 'España peninsular — Europe/Madrid' }];
+  }
+  if (key.includes('uruguay')) return [{ value: 'America/Montevideo', label: 'Uruguay — America/Montevideo' }];
+  if (key.includes('chile')) return [{ value: 'America/Santiago', label: 'Chile — America/Santiago' }];
+  if (key.includes('brasil') || key.includes('brazil')) {
+    return [{ value: 'America/Sao_Paulo', label: 'Brasil (este) — America/Sao_Paulo' }];
+  }
+  if (key.includes('colombia')) return [{ value: 'America/Bogota', label: 'Colombia — America/Bogota' }];
+  if (key.includes('mexico')) return [{ value: 'America/Mexico_City', label: 'México central — America/Mexico_City' }];
+  if (key.includes('paraguay')) return [{ value: 'America/Asuncion', label: 'Paraguay — America/Asuncion' }];
+  return [{ value: 'Etc/UTC', label: 'UTC (configurá la zona en el panel si no aplica)' }];
+}
+
 function mapCountryToPaisOption(countryName) {
   const cn = normalizeText(countryName);
   if (!cn) return '';
@@ -79,6 +110,8 @@ const initialState = () => ({
   step: 1,
   nombre: '',
   pais: '',
+  /** IANA TZ para reservas (default AR). */
+  timezone: TZ_SEDE_DEFAULT,
   provincia: '',
   ciudad: '',
   direccion: '',
@@ -160,6 +193,14 @@ export default function NuevaSedeSuperBottomSheet({
 
   const planMatch = useMemo(() => matchPlanForTotal(planPricing, totalCanchas), [planPricing, totalCanchas]);
 
+  const timezoneOpts = useMemo(() => timezoneOptionsForPais(st.pais), [st.pais]);
+
+  useEffect(() => {
+    if (!timezoneOpts.length) return;
+    const valid = timezoneOpts.some((o) => o.value === st.timezone);
+    if (!valid) setSt((p) => ({ ...p, timezone: timezoneOpts[0].value }));
+  }, [timezoneOpts, st.timezone]);
+
   const goNext = useCallback(() => {
     if (st.step === 1) {
       if (!String(st.nombre || '').trim()) {
@@ -212,6 +253,7 @@ export default function NuevaSedeSuperBottomSheet({
       const body = {
         nombre: String(st.nombre || '').trim(),
         pais: String(st.pais || '').trim(),
+        timezone: String(st.timezone || TZ_SEDE_DEFAULT).trim() || TZ_SEDE_DEFAULT,
         provincia: String(st.provincia || '').trim() || null,
         ciudad: String(st.ciudad || '').trim(),
         direccion: String(st.direccion || '').trim() || null,
@@ -457,6 +499,22 @@ export default function NuevaSedeSuperBottomSheet({
                 ))}
               </select>
             </label>
+            {st.pais ? (
+              <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+                Zona horaria (reservas) *
+                <select
+                  value={st.timezone}
+                  onChange={(e) => setField('timezone', e.target.value)}
+                  style={{ ...inputBase, marginTop: 8 }}
+                >
+                  {timezoneOpts.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
               Provincia / Estado
               <input
