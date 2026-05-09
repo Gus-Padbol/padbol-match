@@ -2292,22 +2292,32 @@ export default function MiPerfil() {
       String(cuentaDeSesion?.foto || '').trim()
   );
 
-  const nombreCompletoTitulo = getDisplayName(userProfile || perfil, session);
-  const aliasLineaSecundaria = editando
-    ? String(formData.alias || '').trim()
-    : String(perfil?.alias || '').trim();
-  /** Misma jerarquía que el chip del header: apodo → nombre real (no alias). */
-  const perfilParaTituloPrincipal = editando
+  /**
+   * Fila para nombre bajo la foto: en vista, priorizar `perfil` (Supabase en esta pantalla) sobre `userProfile`
+   * del contexto para que `apodo` / nombre legal no queden desfasados respecto al alias.
+   * Jerarquía: apodo → nombre real; el alias (@…) va aparte en gris.
+   */
+  const filaParaCabeceraPerfil = editando
     ? {
         ...(perfil && typeof perfil === 'object' ? perfil : {}),
         apodo: String(formData.apodo || '').trim(),
         nombre: String(formData.nombre || '').trim(),
         apellido: String(formData.apellido || '').trim(),
         email: perfil?.email || session?.user?.email,
+        alias: String(formData.alias || '').trim(),
       }
-    : userProfile || perfil;
+    : perfil && userProfile
+      ? { ...userProfile, ...perfil }
+      : perfil || userProfile || {};
+
+  const aliasLineaSecundaria = editando
+    ? String(formData.alias || '').trim()
+    : String(filaParaCabeceraPerfil?.alias || '').trim();
+
   const tituloPrincipalDebajoFoto =
-    headerNombreVisible(perfilParaTituloPrincipal, session) || nombreCompletoTitulo || 'Jugador';
+    headerNombreVisible(filaParaCabeceraPerfil, session) ||
+    getDisplayName(filaParaCabeceraPerfil, session) ||
+    'Jugador';
 
   return (
     <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
