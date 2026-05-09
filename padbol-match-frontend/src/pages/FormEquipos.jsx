@@ -346,9 +346,15 @@ export default function FormEquipos() {
     if (esTorneoSingles(torneo)) {
       setCupoMaximo(1);
       setEquipoAbierto(false);
-    } else {
-      setCupoMaximo((c) => (Number(c) < 2 ? 2 : c));
+      return;
     }
+    const minJ = jugadoresMinimosEquipoTorneo(torneo);
+    if (minJ >= 5) {
+      setCupoMaximo(minJ);
+      setEquipoAbierto(false);
+      return;
+    }
+    setCupoMaximo((c) => (Number(c) < 2 ? 2 : c));
   }, [torneo?.id, torneo?.deporte, torneo?.formato_equipo]);
 
   useEffect(() => {
@@ -1694,6 +1700,8 @@ export default function FormEquipos() {
   const mobileMiEquipoVista = isMobile && miEquipo && mobileVista === 'mi_equipo';
   const mobileOtrosEquipos = isMobile && miEquipo && mobileVista === 'otros';
 
+  const minJugadoresTorneoCrearUi = torneo ? jugadoresMinimosEquipoTorneo(torneo) : 2;
+
   const crearEquipoFormulario = (
     <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
       <h3>👥 Crear equipo</h3>
@@ -1738,6 +1746,23 @@ export default function FormEquipos() {
           }}
         >
           Torneo en formato <strong>singles</strong>: tu equipo sos vos solo (1 jugador).
+        </div>
+      ) : torneo && minJugadoresTorneoCrearUi >= 5 ? (
+        <div
+          style={{
+            marginTop: '14px',
+            padding: '10px 12px',
+            borderRadius: '8px',
+            background: '#ecfdf5',
+            border: '1px solid #86efac',
+            fontSize: '13px',
+            color: '#14532d',
+            fontWeight: 600,
+            lineHeight: 1.45,
+          }}
+        >
+          Este torneo es de <strong>fútbol {minJugadoresTorneoCrearUi === 5 ? '5' : '7'}</strong>: cada equipo debe tener exactamente{' '}
+          <strong>{minJugadoresTorneoCrearUi} jugadores</strong>.
         </div>
       ) : (
         <div style={{ marginTop: '14px' }}>
@@ -1796,7 +1821,7 @@ export default function FormEquipos() {
           </button>
           <button
             type="button"
-            disabled={torneo && esTorneoSingles(torneo)}
+            disabled={torneo && (esTorneoSingles(torneo) || minJugadoresTorneoCrearUi >= 5)}
             onClick={() => setEquipoAbierto(true)}
             style={{
               flex: '1 1 120px',
@@ -1806,9 +1831,9 @@ export default function FormEquipos() {
               background: !equipoAbierto ? '#fff' : '#eff6ff',
               color: !equipoAbierto ? '#6b7280' : '#1e40af',
               fontWeight: 800,
-              cursor: torneo && esTorneoSingles(torneo) ? 'not-allowed' : 'pointer',
+              cursor: torneo && (esTorneoSingles(torneo) || minJugadoresTorneoCrearUi >= 5) ? 'not-allowed' : 'pointer',
               fontSize: '13px',
-              opacity: torneo && esTorneoSingles(torneo) ? 0.55 : 1,
+              opacity: torneo && (esTorneoSingles(torneo) || minJugadoresTorneoCrearUi >= 5) ? 0.55 : 1,
             }}
           >
             Abierto
@@ -1817,7 +1842,9 @@ export default function FormEquipos() {
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#6b7280', lineHeight: 1.45 }}>
           {torneo && esTorneoSingles(torneo)
             ? 'En singles no aplica equipo abierto (no hay plaza para un compañero).'
-            : 'Abierto: otros jugadores pueden solicitar unirse; el capitán sigue aprobando cada ingreso.'}
+            : torneo && minJugadoresTorneoCrearUi >= 5
+              ? 'En fútbol 5/7 el equipo cerrado con plantilla fija no usa modalidad abierta.'
+              : 'Abierto: otros jugadores pueden solicitar unirse; el capitán sigue aprobando cada ingreso.'}
         </p>
       </div>
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
+import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 
 const API_BASE =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -14,15 +15,10 @@ const PRECIO_MENSUAL_USD =
     ? String(process.env.REACT_APP_PRECIO_MENSUAL_USD).trim()
     : '$29 USD/mes';
 
-const DEPORTES_OPCIONES = [
-  { key: 'padbol', label: 'Padbol' },
-  { key: 'padel', label: 'Pádel' },
-  { key: 'pickleball', label: 'Pickleball' },
-  { key: 'otro', label: 'Otro' },
-];
+const DEPORTES_OPCIONES = DEPORTES_CANCHA_SEDE_OPTIONS;
 
-const DEPORTES_INICIAL = { padbol: false, padel: false, pickleball: false, otro: false };
-const CANCHAS_INICIAL = { padbol: '', padel: '', pickleball: '', otro: '' };
+const DEPORTES_INICIAL = Object.fromEntries(DEPORTES_OPCIONES.map((d) => [d.key, false]));
+const CANCHAS_INICIAL = Object.fromEntries(DEPORTES_OPCIONES.map((d) => [d.key, '']));
 
 const CARGO_RESPONSABLE = [
   { value: 'propietario', label: 'Propietario' },

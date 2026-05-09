@@ -20,12 +20,16 @@ import useUserRole from '../hooks/useUserRole';
 import { mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 import {
   TORNEO_DEPORTE_PADBOL,
-  TORNEO_DEPORTE_PADEL,
-  TORNEO_DEPORTE_PICKLEBALL,
+  TORNEO_DEPORTE_FUTBOL5,
+  TORNEO_DEPORTE_FUTBOL7,
   TORNEO_FORMATO_DOBLES,
-  TORNEO_FORMATO_SINGLES,
   TORNEO_DEPORTE_OPTIONS,
-  TORNEO_FORMATO_PICKLE_OPTIONS,
+  TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS,
+  torneoDeportePermiteSinglesDobles,
+  formatoEquipoDefaultParaDeporte,
+  formatoEquipoPayloadParaApi,
+  TORNEO_FORMATO_EQUIPO_5,
+  TORNEO_FORMATO_EQUIPO_7,
 } from '../utils/torneoDeporteFormato';
 
 export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol: rolProp = null }) {
@@ -105,13 +109,11 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     if (esAdminClub && name === 'es_multisede') return;
     if (esAdminClub && name === 'sede_id') return;
     if (name === 'deporte') {
-      setFormData((prev) => {
-        const next = { ...prev, deporte: value };
-        if (value === TORNEO_DEPORTE_PADBOL || value === TORNEO_DEPORTE_PADEL) {
-          next.formato_equipo = TORNEO_FORMATO_DOBLES;
-        }
-        return next;
-      });
+      setFormData((prev) => ({
+        ...prev,
+        deporte: value,
+        formato_equipo: formatoEquipoDefaultParaDeporte(value),
+      }));
       return;
     }
     setFormData((prev) => ({
@@ -162,10 +164,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       es_multisede: formData.es_multisede,
       created_by: null,
       deporte: String(formData.deporte || TORNEO_DEPORTE_PADBOL).trim() || TORNEO_DEPORTE_PADBOL,
-      formato_equipo:
-        formData.deporte === TORNEO_DEPORTE_PICKLEBALL
-          ? String(formData.formato_equipo || TORNEO_FORMATO_DOBLES).trim() || TORNEO_FORMATO_DOBLES
-          : TORNEO_FORMATO_DOBLES,
+      formato_equipo: formatoEquipoPayloadParaApi(formData.deporte, formData.formato_equipo),
     };
 
     const rawCosto = String(formData.costo_inscripcion ?? '').trim();
@@ -302,13 +301,21 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
 
               <div className="form-group">
                 <label>Formato (jugadores por equipo) *</label>
-                {formData.deporte === TORNEO_DEPORTE_PICKLEBALL ? (
+                {torneoDeportePermiteSinglesDobles(formData.deporte) ? (
                   <select name="formato_equipo" value={formData.formato_equipo} onChange={handleChange} required>
-                    {TORNEO_FORMATO_PICKLE_OPTIONS.map((o) => (
+                    {TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
                       </option>
                     ))}
+                  </select>
+                ) : formData.deporte === TORNEO_DEPORTE_FUTBOL5 ? (
+                  <select name="formato_equipo" value={TORNEO_FORMATO_EQUIPO_5} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
+                    <option value={TORNEO_FORMATO_EQUIPO_5}>Equipos de 5</option>
+                  </select>
+                ) : formData.deporte === TORNEO_DEPORTE_FUTBOL7 ? (
+                  <select name="formato_equipo" value={TORNEO_FORMATO_EQUIPO_7} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
+                    <option value={TORNEO_FORMATO_EQUIPO_7}>Equipos de 7</option>
                   </select>
                 ) : (
                   <select name="formato_equipo" value={TORNEO_FORMATO_DOBLES} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
@@ -316,7 +323,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   </select>
                 )}
                 <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Padbol y Pádel se juegan en dobles. Pickleball permite singles o dobles.
+                  Padbol y Pádel: dobles. Pickleball, squash y tenis: singles o dobles. Fútbol 5 y 7: tamaño de equipo fijo.
                 </small>
               </div>
 

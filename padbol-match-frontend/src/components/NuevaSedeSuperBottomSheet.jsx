@@ -1,20 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
+import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim(), codigo: p.codigo }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
-const DEPORTES_CATALOGO = [
-  { key: 'padbol', label: 'Padbol' },
-  { key: 'padel', label: 'Pádel' },
-  { key: 'pickleball', label: 'Pickleball' },
-  { key: 'futbol', label: 'Fútbol' },
-  { key: 'tenis', label: 'Tenis' },
-  { key: 'basquet', label: 'Básquet' },
-  { key: 'otro', label: 'Otro' },
-];
+const DEPORTES_CATALOGO = DEPORTES_CANCHA_SEDE_OPTIONS;
 
 const inputBase = {
   minHeight: 48,

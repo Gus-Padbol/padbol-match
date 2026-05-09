@@ -28,23 +28,18 @@ import { getDistanceKm } from '../utils/sedeCardUi';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
-  resolveFormatoEquipoTorneo,
   TORNEO_DEPORTE_PADBOL,
-  TORNEO_DEPORTE_PADEL,
-  TORNEO_DEPORTE_PICKLEBALL,
-  TORNEO_FORMATO_SINGLES,
+  TORNEO_DEPORTE_OPTIONS,
+  etiquetaFormatoEquipoResuelto,
 } from '../utils/torneoDeporteFormato';
 
 function formatoEquipoLineaTorneoPublico(t) {
-  const f = resolveFormatoEquipoTorneo(t);
-  return f === TORNEO_FORMATO_SINGLES ? 'Singles (1v1)' : 'Dobles (2v2)';
+  return etiquetaFormatoEquipoResuelto(t);
 }
 
 const FILTROS_DEPORTE_TORNEO_PUBLICO = [
   { id: 'todos', label: 'Todos' },
-  { id: TORNEO_DEPORTE_PADBOL, label: 'Padbol' },
-  { id: TORNEO_DEPORTE_PADEL, label: 'Pádel' },
-  { id: TORNEO_DEPORTE_PICKLEBALL, label: 'Pickleball' },
+  ...TORNEO_DEPORTE_OPTIONS.map((o) => ({ id: o.value, label: o.label })),
 ];
 
 function closestSedeId(userPos, sedesList) {

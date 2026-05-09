@@ -1414,7 +1414,7 @@ app.post('/api/sedes', async (req, res) => {
   }
 });
 
-const DEPORTES_SEDE_VALID = new Set(['padbol', 'padel', 'pickleball', 'futbol', 'tenis', 'basquet', 'otro']);
+const DEPORTES_SEDE_VALID = new Set(['padbol', 'padel', 'pickleball', 'squash', 'tenis', 'futbol_5', 'futbol_7']);
 
 /** GET /api/sedes/:id/deportes — filas canchas_por_deporte (JWT admin de la sede o super_admin). */
 app.get('/api/sedes/:id/deportes', async (req, res) => {
@@ -1545,12 +1545,26 @@ app.get('/api/contratos-sedes', async (req, res) => {
   }
 });
 
+/** Etiqueta corta para deporte (sede / torneos / analytics). */
+function etiquetaDeporteCorta(dep) {
+  const d = String(dep || '').trim().toLowerCase();
+  const map = {
+    padbol: 'Padbol',
+    padel: 'Pádel',
+    pickleball: 'Pickleball',
+    squash: 'Squash',
+    tenis: 'Tenis',
+    futbol_5: 'Fútbol 5',
+    futbol_7: 'Fútbol 7',
+  };
+  if (map[d]) return map[d];
+  if (d === 'pádel') return 'Pádel';
+  return d ? d.charAt(0).toUpperCase() + d.slice(1) : 'Padbol';
+}
+
 /** Etiqueta corta para deporte en estadísticas públicas de sede. */
 function etiquetaDeporteEstadisticaSedePublica(dep) {
-  const d = String(dep || '').trim().toLowerCase();
-  if (d === 'padel' || d === 'pádel') return 'Pádel';
-  if (d === 'pickleball') return 'Pickleball';
-  return 'Padbol';
+  return etiquetaDeporteCorta(dep);
 }
 
 /**
@@ -2959,7 +2973,15 @@ function normalizeTorneoCategoriaEdad(raw) {
   return null;
 }
 
-const TORNEO_DEPORTE_VALID = new Set(['padbol', 'padel', 'pickleball']);
+const TORNEO_DEPORTE_VALID = new Set([
+  'padbol',
+  'padel',
+  'pickleball',
+  'squash',
+  'tenis',
+  'futbol_5',
+  'futbol_7',
+]);
 
 function normalizeTorneoDeporteForDb(raw) {
   const s = String(raw || '').trim().toLowerCase();
@@ -2968,11 +2990,15 @@ function normalizeTorneoDeporteForDb(raw) {
   return 'padbol';
 }
 
-/** Pickleball: singles o dobles; Padbol y Pádel: siempre dobles. */
+/** Pickleball / squash / tenis: singles o dobles; fútbol 5/7: equipo fijo; padbol/pádel: dobles. */
 function resolveTorneoFormatoEquipoForDb(deporteNorm, formatoRaw) {
-  if (deporteNorm !== 'pickleball') return 'dobles';
   const f = String(formatoRaw || '').trim().toLowerCase();
-  if (f === 'singles' || f === '1v1') return 'singles';
+  if (deporteNorm === 'pickleball' || deporteNorm === 'squash' || deporteNorm === 'tenis') {
+    if (f === 'singles' || f === '1v1') return 'singles';
+    return 'dobles';
+  }
+  if (deporteNorm === 'futbol_5') return 'equipo_5';
+  if (deporteNorm === 'futbol_7') return 'equipo_7';
   return 'dobles';
 }
 
@@ -7875,8 +7901,9 @@ function deporteMasPopularDesdeTorneos(torneosRows) {
   if (deporteKey === '(sin deporte)') {
     return { deporte: null, torneos_creados: n, label: 'Sin deporte' };
   }
-  const label = deporteKey.charAt(0).toUpperCase() + deporteKey.slice(1);
-  return { deporte: deporteKey, torneos_creados: n, label };
+  const norm = normalizeTorneoDeporteForDb(deporteKey);
+  const label = etiquetaDeporteCorta(norm);
+  return { deporte: norm, torneos_creados: n, label };
 }
 
 /**
@@ -8776,7 +8803,7 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
 
 function normalizeDeportesCanchasSolicitudLicencia(raw) {
   if (raw == null || typeof raw !== 'object') return null;
-  const allowed = new Set(['padbol', 'padel', 'pickleball', 'otro']);
+  const allowed = DEPORTES_SEDE_VALID;
   const depIn = Array.isArray(raw.deportes) ? raw.deportes : [];
   const deportes = [...new Set(depIn.map((x) => String(x || '').trim().toLowerCase()).filter((x) => allowed.has(x)))];
   const canIn = raw.canchas && typeof raw.canchas === 'object' ? raw.canchas : {};
@@ -8794,8 +8821,7 @@ function normalizeDeportesCanchasSolicitudLicencia(raw) {
 
 function formatoDeportesCanchasWhatsApp(dc) {
   if (!dc || typeof dc !== 'object') return '—';
-  const labels = { padbol: 'Padbol', padel: 'Pádel', pickleball: 'Pickleball', otro: 'Otro' };
-  const depLabel = (k) => labels[k] || k;
+  const depLabel = (k) => etiquetaDeporteCorta(k);
   const deportes = Array.isArray(dc.deportes) ? dc.deportes : [];
   const canchas = dc.canchas && typeof dc.canchas === 'object' ? dc.canchas : {};
   const depPart = deportes.map(depLabel).join(', ') || '—';

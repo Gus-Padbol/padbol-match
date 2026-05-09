@@ -44,9 +44,15 @@ import {
 import {
   TORNEO_DEPORTE_OPTIONS,
   TORNEO_DEPORTE_PADBOL,
-  TORNEO_DEPORTE_PICKLEBALL,
+  TORNEO_DEPORTE_FUTBOL5,
+  TORNEO_DEPORTE_FUTBOL7,
   TORNEO_FORMATO_DOBLES,
-  TORNEO_FORMATO_PICKLE_OPTIONS,
+  TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS,
+  TORNEO_FORMATO_EQUIPO_5,
+  TORNEO_FORMATO_EQUIPO_7,
+  torneoDeportePermiteSinglesDobles,
+  formatoEquipoDefaultParaDeporte,
+  formatoEquipoPayloadParaApi,
   resumenDeporteFormatoTorneo,
 } from '../utils/torneoDeporteFormato';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
@@ -3400,11 +3406,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     setSavingTorneo(true);
     try {
+      const dep = String(editTorneoForm.deporte || TORNEO_DEPORTE_PADBOL).trim() || TORNEO_DEPORTE_PADBOL;
       const body = {
         ...editTorneoForm,
         sede_id: editTorneoForm.sede_id ? parseInt(editTorneoForm.sede_id) : null,
         categoria: String(editTorneoForm.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
         estado: mapEstadoTorneoFormParaApi(editTorneoForm.estado || 'proximo'),
+        deporte: dep,
+        formato_equipo: formatoEquipoPayloadParaApi(dep, editTorneoForm.formato_equipo),
       };
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
@@ -5646,8 +5655,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               setEditTorneoForm((p) => ({
                                 ...p,
                                 deporte: v,
-                                formato_equipo:
-                                  v === TORNEO_DEPORTE_PICKLEBALL ? p.formato_equipo || TORNEO_FORMATO_DOBLES : TORNEO_FORMATO_DOBLES,
+                                formato_equipo: formatoEquipoDefaultParaDeporte(v),
                               }));
                             }}
                           >
@@ -5662,17 +5670,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
                             Modalidad (jugadores)
                           </label>
-                          {editTorneoForm.deporte === TORNEO_DEPORTE_PICKLEBALL ? (
+                          {torneoDeportePermiteSinglesDobles(editTorneoForm.deporte) ? (
                             <select
                               style={inp}
                               value={editTorneoForm.formato_equipo || TORNEO_FORMATO_DOBLES}
                               onChange={(e) => setEditTorneoForm((p) => ({ ...p, formato_equipo: e.target.value }))}
                             >
-                              {TORNEO_FORMATO_PICKLE_OPTIONS.map((o) => (
+                              {TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS.map((o) => (
                                 <option key={o.value} value={o.value}>
                                   {o.label}
                                 </option>
                               ))}
+                            </select>
+                          ) : editTorneoForm.deporte === TORNEO_DEPORTE_FUTBOL5 ? (
+                            <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_EQUIPO_5} disabled>
+                              <option value={TORNEO_FORMATO_EQUIPO_5}>Equipos de 5</option>
+                            </select>
+                          ) : editTorneoForm.deporte === TORNEO_DEPORTE_FUTBOL7 ? (
+                            <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_EQUIPO_7} disabled>
+                              <option value={TORNEO_FORMATO_EQUIPO_7}>Equipos de 7</option>
                             </select>
                           ) : (
                             <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_DOBLES} disabled>
