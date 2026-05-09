@@ -7350,6 +7350,74 @@ async function upsertUserRoleAdminClub({ email, nombre, pais, sede_id }) {
   return error || null;
 }
 
+/** Invitación geo: admin_nacional con alcance pais | provincia | ciudad (sin crear sede). */
+function invitacionAdminEsFlujoGeo(inv) {
+  const role = String(inv?.invited_role || 'admin_club').trim().toLowerCase();
+  const alc = String(inv?.invited_alcance || '').trim().toLowerCase();
+  return role === 'admin_nacional' && ['pais', 'provincia', 'ciudad'].includes(alc);
+}
+
+async function upsertUserRoleFromInvitacionGeo({ email, nombre, inv }) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return new Error('Email vacío');
+  const alcance = String(inv.invited_alcance || '').trim().toLowerCase();
+  const pais = String(inv.pais || '').trim() || null;
+  const provinciaInv = String(inv.provincia || '').trim() || null;
+  const ciudadInv = String(inv.ciudad || '').trim() || null;
+
+  let row;
+  if (alcance === 'pais') {
+    if (!pais) return new Error('País obligatorio en la invitación');
+    row = {
+      email: em,
+      role: 'admin_nacional',
+      alcance: 'pais',
+      nombre: nombre || null,
+      sede_id: null,
+      ciudad: null,
+      provincia: null,
+      pais,
+      torneos_oficiales_habilitados: true,
+    };
+  } else if (alcance === 'provincia') {
+    if (!provinciaInv) return new Error('Provincia obligatoria en la invitación');
+    row = {
+      email: em,
+      role: 'admin_nacional',
+      alcance: 'provincia',
+      nombre: nombre || null,
+      sede_id: null,
+      ciudad: null,
+      provincia: provinciaInv,
+      pais: pais || null,
+      torneos_oficiales_habilitados: true,
+    };
+  } else if (alcance === 'ciudad') {
+    if (!ciudadInv) return new Error('Ciudad obligatoria en la invitación');
+    row = {
+      email: em,
+      role: 'admin_nacional',
+      alcance: 'ciudad',
+      nombre: nombre || null,
+      sede_id: null,
+      ciudad: ciudadInv,
+      provincia: provinciaInv || null,
+      pais: pais || null,
+      torneos_oficiales_habilitados: true,
+    };
+  } else {
+    return new Error('Tipo de invitación geográfica no válido');
+  }
+
+  const { data: ex } = await supabase.from('user_roles').select('email').eq('email', em).maybeSingle();
+  if (ex?.email) {
+    const { error } = await supabase.from('user_roles').update(row).eq('email', em);
+    return error || null;
+  }
+  const { error } = await supabase.from('user_roles').insert(row);
+  return error || null;
+}
+
 function randomTemporaryPassword() {
   return `Padbol#${Math.random().toString(36).slice(2, 8)}${Date.now().toString().slice(-4)}`;
 }
@@ -7643,6 +7711,67 @@ async function sendInvitacionAdminClubEmail({ toEmail, inviteUrl, nombreClub, pa
   }
 }
 
+async function sendInvitacionAdminGeoEmail({ toEmail, inviteUrl, paisLabel, invitedAlcance, provincia, ciudad }) {
+  const apiKey = String(process.env.RESEND_API_KEY || '').trim();
+  const from = String(process.env.RESEND_FROM_EMAIL || 'Padbol Match <no-reply@padbolmatch.com>').trim();
+  const to = String(toEmail || '').trim().toLowerCase();
+  if (!apiKey || !to) {
+    console.warn('⚠️ Invitación admin geo: sin RESEND_API_KEY o email vacío — no se envía mail');
+    return false;
+  }
+  const alc = String(invitedAlcance || '').trim().toLowerCase();
+  const pais = String(paisLabel || '').trim();
+  const prov = String(provincia || '').trim();
+  const ciu = String(ciudad || '').trim();
+  let rolTxt = 'administrador nacional';
+  let scopeHtml = '';
+  if (alc === 'pais') {
+    rolTxt = 'administrador nacional';
+    scopeHtml = pais ? `<p><strong>País:</strong> ${pais}</p>` : '';
+  } else if (alc === 'provincia') {
+    rolTxt = 'administrador de ciudad / región';
+    scopeHtml = `<p><strong>País:</strong> ${pais || '—'}</p><p><strong>Provincia o estado:</strong> ${prov || '—'}</p>`;
+  } else if (alc === 'ciudad') {
+    rolTxt = 'administrador de ciudad / región';
+    scopeHtml = `<p><strong>País:</strong> ${pais || '—'}</p>${prov ? `<p><strong>Provincia o estado:</strong> ${prov}</p>` : ''}${
+      ciu ? `<p><strong>Ciudad:</strong> ${ciu}</p>` : ''
+    }`;
+  }
+  const bodyHtml = `
+    <p>Hola,</p>
+    <p>Te invitaron a ser <strong>${rolTxt}</strong> en Padbol Match.</p>
+    ${scopeHtml}
+    <p>Aceptá la invitación en el siguiente enlace (válido ${INVITACION_ADMIN_HORAS_VALIDEZ} horas). No crea una sede: solo activa tu acceso con el alcance indicado.</p>
+    <p><a href="${inviteUrl}" style="font-weight:700;color:#4f46e5;">Aceptar invitación</a></p>
+    <p>Si el botón no funciona, copiá y pegá esta URL en el navegador:<br/><span style="word-break:break-all;font-size:13px;">${inviteUrl}</span></p>
+    <p><strong>PADBOL Match</strong></p>
+  `;
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: 'Invitación como administrador en Padbol Match',
+        html: bodyHtml,
+      }),
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      console.warn('⚠️ Resend invitación admin geo:', r.status, t);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn('⚠️ Email invitación admin geo:', e?.message || e);
+    return false;
+  }
+}
+
 function invitacionAdminUrl(token) {
   const base = String(FRONTEND_URL || '').replace(/\/$/, '');
   return `${base}/invitar-admin-club/${encodeURIComponent(token)}`;
@@ -7689,7 +7818,13 @@ app.get('/api/admin/invitaciones-admin', async (req, res) => {
   try {
     await assertSuperAdminReq(req);
     const est = String(req.query?.estado || '').trim().toLowerCase();
-    let q = supabase.from('invitaciones_admin').select('id, email, pais, nombre_club, estado, created_at, expires_at, sede_id').order('created_at', { ascending: false }).limit(300);
+    let q = supabase
+      .from('invitaciones_admin')
+      .select(
+        'id, email, pais, nombre_club, estado, created_at, expires_at, sede_id, invited_role, invited_alcance, provincia, ciudad',
+      )
+      .order('created_at', { ascending: false })
+      .limit(300);
     if (est && ['pendiente', 'completada', 'expirada', 'cancelada'].includes(est)) {
       q = q.eq('estado', est);
     }
@@ -7711,7 +7846,30 @@ app.post('/api/admin/invitaciones-admin', async (req, res) => {
     const pais = String(b.pais || '').trim();
     if (!email) return res.status(400).json({ error: 'Email obligatorio' });
     if (!pais) return res.status(400).json({ error: 'País obligatorio' });
-    const nombreClub = String(b.nombre_club || '').trim() || null;
+    const tipoInv = String(b.tipo_invitacion || b.tipo || 'club').trim().toLowerCase();
+
+    let invitedRole = 'admin_club';
+    let invitedAlcance = null;
+    let nombreClub = String(b.nombre_club || '').trim() || null;
+    let provinciaIns = null;
+    let ciudadIns = null;
+
+    if (tipoInv === 'nacional') {
+      invitedRole = 'admin_nacional';
+      invitedAlcance = 'pais';
+      nombreClub = null;
+    } else if (tipoInv === 'ciudad_region') {
+      invitedRole = 'admin_nacional';
+      const prov = String(b.provincia || b.estado || '').trim();
+      const ciu = String(b.ciudad || '').trim();
+      if (!prov) return res.status(400).json({ error: 'Provincia / estado obligatorio' });
+      provinciaIns = prov;
+      ciudadIns = ciu || null;
+      invitedAlcance = ciu ? 'ciudad' : 'provincia';
+      nombreClub = null;
+    } else if (tipoInv !== 'club') {
+      return res.status(400).json({ error: 'tipo_invitacion inválido (club, nacional, ciudad_region)' });
+    }
 
     await supabase
       .from('invitaciones_admin')
@@ -7730,18 +7888,33 @@ app.post('/api/admin/invitaciones-admin', async (req, res) => {
         nombre_club: nombreClub,
         estado: 'pendiente',
         expires_at: expiresAt,
+        invited_role: invitedRole,
+        invited_alcance: invitedAlcance,
+        provincia: provinciaIns,
+        ciudad: ciudadIns,
       })
-      .select('id, email, pais, nombre_club, estado, created_at, expires_at, sede_id')
+      .select(
+        'id, email, pais, nombre_club, estado, created_at, expires_at, sede_id, invited_role, invited_alcance, provincia, ciudad',
+      )
       .single();
     if (insErr) throw insErr;
 
     const url = invitacionAdminUrl(token);
-    const mailed = await sendInvitacionAdminClubEmail({
-      toEmail: email,
-      inviteUrl: url,
-      nombreClub,
-      paisLabel: pais,
-    });
+    const mailed = invitacionAdminEsFlujoGeo(row)
+      ? await sendInvitacionAdminGeoEmail({
+          toEmail: email,
+          inviteUrl: url,
+          paisLabel: pais,
+          invitedAlcance: row.invited_alcance,
+          provincia: row.provincia,
+          ciudad: row.ciudad,
+        })
+      : await sendInvitacionAdminClubEmail({
+          toEmail: email,
+          inviteUrl: url,
+          nombreClub,
+          paisLabel: pais,
+        });
     res.status(201).json({ ...row, email_sent: mailed });
   } catch (err) {
     console.error('❌ POST /api/admin/invitaciones-admin:', err.message);
@@ -7776,12 +7949,21 @@ app.post('/api/admin/invitaciones-admin/:id/reenviar', async (req, res) => {
       if (uErr) throw uErr;
     }
     const url = invitacionAdminUrl(token);
-    const mailed = await sendInvitacionAdminClubEmail({
-      toEmail: row.email,
-      inviteUrl: url,
-      nombreClub: row.nombre_club,
-      paisLabel: row.pais,
-    });
+    const mailed = invitacionAdminEsFlujoGeo(row)
+      ? await sendInvitacionAdminGeoEmail({
+          toEmail: row.email,
+          inviteUrl: url,
+          paisLabel: row.pais,
+          invitedAlcance: row.invited_alcance,
+          provincia: row.provincia,
+          ciudad: row.ciudad,
+        })
+      : await sendInvitacionAdminClubEmail({
+          toEmail: row.email,
+          inviteUrl: url,
+          nombreClub: row.nombre_club,
+          paisLabel: row.pais,
+        });
     res.json({ ok: true, email_sent: mailed, expires_at: expiresAt });
   } catch (err) {
     console.error('❌ POST /api/admin/invitaciones-admin/:id/reenviar:', err.message);
@@ -7807,10 +7989,15 @@ app.get('/api/invitacion/:token', async (req, res) => {
     }
     res.json({
       valid: true,
+      flow: invitacionAdminEsFlujoGeo(row) ? 'geo' : 'club',
       email: row.email,
       pais: row.pais,
       nombre_club: row.nombre_club || '',
       expires_at: row.expires_at,
+      invited_role: row.invited_role || 'admin_club',
+      invited_alcance: row.invited_alcance || null,
+      provincia: row.provincia || '',
+      ciudad: row.ciudad || '',
     });
   } catch (err) {
     console.error('❌ GET /api/invitacion/:token:', err.message);
@@ -7840,6 +8027,38 @@ app.post('/api/invitacion/:token/completar', async (req, res) => {
     const emailContacto = String(b.email_contacto || '').trim().toLowerCase();
     if (!emailContacto || emailContacto !== emailInv) {
       return res.status(400).json({ error: 'El email de contacto debe coincidir con el de la invitación' });
+    }
+
+    if (invitacionAdminEsFlujoGeo(inv)) {
+      const nombreAdmin = String(b.nombre_admin || '').trim() || null;
+      const urErr = await upsertUserRoleFromInvitacionGeo({
+        email: emailInv,
+        nombre: nombreAdmin,
+        inv,
+      });
+      if (urErr) {
+        const e = new Error(urErr.message || String(urErr));
+        e.status = 400;
+        throw e;
+      }
+      const { error: upInvGeoErr } = await supabase
+        .from('invitaciones_admin')
+        .update({ estado: 'completada', sede_id: null })
+        .eq('id', inv.id)
+        .eq('estado', 'pendiente');
+      if (upInvGeoErr) {
+        console.error('⚠️ Invitación geo no actualizada:', upInvGeoErr.message);
+      }
+      try {
+        await ensureLicenciatarioAuthUserAndWelcomeEmail(emailInv, {
+          nombre: nombreAdmin,
+          pais: String(inv.pais || '').trim() || null,
+          ciudad: String(inv.ciudad || '').trim() || null,
+        });
+      } catch (authErr) {
+        console.warn('⚠️ Alta rol geo por invitación: provisión auth:', authErr?.message || authErr);
+      }
+      return res.status(201).json({ ok: true, flow: 'geo' });
     }
 
     const nombre = String(b.nombre || '').trim();

@@ -1332,6 +1332,14 @@ function SedeSuperDetallePanel({
   );
 }
 
+function labelInvitacionAdminTipo(inv) {
+  const role = String(inv?.invited_role || 'admin_club').toLowerCase();
+  const alc = String(inv?.invited_alcance || '').toLowerCase();
+  if (role === 'admin_nacional' && alc === 'pais') return '🌍 Admin Nacional';
+  if (role === 'admin_nacional' && (alc === 'provincia' || alc === 'ciudad')) return '🏙️ Admin Ciudad/Región';
+  return '🏆 Admin Club';
+}
+
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
@@ -1459,8 +1467,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [adminInvitacionesRows, setAdminInvitacionesRows] = useState([]);
   const [adminInvitacionesLoading, setAdminInvitacionesLoading] = useState(false);
   const [inviteClubModalOpen, setInviteClubModalOpen] = useState(false);
+  const [inviteAdminModalStep, setInviteAdminModalStep] = useState('tipo');
+  const [inviteAdminTipo, setInviteAdminTipo] = useState(null);
   const [inviteClubSaving, setInviteClubSaving] = useState(false);
-  const [inviteClubForm, setInviteClubForm] = useState({ email: '', nombre_club: '', pais: '' });
+  const [inviteClubForm, setInviteClubForm] = useState({
+    email: '',
+    nombre_club: '',
+    pais: '',
+    provincia: '',
+    ciudad: '',
+  });
   const [adminClubOnboardingOpen, setAdminClubOnboardingOpen] = useState(false);
 
   useEffect(() => {
@@ -1759,6 +1775,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (!isSuperAdmin) return;
     const email = String(inviteClubForm.email || '').trim().toLowerCase();
     const pais = String(inviteClubForm.pais || '').trim();
+    const tipo = inviteAdminTipo || 'club';
     if (!email) {
       alert('Email obligatorio');
       return;
@@ -1767,24 +1784,37 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       alert('País obligatorio');
       return;
     }
+    if (tipo === 'ciudad_region') {
+      const prov = String(inviteClubForm.provincia || '').trim();
+      if (!prov) {
+        alert('Provincia / estado obligatorio');
+        return;
+      }
+    }
     setInviteClubSaving(true);
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
       if (!token) throw new Error('Sin sesión');
+      const body = {
+        tipo_invitacion: tipo,
+        email,
+        pais,
+        nombre_club: String(inviteClubForm.nombre_club || '').trim() || null,
+        provincia: String(inviteClubForm.provincia || '').trim() || undefined,
+        ciudad: String(inviteClubForm.ciudad || '').trim() || undefined,
+      };
       const res = await fetch(`${apiBaseUrl}/api/admin/invitaciones-admin`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          pais,
-          nombre_club: String(inviteClubForm.nombre_club || '').trim() || null,
-        }),
+        body: JSON.stringify(body),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || res.statusText);
       setInviteClubModalOpen(false);
-      setInviteClubForm({ email: '', nombre_club: '', pais: '' });
+      setInviteAdminModalStep('tipo');
+      setInviteAdminTipo(null);
+      setInviteClubForm({ email: '', nombre_club: '', pais: '', provincia: '', ciudad: '' });
       if (j.email_sent === false) {
         setMensajeExito('Invitación creada (no se pudo enviar el email; configura RESEND o reenvía desde la lista).');
       } else {
@@ -1797,7 +1827,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     } finally {
       setInviteClubSaving(false);
     }
-  }, [apiBaseUrl, cargarInvitacionesAdmin, inviteClubForm, isSuperAdmin]);
+  }, [apiBaseUrl, cargarInvitacionesAdmin, inviteAdminTipo, inviteClubForm, isSuperAdmin]);
 
   const reenviarInvitacionClub = useCallback(
     async (id) => {
@@ -7752,17 +7782,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>👥 Roles</h2>
           <div style={{ marginBottom: '28px' }}>
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
-              Invitaciones a nuevos clubes
+              Invitaciones de administradores
             </h3>
             <p style={{ color: 'rgba(226,232,240,0.95)', fontSize: '13px', margin: '0 0 10px', maxWidth: '720px', lineHeight: 1.45 }}>
-              Enviá un enlace al futuro admin para que cargue su sede. Hasta que complete el formulario verás el estado{' '}
+              Enviá un enlace según el tipo de admin: <strong>club</strong> completa el alta de sede; <strong>nacional</strong> o{' '}
+              <strong>ciudad/región</strong> solo activan el rol con el alcance geográfico indicado (sin crear sede). Hasta que acepte verás{' '}
               <strong>Invitado - pendiente de alta</strong>.
             </p>
             <div style={{ marginBottom: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={() => {
-                  setInviteClubForm({ email: '', nombre_club: '', pais: '' });
+                  setInviteClubForm({ email: '', nombre_club: '', pais: '', provincia: '', ciudad: '' });
+                  setInviteAdminModalStep('tipo');
+                  setInviteAdminTipo(null);
                   setInviteClubModalOpen(true);
                 }}
                 style={{
@@ -7775,13 +7808,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   cursor: 'pointer',
                 }}
               >
-                ✉️ Invitar nuevo club
+                ✉️ Invitar nuevo admin
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
                 <thead>
                   <tr style={{ background: '#312e81', color: '#fff' }}>
+                    <th style={{ padding: '8px' }}>Tipo</th>
                     <th style={{ padding: '8px' }}>Email</th>
                     <th style={{ padding: '8px' }}>Club (sugerido)</th>
                     <th style={{ padding: '8px' }}>País</th>
@@ -7793,13 +7827,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <tbody>
                   {adminInvitacionesLoading ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: '10px', textAlign: 'center' }}>
+                      <td colSpan={7} style={{ padding: '10px', textAlign: 'center' }}>
                         Cargando…
                       </td>
                     </tr>
                   ) : adminInvitacionesRows.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>
+                      <td colSpan={7} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>
                         No hay invitaciones pendientes
                       </td>
                     </tr>
@@ -7828,6 +7862,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       }
                       return (
                         <tr key={inv.id} style={{ borderTop: '1px solid #e2e8f0' }}>
+                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                            {labelInvitacionAdminTipo(inv)}
+                          </td>
                           <td style={{ padding: '8px', fontSize: '12px' }}>{inv.email}</td>
                           <td style={{ padding: '8px' }}>{inv.nombre_club || '—'}</td>
                           <td style={{ padding: '8px', fontSize: '12px' }}>{inv.pais || '—'}</td>
@@ -10268,7 +10305,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Invitar nuevo club"
+          aria-label="Invitar nuevo admin"
           style={{
             position: 'fixed',
             inset: 0,
@@ -10280,79 +10317,240 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             padding: '16px',
           }}
           onClick={(ev) => {
-            if (ev.target === ev.currentTarget && !inviteClubSaving) setInviteClubModalOpen(false);
+            if (ev.target === ev.currentTarget && !inviteClubSaving) {
+              setInviteClubModalOpen(false);
+              setInviteAdminModalStep('tipo');
+              setInviteAdminTipo(null);
+            }
           }}
         >
-          <div style={{ width: '100%', maxWidth: '480px', background: '#fff', borderRadius: '14px', padding: '18px' }}>
-            <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>✉️ Invitar nuevo club</h3>
-            <p style={{ margin: '8px 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-              Se enviará un email con un enlace para completar el alta de la sede (48 hs).
-            </p>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
-                Email del futuro admin *
-                <input
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  value={inviteClubForm.email}
-                  onChange={(e) => setInviteClubForm((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="admin@club.com"
-                  style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                />
-              </label>
-              <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
-                Nombre del club (opcional)
-                <input
-                  type="text"
-                  value={inviteClubForm.nombre_club}
-                  onChange={(e) => setInviteClubForm((p) => ({ ...p, nombre_club: e.target.value }))}
-                  placeholder="Ej: Club Padbol Norte"
-                  style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                />
-              </label>
-              <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
-                País *
-                <select
-                  value={inviteClubForm.pais}
-                  onChange={(e) => setInviteClubForm((p) => ({ ...p, pais: e.target.value }))}
-                  style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+          <div style={{ width: '100%', maxWidth: '520px', background: '#fff', borderRadius: '14px', padding: '18px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>✉️ Invitar nuevo admin</h3>
+            {inviteAdminModalStep === 'tipo' ? (
+              <>
+                <p style={{ margin: '8px 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                  Elegí el tipo de administrador. Luego completá el formulario y se enviará un enlace válido 48 hs.
+                </p>
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  <button
+                    type="button"
+                    disabled={inviteClubSaving}
+                    onClick={() => {
+                      setInviteAdminTipo('club');
+                      setInviteAdminModalStep('form');
+                    }}
+                    style={{
+                      textAlign: 'left',
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: '2px solid #e2e8f0',
+                      background: '#f8fafc',
+                      cursor: inviteClubSaving ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <strong>🏆 Admin Club</strong>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Gestiona una sede específica</div>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={inviteClubSaving}
+                    onClick={() => {
+                      setInviteAdminTipo('nacional');
+                      setInviteAdminModalStep('form');
+                    }}
+                    style={{
+                      textAlign: 'left',
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: '2px solid #e2e8f0',
+                      background: '#f8fafc',
+                      cursor: inviteClubSaving ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <strong>🌍 Admin Nacional</strong>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Gestiona un país completo</div>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={inviteClubSaving}
+                    onClick={() => {
+                      setInviteAdminTipo('ciudad_region');
+                      setInviteAdminModalStep('form');
+                    }}
+                    style={{
+                      textAlign: 'left',
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      border: '2px solid #e2e8f0',
+                      background: '#f8fafc',
+                      cursor: inviteClubSaving ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <strong>🏙️ Admin Ciudad/Región</strong>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Gestiona una zona específica</div>
+                  </button>
+                </div>
+                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteClubModalOpen(false);
+                      setInviteAdminModalStep('tipo');
+                      setInviteAdminTipo(null);
+                    }}
+                    disabled={inviteClubSaving}
+                    style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  disabled={inviteClubSaving}
+                  onClick={() => {
+                    setInviteAdminModalStep('tipo');
+                    setInviteAdminTipo(null);
+                  }}
+                  style={{
+                    marginTop: '6px',
+                    marginBottom: '8px',
+                    padding: '4px 0',
+                    border: 'none',
+                    background: 'none',
+                    color: '#4f46e5',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: inviteClubSaving ? 'not-allowed' : 'pointer',
+                  }}
                 >
-                  <option value="">Seleccionar país</option>
-                  {PAISES_SEDE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => !inviteClubSaving && setInviteClubModalOpen(false)}
-                disabled={inviteClubSaving}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: inviteClubSaving ? 'not-allowed' : 'pointer' }}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => void enviarInvitacionClub()}
-                disabled={inviteClubSaving}
-                style={{
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  background: inviteClubSaving ? '#94a3b8' : '#4f46e5',
-                  color: '#fff',
-                  fontWeight: 700,
-                  cursor: inviteClubSaving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {inviteClubSaving ? 'Enviando…' : 'Enviar invitación'}
-              </button>
-            </div>
+                  ← Cambiar tipo
+                </button>
+                <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                  {inviteAdminTipo === 'club'
+                    ? 'Se enviará un email para completar el alta de la sede.'
+                    : inviteAdminTipo === 'nacional'
+                      ? 'Solo se asigna el rol a nivel país (no crea sede).'
+                      : 'Solo se asigna el rol con alcance provincia o ciudad (no crea sede).'}
+                </p>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                    Email del futuro admin *
+                    <input
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      value={inviteClubForm.email}
+                      onChange={(e) => setInviteClubForm((p) => ({ ...p, email: e.target.value }))}
+                      placeholder="admin@ejemplo.com"
+                      style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    />
+                  </label>
+                  {inviteAdminTipo === 'club' ? (
+                    <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                      Nombre del club (opcional)
+                      <input
+                        type="text"
+                        value={inviteClubForm.nombre_club}
+                        onChange={(e) => setInviteClubForm((p) => ({ ...p, nombre_club: e.target.value }))}
+                        placeholder="Ej: Club Padbol Norte"
+                        style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                      />
+                    </label>
+                  ) : null}
+                  <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                    País *
+                    <select
+                      value={inviteClubForm.pais}
+                      onChange={(e) => setInviteClubForm((p) => ({ ...p, pais: e.target.value }))}
+                      style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    >
+                      <option value="">Seleccionar país</option>
+                      {PAISES_SEDE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {inviteAdminTipo === 'ciudad_region' ? (
+                    <>
+                      <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                        Provincia / estado *
+                        <input
+                          type="text"
+                          value={inviteClubForm.provincia}
+                          onChange={(e) => setInviteClubForm((p) => ({ ...p, provincia: e.target.value }))}
+                          placeholder="Ej: Córdoba"
+                          style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                        />
+                      </label>
+                      <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                        Ciudad (opcional)
+                        <input
+                          type="text"
+                          value={inviteClubForm.ciudad}
+                          onChange={(e) => setInviteClubForm((p) => ({ ...p, ciudad: e.target.value }))}
+                          placeholder="Si la dejás vacía, el alcance es la provincia/estado"
+                          style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                        />
+                      </label>
+                    </>
+                  ) : null}
+                </div>
+                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!inviteClubSaving) {
+                        setInviteAdminModalStep('tipo');
+                        setInviteAdminTipo(null);
+                      }
+                    }}
+                    disabled={inviteClubSaving}
+                    style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: inviteClubSaving ? 'not-allowed' : 'pointer' }}
+                  >
+                    Atrás
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteClubModalOpen(false);
+                      setInviteAdminModalStep('tipo');
+                      setInviteAdminTipo(null);
+                    }}
+                    disabled={inviteClubSaving}
+                    style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: inviteClubSaving ? 'not-allowed' : 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void enviarInvitacionClub()}
+                    disabled={inviteClubSaving || !inviteAdminTipo}
+                    style={{
+                      padding: '8px 16px',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: inviteClubSaving || !inviteAdminTipo ? '#94a3b8' : '#4f46e5',
+                      color: '#fff',
+                      fontWeight: 700,
+                      cursor: inviteClubSaving || !inviteAdminTipo ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {inviteClubSaving ? 'Enviando…' : 'Enviar invitación'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : null}
