@@ -2000,6 +2000,56 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
   }
 });
 
+const RESERVAS_JUGADOR_WHATSAPP_CHUNK = 120;
+
+/**
+ * Lista de reservas (admin): agrega `jugador_whatsapp_perfil` desde `jugadores_perfil.whatsapp`
+ * por `user_id` y, si falta, por `email` (coincidencia exacta en email normalizado a minúsculas).
+ */
+async function enrichReservasConJugadorWhatsappPerfil(clienteSupa, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+  const userIds = [...new Set(rows.map((r) => r?.user_id).filter(Boolean))];
+  const waByUserId = new Map();
+  for (let i = 0; i < userIds.length; i += RESERVAS_JUGADOR_WHATSAPP_CHUNK) {
+    const chunk = userIds.slice(i, i + RESERVAS_JUGADOR_WHATSAPP_CHUNK);
+    const { data, error } = await clienteSupa.from('jugadores_perfil').select('user_id, whatsapp').in('user_id', chunk);
+    if (error) {
+      console.warn('enrichReservas jugador_whatsapp (user_id):', error.message);
+      continue;
+    }
+    for (const p of data || []) {
+      const wa = String(p?.whatsapp || '').trim();
+      if (p?.user_id && wa) waByUserId.set(p.user_id, wa);
+    }
+  }
+
+  const emails = [
+    ...new Set(rows.map((r) => String(r?.email || '').trim().toLowerCase()).filter((e) => e.includes('@'))),
+  ];
+  const waByEmail = new Map();
+  for (let i = 0; i < emails.length; i += RESERVAS_JUGADOR_WHATSAPP_CHUNK) {
+    const chunk = emails.slice(i, i + RESERVAS_JUGADOR_WHATSAPP_CHUNK);
+    const { data, error } = await clienteSupa.from('jugadores_perfil').select('email, whatsapp').in('email', chunk);
+    if (error) {
+      console.warn('enrichReservas jugador_whatsapp (email):', error.message);
+      continue;
+    }
+    for (const p of data || []) {
+      const wa = String(p?.whatsapp || '').trim();
+      const em = String(p?.email || '').trim().toLowerCase();
+      if (em && wa) waByEmail.set(em, wa);
+    }
+  }
+
+  return rows.map((r) => {
+    const uid = r?.user_id;
+    const em = String(r?.email || '').trim().toLowerCase();
+    let jugador_whatsapp_perfil = uid ? waByUserId.get(uid) || '' : '';
+    if (!jugador_whatsapp_perfil && em) jugador_whatsapp_perfil = waByEmail.get(em) || '';
+    return { ...r, jugador_whatsapp_perfil: jugador_whatsapp_perfil || null };
+  });
+}
+
 // GET reservas — con Bearer aplica alcance: sede / ciudad / provincia / país / global.
 app.get('/api/reservas', async (req, res) => {
   try {
@@ -2030,7 +2080,8 @@ app.get('/api/reservas', async (req, res) => {
 
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
-    res.json(data || []);
+    const enriched = await enrichReservasConJugadorWhatsappPerfil(supabase, data || []);
+    res.json(enriched);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -374,6 +374,81 @@ function waDigitsForUrl(raw) {
   return String(raw || '').replace(/\D/g, '') || '';
 }
 
+function adminReservaJugadorWhatsappWaMeUrl(storedWhatsApp) {
+  const d = waDigitsForUrl(storedWhatsApp);
+  return d ? `https://wa.me/${d}` : '';
+}
+
+/** Nombre + email + WhatsApp de ficha (`jugador_whatsapp_perfil`) en listado/detalle reservas admin. */
+function AdminReservaJugadorContacto({ reserva }) {
+  const email = String(reserva.email || '').trim();
+  const waPerfil = String(reserva.jugador_whatsapp_perfil || '').trim();
+  const waUrl = adminReservaJugadorWhatsappWaMeUrl(waPerfil);
+  const nombre = String(reserva.nombre || '').trim() || '—';
+  return (
+    <div style={{ overflow: 'hidden', minWidth: 0, lineHeight: 1.4 }}>
+      <div
+        style={{
+          fontWeight: 600,
+          color: '#0f172a',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+        title={nombre}
+      >
+        {nombre}
+      </div>
+      {email ? (
+        <div style={{ fontSize: '12px', marginTop: '2px' }}>
+          <a
+            href={`mailto:${encodeURIComponent(email)}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ color: '#4f46e5', wordBreak: 'break-all' }}
+          >
+            {email}
+          </a>
+        </div>
+      ) : null}
+      {waUrl ? (
+        <div
+          style={{
+            fontSize: '12px',
+            marginTop: '4px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: '6px',
+            rowGap: '4px',
+          }}
+        >
+          <span style={{ color: '#475569', wordBreak: 'break-word' }}>{waPerfil}</span>
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              background: '#15803d',
+              color: '#fff',
+              fontWeight: 700,
+              textDecoration: 'none',
+              fontSize: '11px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            📱 WhatsApp
+          </a>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** Pills de filtro: inactivo blanco + borde gris; activo #667eea + texto blanco (Resumen, Torneos, Reservas). */
 const ADMIN_FILTER_PILL_BASE = {
   padding: '8px 14px',
@@ -1364,6 +1439,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (typeof window === 'undefined' || !window.matchMedia) return;
     const mq = window.matchMedia('(max-width: 768px)');
     const apply = () => setAdminRoleAssignMobile(Boolean(mq.matches));
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  const [vistaReservasAdminTarjetas, setVistaReservasAdminTarjetas] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const apply = () => setVistaReservasAdminTarjetas(Boolean(mq.matches));
     apply();
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
@@ -6352,9 +6437,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             key={r.id}
                             style={{
                               display: 'grid',
-                              gridTemplateColumns: '100px 130px 52px minmax(88px, 1fr) 120px 92px',
+                              gridTemplateColumns: '100px 130px 52px minmax(140px, 1fr) 120px 92px',
                               gap: '8px',
-                              alignItems: 'center',
+                              alignItems: 'start',
                               fontSize: '12px',
                               color: '#334155',
                               background: '#fff',
@@ -6363,22 +6448,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               padding: '6px 8px',
                             }}
                           >
-                            <span>{r.fecha || '—'}</span>
-                            <span>{horaRango(r.hora, r.duracion)}</span>
-                            <span style={{ textAlign: 'center' }}>{r.cancha ?? '—'}</span>
-                            <span
-                              style={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {r.nombre || '—'}
-                            </span>
-                            <span>
+                            <span style={{ paddingTop: '2px' }}>{r.fecha || '—'}</span>
+                            <span style={{ paddingTop: '2px' }}>{horaRango(r.hora, r.duracion)}</span>
+                            <span style={{ textAlign: 'center', paddingTop: '2px' }}>{r.cancha ?? '—'}</span>
+                            <div style={{ minWidth: 0 }}>
+                              <AdminReservaJugadorContacto reserva={r} />
+                            </div>
+                            <span style={{ paddingTop: '2px' }}>
                               <EstadoBadge reserva={r} />
                             </span>
-                            <span style={{ textAlign: 'right', fontWeight: 700 }}>
+                            <span style={{ textAlign: 'right', fontWeight: 700, paddingTop: '2px' }}>
                               ${(Number(r.precio) || 0).toLocaleString('es-AR')}
                             </span>
                           </div>
@@ -6643,6 +6722,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               'ARS'
           );
           const comisClubPm = Math.round(totalFactResClub * 0.03 * 100) / 100;
+          const usarTarjetasReservasClub = vistaReservasAdminTarjetas && editandoId == null;
 
           const tarjetasClubReservas = mostrarResumenClubNacional ? (
             <div
@@ -6717,88 +6797,226 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             );
           }
 
+          const accionesReservaRow = (r) => (
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {String(r.estado || '').toLowerCase() === 'pendiente_pago_manual' && (esAdminClub || isSuperAdmin) ? (
+                <button type="button" onClick={() => confirmarPagoManualReserva(r.id)} style={BTN({ background: '#f59e0b' })}>
+                  Confirmar pago
+                </button>
+              ) : null}
+              <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>
+                ✏️ Editar
+              </button>
+              <button type="button" onClick={() => setCancelReservaModalId(r.id)} style={BTN({ background: '#d32f2f' })}>
+                🗑️
+              </button>
+            </div>
+          );
+
           return (
             <>
               {mostrarResumenClubNacional ? periodoNavClubReservas : null}
               {tarjetasClubReservas}
-              <div className="reservas-table-wrap">
-                <table className="reservas-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: esAdminNacional ? '880px' : '720px', marginTop: 0 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ padding: '10px 8px' }}>Fecha</th>
-                      <th style={{ padding: '10px 8px' }}>Horario</th>
-                      <th style={{ padding: '10px 8px', textAlign: 'center' }}>Cancha</th>
-                      {esAdminNacional ? <th style={{ padding: '10px 8px' }}>Sede</th> : null}
-                      <th style={{ padding: '10px 8px' }}>Jugador</th>
-                      <th style={{ padding: '10px 8px' }}>Estado</th>
-                      <th style={{ padding: '10px 8px' }}>Monto</th>
-                      <th style={{ padding: '10px 8px' }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedRows.map((r) => (
-                      editandoId === r.id ? (
-                        <tr key={r.id}>
-                          <td style={{ padding: '6px 8px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{formatFecha(editFormData.fecha) || '—'}</td>
-                          <td style={{ padding: '6px 8px' }}>
-                            <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-                              <input type="time" value={editFormData.hora || ''} onChange={e => setEditFormData({ ...editFormData, hora: e.target.value })} style={{ padding: '4px', flex: 1, minWidth: 0 }} />
-                              <input type="number" placeholder="min" value={editFormData.duracion || ''} onChange={e => setEditFormData({ ...editFormData, duracion: e.target.value })} style={{ padding: '4px', width: '46px' }} title="Duración en minutos" />
-                            </div>
-                          </td>
-                          <td style={{ padding: '6px 8px' }}><input type="number" value={editFormData.cancha || ''} onChange={e => setEditFormData({ ...editFormData, cancha: parseInt(e.target.value, 10) })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
-                          {esAdminNacional ? <td style={{ padding: '6px 8px' }}><input type="text" value={editFormData.sede || ''} onChange={e => setEditFormData({ ...editFormData, sede: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td> : null}
-                          <td style={{ padding: '6px 8px' }}>
-                            <input type="text" value={editFormData.nombre || ''} onChange={e => setEditFormData({ ...editFormData, nombre: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box', marginBottom: '4px' }} />
-                            <input type="email" value={editFormData.email || ''} onChange={e => setEditFormData({ ...editFormData, email: e.target.value })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box', fontSize: '11px' }} placeholder="Email" />
-                          </td>
-                          <td style={{ padding: '6px 8px' }}>
-                            <select value={editFormData.estado || 'reservada'} onChange={e => setEditFormData({ ...editFormData, estado: e.target.value })} style={{ padding: '4px 6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', width: '100%' }}>
-                              <option value="reservada">📋 Reservada</option>
-                              <option value="pendiente_pago_manual">🟡 Pendiente pago manual</option>
-                              <option value="confirmada">🟢 Confirmada</option>
-                              <option value="completada">✅ Completada</option>
-                              <option value="cancelada">❌ Cancelada</option>
-                            </select>
-                          </td>
-                          <td style={{ padding: '6px 8px' }}><input type="number" value={editFormData.precio || ''} onChange={e => setEditFormData({ ...editFormData, precio: parseInt(e.target.value, 10) })} style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }} /></td>
-                          <td style={{ padding: '6px 8px' }}>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <button type="button" onClick={() => guardarEdicion(r.id)} style={BTN({ background: '#4caf50' })}>✅ Guardar</button>
-                              <button type="button" onClick={cancelarEdicion} style={BTN({ background: '#999' })}>✕</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        <tr key={r.id}>
-                          <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{formatFecha(r.fecha) || '—'}</td>
-                          <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{horaRango(r.hora, r.duracion)}</td>
-                          <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.cancha ?? '—'}</td>
-                          {esAdminNacional ? <td style={{ padding: '6px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sede}</td> : null}
-                          <td style={{ padding: '6px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.nombre}</td>
-                          <td style={{ padding: '6px 8px' }}><EstadoBadge reserva={r} /></td>
-                          <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>${(r.precio || 30000).toLocaleString('es-AR')}</td>
-                          <td style={{ padding: '6px 8px' }}>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              {String(r.estado || '').toLowerCase() === 'pendiente_pago_manual' && (esAdminClub || isSuperAdmin) ? (
-                                <button
-                                  type="button"
-                                  onClick={() => confirmarPagoManualReserva(r.id)}
-                                  style={BTN({ background: '#f59e0b' })}
-                                >
-                                  Confirmar pago
+              {usarTarjetasReservasClub ? (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {sortedRows.map((r) => (
+                    <div
+                      key={r.id}
+                      style={{
+                        background: '#fff',
+                        borderRadius: '12px',
+                        padding: '12px 14px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
+                        minWidth: 0,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <div style={{ display: 'grid', gap: '4px', fontSize: '13px', color: '#475569' }}>
+                        <div>
+                          <span style={{ color: '#64748b', fontWeight: 700 }}>Fecha</span> · {formatFecha(r.fecha) || '—'}
+                        </div>
+                        <div>
+                          <span style={{ color: '#64748b', fontWeight: 700 }}>Horario</span> · {horaRango(r.hora, r.duracion)}
+                        </div>
+                        <div>
+                          <span style={{ color: '#64748b', fontWeight: 700 }}>Cancha</span> · {r.cancha ?? '—'}
+                        </div>
+                        {esAdminNacional ? (
+                          <div>
+                            <span style={{ color: '#64748b', fontWeight: 700 }}>Sede</span> · {String(r.sede || '').trim() || '—'}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                        <AdminReservaJugadorContacto reserva={r} />
+                      </div>
+                      <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+                        <EstadoBadge reserva={r} />
+                        <span style={{ marginLeft: 'auto', fontWeight: 800, color: '#0f172a', fontSize: '15px' }}>
+                          ${(r.precio || 30000).toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                      <div style={{ marginTop: '10px' }}>{accionesReservaRow(r)}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="reservas-table-wrap">
+                  <table
+                    className="reservas-table"
+                    style={{ tableLayout: 'fixed', width: '100%', minWidth: esAdminNacional ? '920px' : '780px', marginTop: 0 }}
+                  >
+                    <thead>
+                      <tr>
+                        <th style={{ padding: '10px 8px' }}>Fecha</th>
+                        <th style={{ padding: '10px 8px' }}>Horario</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>Cancha</th>
+                        {esAdminNacional ? <th style={{ padding: '10px 8px' }}>Sede</th> : null}
+                        <th style={{ padding: '10px 8px' }}>Jugador</th>
+                        <th style={{ padding: '10px 8px' }}>Estado</th>
+                        <th style={{ padding: '10px 8px' }}>Monto</th>
+                        <th style={{ padding: '10px 8px' }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedRows.map((r) =>
+                        editandoId === r.id ? (
+                          <tr key={r.id}>
+                            <td style={{ padding: '6px 8px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{formatFecha(editFormData.fecha) || '—'}</td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                                <input
+                                  type="time"
+                                  value={editFormData.hora || ''}
+                                  onChange={(e) => setEditFormData({ ...editFormData, hora: e.target.value })}
+                                  style={{ padding: '4px', flex: 1, minWidth: 0 }}
+                                />
+                                <input
+                                  type="number"
+                                  placeholder="min"
+                                  value={editFormData.duracion || ''}
+                                  onChange={(e) => setEditFormData({ ...editFormData, duracion: e.target.value })}
+                                  style={{ padding: '4px', width: '46px' }}
+                                  title="Duración en minutos"
+                                />
+                              </div>
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <input
+                                type="number"
+                                value={editFormData.cancha || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, cancha: parseInt(e.target.value, 10) })}
+                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                              />
+                            </td>
+                            {esAdminNacional ? (
+                              <td style={{ padding: '6px 8px' }}>
+                                <input
+                                  type="text"
+                                  value={editFormData.sede || ''}
+                                  onChange={(e) => setEditFormData({ ...editFormData, sede: e.target.value })}
+                                  style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                />
+                              </td>
+                            ) : null}
+                            <td style={{ padding: '6px 8px', verticalAlign: 'top' }}>
+                              <input
+                                type="text"
+                                value={editFormData.nombre || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, nombre: e.target.value })}
+                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box', marginBottom: '4px' }}
+                              />
+                              <input
+                                type="email"
+                                value={editFormData.email || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box', fontSize: '11px' }}
+                                placeholder="Email"
+                              />
+                              {(() => {
+                                const w = adminReservaJugadorWhatsappWaMeUrl(String(editFormData.jugador_whatsapp_perfil || '').trim());
+                                const label = String(editFormData.jugador_whatsapp_perfil || '').trim();
+                                return w && label ? (
+                                  <div style={{ marginTop: '6px', fontSize: '11px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ color: '#475569', wordBreak: 'break-word' }}>{label}</span>
+                                    <a
+                                      href={w}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        display: 'inline-flex',
+                                        padding: '3px 7px',
+                                        borderRadius: '5px',
+                                        background: '#15803d',
+                                        color: '#fff',
+                                        fontWeight: 700,
+                                        textDecoration: 'none',
+                                        fontSize: '10px',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      📱 WhatsApp
+                                    </a>
+                                  </div>
+                                ) : null;
+                              })()}
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <select
+                                value={editFormData.estado || 'reservada'}
+                                onChange={(e) => setEditFormData({ ...editFormData, estado: e.target.value })}
+                                style={{ padding: '4px 6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', width: '100%' }}
+                              >
+                                <option value="reservada">📋 Reservada</option>
+                                <option value="pendiente_pago_manual">🟡 Pendiente pago manual</option>
+                                <option value="confirmada">🟢 Confirmada</option>
+                                <option value="completada">✅ Completada</option>
+                                <option value="cancelada">❌ Cancelada</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <input
+                                type="number"
+                                value={editFormData.precio || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, precio: parseInt(e.target.value, 10) })}
+                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                              />
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <button type="button" onClick={() => guardarEdicion(r.id)} style={BTN({ background: '#4caf50' })}>
+                                  ✅ Guardar
                                 </button>
-                              ) : null}
-                              <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>✏️ Editar</button>
-                              <button type="button" onClick={() => setCancelReservaModalId(r.id)} style={BTN({ background: '#d32f2f' })}>🗑️</button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                                <button type="button" onClick={cancelarEdicion} style={BTN({ background: '#999' })}>
+                                  ✕
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          <tr key={r.id}>
+                            <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{formatFecha(r.fecha) || '—'}</td>
+                            <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{horaRango(r.hora, r.duracion)}</td>
+                            <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.cancha ?? '—'}</td>
+                            {esAdminNacional ? (
+                              <td style={{ padding: '6px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sede}</td>
+                            ) : null}
+                            <td style={{ padding: '6px 8px', verticalAlign: 'top', overflow: 'hidden' }}>
+                              <AdminReservaJugadorContacto reserva={r} />
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <EstadoBadge reserva={r} />
+                            </td>
+                            <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>${(r.precio || 30000).toLocaleString('es-AR')}</td>
+                            <td style={{ padding: '6px 8px' }}>{accionesReservaRow(r)}</td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           );
         })()}
