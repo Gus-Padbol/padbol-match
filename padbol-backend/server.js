@@ -951,6 +951,86 @@ function nombreWhatsappJugadorDesdePerfil(perfil, nombreFallback = '') {
   return 'jugador';
 }
 
+async function enviarTwilioWhatsappAJugadorConNumeroPerfil(rawWa, body, warnLabel) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    if (warnLabel) console.warn(`⚠️ ${warnLabel}: Twilio no configurado`);
+    return;
+  }
+  if (!rawWa || !String(rawWa).trim()) {
+    if (warnLabel) {
+      console.warn(`⚠️ ${warnLabel}: sin WhatsApp en jugadores_perfil para el jugador — no se envía mensaje`);
+    }
+    return;
+  }
+  const to = normalizePhoneToE164ForTwilioWhatsApp(rawWa);
+  if (!to) {
+    if (warnLabel) console.warn(`⚠️ ${warnLabel}: WhatsApp no normalizable a E.164:`, rawWa);
+    return;
+  }
+  await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body: String(body || '').trim() });
+  console.log(`✓ WhatsApp jugador (perfil) enviado a ${to}`);
+}
+
+/**
+ * Envía WhatsApp (Twilio) usando solo `whatsapp` de `jugadores_perfil` por email (misma regla que confirmación de reserva).
+ * @param {{ email: string; body: string; warnSinWhatsapp?: string }} opts warnSinWhatsapp: prefijo log si no hay número
+ */
+async function enviarTwilioWhatsappJugadorPorEmailPerfilReserva({ email, body, warnSinWhatsapp }) {
+  const emailNorm = String(email || '').trim().toLowerCase();
+  if (!emailNorm) {
+    if (warnSinWhatsapp) console.warn(`⚠️ ${warnSinWhatsapp}: sin email`);
+    return;
+  }
+
+  const { data: perfil, error: pErr } = await supabase
+    .from('jugadores_perfil')
+    .select('nombre, apodo, whatsapp')
+    .ilike('email', emailNorm)
+    .maybeSingle();
+
+  if (pErr) {
+    console.warn(`⚠️ ${warnSinWhatsapp || 'WhatsApp jugador'}: error consultando jugadores_perfil:`, pErr.message);
+    return;
+  }
+
+  await enviarTwilioWhatsappAJugadorConNumeroPerfil(perfil?.whatsapp, body, warnSinWhatsapp);
+}
+
+function horaLegibleUnPuntoReserva(horaRaw) {
+  const h = String(horaRaw || '').trim();
+  if (!h) return '—';
+  if (h.includes(' - ')) return h.split(' - ')[0].trim() || h;
+  const m = h.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return h;
+  return `${String(parseInt(m[1], 10)).padStart(2, '0')}:${m[2]}`;
+}
+
+/** Admin pasó la reserva a cancelada (PUT o mismo aviso si DELETE por admin). */
+async function sendReservaAdminCanceladaWhatsAppTwilio({ email, nombreSede, fecha, hora }) {
+  const sedeTxt = String(nombreSede || '').trim() || 'la sede';
+  const fechaTxt = formatFechaReservaConfirmacion(String(fecha || '').trim().slice(0, 10)) || String(fecha || '').trim() || '—';
+  const horaTxt = horaLegibleUnPuntoReserva(hora);
+  const body = `❌ Tu reserva en ${sedeTxt} el ${fechaTxt} a las ${horaTxt} fue cancelada por el administrador. Si tienes dudas, contacta al club.`;
+  await enviarTwilioWhatsappJugadorPorEmailPerfilReserva({
+    email,
+    body,
+    warnSinWhatsapp: 'Cancelación reserva (admin)',
+  });
+}
+
+/** Admin cambió fecha u hora del turno. */
+async function sendReservaAdminFechaHoraModificadaWhatsAppTwilio({ email, nombreSede, fecha, hora }) {
+  const sedeTxt = String(nombreSede || '').trim() || 'la sede';
+  const fechaTxt = formatFechaReservaConfirmacion(String(fecha || '').trim().slice(0, 10)) || String(fecha || '').trim() || '—';
+  const horaTxt = horaLegibleUnPuntoReserva(hora);
+  const body = `📝 Tu reserva en ${sedeTxt} fue modificada. Nueva fecha: ${fechaTxt} a las ${horaTxt}. Si tienes dudas, contacta al club.`;
+  await enviarTwilioWhatsappJugadorPorEmailPerfilReserva({
+    email,
+    body,
+    warnSinWhatsapp: 'Cambio fecha/hora reserva (admin)',
+  });
+}
+
 /**
  * WhatsApp (Twilio) al confirmar reserva: teléfono desde `jugadores_perfil.whatsapp` por email del usuario.
  * Si no hay WhatsApp en perfil, solo loguea warning (no usa el número enviado en el body de la reserva).
@@ -963,10 +1043,6 @@ async function sendReservaConfirmadaWhatsAppTwilio({
   duracionMinutos,
   nombreSede,
 }) {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-    console.warn('⚠️ Confirmación reserva: Twilio no configurado — no se envía WhatsApp');
-    return;
-  }
   const emailNorm = String(email || '').trim().toLowerCase();
   if (!emailNorm) {
     console.warn('⚠️ Confirmación reserva: sin email — no se busca jugadores_perfil');
@@ -984,28 +1060,13 @@ async function sendReservaConfirmadaWhatsAppTwilio({
     return;
   }
 
-  const rawWa = perfil?.whatsapp;
-  if (!rawWa || !String(rawWa).trim()) {
-    console.warn(
-      `⚠️ Confirmación reserva: sin WhatsApp en jugadores_perfil para el email ${emailNorm} — no se envía mensaje`,
-    );
-    return;
-  }
-
   const nombre = nombreWhatsappJugadorDesdePerfil(perfil, nombreFallback);
   const { horaInicio, horaFin } = horaInicioYFinParaMensaje(hora, duracionMinutos);
   const fechaTxt = formatFechaReservaConfirmacion(fecha);
   const sedeTxt = String(nombreSede || '').trim() || 'la sede';
   const body = `¡Hola ${nombre}! ✅ Tu reserva está confirmada. Te esperamos el ${fechaTxt} en horario ${horaInicio} - ${horaFin} en ${sedeTxt}. ⚽ ¡Nos vemos en la cancha!`;
 
-  const to = normalizePhoneToE164ForTwilioWhatsApp(rawWa);
-  if (!to) {
-    console.warn('⚠️ Confirmación reserva: WhatsApp en perfil no normalizable a E.164:', rawWa);
-    return;
-  }
-
-  await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
-  console.log(`✓ WhatsApp confirmación de reserva enviado a ${to}`);
+  await enviarTwilioWhatsappAJugadorConNumeroPerfil(perfil?.whatsapp, body, 'Confirmación reserva');
 }
 
 const PADBOL_SEDE_CRITICO_NOTIFY_SECRET = process.env.PADBOL_SEDE_CRITICO_NOTIFY_SECRET;
@@ -2273,6 +2334,44 @@ app.put('/api/reservas/:id', async (req, res) => {
       }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva (PUT):', err.message));
     }
 
+    const scopePut = await adminListScopeFromRequest(req);
+    const isAdminReservaPut =
+      scopePut &&
+      (scopePut.superA ||
+        scopePut.rol === 'admin_club' ||
+        scopePut.rol === 'admin_nacional' ||
+        scopePut.alcance === 'global');
+    if (row && isAdminReservaPut) {
+      const newEstLc = String(row.estado || '').toLowerCase();
+      const oldEstLc = String(prevRow?.estado || '').toLowerCase();
+      const becameCancelada = newEstLc === 'cancelada' && oldEstLc !== 'cancelada';
+
+      const fechaCambiada =
+        Object.prototype.hasOwnProperty.call(req.body, 'fecha') &&
+        fecha !== undefined &&
+        String(prevRow?.fecha ?? '').trim() !== String(row?.fecha ?? '').trim();
+      const horaCambiada =
+        Object.prototype.hasOwnProperty.call(req.body, 'hora') &&
+        hora !== undefined &&
+        String(prevRow?.hora ?? '').trim() !== String(row?.hora ?? '').trim();
+
+      if (becameCancelada) {
+        sendReservaAdminCanceladaWhatsAppTwilio({
+          email: row.email || prevRow?.email,
+          nombreSede: String(prevRow?.sede || row.sede || '').trim(),
+          fecha: prevRow?.fecha,
+          hora: prevRow?.hora,
+        }).catch((err) => console.warn('⚠️ WhatsApp cancelación admin (PUT):', err.message));
+      } else if (fechaCambiada || horaCambiada) {
+        sendReservaAdminFechaHoraModificadaWhatsAppTwilio({
+          email: row.email,
+          nombreSede: String(row.sede || '').trim(),
+          fecha: row.fecha,
+          hora: row.hora,
+        }).catch((err) => console.warn('⚠️ WhatsApp cambio fecha/hora admin (PUT):', err.message));
+      }
+    }
+
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2284,12 +2383,37 @@ app.delete('/api/reservas/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
+    const scopeDel = await adminListScopeFromRequest(req);
+    const isAdminReservaDel =
+      scopeDel &&
+      (scopeDel.superA ||
+        scopeDel.rol === 'admin_club' ||
+        scopeDel.rol === 'admin_nacional' ||
+        scopeDel.alcance === 'global');
+
+    let prevReserva = null;
+    if (isAdminReservaDel) {
+      const { data: pr, error: prErr } = await supabase.from('reservas').select('*').eq('id', id).maybeSingle();
+      if (prErr) throw prErr;
+      prevReserva = pr;
+    }
+
     const { error } = await supabase
       .from('reservas')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
+
+    if (isAdminReservaDel && prevReserva) {
+      sendReservaAdminCanceladaWhatsAppTwilio({
+        email: prevReserva.email,
+        nombreSede: String(prevReserva.sede || '').trim(),
+        fecha: prevReserva.fecha,
+        hora: prevReserva.hora,
+      }).catch((err) => console.warn('⚠️ WhatsApp cancelación admin (DELETE):', err.message));
+    }
+
     res.json({ mensaje: 'Reserva eliminada' });
   } catch (err) {
     res.status(500).json({ error: err.message });

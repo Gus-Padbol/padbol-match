@@ -3625,8 +3625,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const ejecutarCancelarReservaAdmin = async (reservaId) => {
     try {
+      const headers = {};
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const response = await fetch(`${apiBaseUrl}/api/reservas/${reservaId}`, {
         method: 'DELETE',
+        headers,
       });
 
       if (response.ok) {
