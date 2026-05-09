@@ -18,6 +18,15 @@ import {
 } from '../constants/torneoCompetencia';
 import useUserRole from '../hooks/useUserRole';
 import { mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
+import {
+  TORNEO_DEPORTE_PADBOL,
+  TORNEO_DEPORTE_PADEL,
+  TORNEO_DEPORTE_PICKLEBALL,
+  TORNEO_FORMATO_DOBLES,
+  TORNEO_FORMATO_SINGLES,
+  TORNEO_DEPORTE_OPTIONS,
+  TORNEO_FORMATO_PICKLE_OPTIONS,
+} from '../utils/torneoDeporteFormato';
 
 export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol: rolProp = null }) {
   const [sedes, setSedes] = useState([]);
@@ -42,6 +51,8 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     clasificados_por_grupo: '',
     mejores_terceros_clasificados: '',
     fecha_apertura_inscripcion: '',
+    deporte: TORNEO_DEPORTE_PADBOL,
+    formato_equipo: TORNEO_FORMATO_DOBLES,
   });
 
   const [loading, setLoading] = useState(false);
@@ -93,6 +104,16 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     const { name, value, type, checked } = e.target;
     if (esAdminClub && name === 'es_multisede') return;
     if (esAdminClub && name === 'sede_id') return;
+    if (name === 'deporte') {
+      setFormData((prev) => {
+        const next = { ...prev, deporte: value };
+        if (value === TORNEO_DEPORTE_PADBOL || value === TORNEO_DEPORTE_PADEL) {
+          next.formato_equipo = TORNEO_FORMATO_DOBLES;
+        }
+        return next;
+      });
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -140,6 +161,11 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       cantidad_equipos: formData.cantidad_equipos ? parseInt(formData.cantidad_equipos, 10) : null,
       es_multisede: formData.es_multisede,
       created_by: null,
+      deporte: String(formData.deporte || TORNEO_DEPORTE_PADBOL).trim() || TORNEO_DEPORTE_PADBOL,
+      formato_equipo:
+        formData.deporte === TORNEO_DEPORTE_PICKLEBALL
+          ? String(formData.formato_equipo || TORNEO_FORMATO_DOBLES).trim() || TORNEO_FORMATO_DOBLES
+          : TORNEO_FORMATO_DOBLES,
     };
 
     const rawCosto = String(formData.costo_inscripcion ?? '').trim();
@@ -261,6 +287,37 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   placeholder="Ej: Torneo La Meca 2026"
                   required
                 />
+              </div>
+
+              <div className="form-group">
+                <label>Deporte *</label>
+                <select name="deporte" value={formData.deporte} onChange={handleChange} required>
+                  {TORNEO_DEPORTE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Formato (jugadores por equipo) *</label>
+                {formData.deporte === TORNEO_DEPORTE_PICKLEBALL ? (
+                  <select name="formato_equipo" value={formData.formato_equipo} onChange={handleChange} required>
+                    {TORNEO_FORMATO_PICKLE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <select name="formato_equipo" value={TORNEO_FORMATO_DOBLES} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
+                    <option value={TORNEO_FORMATO_DOBLES}>Dobles (2v2)</option>
+                  </select>
+                )}
+                <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  Padbol y Pádel se juegan en dobles. Pickleball permite singles o dobles.
+                </small>
               </div>
 
               <div className="form-group">

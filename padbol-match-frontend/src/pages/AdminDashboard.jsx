@@ -40,6 +40,14 @@ import {
   formatCategoriaEdadTorneo,
   torneoTipoCompetenciaDb,
 } from '../utils/torneoFormatters';
+import {
+  TORNEO_DEPORTE_OPTIONS,
+  TORNEO_DEPORTE_PADBOL,
+  TORNEO_DEPORTE_PICKLEBALL,
+  TORNEO_FORMATO_DOBLES,
+  TORNEO_FORMATO_PICKLE_OPTIONS,
+  resumenDeporteFormatoTorneo,
+} from '../utils/torneoDeporteFormato';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 import {
@@ -3241,6 +3249,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         torneo.horas_revelar_equipos != null && torneo.horas_revelar_equipos !== ''
           ? String(torneo.horas_revelar_equipos)
           : '48',
+      deporte: torneo.deporte || TORNEO_DEPORTE_PADBOL,
+      formato_equipo: torneo.formato_equipo || TORNEO_FORMATO_DOBLES,
     });
   };
 
@@ -5323,6 +5333,50 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <input style={inp} value={editTorneoForm.nivel_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, nivel_torneo: e.target.value }))} placeholder="Ej: Intermedio" />
                         </div>
                         <div>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Deporte</label>
+                          <select
+                            style={inp}
+                            value={editTorneoForm.deporte || TORNEO_DEPORTE_PADBOL}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setEditTorneoForm((p) => ({
+                                ...p,
+                                deporte: v,
+                                formato_equipo:
+                                  v === TORNEO_DEPORTE_PICKLEBALL ? p.formato_equipo || TORNEO_FORMATO_DOBLES : TORNEO_FORMATO_DOBLES,
+                              }));
+                            }}
+                          >
+                            {TORNEO_DEPORTE_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
+                            Modalidad (jugadores)
+                          </label>
+                          {editTorneoForm.deporte === TORNEO_DEPORTE_PICKLEBALL ? (
+                            <select
+                              style={inp}
+                              value={editTorneoForm.formato_equipo || TORNEO_FORMATO_DOBLES}
+                              onChange={(e) => setEditTorneoForm((p) => ({ ...p, formato_equipo: e.target.value }))}
+                            >
+                              {TORNEO_FORMATO_PICKLE_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_DOBLES} disabled>
+                              <option value={TORNEO_FORMATO_DOBLES}>Dobles (2v2)</option>
+                            </select>
+                          )}
+                        </div>
+                        <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>Formato</label>
                           <select style={inp} value={editTorneoForm.tipo_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, tipo_torneo: e.target.value }))}>
                             <option value="">— Seleccionar —</option>
@@ -5487,6 +5541,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         {torneo.nivel_torneo
                           ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
                           : null}
+                        <span style={badge('#ede9fe', '#5b21b6')}>{resumenDeporteFormatoTorneo(torneo)}</span>
                         <span style={badge('#f0fdf4', '#166534')}>{formatCategoriaTorneo(torneo.categoria)}</span>
                         <span style={badge('#fef9c3', '#854d0e')}>{formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))}</span>
                         <span style={badge('#e0f2fe', '#0369a1')}>{formatCategoriaEdadTorneo(torneo.categoria_edad)}</span>

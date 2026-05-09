@@ -25,6 +25,7 @@ import {
 } from '../utils/torneoEstadoFiltroPills';
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import { getDistanceKm } from '../utils/sedeCardUi';
+import { resumenDeporteFormatoTorneo } from '../utils/torneoDeporteFormato';
 
 function closestSedeId(userPos, sedesList) {
   let bestId = null;
@@ -484,6 +485,7 @@ export default function TorneosPublicos() {
                   }
                 />
                 <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
+                <Row icon="🎾" label={resumenDeporteFormatoTorneo(t)} />
                 <Row icon="🏆" label={formatTipoTorneo(t.tipo_torneo)} />
                 <Row icon="⭐" label={formatNivelTorneo(t.nivel_torneo)} />
                 <Row icon="⚧" label={`Tipo de torneo: ${formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(t))}`} />

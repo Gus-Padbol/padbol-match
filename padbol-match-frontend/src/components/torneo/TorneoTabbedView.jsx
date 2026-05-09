@@ -10,6 +10,7 @@ import {
   formatCategoriaEdadTorneo,
   torneoTipoCompetenciaDb,
 } from '../../utils/torneoFormatters';
+import { resumenDeporteFormatoTorneo } from '../../utils/torneoDeporteFormato';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../JugadorPreviewModal';
@@ -2067,6 +2068,9 @@ export default function TorneoTabbedView({
           ) : null}
         </div>
         {sedeTexto ? <p>{sedeTexto}</p> : null}
+        <p style={{ margin: '6px 0 4px', fontWeight: 700, color: '#475569', fontSize: 'clamp(0.85rem, 2.8vw, 0.95rem)' }}>
+          🎾 {resumenDeporteFormatoTorneo(torneo)}
+        </p>
         <p>
           {formatNivelTorneo(torneo?.nivel_torneo)} • {formatCategoriaTorneo(torneo?.categoria)} •{' '}
           {formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}

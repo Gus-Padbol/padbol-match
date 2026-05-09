@@ -53,6 +53,7 @@ import TorneoTabbedView from '../components/torneo/TorneoTabbedView';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ModalJugador, { hintFromBuscarRow } from '../components/ModalJugador';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
+import { esTorneoSingles, jugadoresMinimosEquipoTorneo } from '../utils/torneoDeporteFormato';
 import '../styles/TorneoVista.css';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
@@ -320,6 +321,16 @@ export default function FormEquipos() {
     setMobileVista('inicio');
     setEquipoDuplicadoBloqueoId(null);
   }, [torneoId]);
+
+  useEffect(() => {
+    if (!torneo) return;
+    if (esTorneoSingles(torneo)) {
+      setCupoMaximo(1);
+      setEquipoAbierto(false);
+    } else {
+      setCupoMaximo((c) => (Number(c) < 2 ? 2 : c));
+    }
+  }, [torneo?.id, torneo?.deporte, torneo?.formato_equipo]);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -889,6 +900,11 @@ export default function FormEquipos() {
     const userId = sess.user.id;
     const emailAuth = String(sess.user.email || '').trim();
     const tipoEquipo = equipoAbierto ? 'abierto' : 'cerrado';
+    const minJug = jugadoresMinimosEquipoTorneo(torneo);
+    if (Number(cupoMaximo) < minJug) {
+      alert(`En este torneo cada equipo debe tener al menos ${minJug} jugador(es).`);
+      return;
+    }
 
     const creadorJugador = buildCreadorJugadorParaEquipo(sess, userProfile, yo);
     if (!creadorJugador) {
@@ -1685,38 +1701,56 @@ export default function FormEquipos() {
         }}
       />
 
-      <div style={{ marginTop: '14px' }}>
-        <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>Tamaño del equipo</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {[2, 3, 4].map((n) => {
-            const active = cupoMaximo === n;
-            return (
-              <button
-                key={n}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setCupoMaximo(n)}
-                style={{
-                  flex: '1 1 88px',
-                  minWidth: '72px',
-                  padding: '8px 14px',
-                  borderRadius: '999px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
-                  background: active ? '#667eea' : 'transparent',
-                  color: active ? '#fff' : '#334155',
-                  boxShadow: active ? '0 2px 10px rgba(102, 126, 234, 0.25)' : 'none',
-                }}
-              >
-                Equipo de {n}
-              </button>
-            );
-          })}
+      {torneo && esTorneoSingles(torneo) ? (
+        <div
+          style={{
+            marginTop: '14px',
+            padding: '10px 12px',
+            borderRadius: '8px',
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            fontSize: '13px',
+            color: '#1e3a8a',
+            fontWeight: 600,
+            lineHeight: 1.45,
+          }}
+        >
+          Torneo en formato <strong>singles</strong>: tu equipo sos vos solo (1 jugador).
         </div>
-      </div>
+      ) : (
+        <div style={{ marginTop: '14px' }}>
+          <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>Tamaño del equipo</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {[2, 3, 4].map((n) => {
+              const active = cupoMaximo === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setCupoMaximo(n)}
+                  style={{
+                    flex: '1 1 88px',
+                    minWidth: '72px',
+                    padding: '8px 14px',
+                    borderRadius: '999px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                    border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
+                    background: active ? '#667eea' : 'transparent',
+                    color: active ? '#fff' : '#334155',
+                    boxShadow: active ? '0 2px 10px rgba(102, 126, 234, 0.25)' : 'none',
+                  }}
+                >
+                  Equipo de {n}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div style={{ marginTop: '14px' }}>
         <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>Tipo de equipo</div>
@@ -1740,6 +1774,7 @@ export default function FormEquipos() {
           </button>
           <button
             type="button"
+            disabled={torneo && esTorneoSingles(torneo)}
             onClick={() => setEquipoAbierto(true)}
             style={{
               flex: '1 1 120px',
@@ -1749,16 +1784,18 @@ export default function FormEquipos() {
               background: !equipoAbierto ? '#fff' : '#eff6ff',
               color: !equipoAbierto ? '#6b7280' : '#1e40af',
               fontWeight: 800,
-              cursor: 'pointer',
+              cursor: torneo && esTorneoSingles(torneo) ? 'not-allowed' : 'pointer',
               fontSize: '13px',
+              opacity: torneo && esTorneoSingles(torneo) ? 0.55 : 1,
             }}
           >
             Abierto
           </button>
         </div>
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#6b7280', lineHeight: 1.45 }}>
-          Abierto: otros jugadores pueden <strong>solicitar</strong> unirse; el capitán sigue aprobando cada
-          ingreso.
+          {torneo && esTorneoSingles(torneo)
+            ? 'En singles no aplica equipo abierto (no hay plaza para un compañero).'
+            : 'Abierto: otros jugadores pueden solicitar unirse; el capitán sigue aprobando cada ingreso.'}
         </p>
       </div>
 

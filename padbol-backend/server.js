@@ -2477,6 +2477,23 @@ function normalizeTorneoCategoriaEdad(raw) {
   return null;
 }
 
+const TORNEO_DEPORTE_VALID = new Set(['padbol', 'padel', 'pickleball']);
+
+function normalizeTorneoDeporteForDb(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (s === 'pádel' || s === 'padel') return 'padel';
+  if (TORNEO_DEPORTE_VALID.has(s)) return s;
+  return 'padbol';
+}
+
+/** Pickleball: singles o dobles; Padbol y Pádel: siempre dobles. */
+function resolveTorneoFormatoEquipoForDb(deporteNorm, formatoRaw) {
+  if (deporteNorm !== 'pickleball') return 'dobles';
+  const f = String(formatoRaw || '').trim().toLowerCase();
+  if (f === 'singles' || f === '1v1') return 'singles';
+  return 'dobles';
+}
+
 const MAX_WHATSAPP_JUGADORES_NUEVO_TORNEO = 50;
 
 /**
@@ -2572,6 +2589,8 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       genero_competencia: legacyGeneroCompBody,
       tipo_torneo_genero: tipoTorneoGeneroBody,
       categoria_edad: categoriaEdadBody,
+      deporte: deporteBody,
+      formato_equipo: formatoEquipoBody,
     } = req.body;
 
     const estadoNorm = normalizeTorneoEstadoForDb(estadoBody);
@@ -2583,6 +2602,8 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
           : tipoTorneoGeneroBody;
     const tipoComp = normalizeTorneoTipoCompetencia(tipoCompRaw) ?? 'masculino';
     const catEdad = normalizeTorneoCategoriaEdad(categoriaEdadBody) ?? 'open';
+    const deporteNorm = normalizeTorneoDeporteForDb(deporteBody);
+    const formatoEq = resolveTorneoFormatoEquipoForDb(deporteNorm, formatoEquipoBody);
 
     const row = {
       nombre,
@@ -2593,6 +2614,8 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       tipo_competencia: tipoComp,
       tipo_torneo_genero: tipoComp,
       categoria_edad: catEdad,
+      deporte: deporteNorm,
+      formato_equipo: formatoEq,
       estado: estadoNorm || 'planificacion',
       fecha_inicio,
       fecha_fin,
@@ -2970,11 +2993,13 @@ async function handleTorneoPatchOrPut(req, res) {
       genero_competencia: legacyGeneroCompPatch,
       tipo_torneo_genero: tipoTorneoGeneroPatch,
       categoria_edad: categoriaEdadPatch,
+      deporte,
+      formato_equipo: formatoEquipoPatch,
     } = req.body;
 
     const { data: prevRow, error: prevErr } = await supabase
       .from('torneos')
-      .select('estado, nombre')
+      .select('estado, nombre, deporte, formato_equipo')
       .eq('id', id)
       .maybeSingle();
     if (prevErr) throw prevErr;
@@ -3084,6 +3109,12 @@ async function handleTorneoPatchOrPut(req, res) {
         }
         patch.categoria_edad = ce;
       }
+    }
+    if (deporte !== undefined || formatoEquipoPatch !== undefined) {
+      const dep = normalizeTorneoDeporteForDb(deporte !== undefined ? deporte : prevRow?.deporte);
+      if (deporte !== undefined) patch.deporte = dep;
+      const fmtSrc = formatoEquipoPatch !== undefined ? formatoEquipoPatch : prevRow?.formato_equipo;
+      patch.formato_equipo = resolveTorneoFormatoEquipoForDb(dep, fmtSrc);
     }
 
     const { data, error } = await supabase.from('torneos').update(patch).eq('id', id).select();
