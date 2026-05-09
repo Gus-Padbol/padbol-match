@@ -3252,7 +3252,7 @@ app.get('/api/torneos/:id/busca-dupla', async (req, res) => {
     if (uids.length) {
       const { data: perfiles, error: pErr } = await supabase
         .from('jugadores_perfil')
-        .select('user_id, nombre, apellido, alias, foto_url, whatsapp, nivel')
+        .select('user_id, nombre, apellido, alias, foto_url, whatsapp, nivel, lateralidad')
         .in('user_id', uids);
       if (pErr) throw pErr;
       (perfiles || []).forEach((p) => {
@@ -3272,6 +3272,7 @@ app.get('/api/torneos/:id/busca-dupla', async (req, res) => {
         alias: perfil?.alias != null ? String(perfil.alias).trim() : '',
         foto_url: perfil?.foto_url != null ? String(perfil.foto_url).trim() : '',
         categoria: perfil?.nivel != null ? String(perfil.nivel).trim() : '',
+        lateralidad: perfil?.lateralidad != null ? String(perfil.lateralidad).trim() : '',
         whatsapp: wa || null,
       };
     });

@@ -1245,6 +1245,15 @@ button.podium-player-avatar-wrap {
   text-align: center;
 }
 
+.torneo-busca-dupla__orden-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b21a8;
+  text-align: center;
+  line-height: 1.4;
+}
+
 .torneo-busca-dupla__invites {
   display: flex;
   flex-direction: column;
@@ -1363,6 +1372,72 @@ button.podium-player-avatar-wrap {
 .torneo-busca-dupla__vos {
   font-weight: 700;
   color: #15803d;
+}
+
+.torneo-busca-dupla__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.torneo-busca-dupla__badge-compat {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.torneo-busca-dupla__badge-compat--mismo {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.torneo-busca-dupla__badge-compat--similar {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.torneo-busca-dupla__badge-compat--diferente {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.torneo-busca-dupla__badge-lat {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.torneo-busca-dupla__badge-inv {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.torneo-busca-dupla__badge-inv--enviada {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.torneo-busca-dupla__badge-inv--recibida {
+  background: #fce7f3;
+  color: #9d174d;
+  border: 1px solid #f9a8d4;
 }
 
 .torneo-busca-dupla__cat {

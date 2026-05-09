@@ -38,6 +38,13 @@ import {
   normalizeJugadorEmail,
 } from '../utils/jugadorNombreTorneo';
 import { torneoPermiteNuevasInscripciones } from '../utils/torneoInscripcionPago';
+import {
+  ordenarBuscaDuplaPorCompatibilidad,
+  tierCompatibilidadNivelBuscaDupla,
+  etiquetaCompatibilidadBuscaDupla,
+  etiquetaLateralidadBuscaDupla,
+  indiceCategoriaNivelBuscaDupla,
+} from '../utils/buscaDuplaMatchmaking';
 import '../styles/TorneoVista.css';
 
 const apiBaseUrlTorneo = (
@@ -947,6 +954,11 @@ export default function TorneoVista() {
     [session?.access_token, torneoId, loadBuscaDupla]
   );
 
+  const buscaDuplaListOrdenada = useMemo(
+    () => ordenarBuscaDuplaPorCompatibilidad(buscaDuplaList, userProfile?.nivel),
+    [buscaDuplaList, userProfile?.nivel]
+  );
+
   if (loading) {
     return (
       <div
@@ -1012,6 +1024,11 @@ export default function TorneoVista() {
     puedePanelBuscaDupla ? (
       <div className="torneo-busca-dupla">
         <h3 className="torneo-busca-dupla__titulo">Jugadores buscando dupla</h3>
+        {session?.user && indiceCategoriaNivelBuscaDupla(userProfile?.nivel) >= 0 ? (
+          <p className="torneo-busca-dupla__orden-hint">
+            Ordenados por compatibilidad con tu categoría ({String(userProfile?.nivel || '').trim() || '—'}).
+          </p>
+        ) : null}
         {buscaDuplaInvRecibidas.length > 0 ? (
           <div className="torneo-busca-dupla__invites">
             {buscaDuplaInvRecibidas.map((inv) => (
@@ -1069,15 +1086,30 @@ export default function TorneoVista() {
           </div>
         ) : null}
         {buscaDuplaLoading ? <p className="torneo-busca-dupla__hint">Cargando lista…</p> : null}
-        {!buscaDuplaLoading && buscaDuplaList.length === 0 ? (
+        {!buscaDuplaLoading && buscaDuplaListOrdenada.length === 0 ? (
           <p className="torneo-busca-dupla__hint">Todavía no hay jugadores anunciados. Sé el primero.</p>
         ) : null}
-        {buscaDuplaList.length > 0 ? (
+        {buscaDuplaListOrdenada.length > 0 ? (
           <ul className="torneo-busca-dupla__lista">
-            {buscaDuplaList.map((row) => {
+            {buscaDuplaListOrdenada.map((row) => {
               const wa = whatsappWebHref(row.whatsapp);
               const esYo = authUserId && row.user_id === authUserId;
               const nombreMostrar = String(row.nombre || row.alias || 'Jugador').trim() || 'Jugador';
+              const tier =
+                session?.user && authUserId && !esYo
+                  ? tierCompatibilidadNivelBuscaDupla(userProfile?.nivel, row.categoria)
+                  : null;
+              const compatClass =
+                tier === 0
+                  ? 'torneo-busca-dupla__badge-compat torneo-busca-dupla__badge-compat--mismo'
+                  : tier === 1
+                    ? 'torneo-busca-dupla__badge-compat torneo-busca-dupla__badge-compat--similar'
+                    : typeof tier === 'number'
+                      ? 'torneo-busca-dupla__badge-compat torneo-busca-dupla__badge-compat--diferente'
+                      : '';
+              const latTxt = etiquetaLateralidadBuscaDupla(row.lateralidad);
+              const invEnviada = buscaDuplaInvEnviadas.some((i) => String(i.to_user_id) === String(row.user_id));
+              const invRecibida = buscaDuplaInvRecibidas.some((i) => String(i.from_user_id) === String(row.user_id));
               return (
                 <li key={row.user_id} className="torneo-busca-dupla__fila">
                   <div className="torneo-busca-dupla__foto-wrap">
@@ -1092,6 +1124,22 @@ export default function TorneoVista() {
                       <strong>{nombreMostrar}</strong>
                       {row.alias ? <span className="torneo-busca-dupla__alias"> @{row.alias}</span> : null}
                       {esYo ? <span className="torneo-busca-dupla__vos"> (tú)</span> : null}
+                    </div>
+                    <div className="torneo-busca-dupla__meta-row">
+                      {typeof tier === 'number' && compatClass ? (
+                        <span className={compatClass}>{etiquetaCompatibilidadBuscaDupla(tier)}</span>
+                      ) : null}
+                      {latTxt ? <span className="torneo-busca-dupla__badge-lat">{latTxt}</span> : null}
+                      {invEnviada ? (
+                        <span className="torneo-busca-dupla__badge-inv torneo-busca-dupla__badge-inv--enviada">
+                          Invitación enviada
+                        </span>
+                      ) : null}
+                      {invRecibida ? (
+                        <span className="torneo-busca-dupla__badge-inv torneo-busca-dupla__badge-inv--recibida">
+                          Te invitó (pendiente)
+                        </span>
+                      ) : null}
                     </div>
                     {row.categoria ? (
                       <div className="torneo-busca-dupla__cat">Categoría: {row.categoria}</div>
@@ -1114,7 +1162,7 @@ export default function TorneoVista() {
                       <button
                         type="button"
                         className="torneo-busca-dupla__btn"
-                        disabled={buscaDuplaBusy}
+                        disabled={buscaDuplaBusy || invEnviada}
                         onClick={() => void invitarBuscaDupla(row.user_id)}
                       >
                         Invitar a formar equipo
