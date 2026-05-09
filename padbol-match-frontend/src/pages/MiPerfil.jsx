@@ -297,6 +297,29 @@ export default function MiPerfil() {
 
   const sessionOwnerEmail = useMemo(() => session?.user?.email?.trim() || null, [session?.user?.email]);
 
+  /** Solo confirmadas/pendientes con inicio ≥ ahora; orden próximo → lejano. */
+  const reservasProximasOrdenadas = useMemo(() => {
+    const rows = Array.isArray(reservas) ? reservas : [];
+    const parseHoraParts = (h) => {
+      const m = String(h || '').trim().match(/^(\d{1,2}):(\d{2})/);
+      return m ? [parseInt(m[1], 10), parseInt(m[2], 10)] : null;
+    };
+    const startMsLocal = (r) => {
+      const fy = String(r.fecha || '').trim().slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fy)) return null;
+      const hp = parseHoraParts(r.hora);
+      if (!hp) return null;
+      const [y, mo, da] = fy.split('-').map((x) => parseInt(x, 10));
+      return new Date(y, mo - 1, da, hp[0], hp[1], 0, 0).getTime();
+    };
+    return rows
+      .filter((r) => String(r.estado || '').toLowerCase() !== 'cancelada')
+      .map((r) => ({ r, ms: startMsLocal(r) }))
+      .filter(({ ms }) => ms != null && Number.isFinite(ms) && ms >= Date.now())
+      .sort((a, b) => a.ms - b.ms)
+      .map(({ r }) => r);
+  }, [reservas]);
+
   fotoPreviewRef.current = fotoPreview;
   useEffect(() => () => {
     const u = fotoPreviewRef.current;
@@ -818,12 +841,15 @@ export default function MiPerfil() {
       return;
     }
     try {
+      const d = new Date();
+      const todayYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const { data, error } = await supabase
         .from('reservas')
         .select('id, sede, fecha, hora, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url')
         .eq('user_id', uid)
-        .order('fecha', { ascending: false })
-        .limit(20);
+        .gte('fecha', todayYmd)
+        .order('fecha', { ascending: true })
+        .limit(80);
       if (error) {
         console.error('[MiPerfil] reservas Supabase error (completo):', {
           message: error.message,
@@ -3597,7 +3623,7 @@ export default function MiPerfil() {
         </div>
       ) : null}
 
-      {/* Historial de Reservas */}
+      {/* Próximas reservas (jugador) */}
       <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '12px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
         <button
           type="button"
@@ -3621,14 +3647,33 @@ export default function MiPerfil() {
             fontFamily: 'inherit',
           }}
         >
-          <span>📋 Mis Reservas ({reservas.length}) {misReservasColapsado ? '▼' : '▲'}</span>
+          <span>📋 Mis próximas reservas ({reservasProximasOrdenadas.length}) {misReservasColapsado ? '▼' : '▲'}</span>
         </button>
-        {!misReservasColapsado && reservas.length === 0 ? (
-          <p style={{ color: '#aaa', textAlign: 'center', margin: '12px 0 8px', fontSize: '14px' }}>Aún no tienes reservas registradas.</p>
+        {!misReservasColapsado && reservasProximasOrdenadas.length === 0 ? (
+          <div style={{ textAlign: 'center', margin: '12px 0 8px' }}>
+            <p style={{ color: '#64748b', margin: '0 0 12px', fontSize: '14px', fontWeight: 600 }}>No tienes reservas próximas</p>
+            <button
+              type="button"
+              onClick={() => navigate('/reservar')}
+              style={{
+                fontSize: '14px',
+                fontWeight: 700,
+                padding: '10px 18px',
+                borderRadius: '10px',
+                border: 'none',
+                background: '#4f46e5',
+                color: '#fff',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Reservar ahora
+            </button>
+          </div>
         ) : null}
-        {!misReservasColapsado && reservas.length > 0 ? (
+        {!misReservasColapsado && reservasProximasOrdenadas.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-            {reservas.map((r) => {
+            {reservasProximasOrdenadas.map((r) => {
               const horasHasta = (new Date(`${r.fecha}T${r.hora}:00-03:00`) - Date.now()) / (1000 * 60 * 60);
               const canCancel = horasHasta > 2 && r.estado !== 'cancelada';
               const mon = String(r.moneda || 'ARS').trim().toUpperCase();
