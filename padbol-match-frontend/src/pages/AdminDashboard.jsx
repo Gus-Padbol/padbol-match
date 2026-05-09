@@ -7579,8 +7579,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {activeTab === 'config' && puedeVerConfig && <div className="section">
         <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>⚙️ Configuración de Puntos</h2>
         {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
-        <div style={{ marginBottom: '32px' }}>
-          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '10px', fontSize: '16px' }}>
+        <div style={{ marginBottom: '12px' }}>
+          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
             Puntos base por nivel de torneo
           </h3>
           <table style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
@@ -7709,25 +7709,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </table>
         </div>
 
-        <div
-          style={{
-            marginBottom: '24px',
-            padding: '14px 16px',
-            background: 'rgba(255,255,255,0.08)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.12)',
-            maxWidth: '640px',
-          }}
-        >
-          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
-            <strong>Datos de la sede:</strong> si tienes la pestaña <strong>«Mi Sede»</strong>, usa el botón{' '}
-            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
-            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
-            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
-            se ofrecen en el flujo de reservas público.
-          </p>
-        </div>
-
         {/* Distribución por posición */}
         {(() => {
           const todosNiveles = STANDARD_KEYS
@@ -7739,11 +7720,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           const pctSum = [1,2,3,4,5,6,7,8,9,10].reduce((acc, pos) => acc + (configPosiciones[pos] ?? 0), 0);
           const pctDiff = pctSum - 100;
           return (
-            <div style={{ marginBottom: '28px' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+            <div style={{ marginBottom: '18px' }}>
+              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
                 Distribución de puntos por posición
               </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   Previsualizar con:
                 </label>
@@ -7804,6 +7785,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           );
         })()}
+
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '12px 14px',
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            maxWidth: '640px',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
+            <strong>Datos de la sede:</strong> si tienes la pestaña <strong>«Mi Sede»</strong>, usa el botón{' '}
+            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
+            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
+            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
+            se ofrecen en el flujo de reservas público.
+          </p>
+        </div>
 
         {/* Save button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
