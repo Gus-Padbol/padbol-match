@@ -41,7 +41,26 @@ html {
   padding-top: calc(8px + env(safe-area-inset-top, 0px));
 }
 
+/**
+ * Desktop (≥769px, alineado con breakpoints tipo panel admin): el contenido de la barra
+ * comparte max-width con el cuerpo (~900px), centrado. En viewport estrecho no se aplica max-width.
+ */
+.app-header-inner {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .app-header-inner--max-body {
+    max-width: var(--pm-header-inner-max, var(--pm-app-body-max-width));
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 :root {
+  /** Misma anchura que la columna central del hub (`HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX`). */
+  --pm-app-body-max-width: 900px;
   --pm-color-primary: #22c55e;
   --pm-color-primary-dark: #16a34a;
   --pm-color-secondary: #6366f1;

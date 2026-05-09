@@ -89,7 +89,7 @@ export default function AppHeader({
    * Panel /admin: chip compacto a la izquierda, logout a la derecha; sin ← Inicio ni menú ⋮.
    */
   adminPanelMinimalHeader = false,
-  /** Si se define (px), el contenido de la barra queda centrado y acotado (p. ej. 900 como el hub). */
+  /** Si se define (px), en desktop sustituye el max-width por defecto del cuerpo (~900px). */
   contentMaxWidth = null,
 }) {
   const navigate = useNavigate();
@@ -450,16 +450,11 @@ export default function AppHeader({
     };
   }, [searchTerm, searchOpen]);
 
-  const headerInnerMaxStyle = useMemo(() => {
+  /** Solo desktop: max-width vía CSS (`.app-header-inner--max-body`). Valor distinto al default → variable CSS. */
+  const headerInnerCssVarStyle = useMemo(() => {
     const n = contentMaxWidth == null || contentMaxWidth === '' ? NaN : Number(contentMaxWidth);
-    if (!Number.isFinite(n) || n <= 0) return null;
-    return {
-      width: '100%',
-      maxWidth: `${n}px`,
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      boxSizing: 'border-box',
-    };
+    if (!Number.isFinite(n) || n <= 0) return undefined;
+    return { '--pm-header-inner-max': `${n}px` };
   }, [contentMaxWidth]);
 
   /** Panel admin: chip con apodo o nombre real (mismo criterio que el hub); nunca `alias`. */
@@ -877,17 +872,21 @@ export default function AppHeader({
         }}
       >
         <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            minHeight: '56px',
-            ...(headerInnerMaxStyle || {}),
-          }}
+          className="app-header-inner app-header-inner--max-body"
+          style={headerInnerCssVarStyle}
         >
-          {adminMinimalRow}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              minHeight: '56px',
+            }}
+          >
+            {adminMinimalRow}
+          </div>
         </div>
       </div>
     );
@@ -899,7 +898,6 @@ export default function AppHeader({
     alignItems: 'center',
     columnGap: '8px',
     minHeight: '56px',
-    ...(headerInnerMaxStyle || {}),
   };
 
   return (
@@ -915,6 +913,7 @@ export default function AppHeader({
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}
     >
+      <div className="app-header-inner app-header-inner--max-body" style={headerInnerCssVarStyle}>
       <div style={headerGridStyle}>
       <div
         style={{
@@ -1271,6 +1270,7 @@ export default function AppHeader({
               </span>
             ) : null}
           </div>
+      </div>
       </div>
       </div>
     </div>
