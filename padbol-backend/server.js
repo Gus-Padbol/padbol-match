@@ -4157,7 +4157,7 @@ function torneoPasaFiltroGeneroRankingApi(t, filtro) {
   return true;
 }
 
-// GET /api/rankings?scope=local|nacional|internacional&sede_id=X&categoria=Y&pais=&provincia=&ciudad=&tipo_competencia=
+// GET /api/rankings?scope=local|nacional|internacional&sede_id=X&categoria=Y&pais=&provincia=&ciudad=&tipo_competencia=&deporte=
 app.get('/api/rankings', async (req, res) => {
   const {
     scope = 'internacional',
@@ -4168,7 +4168,10 @@ app.get('/api/rankings', async (req, res) => {
     ciudad,
     tipo_competencia: tipoCompQ,
     genero_competencia: legacyTipoQ,
+    deporte: deporteQ,
   } = req.query;
+
+  const deporteFiltro = normalizeTorneoDeporteForDb(deporteQ);
 
   const genCompFilt = String(tipoCompQ || legacyTipoQ || '').trim().toLowerCase();
   const normPais = (s) =>
@@ -4189,9 +4192,10 @@ app.get('/api/rankings', async (req, res) => {
 
     let torneosQuery = supabase
       .from('torneos')
-      .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, tipo_torneo_genero, genero_competencia, categoria_edad')
+      .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, tipo_torneo_genero, genero_competencia, categoria_edad, deporte')
       .eq('estado', 'finalizado')
-      .in('nivel_torneo', nivelesPermitidos);
+      .in('nivel_torneo', nivelesPermitidos)
+      .eq('deporte', deporteFiltro);
 
     if (scope === 'local') {
       const sidRaw = sede_id != null && String(sede_id).trim() !== '' ? parseInt(String(sede_id), 10) : NaN;

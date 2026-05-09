@@ -16,6 +16,12 @@ import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador'
 import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
 import { TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
 import { torneoTipoCompetenciaDb } from '../utils/torneoFormatters';
+import {
+  TORNEO_DEPORTE_PADBOL,
+  TORNEO_DEPORTE_OPTIONS,
+  etiquetaDeporteTorneo,
+  normalizeTorneoDeporte,
+} from '../utils/torneoDeporteFormato';
 
 function etiquetaRankingJugador(player) {
   if (!player) return '—';
@@ -55,14 +61,16 @@ function torneoPasaFiltroTipoCompetenciaRanking(t, filtro) {
 /**
  * Misma lógica que GET /api/rankings en el backend; consulta directa a Supabase desde el cliente.
  */
-async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria, tipoCompetencia }) {
+async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria, tipoCompetencia, deporte }) {
   const nivelesPermitidos = SCOPE_NIVELES_RANKING[scope] || SCOPE_NIVELES_RANKING.internacional;
+  const dep = normalizeTorneoDeporte(deporte);
 
   let torneosQuery = supabase
     .from('torneos')
-    .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, tipo_torneo_genero, genero_competencia, categoria_edad')
+    .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, tipo_torneo_genero, genero_competencia, categoria_edad, deporte')
     .eq('estado', 'finalizado')
-    .in('nivel_torneo', nivelesPermitidos);
+    .in('nivel_torneo', nivelesPermitidos)
+    .eq('deporte', dep);
 
   if (scope === 'local') {
     const pPais = pais && String(pais).trim();
@@ -458,6 +466,8 @@ export default function Rankings() {
   const location = useLocation();
   const narrow = useMediaNarrow(520);
   const [activeTab, setActiveTab] = useState('local');
+  /** Solo torneos de este deporte; Nacional/Internacional FIPA solo con Padbol en la UI. */
+  const [rankingDeporte, setRankingDeporte] = useState(TORNEO_DEPORTE_PADBOL);
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
@@ -477,6 +487,11 @@ export default function Rankings() {
   const [rankingFilterSheetOpen, setRankingFilterSheetOpen] = useState(false);
   /** Borrador de filtros mientras el panel está abierto; al cerrar sin Aplicar se descarta. */
   const [rankingFilterSheetDraft, setRankingFilterSheetDraft] = useState(null);
+
+  const tabsForDeporte = useMemo(
+    () => (rankingDeporte === TORNEO_DEPORTE_PADBOL ? TABS : TABS.filter((t) => t.id === 'local')),
+    [rankingDeporte],
+  );
 
   const paisesDesdeSedes = useMemo(
     () =>
@@ -660,6 +675,7 @@ export default function Rankings() {
           ciudad: activeTab === 'local' ? localCiudad : '',
           categoria: selectedCategoria,
           tipoCompetencia: selectedGeneroTorneo,
+          deporte: rankingDeporte,
         });
         if (cancelled) return;
         setRankingSinDatosDisponibles(false);
@@ -677,7 +693,22 @@ export default function Rankings() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, selectedCategoria, selectedGeneroTorneo, localPais, localProvincia, localCiudad, nacionalPais]);
+  }, [
+    activeTab,
+    rankingDeporte,
+    selectedCategoria,
+    selectedGeneroTorneo,
+    localPais,
+    localProvincia,
+    localCiudad,
+    nacionalPais,
+  ]);
+
+  useEffect(() => {
+    if (rankingDeporte !== TORNEO_DEPORTE_PADBOL && activeTab !== 'local') {
+      setActiveTab('local');
+    }
+  }, [rankingDeporte, activeTab]);
 
   // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -747,9 +778,62 @@ export default function Rankings() {
           }}
         />
 
+        {/* Deporte del ranking (encima de Local / Nacional / FIPA) */}
+        <div style={{ marginBottom: '12px' }}>
+          <label
+            htmlFor="ranking-deporte-select"
+            style={{
+              display: 'block',
+              fontSize: '12px',
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.9)',
+              marginBottom: '6px',
+              letterSpacing: '0.02em',
+            }}
+          >
+            Deporte
+          </label>
+          <select
+            id="ranking-deporte-select"
+            value={rankingDeporte}
+            onChange={(e) => {
+              const v = normalizeTorneoDeporte(e.target.value);
+              setRankingDeporte(v);
+              if (v !== TORNEO_DEPORTE_PADBOL) {
+                setRankingFilterSheetOpen(false);
+                setRankingFilterSheetDraft(null);
+                setActiveTab('local');
+              }
+            }}
+            style={{
+              ...RANKING_SHEET_SELECT_STYLE,
+              width: '100%',
+              maxWidth: '420px',
+              display: 'block',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              border: '1px solid rgba(255,255,255,0.35)',
+              background: 'rgba(15,23,42,0.45)',
+              color: '#f8fafc',
+            }}
+          >
+            {TORNEO_DEPORTE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value} style={{ color: '#0f172a' }}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {rankingDeporte !== TORNEO_DEPORTE_PADBOL ? (
+            <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.45, textAlign: 'center' }}>
+              Nacional e Internacional FIPA aplican solo a torneos de Padbol; aquí ves el ranking local de{' '}
+              {etiquetaDeporteTorneo(rankingDeporte)}.
+            </p>
+          ) : null}
+        </div>
+
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '4px', marginBottom: '12px' }}>
-          {TABS.map(tab => (
+          {tabsForDeporte.map((tab) => (
             <button
               key={tab.id}
               onClick={() => {
@@ -814,15 +898,15 @@ export default function Rankings() {
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginBottom: '12px' }}>
           {activeTab === 'local' &&
             (localPais || localProvincia || localCiudad
-              ? `Ranking local · ${[localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · ')}`
-              : 'Ranking local · torneos de club finalizados (filtra por ubicación o deja Todos)')}
+              ? `Ranking local · ${etiquetaDeporteTorneo(rankingDeporte)} · ${[localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · ')}`
+              : `Ranking local · ${etiquetaDeporteTorneo(rankingDeporte)} · torneos de club finalizados (filtra por ubicación o deja Todos)`)}
           {activeTab === 'nacional' &&
             (nacionalPais
-              ? `Ranking nacional · ${countryLabelWithFlag(nacionalPais)}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
-              : 'Ranking nacional · todos los países o elige uno para filtrar jugadores por país del perfil')}
+              ? `Ranking nacional · ${etiquetaDeporteTorneo(rankingDeporte)} · ${countryLabelWithFlag(nacionalPais)}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
+              : `Ranking nacional · ${etiquetaDeporteTorneo(rankingDeporte)} · todos los países o elige uno para filtrar jugadores por país del perfil`)}
           {activeTab === 'internacional' && (
             <>
-              Ranking FIPA · torneos internacionales y mundiales finalizados
+              Ranking FIPA · {etiquetaDeporteTorneo(rankingDeporte)} · torneos internacionales y mundiales finalizados
               {selectedCategoria ? ` · Categoría: ${selectedCategoria}` : ''}
             </>
           )}
