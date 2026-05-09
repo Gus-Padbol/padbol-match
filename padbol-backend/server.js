@@ -3046,6 +3046,87 @@ async function notifyJugadoresPerfilSedeNuevoTorneoWhatsApp(torneoRow) {
   }
 }
 
+const CHUNK_JUGADORES_PERFIL_IN = 80;
+
+function recolectarEmailsYUserIdsJugadoresEquiposTorneo(equiposRows) {
+  const emails = new Set();
+  const userIds = new Set();
+  for (const eq of equiposRows || []) {
+    const ce = String(eq.creador_email || '').trim().toLowerCase();
+    if (ce) emails.add(ce);
+    const cid = String(eq.creador_id || '').trim();
+    if (cid && buscaDuplaEsUuidValido(cid)) userIds.add(cid);
+    const arr = Array.isArray(eq.jugadores) ? eq.jugadores : [];
+    for (const j of arr) {
+      if (!jugadorRegistradoEnEquipoJsonBuscaDupla(j)) continue;
+      const em = String(j.email || '').trim().toLowerCase();
+      if (em) emails.add(em);
+      const jid = String(j.id || '').trim();
+      if (jid && buscaDuplaEsUuidValido(jid)) userIds.add(jid);
+    }
+  }
+  return { emails: [...emails], userIds: [...userIds] };
+}
+
+/**
+ * Tras publicar fixture (generar-partidos o sorteo de grupos): avisa por WhatsApp a jugadores
+ * inscriptos (roster en equipos + creador), usando `jugadores_perfil.whatsapp`. No bloquea la respuesta HTTP.
+ */
+async function notifyJugadoresInscriptosTorneoFixtureWhatsApp(torneoIdNum) {
+  try {
+    const tid = parseInt(String(torneoIdNum), 10);
+    if (!Number.isFinite(tid)) return;
+
+    const { data: torneoRow, error: tErr } = await supabase.from('torneos').select('nombre').eq('id', tid).maybeSingle();
+    if (tErr || !torneoRow) return;
+
+    const nombreTorneo = String(torneoRow.nombre || '').trim() || 'el torneo';
+    const body = `🏆 ¡El torneo ${nombreTorneo} ya tiene fixture! Entrá a ver tu zona y tus fechas 👉 https://www.padbolmatch.com`;
+
+    const { data: equiposRows, error: eErr } = await supabase
+      .from('equipos')
+      .select('jugadores, creador_email, creador_id')
+      .eq('torneo_id', tid);
+    if (eErr || !Array.isArray(equiposRows) || equiposRows.length === 0) return;
+
+    const { emails, userIds } = recolectarEmailsYUserIdsJugadoresEquiposTorneo(equiposRows);
+    if (!emails.length && !userIds.length) return;
+
+    const seenDestinos = new Set();
+    const enviarSiNuevo = async (rawWa) => {
+      const raw = String(rawWa || '').trim();
+      if (!raw) return;
+      const toNorm = normalizePhoneToE164ForTwilioWhatsApp(raw);
+      if (!toNorm || seenDestinos.has(toNorm)) return;
+      seenDestinos.add(toNorm);
+      try {
+        await sendTwilioWhatsAppBodyToRaw(raw, body);
+      } catch {
+        /* silencioso */
+      }
+    };
+
+    for (let i = 0; i < emails.length; i += CHUNK_JUGADORES_PERFIL_IN) {
+      const chunk = emails.slice(i, i + CHUNK_JUGADORES_PERFIL_IN);
+      const { data: rows, error: qErr } = await supabase.from('jugadores_perfil').select('whatsapp').in('email', chunk);
+      if (qErr) continue;
+      for (const row of rows || []) {
+        await enviarSiNuevo(row?.whatsapp);
+      }
+    }
+    for (let i = 0; i < userIds.length; i += CHUNK_JUGADORES_PERFIL_IN) {
+      const chunk = userIds.slice(i, i + CHUNK_JUGADORES_PERFIL_IN);
+      const { data: rows, error: qErr } = await supabase.from('jugadores_perfil').select('whatsapp').in('user_id', chunk);
+      if (qErr) continue;
+      for (const row of rows || []) {
+        await enviarSiNuevo(row?.whatsapp);
+      }
+    }
+  } catch {
+    /* silencioso */
+  }
+}
+
 app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
   try {
     const {
@@ -4256,6 +4337,7 @@ app.post('/api/torneos/:id/generar-partidos', async (req, res) => {
     await supabase.from('torneos').update({ estado: 'en_curso' }).eq('id', id);
 
     console.log(`✅ ${partidos.length} partidos generados para torneo ${id} (${torneo.tipo_torneo})`);
+    void notifyJugadoresInscriptosTorneoFixtureWhatsApp(parseInt(String(id), 10)).catch(() => {});
     res.json({ partidos, total: partidos.length, formato: torneo.tipo_torneo });
   } catch (err) {
     console.error('❌ Error generar-partidos:', err.message);
@@ -4338,6 +4420,7 @@ app.post('/api/torneos/:id/sorteo', async (req, res) => {
       .single();
     if (uErr) throw uErr;
 
+    void notifyJugadoresInscriptosTorneoFixtureWhatsApp(tid).catch(() => {});
     res.json({
       ok: true,
       partidos: inserted,
