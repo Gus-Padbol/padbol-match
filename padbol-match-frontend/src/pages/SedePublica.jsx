@@ -160,6 +160,23 @@ function buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud) {
   return buildMapsSearchHref(direccion, ciudad, pais);
 }
 
+function parseAnioFundacionSedePublica(raw) {
+  const y = parseInt(String(raw ?? '').trim(), 10);
+  if (!Number.isFinite(y) || y < 1800 || y > 2100) return null;
+  return y;
+}
+
+/** Al menos un dato útil para la sección «En números». */
+function sedeTieneSeccionEnNumeros(stats, sedeRow) {
+  if (parseAnioFundacionSedePublica(sedeRow?.anio_fundacion) != null) return true;
+  if (!stats || typeof stats !== 'object') return false;
+  if ((Number(stats.torneos_realizados_total) || 0) > 0) return true;
+  if ((Number(stats.jugadores_reservaron_total) || 0) > 0) return true;
+  const d = stats.deporte_mas_jugado;
+  if (d && ((Number(d.torneos) || 0) > 0 || (Number(d.canchas_cantidad) || 0) > 0)) return true;
+  return false;
+}
+
 /**
  * URLs del carrusel: `fotos_destacadas` en orden (máx. 4), solo si existen en `fotos_urls`;
  * si no, primeras 4 de la galería.
@@ -1581,6 +1598,8 @@ export default function SedePublica() {
     [location.pathname]
   );
   const [sede, setSede] = useState(null);
+  /** Viene en `GET /api/sedes/:id` como `estadisticas_publicas` (null si solo fallback Supabase). */
+  const [estadisticasPublicas, setEstadisticasPublicas] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [fotosGalleryOpen, setFotosGalleryOpen] = useState(false);
@@ -1681,23 +1700,59 @@ export default function SedePublica() {
       setLoading(false);
       return;
     }
+    const idNum = parseInt(String(sedeId), 10);
+    if (!Number.isFinite(idNum)) {
+      setError('ID de sede inválido.');
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
     setLoading(true);
     setError('');
-    supabase
-      .from('sedes')
-      .select('*')
-      .eq('id', parseInt(sedeId, 10))
-      .maybeSingle()
-      .then(({ data, error: err }) => {
+    setEstadisticasPublicas(null);
+
+    (async () => {
+      try {
+        const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}`));
+        const j = await r.json().catch(() => ({}));
+        if (cancelled) return;
+        if (r.ok) {
+          const { estadisticas_publicas: stats, ...rest } = j;
+          if (!rest || rest.id == null) {
+            setError(`Sede con id ${sedeId} no encontrada.`);
+            setSede(null);
+            setEstadisticasPublicas(null);
+          } else {
+            setError('');
+            setSede(rest);
+            setEstadisticasPublicas(stats ?? null);
+          }
+          return;
+        }
+      } catch {
+        /* fallback */
+      }
+      if (cancelled) return;
+      try {
+        const { data, error: err } = await supabase.from('sedes').select('*').eq('id', idNum).maybeSingle();
+        if (cancelled) return;
         if (err) setError(`Error al cargar sede: ${err.message}`);
         else if (!data) setError(`Sede con id ${sedeId} no encontrada.`);
-        else setSede(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError('Error inesperado: ' + (err?.message || String(err)));
-        setLoading(false);
-      });
+        else {
+          setError('');
+          setSede(data);
+          setEstadisticasPublicas(null);
+        }
+      } catch (err) {
+        if (!cancelled) setError('Error inesperado: ' + (err?.message || String(err)));
+      }
+    })().finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [sedeId]);
 
   const sedeViewReady = !loading && !error && sede;
@@ -2143,6 +2198,142 @@ export default function SedePublica() {
                 >
                   Ver todas las fotos ({fotos.length})
                 </button>
+              ) : null}
+
+              {sedeTieneSeccionEnNumeros(estadisticasPublicas, sede) ? (
+                <div
+                  style={{
+                    marginTop: '6px',
+                    marginBottom: '14px',
+                    padding: '16px 14px',
+                    borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <h2
+                    style={{
+                      margin: '0 0 12px',
+                      fontSize: '17px',
+                      fontWeight: 800,
+                      color: '#f8fafc',
+                    }}
+                  >
+                    En números
+                  </h2>
+                  <ul
+                    style={{
+                      margin: 0,
+                      padding: 0,
+                      listStyle: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                    }}
+                  >
+                    {(Number(estadisticasPublicas?.torneos_realizados_total) || 0) > 0 ? (
+                      <li
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          gap: '12px',
+                          fontSize: '14px',
+                          color: 'rgba(248,250,252,0.95)',
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        <span style={{ fontWeight: 700 }}>Torneos realizados en esta sede</span>
+                        <span style={{ fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                          {(Number(estadisticasPublicas.torneos_realizados_total) || 0).toLocaleString('es-AR')}
+                        </span>
+                      </li>
+                    ) : null}
+                    {(Number(estadisticasPublicas?.jugadores_reservaron_total) || 0) > 0 ? (
+                      <li
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          gap: '12px',
+                          fontSize: '14px',
+                          color: 'rgba(248,250,252,0.95)',
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        <span style={{ fontWeight: 700 }}>Jugadores que han reservado</span>
+                        <span style={{ fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                          {(Number(estadisticasPublicas.jugadores_reservaron_total) || 0).toLocaleString('es-AR')}
+                        </span>
+                      </li>
+                    ) : null}
+                    {(() => {
+                      const d = estadisticasPublicas?.deporte_mas_jugado;
+                      const nt = Number(d?.torneos) || 0;
+                      const nc = Number(d?.canchas_cantidad) || 0;
+                      if (!d?.label || (nt <= 0 && nc <= 0)) return null;
+                      const sub =
+                        nt > 0
+                          ? `${nt.toLocaleString('es-AR')} torneo${nt === 1 ? '' : 's'}`
+                          : `${nc.toLocaleString('es-AR')} cancha${nc === 1 ? '' : 's'} (configuración)`;
+                      return (
+                        <li
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'baseline',
+                            gap: '12px',
+                            fontSize: '14px',
+                            color: 'rgba(248,250,252,0.95)',
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          <span style={{ fontWeight: 700 }}>Deporte más jugado</span>
+                          <span
+                            style={{
+                              fontWeight: 800,
+                              color: '#fff',
+                              textAlign: 'right',
+                              maxWidth: '52%',
+                            }}
+                          >
+                            {String(d.label)}
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                color: 'rgba(226,232,240,0.85)',
+                                marginTop: '2px',
+                              }}
+                            >
+                              {sub}
+                            </span>
+                          </span>
+                        </li>
+                      );
+                    })()}
+                    {parseAnioFundacionSedePublica(sede?.anio_fundacion) != null ? (
+                      <li
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          gap: '12px',
+                          fontSize: '14px',
+                          color: 'rgba(248,250,252,0.95)',
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        <span style={{ fontWeight: 700 }}>Año de fundación</span>
+                        <span style={{ fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                          {parseAnioFundacionSedePublica(sede.anio_fundacion)}
+                        </span>
+                      </li>
+                    ) : null}
+                  </ul>
+                </div>
               ) : null}
 
               <div

@@ -276,6 +276,10 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     moneda: sedeData.moneda || 'ARS',
     descripcion: sedeData.descripcion || '',
     historia: sedeData.historia != null ? String(sedeData.historia) : '',
+    anio_fundacion:
+      sedeData.anio_fundacion != null && String(sedeData.anio_fundacion).trim() !== ''
+        ? String(sedeData.anio_fundacion).trim()
+        : '',
     metodo_pago: sedeData.metodo_pago || 'mercadopago',
     stripe_account_id: sedeData.stripe_account_id || '',
     mp_access_token: sedeData.mp_access_token || '',
@@ -325,6 +329,12 @@ function miSedeFormToApiPatchBody(form) {
       form.historia != null && String(form.historia).trim() !== ''
         ? String(form.historia).trim().slice(0, 500)
         : null,
+    anio_fundacion: (() => {
+      const s = String(form.anio_fundacion ?? '').trim();
+      if (!s) return null;
+      const y = parseInt(s, 10);
+      return Number.isFinite(y) && y >= 1800 && y <= 2100 ? y : null;
+    })(),
     metodo_pago: form.metodo_pago || 'mercadopago',
     pago_manual_instrucciones: form.pago_manual_instrucciones || null,
     latitud: latOk ? parseFloat(form.latitud) : null,
@@ -9128,6 +9138,38 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#9ca3af', lineHeight: 1.45 }}>
                     Visible debajo de las fotos en <strong>/sede/…</strong>. La descripción corta de arriba sigue siendo la frase del hero.
+                  </p>
+                </div>
+              </div>
+              <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>
+                  Año de fundación
+                </label>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1800}
+                    max={2100}
+                    step={1}
+                    placeholder="Ej: 2015"
+                    value={miSedeForm.anio_fundacion || ''}
+                    onChange={(e) =>
+                      setMiSedeForm((p) => ({ ...p, anio_fundacion: e.target.value.replace(/[^\d]/g, '').slice(0, 4) }))
+                    }
+                    style={{
+                      width: '100%',
+                      maxWidth: '160px',
+                      padding: '7px 10px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      color: '#333',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#9ca3af', lineHeight: 1.45 }}>
+                    Opcional. Se muestra en la sección «En números» del perfil público del club.
                   </p>
                 </div>
               </div>

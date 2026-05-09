@@ -1545,6 +1545,99 @@ app.get('/api/contratos-sedes', async (req, res) => {
   }
 });
 
+/** Etiqueta corta para deporte en estadísticas públicas de sede. */
+function etiquetaDeporteEstadisticaSedePublica(dep) {
+  const d = String(dep || '').trim().toLowerCase();
+  if (d === 'padel' || d === 'pádel') return 'Pádel';
+  if (d === 'pickleball') return 'Pickleball';
+  return 'Padbol';
+}
+
+/**
+ * Métricas agregadas para la ficha pública `/sede/:id` (torneos, reservas, deporte).
+ * No incluye `anio_fundacion` (viene en la fila `sedes`).
+ */
+async function computeEstadisticasPublicasSede(sedeIdNum, nombreSedeRaw) {
+  const sid = Number(sedeIdNum);
+  const nombreSede = String(nombreSedeRaw || '').trim();
+
+  const tornFinPromise = supabase
+    .from('torneos')
+    .select('id', { count: 'exact', head: true })
+    .eq('sede_id', sid)
+    .eq('estado', 'finalizado');
+
+  const tornDepsPromise = supabase.from('torneos').select('deporte').eq('sede_id', sid).limit(25000);
+
+  const [tFinRes, tornDepsRes] = await Promise.all([tornFinPromise, tornDepsPromise]);
+  if (tFinRes.error) throw tFinRes.error;
+  if (tornDepsRes.error) throw tornDepsRes.error;
+
+  const torneos_realizados_total = tFinRes.count ?? 0;
+  const depRows = tornDepsRes.data || [];
+
+  let deporte_mas_jugado = null;
+  const depMap = {};
+  for (const row of depRows) {
+    const k = normalizeTorneoDeporteForDb(row.deporte);
+    depMap[k] = (depMap[k] || 0) + 1;
+  }
+  const depEntries = Object.entries(depMap).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  if (depEntries.length && depEntries[0][1] > 0) {
+    const [bestKey, bestN] = depEntries[0];
+    deporte_mas_jugado = {
+      deporte: bestKey,
+      label: etiquetaDeporteEstadisticaSedePublica(bestKey),
+      torneos: bestN,
+    };
+  } else {
+    const invMap = await deportePrincipalPorSedeIdsStats(supabase, [sid]);
+    const row = invMap.get(sid) ?? invMap.get(String(sid));
+    const c = Number(row?.cantidad) || 0;
+    if (row?.deporte && c > 0) {
+      const dk = String(row.deporte).trim().toLowerCase();
+      deporte_mas_jugado = {
+        deporte: dk,
+        label: etiquetaDeporteEstadisticaSedePublica(dk),
+        canchas_cantidad: c,
+      };
+    }
+  }
+
+  let jugadores_reservaron_total = 0;
+  if (nombreSede) {
+    const keys = new Set();
+    const pageSize = 1000;
+    let from = 0;
+    for (let guard = 0; guard < 250; guard += 1) {
+      const { data: rows, error: rvErr } = await supabase
+        .from('reservas')
+        .select('user_id,email')
+        .eq('sede', nombreSede)
+        .neq('estado', 'cancelada')
+        .range(from, from + pageSize - 1);
+      if (rvErr) break;
+      if (!rows?.length) break;
+      for (const r of rows) {
+        const uidRaw = r.user_id != null && String(r.user_id).trim() !== '' ? String(r.user_id).trim().toLowerCase() : '';
+        const uid = uidRaw ? `u:${uidRaw}` : null;
+        const em = String(r.email || '').trim().toLowerCase();
+        const k = uid || (em ? `e:${em}` : null);
+        if (k) keys.add(k);
+      }
+      if (rows.length < pageSize) break;
+      from += pageSize;
+    }
+    jugadores_reservaron_total = keys.size;
+  }
+
+  return {
+    torneos_realizados_total,
+    jugadores_reservaron_total,
+    deporte_mas_jugado,
+  };
+}
+
 /** Una sede con todos los campos de `sedes` (precio_turno, franjas, etc.) para reserva / detalle. */
 app.get('/api/sedes/:id', async (req, res) => {
   try {
@@ -1563,7 +1656,13 @@ app.get('/api/sedes/:id', async (req, res) => {
     } catch (e) {
       console.warn('GET /api/sedes/:id canchas_activas:', e?.message || e);
     }
-    res.json(out);
+    let estadisticas_publicas = null;
+    try {
+      estadisticas_publicas = await computeEstadisticasPublicasSede(id, sede.nombre);
+    } catch (e) {
+      console.warn('GET /api/sedes/:id estadisticas_publicas:', e?.message || e);
+    }
+    res.json({ ...out, estadisticas_publicas });
   } catch (err) {
     console.error('❌ Error GET /api/sedes/:id:', err.message);
     res.status(500).json({ error: err.message });
@@ -1627,6 +1726,17 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (hop('historia')) {
       const h = String(b.historia ?? '').trim();
       patch.historia = h ? h.slice(0, 500) : null;
+    }
+    if (hop('anio_fundacion')) {
+      if (b.anio_fundacion === null || b.anio_fundacion === '') {
+        patch.anio_fundacion = null;
+      } else {
+        const y = parseInt(String(b.anio_fundacion).trim(), 10);
+        if (!Number.isFinite(y) || y < 1800 || y > 2100) {
+          return res.status(400).json({ error: 'anio_fundacion debe ser un año entre 1800 y 2100' });
+        }
+        patch.anio_fundacion = y;
+      }
     }
     if (hop('metodo_pago')) patch.metodo_pago = normalizeMetodoPago(b.metodo_pago);
     if (hop('stripe_account_id')) patch.stripe_account_id = String(b.stripe_account_id || '').trim() || null;
