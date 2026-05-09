@@ -1195,7 +1195,22 @@ function sedeLicenciaChip(s) {
   return <span style={{ color: '#64748b', fontSize: '13px' }}>Sin licencia</span>;
 }
 
-/** Panel contrato + suscripción (super admin, detalle expandido) — compartido tabla / tarjeta móvil. */
+/** Búsqueda en vivo (nombre o número de licencia) sobre la lista en memoria. */
+function sedeMatchesSuperAdminBusqueda(s, queryRaw) {
+  const raw = String(queryRaw || '').trim();
+  if (!raw) return true;
+  const q = raw.toLowerCase();
+  const nombre = String(s?.nombre || '').toLowerCase();
+  if (nombre.includes(q)) return true;
+  const lic = String(s?.numero_licencia ?? '').trim().toLowerCase();
+  if (!lic) return false;
+  if (lic.includes(q)) return true;
+  const qCompact = q.replace(/[\s\-_.]/g, '');
+  const licCompact = lic.replace(/[\s\-_.]/g, '');
+  return Boolean(qCompact && licCompact && licCompact.includes(qCompact));
+}
+
+/** Panel contrato + suscripción (super admin) — modal detalle sede en listado; mismo bloque que antes en fila expandida. */
 function SedeSuperDetallePanel({
   s,
   contrato,
@@ -1400,6 +1415,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   /** Filtros país/ciudad super_admin (tabla desktop + tarjetas móvil; paginación sobre lista filtrada). */
   const [sedeMobileFiltroPais, setSedeMobileFiltroPais] = useState('');
   const [sedeMobileFiltroCiudad, setSedeMobileFiltroCiudad] = useState('');
+  /** Búsqueda por nombre de sede o número de licencia (super_admin, lista registradas). */
+  const [sedesSuperAdminBusquedaTexto, setSedesSuperAdminBusquedaTexto] = useState('');
   /** Paginación lista sedes (super_admin), sobre resultados filtrados por país/ciudad */
   const [sedesSuperAdminPagina, setSedesSuperAdminPagina] = useState(1);
   /** Equipos de torneos en alcance (para ingresos por inscripción confirmada). */
@@ -3038,9 +3055,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     return sedesSuperAdminLista.filter((s) => {
       if (sedeMobileFiltroPais && String(s?.pais || '').trim() !== sedeMobileFiltroPais) return false;
       if (sedeMobileFiltroCiudad && String(s?.ciudad || '').trim() !== sedeMobileFiltroCiudad) return false;
+      if (!sedeMatchesSuperAdminBusqueda(s, sedesSuperAdminBusquedaTexto)) return false;
       return true;
     });
-  }, [isSuperAdmin, sedesSuperAdminLista, sedeMobileFiltroPais, sedeMobileFiltroCiudad]);
+  }, [isSuperAdmin, sedesSuperAdminLista, sedeMobileFiltroPais, sedeMobileFiltroCiudad, sedesSuperAdminBusquedaTexto]);
 
   const sedesSuperAdminPaginacion = useMemo(() => {
     if (!isSuperAdmin) {
@@ -3057,7 +3075,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   useEffect(() => {
     setSedesSuperAdminPagina(1);
-  }, [sedeMobileFiltroPais, sedeMobileFiltroCiudad]);
+  }, [sedeMobileFiltroPais, sedeMobileFiltroCiudad, sedesSuperAdminBusquedaTexto]);
+
+  const sedeSuperAdminDetalleModal = useMemo(() => {
+    if (!isSuperAdmin || sedeDetalleAbiertoId == null) return null;
+    const id = Number(sedeDetalleAbiertoId);
+    return sedesSuperAdminLista.find((x) => Number(x.id) === id) || null;
+  }, [isSuperAdmin, sedeDetalleAbiertoId, sedesSuperAdminLista]);
+
+  useEffect(() => {
+    if (activeTab !== 'sedes') setSedeDetalleAbiertoId(null);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!esAdminNacional) {
@@ -5989,6 +6017,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       ))}
                     </select>
                   </label>
+                  <label className="sedes-admin-filter-field sedes-admin-filter-field--search">
+                    <span className="sedes-admin-filter-label">Buscar</span>
+                    <input
+                      type="search"
+                      value={sedesSuperAdminBusquedaTexto}
+                      onChange={(e) => setSedesSuperAdminBusquedaTexto(e.target.value)}
+                      placeholder="Nombre o nº de licencia"
+                      className="sedes-admin-filter-select"
+                      autoComplete="off"
+                      enterKeyHint="search"
+                      aria-label="Buscar sede por nombre o número de licencia"
+                    />
+                  </label>
                 </div>
               ) : null}
               {isSuperAdmin &&
@@ -6070,57 +6111,38 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     sedesSuperAdminLista.length > 0 ? (
                       <tr>
                         <td colSpan={5} style={{ color: '#64748b', padding: '14px 12px' }}>
-                          No hay sedes que coincidan con el filtro.
+                          No hay sedes que coincidan con los filtros o la búsqueda.
                         </td>
                       </tr>
                     ) : (
                       (isSuperAdmin ? sedesSuperAdminPaginacion.slice : sedesNacionalLista).map((s) => {
                       const flagS = sedeFlag(s);
-                      const open = Number(sedeDetalleAbiertoId) === Number(s.id);
-                      const contrato = contratosBySedeId[Number(s.id)] || null;
-                      const badge = contratoBadgeData(contrato);
                       return (
-                        <React.Fragment key={s.id}>
-                          <tr>
-                            <td style={{ fontWeight: 700 }}>
-                              {flagS ? `${flagS} ` : ''}
-                              {String(s.nombre || '').trim() || '—'}
-                              {isSuperAdmin ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setSedeDetalleAbiertoId((prev) => (Number(prev) === Number(s.id) ? null : s.id))}
-                                  style={{ marginLeft: '8px', padding: '2px 8px', fontSize: '11px' }}
-                                >
-                                  {open ? 'Ocultar' : 'Detalle'}
-                                </button>
-                              ) : null}
-                            </td>
-                            <td>{String(s.ciudad || '').trim() || '—'}</td>
-                            {isSuperAdmin ? <td>{String(s.pais || '').trim() || '—'}</td> : null}
+                        <tr key={s.id}>
+                          <td style={{ fontWeight: 700 }}>
+                            {flagS ? `${flagS} ` : ''}
+                            {String(s.nombre || '').trim() || '—'}
                             {isSuperAdmin ? (
-                              <td style={{ fontSize: '12px' }}>
-                                {String(s.email_contacto || '').trim() || '—'}
-                                {' · '}
-                                {String(s.telefono || '').trim() || '—'}
-                              </td>
+                              <button
+                                type="button"
+                                onClick={() => setSedeDetalleAbiertoId(s.id)}
+                                style={{ marginLeft: '8px', padding: '2px 8px', fontSize: '11px' }}
+                              >
+                                Detalle
+                              </button>
                             ) : null}
-                            <td>{sedeLicenciaChip(s)}</td>
-                          </tr>
-                          {isSuperAdmin && open ? (
-                            <tr>
-                              <td colSpan={5} style={{ background: '#f8fafc', padding: '10px 12px' }}>
-                                <SedeSuperDetallePanel
-                                  s={s}
-                                  contrato={contrato}
-                                  badge={badge}
-                                  suscripcionEstadoSuperSavingId={suscripcionEstadoSuperSavingId}
-                                  guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
-                                  activarSuscripcionStripeSede={activarSuscripcionStripeSede}
-                                />
-                              </td>
-                            </tr>
+                          </td>
+                          <td>{String(s.ciudad || '').trim() || '—'}</td>
+                          {isSuperAdmin ? <td>{String(s.pais || '').trim() || '—'}</td> : null}
+                          {isSuperAdmin ? (
+                            <td style={{ fontSize: '12px' }}>
+                              {String(s.email_contacto || '').trim() || '—'}
+                              {' · '}
+                              {String(s.telefono || '').trim() || '—'}
+                            </td>
                           ) : null}
-                        </React.Fragment>
+                          <td>{sedeLicenciaChip(s)}</td>
+                        </tr>
                       );
                     })
                     )}
@@ -6131,14 +6153,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 {(isSuperAdmin ? sedesSuperAdminListaFiltrada : sedesNacionalLista).length === 0 &&
                 (isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).length > 0 ? (
                   <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: 14 }}>
-                    No hay sedes que coincidan con el filtro.
+                    No hay sedes que coincidan con los filtros o la búsqueda.
                   </p>
                 ) : null}
                 {(isSuperAdmin ? sedesSuperAdminPaginacion.slice : sedesNacionalLista).map((s) => {
                   const flagS = sedeFlag(s);
-                  const open = Number(sedeDetalleAbiertoId) === Number(s.id);
-                  const contrato = contratosBySedeId[Number(s.id)] || null;
-                  const badge = contratoBadgeData(contrato);
                   const email = String(s.email_contacto || '').trim();
                   const pais = String(s.pais || '').trim();
                   const ciudad = String(s.ciudad || '').trim();
@@ -6169,7 +6188,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       {isSuperAdmin ? (
                         <button
                           type="button"
-                          onClick={() => setSedeDetalleAbiertoId((prev) => (Number(prev) === Number(s.id) ? null : s.id))}
+                          onClick={() => setSedeDetalleAbiertoId(s.id)}
                           style={{
                             marginTop: '10px',
                             padding: '6px 12px',
@@ -6181,38 +6200,94 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             cursor: 'pointer',
                           }}
                         >
-                          {open ? 'Ocultar detalle' : 'Detalle'}
+                          Detalle
                         </button>
-                      ) : null}
-                      {isSuperAdmin && open ? (
-                        <div
-                          style={{
-                            marginTop: '12px',
-                            paddingTop: '12px',
-                            borderTop: '1px solid #e2e8f0',
-                            background: '#f8fafc',
-                            marginLeft: '-4px',
-                            marginRight: '-4px',
-                            paddingLeft: '12px',
-                            paddingRight: '12px',
-                            paddingBottom: '12px',
-                            borderRadius: '0 0 8px 8px',
-                          }}
-                        >
-                          <SedeSuperDetallePanel
-                            s={s}
-                            contrato={contrato}
-                            badge={badge}
-                            suscripcionEstadoSuperSavingId={suscripcionEstadoSuperSavingId}
-                            guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
-                            activarSuscripcionStripeSede={activarSuscripcionStripeSede}
-                          />
-                        </div>
                       ) : null}
                     </div>
                   );
                 })}
               </div>
+              {isSuperAdmin && sedeSuperAdminDetalleModal ? (
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="sede-super-admin-detalle-titulo"
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 10050,
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding:
+                      'max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))',
+                    boxSizing: 'border-box',
+                  }}
+                  onClick={(ev) => {
+                    if (ev.target === ev.currentTarget) setSedeDetalleAbiertoId(null);
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      maxWidth: '560px',
+                      maxHeight: 'min(90dvh, 880px)',
+                      overflowY: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      background: '#fff',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
+                      boxSizing: 'border-box',
+                    }}
+                    onClick={(ev) => ev.stopPropagation()}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        marginBottom: 14,
+                      }}
+                    >
+                      <h3
+                        id="sede-super-admin-detalle-titulo"
+                        style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}
+                      >
+                        {String(sedeSuperAdminDetalleModal.nombre || '').trim() || 'Sede'}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setSedeDetalleAbiertoId(null)}
+                        aria-label="Cerrar detalle"
+                        style={{
+                          flexShrink: 0,
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          background: '#f8fafc',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          color: '#0f172a',
+                        }}
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                    <SedeSuperDetallePanel
+                      s={sedeSuperAdminDetalleModal}
+                      contrato={contratosBySedeId[Number(sedeSuperAdminDetalleModal.id)] || null}
+                      badge={contratoBadgeData(contratosBySedeId[Number(sedeSuperAdminDetalleModal.id)] || null)}
+                      suscripcionEstadoSuperSavingId={suscripcionEstadoSuperSavingId}
+                      guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
+                      activarSuscripcionStripeSede={activarSuscripcionStripeSede}
+                    />
+                  </div>
+                </div>
+              ) : null}
             </>
           )}
         </div>

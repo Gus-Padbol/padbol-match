@@ -352,6 +352,12 @@
   max-width: 280px;
 }
 
+.sedes-admin-filter-field--search {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .sedes-admin-filter-label {
   font-size: 12px;
   font-weight: 700;
@@ -377,7 +383,11 @@
     flex-wrap: wrap;
     align-items: flex-end;
     gap: 16px;
-    max-width: 720px;
+    max-width: 900px;
+  }
+
+  .sedes-admin-filter-field--search {
+    max-width: min(420px, 100%);
   }
 }
 
