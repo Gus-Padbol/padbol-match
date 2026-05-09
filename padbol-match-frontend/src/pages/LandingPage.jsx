@@ -132,7 +132,7 @@ export default function LandingPage() {
           paddingBottom: '4px',
         }}
       >
-        <Link to="/login" style={btnLoginTop}>
+        <Link to="/login" state={{ padbolHideLoginBack: true }} style={btnLoginTop}>
           Iniciar sesión
         </Link>
       </div>

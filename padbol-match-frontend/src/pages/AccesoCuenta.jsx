@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
 import './AccesoCuenta.css';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
@@ -53,6 +53,12 @@ function PasswordEyeIcon({ revealed }) {
   );
 }
 
+/**
+ * Estado en `<Link to="/login" />` desde la landing: misma SPA pero sin “historial útil” para Volver.
+ * Debe coincidir con `LandingPage.jsx`.
+ */
+const LOGIN_NAV_HIDE_VOLVER = 'padbolHideLoginBack';
+
 /** `?modo=registro` | `?modo=register` | `?registro=1` abre el formulario de alta en `/login`. */
 function readModoDesdeSearch(search) {
   try {
@@ -69,6 +75,7 @@ function readModoDesdeSearch(search) {
 export default function AccesoCuenta() {
   const navigate = useNavigate();
   const location = useLocation();
+  const navigationType = useNavigationType();
   const { refreshSession, session, loading } = useAuth();
 
   const [modo, setModo] = useState(() => readModoDesdeSearch(location.search));
@@ -89,6 +96,12 @@ export default function AccesoCuenta() {
   const [regWaLocal, setRegWaLocal] = useState('');
   const [regWaConfirmLocal, setRegWaConfirmLocal] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
+
+  /** Volver solo tras navegación interna (push/replace), no en carga directa ni desde la landing. */
+  const muestreBotonVolverAcceso = useMemo(() => {
+    if (location.state?.[LOGIN_NAV_HIDE_VOLVER]) return false;
+    return navigationType === 'PUSH' || navigationType === 'REPLACE';
+  }, [location.state, navigationType]);
 
   const handleAccesoBack = useCallback(() => {
     navigate(-1);
@@ -287,7 +300,7 @@ export default function AccesoCuenta() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Acceso" showBack onBack={handleAccesoBack} />
+      <AppHeader title="Acceso" showBack={muestreBotonVolverAcceso} onBack={handleAccesoBack} />
       <div
         style={{
           marginBottom: '20px',
