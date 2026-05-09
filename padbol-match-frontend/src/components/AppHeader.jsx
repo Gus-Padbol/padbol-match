@@ -176,9 +176,8 @@ export default function AppHeader({
   const showHeaderSearch = useMemo(() => {
     const p = pathOnly;
     if (p === '/admin' || p.startsWith('/admin/')) return false;
-    if (session?.user && jugadorHubShellPath) return false;
-    const rutasSoloConSesion = p === '/' || p === '/unirse' || p === '/join';
-    if (rutasSoloConSesion) return Boolean(session?.user);
+    if (!session?.user) return false;
+    if (jugadorHubShellPath) return false;
     return true;
   }, [pathOnly, session?.user, jugadorHubShellPath]);
 
@@ -1091,12 +1090,19 @@ export default function AppHeader({
       <div
         style={{
           display: 'flex',
-          justifyContent: showLogout || showAdminShortcutHub ? 'flex-end' : (miPerfilLogoutSpacing ? 'flex-end' : 'flex-start'),
+          justifyContent:
+            showLogout ||
+            showAdminShortcutHub ||
+            (hubDirectLogin && !session?.user && !authLoading)
+              ? 'flex-end'
+              : miPerfilLogoutSpacing
+                ? 'flex-end'
+                : 'flex-start',
           alignItems: 'center',
           minWidth: 0,
           width: '100%',
           marginLeft: miPerfilLogoutSpacing ? 'auto' : undefined,
-          marginRight: showLogout || showAdminShortcutHub ? '16px' : hubDirectLogin && !session?.user && !authLoading ? '8px' : 0,
+          marginRight: showLogout || showAdminShortcutHub ? '16px' : 0,
           paddingLeft: miPerfilLogoutSpacing ? '8px' : 0,
           paddingRight: miPerfilLogoutSpacing ? '8px' : 0,
           boxSizing: 'border-box',
@@ -1236,17 +1242,18 @@ export default function AppHeader({
                 type="button"
                 onClick={() => navigate('/auth')}
                 style={{
-                  padding: '10px 16px',
-                  borderRadius: '999px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                  color: '#fff',
-                  fontSize: 13,
-                  fontWeight: 800,
+                  padding: '5px 10px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.28)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: 'rgba(248,250,252,0.88)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
-                  boxShadow: '0 4px 16px rgba(34, 197, 94, 0.45)',
+                  boxShadow: 'none',
                 }}
               >
                 Ingresar
