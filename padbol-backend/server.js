@@ -260,14 +260,63 @@ async function fetchNombreAutorResenaInsert(user) {
   if (!uid) return 'Jugador';
   const email = String(user.email || '').trim().toLowerCase();
   let perfil = null;
-  const q1 = await supabase.from('jugadores_perfil').select('nombre, apellido, alias').eq('user_id', uid).maybeSingle();
+  const q1 = await supabase.from('jugadores_perfil').select('nombre, apellido, alias, apodo').eq('user_id', uid).maybeSingle();
   if (!q1.error) perfil = q1.data;
   if (!perfil?.nombre && email) {
-    const q2 = await supabase.from('jugadores_perfil').select('nombre, apellido, alias').eq('email', email).maybeSingle();
+    const q2 = await supabase.from('jugadores_perfil').select('nombre, apellido, alias, apodo').eq('email', email).maybeSingle();
     if (!q2.error) perfil = q2.data;
   }
   const n = nombreAutorResenaDesdePerfil(perfil);
   return n && String(n).trim() ? String(n).trim() : 'Jugador';
+}
+
+/** Al menos una reserva con estado confirmada en la sede (match por nombre de sede en `reservas.sede`). */
+async function jugadorTieneReservaConfirmadaEnSede(user, sedeIdNum) {
+  const uid = user?.id;
+  const email = String(user?.email || '').trim().toLowerCase();
+  if (!uid && !email) return false;
+  const sid = parseInt(String(sedeIdNum), 10);
+  if (!Number.isFinite(sid)) return false;
+  const { data: sedeRow, error: se } = await supabase.from('sedes').select('nombre').eq('id', sid).maybeSingle();
+  if (se || !sedeRow?.nombre) return false;
+  const nombreSede = String(sedeRow.nombre).trim();
+  if (!nombreSede) return false;
+
+  if (uid) {
+    const { data: r1 } = await supabase
+      .from('reservas')
+      .select('id')
+      .eq('sede', nombreSede)
+      .eq('estado', 'confirmada')
+      .eq('user_id', uid)
+      .limit(1)
+      .maybeSingle();
+    if (r1?.id != null) return true;
+  }
+  if (email) {
+    const { data: r2 } = await supabase
+      .from('reservas')
+      .select('id')
+      .eq('sede', nombreSede)
+      .eq('estado', 'confirmada')
+      .ilike('email', email)
+      .limit(1)
+      .maybeSingle();
+    if (r2?.id != null) return true;
+  }
+  return false;
+}
+
+function nombreVisibleAutorResenaListado(perfil, nombreGuardado) {
+  const g = String(nombreGuardado || '').trim();
+  if (g && g.toLowerCase() !== 'jugador') return g;
+  const ap = String(perfil?.apodo || '').trim();
+  if (ap) return ap.charAt(0).toUpperCase() + ap.slice(1);
+  const n = String(perfil?.nombre || '').trim();
+  const a = String(perfil?.apellido || '').trim();
+  const full = [n, a].filter(Boolean).join(' ').trim();
+  if (full) return full;
+  return nombreAutorResenaDesdePerfil(perfil);
 }
 
 // ─── JWT + user_roles (GET torneos/reservas con alcance, rutas /api/admin/*) ──
@@ -1780,7 +1829,7 @@ async function enrichSedeResenasConPerfil(reviews) {
   if (uids.length) {
     const { data: perfiles, error } = await supabase
       .from('jugadores_perfil')
-      .select('user_id, foto_url, nombre, apellido, alias')
+      .select('user_id, foto_url, nombre, apellido, alias, apodo')
       .in('user_id', uids);
     if (error) console.warn('enrichSedeResenasConPerfil jugadores_perfil:', error.message);
     (perfiles || []).forEach((p) => {
@@ -1790,13 +1839,16 @@ async function enrichSedeResenasConPerfil(reviews) {
   return rows.map((r) => {
     const p = map[r.user_id];
     const nombreGuardado = String(r.nombre ?? '').trim();
+    const apodo = p?.apodo != null && String(p.apodo).trim() ? String(p.apodo).trim() : null;
+    const nombreVis = nombreVisibleAutorResenaListado(p, nombreGuardado);
     return {
       id: r.id,
       estrellas: r.estrellas,
       comentario: r.comentario,
       created_at: r.created_at,
       autor: {
-        nombre: nombreGuardado || nombreAutorResenaDesdePerfil(p),
+        nombre: nombreVis,
+        apodo: apodo || null,
         foto_url: p?.foto_url ? String(p.foto_url).trim() || null : null,
       },
     };
@@ -1806,7 +1858,7 @@ async function enrichSedeResenasConPerfil(reviews) {
 /**
  * GET reseñas de una sede: promedio, total, página (orden por más recientes).
  * Query: limit (default 5, max 100), offset (default 0).
- * Con Bearer: incluye `ya_reseño` si el usuario ya publicó en esta sede.
+ * Con Bearer: incluye `ya_reseño` y `puede_reseñar` (reserva confirmada en la sede y aún sin reseña).
  */
 app.get('/api/sedes/:id/resenas', async (req, res) => {
   try {
@@ -1837,6 +1889,7 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
     const resenas = await enrichSedeResenasConPerfil(pageRows || []);
 
     let ya_reseño = false;
+    let puede_reseñar = false;
     const user = await authUserFromBearer(req);
     if (user?.id) {
       const { data: mine } = await supabase
@@ -1846,9 +1899,18 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
         .eq('user_id', user.id)
         .maybeSingle();
       ya_reseño = Boolean(mine);
+      if (!ya_reseño) {
+        puede_reseñar = await jugadorTieneReservaConfirmadaEnSede(user, id);
+      }
     }
 
-    res.json({ promedio, total, resenas, ya_reseño });
+    res.json({
+      promedio,
+      total,
+      resenas,
+      ya_reseño: Boolean(ya_reseño),
+      puede_reseñar: Boolean(user?.id && puede_reseñar),
+    });
   } catch (err) {
     if (isResenasPublicTableConfigError(err)) return respondResenasPublicUnavailable(res, err);
     console.error('❌ Error GET /api/sedes/:id/resenas:', err.message);
@@ -1895,6 +1957,13 @@ app.post('/api/sedes/:id/resenas', async (req, res) => {
       return res.status(409).json({ error: 'Ya dejaste una reseña en esta sede' });
     }
 
+    const puede = await jugadorTieneReservaConfirmadaEnSede(user, id);
+    if (!puede) {
+      return res.status(403).json({
+        error: 'Solo podés dejar una reseña si tenés al menos una reserva confirmada en esta sede.',
+      });
+    }
+
     const nombreAutor = await fetchNombreAutorResenaInsert(user);
     let insertPayload = { sede_id: id, user_id: user.id, estrellas, comentario, nombre: nombreAutor };
     let { data: inserted, error: insErr } = await supabase
@@ -1920,6 +1989,42 @@ app.post('/api/sedes/:id/resenas', async (req, res) => {
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Ya dejaste una reseña en esta sede' });
     }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE reseña (moderación): solo super_admin.
+ */
+app.delete('/api/sedes/:id/resenas/:resenaId', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const sedeId = parseInt(String(req.params.id), 10);
+    const resenaId = String(req.params.resenaId || '').trim();
+    if (!Number.isFinite(sedeId)) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    if (!resenaId) {
+      return res.status(400).json({ error: 'ID de reseña inválido' });
+    }
+    const { data: row, error: fErr } = await supabase
+      .from(PUBLIC_RESENAS_TABLE)
+      .select('id')
+      .eq('id', resenaId)
+      .eq('sede_id', sedeId)
+      .maybeSingle();
+    if (fErr) throw fErr;
+    if (!row?.id) {
+      return res.status(404).json({ error: 'Reseña no encontrada' });
+    }
+    const { error: dErr } = await supabase.from(PUBLIC_RESENAS_TABLE).delete().eq('id', resenaId).eq('sede_id', sedeId);
+    if (dErr) throw dErr;
+    res.json({ ok: true });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    if (isResenasPublicTableConfigError(err)) return respondResenasPublicUnavailable(res, err);
+    console.error('❌ Error DELETE /api/sedes/:id/resenas/:resenaId:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

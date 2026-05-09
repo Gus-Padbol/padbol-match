@@ -1,32 +1,32 @@
 -- =============================================================================
--- Reseñas de sede en Supabase / PostgREST.
+-- Reseñas por sede — modelo equivalente a "reseñas_sedes" (Supabase SQL Editor).
 --
--- La tabla expuesta en la API es: public.resenas
--- (no existe public.sede_resenas en este proyecto; el backend usa .from('resenas')).
+-- La API y el frontend usan la tabla **public.resenas** (sin tilde; PostgREST).
+-- Columnas: id (uuid), sede_id, user_id, estrellas (1–5), comentario (opcional),
+-- nombre (caché de autor al insertar), created_at; una fila por (sede_id, user_id).
 --
--- Ejecutar en Supabase → SQL Editor. Idempotente (IF NOT EXISTS / ADD COLUMN).
+-- Si ya ejecutaste padbol-backend/sql/resenas_sedes.sql, aplicá solo la sección
+-- «Migración» más abajo si hace falta.
 -- =============================================================================
 
--- Tabla nueva (solo si aún no existe)
+-- --- Creación (solo si no existe la tabla) ------------------------------------
 create table if not exists public.resenas (
   id uuid primary key default gen_random_uuid(),
   sede_id integer not null references public.sedes (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
-  nombre text not null default '',
   estrellas integer not null check (estrellas >= 1 and estrellas <= 5),
   comentario text,
+  nombre text not null default '',
   created_at timestamptz not null default now(),
   constraint resenas_sede_usuario unique (sede_id, user_id)
 );
 
--- Si la tabla ya existía sin columna nombre (migración desde versión anterior)
 alter table public.resenas add column if not exists nombre text not null default '';
 
--- Comentario opcional (tablas creadas antes de 2026 podían tener NOT NULL default '')
+-- Comentario opcional (versiones viejas tenían NOT NULL default '')
 alter table public.resenas alter column comentario drop not null;
 alter table public.resenas alter column comentario drop default;
 
--- Índice para listados por sede (más recientes primero)
 create index if not exists idx_resenas_sede_created on public.resenas (sede_id, created_at desc);
 
-comment on table public.resenas is 'Reseñas por sede; una fila por (sede_id, user_id). Expuesta en PostgREST como resenas.';
+comment on table public.resenas is 'Reseñas por sede (concepto producto: reseñas_sedes). Una por jugador y sede.';

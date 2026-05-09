@@ -18,7 +18,9 @@ import {
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
+import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
+import { getDisplayName } from '../utils/displayName';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
   esInscripcionAbiertaTorneo,
@@ -842,10 +844,12 @@ function EstrellasInteractivas({ value, onChange, disabled }) {
   );
 }
 
-function ListaResenaCard({ r, isLast }) {
+function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }) {
   const nombre = r?.autor?.nombre || 'Jugador';
+  const apodo = String(r?.autor?.apodo || '').trim();
   const foto = r?.autor?.foto_url;
   const ini = nombre ? nombre.charAt(0).toUpperCase() : '?';
+  const showApodoSub = apodo && nombre && apodo.toLowerCase() !== nombre.toLowerCase();
   return (
     <div
       style={{
@@ -892,15 +896,54 @@ function ListaResenaCard({ r, isLast }) {
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '6px 10px',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: '8px',
           }}
         >
-          <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>{nombre}</span>
-          <EstrellasSoloLectura value={r.estrellas} />
-          <span style={{ fontSize: '12px', color: 'rgba(226,232,240,0.65)' }}>
-            {formatFechaResenaPublica(r.created_at)}
-          </span>
+          <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: '6px 10px',
+              }}
+            >
+              <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>{nombre}</span>
+              <EstrellasSoloLectura value={r.estrellas} />
+              <span style={{ fontSize: '12px', color: 'rgba(226,232,240,0.65)' }}>
+                {formatFechaResenaPublica(r.created_at)}
+              </span>
+            </div>
+            {showApodoSub ? (
+              <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(226,232,240,0.55)', fontWeight: 600 }}>
+                {apodo}
+              </div>
+            ) : null}
+          </div>
+          {isSuperAdmin && onDeleteResena ? (
+            <button
+              type="button"
+              onClick={() => onDeleteResena(r.id)}
+              disabled={deletingId === r.id}
+              aria-label="Eliminar reseña"
+              style={{
+                flexShrink: 0,
+                border: '1px solid rgba(248,113,113,0.45)',
+                background: 'rgba(127,29,29,0.35)',
+                color: '#fecaca',
+                borderRadius: '8px',
+                padding: '4px 8px',
+                fontSize: '11px',
+                fontWeight: 800,
+                cursor: deletingId === r.id ? 'wait' : 'pointer',
+                opacity: deletingId === r.id ? 0.7 : 1,
+              }}
+            >
+              {deletingId === r.id ? '…' : 'Eliminar'}
+            </button>
+          ) : null}
         </div>
         {String(r.comentario || '').trim() ? (
           <p
@@ -921,7 +964,7 @@ function ListaResenaCard({ r, isLast }) {
   );
 }
 
-function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
+function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
   const idNum = useMemo(() => parseInt(String(sedeId), 10), [sedeId]);
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -929,6 +972,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
   const [verTodasOpen, setVerTodasOpen] = useState(false);
   const [todasRows, setTodasRows] = useState([]);
   const [todasLoading, setTodasLoading] = useState(false);
+  const [deletingResenaId, setDeletingResenaId] = useState(null);
   /** 0 = aún no eligió estrellas (no se envía hasta que elija al menos 1). */
   const [estrellasForm, setEstrellasForm] = useState(0);
   const [comentarioForm, setComentarioForm] = useState('');
@@ -1053,6 +1097,31 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
     }
   };
 
+  const eliminarResenaAdmin = useCallback(
+    async (resenaId) => {
+      if (!isSuperAdmin || !accessToken || !Number.isFinite(idNum) || !resenaId) return;
+      if (!window.confirm('¿Eliminar esta reseña de forma permanente?')) return;
+      setDeletingResenaId(resenaId);
+      try {
+        const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas/${encodeURIComponent(resenaId)}`), {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          throw new Error(body?.error || `Error ${r.status}`);
+        }
+        setTodasRows((prev) => prev.filter((row) => row.id !== resenaId));
+        await loadResenas();
+      } catch (e) {
+        window.alert(e?.message || 'No se pudo eliminar la reseña');
+      } finally {
+        setDeletingResenaId(null);
+      }
+    },
+    [accessToken, idNum, isSuperAdmin, loadResenas],
+  );
+
   if (!Number.isFinite(idNum)) return null;
 
   const cardStyle = {
@@ -1135,7 +1204,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
             <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(226,232,240,0.88)' }}>
               Ya dejaste tu reseña en esta sede. ¡Gracias!
             </p>
-          ) : (
+          ) : payload?.puede_reseñar ? (
             <div style={{ marginBottom: '16px' }}>
               <button
                 type="button"
@@ -1153,9 +1222,13 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
                   boxSizing: 'border-box',
                 }}
               >
-                Dejar una reseña
+                Dejar reseña
               </button>
             </div>
+          ) : (
+            <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(226,232,240,0.82)', lineHeight: 1.45 }}>
+              Solo jugadores con al menos una <strong>reserva confirmada</strong> en esta sede pueden dejar una reseña.
+            </p>
           )}
 
           {lista.length === 0 ? (
@@ -1172,7 +1245,14 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
           ) : (
             <div>
               {lista.map((row, idx) => (
-                <ListaResenaCard key={row.id} r={row} isLast={idx === lista.length - 1} />
+                <ListaResenaCard
+                  key={row.id}
+                  r={row}
+                  isLast={idx === lista.length - 1}
+                  isSuperAdmin={Boolean(isSuperAdmin)}
+                  onDeleteResena={eliminarResenaAdmin}
+                  deletingId={deletingResenaId}
+                />
               ))}
             </div>
           )}
@@ -1280,7 +1360,14 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate }) {
                 <p style={{ margin: 0, color: '#e2e8f0', fontSize: '14px' }}>Cargando…</p>
               ) : (
                 todasRows.map((row, idx) => (
-                  <ListaResenaCard key={row.id} r={row} isLast={idx === todasRows.length - 1} />
+                  <ListaResenaCard
+                    key={row.id}
+                    r={row}
+                    isLast={idx === todasRows.length - 1}
+                    isSuperAdmin={Boolean(isSuperAdmin)}
+                    onDeleteResena={eliminarResenaAdmin}
+                    deletingId={deletingResenaId}
+                  />
                 ))
               )}
               {(payload?.total ?? 0) > 100 ? (
@@ -1472,7 +1559,21 @@ export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { session } = useAuth();
+  const { session, userProfile } = useAuth();
+
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return {
+      email: em,
+      nombre: getDisplayName(userProfile, session) || '',
+      whatsapp: String(userProfile?.whatsapp || '').trim(),
+      foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
+    };
+  }, [session, userProfile]);
+
+  const { rol: userRol } = useUserRole(currentCliente);
+  const isSuperAdmin = userRol === 'super_admin';
   /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
@@ -2206,6 +2307,7 @@ export default function SedePublica() {
                 sedeId={sedeId}
                 accessToken={session?.access_token ?? null}
                 navigate={navigate}
+                isSuperAdmin={isSuperAdmin}
               />
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
