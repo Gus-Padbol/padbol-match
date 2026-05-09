@@ -741,6 +741,22 @@ function formatFechaDia(str) {
     .replace(/^\w/, c => c.toUpperCase());
 }
 
+// ISO timestamptz → fecha y hora local (listado historial reservas)
+function formatReservaHistorialFechaHora(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function etiquetaQuienReservaHistorial(changedBy) {
+  const s = String(changedBy || 'sistema').trim();
+  if (s === 'sistema') return 'Sistema';
+  if (s.startsWith('admin:')) return 'Admin';
+  if (s.startsWith('jugador:')) return 'Jugador';
+  return s;
+}
+
 // "18:00" + 90 → "18:00 - 19:30"
 function horaRango(hora, duracion) {
   if (!hora) return '—';
@@ -1360,6 +1376,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+  /** reserva id → { open, loading, rows, error } */
+  const [reservaHistorialUi, setReservaHistorialUi] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
   const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab')));
   const [nuevaSedeModalOpen, setNuevaSedeModalOpen] = useState(false);
@@ -3506,15 +3524,66 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setEditFormData({});
   };
 
+  const invalidateReservaHistorialCache = useCallback((reservaId) => {
+    setReservaHistorialUi((p) => {
+      const next = { ...p };
+      delete next[reservaId];
+      return next;
+    });
+  }, []);
+
+  const abrirHistorialReserva = useCallback(
+    async (reservaId) => {
+      setReservaHistorialUi((p) => ({
+        ...p,
+        [reservaId]: { open: true, loading: true, rows: [], error: null },
+      }));
+      try {
+        if (!session?.access_token) throw new Error('Sin sesión');
+        const res = await fetch(`${apiBaseUrl}/api/reservas/${reservaId}/historial`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || res.statusText);
+        const rows = Array.isArray(json) ? json : [];
+        setReservaHistorialUi((p) => ({
+          ...p,
+          [reservaId]: { open: true, loading: false, rows, error: null },
+        }));
+      } catch (err) {
+        setReservaHistorialUi((p) => ({
+          ...p,
+          [reservaId]: {
+            open: true,
+            loading: false,
+            rows: [],
+            error: err.message || String(err),
+          },
+        }));
+      }
+    },
+    [apiBaseUrl, session?.access_token],
+  );
+
+  const cerrarHistorialReserva = useCallback((reservaId) => {
+    setReservaHistorialUi((p) => ({
+      ...p,
+      [reservaId]: { ...(p[reservaId] || {}), open: false },
+    }));
+  }, []);
+
   const guardarEdicion = async (reservaId) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const response = await fetch(`${apiBaseUrl}/api/reservas/${reservaId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(editFormData),
       });
 
       if (response.ok) {
+        invalidateReservaHistorialCache(reservaId);
         setMensajeExito('✅ Reserva actualizada');
         setEditandoId(null);
         setTimeout(() => {
@@ -3531,12 +3600,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const confirmarPagoManualReserva = async (reservaId) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const response = await fetch(`${apiBaseUrl}/api/reservas/${reservaId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ estado: 'confirmada' }),
       });
       if (response.ok) {
+        invalidateReservaHistorialCache(reservaId);
         setMensajeExito('✅ Pago manual confirmado');
         setTimeout(() => {
           fetchData();
@@ -6939,7 +7011,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <tbody>
                       {sortedRows.map((r) =>
                         editandoId === r.id ? (
-                          <tr key={r.id}>
+                          <React.Fragment key={r.id}>
+                          <tr>
                             <td style={{ padding: '6px 8px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{formatFecha(editFormData.fecha) || '—'}</td>
                             <td style={{ padding: '6px 8px' }}>
                               <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
@@ -7051,6 +7124,69 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               </div>
                             </td>
                           </tr>
+                          <tr>
+                            <td
+                              colSpan={esAdminNacional ? 8 : 7}
+                              style={{
+                                padding: '10px 12px 14px',
+                                background: '#f8fafc',
+                                borderBottom: '1px solid #e2e8f0',
+                                verticalAlign: 'top',
+                              }}
+                            >
+                              <div style={{ fontWeight: 800, fontSize: '13px', color: '#334155', marginBottom: '8px' }}>
+                                Historial
+                              </div>
+                              {(() => {
+                                const h = reservaHistorialUi[r.id];
+                                const abierto = Boolean(h?.open);
+                                if (!abierto) {
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={() => void abrirHistorialReserva(r.id)}
+                                      style={BTN({ background: '#64748b' })}
+                                    >
+                                      Ver historial
+                                    </button>
+                                  );
+                                }
+                                return (
+                                  <div>
+                                    <button
+                                      type="button"
+                                      onClick={() => cerrarHistorialReserva(r.id)}
+                                      style={{ ...BTN({ background: '#94a3b8' }), marginBottom: '10px' }}
+                                    >
+                                      Ocultar historial
+                                    </button>
+                                    {h.loading ? (
+                                      <div style={{ fontSize: '13px', color: '#64748b' }}>Cargando…</div>
+                                    ) : h.error ? (
+                                      <div style={{ fontSize: '13px', color: '#b91c1c' }}>{h.error}</div>
+                                    ) : !h.rows?.length ? (
+                                      <div style={{ fontSize: '13px', color: '#64748b' }}>Sin cambios de estado registrados.</div>
+                                    ) : (
+                                      <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
+                                        {h.rows.map((row) => (
+                                          <li key={row.id} style={{ marginBottom: '8px' }}>
+                                            <strong>{formatReservaHistorialFechaHora(row.created_at)}</strong>
+                                            {' · '}
+                                            {row.estado_anterior != null && String(row.estado_anterior).trim() !== ''
+                                              ? `${row.estado_anterior} → ${row.estado_nuevo}`
+                                              : `→ ${row.estado_nuevo}`}
+                                            {' · '}
+                                            {etiquetaQuienReservaHistorial(row.changed_by)}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </td>
+                          </tr>
+                          </React.Fragment>
                         ) : (
                           <tr key={r.id}>
                             <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{formatFecha(r.fecha) || '—'}</td>

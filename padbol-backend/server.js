@@ -1971,6 +1971,14 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
     }
 
     const createdReserva = Array.isArray(data) ? data[0] : data;
+    if (createdReserva?.id != null) {
+      await insertReservaHistorialEstado(supabase, {
+        reserva_id: createdReserva.id,
+        estado_anterior: null,
+        estado_nuevo: String(estadoFinal || '').trim() || null,
+        changed_by: 'sistema',
+      });
+    }
     const estReserva = String(createdReserva?.estado || estadoFinal || '').trim().toLowerCase();
     if (estReserva === 'confirmada' || estReserva === 'pendiente_pago_manual') {
       void sendMakeEvent('reserva_confirmada', {
@@ -2050,6 +2058,60 @@ async function enrichReservasConJugadorWhatsappPerfil(clienteSupa, rows) {
   });
 }
 
+/** Auditoría de cambio de estado (tabla reservas_historial). No relanza si falla inserción. */
+async function insertReservaHistorialEstado(client, { reserva_id, estado_anterior, estado_nuevo, changed_by }) {
+  const rid = Number(reserva_id);
+  if (!Number.isFinite(rid)) return;
+  const prev =
+    estado_anterior == null || String(estado_anterior).trim() === '' ? null : String(estado_anterior).trim();
+  const next = estado_nuevo == null || String(estado_nuevo).trim() === '' ? null : String(estado_nuevo).trim();
+  if (prev === next) return;
+  const by = String(changed_by || 'sistema').trim().slice(0, 200) || 'sistema';
+  const { error } = await client.from('reservas_historial').insert({
+    reserva_id: rid,
+    estado_anterior: prev,
+    estado_nuevo: next,
+    changed_by: by,
+  });
+  if (error) console.warn('insertReservaHistorialEstado:', error.message);
+}
+
+/** Misma visibilidad que listados de reservas para leer historial. */
+async function assertReservaAccesibleHistorial(req, reservaId) {
+  const rid = Number(String(reservaId).trim(), 10);
+  if (!Number.isFinite(rid)) {
+    const e = new Error('ID inválido');
+    e.status = 400;
+    throw e;
+  }
+  const scope = await adminListScopeFromRequest(req);
+  if (!scope) {
+    const e = new Error('No autorizado');
+    e.status = 401;
+    throw e;
+  }
+  const { data: r, error } = await supabase.from('reservas').select('id, sede, user_id').eq('id', rid).maybeSingle();
+  if (error) throw error;
+  if (!r) {
+    const e = new Error('Reserva no encontrada');
+    e.status = 404;
+    throw e;
+  }
+  if (scope.superA || scope.alcance === 'global') return r;
+  if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional') {
+    const allowed = await sedesPermitidasPorScope(scope);
+    const nombres = new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean));
+    if (nombres.has(String(r.sede || '').trim())) return r;
+    const e = new Error('No tenés permiso para ver esta reserva');
+    e.status = 403;
+    throw e;
+  }
+  if (scope.authUserId && String(r.user_id || '') === String(scope.authUserId)) return r;
+  const e = new Error('No tenés permiso para ver esta reserva');
+  e.status = 403;
+  throw e;
+}
+
 // GET reservas — con Bearer aplica alcance: sede / ciudad / provincia / país / global.
 app.get('/api/reservas', async (req, res) => {
   try {
@@ -2083,6 +2145,27 @@ app.get('/api/reservas', async (req, res) => {
     const enriched = await enrichReservasConJugadorWhatsappPerfil(supabase, data || []);
     res.json(enriched);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET historial de estados de una reserva (admin / alcance sede o dueño por user_id). */
+app.get('/api/reservas/:id/historial', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+    await assertReservaAccesibleHistorial(req, id);
+    const { data, error } = await supabase
+      .from('reservas_historial')
+      .select('id, reserva_id, estado_anterior, estado_nuevo, changed_by, created_at')
+      .eq('reserva_id', id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/reservas/:id/historial:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -2137,6 +2220,37 @@ app.put('/api/reservas/:id', async (req, res) => {
     if (error) throw error;
 
     const row = Array.isArray(data) ? data[0] : data;
+    if (
+      row &&
+      Object.prototype.hasOwnProperty.call(req.body, 'estado') &&
+      estado !== undefined
+    ) {
+      const oldE = String(prevRow?.estado ?? '').trim();
+      const newE = String(row?.estado ?? '').trim();
+      if (oldE !== newE) {
+        const scopeH = await adminListScopeFromRequest(req);
+        let changedByHist = 'sistema';
+        if (
+          scopeH &&
+          (scopeH.superA ||
+            scopeH.rol === 'admin_club' ||
+            scopeH.rol === 'admin_nacional' ||
+            scopeH.alcance === 'global')
+        ) {
+          changedByHist = `admin:${scopeH.email}`;
+        } else {
+          const user = await authUserFromBearer(req);
+          if (user?.email) changedByHist = `jugador:${String(user.email).trim().toLowerCase()}`;
+        }
+        await insertReservaHistorialEstado(supabase, {
+          reserva_id: id,
+          estado_anterior: oldE || null,
+          estado_nuevo: newE || null,
+          changed_by: changedByHist,
+        });
+      }
+    }
+
     const oldEst = String(prevRow?.estado || '').toLowerCase();
     const newEst = String(row?.estado ?? prevRow?.estado ?? '').toLowerCase();
     if (row && newEst === 'confirmada' && oldEst !== 'confirmada') {
@@ -5185,6 +5299,14 @@ app.post('/api/cancelar-reserva', async (req, res) => {
       .eq('id', reservaId);
     if (updateErr) throw updateErr;
 
+    const emJug = String(email || '').trim().toLowerCase();
+    await insertReservaHistorialEstado(supabase, {
+      reserva_id: reservaId,
+      estado_anterior: String(reserva.estado || '').trim() || null,
+      estado_nuevo: 'cancelada',
+      changed_by: emJug ? `jugador:${emJug}` : 'jugador',
+    });
+
     // Credit if eligible
     let credito = null;
     if (eligibleForCredit && reserva.precio > 0) {
@@ -5998,6 +6120,14 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
       const { data, error } = await supabase.from('reservas').insert([ins]).select();
       if (error) throw error;
       const createdReserva = Array.isArray(data) ? data[0] : null;
+      if (createdReserva?.id != null) {
+        await insertReservaHistorialEstado(supabase, {
+          reserva_id: createdReserva.id,
+          estado_anterior: null,
+          estado_nuevo: 'confirmada',
+          changed_by: 'sistema',
+        });
+      }
       void sendMakeEvent('pago_exitoso', {
         nombre: ins.nombre || null,
         email: ins.email || null,
@@ -6542,6 +6672,14 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     .select();
   if (error) throw error;
   const createdReserva = Array.isArray(data) ? data[0] : null;
+  if (createdReserva?.id != null) {
+    await insertReservaHistorialEstado(supabase, {
+      reserva_id: createdReserva.id,
+      estado_anterior: null,
+      estado_nuevo: 'confirmada',
+      changed_by: 'sistema',
+    });
+  }
   void sendMakeEvent('pago_exitoso', {
     nombre: String(nombre || '').trim() || null,
     email: String(email || '').trim().toLowerCase() || null,
@@ -6854,6 +6992,14 @@ app.post('/api/crear-preferencia', async (req, res) => {
       }
       const { data: reservaCreada, error: resErr } = await supabase.from('reservas').insert([payloadReserva]).select().single();
       if (resErr) throw resErr;
+      if (reservaCreada?.id != null) {
+        await insertReservaHistorialEstado(supabase, {
+          reserva_id: reservaCreada.id,
+          estado_anterior: null,
+          estado_nuevo: String(payloadReserva.estado || '').trim() || 'pendiente_pago_manual',
+          changed_by: 'sistema',
+        });
+      }
       return res.json({
         manual_payment: true,
         instructions: instruccionesManual || 'Transferí/aboná en sede y compartí comprobante por WhatsApp.',
