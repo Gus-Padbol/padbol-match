@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { refreshJugadorPerfilFromSupabase, clearJugadorPerfilLocalStorage } from '../utils/jugadorPerfil';
+import { authSessionUsaProveedorGoogle } from '../utils/perfilJugadorMinimo';
 
 const AuthContext = createContext(null);
 
@@ -51,6 +52,12 @@ async function refreshUserProfile(session, setUserProfile) {
     error = r2.error;
   }
 
+  /** Google OAuth: no crear fila vacía; el usuario completa WhatsApp y género en `/completar-perfil`. */
+  if (!data && !error && authSessionUsaProveedorGoogle(session)) {
+    setUserProfile(null);
+    return;
+  }
+
   if (data && !error) {
     const perfilDB = data;
     setUserProfile({
@@ -67,8 +74,13 @@ async function refreshUserProfile(session, setUserProfile) {
   }
 
   const meta = session?.user?.user_metadata || {};
-  const nombreMeta = String(meta.nombre || '').trim();
-  const apellidoMeta = String(meta.apellido || '').trim();
+  const fullNameOAuth = String(meta.full_name || meta.name || '').trim();
+  const nombreTokensOAuth = fullNameOAuth ? fullNameOAuth.split(/\s+/).filter(Boolean) : [];
+  const nombreMeta =
+    String(meta.nombre || '').trim() || (nombreTokensOAuth.length ? nombreTokensOAuth[0] : '') || '';
+  const apellidoMeta =
+    String(meta.apellido || '').trim() ||
+    (nombreTokensOAuth.length > 1 ? nombreTokensOAuth.slice(1).join(' ').trim() : '');
   const generoMeta = String(meta.genero || '').trim();
   const nw = meta.notificaciones_whatsapp;
   const notificacionesWhatsapp =

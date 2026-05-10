@@ -48,6 +48,7 @@ export function isHubNavBarHiddenPathname(pathname) {
   pathOnly = pathOnly.replace(/\/+$/, '') || '/';
   if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
   if (pathOnly === '/login') return true;
+  if (pathOnly === '/completar-perfil') return true;
   if (pathOnly === '/auth' || pathOnly.startsWith('/auth/')) return true;
   if (pathOnly === '/acceso' || pathOnly.startsWith('/acceso/')) return true;
   if (pathOnly === '/registro' || pathOnly.startsWith('/registro/')) return true;

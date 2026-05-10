@@ -31,6 +31,8 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
+import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
+import CompletarPerfilOAuth from './pages/CompletarPerfilOAuth';
 import NuevaSede from './components/NuevaSede';
 import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
@@ -247,6 +249,7 @@ function AppRoutes() {
   }, [location.pathname]);
 
   return (
+    <PerfilJugadorDatosMinimosGate>
     <Routes>
         <Route path="/" element={<RootHomeRoute />} />
         <Route path="/hub" element={<UserHome />} />
@@ -281,6 +284,15 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
 
         <Route
+          path="/completar-perfil"
+          element={
+            <ProtectedRoute>
+              <CompletarPerfilOAuth />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/perfil"
           element={
             <ProtectedRoute>
@@ -308,6 +320,7 @@ function AppRoutes() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </PerfilJugadorDatosMinimosGate>
   );
 }
 

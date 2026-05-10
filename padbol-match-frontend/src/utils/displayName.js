@@ -62,9 +62,10 @@ export function nombreDesdeSesionSinEmail(perfil, session, nombreFallback = '') 
 }
 
 /**
- * Nombre legal o de registro sin usar `alias`: perfil Supabase y, si falta, metadata de auth.
+ * Nombre legal o de registro sin usar `alias`: perfil Supabase y, si falta, metadata de auth
+ * (`full_name` / `name` de Google u otros proveedores).
  */
-function nombreRealDesdePerfilOauth(perfil, session) {
+export function nombreRealDesdePerfilOauth(perfil, session) {
   const em = String(session?.user?.email || perfil?.email || '').trim();
   let fromDb = nombreDesdeSesionSinEmail(perfil, session, '');
   if (fromDb && esNombrePlaceholderJugador(fromDb)) fromDb = '';

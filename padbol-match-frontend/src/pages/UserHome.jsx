@@ -11,6 +11,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
+import { nombreRealDesdePerfilOauth } from '../utils/displayName';
 import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
@@ -86,21 +87,30 @@ export default function UserHome() {
   }, [session?.user]);
 
   useEffect(() => {
-    setNombreFinal(null);
-  }, [session?.user?.id]);
-
-  useEffect(() => {
     if (!session?.user) return;
-    if (authLoading || profileLoading || userProfile == null) return;
-    setNombreFinal((prev) => {
-      if (prev !== null) return prev;
-      const ap = nombreDesdeApodoPerfil(userProfile);
-      if (ap) return ap.charAt(0).toUpperCase() + ap.slice(1);
-      const nom = primerNombreDesdePerfil(userProfile);
-      if (nom) return nom;
-      return '';
-    });
-  }, [session?.user, authLoading, profileLoading, userProfile]);
+    if (authLoading || profileLoading) return;
+    if (!userProfile) {
+      setNombreFinal('');
+      return;
+    }
+    const ap = nombreDesdeApodoPerfil(userProfile);
+    if (ap) {
+      setNombreFinal(ap.charAt(0).toUpperCase() + ap.slice(1));
+      return;
+    }
+    const nom = primerNombreDesdePerfil(userProfile);
+    if (nom) {
+      setNombreFinal(nom);
+      return;
+    }
+    const fullLine = nombreRealDesdePerfilOauth(userProfile, session);
+    if (fullLine) {
+      const first = fullLine.split(/\s+/).filter(Boolean)[0] || fullLine;
+      setNombreFinal(capitalizarPalabraSaludo(first));
+      return;
+    }
+    setNombreFinal('');
+  }, [session, userProfile, authLoading, profileLoading]);
 
   const sufijo = '¿Qué quieres hacer hoy?';
   const lineaSaludo = !session?.user
