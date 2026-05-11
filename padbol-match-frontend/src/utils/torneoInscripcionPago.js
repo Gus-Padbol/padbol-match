@@ -14,10 +14,15 @@ export function getEquipoInscripcionEstado(equipo) {
 
 /**
  * Monto inscripción por equipo (ARS / moneda del torneo).
- * Prioriza `costo_inscripcion` en BD; 0 = gratis. Legacy: `precio_inscripcion_equipo` / `precio_inscripcion`.
+ * Prioriza `inscripcion_monto`; luego `costo_inscripcion` y campos legacy.
  */
 export function precioInscripcionTorneo(torneo) {
   if (!torneo || typeof torneo !== 'object') return 0;
+  if (Object.prototype.hasOwnProperty.call(torneo, 'inscripcion_monto')) {
+    const c = Number(torneo.inscripcion_monto);
+    if (Number.isFinite(c) && c >= 0) return Math.round(c);
+    return 0;
+  }
   if (Object.prototype.hasOwnProperty.call(torneo, 'costo_inscripcion')) {
     const c = Number(torneo.costo_inscripcion);
     if (Number.isFinite(c) && c >= 0) return Math.round(c);
@@ -96,7 +101,7 @@ export async function iniciarPagoInscripcionTorneo({
     }
   }
 
-  const moneda = String(torneo?.moneda || 'ARS').trim() || 'ARS';
+  const moneda = String(torneo?.inscripcion_moneda || torneo?.moneda || 'ARS').trim() || 'ARS';
   const sedeId = torneo?.sede_id != null ? Number(torneo.sede_id) : null;
   const titulo = `Inscripción torneo — ${String(equipoNombre || 'Equipo').slice(0, 60)}`;
   const reservaData = {

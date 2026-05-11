@@ -1,9 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { refreshJugadorPerfilFromSupabase, clearJugadorPerfilLocalStorage } from '../utils/jugadorPerfil';
 import { authSessionUsaProveedorGoogle } from '../utils/perfilJugadorMinimo';
 
 const AuthContext = createContext(null);
+
+/** Logs temporales (consola móvil): buscar `[PM Auth]`. Quitar cuando el bug violeta esté resuelto. */
+const PM_AUTH_LOG = '[PM Auth]';
 
 /** Caché legacy del saludo en home; se borra al (re)cargar perfil para no mostrar nombre completo viejo. */
 const LS_SALUDO_NOMBRE = 'padbol_nombre_saludo';
@@ -26,6 +29,8 @@ async function refreshUserProfile(session, setUserProfile) {
   const userId = session?.user?.id ?? null;
   const email = String(session?.user?.email || '').trim();
 
+  console.log(`${PM_AUTH_LOG} refreshUserProfile enter`, { userId: userId ?? null, emailLen: email.length });
+
   if (!userId) {
     try {
       localStorage.removeItem('userProfile');
@@ -34,6 +39,7 @@ async function refreshUserProfile(session, setUserProfile) {
     }
     clearJugadorPerfilLocalStorage();
     setUserProfile(null);
+    console.log(`${PM_AUTH_LOG} refreshUserProfile exit (no userId)`);
     return;
   }
 
@@ -41,20 +47,25 @@ async function refreshUserProfile(session, setUserProfile) {
   let error = null;
 
   if (email) {
+    console.log(`${PM_AUTH_LOG} refreshUserProfile query jugadores_perfil by email…`);
     const r1 = await supabase.from('jugadores_perfil').select('*').eq('email', email).maybeSingle();
-    data = r1.data;
-    error = r1.error;
+    if (r1.error) error = r1.error;
+    else data = r1.data;
+    console.log(`${PM_AUTH_LOG} refreshUserProfile email query done`, { hasRow: Boolean(data), hasError: Boolean(r1.error) });
   }
 
-  if (!data && !error) {
+  if (!data) {
+    console.log(`${PM_AUTH_LOG} refreshUserProfile query jugadores_perfil by user_id…`);
     const r2 = await supabase.from('jugadores_perfil').select('*').eq('user_id', userId).maybeSingle();
-    data = r2.data;
-    error = r2.error;
+    if (r2.error && !error) error = r2.error;
+    if (r2.data) data = r2.data;
+    console.log(`${PM_AUTH_LOG} refreshUserProfile user_id query done`, { hasRow: Boolean(data), hasError: Boolean(r2.error) });
   }
 
   /** Google OAuth: no crear fila vacía; el usuario completa WhatsApp y género en `/completar-perfil`. */
   if (!data && !error && authSessionUsaProveedorGoogle(session)) {
     setUserProfile(null);
+    console.log(`${PM_AUTH_LOG} refreshUserProfile exit (Google sin fila, perfil null)`);
     return;
   }
 
@@ -69,7 +80,12 @@ async function refreshUserProfile(session, setUserProfile) {
       email: email || String(perfilDB.email || '').trim(),
     });
     const em = String(email || data.email || '').trim();
-    if (em) await refreshJugadorPerfilFromSupabase(em);
+    if (em) {
+      console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase…`);
+      await refreshJugadorPerfilFromSupabase(em);
+      console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase done`);
+    }
+    console.log(`${PM_AUTH_LOG} refreshUserProfile exit (fila existente)`);
     return;
   }
 
@@ -107,6 +123,7 @@ async function refreshUserProfile(session, setUserProfile) {
 
   if (nuevo && !insErr) {
     const perfilDB = nuevo;
+    console.log(`${PM_AUTH_LOG} refreshUserProfile insert ok`);
     setUserProfile({
       ...perfilDB,
       nombre: perfilDB?.nombre != null ? String(perfilDB.nombre) : '',
@@ -116,10 +133,16 @@ async function refreshUserProfile(session, setUserProfile) {
       email: email || String(perfilDB.email || '').trim(),
     });
     const em = String(email || nuevo.email || '').trim();
-    if (em) await refreshJugadorPerfilFromSupabase(em);
+    if (em) {
+      console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase (post-insert)…`);
+      await refreshJugadorPerfilFromSupabase(em);
+      console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase (post-insert) done`);
+    }
   } else {
+    console.log(`${PM_AUTH_LOG} refreshUserProfile insert falló o sin fila`, { insErr: insErr?.message ?? insErr });
     setUserProfile(null);
   }
+  console.log(`${PM_AUTH_LOG} refreshUserProfile exit (fin rama insert/fallback)`);
 }
 
 /**
@@ -133,29 +156,52 @@ export function AuthProvider({ children }) {
   /** Con sesión: true hasta que termine {@link refreshUserProfile} (evita saludo antes de tener `apodo`/perfil). */
   const [profileLoading, setProfileLoading] = useState(false);
 
+  /** Encadena cargas de perfil para que un `refresh` anterior no cierre `profileLoading` ni pise el perfil del usuario actual. */
+  const profileLoadChainRef = useRef(Promise.resolve());
+
   const user = session?.user ?? null;
 
-  const loadProfile = useCallback(async (sessionArg) => {
-    clearSaludoHomeLocalStorage();
-    if (!sessionArg?.user?.id) {
-      setProfileLoading(false);
+  useEffect(() => {
+    console.log(`${PM_AUTH_LOG} profileLoading (state) =`, profileLoading, {
+      sessionUid: session?.user?.id ?? null,
+    });
+  }, [profileLoading, session?.user?.id]);
+
+  const loadProfile = useCallback((sessionArg) => {
+    const uid = sessionArg?.user?.id ?? null;
+    console.log(`${PM_AUTH_LOG} loadProfile scheduled`, { uid });
+
+    const run = async () => {
+      console.log(`${PM_AUTH_LOG} loadProfile START`, { uid });
+      clearSaludoHomeLocalStorage();
+      if (!sessionArg?.user?.id) {
+        setProfileLoading(false);
+        try {
+          await refreshUserProfile(sessionArg, setUserProfile);
+          console.log(`${PM_AUTH_LOG} loadProfile END (sin sesión)`, { uid });
+        } catch (e) {
+          console.error(`${PM_AUTH_LOG} loadProfile error (sin sesión)`, e);
+          setUserProfile(null);
+          console.log(`${PM_AUTH_LOG} loadProfile END catch (sin sesión)`, { uid });
+        }
+        return;
+      }
+      setProfileLoading(true);
       try {
         await refreshUserProfile(sessionArg, setUserProfile);
+        console.log(`${PM_AUTH_LOG} loadProfile END ok`, { uid });
       } catch (e) {
-        console.error(e);
+        console.error(`${PM_AUTH_LOG} loadProfile error`, e);
         setUserProfile(null);
+        console.log(`${PM_AUTH_LOG} loadProfile END catch`, { uid });
+      } finally {
+        setProfileLoading(false);
+        console.log(`${PM_AUTH_LOG} loadProfile finally profileLoading=false`, { uid });
       }
-      return;
-    }
-    setProfileLoading(true);
-    try {
-      await refreshUserProfile(sessionArg, setUserProfile);
-    } catch (e) {
-      console.error(e);
-      setUserProfile(null);
-    } finally {
-      setProfileLoading(false);
-    }
+    };
+
+    profileLoadChainRef.current = profileLoadChainRef.current.catch(() => {}).then(run);
+    return profileLoadChainRef.current;
   }, []);
 
   useEffect(() => {
@@ -210,6 +256,7 @@ export function AuthProvider({ children }) {
   }, [loadProfile]);
 
   const signOutAndClear = useCallback(async () => {
+    profileLoadChainRef.current = Promise.resolve();
     await supabase.auth.signOut();
     try {
       localStorage.removeItem('userProfile');

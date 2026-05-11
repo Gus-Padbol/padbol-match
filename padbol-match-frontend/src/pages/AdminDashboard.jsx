@@ -64,6 +64,7 @@ import {
   validarCambioEstadoTorneoAdminGuardar,
 } from '../utils/torneoEstadoTransiciones';
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
+import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDistribucionModal';
 import AdminClubOnboardingTour, { readOnboardingDone } from '../components/AdminClubOnboardingTour';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -805,6 +806,16 @@ function horaRango(hora, duracion) {
   const endH = String(hh + Math.floor(mins / 60)).padStart(2, '0');
   const endM = String(mins % 60).padStart(2, '0');
   return `${hora} - ${endH}:${endM}`;
+}
+
+function duracionReservaAdmin(r) {
+  const d = parseInt(String(r?.duracion_minutos ?? r?.duracion ?? ''), 10);
+  return Number.isFinite(d) && d > 0 ? d : 90;
+}
+
+function horarioReservaAdmin(r) {
+  const duracion = duracionReservaAdmin(r);
+  return `${horaRango(r?.hora, duracion)} (${duracion} min)`;
 }
 
 // Returns a JSX status badge for a reserva
@@ -2223,7 +2234,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       const reservasRows = dashboardFinanciero.reservasDetalle.map((r) => ({
         fecha: String(r?.fecha || '').slice(0, 10),
-        hora: horaRango(r?.hora, r?.duracion),
+        hora: horarioReservaAdmin(r),
         cancha: r?.cancha ?? '',
         jugador: r?.nombre || '',
         monto: Number(r?.precio_calc) || 0,
@@ -2488,7 +2499,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       const prox = proximas[0]?.r;
       let proximaTexto = 'Sin reservas hoy';
       if (prox) {
-        proximaTexto = `${horaRango(prox.hora, prox.duracion)} · ${String(prox.nombre || '').trim() || String(prox.email || '').trim() || 'Reserva'}`;
+        proximaTexto = `${horarioReservaAdmin(prox)} · ${String(prox.nombre || '').trim() || String(prox.email || '').trim() || 'Reserva'}`;
       } else if (ocupados > 0) {
         proximaTexto = 'Sin próximas reservas hoy';
       }
@@ -2623,7 +2634,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <li key={r.id ?? `${r.fecha}-${r.hora}-${r.cancha}-${r.email}`} style={{ marginBottom: '6px' }}>
                       <span style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
                         <span>
-                          <strong>{horaRango(r.hora, r.duracion)}</strong>
+                          <strong>{horarioReservaAdmin(r)}</strong>
                           {' · '}
                           Cancha {r.cancha}
                           {' · '}
@@ -2895,6 +2906,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editandoTorneoId, setEditandoTorneoId] = useState(null);
   const [editTorneoForm, setEditTorneoForm] = useState({});
   const [savingTorneo, setSavingTorneo] = useState(false);
+  const [puntosDistribucionTorneo, setPuntosDistribucionTorneo] = useState(null);
   /** Modal sorteo grupos (lista torneos): { torneo, equipos } */
   const [sorteoGruposCtx, setSorteoGruposCtx] = useState(null);
 
@@ -3292,6 +3304,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         torneo.horas_revelar_equipos != null && torneo.horas_revelar_equipos !== ''
           ? String(torneo.horas_revelar_equipos)
           : '48',
+      inscripcion_monto:
+        torneo.inscripcion_monto != null && torneo.inscripcion_monto !== ''
+          ? String(torneo.inscripcion_monto)
+          : torneo.costo_inscripcion != null && Number(torneo.costo_inscripcion) > 0
+            ? String(torneo.costo_inscripcion)
+            : '',
+      inscripcion_moneda:
+        String(torneo.inscripcion_moneda || torneo.moneda || 'ARS').toUpperCase() === 'USD' ? 'USD' : 'ARS',
+      premios_descripcion: torneo.premios_descripcion || '',
+      puntos_total:
+        torneo.puntos_total != null && torneo.puntos_total !== '' ? String(torneo.puntos_total) : '',
       deporte: torneo.deporte || TORNEO_DEPORTE_PADBOL,
       formato_equipo: torneo.formato_equipo || TORNEO_FORMATO_DOBLES,
     });
@@ -3562,7 +3585,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const iniciarEdicion = (reserva) => {
     setEditandoId(reserva.id);
-    setEditFormData({ ...reserva, estado: reserva.estado || 'reservada' });
+    setEditFormData({ ...reserva, duracion: duracionReservaAdmin(reserva), estado: reserva.estado || 'reservada' });
     setMensajeExito('');
   };
 
@@ -5732,6 +5755,75 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             Vista pública: oculta la lista hasta esta cantidad de horas antes del inicio (admins ven siempre).
                           </div>
                         </div>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
+                            Inscripción por equipo
+                          </label>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 74px', gap: '6px' }}>
+                            <input
+                              type="number"
+                              style={inp}
+                              min="0"
+                              step="1"
+                              placeholder="Vacío = gratis"
+                              value={editTorneoForm.inscripcion_monto ?? ''}
+                              onChange={(e) => setEditTorneoForm((p) => ({ ...p, inscripcion_monto: e.target.value }))}
+                            />
+                            <select
+                              style={inp}
+                              value={editTorneoForm.inscripcion_moneda || 'ARS'}
+                              onChange={(e) => setEditTorneoForm((p) => ({ ...p, inscripcion_moneda: e.target.value }))}
+                              aria-label="Moneda inscripción torneo"
+                            >
+                              <option value="ARS">ARS</option>
+                              <option value="USD">USD</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
+                            Puntos del torneo
+                          </label>
+                          <input
+                            type="number"
+                            style={inp}
+                            min="0"
+                            step="1"
+                            placeholder="Opcional"
+                            value={editTorneoForm.puntos_total ?? ''}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, puntos_total: e.target.value }))}
+                          />
+                          {String(editTorneoForm.puntos_total || '').trim() ? (
+                            <button
+                              type="button"
+                              onClick={() => setPuntosDistribucionTorneo(editTorneoForm)}
+                              style={{
+                                marginTop: '6px',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                background: '#4f46e5',
+                                color: '#fff',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Ver distribución
+                            </button>
+                          ) : null}
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '3px' }}>
+                            Premios
+                          </label>
+                          <textarea
+                            style={{ ...inp, minHeight: 70, resize: 'vertical' }}
+                            value={editTorneoForm.premios_descripcion ?? ''}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, premios_descripcion: e.target.value }))}
+                            placeholder="Ej: 1er lugar $50.000, 2do lugar $20.000"
+                          />
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <button
@@ -5890,6 +5982,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           }
           setTorneoStatsTick((n) => n + 1);
         }}
+      />
+      <TorneoPuntosDistribucionModal
+        open={Boolean(puntosDistribucionTorneo)}
+        onClose={() => setPuntosDistribucionTorneo(null)}
+        torneo={puntosDistribucionTorneo}
       />
       </>}
 
@@ -6846,7 +6943,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             }}
                           >
                             <span style={{ paddingTop: '2px' }}>{r.fecha || '—'}</span>
-                            <span style={{ paddingTop: '2px' }}>{horaRango(r.hora, r.duracion)}</span>
+                            <span style={{ paddingTop: '2px' }}>{horarioReservaAdmin(r)}</span>
                             <span style={{ textAlign: 'center', paddingTop: '2px' }}>{r.cancha ?? '—'}</span>
                             <div style={{ minWidth: 0 }}>
                               <AdminReservaJugadorContacto reserva={r} />
@@ -7234,7 +7331,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <span style={{ color: '#64748b', fontWeight: 700 }}>Fecha</span> · {formatFecha(r.fecha) || '—'}
                         </div>
                         <div>
-                          <span style={{ color: '#64748b', fontWeight: 700 }}>Horario</span> · {horaRango(r.hora, r.duracion)}
+                          <span style={{ color: '#64748b', fontWeight: 700 }}>Horario</span> · {horarioReservaAdmin(r)}
                         </div>
                         <div>
                           <span style={{ color: '#64748b', fontWeight: 700 }}>Cancha</span> · {r.cancha ?? '—'}
@@ -7458,7 +7555,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         ) : (
                           <tr key={r.id}>
                             <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{formatFecha(r.fecha) || '—'}</td>
-                            <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{horaRango(r.hora, r.duracion)}</td>
+                            <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{horarioReservaAdmin(r)}</td>
                             <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.cancha ?? '—'}</td>
                             {esAdminNacional ? (
                               <td style={{ padding: '6px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sede}</td>

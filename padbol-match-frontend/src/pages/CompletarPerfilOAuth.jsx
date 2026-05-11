@@ -8,9 +8,9 @@ import {
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
-import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import {
   digitsOnly,
   formatWhatsAppE164,
@@ -22,6 +22,8 @@ import {
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import { nombreRealDesdePerfilOauth } from '../utils/displayName';
+
+const OPCIONES_TELEFONO = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
 
 function capitalizar(s) {
   const t = String(s || '').trim();
@@ -36,7 +38,7 @@ export default function CompletarPerfilOAuth() {
   const [genero, setGenero] = useState('');
   const [waCodigo, setWaCodigo] = useState('+54');
   const [waLocal, setWaLocal] = useState('');
-  const [waConfirm, setWaConfirm] = useState('');
+  const [waLocalConfirm, setWaLocalConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -50,6 +52,7 @@ export default function CompletarPerfilOAuth() {
       const { codigo, local } = splitStoredWhatsapp(rawWa);
       setWaCodigo(codigo);
       setWaLocal(local);
+      setWaLocalConfirm('');
     }
   }, [userProfile?.id, userProfile?.genero, userProfile?.whatsapp]);
 
@@ -69,18 +72,18 @@ export default function CompletarPerfilOAuth() {
         return;
       }
       const waLoc = digitsOnly(waLocal);
-      const waLoc2 = digitsOnly(waConfirm);
-      if (!whatsappNacionalValido(waLoc)) {
-        setErrorMsg('Ingresá un WhatsApp válido (número local, mínimo 10 dígitos, sin repetir el código de país).');
+      const waLoc2 = digitsOnly(waLocalConfirm);
+      if (waLoc !== waLoc2) {
+        setErrorMsg('Los números no coinciden.');
         return;
       }
-      if (waLoc !== waLoc2) {
-        setErrorMsg('Los números de WhatsApp no coinciden.');
+      if (!whatsappNacionalValido(waLoc)) {
+        setErrorMsg('Número de WhatsApp inválido.');
         return;
       }
       const waDigitsFull = buildFullWhatsDigits(waCodigo, waLoc);
       if (!whatsappDigitsValido(waDigitsFull)) {
-        setErrorMsg('Completá un WhatsApp válido.');
+        setErrorMsg('Número de WhatsApp inválido.');
         return;
       }
       const waE164 = formatWhatsAppE164(waCodigo, waLoc);
@@ -119,7 +122,7 @@ export default function CompletarPerfilOAuth() {
             apellido: apellidoIns,
             genero: gen,
             whatsapp: waE164,
-            alias: '',
+            alias: null,
             notificaciones_whatsapp: false,
           };
           const { error } = await supabase.from('jugadores_perfil').insert(insertRow).select().single();
@@ -141,7 +144,7 @@ export default function CompletarPerfilOAuth() {
         setBusy(false);
       }
     },
-    [session, userProfile, genero, waCodigo, waLocal, waConfirm, refreshSession, location.state, navigate]
+    [session, userProfile, genero, waCodigo, waLocal, waLocalConfirm, refreshSession, location.state, navigate]
   );
 
   if (!loading && !profileLoading && session?.user && perfilJugadorDatosMinimosCompletos(userProfile)) {
@@ -160,13 +163,23 @@ export default function CompletarPerfilOAuth() {
         paddingRight: '16px',
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
+        overflow: 'visible',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
       }}
     >
       <AppHeader title="Completar perfil" showBack={false} contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
-      <div style={{ width: '100%', maxWidth: '400px', marginTop: HUB_LOGO_CLEARANCE_TOP_PX }}>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
+          boxSizing: 'border-box',
+          overflow: 'visible',
+        }}
+      >
         <img
           src="/logo-padbol-match.png"
           alt="Padbol Match"
@@ -206,6 +219,10 @@ export default function CompletarPerfilOAuth() {
             borderRadius: '14px',
             padding: '20px 18px',
             boxSizing: 'border-box',
+            width: '100%',
+            minWidth: 0,
+            maxWidth: '100%',
+            overflow: 'visible',
           }}
         >
           <label
@@ -238,75 +255,127 @@ export default function CompletarPerfilOAuth() {
             <option value="otro">Otro</option>
             <option value="open">Open</option>
           </select>
-          <label
+          <div
             style={{
+              marginBottom: '16px',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+              overflow: 'visible',
               display: 'block',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#334155',
-              marginBottom: '6px',
             }}
           >
-            WhatsApp <span style={{ color: '#dc2626' }}>*</span>
-          </label>
-          <div style={{ marginBottom: '8px' }}>
-            <TelefonoPaisCodigoRow
-              codigoValue={waCodigo}
-              onCodigoChange={setWaCodigo}
-              localValue={waLocal}
-              onLocalChange={(v) => setWaLocal(digitsOnly(v))}
-              disabled={busy}
-              placeholderLocal="Ej: 9112345678"
-              selectStyle={{
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+              WhatsApp <span style={{ color: '#dc2626' }}>*</span>
+            </div>
+            <div
+              style={{
                 width: '100%',
                 maxWidth: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                marginBottom: '14px',
                 boxSizing: 'border-box',
-                fontSize: '16px',
-                background: '#ffffff',
-                minWidth: 120,
+                overflow: 'visible',
+                display: 'block',
               }}
-              inputStyle={{
+            >
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                País
+              </label>
+              <select
+                value={waCodigo}
+                onChange={(e) => setWaCodigo(e.target.value)}
+                disabled={busy}
+                title="País / código"
+                aria-label="País y código de área"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '16px',
+                  boxSizing: 'border-box',
+                  maxWidth: '100%',
+                  display: 'block',
+                  background: '#ffffff',
+                }}
+              >
+                {OPCIONES_TELEFONO.map((p) => (
+                  <option key={`${p.nombre}-${p.codigo}`} value={p.codigo} title={p.nombre}>
+                    {p.bandera} {p.codigo}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div
+              style={{
                 width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                maxWidth: '100%',
+                marginBottom: '14px',
                 boxSizing: 'border-box',
-                fontSize: '16px',
-                background: '#ffffff',
+                overflow: 'visible',
+                display: 'block',
               }}
-            />
+            >
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Número
+              </label>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={waLocal}
+                onChange={(e) => setWaLocal(digitsOnly(e.target.value))}
+                disabled={busy}
+                placeholder="Ej: 2213032019"
+                aria-label="Número de celular sin código de país"
+                autoComplete="tel-national"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '16px',
+                  boxSizing: 'border-box',
+                  maxWidth: '100%',
+                  display: 'block',
+                  background: '#ffffff',
+                }}
+              />
+            </div>
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                overflow: 'visible',
+                display: 'block',
+              }}
+            >
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Confirmar número <span style={{ color: '#dc2626' }}>*</span>
+              </label>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={waLocalConfirm}
+                onChange={(e) => setWaLocalConfirm(digitsOnly(e.target.value))}
+                disabled={busy}
+                placeholder="Repetí el número"
+                aria-label="Confirmar número local"
+                autoComplete="off"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '16px',
+                  boxSizing: 'border-box',
+                  maxWidth: '100%',
+                  display: 'block',
+                  background: '#ffffff',
+                }}
+              />
+            </div>
           </div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#334155',
-              marginBottom: '6px',
-            }}
-          >
-            Confirmar WhatsApp <span style={{ color: '#dc2626' }}>*</span>
-          </label>
-          <input
-            type="tel"
-            inputMode="numeric"
-            value={waConfirm}
-            onChange={(e) => setWaConfirm(digitsOnly(e.target.value))}
-            placeholder="Repite el mismo número local"
-            disabled={busy}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '16px',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              fontSize: '16px',
-              boxSizing: 'border-box',
-            }}
-          />
           {errorMsg ? (
             <p style={{ color: '#b91c1c', fontSize: '14px', margin: '0 0 12px' }}>{errorMsg}</p>
           ) : null}

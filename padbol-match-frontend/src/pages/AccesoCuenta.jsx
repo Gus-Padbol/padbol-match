@@ -120,7 +120,7 @@ export default function AccesoCuenta() {
   const [regNotificacionesWhatsapp, setRegNotificacionesWhatsapp] = useState(false);
   const [regWaCodigoPais, setRegWaCodigoPais] = useState('+54');
   const [regWaLocal, setRegWaLocal] = useState('');
-  const [regWaConfirmLocal, setRegWaConfirmLocal] = useState('');
+  const [regWaLocalConfirm, setRegWaLocalConfirm] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
 
   /** Volver solo tras navegación interna (push/replace), no en carga directa ni desde la landing. */
@@ -191,7 +191,7 @@ export default function AccesoCuenta() {
     setRegNotificacionesWhatsapp(false);
     setRegWaCodigoPais('+54');
     setRegWaLocal('');
-    setRegWaConfirmLocal('');
+    setRegWaLocalConfirm('');
   }, [modo]);
 
   const handleIngresar = async (e) => {
@@ -264,18 +264,18 @@ export default function AccesoCuenta() {
       return;
     }
     const waLoc = digitsOnly(regWaLocal);
-    const waLoc2 = digitsOnly(regWaConfirmLocal);
-    if (!whatsappNacionalValido(waLoc)) {
-      setErrorMsg('Ingresa un WhatsApp válido (número local, mínimo 10 dígitos, sin repetir el código de país).');
+    const waLoc2 = digitsOnly(regWaLocalConfirm);
+    if (waLoc !== waLoc2) {
+      setErrorMsg('Los números no coinciden.');
       return;
     }
-    if (waLoc !== waLoc2) {
-      setErrorMsg('Los números de WhatsApp no coinciden.');
+    if (!whatsappNacionalValido(waLoc)) {
+      setErrorMsg('Número de WhatsApp inválido.');
       return;
     }
     const waDigitsFull = buildFullWhatsDigits(regWaCodigoPais, waLoc);
     if (!whatsappDigitsValido(waDigitsFull)) {
-      setErrorMsg('Completa un WhatsApp válido.');
+      setErrorMsg('Número de WhatsApp inválido.');
       return;
     }
     const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
@@ -365,6 +365,7 @@ export default function AccesoCuenta() {
         style={{
           width: '100%',
           maxWidth: '400px',
+          minWidth: 0,
           padding: '0 24px',
           boxSizing: 'border-box',
         }}
@@ -544,7 +545,10 @@ export default function AccesoCuenta() {
             </button>
           </form>
         ) : (
-          <form onSubmit={handleRegistrar}>
+          <form
+            onSubmit={handleRegistrar}
+            style={{ minWidth: 0, maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}
+          >
             <label
               style={{
                 display: 'block',
@@ -689,81 +693,39 @@ export default function AccesoCuenta() {
                 background: '#ffffff',
               }}
             />
-            <label
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
-                marginBottom: '6px',
-              }}
-            >
-              WhatsApp <span style={{ color: '#fecaca' }}>*</span>
-            </label>
-            <div style={{ marginBottom: '6px' }}>
+            <div style={{ marginBottom: '14px', width: '100%', minWidth: 0, maxWidth: '100%' }}>
               <TelefonoPaisCodigoRow
+                sectionHeading={
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.92)' }}>
+                    WhatsApp <span style={{ color: '#fecaca' }}>*</span>
+                  </span>
+                }
+                labelStyle={{ color: 'rgba(255,255,255,0.92)' }}
                 codigoValue={regWaCodigoPais}
                 onCodigoChange={setRegWaCodigoPais}
                 localValue={regWaLocal}
                 onLocalChange={(v) => setRegWaLocal(digitsOnly(v))}
+                confirmLocalValue={regWaLocalConfirm}
+                onConfirmLocalChange={(v) => setRegWaLocalConfirm(digitsOnly(v))}
+                confirmRequired
+                requiredAsteriskStyle={{ color: '#fecaca' }}
                 disabled={busy}
-                placeholderLocal="Ej: 9112345678"
                 selectStyle={{
-                  width: '100%',
-                  maxWidth: '100%',
                   padding: '14px',
                   borderRadius: '8px',
                   border: '1px solid #e2e8f0',
-                  boxSizing: 'border-box',
                   fontSize: '16px',
                   background: '#ffffff',
-                  minWidth: 120,
                 }}
                 inputStyle={{
-                  width: '100%',
                   padding: '14px',
                   borderRadius: '8px',
                   border: '1px solid #e2e8f0',
-                  boxSizing: 'border-box',
                   fontSize: '16px',
                   background: '#ffffff',
                 }}
               />
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', marginTop: 0, marginBottom: '10px', lineHeight: 1.4 }}>
-              Elige el país (bandera + código) y escribe solo tu número local. Se guarda en formato internacional.
-            </p>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
-                marginBottom: '6px',
-              }}
-            >
-              Confirmar WhatsApp <span style={{ color: '#fecaca' }}>*</span>
-            </label>
-            <input
-              className="acceso-cuenta-input"
-              type="tel"
-              inputMode="numeric"
-              value={regWaConfirmLocal}
-              onChange={(e) => setRegWaConfirmLocal(digitsOnly(e.target.value))}
-              placeholder="Repite el mismo número local"
-              disabled={busy}
-              autoComplete="tel-national"
-              style={{
-                width: '100%',
-                padding: '14px',
-                marginBottom: '14px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                boxSizing: 'border-box',
-                fontSize: '16px',
-                background: '#ffffff',
-              }}
-            />
             <label
               style={{
                 display: 'block',

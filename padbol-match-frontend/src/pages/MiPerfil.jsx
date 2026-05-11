@@ -1985,11 +1985,14 @@ export default function MiPerfil() {
                 />
               </div>
 
-              <label style={guestLabelStyle}>
-                WhatsApp {reqAst}
-              </label>
               <div style={{ marginBottom: '6px', width: '100%' }}>
                 <TelefonoPaisCodigoRow
+                  sectionHeading={
+                    <span style={guestLabelStyle}>
+                      WhatsApp {reqAst}
+                    </span>
+                  }
+                  labelStyle={guestLabelStyle}
                   codigoValue={waCodigoPais}
                   onCodigoChange={(v) => {
                     setWaCodigoPais(v);
@@ -2000,22 +2003,30 @@ export default function MiPerfil() {
                     setWaNumeroLocal(digitsOnly(v));
                     setRegistroFieldErrors((p) => ({ ...p, whatsapp: '', whatsappConfirma: '' }));
                   }}
+                  confirmLocalValue={waConfirmLocal}
+                  onConfirmLocalChange={(v) => {
+                    setWaConfirmLocal(digitsOnly(v));
+                    setRegistroFieldErrors((p) => ({ ...p, whatsapp: '', whatsappConfirma: '' }));
+                  }}
+                  confirmRequired
+                  requiredAsteriskStyle={{ color: '#dc2626' }}
                   placeholderLocal="Ej: 2211234567"
+                  placeholderConfirm="Ej: 2211234567"
                   selectStyle={{
                     ...guestInputStyle,
-                    flex: '0 0 auto',
-                    minWidth: '108px',
-                    maxWidth: '132px',
                     marginBottom: 0,
                     cursor: 'pointer',
                     border: regBorder('whatsapp'),
                   }}
                   inputStyle={{
                     ...guestInputStyle,
-                    flex: '1 1 0',
-                    minWidth: 0,
                     marginBottom: 0,
                     border: regBorder('whatsapp'),
+                  }}
+                  confirmInputStyle={{
+                    ...guestInputStyle,
+                    marginBottom: regErr('whatsappConfirma') ? '6px' : '14px',
+                    border: regBorder('whatsappConfirma'),
                   }}
                 />
               </div>
@@ -2023,22 +2034,6 @@ export default function MiPerfil() {
                 Elige país (bandera + código) y escribe solo el número local (mín. 10 dígitos). Se guarda en formato internacional.
               </p>
               {regErrP('whatsapp')}
-
-              <label style={guestLabelStyle}>
-                Confirmar número {reqAst}
-              </label>
-              <input
-                type="tel"
-                inputMode="numeric"
-                value={waConfirmLocal}
-                onChange={(e) => {
-                  setWaConfirmLocal(digitsOnly(e.target.value));
-                  setRegistroFieldErrors((p) => ({ ...p, whatsappConfirma: '' }));
-                }}
-                placeholder="Ej: 2211234567"
-                style={{ ...guestInputStyle, marginBottom: regErr('whatsappConfirma') ? '6px' : '14px', border: regBorder('whatsappConfirma') }}
-                autoComplete="tel-national"
-              />
               {regErrP('whatsappConfirma')}
 
               <label style={guestLabelStyle}>
@@ -2938,9 +2933,10 @@ export default function MiPerfil() {
               Necesitas tener club habitual o sede en tu ficha. Otros te contactan por WhatsApp si tienes número en el perfil o en una reserva.
             </p>
 
-            <label style={labelStyle}>WhatsApp</label>
             <div style={{ marginBottom: '6px', width: '100%' }}>
               <TelefonoPaisCodigoRow
+                sectionHeading={<span style={labelStyle}>WhatsApp</span>}
+                labelStyle={labelStyle}
                 codigoValue={waCodigoPais}
                 onCodigoChange={setWaCodigoPais}
                 localValue={waNumeroLocal}
@@ -2948,16 +2944,11 @@ export default function MiPerfil() {
                 placeholderLocal="Ej: 91123456789"
                 selectStyle={{
                   ...inputStyle,
-                  flex: '0 0 auto',
-                  minWidth: '108px',
-                  maxWidth: '132px',
                   marginBottom: 0,
                   cursor: 'pointer',
                 }}
                 inputStyle={{
                   ...inputStyle,
-                  flex: '1 1 0',
-                  minWidth: 0,
                   marginBottom: 0,
                 }}
               />

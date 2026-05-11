@@ -23,6 +23,8 @@ html {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  /* Si una ruta no pinta nada, evita que solo se vea el gradiente violeta de `body` (App.css). */
+  background-color: #f1f5f9;
 }
 
 /* AppHeader fijo: safe area dentro del header (no tapar con scroll dinámico de Safari) */

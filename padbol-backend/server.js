@@ -2171,6 +2171,59 @@ app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
   }
 });
 
+function minutosDesdeHoraReservaBackend(horaRaw) {
+  const t = String(horaRaw || '').split(' - ')[0].trim();
+  const m = /^(\d{1,2}):(\d{2})/.exec(t);
+  if (!m) return null;
+  const hh = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+  return hh * 60 + mm;
+}
+
+function duracionReservaRowBackend(row) {
+  const d = parseInt(String(row?.duracion_minutos ?? row?.duracion ?? ''), 10);
+  return Number.isFinite(d) && d > 0 ? d : 90;
+}
+
+function reservaEstadoBloqueaSlotBackend(row) {
+  return String(row?.estado || '').trim().toLowerCase() !== 'cancelada';
+}
+
+function reservasSolapanBackend(aInicio, aDuracion, bRow) {
+  const bInicio = minutosDesdeHoraReservaBackend(bRow?.hora);
+  if (bInicio == null) return false;
+  const aFin = aInicio + aDuracion;
+  const bFin = bInicio + duracionReservaRowBackend(bRow);
+  return aInicio < bFin && aFin > bInicio;
+}
+
+async function assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin, excludeId = null }) {
+  const inicioMin = minutosDesdeHoraReservaBackend(hora);
+  if (inicioMin == null) {
+    const e = new Error('Horario inválido');
+    e.status = 400;
+    throw e;
+  }
+  const canchaNum = parseInt(String(cancha), 10);
+  const duracion = Number.isFinite(Number(duracionMin)) && Number(duracionMin) > 0 ? parseInt(String(duracionMin), 10) : 90;
+  let q = supabase
+    .from('reservas')
+    .select('id,hora,duracion,duracion_minutos,estado')
+    .eq('sede', sede)
+    .eq('fecha', fecha)
+    .eq('cancha', canchaNum);
+  if (excludeId != null && String(excludeId).trim() !== '') q = q.neq('id', excludeId);
+  const { data, error } = await q;
+  if (error) throw error;
+  const conflict = (data || []).find((row) => reservaEstadoBloqueaSlotBackend(row) && reservasSolapanBackend(inicioMin, duracion, row));
+  if (conflict) {
+    const e = new Error('Este horario se solapa con otra reserva');
+    e.status = 409;
+    throw e;
+  }
+}
+
 // POST reserva
 app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
   try {
@@ -2194,21 +2247,6 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
     await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
     await assertReservaHorarioNoPasadoParaSede(sede, fecha, hora);
 
-    // Verificar double-booking
-    const { data: existentes, error: errCheck } = await supabase
-      .from('reservas')
-      .select('*')
-      .eq('sede', sede)
-      .eq('fecha', fecha)
-      .eq('hora', hora)
-      .eq('cancha', cancha);
-
-    if (errCheck) throw errCheck;
-
-    if (existentes && existentes.length > 0) {
-      return res.status(409).json({ error: 'Este horario ya está reservado' });
-    }
-
     // Sin `estado` en el body (p. ej. pagos MP viejos en external_reference) → confirmada tras pago exitoso.
     const estadoExplicito =
       Object.prototype.hasOwnProperty.call(req.body, 'estado') &&
@@ -2224,6 +2262,8 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
         .maybeSingle();
       duracionMin = parseInt(sedeDur?.duracion_reserva_minutos, 10) || 90;
     }
+
+    await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
 
     // Crear reserva
     const { data, error } = await supabase
@@ -2241,6 +2281,7 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
         precio: parseInt(precio),
         estado: estadoFinal,
         duracion: duracionMin,
+        duracion_minutos: duracionMin,
         ...(user_id ? { user_id } : {}),
       }])
       .select();
@@ -2527,8 +2568,28 @@ app.put('/api/reservas/:id', async (req, res) => {
     if (nombre   !== undefined) updates.nombre   = nombre;
     if (email    !== undefined) updates.email    = email;
     if (precio   !== undefined) updates.precio   = precio !== null ? parseInt(precio) : null;
-    if (duracion !== undefined) updates.duracion = duracion !== null ? parseInt(duracion) : null;
+    if (duracion !== undefined) {
+      const duracionEdit = duracion !== null ? parseInt(duracion, 10) : null;
+      updates.duracion = duracionEdit;
+      updates.duracion_minutos = duracionEdit;
+    }
     if (estado   !== undefined) updates.estado   = estado;
+
+    const sedeEff = updates.sede !== undefined ? updates.sede : prevRow?.sede;
+    const fechaEff = updates.fecha !== undefined ? updates.fecha : prevRow?.fecha;
+    const horaEff = updates.hora !== undefined ? updates.hora : prevRow?.hora;
+    const canchaEff = updates.cancha !== undefined ? updates.cancha : prevRow?.cancha;
+    const duracionEff = updates.duracion !== undefined ? updates.duracion : duracionReservaRowBackend(prevRow);
+    if (sedeEff && fechaEff && horaEff && canchaEff != null && String(updates.estado ?? prevRow?.estado ?? '').trim().toLowerCase() !== 'cancelada') {
+      await assertReservaSinSolapeBackend({
+        sede: sedeEff,
+        fecha: fechaEff,
+        hora: horaEff,
+        cancha: canchaEff,
+        duracionMin: duracionEff,
+        excludeId: id,
+      });
+    }
 
     const { data, error } = await supabase
       .from('reservas')
@@ -2823,6 +2884,26 @@ function normalizeFechaAperturaInscripcionInput(v) {
   const d = new Date(String(v).trim());
   if (Number.isNaN(d.getTime())) return { action: 'invalid' };
   return { action: 'set', value: d.toISOString() };
+}
+
+function parseTorneoOptionalAmount(value) {
+  if (value === undefined) return { action: 'omit' };
+  if (value === null || String(value).trim() === '') return { action: 'set', value: null };
+  const n = Number(String(value).replace(',', '.'));
+  return Number.isFinite(n) && n >= 0 ? { action: 'set', value: n } : { action: 'set', value: null };
+}
+
+function parseTorneoOptionalInteger(value) {
+  if (value === undefined) return { action: 'omit' };
+  if (value === null || String(value).trim() === '') return { action: 'set', value: null };
+  const n = parseInt(String(value), 10);
+  return Number.isFinite(n) && n >= 0 ? { action: 'set', value: n } : { action: 'set', value: null };
+}
+
+function normalizeTorneoInscripcionMoneda(value) {
+  const raw = String(value || '').trim().toUpperCase();
+  if (raw === 'ARS' || raw === 'USD') return raw;
+  return null;
 }
 
 /** Busca dupla: torneo aún no en curso / finalizado y fecha de inicio no pasada (calendario ART). */
@@ -3165,6 +3246,10 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       fecha_fin,
       cantidad_equipos,
       costo_inscripcion,
+      inscripcion_monto,
+      inscripcion_moneda,
+      premios_descripcion,
+      puntos_total,
       cupos_maximos,
       horas_revelar_equipos,
       es_multisede,
@@ -3212,12 +3297,24 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       es_multisede,
       created_by,
     };
-    if (costo_inscripcion !== undefined && costo_inscripcion !== null && costo_inscripcion !== '') {
-      const c = Number(String(costo_inscripcion).replace(',', '.'));
-      row.costo_inscripcion = Number.isFinite(c) && c >= 0 ? c : 0;
+    const montoInscripcionParsed = parseTorneoOptionalAmount(
+      inscripcion_monto !== undefined ? inscripcion_monto : costo_inscripcion
+    );
+    if (montoInscripcionParsed.action === 'set' && montoInscripcionParsed.value != null) {
+      row.inscripcion_monto = montoInscripcionParsed.value;
+      row.inscripcion_moneda = normalizeTorneoInscripcionMoneda(inscripcion_moneda) || 'ARS';
+      row.costo_inscripcion = montoInscripcionParsed.value;
     } else {
+      row.inscripcion_monto = null;
+      row.inscripcion_moneda = null;
       row.costo_inscripcion = 0;
     }
+    row.premios_descripcion =
+      premios_descripcion != null && String(premios_descripcion).trim()
+        ? String(premios_descripcion).trim()
+        : null;
+    const puntosParsed = parseTorneoOptionalInteger(puntos_total);
+    row.puntos_total = puntosParsed.action === 'set' ? puntosParsed.value : null;
     if (cupos_maximos !== undefined && cupos_maximos !== null && cupos_maximos !== '') {
       const cm = parseInt(String(cupos_maximos), 10);
       row.cupos_maximos = Number.isFinite(cm) && cm > 0 ? cm : null;
@@ -3577,6 +3674,10 @@ async function handleTorneoPatchOrPut(req, res) {
       cupos_maximos,
       horas_revelar_equipos,
       costo_inscripcion,
+      inscripcion_monto,
+      inscripcion_moneda,
+      premios_descripcion,
+      puntos_total,
       fecha_apertura_inscripcion: fechaAperturaPatch,
       tipo_competencia: tipoCompetenciaPatch,
       genero_competencia: legacyGeneroCompPatch,
@@ -3656,9 +3757,28 @@ async function handleTorneoPatchOrPut(req, res) {
       const hr = parseInt(String(horas_revelar_equipos), 10);
       if (Number.isFinite(hr) && hr >= 0) patch.horas_revelar_equipos = hr;
     }
-    if (costo_inscripcion !== undefined && costo_inscripcion !== null && costo_inscripcion !== '') {
-      const c = Number(String(costo_inscripcion).replace(',', '.'));
-      if (Number.isFinite(c) && c >= 0) patch.costo_inscripcion = c;
+    if (inscripcion_monto !== undefined || costo_inscripcion !== undefined) {
+      const montoParsed = parseTorneoOptionalAmount(
+        inscripcion_monto !== undefined ? inscripcion_monto : costo_inscripcion
+      );
+      if (montoParsed.action === 'set') {
+        patch.inscripcion_monto = montoParsed.value;
+        patch.costo_inscripcion = montoParsed.value != null ? montoParsed.value : 0;
+        patch.inscripcion_moneda =
+          montoParsed.value != null
+            ? normalizeTorneoInscripcionMoneda(inscripcion_moneda) || 'ARS'
+            : null;
+      }
+    } else if (inscripcion_moneda !== undefined) {
+      patch.inscripcion_moneda = normalizeTorneoInscripcionMoneda(inscripcion_moneda);
+    }
+    if (premios_descripcion !== undefined) {
+      const premios = String(premios_descripcion || '').trim();
+      patch.premios_descripcion = premios || null;
+    }
+    if (puntos_total !== undefined) {
+      const puntosParsed = parseTorneoOptionalInteger(puntos_total);
+      if (puntosParsed.action === 'set') patch.puntos_total = puntosParsed.value;
     }
     if (fechaAperturaPatch !== undefined) {
       const fap = normalizeFechaAperturaInscripcionInput(fechaAperturaPatch);
@@ -6570,18 +6690,6 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
         return res.status(st).json({ error: e.message || String(e) });
       }
 
-      const { data: existentes, error: errCheck } = await supabase
-        .from('reservas')
-        .select('id')
-        .eq('sede', sede)
-        .eq('fecha', fecha)
-        .eq('hora', hora)
-        .eq('cancha', cancha);
-      if (errCheck) throw errCheck;
-      if ((existentes || []).length > 0) {
-        return res.status(409).json({ error: 'Este horario ya está reservado' });
-      }
-
       let duracionMin = parseInt(String(payload.duracion), 10);
       if (!Number.isFinite(duracionMin) || duracionMin <= 0) {
         const { data: sedeDur } = await supabase
@@ -6591,6 +6699,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
           .maybeSingle();
         duracionMin = parseInt(sedeDur?.duracion_reserva_minutos, 10) || 90;
       }
+      await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
 
       const ins = {
         sede,
@@ -6605,6 +6714,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
         precio: parseInt(String(payload.precio), 10),
         estado: 'confirmada',
         duracion: duracionMin,
+        duracion_minutos: duracionMin,
         ...(authUser.id ? { user_id: authUser.id } : {}),
       };
 
@@ -7122,17 +7232,6 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
   }
   await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
   await assertReservaHorarioNoPasadoParaSede(sede, fecha, hora);
-  const { data: existentes, error: errCheck } = await supabase
-    .from('reservas')
-    .select('id')
-    .eq('sede', sede)
-    .eq('fecha', fecha)
-    .eq('hora', hora)
-    .eq('cancha', parseInt(String(cancha), 10));
-  if (errCheck) throw errCheck;
-  if (existentes && existentes.length > 0) {
-    return { ok: true, duplicate: true };
-  }
   let duracionMin = duracion != null && duracion !== '' ? parseInt(duracion, 10) : null;
   if (!Number.isFinite(duracionMin) || duracionMin <= 0) {
     const { data: sedeDur } = await supabase
@@ -7141,6 +7240,12 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
       .eq('nombre', sede)
       .maybeSingle();
     duracionMin = parseInt(sedeDur?.duracion_reserva_minutos, 10) || 90;
+  }
+  try {
+    await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
+  } catch (e) {
+    if (e.status === 409) return { ok: true, duplicate: true };
+    throw e;
   }
   const { data, error } = await supabase
     .from('reservas')
@@ -7158,6 +7263,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
         precio: parseInt(String(precio), 10),
         estado: 'confirmada',
         duracion: duracionMin,
+        duracion_minutos: duracionMin,
       },
     ])
     .select();
@@ -7456,17 +7562,6 @@ app.post('/api/crear-preferencia', async (req, res) => {
         estado: 'pendiente_pago_manual',
         duracion: r.duracion,
       };
-      const { data: taken, error: chkErr } = await supabase
-        .from('reservas')
-        .select('id')
-        .eq('sede', payloadReserva.sede)
-        .eq('fecha', payloadReserva.fecha)
-        .eq('hora', payloadReserva.hora)
-        .eq('cancha', parseInt(String(payloadReserva.cancha), 10));
-      if (chkErr) throw chkErr;
-      if ((taken || []).length > 0) {
-        return res.status(409).json({ error: 'Este horario ya está reservado' });
-      }
       try {
         await assertCanchaPermitidaParaReservaPorNombreSede(
           String(payloadReserva.sede || '').trim(),
@@ -7477,6 +7572,17 @@ app.post('/api/crear-preferencia', async (req, res) => {
           String(payloadReserva.fecha || '').trim(),
           String(payloadReserva.hora || '').trim()
         );
+        let duracionMinManual = parseInt(String(payloadReserva.duracion), 10);
+        if (!Number.isFinite(duracionMinManual) || duracionMinManual <= 0) duracionMinManual = 90;
+        payloadReserva.duracion = duracionMinManual;
+        payloadReserva.duracion_minutos = duracionMinManual;
+        await assertReservaSinSolapeBackend({
+          sede: String(payloadReserva.sede || '').trim(),
+          fecha: String(payloadReserva.fecha || '').trim(),
+          hora: String(payloadReserva.hora || '').trim(),
+          cancha: payloadReserva.cancha,
+          duracionMin: duracionMinManual,
+        });
       } catch (e) {
         const st = e.status || 400;
         return res.status(st).json({ error: e.message || String(e) });

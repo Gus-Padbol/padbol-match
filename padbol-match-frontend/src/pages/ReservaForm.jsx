@@ -88,6 +88,8 @@ function clienteTieneTelefonoGuardado(c) {
 
 /** Mínimo de dígitos (sin contar +) para considerar un teléfono válido al confirmar pago */
 const MIN_DIGITOS_TELEFONO = 8;
+const RESERVA_DURACIONES_MIN = [60, 90, 120];
+const SLOT_STEP_MIN = 30;
 
 /** Perfil con teléfono/WhatsApp con cantidad de dígitos suficiente (no se re-evalúa en cada tecla del resumen). */
 function perfilTelefonoValido(c) {
@@ -123,6 +125,44 @@ function fechaMaxReservaISO() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+function minutosDesdeHoraReserva(horaRaw) {
+  const t = String(horaRaw || '').split(' - ')[0].trim();
+  const m = /^(\d{1,2}):(\d{2})/.exec(t);
+  if (!m) return null;
+  const hh = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+  return hh * 60 + mm;
+}
+
+function horaDesdeMinutosReserva(totalMin) {
+  const hh = Math.floor(totalMin / 60);
+  const mm = totalMin % 60;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function duracionReservaSeleccionada(formData) {
+  const d = parseInt(String(formData?.duracion || ''), 10);
+  return RESERVA_DURACIONES_MIN.includes(d) ? d : 90;
+}
+
+function reservaBloqueaDisponibilidad(reserva) {
+  const estado = String(reserva?.estado || '').trim().toLowerCase();
+  return estado !== 'cancelada';
+}
+
+function duracionReservaExistenteMin(reserva) {
+  const d = parseInt(String(reserva?.duracion_minutos ?? reserva?.duracion ?? ''), 10);
+  return Number.isFinite(d) && d > 0 ? d : 90;
+}
+
+function reservaSolapaIntervalo(reserva, inicioMin, finMin) {
+  const inicioReserva = minutosDesdeHoraReserva(reserva?.hora);
+  if (inicioReserva == null) return false;
+  const finReserva = inicioReserva + duracionReservaExistenteMin(reserva);
+  return inicioMin < finReserva && finMin > inicioReserva;
 }
 
 /** Intento “reservar desde la sede más cercana por geo” (pantalla 1 → perfil → /reservar?sedeId=). */
@@ -500,6 +540,7 @@ export default function ReservaForm() {
       fecha: p.pantalla === 2 ? todayLocalISO() : '',
       hora: '',
       cancha: '',
+      duracion: '90',
       codigoPais: '+54',
       numeroTel: '',
     };
@@ -643,6 +684,7 @@ export default function ReservaForm() {
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
+  const duracionSeleccionadaMin = duracionReservaSeleccionada(formData);
 
   const irAModificarReservaDesdeResumen = useCallback(() => {
     setPantalla(2);
@@ -873,6 +915,7 @@ export default function ReservaForm() {
             : prev.fecha || ymdHoyParaReservaSede(sedeObj),
         hora: fd.hora != null ? String(fd.hora).trim() : prev.hora || '',
         cancha: fd.cancha != null && String(fd.cancha).trim() ? String(fd.cancha).trim() : prev.cancha || '',
+        duracion: fd.duracion != null ? String(fd.duracion) : prev.duracion || '90',
         codigoPais: fd.codigoPais != null ? String(fd.codigoPais) : prev.codigoPais,
         numeroTel: fd.numeroTel != null ? String(fd.numeroTel) : prev.numeroTel,
       }));
@@ -1118,34 +1161,35 @@ export default function ReservaForm() {
         /* ignore parse errors */
       }
 
-      const duracion = sedeData.duracion_reserva_minutos || 90;
+      const duracion = duracionSeleccionadaMin;
       const slotsOferta = slotsReservaDesdeSede(sedeData);
       const numsSlots = slotsOferta.map((s) => s.numero);
       const hoyCalendarioNegocio = ymdHoyParaReservaSede(sedeData);
       const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
+      const aperturaMin = horaApertura * 60;
+      const cierreMin = horaCierre * 60;
 
       const todosLosHorarios = [];
 
       // Generate all possible time slots based on club schedule
-      for (let h = horaApertura; h < horaCierre; h++) {
-        for (let m = 0; m < 60; m += duracion) {
+      for (let startMin = aperturaMin; startMin + duracion <= cierreMin; startMin += SLOT_STEP_MIN) {
           // Check if slot fits within business hours
-          const slotEndMinutes = m + duracion;
-          const slotEndHours = h + Math.floor(slotEndMinutes / 60);
-          const slotEndMins = slotEndMinutes % 60;
+          const endMin = startMin + duracion;
 
           // Only add if slot ends by closing time
-          if (slotEndHours < horaCierre || (slotEndHours === horaCierre && slotEndMins === 0)) {
-            const horaInicio = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-            const hFin = slotEndHours;
-            const mFin = slotEndMins;
-            const horaFin = String(hFin).padStart(2, '0') + ':' + String(mFin).padStart(2, '0');
+          if (endMin <= cierreMin) {
+            const horaInicio = horaDesdeMinutosReserva(startMin);
+            const horaFin = horaDesdeMinutosReserva(endMin);
 
             // Solo slots ofertados (activos): si ninguno libre, no listar el horario
             const ocupadasNums = Array.isArray(reservadas)
               ? reservadas
-                .filter((r) => r.hora === horaInicio && numsSlots.includes(r.cancha))
-                .map((r) => r.cancha)
+                .filter((r) => (
+                  reservaBloqueaDisponibilidad(r) &&
+                  numsSlots.includes(parseInt(String(r.cancha), 10)) &&
+                  reservaSolapaIntervalo(r, startMin, endMin)
+                ))
+                .map((r) => parseInt(String(r.cancha), 10))
               : [];
             const ocupadas = new Set(ocupadasNums).size;
             const libres = numsSlots.length - ocupadas;
@@ -1166,7 +1210,6 @@ export default function ReservaForm() {
               });
             }
           }
-        }
       }
 
       setHorariosDisponibles(todosLosHorarios);
@@ -1177,7 +1220,7 @@ export default function ReservaForm() {
     } finally {
       setLoading(false);
     }
-  }, [filtros.sede_id, sedeSeleccionada]);
+  }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin]);
 
   // Auto-load time slots when date is selected (pantalla 2)
   useEffect(() => {
@@ -1191,6 +1234,20 @@ export default function ReservaForm() {
     setFormData((prev) => ({
       ...prev,
       fecha,
+      hora: '',
+      cancha: '',
+    }));
+    setHorariosDisponibles([]);
+    setCanchasDisponibles([]);
+    setError('');
+  }, []);
+
+  const handleSelectDuracion = useCallback((duracion) => {
+    setLoading(true);
+    setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
+    setFormData((prev) => ({
+      ...prev,
+      duracion: String(duracion),
       hora: '',
       cancha: '',
     }));
@@ -1213,7 +1270,16 @@ export default function ReservaForm() {
       );
       const reservadas = await response.json();
 
-      const ocupadas = Array.isArray(reservadas) ? reservadas.filter(r => r.hora === hora).map(r => r.cancha) : [];
+      const startMin = minutosDesdeHoraReserva(hora);
+      const endMin = startMin == null ? null : startMin + duracionSeleccionadaMin;
+      const ocupadas = Array.isArray(reservadas) && startMin != null && endMin != null
+        ? reservadas
+          .filter((r) => (
+            reservaBloqueaDisponibilidad(r) &&
+            reservaSolapaIntervalo(r, startMin, endMin)
+          ))
+          .map((r) => parseInt(String(r.cancha), 10))
+        : [];
       const slots = slotsReservaDesdeSede(sedeSeleccionada);
 
       setCanchasDisponibles(
@@ -1226,7 +1292,7 @@ export default function ReservaForm() {
     } catch {
       setError('Error al buscar canchas disponibles');
     }
-  }, [formData.fecha, filtros.sede_id, sedeSeleccionada]);
+  }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin]);
 
   const selectHorario = useCallback(
     (hora) => {
@@ -1308,8 +1374,7 @@ export default function ReservaForm() {
     const precio = getPrecio(sedeSeleccionada, formData.hora);
     const creditoAplicado = 0;
     const precioFinal = Math.max(0, precio - creditoAplicado);
-    const duracionReservaMin =
-      parseInt(sedeSeleccionada.duracion_reserva_minutos, 10) || 90;
+    const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
       sede: sedeSeleccionada.nombre,
       fecha: formData.fecha,
@@ -1349,6 +1414,7 @@ export default function ReservaForm() {
           cancha: parseInt(String(formData.cancha), 10),
           email: String(ccEff.email || '').trim().toLowerCase(),
           sedeId: sedeSeleccionada.id,
+          duracion: duracionReservaMin,
         });
         window.location.href = data.init_point;
       } else if (res.ok && data.manual_payment) {
@@ -1360,7 +1426,7 @@ export default function ReservaForm() {
           .join('\n\n');
         alert(msgManual);
         setPantalla(1);
-        setFormData({ fecha: '', hora: '', cancha: '', nombre: '', email: '', numeroTel: '' });
+        setFormData({ fecha: '', hora: '', cancha: '', duracion: '90', nombre: '', email: '', numeroTel: '' });
         setWhatsapp('');
         setMpLoading(false);
       } else if (res.ok && data.stripe_checkout_pending) {
@@ -1578,6 +1644,33 @@ export default function ReservaForm() {
               />
             </div>
 
+            <div className="form-group">
+              <label style={{ display: 'block', marginBottom: '10px' }}>Duración</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                {RESERVA_DURACIONES_MIN.map((duracion) => {
+                  const active = duracionSeleccionadaMin === duracion;
+                  return (
+                    <button
+                      key={duracion}
+                      type="button"
+                      onClick={() => handleSelectDuracion(duracion)}
+                      style={{
+                        padding: '10px 8px',
+                        borderRadius: '10px',
+                        border: `2px solid ${active ? '#16a34a' : '#e2e8f0'}`,
+                        background: active ? '#f0fdf4' : '#ffffff',
+                        color: active ? '#15803d' : '#334155',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {duracion} min
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {horariosDisponibles.length > 0 && (
               <div className="form-group reserva-horario-bloque">
                 <label style={{ display: 'block', marginBottom: '10px' }}>Horarios disponibles</label>
@@ -1710,8 +1803,7 @@ export default function ReservaForm() {
       currentCliente || { email: '', nombre: '', whatsapp: '' },
       formParaTelStripe
     );
-    const duracionReservaMinP4 =
-      parseInt(sedeSeleccionada?.duracion_reserva_minutos, 10) || 90;
+    const duracionReservaMinP4 = duracionSeleccionadaMin;
     /** Header fijo + margen 24px + notch para que el título del resumen se vea completo en todos los dispositivos. */
     const resumenPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 24}px + env(safe-area-inset-top, 0px))`;
     const resumenPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
@@ -1745,6 +1837,7 @@ export default function ReservaForm() {
             <p style={{ margin: '0 0 8px' }}><strong>📍 Sede:</strong> {sedeSeleccionada?.nombre}</p>
             <p style={{ margin: '0 0 8px' }}><strong>📅 Fecha:</strong> {formData.fecha}</p>
             <p style={{ margin: '0 0 8px' }}><strong>🕐 Hora:</strong> {formData.hora}</p>
+            <p style={{ margin: '0 0 8px' }}><strong>⏱️ Duración:</strong> {duracionReservaMinP4} min</p>
             <p style={{ margin: '0 0 8px' }}><strong>🏟️ Cancha:</strong> {formData.cancha}</p>
             <p style={{ margin: '0 0 8px' }}><strong>👤 Jugador:</strong> {currentCliente?.nombre}</p>
             <p style={{ margin: '0 0 8px' }}><strong>📧 Email:</strong> {currentCliente?.email}</p>
@@ -1901,6 +1994,7 @@ export default function ReservaForm() {
                   fecha: '',
                   hora: '',
                   cancha: '',
+                  duracion: '90',
                   nombre: '',
                   email: '',
                   numeroTel: '',

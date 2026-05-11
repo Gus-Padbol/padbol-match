@@ -63,10 +63,14 @@ export function splitStoredWhatsapp(fullRaw) {
   return { codigo: '+54', local: full };
 }
 
-/** WhatsApp completo guardado o ingresado (internacional mínimo razonable). */
+/**
+ * WhatsApp completo guardado o ingresado.
+ * Acepta internacional (código + número, típ. ≥11 dígitos) o número local argentino típico (10 dígitos, ej. 2213032019).
+ */
 export function whatsappDigitsValido(raw) {
   const d = digitsOnly(raw);
   if (d.length >= MIN_DIGITOS_WHATSAPP_INTERNACIONAL) return true;
+  if (d.length >= MIN_DIGITOS_WHATSAPP_NACIONAL) return true;
   return d.length >= MIN_WHATSAPP_DIGITS;
 }
 

@@ -32,6 +32,7 @@ import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
+import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 import CompletarPerfilOAuth from './pages/CompletarPerfilOAuth';
 import NuevaSede from './components/NuevaSede';
 import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
@@ -136,6 +137,41 @@ function RootHomeRoute() {
   }
 
   return <LandingPage />;
+}
+
+/**
+ * Rutas desconocidas: evita quedarse sin match útil. Con sesión → hub; sin sesión → login.
+ * Mientras `loading` de auth, spinner compacto (no pantalla vacía sobre el gradiente de body).
+ */
+function WildcardFallback() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100dvh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(180deg, #0b1020 0%, #151832 100%)',
+          color: 'rgba(248, 250, 252, 0.92)',
+          fontWeight: 600,
+          fontSize: '15px',
+          boxSizing: 'border-box',
+          padding: 24,
+        }}
+      >
+        Cargando…
+      </div>
+    );
+  }
+
+  if (session?.user) {
+    return <Navigate to="/hub" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 }
 
 function AdminDashboardGate() {
@@ -318,7 +354,7 @@ function AppRoutes() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<WildcardFallback />} />
     </Routes>
     </PerfilJugadorDatosMinimosGate>
   );
@@ -327,17 +363,23 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '900px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          boxSizing: 'border-box',
-        }}
-      >
-        <AppRoutes />
-      </div>
+      <GlobalErrorBoundary>
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '900px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            boxSizing: 'border-box',
+            minHeight: '100dvh',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <AppRoutes />
+        </div>
+      </GlobalErrorBoundary>
     </Router>
   );
 }

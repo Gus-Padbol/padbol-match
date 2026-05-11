@@ -18,6 +18,7 @@ import {
 } from '../constants/torneoCompetencia';
 import useUserRole from '../hooks/useUserRole';
 import { mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
+import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDistribucionModal';
 import {
   TORNEO_DEPORTE_PADBOL,
   TORNEO_DEPORTE_FUTBOL5,
@@ -46,7 +47,10 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
     fecha_inicio: '',
     fecha_fin: '',
     cantidad_equipos: '',
-    costo_inscripcion: '',
+    inscripcion_monto: '',
+    inscripcion_moneda: 'ARS',
+    premios_descripcion: '',
+    puntos_total: '',
     cupos_maximos: '',
     horas_revelar_equipos: '48',
     estado: 'proximo',
@@ -65,6 +69,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
   const { session } = useAuth();
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
+  const [puntosModalOpen, setPuntosModalOpen] = useState(false);
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -167,12 +172,28 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       formato_equipo: formatoEquipoPayloadParaApi(formData.deporte, formData.formato_equipo),
     };
 
-    const rawCosto = String(formData.costo_inscripcion ?? '').trim();
-    if (rawCosto !== '') {
-      const c = parseFloat(rawCosto.replace(',', '.'));
-      payload.costo_inscripcion = Number.isFinite(c) && c >= 0 ? c : 0;
+    const rawInscripcionMonto = String(formData.inscripcion_monto ?? '').trim();
+    if (rawInscripcionMonto !== '') {
+      const c = parseFloat(rawInscripcionMonto.replace(',', '.'));
+      const monto = Number.isFinite(c) && c >= 0 ? c : 0;
+      payload.inscripcion_monto = monto;
+      payload.inscripcion_moneda = formData.inscripcion_moneda === 'USD' ? 'USD' : 'ARS';
+      payload.costo_inscripcion = monto;
     } else {
+      payload.inscripcion_monto = null;
+      payload.inscripcion_moneda = null;
       payload.costo_inscripcion = 0;
+    }
+
+    const premios = String(formData.premios_descripcion ?? '').trim();
+    payload.premios_descripcion = premios || null;
+
+    const rawPuntosTotal = String(formData.puntos_total ?? '').trim();
+    if (rawPuntosTotal !== '') {
+      const pts = parseInt(rawPuntosTotal, 10);
+      payload.puntos_total = Number.isFinite(pts) && pts >= 0 ? pts : null;
+    } else {
+      payload.puntos_total = null;
     }
 
     const rawCupos = String(formData.cupos_maximos ?? '').trim();
@@ -559,19 +580,74 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
               </div>
 
               <div className="form-group">
-                <label>Costo de inscripción por equipo (opcional)</label>
+                <label>Inscripción por equipo (opcional)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 96px', gap: '8px' }}>
+                  <input
+                    type="number"
+                    name="inscripcion_monto"
+                    value={formData.inscripcion_monto}
+                    onChange={handleChange}
+                    placeholder="Vacío = gratis"
+                    min="0"
+                    step="1"
+                  />
+                  <select
+                    name="inscripcion_moneda"
+                    value={formData.inscripcion_moneda}
+                    onChange={handleChange}
+                    aria-label="Moneda de inscripción"
+                  >
+                    <option value="ARS">ARS</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  Monto total por equipo. Deja vacío si no hay costo.
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label>Premios (opcional)</label>
+                <textarea
+                  name="premios_descripcion"
+                  value={formData.premios_descripcion}
+                  onChange={handleChange}
+                  placeholder="Ej: 1er lugar $50.000, 2do lugar $20.000"
+                  rows={3}
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Puntos del torneo (opcional)</label>
                 <input
                   type="number"
-                  name="costo_inscripcion"
-                  value={formData.costo_inscripcion}
+                  name="puntos_total"
+                  value={formData.puntos_total}
                   onChange={handleChange}
-                  placeholder="0 = gratis"
+                  placeholder="Ej: 1000"
                   min="0"
                   step="1"
                 />
-                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Monto total por equipo (ARS u otra moneda de la sede en Mercado Pago). Deja vacío o 0 si no hay costo.
-                </small>
+                {String(formData.puntos_total || '').trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => setPuntosModalOpen(true)}
+                    style={{
+                      alignSelf: 'flex-start',
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: '#4f46e5',
+                      color: '#fff',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Ver distribución
+                  </button>
+                ) : null}
               </div>
 
               <div className="form-group">
@@ -617,6 +693,11 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
         </div>
       </div>
       <BottomNav />
+      <TorneoPuntosDistribucionModal
+        open={puntosModalOpen}
+        onClose={() => setPuntosModalOpen(false)}
+        torneo={formData}
+      />
     </div>
   );
 }
