@@ -39,18 +39,10 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.map((key) => {
-            if (key.startsWith('padbol-match-pwa-') && key !== CACHE_VERSION) {
-              return caches.delete(key);
-            }
-            return undefined;
-          })
-        )
-      )
+    Promise.resolve()
+      .then(() => self.skipWaiting())
+      .then(() => caches.keys())
+      .then((keys) => Promise.all(keys.map((key) => (key !== CACHE_VERSION ? caches.delete(key) : undefined))))
       .then(() => self.clients.claim())
       .then(() =>
         broadcastToClients({
