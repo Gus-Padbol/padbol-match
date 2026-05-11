@@ -10179,6 +10179,286 @@ async function aplicarFechaAperturaInscripcionTorneos() {
   }
 }
 
+// ─── Chat IA: disponibilidad real (misma lógica base que ReservaForm) ───────
+const CHAT_IA_SLOT_STEP_MIN = 30;
+const CHAT_IA_MAX_CANCHAS_UI = 2;
+
+function chatIaFoldText(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Intención de consultar turnos libres o de reservar (no respuestas genéricas sobre “mi reserva pasada”). */
+function chatIaDetectDisponibilidadOReservaIntent(text) {
+  const t = chatIaFoldText(text);
+  if (!t.trim()) return false;
+  if (/\b(cancel|cancela|devoluc|reembols|historial\s+de\s+reserva)\b/i.test(text)) return false;
+  return (
+    /disponibil|horarios?\s+libres?|turnos?\s+libres?|slots?\s+libres?|hay\s+(cancha|turno|lugar|horario|cupos?)/i.test(
+      text,
+    ) ||
+    /(quiero|puedo|me\s+gustar[ií]a|necesito)\s+(reservar|una\s+reserva|un\s+turno|una\s+cancha)/i.test(text) ||
+    /\breservar\b.*\b(cancha|turno|hora|horario)\b/i.test(text) ||
+    /\b(hay|tienen|quedan)\s+(lugar|turno|cupo|hora)/i.test(text) ||
+    /\b(a\s+qu[eé]\s+hora|qu[eé]\s+horarios?)\b/i.test(text)
+  );
+}
+
+function chatIaHoraDesdeMinutosReserva(totalMin) {
+  const hh = Math.floor(totalMin / 60);
+  const mm = totalMin % 60;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+/** Primeras canchas activas como en ReservaForm (máx. 2); si no hay catálogo, 1..min(cantidad,2). */
+function chatIaSlotsReservaDesdeSede(sedeRow) {
+  const active = sedeRow?.canchas_activas;
+  if (Array.isArray(active) && active.length > 0) {
+    const sorted = [...active].sort((a, b) => Number(a.numero) - Number(b.numero));
+    return sorted.slice(0, CHAT_IA_MAX_CANCHAS_UI).map((x) => Number(x.numero));
+  }
+  const total = Math.max(1, Number(sedeRow?.cantidad_canchas) || 2);
+  const n = Math.min(total, CHAT_IA_MAX_CANCHAS_UI);
+  return Array.from({ length: n }, (_, i) => i + 1);
+}
+
+/**
+ * Extrae YYYY-MM-DD: ISO explícito, dd/mm/aaaa, “hoy”, “mañana” (según fecha_referencia en ART).
+ */
+function chatIaExtractFechaYmd(text, fechaReferenciaYmd) {
+  const raw = String(text || '');
+  const iso = raw.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const dmy = raw.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/);
+  if (dmy) {
+    const dd = String(parseInt(dmy[1], 10)).padStart(2, '0');
+    const mo = String(parseInt(dmy[2], 10)).padStart(2, '0');
+    const yy = dmy[3];
+    return `${yy}-${mo}-${dd}`;
+  }
+  const t = chatIaFoldText(raw);
+  const ref = String(fechaReferenciaYmd || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) return null;
+  const base = DateTime.fromISO(ref, { zone: TZ_TORNEO_CALENDARIO }).startOf('day');
+  if (!base.isValid) return null;
+  if (/\b(hoy)\b/.test(t)) return ref;
+  if (/\b(manana|mañana)\b/.test(t)) return base.plus({ days: 1 }).toFormat('yyyy-LL-dd');
+  if (/\b(pasado\s*manana|Pasado\s*mañana|pasado\s*mañana)\b/.test(t)) return base.plus({ days: 2 }).toFormat('yyyy-LL-dd');
+  return null;
+}
+
+function chatIaExtractDuracionMin(text) {
+  const raw = String(text || '');
+  if (/\b120\b|\b2\s*horas\b|\bdos\s*horas\b/i.test(raw)) return 120;
+  if (/\b60\b|\b1\s*hora\b|\buna\s*hora\b/i.test(raw)) return 60;
+  if (/\b90\b|\bhora\s*y\s*media\b|\buna\s*hora\s*y\s*media\b/i.test(raw)) return 90;
+  return null;
+}
+
+function chatIaMatchSedeFromText(text, sedesCompact) {
+  const folded = chatIaFoldText(text);
+  if (!folded || !Array.isArray(sedesCompact) || sedesCompact.length === 0) return null;
+  const sorted = [...sedesCompact].sort(
+    (a, b) => String(b?.nombre || '').length - String(a?.nombre || '').length,
+  );
+  for (const s of sorted) {
+    const n = String(s?.nombre || '').trim();
+    if (!n) continue;
+    const fn = chatIaFoldText(n);
+    if (fn.length >= 4 && folded.includes(fn)) {
+      const id = Number(s.id);
+      if (Number.isFinite(id) && id > 0) return { id, nombre: n };
+    }
+  }
+  return null;
+}
+
+/**
+ * Slots con al menos una cancha ofertada libre (misma grilla que ReservaForm: paso 30 min, duración fija).
+ */
+async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, duracionMin) {
+  const nombreSede = String(sedeRow?.nombre || '').trim();
+  if (!nombreSede || !/^\d{4}-\d{2}-\d{2}$/.test(String(fechaYmd || '').slice(0, 10))) {
+    return { slots: [], error: 'Parámetros inválidos' };
+  }
+  const fecha = String(fechaYmd).trim().slice(0, 10);
+  const duracion = [60, 90, 120].includes(Number(duracionMin)) ? Number(duracionMin) : 90;
+
+  const { data: reservadas, error } = await supabaseClient
+    .from('reservas')
+    .select('*')
+    .eq('sede', nombreSede)
+    .eq('fecha', fecha);
+  if (error) return { slots: [], error: error.message };
+
+  const lista = Array.isArray(reservadas) ? reservadas : [];
+  let horaApertura = 10;
+  let horaCierre = 23;
+  try {
+    if (sedeRow.horario_apertura) {
+      const a = parseInt(String(sedeRow.horario_apertura).split(':')[0], 10);
+      if (Number.isFinite(a)) horaApertura = a;
+    }
+  } catch {
+    /* keep default */
+  }
+  try {
+    if (sedeRow.horario_cierre) {
+      const c = parseInt(String(sedeRow.horario_cierre).split(':')[0], 10);
+      if (Number.isFinite(c)) horaCierre = c;
+    }
+  } catch {
+    /* keep default */
+  }
+
+  const numsSlots = chatIaSlotsReservaDesdeSede(sedeRow);
+  const tz = normalizeSedeTimezone(sedeRow?.timezone || inferTimezoneFromCiudadPais(sedeRow?.ciudad, sedeRow?.pais));
+  const hoySede = ymdTodayInSedeTimezone(tz);
+  const filtrarPasadosHoy = Boolean(hoySede && fecha === hoySede);
+  const aperturaMin = horaApertura * 60;
+  const cierreMin = horaCierre * 60;
+
+  const slots = [];
+  for (let startMin = aperturaMin; startMin + duracion <= cierreMin; startMin += CHAT_IA_SLOT_STEP_MIN) {
+    const endMin = startMin + duracion;
+    if (endMin > cierreMin) break;
+    const horaInicio = chatIaHoraDesdeMinutosReserva(startMin);
+    const horaFin = chatIaHoraDesdeMinutosReserva(endMin);
+
+    const ocupadasNums = lista
+      .filter(
+        (r) =>
+          reservaEstadoBloqueaSlotBackend(r) &&
+          numsSlots.includes(parseInt(String(r.cancha), 10)) &&
+          reservasSolapanBackend(startMin, duracion, r),
+      )
+      .map((r) => parseInt(String(r.cancha), 10));
+    const ocupadas = new Set(ocupadasNums).size;
+    const libres = numsSlots.length - ocupadas;
+
+    if (libres > 0) {
+      if (filtrarPasadosHoy) {
+        const slotMs = reservaWallStartUtcMs(fecha, horaInicio, tz);
+        if (slotMs != null && Number.isFinite(slotMs) && slotMs <= Date.now()) continue;
+      }
+      slots.push({
+        hora_inicio: horaInicio,
+        hora_fin: horaFin,
+        horario: `${horaInicio} - ${horaFin}`,
+        canchas_libres: libres,
+        canchas_ofertadas: numsSlots.length,
+      });
+    }
+  }
+  return { slots, error: null };
+}
+
+async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial, mensaje) {
+  const userBits = historial.filter((h) => h.role === 'user').slice(-4).map((h) => String(h.content || '').trim());
+  const combined = [...userBits, String(mensaje || '').trim()].filter(Boolean).join('\n');
+
+  if (!chatIaDetectDisponibilidadOReservaIntent(combined)) {
+    return { consulta_disponibilidad: { estado: 'no_aplica' } };
+  }
+
+  const sedeM = chatIaMatchSedeFromText(combined, ctx.sedes || []);
+  const fechaM = chatIaExtractFechaYmd(combined, ctx.fecha_referencia);
+  const durGuess = chatIaExtractDuracionMin(combined);
+
+  if (!sedeM) {
+    return {
+      consulta_disponibilidad: {
+        estado: 'faltan_datos',
+        falta: 'sede',
+        instruccion_para_el_modelo:
+          'El usuario pregunta por disponibilidad o reserva pero no se identificó la sede en el mensaje. Preguntá explícitamente en qué club o sede (nombre) quiere consultar, usando solo sedes del contexto JSON.',
+      },
+    };
+  }
+  if (!fechaM) {
+    return {
+      consulta_disponibilidad: {
+        estado: 'faltan_datos',
+        falta: 'fecha',
+        sede_detectada: sedeM.nombre,
+        instruccion_para_el_modelo:
+          'El usuario pregunta por disponibilidad o reserva pero no se indicó una fecha concreta (YYYY-MM-DD, dd/mm/aaaa, “hoy” o “mañana”). Preguntá qué día quiere reservar antes de listar horarios.',
+      },
+    };
+  }
+
+  const { data: sedeFull, error: sedeErr } = await supabaseClient
+    .from('sedes')
+    .select(
+      'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,canchas_activas,cantidad_canchas,timezone,ciudad,pais',
+    )
+    .eq('id', sedeM.id)
+    .maybeSingle();
+
+  if (sedeErr || !sedeFull) {
+    return {
+      consulta_disponibilidad: {
+        estado: 'faltan_datos',
+        falta: 'sede',
+        instruccion_para_el_modelo:
+          'No se pudo cargar la sede en el servidor. Pedí que el usuario elija otra sede o reformule el nombre según el listado del contexto.',
+      },
+    };
+  }
+
+  const tz = normalizeSedeTimezone(sedeFull?.timezone || inferTimezoneFromCiudadPais(sedeFull?.ciudad, sedeFull?.pais));
+  const hoySede = ymdTodayInSedeTimezone(tz);
+  if (fechaM < hoySede) {
+    return {
+      consulta_disponibilidad: {
+        estado: 'faltan_datos',
+        falta: 'fecha',
+        sede_detectada: sedeM.nombre,
+        instruccion_para_el_modelo:
+          'La fecha interpretada ya pasó en la zona horaria de la sede. Pedí una fecha futura (día concreto) antes de listar disponibilidad.',
+      },
+    };
+  }
+
+  const durDefault = parseInt(String(sedeFull.duracion_reserva_minutos || ''), 10);
+  const duracion = [60, 90, 120].includes(durGuess)
+    ? durGuess
+    : [60, 90, 120].includes(durDefault)
+      ? durDefault
+      : 90;
+
+  const { slots, error } = await computeChatIaSlotsReales(supabaseClient, sedeFull, fechaM, duracion);
+  if (error) {
+    return {
+      consulta_disponibilidad: {
+        estado: 'error',
+        sede_id: sedeM.id,
+        sede_nombre: sedeM.nombre,
+        fecha: fechaM,
+        detalle: error,
+        instruccion_para_el_modelo:
+          'No se pudo calcular la disponibilidad en este momento. Pedí disculpas breves y que intente de nuevo o reserve desde la app en /reservar.',
+      },
+    };
+  }
+
+  return {
+    consulta_disponibilidad: {
+      estado: 'ok',
+      sede_id: sedeM.id,
+      sede_nombre: String(sedeFull.nombre || sedeM.nombre).trim(),
+      fecha: fechaM,
+      duracion_minutos: duracion,
+      canchas_consideradas: chatIaSlotsReservaDesdeSede(sedeFull),
+      slots_reales: slots,
+      instruccion_para_el_modelo:
+        'Debés listar únicamente los horarios del array slots_reales (hora_inicio / horario). No uses el horario general de apertura/cierre de la sede como sustituto de disponibilidad. Si slots_reales está vacío, decí que no hay turnos libres en esa fecha con esa duración. Máximo 100 palabras.',
+    },
+  };
+}
+
 // ─── IA Chat (Anthropic Claude) ─────────────────────────────────────────────
 const CHAT_IA_MODEL = 'claude-sonnet-4-20250514';
 const CHAT_IA_RATE_WINDOW_MS = 60 * 60 * 1000;
@@ -10309,10 +10589,19 @@ app.post('/api/chat-ia', async (req, res) => {
       return res.status(429).json({ error: 'Demasiadas consultas. Intenta de nuevo en una hora.' });
     }
 
-    const ctx = await buildChatIAContextPayload(supabase, user);
+    const ctxBase = await buildChatIAContextPayload(supabase, user);
+    const dispExtra = await buildChatIaConsultaDisponibilidad(supabase, ctxBase, historial, mensaje);
+    const ctx = { ...ctxBase, ...dispExtra };
+
     const systemText = `Eres el asistente de Padbol Match. Solo puedes ayudar con reservas de canchas, disponibilidad, precios, torneos, rankings, sedes y canchas cercanas. Si el usuario pregunta algo fuera de estos temas, responde exactamente: Solo puedo ayudarte con reservas, torneos y canchas en Padbol Match.
 
 Responde siempre en español. Sé breve: máximo 100 palabras por mensaje.
+
+Sobre disponibilidad y reservas:
+- Si en el JSON existe consulta_disponibilidad.estado === "ok", usá SOLO el array slots_reales para decir qué horarios están libres (no inventes horarios ni sustituyas por el horario general de la sede).
+- Si estado === "faltan_datos", preguntá al usuario lo que falta (sede o fecha) antes de listar turnos; una pregunta clara.
+- Si estado === "error", pedí disculpas breves y sugerí reservar desde la app.
+- Si estado === "no_aplica", respondé con la información general del contexto sin simular disponibilidad horaria concreta salvo que el usuario haya sido explícito en sede y fecha en el mismo mensaje (en ese caso el backend habría rellenado estado ok).
 
 Contexto dinámico (JSON; no inventes sedes ni torneos que no aparezcan aquí):
 ${JSON.stringify(ctx)}
