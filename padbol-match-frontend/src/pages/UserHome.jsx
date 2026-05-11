@@ -11,16 +11,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { nombreRealDesdePerfilOauth } from '../utils/displayName';
 import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
-import { DEPORTE_LABEL_PARTIDO_ABIERTO } from '../components/PartidoAbiertoCard';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
-
-const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
-);
 
 const HUB_COLUMN_MAX = 390;
 
@@ -85,99 +78,10 @@ function primerNombreDesdePerfil(userProfile) {
   return first ? capitalizarPalabraSaludo(first) : '';
 }
 
-function horaCorta(hora) {
-  const h = String(hora || '').trim();
-  const m = /^(\d{1,2}):(\d{2})/.exec(h);
-  return m ? `${String(parseInt(m[1], 10)).padStart(2, '0')}:${m[2]}` : h || '—';
-}
-
-function PartidoAbiertoRailCard({ partido, onNavigate }) {
-  const confirmados = Array.isArray(partido?.jugadores_confirmados) ? partido.jugadores_confirmados : [];
-  const requeridos = Math.max(2, parseInt(String(partido?.jugadores_requeridos || '4'), 10) || 4);
-  const faltan = Math.max(0, requeridos - confirmados.length);
-  const capitanFoto = String(partido?.capitan_foto_url || '').trim();
-  const capitanNombre = String(partido?.capitan_nombre || '').trim() || 'Capitán';
-  const deporte = DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido';
-
-  return (
-    <button
-      type="button"
-      onClick={onNavigate}
-      style={{
-        flex: '0 0 auto',
-        width: 'min(280px, 78vw)',
-        maxWidth: 280,
-        textAlign: 'left',
-        border: '1px solid rgba(226,232,240,0.95)',
-        borderRadius: 16,
-        background: '#fff',
-        boxShadow: '0 10px 28px rgba(15,23,42,0.12)',
-        padding: 12,
-        boxSizing: 'border-box',
-        cursor: 'pointer',
-        display: 'grid',
-        gap: 8,
-        fontFamily: 'inherit',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {capitanFoto ? (
-          <img
-            src={capitanFoto}
-            alt=""
-            style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-          />
-        ) : (
-          <span
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg,#667eea,#764ba2)',
-              color: '#fff',
-              display: 'grid',
-              placeItems: 'center',
-              fontWeight: 900,
-              flexShrink: 0,
-            }}
-          >
-            {capitanNombre.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>{deporte}</div>
-          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {partido?.sede_nombre || 'Sede'}
-          </div>
-        </div>
-      </div>
-      <div style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
-        {String(partido?.fecha || '').slice(0, 10)} · {horaCorta(partido?.hora)}
-      </div>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 900,
-          color: faltan > 0 ? '#047857' : '#4338ca',
-          background: faltan > 0 ? '#ecfdf5' : '#eef2ff',
-          borderRadius: 999,
-          padding: '6px 10px',
-          display: 'inline-block',
-          width: 'fit-content',
-        }}
-      >
-        {faltan > 0 ? `Faltan ${faltan} jugador${faltan === 1 ? '' : 'es'}` : 'Completo'}
-      </div>
-    </button>
-  );
-}
-
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
-  const [partidosAbiertos, setPartidosAbiertos] = useState([]);
-  const [partidosLoading, setPartidosLoading] = useState(true);
   const [nombreFinal, setNombreFinal] = useState(null);
   const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
     if (ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')) return true;
@@ -267,24 +171,6 @@ export default function UserHome() {
     setNombreFinal('');
   }, [session, userProfile, authLoading, profileLoading]);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_BASE}/api/partidos-abiertos`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled) setPartidosAbiertos(Array.isArray(data) ? data.slice(0, 24) : []);
-      })
-      .catch(() => {
-        if (!cancelled) setPartidosAbiertos([]);
-      })
-      .finally(() => {
-        if (!cancelled) setPartidosLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const lineaSaludo = useMemo(() => {
     if (!session?.user) return 'Hola';
     if (nombreFinal) return `Hola, ${nombreFinal}`;
@@ -304,7 +190,7 @@ export default function UserHome() {
       key: 'jugar',
       icon: '⚽',
       titulo: 'JUGAR',
-      descripcion: 'Reservá una cancha o unite a un partido',
+      descripcion: 'Reserva una cancha o únete a un partido',
       onClick: () => navigate('/jugar'),
     },
     {
@@ -322,9 +208,6 @@ export default function UserHome() {
       onClick: () => navigate('/mi-perfil'),
     },
   ];
-
-  const partidosDestacadosArriba = !partidosLoading && partidosAbiertos.length > 0;
-  const partidosBloqueAbajo = partidosLoading || partidosAbiertos.length === 0;
 
   const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
 
@@ -545,66 +428,6 @@ export default function UserHome() {
             }}
           />
 
-          {partidosDestacadosArriba ? (
-            <section
-              style={{
-                width: '100%',
-                margin: '0 auto 18px',
-                borderRadius: 20,
-                padding: 16,
-                boxSizing: 'border-box',
-                background: '#fff',
-                boxShadow: '0 14px 36px rgba(15,23,42,0.14)',
-                border: '1px solid rgba(226,232,240,0.85)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
-                <div>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: 18, fontWeight: 900, lineHeight: 1.2 }}>Únete a un partido</h2>
-                  <p style={{ margin: '6px 0 0', color: '#475569', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
-                    Cupos abiertos para sumarte a un equipo
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/partidos-abiertos')}
-                  style={{
-                    border: 'none',
-                    borderRadius: 999,
-                    background: 'linear-gradient(135deg,#667eea,#764ba2)',
-                    color: '#fff',
-                    padding: '8px 12px',
-                    fontSize: 12,
-                    fontWeight: 900,
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Ver todos
-                </button>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 12,
-                  overflowX: 'auto',
-                  paddingBottom: 4,
-                  marginLeft: -4,
-                  marginRight: -4,
-                  paddingLeft: 4,
-                  paddingRight: 4,
-                  WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'thin',
-                }}
-              >
-                {partidosAbiertos.map((p) => (
-                  <PartidoAbiertoRailCard key={p.id} partido={p} onNavigate={() => navigate('/partidos-abiertos')} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-
           {!authLoading && !session?.user ? (
             <p
               style={{
@@ -657,90 +480,6 @@ export default function UserHome() {
               </button>
             ))}
           </div>
-
-          {partidosBloqueAbajo ? (
-            <section
-              style={{
-                width: '100%',
-                margin: '0 auto 8px',
-                borderRadius: 12,
-                padding: '6px 8px 8px',
-                boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.88)',
-                boxShadow: '0 4px 12px rgba(15,23,42,0.06)',
-                border: '1px solid rgba(226,232,240,0.65)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 6,
-                  marginBottom: partidosLoading ? 0 : 4,
-                }}
-              >
-                <h2 style={{ margin: 0, color: '#475569', fontSize: 12, fontWeight: 800, lineHeight: 1.2 }}>Únete a un partido</h2>
-                <button
-                  type="button"
-                  onClick={() => navigate('/partidos-abiertos')}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#475569',
-                    padding: '2px 4px',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    flexShrink: 0,
-                  }}
-                >
-                  Ver todos
-                </button>
-              </div>
-
-              {partidosLoading ? (
-                <p style={{ margin: 0, color: '#64748b', fontSize: 11, textAlign: 'center', padding: '4px 0 0' }}>
-                  Cargando…
-                </p>
-              ) : (
-                <div
-                  style={{
-                    background: 'rgba(248,250,252,0.9)',
-                    borderRadius: 8,
-                    padding: '6px 6px 8px',
-                    textAlign: 'center',
-                    border: '1px dashed #e2e8f0',
-                  }}
-                >
-                  <div style={{ fontSize: 16, marginBottom: 2, opacity: 0.9 }}>🤝</div>
-                  <p style={{ margin: '0 0 4px', color: '#57534e', fontSize: 11, lineHeight: 1.35, fontWeight: 600 }}>
-                    Sin cupos publicados
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/armar-partido')}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: 0,
-                      margin: 0,
-                      color: '#64748b',
-                      fontWeight: 600,
-                      fontSize: 11,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textDecoration: 'underline',
-                      textUnderlineOffset: 2,
-                    }}
-                  >
-                    Armar el primero
-                  </button>
-                </div>
-              )}
-            </section>
-          ) : null}
 
           <button
             type="button"
