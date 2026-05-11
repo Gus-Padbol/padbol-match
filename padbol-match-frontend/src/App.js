@@ -37,6 +37,7 @@ import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+import ChatbotIA from './components/ChatbotIA';
 import CompletarPerfilOAuth from './pages/CompletarPerfilOAuth';
 import NuevaSede from './components/NuevaSede';
 import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
@@ -386,6 +387,7 @@ function App() {
           }}
         >
           <AppRoutes />
+          <ChatbotIA />
         </div>
       </GlobalErrorBoundary>
     </Router>

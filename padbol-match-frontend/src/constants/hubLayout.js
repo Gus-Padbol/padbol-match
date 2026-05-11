@@ -129,3 +129,18 @@ export function hubContentPaddingTopWithLogoClearanceCss(pathname) {
 export function hubBottomNavFixedTopCss() {
   return appHeaderStackHeightCss();
 }
+
+/**
+ * Rutas donde se muestra el botón flotante del asistente IA (no admin, no auth ni pagos).
+ */
+export function isChatbotIAVisiblePathname(pathname) {
+  let p = String(pathname || '/').split('?')[0].split('#')[0];
+  p = p.replace(/\/+$/, '') || '/';
+  if (p === '/admin' || p.startsWith('/admin')) return false;
+  if (p === '/login' || p === '/auth' || p.startsWith('/auth/')) return false;
+  if (p === '/completar-perfil') return false;
+  if (p === '/pago-exitoso' || p === '/pago-fallido') return false;
+  if (p === '/unirse' || p === '/join') return false;
+  if (p.startsWith('/invitar-admin-club')) return false;
+  return true;
+}

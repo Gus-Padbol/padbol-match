@@ -725,6 +725,13 @@ if (!STRIPE_SECRET_KEY) {
   console.warn('⚠️  STRIPE_SECRET_KEY no está configurado — pagos Stripe / Connect no funcionarán');
 }
 
+const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || '').trim();
+if (!ANTHROPIC_API_KEY) {
+  console.warn(
+    '⚠️  ANTHROPIC_API_KEY no definido — POST /api/chat-ia no funcionará. Clave en https://console.anthropic.com'
+  );
+}
+
 function getStripeOrThrow() {
   if (!stripeClient) {
     const e = new Error('Stripe no está configurado en el servidor');
@@ -10152,6 +10159,189 @@ async function aplicarFechaAperturaInscripcionTorneos() {
     console.log(`📅 Apertura automática inscripción: ${updated.length} torneo(s)`);
   }
 }
+
+// ─── IA Chat (Anthropic Claude) ─────────────────────────────────────────────
+const CHAT_IA_MODEL = 'claude-sonnet-4-20250514';
+const CHAT_IA_RATE_WINDOW_MS = 60 * 60 * 1000;
+const CHAT_IA_RATE_MAX = 20;
+const CHAT_IA_MAX_USER_MSG = 6;
+const chatIaRateBuckets = new Map();
+
+function chatIaRateKey(req, user) {
+  if (user?.id) return `u:${user.id}`;
+  const xf = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const ip = xf || req.ip || String(req.socket?.remoteAddress || '').trim() || 'unknown';
+  return `ip:${ip}`;
+}
+
+function chatIaConsumeRateSlot(key) {
+  const now = Date.now();
+  const cut = now - CHAT_IA_RATE_WINDOW_MS;
+  let arr = chatIaRateBuckets.get(key);
+  if (!Array.isArray(arr)) arr = [];
+  arr = arr.filter((t) => t > cut);
+  if (arr.length >= CHAT_IA_RATE_MAX) return false;
+  arr.push(now);
+  chatIaRateBuckets.set(key, arr);
+  return true;
+}
+
+async function buildChatIAContextPayload(supabaseClient, authUser) {
+  const sedesQ = await supabaseClient
+    .from('sedes')
+    .select('id,nombre,ciudad,pais,precio_turno,moneda,horario_apertura,horario_cierre,franjas_horarias')
+    .order('nombre', { ascending: true })
+    .limit(45);
+  const sedesRows = sedesQ.error ? [] : sedesQ.data || [];
+  const sedesCompact = sedesRows.map((s) => ({
+    id: s.id,
+    nombre: s.nombre,
+    ciudad: s.ciudad,
+    pais: s.pais,
+    precio_turno: s.precio_turno,
+    moneda: s.moneda || 'ARS',
+    horario: [s.horario_apertura, s.horario_cierre].filter(Boolean).join('–') || null,
+    franjas: s.franjas_horarias != null ? JSON.stringify(s.franjas_horarias).slice(0, 500) : null,
+  }));
+
+  const todayYmd = ymdTodayInTorneoTz() || new Date().toISOString().slice(0, 10);
+  const torneosQ = await supabaseClient
+    .from('torneos')
+    .select('id,nombre,fecha_inicio,estado,sede_id')
+    .gte('fecha_inicio', todayYmd)
+    .order('fecha_inicio', { ascending: true })
+    .limit(20);
+  const torneosRows = torneosQ.error ? [] : torneosQ.data || [];
+
+  let usuarioBloque = null;
+  if (authUser?.email) {
+    const em = String(authUser.email || '').trim().toLowerCase();
+    const perfilQ = await supabaseClient
+      .from('jugadores_perfil')
+      .select('nombre,nombre_saludo,email,ciudad,whatsapp')
+      .eq('email', em)
+      .maybeSingle();
+    const reservasQ = await supabaseClient
+      .from('reservas')
+      .select('sede,fecha,hora,estado,cancha,precio')
+      .eq('email', em)
+      .order('id', { ascending: false })
+      .limit(6);
+    usuarioBloque = {
+      email: em,
+      perfil: perfilQ.data || null,
+      reservas_recientes: reservasQ.error ? [] : reservasQ.data || [],
+    };
+  }
+
+  return {
+    fecha_referencia: todayYmd,
+    sedes: sedesCompact,
+    torneos_proximos: torneosRows,
+    usuario_logueado: usuarioBloque,
+  };
+}
+
+function stripChatIaReserveMarker(rawText) {
+  const text = String(rawText || '').trim();
+  const re = /<<<RESERVA:sede_id=(\d+)(?:\|fecha=([0-9]{4}-[0-9]{2}-[0-9]{2}))?>>>/i;
+  const m = text.match(re);
+  if (!m) return { text, reserve: null };
+  const sedeId = parseInt(m[1], 10);
+  const fecha = m[2] ? String(m[2]).trim() : '';
+  const stripped = text.replace(re, '').trim();
+  let href = `/reservar?sedeId=${sedeId}`;
+  if (fecha) href += `&fecha=${encodeURIComponent(fecha)}`;
+  return {
+    text: stripped,
+    reserve: Number.isFinite(sedeId) && sedeId > 0 ? { sede_id: sedeId, href } : null,
+  };
+}
+
+app.post('/api/chat-ia', async (req, res) => {
+  try {
+    if (!ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'Chat IA no configurado en el servidor.' });
+    }
+    const user = await authUserFromBearer(req);
+    const b = req.body || {};
+    const mensaje = String(b.mensaje || '').trim();
+    const historialRaw = Array.isArray(b.historial) ? b.historial : [];
+    if (!mensaje) return res.status(400).json({ error: 'mensaje requerido' });
+
+    const historial = historialRaw
+      .filter(
+        (x) =>
+          x &&
+          typeof x === 'object' &&
+          (x.role === 'user' || x.role === 'assistant') &&
+          String(x.content || '').trim()
+      )
+      .map((x) => ({ role: x.role, content: String(x.content).trim() }))
+      .slice(-20);
+
+    const priorUser = historial.filter((h) => h.role === 'user').length;
+    if (priorUser >= CHAT_IA_MAX_USER_MSG) {
+      return res.status(400).json({ error: 'Límite de mensajes alcanzado', limit_reached: true });
+    }
+
+    const key = chatIaRateKey(req, user);
+    if (!chatIaConsumeRateSlot(key)) {
+      return res.status(429).json({ error: 'Demasiadas consultas. Intenta de nuevo en una hora.' });
+    }
+
+    const ctx = await buildChatIAContextPayload(supabase, user);
+    const systemText = `Eres el asistente de Padbol Match. Solo puedes ayudar con reservas de canchas, disponibilidad, precios, torneos, rankings, sedes y canchas cercanas. Si el usuario pregunta algo fuera de estos temas, responde exactamente: Solo puedo ayudarte con reservas, torneos y canchas en Padbol Match.
+
+Responde siempre en español. Sé breve: máximo 100 palabras por mensaje.
+
+Contexto dinámico (JSON; no inventes sedes ni torneos que no aparezcan aquí):
+${JSON.stringify(ctx)}
+
+Si el usuario quiere reservar una cancha y conoces un sede_id válido del contexto, termina tu respuesta con una sola línea al final, sin texto extra en esa línea:
+<<<RESERVA:sede_id=NUMERO>>>
+o, si el usuario indicó una fecha en formato YYYY-MM-DD:
+<<<RESERVA:sede_id=NUMERO|fecha=YYYY-MM-DD>>>
+Si no estás seguro del sede_id, no agregues esa línea.`;
+
+    const msgs = [...historial.map((h) => ({ role: h.role, content: h.content })), { role: 'user', content: mensaje }];
+
+    const anthroRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: CHAT_IA_MODEL,
+        max_tokens: 900,
+        system: systemText,
+        messages: msgs,
+      }),
+    });
+
+    const rawJson = await anthroRes.json().catch(() => ({}));
+    if (!anthroRes.ok) {
+      console.error('❌ Anthropic chat-ia:', anthroRes.status, rawJson?.error?.message || rawJson);
+      return res.status(502).json({
+        error: rawJson?.error?.message || 'No se pudo obtener respuesta del asistente.',
+      });
+    }
+    const txt = rawJson?.content?.[0]?.text != null ? String(rawJson.content[0].text) : '';
+    const { text: respuesta, reserve } = stripChatIaReserveMarker(txt);
+
+    return res.json({
+      respuesta,
+      reserve: reserve && reserve.sede_id ? reserve : null,
+      user_messages_used: priorUser + 1,
+      user_messages_max: CHAT_IA_MAX_USER_MSG,
+    });
+  } catch (err) {
+    console.error('❌ POST /api/chat-ia:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
 
 cron.schedule('*/10 * * * *', async () => {
   try {
