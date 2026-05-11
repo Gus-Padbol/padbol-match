@@ -99,11 +99,11 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                   Instalar Padbol Match
                 </h2>
                 <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                  Instalá la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
+                  Instala la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
                 </p>
                 <div>
                 <p style={{ margin: '0 0 14px', fontSize: '14px', color: '#334155', lineHeight: 1.55 }}>
-                  En <strong>Android</strong> (Chrome o navegador compatible) podés usar el instalador del sistema:
+                  En <strong>Android</strong> (Chrome o navegador compatible) puedes usar el instalador del sistema:
                 </p>
                 <button
                   type="button"
@@ -133,10 +133,10 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
             ) : ios ? (
               <>
                 <h2 id="pwa-install-title" style={{ margin: '0 0 12px', fontSize: '18px', color: '#0f172a' }}>
-                  Instalá Padbol Match
+                  Instala Padbol Match
                 </h2>
                 <p style={{ margin: 0, fontSize: '15px', color: '#334155', lineHeight: 1.5 }}>
-                  {`Tocá el botón Compartir ↑ en Safari y luego 'Agregar a inicio'.`}
+                  {`Toca el botón Compartir ↑ en Safari y luego «Agregar a inicio».`}
                 </p>
               </>
             ) : (
@@ -145,11 +145,11 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                   Instalar Padbol Match
                 </h2>
                 <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                  Instalá la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
+                  Instala la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
                 </p>
                 <div>
                 <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#334155', lineHeight: 1.55 }}>
-                  En <strong>Chrome</strong> o <strong>Edge</strong> (escritorio o Android), abrí el menú <strong>⋮</strong> y elegí{' '}
+                  En <strong>Chrome</strong> o <strong>Edge</strong> (escritorio o Android), abre el menú <strong>⋮</strong> y elige{' '}
                   <strong>Instalar Padbol Match…</strong> o <strong>Instalar aplicación</strong>.
                 </p>
                 <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>

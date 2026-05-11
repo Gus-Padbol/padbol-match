@@ -192,7 +192,7 @@ export default function PartidosAbiertos() {
           <section style={{ background: '#fff', borderRadius: 20, padding: 22, textAlign: 'center', boxShadow: '0 16px 34px rgba(15,23,42,0.2)' }}>
             <div style={{ fontSize: 44, marginBottom: 8 }}>🤝</div>
             <h2 style={{ margin: '0 0 8px', color: '#0f172a' }}>Todavía no hay partidos para unirte</h2>
-            <p style={{ margin: '0 0 16px', color: '#475569', fontSize: 14 }}>Publicá el primero y completá jugadores en minutos.</p>
+            <p style={{ margin: '0 0 16px', color: '#475569', fontSize: 14 }}>Publica el primero y completa jugadores en minutos.</p>
             <button
               type="button"
               onClick={() => navigate('/armar-partido')}

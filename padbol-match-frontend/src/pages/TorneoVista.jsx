@@ -767,7 +767,7 @@ export default function TorneoVista() {
           ) : null}
           {!tieneFixturePartidos ? (
             <p className="torneo-iniciar-aviso" role="status">
-              Falta el sorteo o el fixture: generá los partidos del torneo (por ejemplo sorteo de grupos en el panel
+              Falta el sorteo o el fixture: genera los partidos del torneo (por ejemplo sorteo de grupos en el panel
               admin, o la generación de fixture) antes de pasar a «en curso».
             </p>
           ) : null}
@@ -823,7 +823,7 @@ export default function TorneoVista() {
     const sedeNombre = sedeTorneo ? String(sedeTorneo.nombre || '').trim() : 'la sede';
     const title = nombreTor;
     const url = torneoShareUrl;
-    const text = `¡Participá en ${nombreTor} en ${sedeNombre}! 🏆⚽ Inscribite acá:`;
+    const text = `¡Participa en ${nombreTor} en ${sedeNombre}! 🏆⚽ Inscríbete aquí:`;
     return { title, text, url };
   }, [torneo, sedeTorneo, torneoShareUrl]);
 

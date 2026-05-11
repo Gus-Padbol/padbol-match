@@ -258,7 +258,7 @@ export default function UnirsePage() {
           </h1>
           <p style={{ color: '#475569', margin: '0 0 16px', lineHeight: 1.55, fontSize: '15px', textAlign: 'center' }}>
             Dejanos los datos básicos del club y un contacto. Horarios, tipo de instalación y el resto de la ficha los
-            completás después desde tu panel.
+            completas después desde tu panel.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
             <span

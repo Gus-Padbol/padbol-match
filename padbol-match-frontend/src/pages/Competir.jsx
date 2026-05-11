@@ -7,7 +7,7 @@ import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../const
 const opciones = [
   {
     title: 'Torneos',
-    body: 'Inscribite, armá equipo y seguí el fixture.',
+    body: 'Inscríbete, arma un equipo y sigue el fixture.',
     icon: '🏆',
     path: '/torneos',
   },
@@ -35,7 +35,7 @@ export default function Competir() {
     >
       <AppHeader title="Competir" />
       <main style={{ width: '100%', maxWidth: 460, margin: '0 auto', padding: '20px 16px', boxSizing: 'border-box' }}>
-        <h1 style={{ color: '#fff', margin: '0 0 8px', fontSize: 28, lineHeight: 1.1 }}>¿Cómo querés competir?</h1>
+        <h1 style={{ color: '#fff', margin: '0 0 8px', fontSize: 28, lineHeight: 1.1 }}>¿Cómo quieres competir?</h1>
         <p style={{ color: 'rgba(255,255,255,0.86)', margin: '0 0 20px', fontSize: 15, lineHeight: 1.5 }}>
           Torneos oficiales o consultá el ranking de jugadores.
         </p>

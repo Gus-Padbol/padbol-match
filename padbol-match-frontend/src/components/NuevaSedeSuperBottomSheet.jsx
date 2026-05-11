@@ -58,7 +58,7 @@ function timezoneOptionsForPais(paisLabel) {
   if (key.includes('colombia')) return [{ value: 'America/Bogota', label: 'Colombia — America/Bogota' }];
   if (key.includes('mexico')) return [{ value: 'America/Mexico_City', label: 'México central — America/Mexico_City' }];
   if (key.includes('paraguay')) return [{ value: 'America/Asuncion', label: 'Paraguay — America/Asuncion' }];
-  return [{ value: 'Etc/UTC', label: 'UTC (configurá la zona en el panel si no aplica)' }];
+  return [{ value: 'Etc/UTC', label: 'UTC (configura la zona en el panel si no aplica)' }];
 }
 
 function mapCountryToPaisOption(countryName) {
@@ -298,7 +298,7 @@ export default function NuevaSedeSuperBottomSheet({
       });
       const j2 = await res2.json().catch(() => ({}));
       if (!res2.ok) {
-        throw new Error(j2?.error || 'La sede se creó pero no se guardaron los deportes. Revisá la tabla canchas_por_deporte en Supabase.');
+        throw new Error(j2?.error || 'La sede se creó pero no se guardaron los deportes. Revisa la tabla canchas_por_deporte en Supabase.');
       }
 
       onSuccess?.(j, j2.deportes || []);
@@ -636,7 +636,7 @@ export default function NuevaSedeSuperBottomSheet({
                     <strong>US$ {Number(planMatch.precio_usd).toFixed(2)}</strong> / mes
                   </>
                 ) : totalCanchas > 0 ? (
-                  'No hay un plan configurado para esta cantidad. Revisá plan_pricing en Supabase.'
+                  'No hay un plan configurado para esta cantidad. Revisa plan_pricing en Supabase.'
                 ) : (
                   'Elige deportes y cantidades para ver el plan.'
                 )}
@@ -652,7 +652,7 @@ export default function NuevaSedeSuperBottomSheet({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ margin: 0, fontSize: 14, color: '#64748b', lineHeight: 1.45 }}>
               {inviteToken
-                ? 'El email debe ser el mismo que recibió la invitación. Después del alta podrás ingresar al panel como admin del club (revisá tu correo para definir contraseña).'
+                ? 'El email debe ser el mismo que recibió la invitación. Después del alta podrás ingresar al panel como admin del club (revisa tu correo para definir la contraseña).'
                 : 'Precio, mapa, método de pago y el resto los configura el admin del club desde su panel después del alta.'}
             </p>
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>

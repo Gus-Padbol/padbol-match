@@ -439,7 +439,7 @@ export default function UserHome() {
                 lineHeight: 1.45,
               }}
             >
-              Podés explorar sin registrarte
+              Puedes explorar sin registrarte
             </p>
           ) : null}
 
@@ -529,7 +529,7 @@ export default function UserHome() {
               }}
             >
               <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, lineHeight: 1.45, opacity: 0.95 }}>
-                Instalá Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
+                Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
               </p>
               <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
             </div>

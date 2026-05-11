@@ -148,7 +148,7 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
     try {
       const { error: sErr } = await elements.submit();
       if (sErr) {
-        setMsg(sErr.message || 'Revisá los datos');
+        setMsg(sErr.message || 'Revisa los datos');
         return;
       }
       const { error: pErr, paymentIntent } = await stripe.confirmPayment({
@@ -1897,7 +1897,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j?.error || res.statusText);
         if (j.email_sent === false) {
-          alert('No se pudo enviar el email (revisá RESEND).');
+          alert('No se pudo enviar el email (revisa RESEND).');
         } else {
           setMensajeExito('✉️ Invitación reenviada');
           setTimeout(() => setMensajeExito(''), 3500);
@@ -3804,7 +3804,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       estado: reservaManualForm.estado || 'confirmada',
     };
     if (!payload.sede_id || !payload.cancha || !payload.fecha || !payload.hora || !payload.nombre) {
-      setReservaManualError('Completá sede, cancha, fecha, hora y nombre del jugador.');
+      setReservaManualError('Completa sede, cancha, fecha, hora y nombre del jugador.');
       return;
     }
     setReservaManualSaving(true);
@@ -4287,7 +4287,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           return;
         }
         if (!j.client_secret) {
-          alert('Stripe no devolvió client_secret. Revisá el precio y la suscripción en el dashboard de Stripe.');
+          alert('Stripe no devolvió client_secret. Revisa el precio y la suscripción en el dashboard de Stripe.');
           return;
         }
         setSuscripcionModal({
@@ -4572,7 +4572,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     });
     if (invalida) {
       setFranjasSaving(false);
-      setFranjasMsg('⚠️ Completá horarios y al menos un día o fecha por franja');
+      setFranjasMsg('⚠️ Completa horarios y al menos un día o fecha por franja');
       setTimeout(() => setFranjasMsg(''), 4000);
       return;
     }
@@ -6929,10 +6929,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       >
                         <option value="">
                           {!sedeManualId
-                            ? 'Seleccioná sede'
+                            ? 'Selecciona sede'
                             : canchasManualReserva.length === 0
                               ? 'Sin canchas activas'
-                              : 'Seleccioná cancha'}
+                              : 'Selecciona cancha'}
                         </option>
                         {canchasManualReserva.map((cancha) => (
                           <option key={cancha.numero} value={String(cancha.numero)}>
@@ -6962,10 +6962,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       >
                         <option value="">
                           {!reservaManualForm.cancha || !reservaManualForm.fecha
-                            ? 'Elegí cancha y fecha'
+                            ? 'Elige cancha y fecha'
                             : reservaManualSlots.length === 0
                               ? 'Sin horarios disponibles'
-                              : 'Seleccioná horario'}
+                              : 'Selecciona horario'}
                         </option>
                         {reservaManualSlots.map((hora) => (
                           <option key={hora} value={hora}>
@@ -9828,7 +9828,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 700, color: '#334155' }}>Franjas horarias y precios</p>
               <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#9ca3af', lineHeight: 1.5 }}>
-                Definí franjas semanales por día o fechas especiales (feriados/eventos). El precio se elige según la hora de inicio del turno (formato 24 h).
+                Define franjas semanales por día o fechas especiales (feriados/eventos). El precio se elige según la hora de inicio del turno (formato 24 h).
               </p>
               {franjasHorarias.map((fj, idx) => (
                 <div
@@ -10290,7 +10290,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </button>
                     </div>
                     <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-                      Podés pegar manualmente el <code style={{ fontSize: '11px' }}>acct_…</code> o usar el onboarding; al volver, comprobá que el ID quedó guardado.
+                      Puedes pegar manualmente el <code style={{ fontSize: '11px' }}>acct_…</code> o usar el onboarding; al volver, comprueba que el ID quedó guardado.
                     </p>
                   </div>
                 ) : null}
@@ -10819,7 +10819,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           >
             <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800 }}>Tipo de interés</h3>
             <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
-              El club no eligió el modelo en el formulario público. Asigná el tipo antes de crear la sede.
+              El club no eligió el modelo en el formulario público. Asigna el tipo antes de crear la sede.
             </p>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: 8 }}>
               Modelo de licencia
@@ -10911,7 +10911,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             {inviteAdminModalStep === 'tipo' ? (
               <>
                 <p style={{ margin: '8px 0 14px', fontSize: '13px', color: '#334155', lineHeight: 1.45, fontWeight: 500 }}>
-                  Elegí el tipo de administrador. Luego completá el formulario y se enviará un enlace válido 48 hs.
+                  Elige el tipo de administrador. Luego completa el formulario y se enviará un enlace válido 48 hs.
                 </p>
                 <div style={{ display: 'grid', gap: '10px' }}>
                   <button
@@ -11081,7 +11081,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           type="text"
                           value={inviteClubForm.ciudad}
                           onChange={(e) => setInviteClubForm((p) => ({ ...p, ciudad: e.target.value }))}
-                          placeholder="Si la dejás vacía, el alcance es la provincia/estado"
+                          placeholder="Si la dejas vacía, el alcance es la provincia/estado"
                           style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                         />
                       </label>

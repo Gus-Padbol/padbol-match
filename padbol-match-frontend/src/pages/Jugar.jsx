@@ -7,19 +7,19 @@ import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../const
 const opciones = [
   {
     title: 'Reservar cancha',
-    body: 'Elegí sede, cancha y horario como siempre.',
+    body: 'Elige sede, cancha y horario como siempre.',
     icon: '⚽',
     path: '/reservar',
   },
   {
     title: 'Buscar partido',
-    body: 'Encontrá cupos y pedí sumarte a un partido.',
+    body: 'Encuentra cupos y pide sumarte a un partido.',
     icon: '🔎',
     path: '/partidos-abiertos',
   },
   {
     title: 'Armar partido',
-    body: 'Reservá, publicá cupos y compartilo por WhatsApp.',
+    body: 'Reserva, publica cupos y compártelo por WhatsApp.',
     icon: '🤝',
     path: '/armar-partido',
   },
@@ -41,9 +41,9 @@ export default function Jugar() {
     >
       <AppHeader title="Jugar" />
       <main style={{ width: '100%', maxWidth: 460, margin: '0 auto', padding: '20px 16px', boxSizing: 'border-box' }}>
-        <h1 style={{ color: '#fff', margin: '0 0 8px', fontSize: 28, lineHeight: 1.1 }}>¿Cómo querés jugar?</h1>
+        <h1 style={{ color: '#fff', margin: '0 0 8px', fontSize: 28, lineHeight: 1.1 }}>¿Cómo quieres jugar?</h1>
         <p style={{ color: 'rgba(255,255,255,0.86)', margin: '0 0 20px', fontSize: 15, lineHeight: 1.5 }}>
-          Reservá una cancha o encontrá gente para completar partido.
+          Reserva una cancha o encuentra gente para completar partido.
         </p>
         <div style={{ display: 'grid', gap: 14 }}>
           {opciones.map((op) => (

@@ -126,7 +126,7 @@ export function validarMejorDeTres(sets) {
       return { ok: false, error: 'Los games de cada set deben estar entre 0 y 7.' };
     }
     if (a === b) {
-      return { ok: false, error: 'No puede haber empate en un set (decí un ganador por set).' };
+      return { ok: false, error: 'No puede haber empate en un set (indica un ganador por set).' };
     }
     if (a > b) winsA += 1;
     else winsB += 1;
@@ -157,7 +157,7 @@ export function validarMejorDeTres(sets) {
   return {
     ok: false,
     error:
-      'Con 3 sets el resultado debe ser 2-1 (un equipo gana dos sets y el otro uno). Revisá los números.',
+      'Con 3 sets el resultado debe ser 2-1 (un equipo gana dos sets y el otro uno). Revisa los números.',
   };
 }
 
@@ -243,7 +243,7 @@ export function parseMarcadorVozPartido(opts) {
   if (nums.length < 2) {
     return {
       ok: false,
-      error: 'Decí dos números (ej.: «seis a cuatro» o «6-4»).',
+      error: 'Indica dos números (ej.: «seis a cuatro» o «6-4»).',
       transcript,
     };
   }

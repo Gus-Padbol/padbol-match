@@ -313,7 +313,7 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
     try {
       const { error: submitErr } = await elements.submit();
       if (submitErr) {
-        setMsg(submitErr.message || 'Revisá los datos de la tarjeta');
+        setMsg(submitErr.message || 'Revisa los datos de la tarjeta');
         return;
       }
       const { error: payErr, paymentIntent } = await stripe.confirmPayment({

@@ -2915,7 +2915,7 @@ export default function MiPerfil() {
               </span>
             </label>
             <p style={{ color: '#666', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
-              No revela nombres de torneos ni resultados; solo el total si activás esta opción.
+              No revela nombres de torneos ni resultados; solo el total si activas esta opción.
             </p>
 
             <label style={{ ...labelStyle, display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
@@ -3382,7 +3382,7 @@ export default function MiPerfil() {
             value: estadisticasMiPerfilLoading ? '…' : `${Number(st.torneos_jugados) || 0}`,
             sub:
               !aliasStats
-                ? 'Definí tu alias público'
+                ? 'Define tu alias público'
                 : Number(st.torneos_ganados) > 0
                   ? `${st.torneos_ganados} ganado${Number(st.torneos_ganados) === 1 ? '' : 's'}`
                   : 'Torneos finalizados',
@@ -3498,7 +3498,7 @@ export default function MiPerfil() {
             )}
             {!aliasStats ? (
               <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#92400e', fontWeight: 600 }}>
-                Definí tu alias público en la ficha para calcular torneos, partidos y racha.
+                Define tu alias público en la ficha para calcular torneos, partidos y racha.
               </p>
             ) : null}
             <div
@@ -3836,7 +3836,7 @@ export default function MiPerfil() {
                 >
                   Elegir foto
                   <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, opacity: 0.9, marginTop: '4px' }}>
-                    Subí una imagen desde tu dispositivo
+                    Sube una imagen desde tu dispositivo
                   </span>
                 </button>
                 <button
@@ -4160,7 +4160,7 @@ export default function MiPerfil() {
             }}
           >
             <p id="cerrar-sesion-titulo" style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 600, color: '#0f172a', lineHeight: 1.4 }}>
-              ¿Querés cerrar sesión?
+              ¿Quieres cerrar sesión?
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button

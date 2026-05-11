@@ -248,7 +248,7 @@ export default function LandingPage() {
         >
           <StepCard icon="📍" title="Encuentra tu sede" text="Busca clubes y elige el que mejor te quede por ubicación y horarios." />
           <StepCard icon="📅" title="Reserva tu cancha" text="Elige fecha, horario y cancha disponible. Paga online o según las opciones del club." />
-          <StepCard icon="⚽" title="Jugá" text="Recibí la confirmación y a disfrutar del partido en la red de Padbol." />
+          <StepCard icon="⚽" title="Juega" text="Recibe la confirmación y disfruta del partido en la red de Padbol." />
         </div>
       </section>
 

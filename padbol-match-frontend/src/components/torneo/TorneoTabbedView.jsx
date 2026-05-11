@@ -2319,7 +2319,7 @@ export default function TorneoTabbedView({
                   Español (Argentina) · Una sola frase con todos los sets
                 </p>
                 <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-                  Decí los games de cada set en orden: primero el equipo de la izquierda (A), luego el de la derecha (B).
+                  Indica los games de cada set en orden: primero el equipo de la izquierda (A), luego el de la derecha (B).
                   Ejemplos: «6 4, 3 6, 7 5» · «6 4 3 6» (2 sets) · «6 4 6 2» (2-0). Mejor de 3: hace falta un ganador
                   a 2 sets (2-0 o 2-1).
                 </p>

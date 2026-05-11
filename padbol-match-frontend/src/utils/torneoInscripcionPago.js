@@ -140,7 +140,7 @@ export async function iniciarPagoInscripcionTorneo({
         manual: true,
         error:
           data.instructions ||
-          'La sede maneja pago manual. Coordiná con el club para confirmar la inscripción.',
+          'La sede maneja pago manual. Coordina con el club para confirmar la inscripción.',
       };
     }
     if (res.ok && data.stripe_checkout_pending) {

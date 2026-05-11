@@ -62,7 +62,7 @@ export default function CompletarPerfilOAuth() {
       if (!session?.user?.id) return;
       const gen = String(genero || '').trim().toLowerCase();
       if (gen !== 'masculino' && gen !== 'femenino') {
-        setErrorMsg('Seleccioná género (Masculino o Femenino).');
+        setErrorMsg('Selecciona género (Masculino o Femenino).');
         return;
       }
       const waLoc = digitsOnly(waLocal);
@@ -192,10 +192,10 @@ export default function CompletarPerfilOAuth() {
             margin: '0 0 8px',
           }}
         >
-          Completá tu perfil
+          Completa tu perfil
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
-          Completá tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.
+          Completa tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.
         </p>
         <form
           onSubmit={(ev) => void handleGuardar(ev)}

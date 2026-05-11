@@ -77,7 +77,7 @@ export default function JugadorQrModal({
     [nombre, aliasNorm]
   );
   const shareText = useMemo(
-    () => 'Escaneá mi QR o abrí el link para ver mi perfil público en Padbol Match.',
+    () => 'Escanea mi QR o abre el enlace para ver mi perfil público en Padbol Match.',
     []
   );
 

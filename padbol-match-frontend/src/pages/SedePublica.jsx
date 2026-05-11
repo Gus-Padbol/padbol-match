@@ -1098,7 +1098,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
           body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
             ? raw
             : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
-              ? 'Las reseñas no están disponibles: creá o actualizá public.resenas en Supabase (ver resenas_sedes.sql).'
+              ? 'Las reseñas no están disponibles: crea o actualiza public.resenas en Supabase (ver resenas_sedes.sql).'
               : raw || `Error ${r.status}`;
         throw new Error(friendly);
       }

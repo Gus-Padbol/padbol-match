@@ -668,7 +668,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   step="1"
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Si lo definís, en la lista de torneos se muestran los cupos libres según equipos con inscripción confirmada.
+                  Si lo defines, en la lista de torneos se muestran los cupos libres según equipos con inscripción confirmada.
                 </small>
               </div>
 

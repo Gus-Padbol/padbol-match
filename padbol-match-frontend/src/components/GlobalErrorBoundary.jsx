@@ -58,7 +58,7 @@ export default class GlobalErrorBoundary extends React.Component {
       >
         <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>Algo salió mal</h1>
         <p style={{ margin: 0, maxWidth: 360, fontSize: '15px', lineHeight: 1.5, opacity: 0.9 }}>
-          La app encontró un error al mostrar esta pantalla. Podés volver al inicio o al acceso.
+          La app encontró un error al mostrar esta pantalla. Puedes volver al inicio o al acceso.
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
           <button

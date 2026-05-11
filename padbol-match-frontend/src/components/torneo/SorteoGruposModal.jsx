@@ -665,7 +665,7 @@ export default function SorteoGruposModal({
                       color: '#64748b',
                     }}
                   >
-                    <strong style={{ color: '#334155' }}>Sin asignar</strong> — soltá acá para quitar de un grupo (
+                    <strong style={{ color: '#334155' }}>Sin asignar</strong> — suelta aquí para quitar de un grupo (
                     {unassignedManual.length} equipo{unassignedManual.length === 1 ? '' : 's'})
                   </div>
                   <div

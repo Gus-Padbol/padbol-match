@@ -523,7 +523,7 @@ async function assertUsuarioPuedeAdministrarSede(req, sedeIdNum) {
   const allowed = await sedesPermitidasPorScope(scope);
   const ok = (allowed.sedes || []).some((s) => Number(s.id) === sid);
   if (!ok) {
-    const e = new Error('No tenés permiso para esta sede');
+    const e = new Error('No tienes permiso para esta sede');
     e.status = 403;
     throw e;
   }
@@ -811,7 +811,7 @@ async function ensureStripeSubscriptionPriceId() {
     } else {
       const stub = path.join(__dirname, '.env.stripe-subscription');
       fs.writeFileSync(stub, `STRIPE_SUBSCRIPTION_PRICE_ID=${priceId}\n`, 'utf8');
-      console.log(`✓ Creado ${stub} — copiá STRIPE_SUBSCRIPTION_PRICE_ID al entorno de producción`);
+      console.log(`✓ Creado ${stub} — copia STRIPE_SUBSCRIPTION_PRICE_ID al entorno de producción`);
     }
   } catch (e) {
     console.warn('⚠️ No se pudo actualizar .env:', e?.message || e);
@@ -824,7 +824,7 @@ function getStripeSubscriptionPriceIdOrThrow() {
   const id = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();
   if (!id.startsWith('price_')) {
     const e = new Error(
-      'Precio de suscripción no disponible. Configurá STRIPE_SUBSCRIPTION_PRICE_ID o reiniciá el servidor tras crear el Product/Price.'
+      'Precio de suscripción no disponible. Configura STRIPE_SUBSCRIPTION_PRICE_ID o reinicia el servidor tras crear el Product/Price.'
     );
     e.status = 503;
     throw e;
@@ -881,7 +881,7 @@ async function sendSuscripcionPagoFallidoWhatsApp({ sedeNombre, sedeId }) {
   const body =
     `⚠️ Suscripción Padbol Match: pago fallido\n` +
     `Sede: ${String(sedeNombre || '').trim() || '—'} (id ${sedeId})\n` +
-    `Revisá Stripe y el panel de sedes.`;
+    `Revisa Stripe y el panel de sedes.`;
   await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
   console.log(`✓ WhatsApp super_admin: pago suscripción fallido (sede ${sedeId})`);
 }
@@ -929,7 +929,7 @@ function buildTorneoEquipoInvitacionBody(nombreDestinatario, nombreTorneo, torne
   const q =
     equipoId != null && equipoId !== '' && Number.isFinite(eid) ? `?equipo=${eid}` : '';
   const link = `${TORNEO_EQUIPOS_INVITE_BASE_URL}/torneo/${slugTid}/equipos${q}`;
-  return `Hola ${nombre}, te invito a jugar el torneo "${torneoNombre}". Confirmá tu lugar en el equipo: ${link}`;
+  return `Hola ${nombre}, te invito a jugar el torneo "${torneoNombre}". Confirma tu lugar en el equipo: ${link}`;
 }
 
 /** Invitación a equipo de torneo (Twilio WhatsApp). Requiere credenciales Twilio y teléfono normalizable. */
@@ -2171,7 +2171,7 @@ app.post('/api/sedes/:id/resenas', async (req, res) => {
   try {
     const user = await authUserFromBearer(req);
     if (!user?.id) {
-      return res.status(401).json({ error: 'Iniciá sesión para dejar una reseña' });
+      return res.status(401).json({ error: 'Inicia sesión para dejar una reseña' });
     }
 
     const id = parseInt(String(req.params.id), 10);
@@ -2205,7 +2205,7 @@ app.post('/api/sedes/:id/resenas', async (req, res) => {
     const puede = await jugadorTieneReservaConfirmadaEnSede(user, id);
     if (!puede) {
       return res.status(403).json({
-        error: 'Solo podés dejar una reseña si tenés al menos una reserva confirmada en esta sede.',
+        error: 'Solo puedes dejar una reseña si tienes al menos una reserva confirmada en esta sede.',
       });
     }
 
@@ -2472,13 +2472,13 @@ app.post('/api/admin/reservas/manual', async (req, res) => {
     const scope = await adminListScopeFromRequest(req);
     if (!scope) return res.status(401).json({ error: 'No autorizado' });
     if (!scope.superA && !['admin_club', 'empleado'].includes(String(scope.rol || ''))) {
-      return res.status(403).json({ error: 'No tenés permiso para crear reservas manuales' });
+      return res.status(403).json({ error: 'No tienes permiso para crear reservas manuales' });
     }
 
     const b = req.body || {};
     const sedeIdRaw = b.sede_id != null && String(b.sede_id).trim() !== '' ? b.sede_id : scope.sedeId;
     const sedeIdNum = Number(sedeIdRaw);
-    if (!Number.isFinite(sedeIdNum)) return res.status(400).json({ error: 'Seleccioná una sede' });
+    if (!Number.isFinite(sedeIdNum)) return res.status(400).json({ error: 'Selecciona una sede' });
 
     await assertUsuarioPuedeAdministrarSede(req, sedeIdNum);
 
@@ -2502,7 +2502,7 @@ app.post('/api/admin/reservas/manual', async (req, res) => {
     const duracionMin = [60, 90, 120].includes(duracionParsed) ? duracionParsed : 90;
 
     if (!sede || !fecha || !hora || !Number.isFinite(cancha) || !nombre) {
-      return res.status(400).json({ error: 'Completá sede, cancha, fecha, hora y nombre del jugador' });
+      return res.status(400).json({ error: 'Completa sede, cancha, fecha, hora y nombre del jugador' });
     }
 
     await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
@@ -2674,12 +2674,12 @@ async function assertReservaAccesibleHistorial(req, reservaId) {
     const allowed = await sedesPermitidasPorScope(scope);
     const nombres = new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean));
     if (nombres.has(String(r.sede || '').trim())) return r;
-    const e = new Error('No tenés permiso para ver esta reserva');
+    const e = new Error('No tienes permiso para ver esta reserva');
     e.status = 403;
     throw e;
   }
   if (scope.authUserId && String(r.user_id || '') === String(scope.authUserId)) return r;
-  const e = new Error('No tenés permiso para ver esta reserva');
+  const e = new Error('No tienes permiso para ver esta reserva');
   e.status = 403;
   throw e;
 }
@@ -3403,7 +3403,7 @@ async function notifyJugadoresInscriptosTorneoFixtureWhatsApp(torneoIdNum) {
     if (tErr || !torneoRow) return;
 
     const nombreTorneo = String(torneoRow.nombre || '').trim() || 'el torneo';
-    const body = `🏆 ¡El torneo ${nombreTorneo} ya tiene fixture! Entrá a ver tu zona y tus fechas 👉 https://www.padbolmatch.com`;
+    const body = `🏆 ¡El torneo ${nombreTorneo} ya tiene fixture! Entra a ver tu zona y tus fechas 👉 https://www.padbolmatch.com`;
 
     const { data: equiposRows, error: eErr } = await supabase
       .from('equipos')
@@ -3713,7 +3713,7 @@ app.post('/api/torneos/notificar-equipo-completo', async (req, res) => {
     }
 
     const nombreEquipo = String(eq.nombre || 'tu equipo').trim();
-    const body = `🏆 Tu equipo ${nombreEquipo} está completo. Confirmá el cupo pagando la inscripción en padbolmatch.com`;
+    const body = `🏆 Tu equipo ${nombreEquipo} está completo. Confirma el cupo pagando la inscripción en padbolmatch.com`;
 
     let whatsappDest = '';
     const creadorUid = eq.creador_id != null && String(eq.creador_id).trim() !== '' ? String(eq.creador_id).trim() : '';
@@ -3793,7 +3793,7 @@ async function requisitosParaPasarTorneoAEnCurso(torneoId) {
   }
   if (partidos_count < 1) {
     faltas.push(
-      'No hay partidos generados. Realizá el sorteo de grupos o generá el fixture antes de iniciar el torneo.',
+      'No hay partidos generados. Realiza el sorteo de grupos o genera el fixture antes de iniciar el torneo.',
     );
   }
 
@@ -3857,7 +3857,7 @@ async function notifyListaEsperaInscripcionAbiertaJob(torneoId) {
     const nombreTorneo = String(torneoRow.nombre || 'el torneo').trim();
     const body =
       `🏆 ¡La inscripción para ${nombreTorneo} en ${nombreSede} ya está abierta! ` +
-      'Entrá a padbolmatch.com para inscribirte con tu compañero. Cupos limitados.';
+      'Entra a padbolmatch.com para inscribirte con tu compañero. Cupos limitados.';
 
     for (const row of rows) {
       let dest = String(row?.whatsapp || '').trim();
@@ -4261,7 +4261,7 @@ app.post('/api/torneos/:id/busca-dupla', async (req, res) => {
     }
 
     if (await usuarioEstaEnAlgunEquipoTorneo(tid, user.id, email)) {
-      return res.status(400).json({ error: 'Ya tenés equipo en este torneo' });
+      return res.status(400).json({ error: 'Ya tienes equipo en este torneo' });
     }
 
     const { error: insErr } = await supabase.from('busca_dupla_torneo').insert({
@@ -4392,7 +4392,7 @@ app.post('/api/torneos/:id/busca-dupla/invitar', async (req, res) => {
     const toRaw = req.body?.to_user_id ?? req.body?.user_id;
     const toUid = String(toRaw || '').trim();
     if (!buscaDuplaEsUuidValido(toUid)) return res.status(400).json({ error: 'to_user_id inválido' });
-    if (toUid === String(user.id)) return res.status(400).json({ error: 'No podés invitarte a vos mismo' });
+    if (toUid === String(user.id)) return res.status(400).json({ error: 'No puedes invitarte a ti mismo' });
 
     const { data: torneoRow, error: tErr } = await supabase
       .from('torneos')
@@ -4406,7 +4406,7 @@ app.post('/api/torneos/:id/busca-dupla/invitar', async (req, res) => {
     }
 
     if (await usuarioEstaEnAlgunEquipoTorneo(tid, user.id, email)) {
-      return res.status(400).json({ error: 'Ya tenés equipo en este torneo' });
+      return res.status(400).json({ error: 'Ya tienes equipo en este torneo' });
     }
     if (await usuarioEstaEnAlgunEquipoTorneo(tid, toUid, null)) {
       return res.status(400).json({ error: 'Ese jugador ya tiene equipo en este torneo' });
@@ -4536,7 +4536,7 @@ app.post('/api/torneos/:id/busca-dupla/invitaciones/:invId/aceptar', async (req,
       return res.status(400).json({ error: 'Tu compañero ya tiene equipo en este torneo' });
     }
     if (await usuarioEstaEnAlgunEquipoTorneo(tid, toUid, emailInv)) {
-      return res.status(400).json({ error: 'Ya tenés equipo en este torneo' });
+      return res.status(400).json({ error: 'Ya tienes equipo en este torneo' });
     }
 
     const emailFrom = (await obtenerEmailAuthPorUserIdBuscaDupla(fromUid)) || '';
@@ -4637,7 +4637,7 @@ app.post('/api/torneos/:id/busca-dupla/limpiar-si-dupla-formada', async (req, re
     if (!eq || Number(eq.torneo_id) !== tid) return res.status(404).json({ error: 'Equipo no encontrado' });
 
     const enEquipo = await usuarioEstaEnAlgunEquipoTorneo(tid, user.id, email);
-    if (!enEquipo) return res.status(403).json({ error: 'No pertenecés a este equipo' });
+    if (!enEquipo) return res.status(403).json({ error: 'No perteneces a este equipo' });
 
     const cupo = Number(eq.cupo_maximo || 2);
     const nReg = jugadoresRegistradosCountBuscaDupla(eq);
@@ -5632,7 +5632,7 @@ app.post('/api/torneos/:torneo_id/equipos', async (req, res) => {
 app.post('/api/inscripciones', checkSuscripcionActiva, async (req, res) => {
   return res.status(404).json({
     error:
-      'Ruta no disponible. Para inscribir un equipo en un torneo usá POST /api/torneos/:torneo_id/equipos. Si enviás sede_id en el body, la suscripción de esa sede se valida igualmente.',
+      'Ruta no disponible. Para inscribir un equipo en un torneo usa POST /api/torneos/:torneo_id/equipos. Si envías sede_id en el body, la suscripción de esa sede se valida igualmente.',
   });
 });
 
@@ -6781,7 +6781,7 @@ function stripeMetadataPayload(payloadObj) {
   const raw = JSON.stringify(payloadObj);
   if (raw.length <= 500) return { payload_json: raw };
   const e = new Error(
-    'Los datos de la operación superan el límite permitido. Acortá nombre u otros textos e intentá de nuevo.'
+    'Los datos de la operación superan el límite permitido. Acorta nombre u otros textos e intenta de nuevo.'
   );
   e.status = 400;
   throw e;
@@ -7154,7 +7154,7 @@ app.post('/api/stripe/suscripcion/crear', async (req, res) => {
     if (!adminEmail || !adminEmail.includes('@')) {
       return res.status(400).json({
         error:
-          'No hay email de admin_club ni email_contacto válido. Asigná un admin al club o completá el contacto de la sede.',
+          'No hay email de admin_club ni email_contacto válido. Asigna un admin al club o completa el contacto de la sede.',
       });
     }
 
@@ -7753,7 +7753,7 @@ app.post('/api/partidos-abiertos/:id/solicitudes', async (req, res) => {
     }
     const emailJugador = String(authUser.email || '').trim().toLowerCase();
     const capitanEmail = String(partido.capitan_email || '').trim().toLowerCase();
-    if (emailJugador === capitanEmail) return res.status(400).json({ error: 'Ya sos el capitán de este partido' });
+    if (emailJugador === capitanEmail) return res.status(400).json({ error: 'Ya eres el capitán de este partido' });
 
     const { data: perfil } = await supabase
       .from('jugadores_perfil')
@@ -7791,7 +7791,7 @@ app.post('/api/partidos-abiertos/:id/solicitudes', async (req, res) => {
       `Nuevo pedido para tu partido en Padbol Match\n\n` +
       `${nombreJugador} quiere jugar ${String(partido.deporte || '').toUpperCase()} en ${partido.sede_nombre} ` +
       `el ${formatFechaReservaConfirmacion(String(partido.fecha || '').slice(0, 10))} a las ${horaLegibleUnPuntoReserva(partido.hora)}.\n\n` +
-      `Entrá a la app para aceptar o rechazar.`;
+      `Entra a la app para aceptar o rechazar.`;
     await enviarTwilioWhatsappJugadorPorEmailPerfilReserva({
       email: capitanEmail,
       body,
@@ -8169,7 +8169,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
       if (tipoEff === 'torneo_inscripcion') {
         return res.json({
           manual_payment: true,
-          instructions: instruccionesManual || 'Coordiná el pago manual con la sede para confirmar la inscripción.',
+          instructions: instruccionesManual || 'Coordina el pago manual con la sede para confirmar la inscripción.',
           status: 'pendiente_pago_manual',
           tipo: 'torneo_inscripcion',
         });
@@ -8233,7 +8233,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
       }
       return res.json({
         manual_payment: true,
-        instructions: instruccionesManual || 'Transferí/aboná en sede y compartí comprobante por WhatsApp.',
+        instructions: instruccionesManual || 'Transfiere o abona en sede y comparte el comprobante por WhatsApp.',
         reservation: reservaCreada,
         partido: partidoCreado,
       });
@@ -8246,7 +8246,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
         provider: 'stripe',
         stripe_account_id: stripeAccountId,
         message:
-          'Stripe Connect está en implementación. Mientras tanto usá Mercado Pago o pago manual en esta sede.',
+          'Stripe Connect está en implementación. Mientras tanto usa Mercado Pago o pago manual en esta sede.',
       });
     }
 
@@ -8254,7 +8254,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
     if (!mpTokSede) {
       return res.status(400).json({
         error:
-          'Esta sede no tiene configurado Mercado Pago. En Admin → Mi sede → Configuración de pagos, ingresá el Access Token de la cuenta del club.',
+          'Esta sede no tiene configurado Mercado Pago. En Admin → Mi sede → Configuración de pagos, ingresa el Access Token de la cuenta del club.',
       });
     }
     const client = new MercadoPagoConfig({ accessToken: mpTokSede });
@@ -8848,9 +8848,9 @@ async function sendInvitacionAdminClubEmail({ toEmail, inviteUrl, nombreClub, pa
     <p>Te invitaron a ser <strong>administrador de club</strong> en Padbol Match.</p>
     ${club ? `<p><strong>Club sugerido:</strong> ${club}</p>` : ''}
     ${pais ? `<p><strong>País:</strong> ${pais}</p>` : ''}
-    <p>Completá el alta de tu sede en el siguiente enlace (válido ${INVITACION_ADMIN_HORAS_VALIDEZ} horas):</p>
+    <p>Completa el alta de tu sede en el siguiente enlace (válido ${INVITACION_ADMIN_HORAS_VALIDEZ} horas):</p>
     <p><a href="${inviteUrl}" style="font-weight:700;color:#4f46e5;">Completar alta de sede</a></p>
-    <p>Si el botón no funciona, copiá y pegá esta URL en el navegador:<br/><span style="word-break:break-all;font-size:13px;">${inviteUrl}</span></p>
+    <p>Si el botón no funciona, copia y pega esta URL en el navegador:<br/><span style="word-break:break-all;font-size:13px;">${inviteUrl}</span></p>
     <p><strong>PADBOL Match</strong></p>
   `;
   try {
@@ -8909,9 +8909,9 @@ async function sendInvitacionAdminGeoEmail({ toEmail, inviteUrl, paisLabel, invi
     <p>Hola,</p>
     <p>Te invitaron a ser <strong>${rolTxt}</strong> en Padbol Match.</p>
     ${scopeHtml}
-    <p>Aceptá la invitación en el siguiente enlace (válido ${INVITACION_ADMIN_HORAS_VALIDEZ} horas). No crea una sede: solo activa tu acceso con el alcance indicado.</p>
+    <p>Acepta la invitación en el siguiente enlace (válido ${INVITACION_ADMIN_HORAS_VALIDEZ} horas). No crea una sede: solo activa tu acceso con el alcance indicado.</p>
     <p><a href="${inviteUrl}" style="font-weight:700;color:#4f46e5;">Aceptar invitación</a></p>
-    <p>Si el botón no funciona, copiá y pegá esta URL en el navegador:<br/><span style="word-break:break-all;font-size:13px;">${inviteUrl}</span></p>
+    <p>Si el botón no funciona, copia y pega esta URL en el navegador:<br/><span style="word-break:break-all;font-size:13px;">${inviteUrl}</span></p>
     <p><strong>PADBOL Match</strong></p>
   `;
   try {
@@ -9386,7 +9386,7 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
     const rowRole = await fetchUserRoleRow(user.email);
     const role = rowRole?.role || null;
     if (isSuperAdminApi(user.email, role)) {
-      return res.status(403).json({ error: 'Usá “Crear sede” desde el formulario de super admin' });
+      return res.status(403).json({ error: 'Usa “Crear sede” desde el formulario de super admin' });
     }
     if (role !== 'admin_nacional') {
       return res.status(403).json({ error: 'Solo admin nacional puede enviar solicitudes pendientes' });
@@ -9533,8 +9533,8 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
     if (waLic) {
       const msg =
         `🎉 Bienvenido a PADBOL Match. Tu sede "${nombre}" está activa.\n` +
-        `Ingresá al panel: padbolmatch.com/admin\n` +
-        `${authProvision?.created ? 'Revisá tu email para configurar acceso y cambiar la contraseña temporal.' : 'Si ya tenías cuenta, revisá tu email para restablecer contraseña.'}`;
+        `Ingresa al panel: padbolmatch.com/admin\n` +
+        `${authProvision?.created ? 'Revisa tu email para configurar acceso y cambiar la contraseña temporal.' : 'Si ya tenías cuenta, revisa tu email para restablecer contraseña.'}`;
       await sendTwilioWhatsAppBodyToRaw(waLic, msg);
     }
 
@@ -9687,7 +9687,7 @@ app.post('/api/solicitudes-licencia', async (req, res) => {
 
     const deportesCanchas = normalizeDeportesCanchasSolicitudLicencia(b.deportes_canchas);
     if (!deportesCanchas || !Array.isArray(deportesCanchas.deportes) || deportesCanchas.deportes.length === 0) {
-      return res.status(400).json({ error: 'Seleccioná al menos un deporte disponible' });
+      return res.status(400).json({ error: 'Selecciona al menos un deporte disponible' });
     }
 
     const cantidadCanchasTotal = (() => {
@@ -9900,7 +9900,7 @@ app.post('/api/admin/sedes-pendientes/:id/aprobar', async (req, res) => {
     if (waLic) {
       await sendTwilioWhatsAppBodyToRaw(
         waLic,
-        `🎉 Bienvenido a PADBOL Match. Tu sede "${nombre}" está activa.\nIngresá al panel: padbolmatch.com/admin`
+        `🎉 Bienvenido a PADBOL Match. Tu sede "${nombre}" está activa.\nIngresa al panel: padbolmatch.com/admin`
       );
     }
 

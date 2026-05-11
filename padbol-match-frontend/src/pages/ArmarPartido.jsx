@@ -155,7 +155,7 @@ export default function ArmarPartido() {
       return;
     }
     if (!sede || !form.cancha || !form.fecha || !form.hora) {
-      setMsg('Completá sede, cancha, fecha y horario.');
+      setMsg('Completa sede, cancha, fecha y horario.');
       return;
     }
     setPaying(true);
@@ -240,7 +240,7 @@ export default function ArmarPartido() {
 
           {step === 1 ? (
             <>
-              <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Elegí deporte</h1>
+              <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Elige deporte</h1>
               <div style={{ display: 'grid', gap: 10 }}>
                 {DEPORTES.map((d) => (
                   <button key={d.id} type="button" onClick={() => setDeporte(d.id)} style={{ border: form.deporte === d.id ? '2px solid #667eea' : '1px solid #e2e8f0', borderRadius: 14, padding: 13, background: form.deporte === d.id ? '#eef2ff' : '#fff', textAlign: 'left', fontWeight: 900, cursor: 'pointer' }}>
@@ -262,7 +262,7 @@ export default function ArmarPartido() {
 
           {step === 2 ? (
             <>
-              <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Elegí sede y cancha</h1>
+              <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Elige sede y cancha</h1>
               <label style={{ display: 'block', fontWeight: 800, color: '#334155' }}>
                 Sede
                 <select value={form.sedeId} onChange={(e) => setForm((f) => ({ ...f, sedeId: e.target.value, cancha: '', hora: '' }))} disabled={loadingSedes} style={{ width: '100%', marginTop: 6, padding: 12, borderRadius: 10, border: '1px solid #cbd5e1' }}>
@@ -296,7 +296,7 @@ export default function ArmarPartido() {
           {step === 4 ? (
             <>
               <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Jugadores confirmados</h1>
-              <p style={{ color: '#64748b', fontSize: 14 }}>El partido necesita {form.jugadoresRequeridos} jugadores. Contate a vos y a quienes ya tenés confirmados.</p>
+              <p style={{ color: '#64748b', fontSize: 14 }}>El partido necesita {form.jugadoresRequeridos} jugadores. Cuenta contigo y con quienes ya tienes confirmados.</p>
               <input type="number" min={1} max={form.jugadoresRequeridos} value={form.jugadoresConfirmados} onChange={(e) => setForm((f) => ({ ...f, jugadoresConfirmados: Math.max(1, Math.min(Number(f.jugadoresRequeridos), Number(e.target.value) || 1)) }))} style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
               <p style={{ margin: '12px 0 0', color: '#16a34a', fontWeight: 900 }}>Faltan {Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados)} jugadores.</p>
             </>

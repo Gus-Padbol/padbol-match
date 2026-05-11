@@ -1745,7 +1745,7 @@ export default function FormEquipos() {
             lineHeight: 1.45,
           }}
         >
-          Torneo en formato <strong>singles</strong>: tu equipo sos vos solo (1 jugador).
+          Torneo en formato <strong>singles</strong>: eres el único jugador de tu equipo (1 jugador).
         </div>
       ) : torneo && minJugadoresTorneoCrearUi >= 5 ? (
         <div
