@@ -342,7 +342,7 @@ export default function CompletarPerfilOAuth() {
                 value={waLocalConfirm}
                 onChange={(e) => setWaLocalConfirm(digitsOnly(e.target.value))}
                 disabled={busy}
-                placeholder="Repetí el número"
+                placeholder="Repite el número"
                 aria-label="Confirmar número local"
                 autoComplete="off"
                 style={{

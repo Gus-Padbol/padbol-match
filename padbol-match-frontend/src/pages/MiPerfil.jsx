@@ -3886,7 +3886,7 @@ export default function MiPerfil() {
                 >
                   Eliminar foto
                   <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, opacity: 0.9, marginTop: '4px' }}>
-                    Volvé al avatar por defecto
+                    Vuelve al avatar por defecto
                   </span>
                 </button>
                 <button

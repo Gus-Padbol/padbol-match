@@ -153,7 +153,7 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                   <strong>Instalar Padbol Match…</strong> o <strong>Instalar aplicación</strong>.
                 </p>
                 <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                  Si no ves la opción, puede que el navegador aún no ofrezca instalación en este dispositivo; probá con Chrome actualizado o volvé más tarde.
+                  Si no ves la opción, puede que el navegador aún no ofrezca instalación en este dispositivo; prueba con Chrome actualizado o vuelve más tarde.
                 </p>
                 </div>
               </>

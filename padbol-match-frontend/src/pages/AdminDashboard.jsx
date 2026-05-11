@@ -5230,7 +5230,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     lineHeight: 1.45,
                   }}
                 >
-                  ⚠️ Tu suscripción venció. Regularizá el pago para evitar interrupciones.
+                  ⚠️ Tu suscripción venció. Regulariza el pago para evitar interrupciones.
                 </div>
               );
             }
@@ -5250,7 +5250,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     lineHeight: 1.45,
                   }}
                 >
-                  🔴 Segundo aviso: tu cuenta será suspendida en breve si no regularizás.
+                  🔴 Segundo aviso: tu cuenta será suspendida en breve si no regularizas.
                 </div>
               );
             }
@@ -9713,7 +9713,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     rows={8}
                     maxLength={500}
                     value={miSedeForm.historia || ''}
-                    placeholder="Contá la historia del club, servicios, valores… Se muestra en la sección «Sobre el club» del perfil público."
+                    placeholder="Cuenta la historia del club, servicios, valores… Se muestra en la sección «Sobre el club» del perfil público."
                     onChange={(e) =>
                       setMiSedeForm((p) => ({ ...p, historia: e.target.value.slice(0, 500) }))
                     }

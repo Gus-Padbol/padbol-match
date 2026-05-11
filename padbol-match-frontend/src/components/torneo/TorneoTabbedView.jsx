@@ -820,9 +820,9 @@ export default function TorneoTabbedView({
       if (code === 'aborted') return;
       const msg =
         code === 'not-allowed'
-          ? 'Permití el micrófono para este sitio.'
+          ? 'Permite el micrófono para este sitio.'
           : code === 'no-speech'
-            ? 'No se detectó voz. Probá de nuevo.'
+            ? 'No se detectó voz. Prueba de nuevo.'
             : code || 'Error de reconocimiento de voz.';
       setVoiceError(msg);
     };
@@ -1057,7 +1057,7 @@ export default function TorneoTabbedView({
             textAlign: 'center',
           }}
         >
-          Los equipos participantes se revelan {horasRevelarEquiposMsg} horas antes del inicio. ¡Anotate y sorprendé a
+          Los equipos participantes se revelan {horasRevelarEquiposMsg} horas antes del inicio. ¡Anota y sorprende a
           todos el día del torneo!
         </div>
       ) : equipos.length === 0 ? (

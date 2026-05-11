@@ -37,7 +37,7 @@ export default function Competir() {
       <main style={{ width: '100%', maxWidth: 460, margin: '0 auto', padding: '20px 16px', boxSizing: 'border-box' }}>
         <h1 style={{ color: '#fff', margin: '0 0 8px', fontSize: 28, lineHeight: 1.1 }}>¿Cómo quieres competir?</h1>
         <p style={{ color: 'rgba(255,255,255,0.86)', margin: '0 0 20px', fontSize: 15, lineHeight: 1.5 }}>
-          Torneos oficiales o consultá el ranking de jugadores.
+          Torneos oficiales o consulta el ranking de jugadores.
         </p>
         <div style={{ display: 'grid', gap: 14 }}>
           {opciones.map((op) => (
