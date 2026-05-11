@@ -55,6 +55,8 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/registro' || pathOnly.startsWith('/registro/')) return true;
   if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   if (pathOnly === '/sedes' || pathOnly.startsWith('/sedes/')) return true;
+  if (pathOnly === '/terminos' || pathOnly.startsWith('/terminos/')) return true;
+  if (pathOnly === '/privacidad' || pathOnly.startsWith('/privacidad/')) return true;
   return false;
 }
 
@@ -142,5 +144,23 @@ export function isChatbotIAVisiblePathname(pathname) {
   if (p === '/pago-exitoso' || p === '/pago-fallido') return false;
   if (p === '/unirse' || p === '/join') return false;
   if (p.startsWith('/invitar-admin-club')) return false;
+  if (p === '/terminos' || p.startsWith('/terminos/')) return false;
+  if (p === '/privacidad' || p.startsWith('/privacidad/')) return false;
+  return true;
+}
+
+/** Altura aproximada del pie global de enlaces legales (padding + texto). */
+export const LEGAL_FOOTER_GLOBAL_SPACER_PX = 52;
+
+/**
+ * Pie global con enlaces a /terminos y /privacidad.
+ * La landing (`/`) tiene su propio footer; las páginas legales incluyen navegación al final del texto.
+ */
+export function isLegalFooterGlobalBarVisiblePathname(pathname) {
+  let p = String(pathname || '/').split('?')[0].split('#')[0];
+  p = p.replace(/\/+$/, '') || '/';
+  if (p === '/') return false;
+  if (p === '/terminos' || p.startsWith('/terminos/')) return false;
+  if (p === '/privacidad' || p.startsWith('/privacidad/')) return false;
   return true;
 }

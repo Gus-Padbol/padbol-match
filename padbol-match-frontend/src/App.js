@@ -38,6 +38,13 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 import ChatbotIA from './components/ChatbotIA';
+import LegalFooterBar from './components/LegalFooterBar';
+import TerminosCondiciones from './pages/TerminosCondiciones';
+import PoliticaPrivacidad from './pages/PoliticaPrivacidad';
+import {
+  isLegalFooterGlobalBarVisiblePathname,
+  LEGAL_FOOTER_GLOBAL_SPACER_PX,
+} from './constants/hubLayout';
 import CompletarPerfilOAuth from './pages/CompletarPerfilOAuth';
 import NuevaSede from './components/NuevaSede';
 import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
@@ -327,6 +334,8 @@ function AppRoutes() {
         <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/terminos" element={<TerminosCondiciones />} />
+        <Route path="/privacidad" element={<PoliticaPrivacidad />} />
 
         <Route
           path="/completar-perfil"
@@ -369,6 +378,31 @@ function AppRoutes() {
   );
 }
 
+function AppShell() {
+  const location = useLocation();
+  const legalFooterPad = isLegalFooterGlobalBarVisiblePathname(location.pathname)
+    ? LEGAL_FOOTER_GLOBAL_SPACER_PX
+    : 0;
+
+  return (
+    <>
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          minHeight: 0,
+          paddingBottom: legalFooterPad,
+          boxSizing: 'border-box',
+        }}
+      >
+        <AppRoutes />
+      </div>
+      <LegalFooterBar />
+      <ChatbotIA />
+    </>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -386,8 +420,7 @@ function App() {
             flexDirection: 'column',
           }}
         >
-          <AppRoutes />
-          <ChatbotIA />
+          <AppShell />
         </div>
       </GlobalErrorBoundary>
     </Router>

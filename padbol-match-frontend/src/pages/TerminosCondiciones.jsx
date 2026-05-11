@@ -1,0 +1,102 @@
+import React from 'react';
+import LegalStaticPageLayout, {
+  LegalSectionTitle,
+  LegalP,
+  LegalUl,
+  LegalLi,
+} from '../components/LegalStaticPageLayout';
+
+const CONTACT = 'mailto:padbolinternacional@gmail.com';
+
+export default function TerminosCondiciones() {
+  return (
+    <LegalStaticPageLayout
+      title="Términos y Condiciones"
+      lead="Última actualización: información general para usuarios de Padbol Match. Si tenés dudas, escribinos."
+    >
+      <LegalSectionTitle>Titular del servicio</LegalSectionTitle>
+      <LegalP>
+        Padbol Match es operado por <strong style={{ color: '#e2e8f0' }}>Entertainment and Sports Services LLC</strong>,
+        con domicilio en el Estado de Florida, Estados Unidos. Al usar la plataforma aceptás estos términos.
+      </LegalP>
+
+      <LegalSectionTitle>Qué es Padbol Match</LegalSectionTitle>
+      <LegalP>
+        Padbol Match es una <strong style={{ color: '#e2e8f0' }}>plataforma digital de reservas deportivas</strong> que
+        conecta jugadores con clubes y sedes: reservas de canchas, torneos, rankings e información de sedes. El servicio
+        puede ampliarse con nuevas funciones sin que ello implique renuncia a estas condiciones base.
+      </LegalP>
+
+      <LegalSectionTitle>Condiciones de uso de la plataforma</LegalSectionTitle>
+      <LegalUl>
+        <LegalLi>Debés proporcionar datos veraces y mantener tu cuenta segura (contraseña, dispositivo).</LegalLi>
+        <LegalLi>Está prohibido usar la plataforma de forma fraudulenta, para perjudicar a terceros o vulnerar la ley.</LegalLi>
+        <LegalLi>Podemos suspender o limitar cuentas ante incumplimientos graves o riesgo para la comunidad.</LegalLi>
+      </LegalUl>
+
+      <LegalSectionTitle>Reservas de canchas</LegalSectionTitle>
+      <LegalUl>
+        <LegalLi>
+          <strong style={{ color: '#e2e8f0' }}>Pago online:</strong> las reservas gestionadas a través de Padbol Match se
+          abonan por medios digitales habilitados en la plataforma. <strong style={{ color: '#e2e8f0' }}>No se acepta efectivo</strong>{' '}
+          como medio de pago en el flujo de la plataforma.
+        </LegalLi>
+        <LegalLi>
+          <strong style={{ color: '#e2e8f0' }}>Cancelación y reembolsos:</strong> las reglas de cancelación, cambios y
+          penalidades dependen de la <strong style={{ color: '#e2e8f0' }}>política de cada sede</strong> publicada o
+          comunicada por el club. Revisá siempre los detalles antes de confirmar.
+        </LegalLi>
+        <LegalLi>
+          <strong style={{ color: '#e2e8f0' }}>Comisión de servicio:</strong> Padbol Match puede aplicar un{' '}
+          <strong style={{ color: '#e2e8f0' }}>fee de servicio del 3%</strong> calculado sobre el precio de la reserva (u
+          otra base que se indique al momento del pago). El desglose se muestra antes de que confirmes el pago.
+        </LegalLi>
+      </LegalUl>
+
+      <LegalSectionTitle>Torneos</LegalSectionTitle>
+      <LegalUl>
+        <LegalLi>
+          La <strong style={{ color: '#e2e8f0' }}>inscripción</strong> a un torneo puede quedar{' '}
+          <strong style={{ color: '#e2e8f0' }}>sujeta a aprobación del organizador</strong> del evento.
+        </LegalLi>
+        <LegalLi>
+          Las <strong style={{ color: '#e2e8f0' }}>categorías de género y formato</strong> (incluidas divisiones
+          masculinas, femeninas, mixtas u otras) las define el <strong style={{ color: '#e2e8f0' }}>organizador</strong>{' '}
+          del torneo conforme a sus reglas internas y a la normativa aplicable.
+        </LegalLi>
+      </LegalUl>
+
+      <LegalSectionTitle>Responsabilidad limitada</LegalSectionTitle>
+      <LegalP>
+        Padbol Match actúa como <strong style={{ color: '#e2e8f0' }}>intermediario tecnológico</strong> entre jugadores y
+        sedes. No somos dueños ni operadores directos de las instalaciones físicas. Cualquier incidente en el predio
+        (seguridad, estado de las canchas, conflictos entre usuarios, lesiones, etc.) debe dirimirse principalmente con la
+        sede y las partes involucradas. En la medida permitida por la ley aplicable, limitamos nuestra responsabilidad por
+        el uso de la plataforma a lo razonablemente previsible.
+      </LegalP>
+
+      <LegalSectionTitle>Propiedad intelectual</LegalSectionTitle>
+      <LegalP>
+        El nombre <strong style={{ color: '#e2e8f0' }}>PADBOL®</strong> es marca registrada de{' '}
+        <strong style={{ color: '#e2e8f0' }}>FIPA</strong> (Federación Internacional de Padbol). Los contenidos de la
+        app (diseño, textos, logos propios de Padbol Match y software) están protegidos; no podés copiarlos ni
+        redistribuirlos sin autorización.
+      </LegalP>
+
+      <LegalSectionTitle>Ley aplicable</LegalSectionTitle>
+      <LegalP>
+        Estos términos se rigen por las leyes del <strong style={{ color: '#e2e8f0' }}>Estado de Florida, Estados Unidos</strong>,
+        sin perjuicio de derechos imperativos que correspondan a consumidores en otros países.
+      </LegalP>
+
+      <LegalSectionTitle>Contacto</LegalSectionTitle>
+      <LegalP>
+        Consultas sobre estos términos:{' '}
+        <a href={CONTACT} style={{ color: '#a5b4fc', fontWeight: 700 }}>
+          padbolinternacional@gmail.com
+        </a>
+        .
+      </LegalP>
+    </LegalStaticPageLayout>
+  );
+}

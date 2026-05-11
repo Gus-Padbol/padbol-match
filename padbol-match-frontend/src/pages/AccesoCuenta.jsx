@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
+import { useNavigate, useLocation, useNavigationType, Link } from 'react-router-dom';
 import './AccesoCuenta.css';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
@@ -121,6 +121,7 @@ export default function AccesoCuenta() {
   const [regWaCodigoPais, setRegWaCodigoPais] = useState('+54');
   const [regWaLocal, setRegWaLocal] = useState('');
   const [regWaLocalConfirm, setRegWaLocalConfirm] = useState('');
+  const [aceptoTerminosPrivacidad, setAceptoTerminosPrivacidad] = useState(false);
   const sesionYaRedirigidaRef = useRef(false);
 
   /** Volver solo tras navegación interna (push/replace), no en carga directa ni desde la landing. */
@@ -196,6 +197,7 @@ export default function AccesoCuenta() {
     setRegWaCodigoPais('+54');
     setRegWaLocal('');
     setRegWaLocalConfirm('');
+    setAceptoTerminosPrivacidad(false);
   }, [modo]);
 
   const handleIngresar = async (e) => {
@@ -280,6 +282,10 @@ export default function AccesoCuenta() {
     const waDigitsFull = buildFullWhatsDigits(regWaCodigoPais, waLoc);
     if (!whatsappDigitsValido(waDigitsFull)) {
       setErrorMsg('Número de WhatsApp inválido.');
+      return;
+    }
+    if (!aceptoTerminosPrivacidad) {
+      setErrorMsg('Debés aceptar los Términos y Condiciones y la Política de Privacidad.');
       return;
     }
     const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
@@ -824,6 +830,37 @@ export default function AccesoCuenta() {
                 <PasswordEyeIcon revealed={showRegPassword2} />
               </button>
             </div>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                marginBottom: '16px',
+                cursor: busy ? 'default' : 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={aceptoTerminosPrivacidad}
+                onChange={(e) => {
+                  setAceptoTerminosPrivacidad(e.target.checked);
+                  if (e.target.checked) setErrorMsg('');
+                }}
+                disabled={busy}
+                style={{ marginTop: '4px', width: 18, height: 18, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.92)', lineHeight: 1.45 }}>
+                Acepto los{' '}
+                <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: '#fde68a', fontWeight: 800 }}>
+                  Términos y Condiciones
+                </Link>{' '}
+                y la{' '}
+                <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#fde68a', fontWeight: 800 }}>
+                  Política de Privacidad
+                </Link>{' '}
+                <span style={{ color: '#fecaca' }}>*</span>
+              </span>
+            </label>
             <button
               type="submit"
               disabled={busy}

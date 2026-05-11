@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
@@ -367,6 +367,7 @@ export default function MiPerfil() {
   const [torneoPerfil, setTorneoPerfil] = useState(null);
   /** Errores por campo en formulario registro sin sesión */
   const [registroFieldErrors, setRegistroFieldErrors] = useState({});
+  const [aceptoTerminosPrivacidadRegistro, setAceptoTerminosPrivacidadRegistro] = useState(false);
   const [fichaFieldErrors, setFichaFieldErrors] = useState({});
   const fichErr = (k) => fichaFieldErrors[k];
   const fichErrP = (k) =>
@@ -1263,6 +1264,10 @@ export default function MiPerfil() {
       const errPaisInv = mensajeValidarPaisTorneo(torneoPerfil, formData.pais);
       if (errPaisInv) {
         fe.pais = errPaisInv;
+      }
+
+      if (!aceptoTerminosPrivacidadRegistro) {
+        fe.acepto_terminos = 'Debés aceptar los Términos y Condiciones y la Política de Privacidad.';
       }
 
       if (Object.keys(fe).length > 0) {
@@ -2234,6 +2239,41 @@ export default function MiPerfil() {
                   No
                 </button>
               </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  marginBottom: regErr('acepto_terminos') ? '6px' : '16px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: '#334155',
+                  lineHeight: 1.45,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={aceptoTerminosPrivacidadRegistro}
+                  onChange={(e) => {
+                    setAceptoTerminosPrivacidadRegistro(e.target.checked);
+                    setRegistroFieldErrors((p) => ({ ...p, acepto_terminos: '' }));
+                  }}
+                  style={{ marginTop: '3px', width: 18, height: 18, flexShrink: 0 }}
+                />
+                <span>
+                  Acepto los{' '}
+                  <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6bc0', fontWeight: 700 }}>
+                    Términos y Condiciones
+                  </Link>{' '}
+                  y la{' '}
+                  <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6bc0', fontWeight: 700 }}>
+                    Política de Privacidad
+                  </Link>{' '}
+                  {reqAst}
+                </span>
+              </label>
+              {regErrP('acepto_terminos')}
 
               {successMsg ? (
                 <p style={{ color: '#2e7d32', marginBottom: '10px', fontWeight: 600, lineHeight: 1.4 }}>{successMsg}</p>

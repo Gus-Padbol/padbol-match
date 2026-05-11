@@ -409,6 +409,18 @@ export default function LandingPage() {
             <a href={CONTACT_MAIL} style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
               Contacto
             </a>
+            <span style={{ color: c.footerDot }} aria-hidden>
+              ·
+            </span>
+            <Link to="/terminos" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+              Términos
+            </Link>
+            <span style={{ color: c.footerDot }} aria-hidden>
+              ·
+            </span>
+            <Link to="/privacidad" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+              Privacidad
+            </Link>
           </div>
         </nav>
         <p style={{ margin: 0, textAlign: 'center', fontSize: '0.8rem', color: c.muted }}>

@@ -14,6 +14,8 @@ function gateSkipsPerfilMinimo(pathOnly) {
   if (pathOnly === '/completar-perfil') return true;
   if (pathOnly === '/login' || pathOnly === '/auth' || pathOnly.startsWith('/auth/')) return true;
   if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
+  if (pathOnly === '/terminos' || pathOnly.startsWith('/terminos/')) return true;
+  if (pathOnly === '/privacidad' || pathOnly.startsWith('/privacidad/')) return true;
   return false;
 }
 
