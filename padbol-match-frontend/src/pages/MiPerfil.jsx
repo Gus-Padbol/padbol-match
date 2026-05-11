@@ -252,7 +252,7 @@ function puedeMostrarComprobanteMp(r) {
 export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
+  const { session, loading: authLoading, userProfile, refreshSession, signOutAndClear } = useAuth();
   const [searchParams] = useSearchParams();
   const torneoIdPerfil = searchParams.get('id');
   const redirectAfterAuth = searchParams.get('redirect') || '';
@@ -294,6 +294,7 @@ export default function MiPerfil() {
   const [jugadorPreviewMiCompanero, setJugadorPreviewMiCompanero] = useState(null);
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
+  const [modalConfirmarCerrarSesion, setModalConfirmarCerrarSesion] = useState(false);
 
   const sessionOwnerEmail = useMemo(() => session?.user?.email?.trim() || null, [session?.user?.email]);
 
@@ -4102,6 +4103,109 @@ export default function MiPerfil() {
         onClose={() => setJugadorPreviewMiCompanero(null)}
         data={jugadorPreviewMiCompanero}
       />
+
+      {session?.user ? (
+        <div style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '8px 16px 4px', boxSizing: 'border-box' }}>
+          <button
+            type="button"
+            onClick={() => setModalConfirmarCerrarSesion(true)}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '10px 8px',
+              border: 'none',
+              background: 'transparent',
+              color: '#94a3b8',
+              fontSize: '13px',
+              fontWeight: 400,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              textAlign: 'center',
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      ) : null}
+
+      {modalConfirmarCerrarSesion ? (
+        <div
+          role="presentation"
+          onClick={() => setModalConfirmarCerrarSesion(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 12000,
+            background: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cerrar-sesion-titulo"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 340,
+              background: '#fff',
+              borderRadius: 14,
+              padding: '20px 18px 16px',
+              boxShadow: '0 20px 50px rgba(15,23,42,0.25)',
+              boxSizing: 'border-box',
+            }}
+          >
+            <p id="cerrar-sesion-titulo" style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 600, color: '#0f172a', lineHeight: 1.4 }}>
+              ¿Querés cerrar sesión?
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setModalConfirmarCerrarSesion(false)}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 10,
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  color: '#334155',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setModalConfirmarCerrarSesion(false);
+                  await signOutAndClear();
+                  navigate('/');
+                }}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: '#334155',
+                  color: '#f8fafc',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Sí
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <BottomNav />
     </div>
   );

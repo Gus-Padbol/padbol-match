@@ -175,7 +175,7 @@ function PartidoAbiertoRailCard({ partido, onNavigate }) {
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, profileLoading, refreshSession, signOutAndClear } = useAuth();
+  const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [partidosAbiertos, setPartidosAbiertos] = useState([]);
   const [partidosLoading, setPartidosLoading] = useState(true);
   const [nombreFinal, setNombreFinal] = useState(null);
@@ -475,32 +475,9 @@ export default function UserHome() {
                 {isOnAdmin ? '←' : '⚙'}
               </button>
             ) : null}
-            {session?.user ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  await signOutAndClear();
-                  navigate('/');
-                }}
-                aria-label="Cerrar sesión"
-                title="Cerrar sesión"
-                style={{
-                  width: 34,
-                  height: 34,
-                  padding: 0,
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.1)',
-                  color: '#e2e8f0',
-                  fontSize: 15,
-                  cursor: 'pointer',
-                  display: 'grid',
-                  placeItems: 'center',
-                }}
-              >
-                ⏻
-              </button>
-            ) : !authLoading ? (
+            {!session?.user && authLoading ? (
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>…</span>
+            ) : !session?.user ? (
               <button
                 type="button"
                 onClick={() => navigate('/auth')}
@@ -518,9 +495,7 @@ export default function UserHome() {
               >
                 Ingresar
               </button>
-            ) : (
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>…</span>
-            )}
+            ) : null}
           </div>
         </div>
       </header>

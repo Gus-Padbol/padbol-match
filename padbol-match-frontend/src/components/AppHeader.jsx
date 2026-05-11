@@ -196,7 +196,7 @@ export default function AppHeader({
     return titleStr;
   }, [pathOnly, location.state?.fromAdmin, titleStr]);
 
-  /** Rutas del hub jugador (/, /hub, …): chip con apodo o nombre real; sí ⚙ Admin + ⏻ para admins. */
+  /** Rutas del hub jugador (/, /hub, …): chip con apodo o nombre real; sí ⚙ Admin para admins (logout en Mi Perfil). */
   const hubInicioPath =
     pathOnly === '/' ||
     pathOnly === '/inicio' ||
@@ -214,7 +214,8 @@ export default function AppHeader({
   }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
 
   const authEmail = String(session?.user?.email || '').trim().toLowerCase();
-  const showLogout = !hideLogoutEffective && Boolean(session?.user);
+  /** Panel admin (barra compacta): logout rápido. En flujo jugador el cierre va en Mi Perfil. */
+  const showLogoutAdminHeader = !hideLogoutEffective && Boolean(session?.user);
   const hubNombreCorto = useMemo(() => {
     const base = headerNombreVisible(userProfile, session);
     const email = String(session?.user?.email || '').trim().toLowerCase();
@@ -274,12 +275,10 @@ export default function AppHeader({
   const showJugadorNotifications = Boolean(session?.user) && !isOnAdmin && !adminFlowSurface;
   /** Torneo / equipo desde el panel: sin chip @ a la derecha; volver = avatar + nombre (no texto «← Admin»). */
   const adminTorneoEquipoDesdePanel = adminFlowSurface && !isOnAdmin;
-  const miPerfilLogoutSpacing =
-    showLogout && (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/'));
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
   const compactHubChip = hubDirectLogin && hubInicioPath && Boolean(session?.user);
 
-  /** Hub inicio con sesión: super admin → [⚙ Admin] + [⏻] sin chip; resto → chip + logout; “Inicio” oculto si >2 controles o super admin. */
+  /** Hub inicio con sesión: super admin → [⚙ Admin] sin chip; resto → chip (logout en Mi Perfil). */
   const hubHomeCompactHeader =
     hubDirectLogin && hubInicioPath && Boolean(session?.user);
   const muestraChipUsuarioHubDerecha =
@@ -289,8 +288,7 @@ export default function AppHeader({
   const hubHeaderControlCount =
     (showAdminShortcutHub ? 1 : 0) +
     (showJugadorNotifications ? 1 : 0) +
-    (muestraChipUsuarioHubDerecha ? 1 : 0) +
-    (showLogout ? 1 : 0);
+    (muestraChipUsuarioHubDerecha ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
   /** Hub inicio (UserHome): ⚙ Admin siempre columna izquierda — mismo criterio para super_admin y admin_club. */
   const botonAdminIzquierdaEnHub =
@@ -831,7 +829,7 @@ export default function AppHeader({
           <span aria-hidden style={{ width: 32, height: 32, flexShrink: 0 }} />
         )}
         {searchUiBlock}
-        {showLogout && session?.user ? (
+        {showLogoutAdminHeader && session?.user ? (
           <button
             type="button"
             onClick={async () => {
@@ -1096,20 +1094,11 @@ export default function AppHeader({
         style={{
           display: 'flex',
           justifyContent:
-            showLogout ||
-            showAdminShortcutHub ||
-            (hubDirectLogin && !session?.user && !authLoading)
-              ? 'flex-end'
-              : miPerfilLogoutSpacing
-                ? 'flex-end'
-                : 'flex-start',
+            showAdminShortcutHub || (hubDirectLogin && !session?.user && !authLoading) ? 'flex-end' : 'flex-start',
           alignItems: 'center',
           minWidth: 0,
           width: '100%',
-          marginLeft: miPerfilLogoutSpacing ? 'auto' : undefined,
-          marginRight: showLogout || showAdminShortcutHub ? '16px' : 0,
-          paddingLeft: miPerfilLogoutSpacing ? '8px' : 0,
-          paddingRight: miPerfilLogoutSpacing ? '8px' : 0,
+          marginRight: showAdminShortcutHub ? '16px' : 0,
           boxSizing: 'border-box',
           justifySelf: hubDirectLogin && !session?.user && !authLoading ? 'end' : undefined,
         }}
@@ -1119,7 +1108,7 @@ export default function AppHeader({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            marginLeft: miPerfilLogoutSpacing ? 'auto' : 0,
+            marginLeft: 0,
           }}
         >
             {jugadorChipEnHeaderGrid ? (
@@ -1215,35 +1204,7 @@ export default function AppHeader({
             {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
             {showJugadorNotifications ? <JugadorNotificationsBell compact={compactHubChip} /> : null}
             {searchUiBlock}
-            {showLogout ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  await signOutAndClear();
-                  navigate('/');
-                }}
-                aria-label="Cerrar sesión"
-                title="Cerrar sesión"
-                style={{
-                  width: LOGOUT_BTN_SIZE,
-                  height: LOGOUT_BTN_SIZE,
-                  padding: 0,
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.1)',
-                  color: '#e2e8f0',
-                  fontSize: 16,
-                  lineHeight: 1,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                ⏻
-              </button>
-            ) : hubDirectLogin && !session?.user && !authLoading ? (
+            {hubDirectLogin && !session?.user && !authLoading ? (
               <button
                 type="button"
                 onClick={() => navigate('/auth')}
