@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import SedeSearchInput from '../components/SedeSearchInput';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
@@ -32,6 +33,12 @@ import {
   TORNEO_FORMATO_EQUIPO_5,
   TORNEO_FORMATO_EQUIPO_7,
 } from '../utils/torneoDeporteFormato';
+
+function formatSedeTorneoOption(sede) {
+  const nombre = String(sede?.nombre || '').trim();
+  const ciudad = String(sede?.ciudad || '').trim();
+  return ciudad ? `${nombre} - ${ciudad}` : nombre;
+}
 
 export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol: rolProp = null }) {
   const [sedes, setSedes] = useState([]);
@@ -177,7 +184,9 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       const c = parseFloat(rawInscripcionMonto.replace(',', '.'));
       const monto = Number.isFinite(c) && c >= 0 ? c : 0;
       payload.inscripcion_monto = monto;
-      payload.inscripcion_moneda = formData.inscripcion_moneda === 'USD' ? 'USD' : 'ARS';
+      payload.inscripcion_moneda = ['ARS', 'USD', 'EUR'].includes(formData.inscripcion_moneda)
+        ? formData.inscripcion_moneda
+        : 'ARS';
       payload.costo_inscripcion = monto;
     } else {
       payload.inscripcion_monto = null;
@@ -389,34 +398,30 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   <label>Sede *</label>
                   {esAdminClub ? (
                     <>
-                      <select
-                        name="sede_id"
-                        value={formData.sede_id}
+                      <SedeSearchInput
+                        sedes={sedes}
+                        valueId={formData.sede_id}
+                        onChangeId={() => {}}
                         disabled
-                        required
-                        style={{ opacity: 0.92, cursor: 'not-allowed' }}
-                      >
-                        {sedeSeleccionada ? (
-                          <option value={String(sedeSeleccionada.id)}>
-                            {sedeSeleccionada.nombre} — {sedeSeleccionada.ciudad || '—'}
-                          </option>
-                        ) : (
-                          <option value={formData.sede_id || ''}>Cargando sede…</option>
-                        )}
-                      </select>
+                        formatLabel={formatSedeTorneoOption}
+                        inputStyle={{ opacity: 0.92, cursor: 'not-allowed' }}
+                      />
+                      {!sedeSeleccionada ? (
+                        <small style={{ color: '#888', fontSize: '12px', marginTop: '6px', display: 'block' }}>
+                          Cargando sede…
+                        </small>
+                      ) : null}
                       <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
                         La sede corresponde a tu club y no se puede cambiar desde aquí.
                       </small>
                     </>
                   ) : (
-                    <select name="sede_id" value={formData.sede_id} onChange={handleChange} required>
-                      <option value="">-- Selecciona Sede --</option>
-                      {sedes.map((sede) => (
-                        <option key={sede.id} value={sede.id}>
-                          {sede.nombre} - {sede.ciudad}
-                        </option>
-                      ))}
-                    </select>
+                    <SedeSearchInput
+                      sedes={sedes}
+                      valueId={formData.sede_id}
+                      onChangeId={(id) => setFormData((prev) => ({ ...prev, sede_id: id }))}
+                      formatLabel={formatSedeTorneoOption}
+                    />
                   )}
                 </div>
               )}
@@ -599,6 +604,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
                   >
                     <option value="ARS">ARS</option>
                     <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
                   </select>
                 </div>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>

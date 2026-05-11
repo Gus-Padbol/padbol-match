@@ -2339,6 +2339,90 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
   }
 });
 
+app.post('/api/admin/reservas/manual', async (req, res) => {
+  try {
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope) return res.status(401).json({ error: 'No autorizado' });
+    if (!scope.superA && String(scope.rol || '') !== 'admin_club') {
+      return res.status(403).json({ error: 'No tenés permiso para crear reservas manuales' });
+    }
+
+    const b = req.body || {};
+    const sedeIdRaw = b.sede_id != null && String(b.sede_id).trim() !== '' ? b.sede_id : scope.sedeId;
+    const sedeIdNum = Number(sedeIdRaw);
+    if (!Number.isFinite(sedeIdNum)) return res.status(400).json({ error: 'Seleccioná una sede' });
+
+    await assertUsuarioPuedeAdministrarSede(req, sedeIdNum);
+
+    const { data: sedeRow, error: sedeErr } = await supabase
+      .from('sedes')
+      .select('id,nombre,moneda')
+      .eq('id', sedeIdNum)
+      .maybeSingle();
+    if (sedeErr) throw sedeErr;
+    if (!sedeRow) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    const sede = String(sedeRow.nombre || '').trim();
+    const fecha = String(b.fecha || '').trim().slice(0, 10);
+    const hora = String(b.hora || '').trim().slice(0, 5);
+    const cancha = parseInt(String(b.cancha), 10);
+    const nombre = String(b.nombre || '').trim();
+    const telefono = String(b.telefono || b.whatsapp || '').trim();
+    const estadoRaw = String(b.estado || 'confirmada').trim().toLowerCase();
+    const estado = ['confirmada', 'reservada', 'completada'].includes(estadoRaw) ? estadoRaw : 'confirmada';
+    const duracionParsed = parseInt(String(b.duracion_minutos ?? b.duracion ?? 90), 10);
+    const duracionMin = [60, 90, 120].includes(duracionParsed) ? duracionParsed : 90;
+
+    if (!sede || !fecha || !hora || !Number.isFinite(cancha) || !nombre) {
+      return res.status(400).json({ error: 'Completá sede, cancha, fecha, hora y nombre del jugador' });
+    }
+
+    await assertCanchaPermitidaParaReservaPorNombreSede(sede, cancha);
+    await assertReservaHorarioNoPasadoParaSede(sede, fecha, hora);
+    await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
+
+    const { data, error } = await supabase
+      .from('reservas')
+      .insert([
+        {
+          sede,
+          fecha,
+          hora,
+          cancha,
+          nombre,
+          email: null,
+          telefono: telefono || null,
+          whatsapp: telefono || null,
+          nivel: 'Manual',
+          precio: 0,
+          moneda: String(sedeRow.moneda || 'ARS').trim().toUpperCase() || 'ARS',
+          estado,
+          duracion: duracionMin,
+          duracion_minutos: duracionMin,
+        },
+      ])
+      .select()
+      .single();
+    if (error) throw error;
+
+    if (data?.id != null) {
+      await insertReservaHistorialEstado(supabase, {
+        reserva_id: data.id,
+        estado_anterior: null,
+        estado_nuevo: estado,
+        changed_by: `admin:${scope.email}`,
+      });
+    }
+
+    res.status(201).json(data);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ Error POST /api/admin/reservas/manual:', err.message);
+    res.status(500).json({ error: err.message || 'No se pudo crear la reserva manual' });
+  }
+});
+
 const RESERVAS_JUGADOR_WHATSAPP_CHUNK = 120;
 
 /**
@@ -2902,7 +2986,7 @@ function parseTorneoOptionalInteger(value) {
 
 function normalizeTorneoInscripcionMoneda(value) {
   const raw = String(value || '').trim().toUpperCase();
-  if (raw === 'ARS' || raw === 'USD') return raw;
+  if (raw === 'ARS' || raw === 'USD' || raw === 'EUR') return raw;
   return null;
 }
 

@@ -21,7 +21,6 @@ import {
 } from '../utils/authIdentidad';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
-import { nombreRealDesdePerfilOauth } from '../utils/displayName';
 
 const OPCIONES_TELEFONO = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
 
@@ -56,19 +55,14 @@ export default function CompletarPerfilOAuth() {
     }
   }, [userProfile?.id, userProfile?.genero, userProfile?.whatsapp]);
 
-  const lineaNombre = nombreRealDesdePerfilOauth(userProfile, session) || session?.user?.email || '';
-  const primerNombreSaludo = lineaNombre.includes('@')
-    ? ''
-    : String(lineaNombre.split(/\s+/).filter(Boolean)[0] || '').trim();
-
   const handleGuardar = useCallback(
     async (e) => {
       e.preventDefault();
       setErrorMsg('');
       if (!session?.user?.id) return;
       const gen = String(genero || '').trim().toLowerCase();
-      if (gen !== 'masculino' && gen !== 'femenino' && gen !== 'otro' && gen !== 'open') {
-        setErrorMsg('Seleccioná género (Masculino, Femenino, Otro u Open).');
+      if (gen !== 'masculino' && gen !== 'femenino') {
+        setErrorMsg('Seleccioná género (Masculino o Femenino).');
         return;
       }
       const waLoc = digitsOnly(waLocal);
@@ -201,16 +195,7 @@ export default function CompletarPerfilOAuth() {
           Completá tu perfil
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
-          {primerNombreSaludo ? (
-            <>
-              Hola, {primerNombreSaludo}. Necesitamos tu <strong>WhatsApp</strong> y <strong>género</strong> para continuar
-              (Google no los envía).
-            </>
-          ) : (
-            <>
-              Necesitamos tu <strong>WhatsApp</strong> y <strong>género</strong> para continuar.
-            </>
-          )}
+          Completá tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.
         </p>
         <form
           onSubmit={(ev) => void handleGuardar(ev)}
@@ -252,8 +237,6 @@ export default function CompletarPerfilOAuth() {
             <option value="">— Elegir —</option>
             <option value="masculino">Masculino</option>
             <option value="femenino">Femenino</option>
-            <option value="otro">Otro</option>
-            <option value="open">Open</option>
           </select>
           <div
             style={{

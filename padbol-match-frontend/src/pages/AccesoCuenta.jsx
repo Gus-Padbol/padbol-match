@@ -259,8 +259,8 @@ export default function AccesoCuenta() {
       setErrorMsg('Completa tu apellido.');
       return;
     }
-    if (gen !== 'masculino' && gen !== 'femenino' && gen !== 'otro' && gen !== 'open') {
-      setErrorMsg('Selecciona género (Masculino, Femenino, Otro u Open).');
+    if (gen !== 'masculino' && gen !== 'femenino') {
+      setErrorMsg('Selecciona género (Masculino o Femenino).');
       return;
     }
     const waLoc = digitsOnly(regWaLocal);
@@ -636,8 +636,6 @@ export default function AccesoCuenta() {
               <option value="">— Elegir —</option>
               <option value="masculino">Masculino</option>
               <option value="femenino">Femenino</option>
-              <option value="otro">Otro</option>
-              <option value="open">Open</option>
             </select>
             <label
               style={{
