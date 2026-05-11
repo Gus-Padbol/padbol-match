@@ -13,7 +13,7 @@ const opciones = [
   },
   {
     title: 'Buscar partido',
-    body: 'Encontrá partidos abiertos y pedí sumarte.',
+    body: 'Encontrá cupos y pedí sumarte a un partido.',
     icon: '🔎',
     path: '/partidos-abiertos',
   },

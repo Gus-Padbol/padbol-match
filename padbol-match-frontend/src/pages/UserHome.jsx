@@ -302,7 +302,7 @@ export default function UserHome() {
   const modulos = [
     {
       key: 'jugar',
-      icon: '🎮',
+      icon: '⚽',
       titulo: 'JUGAR',
       descripcion: 'Reservá una cancha o unite a un partido',
       onClick: () => navigate('/jugar'),
@@ -560,9 +560,9 @@ export default function UserHome() {
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
                 <div>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: 18, fontWeight: 900, lineHeight: 1.2 }}>Partidos abiertos</h2>
-                  <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
-                    Partidos disponibles para sumarte
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: 18, fontWeight: 900, lineHeight: 1.2 }}>Únete a un partido</h2>
+                  <p style={{ margin: '6px 0 0', color: '#475569', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
+                    Cupos abiertos para sumarte a un equipo
                   </p>
                 </div>
                 <button
@@ -662,13 +662,13 @@ export default function UserHome() {
             <section
               style={{
                 width: '100%',
-                margin: '0 auto 12px',
-                borderRadius: 14,
-                padding: '10px 12px 12px',
+                margin: '0 auto 8px',
+                borderRadius: 12,
+                padding: '6px 8px 8px',
                 boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.92)',
-                boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
-                border: '1px solid rgba(226,232,240,0.75)',
+                background: 'rgba(255,255,255,0.88)',
+                boxShadow: '0 4px 12px rgba(15,23,42,0.06)',
+                border: '1px solid rgba(226,232,240,0.65)',
               }}
             >
               <div
@@ -676,20 +676,20 @@ export default function UserHome() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 8,
-                  marginBottom: partidosLoading ? 0 : 8,
+                  gap: 6,
+                  marginBottom: partidosLoading ? 0 : 4,
                 }}
               >
-                <h2 style={{ margin: 0, color: '#64748b', fontSize: 14, fontWeight: 800, lineHeight: 1.2 }}>Partidos abiertos</h2>
+                <h2 style={{ margin: 0, color: '#475569', fontSize: 12, fontWeight: 800, lineHeight: 1.2 }}>Únete a un partido</h2>
                 <button
                   type="button"
                   onClick={() => navigate('/partidos-abiertos')}
                   style={{
                     border: 'none',
                     background: 'transparent',
-                    color: '#64748b',
-                    padding: '4px 6px',
-                    fontSize: 12,
+                    color: '#475569',
+                    padding: '2px 4px',
+                    fontSize: 11,
                     fontWeight: 700,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
@@ -701,37 +701,38 @@ export default function UserHome() {
               </div>
 
               {partidosLoading ? (
-                <p style={{ margin: 0, color: '#94a3b8', fontSize: 12, textAlign: 'center', padding: '6px 0 2px' }}>
+                <p style={{ margin: 0, color: '#64748b', fontSize: 11, textAlign: 'center', padding: '4px 0 0' }}>
                   Cargando…
                 </p>
               ) : (
                 <div
                   style={{
-                    background: 'rgba(248,250,252,0.95)',
-                    borderRadius: 12,
-                    padding: '10px 10px 12px',
+                    background: 'rgba(248,250,252,0.9)',
+                    borderRadius: 8,
+                    padding: '6px 6px 8px',
                     textAlign: 'center',
                     border: '1px dashed #e2e8f0',
                   }}
                 >
-                  <div style={{ fontSize: 22, marginBottom: 4, opacity: 0.85 }}>🤝</div>
-                  <p style={{ margin: '0 0 8px', color: '#94a3b8', fontSize: 12, lineHeight: 1.4, fontWeight: 600 }}>
-                    Sin partidos publicados aún
+                  <div style={{ fontSize: 16, marginBottom: 2, opacity: 0.9 }}>🤝</div>
+                  <p style={{ margin: '0 0 4px', color: '#57534e', fontSize: 11, lineHeight: 1.35, fontWeight: 600 }}>
+                    Sin cupos publicados
                   </p>
                   <button
                     type="button"
                     onClick={() => navigate('/armar-partido')}
                     style={{
                       border: 'none',
-                      borderRadius: 10,
-                      padding: '8px 14px',
-                      background: 'linear-gradient(135deg,#22c55e,#16a34a)',
-                      color: '#fff',
-                      fontWeight: 800,
-                      fontSize: 12,
+                      background: 'transparent',
+                      padding: 0,
+                      margin: 0,
+                      color: '#64748b',
+                      fontWeight: 600,
+                      fontSize: 11,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
-                      boxShadow: '0 4px 12px rgba(22,163,74,0.25)',
+                      textDecoration: 'underline',
+                      textUnderlineOffset: 2,
                     }}
                   >
                     Armar el primero

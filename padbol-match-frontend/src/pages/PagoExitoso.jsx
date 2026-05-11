@@ -236,7 +236,7 @@ export default function PagoExitoso() {
               ¡Partido publicado!
             </h1>
             <p style={{ color: '#374151', fontSize: '15px', lineHeight: 1.6, marginBottom: '20px' }}>
-              Tu reserva fue confirmada y el partido ya aparece en Partidos abiertos.
+              Tu reserva fue confirmada: el partido ya está publicado para que otros se sumen.
             </p>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(`Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`)}`}
@@ -270,7 +270,7 @@ export default function PagoExitoso() {
                 cursor: 'pointer',
               }}
             >
-              Ver partidos abiertos
+              Ver cupos para unirte
             </button>
           </>
         ) : pagoKind === 'torneo' && torneoInscripcion ? (

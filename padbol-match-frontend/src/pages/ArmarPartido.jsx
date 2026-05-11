@@ -319,10 +319,10 @@ export default function ArmarPartido() {
           {step === 6 ? (
             <>
               <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Partido publicado</h1>
-              <p style={{ color: '#475569', lineHeight: 1.55 }}>Tu partido ya aparece en Partidos abiertos.</p>
+              <p style={{ color: '#475569', lineHeight: 1.55 }}>Tu partido ya aparece para que otros se unan.</p>
               <div style={{ display: 'grid', gap: 10 }}>
                 <a href={shareUrl(publicado)} target="_blank" rel="noreferrer" style={{ textAlign: 'center', borderRadius: 12, padding: 13, background: '#22c55e', color: '#fff', fontWeight: 900, textDecoration: 'none' }}>Compartir por WhatsApp</a>
-                <button type="button" onClick={() => navigate('/partidos-abiertos')} style={{ border: '1px solid #cbd5e1', borderRadius: 12, padding: 13, background: '#fff', color: '#334155', fontWeight: 900 }}>Ver partidos abiertos</button>
+                <button type="button" onClick={() => navigate('/partidos-abiertos')} style={{ border: '1px solid #cbd5e1', borderRadius: 12, padding: 13, background: '#fff', color: '#334155', fontWeight: 900 }}>Ver cupos para unirte</button>
               </div>
             </>
           ) : null}

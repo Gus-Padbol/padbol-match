@@ -269,7 +269,7 @@ const BottomNav = () => {
         : [
             {
               label: 'Jugar',
-              icon: '🎮',
+              icon: '⚽',
               path: '/jugar',
               match: (p) => {
                 const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';

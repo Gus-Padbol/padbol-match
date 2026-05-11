@@ -8538,11 +8538,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
               Invitaciones de administradores
             </h3>
-            <p style={{ color: 'rgba(226,232,240,0.95)', fontSize: '13px', margin: '0 0 10px', maxWidth: '720px', lineHeight: 1.45 }}>
-              Enviá un enlace según el tipo de admin: <strong>club</strong> completa el alta de sede; <strong>nacional</strong> o{' '}
-              <strong>ciudad/región</strong> solo activan el rol con el alcance geográfico indicado (sin crear sede). Hasta que acepte verás{' '}
-              <strong>Invitado - pendiente de alta</strong>.
-            </p>
             <div style={{ marginBottom: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
               <button
                 type="button"
@@ -8581,13 +8576,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <tbody>
                   {adminInvitacionesLoading ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '10px', textAlign: 'center' }}>
+                      <td colSpan={7} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>
                         Cargando…
                       </td>
                     </tr>
                   ) : adminInvitacionesRows.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>
+                      <td colSpan={7} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>
                         No hay invitaciones pendientes
                       </td>
                     </tr>
@@ -8615,16 +8610,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         venceTxt = '—';
                       }
                       return (
-                        <tr key={inv.id} style={{ borderTop: '1px solid #e2e8f0' }}>
-                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        <tr key={inv.id} style={{ borderTop: '1px solid #e2e8f0', color: '#1e293b' }}>
+                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', color: '#1e293b' }}>
                             {labelInvitacionAdminTipo(inv)}
                           </td>
-                          <td style={{ padding: '8px', fontSize: '12px' }}>{inv.email}</td>
-                          <td style={{ padding: '8px' }}>{inv.nombre_club || '—'}</td>
-                          <td style={{ padding: '8px', fontSize: '12px' }}>{inv.pais || '—'}</td>
-                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600 }}>{estadoLabel}</td>
-                          <td style={{ padding: '8px', fontSize: '12px' }}>{venceTxt}</td>
-                          <td style={{ padding: '8px' }}>
+                          <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>{inv.email}</td>
+                          <td style={{ padding: '8px', color: '#1e293b' }}>{inv.nombre_club || '—'}</td>
+                          <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>{inv.pais || '—'}</td>
+                          <td style={{ padding: '8px', fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>{estadoLabel}</td>
+                          <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>{venceTxt}</td>
+                          <td style={{ padding: '8px', color: '#1e293b' }}>
                             {inv.estado === 'pendiente' ? (
                               <button
                                 type="button"
@@ -8643,7 +8638,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 Reenviar email
                               </button>
                             ) : (
-                              <span style={{ color: '#94a3b8', fontSize: '12px' }}>—</span>
+                              <span style={{ color: '#64748b', fontSize: '12px' }}>—</span>
                             )}
                           </td>
                         </tr>
@@ -8660,7 +8655,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </h3>
             <div style={{ marginBottom: '10px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
               <div style={{ flex: '1 1 220px', minWidth: '180px', maxWidth: '400px' }}>
-                <label htmlFor="admin-busqueda-roles" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(226,232,240,0.95)', marginBottom: '4px' }}>
+                <label htmlFor="admin-busqueda-roles" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
                   Buscar por nombre o email
                 </label>
                 <input
@@ -8695,28 +8690,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </thead>
                 <tbody>
                   {adminRolesLoading ? (
-                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center' }}>Cargando…</td></tr>
+                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>Cargando…</td></tr>
                   ) : adminRolesRows.length === 0 ? (
-                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>Sin administradores registrados</td></tr>
+                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>Sin administradores registrados</td></tr>
                   ) : adminRolesRowsFiltrados.length === 0 ? (
-                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#64748b' }}>Ningún administrador coincide con la búsqueda.</td></tr>
+                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>Ningún administrador coincide con la búsqueda.</td></tr>
                   ) : (
                     adminRolesRowsFiltrados.map((row) => (
-                      <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: '8px' }}>{row.nombre || '—'}</td>
-                        <td style={{ padding: '8px', fontSize: '12px' }}>{row.email}</td>
-                        <td style={{ padding: '8px' }}>{row.role || '—'}</td>
-                        <td style={{ padding: '8px' }}>{row.alcance || '—'}</td>
-                        <td style={{ padding: '8px', fontSize: '12px' }}>
+                      <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: '#1e293b' }}>
+                        <td style={{ padding: '8px', color: '#1e293b' }}>{row.nombre || '—'}</td>
+                        <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>{row.email}</td>
+                        <td style={{ padding: '8px', color: '#1e293b' }}>{row.role || '—'}</td>
+                        <td style={{ padding: '8px', color: '#1e293b' }}>{row.alcance || '—'}</td>
+                        <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>
                           {row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
                           {row.alcance === 'ciudad' ? row.ciudad || '—' : null}
                           {row.alcance === 'provincia' ? row.provincia || '—' : null}
                           {row.alcance === 'pais' ? row.pais || '—' : null}
                           {row.alcance === 'global' ? 'Global' : null}
                         </td>
-                        <td style={{ padding: '8px' }}>
+                        <td style={{ padding: '8px', color: '#1e293b' }}>
                           {row.role === 'super_admin' ? (
-                            <span style={{ color: '#64748b', fontSize: '12px' }}>—</span>
+                            <span style={{ color: '#475569', fontSize: '12px' }}>—</span>
                           ) : (
                             <button
                               type="button"
@@ -10915,7 +10910,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>✉️ Invitar nuevo admin</h3>
             {inviteAdminModalStep === 'tipo' ? (
               <>
-                <p style={{ margin: '8px 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                <p style={{ margin: '8px 0 14px', fontSize: '13px', color: '#334155', lineHeight: 1.45, fontWeight: 500 }}>
                   Elegí el tipo de administrador. Luego completá el formulario y se enviará un enlace válido 48 hs.
                 </p>
                 <div style={{ display: 'grid', gap: '10px' }}>
@@ -10938,7 +10933,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   >
                     <strong>🏆 Admin Club</strong>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Gestiona una sede específica</div>
+                    <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', fontWeight: 500 }}>Gestiona una sede específica</div>
                   </button>
                   <button
                     type="button"
@@ -10959,7 +10954,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   >
                     <strong>🌍 Admin Nacional</strong>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Gestiona un país completo</div>
+                    <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', fontWeight: 500 }}>Gestiona un país completo</div>
                   </button>
                   <button
                     type="button"
@@ -10980,7 +10975,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   >
                     <strong>🏙️ Admin Ciudad/Región</strong>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Gestiona una zona específica</div>
+                    <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', fontWeight: 500 }}>Gestiona una zona específica</div>
                   </button>
                 </div>
                 <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>

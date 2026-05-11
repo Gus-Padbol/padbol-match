@@ -121,11 +121,11 @@ export default function PartidosAbiertos() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Partidos abiertos" />
+      <AppHeader title="Únete a un partido" />
       <main style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '18px 16px', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
           <div>
-            <h1 style={{ color: '#fff', margin: 0, fontSize: 25 }}>Buscá partido</h1>
+            <h1 style={{ color: '#fff', margin: 0, fontSize: 25 }}>Únete a un partido</h1>
             <p style={{ color: 'rgba(255,255,255,0.84)', margin: '5px 0 0', fontSize: 14 }}>Sumate a un equipo que necesita jugadores.</p>
           </div>
           <button
@@ -191,8 +191,8 @@ export default function PartidosAbiertos() {
         ) : partidos.length === 0 ? (
           <section style={{ background: '#fff', borderRadius: 20, padding: 22, textAlign: 'center', boxShadow: '0 16px 34px rgba(15,23,42,0.2)' }}>
             <div style={{ fontSize: 44, marginBottom: 8 }}>🤝</div>
-            <h2 style={{ margin: '0 0 8px', color: '#0f172a' }}>Todavía no hay partidos abiertos</h2>
-            <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: 14 }}>Publicá el primero y completá jugadores en minutos.</p>
+            <h2 style={{ margin: '0 0 8px', color: '#0f172a' }}>Todavía no hay partidos para unirte</h2>
+            <p style={{ margin: '0 0 16px', color: '#475569', fontSize: 14 }}>Publicá el primero y completá jugadores en minutos.</p>
             <button
               type="button"
               onClick={() => navigate('/armar-partido')}
