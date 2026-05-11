@@ -21,6 +21,7 @@ function broadcastToClients(data) {
 }
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches
       .open(CACHE_VERSION)
@@ -33,17 +34,15 @@ self.addEventListener('install', (event) => {
           )
         )
       )
-      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
+  self.clients.claim();
   event.waitUntil(
-    Promise.resolve()
-      .then(() => self.skipWaiting())
-      .then(() => caches.keys())
+    caches
+      .keys()
       .then((keys) => Promise.all(keys.map((key) => (key !== CACHE_VERSION ? caches.delete(key) : undefined))))
-      .then(() => self.clients.claim())
       .then(() =>
         broadcastToClients({
           type: MSG_UPDATED,
