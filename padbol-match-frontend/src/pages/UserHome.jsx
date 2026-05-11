@@ -312,7 +312,7 @@ export default function UserHome() {
       icon: '🏆',
       titulo: 'COMPETIR',
       descripcion: 'Torneos y rankings',
-      onClick: () => navigate('/torneos'),
+      onClick: () => navigate('/competir'),
     },
     {
       key: 'perfil',
@@ -322,6 +322,9 @@ export default function UserHome() {
       onClick: () => navigate('/mi-perfil'),
     },
   ];
+
+  const partidosDestacadosArriba = !partidosLoading && partidosAbiertos.length > 0;
+  const partidosBloqueAbajo = partidosLoading || partidosAbiertos.length === 0;
 
   const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
 
@@ -534,58 +537,53 @@ export default function UserHome() {
               display: 'block',
               marginLeft: 'auto',
               marginRight: 'auto',
-              height: 44,
+              height: 100,
               width: 'auto',
-              maxWidth: 'min(88vw, 280px)',
+              maxWidth: 'min(92vw, 400px)',
               objectFit: 'contain',
-              marginBottom: 16,
+              marginBottom: 22,
             }}
           />
 
-          <section
-            style={{
-              width: '100%',
-              margin: '0 auto 18px',
-              borderRadius: 20,
-              padding: 16,
-              boxSizing: 'border-box',
-              background: '#fff',
-              boxShadow: '0 14px 36px rgba(15,23,42,0.14)',
-              border: '1px solid rgba(226,232,240,0.85)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
-              <div>
-                <h2 style={{ margin: 0, color: '#0f172a', fontSize: 18, fontWeight: 900, lineHeight: 1.2 }}>Partidos abiertos</h2>
-                <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
-                  Partidos disponibles para sumarte
-                </p>
+          {partidosDestacadosArriba ? (
+            <section
+              style={{
+                width: '100%',
+                margin: '0 auto 18px',
+                borderRadius: 20,
+                padding: 16,
+                boxSizing: 'border-box',
+                background: '#fff',
+                boxShadow: '0 14px 36px rgba(15,23,42,0.14)',
+                border: '1px solid rgba(226,232,240,0.85)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+                <div>
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: 18, fontWeight: 900, lineHeight: 1.2 }}>Partidos abiertos</h2>
+                  <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
+                    Partidos disponibles para sumarte
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/partidos-abiertos')}
+                  style={{
+                    border: 'none',
+                    borderRadius: 999,
+                    background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                    color: '#fff',
+                    padding: '8px 12px',
+                    fontSize: 12,
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Ver todos
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => navigate('/partidos-abiertos')}
-                style={{
-                  border: 'none',
-                  borderRadius: 999,
-                  background: 'linear-gradient(135deg,#667eea,#764ba2)',
-                  color: '#fff',
-                  padding: '8px 12px',
-                  fontSize: 12,
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  fontFamily: 'inherit',
-                }}
-              >
-                Ver todos
-              </button>
-            </div>
-
-            {partidosLoading ? (
-              <p style={{ margin: 0, color: '#64748b', fontSize: 14, textAlign: 'center', padding: '16px 0' }}>
-                Cargando…
-              </p>
-            ) : partidosAbiertos.length > 0 ? (
               <div
                 style={{
                   display: 'flex',
@@ -604,42 +602,8 @@ export default function UserHome() {
                   <PartidoAbiertoRailCard key={p.id} partido={p} onNavigate={() => navigate('/partidos-abiertos')} />
                 ))}
               </div>
-            ) : (
-              <div
-                style={{
-                  background: 'linear-gradient(180deg,#f8fafc,#f1f5f9)',
-                  borderRadius: 16,
-                  padding: 20,
-                  textAlign: 'center',
-                  border: '1px dashed #cbd5e1',
-                }}
-              >
-                <div style={{ fontSize: 36, marginBottom: 8 }}>🤝</div>
-                <strong style={{ display: 'block', fontSize: 16, color: '#0f172a', marginBottom: 6 }}>Todavía no hay partidos abiertos</strong>
-                <p style={{ margin: '0 0 14px', color: '#64748b', fontSize: 14, lineHeight: 1.45 }}>
-                  Creá el primero y completá equipo desde la app.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/armar-partido')}
-                  style={{
-                    border: 'none',
-                    borderRadius: 14,
-                    padding: '14px 20px',
-                    background: 'linear-gradient(135deg,#22c55e,#16a34a)',
-                    color: '#fff',
-                    fontWeight: 900,
-                    fontSize: 15,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    boxShadow: '0 8px 22px rgba(22,163,74,0.35)',
-                  }}
-                >
-                  Armar el primero
-                </button>
-              </div>
-            )}
-          </section>
+            </section>
+          ) : null}
 
           {!authLoading && !session?.user ? (
             <p
@@ -693,6 +657,89 @@ export default function UserHome() {
               </button>
             ))}
           </div>
+
+          {partidosBloqueAbajo ? (
+            <section
+              style={{
+                width: '100%',
+                margin: '0 auto 12px',
+                borderRadius: 14,
+                padding: '10px 12px 12px',
+                boxSizing: 'border-box',
+                background: 'rgba(255,255,255,0.92)',
+                boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
+                border: '1px solid rgba(226,232,240,0.75)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  marginBottom: partidosLoading ? 0 : 8,
+                }}
+              >
+                <h2 style={{ margin: 0, color: '#64748b', fontSize: 14, fontWeight: 800, lineHeight: 1.2 }}>Partidos abiertos</h2>
+                <button
+                  type="button"
+                  onClick={() => navigate('/partidos-abiertos')}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#64748b',
+                    padding: '4px 6px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    flexShrink: 0,
+                  }}
+                >
+                  Ver todos
+                </button>
+              </div>
+
+              {partidosLoading ? (
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: 12, textAlign: 'center', padding: '6px 0 2px' }}>
+                  Cargando…
+                </p>
+              ) : (
+                <div
+                  style={{
+                    background: 'rgba(248,250,252,0.95)',
+                    borderRadius: 12,
+                    padding: '10px 10px 12px',
+                    textAlign: 'center',
+                    border: '1px dashed #e2e8f0',
+                  }}
+                >
+                  <div style={{ fontSize: 22, marginBottom: 4, opacity: 0.85 }}>🤝</div>
+                  <p style={{ margin: '0 0 8px', color: '#94a3b8', fontSize: 12, lineHeight: 1.4, fontWeight: 600 }}>
+                    Sin partidos publicados aún
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/armar-partido')}
+                    style={{
+                      border: 'none',
+                      borderRadius: 10,
+                      padding: '8px 14px',
+                      background: 'linear-gradient(135deg,#22c55e,#16a34a)',
+                      color: '#fff',
+                      fontWeight: 800,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      boxShadow: '0 4px 12px rgba(22,163,74,0.25)',
+                    }}
+                  >
+                    Armar el primero
+                  </button>
+                </div>
+              )}
+            </section>
+          ) : null}
 
           <button
             type="button"

@@ -25,6 +25,7 @@ import EquipoPerfil from './pages/EquipoPerfil';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
 import Jugar from './pages/Jugar';
+import Competir from './pages/Competir';
 import PartidosAbiertos from './pages/PartidosAbiertos';
 import ArmarPartido from './pages/ArmarPartido';
 import useUserRole from './hooks/useUserRole';
@@ -301,6 +302,7 @@ function AppRoutes() {
         <Route path="/reserva" element={<Navigate to="/reservar" replace />} />
         <Route path="/reservar" element={<ReservaForm />} />
         <Route path="/jugar" element={<Jugar />} />
+        <Route path="/competir" element={<Competir />} />
         <Route path="/partidos-abiertos" element={<PartidosAbiertos />} />
         <Route path="/armar-partido" element={<ArmarPartido />} />
 

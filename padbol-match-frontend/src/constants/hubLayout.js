@@ -65,6 +65,7 @@ export function isJugadorHubShellPathname(pathname) {
   let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
   pathOnly = pathOnly.replace(/\/+$/, '') || '/';
   if (pathOnly === '/jugar') return true;
+  if (pathOnly === '/competir') return true;
   if (pathOnly === '/rankings') return true;
   if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   if (pathOnly === '/torneos') return true;

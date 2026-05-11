@@ -248,8 +248,16 @@ const BottomNav = () => {
             {
               label: 'Competir',
               icon: '🏆',
-              path: '/torneos',
-              match: (p) => p === '/torneos' || p.startsWith('/torneo') || p === '/rankings',
+              path: '/competir',
+              match: (p) => {
+                const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+                return (
+                  x === '/competir' ||
+                  x === '/torneos' ||
+                  x.startsWith('/torneo') ||
+                  x === '/rankings'
+                );
+              },
             },
             {
               label: 'Perfil',
@@ -275,10 +283,15 @@ const BottomNav = () => {
             {
               label: 'Competir',
               icon: '🏆',
-              path: '/torneos',
+              path: '/competir',
               match: (p) => {
                 const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-                return x === '/torneos' || x.startsWith('/torneo') || x === '/rankings';
+                return (
+                  x === '/competir' ||
+                  x === '/torneos' ||
+                  x.startsWith('/torneo') ||
+                  x === '/rankings'
+                );
               },
             },
             {
