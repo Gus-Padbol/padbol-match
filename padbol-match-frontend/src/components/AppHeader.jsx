@@ -7,6 +7,7 @@ import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import { HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX, isJugadorHubShellPathname } from '../constants/hubLayout';
+import JugadorNotificationsBell from './JugadorNotificationsBell';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -270,6 +271,7 @@ export default function AppHeader({
     (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
 
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
+  const showJugadorNotifications = Boolean(session?.user) && !isOnAdmin && !adminFlowSurface;
   /** Torneo / equipo desde el panel: sin chip @ a la derecha; volver = avatar + nombre (no texto «← Admin»). */
   const adminTorneoEquipoDesdePanel = adminFlowSurface && !isOnAdmin;
   const miPerfilLogoutSpacing =
@@ -286,6 +288,7 @@ export default function AppHeader({
     !(hubHomeCompactHeader && esRolAdminHub);
   const hubHeaderControlCount =
     (showAdminShortcutHub ? 1 : 0) +
+    (showJugadorNotifications ? 1 : 0) +
     (muestraChipUsuarioHubDerecha ? 1 : 0) +
     (showLogout ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
@@ -1210,6 +1213,7 @@ export default function AppHeader({
               </div>
             ) : null}
             {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
+            {showJugadorNotifications ? <JugadorNotificationsBell compact={compactHubChip} /> : null}
             {searchUiBlock}
             {showLogout ? (
               <button

@@ -1119,6 +1119,120 @@ async function sendReservaConfirmadaWhatsAppTwilio({
   await enviarTwilioWhatsappAJugadorConNumeroPerfil(perfil?.whatsapp, body, 'Confirmación reserva');
 }
 
+async function resolveNotificacionUserId({ userId = null, email = '' } = {}) {
+  const uid = String(userId || '').trim();
+  if (uid) return uid;
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return null;
+  const { data, error } = await supabase
+    .from('jugadores_perfil')
+    .select('user_id')
+    .ilike('email', em)
+    .maybeSingle();
+  if (error) {
+    console.warn('⚠️ Notificación: no se pudo resolver user_id:', error.message);
+    return null;
+  }
+  return data?.user_id ? String(data.user_id) : null;
+}
+
+async function crearNotificacionJugador({ userId = null, email = '', tipo, titulo, mensaje, link = null }) {
+  try {
+    const uid = await resolveNotificacionUserId({ userId, email });
+    if (!uid) {
+      console.warn('⚠️ Notificación omitida: sin user_id destinatario', { tipo, email });
+      return null;
+    }
+    const row = {
+      user_id: uid,
+      tipo: String(tipo || 'general').trim() || 'general',
+      titulo: String(titulo || '').trim().slice(0, 160),
+      mensaje: String(mensaje || '').trim().slice(0, 800),
+      link: String(link || '').trim() || null,
+      leida: false,
+    };
+    if (!row.titulo || !row.mensaje) return null;
+    const { data, error } = await supabase.from('notificaciones').insert([row]).select('*').single();
+    if (error) {
+      console.warn('⚠️ Notificación: error insertando:', error.message);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.warn('⚠️ Notificación: error inesperado:', err.message);
+    return null;
+  }
+}
+
+async function crearNotificacionReservaConfirmada({ userId = null, email = '', sede, fecha, hora }) {
+  const fechaTxt = formatFechaReservaConfirmacion(String(fecha || '').slice(0, 10));
+  return crearNotificacionJugador({
+    userId,
+    email,
+    tipo: 'reserva_confirmada',
+    titulo: 'Reserva confirmada',
+    mensaje: `Tu reserva en ${String(sede || 'la sede').trim()} quedó confirmada para ${fechaTxt} a las ${horaLegibleUnPuntoReserva(hora)}.`,
+    link: '/mi-perfil?tab=reservas',
+  });
+}
+
+async function getDestinatariosEquipoNotificaciones(equipoRow) {
+  const out = new Map();
+  const add = (userId, email) => {
+    const uid = String(userId || '').trim();
+    const em = String(email || '').trim().toLowerCase();
+    const key = uid || em;
+    if (!key) return;
+    out.set(key, { userId: uid || null, email: em });
+  };
+  add(equipoRow?.creador_id, equipoRow?.creador_email);
+  for (const j of Array.isArray(equipoRow?.jugadores) ? equipoRow.jugadores : []) {
+    add(j?.id || j?.user_id, j?.email);
+  }
+  return [...out.values()];
+}
+
+async function crearNotificacionesEquipoTorneo(equipoRow, { tipo, titulo, mensaje, link }) {
+  const destinatarios = await getDestinatariosEquipoNotificaciones(equipoRow);
+  await Promise.all(destinatarios.map((d) => crearNotificacionJugador({ ...d, tipo, titulo, mensaje, link })));
+}
+
+app.get('/api/notificaciones', async (req, res) => {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.id) return res.status(401).json({ error: 'No autorizado' });
+    const { data, error } = await supabase
+      .from('notificaciones')
+      .select('*')
+      .eq('user_id', authUser.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('❌ GET /api/notificaciones:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/notificaciones/leer', async (req, res) => {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.id) return res.status(401).json({ error: 'No autorizado' });
+    const ids = Array.isArray(req.body?.ids)
+      ? req.body.ids.map((id) => parseInt(String(id), 10)).filter((id) => Number.isFinite(id) && id > 0)
+      : [];
+    let q = supabase.from('notificaciones').update({ leida: true }).eq('user_id', authUser.id).eq('leida', false);
+    if (ids.length) q = q.in('id', ids);
+    const { error } = await q;
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ PATCH /api/notificaciones/leer:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
 const PADBOL_SEDE_CRITICO_NOTIFY_SECRET = process.env.PADBOL_SEDE_CRITICO_NOTIFY_SECRET;
 
 function resolveSuperAdminNotifyWhatsAppTo() {
@@ -2300,6 +2414,13 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
         duracionMinutos: duracionMin,
         nombreSede: sede,
       }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva:', err.message));
+      void crearNotificacionReservaConfirmada({
+        userId: user_id,
+        email,
+        sede,
+        fecha,
+        hora,
+      });
     }
 
     const createdReserva = Array.isArray(data) ? data[0] : data;
@@ -3513,7 +3634,7 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
 
     const { data: eq, error: errEq } = await supabase
       .from('equipos')
-      .select('id, torneo_id, inscripcion_estado')
+      .select('id, torneo_id, nombre, jugadores, creador_id, creador_email, inscripcion_estado')
       .eq('id', eid)
       .maybeSingle();
 
@@ -3529,7 +3650,7 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
 
     const { data: torneoRow, error: errTorneo } = await supabase
       .from('torneos')
-      .select('fecha_inicio')
+      .select('id, nombre, fecha_inicio')
       .eq('id', tid)
       .maybeSingle();
     if (errTorneo) throw errTorneo;
@@ -3545,6 +3666,12 @@ app.post('/api/torneos/confirmar-inscripcion', async (req, res) => {
 
     if (errUp) throw errUp;
     await sendInscripcionTorneoMakeEvent({ equipoId: eid, torneoId: tid });
+    void crearNotificacionesEquipoTorneo(eq, {
+      tipo: 'torneo_inscripcion_confirmada',
+      titulo: 'Inscripción confirmada',
+      mensaje: `Tu inscripción al torneo ${String(torneoRow.nombre || 'seleccionado').trim()} quedó confirmada.`,
+      link: `/torneo/${tid}`,
+    });
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ POST /api/torneos/confirmar-inscripcion:', err.message);
@@ -4991,6 +5118,17 @@ app.post('/api/torneos/:id/finalizar', async (req, res) => {
       .single();
     if (errFinal) throw errFinal;
 
+    await Promise.all(
+      (clasificacion || []).map((eq, idx) =>
+        crearNotificacionesEquipoTorneo(eq, {
+          tipo: 'ranking_actualizado',
+          titulo: 'Ranking actualizado',
+          mensaje: `Se actualizó el ranking del torneo ${String(torneo.nombre || '').trim() || id}. Posición final: ${idx + 1}.`,
+          link: `/torneo/${id}`,
+        })
+      )
+    );
+
     console.log(`🏆 Torneo ${id} finalizado. ${puntosData.length} equipos clasificados.`);
     res.json({
       torneo: torneoFinal,
@@ -5825,6 +5963,32 @@ app.put('/api/partidos/:id', async (req, res) => {
       .select('*')
       .eq('id', id)
       .single();
+
+    if (String(estado || '').trim().toLowerCase() === 'finalizado') {
+      const { data: torneoNotif } = await supabase
+        .from('torneos')
+        .select('id, nombre')
+        .eq('id', partido.torneo_id)
+        .maybeSingle();
+      const nombreTorneo = String(torneoNotif?.nombre || 'tu torneo').trim();
+      const mensaje = `Se cargó el resultado de un partido en ${nombreTorneo}.`;
+      if (equipoA) {
+        void crearNotificacionesEquipoTorneo(equipoA, {
+          tipo: 'resultado_partido',
+          titulo: 'Resultado cargado',
+          mensaje,
+          link: `/torneo/${partido.torneo_id}`,
+        });
+      }
+      if (equipoB) {
+        void crearNotificacionesEquipoTorneo(equipoB, {
+          tipo: 'resultado_partido',
+          titulo: 'Resultado cargado',
+          mensaje,
+          link: `/torneo/${partido.torneo_id}`,
+        });
+      }
+    }
 
     res.json(updatedPartido);
   } catch (err) {
@@ -6833,6 +6997,13 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
         duracionMinutos: duracionMin,
         nombreSede: sede,
       }).catch((errW) => console.warn('⚠️ WhatsApp confirmación reserva:', errW.message));
+      void crearNotificacionReservaConfirmada({
+        userId: authUser.id,
+        email: ins.email,
+        sede,
+        fecha,
+        hora,
+      });
       return res.json({ ok: true, tipo: 'reserva', reservation: data?.[0] || null });
     }
 
@@ -6845,7 +7016,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
 
       const { data: eq, error: errEq } = await supabase
         .from('equipos')
-        .select('id, torneo_id, inscripcion_estado')
+        .select('id, torneo_id, nombre, jugadores, creador_id, creador_email, inscripcion_estado')
         .eq('id', eid)
         .maybeSingle();
       if (errEq) throw errEq;
@@ -6859,7 +7030,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
 
       const { data: torneoRow, error: errTorneo } = await supabase
         .from('torneos')
-        .select('fecha_inicio')
+        .select('id, nombre, fecha_inicio')
         .eq('id', tid)
         .maybeSingle();
       if (errTorneo) throw errTorneo;
@@ -6871,6 +7042,12 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
       const { error: errUp } = await supabase.from('equipos').update({ inscripcion_estado: 'confirmado' }).eq('id', eid);
       if (errUp) throw errUp;
       await sendInscripcionTorneoMakeEvent({ equipoId: eid, torneoId: tid, emailHint: emailUser });
+      void crearNotificacionesEquipoTorneo(eq, {
+        tipo: 'torneo_inscripcion_confirmada',
+        titulo: 'Inscripción confirmada',
+        mensaje: `Tu inscripción al torneo ${String(torneoRow.nombre || 'seleccionado').trim()} quedó confirmada.`,
+        link: `/torneo/${tid}`,
+      });
       return res.json({ ok: true, tipo: 'torneo' });
     }
 
@@ -7393,6 +7570,13 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     duracionMinutos: duracionMin,
     nombreSede: sede,
   }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva (webhook MP):', err.message));
+  void crearNotificacionReservaConfirmada({
+    userId: user_id,
+    email: String(email).trim().toLowerCase(),
+    sede,
+    fecha,
+    hora,
+  });
   return { ok: true, data };
 }
 
@@ -7586,6 +7770,14 @@ app.post('/api/partidos-abiertos/:id/solicitudes', async (req, res) => {
       body,
       warnSinWhatsapp: 'Solicitud partido abierto',
     });
+    void crearNotificacionJugador({
+      userId: partido.capitan_user_id,
+      email: capitanEmail,
+      tipo: 'partido_solicitud',
+      titulo: 'Quieren unirse a tu partido',
+      mensaje: `${nombreJugador} pidió sumarse a tu partido en ${partido.sede_nombre}.`,
+      link: '/partidos-abiertos',
+    });
     res.json({ ok: true, solicitud });
   } catch (err) {
     console.error('❌ POST /api/partidos-abiertos/:id/solicitudes:', err.message);
@@ -7686,6 +7878,17 @@ app.patch('/api/partidos-abiertos/solicitudes/:id', async (req, res) => {
       if (upPartidoErr) throw upPartidoErr;
       updatedPartido = pUp;
     }
+    void crearNotificacionJugador({
+      userId: solicitud.jugador_user_id,
+      email: solicitud.jugador_email,
+      tipo: estado === 'aceptada' ? 'partido_solicitud_aceptada' : 'partido_solicitud_rechazada',
+      titulo: estado === 'aceptada' ? 'Te aceptaron en el partido' : 'Solicitud rechazada',
+      mensaje:
+        estado === 'aceptada'
+          ? `Ya estás confirmado para jugar en ${partido.sede_nombre}.`
+          : `El capitán rechazó tu solicitud para el partido en ${partido.sede_nombre}.`,
+      link: '/partidos-abiertos',
+    });
     res.json({ ok: true, solicitud: updatedSolicitud, partido: updatedPartido });
   } catch (err) {
     console.error('❌ PATCH /api/partidos-abiertos/solicitudes/:id:', err.message);
@@ -9722,7 +9925,7 @@ app.post('/api/admin/sedes-pendientes/:id/rechazar', async (req, res) => {
   }
 });
 
-// ─── Cron: WhatsApp reminder ~1 hour before reservation (por zona de cada sede) ─
+// ─── Cron: recordatorio ~2 horas antes de la reserva (por zona de cada sede) ─
 cron.schedule('*/5 * * * *', async () => {
   try {
     const { data: reservas, error } = await supabase
@@ -9769,12 +9972,12 @@ cron.schedule('*/5 * * * *', async () => {
         if (startMs == null || !Number.isFinite(startMs)) continue;
 
         const minsUntil = (startMs - Date.now()) / (1000 * 60);
-        if (minsUntil < 55 || minsUntil > 65) continue;
+        if (minsUntil < 115 || minsUntil > 125) continue;
 
         const body =
 `🎾 *¡Te esperamos en ${r.sede}!*
 
-Tu reserva es en 1 hora:
+Tu reserva es en 2 horas:
 ⏰ ${r.hora}hs${meta.direccion ? `\n📍 ${meta.direccion}` : ''}
 
 Recordá llegar 10 minutos antes.
@@ -9787,6 +9990,15 @@ Recordá llegar 10 minutos antes.
         await twilioClient.messages.create({ from: TWILIO_WHATSAPP_FROM, to, body });
         enviados += 1;
         console.log(`✓ Recordatorio enviado a ${to} (reserva ${r.id})`);
+
+        await crearNotificacionJugador({
+          userId: r.user_id,
+          email: r.email,
+          tipo: 'recordatorio_reserva',
+          titulo: 'Tu reserva empieza en 2 horas',
+          mensaje: `Te esperamos en ${r.sede} a las ${horaLegibleUnPuntoReserva(r.hora)}.`,
+          link: '/mi-perfil?tab=reservas',
+        });
 
         await supabase.from('reservas').update({ recordatorio_enviado: true }).eq('id', r.id);
       } catch (err) {
