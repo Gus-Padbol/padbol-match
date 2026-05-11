@@ -1103,9 +1103,56 @@ function minutosDesdeMedianocheHHMMAdminDash(hhmm) {
   return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
 }
 
+function horaDesdeMinutosAdminDash(totalMin) {
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
 function minutosInicioReservaAdminDash(r) {
   const s = normalizeHoraInicioReservaAdminDash(r?.hora);
   return minutosDesdeMedianocheHHMMAdminDash(s);
+}
+
+function reservaBloqueaSlotAdminDash(r) {
+  const est = String(r?.estado || '').trim().toLowerCase();
+  return est !== 'cancelada' && !r?.cancelada;
+}
+
+function reservaSolapaSlotAdminDash(r, startMin, endMin) {
+  const rStart = minutosInicioReservaAdminDash(r);
+  if (rStart == null) return false;
+  const rEnd = rStart + duracionReservaAdmin(r);
+  return startMin < rEnd && endMin > rStart;
+}
+
+function slotsReservaManualDisponiblesAdminDash({ sedeRow, reservas, fecha, cancha, duracion, ctx }) {
+  if (!sedeRow || !fecha || !cancha) return [];
+  const dur = parseInt(String(duracion), 10);
+  const duracionMin = [60, 90, 120].includes(dur) ? dur : 90;
+  const canchaNum = parseInt(String(cancha), 10);
+  if (!Number.isFinite(canchaNum)) return [];
+
+  const apertura = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_apertura, 10) * 60;
+  const cierre = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_cierre, 23) * 60;
+  const sedeNombre = String(sedeRow?.nombre || '').trim().toLowerCase();
+  const fechaISO = String(fecha || '').trim().slice(0, 10);
+  const ocupadas = (Array.isArray(reservas) ? reservas : []).filter((r) => {
+    if (!reservaBloqueaSlotAdminDash(r)) return false;
+    if (String(r?.fecha || '').trim().slice(0, 10) !== fechaISO) return false;
+    if (parseInt(String(r?.cancha), 10) !== canchaNum) return false;
+    return String(r?.sede || '').trim().toLowerCase() === sedeNombre;
+  });
+
+  const filtraPasadosHoy = ctx?.hoyISO && fechaISO === ctx.hoyISO;
+  const out = [];
+  for (let start = apertura; start + duracionMin <= cierre; start += 30) {
+    if (filtraPasadosHoy && start < ctx.minutesNow) continue;
+    const end = start + duracionMin;
+    const solapada = ocupadas.some((r) => reservaSolapaSlotAdminDash(r, start, end));
+    if (!solapada) out.push(horaDesdeMinutosAdminDash(start));
+  }
+  return out;
 }
 
 /** Inicios de turno posibles desde ahora hasta el cierre (ART), misma grilla que ReservaForm. */
@@ -6629,6 +6676,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 { length: Math.max(0, Number(sedeManualRow?.cantidad_canchas) || Number(canchasResumenPorSede[sedeManualId]?.activas) || 0) },
                 (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}` })
               );
+          const reservaManualSlots = slotsReservaManualDisponiblesAdminDash({
+            sedeRow: sedeManualRow,
+            reservas,
+            fecha: reservaManualForm.fecha,
+            cancha: reservaManualForm.cancha,
+            duracion: reservaManualForm.duracion,
+            ctx: ahoraArgentinaPartes(),
+          });
           const manualInput = {
             width: '100%',
             padding: '9px 10px',
@@ -6682,7 +6737,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   cursor: 'pointer',
                 }}
               >
-                {reservaManualOpen ? 'Cerrar reserva manual' : 'Nueva reserva manual'}
+                {reservaManualOpen ? 'Cerrar' : 'Nueva reserva manual'}
               </button>
 
               {reservaManualOpen ? (
@@ -6693,7 +6748,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <SedeSearchInput
                         sedes={sedesManualReserva}
                         valueId={reservaManualForm.sede_id}
-                        onChangeId={(id) => setReservaManualForm((p) => ({ ...p, sede_id: id, cancha: '' }))}
+                        onChangeId={(id) => setReservaManualForm((p) => ({ ...p, sede_id: id, cancha: '', hora: '' }))}
                         inputStyle={manualInput}
                       />
                     </label>
@@ -6704,7 +6759,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       Cancha
                       <select
                         value={reservaManualForm.cancha}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, cancha: e.target.value }))}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, cancha: e.target.value, hora: '' }))}
                         style={manualInput}
                         required
                         disabled={!sedeManualId || canchasManualReserva.length === 0}
@@ -6728,26 +6783,39 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <input
                         type="date"
                         value={reservaManualForm.fecha}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, fecha: e.target.value }))}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, fecha: e.target.value, hora: '' }))}
                         style={manualInput}
                         required
                       />
                     </label>
                     <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
                       Hora inicio
-                      <input
-                        type="time"
+                      <select
                         value={reservaManualForm.hora}
                         onChange={(e) => setReservaManualForm((p) => ({ ...p, hora: e.target.value }))}
                         style={manualInput}
                         required
-                      />
+                        disabled={!reservaManualForm.cancha || !reservaManualForm.fecha || reservaManualSlots.length === 0}
+                      >
+                        <option value="">
+                          {!reservaManualForm.cancha || !reservaManualForm.fecha
+                            ? 'Elegí cancha y fecha'
+                            : reservaManualSlots.length === 0
+                              ? 'Sin horarios disponibles'
+                              : 'Seleccioná horario'}
+                        </option>
+                        {reservaManualSlots.map((hora) => (
+                          <option key={hora} value={hora}>
+                            {hora}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                     <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
                       Duración
                       <select
                         value={reservaManualForm.duracion}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, duracion: e.target.value }))}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, duracion: e.target.value, hora: '' }))}
                         style={manualInput}
                       >
                         <option value="60">60 min</option>
