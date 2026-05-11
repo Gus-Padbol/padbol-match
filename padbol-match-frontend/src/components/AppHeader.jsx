@@ -23,7 +23,7 @@ const btnVolver = {
 
 const LOGOUT_BTN_SIZE = 34;
 
-const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club'];
+const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
 
 const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
 

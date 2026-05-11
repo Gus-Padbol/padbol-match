@@ -8188,7 +8188,7 @@ app.get('/api/admin/roles', async (req, res) => {
     const { data: rolesRows, error: rErr } = await supabase
       .from('user_roles')
       .select('email, nombre, role, alcance, sede_id, ciudad, provincia, pais')
-      .in('role', ['admin_club', 'admin_nacional', 'super_admin'])
+      .in('role', ['admin_club', 'admin_nacional', 'super_admin', 'empleado'])
       .order('email', { ascending: true });
     if (rErr) throw rErr;
     const sedeIds = [...new Set((rolesRows || []).map((r) => r.sede_id).filter((id) => id != null))];
@@ -8219,9 +8219,12 @@ app.post('/api/admin/roles', async (req, res) => {
     const role = String(b.role || '').trim().toLowerCase();
     const alcance = String(b.alcance || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ error: 'Email obligatorio' });
-    if (!['admin_club', 'admin_nacional'].includes(role)) return res.status(400).json({ error: 'Rol inválido' });
+    if (!['admin_club', 'admin_nacional', 'empleado'].includes(role)) return res.status(400).json({ error: 'Rol inválido' });
     if (!['sede', 'ciudad', 'provincia', 'pais'].includes(alcance)) {
       return res.status(400).json({ error: 'Alcance inválido' });
+    }
+    if (role === 'empleado' && alcance !== 'sede') {
+      return res.status(400).json({ error: 'El rol empleado debe tener alcance sede' });
     }
     const sedeId = b.sede_id != null && String(b.sede_id).trim() !== '' ? Number(b.sede_id) : null;
     const ciudad = String(b.ciudad || '').trim() || null;

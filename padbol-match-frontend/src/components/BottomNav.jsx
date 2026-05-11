@@ -10,7 +10,7 @@ import {
   isSedeProfilePathname,
 } from '../constants/hubLayout';
 
-const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club'];
+const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
 
 function readCachedRol() {
   try {
@@ -76,7 +76,26 @@ const BottomNav = () => {
     return x === '/' || x === '/inicio' || x === '/hub' || x === '/home';
   };
 
-  const adminDashboardItems = [
+  const adminDashboardItems = rolEffective === 'empleado' ? [
+    {
+      label: 'Reservas',
+      icon: '⚽',
+      path: '/admin?tab=reservas',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'reservas';
+      },
+    },
+    {
+      label: 'Torneos',
+      icon: '🏆',
+      path: '/admin?tab=torneos',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x.startsWith('/torneo') || (x === '/admin' && adminTabActivo === 'torneos');
+      },
+    },
+  ] : [
     {
       label: 'Resumen',
       icon: '📊',
@@ -146,7 +165,26 @@ const BottomNav = () => {
       : []),
   ];
 
-  const adminTorneoItems = [
+  const adminTorneoItems = rolEffective === 'empleado' ? [
+    {
+      label: 'Reservas',
+      icon: '⚽',
+      path: '/admin?tab=reservas',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/admin' && adminTabActivo === 'reservas';
+      },
+    },
+    {
+      label: 'Torneos',
+      icon: '🏆',
+      path: '/admin?tab=torneos',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x.startsWith('/torneo') || (x === '/admin' && adminTabActivo === 'torneos');
+      },
+    },
+  ] : [
     {
       label: 'Resumen',
       icon: '📊',

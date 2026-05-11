@@ -2090,7 +2090,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   useEffect(() => {
     const raw = searchParams.get('tab');
     if (raw == null || String(raw).trim() === '') {
-      setActiveTab('resumen');
+      setActiveTab(esEmpleado ? 'reservas' : 'resumen');
       return;
     }
     const t = sanitizeAdminActiveTab(raw);
@@ -2099,7 +2099,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       sessionStorage.setItem('adminActiveTab', t);
       return t;
     });
-  }, [searchParams]);
+  }, [searchParams, esEmpleado]);
 
   useEffect(() => {
     if (activeTab !== 'reservas') {
@@ -3138,6 +3138,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setActiveTab('resumen');
     navigate('/admin?tab=resumen', { replace: true });
   }, [esAdminNacional, activeTab, navigate]);
+
+  useEffect(() => {
+    if (!esEmpleado) return;
+    const permitidas = new Set(['reservas', 'torneos']);
+    if (permitidas.has(activeTab)) return;
+    setActiveTab('reservas');
+    navigate('/admin?tab=reservas', { replace: true });
+  }, [esEmpleado, activeTab, navigate]);
 
   // ── Config puntos (superAdmin only) ──
   const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
@@ -4778,7 +4786,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const TABS = esEmpleado
     ? [
-        { id: 'resumen', label: 'Resumen operativo' },
         { id: 'reservas', label: '⚽ Reservas' },
         { id: 'torneos', label: '🏆 Torneos' },
       ]
