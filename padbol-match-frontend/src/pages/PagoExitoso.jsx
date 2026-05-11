@@ -7,6 +7,7 @@ import {
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { clearMpReservaPendingSlot } from '../utils/reservaReturnUrl';
+import { supabase } from '../supabaseClient';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -25,7 +26,7 @@ export default function PagoExitoso() {
   const [saving, setSaving] = useState(true);
   const [reserva, setReserva] = useState(null);
   const [saveError, setSaveError] = useState('');
-  /** null | 'reserva' | 'torneo' */
+  /** null | 'reserva' | 'torneo' | 'partido' */
   const [pagoKind, setPagoKind] = useState(null);
   const [torneoInscripcion, setTorneoInscripcion] = useState(null);
   const savedRef = useRef(false);
@@ -80,6 +81,35 @@ export default function PagoExitoso() {
           }
         })
         .catch((err) => setSaveError(err.message || 'Error de red'))
+        .finally(() => setSaving(false));
+      return;
+    }
+
+    if (payload?.tipo === 'partido_abierto') {
+      savedRef.current = true;
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          const token = data?.session?.access_token || '';
+          return fetch(`${API_BASE}/api/partidos-abiertos/confirmar-pago`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(payload),
+          });
+        })
+        .then((r) => r.json().then((d) => ({ ok: r.ok, status: r.status, data: d })))
+        .then(({ ok, data }) => {
+          if (ok) {
+            clearMpReservaPendingSlot();
+            setPagoKind('partido');
+          } else {
+            setSaveError(data?.error || 'No se pudo publicar el partido.');
+          }
+        })
+        .catch((err) => setSaveError('Error al publicar el partido: ' + err.message))
         .finally(() => setSaving(false));
       return;
     }
@@ -197,6 +227,50 @@ export default function PagoExitoso() {
               }}
             >
               Continuar
+            </button>
+          </>
+        ) : pagoKind === 'partido' ? (
+          <>
+            <div style={{ fontSize: '64px', marginBottom: '16px' }}>✅</div>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#065f46', marginBottom: '8px' }}>
+              ¡Partido publicado!
+            </h1>
+            <p style={{ color: '#374151', fontSize: '15px', lineHeight: 1.6, marginBottom: '20px' }}>
+              Tu reserva fue confirmada y el partido ya aparece en Partidos abiertos.
+            </p>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`)}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'block',
+                padding: '12px 18px',
+                background: '#22c55e',
+                color: 'white',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: 800,
+                textDecoration: 'none',
+                marginBottom: '10px',
+              }}
+            >
+              Compartir por WhatsApp
+            </a>
+            <button
+              type="button"
+              onClick={() => navigate('/partidos-abiertos')}
+              style={{
+                padding: '11px 24px',
+                background: '#065f46',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Ver partidos abiertos
             </button>
           </>
         ) : pagoKind === 'torneo' && torneoInscripcion ? (

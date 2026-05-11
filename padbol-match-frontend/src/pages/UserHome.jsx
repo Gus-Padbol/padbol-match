@@ -13,8 +13,15 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { nombreRealDesdePerfilOauth } from '../utils/displayName';
 import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
+import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
+
+const API_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
 
 const hubPwaInstallButtonStyle = {
   display: 'inline-flex',
@@ -64,6 +71,8 @@ export default function UserHome() {
   const location = useLocation();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+  const [partidosAbiertos, setPartidosAbiertos] = useState([]);
+  const [partidosLoading, setPartidosLoading] = useState(true);
   /** Nombre para el saludo: se fija una sola vez al tener perfil listo (evita parpadeo por re-renders). */
   const [nombreFinal, setNombreFinal] = useState(null);
 
@@ -112,6 +121,24 @@ export default function UserHome() {
     setNombreFinal('');
   }, [session, userProfile, authLoading, profileLoading]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE}/api/partidos-abiertos`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setPartidosAbiertos(Array.isArray(data) ? data.slice(0, 2) : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPartidosAbiertos([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPartidosLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const sufijo = '¿Qué quieres hacer hoy?';
   const lineaSaludo = !session?.user
     ? `¡Hola! ${sufijo}`
@@ -120,7 +147,7 @@ export default function UserHome() {
       : `¡Hola! ${sufijo}`;
 
   const accesosRapidos = [
-    { label: 'Reservar', icon: '⚽', action: () => navigate('/reservar') },
+    { label: 'Jugar', icon: '⚽', action: () => navigate('/jugar') },
     { label: 'Torneos', icon: '🏆', action: () => navigate('/torneos') },
     { label: 'Ranking', icon: '🥇', action: () => navigate('/rankings') },
     { label: 'Perfil', icon: '👤', action: () => navigate('/mi-perfil') },
@@ -182,6 +209,78 @@ export default function UserHome() {
         }}
       />
       <div style={{ width: '100%', margin: '0 auto' }}>
+        <section
+          style={{
+            width: '100%',
+            maxWidth: '420px',
+            margin: '0 auto 18px',
+            borderRadius: '20px',
+            padding: '14px',
+            boxSizing: 'border-box',
+            background: 'rgba(255,255,255,0.16)',
+            border: '1px solid rgba(255,255,255,0.24)',
+            boxShadow: '0 14px 32px rgba(15,23,42,0.16)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
+            <div>
+              <h2 style={{ margin: 0, color: '#fff', fontSize: '18px', lineHeight: 1.2 }}>Partidos abiertos</h2>
+              <p style={{ margin: '3px 0 0', color: 'rgba(255,255,255,0.84)', fontSize: '12px' }}>
+                Buscá equipo o armá el tuyo.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/partidos-abiertos')}
+              style={{
+                border: 'none',
+                borderRadius: '999px',
+                background: '#fff',
+                color: '#4f46e5',
+                padding: '8px 11px',
+                fontSize: '12px',
+                fontWeight: 900,
+                cursor: 'pointer',
+              }}
+            >
+              Ver todos
+            </button>
+          </div>
+          {partidosLoading ? (
+            <p style={{ margin: 0, color: '#fff', fontSize: '13px', textAlign: 'center', padding: '12px 0' }}>
+              Cargando partidos...
+            </p>
+          ) : partidosAbiertos.length > 0 ? (
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {partidosAbiertos.map((p) => (
+                <PartidoAbiertoCard key={p.id} partido={p} compact />
+              ))}
+            </div>
+          ) : (
+            <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', textAlign: 'center', color: '#0f172a' }}>
+              <div style={{ fontSize: '34px', marginBottom: '6px' }}>🤝</div>
+              <strong style={{ display: 'block', fontSize: '15px', marginBottom: '5px' }}>No hay partidos publicados</strong>
+              <p style={{ margin: '0 0 12px', color: '#64748b', fontSize: '13px', lineHeight: 1.4 }}>
+                Sé el primero en abrir cupos y completar equipo.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/armar-partido')}
+                style={{
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '11px 14px',
+                  background: 'linear-gradient(135deg,#22c55e,#16a34a)',
+                  color: '#fff',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                }}
+              >
+                Armar el primero
+              </button>
+            </div>
+          )}
+        </section>
         <div
           style={{
             background: 'rgba(255,255,255,0.10)',

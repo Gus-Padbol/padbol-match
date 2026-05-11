@@ -7314,7 +7314,7 @@ function parseMercadoPagoExternalReference(raw) {
 }
 
 async function crearReservaConfirmadaDesdePayloadMp(payload) {
-  const { sede, fecha, hora, cancha, nombre, email, whatsapp, nivel, precio, duracion } = payload;
+  const { sede, fecha, hora, cancha, nombre, email, whatsapp, nivel, precio, duracion, user_id } = payload;
   if (!sede || !fecha || !hora || cancha == null || !nombre || !email || !whatsapp) {
     throw new Error('Payload de reserva incompleto');
   }
@@ -7332,7 +7332,18 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
   try {
     await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
   } catch (e) {
-    if (e.status === 409) return { ok: true, duplicate: true };
+    if (e.status === 409) {
+      const { data: existente } = await supabase
+        .from('reservas')
+        .select('*')
+        .eq('sede', sede)
+        .eq('fecha', fecha)
+        .eq('cancha', parseInt(String(cancha), 10))
+        .eq('hora', hora)
+        .limit(1)
+        .maybeSingle();
+      return { ok: true, duplicate: true, data: existente ? [existente] : [] };
+    }
     throw e;
   }
   const { data, error } = await supabase
@@ -7352,6 +7363,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
         estado: 'confirmada',
         duracion: duracionMin,
         duracion_minutos: duracionMin,
+        ...(user_id ? { user_id } : {}),
       },
     ])
     .select();
@@ -7383,6 +7395,303 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
   }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva (webhook MP):', err.message));
   return { ok: true, data };
 }
+
+function normalizeDeportePartido(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  const compact = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s-]+/g, '_');
+  if (compact === 'padel' || compact === 'paddle') return 'padel';
+  if (compact === 'pickleball') return 'pickleball';
+  if (compact === 'futbol5' || compact === 'futbol_5') return 'futbol_5';
+  if (compact === 'futbol7' || compact === 'futbol_7') return 'futbol_7';
+  return 'padbol';
+}
+
+function jugadoresRequeridosPartido(deporte, rawCantidad) {
+  const d = normalizeDeportePartido(deporte);
+  const n = parseInt(String(rawCantidad || ''), 10);
+  if (d === 'futbol_5') return 10;
+  if (d === 'futbol_7') return 14;
+  if (d === 'pickleball') return n === 2 ? 2 : 4;
+  return 4;
+}
+
+function buildJugadorConfirmadoPartido(payload) {
+  return {
+    user_id: payload.capitan_user_id || payload.user_id || null,
+    email: String(payload.email || payload.capitan_email || '').trim().toLowerCase(),
+    nombre: String(payload.nombre || payload.capitan_nombre || '').trim() || 'Capitán',
+    foto_url: String(payload.capitan_foto_url || '').trim() || null,
+    rol: 'capitan',
+  };
+}
+
+async function publicarPartidoAbiertoDesdePayload(payload, reservaRow = null) {
+  const shareToken = String(payload.share_token || '').trim() || crypto.randomBytes(12).toString('hex');
+  const { data: existente, error: exErr } = await supabase
+    .from('partidos_abiertos')
+    .select('*')
+    .eq('share_token', shareToken)
+    .maybeSingle();
+  if (exErr) throw exErr;
+  if (existente?.id) return { ok: true, partido: existente, already: true };
+
+  const deporte = normalizeDeportePartido(payload.deporte);
+  const jugadoresRequeridos = jugadoresRequeridosPartido(deporte, payload.jugadores_requeridos);
+  const confirmadosRaw = parseInt(String(payload.jugadores_confirmados_count || '1'), 10);
+  const confirmadosCount = Math.max(1, Math.min(jugadoresRequeridos, Number.isFinite(confirmadosRaw) ? confirmadosRaw : 1));
+  const capitan = buildJugadorConfirmadoPartido(payload);
+  const jugadoresConfirmados = [
+    capitan,
+    ...Array.from({ length: Math.max(0, confirmadosCount - 1) }, (_, idx) => ({
+      nombre: `Jugador ${idx + 2}`,
+      invitado: true,
+    })),
+  ];
+  const sedeId = parseInt(String(payload.sede_id || payload.sedeId || ''), 10);
+  const row = {
+    reserva_id: reservaRow?.id ?? null,
+    sede_id: Number.isFinite(sedeId) && sedeId > 0 ? sedeId : null,
+    sede_nombre: String(payload.sede || payload.sede_nombre || '').trim(),
+    cancha: parseInt(String(payload.cancha), 10),
+    deporte,
+    fecha: String(payload.fecha || '').trim().slice(0, 10),
+    hora: String(payload.hora || '').trim().split(' - ')[0],
+    duracion_minutos: parseInt(String(payload.duracion || payload.duracion_minutos || '90'), 10) || 90,
+    nivel: String(payload.nivel || 'Principiante').trim(),
+    jugadores_requeridos: jugadoresRequeridos,
+    jugadores_confirmados: jugadoresConfirmados,
+    capitan_user_id: payload.capitan_user_id || payload.user_id || null,
+    capitan_email: capitan.email,
+    capitan_nombre: capitan.nombre,
+    capitan_foto_url: capitan.foto_url,
+    estado: confirmadosCount >= jugadoresRequeridos ? 'completo' : 'abierto',
+    share_token: shareToken,
+  };
+  if (!row.sede_nombre || !row.fecha || !row.hora || !row.cancha || !row.capitan_email) {
+    const e = new Error('Payload de partido abierto incompleto');
+    e.status = 400;
+    throw e;
+  }
+  const { data, error } = await supabase.from('partidos_abiertos').insert([row]).select('*').single();
+  if (error) throw error;
+  return { ok: true, partido: data };
+}
+
+async function crearReservaYPartidoAbiertoDesdePayload(payload) {
+  const reservaRes = await crearReservaConfirmadaDesdePayloadMp(payload);
+  const reservaRow = Array.isArray(reservaRes?.data) ? reservaRes.data[0] : null;
+  return publicarPartidoAbiertoDesdePayload(payload, reservaRow);
+}
+
+app.get('/api/partidos-abiertos', async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await supabase
+      .from('partidos_abiertos')
+      .select('*')
+      .in('estado', ['abierto', 'completo'])
+      .gte('fecha', today)
+      .order('fecha', { ascending: true })
+      .order('hora', { ascending: true })
+      .limit(60);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('❌ GET /api/partidos-abiertos:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/partidos-abiertos/confirmar-pago', async (req, res) => {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+    const payload = req.body || {};
+    const emailPayload = String(payload.email || payload.capitan_email || '').trim().toLowerCase();
+    const emailUser = String(authUser.email || '').trim().toLowerCase();
+    if (!emailPayload || emailPayload !== emailUser) {
+      return res.status(403).json({ error: 'El email del partido debe coincidir con tu sesión' });
+    }
+    const out = await crearReservaYPartidoAbiertoDesdePayload({
+      ...payload,
+      user_id: authUser.id || payload.user_id || null,
+      capitan_user_id: authUser.id || payload.capitan_user_id || null,
+    });
+    res.json(out);
+  } catch (err) {
+    console.error('❌ POST /api/partidos-abiertos/confirmar-pago:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.post('/api/partidos-abiertos/:id/solicitudes', async (req, res) => {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+    const partidoId = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(partidoId) || partidoId <= 0) return res.status(400).json({ error: 'partido_id inválido' });
+    const { data: partido, error: pErr } = await supabase
+      .from('partidos_abiertos')
+      .select('*')
+      .eq('id', partidoId)
+      .maybeSingle();
+    if (pErr) throw pErr;
+    if (!partido) return res.status(404).json({ error: 'Partido no encontrado' });
+    if (String(partido.estado || '').toLowerCase() !== 'abierto') {
+      return res.status(400).json({ error: 'Este partido no está abierto a solicitudes' });
+    }
+    const emailJugador = String(authUser.email || '').trim().toLowerCase();
+    const capitanEmail = String(partido.capitan_email || '').trim().toLowerCase();
+    if (emailJugador === capitanEmail) return res.status(400).json({ error: 'Ya sos el capitán de este partido' });
+
+    const { data: perfil } = await supabase
+      .from('jugadores_perfil')
+      .select('nombre, apellido, apodo, foto_url, avatar_url, whatsapp')
+      .eq('user_id', authUser.id)
+      .maybeSingle();
+    const nombreJugador =
+      String(perfil?.apodo || '').trim() ||
+      [perfil?.nombre, perfil?.apellido].map((v) => String(v || '').trim()).filter(Boolean).join(' ') ||
+      String(authUser.user_metadata?.full_name || '').trim() ||
+      emailJugador;
+    const fotoJugador = String(perfil?.foto_url || perfil?.avatar_url || authUser.user_metadata?.avatar_url || '').trim() || null;
+    const mensaje = String((req.body || {}).mensaje || '').trim().slice(0, 300);
+    const { data: solicitud, error: sErr } = await supabase
+      .from('partidos_abiertos_solicitudes')
+      .insert([{
+        partido_id: partidoId,
+        jugador_user_id: authUser.id || null,
+        jugador_email: emailJugador,
+        jugador_nombre: nombreJugador,
+        jugador_foto_url: fotoJugador,
+        mensaje: mensaje || null,
+        estado: 'pendiente',
+      }])
+      .select('*')
+      .single();
+    if (sErr) {
+      if (String(sErr.message || '').toLowerCase().includes('duplicate')) {
+        return res.status(409).json({ error: 'Ya enviaste una solicitud para este partido' });
+      }
+      throw sErr;
+    }
+
+    const body =
+      `Nuevo pedido para tu partido en Padbol Match\n\n` +
+      `${nombreJugador} quiere jugar ${String(partido.deporte || '').toUpperCase()} en ${partido.sede_nombre} ` +
+      `el ${formatFechaReservaConfirmacion(String(partido.fecha || '').slice(0, 10))} a las ${horaLegibleUnPuntoReserva(partido.hora)}.\n\n` +
+      `Entrá a la app para aceptar o rechazar.`;
+    await enviarTwilioWhatsappJugadorPorEmailPerfilReserva({
+      email: capitanEmail,
+      body,
+      warnSinWhatsapp: 'Solicitud partido abierto',
+    });
+    res.json({ ok: true, solicitud });
+  } catch (err) {
+    console.error('❌ POST /api/partidos-abiertos/:id/solicitudes:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/partidos-abiertos/mis-solicitudes', async (req, res) => {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+    const email = String(authUser.email || '').trim().toLowerCase();
+    const { data: partidos, error: pErr } = await supabase
+      .from('partidos_abiertos')
+      .select('id,sede_nombre,deporte,fecha,hora,jugadores_requeridos,jugadores_confirmados,capitan_email,estado')
+      .eq('capitan_email', email)
+      .in('estado', ['abierto', 'completo'])
+      .order('fecha', { ascending: true });
+    if (pErr) throw pErr;
+    const ids = (partidos || []).map((p) => p.id).filter(Boolean);
+    if (!ids.length) return res.json([]);
+    const { data: solicitudes, error: sErr } = await supabase
+      .from('partidos_abiertos_solicitudes')
+      .select('*')
+      .in('partido_id', ids)
+      .eq('estado', 'pendiente')
+      .order('created_at', { ascending: true });
+    if (sErr) throw sErr;
+    const partidoMap = new Map((partidos || []).map((p) => [Number(p.id), p]));
+    res.json((solicitudes || []).map((s) => ({ ...s, partido: partidoMap.get(Number(s.partido_id)) || null })));
+  } catch (err) {
+    console.error('❌ GET /api/partidos-abiertos/mis-solicitudes:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/partidos-abiertos/solicitudes/:id', async (req, res) => {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+    const solicitudId = parseInt(String(req.params.id), 10);
+    const estado = String((req.body || {}).estado || '').trim().toLowerCase();
+    if (!['aceptada', 'rechazada'].includes(estado)) {
+      return res.status(400).json({ error: 'estado debe ser aceptada o rechazada' });
+    }
+    const { data: solicitud, error: sErr } = await supabase
+      .from('partidos_abiertos_solicitudes')
+      .select('*')
+      .eq('id', solicitudId)
+      .maybeSingle();
+    if (sErr) throw sErr;
+    if (!solicitud) return res.status(404).json({ error: 'Solicitud no encontrada' });
+    const { data: partido, error: pErr } = await supabase
+      .from('partidos_abiertos')
+      .select('*')
+      .eq('id', solicitud.partido_id)
+      .maybeSingle();
+    if (pErr) throw pErr;
+    if (!partido) return res.status(404).json({ error: 'Partido no encontrado' });
+    const emailUser = String(authUser.email || '').trim().toLowerCase();
+    if (String(partido.capitan_email || '').trim().toLowerCase() !== emailUser) {
+      return res.status(403).json({ error: 'Solo el capitán puede gestionar esta solicitud' });
+    }
+
+    const { data: updatedSolicitud, error: upSolErr } = await supabase
+      .from('partidos_abiertos_solicitudes')
+      .update({ estado, updated_at: new Date().toISOString() })
+      .eq('id', solicitudId)
+      .select('*')
+      .single();
+    if (upSolErr) throw upSolErr;
+
+    let updatedPartido = partido;
+    if (estado === 'aceptada') {
+      const jugadores = Array.isArray(partido.jugadores_confirmados) ? partido.jugadores_confirmados : [];
+      const emailJugador = String(solicitud.jugador_email || '').trim().toLowerCase();
+      const existe = jugadores.some((j) => String(j?.email || '').trim().toLowerCase() === emailJugador);
+      const requeridos = parseInt(String(partido.jugadores_requeridos || '4'), 10) || 4;
+      const nextJugadores = existe
+        ? jugadores
+        : [
+            ...jugadores,
+            {
+              user_id: solicitud.jugador_user_id || null,
+              email: emailJugador,
+              nombre: solicitud.jugador_nombre || emailJugador,
+              foto_url: solicitud.jugador_foto_url || null,
+              rol: 'jugador',
+            },
+          ].slice(0, requeridos);
+      const nextEstado = nextJugadores.length >= requeridos ? 'completo' : 'abierto';
+      const { data: pUp, error: upPartidoErr } = await supabase
+        .from('partidos_abiertos')
+        .update({ jugadores_confirmados: nextJugadores, estado: nextEstado, updated_at: new Date().toISOString() })
+        .eq('id', partido.id)
+        .select('*')
+        .single();
+      if (upPartidoErr) throw upPartidoErr;
+      updatedPartido = pUp;
+    }
+    res.json({ ok: true, solicitud: updatedSolicitud, partido: updatedPartido });
+  } catch (err) {
+    console.error('❌ PATCH /api/partidos-abiertos/solicitudes/:id:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
 
 async function sendInscripcionTorneoMakeEvent({ equipoId, torneoId, emailHint = '' }) {
   const eid = parseInt(String(equipoId), 10);
@@ -7487,6 +7796,8 @@ async function procesarPagoMercadoPagoWebhook(logId, paymentId) {
     const tipo = String(ext.tipo || '').toLowerCase();
     if (tipo === 'torneo_inscripcion') {
       await confirmarTorneoInscripcionDesdePayloadMp(ext);
+    } else if (tipo === 'partido_abierto') {
+      await crearReservaYPartidoAbiertoDesdePayload(ext);
     } else {
       await crearReservaConfirmadaDesdePayloadMp(ext);
     }
@@ -7677,6 +7988,11 @@ app.post('/api/crear-preferencia', async (req, res) => {
       }
       const { data: reservaCreada, error: resErr } = await supabase.from('reservas').insert([payloadReserva]).select().single();
       if (resErr) throw resErr;
+      let partidoCreado = null;
+      if (String(r.tipo || '').trim().toLowerCase() === 'partido_abierto') {
+        const pub = await publicarPartidoAbiertoDesdePayload(r, reservaCreada);
+        partidoCreado = pub.partido || null;
+      }
       if (reservaCreada?.id != null) {
         await insertReservaHistorialEstado(supabase, {
           reserva_id: reservaCreada.id,
@@ -7689,6 +8005,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
         manual_payment: true,
         instructions: instruccionesManual || 'Transferí/aboná en sede y compartí comprobante por WhatsApp.',
         reservation: reservaCreada,
+        partido: partidoCreado,
       });
     }
 
