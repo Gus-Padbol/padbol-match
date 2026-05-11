@@ -3896,7 +3896,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       { id: 'horarios', label: 'Horarios' },
     ];
     if (esAdminClub || isSuperAdmin) items.push({ id: 'pagos', label: 'Configuración de pagos' });
-    items.push({ id: 'contrato', label: 'Contrato' });
+    items.push({ id: 'contrato', label: 'Imágenes' });
     return items;
   }, [esAdminClub, isSuperAdmin]);
   const scrollToMiSedeSection = useCallback((sectionId) => {
