@@ -380,6 +380,7 @@ function normalizeMetodoPago(raw) {
   const v = String(raw || '').trim().toLowerCase();
   if (v === 'stripe') return 'stripe';
   if (v === 'manual') return 'manual';
+  if (v === 'efectivo') return 'efectivo';
   return 'mercadopago';
 }
 
@@ -2446,7 +2447,8 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
       });
     }
     const estReserva = String(createdReserva?.estado || estadoFinal || '').trim().toLowerCase();
-    if (estReserva === 'confirmada' || estReserva === 'pendiente_pago_manual') {
+    if (estReserva === 'confirmada' || estReserva === 'pendiente_pago_manual' || estReserva === 'pendiente_pago_efectivo') {
+      const estEv = String(createdReserva?.estado || '').toLowerCase();
       void sendMakeEvent('reserva_confirmada', {
         nombre: String(createdReserva?.nombre || nombre || '').trim() || null,
         email: String(createdReserva?.email || email || '').trim().toLowerCase() || null,
@@ -2457,9 +2459,11 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
         cancha: createdReserva?.cancha ?? (cancha != null ? parseInt(cancha, 10) : null),
         monto: createdReserva?.precio ?? (precio != null ? parseInt(precio, 10) : null),
         metodo_pago:
-          String(createdReserva?.estado || '').toLowerCase() === 'pendiente_pago_manual'
+          estEv === 'pendiente_pago_manual'
             ? 'manual'
-            : (createdReserva?.metodo_pago ?? null),
+            : estEv === 'pendiente_pago_efectivo'
+              ? 'efectivo'
+              : (createdReserva?.metodo_pago ?? null),
       });
     }
 
@@ -2977,7 +2981,12 @@ app.post('/api/reservas/liberar-slot-pendiente', async (req, res) => {
     if (!sede || !fecha || !hora || !Number.isFinite(cancha)) {
       return res.status(400).json({ error: 'Faltan sede, fecha, hora o cancha' });
     }
-    const estadosPend = ['pendiente_pago_manual', 'pendiente_pago_mercadopago', 'pendiente_mercadopago'];
+    const estadosPend = [
+      'pendiente_pago_manual',
+      'pendiente_pago_efectivo',
+      'pendiente_pago_mercadopago',
+      'pendiente_mercadopago',
+    ];
     let q = supabase
       .from('reservas')
       .select('id')
@@ -8172,18 +8181,25 @@ app.post('/api/crear-preferencia', async (req, res) => {
     const metodoPago = normalizeMetodoPago(sedeCfg?.metodo_pago || 'mercadopago');
     const instruccionesManual = String(sedeCfg?.pago_manual_instrucciones || '').trim();
 
-    if (metodoPago === 'manual') {
+    if (metodoPago === 'manual' || metodoPago === 'efectivo') {
+      const esEfectivo = metodoPago === 'efectivo';
+      const estadoPresencial = esEfectivo ? 'pendiente_pago_efectivo' : 'pendiente_pago_manual';
       if (tipoEff === 'torneo_inscripcion') {
         return res.json({
-          manual_payment: true,
-          instructions: instruccionesManual || 'Coordina el pago manual con la sede para confirmar la inscripción.',
-          status: 'pendiente_pago_manual',
+          manual_payment: !esEfectivo,
+          efectivo_payment: esEfectivo,
+          instructions: esEfectivo
+            ? 'Esta sede acepta pago presencial. Presenta tu inscripción al llegar al club.'
+            : instruccionesManual || 'Coordina el pago manual con la sede para confirmar la inscripción.',
+          status: estadoPresencial,
           tipo: 'torneo_inscripcion',
         });
       }
       const r = reservaData && typeof reservaData === 'object' ? reservaData : null;
       if (!r) {
-        return res.status(400).json({ error: 'Para pago manual se requiere reservaData' });
+        return res.status(400).json({
+          error: esEfectivo ? 'Para pago en efectivo se requiere reservaData' : 'Para pago manual se requiere reservaData',
+        });
       }
       const payloadReserva = {
         sede: r.sede,
@@ -8195,7 +8211,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
         whatsapp: r.whatsapp,
         nivel: r.nivel || 'Principiante',
         precio: Number(r.precio) || unitPrice,
-        estado: 'pendiente_pago_manual',
+        estado: estadoPresencial,
         duracion: r.duracion,
       };
       try {
@@ -8234,13 +8250,16 @@ app.post('/api/crear-preferencia', async (req, res) => {
         await insertReservaHistorialEstado(supabase, {
           reserva_id: reservaCreada.id,
           estado_anterior: null,
-          estado_nuevo: String(payloadReserva.estado || '').trim() || 'pendiente_pago_manual',
+          estado_nuevo: String(payloadReserva.estado || '').trim() || estadoPresencial,
           changed_by: 'sistema',
         });
       }
       return res.json({
-        manual_payment: true,
-        instructions: instruccionesManual || 'Transfiere o abona en sede y comparte el comprobante por WhatsApp.',
+        manual_payment: !esEfectivo,
+        efectivo_payment: esEfectivo,
+        instructions: esEfectivo
+          ? null
+          : instruccionesManual || 'Transfiere o abona en sede y comparte el comprobante por WhatsApp.',
         reservation: reservaCreada,
         partido: partidoCreado,
       });
@@ -8253,7 +8272,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
         provider: 'stripe',
         stripe_account_id: stripeAccountId,
         message:
-          'Stripe Connect está en implementación. Mientras tanto usa Mercado Pago o pago manual en esta sede.',
+          'Stripe Connect está en implementación. Mientras tanto usa Mercado Pago, pago manual o efectivo en sede según la sede.',
       });
     }
 

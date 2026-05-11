@@ -1417,6 +1417,12 @@ export default function ReservaForm() {
           duracion: duracionReservaMin,
         });
         window.location.href = data.init_point;
+      } else if (res.ok && data.efectivo_payment) {
+        alert('Esta sede acepta pago presencial. Presenta tu reserva al llegar al club.');
+        setPantalla(1);
+        setFormData({ fecha: '', hora: '', cancha: '', duracion: '90', nombre: '', email: '', numeroTel: '' });
+        setWhatsapp('');
+        setMpLoading(false);
       } else if (res.ok && data.manual_payment) {
         const msgManual = [
           'Reserva creada con estado pendiente de pago manual.',
@@ -1793,6 +1799,7 @@ export default function ReservaForm() {
     const creditoAplicado = 0;
     const precioFinal = Math.max(0, precio - creditoAplicado);
     const metodoPagoStripe = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'stripe';
+    const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
     const stripeCuentaOk = String(sedeSeleccionada?.stripe_account_id || '').trim().startsWith('acct_');
     const montoBaseMinor = amountMainToStripeMinor(precioFinal, moneda);
     const cargoServicioMinor = Math.round(montoBaseMinor * 0.03);
@@ -1859,6 +1866,11 @@ export default function ReservaForm() {
               ) : (
                 <p style={{ margin: '12px 0 0', fontSize: '18px', fontWeight: 800, color: '#d32f2f' }}>
                   💰 {Number(precio).toLocaleString('es-AR')} {moneda}
+                  {metodoPagoEfectivo ? (
+                    <span style={{ display: 'block', marginTop: '8px', fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+                      Sin cargo del 3% de Padbol Match (cobro en sede).
+                    </span>
+                  ) : null}
                 </p>
               )
             ) : null}
@@ -1898,6 +1910,26 @@ export default function ReservaForm() {
               ) : null}
             </div>
           )}
+
+          {metodoPagoEfectivo ? (
+            <div
+              style={{
+                margin: '0 0 16px',
+                padding: '12px 14px',
+                background: '#ecfdf5',
+                border: '1px solid #6ee7b7',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#065f46',
+                lineHeight: 1.6,
+              }}
+            >
+              <strong>Pago en la sede</strong>
+              <br />
+              Esta sede acepta pago presencial. No te redirigimos a Mercado Pago ni a tarjeta: al confirmar, la reserva
+              queda pendiente hasta que abones en el club.
+            </div>
+          ) : null}
 
           <div style={{
             margin: '0 0 16px',
@@ -2012,18 +2044,24 @@ export default function ReservaForm() {
               style={{
                 width: '100%',
                 padding: '14px',
-                background: mpLoading ? '#aaa' : 'linear-gradient(135deg, #009ee3 0%, #0077c8 100%)',
+                background: mpLoading
+                  ? '#aaa'
+                  : metodoPagoEfectivo
+                    ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
+                    : 'linear-gradient(135deg, #009ee3 0%, #0077c8 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: 'bold',
                 cursor: mpLoading ? 'not-allowed' : 'pointer',
-                boxShadow: '0 3px 12px rgba(0,158,227,0.4)',
+                boxShadow: metodoPagoEfectivo
+                  ? '0 3px 12px rgba(22,163,74,0.35)'
+                  : '0 3px 12px rgba(0,158,227,0.4)',
                 marginBottom: '12px',
               }}
             >
-              {mpLoading ? 'Procesando...' : 'Pagar con Mercado Pago'}
+              {mpLoading ? 'Procesando...' : metodoPagoEfectivo ? 'Confirmar reserva (pago en sede)' : 'Pagar con Mercado Pago'}
             </button>
           )}
         </div>

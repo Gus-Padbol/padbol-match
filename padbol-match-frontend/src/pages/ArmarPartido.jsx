@@ -206,7 +206,7 @@ export default function ArmarPartido() {
         window.location.href = data.init_point;
         return;
       }
-      if (res.ok && data.manual_payment) {
+      if (res.ok && (data.manual_payment || data.efectivo_payment)) {
         setPublicado(data.partido || null);
         setStep(6);
         return;

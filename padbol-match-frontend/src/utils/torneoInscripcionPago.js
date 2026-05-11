@@ -134,6 +134,15 @@ export async function iniciarPagoInscripcionTorneo({
       window.location.href = data.init_point;
       return { ok: true };
     }
+    if (res.ok && data.efectivo_payment) {
+      return {
+        ok: false,
+        manual: true,
+        error:
+          data.instructions ||
+          'Esta sede acepta pago presencial. Presenta tu inscripción al llegar al club.',
+      };
+    }
     if (res.ok && data.manual_payment) {
       return {
         ok: false,

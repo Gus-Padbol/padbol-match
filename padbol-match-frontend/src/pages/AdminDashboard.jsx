@@ -846,8 +846,12 @@ function horarioReservaAdmin(r) {
 
 // Returns a JSX status badge for a reserva
 function EstadoBadge({ reserva }) {
-  if (String(reserva.estado || '').toLowerCase() === 'pendiente_pago_manual') {
+  const est = String(reserva.estado || '').toLowerCase();
+  if (est === 'pendiente_pago_manual') {
     return <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap', fontWeight: 700 }}>🟡 Pago manual pendiente</span>;
+  }
+  if (est === 'pendiente_pago_efectivo') {
+    return <span style={{ background: '#d1fae5', color: '#065f46', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap', fontWeight: 700 }}>💵 Cobro en sede pendiente</span>;
   }
   if (reserva.estado === 'cancelada' || reserva.cancelada) {
     return <span style={{ background: '#fee2e2', color: '#991b1b', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>❌ Cancelada</span>;
@@ -873,7 +877,7 @@ const FILTROS_RESERVA_ADMIN_PILLS = [
 function bucketEstadoReservaAdmin(estadoRaw) {
   const e = String(estadoRaw || '').trim().toLowerCase();
   if (e === 'cancelada') return 'canceladas';
-  if (e === 'reservada' || e === 'pendiente_pago_manual') return 'pendientes';
+  if (e === 'reservada' || e === 'pendiente_pago_manual' || e === 'pendiente_pago_efectivo') return 'pendientes';
   if (e === 'confirmada' || e === 'completada') return 'confirmadas';
   return 'pendientes';
 }
@@ -3758,14 +3762,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       });
       if (response.ok) {
         invalidateReservaHistorialCache(reservaId);
-        setMensajeExito('✅ Pago manual confirmado');
+        setMensajeExito('✅ Cobro presencial / pago confirmado');
         setTimeout(() => {
           fetchData();
           setMensajeExito('');
         }, 900);
       } else {
         const j = await response.json().catch(() => ({}));
-        alert(j.error || 'No se pudo confirmar el pago manual');
+        alert(j.error || 'No se pudo confirmar el pago');
       }
     } catch (err) {
       alert('Error: ' + err.message);
@@ -7818,9 +7822,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           const accionesReservaRow = (r) => (
             <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-              {String(r.estado || '').toLowerCase() === 'pendiente_pago_manual' && (esAdminClub || isSuperAdmin) ? (
+              {['pendiente_pago_manual', 'pendiente_pago_efectivo'].includes(String(r.estado || '').toLowerCase()) &&
+              (esAdminClub || isSuperAdmin) ? (
                 <button type="button" onClick={() => confirmarPagoManualReserva(r.id)} style={BTN({ background: '#f59e0b' })}>
-                  Confirmar pago
+                  {String(r.estado || '').toLowerCase() === 'pendiente_pago_efectivo' ? 'Confirmar cobro en sede' : 'Confirmar pago'}
                 </button>
               ) : null}
               <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>
@@ -7991,6 +7996,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               >
                                 <option value="reservada">📋 Reservada</option>
                                 <option value="pendiente_pago_manual">🟡 Pendiente pago manual</option>
+                                <option value="pendiente_pago_efectivo">💵 Pendiente cobro en sede (efectivo)</option>
                                 <option value="confirmada">🟢 Confirmada</option>
                                 <option value="completada">✅ Completada</option>
                                 <option value="cancelada">❌ Cancelada</option>
@@ -9223,6 +9229,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <option value="mercadopago">Mercado Pago</option>
                     <option value="stripe">Stripe</option>
                     <option value="manual">Pago manual</option>
+                    <option value="efectivo">Efectivo en sede</option>
                   </select>
                 </div>
                 {String(editarSedeDraft.metodo_pago || '') === 'mercadopago' ? (
@@ -9266,6 +9273,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       }}
                     />
                   </div>
+                ) : null}
+                {String(editarSedeDraft.metodo_pago || '') === 'efectivo' ? (
+                  <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+                    Reservas sin Mercado Pago ni Stripe; el jugador paga al llegar. Sin fee del 3% en el flujo de reserva.
+                  </p>
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'manual' ? (
                   <div style={{ marginBottom: '12px' }}>
@@ -10315,8 +10327,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 >
                   <option value="mercadopago">Mercado Pago</option>
                   <option value="stripe">Stripe</option>
-                  <option value="manual">Manual (transferencia o efectivo)</option>
+                  <option value="manual">Manual (transferencia u otras instrucciones)</option>
+                  <option value="efectivo">Efectivo en sede (sin pasarela ni fee 3%)</option>
                 </select>
+                {String(miSedeForm.metodo_pago || '') === 'efectivo' ? (
+                  <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#555', lineHeight: 1.45 }}>
+                    Las reservas quedan pendientes de cobro en el club hasta que confirmes el pago recibido.
+                  </p>
+                ) : null}
                 {String(miSedeForm.metodo_pago || '') === 'manual' ? (
                   <>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>

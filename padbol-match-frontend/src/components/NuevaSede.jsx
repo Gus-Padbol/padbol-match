@@ -479,7 +479,8 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
             <select style={inputStyle} value={form.metodo_pago} onChange={(e) => setField('metodo_pago', e.target.value)}>
               <option value="mercadopago">Mercado Pago</option>
               <option value="stripe">Stripe</option>
-              <option value="manual">Manual (transferencia o efectivo)</option>
+              <option value="manual">Manual (transferencia u otras instrucciones)</option>
+              <option value="efectivo">Efectivo en sede (sin pasarela ni fee 3%)</option>
             </select>
             {form.metodo_pago === 'mercadopago' ? (
               <>
@@ -506,6 +507,11 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
                   Conectar con Stripe (próximamente). Por ahora guardamos el Account ID manualmente.
                 </p>
               </>
+            ) : null}
+            {form.metodo_pago === 'efectivo' ? (
+              <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
+                Las reservas quedan en estado pendiente de cobro en el club; el jugador no paga online por Padbol Match.
+              </p>
             ) : null}
             {form.metodo_pago === 'manual' ? (
               <>

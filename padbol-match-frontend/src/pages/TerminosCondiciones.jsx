@@ -37,9 +37,8 @@ export default function TerminosCondiciones() {
       <LegalSectionTitle>Reservas de canchas</LegalSectionTitle>
       <LegalUl>
         <LegalLi>
-          <strong style={{ color: '#e2e8f0' }}>Pago online:</strong> las reservas gestionadas a través de Padbol Match se
-          abonan por medios digitales habilitados en la plataforma. <strong style={{ color: '#e2e8f0' }}>No se acepta efectivo</strong>{' '}
-          como medio de pago en el flujo de la plataforma.
+          <strong style={{ color: '#e2e8f0' }}>Medios de pago:</strong> el método de pago depende de cada sede. Algunas
+          operan exclusivamente con pago online; otras pueden ofrecer pago presencial según su plan de suscripción.
         </LegalLi>
         <LegalLi>
           <strong style={{ color: '#e2e8f0' }}>Cancelación y reembolsos:</strong> las reglas de cancelación, cambios y
@@ -47,9 +46,10 @@ export default function TerminosCondiciones() {
           comunicada por el club. Revisá siempre los detalles antes de confirmar.
         </LegalLi>
         <LegalLi>
-          <strong style={{ color: '#e2e8f0' }}>Comisión de servicio:</strong> Padbol Match puede aplicar un{' '}
-          <strong style={{ color: '#e2e8f0' }}>fee de servicio del 3%</strong> calculado sobre el precio de la reserva (u
-          otra base que se indique al momento del pago). El desglose se muestra antes de que confirmes el pago.
+          <strong style={{ color: '#e2e8f0' }}>Comisión de servicio:</strong> cuando el pago se procesa online a través
+          de Padbol Match (por ejemplo Mercado Pago o Stripe), puede aplicarse un{' '}
+          <strong style={{ color: '#e2e8f0' }}>fee de servicio del 3%</strong> sobre el precio de la reserva; el desglose
+          se muestra antes de pagar. Las reservas con cobro en efectivo en la sede no incluyen ese cargo de la plataforma.
         </LegalLi>
       </LegalUl>
 
