@@ -431,6 +431,7 @@ function resolveAlcanceFromRoleRow(row) {
   if (role === 'super_admin') return 'global';
   if (role === 'admin_nacional') return 'pais';
   if (role === 'admin_club') return 'sede';
+  if (role === 'empleado') return 'sede';
   return null;
 }
 
@@ -2343,7 +2344,7 @@ app.post('/api/admin/reservas/manual', async (req, res) => {
   try {
     const scope = await adminListScopeFromRequest(req);
     if (!scope) return res.status(401).json({ error: 'No autorizado' });
-    if (!scope.superA && String(scope.rol || '') !== 'admin_club') {
+    if (!scope.superA && !['admin_club', 'empleado'].includes(String(scope.rol || ''))) {
       return res.status(403).json({ error: 'No tenés permiso para crear reservas manuales' });
     }
 
@@ -2542,7 +2543,7 @@ async function assertReservaAccesibleHistorial(req, reservaId) {
     throw e;
   }
   if (scope.superA || scope.alcance === 'global') return r;
-  if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional') {
+  if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
     const allowed = await sedesPermitidasPorScope(scope);
     const nombres = new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean));
     if (nombres.has(String(r.sede || '').trim())) return r;
@@ -2570,7 +2571,7 @@ app.get('/api/reservas', async (req, res) => {
     if (scope) {
       if (scope.superA || scope.alcance === 'global') {
         // sin filtro
-      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional') {
+      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
         const allowed = await sedesPermitidasPorScope(scope);
         const nombres = [
           ...new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean)),
@@ -2698,6 +2699,7 @@ app.put('/api/reservas/:id', async (req, res) => {
           scopeH &&
           (scopeH.superA ||
             scopeH.rol === 'admin_club' ||
+            scopeH.rol === 'empleado' ||
             scopeH.rol === 'admin_nacional' ||
             scopeH.alcance === 'global')
         ) {
@@ -2742,6 +2744,7 @@ app.put('/api/reservas/:id', async (req, res) => {
       scopePut &&
       (scopePut.superA ||
         scopePut.rol === 'admin_club' ||
+        scopePut.rol === 'empleado' ||
         scopePut.rol === 'admin_nacional' ||
         scopePut.alcance === 'global');
     if (row && isAdminReservaPut) {
@@ -2791,6 +2794,7 @@ app.delete('/api/reservas/:id', async (req, res) => {
       scopeDel &&
       (scopeDel.superA ||
         scopeDel.rol === 'admin_club' ||
+        scopeDel.rol === 'empleado' ||
         scopeDel.rol === 'admin_nacional' ||
         scopeDel.alcance === 'global');
 
@@ -3460,7 +3464,7 @@ app.get('/api/torneos', async (req, res) => {
     if (scope) {
       if (scope.superA || scope.alcance === 'global') {
         // sin filtro
-      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional') {
+      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
         const allowed = await sedesPermitidasPorScope(scope);
         const ids = (allowed.sedes || [])
           .map((s) => s?.id)

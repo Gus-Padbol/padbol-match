@@ -42,10 +42,10 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 
 // Returns the correct price for a given sede + time slot.
 // Base desde `sedes` (precio_turno en Supabase, luego legacy precio_por_reserva); luego franjas o mañana/tarde.
-function getPrecio(sede, hora) {
+function getPrecio(sede, hora, fecha) {
   const base = precioBaseTurnoDesdeSede(sede);
   if (!hora || !sede) return base;
-  const desdeFranjas = precioDesdeFranjas(sede, hora);
+  const desdeFranjas = precioDesdeFranjas(sede, hora, fecha);
   if (desdeFranjas != null) return desdeFranjas;
   const h = parseInt(hora.split(':')[0], 10);
   return h < 16
@@ -1371,7 +1371,7 @@ export default function ReservaForm() {
     setMpLoading(true);
     setError('');
 
-    const precio = getPrecio(sedeSeleccionada, formData.hora);
+    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha);
     const creditoAplicado = 0;
     const precioFinal = Math.max(0, precio - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
@@ -1708,11 +1708,11 @@ export default function ReservaForm() {
             {formData.hora && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: '#0369a1' }}>
-                  💰 {Number(getPrecio(sedeSeleccionada, formData.hora)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
+                  💰 {Number(getPrecio(sedeSeleccionada, formData.hora, formData.fecha)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
                 {(() => {
                   const subEtiqueta =
-                    nombreFranjaActiva(sedeSeleccionada, formData.hora) ||
+                    nombreFranjaActiva(sedeSeleccionada, formData.hora, formData.fecha) ||
                     (sedeSeleccionada?.precio_manana && sedeSeleccionada?.precio_tarde
                       ? parseInt(formData.hora.split(':')[0], 10) < 16
                         ? '🌅 Tarifa mañana'
@@ -1788,7 +1788,7 @@ export default function ReservaForm() {
 
   // PANTALLA 4: Resumen + pago
   if (pantalla === 4) {
-    const precio = getPrecio(sedeSeleccionada, formData.hora);
+    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha);
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const creditoAplicado = 0;
     const precioFinal = Math.max(0, precio - creditoAplicado);

@@ -219,6 +219,17 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
 }
 
 const MAX_FOTOS_SEDE = 20;
+const DIAS_SEMANA_FRANJA = [
+  { id: 'lun', label: 'Lun' },
+  { id: 'mar', label: 'Mar' },
+  { id: 'mie', label: 'Mié' },
+  { id: 'jue', label: 'Jue' },
+  { id: 'vie', label: 'Vie' },
+  { id: 'sab', label: 'Sáb' },
+  { id: 'dom', label: 'Dom' },
+];
+const DIAS_SEMANA_DEFAULT_FRANJA = DIAS_SEMANA_FRANJA.map((d) => d.id);
+const ADMIN_NOTIFICACIONES_READ_LS_KEY = 'admin_notificaciones_leidas_v1';
 
 function newFranjaId() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -230,7 +241,12 @@ function normalizeFranjasHorarias(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map((f) => ({
     id: String(f?.id || '').trim() || newFranjaId(),
+    tipo: String(f?.tipo || '').trim() === 'fecha_especial' ? 'fecha_especial' : 'semanal',
     nombre: String(f?.nombre ?? '').trim(),
+    fecha: String(f?.fecha ?? '').trim().slice(0, 10),
+    dias: Array.isArray(f?.dias)
+      ? f.dias.map((d) => String(d).trim()).filter((d) => DIAS_SEMANA_DEFAULT_FRANJA.includes(d))
+      : DIAS_SEMANA_DEFAULT_FRANJA,
     hora_inicio: String(f?.hora_inicio ?? '').trim().slice(0, 5),
     hora_fin: String(f?.hora_fin ?? '').trim().slice(0, 5),
     precio:
@@ -244,9 +260,18 @@ function franjasHorariasToDbPayload(rows) {
   return rows.map((r) => {
     const digits = String(r.precio ?? '').replace(/\./g, '').replace(/[^\d]/g, '');
     const precio = digits === '' ? 0 : parseInt(digits, 10);
+    const tipo = String(r.tipo || '').trim() === 'fecha_especial' ? 'fecha_especial' : 'semanal';
     return {
       id: String(r.id || '').trim() || newFranjaId(),
+      tipo,
       nombre: String(r.nombre || '').trim(),
+      fecha: String(r.fecha || '').trim().slice(0, 10) || null,
+      dias:
+        tipo === 'fecha_especial'
+          ? []
+          : Array.isArray(r.dias) && r.dias.length
+            ? r.dias.map((d) => String(d).trim()).filter((d) => DIAS_SEMANA_DEFAULT_FRANJA.includes(d))
+            : DIAS_SEMANA_DEFAULT_FRANJA,
       hora_inicio: String(r.hora_inicio || '').trim().slice(0, 5),
       hora_fin: String(r.hora_fin || '').trim().slice(0, 5),
       precio: Number.isFinite(precio) ? precio : 0,
@@ -1428,6 +1453,7 @@ function labelInvitacionAdminTipo(inv) {
   const alc = String(inv?.invited_alcance || '').toLowerCase();
   if (role === 'admin_nacional' && alc === 'pais') return '🌍 Admin Nacional';
   if (role === 'admin_nacional' && (alc === 'provincia' || alc === 'ciudad')) return '🏙️ Admin Ciudad/Región';
+  if (role === 'empleado') return '👤 Empleado';
   return '🏆 Admin Club';
 }
 
@@ -1440,13 +1466,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
 
   const isSuperAdmin = rol === 'super_admin';
+  const esEmpleado = rol === 'empleado';
   const isAdmin =
-    isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club';
+    isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club' || esEmpleado;
 
   // Role-based access flags
   const esAdminNacional = rol === 'admin_nacional';
   const esAdminClub     = rol === 'admin_club';
   const puedeVerConfig  = isSuperAdmin;
+  const puedeVerFinanzas = !esEmpleado;
 
   const paisAdminNacional = useMemo(() => {
     if (!esAdminNacional) return '';
@@ -1469,6 +1497,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     super_admin:    '👑 Super Admin',
     admin_nacional: '🌎 Admin Nacional',
     admin_club:     '🏠 Admin Club',
+    empleado:       '👤 Empleado',
   };
 
   const [reservas, setReservas] = useState([]);
@@ -1514,6 +1543,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   /** reserva id → { open, loading, rows, error } */
   const [reservaHistorialUi, setReservaHistorialUi] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
+  const [notificacionesOpen, setNotificacionesOpen] = useState(false);
+  const [notificacionesLeidas, setNotificacionesLeidas] = useState(() => {
+    try {
+      const raw = localStorage.getItem(ADMIN_NOTIFICACIONES_READ_LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.map(String) : [];
+    } catch {
+      return [];
+    }
+  });
   const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab')));
   const [nuevaSedeModalOpen, setNuevaSedeModalOpen] = useState(false);
 
@@ -2070,6 +2109,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [activeTab]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(ADMIN_NOTIFICACIONES_READ_LS_KEY, JSON.stringify(notificacionesLeidas.slice(-200)));
+    } catch {
+      /* noop */
+    }
+  }, [notificacionesLeidas]);
+
+  useEffect(() => {
     if (!esAdminClub || sedeId == null || sedeId === '') return;
     setReservaManualForm((prev) => ({ ...prev, sede_id: String(sedeId) }));
   }, [esAdminClub, sedeId]);
@@ -2587,7 +2634,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     };
   }, [esAdminClub, sedeId, reservas, sedesMap, canchasDetallePorSede, canchasResumenPorSede]);
 
-  const resumenOperativoSecciones = useMemo(() => {
+  const adminNotificaciones = useMemo(() => {
     const p = resumenPanelDiario;
     const alertasContratosPorVencer = isSuperAdmin
       ? Object.values(contratosBySedeId || {})
@@ -2642,37 +2689,131 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           return [];
         })
       : [];
-    const btnTorneo = {
-      marginTop: '8px',
-      padding: '6px 12px',
-      fontSize: '12px',
-      fontWeight: 700,
-      border: 'none',
-      borderRadius: '8px',
-      background: '#4f46e5',
-      color: '#fff',
-      cursor: 'pointer',
+    const items = [];
+    const irATab = (tabId) => {
+      setActiveTab(tabId);
+      sessionStorage.setItem('adminActiveTab', tabId);
+      navigate(`/admin?tab=${encodeURIComponent(tabId)}`, { replace: true });
     };
-    const alertBox = (bg, border, color) => ({
-      padding: '10px 14px',
-      borderRadius: '10px',
-      background: bg,
-      border: `1px solid ${border}`,
-      color,
-      fontSize: '13px',
-      fontWeight: 700,
-      marginBottom: '8px',
+    if (isSuperAdmin && snapPendienteSedes + snapPendienteLic > 0) {
+      const count = snapPendienteSedes + snapPendienteLic;
+      items.push({
+        id: `solicitudes-pendientes-${count}`,
+        tone: 'danger',
+        title: count === 1 ? '1 solicitud pendiente' : `${count} solicitudes pendientes`,
+        body: 'Alta nacional o interés web pendiente de revisión.',
+        actionLabel: 'Ir a Solicitudes',
+        onClick: () => {
+          setSolicitudesFiltroEstado('pendiente');
+          irATab('solicitudes');
+        },
+      });
+    }
+    (p.alertasEquiposTorneoProximoSinConfirmar || []).forEach((a) => {
+      items.push({
+        id: `torneo-proximo-${a.torneoId}-${a.count}`,
+        tone: 'warning',
+        title: 'Torneo próximo',
+        body: `${a.count} equipo${a.count === 1 ? '' : 's'} sin inscripción confirmada en «${a.nombre}».`,
+        actionLabel: 'Ver torneo',
+        onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
+      });
     });
-    const tieneAlertaOperativa =
-      (p.equiposPendientePagoCount || 0) > 0 ||
-      (p.alertasEquiposSinConfirmarCierre48h || []).length > 0 ||
-      (p.alertasEquiposTorneoProximoSinConfirmar || []).length > 0 ||
-      (p.alertasTorneosMenosDosConfirmados || []).length > 0 ||
-      (p.alertasTorneoSinSorteo48h || []).length > 0 ||
-      alertasContratosPorVencer.length > 0 ||
-      alertasSuscripcionBilling.length > 0 ||
-      (isSuperAdmin && snapPendienteSedes + snapPendienteLic > 0);
+    (p.alertasTorneosMenosDosConfirmados || []).forEach((a) => {
+      items.push({
+        id: `torneo-menos2-${a.torneoId}-${a.confirmados}`,
+        tone: 'warning',
+        title: 'Inscripción abierta',
+        body: `«${a.nombre}» tiene solo ${a.confirmados} equipo${a.confirmados === 1 ? '' : 's'} confirmado${a.confirmados === 1 ? '' : 's'}.`,
+        actionLabel: 'Ver torneo',
+        onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
+      });
+    });
+    (p.alertasTorneoSinSorteo48h || []).forEach((a) => {
+      items.push({
+        id: `torneo-sin-sorteo-${a.torneoId}`,
+        tone: 'danger',
+        title: 'Arranca pronto',
+        body: `«${a.nombre}» (${formatFecha(a.fecha_inicio)}) no tiene partidos generados y empieza en menos de 48 horas.`,
+        actionLabel: 'Ver torneo',
+        onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
+      });
+    });
+    if ((p.equiposPendientePagoCount || 0) > 0) {
+      items.push({
+        id: `equipos-pago-pendiente-${p.equiposPendientePagoCount}`,
+        tone: 'warning',
+        title: 'Inscripciones pendientes',
+        body: `Hay ${p.equiposPendientePagoCount} equipo${p.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción pendiente de pago.`,
+        actionLabel: 'Ir a Torneos',
+        onClick: () => irATab('torneos'),
+      });
+    }
+    (p.alertasEquiposSinConfirmarCierre48h || []).forEach((a) => {
+      items.push({
+        id: `cierre-inscripcion-${a.torneoId}-${a.count}`,
+        tone: 'warning',
+        title: 'Cierre de inscripción',
+        body: `${a.count} equipo${a.count === 1 ? '' : 's'} sin confirmar en «${a.nombre}».`,
+        actionLabel: 'Ver torneo',
+        onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
+      });
+    });
+    if (puedeVerFinanzas) {
+      alertasContratosPorVencer.forEach((a) => {
+        items.push({
+          id: `contrato-vencer-${a.sedeId}-${a.fecha_vencimiento}`,
+          tone: 'warning',
+          title: 'Contrato por vencer',
+          body: `${a.sedeNombre} vence el ${formatFecha(a.fecha_vencimiento)} (${a.days} día${a.days === 1 ? '' : 's'}).`,
+        });
+      });
+      alertasSuscripcionBilling.forEach((a) => {
+        if (a.tipo === 'vencida') {
+          items.push({
+            id: `suscripcion-vencida-${a.sedeId}`,
+            tone: 'danger',
+            title: 'Suscripción vencida',
+            body: `${a.sedeNombre} requiere revisión de pago en Stripe o reactivación.`,
+            actionLabel: 'Ir a Sedes',
+            onClick: () => irATab('sedes'),
+          });
+        } else {
+          items.push({
+            id: `suscripcion-proxima-${a.sedeId}-${a.fecha}`,
+            tone: 'info',
+            title: 'Suscripción por cobrar',
+            body: `${a.sedeNombre} tiene próximo cobro ${formatProximoCobroAdmin(a.fecha)}.`,
+          });
+        }
+      });
+    }
+    return items;
+  }, [
+    resumenPanelDiario,
+    contratosBySedeId,
+    sedesMap,
+    isSuperAdmin,
+    navigate,
+    puedeVerFinanzas,
+    snapPendienteSedes,
+    snapPendienteLic,
+    setSolicitudesFiltroEstado,
+  ]);
 
+  const notificacionesNoLeidas = useMemo(() => {
+    const leidas = new Set(notificacionesLeidas);
+    return adminNotificaciones.filter((n) => !leidas.has(String(n.id))).length;
+  }, [adminNotificaciones, notificacionesLeidas]);
+
+  const marcarNotificacionLeida = useCallback((id) => {
+    const key = String(id || '');
+    if (!key) return;
+    setNotificacionesLeidas((prev) => (prev.includes(key) ? prev : [...prev, key]));
+  }, []);
+
+  const resumenOperativoSecciones = useMemo(() => {
+    const p = resumenPanelDiario;
     return (
       <>
         <div className="section" style={{ marginBottom: '18px', color: '#1e293b' }}>
@@ -2713,7 +2854,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </ul>
               )}
             </div>
-            <div>
+            {puedeVerFinanzas ? <div>
               <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Ingresos del día (por moneda de cada sede)
               </div>
@@ -2721,7 +2862,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#94a3b8' }}>
                 Suma de precios de reservas de hoy no canceladas.
               </p>
-            </div>
+            </div> : null}
             <div>
               <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Canchas ahora (hora Argentina)
@@ -2765,149 +2906,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
         </div>
-
-        <div className="section" style={{ marginBottom: '18px', color: '#1e293b' }}>
-          <h2 style={{ marginTop: 0, color: '#334155' }}>Alertas</h2>
-          {!tieneAlertaOperativa ? (
-            <p style={{ margin: 0, color: '#94a3b8' }}>Sin alertas prioritarias.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {isSuperAdmin && snapPendienteSedes + snapPendienteLic > 0 ? (
-                <div role="alert" style={alertBox('#fee2e2', '#f87171', '#991b1b')}>
-                  {snapPendienteSedes + snapPendienteLic === 1
-                    ? '1 solicitud pendiente'
-                    : `${snapPendienteSedes + snapPendienteLic} solicitudes pendientes`}{' '}
-                  (alta nacional o interés web). Revisalas en «Solicitudes».
-                  <button
-                    type="button"
-                    style={{ ...btnTorneo, marginLeft: '10px' }}
-                    onClick={() => {
-                      setSolicitudesFiltroEstado('pendiente');
-                      setActiveTab('solicitudes');
-                      sessionStorage.setItem('adminActiveTab', 'solicitudes');
-                      navigate('/admin?tab=solicitudes', { replace: true });
-                    }}
-                  >
-                    Ir a Solicitudes
-                  </button>
-                </div>
-              ) : null}
-
-              {p.alertasEquiposTorneoProximoSinConfirmar.length > 0
-                ? p.alertasEquiposTorneoProximoSinConfirmar.map((a) => (
-                    <div key={`prox-${a.torneoId}`} role="alert" style={alertBox('#ffedd5', '#fb923c', '#9a3412')}>
-                      <strong>Torneo próximo:</strong> {a.count} equipo{a.count === 1 ? '' : 's'} sin inscripción confirmada en «
-                      {a.nombre}».
-                      <button
-                        type="button"
-                        style={btnTorneo}
-                        onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
-                      >
-                        Ver torneo
-                      </button>
-                    </div>
-                  ))
-                : null}
-
-              {p.alertasTorneosMenosDosConfirmados.length > 0
-                ? p.alertasTorneosMenosDosConfirmados.map((a) => (
-                    <div key={`menos2-${a.torneoId}`} role="alert" style={alertBox('#fef3c7', '#fbbf24', '#92400e')}>
-                      <strong>Inscripción abierta:</strong> «{a.nombre}» tiene solo {a.confirmados} equipo
-                      {a.confirmados === 1 ? '' : 's'} confirmado{a.confirmados === 1 ? '' : 's'} (mínimo 2 para iniciar con
-                      validaciones actuales).
-                      <button
-                        type="button"
-                        style={btnTorneo}
-                        onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
-                      >
-                        Ver torneo
-                      </button>
-                    </div>
-                  ))
-                : null}
-
-              {p.alertasTorneoSinSorteo48h.length > 0
-                ? p.alertasTorneoSinSorteo48h.map((a) => (
-                    <div key={`sorteo-${a.torneoId}`} role="alert" style={alertBox('#fce7f3', '#f472b6', '#9d174d')}>
-                      <strong>Arranca pronto:</strong> «{a.nombre}» ({formatFecha(a.fecha_inicio)}) — sin partidos generados
-                      (sorteo/fixture pendiente) y el inicio es en menos de 48 horas.
-                      <button
-                        type="button"
-                        style={btnTorneo}
-                        onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
-                      >
-                        Ver torneo
-                      </button>
-                    </div>
-                  ))
-                : null}
-
-              {p.equiposPendientePagoCount > 0 ? (
-                <div role="alert" style={alertBox('#fef3c7', '#fbbf24', '#92400e')}>
-                  Hay {p.equiposPendientePagoCount} equipo{p.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción{' '}
-                  <strong>pendiente de pago</strong> en torneos con costo.
-                </div>
-              ) : null}
-
-              {p.alertasEquiposSinConfirmarCierre48h.map((a) => (
-                <div key={`cierre-${a.torneoId}`} role="alert" style={alertBox('#ffedd5', '#fb923c', '#9a3412')}>
-                  {a.count} equipo{a.count === 1 ? '' : 's'} sin confirmar en «{a.nombre}» — inscripción cierra en menos de
-                  48h (fecha de inicio del torneo).
-                  <button
-                    type="button"
-                    style={btnTorneo}
-                    onClick={() => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } })}
-                  >
-                    Ver torneo
-                  </button>
-                </div>
-              ))}
-              {alertasContratosPorVencer.map((a) => (
-                <div key={`contr-${a.sedeId}`} role="alert" style={alertBox('#fef3c7', '#fbbf24', '#92400e')}>
-                  <strong>Contrato por vencer:</strong> {a.sedeNombre} vence el {formatFecha(a.fecha_vencimiento)} (
-                  {a.days} día{a.days === 1 ? '' : 's'}).
-                </div>
-              ))}
-              {alertasSuscripcionBilling.map((a) =>
-                a.tipo === 'vencida' ? (
-                  <div key={`sub-v-${a.sedeId}`} role="alert" style={alertBox('#fee2e2', '#f87171', '#991b1b')}>
-                    <strong>Suscripción vencida:</strong> {a.sedeNombre} — revisá el pago en Stripe o reactivá desde Sedes.
-                    <button
-                      type="button"
-                      style={btnTorneo}
-                      onClick={() => {
-                        setActiveTab('sedes');
-                        sessionStorage.setItem('adminActiveTab', 'sedes');
-                        navigate(`/admin?tab=sedes`, { replace: true });
-                      }}
-                    >
-                      Ir a Sedes
-                    </button>
-                  </div>
-                ) : (
-                  <div key={`sub-p-${a.sedeId}`} role="alert" style={alertBox('#e0e7ff', '#818cf8', '#3730a3')}>
-                    <strong>Suscripción por cobrar:</strong> {a.sedeNombre} — próximo cobro{' '}
-                    {formatProximoCobroAdmin(a.fecha)}.
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </div>
       </>
     );
   }, [
     resumenPanelDiario,
-    contratosBySedeId,
-    sedesMap,
-    isSuperAdmin,
-    navigate,
-    setActiveTab,
-    puedeVerSedesPendientes,
-    isSuperAdmin,
-    snapPendienteSedes,
-    snapPendienteLic,
-    setSolicitudesFiltroEstado,
+    puedeVerFinanzas,
   ]);
 
   const fetchPendientes = async () => {
@@ -4554,6 +4557,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setFranjasSaving(true);
     setFranjasMsg('');
     const payload = franjasHorariasToDbPayload(franjasHorarias);
+    const invalida = payload.find((f) => {
+      if (!f.hora_inicio || !f.hora_fin) return true;
+      if (f.tipo === 'fecha_especial') return !f.fecha;
+      return !Array.isArray(f.dias) || f.dias.length === 0;
+    });
+    if (invalida) {
+      setFranjasSaving(false);
+      setFranjasMsg('⚠️ Completá horarios y al menos un día o fecha por franja');
+      setTimeout(() => setFranjasMsg(''), 4000);
+      return;
+    }
     const { error } = await supabase.from('sedes').update({ franjas_horarias: payload }).eq('id', sedeId);
     setFranjasSaving(false);
     if (error) {
@@ -4762,7 +4776,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
   })();
 
-  const TABS = esAdminNacional
+  const TABS = esEmpleado
+    ? [
+        { id: 'resumen', label: 'Resumen operativo' },
+        { id: 'reservas', label: '⚽ Reservas' },
+        { id: 'torneos', label: '🏆 Torneos' },
+      ]
+    : esAdminNacional
     ? [
         { id: 'resumen', label: 'Resumen' },
         { id: 'torneos', label: 'Torneos' },
@@ -4858,6 +4878,138 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <p style={{ margin: '0 0 10px', color: '#cbd5e1', fontSize: '12px', textAlign: 'center' }}>
             {fechaActualLarga}
           </p>
+          <div style={{ position: 'relative', marginBottom: '12px' }}>
+            <button
+              type="button"
+              aria-label={`Notificaciones: ${notificacionesNoLeidas} no leídas`}
+              onClick={() => setNotificacionesOpen((v) => !v)}
+              style={{
+                position: 'relative',
+                border: '1px solid rgba(255,255,255,0.45)',
+                background: 'rgba(255,255,255,0.16)',
+                color: '#fff',
+                borderRadius: '999px',
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: '18px',
+                lineHeight: 1,
+                boxShadow: '0 4px 14px rgba(15,23,42,0.18)',
+              }}
+            >
+              🔔
+              {notificacionesNoLeidas > 0 ? (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-7px',
+                    right: '-7px',
+                    minWidth: '20px',
+                    height: '20px',
+                    padding: '0 5px',
+                    borderRadius: '999px',
+                    background: '#ef4444',
+                    color: '#fff',
+                    border: '2px solid #667eea',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '11px',
+                    fontWeight: 900,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  {notificacionesNoLeidas > 99 ? '99+' : notificacionesNoLeidas}
+                </span>
+              ) : null}
+            </button>
+            {notificacionesOpen ? (
+              <div
+                role="dialog"
+                aria-label="Notificaciones"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: '50%',
+                  transform: 'translateX(50%)',
+                  width: 'min(340px, calc(100vw - 24px))',
+                  maxHeight: '420px',
+                  overflowY: 'auto',
+                  background: '#fff',
+                  color: '#0f172a',
+                  borderRadius: '14px',
+                  boxShadow: '0 20px 45px rgba(15,23,42,0.28)',
+                  border: '1px solid #e2e8f0',
+                  zIndex: 250,
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                  <strong style={{ fontSize: '14px' }}>Notificaciones</strong>
+                  {adminNotificaciones.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setNotificacionesLeidas(adminNotificaciones.map((n) => String(n.id)))}
+                      style={{ border: 'none', background: 'transparent', color: '#4f46e5', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      Marcar leídas
+                    </button>
+                  ) : null}
+                </div>
+                {adminNotificaciones.length === 0 ? (
+                  <p style={{ margin: 0, padding: '14px', color: '#64748b', fontSize: '13px' }}>Sin notificaciones prioritarias.</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: '8px', padding: '10px' }}>
+                    {adminNotificaciones.map((n) => {
+                      const leida = notificacionesLeidas.includes(String(n.id));
+                      const borderColor =
+                        n.tone === 'danger' ? '#f87171' : n.tone === 'warning' ? '#fbbf24' : '#818cf8';
+                      return (
+                        <div
+                          key={n.id}
+                          style={{
+                            border: `1px solid ${borderColor}`,
+                            borderLeft: `4px solid ${borderColor}`,
+                            borderRadius: '10px',
+                            padding: '10px',
+                            background: leida ? '#f8fafc' : '#fff7ed',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                            <strong style={{ fontSize: '13px', color: '#0f172a' }}>{n.title}</strong>
+                            {!leida ? <span style={{ color: '#ef4444', fontSize: '11px', fontWeight: 900 }}>Nuevo</span> : null}
+                          </div>
+                          <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.4, color: '#475569' }}>{n.body}</p>
+                          {n.actionLabel ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                marcarNotificacionLeida(n.id);
+                                setNotificacionesOpen(false);
+                                if (typeof n.onClick === 'function') n.onClick();
+                              }}
+                              style={{
+                                marginTop: '8px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '6px 10px',
+                                background: '#4f46e5',
+                                color: '#fff',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {n.actionLabel}
+                            </button>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
           {esAdminClub && sedeStatus ? (() => {
             const { numero_licencia, licencia_activa } = sedeStatus;
             if (!numero_licencia) {
@@ -5337,6 +5489,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             ) : null}
           </div>
         ) : null}
+        {puedeVerFinanzas ? <>
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
             Período del resumen financiero
@@ -5577,6 +5730,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           )}
         </div>
       </div>
+      </> : null}
         </>
       ))}
 
@@ -5618,12 +5772,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0 }}>📋 Torneos Creados</h2>
-          <button
-            onClick={() => navigate('/torneo/crear')}
-            style={{ padding: '8px 16px', background: '#e53935', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-          >
-            + Nuevo Torneo
-          </button>
+          {!esEmpleado ? (
+            <button
+              onClick={() => navigate('/torneo/crear')}
+              style={{ padding: '8px 16px', background: '#e53935', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+            >
+              + Nuevo Torneo
+            </button>
+          ) : null}
         </div>
         {torneos.length === 0 ? (
           <p style={{ color: '#999' }}>Sin torneos</p>
@@ -9670,7 +9826,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 700, color: '#334155' }}>Franjas horarias y precios</p>
               <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#9ca3af', lineHeight: 1.5 }}>
-                Definí tantas franjas como quieras. El precio de la reserva se elige según la hora de inicio del turno (formato 24 h).
+                Definí franjas semanales por día o fechas especiales (feriados/eventos). El precio se elige según la hora de inicio del turno (formato 24 h).
               </p>
               {franjasHorarias.map((fj, idx) => (
                 <div
@@ -9710,13 +9866,98 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <input
                     type="text"
                     value={fj.nombre}
-                    placeholder="Ej: Mañana, Tarde, Noche"
+                    placeholder={fj.tipo === 'fecha_especial' ? 'Ej: Feriado, Evento privado' : 'Ej: Mañana, Tarde, Noche'}
                     onChange={(e) => {
                       const v = e.target.value;
                       setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, nombre: v } : r)));
                     }}
                     style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
                   />
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#555' }}>Aplicación</label>
+                    <select
+                      value={fj.tipo || 'semanal'}
+                      onChange={(e) => {
+                        const v = e.target.value === 'fecha_especial' ? 'fecha_especial' : 'semanal';
+                        setFranjasHorarias((rows) =>
+                          rows.map((r) =>
+                            r.id === fj.id
+                              ? {
+                                  ...r,
+                                  tipo: v,
+                                  fecha: v === 'fecha_especial' ? r.fecha || '' : '',
+                                  dias: v === 'semanal' ? (Array.isArray(r.dias) && r.dias.length ? r.dias : DIAS_SEMANA_DEFAULT_FRANJA) : [],
+                                }
+                              : r
+                          )
+                        );
+                      }}
+                      style={{ width: '100%', maxWidth: '220px', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                    >
+                      <option value="semanal">Semanal</option>
+                      <option value="fecha_especial">Fecha especial</option>
+                    </select>
+                  </div>
+                  {fj.tipo === 'fecha_especial' ? (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>Fecha especial</label>
+                      <input
+                        type="date"
+                        value={fj.fecha || ''}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, fecha: v } : r)));
+                        }}
+                        style={{ width: '100%', maxWidth: '220px', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '6px' }}>Días de la semana</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {DIAS_SEMANA_FRANJA.map((dia) => {
+                          const checked = Array.isArray(fj.dias) ? fj.dias.includes(dia.id) : true;
+                          return (
+                            <label
+                              key={dia.id}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                padding: '6px 8px',
+                                borderRadius: '999px',
+                                border: checked ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+                                background: checked ? '#eef2ff' : '#f8fafc',
+                                color: checked ? '#312e81' : '#475569',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const isChecked = e.target.checked;
+                                  setFranjasHorarias((rows) =>
+                                    rows.map((r) => {
+                                      if (r.id !== fj.id) return r;
+                                      const actuales = Array.isArray(r.dias) ? r.dias : DIAS_SEMANA_DEFAULT_FRANJA;
+                                      const next = isChecked
+                                        ? [...new Set([...actuales, dia.id])]
+                                        : actuales.filter((d) => d !== dia.id);
+                                      return { ...r, dias: next };
+                                    })
+                                  );
+                                }}
+                              />
+                              {dia.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <div className="admin-franja-horas" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                     <div style={{ flex: '1 1 120px', minWidth: 0 }}>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>Inicio</label>
@@ -9771,7 +10012,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   onClick={() =>
                     setFranjasHorarias((rows) => [
                       ...rows,
-                      { id: newFranjaId(), nombre: '', hora_inicio: '', hora_fin: '', precio: '' },
+                      { id: newFranjaId(), tipo: 'semanal', nombre: '', dias: DIAS_SEMANA_DEFAULT_FRANJA, fecha: '', hora_inicio: '', hora_fin: '', precio: '' },
                     ])
                   }
                   style={{
@@ -9786,6 +10027,27 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   }}
                 >
                   + Agregar franja
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFranjasHorarias((rows) => [
+                      ...rows,
+                      { id: newFranjaId(), tipo: 'fecha_especial', nombre: '', dias: [], fecha: '', hora_inicio: '', hora_fin: '', precio: '' },
+                    ])
+                  }
+                  style={{
+                    padding: '8px 16px',
+                    background: '#fef3c7',
+                    color: '#92400e',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                  }}
+                >
+                  + Fecha especial
                 </button>
                 <button
                   type="button"
