@@ -1,6 +1,6 @@
 import React from 'react';
 
-const DEPORTE_LABEL = {
+export const DEPORTE_LABEL_PARTIDO_ABIERTO = {
   padbol: 'Padbol',
   padel: 'Pádel',
   pickleball: 'Pickleball',
@@ -89,7 +89,7 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
       </div>
 
       <h3 style={{ margin: '0 0 8px', fontSize: compact ? '17px' : '19px', lineHeight: 1.2 }}>
-        {DEPORTE_LABEL[partido?.deporte] || partido?.deporte || 'Partido'} en {partido?.sede_nombre || 'sede'}
+        {DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido'} en {partido?.sede_nombre || 'sede'}
       </h3>
       <p style={{ margin: '0 0 12px', color: '#475569', fontSize: '13px', lineHeight: 1.5 }}>
         {fechaPartidoLabel(partido?.fecha)} · {horaPartidoLabel(partido?.hora)} · Cancha {partido?.cancha || '—'} ·{' '}

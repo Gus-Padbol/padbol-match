@@ -1,5 +1,5 @@
 /**
- * Layout hub: AppHeader fijo + barra de navegación (Reservar, Torneos, Ranking, Perfil)
+ * Layout hub: AppHeader fijo + barra de navegación (Jugar, Competir, Perfil)
  * justo debajo del header.
  */
 export const HUB_APP_HEADER_HEIGHT_PX = 56;
@@ -39,7 +39,8 @@ export const hubInstagramColumnWrapStyle = {
 export const hubBottomNavMaxWidthPx = HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX;
 
 /**
- * Rutas sin barra hub: inicio, listado sedes, reserva, auth.
+ * Rutas sin barra hub bajo el header (auth, reserva full-bleed, admin, listado sedes).
+ * El inicio del jugador (`/`, `/hub`, …) sí muestra {@link BottomNav} (Jugar / Competir / Perfil).
  * `/admin` usa solo las pestañas del propio panel (no {@link BottomNav} bajo el header).
  * Perfil de sede (`/sede/:id`) muestra la barra con estilo sobrio en {@link BottomNav}.
  */
@@ -53,22 +54,23 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/acceso' || pathOnly.startsWith('/acceso/')) return true;
   if (pathOnly === '/registro' || pathOnly.startsWith('/registro/')) return true;
   if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
-  if (pathOnly === '/' || pathOnly === '/inicio' || pathOnly === '/hub' || pathOnly === '/home') return true;
   if (pathOnly === '/sedes' || pathOnly.startsWith('/sedes/')) return true;
   return false;
 }
 
 /**
- * Rutas de la barra inferior del jugador (Ranking, Reservar, Torneos, Mi perfil):
- * mismo criterio de identidad en header que el hub, sin lupa ni atajo ⚙ Admin.
+ * Rutas del shell jugador (misma barra inferior): sin lupa global en {@link AppHeader}.
  */
 export function isJugadorHubShellPathname(pathname) {
   let pathOnly = String(pathname || '/').split('?')[0].split('#')[0];
   pathOnly = pathOnly.replace(/\/+$/, '') || '/';
+  if (pathOnly === '/jugar') return true;
   if (pathOnly === '/rankings') return true;
   if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   if (pathOnly === '/torneos') return true;
   if (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/')) return true;
+  if (pathOnly === '/partidos-abiertos') return true;
+  if (pathOnly === '/armar-partido') return true;
   return false;
 }
 

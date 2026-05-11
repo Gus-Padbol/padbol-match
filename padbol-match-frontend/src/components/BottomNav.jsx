@@ -246,24 +246,47 @@ const BottomNav = () => {
               homePadbolLogo: isSedePublicDetailPath,
             },
             {
-              label: 'Torneos',
+              label: 'Competir',
               icon: '🏆',
               path: '/torneos',
-              match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+              match: (p) => p === '/torneos' || p.startsWith('/torneo') || p === '/rankings',
             },
-            { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
-            { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+            {
+              label: 'Perfil',
+              icon: '👤',
+              path: '/mi-perfil',
+              match: (p) => p === '/mi-perfil' || p.startsWith('/mi-perfil/'),
+            },
           ]
         : [
-            { label: 'Reservar', icon: '⚽', path: '/reservar', match: (p) => p === '/reservar' },
             {
-              label: 'Torneos',
+              label: 'Jugar',
+              icon: '🎮',
+              path: '/jugar',
+              match: (p) => {
+                const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+                if (x === '/jugar') return true;
+                if (x === '/partidos-abiertos') return true;
+                if (x === '/armar-partido') return true;
+                if (x === '/reservar' || x.startsWith('/reservar/')) return true;
+                return false;
+              },
+            },
+            {
+              label: 'Competir',
               icon: '🏆',
               path: '/torneos',
-              match: (p) => p === '/torneos' || p.startsWith('/torneo'),
+              match: (p) => {
+                const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+                return x === '/torneos' || x.startsWith('/torneo') || x === '/rankings';
+              },
             },
-            { label: 'Ranking', icon: '📊', path: '/rankings', match: (p) => p === '/rankings' },
-            { label: 'Perfil', icon: '👤', path: '/mi-perfil', match: (p) => p === '/mi-perfil' },
+            {
+              label: 'Perfil',
+              icon: '👤',
+              path: '/mi-perfil',
+              match: (p) => p === '/mi-perfil' || p.startsWith('/mi-perfil/'),
+            },
           ];
 
   const go = (item) => {

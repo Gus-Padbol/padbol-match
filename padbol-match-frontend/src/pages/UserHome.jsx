@@ -1,27 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import JugadorNotificationsBell from '../components/JugadorNotificationsBell';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
+  HUB_NAV_HEIGHT_PX,
+  hubBottomNavMaxWidthPx,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { nombreRealDesdePerfilOauth } from '../utils/displayName';
 import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
-import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
+import { DEPORTE_LABEL_PARTIDO_ABIERTO } from '../components/PartidoAbiertoCard';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
+import useUserRole from '../hooks/useUserRole';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );
+
+const HUB_COLUMN_MAX = 390;
+
+const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
+const LEGACY_GLOBAL_ADMIN_EMAILS = [
+  'padbolinternacional@gmail.com',
+  'admin@padbol.com',
+  'sm@padbol.com',
+];
+
+function readCachedRolHeader() {
+  try {
+    return JSON.parse(localStorage.getItem('user_role_data') || '{}')?.rol || null;
+  } catch {
+    return null;
+  }
+}
+
+function emailEsLegacyAdminHub(emailRaw) {
+  const email = String(emailRaw || '').trim().toLowerCase();
+  return LEGACY_GLOBAL_ADMIN_EMAILS.includes(email);
+}
 
 const hubPwaInstallButtonStyle = {
   display: 'inline-flex',
@@ -49,7 +70,6 @@ function capitalizarPalabraSaludo(w) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-/** `apodo` en jugadores_perfil (vacío → no aplica). Lee explícitamente la columna. */
 function nombreDesdeApodoPerfil(userProfile) {
   if (!userProfile || typeof userProfile !== 'object') return '';
   const raw = userProfile.apodo;
@@ -58,7 +78,6 @@ function nombreDesdeApodoPerfil(userProfile) {
   return v || '';
 }
 
-/** Primer token de `nombre` (columna perfil), sin apellido en el saludo. */
 function primerNombreDesdePerfil(userProfile) {
   const v = String(userProfile?.nombre || '').trim();
   if (!v || esPlaceholderJugador(v)) return '';
@@ -66,15 +85,142 @@ function primerNombreDesdePerfil(userProfile) {
   return first ? capitalizarPalabraSaludo(first) : '';
 }
 
+function horaCorta(hora) {
+  const h = String(hora || '').trim();
+  const m = /^(\d{1,2}):(\d{2})/.exec(h);
+  return m ? `${String(parseInt(m[1], 10)).padStart(2, '0')}:${m[2]}` : h || '—';
+}
+
+function PartidoAbiertoRailCard({ partido, onNavigate }) {
+  const confirmados = Array.isArray(partido?.jugadores_confirmados) ? partido.jugadores_confirmados : [];
+  const requeridos = Math.max(2, parseInt(String(partido?.jugadores_requeridos || '4'), 10) || 4);
+  const faltan = Math.max(0, requeridos - confirmados.length);
+  const capitanFoto = String(partido?.capitan_foto_url || '').trim();
+  const capitanNombre = String(partido?.capitan_nombre || '').trim() || 'Capitán';
+  const deporte = DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido';
+
+  return (
+    <button
+      type="button"
+      onClick={onNavigate}
+      style={{
+        flex: '0 0 auto',
+        width: 'min(280px, 78vw)',
+        maxWidth: 280,
+        textAlign: 'left',
+        border: '1px solid rgba(226,232,240,0.95)',
+        borderRadius: 16,
+        background: '#fff',
+        boxShadow: '0 10px 28px rgba(15,23,42,0.12)',
+        padding: 12,
+        boxSizing: 'border-box',
+        cursor: 'pointer',
+        display: 'grid',
+        gap: 8,
+        fontFamily: 'inherit',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {capitanFoto ? (
+          <img
+            src={capitanFoto}
+            alt=""
+            style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+          />
+        ) : (
+          <span
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg,#667eea,#764ba2)',
+              color: '#fff',
+              display: 'grid',
+              placeItems: 'center',
+              fontWeight: 900,
+              flexShrink: 0,
+            }}
+          >
+            {capitanNombre.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>{deporte}</div>
+          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {partido?.sede_nombre || 'Sede'}
+          </div>
+        </div>
+      </div>
+      <div style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
+        {String(partido?.fecha || '').slice(0, 10)} · {horaCorta(partido?.hora)}
+      </div>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 900,
+          color: faltan > 0 ? '#047857' : '#4338ca',
+          background: faltan > 0 ? '#ecfdf5' : '#eef2ff',
+          borderRadius: 999,
+          padding: '6px 10px',
+          display: 'inline-block',
+          width: 'fit-content',
+        }}
+      >
+        {faltan > 0 ? `Faltan ${faltan} jugador${faltan === 1 ? '' : 'es'}` : 'Completo'}
+      </div>
+    </button>
+  );
+}
+
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
-  const [hoveredHubBtn, setHoveredHubBtn] = useState(null);
+  const { session, loading: authLoading, userProfile, profileLoading, refreshSession, signOutAndClear } = useAuth();
   const [partidosAbiertos, setPartidosAbiertos] = useState([]);
   const [partidosLoading, setPartidosLoading] = useState(true);
-  /** Nombre para el saludo: se fija una sola vez al tener perfil listo (evita parpadeo por re-renders). */
   const [nombreFinal, setNombreFinal] = useState(null);
+  const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
+    if (ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')) return true;
+    if (emailEsLegacyAdminHub(session?.user?.email)) return true;
+    return false;
+  });
+
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { rol, loading: roleLoading } = useUserRole(currentCliente);
+
+  useEffect(() => {
+    if (!session?.user) {
+      setHubAdminRolEver(false);
+      return;
+    }
+    if (emailEsLegacyAdminHub(session.user.email)) setHubAdminRolEver((p) => p || true);
+    if (ADMIN_ROLES_CHIP.includes(rol || '')) setHubAdminRolEver((p) => p || true);
+  }, [session?.user, rol]);
+
+  const rolEffective = useMemo(() => {
+    const cached = readCachedRolHeader();
+    const fromJwt = (() => {
+      const r = String(
+        session?.user?.app_metadata?.role ?? session?.user?.user_metadata?.role ?? ''
+      )
+        .trim()
+        .toLowerCase();
+      return ADMIN_ROLES_CHIP.includes(r) ? r : null;
+    })();
+    return rol || cached || fromJwt;
+  }, [rol, session?.user?.app_metadata?.role, session?.user?.user_metadata?.role]);
+
+  const esRolAdminHub =
+    hubAdminRolEver ||
+    ADMIN_ROLES_CHIP.includes(rolEffective || '') ||
+    (Boolean(roleLoading) &&
+      LEGACY_GLOBAL_ADMIN_EMAILS.includes(String(session?.user?.email || '').trim().toLowerCase()));
+  const isOnAdmin = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+  const showAdminShortcut = Boolean(session?.user) && esRolAdminHub;
 
   useEffect(() => {
     const onPerfil = () => {
@@ -126,7 +272,7 @@ export default function UserHome() {
     fetch(`${API_BASE}/api/partidos-abiertos`)
       .then((r) => r.json())
       .then((data) => {
-        if (!cancelled) setPartidosAbiertos(Array.isArray(data) ? data.slice(0, 2) : []);
+        if (!cancelled) setPartidosAbiertos(Array.isArray(data) ? data.slice(0, 24) : []);
       })
       .catch(() => {
         if (!cancelled) setPartidosAbiertos([]);
@@ -139,19 +285,45 @@ export default function UserHome() {
     };
   }, []);
 
-  const sufijo = '¿Qué quieres hacer hoy?';
-  const lineaSaludo = !session?.user
-    ? `¡Hola! ${sufijo}`
-    : nombreFinal
-      ? `¡Hola, ${nombreFinal}! ${sufijo}`
-      : `¡Hola! ${sufijo}`;
+  const lineaSaludo = useMemo(() => {
+    if (!session?.user) return 'Hola';
+    if (nombreFinal) return `Hola, ${nombreFinal}`;
+    return 'Hola';
+  }, [session?.user, nombreFinal]);
 
-  const accesosRapidos = [
-    { label: 'Jugar', icon: '⚽', action: () => navigate('/jugar') },
-    { label: 'Torneos', icon: '🏆', action: () => navigate('/torneos') },
-    { label: 'Ranking', icon: '🥇', action: () => navigate('/rankings') },
-    { label: 'Perfil', icon: '👤', action: () => navigate('/mi-perfil') },
+  const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
+  const hubInicial = String(lineaSaludo.replace(/^Hola,?\s*/i, '').trim() || '?')
+    .charAt(0)
+    .toUpperCase();
+
+  const padL = 'calc(12px + env(safe-area-inset-left, 0px))';
+  const padR = 'calc(12px + env(safe-area-inset-right, 0px))';
+
+  const modulos = [
+    {
+      key: 'jugar',
+      icon: '🎮',
+      titulo: 'JUGAR',
+      descripcion: 'Reservá una cancha o unite a un partido',
+      onClick: () => navigate('/jugar'),
+    },
+    {
+      key: 'competir',
+      icon: '🏆',
+      titulo: 'COMPETIR',
+      descripcion: 'Torneos y rankings',
+      onClick: () => navigate('/torneos'),
+    },
+    {
+      key: 'perfil',
+      icon: '👤',
+      titulo: 'MI PERFIL',
+      descripcion: 'Tu perfil, estadísticas e historial',
+      onClick: () => navigate('/mi-perfil'),
+    },
   ];
+
+  const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
 
   return (
     <div
@@ -165,7 +337,194 @@ export default function UserHome() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Inicio" showBack={false} hubDirectLogin contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+      <header
+        className="app-header-shell"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1002,
+          minHeight: '56px',
+          background: '#0f172a',
+          paddingBottom: '8px',
+          paddingLeft: padL,
+          paddingRight: padR,
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: hubBottomNavMaxWidthPx,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            minHeight: 56,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              if (session?.user) navigate('/mi-perfil');
+            }}
+            disabled={!session?.user}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              minWidth: 0,
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              padding: '4px 0',
+              cursor: session?.user ? 'pointer' : 'default',
+              textAlign: 'left',
+              fontFamily: 'inherit',
+            }}
+            aria-label={session?.user ? 'Ir a mi perfil' : undefined}
+          >
+            {session?.user ? (
+              hubFotoUrl ? (
+                <img
+                  src={hubFotoUrl}
+                  alt=""
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                    border: '2px solid rgba(255,255,255,0.25)',
+                  }}
+                />
+              ) : (
+                <span
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: '#fff',
+                    fontSize: 16,
+                    fontWeight: 800,
+                    display: 'grid',
+                    placeItems: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {hubInicial}
+                </span>
+              )
+            ) : (
+              <span
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.12)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 20,
+                  flexShrink: 0,
+                }}
+                aria-hidden
+              >
+                👋
+              </span>
+            )}
+            <span
+              style={{
+                color: '#f8fafc',
+                fontSize: 17,
+                fontWeight: 700,
+                lineHeight: 1.25,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {lineaSaludo}
+            </span>
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            {session?.user ? <JugadorNotificationsBell compact /> : null}
+            {showAdminShortcut ? (
+              <button
+                type="button"
+                onClick={() => navigate(isOnAdmin ? '/' : '/admin')}
+                aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
+                title={isOnAdmin ? 'App' : 'Admin'}
+                style={{
+                  height: 34,
+                  padding: '0 8px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.14)',
+                  color: '#e2e8f0',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                {isOnAdmin ? '←' : '⚙'}
+              </button>
+            ) : null}
+            {session?.user ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOutAndClear();
+                  navigate('/');
+                }}
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                style={{
+                  width: 34,
+                  height: 34,
+                  padding: 0,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.1)',
+                  color: '#e2e8f0',
+                  fontSize: 15,
+                  cursor: 'pointer',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                ⏻
+              </button>
+            ) : !authLoading ? (
+              <button
+                type="button"
+                onClick={() => navigate('/auth')}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.28)',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#f8fafc',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Ingresar
+              </button>
+            ) : (
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>…</span>
+            )}
+          </div>
+        </div>
+      </header>
+
       <div
         style={{
           flex: 1,
@@ -176,255 +535,244 @@ export default function UserHome() {
           width: '100%',
           boxSizing: 'border-box',
           paddingTop: hubContentPaddingTopCss(location.pathname),
-          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          paddingBottom: scrollPaddingBottom,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
         }}
       >
-      <div
-        style={{
-          ...hubInstagramColumnWrapStyle,
-          paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-        }}
-      >
-      <img
-        src="/logo-padbol-match.png"
-        alt="Padbol Match"
-        style={{
-          ...padbolLogoImgStyle,
-          display: 'block',
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          width: 'auto',
-          height: '120px',
-          minWidth: '120px',
-          minHeight: '120px',
-          maxWidth: 'min(92vw, 360px)',
-          objectFit: 'contain',
-          objectPosition: 'center center',
-          marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-          marginBottom: '40px',
-        }}
-      />
-      <div style={{ width: '100%', margin: '0 auto' }}>
-        <section
-          style={{
-            width: '100%',
-            maxWidth: '420px',
-            margin: '0 auto 18px',
-            borderRadius: '20px',
-            padding: '14px',
-            boxSizing: 'border-box',
-            background: 'rgba(255,255,255,0.16)',
-            border: '1px solid rgba(255,255,255,0.24)',
-            boxShadow: '0 14px 32px rgba(15,23,42,0.16)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
-            <div>
-              <h2 style={{ margin: 0, color: '#fff', fontSize: '18px', lineHeight: 1.2 }}>Partidos abiertos</h2>
-              <p style={{ margin: '3px 0 0', color: 'rgba(255,255,255,0.84)', fontSize: '12px' }}>
-                Buscá equipo o armá el tuyo.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/partidos-abiertos')}
-              style={{
-                border: 'none',
-                borderRadius: '999px',
-                background: '#fff',
-                color: '#4f46e5',
-                padding: '8px 11px',
-                fontSize: '12px',
-                fontWeight: 900,
-                cursor: 'pointer',
-              }}
-            >
-              Ver todos
-            </button>
-          </div>
-          {partidosLoading ? (
-            <p style={{ margin: 0, color: '#fff', fontSize: '13px', textAlign: 'center', padding: '12px 0' }}>
-              Cargando partidos...
-            </p>
-          ) : partidosAbiertos.length > 0 ? (
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {partidosAbiertos.map((p) => (
-                <PartidoAbiertoCard key={p.id} partido={p} compact />
-              ))}
-            </div>
-          ) : (
-            <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', textAlign: 'center', color: '#0f172a' }}>
-              <div style={{ fontSize: '34px', marginBottom: '6px' }}>🤝</div>
-              <strong style={{ display: 'block', fontSize: '15px', marginBottom: '5px' }}>No hay partidos publicados</strong>
-              <p style={{ margin: '0 0 12px', color: '#64748b', fontSize: '13px', lineHeight: 1.4 }}>
-                Sé el primero en abrir cupos y completar equipo.
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate('/armar-partido')}
-                style={{
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '11px 14px',
-                  background: 'linear-gradient(135deg,#22c55e,#16a34a)',
-                  color: '#fff',
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                }}
-              >
-                Armar el primero
-              </button>
-            </div>
-          )}
-        </section>
         <div
           style={{
-            background: 'rgba(255,255,255,0.10)',
-            border: '1px solid rgba(255,255,255,0.16)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '14px',
-            padding: '14px 18px',
-            maxWidth: '300px',
-            margin: '0 auto 30px auto',
-            color: 'white',
+            ...hubInstagramColumnWrapStyle,
+            width: '100%',
+            maxWidth: HUB_COLUMN_MAX,
+            paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
+            paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
+            paddingTop: 8,
+            boxSizing: 'border-box',
           }}
         >
-          <h1
+          <img
+            src="/logo-padbol-match.png"
+            alt="Padbol Match"
             style={{
-              color: 'white',
-              textAlign: 'center',
-              margin: '0 0 6px 0',
-              fontSize: '18px',
-              fontWeight: '600',
-              lineHeight: 1.35,
-              minHeight: '2.7em',
-              transition: 'none',
-              animation: 'none',
+              display: 'block',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              height: 44,
+              width: 'auto',
+              maxWidth: 'min(88vw, 280px)',
+              objectFit: 'contain',
+              marginBottom: 16,
+            }}
+          />
+
+          <section
+            style={{
+              width: '100%',
+              margin: '0 auto 18px',
+              borderRadius: 20,
+              padding: 16,
+              boxSizing: 'border-box',
+              background: '#fff',
+              boxShadow: '0 14px 36px rgba(15,23,42,0.14)',
+              border: '1px solid rgba(226,232,240,0.85)',
             }}
           >
-            {lineaSaludo}
-          </h1>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+              <div>
+                <h2 style={{ margin: 0, color: '#0f172a', fontSize: 18, fontWeight: 900, lineHeight: 1.2 }}>Partidos abiertos</h2>
+                <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
+                  Partidos disponibles para sumarte
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/partidos-abiertos')}
+                style={{
+                  border: 'none',
+                  borderRadius: 999,
+                  background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                  color: '#fff',
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  fontFamily: 'inherit',
+                }}
+              >
+                Ver todos
+              </button>
+            </div>
+
+            {partidosLoading ? (
+              <p style={{ margin: 0, color: '#64748b', fontSize: 14, textAlign: 'center', padding: '16px 0' }}>
+                Cargando…
+              </p>
+            ) : partidosAbiertos.length > 0 ? (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  overflowX: 'auto',
+                  paddingBottom: 4,
+                  marginLeft: -4,
+                  marginRight: -4,
+                  paddingLeft: 4,
+                  paddingRight: 4,
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'thin',
+                }}
+              >
+                {partidosAbiertos.map((p) => (
+                  <PartidoAbiertoRailCard key={p.id} partido={p} onNavigate={() => navigate('/partidos-abiertos')} />
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: 'linear-gradient(180deg,#f8fafc,#f1f5f9)',
+                  borderRadius: 16,
+                  padding: 20,
+                  textAlign: 'center',
+                  border: '1px dashed #cbd5e1',
+                }}
+              >
+                <div style={{ fontSize: 36, marginBottom: 8 }}>🤝</div>
+                <strong style={{ display: 'block', fontSize: 16, color: '#0f172a', marginBottom: 6 }}>Todavía no hay partidos abiertos</strong>
+                <p style={{ margin: '0 0 14px', color: '#64748b', fontSize: 14, lineHeight: 1.45 }}>
+                  Creá el primero y completá equipo desde la app.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/armar-partido')}
+                  style={{
+                    border: 'none',
+                    borderRadius: 14,
+                    padding: '14px 20px',
+                    background: 'linear-gradient(135deg,#22c55e,#16a34a)',
+                    color: '#fff',
+                    fontWeight: 900,
+                    fontSize: 15,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 8px 22px rgba(22,163,74,0.35)',
+                  }}
+                >
+                  Armar el primero
+                </button>
+              </div>
+            )}
+          </section>
+
           {!authLoading && !session?.user ? (
             <p
               style={{
                 textAlign: 'center',
-                margin: '12px 0 0 0',
-                fontSize: '14px',
+                margin: '0 0 16px',
+                fontSize: 14,
                 fontWeight: 600,
-                color: '#ffffff',
+                color: 'rgba(255,255,255,0.92)',
                 lineHeight: 1.45,
               }}
             >
-              Puedes explorar sin registrarte
+              Podés explorar sin registrarte
             </p>
           ) : null}
-        </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '16px',
-            width: '100%',
-            maxWidth: '420px',
-            margin: '0 auto 20px auto',
-          }}
-        >
-          {accesosRapidos.map(({ label, icon, action }, index) => {
-            const isHovered = hoveredHubBtn === index;
-            return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', marginBottom: 16 }}>
+            {modulos.map((m) => (
               <button
-                key={label}
+                key={m.key}
                 type="button"
-                onClick={action}
-                onMouseEnter={() => setHoveredHubBtn(index)}
-                onMouseLeave={() => setHoveredHubBtn(null)}
+                onClick={m.onClick}
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '18px',
-                  borderRadius: '16px',
-                  background: '#ffffff',
-                  boxShadow: isHovered
-                    ? '0 14px 30px rgba(0,0,0,0.2)'
-                    : '0 10px 25px rgba(0,0,0,0.15)',
+                  width: '100%',
+                  textAlign: 'left',
                   border: 'none',
-                  transition: 'all 0.2s ease',
-                  transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+                  borderRadius: 20,
+                  padding: '20px 18px',
+                  background: '#fff',
+                  boxShadow: '0 12px 32px rgba(15,23,42,0.12)',
                   cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  boxSizing: 'border-box',
                 }}
               >
-                <span style={{ fontSize: '28px', lineHeight: 1, marginBottom: '6px' }}>{icon}</span>
-                <span style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', lineHeight: 1.2 }}>
-                  {label}
+                <span style={{ fontSize: 40, lineHeight: 1, flexShrink: 0 }} aria-hidden>
+                  {m.icon}
+                </span>
+                <span style={{ minWidth: 0, flex: 1 }}>
+                  <span style={{ display: 'block', fontSize: 17, fontWeight: 900, color: '#0f172a', letterSpacing: 0.02 }}>{m.titulo}</span>
+                  <span style={{ display: 'block', marginTop: 6, fontSize: 14, color: '#64748b', fontWeight: 600, lineHeight: 1.4 }}>
+                    {m.descripcion}
+                  </span>
+                </span>
+                <span style={{ fontSize: 22, color: '#667eea', fontWeight: 900, flexShrink: 0 }} aria-hidden>
+                  ›
                 </span>
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
 
-        <button
-          type="button"
-          onClick={() => navigate('/sedes')}
-          style={{
-            width: '100%',
-            maxWidth: '420px',
-            margin: '0 auto',
-            display: 'block',
-            padding: '16px',
-            borderRadius: '16px',
-            border: 'none',
-            fontWeight: '600',
-            background: 'rgba(255,255,255,0.9)',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-            cursor: 'pointer',
-            color: '#1e293b',
-          }}
-        >
-          Explorar sedes
-        </button>
-      </div>
-      </div>
-
-      {!isPwaStandalone() ? (
-        <div
-          style={{
-            marginTop: 'auto',
-            flexShrink: 0,
-            width: '100%',
-            boxSizing: 'border-box',
-            paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
-            paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-            paddingTop: '20px',
-            paddingBottom: '8px',
-          }}
-        >
-          <div
+          <button
+            type="button"
+            onClick={() => navigate('/sedes')}
             style={{
-              maxWidth: '420px',
-              margin: '0 auto',
-              padding: '14px 16px 16px',
-              borderRadius: '14px',
-              background: 'rgba(255,255,255,0.14)',
-              border: '1px solid rgba(255,255,255,0.22)',
-              boxSizing: 'border-box',
-              textAlign: 'center',
+              width: '100%',
+              margin: '0 auto 8px',
+              display: 'block',
+              padding: '14px 16px',
+              borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.35)',
+              fontWeight: 700,
+              background: 'rgba(255,255,255,0.18)',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.1)',
+              cursor: 'pointer',
               color: '#fff',
+              fontSize: 15,
+              fontFamily: 'inherit',
             }}
           >
-            <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, lineHeight: 1.45, opacity: 0.95 }}>
-              Instalá Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
-            </p>
-            <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
-          </div>
+            Explorar sedes
+          </button>
         </div>
-      ) : null}
+
+        {!isPwaStandalone() ? (
+          <div
+            style={{
+              marginTop: 'auto',
+              flexShrink: 0,
+              width: '100%',
+              maxWidth: HUB_COLUMN_MAX,
+              boxSizing: 'border-box',
+              paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
+              paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
+              paddingTop: 12,
+            }}
+          >
+            <div
+              style={{
+                padding: '14px 16px 16px',
+                borderRadius: 16,
+                background: 'rgba(255,255,255,0.14)',
+                border: '1px solid rgba(255,255,255,0.22)',
+                boxSizing: 'border-box',
+                textAlign: 'center',
+                color: '#fff',
+              }}
+            >
+              <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, lineHeight: 1.45, opacity: 0.95 }}>
+                Instalá Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
+              </p>
+              <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
+            </div>
+          </div>
+        ) : null}
       </div>
       <BottomNav />
     </div>
