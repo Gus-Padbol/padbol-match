@@ -1,5 +1,11 @@
 -- Supabase SQL Editor:
 -- Notificaciones in-app para jugadores (campanita del hub).
+--
+-- Columnas: user_id, tipo, titulo, mensaje, leida, created_at, link
+-- Tipos usados por el backend (texto libre; convención):
+--   partido_solicitud | partido_solicitud_aceptada | partido_solicitud_rechazada
+--   torneo_inscripcion_confirmada | resultado_partido | ranking_actualizado
+--   reserva_confirmada | recordatorio_reserva | invitacion_torneo_dupla | general
 
 CREATE TABLE IF NOT EXISTS notificaciones (
   id BIGSERIAL PRIMARY KEY,
@@ -32,3 +38,20 @@ CREATE POLICY "Usuarios marcan sus notificaciones"
   FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- Realtime (cliente con JWT): campanita se actualiza sin esperar al polling.
+-- Si falla "already member of publication", la tabla ya estaba publicada.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'notificaciones'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notificaciones;
+  END IF;
+END $$;
+
+ALTER TABLE public.notificaciones REPLICA IDENTITY FULL;

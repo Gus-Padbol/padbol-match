@@ -9,6 +9,20 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
+/** Etiqueta corta según `tipo` guardado por el backend (ver `notificaciones_jugadores.sql`). */
+const TIPO_ETIQUETA = {
+  partido_solicitud: 'Partido',
+  partido_solicitud_aceptada: 'Partido',
+  partido_solicitud_rechazada: 'Partido',
+  torneo_inscripcion_confirmada: 'Torneo',
+  resultado_partido: 'Torneo',
+  ranking_actualizado: 'Ranking',
+  reserva_confirmada: 'Reserva',
+  recordatorio_reserva: 'Reserva',
+  invitacion_torneo_dupla: 'Torneo',
+  general: 'Aviso',
+};
+
 function fechaNotifLabel(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '';
@@ -78,6 +92,30 @@ export default function JugadorNotificationsBell({ compact = false }) {
     return () => clearInterval(id);
   }, [fetchItems]);
 
+  /** Supabase Realtime: nuevo aviso o cambio de `leida` sin esperar al polling de 30s. */
+  useEffect(() => {
+    const uid = String(session?.user?.id || '').trim();
+    if (!uid) return undefined;
+    const channel = supabase
+      .channel(`notificaciones-jugador:${uid}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notificaciones',
+          filter: `user_id=eq.${uid}`,
+        },
+        () => {
+          fetchItems({ silent: true });
+        }
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, fetchItems]);
+
   useEffect(() => {
     if (!open) return undefined;
     const onDown = (ev) => {
@@ -91,9 +129,7 @@ export default function JugadorNotificationsBell({ compact = false }) {
     const nextOpen = !open;
     setOpen(nextOpen);
     if (nextOpen) {
-      const freshItems = await fetchItems();
-      const unreadIds = (freshItems || items).filter((n) => !n.leida).map((n) => n.id);
-      if (unreadIds.length) void markRead(unreadIds);
+      await fetchItems();
     }
   };
 
@@ -209,6 +245,20 @@ export default function JugadorNotificationsBell({ compact = false }) {
                     cursor: 'pointer',
                   }}
                 >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: '#4338ca',
+                      background: '#e0e7ff',
+                      padding: '2px 7px',
+                      borderRadius: 6,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {TIPO_ETIQUETA[n.tipo] || 'Aviso'}
+                  </span>
                   <strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{n.titulo}</strong>
                   <span style={{ display: 'block', color: '#475569', fontSize: 12, lineHeight: 1.4, marginTop: 4 }}>
                     {n.mensaje}

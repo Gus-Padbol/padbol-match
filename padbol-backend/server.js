@@ -1222,9 +1222,15 @@ app.patch('/api/notificaciones/leer', async (req, res) => {
     const ids = Array.isArray(req.body?.ids)
       ? req.body.ids.map((id) => parseInt(String(id), 10)).filter((id) => Number.isFinite(id) && id > 0)
       : [];
-    let q = supabase.from('notificaciones').update({ leida: true }).eq('user_id', authUser.id).eq('leida', false);
-    if (ids.length) q = q.in('id', ids);
-    const { error } = await q;
+    if (!ids.length) {
+      return res.json({ ok: true, skipped: true });
+    }
+    const { error } = await supabase
+      .from('notificaciones')
+      .update({ leida: true })
+      .eq('user_id', authUser.id)
+      .eq('leida', false)
+      .in('id', ids);
     if (error) throw error;
     res.json({ ok: true });
   } catch (err) {
@@ -4455,6 +4461,27 @@ app.post('/api/torneos/:id/busca-dupla/invitar', async (req, res) => {
         return res.json({ ok: true, invitation_id: ex2?.id, existing: true });
       }
       throw insErr;
+    }
+    try {
+      const [{ data: tNom }, { data: perfilFrom }] = await Promise.all([
+        supabase.from('torneos').select('nombre').eq('id', tid).maybeSingle(),
+        supabase.from('jugadores_perfil').select('nombre, apellido, apodo').eq('user_id', user.id).maybeSingle(),
+      ]);
+      const nombreTorneo = String(tNom?.nombre || 'el torneo').trim();
+      const nomInv =
+        String(perfilFrom?.apodo || '').trim() ||
+        [perfilFrom?.nombre, perfilFrom?.apellido].map((v) => String(v || '').trim()).filter(Boolean).join(' ') ||
+        String(email || '').split('@')[0] ||
+        'Un jugador';
+      void crearNotificacionJugador({
+        userId: toUid,
+        tipo: 'invitacion_torneo_dupla',
+        titulo: 'Invitación a formar equipo',
+        mensaje: `${nomInv} te invitó a armar equipo en ${nombreTorneo}.`,
+        link: `/torneo/${tid}/equipos`,
+      });
+    } catch {
+      /* no bloquear invitación si falla la notificación in-app */
     }
     res.json({ ok: true, invitation_id: inserted?.id, existing: false });
   } catch (err) {
