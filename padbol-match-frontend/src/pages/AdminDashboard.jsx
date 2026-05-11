@@ -6609,6 +6609,216 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
         <div className="section">
         {(() => {
+          const sedesManualReserva = Object.values(sedesMap || {}).sort((a, b) =>
+            String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' })
+          );
+          const mostrarSelectorSedeManual = !esAdminClub && sedesManualReserva.length !== 1;
+          const sedeManualId = String(reservaManualForm.sede_id || (esAdminClub && sedeId != null ? sedeId : '') || '');
+          const sedeManualRow = sedeManualId ? sedesMap[sedeManualId] : null;
+          const canchasManualReservaRaw = canchasDetallePorSede[sedeManualId] || [];
+          const canchasManualReserva = canchasManualReservaRaw.length
+            ? canchasManualReservaRaw
+                .filter((c) => normalizeEstadoCanchaAdminDash(c.estado) !== 'inactiva')
+                .map((c) => ({
+                  numero: Number(c.numero_reserva ?? c.orden),
+                  nombre: String(c.nombre || '').trim() || `Cancha ${c.numero_reserva ?? c.orden}`,
+                }))
+                .filter((c) => Number.isFinite(c.numero))
+                .sort((a, b) => a.numero - b.numero)
+            : Array.from(
+                { length: Math.max(0, Number(sedeManualRow?.cantidad_canchas) || Number(canchasResumenPorSede[sedeManualId]?.activas) || 0) },
+                (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}` })
+              );
+          const manualInput = {
+            width: '100%',
+            padding: '9px 10px',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            fontSize: '14px',
+            boxSizing: 'border-box',
+            background: '#fff',
+          };
+          const manualActionButton = (extra) => ({
+            padding: '9px 14px',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: reservaManualSaving ? 'not-allowed' : 'pointer',
+            fontSize: '12px',
+            whiteSpace: 'nowrap',
+            color: 'white',
+            ...extra,
+          });
+          const puedeCrearReservaManual = isSuperAdmin || esAdminClub;
+          const reservaManualPanel = puedeCrearReservaManual ? (
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '14px',
+                marginBottom: '16px',
+                boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setReservaManualOpen((open) => {
+                    const next = !open;
+                    if (next && !reservaManualForm.sede_id && sedesManualReserva.length === 1) {
+                      setReservaManualForm((p) => ({ ...p, sede_id: String(sedesManualReserva[0].id) }));
+                    }
+                    setReservaManualError('');
+                    return next;
+                  });
+                }}
+                style={{
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  background: '#0f172a',
+                  color: '#fff',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                {reservaManualOpen ? 'Cerrar reserva manual' : 'Nueva reserva manual'}
+              </button>
+
+              {reservaManualOpen ? (
+                <form onSubmit={crearReservaManual} style={{ marginTop: '14px', display: 'grid', gap: '12px' }}>
+                  {mostrarSelectorSedeManual ? (
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Sede
+                      <SedeSearchInput
+                        sedes={sedesManualReserva}
+                        valueId={reservaManualForm.sede_id}
+                        onChangeId={(id) => setReservaManualForm((p) => ({ ...p, sede_id: id, cancha: '' }))}
+                        inputStyle={manualInput}
+                      />
+                    </label>
+                  ) : null}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px' }}>
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Cancha
+                      <select
+                        value={reservaManualForm.cancha}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, cancha: e.target.value }))}
+                        style={manualInput}
+                        required
+                        disabled={!sedeManualId || canchasManualReserva.length === 0}
+                      >
+                        <option value="">
+                          {!sedeManualId
+                            ? 'Seleccioná sede'
+                            : canchasManualReserva.length === 0
+                              ? 'Sin canchas activas'
+                              : 'Seleccioná cancha'}
+                        </option>
+                        {canchasManualReserva.map((cancha) => (
+                          <option key={cancha.numero} value={String(cancha.numero)}>
+                            {cancha.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Fecha
+                      <input
+                        type="date"
+                        value={reservaManualForm.fecha}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, fecha: e.target.value }))}
+                        style={manualInput}
+                        required
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Hora inicio
+                      <input
+                        type="time"
+                        value={reservaManualForm.hora}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, hora: e.target.value }))}
+                        style={manualInput}
+                        required
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Duración
+                      <select
+                        value={reservaManualForm.duracion}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, duracion: e.target.value }))}
+                        style={manualInput}
+                      >
+                        <option value="60">60 min</option>
+                        <option value="90">90 min</option>
+                        <option value="120">120 min</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '10px' }}>
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Nombre del jugador
+                      <input
+                        type="text"
+                        value={reservaManualForm.nombre}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, nombre: e.target.value }))}
+                        style={manualInput}
+                        required
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Teléfono (opcional)
+                      <input
+                        type="tel"
+                        value={reservaManualForm.telefono}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, telefono: e.target.value }))}
+                        style={manualInput}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
+                      Estado
+                      <select
+                        value={reservaManualForm.estado}
+                        onChange={(e) => setReservaManualForm((p) => ({ ...p, estado: e.target.value }))}
+                        style={manualInput}
+                      >
+                        <option value="confirmada">Confirmada</option>
+                        <option value="reservada">Reservada</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  {reservaManualError ? (
+                    <div style={{ color: '#b91c1c', fontSize: '13px', fontWeight: 700 }}>{reservaManualError}</div>
+                  ) : null}
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="submit"
+                      disabled={reservaManualSaving}
+                      style={manualActionButton({ background: reservaManualSaving ? '#94a3b8' : '#16a34a' })}
+                    >
+                      {reservaManualSaving ? 'Guardando...' : 'Crear reserva'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={reservaManualSaving}
+                      onClick={() => {
+                        setReservaManualOpen(false);
+                        resetReservaManualForm();
+                      }}
+                      style={manualActionButton({ background: '#64748b' })}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+            </div>
+          ) : null;
+
           if (isSuperAdmin) {
             const getMonedaCanonica = (reserva) => {
               const s = String(reserva?.moneda || '').trim().toUpperCase();
@@ -7047,6 +7257,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
             return (
               <div style={{ display: 'grid', gap: '16px', minWidth: 0, maxWidth: '100%' }}>
+                {reservaManualPanel}
                 {periodoReservasSuperRow}
                 <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
                   País
@@ -7299,205 +7510,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           );
           const comisClubPm = Math.round(totalFactResClub * 0.03 * 100) / 100;
           const usarTarjetasReservasClub = vistaReservasAdminTarjetas && editandoId == null;
-          const sedesManualReserva = Object.values(sedesMap || {}).sort((a, b) =>
-            String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' })
-          );
-          const mostrarSelectorSedeManual = !esAdminClub && sedesManualReserva.length !== 1;
-          const sedeManualId = String(reservaManualForm.sede_id || (esAdminClub && sedeId != null ? sedeId : '') || '');
-          const sedeManualRow = sedeManualId ? sedesMap[sedeManualId] : null;
-          const canchasManualReservaRaw = canchasDetallePorSede[sedeManualId] || [];
-          const canchasManualReserva = canchasManualReservaRaw.length
-            ? canchasManualReservaRaw
-                .filter((c) => normalizeEstadoCanchaAdminDash(c.estado) !== 'inactiva')
-                .map((c) => ({
-                  numero: Number(c.numero_reserva ?? c.orden),
-                  nombre: String(c.nombre || '').trim() || `Cancha ${c.numero_reserva ?? c.orden}`,
-                }))
-                .filter((c) => Number.isFinite(c.numero))
-                .sort((a, b) => a.numero - b.numero)
-            : Array.from(
-                { length: Math.max(0, Number(sedeManualRow?.cantidad_canchas) || Number(canchasResumenPorSede[sedeManualId]?.activas) || 0) },
-                (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}` })
-              );
-          const manualInput = {
-            width: '100%',
-            padding: '9px 10px',
-            border: '1px solid #cbd5e1',
-            borderRadius: '8px',
-            fontSize: '14px',
-            boxSizing: 'border-box',
-            background: '#fff',
-          };
-          const puedeCrearReservaManual = isSuperAdmin || esAdminClub;
-          const reservaManualPanel = puedeCrearReservaManual ? (
-            <div
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '14px',
-                marginBottom: '16px',
-                boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setReservaManualOpen((open) => {
-                    const next = !open;
-                    if (next && !reservaManualForm.sede_id && sedesManualReserva.length === 1) {
-                      setReservaManualForm((p) => ({ ...p, sede_id: String(sedesManualReserva[0].id) }));
-                    }
-                    setReservaManualError('');
-                    return next;
-                  });
-                }}
-                style={{
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  background: '#0f172a',
-                  color: '#fff',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                {reservaManualOpen ? 'Cerrar reserva manual' : 'Nueva reserva manual'}
-              </button>
-
-              {reservaManualOpen ? (
-                <form onSubmit={crearReservaManual} style={{ marginTop: '14px', display: 'grid', gap: '12px' }}>
-                  {mostrarSelectorSedeManual ? (
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Sede
-                      <SedeSearchInput
-                        sedes={sedesManualReserva}
-                        valueId={reservaManualForm.sede_id}
-                        onChangeId={(id) => setReservaManualForm((p) => ({ ...p, sede_id: id, cancha: '' }))}
-                        inputStyle={manualInput}
-                      />
-                    </label>
-                  ) : null}
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px' }}>
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Cancha
-                      <select
-                        value={reservaManualForm.cancha}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, cancha: e.target.value }))}
-                        style={manualInput}
-                        required
-                        disabled={!sedeManualId || canchasManualReserva.length === 0}
-                      >
-                        <option value="">
-                          {!sedeManualId
-                            ? 'Seleccioná sede'
-                            : canchasManualReserva.length === 0
-                              ? 'Sin canchas activas'
-                              : 'Seleccioná cancha'}
-                        </option>
-                        {canchasManualReserva.map((cancha) => (
-                          <option key={cancha.numero} value={String(cancha.numero)}>
-                            {cancha.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Fecha
-                      <input
-                        type="date"
-                        value={reservaManualForm.fecha}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, fecha: e.target.value }))}
-                        style={manualInput}
-                        required
-                      />
-                    </label>
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Hora inicio
-                      <input
-                        type="time"
-                        value={reservaManualForm.hora}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, hora: e.target.value }))}
-                        style={manualInput}
-                        required
-                      />
-                    </label>
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Duración
-                      <select
-                        value={reservaManualForm.duracion}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, duracion: e.target.value }))}
-                        style={manualInput}
-                      >
-                        <option value="60">60 min</option>
-                        <option value="90">90 min</option>
-                        <option value="120">120 min</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '10px' }}>
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Nombre del jugador
-                      <input
-                        type="text"
-                        value={reservaManualForm.nombre}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, nombre: e.target.value }))}
-                        style={manualInput}
-                        required
-                      />
-                    </label>
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Teléfono (opcional)
-                      <input
-                        type="tel"
-                        value={reservaManualForm.telefono}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, telefono: e.target.value }))}
-                        style={manualInput}
-                      />
-                    </label>
-                    <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                      Estado
-                      <select
-                        value={reservaManualForm.estado}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, estado: e.target.value }))}
-                        style={manualInput}
-                      >
-                        <option value="confirmada">Confirmada</option>
-                        <option value="reservada">Reservada</option>
-                      </select>
-                    </label>
-                  </div>
-
-                  {reservaManualError ? (
-                    <div style={{ color: '#b91c1c', fontSize: '13px', fontWeight: 700 }}>{reservaManualError}</div>
-                  ) : null}
-
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button
-                      type="submit"
-                      disabled={reservaManualSaving}
-                      style={BTN({ background: reservaManualSaving ? '#94a3b8' : '#16a34a', padding: '9px 14px' })}
-                    >
-                      {reservaManualSaving ? 'Guardando...' : 'Crear reserva'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={reservaManualSaving}
-                      onClick={() => {
-                        setReservaManualOpen(false);
-                        resetReservaManualForm();
-                      }}
-                      style={BTN({ background: '#64748b', padding: '9px 14px' })}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
-              ) : null}
-            </div>
-          ) : null;
 
           const tarjetasClubReservas = mostrarResumenClubNacional ? (
             <div
