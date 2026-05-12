@@ -107,6 +107,43 @@ function normalizeUiLocale(raw) {
   return 'es';
 }
 
+/** Etiqueta corta para chips de elección de deporte (slug canónico del backend). */
+function deporteSlugDisplayLabel(slug, loc) {
+  const s = String(slug || '').trim().toLowerCase();
+  const l = normalizeUiLocale(loc);
+  const maps = {
+    es: {
+      padbol: 'Padbol',
+      padel: 'Pádel',
+      tenis: 'Tenis',
+      pickleball: 'Pickleball',
+      squash: 'Squash',
+      futbol_5: 'Fútbol 5',
+      futbol_7: 'Fútbol 7',
+    },
+    en: {
+      padbol: 'Padbol',
+      padel: 'Padel',
+      tenis: 'Tennis',
+      pickleball: 'Pickleball',
+      squash: 'Squash',
+      futbol_5: 'Football 5',
+      futbol_7: 'Football 7',
+    },
+    pt: {
+      padbol: 'Padbol',
+      padel: 'Padel',
+      tenis: 'Tênis',
+      pickleball: 'Pickleball',
+      squash: 'Squash',
+      futbol_5: 'Futebol 5',
+      futbol_7: 'Futebol 7',
+    },
+  };
+  const m = maps[l] || maps.es;
+  return m[s] || s.replace(/_/g, ' ');
+}
+
 /** es|en|pt según el texto escrito por el usuario (heurística alineada con el backend). */
 function inferWritingLocaleCodeFromText(textRaw) {
   const text = String(textRaw || '').trim();
@@ -215,6 +252,8 @@ function chatUiStrings(loc) {
       errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
       errVoiceStart: 'Could not start speech recognition.',
       slotsDisponiblesTitulo: 'Free slots (tap to book):',
+      deportesElegirTitulo: 'Sports at this club (tap one):',
+      deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
       franjaManana: '🌅 Morning',
       franjaTarde: '☀️ Afternoon',
       franjaNoche: '🌙 Evening',
@@ -265,6 +304,8 @@ function chatUiStrings(loc) {
       errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
       errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
       slotsDisponiblesTitulo: 'Horários livres (toque para reservar):',
+      deportesElegirTitulo: 'Esportes neste clube (toque em um):',
+      deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
       franjaManana: '🌅 Manhã',
       franjaTarde: '☀️ Tarde',
       franjaNoche: '🌙 Noite',
@@ -314,6 +355,8 @@ function chatUiStrings(loc) {
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
     slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
+    deportesElegirTitulo: 'Deportes en esta sede (toca uno):',
+    deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
     franjaManana: '🌅 Mañana',
     franjaTarde: '☀️ Tarde',
     franjaNoche: '🌙 Noche',
@@ -789,24 +832,30 @@ export default function ChatbotIA() {
           return;
         }
         const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
-        const disp =
-          data.disponibilidad &&
-          data.disponibilidad.sede_id != null &&
-          data.disponibilidad.fecha &&
-          Array.isArray(data.disponibilidad.slots) &&
-          data.disponibilidad.slots.length
-            ? {
-                sede_id: Number(data.disponibilidad.sede_id),
-                sede_nombre: String(data.disponibilidad.sede_nombre || '').trim(),
-                fecha: String(data.disponibilidad.fecha).slice(0, 10),
-                duracion_minutos: data.disponibilidad.duracion_minutos,
-                deporte_filtro:
-                  data.disponibilidad.deporte_filtro != null && String(data.disponibilidad.deporte_filtro).trim()
-                    ? String(data.disponibilidad.deporte_filtro).trim()
-                    : null,
-                slots: data.disponibilidad.slots,
-              }
-            : null;
+        const dispRaw = data.disponibilidad;
+        let disp = null;
+        if (dispRaw && dispRaw.sede_id != null && dispRaw.fecha) {
+          const slots = Array.isArray(dispRaw.slots) ? dispRaw.slots : [];
+          const depEl = Array.isArray(dispRaw.deportes_eleccion)
+            ? dispRaw.deportes_eleccion
+                .map((d) => String(d || '').trim().toLowerCase())
+                .filter(Boolean)
+            : [];
+          if (slots.length > 0 || depEl.length > 0) {
+            disp = {
+              sede_id: Number(dispRaw.sede_id),
+              sede_nombre: String(dispRaw.sede_nombre || '').trim(),
+              fecha: String(dispRaw.fecha).slice(0, 10),
+              duracion_minutos: dispRaw.duracion_minutos,
+              deporte_filtro:
+                dispRaw.deporte_filtro != null && String(dispRaw.deporte_filtro).trim()
+                  ? String(dispRaw.deporte_filtro).trim()
+                  : null,
+              slots,
+              deportes_eleccion: depEl.length ? depEl : null,
+            };
+          }
+        }
         setMessages((prev) => [...prev, { role: 'assistant', content: reply, disponibilidad: disp }]);
         if (data.reserve?.href) setLastReserve(data.reserve);
         const sc = data.sede_contexto;
@@ -1236,6 +1285,47 @@ export default function ChatbotIA() {
                   >
                     {m.content}
                   </div>
+                  {m.role === 'assistant' &&
+                  Array.isArray(m.disponibilidad?.deportes_eleccion) &&
+                  m.disponibilidad.deportes_eleccion.length ? (
+                    <div
+                      style={{
+                        alignSelf: 'flex-start',
+                        maxWidth: '92%',
+                        marginTop: -2,
+                        marginBottom: 2,
+                        padding: '0 2px 8px',
+                      }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                        {ui.deportesElegirTitulo}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {m.disponibilidad.deportes_eleccion.map((slug) => (
+                          <button
+                            key={`${i}-dep-${slug}`}
+                            type="button"
+                            disabled={loading || sessionEnded}
+                            onClick={() => void sendMessage(slug)}
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: 8,
+                              border: '1px solid #cbd5e1',
+                              background: '#fff',
+                              color: '#0f172a',
+                              fontWeight: 700,
+                              fontSize: 12,
+                              cursor: loading || sessionEnded ? 'not-allowed' : 'pointer',
+                              opacity: loading || sessionEnded ? 0.55 : 1,
+                              WebkitTapHighlightColor: 'transparent',
+                            }}
+                          >
+                            {ui.deporteElegirLabel(slug)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                   {m.role === 'assistant' && m.disponibilidad?.slots?.length ? (() => {
                     const disp = m.disponibilidad;
                     const slots = disp.slots;
