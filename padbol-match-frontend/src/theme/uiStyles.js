@@ -2,65 +2,68 @@ import * as T from './designTokens';
 
 export const pageBackgroundStyle = {
   minHeight: '100vh',
-  background: `linear-gradient(135deg, ${T.gradientStart}, ${T.gradientEnd})`,
+  background: T.colorBg,
 };
 
 export const cardStyle = {
   background: T.colorCard,
   borderRadius: T.radiusCard,
   boxShadow: T.shadowCard,
-  padding: 24,
+  border: `1px solid ${T.colorBorder}`,
+  padding: 16,
   boxSizing: 'border-box',
 };
 
 export const cardStyleCompact = {
   ...cardStyle,
-  padding: 18,
+  padding: 14,
 };
 
-/** A) Primario — acción principal */
+/** Primario de marca — rojo */
 export const buttonPrimaryStyle = {
   width: '100%',
-  padding: '16px 20px',
+  padding: '14px 24px',
   borderRadius: T.radiusButton,
   border: 'none',
-  fontWeight: 800,
+  fontWeight: 600,
   fontSize: 16,
   color: '#fff',
   cursor: 'pointer',
-  background: `linear-gradient(135deg, ${T.colorPrimary}, ${T.colorPrimaryDark})`,
-  boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
+  background: T.colorBrand,
+  boxShadow: 'none',
 };
 
-/** B) Secundario — navegación / alternativa fuerte */
+/** Secundario — borde rojo */
 export const buttonSecondaryStyle = {
   ...buttonPrimaryStyle,
-  background: `linear-gradient(135deg, ${T.colorSecondary}, ${T.colorSecondaryDark})`,
-  boxShadow: '0 4px 14px rgba(79, 70, 229, 0.3)',
+  background: 'transparent',
+  color: T.colorBrand,
+  border: `2px solid ${T.colorBrand}`,
 };
 
+/** Positivo / confirmar — verde */
 export const buttonAccentStyle = {
   ...buttonPrimaryStyle,
-  background: `linear-gradient(135deg, ${T.colorAccent}, ${T.colorAccentDark})`,
-  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
+  background: T.colorSuccess,
+  color: '#fff',
+  border: 'none',
 };
 
-/** C) Terciario — Volver / acciones suaves */
+/** Terciario — sobre fondos oscuros o fotos */
 export const buttonTertiaryStyle = {
   padding: '10px 18px',
   borderRadius: T.radiusButton,
-  border: '1px solid rgba(255,255,255,0.35)',
-  fontWeight: 700,
-  fontSize: 13,
-  color: '#fff',
+  border: `1px solid ${T.colorBorder}`,
+  fontWeight: 600,
+  fontSize: 14,
+  color: T.colorText,
   cursor: 'pointer',
-  background: 'rgba(0,0,0,0.35)',
-  backdropFilter: 'blur(4px)',
+  background: T.colorMutedBg,
 };
 
 export const status = {
   confirmed: { color: T.colorSuccessStrong, bg: 'rgba(22, 163, 74, 0.12)' },
   pending: { color: T.colorWarningSoft, bg: 'rgba(245, 158, 11, 0.15)' },
   complete: { color: T.colorPrimaryStrong, bg: 'rgba(21, 128, 61, 0.12)' },
-  error: { color: T.colorErrorDark, bg: 'rgba(239, 68, 68, 0.12)' },
+  error: { color: T.colorErrorDark, bg: 'rgba(225, 27, 34, 0.1)' },
 };

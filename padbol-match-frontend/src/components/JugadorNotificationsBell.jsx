@@ -29,7 +29,7 @@ function fechaNotifLabel(value) {
   return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-export default function JugadorNotificationsBell({ compact = false }) {
+export default function JugadorNotificationsBell({ compact = false, headerLight = false }) {
   const navigate = useNavigate();
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
@@ -154,9 +154,9 @@ export default function JugadorNotificationsBell({ compact = false }) {
           width: compact ? 30 : 34,
           height: compact ? 30 : 34,
           borderRadius: '50%',
-          border: 'none',
-          background: 'rgba(255,255,255,0.1)',
-          color: '#e2e8f0',
+          border: headerLight ? '1px solid #E0E0E0' : 'none',
+          background: headerLight ? '#F5F5F5' : 'rgba(255,255,255,0.1)',
+          color: headerLight ? '#0F0F0F' : '#e2e8f0',
           fontSize: compact ? 15 : 16,
           lineHeight: 1,
           cursor: 'pointer',
@@ -178,7 +178,7 @@ export default function JugadorNotificationsBell({ compact = false }) {
               borderRadius: 999,
               background: '#ef4444',
               color: '#fff',
-              border: '2px solid #0f172a',
+              border: headerLight ? '2px solid #fff' : '2px solid #0f172a',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',

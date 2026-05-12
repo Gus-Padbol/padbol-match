@@ -24,7 +24,7 @@ html {
   display: flex;
   flex-direction: column;
   /* Si una ruta no pinta nada, evita que solo se vea el gradiente violeta de `body` (App.css). */
-  background-color: #f1f5f9;
+  background-color: var(--pm-color-bg);
 }
 
 /* AppHeader fijo: safe area dentro del header (no tapar con scroll dinámico de Safari) */
@@ -63,20 +63,28 @@ html {
 :root {
   /** Misma anchura que la columna central del hub (`HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX`). */
   --pm-app-body-max-width: 900px;
-  --pm-color-primary: #22c55e;
-  --pm-color-primary-dark: #16a34a;
-  --pm-color-secondary: #6366f1;
-  --pm-color-secondary-dark: #4f46e5;
-  --pm-gradient-start: #667eea;
-  --pm-gradient-end: #764ba2;
+  --pm-color-bg: #ffffff;
+  --pm-color-text: #0f0f0f;
+  --pm-color-text-muted: #6b6b6b;
+  --pm-color-muted-bg: #f5f5f5;
+  --pm-color-border: #e0e0e0;
+  --pm-color-brand: #e11b22;
+  --pm-color-brand-hover: #c41219;
+  --pm-color-primary: #16a34a;
+  --pm-color-primary-dark: #15803d;
+  --pm-color-secondary: #e11b22;
+  --pm-color-secondary-dark: #c41219;
+  --pm-gradient-start: #f5f5f5;
+  --pm-gradient-end: #ffffff;
   --pm-color-card: #ffffff;
   --pm-color-success: #16a34a;
   --pm-color-warning: #f59e0b;
-  --pm-color-error: #ef4444;
+  --pm-color-error: #e11b22;
   --pm-color-highlight: #d97706;
-  --pm-radius-card: 20px;
-  --pm-radius-button: 16px;
-  --pm-shadow-card: 0 8px 28px rgba(15, 23, 42, 0.1);
+  --pm-radius-card: 12px;
+  --pm-radius-button: 8px;
+  --pm-radius-input: 8px;
+  --pm-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 body {
@@ -92,6 +100,28 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
+  color: var(--pm-color-text);
+  background: var(--pm-color-bg);
+}
+
+h1,
+h2 {
+  font-weight: 700;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(225, 27, 34, 0.25);
 }
 
 /* Mi Perfil: la foto no pegada al borde superior del bloque blanco */

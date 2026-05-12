@@ -3,9 +3,19 @@ import React from 'react';
 export const DEPORTE_LABEL_PARTIDO_ABIERTO = {
   padbol: 'Padbol',
   padel: 'Pádel',
+  tenis: 'Tenis',
   pickleball: 'Pickleball',
   futbol_5: 'Fútbol 5',
   futbol_7: 'Fútbol 7',
+};
+
+const DEPORTE_HERO = {
+  padbol: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
+  padel: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
+  tenis: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
+  pickleball: 'https://images.unsplash.com/photo-1622163642998-1ea36b1adcd3?w=800&q=80',
+  futbol_5: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
+  futbol_7: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
 };
 
 function fechaPartidoLabel(fecha) {
@@ -26,132 +36,158 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
   const requeridos = Math.max(2, parseInt(String(partido?.jugadores_requeridos || '4'), 10) || 4);
   const faltan = Math.max(0, requeridos - confirmados.length);
   const capitanFoto = String(partido?.capitan_foto_url || '').trim();
-  const capitanNombre = String(partido?.capitan_nombre || '').trim() || 'Capitán';
+  const capitanNombre = String(partido?.capitan_nombre || '').trim() || 'Organizador';
+  const dep = String(partido?.deporte || 'padbol').toLowerCase();
+  const hero = DEPORTE_HERO[dep] || DEPORTE_HERO.padbol;
 
   return (
     <article
       style={{
         width: '100%',
-        borderRadius: '18px',
-        background: '#fff',
-        color: '#0f172a',
-        boxShadow: compact ? '0 10px 24px rgba(15,23,42,0.14)' : '0 16px 35px rgba(15,23,42,0.18)',
-        border: '1px solid rgba(226,232,240,0.9)',
-        padding: compact ? '14px' : '16px',
+        borderRadius: 12,
+        background: '#FFFFFF',
+        color: '#0F0F0F',
+        boxShadow: compact ? '0 2px 8px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid #E0E0E0',
+        overflow: 'hidden',
         boxSizing: 'border-box',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        {capitanFoto ? (
-          <img
-            src={capitanFoto}
-            alt={capitanNombre}
-            style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#e2e8f0' }}
-          />
-        ) : (
-          <div
-            aria-hidden
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg,#667eea,#764ba2)',
-              color: '#fff',
-              display: 'grid',
-              placeItems: 'center',
-              fontWeight: 900,
-            }}
-          >
-            {capitanNombre.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <strong style={{ display: 'block', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {capitanNombre}
-          </strong>
-          <span style={{ display: 'block', color: '#64748b', fontSize: '12px', fontWeight: 700 }}>
-            Capitán del partido
-          </span>
-        </div>
-        <span
+      <div
+        style={{
+          height: compact ? 100 : 120,
+          background: `#6B6B6B url(${hero}) center/cover no-repeat`,
+          position: 'relative',
+        }}
+      >
+        <div
           style={{
-            borderRadius: '999px',
-            padding: '6px 9px',
-            background: faltan > 0 ? '#ecfdf5' : '#eef2ff',
-            color: faltan > 0 ? '#047857' : '#4338ca',
-            fontSize: '12px',
-            fontWeight: 900,
-            whiteSpace: 'nowrap',
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            padding: '6px 10px',
+            borderRadius: 6,
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: 0.04,
+            background: faltan > 0 ? '#16A34A' : '#E11B22',
+            color: '#fff',
           }}
         >
-          {faltan > 0 ? `Faltan ${faltan}` : 'Completo'}
-        </span>
+          {faltan > 0 ? 'LUGARES DISPONIBLES' : 'SIN LUGAR'}
+        </div>
       </div>
 
-      <h3 style={{ margin: '0 0 8px', fontSize: compact ? '17px' : '19px', lineHeight: 1.2 }}>
-        {DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido'} en {partido?.sede_nombre || 'sede'}
-      </h3>
-      <p style={{ margin: '0 0 12px', color: '#475569', fontSize: '13px', lineHeight: 1.5 }}>
-        {fechaPartidoLabel(partido?.fecha)} · {horaPartidoLabel(partido?.hora)} · Cancha {partido?.cancha || '—'} ·{' '}
-        {partido?.duracion_minutos || 90} min · Nivel {partido?.nivel || 'Principiante'}
-      </p>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap', marginBottom: onJoin ? '14px' : 0 }}>
-        {Array.from({ length: requeridos }, (_, idx) => {
-          const jugador = confirmados[idx];
-          const foto = String(jugador?.foto_url || '').trim();
-          const nombre = String(jugador?.nombre || '').trim() || 'Jugador';
-          return foto ? (
+      <div style={{ padding: compact ? 14 : 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          {capitanFoto ? (
             <img
-              key={idx}
-              src={foto}
-              alt={nombre}
-              title={nombre}
-              style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }}
+              src={capitanFoto}
+              alt={capitanNombre}
+              style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#F5F5F5', border: '1px solid #E0E0E0' }}
             />
           ) : (
-            <span
-              key={idx}
-              title={jugador ? nombre : 'Slot disponible'}
+            <div
+              aria-hidden
               style={{
-                width: 30,
-                height: 30,
+                width: 44,
+                height: 44,
                 borderRadius: '50%',
-                border: jugador ? '2px solid #c4b5fd' : '2px dashed #cbd5e1',
-                background: jugador ? '#ede9fe' : '#f8fafc',
-                color: jugador ? '#5b21b6' : '#94a3b8',
-                display: 'inline-grid',
+                background: '#F5F5F5',
+                color: '#E11B22',
+                display: 'grid',
                 placeItems: 'center',
-                fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 700,
+                fontSize: 16,
+                border: '1px solid #E0E0E0',
               }}
             >
-              {jugador ? nombre.charAt(0).toUpperCase() : '+'}
-            </span>
-          );
-        })}
-      </div>
+              {capitanNombre.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <strong style={{ display: 'block', fontSize: 16, fontWeight: 700, color: '#0F0F0F' }}>{capitanNombre}</strong>
+            <span style={{ display: 'block', color: '#6B6B6B', fontSize: 12, fontWeight: 600 }}>Organizador</span>
+          </div>
+        </div>
 
-      {onJoin ? (
-        <button
-          type="button"
-          onClick={() => onJoin(partido)}
-          disabled={joining || faltan <= 0}
+        <h3 style={{ margin: '0 0 10px', fontSize: compact ? 17 : 18, lineHeight: 1.25, fontWeight: 700 }}>
+          {DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido'} · {partido?.sede_nombre || 'Sede'}
+        </h3>
+        <ul
           style={{
-            width: '100%',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '12px 14px',
-            background: joining || faltan <= 0 ? '#cbd5e1' : 'linear-gradient(135deg,#22c55e,#16a34a)',
-            color: '#fff',
-            fontWeight: 900,
-            fontSize: '14px',
-            cursor: joining || faltan <= 0 ? 'not-allowed' : 'pointer',
+            margin: '0 0 14px',
+            paddingLeft: 18,
+            color: '#6B6B6B',
+            fontSize: 14,
+            fontWeight: 400,
+            lineHeight: 1.55,
           }}
         >
-          {joining ? 'Enviando...' : faltan <= 0 ? 'Partido completo' : 'Quiero jugar'}
-        </button>
-      ) : null}
+          <li>{fechaPartidoLabel(partido?.fecha)}</li>
+          <li>Hora {horaPartidoLabel(partido?.hora)}</li>
+          <li>Nivel {partido?.nivel || 'Principiante'}</li>
+          <li>Cancha {partido?.cancha || '—'}</li>
+          <li>{partido?.duracion_minutos || 90} min</li>
+        </ul>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: onJoin ? 14 : 0 }}>
+          {Array.from({ length: requeridos }, (_, idx) => {
+            const jugador = confirmados[idx];
+            const foto = String(jugador?.foto_url || '').trim();
+            const nombre = String(jugador?.nombre || '').trim() || 'Jugador';
+            return foto ? (
+              <img
+                key={idx}
+                src={foto}
+                alt={nombre}
+                title={nombre}
+                style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E0E0E0' }}
+              />
+            ) : (
+              <span
+                key={idx}
+                title={jugador ? nombre : 'Libre'}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  border: jugador ? '2px solid #E0E0E0' : '2px dashed #B0B0B0',
+                  background: jugador ? '#F5F5F5' : '#FFFFFF',
+                  color: jugador ? '#0F0F0F' : '#94a3b8',
+                  display: 'inline-grid',
+                  placeItems: 'center',
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                {jugador ? nombre.charAt(0).toUpperCase() : '+'}
+              </span>
+            );
+          })}
+        </div>
+
+        {onJoin ? (
+          <button
+            type="button"
+            onClick={() => onJoin(partido)}
+            disabled={joining || faltan <= 0}
+            style={{
+              width: '100%',
+              border: 'none',
+              borderRadius: 8,
+              padding: '14px 16px',
+              background: joining || faltan <= 0 ? '#E0E0E0' : '#16A34A',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: 16,
+              cursor: joining || faltan <= 0 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {joining ? 'Enviando...' : faltan <= 0 ? 'Partido completo' : 'Quiero jugar'}
+          </button>
+        ) : null}
+      </div>
     </article>
   );
 }

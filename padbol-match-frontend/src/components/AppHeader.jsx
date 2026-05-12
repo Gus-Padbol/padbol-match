@@ -213,6 +213,9 @@ export default function AppHeader({
     return false;
   }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
 
+  const hubLightBar =
+    jugadorHubShellPath && !adminFlowSurface && !adminPanelMinimalHeader;
+
   const authEmail = String(session?.user?.email || '').trim().toLowerCase();
   /** Panel admin (barra compacta): logout rápido. En flujo jugador el cierre va en Mi Perfil. */
   const showLogoutAdminHeader = !hideLogoutEffective && Boolean(session?.user);
@@ -910,11 +913,11 @@ export default function AppHeader({
       style={{
         overflowX: 'hidden',
         minHeight: '56px',
-        background: '#0f172a',
+        background: hubLightBar ? '#ffffff' : '#0f172a',
         paddingBottom: '8px',
         paddingLeft: padL,
         paddingRight: padR,
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: hubLightBar ? '1px solid #E0E0E0' : '1px solid rgba(255,255,255,0.08)',
       }}
     >
       <div className="app-header-inner app-header-inner--max-body" style={headerInnerCssVarStyle}>
@@ -1011,7 +1014,7 @@ export default function AppHeader({
             <button
               type="button"
               onClick={handleBack}
-              style={{ ...btnVolver, flexShrink: 0 }}
+              style={{ ...(hubLightBar ? { ...btnVolver, background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#0F0F0F' } : btnVolver), flexShrink: 0 }}
               aria-label="Volver atrás"
             >
               {displayBackLabel}
@@ -1044,7 +1047,7 @@ export default function AppHeader({
               type="button"
               onClick={() => navigate('/')}
               style={{
-                color: titleColor || '#fff',
+                color: titleColor || (hubLightBar ? '#0F0F0F' : '#fff'),
                 fontSize: '15px',
                 fontWeight: 600,
                 margin: 0,
@@ -1146,9 +1149,9 @@ export default function AppHeader({
                         : 'min(42vw, 160px)',
                     padding: adminFlowSurface ? '2px 8px 2px 2px' : compactHubChip ? '3px 6px 3px 3px' : '4px 8px 4px 4px',
                     borderRadius: '999px',
-                    border: adminFlowSurface ? '1px solid rgba(255,255,255,0.28)' : 'none',
-                    background: 'rgba(255,255,255,0.12)',
-                    color: '#f8fafc',
+                    border: hubLightBar ? '1px solid #E0E0E0' : adminFlowSurface ? '1px solid rgba(255,255,255,0.28)' : 'none',
+                    background: hubLightBar ? '#F5F5F5' : 'rgba(255,255,255,0.12)',
+                    color: hubLightBar ? '#0F0F0F' : '#f8fafc',
                     cursor: 'pointer',
                     flexShrink: 1,
                     minWidth: 0,
@@ -1164,7 +1167,7 @@ export default function AppHeader({
                         borderRadius: '50%',
                         objectFit: 'cover',
                         flexShrink: 0,
-                        border: '1px solid rgba(255,255,255,0.25)',
+                        border: hubLightBar ? '1px solid #E0E0E0' : '1px solid rgba(255,255,255,0.25)',
                       }}
                     />
                   ) : (
@@ -1173,14 +1176,15 @@ export default function AppHeader({
                         width: adminFlowSurface ? 22 : compactHubChip ? 22 : 28,
                         height: adminFlowSurface ? 22 : compactHubChip ? 22 : 28,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                        color: '#fff',
+                        background: hubLightBar ? '#F5F5F5' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                        color: hubLightBar ? '#E11B22' : '#fff',
                         fontSize: adminFlowSurface ? 10 : compactHubChip ? 10 : 12,
                         fontWeight: 800,
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
+                        border: hubLightBar ? '1px solid #E0E0E0' : 'none',
                       }}
                     >
                       {hubInicial}
@@ -1202,7 +1206,9 @@ export default function AppHeader({
               </div>
             ) : null}
             {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
-            {showJugadorNotifications ? <JugadorNotificationsBell compact={compactHubChip} /> : null}
+            {showJugadorNotifications ? (
+              <JugadorNotificationsBell compact={compactHubChip} headerLight={hubLightBar} />
+            ) : null}
             {searchUiBlock}
             {hubDirectLogin && !session?.user && !authLoading ? (
               <button

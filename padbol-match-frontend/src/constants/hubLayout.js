@@ -74,6 +74,7 @@ export function isJugadorHubShellPathname(pathname) {
   if (pathOnly === '/mi-perfil' || pathOnly.startsWith('/mi-perfil/')) return true;
   if (pathOnly === '/partidos-abiertos') return true;
   if (pathOnly === '/armar-partido') return true;
+  if (pathOnly === '/notificaciones') return true;
   return false;
 }
 

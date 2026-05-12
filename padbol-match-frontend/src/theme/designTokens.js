@@ -1,36 +1,47 @@
-/** Padbol Match — design tokens (UI only) */
+/** Padbol Match — design tokens (Gero refresh, UI only) */
 
-export const colorPrimary = '#22c55e';
-export const colorPrimaryDark = '#16a34a';
-export const colorPrimaryStrong = '#15803d';
+export const colorBg = '#FFFFFF';
+export const colorText = '#0F0F0F';
+export const colorAccent = '#E11B22';
+export const colorAccentHover = '#C41219';
+export const colorMutedBg = '#F5F5F5';
+export const colorTextMuted = '#6B6B6B';
+export const colorBorder = '#E0E0E0';
 
-export const colorSecondary = '#6366f1';
-export const colorSecondaryDark = '#4f46e5';
+/** Acción positiva (unirse, confirmar) */
+export const colorPrimary = '#16A34A';
+export const colorPrimaryDark = '#15803d';
+export const colorPrimaryStrong = '#166534';
 
-export const gradientStart = '#667eea';
-export const gradientEnd = '#764ba2';
+/** Marca / CTA principal (botón primario de marca) */
+export const colorBrand = '#E11B22';
+export const colorBrandHover = '#C41219';
+
+export const colorSecondary = colorBrand;
+export const colorSecondaryDark = colorBrandHover;
+
+export const gradientStart = colorMutedBg;
+export const gradientEnd = colorBg;
 
 export const colorCard = '#ffffff';
-export const colorCardMuted = '#f8fafc';
-export const colorText = '#0f172a';
-export const colorTextMuted = '#64748b';
+export const colorCardMuted = colorMutedBg;
 
-export const colorSuccess = '#16a34a';
+export const colorSuccess = '#16A34A';
 export const colorSuccessStrong = '#15803d';
 export const colorWarning = '#f59e0b';
 export const colorWarningSoft = '#b45309';
-export const colorError = '#ef4444';
-export const colorErrorDark = '#b91c1c';
+export const colorError = '#E11B22';
+export const colorErrorDark = '#C41219';
 
-/** Logros / destacados deportivos */
 export const colorHighlight = '#d97706';
 
-export const colorAccent = '#0ea5e9';
+export const colorAccentBlue = '#0ea5e9';
 export const colorAccentDark = '#0284c7';
 
-export const shadowCard = '0 8px 28px rgba(15, 23, 42, 0.1)';
-export const shadowCardHover = '0 12px 36px rgba(15, 23, 42, 0.12)';
+export const shadowCard = '0 2px 8px rgba(0, 0, 0, 0.08)';
+export const shadowCardHover = '0 4px 12px rgba(0, 0, 0, 0.1)';
 
-export const radiusCard = 20;
-export const radiusButton = 16;
+export const radiusCard = 12;
+export const radiusButton = 8;
+export const radiusInput = 8;
 export const radiusPill = 9999;

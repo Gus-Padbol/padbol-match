@@ -27,6 +27,7 @@ import PagoFallido from './pages/PagoFallido';
 import Jugar from './pages/Jugar';
 import Competir from './pages/Competir';
 import PartidosAbiertos from './pages/PartidosAbiertos';
+import NotificacionesPage from './pages/NotificacionesPage';
 import ArmarPartido from './pages/ArmarPartido';
 import useUserRole from './hooks/useUserRole';
 import EquipoVista from './pages/EquipoVista';
@@ -313,6 +314,7 @@ function AppRoutes() {
         <Route path="/jugar/buscar" element={<PartidosAbiertos />} />
         <Route path="/competir" element={<Competir />} />
         <Route path="/partidos-abiertos" element={<PartidosAbiertos />} />
+        <Route path="/notificaciones" element={<NotificacionesPage />} />
         <Route path="/armar-partido" element={<ArmarPartido />} />
 
         <Route path="/torneos" element={<TorneosPublicos />} />
