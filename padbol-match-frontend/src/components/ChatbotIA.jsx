@@ -11,6 +11,8 @@ import {
 import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 
 const MAX_USER_MESSAGES = 6;
+/** Por encima de este número de turnos se agrupa por franja (si aplica más de una franja con datos). */
+const DISPO_SLOTS_FRANJA_THRESHOLD = 8;
 const CHAT_IA_GEO_DENIED_STORAGE_KEY = 'padbol_match_chat_ia_geo_denied';
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -36,6 +38,42 @@ function ymdBuenosAires(d = new Date()) {
   }
   return '';
 }
+
+/** Minutos desde medianoche a partir de `hora_inicio` (ej. "09:30" o "09:30:00"). */
+function horaInicioSlotToMinutes(horaInicio) {
+  const str = String(horaInicio || '').trim();
+  const m = str.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+  return hh * 60 + mm;
+}
+
+/**
+ * Franjas según especificación: 🌅 08:00–12:59, ☀️ 13:00–17:59, 🌙 18:00–23:59.
+ * Horas fuera de 08–24 se asignan a la franja más cercana para no perder chips.
+ */
+function slotFranjaKey(horaInicio) {
+  const min = horaInicioSlotToMinutes(horaInicio);
+  if (min == null) return 'manana';
+  if (min < 8 * 60) return 'manana';
+  if (min <= 12 * 60 + 59) return 'manana';
+  if (min <= 17 * 60 + 59) return 'tarde';
+  return 'noche';
+}
+
+function groupDisponibilidadSlotsByFranja(slots) {
+  const out = { manana: [], tarde: [], noche: [] };
+  if (!Array.isArray(slots)) return out;
+  for (const s of slots) {
+    const k = slotFranjaKey(s?.hora_inicio);
+    out[k].push(s);
+  }
+  return out;
+}
+
+const FRANJA_KEYS = ['manana', 'tarde', 'noche'];
 
 function getSpeechRecognitionCtor() {
   if (typeof window === 'undefined') return null;
@@ -177,6 +215,9 @@ function chatUiStrings(loc) {
       errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
       errVoiceStart: 'Could not start speech recognition.',
       slotsDisponiblesTitulo: 'Free slots (tap to book):',
+      franjaManana: '🌅 Morning',
+      franjaTarde: '☀️ Afternoon',
+      franjaNoche: '🌙 Evening',
       welcomeAssistant: (firstName) => {
         const n = String(firstName || '').trim();
         const lead = n ? `Hi ${n} 👋` : 'Hi 👋';
@@ -224,6 +265,9 @@ function chatUiStrings(loc) {
       errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
       errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
       slotsDisponiblesTitulo: 'Horários livres (toque para reservar):',
+      franjaManana: '🌅 Manhã',
+      franjaTarde: '☀️ Tarde',
+      franjaNoche: '🌙 Noite',
       welcomeAssistant: (firstName) => {
         const n = String(firstName || '').trim();
         const lead = n ? `Olá ${n} 👋` : 'Olá 👋';
@@ -270,6 +314,9 @@ function chatUiStrings(loc) {
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
     slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
+    franjaManana: '🌅 Mañana',
+    franjaTarde: '☀️ Tarde',
+    franjaNoche: '🌙 Noche',
     welcomeAssistant: (firstName) => {
       const n = String(firstName || '').trim();
       const lead = n ? `Hola ${n} 👋` : 'Hola 👋';
@@ -358,6 +405,8 @@ export default function ChatbotIA() {
   const [readAloud, setReadAloud] = useState(false);
   /** True mientras `speechSynthesis` está reproduciendo la última respuesta del asistente. */
   const [ttsPlaying, setTtsPlaying] = useState(false);
+  /** Despliegue por franja de turnos (índice del mensaje + franja) cuando hay >8 slots y varias franjas. */
+  const [dispSlotsFranja, setDispSlotsFranja] = useState(null);
   const [lastReserve, setLastReserve] = useState(null);
   const [bootstrap, setBootstrap] = useState(null);
   const [sedeContextoTurno, setSedeContextoTurno] = useState(null);
@@ -955,6 +1004,7 @@ export default function ChatbotIA() {
       /* ignore */
     }
     setTtsPlaying(false);
+    setDispSlotsFranja(null);
     setMessages([]);
     setInput('');
     setError('');
@@ -1186,57 +1236,117 @@ export default function ChatbotIA() {
                   >
                     {m.content}
                   </div>
-                  {m.role === 'assistant' && m.disponibilidad?.slots?.length ? (
-                    <div
-                      style={{
-                        alignSelf: 'flex-start',
-                        maxWidth: '92%',
-                        marginTop: -2,
-                        marginBottom: 2,
-                        padding: '0 2px 8px',
-                      }}
-                    >
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
-                        {ui.slotsDisponiblesTitulo}
+                  {m.role === 'assistant' && m.disponibilidad?.slots?.length ? (() => {
+                    const disp = m.disponibilidad;
+                    const slots = disp.slots;
+                    const n = slots.length;
+                    const groups = groupDisponibilidadSlotsByFranja(slots);
+                    const keysWithSlots = FRANJA_KEYS.filter((k) => groups[k].length > 0);
+                    const useFranjaNav =
+                      n > DISPO_SLOTS_FRANJA_THRESHOLD && keysWithSlots.length > 1;
+                    const franjaAbierta =
+                      dispSlotsFranja?.messageIndex === i ? dispSlotsFranja.franja : null;
+                    const listado = useFranjaNav
+                      ? franjaAbierta
+                        ? groups[franjaAbierta]
+                        : []
+                      : slots;
+
+                    return (
+                      <div
+                        style={{
+                          alignSelf: 'flex-start',
+                          maxWidth: '92%',
+                          marginTop: -2,
+                          marginBottom: 2,
+                          padding: '0 2px 8px',
+                        }}
+                      >
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                          {ui.slotsDisponiblesTitulo}
+                        </div>
+                        {useFranjaNav ? (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 6,
+                              marginBottom: listado.length ? 6 : 0,
+                            }}
+                          >
+                            {keysWithSlots.map((k) => {
+                              const active = franjaAbierta === k;
+                              const label =
+                                k === 'manana' ? ui.franjaManana : k === 'tarde' ? ui.franjaTarde : ui.franjaNoche;
+                              return (
+                                <button
+                                  key={`${i}-franja-${k}`}
+                                  type="button"
+                                  onClick={() =>
+                                    setDispSlotsFranja((prev) =>
+                                      prev?.messageIndex === i && prev?.franja === k
+                                        ? null
+                                        : { messageIndex: i, franja: k },
+                                    )
+                                  }
+                                  style={{
+                                    padding: '6px 10px',
+                                    borderRadius: 8,
+                                    border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                                    background: active ? '#eef2ff' : '#fff',
+                                    color: '#0f172a',
+                                    fontWeight: 700,
+                                    fontSize: 12,
+                                    cursor: 'pointer',
+                                    WebkitTapHighlightColor: 'transparent',
+                                  }}
+                                >
+                                  {label}{' '}
+                                  <span style={{ color: '#64748b', fontWeight: 700 }}>({groups[k].length})</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {listado.map((s, j) => {
+                            const sid = disp.sede_id;
+                            const fe = disp.fecha;
+                            const det = Array.isArray(s.canchas_detalle) ? s.canchas_detalle : [];
+                            const nLibresRaw = Number(s.canchas_libres);
+                            const nLibres =
+                              Number.isFinite(nLibresRaw) && nLibresRaw > 0
+                                ? nLibresRaw
+                                : Math.max(1, det.length);
+                            const hora = String(s.hora_inicio || '').trim();
+                            const chipText = hora ? `${hora} · ${nLibres}` : String(nLibres);
+                            const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
+                            return (
+                              <Link
+                                key={`${i}-slot-${String(s.hora_inicio || '')}-${j}`}
+                                to={href}
+                                onClick={() => setOpen(false)}
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '5px 9px',
+                                  borderRadius: 8,
+                                  background: '#e0e7ff',
+                                  color: '#312e81',
+                                  fontWeight: 700,
+                                  fontSize: 12,
+                                  textDecoration: 'none',
+                                  border: '1px solid #c7d2fe',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {chipText}
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {m.disponibilidad.slots.slice(0, 14).map((s, j) => {
-                          const sid = m.disponibilidad.sede_id;
-                          const fe = m.disponibilidad.fecha;
-                          const det = Array.isArray(s.canchas_detalle) ? s.canchas_detalle : [];
-                          const nLibresRaw = Number(s.canchas_libres);
-                          const nLibres =
-                            Number.isFinite(nLibresRaw) && nLibresRaw > 0
-                              ? nLibresRaw
-                              : Math.max(1, det.length);
-                          const hora = String(s.hora_inicio || '').trim();
-                          const chipText = hora ? `${hora} · ${nLibres}` : String(nLibres);
-                          const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
-                          return (
-                            <Link
-                              key={`${i}-slot-${j}`}
-                              to={href}
-                              onClick={() => setOpen(false)}
-                              style={{
-                                display: 'inline-block',
-                                padding: '5px 9px',
-                                borderRadius: 8,
-                                background: '#e0e7ff',
-                                color: '#312e81',
-                                fontWeight: 700,
-                                fontSize: 12,
-                                textDecoration: 'none',
-                                border: '1px solid #c7d2fe',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {chipText}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
+                    );
+                  })() : null}
                   {m.role === 'assistant' && showQuickSuggestionBar && i === lastAssistantIndex ? (
                     <QuickSuggestionBar
                       items={ui.quickSuggestions}
