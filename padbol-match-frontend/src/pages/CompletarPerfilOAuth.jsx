@@ -56,6 +56,22 @@ const btnSecundarioStyle = {
   cursor: 'pointer',
 };
 
+/** Estilo del botón terciario «Omitir»: texto gris pequeño, sin borde ni fondo. */
+const btnOmitirStyle = {
+  display: 'block',
+  width: '100%',
+  marginTop: '10px',
+  padding: '6px 8px',
+  border: 'none',
+  background: 'transparent',
+  color: '#94a3b8',
+  fontWeight: 500,
+  fontSize: '13px',
+  lineHeight: 1.35,
+  cursor: 'pointer',
+  textAlign: 'center',
+};
+
 function capitalizar(s) {
   const t = String(s || '').trim();
   if (!t) return '';
@@ -120,6 +136,13 @@ export default function CompletarPerfilOAuth() {
     }
     return true;
   }, [genero, waLocal, waLocalConfirm, waCodigo]);
+
+  const irAlHubPrincipal = useCallback(() => {
+    const from = location.state?.from;
+    let dest = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : '/hub';
+    if (dest === '/completar-perfil') dest = '/hub';
+    navigate(dest, { replace: true });
+  }, [location.state, navigate]);
 
   const handleGuardar = useCallback(
     async (e) => {
@@ -211,10 +234,7 @@ export default function CompletarPerfilOAuth() {
           /* ignore */
         }
         await refreshSession();
-        const from = location.state?.from;
-        let dest = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : '/hub';
-        if (dest === '/completar-perfil') dest = '/hub';
-        navigate(dest, { replace: true });
+        irAlHubPrincipal();
       } catch (err) {
         setErrorMsg(err?.message || 'No se pudo guardar el perfil.');
       } finally {
@@ -233,8 +253,7 @@ export default function CompletarPerfilOAuth() {
       deportesPreferidos,
       validarPasoDatos,
       refreshSession,
-      location.state,
-      navigate,
+      irAlHubPrincipal,
     ]
   );
 
@@ -248,7 +267,7 @@ export default function CompletarPerfilOAuth() {
         minHeight: '100dvh',
         width: '100%',
         maxWidth: '100%',
-        background: 'linear-gradient(135deg,#667eea,#764ba2)',
+        background: '#FFFFFF',
         paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingLeft: '16px',
         paddingRight: '16px',
@@ -282,7 +301,7 @@ export default function CompletarPerfilOAuth() {
         />
         <h1
           style={{
-            color: '#fff',
+            color: '#111827',
             fontSize: '1.25rem',
             fontWeight: 700,
             textAlign: 'center',
@@ -291,7 +310,7 @@ export default function CompletarPerfilOAuth() {
         >
           {paso === 0 ? 'Completa tu perfil' : '¿Qué deportes practicas?'}
         </h1>
-        <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
+        <p style={{ color: '#374151', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
           {paso === 0
             ? 'Completa tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.'
             : 'Elige uno o más (opcional pero recomendado). Puedes cambiarlos después en Mi perfil.'}
@@ -299,7 +318,7 @@ export default function CompletarPerfilOAuth() {
         <form
           onSubmit={(ev) => void handleGuardar(ev)}
           style={{
-            background: 'rgba(255,255,255,0.98)',
+            background: '#FFFFFF',
             borderRadius: '14px',
             padding: '20px 18px',
             boxSizing: 'border-box',
@@ -307,6 +326,8 @@ export default function CompletarPerfilOAuth() {
             minWidth: 0,
             maxWidth: '100%',
             overflow: 'visible',
+            boxShadow: '0 4px 24px rgba(15, 23, 42, 0.08)',
+            border: '1px solid rgba(15, 23, 42, 0.06)',
           }}
         >
           {paso === 0 ? (
@@ -518,6 +539,18 @@ export default function CompletarPerfilOAuth() {
             }}
           >
             {busy ? 'Guardando…' : paso === 0 ? 'Continuar' : 'Guardar y continuar'}
+          </button>
+          <button
+            type="button"
+            onClick={irAlHubPrincipal}
+            disabled={busy || loading || profileLoading}
+            style={{
+              ...btnOmitirStyle,
+              cursor: busy || loading || profileLoading ? 'not-allowed' : 'pointer',
+              opacity: busy || loading || profileLoading ? 0.5 : 1,
+            }}
+          >
+            Omitir
           </button>
         </form>
       </div>
