@@ -57,6 +57,8 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/sedes' || pathOnly.startsWith('/sedes/')) return true;
   if (pathOnly === '/terminos' || pathOnly.startsWith('/terminos/')) return true;
   if (pathOnly === '/privacidad' || pathOnly.startsWith('/privacidad/')) return true;
+  if (pathOnly === '/sobre' || pathOnly.startsWith('/sobre/')) return true;
+  if (pathOnly === '/contacto' || pathOnly.startsWith('/contacto/')) return true;
   return false;
 }
 
@@ -179,5 +181,7 @@ export function isLegalFooterGlobalBarVisiblePathname(pathname) {
   if (p === '/') return false;
   if (p === '/terminos' || p.startsWith('/terminos/')) return false;
   if (p === '/privacidad' || p.startsWith('/privacidad/')) return false;
+  if (p === '/sobre' || p.startsWith('/sobre/')) return false;
+  if (p === '/contacto' || p.startsWith('/contacto/')) return false;
   return true;
 }

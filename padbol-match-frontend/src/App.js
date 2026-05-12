@@ -33,6 +33,8 @@ import useUserRole from './hooks/useUserRole';
 import EquipoVista from './pages/EquipoVista';
 import UserHome from './pages/UserHome';
 import LandingPage from './pages/LandingPage';
+import SobrePadbolMatch from './pages/SobrePadbolMatch';
+import ContactoSumarClub from './pages/ContactoSumarClub';
 import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -339,6 +341,8 @@ function AppRoutes() {
         <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/sobre" element={<SobrePadbolMatch />} />
+        <Route path="/contacto" element={<ContactoSumarClub />} />
         <Route path="/terminos" element={<TerminosCondiciones />} />
         <Route path="/privacidad" element={<PoliticaPrivacidad />} />
 

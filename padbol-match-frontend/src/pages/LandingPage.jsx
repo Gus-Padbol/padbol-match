@@ -1,432 +1,242 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 
-const IG_DEFAULT = 'https://www.instagram.com/padbolmatch/';
-const CONTACT_MAIL = 'mailto:hola@padbolmatch.com';
-
-const instagramUrl =
-  (typeof import.meta !== 'undefined' && String(import.meta.env?.VITE_PADBOL_INSTAGRAM_URL || '').trim()) || IG_DEFAULT;
-
-/** Contraste sobre fondo oscuro (App.css fuerza h2/h3 en #1a1a1a si no hay color inline). */
-const c = {
-  title: '#FFFFFF',
-  titleSoft: '#E2E8F0',
-  body: '#CBD5E1',
-  muted: '#94A3B8',
-  accentStat: '#C4B5FD',
-  footerLink: '#E2E8F0',
-  footerDot: 'rgba(226, 232, 240, 0.35)',
-};
+const ACCENT = '#E11B22';
+const BG = '#FFFFFF';
+const TEXT = '#0F172A';
+const TEXT_MUTED = '#64748B';
+const BORDER = '#E2E8F0';
+const COL_MAX = 390;
 
 const shell = {
-  position: 'relative',
-  minHeight: '100vh',
+  minHeight: '100dvh',
   width: '100%',
   maxWidth: '100%',
+  margin: 0,
   boxSizing: 'border-box',
-  overflowX: 'hidden',
-  background: 'linear-gradient(180deg, #0b1020 0%, #151832 38%, #1a1040 100%)',
-  color: c.body,
+  background: BG,
+  color: TEXT,
+  paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
+  paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
 };
 
-const btnLoginTop = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '13px',
-  fontWeight: 600,
-  color: c.titleSoft,
-  textDecoration: 'none',
-  padding: '8px 14px',
-  borderRadius: '999px',
-  border: '1px solid rgba(255, 255, 255, 0.22)',
-  background: 'rgba(255, 255, 255, 0.06)',
-  boxSizing: 'border-box',
-};
-
-const section = {
+const column = {
   width: '100%',
-  maxWidth: 'min(720px, 100%)',
+  maxWidth: COL_MAX,
   marginLeft: 'auto',
   marginRight: 'auto',
-  paddingLeft: 'clamp(16px, 4vw, 24px)',
-  paddingRight: 'clamp(16px, 4vw, 24px)',
+  paddingLeft: 'max(20px, env(safe-area-inset-left, 0px))',
+  paddingRight: 'max(20px, env(safe-area-inset-right, 0px))',
   boxSizing: 'border-box',
 };
 
 const btnPrimary = {
-  display: 'inline-flex',
+  display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   width: '100%',
-  maxWidth: '320px',
-  padding: '14px 22px',
-  borderRadius: '14px',
+  padding: '15px 18px',
+  borderRadius: 12,
   border: 'none',
   fontWeight: 800,
-  fontSize: 'clamp(15px, 3.8vw, 16px)',
+  fontSize: 16,
   cursor: 'pointer',
   textDecoration: 'none',
   color: '#fff',
-  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-  boxShadow: '0 6px 22px rgba(34, 197, 94, 0.35)',
+  background: ACCENT,
   boxSizing: 'border-box',
+  fontFamily: 'inherit',
+  boxShadow: '0 4px 14px rgba(225, 27, 34, 0.28)',
 };
 
 const btnSecondary = {
   ...btnPrimary,
-  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-  boxShadow: '0 6px 22px rgba(99, 102, 241, 0.35)',
+  background: BG,
+  color: ACCENT,
+  border: `2px solid ${ACCENT}`,
+  boxShadow: 'none',
 };
 
-const card = {
-  background: 'rgba(255, 255, 255, 0.06)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  borderRadius: '16px',
-  padding: 'clamp(18px, 4vw, 24px)',
-  boxSizing: 'border-box',
+const btnOutline = {
+  ...btnPrimary,
+  background: BG,
+  color: TEXT,
+  border: `1px solid ${BORDER}`,
+  fontWeight: 700,
+  boxShadow: 'none',
 };
 
-function StepCard({ icon, title, text }) {
+function HowCard({ emoji, title, description }) {
   return (
-    <div style={{ ...card, textAlign: 'center' }}>
-      <div style={{ fontSize: 'clamp(36px, 9vw, 44px)', lineHeight: 1, marginBottom: '12px' }} aria-hidden>
-        {icon}
+    <div
+      style={{
+        border: `1px solid ${BORDER}`,
+        borderRadius: 12,
+        padding: '20px 18px',
+        background: BG,
+        boxSizing: 'border-box',
+      }}
+    >
+      <div style={{ width: 36, height: 4, borderRadius: 2, background: ACCENT, marginBottom: 12 }} aria-hidden />
+      <div style={{ fontSize: 26, lineHeight: 1, marginBottom: 10 }} aria-hidden>
+        {emoji}
       </div>
       <h3
         style={{
           margin: '0 0 8px',
-          fontSize: 'clamp(1rem, 3.5vw, 1.1rem)',
+          fontSize: 17,
           fontWeight: 800,
-          color: c.titleSoft,
+          color: TEXT,
+          lineHeight: 1.25,
         }}
       >
         {title}
       </h3>
-      <p style={{ margin: 0, fontSize: 'clamp(0.88rem, 3.2vw, 0.95rem)', color: c.body, lineHeight: 1.5 }}>
-        {text}
-      </p>
-    </div>
-  );
-}
-
-function Stat({ value, label }) {
-  return (
-    <div style={{ textAlign: 'center', minWidth: 0 }}>
-      <div style={{ fontSize: 'clamp(1.35rem, 5vw, 1.75rem)', fontWeight: 900, color: c.accentStat, lineHeight: 1.2 }}>{value}</div>
-      <div style={{ fontSize: 'clamp(0.78rem, 2.8vw, 0.85rem)', color: c.muted, marginTop: '4px' }}>{label}</div>
+      <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: TEXT_MUTED, lineHeight: 1.5 }}>{description}</p>
     </div>
   );
 }
 
 export default function LandingPage() {
+  const reservarConLogin = authUrlWithRedirect('/reservar');
+
   return (
     <div style={shell}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
-          paddingRight: 'clamp(16px, 4vw, 24px)',
-          paddingLeft: 'clamp(16px, 4vw, 24px)',
-          paddingBottom: '4px',
-        }}
-      >
-        <Link to="/login" state={{ padbolHideLoginBack: true }} style={btnLoginTop}>
-          Iniciar sesión
-        </Link>
-      </div>
-      <header style={{ ...section, paddingTop: 'clamp(12px, 5vw, 32px)', paddingBottom: 'clamp(8px, 3vw, 16px)' }}>
-        <div style={{ textAlign: 'center' }}>
-          <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
+      <header style={{ ...column, textAlign: 'center', paddingBottom: 8 }}>
+        <img src="/logo-padbol-match.png" alt="Padbol Match" style={{ ...padbolLogoImgStyle, height: 72, maxWidth: '100%' }} />
+      </header>
+
+      <main style={column}>
+        <section style={{ paddingTop: 8, paddingBottom: 28 }}>
+          <h1
             style={{
-              display: 'block',
-              margin: '0 auto',
-              height: 'clamp(120px, 28vw, 180px)',
-              width: 'auto',
-              maxWidth: 'min(92vw, 360px)',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 8px 32px rgba(0, 0, 0, 0.45))',
-            }}
-          />
-          <p
-            style={{
-              margin: 'clamp(16px, 4vw, 24px) 0 0',
-              fontSize: 'clamp(1.12rem, 4.2vw, 1.45rem)',
-              fontWeight: 800,
-              lineHeight: 1.3,
-              color: c.title,
-              maxWidth: 'min(92vw, 640px)',
-              marginLeft: 'auto',
-              marginRight: 'auto',
+              margin: 0,
+              fontSize: 28,
+              fontWeight: 900,
+              lineHeight: 1.15,
+              color: TEXT,
+              letterSpacing: '-0.02em',
             }}
           >
-            Nació con Padbol. Hoy es para todos los deportes.
+            Nació con Padbol.
+          </h1>
+          <p
+            style={{
+              margin: '10px 0 0',
+              fontSize: 28,
+              fontWeight: 900,
+              lineHeight: 1.15,
+              color: TEXT,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Hoy es para todos los deportes.
           </p>
           <p
             style={{
-              margin: 'clamp(12px, 3vw, 16px) 0 0',
-              fontSize: 'clamp(0.95rem, 3.5vw, 1.05rem)',
-              fontWeight: 600,
-              lineHeight: 1.45,
-              color: c.titleSoft,
-              maxWidth: 'min(92vw, 560px)',
-              marginLeft: 'auto',
-              marginRight: 'auto',
+              margin: '16px 0 0',
+              fontSize: 15,
+              fontWeight: 500,
+              lineHeight: 1.5,
+              color: TEXT_MUTED,
             }}
           >
             La plataforma que lleva el Padbol al mundo, y abre sus puertas al Pádel, Pickleball, Fútbol y más.
           </p>
-          <p
-            style={{
-              margin: 'clamp(8px, 2vw, 12px) 0 0',
-              fontSize: 'clamp(1.35rem, 5vw, 1.75rem)',
-              lineHeight: 1.2,
-              letterSpacing: '0.12em',
-              textAlign: 'center',
-            }}
-            aria-label="Deportes"
-          >
-            <span aria-hidden>⚽</span>{' '}
-            <span aria-hidden>🎾</span>{' '}
-            <span aria-hidden>🏓</span>
-          </p>
-          <p
-            style={{
-              margin: 'clamp(10px, 2.5vw, 14px) 0 0',
-              fontSize: 'clamp(0.85rem, 3vw, 0.95rem)',
-              fontWeight: 700,
-              lineHeight: 1.4,
-              color: c.muted,
-              maxWidth: 'min(92vw, 520px)',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              textAlign: 'center',
-            }}
-          >
-            La plataforma deportiva más avanzada del planeta.
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '12px',
-              marginTop: 'clamp(22px, 5vw, 32px)',
-            }}
-          >
-            <Link to="/hub" style={btnPrimary}>
-              Explorar Padbol Match
-            </Link>
-            <Link to="/unirse" style={btnSecondary}>
-              Unirme como club
-            </Link>
-          </div>
-        </div>
-      </header>
+        </section>
 
-      <section style={{ ...section, paddingTop: 'clamp(36px, 10vw, 56px)', paddingBottom: 'clamp(24px, 6vw, 40px)' }}>
-        <h2
-          style={{
-            fontSize: 'clamp(1.25rem, 4.5vw, 1.5rem)',
-            fontWeight: 900,
-            margin: '0 0 clamp(18px, 4vw, 24px)',
-            textAlign: 'center',
-            color: c.title,
-          }}
-        >
-          Cómo funciona
-        </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            gap: '14px',
-          }}
-        >
-          <StepCard icon="📍" title="Encuentra tu sede" text="Busca clubes y elige el que mejor te quede por ubicación y horarios." />
-          <StepCard icon="📅" title="Reserva tu cancha" text="Elige fecha, horario y cancha disponible. Paga online o según las opciones del club." />
-          <StepCard icon="⚽" title="Juega" text="Recibe la confirmación y disfruta del partido en la red de Padbol." />
-        </div>
-      </section>
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 40 }}>
+          <Link to={reservarConLogin} style={btnPrimary}>
+            Reservar un turno
+          </Link>
+          <Link to="/sedes" style={btnSecondary}>
+            Explorar Padbol Match
+          </Link>
+          <Link to="/auth?modo=registro" style={btnOutline}>
+            Crear una cuenta
+          </Link>
+        </section>
 
-      <section
-        style={{
-          ...section,
-          paddingTop: 'clamp(8px, 3vw, 16px)',
-          paddingBottom: 'clamp(32px, 8vw, 48px)',
-        }}
-      >
-        <div style={{ ...card, maxWidth: '100%' }}>
+        <section style={{ marginBottom: 44 }}>
           <h2
-            style={{
-              fontSize: 'clamp(1.2rem, 4.2vw, 1.45rem)',
-              fontWeight: 900,
-              margin: '0 0 12px',
-              textAlign: 'center',
-              color: c.title,
-            }}
-          >
-            De Padbol al mundo
-          </h2>
-          <p
-            style={{
-              margin: '0 0 10px',
-              fontSize: 'clamp(0.92rem, 3.4vw, 1rem)',
-              lineHeight: 1.65,
-              color: c.body,
-              textAlign: 'center',
-              fontWeight: 700,
-            }}
-          >
-            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>Deportes soportados:</strong> Padbol, Pádel, Pickleball,
-            Fútbol y más.
-          </p>
-          <p
-            style={{
-              margin: '0 0 22px',
-              fontSize: 'clamp(0.92rem, 3.4vw, 1rem)',
-              lineHeight: 1.65,
-              color: c.body,
-              textAlign: 'center',
-            }}
-          >
-            Padbol Match{' '}
-            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>nació con Padbol</strong>
-            {' '}—el deporte que fusiona fútbol, tenis y vóley en una cancha cerrada con red— y{' '}
-            <strong style={{ color: c.titleSoft, fontWeight: 800 }}>hoy abre sus puertas a todos los deportes</strong>
-            . Construimos una infraestructura internacional de primer nivel: misma exigencia de producto, misma ambición
-            global. Conectamos clubes y jugadores sin fronteras, con herramientas pensadas para competir a escala mundial.
-          </p>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-              gap: 'clamp(10px, 3vw, 16px)',
-              paddingTop: '8px',
-              borderTop: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <Stat value="30+" label="países" />
-            <Stat value="200+" label="sedes" />
-            <Stat value="12.000+" label="jugadores" />
-          </div>
-        </div>
-      </section>
-
-      <section style={{ ...section, paddingBottom: 'clamp(36px, 9vw, 56px)' }}>
-        <div style={{ ...card, background: 'rgba(99, 102, 241, 0.12)', borderColor: 'rgba(165, 180, 252, 0.25)' }}>
-          <h2
-            style={{
-              fontSize: 'clamp(1.2rem, 4.2vw, 1.45rem)',
-              fontWeight: 900,
-              margin: '0 0 14px',
-              textAlign: 'center',
-              color: c.title,
-            }}
-          >
-            Para clubes
-          </h2>
-          <p
             style={{
               margin: '0 0 20px',
-              fontSize: 'clamp(0.92rem, 3.35vw, 1rem)',
-              lineHeight: 1.65,
-              color: c.body,
               textAlign: 'center',
-              fontWeight: 600,
+              fontSize: 22,
+              fontWeight: 800,
+              color: TEXT,
             }}
           >
-            Reservas online, torneos, ranking, comunidad de jugadores, herramientas de cobro y presencia en el mapa oficial
-            de Padbol Match. Tu disciplina, tu sede, tu ciudad.
-          </p>
-          <div style={{ textAlign: 'center' }}>
-            <Link
-              to="/unirse"
-              style={{
-                ...btnSecondary,
-                display: 'inline-flex',
-                width: 'auto',
-                minWidth: 'min(100%, 280px)',
-              }}
-            >
-              Quiero sumar mi club
-            </Link>
+            ¿Cómo funciona?
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <HowCard
+              emoji="📍"
+              title="Encuentra tu sede"
+              description="Busca clubes y elige el que mejor te quede por ubicación y horarios."
+            />
+            <HowCard
+              emoji="📅"
+              title="Reserva tu cancha"
+              description="Elige fecha, horario y cancha disponible. Paga online o según las opciones del club."
+            />
+            <HowCard
+              emoji="⚽"
+              title="Juega"
+              description="Recibe la confirmación y a disfrutar del partido en la red de Padbol."
+            />
           </div>
-        </div>
-      </section>
+        </section>
 
-      <footer
-        style={{
-          ...section,
-          paddingTop: 'clamp(20px, 5vw, 28px)',
-          paddingBottom: 'calc(28px + env(safe-area-inset-bottom, 0px))',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(0,0,0,0.2)',
-        }}
-      >
-        <nav aria-label="Pie de página">
+        <footer
+          style={{
+            borderTop: `1px solid ${BORDER}`,
+            paddingTop: 28,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 16,
+          }}
+        >
+          <Link to="/contacto" style={{ ...btnPrimary, maxWidth: '100%' }}>
+            Quiero sumar mi club
+          </Link>
+          <Link
+            to="/sobre"
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: ACCENT,
+              textDecoration: 'none',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            ¿Qué es Padbol Match?
+          </Link>
           <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: '10px 16px',
-              marginBottom: '14px',
+              marginTop: 24,
+              paddingTop: 16,
+              borderTop: `1px solid ${BORDER}`,
+              fontSize: 13,
+              textAlign: 'center',
             }}
           >
-            <Link to="/torneos" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
-              Torneos
-            </Link>
-            <span style={{ color: c.footerDot }} aria-hidden>
-              ·
-            </span>
-            <Link to="/rankings" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
-              Ranking
-            </Link>
-            <span style={{ color: c.footerDot }} aria-hidden>
-              ·
-            </span>
-            <Link to="/sedes" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
-              Sedes
-            </Link>
-            <span style={{ color: c.footerDot }} aria-hidden>
-              ·
-            </span>
-            <a
-              href={instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}
-            >
-              Instagram
-            </a>
-            <span style={{ color: c.footerDot }} aria-hidden>
-              ·
-            </span>
-            <a href={CONTACT_MAIL} style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
-              Contacto
-            </a>
-            <span style={{ color: c.footerDot }} aria-hidden>
-              ·
-            </span>
-            <Link to="/terminos" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+            <Link to="/terminos" style={{ color: TEXT_MUTED, fontWeight: 600, textDecoration: 'none' }}>
               Términos
             </Link>
-            <span style={{ color: c.footerDot }} aria-hidden>
-              ·
-            </span>
-            <Link to="/privacidad" style={{ color: c.footerLink, fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+            <span style={{ color: BORDER, margin: '0 8px' }}>|</span>
+            <Link to="/privacidad" style={{ color: TEXT_MUTED, fontWeight: 600, textDecoration: 'none' }}>
               Privacidad
             </Link>
           </div>
-        </nav>
-        <p style={{ margin: 0, textAlign: 'center', fontSize: '0.8rem', color: c.muted }}>
-          © {new Date().getFullYear()} Padbol Match
-        </p>
-      </footer>
+        </footer>
+      </main>
     </div>
   );
 }
