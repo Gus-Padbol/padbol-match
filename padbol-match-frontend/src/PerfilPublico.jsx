@@ -23,6 +23,8 @@ import {
   sliceEstadisticasJugadorTorneo,
 } from './utils/jugadorEstadisticasPorDeporte';
 import { etiquetaDeporteTorneo } from './utils/torneoDeporteFormato';
+import DeportesPreferidosLecturaChips from './components/DeportesPreferidosLecturaChips';
+import { normalizeDeportesPreferidosArray } from './constants/deportesPreferidos';
 
 const API_BASE_PERFIL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -772,6 +774,35 @@ export default function PerfilPublico() {
             </div>
           </div>
         </div>
+
+        {normalizeDeportesPreferidosArray(perfil?.deportes_preferidos).length > 0 ? (
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '18px 20px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+              marginBottom: '14px',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+            }}
+          >
+            <h2
+              style={{
+                margin: '0 0 12px',
+                fontSize: '16px',
+                color: '#334155',
+                fontWeight: 800,
+                borderBottom: '1px solid #e5e7eb',
+                paddingBottom: '8px',
+              }}
+            >
+              Deportes que practico
+            </h2>
+            <DeportesPreferidosLecturaChips keys={perfil.deportes_preferidos} />
+          </div>
+        ) : null}
 
         {showEstadisticasTorneoPub ? (
           <div

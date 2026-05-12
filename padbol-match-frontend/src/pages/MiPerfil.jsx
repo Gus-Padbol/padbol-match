@@ -55,8 +55,8 @@ import { getCroppedImgBlob } from '../utils/cropImage';
 import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
+import DeportesPreferidosLecturaChips from '../components/DeportesPreferidosLecturaChips';
 import {
-  DEPORTES_PREFERIDOS_OPCIONES,
   normalizeDeportesPreferidosArray,
 } from '../constants/deportesPreferidos';
 
@@ -92,14 +92,6 @@ function miPerfilPageOuterStyle(paddingTopCss) {
 
 /** Asterisco obligatorio (rojo) para labels del registro. */
 const reqAst = <span style={{ color: '#d32f2f', fontWeight: 800 }}>*</span>;
-
-function textoDeportesPreferidosLista(arr) {
-  const keys = normalizeDeportesPreferidosArray(arr);
-  if (!keys.length) return '—';
-  return keys
-    .map((k) => DEPORTES_PREFERIDOS_OPCIONES.find((o) => o.key === k)?.label || k)
-    .join(' · ');
-}
 
 function emailValidoVisible(raw) {
   const s = String(raw || '').trim();
@@ -660,6 +652,12 @@ export default function MiPerfil() {
       setAliasDisponible(false);
       return;
     }
+    if (String(perfil?.alias || '').trim() && !esRegistroSinSesion) {
+      setAliasDuplicado(false);
+      setAliasVerificando(false);
+      setAliasDisponible(false);
+      return;
+    }
     const raw = String(formData.alias || '').trim();
     if (!raw) {
       setAliasDuplicado(false);
@@ -688,11 +686,16 @@ export default function MiPerfil() {
       setAliasDisponible(!dup);
     }, 500);
     return () => clearTimeout(handle);
-  }, [editando, esRegistroSinSesion, formData.alias, session?.user?.id]);
+  }, [editando, esRegistroSinSesion, perfil?.alias, formData.alias, session?.user?.id]);
 
   /** Sugerencias de alias desde «¿Cómo quieres que te llamemos?» (disponibilidad en jugadores_perfil). */
   useEffect(() => {
     if (!editando && !esRegistroSinSesion) {
+      setAliasSuggestions([]);
+      setAliasSugerenciasCargando(false);
+      return;
+    }
+    if (String(perfil?.alias || '').trim() && !esRegistroSinSesion) {
       setAliasSuggestions([]);
       setAliasSugerenciasCargando(false);
       return;
@@ -734,7 +737,7 @@ export default function MiPerfil() {
       setAliasSuggestions(rows);
     }, 500);
     return () => clearTimeout(t);
-  }, [editando, esRegistroSinSesion, formData.apodo, session?.user?.id]);
+  }, [editando, esRegistroSinSesion, perfil?.alias, formData.apodo, session?.user?.id]);
 
   useEffect(() => {
     if (sessionOwnerEmail) return;
@@ -1498,11 +1501,12 @@ export default function MiPerfil() {
         return;
       }
 
-      if (String(formData.alias || '').trim() && aliasDuplicado) {
+      const aliasPerfilExistente = String(perfil?.alias || '').trim();
+      if (!aliasPerfilExistente && String(formData.alias || '').trim() && aliasDuplicado) {
         setErrorMsg('Este alias ya está en uso, elige otro.');
         return;
       }
-      if (String(formData.alias || '').trim() && aliasVerificando) {
+      if (!aliasPerfilExistente && String(formData.alias || '').trim() && aliasVerificando) {
         return;
       }
 
@@ -1526,7 +1530,7 @@ export default function MiPerfil() {
 
       const paisGuardado = paisPayloadSegunTorneo(torneoPerfil, formData.pais);
 
-      const aliasTrim = String(formData.alias || '').trim();
+      const aliasTrim = aliasPerfilExistente || String(formData.alias || '').trim();
       const payload = {
         lateralidad: formData.lateralidad,
         nivel: formData.nivel,
@@ -1557,7 +1561,7 @@ export default function MiPerfil() {
         return;
       }
 
-      if (aliasTrim) {
+      if (!aliasPerfilExistente && aliasTrim) {
         const lit = escapeIlikeLiteral(aliasTrim);
         const { data: dupRows, error: dupErr } = await supabase
           .from('jugadores_perfil')
@@ -2824,7 +2828,6 @@ export default function MiPerfil() {
                 </span>
               } />
               <Row label="Lateralidad" value={perfil.lateralidad} />
-              <Row label="Deportes que practicás" value={textoDeportesPreferidosLista(perfil?.deportes_preferidos)} />
               <Row
                 label="Busco compañero"
                 value={perfil.busca_companero ? 'Sí · visible en tu sede' : 'No'}
@@ -2903,6 +2906,8 @@ export default function MiPerfil() {
               style={{ ...inputStyle, marginBottom: '8px' }}
               autoComplete="off"
             />
+            {!String(perfil?.alias || '').trim() ? (
+              <>
             {aliasSugerenciasCargando ? (
               <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
             ) : null}
@@ -2982,6 +2987,20 @@ export default function MiPerfil() {
                 ✗ Ya está en uso — elige otro u otra sugerencia.
               </p>
             ) : null}
+              </>
+            ) : (
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: '#475569',
+                  marginBottom: '14px',
+                  lineHeight: 1.45,
+                  fontWeight: 600,
+                }}
+              >
+                Tu alias es {formatAliasConArroba(String(perfil.alias).trim())} y no puede modificarse.
+              </p>
+            )}
 
             <label style={labelStyle}>Instagram</label>
             <div
@@ -3476,6 +3495,7 @@ export default function MiPerfil() {
                       es_federado: perfil?.es_federado || false,
                       mostrar_torneos_jugados: Boolean(perfil?.mostrar_torneos_jugados),
                       busca_companero: Boolean(perfil?.busca_companero),
+                      deportes_preferidos: normalizeDeportesPreferidosArray(perfil?.deportes_preferidos),
                     };
                   });
                 }}
@@ -3487,6 +3507,53 @@ export default function MiPerfil() {
           </form>
         )}
       </div>
+
+      {perfil && typeof perfil === 'object' && !editando ? (
+        <div
+          style={{
+            background: '#f9f9f9',
+            borderRadius: '12px',
+            padding: '20px 24px',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+            marginBottom: '16px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
+          <h4
+            style={{
+              margin: '0 0 12px',
+              color: '#333',
+              borderBottom: '1px solid #e0e0e0',
+              paddingBottom: '8px',
+            }}
+          >
+            Deportes que practico
+          </h4>
+          {normalizeDeportesPreferidosArray(perfil.deportes_preferidos).length > 0 ? (
+            <DeportesPreferidosLecturaChips keys={perfil.deportes_preferidos} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditando(true)}
+              style={{
+                display: 'inline-block',
+                padding: '10px 18px',
+                background: '#4f46e5',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '14px',
+              }}
+            >
+              Agregar deportes
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {/* Credit balance */}
       {creditTotal > 0 && (
