@@ -547,21 +547,6 @@ export default function UserHome() {
             boxSizing: 'border-box',
           }}
         >
-          <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
-            style={{
-              display: 'block',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              height: 56,
-              width: 'auto',
-              maxWidth: 'min(88vw, 320px)',
-              objectFit: 'contain',
-              marginBottom: 20,
-            }}
-          />
-
           {session?.user ? (
             <label style={{ display: 'block', width: '100%', marginBottom: 18 }}>
               <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Elegir deporte</span>
