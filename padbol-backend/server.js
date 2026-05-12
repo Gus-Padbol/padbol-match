@@ -10182,22 +10182,6 @@ function chatIaFoldText(s) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-/** Intención de consultar turnos libres o de reservar (no respuestas genéricas sobre “mi reserva pasada”). */
-function chatIaDetectDisponibilidadOReservaIntent(text) {
-  const t = chatIaFoldText(text);
-  if (!t.trim()) return false;
-  if (/\b(cancel|cancela|devoluc|reembols|historial\s+de\s+reserva)\b/i.test(text)) return false;
-  return (
-    /disponibil|horarios?\s+libres?|turnos?\s+libres?|slots?\s+libres?|hay\s+(cancha|turno|lugar|horario|cupos?)/i.test(
-      text,
-    ) ||
-    /(quiero|puedo|me\s+gustar[ií]a|necesito)\s+(reservar|una\s+reserva|un\s+turno|una\s+cancha)/i.test(text) ||
-    /\breservar\b.*\b(cancha|turno|hora|horario)\b/i.test(text) ||
-    /\b(hay|tienen|quedan)\s+(lugar|turno|cupo|hora)/i.test(text) ||
-    /\b(a\s+qu[eé]\s+hora|qu[eé]\s+horarios?)\b/i.test(text)
-  );
-}
-
 function chatIaHoraDesdeMinutosReserva(totalMin) {
   const hh = Math.floor(totalMin / 60);
   const mm = totalMin % 60;
@@ -10216,441 +10200,6 @@ function chatIaSlotsReservaDesdeSede(sedeRow) {
   return Array.from({ length: n }, (_, i) => i + 1);
 }
 
-/**
- * Extrae YYYY-MM-DD: ISO, dd/mm/aaaa, “hoy”, “mañana”, fechas en español, “el viernes”, etc. (zona ART).
- * Si el texto nombra un día de la semana y una fecha numérica que no coincide, se corrige al día de la semana
- * más cercano (±6 días) y se devuelve nota_correccion.
- */
-function chatIaSpanishMonthToNum(mesRaw) {
-  const m = chatIaFoldText(String(mesRaw || '')).replace(/\./g, '');
-  const map = {
-    enero: 1,
-    febrero: 2,
-    marzo: 3,
-    abril: 4,
-    mayo: 5,
-    junio: 6,
-    julio: 7,
-    agosto: 8,
-    septiembre: 9,
-    setiembre: 9,
-    octubre: 10,
-    noviembre: 11,
-    diciembre: 12,
-  };
-  return map[m] ?? null;
-}
-
-function chatIaSpanishWeekdayToLuxonWeekday(wRaw) {
-  const w = chatIaFoldText(String(wRaw || ''));
-  const map = {
-    lunes: 1,
-    martes: 2,
-    miercoles: 3,
-    miércoles: 3,
-    jueves: 4,
-    viernes: 5,
-    sabado: 6,
-    sábado: 6,
-    domingo: 7,
-  };
-  return map[w] ?? null;
-}
-
-function chatIaNearestSameWeekday(dt, targetLuxonWeekday) {
-  if (!dt?.isValid || targetLuxonWeekday == null) return { dt, adjusted: false };
-  if (dt.weekday === targetLuxonWeekday) return { dt, adjusted: false };
-  let best = null;
-  let bestAbs = 999;
-  for (let d = -6; d <= 6; d += 1) {
-    const c = dt.plus({ days: d });
-    if (c.weekday === targetLuxonWeekday) {
-      const ad = Math.abs(d);
-      if (ad < bestAbs) {
-        best = c;
-        bestAbs = ad;
-      }
-    }
-  }
-  if (best?.isValid) return { dt: best, adjusted: true };
-  return { dt, adjusted: false };
-}
-
-function chatIaNextWeekdayOnOrAfter(refYmd, targetLuxonWeekday, zoneIana) {
-  const z = normalizeSedeTimezone(zoneIana || TZ_TORNEO_CALENDARIO);
-  const ref = String(refYmd || '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref) || targetLuxonWeekday == null) return null;
-  let d = DateTime.fromISO(ref, { zone: z }).startOf('day');
-  if (!d.isValid) return null;
-  for (let i = 0; i < 14; i += 1) {
-    if (d.weekday === targetLuxonWeekday) return d.toFormat('yyyy-LL-dd');
-    d = d.plus({ days: 1 });
-  }
-  return null;
-}
-
-/**
- * Resuelve fechas en el texto (ISO, d/m/y, hoy/mañana, días de la semana, etc.).
- * `fechaReferenciaYmd` debe ser “hoy” en la misma `zoneIana` (p. ej. calendario de la sede).
- * `zoneIana` IANA de la sede consultada (o ART solo si no hay sede).
- */
-function chatIaResolveFechaParaConsulta(text, fechaReferenciaYmd, zoneIana) {
-  const raw = String(text || '');
-  const ref = String(fechaReferenciaYmd || '').trim();
-  const zone = normalizeSedeTimezone(zoneIana || TZ_TORNEO_CALENDARIO);
-
-  const iso = raw.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
-  if (iso) {
-    const ymd = `${iso[1]}-${iso[2]}-${iso[3]}`;
-    const dt = DateTime.fromISO(ymd, { zone }).startOf('day');
-    if (!dt.isValid) return null;
-    return { ymd, nota_correccion: null };
-  }
-
-  const dmy = raw.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/);
-  if (dmy) {
-    const dd = String(parseInt(dmy[1], 10)).padStart(2, '0');
-    const mo = String(parseInt(dmy[2], 10)).padStart(2, '0');
-    const yy = dmy[3];
-    const ymd = `${yy}-${mo}-${dd}`;
-    const dt = DateTime.fromISO(ymd, { zone }).startOf('day');
-    if (!dt.isValid) return null;
-    return { ymd, nota_correccion: null };
-  }
-
-  const tFold = chatIaFoldText(raw);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(ref)) {
-    const base = DateTime.fromISO(ref, { zone }).startOf('day');
-    if (base.isValid) {
-      if (/\b(hoy)\b/.test(tFold)) return { ymd: ref, nota_correccion: null };
-      if (/\b(manana|mañana)\b/.test(tFold)) {
-        return { ymd: base.plus({ days: 1 }).toFormat('yyyy-LL-dd'), nota_correccion: null };
-      }
-      if (/\b(pasado\s*manana|pasado\s*mañana)\b/.test(tFold)) {
-        return { ymd: base.plus({ days: 2 }).toFormat('yyyy-LL-dd'), nota_correccion: null };
-      }
-    }
-  }
-
-  const reNamedDayNumMonth = new RegExp(
-    '\\b(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\\s+(\\d{1,2})\\s+de\\s+([a-záéíóúñ]+)\\s+(?:de\\s+)?(20\\d{2})\\b',
-    'i',
-  );
-  const mNamed = raw.match(reNamedDayNumMonth);
-  if (mNamed) {
-    const wdName = mNamed[1];
-    const dayNum = parseInt(mNamed[2], 10);
-    const moNum = chatIaSpanishMonthToNum(mNamed[3]);
-    const year = parseInt(mNamed[4], 10);
-    const targetWd = chatIaSpanishWeekdayToLuxonWeekday(wdName);
-    if (moNum && Number.isFinite(dayNum) && Number.isFinite(year) && targetWd != null) {
-      const dt0 = DateTime.fromObject({ year, month: moNum, day: dayNum }, { zone }).startOf('day');
-      if (!dt0.isValid) return null;
-      const { dt, adjusted } = chatIaNearestSameWeekday(dt0, targetWd);
-      const ymd = dt.toFormat('yyyy-LL-dd');
-      let nota = null;
-      if (adjusted) {
-        const nom = DateTime.fromISO(ymd, { zone }).setLocale('es').toFormat('cccc d \'de\' LLLL yyyy');
-        nota = `El calendario para ${dayNum}/${moNum}/${year} (${zone}) no coincide con «${String(wdName).trim()}»; se usó el ${nom}.`;
-      }
-      return { ymd, nota_correccion: nota };
-    }
-  }
-
-  const reNumMonth = new RegExp(
-    '\\b(\\d{1,2})\\s+de\\s+([a-záéíóúñ]+)\\s+(?:de\\s+)?(20\\d{2})\\b',
-    'i',
-  );
-  const mNum = raw.match(reNumMonth);
-  if (mNum) {
-    const dayNum = parseInt(mNum[1], 10);
-    const moNum = chatIaSpanishMonthToNum(mNum[2]);
-    const year = parseInt(mNum[3], 10);
-    if (moNum && Number.isFinite(dayNum) && Number.isFinite(year)) {
-      const dt = DateTime.fromObject({ year, month: moNum, day: dayNum }, { zone }).startOf('day');
-      if (!dt.isValid) return null;
-      const idx = typeof mNum.index === 'number' ? mNum.index : raw.search(reNumMonth);
-      const before = idx > 0 ? raw.slice(Math.max(0, idx - 80), idx) : '';
-      const wdM = before.match(
-        /\b(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\b/i,
-      );
-      if (wdM) {
-        const targetWd = chatIaSpanishWeekdayToLuxonWeekday(wdM[1]);
-        if (targetWd != null) {
-          const { dt: dt2, adjusted } = chatIaNearestSameWeekday(dt, targetWd);
-          const ymd = dt2.toFormat('yyyy-LL-dd');
-          let nota = null;
-          if (adjusted) {
-            const nom = DateTime.fromISO(ymd, { zone }).setLocale('es').toFormat("cccc d 'de' LLLL yyyy");
-            nota = `La fecha numérica no caía en «${String(wdM[1]).trim()}» (${zone}); se ajustó al ${nom}.`;
-          }
-          return { ymd, nota_correccion: nota };
-        }
-      }
-      return { ymd: dt.toFormat('yyyy-LL-dd'), nota_correccion: null };
-    }
-  }
-
-  const reSoloWeekday = new RegExp(
-    '\\b(?:el|la|este|esta|proximo|próximo)?\\s*(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\\b',
-    'i',
-  );
-  const mSolo = raw.match(reSoloWeekday);
-  if (mSolo && /^\d{4}-\d{2}-\d{2}$/.test(ref)) {
-    const targetWd = chatIaSpanishWeekdayToLuxonWeekday(mSolo[1]);
-    if (targetWd != null) {
-      const ymd = chatIaNextWeekdayOnOrAfter(ref, targetWd, zone);
-      if (ymd) return { ymd, nota_correccion: null };
-    }
-  }
-
-  return null;
-}
-
-function chatIaExtractDuracionMin(text) {
-  const raw = String(text || '');
-  if (/\b120\b|\b2\s*horas\b|\bdos\s*horas\b/i.test(raw)) return 120;
-  if (/\b60\b|\b1\s*hora\b|\buna\s*hora\b/i.test(raw)) return 60;
-  if (/\b90\b|\bhora\s*y\s*media\b|\buna\s*hora\s*y\s*media\b/i.test(raw)) return 90;
-  return null;
-}
-
-/** HH:mm detectado en el texto (no exige que exista en slots). */
-function chatIaExtractHoraPedida(text) {
-  const raw = String(text || '');
-  const patterns = [
-    /\b(?:a\s+las|para\s+las|a\s+la|las)\s+(\d{1,2}):(\d{2})\b/i,
-    /\b(\d{1,2}):(\d{2})\s*(?:hs|h)?\b/,
-  ];
-  for (const re of patterns) {
-    const m = raw.match(re);
-    if (!m) continue;
-    const hh = String(parseInt(m[1], 10)).padStart(2, '0');
-    const mm = String(parseInt(m[2], 10)).padStart(2, '0');
-    return `${hh}:${mm}`;
-  }
-  return null;
-}
-
-/** HH:mm que el usuario pidió y que coincide con un slot real (hora_inicio). */
-function chatIaMatchHoraEnSlots(text, slots) {
-  const raw = String(text || '');
-  const list = Array.isArray(slots) ? slots : [];
-  const starts = new Set(list.map((s) => String(s?.hora_inicio || '').trim()).filter(Boolean));
-  if (!starts.size) return null;
-  const patterns = [
-    /\b(?:a\s+las|para\s+las|a\s+la|las)\s+(\d{1,2}):(\d{2})\b/i,
-    /\b(\d{1,2}):(\d{2})\s*(?:hs|h)?\b/,
-  ];
-  for (const re of patterns) {
-    const m = raw.match(re);
-    if (!m) continue;
-    const hh = String(parseInt(m[1], 10)).padStart(2, '0');
-    const mm = String(parseInt(m[2], 10)).padStart(2, '0');
-    const h = `${hh}:${mm}`;
-    if (starts.has(h)) return h;
-  }
-  return null;
-}
-
-/** Palabras muy genéricas en marcas de sede; solas no eligen sede (p. ej. varias "Padbol Point …"). */
-const CHAT_IA_SEDE_GENERIC_TOKENS = new Set([
-  'padbol',
-  'padel',
-  'club',
-  'cancha',
-  'sede',
-  'point',
-  'center',
-  'centro',
-  'court',
-]);
-
-function chatIaKeywordHitInFoldedUserText(foldedUser, kw) {
-  const k = String(kw || '').trim();
-  if (!k) return false;
-  if (k.includes(' ')) return foldedUser.includes(k);
-  const esc = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`, 'i').test(foldedUser);
-}
-
-/** Clave laxa para filtrar sedes por `jugadores_perfil.pais` vs `sedes.pais`. */
-function chatIaPaisBucket(raw) {
-  const s = chatIaFoldText(String(raw || '')).replace(/[^a-z0-9]/g, '');
-  if (!s) return '';
-  if (/argentin|^ar$/.test(s)) return 'ar';
-  if (/espana|spain|^es$/.test(s)) return 'es';
-  if (/uruguay|^uy/.test(s)) return 'uy';
-  if (/colombia|^co$/.test(s)) return 'co';
-  if (/chile|^cl$/.test(s)) return 'cl';
-  if (/mexico|^mx$/.test(s)) return 'mx';
-  if (/paraguay|^py$/.test(s)) return 'py';
-  if (/brasil|brazil/.test(s)) return 'br';
-  if (/estadosunidos|unitedstates|usa|^us$|miami|florida/.test(s)) return 'us';
-  return s;
-}
-
-function chatIaPaisSedeCoincideConJugador(paisSede, paisJugador) {
-  const pj = String(paisJugador || '').trim();
-  if (!pj) return true;
-  const ps = String(paisSede || '').trim();
-  if (!ps) return true;
-  const bj = chatIaPaisBucket(pj);
-  const bs = chatIaPaisBucket(ps);
-  if (bj && bs && bj === bs) return true;
-  const fj = chatIaFoldText(pj).replace(/[^a-z0-9]/g, '');
-  const fs = chatIaFoldText(ps).replace(/[^a-z0-9]/g, '');
-  if (fj.length >= 3 && fs.length >= 3 && (fs.includes(fj) || fj.includes(fs))) return true;
-  return chatIaFoldText(ps) === chatIaFoldText(pj);
-}
-
-function chatIaSedesFiltradasPorPaisJugador(sedesCompact, paisJugador) {
-  if (!Array.isArray(sedesCompact) || !sedesCompact.length) return [];
-  const pj = String(paisJugador || '').trim();
-  if (!pj) return sedesCompact;
-  const out = sedesCompact.filter((s) => chatIaPaisSedeCoincideConJugador(String(s?.pais || ''), pj));
-  return out.length ? out : sedesCompact;
-}
-
-function chatIaScoreSedePorTextoUsuario(foldedUser, s) {
-  const nombre = String(s?.nombre || '').trim();
-  const ciudad = String(s?.ciudad || '').trim();
-  if (!nombre) return 0;
-  const fn = chatIaFoldText(nombre);
-  if (fn.length >= 4 && foldedUser.includes(fn)) return 1000;
-
-  let sc = 0;
-  const nt = fn.split(/[^a-z0-9]+/).filter(Boolean);
-  for (let i = 0; i < nt.length - 1; i += 1) {
-    const bg = `${nt[i]} ${nt[i + 1]}`;
-    if (bg.replace(/\s/g, '').length >= 4 && foldedUser.includes(bg)) sc += 42;
-  }
-
-  const bag = new Set([
-    ...fn.split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
-    ...chatIaFoldText(ciudad)
-      .split(/[^a-z0-9]+/)
-      .filter((t) => t.length >= 3),
-  ]);
-  for (const t of bag) {
-    if (CHAT_IA_SEDE_GENERIC_TOKENS.has(t)) continue;
-    if (chatIaKeywordHitInFoldedUserText(foldedUser, t)) sc += 14 + Math.min(10, t.length);
-    else if (t.length >= 4 && fn.includes(t) && foldedUser.includes(t)) sc += 16;
-  }
-  return sc;
-}
-
-function chatIaRankSedesPorTexto(text, sedesCompact) {
-  const folded = chatIaFoldText(text);
-  if (!folded || !Array.isArray(sedesCompact) || sedesCompact.length === 0) return [];
-  return sedesCompact
-    .map((s) => {
-      const nombre = String(s?.nombre || '').trim();
-      const id = Number(s.id);
-      const sc = chatIaScoreSedePorTextoUsuario(folded, s);
-      if (!Number.isFinite(id) || id <= 0 || !nombre) return null;
-      return { id, nombre, sc };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.sc - a.sc || b.nombre.length - a.nombre.length);
-}
-
-function chatIaPickSedeDesdeRanking(ranked) {
-  const withScore = (ranked || []).filter((x) => x.sc >= 12);
-  if (!withScore.length) return { tipo: 'none' };
-  const best = withScore[0];
-  const tied = withScore.filter((x) => x.sc >= best.sc - 1 && x.sc >= 12);
-  if (tied.length >= 2 && best.sc < 1000) {
-    return {
-      tipo: 'tie',
-      candidatas: tied.map((t) => ({ id: t.id, nombre: t.nombre })),
-    };
-  }
-  return { tipo: 'ok', sede: { id: best.id, nombre: best.nombre } };
-}
-
-/**
- * Resolución de sede para consulta de disponibilidad:
- * 1) Nombre en el mensaje (prioriza sedes del mismo país que el jugador; si no hay match, busca en todas).
- * 2) Empate → devolver candidatas (el modelo pregunta cuál).
- * 3) Sin match en texto → sede_id del perfil → última reserva.
- * 4) Si sigue sin sede → listado corto por país para una sola pregunta.
- */
-function chatIaResolveSedeParaConsultaDisponibilidad(combined, ctx) {
-  const sedesAll = Array.isArray(ctx?.sedes) ? ctx.sedes : [];
-  const u = ctx?.usuario_logueado;
-  const paisJ = String(u?.perfil?.pais || '').trim();
-  const sedesPais = chatIaSedesFiltradasPorPaisJugador(sedesAll, paisJ);
-
-  const listadoPais = sedesPais.slice(0, 22).map((s) => ({
-    id: Number(s.id),
-    nombre: String(s.nombre || '').trim(),
-  }));
-
-  const tryList = (list) => {
-    const ranked = chatIaRankSedesPorTexto(combined, list);
-    return { ranked, pick: chatIaPickSedeDesdeRanking(ranked) };
-  };
-
-  const primaryList = sedesPais.length ? sedesPais : sedesAll;
-  let { pick } = tryList(primaryList);
-  if (pick.tipo === 'none' && paisJ && sedesPais.length && sedesPais.length < sedesAll.length) {
-    pick = tryList(sedesAll).pick;
-  }
-
-  if (pick.tipo === 'ok') {
-    return {
-      sede: pick.sede,
-      fuente_resolucion_sede: 'mensaje',
-      sede_ambigua: false,
-      candidatas_sede: null,
-      sedes_sugeridas_mismo_pais: listadoPais,
-    };
-  }
-  if (pick.tipo === 'tie') {
-    return {
-      sede: null,
-      fuente_resolucion_sede: null,
-      sede_ambigua: true,
-      candidatas_sede: pick.candidatas.slice(0, 6),
-      sedes_sugeridas_mismo_pais: listadoPais,
-    };
-  }
-
-  const sidProf = u?.perfil?.sede_id != null && Number.isFinite(Number(u.perfil.sede_id)) ? Number(u.perfil.sede_id) : null;
-  if (sidProf) {
-    const row = sedesAll.find((s) => Number(s.id) === sidProf);
-    const nom = String(row?.nombre || '').trim();
-    if (nom) {
-      return {
-        sede: { id: sidProf, nombre: nom },
-        fuente_resolucion_sede: 'perfil_habitual',
-        sede_ambigua: false,
-        candidatas_sede: null,
-        sedes_sugeridas_mismo_pais: listadoPais,
-      };
-    }
-  }
-
-  const ur = u?.ultima_reserva_sede;
-  if (ur && Number.isFinite(Number(ur.sede_id)) && Number(ur.sede_id) > 0 && String(ur.nombre || '').trim()) {
-    return {
-      sede: { id: Number(ur.sede_id), nombre: String(ur.nombre).trim() },
-      fuente_resolucion_sede: 'ultima_reserva',
-      sede_ambigua: false,
-      candidatas_sede: null,
-      sedes_sugeridas_mismo_pais: listadoPais,
-    };
-  }
-
-  return {
-    sede: null,
-    fuente_resolucion_sede: null,
-    sede_ambigua: false,
-    candidatas_sede: null,
-    sedes_sugeridas_mismo_pais: listadoPais,
-  };
-}
 
 /**
  * Slots con al menos una cancha ofertada libre (misma grilla que ReservaForm: paso 30 min, duración fija).
@@ -10732,202 +10281,383 @@ async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, durac
   return { slots, error: null };
 }
 
-async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial, mensaje) {
-  const userBits = historial.filter((h) => h.role === 'user').slice(-4).map((h) => String(h.content || '').trim());
-  const combined = [...userBits, String(mensaje || '').trim()].filter(Boolean).join('\n');
-
-  if (!chatIaDetectDisponibilidadOReservaIntent(combined)) {
-    return { consulta_disponibilidad: { estado: 'no_aplica' } };
-  }
-
-  const sedeRes = chatIaResolveSedeParaConsultaDisponibilidad(combined, ctx);
-  const paisJugador = String(ctx?.usuario_logueado?.perfil?.pais || '').trim();
-
-  if (sedeRes.sede_ambigua) {
-    return {
-      consulta_disponibilidad: {
-        estado: 'faltan_datos',
-        falta: 'sede',
-        sede_ambigua: true,
-        jugador_pais: paisJugador || null,
-        candidatas_sede: sedeRes.candidatas_sede,
-        sedes_sugeridas_mismo_pais: sedeRes.sedes_sugeridas_mismo_pais,
-        instruccion_para_el_modelo:
-          'Varias sedes encajan (candidatas_sede). UNA pregunta (una línea): cuál eligen, con el nombre exacto de la lista. Sin WhatsApp (no <<<WHATSAPP>>>).',
-      },
-    };
-  }
-
-  const sedeM = sedeRes.sede;
-  const sedeRowChat = (ctx.sedes || []).find((s) => Number(s.id) === Number(sedeM?.id));
-  const zonaConsultaSede = normalizeSedeTimezone(
-    sedeRowChat?.timezone || inferTimezoneFromCiudadPais(sedeRowChat?.ciudad, sedeRowChat?.pais),
-  );
-  const hoyYmdEnZonaSede = DateTime.now().setZone(zonaConsultaSede).toFormat('yyyy-LL-dd');
-  const fechaRes = chatIaResolveFechaParaConsulta(combined, hoyYmdEnZonaSede, zonaConsultaSede);
-  const fechaM = fechaRes?.ymd || null;
-  const fechaNota = fechaRes?.nota_correccion || null;
-  const durGuess = chatIaExtractDuracionMin(combined);
-
-  if (!sedeM) {
-    return {
-      consulta_disponibilidad: {
-        estado: 'faltan_datos',
-        falta: 'sede',
-        jugador_pais: paisJugador || null,
-        sedes_sugeridas_mismo_pais: sedeRes.sedes_sugeridas_mismo_pais,
-        instruccion_para_el_modelo:
-          'No se infirió sede. UNA pregunta (una línea): qué sede quieren; priorizá nombres de sedes_sugeridas_mismo_pais (mismo país que jugador_pais si existe). Sin WhatsApp (no <<<WHATSAPP>>>).',
-      },
-    };
-  }
-  if (!fechaM) {
-    return {
-      consulta_disponibilidad: {
-        estado: 'faltan_datos',
-        falta: 'fecha',
-        sede_detectada: sedeM.nombre,
-        instruccion_para_el_modelo:
-          'Falta solo la fecha. UNA pregunta corta (una línea): qué día (o “mañana”, etc.). Sin WhatsApp (no <<<WHATSAPP>>>).',
-      },
-    };
-  }
-
-  const { data: sedeFull, error: sedeErr } = await supabaseClient
+async function chatIaFetchSedeFullForTool(supabaseClient, sedeId) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0) return null;
+  const { data: sede, error } = await supabaseClient
     .from('sedes')
     .select(
       'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,canchas_activas,cantidad_canchas,timezone,ciudad,pais',
     )
-    .eq('id', sedeM.id)
+    .eq('id', sid)
     .maybeSingle();
+  if (error || !sede) return null;
+  const canchasRows = await fetchCanchasRowsForSede(sid);
+  return sedeResponseConCanchasActivas(sede, canchasRows);
+}
 
-  if (sedeErr || !sedeFull) {
-    return {
-      consulta_disponibilidad: {
-        estado: 'faltan_datos',
-        falta: 'sede',
-        instruccion_para_el_modelo:
-          'No se pudo cargar la sede. UNA pregunta: otra sede del listado o reformular el nombre. Sin WhatsApp (no <<<WHATSAPP>>>).',
-      },
-    };
-  }
-
-  const tz = normalizeSedeTimezone(sedeFull?.timezone || inferTimezoneFromCiudadPais(sedeFull?.ciudad, sedeFull?.pais));
-  const hoySede = ymdTodayInSedeTimezone(tz);
-  if (fechaM < hoySede) {
-    return {
-      consulta_disponibilidad: {
-        estado: 'faltan_datos',
-        falta: 'fecha',
-        sede_detectada: sedeM.nombre,
-        instruccion_para_el_modelo:
-          'La fecha ya pasó en la sede. UNA pregunta: qué día futuro. Sin WhatsApp (no <<<WHATSAPP>>>).',
-      },
-    };
-  }
-
-  const durDefault = parseInt(String(sedeFull.duracion_reserva_minutos || ''), 10);
-  const duracion = [60, 90, 120].includes(durGuess)
-    ? durGuess
-    : [60, 90, 120].includes(durDefault)
-      ? durDefault
-      : 90;
-
-  const { slots, error } = await computeChatIaSlotsReales(supabaseClient, sedeFull, fechaM, duracion);
-  if (error) {
-    return {
-      consulta_disponibilidad: {
-        estado: 'error',
-        sede_id: sedeM.id,
-        sede_nombre: sedeM.nombre,
-        fecha: fechaM,
-        detalle: error,
-        instruccion_para_el_modelo:
-          'Error al calcular disponibilidad. Máximo 2 líneas: disculpas y reintento o /reservar. Sin WhatsApp (no <<<WHATSAPP>>>).',
-      },
-    };
-  }
-
-  const tzEtiquetaSede = normalizeSedeTimezone(
-    sedeFull?.timezone || inferTimezoneFromCiudadPais(sedeFull?.ciudad, sedeFull?.pais),
-  );
-  const locEtiqueta = chatIaLuxonLocaleForUi(ctx?.idioma_ui || 'es');
-  const dtEt = DateTime.fromISO(fechaM, { zone: tzEtiquetaSede }).setLocale(locEtiqueta);
-  const etiqueta_fecha_listado = dtEt.isValid
-    ? dtEt.toFormat("cccc d 'de' LLLL")
-    : fechaM;
-  const etiqueta_fecha_corta = dtEt.isValid ? dtEt.toFormat('cccc d') : fechaM;
-  const horaParaReserva = chatIaMatchHoraEnSlots(combined, slots);
-  const horariosLista = Array.isArray(slots) ? slots.map((s) => s.hora_inicio).filter(Boolean) : [];
-  const horaSolicitudUsuario = chatIaExtractHoraPedida(combined);
-  const horaSolicitudEnSlots = Boolean(
-    horaSolicitudUsuario && horariosLista.some((h) => String(h).trim() === horaSolicitudUsuario),
-  );
-  const nombreSedeShort = String(sedeFull.nombre || sedeM.nombre).trim();
-
-  let instruccionOk = '';
-  if (!horariosLista.length) {
-    instruccionOk =
-      'Máximo 2 líneas: no hay turnos libres ese día en ' +
-      nombreSedeShort +
-      '. Sin pedir confirmación. No uses <<<WHATSAPP>>> si podés sugerir otro día o /reservar.';
-  } else if (horaSolicitudUsuario && !horaSolicitudEnSlots) {
-    instruccionOk =
-      'El usuario pidió ' +
-      horaSolicitudUsuario +
-      ' y esa hora de inicio NO está en slots_reales. Máximo 3 líneas: «No hay lugar a las ' +
-      horaSolicitudUsuario +
-      '. Sí hay a las ' +
-      horariosLista.slice(0, 6).join(', ') +
-      (horariosLista.length > 6 ? '…' : '') +
-      '.» Solo hora_inicio de slots_reales. Opcional una sola pregunta: «¿Cuál preferís?». Sin frases de verificación. No <<<WHATSAPP>>>. Si encaja una hora de la lista, podés una línea <<<RESERVA:sede_id=' +
-      sedeM.id +
-      '|fecha=' +
-      fechaM +
-      '|hora=HH:MM>>>.';
-  } else {
-    instruccionOk =
-      'Ya hay sede+fecha resueltas: listá disponibilidad de inmediato (máximo 3 líneas, sin párrafos ni "¿te parece?"). Formato ideal: «[día] en ' +
-      nombreSedeShort +
-      ' hay lugar a las ' +
-      horariosLista.slice(0, 5).join(', ') +
-      (horariosLista.length > 5 ? '…' : '') +
-      '. ¿Cuál preferís?» (adaptá al idioma del usuario). Horarios solo de slots_reales. Usá etiqueta_fecha_listado / etiqueta_fecha_corta (calendario en timezone_consulta de la sede). Si nota_fecha, una frase corta. ' +
-      (horaParaReserva
-        ? `Cuadra ${horaParaReserva}: una línea final <<<RESERVA:sede_id=${sedeM.id}|fecha=${fechaM}|hora=${horaParaReserva}>>>.`
-        : 'Si el usuario elige hora de la lista: <<<RESERVA:sede_id=' +
-          sedeM.id +
-          '|fecha=' +
-          fechaM +
-          '|hora=HH:MM>>>. Si aún no eligió: <<<RESERVA:sede_id=' +
-          sedeM.id +
-          '|fecha=' +
-          fechaM +
-          '>>>.') +
-      ' No <<<WHATSAPP>>>.';
-  }
-
-  return {
-    consulta_disponibilidad: {
-      estado: 'ok',
-      sede_id: sedeM.id,
-      sede_nombre: nombreSedeShort,
-      fecha: fechaM,
-      duracion_minutos: duracion,
-      canchas_consideradas: chatIaSlotsReservaDesdeSede(sedeFull),
-      slots_reales: slots,
-      etiqueta_fecha_listado,
-      etiqueta_fecha_corta,
-      horarios_inicio_csv: horariosLista.join(', '),
-      nota_fecha: fechaNota,
-      timezone_consulta: tzEtiquetaSede,
-      hora_para_reserva_url: horaParaReserva,
-      hora_solicitud_usuario: horaSolicitudUsuario,
-      hora_solicitud_en_slots: horaSolicitudEnSlots,
-      fuente_resolucion_sede: sedeRes.fuente_resolucion_sede || null,
-      instruccion_para_el_modelo: instruccionOk,
-    },
+/** Misma lógica agregada que GET /api/rankings; devuelve hasta 10 filas. */
+async function chatIaRankingsForTool(supabaseClient, { nivel, deporte, categoria, pais, sede_id }) {
+  const scope = ['local', 'nacional', 'internacional'].includes(String(nivel || '').trim())
+    ? String(nivel).trim()
+    : 'internacional';
+  const genCompFilt = '';
+  const normPais = (s) =>
+    String(s || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  const SCOPE_NIVELES = {
+    local: ['club', 'club_oficial', 'club_no_oficial'],
+    nacional: ['nacional'],
+    internacional: ['internacional', 'mundial'],
   };
+  const nivelesPermitidos = SCOPE_NIVELES[scope] || SCOPE_NIVELES.internacional;
+  const deporteFiltro = normalizeTorneoDeporteForDb(deporte || 'padbol');
+
+  let torneosQuery = supabaseClient
+    .from('torneos')
+    .select('id, sede_id, nivel_torneo, nombre, tipo_competencia, tipo_torneo_genero, genero_competencia, categoria_edad, deporte')
+    .eq('estado', 'finalizado')
+    .in('nivel_torneo', nivelesPermitidos)
+    .eq('deporte', deporteFiltro);
+
+  if (scope === 'local') {
+    const sidRaw = sede_id != null && String(sede_id).trim() !== '' ? parseInt(String(sede_id), 10) : NaN;
+    if (Number.isFinite(sidRaw)) {
+      torneosQuery = torneosQuery.eq('sede_id', sidRaw);
+    } else {
+      const pPais = pais && String(pais).trim();
+      if (!pPais) {
+        return {
+          ok: false,
+          error:
+            'Ranking local: pasá sede_id (id numérico de la sede) o pais para acotar sedes; si no, usá nivel internacional o nacional.',
+        };
+      }
+      let sedesQ = supabaseClient.from('sedes').select('id').ilike('pais', pPais);
+      const { data: sedeRows, error: errSedes } = await sedesQ;
+      if (errSedes) return { ok: false, error: errSedes.message };
+      const ids = (sedeRows || []).map((s) => s.id).filter((id) => id != null);
+      if (!ids.length) return { ok: true, ranking: [] };
+      torneosQuery = torneosQuery.in('sede_id', ids);
+    }
+  }
+
+  const { data: torneosRaw, error: errT } = await torneosQuery;
+  if (errT) return { ok: false, error: errT.message };
+  if (!torneosRaw?.length) return { ok: true, ranking: [] };
+
+  const torneos = torneosRaw.filter((t) => torneoPasaFiltroGeneroRankingApi(t, genCompFilt));
+  if (!torneos.length) return { ok: true, ranking: [] };
+
+  const torneoIds = torneos.map((t) => t.id);
+  const { data: puntos, error: errP } = await supabaseClient
+    .from('tabla_puntos')
+    .select('torneo_id, equipo_id, posicion, puntos')
+    .in('torneo_id', torneoIds);
+  if (errP) return { ok: false, error: errP.message };
+  if (!puntos?.length) return { ok: true, ranking: [] };
+
+  const equipoIds = [...new Set(puntos.map((p) => p.equipo_id))];
+  const { data: equipos, error: errE } = await supabaseClient.from('equipos').select('id, nombre, jugadores').in('id', equipoIds);
+  if (errE) return { ok: false, error: errE.message };
+
+  const equipoMap = {};
+  (equipos || []).forEach((e) => {
+    equipoMap[e.id] = e;
+  });
+
+  const playerMap = {};
+  puntos.forEach((p) => {
+    const equipo = equipoMap[p.equipo_id];
+    if (!equipo) return;
+    const jugadores = Array.isArray(equipo.jugadores) ? equipo.jugadores : [];
+    if (jugadores.length === 0) {
+      const key = `equipo:${equipo.id}`;
+      if (!playerMap[key]) {
+        playerMap[key] = {
+          nombre: equipo.nombre,
+          email: null,
+          pais: null,
+          puntos_total: 0,
+          torneos_count: 0,
+        };
+      }
+      playerMap[key].puntos_total += p.puntos;
+      playerMap[key].torneos_count += 1;
+    } else {
+      jugadores.forEach((j) => {
+        const key = j.email || j.nombre;
+        if (!key) return;
+        if (!playerMap[key]) {
+          playerMap[key] = {
+            nombre: j.nombre || key,
+            email: j.email || null,
+            pais: null,
+            puntos_total: 0,
+            torneos_count: 0,
+          };
+        }
+        playerMap[key].puntos_total += p.puntos;
+        playerMap[key].torneos_count += 1;
+      });
+    }
+  });
+
+  const emails = Object.values(playerMap)
+    .map((pl) => pl.email)
+    .filter(Boolean);
+  if (emails.length > 0) {
+    const { data: perfiles } = await supabaseClient
+      .from('jugadores_perfil')
+      .select('email, nombre, apellido, alias, pais, sede_id, nivel')
+      .in('email', emails);
+    (perfiles || []).forEach((perfil) => {
+      const entry = playerMap[perfil.email];
+      if (!entry) return;
+      entry.pais = perfil.pais || null;
+      entry.nombre = perfil.nombre || entry.nombre;
+      entry.nivel = perfil.nivel || null;
+    });
+  }
+
+  let result = Object.values(playerMap);
+  if (categoria && String(categoria).trim()) {
+    result = result.filter((pl) => pl.nivel === String(categoria).trim());
+  }
+  if (scope === 'nacional' && pais && String(pais).trim()) {
+    const needle = normPais(pais);
+    result = result.filter((pl) => normPais(pl.pais) === needle);
+  }
+
+  result.sort((a, b) => b.puntos_total - a.puntos_total || b.torneos_count - a.torneos_count);
+  return { ok: true, ranking: result.slice(0, 10) };
+}
+
+function chatIaAnthropicToolsDefinition() {
+  return [
+    {
+      name: 'consultar_disponibilidad',
+      description:
+        'Consulta turnos libres reales en una sede para una fecha (YYYY-MM-DD) y duración 60, 90 o 120 minutos. Usá listar_sedes antes si no conocés sede_id.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          sede_id: { type: 'number', description: 'ID numérico de la sede' },
+          fecha: { type: 'string', description: 'Fecha en calendario local de la sede, formato YYYY-MM-DD' },
+          duracion_minutos: { type: 'number', enum: [60, 90, 120] },
+        },
+        required: ['sede_id', 'fecha', 'duracion_minutos'],
+      },
+    },
+    {
+      name: 'listar_sedes',
+      description: 'Lista sedes públicas con id, nombre, ciudad, país, timezone y horarios. Filtra opcionalmente por país.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          pais: { type: 'string', description: 'Filtro opcional, coincide con sedes.pais (ilike)' },
+        },
+      },
+    },
+    {
+      name: 'listar_torneos',
+      description: 'Torneos próximos (no finalizados) con fechas y datos básicos.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          sede_id: { type: 'number', description: 'Opcional: solo torneos de esta sede' },
+          dias_proximos: { type: 'number', description: 'Ventana desde hoy (ART) hacia adelante, default 30' },
+        },
+      },
+    },
+    {
+      name: 'consultar_ranking',
+      description: 'Top jugadores/equipos por puntos de torneos finalizados (tabla_puntos).',
+      input_schema: {
+        type: 'object',
+        properties: {
+          nivel: {
+            type: 'string',
+            enum: ['local', 'nacional', 'internacional'],
+            description: 'Alcance del torneo',
+          },
+          deporte: { type: 'string', description: 'Ej. padbol, padel' },
+          categoria: { type: 'string', description: 'Opcional: filtra por nivel del jugador en perfil' },
+          pais: { type: 'string', description: 'Para nacional: país del jugador; para local sin sede_id: filtra sedes' },
+          sede_id: { type: 'number', description: 'Para nivel local: recomendado' },
+        },
+        required: ['nivel', 'deporte'],
+      },
+    },
+  ];
+}
+
+async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
+  const input = toolInput && typeof toolInput === 'object' ? toolInput : {};
+  try {
+    if (toolName === 'consultar_disponibilidad') {
+      const sedeId = Number(input.sede_id);
+      const fecha = String(input.fecha || '').trim().slice(0, 10);
+      const dur = Number(input.duracion_minutos);
+      if (!Number.isFinite(sedeId) || sedeId <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(fecha) || ![60, 90, 120].includes(dur)) {
+        return { ok: false, error: 'Parámetros inválidos: sede_id, fecha YYYY-MM-DD, duracion_minutos 60|90|120' };
+      }
+      const sedeFull = await chatIaFetchSedeFullForTool(supabaseClient, sedeId);
+      if (!sedeFull) return { ok: false, error: 'Sede no encontrada' };
+      const { slots, error } = await computeChatIaSlotsReales(supabaseClient, sedeFull, fecha, dur);
+      if (error) return { ok: false, error };
+      return {
+        ok: true,
+        sede_id: sedeId,
+        sede_nombre: String(sedeFull.nombre || '').trim(),
+        fecha,
+        duracion_minutos: dur,
+        slots: slots.map((s) => ({
+          hora_inicio: s.hora_inicio,
+          hora_fin: s.hora_fin,
+          canchas_libres: s.canchas_libres,
+        })),
+      };
+    }
+    if (toolName === 'listar_sedes') {
+      const paisF = String(input.pais || '').trim();
+      let q = supabaseClient
+        .from('sedes')
+        .select('id,nombre,ciudad,pais,timezone,horario_apertura,horario_cierre,precio_turno,moneda')
+        .order('nombre', { ascending: true })
+        .limit(60);
+      if (paisF) q = q.ilike('pais', paisF);
+      const { data, error } = await q;
+      if (error) return { ok: false, error: error.message };
+      const rows = Array.isArray(data) ? data : [];
+      return {
+        ok: true,
+        sedes: rows.map((s) => ({
+          id: s.id,
+          nombre: s.nombre,
+          ciudad: s.ciudad,
+          pais: s.pais,
+          timezone: normalizeSedeTimezone(s.timezone || inferTimezoneFromCiudadPais(s.ciudad, s.pais)),
+          horario: [s.horario_apertura, s.horario_cierre].filter(Boolean).join('–') || null,
+          precio_turno: s.precio_turno,
+          moneda: s.moneda || 'ARS',
+        })),
+      };
+    }
+    if (toolName === 'listar_torneos') {
+      const dias = Number.isFinite(Number(input.dias_proximos)) ? Math.min(90, Math.max(1, Number(input.dias_proximos))) : 30;
+      const todayYmd = ymdTodayInTorneoTz();
+      const hasta = DateTime.fromISO(todayYmd, { zone: TZ_TORNEO_CALENDARIO })
+        .plus({ days: dias })
+        .toFormat('yyyy-LL-dd');
+      let tq = supabaseClient
+        .from('torneos')
+        .select(
+          'id,nombre,fecha_inicio,estado,sede_id,categoria_edad,deporte,precio_inscripcion,monto_inscripcion,moneda,cupos_maximos',
+        )
+        .gte('fecha_inicio', todayYmd)
+        .lte('fecha_inicio', hasta)
+        .order('fecha_inicio', { ascending: true })
+        .limit(40);
+      const sid = input.sede_id != null ? parseInt(String(input.sede_id), 10) : NaN;
+      if (Number.isFinite(sid) && sid > 0) tq = tq.eq('sede_id', sid);
+      const { data, error } = await tq;
+      if (error) return { ok: false, error: error.message };
+      const list = (Array.isArray(data) ? data : []).filter((t) => chatIaTorneoEstadoInteresPublico(t?.estado));
+      return {
+        ok: true,
+        torneos: list.map((t) => ({
+          id: t.id,
+          nombre: t.nombre,
+          fecha_inicio: t.fecha_inicio,
+          estado: t.estado,
+          sede_id: t.sede_id,
+          categoria: t.categoria_edad || null,
+          deporte: t.deporte || null,
+          precio_inscripcion: t.monto_inscripcion != null && t.monto_inscripcion !== '' ? t.monto_inscripcion : t.precio_inscripcion,
+          moneda: t.moneda || null,
+          cupos: t.cupos_maximos ?? null,
+        })),
+      };
+    }
+    if (toolName === 'consultar_ranking') {
+      const paisDefault = String(ctx?.usuario_logueado?.perfil?.pais || '').trim();
+      const sidH = ctx?.usuario_logueado?.sede_habitual?.sede_id;
+      const sedeIdTool = input.sede_id != null ? parseInt(String(input.sede_id), 10) : NaN;
+      const sedeRanking =
+        Number.isFinite(sedeIdTool) && sedeIdTool > 0 ? sedeIdTool : input.nivel === 'local' && sidH != null ? Number(sidH) : null;
+      return chatIaRankingsForTool(supabaseClient, {
+        nivel: input.nivel,
+        deporte: input.deporte,
+        categoria: input.categoria,
+        pais: String(input.pais || '').trim() || (input.nivel === 'nacional' ? paisDefault : ''),
+        sede_id: sedeRanking,
+      });
+    }
+    return { ok: false, error: `Tool desconocida: ${toolName}` };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+}
+
+async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools, supabaseClient, ctx }) {
+  const msgs = [...messages];
+  const toolDefs = tools || chatIaAnthropicToolsDefinition();
+  for (let round = 0; round < 8; round += 1) {
+    const anthroRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 900,
+        system,
+        tools: toolDefs,
+        messages: msgs,
+      }),
+    });
+    const rawJson = await anthroRes.json().catch(() => ({}));
+    if (!anthroRes.ok) {
+      return {
+        ok: false,
+        status: anthroRes.status,
+        error: rawJson?.error?.message || rawJson?.message || 'Anthropic error',
+        raw: rawJson,
+      };
+    }
+    const content = Array.isArray(rawJson.content) ? rawJson.content : [];
+    msgs.push({ role: 'assistant', content });
+    const stop = rawJson.stop_reason;
+    if (stop !== 'tool_use') {
+      const text = content
+        .filter((b) => b && b.type === 'text' && b.text)
+        .map((b) => b.text)
+        .join('\n')
+        .trim();
+      return { ok: true, text, stop_reason: stop, raw: rawJson };
+    }
+    const toolUses = content.filter((b) => b && b.type === 'tool_use' && b.name && b.id);
+    if (!toolUses.length) {
+      return { ok: false, error: 'tool_use sin bloques', raw: rawJson };
+    }
+    const toolResults = [];
+    for (const tu of toolUses) {
+      const out = await chatIaExecuteTool(supabaseClient, tu.name, tu.input || {}, ctx);
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: tu.id,
+        content: JSON.stringify(out),
+      });
+    }
+    msgs.push({ role: 'user', content: toolResults });
+  }
+  return { ok: false, error: 'Demasiadas rondas de tools' };
 }
 
 // ─── IA Chat (Anthropic Claude) ─────────────────────────────────────────────
@@ -11342,6 +11072,17 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
     idioma_ui,
     claude_language: chatIaClaudeLanguageName(idioma_ui),
     fecha_referencia: todayYmd,
+    sedes_hora_local: sedesRows.map((s) => {
+      const tz = normalizeSedeTimezone(s.timezone || inferTimezoneFromCiudadPais(s.ciudad, s.pais));
+      const now = DateTime.now().setZone(tz);
+      return {
+        sede_id: s.id,
+        nombre: String(s.nombre || '').trim(),
+        timezone: tz,
+        fecha_hora_local: now.toFormat('yyyy-LL-dd HH:mm'),
+        ymd_hoy: now.toFormat('yyyy-LL-dd'),
+      };
+    }),
     sedes: sedesCompact,
     torneos_proximos,
     guia_app: chatIaGuiaAppUsoSerializable(),
@@ -11418,46 +11159,45 @@ function buildChatIaSystemPrompt(ctxForModel) {
   const langName = ctxForModel.claude_language || 'Spanish';
   const uiLang = ctxForModel.idioma_ui || 'es';
   const oos = chatIaOutOfScopeExactReply(uiLang);
-  return `You are the Padbol Match assistant for padbol / padel court bookings in Latin America and Spain.
+  const payload = {
+    idioma_ui: ctxForModel.idioma_ui,
+    claude_language: ctxForModel.claude_language,
+    fecha_referencia_art: ctxForModel.fecha_referencia,
+    sedes_hora_local: ctxForModel.sedes_hora_local,
+    sedes_resumen: (ctxForModel.sedes || []).map((s) => ({
+      id: s.id,
+      nombre: s.nombre,
+      ciudad: s.ciudad,
+      pais: s.pais,
+      timezone: s.timezone,
+    })),
+    usuario_logueado: ctxForModel.usuario_logueado,
+    guia_app: ctxForModel.guia_app,
+  };
+  return `You are the Padbol Match assistant for padbol/padel bookings, tournaments and rankings.
 
-Always respond in ${langName} (user UI language code: ${uiLang}).
+Always respond in ${langName} (UI language code: ${uiLang}).
 
-STYLE (strict):
-- Maximum 3 short lines per reply. No long paragraphs, no bullet lists, no filler.
-- Be direct: state facts, times, prices, or the single question you need. Do NOT use hedging or meta phrases such as: "I need to verify", "I suggest you check", "would you like me to", "let me know if", "te parece que", "necesito confirmar", "podrías revisar", or similar.
-- Act, do not ask for permission, when the JSON already has availability (consulta_disponibilidad.estado === "ok"): give the real slots immediately. Never ask "should I look?" if the backend already computed slots.
+STYLE:
+- Maximum 3 short lines. No long paragraphs or bullet lists.
+- Act without asking for confirmation when tools already returned data: state slots, names, dates and prices directly.
+- Use tools for real data: never invent availability, rankings or tournaments.
 
-Scope: bookings, availability, prices, tournaments, rankings, clubs (sedes) and nearby courts. If the user asks for something completely outside this scope, reply with exactly this single sentence and nothing else:
+Out of scope (reply with exactly this one sentence, nothing else):
 ${JSON.stringify(oos)}
 
-App how-to (translate into ${langName} when answering; keys are Spanish hints):
-${JSON.stringify(ctxForModel.guia_app || {})}
+Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art is yyyy-LL-dd in America/Argentina/Buenos_Aires):
+${JSON.stringify(payload)}
 
-Logged-in user hints (only if usuario_logueado is non-null):
-- reservas_ultimas_3 / patron_sugerencias_ia / torneos_sede_habitual_7d / ultima_reserva_sede / perfil.pais: one short optional line max; no multi-question prompts.
-- Availability sede resolution (consulta_disponibilidad): message match within player country first; if still ambiguous, candidatas_sede; else perfil.sede_id, else ultima_reserva_sede (see JSON fields fuente_resolucion_sede / sedes_sugeridas_mismo_pais).
+Tools: call consultar_disponibilidad with sede_id + fecha (YYYY-MM-DD in the club calendar) + duracion_minutos. listar_sedes / listar_torneos / consultar_ranking as needed.
 
-Availability (consulta_disponibilidad: fecha relative words use the club timezone; fecha_referencia in JSON is today yyyy-LL-dd in America/Argentina/Buenos_Aires; when estado is ok use etiqueta_fecha_* and timezone_consulta for the weekday shown to the user; nota_fecha if corrected). Follow instruccion_para_el_modelo logic; phrase the visible reply in ${langName}:
-- estado === "ok": answer with concrete free start times from slots_reales immediately. Ideal shape (adapt language): "[When] at [club] there is space at 19:00 and 19:30. Which do you prefer?" If hora_solicitud_usuario is set and hora_solicitud_en_slots is false, say clearly that the requested start is not available and list real alternatives from slots_reales (see instruccion_para_el_modelo). Never ask to "confirm" before listing slots when data is already there.
-- estado === "faltan_datos": at most ONE question in the whole reply—only what falta indicates (sede OR fecha). If sede_ambigua, ask which of candidatas_sede; else if falta sede, prefer listing sedes_sugeridas_mismo_pais. No second question, no preamble.
-- estado === "error": max 2 lines; apology + retry or /reservar.
-- estado === "no_aplica": short factual answer from JSON only; do not invent hourly availability.
-
-WhatsApp marker <<<WHATSAPP>>> (strict):
-- The app ONLY shows a WhatsApp button if the USER message clearly requests club contact (phone/WhatsApp/human). Do NOT output <<<WHATSAPP>>> for missing sede/fecha, ambiguous sede, or generic errors—ask or suggest /reservar instead.
-- NEVER add <<<WHATSAPP>>> when consulta_disponibilidad.estado === "ok" or when you already listed slots or answered from context.
-- NEVER offer WhatsApp as the first or main option when availability or booking data exists.
-
-Dynamic context (JSON; do not invent clubs or tournaments):
-${JSON.stringify(ctxForModel)}
-
-Booking deep link: if the user wants to book and sede_id is valid (and optional HH:mm matching a slot), end with exactly one final line, nothing else on that line:
+Booking: when the user chooses a slot, end with exactly one line:
 <<<RESERVA:sede_id=NUMBER|fecha=YYYY-MM-DD|hora=HH:MM>>>
 or without hora:
 <<<RESERVA:sede_id=NUMBER|fecha=YYYY-MM-DD>>>
-or sede only:
-<<<RESERVA:sede_id=NUMBER>>>
-If unsure of sede_id or the time is not in the offered slots, omit that line.`;
+If sede_id or time is uncertain, omit that line.
+
+WhatsApp: do NOT output <<<WHATSAPP>>> unless the user clearly asks to contact the club by WhatsApp/phone.`;
 }
 
 function stripChatIaReserveMarker(rawText) {
@@ -11525,42 +11265,33 @@ app.post('/api/chat-ia', async (req, res) => {
 
     const locale = normalizeChatIaLocale(b.locale);
     const ctxBase = await buildChatIAContextPayload(supabase, user, locale);
-    const dispExtra = await buildChatIaConsultaDisponibilidad(supabase, ctxBase, historial, mensaje);
-    const ctx = { ...ctxBase, ...dispExtra };
-    const ctxForModel = { ...ctx };
+    const ctxForModel = { ...ctxBase };
     delete ctxForModel._sedes_rows_chat_ia;
 
     const systemText = buildChatIaSystemPrompt(ctxForModel);
 
     const msgs = [...historial.map((h) => ({ role: h.role, content: h.content })), { role: 'user', content: mensaje }];
 
-    const anthroRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: CHAT_IA_MODEL,
-        max_tokens: 400,
-        system: systemText,
-        messages: msgs,
-      }),
+    const run = await chatIaRunClaudeWithTools({
+      apiKey: ANTHROPIC_API_KEY,
+      model: CHAT_IA_MODEL,
+      system: systemText,
+      messages: msgs,
+      tools: chatIaAnthropicToolsDefinition(),
+      supabaseClient: supabase,
+      ctx: ctxForModel,
     });
-
-    const rawJson = await anthroRes.json().catch(() => ({}));
-    if (!anthroRes.ok) {
-      console.error('❌ Anthropic chat-ia:', anthroRes.status, rawJson?.error?.message || rawJson);
+    if (!run.ok) {
+      console.error('❌ Anthropic chat-ia:', run.status || '', run.error || run.raw);
       return res.status(502).json({
-        error: rawJson?.error?.message || 'No se pudo obtener respuesta del asistente.',
+        error: run.error || 'No se pudo obtener respuesta del asistente.',
       });
     }
-    const txt = rawJson?.content?.[0]?.text != null ? String(rawJson.content[0].text) : '';
+    const txt = String(run.text || '');
     let { text: respuesta, reserve } = stripChatIaReserveMarker(txt);
     const waSt = stripChatIaWhatsAppMarkers(respuesta);
     respuesta = waSt.text;
-    let whatsapp_escalada = await chatIaResolveWhatsappEscalation(supabase, waSt.whatsapp_sede_id, ctx);
+    let whatsapp_escalada = await chatIaResolveWhatsappEscalation(supabase, waSt.whatsapp_sede_id, ctxBase);
     if (whatsapp_escalada && !chatIaUserAllowsWhatsappEscalada(mensaje)) {
       whatsapp_escalada = null;
     }
