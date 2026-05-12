@@ -819,14 +819,29 @@ export default function ChatbotIA() {
           cursor: 'pointer',
           background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
           color: '#fff',
-          fontSize: 26,
           boxShadow: '0 10px 28px rgba(15,23,42,0.35)',
-          display: 'grid',
-          placeItems: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
           padding: 0,
         }}
       >
-        💬
+        <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden>
+          ✨
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            color: '#fff',
+            lineHeight: 1,
+            letterSpacing: '0.04em',
+          }}
+        >
+          IA
+        </span>
       </button>
 
       {open ? (
