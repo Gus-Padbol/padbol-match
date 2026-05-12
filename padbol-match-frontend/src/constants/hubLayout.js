@@ -85,6 +85,21 @@ export function isSedeProfilePathname(pathname) {
   return pathOnly === '/sede' || pathOnly.startsWith('/sede/');
 }
 
+/** Rutas permitidas en `location.state.sedeBackPath` al salir del perfil público de sede. */
+const SEDE_PUBLIC_BACK_PATH_ALLOWLIST = new Set(['/hub', '/sedes']);
+
+/**
+ * Destino fijo para «Volver» en `/sede` y `/sede/:id` (evita `history.back()` y loops con calendario u otras pantallas).
+ * Si la navegación a la sede envió `location.state.sedeBackPath` (p. ej. desde el listado `/sedes`), se respeta si está en la lista blanca; si no, `/hub`.
+ */
+export function resolveSedePublicaBackToPath(locationState) {
+  const raw = locationState?.sedeBackPath;
+  if (typeof raw !== 'string') return '/hub';
+  const norm = raw.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+  if (SEDE_PUBLIC_BACK_PATH_ALLOWLIST.has(norm)) return norm;
+  return '/hub';
+}
+
 /**
  * Padding-top en px bajo el header fijo (y la barra hub si aplica).
  * Perfil público `/sede` y `/sede/:id` siempre muestran header + BottomNav bajo el header.

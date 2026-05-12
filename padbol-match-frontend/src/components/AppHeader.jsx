@@ -10,6 +10,7 @@ import {
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   isJugadorHubShellPathname,
   isSedeProfilePathname,
+  resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
 import JugadorNotificationsBell from './JugadorNotificationsBell';
 
@@ -338,6 +339,10 @@ export default function AppHeader({
         return;
       }
       navigate('/admin');
+      return;
+    }
+    if (isSedeProfilePathname(pathOnly)) {
+      navigate(resolveSedePublicaBackToPath(location.state));
       return;
     }
     if (typeof window !== 'undefined') window.history.back();

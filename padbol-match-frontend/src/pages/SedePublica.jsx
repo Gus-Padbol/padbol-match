@@ -16,6 +16,7 @@ import {
   hubContentPaddingTopCss,
   hubContentPaddingTopPx,
   hubInstagramColumnWrapStyle,
+  resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
@@ -1790,7 +1791,12 @@ export default function SedePublica() {
 
   return (
     <div style={rootPageStyle}>
-      <AppHeader title="" showBack hideLogout />
+      <AppHeader
+        title=""
+        showBack
+        hideLogout
+        onBack={() => navigate(resolveSedePublicaBackToPath(location.state))}
+      />
 
       {loading && (
         <div

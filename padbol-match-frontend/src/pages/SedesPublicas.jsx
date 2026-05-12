@@ -98,7 +98,7 @@ export default function SedesPublicas() {
     (async () => {
       const id = await fetchSedeFavoritaId(email, sedes);
       if (cancelled || gen !== favoriteRunGenRef.current) return;
-      if (id) navigate(`/sede/${id}`, { replace: true });
+      if (id) navigate(`/sede/${id}`, { replace: true, state: { sedeBackPath: '/sedes' } });
     })();
 
     return () => {
@@ -243,11 +243,11 @@ export default function SedesPublicas() {
                   key={sede.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate(`/sede/${sede.id}`)}
+                  onClick={() => navigate(`/sede/${sede.id}`, { state: { sedeBackPath: '/sedes' } })}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      navigate(`/sede/${sede.id}`);
+                      navigate(`/sede/${sede.id}`, { state: { sedeBackPath: '/sedes' } });
                     }
                   }}
                   style={{
