@@ -34,6 +34,59 @@ function isSpeechSynthesisAvailable() {
 /** Breve pausa tras cerrar el mic antes de enviar el texto (UX “Procesando…”). */
 const VOICE_POST_TRANSCRIPT_MS = 420;
 
+function normalizeUiLocale(raw) {
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .slice(0, 24);
+  if (!s) return 'es';
+  if (s.startsWith('es')) return 'es';
+  if (s.startsWith('pt')) return 'pt';
+  if (s.startsWith('en')) return 'en';
+  return 'es';
+}
+
+function chatUiStrings(loc) {
+  const l = normalizeUiLocale(loc);
+  if (l === 'en') {
+    return {
+      escribiendo: 'Writing…',
+      procesando: 'Processing…',
+      enviar: 'Send',
+      placeholder: 'Ask something…',
+      waEscalada: 'Contact the club on WhatsApp',
+      waClub: 'Message your usual club',
+      fabOpen: 'Open Padbol Match assistant',
+      titulo: 'Assistant',
+      cargando: 'Loading…',
+    };
+  }
+  if (l === 'pt') {
+    return {
+      escribiendo: 'Escrevendo…',
+      procesando: 'Processando…',
+      enviar: 'Enviar',
+      placeholder: 'Escreva sua pergunta…',
+      waEscalada: 'Falar com o clube no WhatsApp',
+      waClub: 'Escrever ao clube habitual',
+      fabOpen: 'Abrir assistente Padbol Match',
+      titulo: 'Assistente',
+      cargando: 'Carregando…',
+    };
+  }
+  return {
+    escribiendo: 'Escribiendo…',
+    procesando: 'Procesando…',
+    enviar: 'Enviar',
+    placeholder: 'Escribe tu pregunta…',
+    waEscalada: 'Contactar al club por WhatsApp',
+    waClub: 'Escribir al club habitual',
+    fabOpen: 'Abrir asistente Padbol Match',
+    titulo: 'Asistente Padbol',
+    cargando: 'Cargando…',
+  };
+}
+
 export default function ChatbotIA() {
   const location = useLocation();
   const { session } = useAuth();
@@ -47,6 +100,8 @@ export default function ChatbotIA() {
   const [voicePhase, setVoicePhase] = useState('idle');
   const [readAloud, setReadAloud] = useState(false);
   const [lastReserve, setLastReserve] = useState(null);
+  const [bootstrap, setBootstrap] = useState(null);
+  const [whatsappEscalada, setWhatsappEscalada] = useState(null);
   const recRef = useRef(null);
   const listEndRef = useRef(null);
   const readAloudRef = useRef(readAloud);
@@ -63,6 +118,25 @@ export default function ChatbotIA() {
   useEffect(() => {
     readAloudRef.current = readAloud;
   }, [readAloud]);
+
+  const deviceLocale = useMemo(
+    () => (typeof navigator !== 'undefined' ? navigator.language || 'es' : 'es'),
+    [],
+  );
+  const ui = useMemo(() => chatUiStrings(deviceLocale), [deviceLocale]);
+  const speechRecLang = useMemo(() => {
+    const l = String(deviceLocale || 'es').toLowerCase();
+    if (l.startsWith('en')) return 'en-US';
+    if (l.startsWith('pt')) return 'pt-BR';
+    if (l.startsWith('fr')) return 'fr-FR';
+    if (l.startsWith('de')) return 'de-DE';
+    if (l.startsWith('it')) return 'it-IT';
+    return 'es-AR';
+  }, [deviceLocale]);
+  const ttsUtterLang = useMemo(() => {
+    const l = String(deviceLocale || 'es').trim();
+    return l.length >= 2 ? l : 'es-AR';
+  }, [deviceLocale]);
 
   const visible = useMemo(() => isChatbotIAVisiblePathname(location.pathname), [location.pathname]);
 
@@ -82,6 +156,30 @@ export default function ChatbotIA() {
     if (!open) return;
     listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [open, messages, loading, error]);
+
+  useEffect(() => {
+    if (!open) return;
+    let canceled = false;
+    (async () => {
+      try {
+        const headers = {};
+        const { data: sess } = await supabase.auth.getSession();
+        const tok = sess?.session?.access_token;
+        if (tok) headers.Authorization = `Bearer ${tok}`;
+        const loc = typeof navigator !== 'undefined' ? navigator.language || 'es' : 'es';
+        const res = await fetch(`${API_BASE}/api/chat-ia/bootstrap?locale=${encodeURIComponent(loc)}`, {
+          headers,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!canceled && res.ok) setBootstrap(data);
+      } catch {
+        if (!canceled) setBootstrap(null);
+      }
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [open, session?.user?.id]);
 
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === 'user').length, [messages]);
 
@@ -116,16 +214,13 @@ export default function ChatbotIA() {
     try {
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(t);
-      utter.lang = 'es-AR';
+      utter.lang = ttsUtterLang;
       utter.rate = 0.92;
       window.speechSynthesis.speak(utter);
     } catch {
       /* ignore */
     }
-  }, [ttsSupported]);
-
-  /** Llamar desde handlers de gesto del usuario (enviar, dictado, activar checkbox). */
-  const primeSpeechSynthesisFromUserGesture = useCallback(() => {
+  }, [ttsSupported, ttsUtterLang]);
     if (!ttsSupported || typeof window === 'undefined' || !window.speechSynthesis) return;
     try {
       window.speechSynthesis.resume();
@@ -172,6 +267,7 @@ export default function ChatbotIA() {
       setVoicePhase('idle');
       setLoading(true);
       setLastReserve(null);
+      setWhatsappEscalada(null);
 
       try {
         const headers = { 'Content-Type': 'application/json' };
@@ -186,6 +282,7 @@ export default function ChatbotIA() {
             mensaje: text,
             historial,
             user_id: session?.user?.id || null,
+            locale: deviceLocale,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -196,6 +293,7 @@ export default function ChatbotIA() {
         const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
         setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
         if (data.reserve?.href) setLastReserve(data.reserve);
+        if (data.whatsapp_escalada?.href) setWhatsappEscalada(data.whatsapp_escalada);
         const used = Number(data.user_messages_used);
         if (Number.isFinite(used) && used >= MAX_USER_MESSAGES) setSessionEnded(true);
         scheduleAssistantSpeak(reply);
@@ -214,6 +312,7 @@ export default function ChatbotIA() {
       session?.user?.id,
       primeSpeechSynthesisFromUserGesture,
       scheduleAssistantSpeak,
+      deviceLocale,
     ]
   );
 
@@ -228,7 +327,7 @@ export default function ChatbotIA() {
     setError('');
     primeSpeechSynthesisFromUserGesture();
     const rec = new Ctor();
-    rec.lang = 'es-AR';
+    rec.lang = speechRecLang;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
     rec.onresult = (ev) => {
@@ -286,6 +385,7 @@ export default function ChatbotIA() {
     micSupported,
     primeSpeechSynthesisFromUserGesture,
     stopRecognition,
+    speechRecLang,
   ]);
 
   const nuevaConsulta = useCallback(() => {
@@ -300,6 +400,7 @@ export default function ChatbotIA() {
     setError('');
     setSessionEnded(false);
     setLastReserve(null);
+    setWhatsappEscalada(null);
   }, [stopRecognition]);
 
   if (!visible) return null;
@@ -308,7 +409,7 @@ export default function ChatbotIA() {
     <>
       <button
         type="button"
-        aria-label="Abrir asistente Padbol Match"
+        aria-label={ui.fabOpen}
         onClick={() => {
           setOpen(true);
           setError('');
@@ -394,7 +495,7 @@ export default function ChatbotIA() {
                 background: 'linear-gradient(135deg,#eef2ff,#fff)',
               }}
             >
-              <div style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>Asistente Padbol</div>
+              <div style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>{ui.titulo}</div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -425,10 +526,23 @@ export default function ChatbotIA() {
               }}
             >
               {messages.length === 0 ? (
-                <p style={{ margin: 0, color: '#64748b', fontSize: 14, lineHeight: 1.5 }}>
-                  Pregunta por sedes, precios, torneos o cómo reservar. Máximo {MAX_USER_MESSAGES} mensajes por
-                  consulta.
-                </p>
+                bootstrap ? (
+                  <div style={{ color: '#334155', fontSize: 14, lineHeight: 1.55 }}>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a', marginBottom: 8 }}>
+                      {bootstrap.saludo_titulo || ui.titulo}
+                    </div>
+                    {(bootstrap.saludo_lineas || []).map((line, idx) => (
+                      <p
+                        key={idx}
+                        style={{ margin: idx === 0 ? '0 0 8px' : '0 0 6px', color: idx === 0 ? '#64748b' : '#475569' }}
+                      >
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>{ui.cargando}</p>
+                )
               ) : null}
               {messages.map((m, i) => (
                 <div
@@ -449,11 +563,11 @@ export default function ChatbotIA() {
                 </div>
               ))}
               {loading ? (
-                <div style={{ color: '#64748b', fontSize: 13, fontWeight: 600 }}>Escribiendo…</div>
+                <div style={{ color: '#64748b', fontSize: 13, fontWeight: 600 }}>{ui.escribiendo}</div>
               ) : null}
               {voicePhase === 'processing' && !loading ? (
                 <div role="status" aria-live="polite" style={{ color: '#b45309', fontSize: 13, fontWeight: 700 }}>
-                  Procesando…
+                  {ui.procesando}
                 </div>
               ) : null}
               {error ? (
@@ -521,6 +635,51 @@ export default function ChatbotIA() {
                       : ''}
                 </Link>
               ) : null}
+              {whatsappEscalada?.href ? (
+                <a
+                  href={whatsappEscalada.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    alignSelf: 'center',
+                    marginTop: 4,
+                    padding: '10px 16px',
+                    borderRadius: 10,
+                    background: '#128C7E',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: 14,
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                  }}
+                >
+                  {ui.waEscalada}
+                  {whatsappEscalada.sede_nombre ? ` · ${whatsappEscalada.sede_nombre}` : ''}
+                </a>
+              ) : null}
+              {!whatsappEscalada?.href && bootstrap?.whatsapp_club?.href ? (
+                <a
+                  href={bootstrap.whatsapp_club.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    alignSelf: 'center',
+                    marginTop: 2,
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    border: '1px solid #86efac',
+                    background: '#f0fdf4',
+                    color: '#166534',
+                    fontWeight: 700,
+                    fontSize: 12,
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                  }}
+                >
+                  {ui.waClub}
+                  {bootstrap.whatsapp_club.sede_nombre ? ` · ${bootstrap.whatsapp_club.sede_nombre}` : ''}
+                </a>
+              ) : null}
               <div ref={listEndRef} />
             </div>
 
@@ -587,7 +746,7 @@ export default function ChatbotIA() {
                     }
                   }}
                   disabled={loading || sessionEnded}
-                  placeholder={sessionEnded ? 'Límite alcanzado' : 'Escribe tu pregunta…'}
+                  placeholder={sessionEnded ? '—' : ui.placeholder}
                   style={{
                     flex: 1,
                     minWidth: 0,
@@ -638,7 +797,7 @@ export default function ChatbotIA() {
                     cursor: loading || sessionEnded || !input.trim() ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  Enviar
+                  {ui.enviar}
                 </button>
               </div>
             </div>
