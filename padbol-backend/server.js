@@ -5148,12 +5148,21 @@ app.get('/api/rankings', async (req, res) => {
 
     const torneoIds = torneos.map((t) => t.id);
 
+    const depByTorneoId = {};
+    torneos.forEach((t) => {
+      depByTorneoId[t.id] = normalizeTorneoDeporteForDb(t.deporte);
+    });
+
     // 2. Load tabla_puntos for those torneos
-    const { data: puntos, error: errP } = await supabase
+    const { data: puntosRaw, error: errP } = await supabase
       .from('tabla_puntos')
-      .select('torneo_id, equipo_id, posicion, puntos')
+      .select('torneo_id, equipo_id, posicion, puntos, deporte')
       .in('torneo_id', torneoIds);
     if (errP) throw errP;
+    const puntos = (puntosRaw || []).filter((p) => {
+      const d = p.deporte != null && String(p.deporte).trim() !== '' ? normalizeTorneoDeporteForDb(p.deporte) : depByTorneoId[p.torneo_id];
+      return d === deporteFiltro;
+    });
     if (!puntos?.length) return res.json([]);
 
     // 3. Load equipos
@@ -5352,6 +5361,7 @@ app.post('/api/torneos/:id/finalizar', async (req, res) => {
       equipo_id: eq.id,
       posicion: idx + 1,
       puntos: Math.round(base * (POSICION_MULT[idx] ?? 0.05)),
+      deporte: normalizeTorneoDeporteForDb(torneo?.deporte),
     }));
 
     // Delete previous entries for this torneo (idempotent), then insert
@@ -6833,6 +6843,7 @@ async function computeEstadisticasJugadorPublico(perfil) {
       partidos_ganados: 0,
       win_rate_pct: 0,
       puntos_ranking_total: 0,
+      puntos_ranking_por_deporte: {},
       sede_habitual: null,
       racha_victorias_consecutivas: 0,
       mejor_resultado: null,
@@ -6843,7 +6854,7 @@ async function computeEstadisticasJugadorPublico(perfil) {
 
   const { data: torneosRows, error: tErr } = await supabase
     .from('torneos')
-    .select('id, estado, sede_id, fecha_inicio, fecha_fin')
+    .select('id, estado, sede_id, fecha_inicio, fecha_fin, deporte')
     .in('id', misTorneoIds);
   if (tErr) throw tErr;
 
@@ -6873,25 +6884,62 @@ async function computeEstadisticasJugadorPublico(perfil) {
   let puntos_ranking_total = 0;
   let torneos_ganados = 0;
   let mejor_posicion_torneo = Infinity;
+  const puntos_ranking_por_deporte = {};
+  let deporte_mas_jugado = null;
+
+  const deporteTorneoFreq = new Map();
+  for (const tid of torneosJugadosSet) {
+    const t = torneoById[tid];
+    const d = normalizeTorneoDeporteForDb(t?.deporte);
+    deporteTorneoFreq.set(d, (deporteTorneoFreq.get(d) || 0) + 1);
+  }
+  if (deporteTorneoFreq.size > 0) {
+    let bestDep = null;
+    let bestN = 0;
+    for (const [d, n] of deporteTorneoFreq) {
+      if (n > bestN || (n === bestN && String(d) < String(bestDep || '\uffff'))) {
+        bestN = n;
+        bestDep = d;
+      }
+    }
+    deporte_mas_jugado = formatDeporteEstadisticaSlug(bestDep);
+  }
+
   if (fArr.length && misEquipoIdsFinal.length) {
     const { data: tpRows, error: tpErr } = await supabase
       .from('tabla_puntos')
-      .select('torneo_id, equipo_id, posicion, puntos')
+      .select('torneo_id, equipo_id, posicion, puntos, deporte')
       .in('torneo_id', fArr)
       .in('equipo_id', misEquipoIdsFinal);
     if (tpErr) throw tpErr;
+    const depForTorneo = (tid) => normalizeTorneoDeporteForDb(torneoById[tid]?.deporte);
     const ganadosSet = new Set();
     for (const row of tpRows || []) {
       const tid = row.torneo_id;
       const eid = row.equipo_id;
       if (equipoIdPorTorneo.get(Number(tid)) !== eid) continue;
       const pts = Number(row.puntos) || 0;
-      puntos_ranking_total += pts;
+      const dep = row.deporte != null && String(row.deporte).trim() !== '' ? normalizeTorneoDeporteForDb(row.deporte) : depForTorneo(tid);
+      puntos_ranking_por_deporte[dep] = (puntos_ranking_por_deporte[dep] || 0) + pts;
       if (Number(row.posicion) === 1) ganadosSet.add(tid);
       const posN = Number(row.posicion);
       if (Number.isFinite(posN) && posN >= 1) mejor_posicion_torneo = Math.min(mejor_posicion_torneo, posN);
     }
     torneos_ganados = ganadosSet.size;
+
+    let primaryDep = null;
+    let bestNc = 0;
+    for (const [d, n] of deporteTorneoFreq) {
+      if (n > bestNc || (n === bestNc && String(d) < String(primaryDep || '\uffff'))) {
+        bestNc = n;
+        primaryDep = d;
+      }
+    }
+    if (primaryDep && puntos_ranking_por_deporte[primaryDep] != null) {
+      puntos_ranking_total = puntos_ranking_por_deporte[primaryDep];
+    } else {
+      puntos_ranking_total = Object.values(puntos_ranking_por_deporte).reduce((a, b) => a + b, 0);
+    }
   }
 
   let partidos_jugados = 0;
@@ -6949,29 +6997,6 @@ async function computeEstadisticasJugadorPublico(perfil) {
     }
   }
 
-  let deporte_mas_jugado = null;
-  const sedeIdsDeporte = [...torneosJugadosSet].map((tid) => torneoById[tid]?.sede_id).filter((x) => x != null);
-  const depMap = await deportePrincipalPorSedeIdsStats(supabase, sedeIdsDeporte);
-  const deporteFreq = new Map();
-  for (const tid of torneosJugadosSet) {
-    const sid = torneoById[tid]?.sede_id;
-    if (sid == null) continue;
-    const dep = depMap.get(sid)?.deporte;
-    if (!dep) continue;
-    deporteFreq.set(dep, (deporteFreq.get(dep) || 0) + 1);
-  }
-  if (deporteFreq.size > 0) {
-    let bestDep = null;
-    let bestDn = 0;
-    for (const [dep, n] of deporteFreq) {
-      if (n > bestDn || (n === bestDn && dep < String(bestDep || '\uffff'))) {
-        bestDn = n;
-        bestDep = dep;
-      }
-    }
-    deporte_mas_jugado = formatDeporteEstadisticaSlug(bestDep);
-  }
-
   return {
     torneos_jugados,
     torneos_ganados,
@@ -6979,6 +7004,7 @@ async function computeEstadisticasJugadorPublico(perfil) {
     partidos_ganados,
     win_rate_pct,
     puntos_ranking_total,
+    puntos_ranking_por_deporte,
     sede_habitual,
     racha_victorias_consecutivas,
     mejor_resultado,
@@ -10606,11 +10632,20 @@ async function chatIaRankingsForTool(supabaseClient, { nivel, deporte, categoria
   if (!torneos.length) return { ok: true, ranking: [] };
 
   const torneoIds = torneos.map((t) => t.id);
-  const { data: puntos, error: errP } = await supabaseClient
+  const depByTorneoId = {};
+  torneos.forEach((t) => {
+    depByTorneoId[t.id] = normalizeTorneoDeporteForDb(t.deporte);
+  });
+
+  const { data: puntosRaw, error: errP } = await supabaseClient
     .from('tabla_puntos')
-    .select('torneo_id, equipo_id, posicion, puntos')
+    .select('torneo_id, equipo_id, posicion, puntos, deporte')
     .in('torneo_id', torneoIds);
   if (errP) return { ok: false, error: errP.message };
+  const puntos = (puntosRaw || []).filter((p) => {
+    const d = p.deporte != null && String(p.deporte).trim() !== '' ? normalizeTorneoDeporteForDb(p.deporte) : depByTorneoId[p.torneo_id];
+    return d === deporteFiltro;
+  });
   if (!puntos?.length) return { ok: true, ranking: [] };
 
   const equipoIds = [...new Set(puntos.map((p) => p.equipo_id))];

@@ -101,12 +101,26 @@ async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria
 
   const torneoIds = torneos.map((t) => t.id);
 
-  const { data: puntos, error: errP } = await supabase
+  const depByTorneoId = {};
+  torneos.forEach((t) => {
+    depByTorneoId[t.id] = normalizeTorneoDeporte(t.deporte);
+  });
+
+  const { data: puntosRaw, error: errP } = await supabase
     .from('tabla_puntos')
-    .select('torneo_id, equipo_id, posicion, puntos')
+    .select('torneo_id, equipo_id, posicion, puntos, deporte')
     .in('torneo_id', torneoIds);
   if (errP) throw errP;
-  if (!puntos?.length) return [];
+  if (!puntosRaw?.length) return [];
+
+  const puntos = puntosRaw.filter((p) => {
+    const d =
+      p.deporte != null && String(p.deporte).trim() !== ''
+        ? normalizeTorneoDeporte(p.deporte)
+        : depByTorneoId[p.torneo_id];
+    return d === dep;
+  });
+  if (!puntos.length) return [];
 
   const equipoIds = [...new Set(puntos.map((p) => p.equipo_id))];
   const { data: equipos, error: errE } = await supabase
