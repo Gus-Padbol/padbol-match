@@ -10966,7 +10966,7 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'buscar_sedes_por_deporte',
       description:
-        'Lists clubs that have at least one ACTIVE court (canchas.estado) whose canchas.deporte column matches the requested sport—strict match only; canchas_por_deporte is NOT used. If the tool returns an empty sedes array, tell the user honestly that no clubs offer that sport for the filters used—do NOT suggest other clubs from Context sedes_resumen or listar_sedes unless they appear in this tool result. Optional ciudad/pais (ilike on sedes). Optional lat/lng for distance sort when no ciudad/pais.',
+        'Lists clubs from an INNER JOIN sedes↔canchas: only rows where canchas.deporte matches the requested sport AND canchas.estado is activa (DB column). canchas_por_deporte is NOT used. If sedes is empty, say honestly there are no clubs with that sport for that city/area (or nearby)—offer to search another city/region—and do NOT suggest clubs from Context sedes_resumen or listar_sedes unless they appear in this tool result. Optional ciudad/pais (ilike on sedes). Optional lat/lng for distance sort when no ciudad/pais.',
       input_schema: {
         type: 'object',
         properties: {
@@ -11196,26 +11196,51 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
       const keys = chatIaDeporteDbKeysForFilter(depCanon);
       if (!keys.length) return { ok: false, error: 'Deporte no reconocido' };
 
-      const { data: canRows, error: canErr } = await supabaseClient.from('canchas').select('sede_id, deporte, estado').in('deporte', keys);
-      if (canErr) return { ok: false, error: canErr.message };
+      // INNER JOIN canchas → sedes: PostgREST embed + filtros en canchas (equivalente a JOIN con deporte y estado activa).
+      const { data: joinRows, error: joinErr } = await supabaseClient
+        .from('canchas')
+        .select(
+          'sede_id, deporte, estado, sedes!inner ( id, nombre, ciudad, pais, latitud, longitud )'
+        )
+        .in('deporte', keys)
+        .eq('estado', 'activa')
+        .limit(800);
+      if (joinErr) return { ok: false, error: joinErr.message };
+
       const sidMap = new Map();
-      for (const row of canRows || []) {
+      const sedeMeta = new Map();
+      for (const row of joinRows || []) {
         if (normalizeEstadoCancha(row?.estado) !== 'activa') continue;
-        const dnorm = normalizeTorneoDeporteForDb(row?.deporte != null && String(row.deporte).trim() !== '' ? row.deporte : 'padbol');
+        const dnorm = normalizeTorneoDeporteForDb(
+          row?.deporte != null && String(row.deporte).trim() !== '' ? row.deporte : 'padbol'
+        );
         if (!keys.includes(dnorm)) continue;
-        const sid = Number(row.sede_id);
+        const rawSede = row?.sedes;
+        const sede = Array.isArray(rawSede) ? rawSede[0] : rawSede;
+        const sid = sede && sede.id != null ? Number(sede.id) : Number(row.sede_id);
         if (!Number.isFinite(sid) || sid <= 0) continue;
         sidMap.set(sid, (sidMap.get(sid) || 0) + 1);
+        if (!sedeMeta.has(sid) && sede && typeof sede === 'object') {
+          sedeMeta.set(sid, {
+            id: sede.id,
+            nombre: sede.nombre,
+            ciudad: sede.ciudad,
+            pais: sede.pais,
+            latitud: sede.latitud,
+            longitud: sede.longitud,
+          });
+        }
       }
       const ids = [...sidMap.keys()];
       if (!ids.length) {
         return {
           ok: true,
           deporte_filtro: depCanon,
-          criterio_sede: 'solo_canchas_activas_columna_deporte',
+          criterio_sede: 'join_canchas_sedes_deporte_activa',
           sedes: [],
           orden: 'ninguno',
-          aviso: 'Ninguna sede tiene al menos una cancha activa con este deporte en canchas.deporte (coincidencia estricta). No sugieras otras sedes como si ofrecieran este deporte.',
+          aviso:
+            'Ninguna sede tiene al menos una cancha activa (canchas.estado=activa) con este deporte en canchas.deporte. No inventes sedes ni deportes. Si el usuario filtró por ciudad, puedes ofrecer buscar en otra ciudad o región.',
         };
       }
 
@@ -11257,12 +11282,44 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
         else if (sh?.pais && String(sh.pais).trim()) paisF = String(sh.pais).trim();
       }
 
-      let sq = supabaseClient.from('sedes').select('id,nombre,ciudad,pais,latitud,longitud').in('id', ids).limit(120);
-      if (paisF) sq = sq.ilike('pais', `%${paisF}%`);
-      if (ciudadF) sq = sq.ilike('ciudad', `%${ciudadF}%`);
-      const { data: sedesData, error: sErr } = await sq;
-      if (sErr) return { ok: false, error: sErr.message };
-      let sedes = (sedesData || []).map((s) => {
+      const missingMeta = ids.filter((id) => !sedeMeta.has(id));
+      if (missingMeta.length) {
+        const { data: fillRows, error: fillErr } = await supabaseClient
+          .from('sedes')
+          .select('id,nombre,ciudad,pais,latitud,longitud')
+          .in('id', missingMeta)
+          .limit(120);
+        if (fillErr) return { ok: false, error: fillErr.message };
+        for (const s of fillRows || []) {
+          const sid = Number(s.id);
+          if (Number.isFinite(sid) && sid > 0) sedeMeta.set(sid, s);
+        }
+      }
+
+      const ilikeSub = (col, needle) => {
+        const c = String(col || '').toLowerCase();
+        const n = String(needle || '').trim().toLowerCase();
+        return !n || c.includes(n);
+      };
+      let sedesData = ids
+        .map((id) => sedeMeta.get(id))
+        .filter((s) => s != null && s.id != null);
+      if (paisF) sedesData = sedesData.filter((s) => ilikeSub(s.pais, paisF));
+      if (ciudadF) sedesData = sedesData.filter((s) => ilikeSub(s.ciudad, ciudadF));
+
+      if (!sedesData.length && ids.length) {
+        return {
+          ok: true,
+          deporte_filtro: depCanon,
+          criterio_sede: 'join_canchas_sedes_deporte_activa',
+          sedes: [],
+          orden: 'ninguno',
+          aviso:
+            'Hay sedes con este deporte en la red, pero ninguna coincide con el filtro de ciudad/país usado. Di con claridad que no hay sedes con ese deporte en esa zona y ofrece buscar en otra ciudad o país, o ampliar el criterio. No inventes sedes.',
+        };
+      }
+
+      let sedes = sedesData.map((s) => {
         const latS = s.latitud != null ? Number(s.latitud) : NaN;
         const lngS = s.longitud != null ? Number(s.longitud) : NaN;
         const distKm =
@@ -11294,7 +11351,7 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
       return {
         ok: true,
         deporte_filtro: depCanon,
-        criterio_sede: 'solo_canchas_activas_columna_deporte',
+        criterio_sede: 'join_canchas_sedes_deporte_activa',
         orden: sortByDistance ? 'distancia_km' : 'nombre',
         referencia_geo: sortByDistance ? { latitud: refLat, longitud: refLng } : null,
         sedes: sedes.slice(0, 40),
@@ -12125,7 +12182,7 @@ Sede for availability (read disponibilidad_sede_implicita in Context JSON):
 
 Use buscar_sedes_por_deporte for "which clubs offer sport X" or "near me"; combine with listar_sedes only to resolve sede_id when the user names a specific club you already know exists. Location priority (critical): (1) If the user message names a city, region or country (e.g. Madrid, Buenos Aires, Spain), pass ciudad and/or pais in the tool—do not use GPS for ordering. (2) If they do not name a place and Context JSON client_geolocalizacion has latitud/longitud, pass those in the tool or omit them (the server injects the same coords) so results include distancia_km sorted nearest-first. (3) If there is no named place and client_geolocalizacion is null, use usuario_logueado.sede_habitual.ciudad / .pais from context when the user is logged in and has a habitual club.
 
-buscar_sedes_por_deporte (critical): The tool returns ONLY clubs with at least one active court where the database column canchas.deporte matches the requested sport—no other catalog. If sedes is empty, say clearly that there are no clubs with that sport for that city/area (or near them)—do NOT offer sedes from sedes_resumen, listar_sedes, or habitual club as "alternatives" unless they also appear in this tool result with that sport. Never imply a club offers a sport unless it is in the tool output.
+buscar_sedes_por_deporte (critical): The tool uses a join of sedes with canchas: only clubs with at least one active court (canchas.estado) where canchas.deporte matches the requested sport—no other catalog. If sedes is empty, say clearly there are no clubs with that sport in that city/area (or near them), offer to try another city or region, and do NOT offer sedes from sedes_resumen, listar_sedes, or habitual club as "alternatives" unless they also appear in this tool result with that sport. Never imply a club offers a sport unless it is in the tool output.
 
 Availability (critical):
 - When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result—except when disponibilidad_sede_implicita.fuente is ninguna and they have not specified a club yet: then ask which city/club first (no tool). Include deporte in the tool call only if the user clearly names a sport (e.g. "quiero jugar fútbol", "hay pádel"); if they only ask for today\'s times or generic availability, omit deporte. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
