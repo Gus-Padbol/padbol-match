@@ -280,12 +280,18 @@ function QuickSuggestionBar({ items, disabled, onPick }) {
   return (
     <div
       style={{
-        alignSelf: 'flex-start',
-        maxWidth: '92%',
+        alignSelf: 'stretch',
+        maxWidth: '100%',
         width: '100%',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
+        flexWrap: 'nowrap',
         gap: 8,
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'thin',
+        paddingBottom: 2,
+        boxSizing: 'border-box',
       }}
     >
       {list.map((q, idx) => (
@@ -295,16 +301,25 @@ function QuickSuggestionBar({ items, disabled, onPick }) {
           disabled={disabled}
           onClick={() => onPick(q.label)}
           style={{
-            textAlign: 'left',
-            padding: '10px 12px',
-            borderRadius: 10,
-            border: '1px solid #c7d2fe',
-            background: '#eef2ff',
-            color: '#312e81',
-            fontWeight: 700,
-            fontSize: 14,
+            flex: '0 0 auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            maxHeight: 32,
+            padding: '6px 12px',
+            boxSizing: 'border-box',
+            borderRadius: 9999,
+            border: '1px solid #d1d5f8',
+            background: 'transparent',
+            color: '#64748b',
+            fontSize: 12,
+            fontWeight: 500,
+            lineHeight: 1.25,
+            whiteSpace: 'nowrap',
             cursor: disabled ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.55 : 1,
+            opacity: disabled ? 0.5 : 1,
+            boxShadow: 'none',
+            WebkitTapHighlightColor: 'transparent',
           }}
         >
           {q.label}
