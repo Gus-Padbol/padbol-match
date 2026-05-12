@@ -3721,6 +3721,7 @@ export default function MiPerfil() {
           },
         ];
         if (!mostrarBloqueEstadisticas) return null;
+        return (
           <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>📊 Estadísticas</h4>
             {showGridTorneos && depsList.length > 1 ? (
