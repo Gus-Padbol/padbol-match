@@ -14,15 +14,33 @@ import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
 
 const HUB_COLUMN_MAX = 390;
 
-const HUB_CARD_IMAGES = {
-  partidos: 'https://images.unsplash.com/photo-1526676531761-c6e1654d599b?w=800&q=80',
-  torneos: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
-  perfil: 'https://images.unsplash.com/photo-1534438327276-14e53078660e?w=800&q=80',
-  sedes: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&q=80',
-};
+const HUB_API_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
+
+function hubCardNavigate(navigate, cardId, deporteElegido) {
+  const id = String(cardId || '').trim();
+  const q = deporteElegido ? `?deporte=${encodeURIComponent(deporteElegido)}` : '';
+  const routes = {
+    partidos: () => navigate(`/jugar/buscar${q}`),
+    torneos: () => navigate('/competir'),
+    perfil: () => navigate('/mi-perfil'),
+    sedes: () => navigate('/sedes'),
+    reservar: () => navigate('/reservar'),
+    rankings: () => navigate('/rankings'),
+    jugar: () => navigate('/jugar'),
+    torneos_lista: () => navigate('/torneos'),
+  };
+  const fn = routes[id];
+  if (fn) fn();
+  else navigate('/');
+}
 
 const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
 const LEGACY_GLOBAL_ADMIN_EMAILS = [
@@ -91,6 +109,8 @@ export default function UserHome() {
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [nombreFinal, setNombreFinal] = useState(null);
   const [deporteElegido, setDeporteElegido] = useState('');
+  const [hubCmsStatus, setHubCmsStatus] = useState('loading');
+  const [hubCmsRows, setHubCmsRows] = useState([]);
   const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
     if (ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')) return true;
     if (emailEsLegacyAdminHub(session?.user?.email)) return true;
@@ -154,6 +174,32 @@ export default function UserHome() {
   }, [session?.user]);
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${HUB_API_BASE}/api/hub-config`);
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (!res.ok || !Array.isArray(data)) {
+          setHubCmsStatus('error');
+          setHubCmsRows([]);
+          return;
+        }
+        setHubCmsRows(data);
+        setHubCmsStatus('ok');
+      } catch {
+        if (!cancelled) {
+          setHubCmsStatus('error');
+          setHubCmsRows([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!session?.user) return;
     if (authLoading || profileLoading) return;
     if (!userProfile) {
@@ -195,41 +241,65 @@ export default function UserHome() {
   const padL = 'calc(12px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(12px + env(safe-area-inset-right, 0px))';
 
-  const irPartidosCerca = () => {
-    const q = deporteElegido ? `?deporte=${encodeURIComponent(deporteElegido)}` : '';
-    navigate(`/jugar/buscar${q}`);
-  };
+  const bigCards = useMemo(() => {
+    const fallback = [
+      {
+        key: 'partidos',
+        titulo: 'Partidos cerca de ti',
+        subtitulo: 'Si no hay, ¡Crea uno!',
+        image: defaultHubCardImageForId('partidos'),
+        onClick: () => hubCardNavigate(navigate, 'partidos', deporteElegido),
+      },
+      {
+        key: 'torneos',
+        titulo: 'Torneos',
+        subtitulo: 'Torneos y rankings.',
+        image: defaultHubCardImageForId('torneos'),
+        onClick: () => hubCardNavigate(navigate, 'torneos', deporteElegido),
+      },
+      {
+        key: 'perfil',
+        titulo: 'Mi perfil',
+        subtitulo: 'Perfil, estadísticas e historial.',
+        image: defaultHubCardImageForId('perfil'),
+        onClick: () => hubCardNavigate(navigate, 'perfil', deporteElegido),
+      },
+      {
+        key: 'sedes',
+        titulo: 'Explorar sedes',
+        subtitulo: '',
+        image: defaultHubCardImageForId('sedes'),
+        onClick: () => hubCardNavigate(navigate, 'sedes', deporteElegido),
+      },
+    ];
 
-  const bigCards = [
-    {
-      key: 'partidos',
-      titulo: 'Partidos cerca de ti',
-      subtitulo: 'Si no hay, ¡Crea uno!',
-      image: HUB_CARD_IMAGES.partidos,
-      onClick: irPartidosCerca,
-    },
-    {
-      key: 'torneos',
-      titulo: 'Torneos',
-      subtitulo: 'Torneos y rankings.',
-      image: HUB_CARD_IMAGES.torneos,
-      onClick: () => navigate('/competir'),
-    },
-    {
-      key: 'perfil',
-      titulo: 'Mi perfil',
-      subtitulo: 'Perfil, estadísticas e historial.',
-      image: HUB_CARD_IMAGES.perfil,
-      onClick: () => navigate('/mi-perfil'),
-    },
-    {
-      key: 'sedes',
-      titulo: 'Explorar sedes',
-      subtitulo: '',
-      image: HUB_CARD_IMAGES.sedes,
-      onClick: () => navigate('/sedes'),
-    },
-  ];
+    if (hubCmsStatus !== 'ok' || !hubCmsRows.length) return fallback;
+
+    const active = hubCmsRows.filter((r) => {
+      if (r == null || typeof r !== 'object') return false;
+      if (r.activo === false || r.activo === 'false' || r.activo === 0) return false;
+      return true;
+    });
+    if (!active.length) return fallback;
+
+    return active.map((r) => {
+      const id = String(r.id || '').trim() || 'card';
+      const fb = fallbackCopyForHubCardId(id);
+      const tituloRaw = String(r.titulo || '').trim();
+      const subRaw = String(r.subtitulo || '').trim();
+      const titulo = tituloRaw || fb.titulo;
+      const subtitulo = subRaw !== '' ? subRaw : fb.subtitulo;
+      const foto = String(r.foto_url || '').trim();
+      const image = foto || defaultHubCardImageForId(id);
+      return {
+        key: id,
+        titulo,
+        subtitulo,
+        image,
+        onClick: () => hubCardNavigate(navigate, id, deporteElegido),
+      };
+    });
+  }, [hubCmsStatus, hubCmsRows, navigate, deporteElegido]);
 
   const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
 

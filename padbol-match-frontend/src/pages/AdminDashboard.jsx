@@ -68,6 +68,7 @@ import {
 import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
 import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDistribucionModal';
 import AdminClubOnboardingTour, { readOnboardingDone } from '../components/AdminClubOnboardingTour';
+import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import * as XLSX from 'xlsx';
@@ -402,6 +403,7 @@ const ADMIN_TABS_ALLOWED = new Set([
   'sedes',
   'jugadores',
   'solicitudes',
+  'personalizar_hub',
 ]);
 
 const SEDES_SUPER_ADMIN_PAGE_SIZE = 10;
@@ -3162,6 +3164,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     navigate('/admin?tab=reservas', { replace: true });
   }, [esEmpleado, activeTab, navigate]);
 
+  useEffect(() => {
+    if (isSuperAdmin) return;
+    if (activeTab !== 'personalizar_hub') return;
+    setActiveTab('resumen');
+    navigate('/admin?tab=resumen', { replace: true });
+  }, [isSuperAdmin, activeTab, navigate]);
+
   // ── Config puntos (superAdmin only) ──
   const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
   const CONFIG_POSICIONES_DEFAULT    = { 1: 30, 2: 20, 3: 15, 4: 12, 5: 8, 6: 6, 7: 4, 8: 3, 9: 1, 10: 1 };
@@ -4818,6 +4827,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         { id: 'resumen', label: '📊 Resumen' },
         ...(isSuperAdmin ? [{ id: 'sedes', label: '🏟️ Sedes' }] : []),
         ...(isSuperAdmin ? [{ id: 'solicitudes', label: '📝 Solicitudes' }] : []),
+        ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: '🎨 Personalizar Hub' }] : []),
         { id: 'torneos', label: '🏆 Torneos' },
         { id: 'reservas', label: '⚽ Reservas' },
         { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
@@ -8126,6 +8136,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         })()}
         </div>
       </>}
+
+      {activeTab === 'personalizar_hub' && isSuperAdmin ? (
+        <AdminHubPersonalizarSection apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
+      ) : null}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
         <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>⚙️ Configuración de Puntos</h2>

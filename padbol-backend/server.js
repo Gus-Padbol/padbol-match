@@ -75,6 +75,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const uploadContrato = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
+const uploadHubFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
 const TZ_TORNEO_CALENDARIO = 'America/Argentina/Buenos_Aires';
 const MSG_TORNEO_INSCRIPCION_FECHA_PASADA =
@@ -1399,6 +1400,93 @@ app.get('/api/plan-pricing', async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error('❌ GET /api/plan-pricing:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/hub-config — filas hub_config ordenadas por `orden` (público, sin JWT). */
+app.get('/api/hub-config', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('hub_config').select('*').order('orden', { ascending: true });
+    if (error) throw error;
+    res.json(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error('❌ GET /api/hub-config:', err.message);
+    res.status(500).json({ error: err.message || 'Error al cargar hub' });
+  }
+});
+
+/** PATCH /api/hub-config/:id — super_admin: titulo, subtitulo, foto_url, fotos_urls. */
+app.patch('/api/hub-config/:id', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'id requerido' });
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const patch = { updated_at: new Date().toISOString() };
+    if (Object.prototype.hasOwnProperty.call(body, 'titulo')) patch.titulo = String(body.titulo ?? '');
+    if (Object.prototype.hasOwnProperty.call(body, 'subtitulo')) patch.subtitulo = String(body.subtitulo ?? '');
+    if (Object.prototype.hasOwnProperty.call(body, 'foto_url')) {
+      const u = String(body.foto_url ?? '').trim();
+      patch.foto_url = u || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'fotos_urls')) {
+      patch.fotos_urls = Array.isArray(body.fotos_urls)
+        ? body.fotos_urls.map((x) => String(x || '').trim()).filter(Boolean)
+        : [];
+    }
+    const keys = Object.keys(patch).filter((k) => k !== 'updated_at');
+    if (!keys.length) return res.status(400).json({ error: 'Nada que actualizar' });
+    const { data, error } = await supabase.from('hub_config').update(patch).eq('id', id).select('*').maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Card no encontrada' });
+    res.json(data);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ PATCH /api/hub-config/:id:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/hub-config/:id/foto — multipart campo `foto`; sube a Storage bucket hub-images y guarda foto_url.
+ * Solo super_admin.
+ */
+app.post('/api/hub-config/:id/foto', uploadHubFoto.single('foto'), async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'id requerido' });
+    if (!req.file?.buffer) return res.status(400).json({ error: 'Archivo requerido (campo "foto")' });
+
+    const { data: existing, error: exErr } = await supabase.from('hub_config').select('id').eq('id', id).maybeSingle();
+    if (exErr) throw exErr;
+    if (!existing) return res.status(404).json({ error: 'Card no encontrada' });
+
+    const safeName = String(req.file.originalname || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `${id}/${Date.now()}_${safeName}`;
+    const up = await supabase.storage.from('hub-images').upload(storagePath, req.file.buffer, {
+      contentType: req.file.mimetype || 'image/jpeg',
+      upsert: false,
+    });
+    if (up.error) throw up.error;
+    const pub = supabase.storage.from('hub-images').getPublicUrl(storagePath);
+    const fotoUrl = pub?.data?.publicUrl || null;
+    if (!fotoUrl) return res.status(500).json({ error: 'No se pudo obtener URL pública' });
+
+    const { data: row, error: upErr } = await supabase
+      .from('hub_config')
+      .update({ foto_url: fotoUrl, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+    if (upErr) throw upErr;
+    res.json(row);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/hub-config/:id/foto:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
