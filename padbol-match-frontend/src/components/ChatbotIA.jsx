@@ -8,7 +8,7 @@ import {
   isJugadorHubShellPathname,
   isSedeProfilePathname,
 } from '../constants/hubLayout';
-import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
+import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 
 const MAX_USER_MESSAGES = 6;
 const CHAT_IA_GEO_DENIED_STORAGE_KEY = 'padbol_match_chat_ia_geo_denied';
@@ -270,9 +270,10 @@ function chatUiStrings(loc) {
     welcomeAssistant: (firstName) => {
       const n = String(firstName || '').trim();
       const lead = n ? `Hola ${n} 👋` : 'Hola 👋';
-      return `${lead} Soy tu asistente. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitás?`;
+      return `${lead} Soy tu asistente. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitas?`;
     },
-    welcomeDeportesHint: 'Por cierto, si me decís qué deportes practicás te puedo ayudar mejor 🎯',
+    welcomeDeportesHint:
+      'Por cierto, si me cuentas qué deportes practicas te puedo ayudar mejor 🎯',
     quickSuggestions: [
       { label: 'Ver horarios hoy ⚽' },
       { label: 'Buscar partido cerca 🔍', to: '/jugar/buscar' },
@@ -1126,8 +1127,7 @@ export default function ChatbotIA() {
                   >
                     {(() => {
                       const base = ui.welcomeAssistant(chatWelcomeFirstName);
-                      const hasPrefs =
-                        normalizeDeportesPreferidosArray(userProfile?.deportes_preferidos).length > 0;
+                      const hasPrefs = hasDeportesPreferidosCargados(userProfile?.deportes_preferidos);
                       const hint =
                         session?.user && !hasPrefs && ui.welcomeDeportesHint
                           ? `\n\n${ui.welcomeDeportesHint}`

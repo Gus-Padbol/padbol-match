@@ -58,6 +58,7 @@ import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import DeportesPreferidosLecturaChips from '../components/DeportesPreferidosLecturaChips';
 import {
   normalizeDeportesPreferidosArray,
+  hasDeportesPreferidosCargados,
 } from '../constants/deportesPreferidos';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -3117,18 +3118,6 @@ export default function MiPerfil() {
             </select>
             {fichErrP('lateralidad')}
 
-            <label style={labelStyle}>Deportes que practicás</label>
-            <p style={{ color: '#64748b', fontSize: '12px', marginTop: 0, marginBottom: '8px', lineHeight: 1.4 }}>
-              Opcional. Mejora sugerencias del asistente y reservas.
-            </p>
-            <DeportesPreferidosChips
-              value={formData.deportes_preferidos}
-              onChange={(next) =>
-                setFormData((prev) => ({ ...prev, deportes_preferidos: normalizeDeportesPreferidosArray(next) }))
-              }
-              disabled={isSubmitting}
-            />
-
             <label style={labelStyle}>Categoría {reqAst}</label>
             <select
               name="nivel"
@@ -3508,7 +3497,7 @@ export default function MiPerfil() {
         )}
       </div>
 
-      {perfil && typeof perfil === 'object' && !editando ? (
+      {perfil && typeof perfil === 'object' ? (
         <div
           style={{
             background: '#f9f9f9',
@@ -3531,26 +3520,75 @@ export default function MiPerfil() {
           >
             Deportes que practico
           </h4>
-          {normalizeDeportesPreferidosArray(perfil.deportes_preferidos).length > 0 ? (
-            <DeportesPreferidosLecturaChips keys={perfil.deportes_preferidos} />
+          {!editando ? (
+            hasDeportesPreferidosCargados(perfil?.deportes_preferidos) ? (
+              <DeportesPreferidosLecturaChips keys={perfil.deportes_preferidos} />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditando(true)}
+                style={{
+                  display: 'inline-block',
+                  padding: '10px 18px',
+                  background: '#4f46e5',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                }}
+              >
+                Agregar deportes
+              </button>
+            )
           ) : (
-            <button
-              type="button"
-              onClick={() => setEditando(true)}
-              style={{
-                display: 'inline-block',
-                padding: '10px 18px',
-                background: '#4f46e5',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                fontSize: '14px',
-              }}
-            >
-              Agregar deportes
-            </button>
+            <>
+              {hasDeportesPreferidosCargados(formData.deportes_preferidos) ? (
+                <div style={{ marginBottom: 12 }}>
+                  <DeportesPreferidosLecturaChips keys={formData.deportes_preferidos} />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById('mi-perfil-deportes-chips')?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'center',
+                    })
+                  }
+                  style={{
+                    display: 'inline-block',
+                    padding: '10px 18px',
+                    marginBottom: 12,
+                    background: '#4f46e5',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                  }}
+                >
+                  Agregar deportes
+                </button>
+              )}
+              <p style={{ color: '#64748b', fontSize: '12px', marginTop: 0, marginBottom: '8px', lineHeight: 1.4 }}>
+                Selecciona los deportes que practicas (opcional). Mejoran las sugerencias del asistente.
+              </p>
+              <div id="mi-perfil-deportes-chips">
+                <DeportesPreferidosChips
+                  value={formData.deportes_preferidos}
+                  onChange={(next) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      deportes_preferidos: normalizeDeportesPreferidosArray(next),
+                    }))
+                  }
+                  disabled={isSubmitting}
+                />
+              </div>
+            </>
           )}
         </div>
       ) : null}

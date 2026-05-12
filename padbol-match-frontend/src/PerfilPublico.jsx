@@ -24,7 +24,7 @@ import {
 } from './utils/jugadorEstadisticasPorDeporte';
 import { etiquetaDeporteTorneo } from './utils/torneoDeporteFormato';
 import DeportesPreferidosLecturaChips from './components/DeportesPreferidosLecturaChips';
-import { normalizeDeportesPreferidosArray } from './constants/deportesPreferidos';
+import { hasDeportesPreferidosCargados } from './constants/deportesPreferidos';
 
 const API_BASE_PERFIL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -775,7 +775,7 @@ export default function PerfilPublico() {
           </div>
         </div>
 
-        {normalizeDeportesPreferidosArray(perfil?.deportes_preferidos).length > 0 ? (
+        {hasDeportesPreferidosCargados(perfil?.deportes_preferidos) ? (
           <div
             style={{
               background: 'white',

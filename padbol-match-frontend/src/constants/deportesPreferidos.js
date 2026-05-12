@@ -27,3 +27,8 @@ export function normalizeDeportesPreferidosArray(raw) {
   }
   return out;
 }
+
+/** True si el jugador tiene al menos un deporte preferido (trata null, undefined, [] y arrays con solo valores inválidos). */
+export function hasDeportesPreferidosCargados(raw) {
+  return normalizeDeportesPreferidosArray(raw).length > 0;
+}
