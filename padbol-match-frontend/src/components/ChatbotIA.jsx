@@ -64,6 +64,9 @@ function chatUiStrings(loc) {
       escuchando: 'Listening…',
       sinVoz: 'No voice detected. Try again.',
       noReconocer: 'Could not recognize speech. Try again.',
+      limiteSesion: 'You have reached the limit for this session.',
+      verDisponibilidad: 'See availability',
+      nuevaConsultaSesion: 'New chat',
     };
   }
   if (l === 'pt') {
@@ -80,13 +83,16 @@ function chatUiStrings(loc) {
       escuchando: 'Ouvindo…',
       sinVoz: 'Nenhuma voz detectada. Tente de novo.',
       noReconocer: 'Não foi possível reconhecer. Tente de novo.',
+      limiteSesion: 'Você chegou ao limite desta sessão.',
+      verDisponibilidad: 'Ver disponibilidade',
+      nuevaConsultaSesion: 'Nova conversa',
     };
   }
   return {
     escribiendo: 'Escribiendo…',
     procesando: 'Procesando…',
     enviar: 'Enviar',
-    placeholder: 'Escribe tu pregunta…',
+    placeholder: 'Escribe tu consulta…',
     waEscalada: 'Contactar al club por WhatsApp',
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Padbol Match',
@@ -95,6 +101,9 @@ function chatUiStrings(loc) {
     escuchando: 'Escuchando…',
     sinVoz: 'No se detectó voz. Intenta de nuevo.',
     noReconocer: 'No se pudo reconocer. Intenta de nuevo.',
+    limiteSesion: 'Llegaste al límite de esta sesión.',
+    verDisponibilidad: 'Ver disponibilidad',
+    nuevaConsultaSesion: 'Nueva consulta',
   };
 }
 
@@ -207,6 +216,14 @@ export default function ChatbotIA() {
   }, [open, session?.user?.id]);
 
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === 'user').length, [messages]);
+
+  const reservarDesdeLimiteHref = useMemo(() => {
+    const sid = bootstrap?.sede_habitual_id;
+    if (sid != null && Number.isFinite(Number(sid)) && Number(sid) > 0) {
+      return `/reservar?sedeId=${encodeURIComponent(String(sid))}`;
+    }
+    return '/reservar';
+  }, [bootstrap?.sede_habitual_id]);
 
   const lastAssistantText = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -349,8 +366,15 @@ export default function ChatbotIA() {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          if (data?.limit_reached) setSessionEnded(true);
-          throw new Error(data.error || res.statusText || 'Error');
+          if (data?.limit_reached) {
+            setSessionEnded(true);
+            setError('');
+            setLoading(false);
+            return;
+          }
+          setMessages((prev) => prev.slice(0, -1));
+          setError(data?.error || res.statusText || 'Error');
+          return;
         }
         const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
         setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
@@ -429,7 +453,7 @@ export default function ChatbotIA() {
       const code = ev?.error || '';
       if (code === 'aborted') return;
       if (code === 'not-allowed') {
-        setError('Permiso de micrófono denegado. Actívalo en el navegador e intenta de nuevo.');
+        setError('Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.');
         recRef.current = null;
         setVoicePhase('idle');
         setVoiceFinal('');
@@ -735,37 +759,55 @@ export default function ChatbotIA() {
               {sessionEnded ? (
                 <div
                   style={{
-                    padding: 12,
-                    borderRadius: 10,
+                    padding: 14,
+                    borderRadius: 12,
                     background: '#fef3c7',
                     border: '1px solid #fcd34d',
-                    color: '#92400e',
-                    fontSize: 13,
+                    color: '#78350f',
+                    fontSize: 14,
                     fontWeight: 700,
                     textAlign: 'center',
                   }}
                 >
-                  Inicia una nueva consulta
-                  <div style={{ marginTop: 8 }}>
+                  <div style={{ marginBottom: 12, lineHeight: 1.45 }}>{ui.limiteSesion}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <Link
+                      to={reservarDesdeLimiteHref}
+                      onClick={() => setOpen(false)}
+                      style={{
+                        display: 'block',
+                        padding: '12px 16px',
+                        borderRadius: 10,
+                        background: '#16a34a',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: 15,
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {ui.verDisponibilidad}
+                    </Link>
                     <button
                       type="button"
                       onClick={nuevaConsulta}
                       style={{
-                        border: 'none',
-                        borderRadius: 8,
-                        padding: '8px 14px',
+                        border: '1px solid #ca8a04',
+                        borderRadius: 10,
+                        padding: '10px 16px',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        background: '#ea580c',
-                        color: '#fff',
+                        background: '#fffbeb',
+                        color: '#92400e',
+                        fontSize: 14,
                       }}
                     >
-                      Nueva consulta
+                      {ui.nuevaConsultaSesion}
                     </button>
                   </div>
                 </div>
               ) : null}
-              {lastReserve?.href ? (
+              {!sessionEnded && lastReserve?.href ? (
                 <Link
                   to={lastReserve.href}
                   onClick={() => setOpen(false)}
@@ -794,7 +836,7 @@ export default function ChatbotIA() {
                       : ''}
                 </Link>
               ) : null}
-              {whatsappEscalada?.href ? (
+              {!sessionEnded && whatsappEscalada?.href ? (
                 <a
                   href={whatsappEscalada.href}
                   target="_blank"

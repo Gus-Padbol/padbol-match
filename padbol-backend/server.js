@@ -11214,62 +11214,48 @@ function buildChatIaBootstrapPayload(ctx) {
   const l = ctx?.idioma_ui || 'es';
   const u = ctx?.usuario_logueado;
   const nombre = String(u?.perfil?.nombre_saludo || u?.perfil?.nombre || u?.perfil?.apodo || '').trim();
-  const maxMsg = CHAT_IA_MAX_USER_MSG;
-  const torDest = (u?.torneos_sede_habitual_7d || []).find((t) => !t.inscripto);
-  const loc = chatIaLuxonLocaleForUi(l);
-  let fechaTorneoFmt = '';
-  if (torDest?.fecha_inicio) {
-    const d = DateTime.fromISO(String(torDest.fecha_inicio).slice(0, 10), { zone: TZ_TORNEO_CALENDARIO });
-    if (d.isValid) fechaTorneoFmt = d.setLocale(loc).toFormat("cccc d 'de' LLLL");
-  }
 
   const lines = {
     es: {
-      titulo: nombre ? `Hola ${nombre}, ¿en qué te ayudo hoy?` : 'Hola, ¿en qué te ayudo hoy?',
-      hint: `Podés hacerme hasta ${maxMsg} preguntas en esta consulta.`,
-      torneo: torDest
-        ? `Hay un torneo próximo (${String(torDest.nombre || '').trim()})${fechaTorneoFmt ? ` el ${fechaTorneoFmt}` : ''} en tu sede habitual. ¿Querés que te cuente cómo inscribirte?`
-        : null,
+      titulo: nombre ? `Hola ${nombre}, ¿en qué te ayudo?` : 'Hola, ¿en qué te ayudo?',
       patron: (() => {
         const p = u?.patron_sugerencias_ia;
         if (!p?.weekday_label || !p?.sede_favorita_nombre) return null;
         const h = p.hora_tipica ? ` a las ${p.hora_tipica}` : '';
-        return `Sueles reservar los ${p.weekday_label}${h} en ${p.sede_favorita_nombre}. Puedo buscar algo parecido esta semana si querés.`;
+        return `Sueles reservar los ${p.weekday_label}${h} en ${p.sede_favorita_nombre}. ¿Busco algo parecido?`;
       })(),
     },
     en: {
-      titulo: nombre ? `Hi ${nombre}, how can I help today?` : 'Hi, how can I help today?',
-      hint: `You can ask up to ${maxMsg} questions in this chat.`,
-      torneo: torDest
-        ? `There's an upcoming tournament (${String(torDest.nombre || '').trim()})${fechaTorneoFmt ? ` on ${fechaTorneoFmt}` : ''} at your usual club. Want tips to sign up?`
-        : null,
+      titulo: nombre ? `Hi ${nombre}, how can I help?` : 'Hi, how can I help?',
       patron: (() => {
         const p = u?.patron_sugerencias_ia;
         if (!p?.weekday_label || !p?.sede_favorita_nombre) return null;
         const h = p.hora_tipica ? ` around ${p.hora_tipica}` : '';
-        return `You often book on ${p.weekday_label}${h} at ${p.sede_favorita_nombre}. I can look for something similar this week.`;
+        return `You often book on ${p.weekday_label}${h} at ${p.sede_favorita_nombre}. Want me to look for something similar?`;
       })(),
     },
     pt: {
-      titulo: nombre ? `Olá ${nombre}, em que posso ajudar hoje?` : 'Olá, em que posso ajudar hoje?',
-      hint: `Você pode fazer até ${maxMsg} perguntas neste chat.`,
-      torneo: torDest
-        ? `Há um torneio próximo (${String(torDest.nombre || '').trim()})${fechaTorneoFmt ? ` em ${fechaTorneoFmt}` : ''} no seu clube habitual. Quer saber como se inscrever?`
-        : null,
+      titulo: nombre ? `Olá ${nombre}, em que posso ajudar?` : 'Olá, em que posso ajudar?',
       patron: (() => {
         const p = u?.patron_sugerencias_ia;
         if (!p?.weekday_label || !p?.sede_favorita_nombre) return null;
         const h = p.hora_tipica ? ` às ${p.hora_tipica}` : '';
-        return `Você costuma reservar nas ${p.weekday_label}${h} em ${p.sede_favorita_nombre}. Posso buscar algo parecido esta semana.`;
+        return `Você costuma reservar nas ${p.weekday_label}${h} em ${p.sede_favorita_nombre}. Quer que eu busque algo parecido?`;
       })(),
     },
   };
   const pack = lines[l] || lines.en;
-  const extras = [pack.torneo, pack.patron].filter(Boolean);
+  const extras = [pack.patron].filter(Boolean);
+  const sedeHab = u?.sede_habitual?.sede_id;
+  const sede_habitual_id =
+    sedeHab != null && String(sedeHab).trim() !== '' && Number.isFinite(Number(sedeHab)) && Number(sedeHab) > 0
+      ? Number(sedeHab)
+      : null;
   return {
     idioma: l,
     saludo_titulo: pack.titulo,
-    saludo_lineas: [pack.hint, ...extras],
+    saludo_lineas: extras,
+    sede_habitual_id,
     whatsapp_club: u?.escalada_whatsapp_default || null,
   };
 }
@@ -11301,6 +11287,7 @@ STYLE:
 - Maximum 3 short lines. No long paragraphs or bullet lists.
 - Act without asking for confirmation when tools already returned data: state slots, names, dates and prices directly.
 - Use tools for real data: never invent availability, rankings or tournaments.
+- For Spanish (es), avoid voseo: use "puedes", "quieres", "tienes", "haces", not "podés", "querés", "tenés", "hacés".
 
 Out of scope (reply with exactly this one sentence, nothing else):
 ${JSON.stringify(oos)}
@@ -11374,7 +11361,7 @@ app.post('/api/chat-ia', async (req, res) => {
 
     const priorUser = historial.filter((h) => h.role === 'user').length;
     if (priorUser >= CHAT_IA_MAX_USER_MSG) {
-      return res.status(400).json({ error: 'Límite de mensajes alcanzado', limit_reached: true });
+      return res.status(400).json({ error: 'Llegaste al límite de esta sesión.', limit_reached: true });
     }
 
     const key = chatIaRateKey(req, user);
