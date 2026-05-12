@@ -1420,6 +1420,31 @@ app.get('/api/hub-config', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/registro/email-perfil-libre — JWT: el email de la sesión no debe estar en `jugadores_perfil` de otro usuario.
+ * Evita duplicate key al completar perfil OAuth (paso deportes).
+ */
+app.get('/api/registro/email-perfil-libre', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email || !user.id) return res.status(401).json({ error: 'No autorizado' });
+    const email = String(user.email).trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Sin email en la sesión' });
+    const { data, error } = await supabase
+      .from('jugadores_perfil')
+      .select('id')
+      .ilike('email', email)
+      .neq('user_id', user.id)
+      .limit(1);
+    if (error) throw error;
+    const conflicto = Array.isArray(data) && data.length > 0;
+    res.json({ disponible: !conflicto });
+  } catch (err) {
+    console.error('❌ GET /api/registro/email-perfil-libre:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** PATCH /api/hub-config/:id — super_admin o editor_contenido: titulo, subtitulo, foto_url, fotos_urls. */
 app.patch('/api/hub-config/:id', async (req, res) => {
   try {

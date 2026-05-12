@@ -24,7 +24,37 @@ import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo
 import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
 
+const API_BASE = (
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com'
+);
+
 const OPCIONES_TELEFONO = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
+
+const btnPrimarioStyle = {
+  width: '100%',
+  padding: '14px',
+  borderRadius: '10px',
+  border: 'none',
+  background: '#E11B22',
+  color: '#fff',
+  fontWeight: 700,
+  fontSize: '16px',
+  cursor: 'pointer',
+};
+
+const btnSecundarioStyle = {
+  width: '100%',
+  padding: '12px',
+  borderRadius: '10px',
+  border: '1px solid #E0E0E0',
+  background: '#fff',
+  color: '#6B6B6B',
+  fontWeight: 700,
+  fontSize: '15px',
+  cursor: 'pointer',
+};
 
 function capitalizar(s) {
   const t = String(s || '').trim();
@@ -42,6 +72,7 @@ export default function CompletarPerfilOAuth() {
   const [waLocalConfirm, setWaLocalConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [emailConflicto, setEmailConflicto] = useState(false);
   /** 0 = género + WhatsApp; 1 = deportes preferidos (opcional). */
   const [paso, setPaso] = useState(0);
   const [deportesPreferidos, setDeportesPreferidos] = useState([]);
@@ -94,10 +125,36 @@ export default function CompletarPerfilOAuth() {
     async (e) => {
       e.preventDefault();
       setErrorMsg('');
+      setEmailConflicto(false);
       if (!session?.user?.id) return;
       if (paso === 0) {
         if (!validarPasoDatos()) return;
-        setPaso(1);
+        const token = session?.access_token;
+        if (!token) {
+          setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
+          return;
+        }
+        setBusy(true);
+        try {
+          const res = await fetch(`${API_BASE}/api/registro/email-perfil-libre`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const j = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            setErrorMsg(String(j?.error || 'No se pudo verificar el email.'));
+            return;
+          }
+          if (!j?.disponible) {
+            setEmailConflicto(true);
+            setErrorMsg('Este email ya tiene una cuenta. ¿Quieres iniciar sesión?');
+            return;
+          }
+          setPaso(1);
+        } catch {
+          setErrorMsg('No se pudo verificar el email. Intenta de nuevo.');
+        } finally {
+          setBusy(false);
+        }
         return;
       }
       if (!validarPasoDatos()) return;
@@ -166,6 +223,7 @@ export default function CompletarPerfilOAuth() {
     },
     [
       session,
+      session?.access_token,
       userProfile,
       paso,
       genero,
@@ -231,12 +289,12 @@ export default function CompletarPerfilOAuth() {
             margin: '0 0 8px',
           }}
         >
-          {paso === 0 ? 'Completa tu perfil' : '¿Qué deportes practicás?'}
+          {paso === 0 ? 'Completa tu perfil' : '¿Qué deportes practicas?'}
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
           {paso === 0
             ? 'Completa tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.'
-            : 'Elegí uno o más (opcional pero recomendado). Podés cambiarlos después en Mi perfil.'}
+            : 'Elige uno o más (opcional pero recomendado). Puedes cambiarlos después en Mi perfil.'}
         </p>
         <form
           onSubmit={(ev) => void handleGuardar(ev)}
@@ -406,7 +464,7 @@ export default function CompletarPerfilOAuth() {
           ) : (
             <>
               <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 12px', lineHeight: 1.45 }}>
-                Elegí los que apliquen. Si preferís no decirlo ahora, dejá todo sin marcar y tocá «Guardar y continuar».
+                Elige los que apliquen. Si prefieres no decirlo ahora, deja todo sin marcar y pulsa «Guardar y continuar».
               </p>
               <DeportesPreferidosChips
                 value={deportesPreferidos}
@@ -418,25 +476,33 @@ export default function CompletarPerfilOAuth() {
           {errorMsg ? (
             <p style={{ color: '#b91c1c', fontSize: '14px', margin: '12px 0' }}>{errorMsg}</p>
           ) : null}
+          {emailConflicto ? (
+            <button
+              type="button"
+              onClick={() => navigate('/auth', { replace: false })}
+              style={{
+                ...btnSecundarioStyle,
+                marginBottom: '10px',
+                cursor: 'pointer',
+              }}
+            >
+              Ir a iniciar sesión
+            </button>
+          ) : null}
           {paso === 1 ? (
             <button
               type="button"
               onClick={() => {
                 setErrorMsg('');
+                setEmailConflicto(false);
                 setPaso(0);
               }}
               disabled={busy || loading || profileLoading}
               style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '10px',
-                border: '1px solid #cbd5e1',
-                background: '#fff',
-                color: '#334155',
-                fontWeight: 700,
-                fontSize: '15px',
-                cursor: busy ? 'wait' : 'pointer',
+                ...btnSecundarioStyle,
                 marginBottom: '10px',
+                cursor: busy || loading || profileLoading ? 'not-allowed' : 'pointer',
+                opacity: busy || loading || profileLoading ? 0.7 : 1,
               }}
             >
               Atrás
@@ -446,16 +512,9 @@ export default function CompletarPerfilOAuth() {
             type="submit"
             disabled={busy || loading || profileLoading}
             style={{
-              width: '100%',
-              padding: '14px',
-              borderRadius: '10px',
-              border: 'none',
-              background: '#16a34a',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '16px',
-              cursor: busy ? 'wait' : 'pointer',
-              opacity: busy ? 0.85 : 1,
+              ...btnPrimarioStyle,
+              cursor: busy || loading || profileLoading ? 'wait' : 'pointer',
+              opacity: busy || loading || profileLoading ? 0.85 : 1,
             }}
           >
             {busy ? 'Guardando…' : paso === 0 ? 'Continuar' : 'Guardar y continuar'}
