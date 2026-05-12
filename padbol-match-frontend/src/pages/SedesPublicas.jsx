@@ -12,6 +12,18 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { fetchSedeFavoritaId } from '../utils/sedeFavorita';
 import { getDistanceKm } from '../utils/sedeCardUi';
+import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+
+function sedeTieneDeporteOfrecido(sede, deporteKey) {
+  const rows = sede.canchas_por_deporte;
+  if (!Array.isArray(rows) || !rows.length) return false;
+  return rows.some(
+    (r) =>
+      r.activo !== false &&
+      Number(r.cantidad) > 0 &&
+      String(r.deporte || '').trim().toLowerCase() === deporteKey
+  );
+}
 
 function formatHorario(apertura, cierre) {
   if (apertura && cierre) return `${apertura} – ${cierre}`;
@@ -30,6 +42,9 @@ export default function SedesPublicas() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const from = searchParams.get('from'); // 'reserva' | 'explorar' | null
+  const deporteCatalogo = String(searchParams.get('deporte') || '').trim().toLowerCase();
+  const deporteFiltroSedes =
+    deporteCatalogo && DEPORTES_CANCHA_SEDE_KEYS.includes(deporteCatalogo) ? deporteCatalogo : '';
   const skipFavoriteRedirect =
     searchParams.get('ver_todas') === '1' || from === 'explorar';
 
@@ -67,7 +82,9 @@ export default function SedesPublicas() {
         const result = await Promise.race([
           supabase
             .from('sedes')
-            .select('id, nombre, ciudad, pais, logo_url, horario_apertura, horario_cierre, descripcion, latitud, longitud')
+            .select(
+              'id, nombre, ciudad, pais, logo_url, horario_apertura, horario_cierre, descripcion, latitud, longitud, canchas_por_deporte(deporte, cantidad, activo)'
+            )
             .order('nombre', { ascending: true }),
           timeoutPromise
         ]);
@@ -156,7 +173,8 @@ export default function SedesPublicas() {
         ? '🗺️ Explorar sedes'
         : '🏟️ Clubes cerca de ti';
 
-  const filtered = sorted.filter(s => {
+  const filtered = sorted.filter((s) => {
+    if (deporteFiltroSedes && !sedeTieneDeporteOfrecido(s, deporteFiltroSedes)) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -215,6 +233,27 @@ export default function SedesPublicas() {
               </span>
             </div>
           )}
+          {deporteFiltroSedes ? (
+            <div style={{ marginBottom: '16px' }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  background: '#fff7ed',
+                  color: '#9a3412',
+                  border: '1px solid #fed7aa',
+                }}
+              >
+                🎯 Deporte:{' '}
+                {DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === deporteFiltroSedes)?.label || deporteFiltroSedes}
+              </span>
+            </div>
+          ) : null}
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
             <input

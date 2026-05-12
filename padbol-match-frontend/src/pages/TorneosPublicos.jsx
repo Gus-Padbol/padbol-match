@@ -95,7 +95,7 @@ function badgeEstadoTorneoListado(t) {
 export default function TorneosPublicos() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const nearMode = searchParams.get('context') === 'near';
 
   const sedeFiltroId = useMemo(() => {
@@ -131,8 +131,27 @@ export default function TorneosPublicos() {
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
   const torneoSearchInputRef = useRef(null);
   const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('todos');
-  /** Filtro en memoria: todos | padbol | padel | pickleball */
-  const [filtroDeporteTorneo, setFiltroDeporteTorneo] = useState('todos');
+  /** Deriva del query `?deporte=` (hub y enlaces compartibles). */
+  const filtroDeporteTorneo = useMemo(() => {
+    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
+    if (!d || d === 'todos') return 'todos';
+    return FILTROS_DEPORTE_TORNEO_PUBLICO.some((x) => x.id === d) ? d : 'todos';
+  }, [searchParams]);
+
+  const setDeporteFiltroEnUrl = useCallback(
+    (id) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (!id || id === 'todos') next.delete('deporte');
+          else next.set('deporte', id);
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   /** Conteo de equipos con inscripción confirmada por torneo_id (para cupos disponibles en card). */
   const [equiposConfirmadosPorTorneoId, setEquiposConfirmadosPorTorneoId] = useState({});
 
@@ -393,7 +412,7 @@ export default function TorneosPublicos() {
           <div style={{ marginTop: '12px' }}>
             <button
               type="button"
-              onClick={() => setFiltroDeporteTorneo('todos')}
+              onClick={() => setDeporteFiltroEnUrl('todos')}
               style={{
                 padding: '10px 16px',
                 borderRadius: '10px',
@@ -751,7 +770,7 @@ export default function TorneosPublicos() {
                       key={id}
                       type="button"
                       aria-pressed={active}
-                      onClick={() => setFiltroDeporteTorneo(id)}
+                      onClick={() => setDeporteFiltroEnUrl(id)}
                       style={{
                         flexShrink: 0,
                         whiteSpace: 'nowrap',

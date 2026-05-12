@@ -1,5 +1,5 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
@@ -35,6 +35,11 @@ const opciones = [
 export default function Jugar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const deporteQ = useMemo(() => {
+    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
+    return d ? `?deporte=${encodeURIComponent(d)}` : '';
+  }, [searchParams]);
 
   return (
     <div
@@ -56,7 +61,7 @@ export default function Jugar() {
             <button
               key={op.title}
               type="button"
-              onClick={() => navigate(op.path)}
+              onClick={() => navigate(`${op.path}${deporteQ}`)}
               style={{
                 textAlign: 'left',
                 border: '1px solid #E0E0E0',

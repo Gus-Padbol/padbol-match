@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +20,8 @@ const DEPORTES = [
   { id: 'padbol', label: 'Padbol', jugadores: 4 },
   { id: 'padel', label: 'Pádel', jugadores: 4 },
   { id: 'pickleball', label: 'Pickleball', jugadores: 4 },
+  { id: 'squash', label: 'Squash', jugadores: 4 },
+  { id: 'tenis', label: 'Tenis', jugadores: 4 },
   { id: 'futbol_5', label: 'Fútbol 5', jugadores: 10 },
   { id: 'futbol_7', label: 'Fútbol 7', jugadores: 14 },
 ];
@@ -85,6 +87,7 @@ function shareUrl(partido) {
 export default function ArmarPartido() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { session, userProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [sedes, setSedes] = useState([]);
@@ -104,6 +107,19 @@ export default function ArmarPartido() {
     jugadoresConfirmados: 1,
     nivel: 'Intermedio',
   });
+
+  useEffect(() => {
+    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
+    if (!d) return;
+    const item = DEPORTES.find((x) => x.id === d);
+    if (!item) return;
+    setForm((f) => ({
+      ...f,
+      deporte: item.id,
+      jugadoresRequeridos: item.id === 'pickleball' ? f.jugadoresRequeridos : item.jugadores,
+      jugadoresConfirmados: 1,
+    }));
+  }, [searchParams]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/sedes`)

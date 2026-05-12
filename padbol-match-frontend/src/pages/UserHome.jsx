@@ -13,10 +13,13 @@ import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
-import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
 
 const HUB_COLUMN_MAX = 390;
+
+/** Persiste el filtro «Elegir deporte» del hub entre visitas (misma pestaña / sesión). */
+const HUB_DEPORTE_SESSION_KEY = 'padbol_hub_deporte_filter';
 
 const HUB_API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -26,20 +29,46 @@ const HUB_API_BASE = (
 
 function hubCardNavigate(navigate, cardId, deporteElegido) {
   const id = String(cardId || '').trim();
-  const q = deporteElegido ? `?deporte=${encodeURIComponent(deporteElegido)}` : '';
+  const dep = String(deporteElegido || '').trim().toLowerCase();
+  const q =
+    dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep) ? `?deporte=${encodeURIComponent(dep)}` : '';
   const routes = {
     partidos: () => navigate(`/jugar/buscar${q}`),
-    torneos: () => navigate('/competir'),
+    torneos: () => navigate(`/competir${q}`),
     perfil: () => navigate('/mi-perfil'),
-    sedes: () => navigate('/sedes'),
-    reservar: () => navigate('/reservar'),
+    sedes: () => navigate(`/sedes${q}`),
+    reservar: () => navigate(`/reservar${q}`),
     rankings: () => navigate('/rankings'),
-    jugar: () => navigate('/jugar'),
-    torneos_lista: () => navigate('/torneos'),
+    jugar: () => navigate(`/jugar${q}`),
+    torneos_lista: () => navigate(`/torneos${q}`),
   };
   const fn = routes[id];
   if (fn) fn();
   else navigate('/');
+}
+
+function etiquetaDeporteHub(key) {
+  const k = String(key || '').trim().toLowerCase();
+  return DEPORTES_CANCHA_SEDE_OPTIONS.find((d) => d.key === k)?.label || '';
+}
+
+/** Texto de cards del hub según deporte elegido (solo claves válidas). */
+function hubCardCopyConDeporte(cardId, deporteKey) {
+  const id = String(cardId || '').trim();
+  const fb = fallbackCopyForHubCardId(id);
+  if (!deporteKey || !DEPORTES_CANCHA_SEDE_KEYS.includes(deporteKey)) {
+    return { titulo: fb.titulo, subtitulo: fb.subtitulo };
+  }
+  const label = etiquetaDeporteHub(deporteKey);
+  const map = {
+    partidos: { titulo: `Partidos de ${label} cerca de ti`, subtitulo: fb.subtitulo },
+    torneos: { titulo: `Torneos · ${label}`, subtitulo: 'Inscripciones y sedes con este deporte.' },
+    sedes: { titulo: `Explorar sedes · ${label}`, subtitulo: 'Clubes que ofrecen este deporte.' },
+    reservar: { titulo: `Reservar cancha · ${label}`, subtitulo: fb.subtitulo },
+    torneos_lista: { titulo: `Torneos abiertos · ${label}`, subtitulo: fb.subtitulo },
+    jugar: { titulo: `${fb.titulo} · ${label}`, subtitulo: fb.subtitulo },
+  };
+  return map[id] || { titulo: `${fb.titulo} · ${label}`, subtitulo: fb.subtitulo };
 }
 
 const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado', 'editor_contenido'];
@@ -108,7 +137,15 @@ export default function UserHome() {
   const location = useLocation();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [nombreFinal, setNombreFinal] = useState(null);
-  const [deporteElegido, setDeporteElegido] = useState('');
+  const [deporteElegido, setDeporteElegido] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(HUB_DEPORTE_SESSION_KEY);
+      const k = String(raw || '').trim().toLowerCase();
+      return DEPORTES_CANCHA_SEDE_KEYS.includes(k) ? k : '';
+    } catch {
+      return '';
+    }
+  });
   const [hubCmsStatus, setHubCmsStatus] = useState('loading');
   const [hubCmsRows, setHubCmsRows] = useState([]);
   const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
@@ -242,32 +279,36 @@ export default function UserHome() {
   const padR = 'calc(12px + env(safe-area-inset-right, 0px))';
 
   const bigCards = useMemo(() => {
+    const cPartidos = hubCardCopyConDeporte('partidos', deporteElegido);
+    const cTorneos = hubCardCopyConDeporte('torneos', deporteElegido);
+    const cPerfil = hubCardCopyConDeporte('perfil', deporteElegido);
+    const cSedes = hubCardCopyConDeporte('sedes', deporteElegido);
     const fallback = [
       {
         key: 'partidos',
-        titulo: 'Partidos cerca de ti',
-        subtitulo: 'Si no hay, ¡Crea uno!',
+        titulo: cPartidos.titulo,
+        subtitulo: cPartidos.subtitulo,
         image: defaultHubCardImageForId('partidos'),
         onClick: () => hubCardNavigate(navigate, 'partidos', deporteElegido),
       },
       {
         key: 'torneos',
-        titulo: 'Torneos',
-        subtitulo: 'Torneos y rankings.',
+        titulo: cTorneos.titulo,
+        subtitulo: cTorneos.subtitulo,
         image: defaultHubCardImageForId('torneos'),
         onClick: () => hubCardNavigate(navigate, 'torneos', deporteElegido),
       },
       {
         key: 'perfil',
-        titulo: 'Mi perfil',
-        subtitulo: 'Perfil, estadísticas e historial.',
+        titulo: cPerfil.titulo,
+        subtitulo: cPerfil.subtitulo,
         image: defaultHubCardImageForId('perfil'),
         onClick: () => hubCardNavigate(navigate, 'perfil', deporteElegido),
       },
       {
         key: 'sedes',
-        titulo: 'Explorar sedes',
-        subtitulo: '',
+        titulo: cSedes.titulo,
+        subtitulo: cSedes.subtitulo,
         image: defaultHubCardImageForId('sedes'),
         onClick: () => hubCardNavigate(navigate, 'sedes', deporteElegido),
       },
@@ -282,12 +323,17 @@ export default function UserHome() {
     });
     if (!active.length) return fallback;
 
+    const sportSuffix =
+      deporteElegido && DEPORTES_CANCHA_SEDE_KEYS.includes(deporteElegido)
+        ? ` · ${etiquetaDeporteHub(deporteElegido)}`
+        : '';
+
     return active.map((r) => {
       const id = String(r.id || '').trim() || 'card';
       const fb = fallbackCopyForHubCardId(id);
       const tituloRaw = String(r.titulo || '').trim();
       const subRaw = String(r.subtitulo || '').trim();
-      const titulo = tituloRaw || fb.titulo;
+      const titulo = (tituloRaw || fb.titulo) + sportSuffix;
       const subtitulo = subRaw !== '' ? subRaw : fb.subtitulo;
       const foto = String(r.foto_url || '').trim();
       const image = foto || defaultHubCardImageForId(id);
@@ -554,7 +600,16 @@ export default function UserHome() {
               <div style={{ position: 'relative' }}>
                 <select
                   value={deporteElegido}
-                  onChange={(e) => setDeporteElegido(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setDeporteElegido(v);
+                    try {
+                      if (v) sessionStorage.setItem(HUB_DEPORTE_SESSION_KEY, v);
+                      else sessionStorage.removeItem(HUB_DEPORTE_SESSION_KEY);
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',
