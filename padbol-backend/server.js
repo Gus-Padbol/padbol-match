@@ -3381,6 +3381,61 @@ function chatIaShouldOmitDeporteDisponibilidadParaUltimoUsuario(ultimoUsuarioTex
   return new Set(['ver horarios hoy', 'see todays court times', 'ver horarios hoje']).has(k);
 }
 
+/** Sede implícita para consultas genéricas "hoy": página actual > habitual > ninguna. */
+function chatIaResolveDisponibilidadSedeImplicita(ctx, clientSedeIdRaw) {
+  const sidPage = parseInt(String(clientSedeIdRaw ?? '').trim(), 10);
+  if (Number.isFinite(sidPage) && sidPage > 0) {
+    const sh = (ctx.sedes_hora_local || []).find((x) => Number(x.sede_id) === sidPage);
+    const ymd = sh?.ymd_hoy || ctx.fecha_referencia || null;
+    const nombre = chatIaSedeNombreDesdeCtx(ctx, sidPage) || (sh?.nombre ? String(sh.nombre).trim() : '') || null;
+    return {
+      sede_id: sidPage,
+      sede_nombre: nombre,
+      fuente: 'pagina_actual',
+      ymd_hoy_local: ymd,
+    };
+  }
+  const h = ctx?.usuario_logueado?.sede_habitual;
+  const sidH = h?.sede_id != null ? Number(h.sede_id) : NaN;
+  if (Number.isFinite(sidH) && sidH > 0) {
+    const sh = (ctx.sedes_hora_local || []).find((x) => Number(x.sede_id) === sidH);
+    const ymd = sh?.ymd_hoy || ctx.fecha_referencia || null;
+    const nombre = String(h.nombre || '').trim() || chatIaSedeNombreDesdeCtx(ctx, sidH) || null;
+    return {
+      sede_id: sidH,
+      sede_nombre: nombre,
+      fuente: 'habitual',
+      ymd_hoy_local: ymd,
+    };
+  }
+  return { sede_id: null, sede_nombre: null, fuente: 'ninguna', ymd_hoy_local: null };
+}
+
+function chatIaPreguntaLugarSinSedeResuelta(loc) {
+  if (loc === 'en') return 'Which city or club would you like to play at?';
+  if (loc === 'pt') return 'Em qual cidade ou clube você quer jogar?';
+  return '¿En qué ciudad o club quieres jugar?';
+}
+
+function chatIaFormatHorariosHoyRespuestaLineas(loc, sedeNombre, slots) {
+  const nom = String(sedeNombre || '').trim() || 'la sede';
+  const arr = Array.isArray(slots) ? slots : [];
+  const times = arr.slice(0, 12).map((s) => s.hora_inicio).filter(Boolean);
+  if (loc === 'en') {
+    if (!times.length) return `No free court slots today at ${nom}.`;
+    const more = arr.length > times.length ? ' …' : '';
+    return `Today's openings at ${nom}:\n${times.join(', ')}${more}`;
+  }
+  if (loc === 'pt') {
+    if (!times.length) return `Não há horários livres hoje em ${nom}.`;
+    const more = arr.length > times.length ? ' …' : '';
+    return `Horários livres hoje em ${nom}:\n${times.join(', ')}${more}`;
+  }
+  if (!times.length) return `No hay turnos libres hoy en ${nom}.`;
+  const more = arr.length > times.length ? ' …' : '';
+  return `Turnos libres hoy en ${nom}:\n${times.join(', ')}${more}`;
+}
+
 async function chatIaFetchCanchasPorDeporteRows(supabaseClient, sedeId) {
   const sid = Number(sedeId);
   if (!Number.isFinite(sid) || sid <= 0) return { rows: [], error: null };
@@ -11701,6 +11756,12 @@ function buildChatIaSystemPrompt(ctxForModel) {
     fecha_referencia_art: ctxForModel.fecha_referencia,
     fecha_mañana_art: ctxForModel.fecha_mañana_art,
     sedes_hora_local: ctxForModel.sedes_hora_local,
+    disponibilidad_sede_implicita: ctxForModel.disponibilidad_sede_implicita || {
+      sede_id: null,
+      sede_nombre: null,
+      fuente: 'ninguna',
+      ymd_hoy_local: null,
+    },
     sedes_resumen: (ctxForModel.sedes || []).map((s) => ({
       id: s.id,
       nombre: s.nombre,
@@ -11729,10 +11790,16 @@ Out of scope: if the question is unrelated to padbol/padel bookings, tournaments
 Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art and fecha_mañana_art are yyyy-LL-dd in America/Argentina/Buenos_Aires for "hoy" / "mañana"):
 ${JSON.stringify(payload)}
 
-Tools: call consultar_disponibilidad with sede_id + fecha + optional duracion_minutos (default 90). Pass deporte ONLY when the user explicitly names a sport in their message (padbol, padel, tenis, pickleball, squash, futbol / football). Do NOT pass deporte for generic "today\'s slots" / "ver horarios hoy" / "horarios" requests with no sport—omit deporte so all courts are included. Use buscar_sedes_por_deporte with deporte and optional ciudad/pais when they ask which clubs offer a sport. Use listar_sedes to resolve sede_id from a name or match sedes_resumen. Use listar_torneos / consultar_ranking as needed.
+Tools: call consultar_disponibilidad with sede_id + fecha + optional duracion_minutos (default 90). Pass deporte ONLY when the user explicitly names a sport in their message (padbol, padel, tenis, pickleball, squash, futbol / football). Do NOT pass deporte for generic "today\'s slots" / "ver horarios hoy" / "horarios" requests with no sport—omit deporte so all courts are included.
+
+Sede for availability (read disponibilidad_sede_implicita in Context JSON):
+- If fuente is pagina_actual or habitual and sede_id is set: when the user asks for today\'s hours or generic availability without naming a club, use that sede_id with fecha = ymd_hoy_local from the same object (or matching sedes_hora_local). Do not ask which club first.
+- If fuente is ninguna (sede_id null): do NOT call consultar_disponibilidad until the user names a city or club (or picks from sedes_resumen). Ask one short line which city/club they want—in Spanish use tú: "¿En qué ciudad o club quieres jugar?" (mirror EN/PT if the user writes in those languages).
+
+Use buscar_sedes_por_deporte with deporte and optional ciudad/pais when they ask which clubs offer a sport. Use listar_sedes to resolve sede_id from a name or match sedes_resumen. Use listar_torneos / consultar_ranking as needed.
 
 Availability (critical):
-- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result. Include deporte in the tool call only if the user clearly names a sport (e.g. "quiero jugar fútbol", "hay pádel"); if they only ask for today\'s times or generic availability, omit deporte. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
+- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result—except when disponibilidad_sede_implicita.fuente is ninguna and they have not specified a club yet: then ask which city/club first (no tool). Include deporte in the tool call only if the user clearly names a sport (e.g. "quiero jugar fútbol", "hay pádel"); if they only ask for today\'s times or generic availability, omit deporte. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
 - Never invent times. If slots is empty, say there are no openings that day for that duration and suggest another date or duration—do not send the user to WhatsApp.
 - Never output <<<WHATSAPP>>> for availability, booking help, or missing data. WhatsApp is ONLY when the user clearly asks to message or call the club by phone/WhatsApp.
 
@@ -11844,8 +11911,79 @@ app.post('/api/chat-ia', async (req, res) => {
         fecha_mañana_art: ctxBase.fecha_mañana_art,
       }),
     );
-    const ctxForModel = { ...ctxBase };
+    const clientSedeRaw = b.client_pagina_sede_id ?? b.pagina_sede_id;
+    const disponibilidadSedeImplicita = chatIaResolveDisponibilidadSedeImplicita(ctxBase, clientSedeRaw);
+    const ctxForModel = { ...ctxBase, disponibilidad_sede_implicita: disponibilidadSedeImplicita };
     delete ctxForModel._sedes_rows_chat_ia;
+
+    const genericHoyChip = chatIaShouldOmitDeporteDisponibilidadParaUltimoUsuario(mensaje);
+    if (genericHoyChip) {
+      if (disponibilidadSedeImplicita.sede_id != null) {
+        const sid = Number(disponibilidadSedeImplicita.sede_id);
+        const fechaRaw = disponibilidadSedeImplicita.ymd_hoy_local || ctxBase.fecha_referencia;
+        const fecha = String(fechaRaw || '').trim().slice(0, 10);
+        if (Number.isFinite(sid) && sid > 0 && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+          try {
+            const sedeFull = await chatIaFetchSedeFullForTool(supabase, sid);
+            if (sedeFull) {
+              const { slots, error } = await computeChatIaSlotsReales(supabase, sedeFull, fecha, 90, null);
+              if (!error) {
+                const sedeNombre =
+                  String(sedeFull.nombre || disponibilidadSedeImplicita.sede_nombre || '').trim() || `Sede ${sid}`;
+                const respuesta = chatIaFormatHorariosHoyRespuestaLineas(locale, sedeNombre, slots);
+                const disponibilidad = {
+                  sede_id: sid,
+                  sede_nombre: sedeNombre,
+                  fecha,
+                  duracion_minutos: 90,
+                  deporte_filtro: null,
+                  slots: (slots || []).slice(0, 24).map((s) => ({
+                    hora_inicio: s.hora_inicio,
+                    hora_fin: s.hora_fin,
+                    canchas_libres: s.canchas_libres,
+                    canchas_nombres: s.canchas_nombres || null,
+                    canchas_detalle: Array.isArray(s.canchas_detalle) ? s.canchas_detalle.slice(0, 8) : [],
+                  })),
+                };
+                const sede_contexto = { id: sid, nombre: sedeNombre };
+                console.error(
+                  '[chat-ia] POST ver_horarios_hoy fast_path',
+                  JSON.stringify({
+                    sid,
+                    fecha,
+                    fuente: disponibilidadSedeImplicita.fuente,
+                    nslots: slots?.length ?? 0,
+                  }),
+                );
+                return res.json({
+                  respuesta,
+                  reserve: null,
+                  whatsapp_escalada: null,
+                  user_messages_used: priorUser + 1,
+                  user_messages_max: CHAT_IA_MAX_USER_MSG,
+                  sede_contexto,
+                  disponibilidad: disponibilidad.slots.length ? disponibilidad : null,
+                });
+              }
+            }
+          } catch (e) {
+            console.error('[chat-ia] fast_path ver_horarios_hoy', e?.message || e);
+          }
+        }
+      } else {
+        const q = chatIaPreguntaLugarSinSedeResuelta(locale);
+        console.error('[chat-ia] POST ver_horarios_hoy sin_sede', JSON.stringify({ locale }));
+        return res.json({
+          respuesta: q,
+          reserve: null,
+          whatsapp_escalada: null,
+          user_messages_used: priorUser + 1,
+          user_messages_max: CHAT_IA_MAX_USER_MSG,
+          sede_contexto: null,
+          disponibilidad: null,
+        });
+      }
+    }
 
     const systemText = buildChatIaSystemPrompt(ctxForModel);
 

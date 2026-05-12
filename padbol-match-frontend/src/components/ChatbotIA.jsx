@@ -426,6 +426,22 @@ export default function ChatbotIA() {
 
   const visible = useMemo(() => isChatbotIAVisiblePathname(location.pathname), [location.pathname]);
 
+  const clientPaginaSedeId = useMemo(() => {
+    const path = (location.pathname || '').split('?')[0] || '';
+    const mSede = path.match(/^\/sede\/(\d+)\/?$/i);
+    if (mSede) {
+      const id = parseInt(mSede[1], 10);
+      if (Number.isFinite(id) && id > 0) return id;
+    }
+    if (path === '/reservar') {
+      const sp = new URLSearchParams(location.search || '');
+      const q = sp.get('sedeId');
+      const id = q != null && String(q).trim() !== '' ? parseInt(String(q).trim(), 10) : NaN;
+      if (Number.isFinite(id) && id > 0) return id;
+    }
+    return null;
+  }, [location.pathname, location.search]);
+
   const hubShell = useMemo(() => {
     const p = location.pathname.split('?')[0] || '/';
     return isJugadorHubShellPathname(p) || isSedeProfilePathname(p) || p === '/' || p === '/hub' || p === '/inicio' || p === '/home';
@@ -636,6 +652,7 @@ export default function ChatbotIA() {
             user_id: session?.user?.id || null,
             locale: inferWritingLocaleCodeFromText(text),
             client_calendario_art: ymdBuenosAires(),
+            ...(clientPaginaSedeId != null ? { client_pagina_sede_id: clientPaginaSedeId } : {}),
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -698,6 +715,7 @@ export default function ChatbotIA() {
       messages,
       userMessageCount,
       session?.user?.id,
+      clientPaginaSedeId,
       primeSpeechSynthesisFromUserGesture,
       scheduleAssistantSpeak,
     ]
