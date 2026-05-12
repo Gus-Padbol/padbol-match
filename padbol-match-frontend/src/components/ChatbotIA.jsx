@@ -816,29 +816,6 @@ export default function ChatbotIA() {
                   {whatsappEscalada.sede_nombre ? ` · ${whatsappEscalada.sede_nombre}` : ''}
                 </a>
               ) : null}
-              {!whatsappEscalada?.href && bootstrap?.whatsapp_club?.href ? (
-                <a
-                  href={bootstrap.whatsapp_club.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    alignSelf: 'center',
-                    marginTop: 2,
-                    padding: '8px 12px',
-                    borderRadius: 10,
-                    border: '1px solid #86efac',
-                    background: '#f0fdf4',
-                    color: '#166534',
-                    fontWeight: 700,
-                    fontSize: 12,
-                    textDecoration: 'none',
-                    textAlign: 'center',
-                  }}
-                >
-                  {ui.waClub}
-                  {bootstrap.whatsapp_club.sede_nombre ? ` · ${bootstrap.whatsapp_club.sede_nombre}` : ''}
-                </a>
-              ) : null}
               <div ref={listEndRef} />
             </div>
 

@@ -10417,6 +10417,23 @@ function chatIaExtractDuracionMin(text) {
   return null;
 }
 
+/** HH:mm detectado en el texto (no exige que exista en slots). */
+function chatIaExtractHoraPedida(text) {
+  const raw = String(text || '');
+  const patterns = [
+    /\b(?:a\s+las|para\s+las|a\s+la|las)\s+(\d{1,2}):(\d{2})\b/i,
+    /\b(\d{1,2}):(\d{2})\s*(?:hs|h)?\b/,
+  ];
+  for (const re of patterns) {
+    const m = raw.match(re);
+    if (!m) continue;
+    const hh = String(parseInt(m[1], 10)).padStart(2, '0');
+    const mm = String(parseInt(m[2], 10)).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+  return null;
+}
+
 /** HH:mm que el usuario pidió y que coincide con un slot real (hora_inicio). */
 function chatIaMatchHoraEnSlots(text, slots) {
   const raw = String(text || '');
@@ -10556,7 +10573,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         estado: 'faltan_datos',
         falta: 'sede',
         instruccion_para_el_modelo:
-          'El usuario pregunta por disponibilidad o reserva pero no se identificó la sede en el mensaje. Preguntá explícitamente en qué club o sede (nombre) quiere consultar, usando solo sedes del contexto JSON.',
+          'Falta solo identificar la sede. Respondé con UNA sola pregunta corta (una línea): qué sede o club del listado JSON. Sin otras preguntas ni explicaciones.',
       },
     };
   }
@@ -10567,7 +10584,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         falta: 'fecha',
         sede_detectada: sedeM.nombre,
         instruccion_para_el_modelo:
-          'El usuario pregunta por disponibilidad o reserva pero no se indicó una fecha concreta (YYYY-MM-DD, dd/mm/aaaa, “hoy”, “mañana”, “el viernes”, “16 de mayo 2026”, etc.). Preguntá qué día quiere reservar antes de listar horarios.',
+          'Falta solo la fecha. Respondé con UNA sola pregunta corta (una línea): qué día quiere (o “mañana”, etc.). Sin otras preguntas.',
       },
     };
   }
@@ -10586,7 +10603,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         estado: 'faltan_datos',
         falta: 'sede',
         instruccion_para_el_modelo:
-          'No se pudo cargar la sede en el servidor. Pedí que el usuario elija otra sede o reformule el nombre según el listado del contexto.',
+          'No se pudo cargar la sede. UNA pregunta corta: que elija otra sede del listado o reformule el nombre.',
       },
     };
   }
@@ -10600,7 +10617,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         falta: 'fecha',
         sede_detectada: sedeM.nombre,
         instruccion_para_el_modelo:
-          'La fecha interpretada ya pasó en la zona horaria de la sede. Pedí una fecha futura (día concreto) antes de listar disponibilidad.',
+          'La fecha ya pasó en la sede. UNA pregunta corta: qué día futuro quiere.',
       },
     };
   }
@@ -10622,7 +10639,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         fecha: fechaM,
         detalle: error,
         instruccion_para_el_modelo:
-          'No se pudo calcular la disponibilidad en este momento. Pedí disculpas breves y que intente de nuevo o reserve desde la app en /reservar.',
+          'Error al calcular disponibilidad. Máximo 2 líneas: disculpas y que intente de nuevo o reserve en /reservar. Sin <<<WHATSAPP>>> salvo que sea imposible orientarlo.',
       },
     };
   }
@@ -10634,12 +10651,59 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
   const etiqueta_fecha_corta = dtEt.isValid ? dtEt.toFormat('cccc d') : fechaM;
   const horaParaReserva = chatIaMatchHoraEnSlots(combined, slots);
   const horariosLista = Array.isArray(slots) ? slots.map((s) => s.hora_inicio).filter(Boolean) : [];
+  const horaSolicitudUsuario = chatIaExtractHoraPedida(combined);
+  const horaSolicitudEnSlots = Boolean(
+    horaSolicitudUsuario && horariosLista.some((h) => String(h).trim() === horaSolicitudUsuario),
+  );
+  const nombreSedeShort = String(sedeFull.nombre || sedeM.nombre).trim();
+
+  let instruccionOk = '';
+  if (!horariosLista.length) {
+    instruccionOk =
+      'Máximo 2 líneas: no hay turnos libres ese día en ' +
+      nombreSedeShort +
+      '. Sin pedir confirmación. No uses <<<WHATSAPP>>> si podés sugerir otro día o /reservar.';
+  } else if (horaSolicitudUsuario && !horaSolicitudEnSlots) {
+    instruccionOk =
+      'El usuario pidió ' +
+      horaSolicitudUsuario +
+      ' y esa hora de inicio NO está en slots_reales. Máximo 3 líneas: «No hay lugar a las ' +
+      horaSolicitudUsuario +
+      '. Sí hay a las ' +
+      horariosLista.slice(0, 6).join(', ') +
+      (horariosLista.length > 6 ? '…' : '') +
+      '.» Solo hora_inicio de slots_reales. Opcional una sola pregunta: «¿Cuál preferís?». Sin frases de verificación. No <<<WHATSAPP>>>. Si encaja una hora de la lista, podés una línea <<<RESERVA:sede_id=' +
+      sedeM.id +
+      '|fecha=' +
+      fechaM +
+      '|hora=HH:MM>>>.';
+  } else {
+    instruccionOk =
+      'Ya hay sede+fecha resueltas: listá disponibilidad de inmediato (máximo 3 líneas, sin párrafos ni "¿te parece?"). Formato ideal: «[día] en ' +
+      nombreSedeShort +
+      ' hay lugar a las ' +
+      horariosLista.slice(0, 5).join(', ') +
+      (horariosLista.length > 5 ? '…' : '') +
+      '. ¿Cuál preferís?» (adaptá al idioma del usuario). Horarios solo de slots_reales. Si nota_fecha, una frase corta ART. ' +
+      (horaParaReserva
+        ? `Cuadra ${horaParaReserva}: una línea final <<<RESERVA:sede_id=${sedeM.id}|fecha=${fechaM}|hora=${horaParaReserva}>>>.`
+        : 'Si el usuario elige hora de la lista: <<<RESERVA:sede_id=' +
+          sedeM.id +
+          '|fecha=' +
+          fechaM +
+          '|hora=HH:MM>>>. Si aún no eligió: <<<RESERVA:sede_id=' +
+          sedeM.id +
+          '|fecha=' +
+          fechaM +
+          '>>>.') +
+      ' No <<<WHATSAPP>>>.';
+  }
 
   return {
     consulta_disponibilidad: {
       estado: 'ok',
       sede_id: sedeM.id,
-      sede_nombre: String(sedeFull.nombre || sedeM.nombre).trim(),
+      sede_nombre: nombreSedeShort,
       fecha: fechaM,
       duracion_minutos: duracion,
       canchas_consideradas: chatIaSlotsReservaDesdeSede(sedeFull),
@@ -10649,25 +10713,9 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
       horarios_inicio_csv: horariosLista.join(', '),
       nota_fecha: fechaNota,
       hora_para_reserva_url: horaParaReserva,
-      instruccion_para_el_modelo:
-        'OBLIGATORIO: en el cuerpo del mensaje listá primero los horarios libres en una sola línea con este formato exacto: Horarios disponibles el ' +
-        etiqueta_fecha_corta +
-        ': ' +
-        (horariosLista.length ? horariosLista.join(', ') : '(ninguno)') +
-        '. Usá solo esas horas (hora_inicio de slots_reales); no inventes ni reemplaces por el horario general de la sede. No envíes al usuario solo al enlace de reservar sin esta línea. ' +
-        'Si nota_fecha viene con texto, mencioná brevemente la corrección de calendario (ART). ' +
-        (horaParaReserva
-          ? `El usuario eligió ${horaParaReserva}; al final agregá UNA sola línea: <<<RESERVA:sede_id=${sedeM.id}|fecha=${fechaM}|hora=${horaParaReserva}>>> (sin otro texto en esa línea).`
-          : 'Si el usuario elige una hora que coincida con un slot de slots_reales, podés terminar con <<<RESERVA:sede_id=' +
-            sedeM.id +
-            '|fecha=' +
-            fechaM +
-            '|hora=HH:MM>>>. Si no hay hora concreta, podés usar <<<RESERVA:sede_id=' +
-            sedeM.id +
-            '|fecha=' +
-            fechaM +
-            '>>>.') +
-        ' Si slots_reales está vacío, decí que no hay turnos libres. Máximo 100 palabras.',
+      hora_solicitud_usuario: horaSolicitudUsuario,
+      hora_solicitud_en_slots: horaSolicitudEnSlots,
+      instruccion_para_el_modelo: instruccionOk,
     },
   };
 }
@@ -11124,42 +11172,43 @@ function buildChatIaSystemPrompt(ctxForModel) {
   const oos = chatIaOutOfScopeExactReply(uiLang);
   return `You are the Padbol Match assistant for padbol / padel court bookings in Latin America and Spain.
 
-Always respond in ${langName} (user UI language code: ${uiLang}). Keep answers brief: at most 100 words per message.
+Always respond in ${langName} (user UI language code: ${uiLang}).
+
+STYLE (strict):
+- Maximum 3 short lines per reply. No long paragraphs, no bullet lists, no filler.
+- Be direct: state facts, times, prices, or the single question you need. Do NOT use hedging or meta phrases such as: "I need to verify", "I suggest you check", "would you like me to", "let me know if", "te parece que", "necesito confirmar", "podrías revisar", or similar.
+- Act, do not ask for permission, when the JSON already has availability (consulta_disponibilidad.estado === "ok"): give the real slots immediately. Never ask "should I look?" if the backend already computed slots.
 
 Scope: bookings, availability, prices, tournaments, rankings, clubs (sedes) and nearby courts. If the user asks for something completely outside this scope, reply with exactly this single sentence and nothing else:
 ${JSON.stringify(oos)}
 
-App how-to (translate or paraphrase into ${langName} when answering; keys are hints in Spanish for staff alignment):
+App how-to (translate into ${langName} when answering; keys are Spanish hints):
 ${JSON.stringify(ctxForModel.guia_app || {})}
 
-Logged-in user hints (only if usuario_logueado is non-null in JSON):
-- reservas_ultimas_3: you may suggest repeating a similar booking (club, weekday, time) when it fits the conversation.
-- patron_sugerencias_ia: use weekday_label, hora_tipica and sede_favorita_nombre to proactively suggest similar slots (e.g. "you usually play Thursdays around 19:30 at Club X — want me to check this week?").
-- torneos_sede_habitual_7d: for entries with inscripto=false, you may briefly mention the upcoming tournament at their usual club in the first reply when relevant.
-- Never invent tournaments, clubs or reservations that are not in the JSON.
+Logged-in user hints (only if usuario_logueado is non-null):
+- reservas_ultimas_3 / patron_sugerencias_ia / torneos_sede_habitual_7d: one short optional line max; no multi-question prompts.
 
-Availability and bookings (calendar dates in JSON are resolved in Argentina ART, UTC-3; consulta_disponibilidad.nota_fecha if a weekday/date was corrected). Fields like instruccion_para_el_modelo may be written in Spanish for precision—follow their logic but phrase your visible reply in ${langName}:
-- If consulta_disponibilidad.estado === "ok", follow strictly instruccion_para_el_modelo: first a line with concrete slots (slots_reales / horarios_inicio_csv); never send users only to book without listing them.
-- If estado === "faltan_datos", ask clearly what is missing (club or date) before listing slots.
-- If estado === "error", apologize briefly and suggest booking from the app.
-- If estado === "no_aplica", answer from general context without inventing concrete hourly availability unless the user was explicit about club and date in the same message (then the backend would have set estado ok).
+Availability (dates in JSON are Argentina ART; consulta_disponibilidad.nota_fecha if corrected). Follow instruccion_para_el_modelo logic; phrase the visible reply in ${langName}:
+- estado === "ok": answer with concrete free start times from slots_reales immediately. Ideal shape (adapt language): "[When] at [club] there is space at 19:00 and 19:30. Which do you prefer?" If hora_solicitud_usuario is set and hora_solicitud_en_slots is false, say clearly that the requested start is not available and list real alternatives from slots_reales (see instruccion_para_el_modelo). Never ask to "confirm" before listing slots when data is already there.
+- estado === "faltan_datos": at most ONE question in the whole reply—only what falta indicates (sede OR fecha). No second question, no preamble.
+- estado === "error": max 2 lines; apology + retry or /reservar.
+- estado === "no_aplica": short factual answer from JSON only; do not invent hourly availability.
 
-WhatsApp escalation: if you cannot resolve within your scope, apologize briefly and add exactly one final line with no other text on that line:
-<<<WHATSAPP:sede_id=NUMBER>>>
-using a sede_id from the JSON when possible, or
-<<<WHATSAPP>>>
-if no club fits. The client will open WhatsApp; never invent phone numbers.
+WhatsApp marker <<<WHATSAPP>>> (use sparingly):
+- Add it ONLY if you truly cannot resolve with the given JSON (e.g. persistent technical failure after error state, or a request impossible from data AND not fixable by asking the single missing sede/fecha).
+- NEVER add <<<WHATSAPP>>> when consulta_disponibilidad.estado === "ok" or when you already listed slots or answered from context.
+- NEVER offer WhatsApp as the first or main option when availability or booking data exists.
 
-Dynamic context (JSON; do not invent clubs or tournaments not listed here):
+Dynamic context (JSON; do not invent clubs or tournaments):
 ${JSON.stringify(ctxForModel)}
 
-If the user wants to book and you know a valid sede_id (and optionally a start time matching a slot), end with exactly one final line, no extra text on that line:
-<<<RESERVA:sede_id=NUMBER>>>
-or with date:
-<<<RESERVA:sede_id=NUMBER|fecha=YYYY-MM-DD>>>
-or with date and start time (HH:mm):
+Booking deep link: if the user wants to book and sede_id is valid (and optional HH:mm matching a slot), end with exactly one final line, nothing else on that line:
 <<<RESERVA:sede_id=NUMBER|fecha=YYYY-MM-DD|hora=HH:MM>>>
-If you are unsure of sede_id or the time is not among offered slots, do not add that line.`;
+or without hora:
+<<<RESERVA:sede_id=NUMBER|fecha=YYYY-MM-DD>>>
+or sede only:
+<<<RESERVA:sede_id=NUMBER>>>
+If unsure of sede_id or the time is not in the offered slots, omit that line.`;
 }
 
 function stripChatIaReserveMarker(rawText) {
@@ -11245,7 +11294,7 @@ app.post('/api/chat-ia', async (req, res) => {
       },
       body: JSON.stringify({
         model: CHAT_IA_MODEL,
-        max_tokens: 900,
+        max_tokens: 400,
         system: systemText,
         messages: msgs,
       }),
