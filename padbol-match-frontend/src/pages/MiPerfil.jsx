@@ -3593,27 +3593,6 @@ export default function MiPerfil() {
         </div>
       ) : null}
 
-      {/* Credit balance */}
-      {creditTotal > 0 && (
-        <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 14px', color: '#15803d', borderBottom: '1px solid #bbf7d0', paddingBottom: '8px' }}>💰 Créditos disponibles</h4>
-          <div style={{ fontSize: '28px', fontWeight: 900, color: '#16a34a', marginBottom: creditItems.length ? '14px' : 0 }}>
-            ${creditTotal.toLocaleString('es-AR')} <span style={{ fontSize: '14px', fontWeight: 600, color: '#4ade80' }}>ARS</span>
-          </div>
-          {creditItems.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {creditItems.map(c => (
-                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#166534', background: 'white', borderRadius: '6px', padding: '6px 10px' }}>
-                  <span>📅 {new Date(c.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                  <span style={{ fontWeight: 700 }}>+${Number(c.monto).toLocaleString('es-AR')}</span>
-                  <span style={{ color: '#86efac' }}>vence {new Date(c.vence_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Estadísticas: puntos por alcance + resumen backend (torneos finalizados, racha, reservas, etc.). */}
       {perfil && typeof perfil === 'object' ? (() => {
         const flagTorneosPub = editando ? !!formData.mostrar_torneos_jugados : !!perfil?.mostrar_torneos_jugados;
@@ -3622,31 +3601,32 @@ export default function MiPerfil() {
         const aliasStats = String(perfil?.alias || '').trim();
         const torneosTot = torneosJugadosTotalDesdeEstadisticas(st);
         const depsList = Array.isArray(st.deportes_jugados) ? st.deportes_jugados : [];
-        const displayStats =
-          aliasStats && torneosTot > 0 ? sliceEstadisticasJugadorTorneo(st, estadisticasDeporteTab) || st : null;
-        const showGridTorneos = Boolean(aliasStats && torneosTot > 0 && displayStats);
-        const mostrarBloqueEstadisticas = hayPuntosNivel || showGridTorneos || !aliasStats;
+        const rowStats =
+          aliasStats && torneosTot > 0
+            ? sliceEstadisticasJugadorTorneo(st, estadisticasDeporteTab) || st
+            : st;
+        const mostrarTabsDeporteStats = Boolean(aliasStats && torneosTot > 0 && depsList.length > 1);
         const gridItems = [
           {
             k: 'torneos',
             label: 'Torneos jugados',
-            value: estadisticasMiPerfilLoading ? '…' : `${Number(displayStats?.torneos_jugados) || 0}`,
+            value: estadisticasMiPerfilLoading ? '…' : `${Number(rowStats?.torneos_jugados) || 0}`,
             sub:
               !aliasStats
                 ? 'Define tu alias público'
-                : Number(displayStats?.torneos_ganados) > 0
-                  ? `${displayStats.torneos_ganados} ganado${Number(displayStats.torneos_ganados) === 1 ? '' : 's'}`
+                : Number(rowStats?.torneos_ganados) > 0
+                  ? `${rowStats.torneos_ganados} ganado${Number(rowStats.torneos_ganados) === 1 ? '' : 's'}`
                   : 'Torneos finalizados',
           },
           {
             k: 'partidos',
             label: 'Partidos jugados',
-            value: estadisticasMiPerfilLoading ? '…' : `${Number(displayStats?.partidos_jugados) || 0}`,
+            value: estadisticasMiPerfilLoading ? '…' : `${Number(rowStats?.partidos_jugados) || 0}`,
             sub:
               !aliasStats
                 ? '—'
-                : Number(displayStats?.partidos_jugados) > 0
-                  ? `${Number(displayStats.partidos_ganados) || 0} victorias`
+                : Number(rowStats?.partidos_jugados) > 0
+                  ? `${Number(rowStats.partidos_ganados) || 0} victorias`
                   : 'En torneos finalizados',
           },
           {
@@ -3655,8 +3635,8 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : Number(displayStats?.partidos_jugados) > 0
-                  ? `${displayStats.win_rate_pct}%`
+                : Number(rowStats?.partidos_jugados) > 0
+                  ? `${rowStats.win_rate_pct}%`
                   : '—',
             sub: 'Victorias / jugados',
           },
@@ -3666,8 +3646,8 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : Number(displayStats?.puntos_ranking_total) > 0
-                  ? `${displayStats.puntos_ranking_total}`
+                : Number(rowStats?.puntos_ranking_total) > 0
+                  ? `${rowStats.puntos_ranking_total}`
                   : '—',
             sub: depsList.length > 1 ? 'Tabla (deporte seleccionado)' : 'Total tabla de puntos',
           },
@@ -3677,15 +3657,15 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : Number(displayStats?.racha_victorias_consecutivas) > 0
-                  ? `${displayStats.racha_victorias_consecutivas}`
+                : Number(rowStats?.racha_victorias_consecutivas) > 0
+                  ? `${rowStats.racha_victorias_consecutivas}`
                   : '—',
             sub:
               !aliasStats
                 ? '—'
-                : Number(displayStats?.racha_victorias_consecutivas) > 0
-                  ? `Partido${displayStats.racha_victorias_consecutivas === 1 ? '' : 's'} ganado${
-                      displayStats.racha_victorias_consecutivas === 1 ? '' : 's'
+                : Number(rowStats?.racha_victorias_consecutivas) > 0
+                  ? `Partido${rowStats.racha_victorias_consecutivas === 1 ? '' : 's'} ganado${
+                      rowStats.racha_victorias_consecutivas === 1 ? '' : 's'
                     } seguidos`
                   : 'Sin racha activa',
           },
@@ -3693,14 +3673,14 @@ export default function MiPerfil() {
             k: 'mejor',
             label: 'Mejor resultado',
             value:
-              estadisticasMiPerfilLoading || !aliasStats ? '—' : displayStats?.mejor_resultado || '—',
+              estadisticasMiPerfilLoading || !aliasStats ? '—' : rowStats?.mejor_resultado || '—',
             sub: depsList.length > 1 ? 'En este deporte' : 'Mejor torneo (tabla)',
           },
           {
             k: 'deporte',
             label: depsList.length > 1 ? 'Deporte' : 'Deporte más jugado',
             value:
-              estadisticasMiPerfilLoading || !aliasStats ? '—' : displayStats?.deporte_mas_jugado || '—',
+              estadisticasMiPerfilLoading || !aliasStats ? '—' : rowStats?.deporte_mas_jugado || '—',
             sub: depsList.length > 1 ? 'Pestaña activa' : 'Por torneos jugados',
           },
           {
@@ -3709,22 +3689,21 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : displayStats?.sede_mas_frecuentada_reservas?.nombre || '—',
+                : rowStats?.sede_mas_frecuentada_reservas?.nombre || '—',
             sub:
               !aliasStats
                 ? '—'
-                : displayStats?.sede_mas_frecuentada_reservas?.reservas_en_sede != null
-                  ? `${displayStats.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
-                      displayStats.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
+                : rowStats?.sede_mas_frecuentada_reservas?.reservas_en_sede != null
+                  ? `${rowStats.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
+                      rowStats.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
                     }`
                   : 'Por reservas',
           },
         ];
-        if (!mostrarBloqueEstadisticas) return null;
         return (
           <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>📊 Estadísticas</h4>
-            {showGridTorneos && depsList.length > 1 ? (
+            {mostrarTabsDeporteStats ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
                 {depsList.map((d) => {
                   const active = estadisticasDeporteTab === d.deporte;
@@ -3780,7 +3759,6 @@ export default function MiPerfil() {
                 Define tu alias público en la ficha para calcular torneos, partidos y racha.
               </p>
             ) : null}
-            {showGridTorneos ? (
             <>
             <div
               style={{
@@ -3818,11 +3796,10 @@ export default function MiPerfil() {
             >
               Sede habitual (torneos):{' '}
               <span style={{ color: '#0f172a' }}>
-                {estadisticasMiPerfilLoading ? '…' : displayStats?.sede_habitual?.nombre || '—'}
+                {estadisticasMiPerfilLoading ? '…' : rowStats?.sede_habitual?.nombre || '—'}
               </span>
             </p>
             </>
-            ) : null}
             {flagTorneosPub ? (
               <p style={{ margin: '10px 0 0', fontSize: '12px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
                 En tu perfil público también se muestran torneos con puntos:{' '}
@@ -3832,6 +3809,27 @@ export default function MiPerfil() {
           </div>
         );
       })() : null}
+
+      {/* Credit balance */}
+      {creditTotal > 0 && (
+        <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 14px', color: '#15803d', borderBottom: '1px solid #bbf7d0', paddingBottom: '8px' }}>💰 Créditos disponibles</h4>
+          <div style={{ fontSize: '28px', fontWeight: 900, color: '#16a34a', marginBottom: creditItems.length ? '14px' : 0 }}>
+            ${creditTotal.toLocaleString('es-AR')} <span style={{ fontSize: '14px', fontWeight: 600, color: '#4ade80' }}>ARS</span>
+          </div>
+          {creditItems.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {creditItems.map(c => (
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#166534', background: 'white', borderRadius: '6px', padding: '6px 10px' }}>
+                  <span>📅 {new Date(c.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                  <span style={{ fontWeight: 700 }}>+${Number(c.monto).toLocaleString('es-AR')}</span>
+                  <span style={{ color: '#86efac' }}>vence {new Date(c.vence_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {torneosConPuntosMiPerfil.length > 0 && !ocultarUiJugadorPorAdmin ? (
         <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
