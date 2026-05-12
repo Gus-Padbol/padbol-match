@@ -340,7 +340,7 @@ function QuickSuggestionBar({ items, disabled, onPick }) {
 export default function ChatbotIA() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { session, userProfile } = useAuth();
+  const { session, userProfile, refreshSession } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -747,6 +747,9 @@ export default function ChatbotIA() {
           setSedeContextoTurno(null);
         }
         if (data.whatsapp_escalada?.href) setWhatsappEscalada(data.whatsapp_escalada);
+        if (data.deporte_aprendido) {
+          void refreshSession();
+        }
         const used = Number(data.user_messages_used);
         if (Number.isFinite(used) && used >= MAX_USER_MESSAGES) setSessionEnded(true);
         scheduleAssistantSpeak(reply);
@@ -766,6 +769,7 @@ export default function ChatbotIA() {
       clientPaginaSedeId,
       primeSpeechSynthesisFromUserGesture,
       scheduleAssistantSpeak,
+      refreshSession,
     ]
   );
 

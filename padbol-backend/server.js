@@ -3403,6 +3403,54 @@ function normalizeChatIaDeporteToolInput(raw) {
   return '';
 }
 
+/** Slugs canónicos a fusionar en `jugadores_perfil.deportes_preferidos` según el texto del usuario (misma lógica que tools). */
+function chatIaDeporteSlugsPreferidosDesdeMensajeUsuario(mensaje) {
+  const c = normalizeChatIaDeporteToolInput(String(mensaje || '').trim());
+  if (!c) return [];
+  if (c === '__futbol_any__') return ['futbol_5', 'futbol_7'];
+  if (TORNEO_DEPORTE_VALID.has(c)) return [c];
+  return [];
+}
+
+/**
+ * Si el usuario logueado menciona un deporte, lo agrega a `jugadores_perfil.deportes_preferidos` sin afectar la respuesta del modelo.
+ * @returns {Promise<string|null>} primer slug recién añadido, o null si no hubo cambios / sin sesión / sin fila.
+ */
+async function chatIaAprenderDeportePreferidoDesdeMensajeUsuario(supabaseClient, user, mensaje) {
+  const uid = user?.id != null ? String(user.id).trim() : '';
+  if (!uid) return null;
+  const slugs = chatIaDeporteSlugsPreferidosDesdeMensajeUsuario(mensaje);
+  if (!slugs.length) return null;
+  try {
+    const { data: row, error } = await supabaseClient
+      .from('jugadores_perfil')
+      .select('deportes_preferidos')
+      .eq('user_id', uid)
+      .maybeSingle();
+    if (error || !row) return null;
+    const cur = [...chatIaNormalizeDeportesPreferidosDb(row.deportes_preferidos)];
+    const set = new Set(cur);
+    let firstNew = null;
+    for (const s of slugs) {
+      if (!set.has(s)) {
+        set.add(s);
+        cur.push(s);
+        if (!firstNew) firstNew = s;
+      }
+    }
+    if (!firstNew) return null;
+    const { error: upErr } = await supabaseClient.from('jugadores_perfil').update({ deportes_preferidos: cur }).eq('user_id', uid);
+    if (upErr) {
+      console.error('[chat-ia] merge deportes_preferidos', upErr.message || String(upErr));
+      return null;
+    }
+    return firstNew;
+  } catch (e) {
+    console.error('[chat-ia] merge deportes_preferidos catch', e?.message || String(e));
+    return null;
+  }
+}
+
 /** ?deporte= en API pública/admin: mismo criterio que tool IA; null = sin filtro. */
 function parseDeporteCanchaQueryParamExpress(raw) {
   const c = normalizeChatIaDeporteToolInput(raw);
@@ -12391,6 +12439,7 @@ app.post('/api/chat-ia', async (req, res) => {
                     nslots: slots?.length ?? 0,
                   }),
                 );
+                const deporte_aprendido = await chatIaAprenderDeportePreferidoDesdeMensajeUsuario(supabase, user, mensaje);
                 return res.json({
                   respuesta,
                   reserve: null,
@@ -12399,6 +12448,7 @@ app.post('/api/chat-ia', async (req, res) => {
                   user_messages_max: CHAT_IA_MAX_USER_MSG,
                   sede_contexto,
                   disponibilidad: disponibilidad.slots.length ? disponibilidad : null,
+                  deporte_aprendido,
                 });
               }
             }
@@ -12409,6 +12459,7 @@ app.post('/api/chat-ia', async (req, res) => {
       } else {
         const q = chatIaPreguntaLugarSinSedeResuelta(locale);
         console.error('[chat-ia] POST ver_horarios_hoy sin_sede', JSON.stringify({ locale }));
+        const deporte_aprendido = await chatIaAprenderDeportePreferidoDesdeMensajeUsuario(supabase, user, mensaje);
         return res.json({
           respuesta: q,
           reserve: null,
@@ -12417,6 +12468,7 @@ app.post('/api/chat-ia', async (req, res) => {
           user_messages_max: CHAT_IA_MAX_USER_MSG,
           sede_contexto: null,
           disponibilidad: null,
+          deporte_aprendido,
         });
       }
     }
@@ -12471,6 +12523,8 @@ app.post('/api/chat-ia', async (req, res) => {
       }
     }
 
+    const deporte_aprendido = await chatIaAprenderDeportePreferidoDesdeMensajeUsuario(supabase, user, mensaje);
+
     return res.json({
       respuesta,
       reserve: reserve && reserve.sede_id ? reserve : null,
@@ -12479,6 +12533,7 @@ app.post('/api/chat-ia', async (req, res) => {
       user_messages_max: CHAT_IA_MAX_USER_MSG,
       sede_contexto,
       disponibilidad: run.disponibilidad || null,
+      deporte_aprendido,
     });
   } catch (err) {
     console.error('❌ POST /api/chat-ia:', err?.message || err);
