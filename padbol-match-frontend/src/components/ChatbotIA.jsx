@@ -95,6 +95,45 @@ function inferWritingLocaleCodeFromText(textRaw) {
   return 'es';
 }
 
+/**
+ * BCP-47 para SpeechSynthesis según el texto de la respuesta del asistente (no dispositivo ni mensaje del usuario).
+ */
+function bcp47LangForAssistantTts(textRaw) {
+  const text = String(textRaw || '').trim();
+  if (!text) return 'es-AR';
+
+  // Scripts (orden: no latinos primero)
+  if (/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) return 'ar-SA';
+  if (/[\u0590-\u05FF]/.test(text)) return 'he-IL';
+  if (/[\u0400-\u04FF]/.test(text)) return 'ru-RU';
+  if (/[\u0370-\u03FF]/.test(text)) return 'el-GR';
+  if (/[\u0900-\u097F]/.test(text)) return 'hi-IN';
+  if (/[\u0E00-\u0E7F]/.test(text)) return 'th-TH';
+  if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) return 'ja-JP';
+  if (/[\uAC00-\uD7A3]/.test(text)) return 'ko-KR';
+  if (/[\u4E00-\u9FFF]/.test(text)) return 'zh-CN';
+
+  // Rumano (diacríticos típicos o palabras sin diacríticos comunes)
+  if (/[\u0103\u0102\u00E2\u00C2\u00EE\u00CE\u0219\u0218\u021b\u021B]/.test(text)) return 'ro-RO';
+  if (/\b(multumesc|mulțumesc|bun[ăa]\s+ziua|pe\s+m[aâ]ine|ast[ăa]zi|v[aă]\s+rog|sigur)\b/i.test(text)) return 'ro-RO';
+
+  // Turco / alemán / francés (latinos con señales fuertes)
+  if (/[ğüşöçıİĞÜŞÖÇ]/.test(text)) return 'tr-TR';
+  if (/[äöüÄÖÜß]/.test(text)) return 'de-DE';
+  if (
+    /[àâçéèêëïîôùûüÿœæ]/.test(text) &&
+    /\b(merci|bonjour|bonsoir|monsieur|madame|au\s+revoir|vous|nous|avec|pour)\b/i.test(text) &&
+    !/\b(hola|gracias|cancha|mañana|dónde)\b/i.test(text)
+  ) {
+    return 'fr-FR';
+  }
+
+  const code = inferWritingLocaleCodeFromText(text);
+  if (code === 'pt') return 'pt-BR';
+  if (code === 'en') return 'en-US';
+  return 'es-AR';
+}
+
 function navigatorLanguageToChatCode(nav) {
   const n = String(nav || 'es').toLowerCase();
   if (n.startsWith('pt')) return 'pt';
@@ -271,13 +310,6 @@ export default function ChatbotIA() {
     return 'es-AR';
   }, [writingLocaleForVoice]);
 
-  const ttsUtterLang = useMemo(() => {
-    const c = writingLocaleForVoice;
-    if (c === 'en') return 'en-US';
-    if (c === 'pt') return 'pt-BR';
-    return 'es-AR';
-  }, [writingLocaleForVoice]);
-
   const visible = useMemo(() => isChatbotIAVisiblePathname(location.pathname), [location.pathname]);
 
   const hubShell = useMemo(() => {
@@ -413,13 +445,13 @@ export default function ChatbotIA() {
     try {
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(t);
-      utter.lang = ttsUtterLang;
+      utter.lang = bcp47LangForAssistantTts(t);
       utter.rate = 0.92;
       window.speechSynthesis.speak(utter);
     } catch {
       /* ignore */
     }
-  }, [ttsSupported, ttsUtterLang]);
+  }, [ttsSupported]);
 
   /** Llamar desde handlers de gesto del usuario (enviar, dictado, activar checkbox). */
   const primeSpeechSynthesisFromUserGesture = useCallback(() => {
