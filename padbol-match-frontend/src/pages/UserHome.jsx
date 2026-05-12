@@ -14,9 +14,73 @@ import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
 
 const HUB_COLUMN_MAX = 390;
+
+/** Cuatro acciones fijas del hub (orden fijo). `cmsPhotoIds`: ids en hub-config para foto opcional. */
+const HUB_FIXED_ACTIONS = [
+  {
+    key: 'reservar',
+    titulo: 'Reservar cancha',
+    subtitulo: 'Ya tengo equipo, quiero una cancha.',
+    to: '/reservar',
+    cmsPhotoIds: ['reservar'],
+  },
+  {
+    key: 'buscar_partido',
+    titulo: 'Buscar partido',
+    subtitulo: 'Quiero unirme a un partido que ya existe.',
+    to: '/jugar/buscar',
+    cmsPhotoIds: ['buscar_partido', 'partidos'],
+  },
+  {
+    key: 'torneos',
+    titulo: 'Torneos',
+    subtitulo: 'Torneos y rankings.',
+    to: '/competir',
+    cmsPhotoIds: ['torneos'],
+  },
+  {
+    key: 'armar_partido',
+    titulo: 'Armar partido',
+    subtitulo: 'Quiero crear un partido y sumar jugadores.',
+    to: '/jugar/armar',
+    cmsPhotoIds: ['armar_partido', 'jugar', 'armar-partido'],
+  },
+];
+
+const HUB_CARD_HEIGHT_PX = 180;
+
+function deporteQuery(deporteElegido) {
+  const dep = String(deporteElegido || '').trim().toLowerCase();
+  return dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep) ? `?deporte=${encodeURIComponent(dep)}` : '';
+}
+
+function etiquetaDeporteHub(key) {
+  const k = String(key || '').trim().toLowerCase();
+  return DEPORTES_CANCHA_SEDE_OPTIONS.find((d) => d.key === k)?.label || '';
+}
+
+/** Título con sufijo de deporte si aplica; subtítulos fijos del producto. */
+function tituloHubCardConDeporte(tituloBase, deporteKey) {
+  if (!deporteKey || !DEPORTES_CANCHA_SEDE_KEYS.includes(deporteKey)) return tituloBase;
+  const label = etiquetaDeporteHub(deporteKey);
+  return `${tituloBase} · ${label}`;
+}
+
+function pickHubCmsPhotoUrl(rows, cmsPhotoIds) {
+  if (!Array.isArray(rows) || !cmsPhotoIds?.length) return '';
+  for (const wantedId of cmsPhotoIds) {
+    const row = rows.find((r) => {
+      if (r == null || typeof r !== 'object') return false;
+      if (r.activo === false || r.activo === 'false' || r.activo === 0) return false;
+      return String(r.id || '').trim() === wantedId;
+    });
+    const foto = row && String(row.foto_url || '').trim();
+    if (foto) return foto;
+  }
+  return '';
+}
 
 /** Persiste el filtro «Elegir deporte» del hub entre visitas (misma pestaña / sesión). */
 const HUB_DEPORTE_SESSION_KEY = 'padbol_hub_deporte_filter';
@@ -26,50 +90,6 @@ const HUB_API_BASE = (
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );
-
-function hubCardNavigate(navigate, cardId, deporteElegido) {
-  const id = String(cardId || '').trim();
-  const dep = String(deporteElegido || '').trim().toLowerCase();
-  const q =
-    dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep) ? `?deporte=${encodeURIComponent(dep)}` : '';
-  const routes = {
-    partidos: () => navigate(`/jugar/buscar${q}`),
-    torneos: () => navigate(`/competir${q}`),
-    perfil: () => navigate('/mi-perfil'),
-    sedes: () => navigate(`/sedes${q}`),
-    reservar: () => navigate(`/reservar${q}`),
-    rankings: () => navigate('/rankings'),
-    jugar: () => navigate(`/jugar${q}`),
-    torneos_lista: () => navigate(`/torneos${q}`),
-  };
-  const fn = routes[id];
-  if (fn) fn();
-  else navigate('/');
-}
-
-function etiquetaDeporteHub(key) {
-  const k = String(key || '').trim().toLowerCase();
-  return DEPORTES_CANCHA_SEDE_OPTIONS.find((d) => d.key === k)?.label || '';
-}
-
-/** Texto de cards del hub según deporte elegido (solo claves válidas). */
-function hubCardCopyConDeporte(cardId, deporteKey) {
-  const id = String(cardId || '').trim();
-  const fb = fallbackCopyForHubCardId(id);
-  if (!deporteKey || !DEPORTES_CANCHA_SEDE_KEYS.includes(deporteKey)) {
-    return { titulo: fb.titulo, subtitulo: fb.subtitulo };
-  }
-  const label = etiquetaDeporteHub(deporteKey);
-  const map = {
-    partidos: { titulo: `Partidos de ${label} cerca de ti`, subtitulo: fb.subtitulo },
-    torneos: { titulo: `Torneos · ${label}`, subtitulo: 'Inscripciones y sedes con este deporte.' },
-    sedes: { titulo: `Explorar sedes · ${label}`, subtitulo: 'Clubes que ofrecen este deporte.' },
-    reservar: { titulo: `Reservar cancha · ${label}`, subtitulo: fb.subtitulo },
-    torneos_lista: { titulo: `Torneos abiertos · ${label}`, subtitulo: fb.subtitulo },
-    jugar: { titulo: `${fb.titulo} · ${label}`, subtitulo: fb.subtitulo },
-  };
-  return map[id] || { titulo: `${fb.titulo} · ${label}`, subtitulo: fb.subtitulo };
-}
 
 const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado', 'editor_contenido'];
 const LEGACY_GLOBAL_ADMIN_EMAILS = [
@@ -279,70 +299,16 @@ export default function UserHome() {
   const padR = 'calc(12px + env(safe-area-inset-right, 0px))';
 
   const bigCards = useMemo(() => {
-    const cPartidos = hubCardCopyConDeporte('partidos', deporteElegido);
-    const cTorneos = hubCardCopyConDeporte('torneos', deporteElegido);
-    const cPerfil = hubCardCopyConDeporte('perfil', deporteElegido);
-    const cSedes = hubCardCopyConDeporte('sedes', deporteElegido);
-    const fallback = [
-      {
-        key: 'partidos',
-        titulo: cPartidos.titulo,
-        subtitulo: cPartidos.subtitulo,
-        image: defaultHubCardImageForId('partidos'),
-        onClick: () => hubCardNavigate(navigate, 'partidos', deporteElegido),
-      },
-      {
-        key: 'torneos',
-        titulo: cTorneos.titulo,
-        subtitulo: cTorneos.subtitulo,
-        image: defaultHubCardImageForId('torneos'),
-        onClick: () => hubCardNavigate(navigate, 'torneos', deporteElegido),
-      },
-      {
-        key: 'perfil',
-        titulo: cPerfil.titulo,
-        subtitulo: cPerfil.subtitulo,
-        image: defaultHubCardImageForId('perfil'),
-        onClick: () => hubCardNavigate(navigate, 'perfil', deporteElegido),
-      },
-      {
-        key: 'sedes',
-        titulo: cSedes.titulo,
-        subtitulo: cSedes.subtitulo,
-        image: defaultHubCardImageForId('sedes'),
-        onClick: () => hubCardNavigate(navigate, 'sedes', deporteElegido),
-      },
-    ];
-
-    if (hubCmsStatus !== 'ok' || !hubCmsRows.length) return fallback;
-
-    const active = hubCmsRows.filter((r) => {
-      if (r == null || typeof r !== 'object') return false;
-      if (r.activo === false || r.activo === 'false' || r.activo === 0) return false;
-      return true;
-    });
-    if (!active.length) return fallback;
-
-    const sportSuffix =
-      deporteElegido && DEPORTES_CANCHA_SEDE_KEYS.includes(deporteElegido)
-        ? ` · ${etiquetaDeporteHub(deporteElegido)}`
-        : '';
-
-    return active.map((r) => {
-      const id = String(r.id || '').trim() || 'card';
-      const fb = fallbackCopyForHubCardId(id);
-      const tituloRaw = String(r.titulo || '').trim();
-      const subRaw = String(r.subtitulo || '').trim();
-      const titulo = (tituloRaw || fb.titulo) + sportSuffix;
-      const subtitulo = subRaw !== '' ? subRaw : fb.subtitulo;
-      const foto = String(r.foto_url || '').trim();
-      const image = foto || defaultHubCardImageForId(id);
+    const q = deporteQuery(deporteElegido);
+    const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
+    return HUB_FIXED_ACTIONS.map((slot) => {
+      const imageUrl = pickHubCmsPhotoUrl(rows, slot.cmsPhotoIds);
       return {
-        key: id,
-        titulo,
-        subtitulo,
-        image,
-        onClick: () => hubCardNavigate(navigate, id, deporteElegido),
+        key: slot.key,
+        titulo: tituloHubCardConDeporte(slot.titulo, deporteElegido),
+        subtitulo: slot.subtitulo,
+        imageUrl,
+        onClick: () => navigate(`${slot.to}${q}`),
       };
     });
   }, [hubCmsStatus, hubCmsRows, navigate, deporteElegido]);
@@ -666,7 +632,9 @@ export default function UserHome() {
           ) : null}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', marginBottom: 20 }}>
-            {bigCards.map((c) => (
+            {bigCards.map((c) => {
+              const hasPhoto = Boolean(c.imageUrl);
+              return (
               <button
                 key={c.key}
                 type="button"
@@ -674,7 +642,9 @@ export default function UserHome() {
                 style={{
                   position: 'relative',
                   width: '100%',
-                  minHeight: 152,
+                  height: HUB_CARD_HEIGHT_PX,
+                  minHeight: HUB_CARD_HEIGHT_PX,
+                  maxHeight: HUB_CARD_HEIGHT_PX,
                   textAlign: 'left',
                   border: 'none',
                   borderRadius: 12,
@@ -682,40 +652,67 @@ export default function UserHome() {
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                   padding: 0,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  background: `#6B6B6B url(${c.image}) center/cover no-repeat`,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  backgroundColor: hasPhoto ? '#1a1a1a' : '#2d2d2d',
+                  backgroundImage: hasPhoto ? `url(${c.imageUrl})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
                 }}
               >
                 <div
+                  aria-hidden
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(225,27,34,0.55) 100%)',
+                    background: 'rgba(225, 27, 34, 0.48)',
                   }}
                 />
                 <div
                   style={{
                     position: 'relative',
                     zIndex: 1,
-                    minHeight: 152,
+                    height: '100%',
+                    width: '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-end',
-                    padding: 16,
+                    alignItems: 'flex-start',
+                    padding: '14px 16px 16px',
                     boxSizing: 'border-box',
                   }}
                 >
-                  <span style={{ display: 'block', color: '#fff', fontSize: 18, fontWeight: 700, lineHeight: 1.25, textShadow: '0 1px 4px rgba(0,0,0,0.35)' }}>
+                  <span
+                    style={{
+                      display: 'block',
+                      color: '#fff',
+                      fontSize: 18,
+                      fontWeight: 800,
+                      lineHeight: 1.2,
+                      textShadow: '0 1px 3px rgba(0,0,0,0.45)',
+                    }}
+                  >
                     {c.titulo}
                   </span>
                   {c.subtitulo ? (
-                    <span style={{ display: 'block', marginTop: 6, color: 'rgba(255,255,255,0.95)', fontSize: 14, fontWeight: 400, lineHeight: 1.35 }}>
+                    <span
+                      style={{
+                        display: 'block',
+                        marginTop: 6,
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 700,
+                        lineHeight: 1.35,
+                        textShadow: '0 1px 3px rgba(0,0,0,0.45)',
+                      }}
+                    >
                       {c.subtitulo}
                     </span>
                   ) : null}
                 </div>
               </button>
-            ))}
+            );
+            })}
           </div>
         </div>
 

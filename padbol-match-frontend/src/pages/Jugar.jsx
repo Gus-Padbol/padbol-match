@@ -28,7 +28,7 @@ const opciones = [
     title: 'Armar partido',
     body: 'Quiero crear un partido y sumar jugadores.',
     image: IMG_ARMAR,
-    path: '/armar-partido',
+    path: '/jugar/armar',
   },
 ];
 

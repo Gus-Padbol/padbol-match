@@ -313,6 +313,7 @@ function AppRoutes() {
         <Route path="/reservar" element={<ReservaForm />} />
         <Route path="/jugar" element={<Jugar />} />
         <Route path="/jugar/buscar" element={<PartidosAbiertos />} />
+        <Route path="/jugar/armar" element={<ArmarPartido />} />
         <Route path="/competir" element={<Competir />} />
         <Route path="/partidos-abiertos" element={<PartidosAbiertos />} />
         <Route path="/notificaciones" element={<NotificacionesPage />} />
