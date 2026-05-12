@@ -10856,6 +10856,36 @@ async function chatIaRankingsForTool(supabaseClient, { nivel, deporte, categoria
   return { ok: true, ranking: result.slice(0, 10) };
 }
 
+/** Distancia en km entre dos puntos WGS84 (ordenar sedes por cercanía). */
+function chatIaHaversineDistanceKm(lat1, lon1, lat2, lon2) {
+  if (![lat1, lon1, lat2, lon2].every((x) => typeof x === 'number' && Number.isFinite(x))) return null;
+  const R = 6371;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const km = R * c;
+  return Number.isFinite(km) ? Math.round(km * 100) / 100 : null;
+}
+
+/** Coordenadas enviadas por el cliente (navigator.geolocation), validadas. */
+function chatIaParseClientGeolocalizacion(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const lat = Number(raw.latitud);
+  const lng = Number(raw.longitud);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  const acc = raw.precision_m != null ? Number(raw.precision_m) : null;
+  return {
+    latitud: lat,
+    longitud: lng,
+    precision_m: Number.isFinite(acc) && acc >= 0 ? Math.round(acc) : null,
+  };
+}
+
 function chatIaAnthropicToolsDefinition() {
   return [
     {
@@ -10890,7 +10920,7 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'buscar_sedes_por_deporte',
       description:
-        'Find clubs that declare the given sport in canchas_por_deporte (with court counts). Use for questions like which clubs near me offer football or padel. Combine with optional ciudad or pais filters (ilike on sedes).',
+        'Find clubs that declare the given sport in canchas_por_deporte (with court counts). If the user names a city or country in their message, pass ciudad and/or pais (ilike on sedes)—that overrides proximity sorting. If they do not name a place, pass latitud and longitud from Context JSON client_geolocalizacion when present so results are ordered by distance; otherwise the server may fall back to the user habitual club city/country. You may pass latitud/longitud explicitly when the user asks for clubs "near me" / "cerca" and coords exist in context.',
       input_schema: {
         type: 'object',
         properties: {
@@ -10898,8 +10928,17 @@ function chatIaAnthropicToolsDefinition() {
             type: 'string',
             description: 'Required: padbol, padel, futbol, tenis, pickleball, squash, futbol_5, futbol_7',
           },
-          ciudad: { type: 'string', description: 'Optional: filters sedes.ciudad (ilike)' },
-          pais: { type: 'string', description: 'Optional: filters sedes.pais (ilike)' },
+          ciudad: { type: 'string', description: 'Optional: filters sedes.ciudad (ilike). Use when the user names a city/area in text.' },
+          pais: { type: 'string', description: 'Optional: filters sedes.pais (ilike). Use when the user names a country in text.' },
+          latitud: {
+            type: 'number',
+            description:
+              'Optional WGS84 latitude. When the user does not name a city/country, pass Context client_geolocalizacion.latitud so clubs are sorted by distance (nearest first). Omit if using only ciudad/pais.',
+          },
+          longitud: {
+            type: 'number',
+            description: 'Optional WGS84 longitude; pair with latitud. Same rules as latitud.',
+          },
         },
         required: ['deporte'],
       },
@@ -11126,22 +11165,87 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
         sidMap.set(sid, (sidMap.get(sid) || 0) + c);
       }
       const ids = [...sidMap.keys()];
-      if (!ids.length) return { ok: true, deporte_filtro: depCanon, sedes: [] };
-      let sq = supabaseClient.from('sedes').select('id,nombre,ciudad,pais').in('id', ids).order('nombre', { ascending: true }).limit(80);
-      const ciudadF = String(input.ciudad || '').trim();
-      const paisF = String(input.pais || '').trim();
+      if (!ids.length) return { ok: true, deporte_filtro: depCanon, sedes: [], orden: 'ninguno' };
+
+      let ciudadF = String(input.ciudad || '').trim();
+      let paisF = String(input.pais || '').trim();
+      const namedPlaceInTool = Boolean(ciudadF || paisF);
+
+      let refLat = input.latitud != null ? Number(input.latitud) : NaN;
+      let refLng = input.longitud != null ? Number(input.longitud) : NaN;
+      if (!namedPlaceInTool) {
+        const okIn = (la, lo) =>
+          Number.isFinite(la) &&
+          Number.isFinite(lo) &&
+          la >= -90 &&
+          la <= 90 &&
+          lo >= -180 &&
+          lo <= 180;
+        if (!okIn(refLat, refLng)) {
+          const g = ctx?.client_geolocalizacion;
+          if (g && okIn(Number(g.latitud), Number(g.longitud))) {
+            refLat = Number(g.latitud);
+            refLng = Number(g.longitud);
+          }
+        }
+      }
+
+      const hasRefGeo =
+        Number.isFinite(refLat) &&
+        Number.isFinite(refLng) &&
+        refLat >= -90 &&
+        refLat <= 90 &&
+        refLng >= -180 &&
+        refLng <= 180;
+      const sortByDistance = hasRefGeo && !namedPlaceInTool;
+
+      if (!namedPlaceInTool && !hasRefGeo) {
+        const sh = ctx?.usuario_logueado?.sede_habitual;
+        if (sh?.ciudad && String(sh.ciudad).trim()) ciudadF = String(sh.ciudad).trim();
+        else if (sh?.pais && String(sh.pais).trim()) paisF = String(sh.pais).trim();
+      }
+
+      let sq = supabaseClient.from('sedes').select('id,nombre,ciudad,pais,latitud,longitud').in('id', ids).limit(120);
       if (paisF) sq = sq.ilike('pais', `%${paisF}%`);
       if (ciudadF) sq = sq.ilike('ciudad', `%${ciudadF}%`);
       const { data: sedesData, error: sErr } = await sq;
       if (sErr) return { ok: false, error: sErr.message };
-      const sedes = (sedesData || []).map((s) => ({
-        id: s.id,
-        nombre: s.nombre,
-        ciudad: s.ciudad,
-        pais: s.pais,
-        canchas_declaradas_para_deporte: sidMap.get(Number(s.id)) || 0,
-      }));
-      return { ok: true, deporte_filtro: depCanon, sedes };
+      let sedes = (sedesData || []).map((s) => {
+        const latS = s.latitud != null ? Number(s.latitud) : NaN;
+        const lngS = s.longitud != null ? Number(s.longitud) : NaN;
+        const distKm =
+          sortByDistance && Number.isFinite(latS) && Number.isFinite(lngS)
+            ? chatIaHaversineDistanceKm(refLat, refLng, latS, lngS)
+            : null;
+        const base = {
+          id: s.id,
+          nombre: s.nombre,
+          ciudad: s.ciudad,
+          pais: s.pais,
+          canchas_declaradas_para_deporte: sidMap.get(Number(s.id)) || 0,
+        };
+        if (sortByDistance) return { ...base, distancia_km: distKm };
+        return base;
+      });
+      if (sortByDistance) {
+        sedes.sort((a, b) => {
+          const da = a.distancia_km;
+          const db = b.distancia_km;
+          if (da != null && db != null) return da - db;
+          if (da != null) return -1;
+          if (db != null) return 1;
+          return String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es');
+        });
+      } else {
+        sedes.sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es'));
+      }
+      return {
+        ok: true,
+        deporte_filtro: depCanon,
+        orden: sortByDistance ? 'distancia_km' : 'nombre',
+        referencia_geo: sortByDistance ? { latitud: refLat, longitud: refLng } : null,
+        sedes: sedes.slice(0, 40),
+      };
     }
     if (toolName === 'listar_sedes') {
       const paisF = String(input.pais || '').trim();
@@ -11778,6 +11882,8 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
         sede_habitual = {
           sede_id: habitualSid,
           nombre: String(row.nombre || '').trim(),
+          ciudad: row.ciudad != null ? String(row.ciudad).trim() : null,
+          pais: row.pais != null ? String(row.pais).trim() : null,
         };
       }
     }
@@ -11923,6 +12029,7 @@ function buildChatIaSystemPrompt(ctxForModel) {
     fecha_referencia_art: ctxForModel.fecha_referencia,
     fecha_mañana_art: ctxForModel.fecha_mañana_art,
     sedes_hora_local: ctxForModel.sedes_hora_local,
+    client_geolocalizacion: ctxForModel.client_geolocalizacion || null,
     disponibilidad_sede_implicita: ctxForModel.disponibilidad_sede_implicita || {
       sede_id: null,
       sede_nombre: null,
@@ -11963,7 +12070,7 @@ Sede for availability (read disponibilidad_sede_implicita in Context JSON):
 - If fuente is pagina_actual or habitual and sede_id is set: when the user asks for today\'s hours or generic availability without naming a club, use that sede_id with fecha = ymd_hoy_local from the same object (or matching sedes_hora_local). Do not ask which club first.
 - If fuente is ninguna (sede_id null): do NOT call consultar_disponibilidad until the user names a city or club (or picks from sedes_resumen). Ask one short line which city/club they want—in Spanish use tú: "¿En qué ciudad o club quieres jugar?" (mirror EN/PT if the user writes in those languages).
 
-Use buscar_sedes_por_deporte with deporte and optional ciudad/pais when they ask which clubs offer a sport. Use listar_sedes to resolve sede_id from a name or match sedes_resumen. Use listar_torneos / consultar_ranking as needed.
+Use buscar_sedes_por_deporte for "which clubs offer sport X" or "near me"; combine with listar_sedes to resolve sede_id from a name or sedes_resumen; use listar_torneos / consultar_ranking as needed. Location priority (critical): (1) If the user message names a city, region or country (e.g. Madrid, Buenos Aires, Spain), pass ciudad and/or pais in the tool—do not use GPS for ordering. (2) If they do not name a place and Context JSON client_geolocalizacion has latitud/longitud, pass those in the tool or omit them (the server injects the same coords) so results include distancia_km sorted nearest-first. (3) If there is no named place and client_geolocalizacion is null, use usuario_logueado.sede_habitual.ciudad / .pais from context when the user is logged in and has a habitual club.
 
 Availability (critical):
 - When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result—except when disponibilidad_sede_implicita.fuente is ninguna and they have not specified a club yet: then ask which city/club first (no tool). Include deporte in the tool call only if the user clearly names a sport (e.g. "quiero jugar fútbol", "hay pádel"); if they only ask for today\'s times or generic availability, omit deporte. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
@@ -12067,6 +12174,7 @@ app.post('/api/chat-ia', async (req, res) => {
 
     const locale = chatIaInferWritingLocaleFromConversation(mensaje, historial);
     const ctxBase = await buildChatIAContextPayload(supabase, user, locale);
+    const geoParsed = chatIaParseClientGeolocalizacion(b.client_geolocalizacion);
     console.error(
       '[chat-ia] POST inicio',
       JSON.stringify({
@@ -12076,12 +12184,14 @@ app.post('/api/chat-ia', async (req, res) => {
         locale,
         fecha_referencia_art: ctxBase.fecha_referencia,
         fecha_mañana_art: ctxBase.fecha_mañana_art,
+        client_geo_ok: Boolean(geoParsed),
       }),
     );
     const clientSedeRaw = b.client_pagina_sede_id ?? b.pagina_sede_id;
     const disponibilidadSedeImplicita = chatIaResolveDisponibilidadSedeImplicita(ctxBase, clientSedeRaw);
     const ctxForModel = { ...ctxBase, disponibilidad_sede_implicita: disponibilidadSedeImplicita };
     delete ctxForModel._sedes_rows_chat_ia;
+    if (geoParsed) ctxForModel.client_geolocalizacion = geoParsed;
 
     const genericHoyChip = chatIaShouldOmitDeporteDisponibilidadParaUltimoUsuario(mensaje);
     if (genericHoyChip) {

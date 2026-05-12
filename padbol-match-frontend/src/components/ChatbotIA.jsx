@@ -10,6 +10,7 @@ import {
 } from '../constants/hubLayout';
 
 const MAX_USER_MESSAGES = 6;
+const CHAT_IA_GEO_DENIED_STORAGE_KEY = 'padbol_match_chat_ia_geo_denied';
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -360,6 +361,7 @@ export default function ChatbotIA() {
   const voiceHeardNonEmptyRef = useRef(false);
   const voiceTimedOutRef = useRef(false);
   const voiceUserCancelledRef = useRef(false);
+  const clientGeoRef = useRef(null);
 
   const micSupported = useMemo(() => isSpeechRecognitionAvailable(), []);
   const ttsSupported = useMemo(() => isSpeechSynthesisAvailable(), []);
@@ -459,6 +461,39 @@ export default function ChatbotIA() {
     if (!open) return;
     listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [open, messages, loading, error, showQuickSuggestionBar]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (typeof window === 'undefined' || !navigator.geolocation) return;
+    try {
+      if (window.localStorage.getItem(CHAT_IA_GEO_DENIED_STORAGE_KEY) === '1') return;
+    } catch {
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const la = pos.coords.latitude;
+        const lo = pos.coords.longitude;
+        if (!Number.isFinite(la) || !Number.isFinite(lo)) return;
+        clientGeoRef.current = {
+          latitud: la,
+          longitud: lo,
+          precision_m:
+            pos.coords.accuracy != null && Number.isFinite(pos.coords.accuracy)
+              ? Math.round(pos.coords.accuracy)
+              : null,
+        };
+      },
+      () => {
+        try {
+          window.localStorage.setItem(CHAT_IA_GEO_DENIED_STORAGE_KEY, '1');
+        } catch {
+          /* ignore */
+        }
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+    );
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -654,6 +689,11 @@ export default function ChatbotIA() {
             locale: inferWritingLocaleCodeFromText(text),
             client_calendario_art: ymdBuenosAires(),
             ...(clientPaginaSedeId != null ? { client_pagina_sede_id: clientPaginaSedeId } : {}),
+            ...(clientGeoRef.current &&
+            Number.isFinite(Number(clientGeoRef.current.latitud)) &&
+            Number.isFinite(Number(clientGeoRef.current.longitud))
+              ? { client_geolocalizacion: clientGeoRef.current }
+              : {}),
           }),
         });
         const data = await res.json().catch(() => ({}));
