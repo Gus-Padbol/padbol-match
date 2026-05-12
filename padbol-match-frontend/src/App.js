@@ -310,6 +310,7 @@ function AppRoutes() {
         <Route path="/reserva" element={<Navigate to="/reservar" replace />} />
         <Route path="/reservar" element={<ReservaForm />} />
         <Route path="/jugar" element={<Jugar />} />
+        <Route path="/jugar/buscar" element={<PartidosAbiertos />} />
         <Route path="/competir" element={<Competir />} />
         <Route path="/partidos-abiertos" element={<PartidosAbiertos />} />
         <Route path="/armar-partido" element={<ArmarPartido />} />

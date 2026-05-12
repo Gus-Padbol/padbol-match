@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -181,8 +181,8 @@ function chatUiStrings(loc) {
       },
       quickSuggestions: [
         { label: "See today's court times ⚽" },
-        { label: 'Find a game nearby 🔍' },
-        { label: 'Available tournaments 🏆' },
+        { label: 'Find a game nearby 🔍', to: '/jugar/buscar' },
+        { label: 'Available tournaments 🏆', to: '/competir' },
         { label: 'Book a court 📅' },
       ],
     };
@@ -225,8 +225,8 @@ function chatUiStrings(loc) {
       },
       quickSuggestions: [
         { label: 'Ver horários hoje ⚽' },
-        { label: 'Buscar partida perto 🔍' },
-        { label: 'Torneios disponíveis 🏆' },
+        { label: 'Buscar partida perto 🔍', to: '/jugar/buscar' },
+        { label: 'Torneios disponíveis 🏆', to: '/competir' },
         { label: 'Reservar quadra 📅' },
       ],
     };
@@ -268,8 +268,8 @@ function chatUiStrings(loc) {
     },
     quickSuggestions: [
       { label: 'Ver horarios hoy ⚽' },
-      { label: 'Buscar partido cerca 🔍' },
-      { label: 'Torneos disponibles 🏆' },
+      { label: 'Buscar partido cerca 🔍', to: '/jugar/buscar' },
+      { label: 'Torneos disponibles 🏆', to: '/competir' },
       { label: 'Reservar cancha 📅' },
     ],
   };
@@ -299,7 +299,7 @@ function QuickSuggestionBar({ items, disabled, onPick }) {
           key={`qs-row-${idx}`}
           type="button"
           disabled={disabled}
-          onClick={() => onPick(q.label)}
+          onClick={() => onPick(q)}
           style={{
             flex: '0 0 auto',
             display: 'inline-flex',
@@ -331,6 +331,7 @@ function QuickSuggestionBar({ items, disabled, onPick }) {
 
 export default function ChatbotIA() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { session, userProfile } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -721,6 +722,20 @@ export default function ChatbotIA() {
     ]
   );
 
+  const handleQuickSuggestion = useCallback(
+    (item) => {
+      const to = item && typeof item.to === 'string' ? item.to.trim() : '';
+      if (to) {
+        setOpen(false);
+        navigate(to);
+        return;
+      }
+      const label = item && item.label != null ? String(item.label).trim() : '';
+      if (label) void sendMessage(label);
+    },
+    [navigate, sendMessage],
+  );
+
   const startVoice = useCallback(() => {
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor || !micSupported) return;
@@ -1071,7 +1086,7 @@ export default function ChatbotIA() {
                 <QuickSuggestionBar
                   items={ui.quickSuggestions}
                   disabled={loading || sessionEnded}
-                  onPick={(label) => void sendMessage(label)}
+                  onPick={handleQuickSuggestion}
                 />
               ) : null}
               {messages.map((m, i) => (
@@ -1153,7 +1168,7 @@ export default function ChatbotIA() {
                     <QuickSuggestionBar
                       items={ui.quickSuggestions}
                       disabled={loading || sessionEnded}
-                      onPick={(label) => void sendMessage(label)}
+                      onPick={handleQuickSuggestion}
                     />
                   ) : null}
                 </React.Fragment>
