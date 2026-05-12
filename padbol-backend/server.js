@@ -11260,7 +11260,7 @@ function buildChatIaBootstrapPayload(ctx) {
         const p = u?.patron_sugerencias_ia;
         if (!p?.weekday_label || !p?.sede_favorita_nombre) return null;
         const h = p.hora_tipica ? ` a las ${p.hora_tipica}` : '';
-        return `Sueles reservar los ${p.weekday_label}${h}\nen ${p.sede_favorita_nombre}. ¿Busco algo parecido?`;
+        return `Sueles reservar los ${p.weekday_label}${h}\nen ${p.sede_favorita_nombre}. ¿Busco algo parecido esta semana?`;
       })(),
     },
     en: {
@@ -11269,7 +11269,7 @@ function buildChatIaBootstrapPayload(ctx) {
         const p = u?.patron_sugerencias_ia;
         if (!p?.weekday_label || !p?.sede_favorita_nombre) return null;
         const h = p.hora_tipica ? ` around ${p.hora_tipica}` : '';
-        return `You often book on ${p.weekday_label}${h} at ${p.sede_favorita_nombre}. Want me to look for something similar?`;
+        return `You often book on ${p.weekday_label}${h} at ${p.sede_favorita_nombre}. Want me to look for something similar this week?`;
       })(),
     },
     pt: {
@@ -11278,7 +11278,7 @@ function buildChatIaBootstrapPayload(ctx) {
         const p = u?.patron_sugerencias_ia;
         if (!p?.weekday_label || !p?.sede_favorita_nombre) return null;
         const h = p.hora_tipica ? ` às ${p.hora_tipica}` : '';
-        return `Você costuma reservar nas ${p.weekday_label}${h} em ${p.sede_favorita_nombre}. Quer que eu busque algo parecido?`;
+        return `Você costuma reservar nas ${p.weekday_label}${h} em ${p.sede_favorita_nombre}. Quer que eu busque algo parecido nesta semana?`;
       })(),
     },
   };

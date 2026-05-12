@@ -50,7 +50,6 @@ function normalizeUiLocale(raw) {
 
 function chatUiStrings(loc) {
   const l = normalizeUiLocale(loc);
-  const max = MAX_USER_MESSAGES;
   if (l === 'en') {
     return {
       escribiendo: 'Writing…',
@@ -61,7 +60,6 @@ function chatUiStrings(loc) {
       waClub: 'Message your usual club',
       fabOpen: 'Open Padbol Match assistant',
       titulo: 'Padbol Match Assistant',
-      hintSesion: `You can ask up to ${max} questions in this chat.`,
       cargando: 'Loading…',
       escuchando: 'Listening…',
       sinVoz: 'No voice detected. Try again.',
@@ -94,7 +92,6 @@ function chatUiStrings(loc) {
       waClub: 'Escrever ao clube habitual',
       fabOpen: 'Abrir assistente Padbol Match',
       titulo: 'Assistente Padbol Match',
-      hintSesion: `Você pode fazer até ${max} perguntas neste chat.`,
       cargando: 'Carregando…',
       escuchando: 'Ouvindo…',
       sinVoz: 'Nenhuma voz detectada. Tente de novo.',
@@ -126,7 +123,6 @@ function chatUiStrings(loc) {
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Padbol Match',
     titulo: 'Asistente Padbol Match',
-    hintSesion: `Puedes hacer hasta ${max} preguntas en esta consulta.`,
     cargando: 'Cargando…',
     escuchando: 'Escuchando…',
     sinVoz: 'No se detectó voz. Intenta de nuevo.',
@@ -798,7 +794,6 @@ export default function ChatbotIA() {
                         {line}
                       </p>
                     ))}
-                    <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: 13 }}>{ui.hintSesion}</p>
                   </div>
                 ) : (
                   <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>{ui.cargando}</p>
@@ -994,14 +989,24 @@ export default function ChatbotIA() {
                   <span />
                 </div>
               ) : null}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
+                  gap: 8,
+                  alignItems: 'stretch',
+                }}
+              >
                 {voicePhase === 'listening' ? (
                   <div
                     role="status"
                     aria-live="polite"
                     aria-relevant="additions text"
                     style={{
-                      flex: 1,
+                      flex: '1 1 0',
                       minWidth: 0,
                       padding: '10px 12px',
                       borderRadius: 10,
@@ -1034,7 +1039,7 @@ export default function ChatbotIA() {
                     disabled={loading || sessionEnded || voicePhase === 'processing'}
                     placeholder={sessionEnded ? '—' : ui.placeholder}
                     style={{
-                      flex: 1,
+                      flex: '1 1 0',
                       minWidth: 0,
                       padding: '10px 12px',
                       borderRadius: 10,
@@ -1058,7 +1063,11 @@ export default function ChatbotIA() {
                     onClick={() => startVoice()}
                     className={voicePhase === 'listening' ? 'chatbotia-mic-recording' : ''}
                     style={{
-                      width: 48,
+                      width: 44,
+                      minWidth: 44,
+                      maxWidth: 44,
+                      flexShrink: 0,
+                      boxSizing: 'border-box',
                       borderRadius: 10,
                       border: '1px solid #cbd5e1',
                       background: '#fff',
@@ -1081,7 +1090,9 @@ export default function ChatbotIA() {
                   }
                   onClick={() => void sendMessage(input)}
                   style={{
-                    padding: '0 16px',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                    padding: '0 14px',
                     borderRadius: 10,
                     border: 'none',
                     background:
