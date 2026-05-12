@@ -10225,27 +10225,187 @@ function chatIaSlotsReservaDesdeSede(sedeRow) {
 }
 
 /**
- * Extrae YYYY-MM-DD: ISO explícito, dd/mm/aaaa, “hoy”, “mañana” (según fecha_referencia en ART).
+ * Extrae YYYY-MM-DD: ISO, dd/mm/aaaa, “hoy”, “mañana”, fechas en español, “el viernes”, etc. (zona ART).
+ * Si el texto nombra un día de la semana y una fecha numérica que no coincide, se corrige al día de la semana
+ * más cercano (±6 días) y se devuelve nota_correccion.
  */
-function chatIaExtractFechaYmd(text, fechaReferenciaYmd) {
+function chatIaSpanishMonthToNum(mesRaw) {
+  const m = chatIaFoldText(String(mesRaw || '')).replace(/\./g, '');
+  const map = {
+    enero: 1,
+    febrero: 2,
+    marzo: 3,
+    abril: 4,
+    mayo: 5,
+    junio: 6,
+    julio: 7,
+    agosto: 8,
+    septiembre: 9,
+    setiembre: 9,
+    octubre: 10,
+    noviembre: 11,
+    diciembre: 12,
+  };
+  return map[m] ?? null;
+}
+
+function chatIaSpanishWeekdayToLuxonWeekday(wRaw) {
+  const w = chatIaFoldText(String(wRaw || ''));
+  const map = {
+    lunes: 1,
+    martes: 2,
+    miercoles: 3,
+    miércoles: 3,
+    jueves: 4,
+    viernes: 5,
+    sabado: 6,
+    sábado: 6,
+    domingo: 7,
+  };
+  return map[w] ?? null;
+}
+
+function chatIaNearestSameWeekday(dt, targetLuxonWeekday) {
+  if (!dt?.isValid || targetLuxonWeekday == null) return { dt, adjusted: false };
+  if (dt.weekday === targetLuxonWeekday) return { dt, adjusted: false };
+  let best = null;
+  let bestAbs = 999;
+  for (let d = -6; d <= 6; d += 1) {
+    const c = dt.plus({ days: d });
+    if (c.weekday === targetLuxonWeekday) {
+      const ad = Math.abs(d);
+      if (ad < bestAbs) {
+        best = c;
+        bestAbs = ad;
+      }
+    }
+  }
+  if (best?.isValid) return { dt: best, adjusted: true };
+  return { dt, adjusted: false };
+}
+
+function chatIaNextWeekdayOnOrAfter(refYmd, targetLuxonWeekday) {
+  const ref = String(refYmd || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref) || targetLuxonWeekday == null) return null;
+  let d = DateTime.fromISO(ref, { zone: TZ_TORNEO_CALENDARIO }).startOf('day');
+  if (!d.isValid) return null;
+  for (let i = 0; i < 14; i += 1) {
+    if (d.weekday === targetLuxonWeekday) return d.toFormat('yyyy-LL-dd');
+    d = d.plus({ days: 1 });
+  }
+  return null;
+}
+
+function chatIaResolveFechaParaConsultaArt(text, fechaReferenciaYmd) {
   const raw = String(text || '');
+  const ref = String(fechaReferenciaYmd || '').trim();
+  const zone = TZ_TORNEO_CALENDARIO;
+
   const iso = raw.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  if (iso) {
+    const ymd = `${iso[1]}-${iso[2]}-${iso[3]}`;
+    const dt = DateTime.fromISO(ymd, { zone }).startOf('day');
+    if (!dt.isValid) return null;
+    return { ymd, nota_correccion: null };
+  }
+
   const dmy = raw.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/);
   if (dmy) {
     const dd = String(parseInt(dmy[1], 10)).padStart(2, '0');
     const mo = String(parseInt(dmy[2], 10)).padStart(2, '0');
     const yy = dmy[3];
-    return `${yy}-${mo}-${dd}`;
+    const ymd = `${yy}-${mo}-${dd}`;
+    const dt = DateTime.fromISO(ymd, { zone }).startOf('day');
+    if (!dt.isValid) return null;
+    return { ymd, nota_correccion: null };
   }
-  const t = chatIaFoldText(raw);
-  const ref = String(fechaReferenciaYmd || '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) return null;
-  const base = DateTime.fromISO(ref, { zone: TZ_TORNEO_CALENDARIO }).startOf('day');
-  if (!base.isValid) return null;
-  if (/\b(hoy)\b/.test(t)) return ref;
-  if (/\b(manana|mañana)\b/.test(t)) return base.plus({ days: 1 }).toFormat('yyyy-LL-dd');
-  if (/\b(pasado\s*manana|Pasado\s*mañana|pasado\s*mañana)\b/.test(t)) return base.plus({ days: 2 }).toFormat('yyyy-LL-dd');
+
+  const tFold = chatIaFoldText(raw);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(ref)) {
+    const base = DateTime.fromISO(ref, { zone }).startOf('day');
+    if (base.isValid) {
+      if (/\b(hoy)\b/.test(tFold)) return { ymd: ref, nota_correccion: null };
+      if (/\b(manana|mañana)\b/.test(tFold)) {
+        return { ymd: base.plus({ days: 1 }).toFormat('yyyy-LL-dd'), nota_correccion: null };
+      }
+      if (/\b(pasado\s*manana|pasado\s*mañana)\b/.test(tFold)) {
+        return { ymd: base.plus({ days: 2 }).toFormat('yyyy-LL-dd'), nota_correccion: null };
+      }
+    }
+  }
+
+  const reNamedDayNumMonth = new RegExp(
+    '\\b(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\\s+(\\d{1,2})\\s+de\\s+([a-záéíóúñ]+)\\s+(?:de\\s+)?(20\\d{2})\\b',
+    'i',
+  );
+  const mNamed = raw.match(reNamedDayNumMonth);
+  if (mNamed) {
+    const wdName = mNamed[1];
+    const dayNum = parseInt(mNamed[2], 10);
+    const moNum = chatIaSpanishMonthToNum(mNamed[3]);
+    const year = parseInt(mNamed[4], 10);
+    const targetWd = chatIaSpanishWeekdayToLuxonWeekday(wdName);
+    if (moNum && Number.isFinite(dayNum) && Number.isFinite(year) && targetWd != null) {
+      const dt0 = DateTime.fromObject({ year, month: moNum, day: dayNum }, { zone }).startOf('day');
+      if (!dt0.isValid) return null;
+      const { dt, adjusted } = chatIaNearestSameWeekday(dt0, targetWd);
+      const ymd = dt.toFormat('yyyy-LL-dd');
+      let nota = null;
+      if (adjusted) {
+        const nom = DateTime.fromISO(ymd, { zone }).setLocale('es').toFormat('cccc d \'de\' LLLL yyyy');
+        nota = `El calendario para ${dayNum}/${moNum}/${year} en Argentina no coincide con «${String(wdName).trim()}»; se usó el ${nom} (ART).`;
+      }
+      return { ymd, nota_correccion: nota };
+    }
+  }
+
+  const reNumMonth = new RegExp(
+    '\\b(\\d{1,2})\\s+de\\s+([a-záéíóúñ]+)\\s+(?:de\\s+)?(20\\d{2})\\b',
+    'i',
+  );
+  const mNum = raw.match(reNumMonth);
+  if (mNum) {
+    const dayNum = parseInt(mNum[1], 10);
+    const moNum = chatIaSpanishMonthToNum(mNum[2]);
+    const year = parseInt(mNum[3], 10);
+    if (moNum && Number.isFinite(dayNum) && Number.isFinite(year)) {
+      const dt = DateTime.fromObject({ year, month: moNum, day: dayNum }, { zone }).startOf('day');
+      if (!dt.isValid) return null;
+      const idx = typeof mNum.index === 'number' ? mNum.index : raw.search(reNumMonth);
+      const before = idx > 0 ? raw.slice(Math.max(0, idx - 80), idx) : '';
+      const wdM = before.match(
+        /\b(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\b/i,
+      );
+      if (wdM) {
+        const targetWd = chatIaSpanishWeekdayToLuxonWeekday(wdM[1]);
+        if (targetWd != null) {
+          const { dt: dt2, adjusted } = chatIaNearestSameWeekday(dt, targetWd);
+          const ymd = dt2.toFormat('yyyy-LL-dd');
+          let nota = null;
+          if (adjusted) {
+            const nom = DateTime.fromISO(ymd, { zone }).setLocale('es').toFormat("cccc d 'de' LLLL yyyy");
+            nota = `La fecha numérica no caía en «${String(wdM[1]).trim()}»; se ajustó al ${nom} (ART).`;
+          }
+          return { ymd, nota_correccion: nota };
+        }
+      }
+      return { ymd: dt.toFormat('yyyy-LL-dd'), nota_correccion: null };
+    }
+  }
+
+  const reSoloWeekday = new RegExp(
+    '\\b(?:el|la|este|esta|proximo|próximo)?\\s*(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\\b',
+    'i',
+  );
+  const mSolo = raw.match(reSoloWeekday);
+  if (mSolo && /^\d{4}-\d{2}-\d{2}$/.test(ref)) {
+    const targetWd = chatIaSpanishWeekdayToLuxonWeekday(mSolo[1]);
+    if (targetWd != null) {
+      const ymd = chatIaNextWeekdayOnOrAfter(ref, targetWd);
+      if (ymd) return { ymd, nota_correccion: null };
+    }
+  }
+
   return null;
 }
 
@@ -10254,6 +10414,27 @@ function chatIaExtractDuracionMin(text) {
   if (/\b120\b|\b2\s*horas\b|\bdos\s*horas\b/i.test(raw)) return 120;
   if (/\b60\b|\b1\s*hora\b|\buna\s*hora\b/i.test(raw)) return 60;
   if (/\b90\b|\bhora\s*y\s*media\b|\buna\s*hora\s*y\s*media\b/i.test(raw)) return 90;
+  return null;
+}
+
+/** HH:mm que el usuario pidió y que coincide con un slot real (hora_inicio). */
+function chatIaMatchHoraEnSlots(text, slots) {
+  const raw = String(text || '');
+  const list = Array.isArray(slots) ? slots : [];
+  const starts = new Set(list.map((s) => String(s?.hora_inicio || '').trim()).filter(Boolean));
+  if (!starts.size) return null;
+  const patterns = [
+    /\b(?:a\s+las|para\s+las|a\s+la|las)\s+(\d{1,2}):(\d{2})\b/i,
+    /\b(\d{1,2}):(\d{2})\s*(?:hs|h)?\b/,
+  ];
+  for (const re of patterns) {
+    const m = raw.match(re);
+    if (!m) continue;
+    const hh = String(parseInt(m[1], 10)).padStart(2, '0');
+    const mm = String(parseInt(m[2], 10)).padStart(2, '0');
+    const h = `${hh}:${mm}`;
+    if (starts.has(h)) return h;
+  }
   return null;
 }
 
@@ -10364,7 +10545,9 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
   }
 
   const sedeM = chatIaMatchSedeFromText(combined, ctx.sedes || []);
-  const fechaM = chatIaExtractFechaYmd(combined, ctx.fecha_referencia);
+  const fechaRes = chatIaResolveFechaParaConsultaArt(combined, ctx.fecha_referencia);
+  const fechaM = fechaRes?.ymd || null;
+  const fechaNota = fechaRes?.nota_correccion || null;
   const durGuess = chatIaExtractDuracionMin(combined);
 
   if (!sedeM) {
@@ -10384,7 +10567,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         falta: 'fecha',
         sede_detectada: sedeM.nombre,
         instruccion_para_el_modelo:
-          'El usuario pregunta por disponibilidad o reserva pero no se indicó una fecha concreta (YYYY-MM-DD, dd/mm/aaaa, “hoy” o “mañana”). Preguntá qué día quiere reservar antes de listar horarios.',
+          'El usuario pregunta por disponibilidad o reserva pero no se indicó una fecha concreta (YYYY-MM-DD, dd/mm/aaaa, “hoy”, “mañana”, “el viernes”, “16 de mayo 2026”, etc.). Preguntá qué día quiere reservar antes de listar horarios.',
       },
     };
   }
@@ -10444,6 +10627,13 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
     };
   }
 
+  const dtEt = DateTime.fromISO(fechaM, { zone: TZ_TORNEO_CALENDARIO }).setLocale('es');
+  const etiqueta_fecha_listado = dtEt.isValid
+    ? dtEt.toFormat("cccc d 'de' LLLL")
+    : fechaM;
+  const horaParaReserva = chatIaMatchHoraEnSlots(combined, slots);
+  const horariosLista = Array.isArray(slots) ? slots.map((s) => s.hora_inicio).filter(Boolean) : [];
+
   return {
     consulta_disponibilidad: {
       estado: 'ok',
@@ -10453,8 +10643,29 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
       duracion_minutos: duracion,
       canchas_consideradas: chatIaSlotsReservaDesdeSede(sedeFull),
       slots_reales: slots,
+      etiqueta_fecha_listado,
+      horarios_inicio_csv: horariosLista.join(', '),
+      nota_fecha: fechaNota,
+      hora_para_reserva_url: horaParaReserva,
       instruccion_para_el_modelo:
-        'Debés listar únicamente los horarios del array slots_reales (hora_inicio / horario). No uses el horario general de apertura/cierre de la sede como sustituto de disponibilidad. Si slots_reales está vacío, decí que no hay turnos libres en esa fecha con esa duración. Máximo 100 palabras.',
+        'OBLIGATORIO: en el cuerpo del mensaje listá primero los horarios libres en una sola línea con este formato exacto: Horarios disponibles el ' +
+        etiqueta_fecha_listado +
+        ': ' +
+        (horariosLista.length ? horariosLista.join(', ') : '(ninguno)') +
+        '. Usá solo esas horas (hora_inicio de slots_reales); no inventes ni reemplaces por el horario general de la sede. No envíes al usuario solo al enlace de reservar sin esta línea. ' +
+        'Si nota_fecha viene con texto, mencioná brevemente la corrección de calendario (ART). ' +
+        (horaParaReserva
+          ? `El usuario eligió ${horaParaReserva}; al final agregá UNA sola línea: <<<RESERVA:sede_id=${sedeM.id}|fecha=${fechaM}|hora=${horaParaReserva}>>> (sin otro texto en esa línea).`
+          : 'Si el usuario elige una hora que coincida con un slot de slots_reales, podés terminar con <<<RESERVA:sede_id=' +
+            sedeM.id +
+            '|fecha=' +
+            fechaM +
+            '|hora=HH:MM>>>. Si no hay hora concreta, podés usar <<<RESERVA:sede_id=' +
+            sedeM.id +
+            '|fecha=' +
+            fechaM +
+            '>>>.') +
+        ' Si slots_reales está vacío, decí que no hay turnos libres. Máximo 100 palabras.',
     },
   };
 }
@@ -10543,17 +10754,20 @@ async function buildChatIAContextPayload(supabaseClient, authUser) {
 
 function stripChatIaReserveMarker(rawText) {
   const text = String(rawText || '').trim();
-  const re = /<<<RESERVA:sede_id=(\d+)(?:\|fecha=([0-9]{4}-[0-9]{2}-[0-9]{2}))?>>>/i;
+  const re =
+    /<<<RESERVA:sede_id=(\d+)(?:\|fecha=([0-9]{4}-[0-9]{2}-[0-9]{2}))?(?:\|hora=([0-9]{2}:[0-9]{2}))?>>>/i;
   const m = text.match(re);
   if (!m) return { text, reserve: null };
   const sedeId = parseInt(m[1], 10);
   const fecha = m[2] ? String(m[2]).trim() : '';
+  const hora = m[3] ? String(m[3]).trim() : '';
   const stripped = text.replace(re, '').trim();
   let href = `/reservar?sedeId=${sedeId}`;
   if (fecha) href += `&fecha=${encodeURIComponent(fecha)}`;
+  if (hora) href += `&hora=${encodeURIComponent(hora)}`;
   return {
     text: stripped,
-    reserve: Number.isFinite(sedeId) && sedeId > 0 ? { sede_id: sedeId, href } : null,
+    reserve: Number.isFinite(sedeId) && sedeId > 0 ? { sede_id: sedeId, href, fecha: fecha || null, hora: hora || null } : null,
   };
 }
 
@@ -10598,7 +10812,8 @@ app.post('/api/chat-ia', async (req, res) => {
 Responde siempre en español. Sé breve: máximo 100 palabras por mensaje.
 
 Sobre disponibilidad y reservas:
-- Si en el JSON existe consulta_disponibilidad.estado === "ok", usá SOLO el array slots_reales para decir qué horarios están libres (no inventes horarios ni sustituyas por el horario general de la sede).
+- Las fechas relativas (“hoy”, “mañana”, “el viernes”) y las correcciones de calendario vienen resueltas en Argentina (ART, UTC-3) en el JSON (consulta_disponibilidad.nota_fecha si hubo ajuste).
+- Si consulta_disponibilidad.estado === "ok", seguí estrictamente instruccion_para_el_modelo: primero una línea con horarios concretos (ver slots_reales / horarios_inicio_csv); nunca redirijas solo a reservar sin listarlos.
 - Si estado === "faltan_datos", preguntá al usuario lo que falta (sede o fecha) antes de listar turnos; una pregunta clara.
 - Si estado === "error", pedí disculpas breves y sugerí reservar desde la app.
 - Si estado === "no_aplica", respondé con la información general del contexto sin simular disponibilidad horaria concreta salvo que el usuario haya sido explícito en sede y fecha en el mismo mensaje (en ese caso el backend habría rellenado estado ok).
@@ -10606,11 +10821,13 @@ Sobre disponibilidad y reservas:
 Contexto dinámico (JSON; no inventes sedes ni torneos que no aparezcan aquí):
 ${JSON.stringify(ctx)}
 
-Si el usuario quiere reservar una cancha y conoces un sede_id válido del contexto, termina tu respuesta con una sola línea al final, sin texto extra en esa línea:
+Si el usuario quiere reservar y conocés sede_id (y opcionalmente fecha y hora de inicio que coincida con un slot), terminá con UNA sola línea al final, sin otro texto en esa línea:
 <<<RESERVA:sede_id=NUMERO>>>
-o, si el usuario indicó una fecha en formato YYYY-MM-DD:
+o con fecha:
 <<<RESERVA:sede_id=NUMERO|fecha=YYYY-MM-DD>>>
-Si no estás seguro del sede_id, no agregues esa línea.`;
+o con fecha y hora de inicio (HH:mm):
+<<<RESERVA:sede_id=NUMERO|fecha=YYYY-MM-DD|hora=HH:MM>>>
+Si no estás seguro del sede_id o la hora no está entre los slots ofrecidos, no agregues esa línea.`;
 
     const msgs = [...historial.map((h) => ({ role: h.role, content: h.content })), { role: 'user', content: mensaje }];
 

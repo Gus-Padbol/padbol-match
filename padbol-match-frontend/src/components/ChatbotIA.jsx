@@ -364,6 +364,10 @@ export default function ChatbotIA() {
                 <Link
                   to={lastReserve.href}
                   onClick={() => setOpen(false)}
+                  title={
+                    [lastReserve.fecha, lastReserve.hora].filter(Boolean).join(' · ') ||
+                    'Abrir formulario de reserva con los datos indicados'
+                  }
                   style={{
                     alignSelf: 'center',
                     marginTop: 4,
@@ -378,6 +382,11 @@ export default function ChatbotIA() {
                   }}
                 >
                   Ir a reservar
+                  {lastReserve.hora
+                    ? ` · ${lastReserve.hora}${lastReserve.fecha ? ` (${lastReserve.fecha})` : ''}`
+                    : lastReserve.fecha
+                      ? ` · ${lastReserve.fecha}`
+                      : ''}
                 </Link>
               ) : null}
               <div ref={listEndRef} />
