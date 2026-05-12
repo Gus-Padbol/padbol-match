@@ -33,6 +33,8 @@ function isSpeechSynthesisAvailable() {
 
 /** Breve pausa tras cerrar el mic antes de enviar el texto (UX “Procesando…”). */
 const VOICE_POST_TRANSCRIPT_MS = 420;
+/** Sin transcripción con contenido en este tiempo → cancelar y avisar. */
+const VOICE_SILENCE_MS = 8000;
 
 function normalizeUiLocale(raw) {
   const s = String(raw || '')
@@ -59,6 +61,9 @@ function chatUiStrings(loc) {
       fabOpen: 'Open Padbol Match assistant',
       titulo: 'Assistant',
       cargando: 'Loading…',
+      escuchando: 'Listening…',
+      sinVoz: 'No voice detected. Try again.',
+      noReconocer: 'Could not recognize speech. Try again.',
     };
   }
   if (l === 'pt') {
@@ -72,6 +77,9 @@ function chatUiStrings(loc) {
       fabOpen: 'Abrir assistente Padbol Match',
       titulo: 'Assistente',
       cargando: 'Carregando…',
+      escuchando: 'Ouvindo…',
+      sinVoz: 'Nenhuma voz detectada. Tente de novo.',
+      noReconocer: 'Não foi possível reconhecer. Tente de novo.',
     };
   }
   return {
@@ -84,6 +92,9 @@ function chatUiStrings(loc) {
     fabOpen: 'Abrir asistente Padbol Match',
     titulo: 'Asistente Padbol',
     cargando: 'Cargando…',
+    escuchando: 'Escuchando…',
+    sinVoz: 'No se detectó voz. Intenta de nuevo.',
+    noReconocer: 'No se pudo reconocer. Intenta de nuevo.',
   };
 }
 
@@ -98,6 +109,9 @@ export default function ChatbotIA() {
   const [sessionEnded, setSessionEnded] = useState(false);
   /** idle: sin dictado; listening: grabando; processing: entre fin de voz y envío al API */
   const [voicePhase, setVoicePhase] = useState('idle');
+  const [voiceFinal, setVoiceFinal] = useState('');
+  const [voiceInterim, setVoiceInterim] = useState('');
+  const [voiceNotice, setVoiceNotice] = useState('');
   const [readAloud, setReadAloud] = useState(false);
   const [lastReserve, setLastReserve] = useState(null);
   const [bootstrap, setBootstrap] = useState(null);
@@ -105,7 +119,14 @@ export default function ChatbotIA() {
   const recRef = useRef(null);
   const listEndRef = useRef(null);
   const readAloudRef = useRef(readAloud);
+  const uiRef = useRef(null);
   const voiceSendTimerRef = useRef(null);
+  const voiceSilenceTimerRef = useRef(null);
+  const voiceDictationBackupRef = useRef('');
+  const voiceLatestTranscriptRef = useRef('');
+  const voiceHeardNonEmptyRef = useRef(false);
+  const voiceTimedOutRef = useRef(false);
+  const voiceUserCancelledRef = useRef(false);
 
   const micSupported = useMemo(() => isSpeechRecognitionAvailable(), []);
   const ttsSupported = useMemo(() => isSpeechSynthesisAvailable(), []);
@@ -115,15 +136,19 @@ export default function ChatbotIA() {
     return /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }, []);
 
-  useEffect(() => {
-    readAloudRef.current = readAloud;
-  }, [readAloud]);
-
   const deviceLocale = useMemo(
     () => (typeof navigator !== 'undefined' ? navigator.language || 'es' : 'es'),
     [],
   );
   const ui = useMemo(() => chatUiStrings(deviceLocale), [deviceLocale]);
+
+  useEffect(() => {
+    readAloudRef.current = readAloud;
+  }, [readAloud]);
+
+  useEffect(() => {
+    uiRef.current = ui;
+  }, [ui]);
   const speechRecLang = useMemo(() => {
     const l = String(deviceLocale || 'es').toLowerCase();
     if (l.startsWith('en')) return 'en-US';
@@ -190,21 +215,52 @@ export default function ChatbotIA() {
     return '';
   }, [messages]);
 
-  const stopRecognition = useCallback(() => {
-    if (voiceSendTimerRef.current != null) {
-      window.clearTimeout(voiceSendTimerRef.current);
-      voiceSendTimerRef.current = null;
+  const clearVoiceSilenceTimer = useCallback(() => {
+    if (voiceSilenceTimerRef.current != null) {
+      window.clearTimeout(voiceSilenceTimerRef.current);
+      voiceSilenceTimerRef.current = null;
     }
-    try {
-      recRef.current?.stop?.();
-    } catch {
-      /* ignore */
-    }
-    recRef.current = null;
-    setVoicePhase('idle');
   }, []);
 
-  useEffect(() => () => stopRecognition(), [stopRecognition]);
+  const stopRecognition = useCallback(
+    (opts) => {
+      clearVoiceSilenceTimer();
+      if (voiceSendTimerRef.current != null) {
+        window.clearTimeout(voiceSendTimerRef.current);
+        voiceSendTimerRef.current = null;
+      }
+      const rec = recRef.current;
+      if (opts?.userCancelled) voiceUserCancelledRef.current = true;
+      if (opts?.hard) {
+        voiceUserCancelledRef.current = true;
+        try {
+          if (rec && typeof rec.abort === 'function') rec.abort();
+          else rec?.stop?.();
+        } catch {
+          /* ignore */
+        }
+        recRef.current = null;
+        setVoicePhase('idle');
+        setVoiceFinal('');
+        setVoiceInterim('');
+        return;
+      }
+      if (!rec) {
+        setVoicePhase('idle');
+        setVoiceFinal('');
+        setVoiceInterim('');
+        return;
+      }
+      try {
+        rec.stop();
+      } catch {
+        /* ignore */
+      }
+    },
+    [clearVoiceSilenceTimer],
+  );
+
+  useEffect(() => () => stopRecognition({ hard: true }), [stopRecognition]);
 
   const speakAssistantReply = useCallback((text) => {
     if (!ttsSupported || typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -221,6 +277,9 @@ export default function ChatbotIA() {
       /* ignore */
     }
   }, [ttsSupported, ttsUtterLang]);
+
+  /** Llamar desde handlers de gesto del usuario (enviar, dictado, activar checkbox). */
+  const primeSpeechSynthesisFromUserGesture = useCallback(() => {
     if (!ttsSupported || typeof window === 'undefined' || !window.speechSynthesis) return;
     try {
       window.speechSynthesis.resume();
@@ -265,6 +324,9 @@ export default function ChatbotIA() {
       setMessages((prev) => [...prev, { role: 'user', content: text }]);
       setInput('');
       setVoicePhase('idle');
+      setVoiceFinal('');
+      setVoiceInterim('');
+      setVoiceNotice('');
       setLoading(true);
       setLastReserve(null);
       setWhatsappEscalada(null);
@@ -321,59 +383,123 @@ export default function ChatbotIA() {
     if (!Ctor || !micSupported) return;
     if (voicePhase === 'processing' || loading || sessionEnded) return;
     if (voicePhase === 'listening') {
-      stopRecognition();
+      stopRecognition({ userCancelled: true });
       return;
     }
+    setVoiceNotice('');
     setError('');
+    voiceUserCancelledRef.current = false;
+    voiceTimedOutRef.current = false;
+    voiceHeardNonEmptyRef.current = false;
+    voiceDictationBackupRef.current = input;
+    voiceLatestTranscriptRef.current = '';
+    setVoiceFinal('');
+    setVoiceInterim('');
     primeSpeechSynthesisFromUserGesture();
+
     const rec = new Ctor();
+    rec.continuous = true;
+    rec.interimResults = true;
     rec.lang = speechRecLang;
-    rec.interimResults = false;
     rec.maxAlternatives = 1;
+
     rec.onresult = (ev) => {
-      if (voiceSendTimerRef.current != null) {
-        window.clearTimeout(voiceSendTimerRef.current);
-        voiceSendTimerRef.current = null;
+      let finalP = '';
+      let interP = '';
+      const results = ev.results;
+      if (results && results.length) {
+        for (let i = 0; i < results.length; i += 1) {
+          const piece = results[i][0]?.transcript ?? '';
+          if (results[i].isFinal) finalP += piece;
+          else interP += piece;
+        }
       }
-      const transcript = Array.from(ev.results || [])
-        .map((r) => r[0]?.transcript)
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-      try {
-        rec.stop();
-      } catch {
-        /* ignore */
+      const combined = (finalP + interP).trim();
+      voiceLatestTranscriptRef.current = finalP + interP;
+      setVoiceFinal(finalP);
+      setVoiceInterim(interP);
+      if (combined.length > 0) {
+        clearVoiceSilenceTimer();
+        voiceHeardNonEmptyRef.current = true;
       }
-      if (recRef.current === rec) recRef.current = null;
-      if (!transcript) {
+    };
+
+    rec.onerror = (ev) => {
+      clearVoiceSilenceTimer();
+      const code = ev?.error || '';
+      if (code === 'aborted') return;
+      if (code === 'not-allowed') {
+        setError('Permiso de micrófono denegado. Actívalo en el navegador e intenta de nuevo.');
+        recRef.current = null;
         setVoicePhase('idle');
+        setVoiceFinal('');
+        setVoiceInterim('');
+        setInput(voiceDictationBackupRef.current);
         return;
       }
-      setVoicePhase('processing');
-      voiceSendTimerRef.current = window.setTimeout(() => {
-        voiceSendTimerRef.current = null;
-        void sendMessage(transcript);
-      }, VOICE_POST_TRANSCRIPT_MS);
-    };
-    rec.onerror = () => {
-      if (voiceSendTimerRef.current != null) {
-        window.clearTimeout(voiceSendTimerRef.current);
-        voiceSendTimerRef.current = null;
+      const u = uiRef.current;
+      if (code === 'no-speech' || code === 'audio-capture') {
+        setVoiceNotice(u?.sinVoz || 'No se detectó voz. Intenta de nuevo.');
+      } else {
+        setVoiceNotice(u?.noReconocer || 'No se pudo reconocer. Intenta de nuevo.');
       }
-      setError('No se pudo usar el micrófono. Revisa permisos o intenta de nuevo.');
+      recRef.current = null;
       setVoicePhase('idle');
-      if (recRef.current === rec) recRef.current = null;
+      setVoiceFinal('');
+      setVoiceInterim('');
+      setInput(voiceDictationBackupRef.current);
     };
+
     rec.onend = () => {
-      if (recRef.current === rec) recRef.current = null;
-      setVoicePhase((prev) => (prev === 'listening' ? 'idle' : prev));
+      clearVoiceSilenceTimer();
+      recRef.current = null;
+      const t = String(voiceLatestTranscriptRef.current || '').trim();
+      const backup = String(voiceDictationBackupRef.current ?? '');
+      const cancelled = voiceUserCancelledRef.current;
+      const timedOut = voiceTimedOutRef.current;
+      voiceUserCancelledRef.current = false;
+      voiceTimedOutRef.current = false;
+
+      if (t) {
+        setVoiceFinal('');
+        setVoiceInterim('');
+        setInput(t);
+        setVoicePhase('processing');
+        voiceSendTimerRef.current = window.setTimeout(() => {
+          voiceSendTimerRef.current = null;
+          void sendMessage(t);
+        }, VOICE_POST_TRANSCRIPT_MS);
+        return;
+      }
+
+      setVoicePhase('idle');
+      setVoiceFinal('');
+      setVoiceInterim('');
+      setInput(backup);
+      if (timedOut && !cancelled) {
+        const u = uiRef.current;
+        setVoiceNotice(u?.sinVoz || 'No se detectó voz. Intenta de nuevo.');
+      }
     };
+
     recRef.current = rec;
     setVoicePhase('listening');
+    voiceSilenceTimerRef.current = window.setTimeout(() => {
+      voiceSilenceTimerRef.current = null;
+      if (!voiceHeardNonEmptyRef.current) {
+        voiceTimedOutRef.current = true;
+        try {
+          rec.stop();
+        } catch {
+          /* ignore */
+        }
+      }
+    }, VOICE_SILENCE_MS);
+
     try {
       rec.start();
     } catch {
+      clearVoiceSilenceTimer();
       setVoicePhase('idle');
       setError('No se pudo iniciar el reconocimiento de voz.');
     }
@@ -381,15 +507,17 @@ export default function ChatbotIA() {
     voicePhase,
     loading,
     sessionEnded,
+    input,
     sendMessage,
     micSupported,
     primeSpeechSynthesisFromUserGesture,
     stopRecognition,
     speechRecLang,
+    clearVoiceSilenceTimer,
   ]);
 
   const nuevaConsulta = useCallback(() => {
-    stopRecognition();
+    stopRecognition({ hard: true });
     try {
       window.speechSynthesis?.cancel?.();
     } catch {
@@ -401,6 +529,9 @@ export default function ChatbotIA() {
     setSessionEnded(false);
     setLastReserve(null);
     setWhatsappEscalada(null);
+    setVoiceFinal('');
+    setVoiceInterim('');
+    setVoiceNotice('');
   }, [stopRecognition]);
 
   if (!visible) return null;
@@ -413,6 +544,7 @@ export default function ChatbotIA() {
         onClick={() => {
           setOpen(true);
           setError('');
+          setVoiceNotice('');
         }}
         style={{
           position: 'fixed',
@@ -453,7 +585,10 @@ export default function ChatbotIA() {
             boxSizing: 'border-box',
           }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
+            if (e.target === e.currentTarget) {
+              stopRecognition({ hard: true });
+              setOpen(false);
+            }
           }}
         >
           <div
@@ -482,6 +617,32 @@ export default function ChatbotIA() {
                   color: #fff !important;
                   animation: chatbotia-mic-pulse 1.15s ease-in-out infinite;
                 }
+                @keyframes chatbotia-voice-bar {
+                  0%, 100% { transform: scaleY(0.35); opacity: 0.65; }
+                  50% { transform: scaleY(1); opacity: 1; }
+                }
+                .chatbotia-voice-bars {
+                  display: flex;
+                  align-items: flex-end;
+                  justify-content: center;
+                  gap: 3px;
+                  height: 22px;
+                  margin-bottom: 6px;
+                }
+                .chatbotia-voice-bars span {
+                  display: block;
+                  width: 4px;
+                  height: 18px;
+                  border-radius: 2px;
+                  background: #6366f1;
+                  transform-origin: bottom center;
+                  animation: chatbotia-voice-bar 0.55s ease-in-out infinite;
+                }
+                .chatbotia-voice-bars span:nth-child(1) { animation-delay: 0ms; }
+                .chatbotia-voice-bars span:nth-child(2) { animation-delay: 90ms; }
+                .chatbotia-voice-bars span:nth-child(3) { animation-delay: 180ms; }
+                .chatbotia-voice-bars span:nth-child(4) { animation-delay: 120ms; }
+                .chatbotia-voice-bars span:nth-child(5) { animation-delay: 60ms; }
               `}
             </style>
             <div
@@ -498,7 +659,10 @@ export default function ChatbotIA() {
               <div style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>{ui.titulo}</div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  stopRecognition({ hard: true });
+                  setOpen(false);
+                }}
                 style={{
                   border: 'none',
                   background: 'transparent',
@@ -564,11 +728,6 @@ export default function ChatbotIA() {
               ))}
               {loading ? (
                 <div style={{ color: '#64748b', fontSize: 13, fontWeight: 600 }}>{ui.escribiendo}</div>
-              ) : null}
-              {voicePhase === 'processing' && !loading ? (
-                <div role="status" aria-live="polite" style={{ color: '#b45309', fontSize: 13, fontWeight: 700 }}>
-                  {ui.procesando}
-                </div>
               ) : null}
               {error ? (
                 <div style={{ color: '#b91c1c', fontSize: 13, fontWeight: 600 }}>{error}</div>
@@ -734,28 +893,64 @@ export default function ChatbotIA() {
                   </div>
                 </div>
               ) : null}
+              {voicePhase === 'listening' ? (
+                <div className="chatbotia-voice-bars" aria-hidden>
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              ) : null}
               <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      void sendMessage(input);
-                    }
-                  }}
-                  disabled={loading || sessionEnded}
-                  placeholder={sessionEnded ? '—' : ui.placeholder}
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    border: '1px solid #cbd5e1',
-                    fontSize: 15,
-                  }}
-                />
+                {voicePhase === 'listening' ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    aria-relevant="additions text"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: '1px solid #cbd5e1',
+                      fontSize: 15,
+                      minHeight: 44,
+                      boxSizing: 'border-box',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      background: '#fafafa',
+                    }}
+                  >
+                    <span style={{ color: '#0f172a', whiteSpace: 'pre-wrap' }}>{voiceFinal}</span>
+                    <span style={{ color: '#94a3b8', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+                      {voiceInterim}
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        void sendMessage(input);
+                      }
+                    }}
+                    disabled={loading || sessionEnded || voicePhase === 'processing'}
+                    placeholder={sessionEnded ? '—' : ui.placeholder}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: '1px solid #cbd5e1',
+                      fontSize: 15,
+                    }}
+                  />
+                )}
                 {micSupported ? (
                   <button
                     type="button"
@@ -785,21 +980,53 @@ export default function ChatbotIA() {
                 ) : null}
                 <button
                   type="button"
-                  disabled={loading || sessionEnded || !input.trim()}
+                  disabled={
+                    loading ||
+                    sessionEnded ||
+                    voicePhase === 'listening' ||
+                    voicePhase === 'processing' ||
+                    !input.trim()
+                  }
                   onClick={() => void sendMessage(input)}
                   style={{
                     padding: '0 16px',
                     borderRadius: 10,
                     border: 'none',
-                    background: loading || sessionEnded || !input.trim() ? '#94a3b8' : '#4f46e5',
+                    background:
+                      loading ||
+                      sessionEnded ||
+                      voicePhase === 'listening' ||
+                      voicePhase === 'processing' ||
+                      !input.trim()
+                        ? '#94a3b8'
+                        : '#4f46e5',
                     color: '#fff',
                     fontWeight: 800,
-                    cursor: loading || sessionEnded || !input.trim() ? 'not-allowed' : 'pointer',
+                    cursor:
+                      loading ||
+                      sessionEnded ||
+                      voicePhase === 'listening' ||
+                      voicePhase === 'processing' ||
+                      !input.trim()
+                        ? 'not-allowed'
+                        : 'pointer',
                   }}
                 >
                   {ui.enviar}
                 </button>
               </div>
+              {(voicePhase === 'listening' || voicePhase === 'processing') && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: '#b45309' }}
+                >
+                  {voicePhase === 'listening' ? ui.escuchando : ui.procesando}
+                </div>
+              )}
+              {voiceNotice ? (
+                <div style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: '#c2410c' }}>{voiceNotice}</div>
+              ) : null}
             </div>
           </div>
         </div>
