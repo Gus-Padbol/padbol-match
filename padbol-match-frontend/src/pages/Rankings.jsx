@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -109,7 +109,8 @@ async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria
   const { data: puntosRaw, error: errP } = await supabase
     .from('tabla_puntos')
     .select('torneo_id, equipo_id, posicion, puntos, deporte')
-    .in('torneo_id', torneoIds);
+    .in('torneo_id', torneoIds)
+    .eq('deporte', dep);
   if (errP) throw errP;
   if (!puntosRaw?.length) return [];
 
@@ -478,10 +479,18 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
 
 export default function Rankings() {
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const narrow = useMediaNarrow(520);
   const [activeTab, setActiveTab] = useState('local');
   /** Solo torneos de este deporte; Nacional/Internacional FIPA solo con Padbol en la UI. */
   const [rankingDeporte, setRankingDeporte] = useState(TORNEO_DEPORTE_PADBOL);
+
+  useEffect(() => {
+    const raw = searchParams.get('deporte');
+    if (raw == null || String(raw).trim() === '') return;
+    const d = normalizeTorneoDeporte(raw);
+    setRankingDeporte((prev) => (prev === d ? prev : d));
+  }, [searchParams]);
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
@@ -813,6 +822,15 @@ export default function Rankings() {
             onChange={(e) => {
               const v = normalizeTorneoDeporte(e.target.value);
               setRankingDeporte(v);
+              setSearchParams(
+                (prev) => {
+                  const next = new URLSearchParams(prev);
+                  if (v === TORNEO_DEPORTE_PADBOL) next.delete('deporte');
+                  else next.set('deporte', v);
+                  return next;
+                },
+                { replace: true }
+              );
               if (v !== TORNEO_DEPORTE_PADBOL) {
                 setRankingFilterSheetOpen(false);
                 setRankingFilterSheetDraft(null);

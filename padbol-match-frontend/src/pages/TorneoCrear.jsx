@@ -32,6 +32,7 @@ import {
   formatoEquipoPayloadParaApi,
   TORNEO_FORMATO_EQUIPO_5,
   TORNEO_FORMATO_EQUIPO_7,
+  normalizeTorneoDeporte,
 } from '../utils/torneoDeporteFormato';
 
 function formatSedeTorneoOption(sede) {
@@ -155,6 +156,12 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       return;
     }
 
+    if (!String(formData.deporte || '').trim()) {
+      setError('Selecciona el deporte del torneo');
+      setLoading(false);
+      return;
+    }
+
     if (!formData.es_multisede && !formData.sede_id) {
       setError('Selecciona una sede (o marca multisede)');
       setLoading(false);
@@ -175,7 +182,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       cantidad_equipos: formData.cantidad_equipos ? parseInt(formData.cantidad_equipos, 10) : null,
       es_multisede: formData.es_multisede,
       created_by: null,
-      deporte: String(formData.deporte || TORNEO_DEPORTE_PADBOL).trim() || TORNEO_DEPORTE_PADBOL,
+      deporte: normalizeTorneoDeporte(formData.deporte),
       formato_equipo: formatoEquipoPayloadParaApi(formData.deporte, formData.formato_equipo),
     };
 

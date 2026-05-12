@@ -56,6 +56,7 @@ import {
   formatoEquipoDefaultParaDeporte,
   formatoEquipoPayloadParaApi,
   resumenDeporteFormatoTorneo,
+  normalizeTorneoDeporte,
 } from '../utils/torneoDeporteFormato';
 import { precioInscripcionTorneo } from '../utils/torneoInscripcionPago';
 import { mapEstadoTorneoDesdeApiParaForm, mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
@@ -3398,7 +3399,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       premios_descripcion: torneo.premios_descripcion || '',
       puntos_total:
         torneo.puntos_total != null && torneo.puntos_total !== '' ? String(torneo.puntos_total) : '',
-      deporte: torneo.deporte || TORNEO_DEPORTE_PADBOL,
+      deporte: normalizeTorneoDeporte(torneo.deporte) || TORNEO_DEPORTE_PADBOL,
       formato_equipo: torneo.formato_equipo || TORNEO_FORMATO_DOBLES,
     });
   };
@@ -3420,7 +3421,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     setSavingTorneo(true);
     try {
-      const dep = String(editTorneoForm.deporte || TORNEO_DEPORTE_PADBOL).trim() || TORNEO_DEPORTE_PADBOL;
+      const dep = normalizeTorneoDeporte(String(editTorneoForm.deporte || TORNEO_DEPORTE_PADBOL).trim()) || TORNEO_DEPORTE_PADBOL;
       const body = {
         ...editTorneoForm,
         sede_id: editTorneoForm.sede_id ? parseInt(editTorneoForm.sede_id) : null,

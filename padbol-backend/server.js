@@ -3328,6 +3328,8 @@ const TORNEO_DEPORTE_VALID = new Set([
 
 function normalizeTorneoDeporteForDb(raw) {
   const s = String(raw || '').trim().toLowerCase();
+  if (s === 'futbol5') return 'futbol_5';
+  if (s === 'futbol7') return 'futbol_7';
   if (s === 'pádel' || s === 'padel') return 'padel';
   if (TORNEO_DEPORTE_VALID.has(s)) return s;
   return 'padbol';
@@ -5074,6 +5076,7 @@ function torneoPasaFiltroGeneroRankingApi(t, filtro) {
 }
 
 // GET /api/rankings?scope=local|nacional|internacional&sede_id=X&categoria=Y&pais=&provincia=&ciudad=&tipo_competencia=&deporte=
+// ?deporte= filtra torneos y filas de tabla_puntos (slug canónico: padbol, padel, tenis, pickleball, squash, futbol_5, futbol_7; alias futbol5/futbol7).
 app.get('/api/rankings', async (req, res) => {
   const {
     scope = 'internacional',
@@ -5153,11 +5156,12 @@ app.get('/api/rankings', async (req, res) => {
       depByTorneoId[t.id] = normalizeTorneoDeporteForDb(t.deporte);
     });
 
-    // 2. Load tabla_puntos for those torneos
+    // 2. Load tabla_puntos for those torneos (filtro por deporte en query + filtro defensivo en memoria)
     const { data: puntosRaw, error: errP } = await supabase
       .from('tabla_puntos')
       .select('torneo_id, equipo_id, posicion, puntos, deporte')
-      .in('torneo_id', torneoIds);
+      .in('torneo_id', torneoIds)
+      .eq('deporte', deporteFiltro);
     if (errP) throw errP;
     const puntos = (puntosRaw || []).filter((p) => {
       const d = p.deporte != null && String(p.deporte).trim() !== '' ? normalizeTorneoDeporteForDb(p.deporte) : depByTorneoId[p.torneo_id];
