@@ -58,7 +58,7 @@ function PasswordEyeIcon({ revealed }) {
     width: 22,
     height: 22,
     fill: 'none',
-    stroke: '#64748b',
+    stroke: 'currentColor',
     strokeWidth: 2,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
@@ -334,7 +334,7 @@ export default function AccesoCuenta() {
         minHeight: 'auto',
         width: '100%',
         maxWidth: '100%',
-        background: '#FFFFFF',
+        background: 'var(--bg-page)',
         paddingTop: accesoPaddingTop,
         paddingLeft: '16px',
         paddingRight: '16px',
@@ -384,7 +384,7 @@ export default function AccesoCuenta() {
           style={{
             marginTop: 0,
             marginBottom: '18px',
-            color: '#111827',
+            color: 'var(--text-primary)',
             fontSize: '1.35rem',
             fontWeight: 700,
             textAlign: 'center',
@@ -406,9 +406,9 @@ export default function AccesoCuenta() {
               gap: '10px',
               padding: '12px 14px',
               borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              background: '#ffffff',
-              color: '#111827',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
               fontSize: '15px',
               fontWeight: 600,
               cursor: busy ? 'not-allowed' : 'pointer',
@@ -430,11 +430,11 @@ export default function AccesoCuenta() {
             }}
             aria-hidden
           >
-            <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
-            <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 600, letterSpacing: '0.02em' }}>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+            <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, letterSpacing: '0.02em' }}>
               — o —
             </span>
-            <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
           </div>
         </div>
 
@@ -445,7 +445,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -463,10 +463,10 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--border)',
                 boxSizing: 'border-box',
                 fontSize: '16px',
-                background: '#ffffff',
+                background: 'var(--bg-card)',
               }}
             />
             <label
@@ -474,7 +474,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -491,10 +491,10 @@ export default function AccesoCuenta() {
                   width: '100%',
                   padding: '14px 48px 14px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--border)',
                   boxSizing: 'border-box',
                   fontSize: '16px',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
               />
               <button
@@ -510,6 +510,7 @@ export default function AccesoCuenta() {
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
+                  color: 'var(--text-secondary)',
                   lineHeight: 0,
                   borderRadius: '8px',
                 }}
@@ -525,7 +526,7 @@ export default function AccesoCuenta() {
                 padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
-                background: '#E11B22',
+                background: 'var(--accent)',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
@@ -545,7 +546,7 @@ export default function AccesoCuenta() {
                 padding: 0,
                 border: 'none',
                 background: 'transparent',
-                color: '#E11B22',
+                color: 'var(--accent)',
                 fontSize: '15px',
                 fontWeight: 600,
                 cursor: busy ? 'default' : 'pointer',
@@ -565,7 +566,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -583,10 +584,10 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--border)',
                 boxSizing: 'border-box',
                 fontSize: '16px',
-                background: '#ffffff',
+                background: 'var(--bg-card)',
               }}
             />
             <label
@@ -594,7 +595,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -612,10 +613,10 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--border)',
                 boxSizing: 'border-box',
                 fontSize: '16px',
-                background: '#ffffff',
+                background: 'var(--bg-card)',
               }}
             />
             <label
@@ -623,7 +624,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -638,10 +639,10 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--border)',
                 boxSizing: 'border-box',
                 fontSize: '16px',
-                background: '#ffffff',
+                background: 'var(--bg-card)',
               }}
             >
               <option value="">— Elegir —</option>
@@ -655,7 +656,7 @@ export default function AccesoCuenta() {
                 gap: '10px',
                 marginBottom: '16px',
                 cursor: busy ? 'default' : 'pointer',
-                color: '#334155',
+                color: 'var(--text-primary)',
                 fontSize: '14px',
                 lineHeight: 1.45,
                 fontWeight: 500,
@@ -670,7 +671,7 @@ export default function AccesoCuenta() {
               />
               <span>
                 Quiero recibir novedades de torneos y promociones por WhatsApp{' '}
-                <span style={{ fontWeight: 600, color: '#64748b', fontSize: '12px' }}>(opcional)</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
               </span>
             </label>
             <label
@@ -678,7 +679,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -696,10 +697,10 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--border)',
                 boxSizing: 'border-box',
                 fontSize: '16px',
-                background: '#ffffff',
+                background: 'var(--bg-card)',
               }}
             />
             <div style={{ marginBottom: '14px', width: '100%', minWidth: 0, maxWidth: '100%' }}>
@@ -722,16 +723,16 @@ export default function AccesoCuenta() {
                 selectStyle={{
                   padding: '14px',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--border)',
                   fontSize: '16px',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
                 inputStyle={{
                   padding: '14px',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--border)',
                   fontSize: '16px',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
               />
             </div>
@@ -740,7 +741,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -757,10 +758,10 @@ export default function AccesoCuenta() {
                   width: '100%',
                   padding: '14px 48px 14px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--border)',
                   boxSizing: 'border-box',
                   fontSize: '16px',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
               />
               <button
@@ -776,6 +777,7 @@ export default function AccesoCuenta() {
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
+                  color: 'var(--text-secondary)',
                   lineHeight: 0,
                   borderRadius: '8px',
                 }}
@@ -788,7 +790,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
                 marginBottom: '6px',
               }}
             >
@@ -805,10 +807,10 @@ export default function AccesoCuenta() {
                   width: '100%',
                   padding: '14px 48px 14px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--border)',
                   boxSizing: 'border-box',
                   fontSize: '16px',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
               />
               <button
@@ -824,6 +826,7 @@ export default function AccesoCuenta() {
                   border: 'none',
                   background: 'transparent',
                   cursor: 'pointer',
+                  color: 'var(--text-secondary)',
                   lineHeight: 0,
                   borderRadius: '8px',
                 }}
@@ -850,13 +853,13 @@ export default function AccesoCuenta() {
                 disabled={busy}
                 style={{ marginTop: '4px', width: 18, height: 18, flexShrink: 0 }}
               />
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155', lineHeight: 1.45 }}>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
                 Acepto los{' '}
-                <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: '#E11B22', fontWeight: 800 }}>
+                <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontWeight: 800 }}>
                   Términos y Condiciones
                 </Link>{' '}
                 y la{' '}
-                <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#E11B22', fontWeight: 800 }}>
+                <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontWeight: 800 }}>
                   Política de Privacidad
                 </Link>{' '}
                 <span style={{ color: '#fecaca' }}>*</span>
@@ -870,7 +873,7 @@ export default function AccesoCuenta() {
                 padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
-                background: '#E11B22',
+                background: 'var(--accent)',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
@@ -900,9 +903,9 @@ export default function AccesoCuenta() {
               width: '100%',
               padding: '12px',
               borderRadius: '10px',
-              border: '1px solid #e5e7eb',
-              background: '#ffffff',
-              color: '#111827',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
               fontWeight: 700,
               fontSize: '15px',
               cursor: busy ? 'default' : 'pointer',

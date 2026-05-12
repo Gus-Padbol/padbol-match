@@ -63,28 +63,71 @@ html {
 :root {
   /** Misma anchura que la columna central del hub (`HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX`). */
   --pm-app-body-max-width: 900px;
-  --pm-color-bg: #ffffff;
-  --pm-color-text: #0f0f0f;
-  --pm-color-text-muted: #6b6b6b;
-  --pm-color-muted-bg: #f5f5f5;
-  --pm-color-border: #e0e0e0;
-  --pm-color-brand: #e11b22;
-  --pm-color-brand-hover: #c41219;
-  --pm-color-primary: #16a34a;
-  --pm-color-primary-dark: #15803d;
-  --pm-color-secondary: #e11b22;
-  --pm-color-secondary-dark: #c41219;
-  --pm-gradient-start: #f5f5f5;
-  --pm-gradient-end: #ffffff;
-  --pm-color-card: #ffffff;
-  --pm-color-success: #16a34a;
-  --pm-color-warning: #f59e0b;
-  --pm-color-error: #e11b22;
-  --pm-color-highlight: #d97706;
   --pm-radius-card: 12px;
   --pm-radius-button: 8px;
   --pm-radius-input: 8px;
   --pm-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Tema: clase en `document.documentElement` (ver ThemeContext + script en index.html). */
+html.theme-dark {
+  color-scheme: dark;
+  --accent: #e11b22;
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --nav-bg: #0f172a;
+  --nav-border: #1e293b;
+  --pm-color-bg: var(--bg-page);
+  --pm-color-text: var(--text-primary);
+  --pm-color-text-muted: var(--text-secondary);
+  --pm-color-muted-bg: #1e293b;
+  --pm-color-border: var(--border);
+  --pm-color-brand: var(--accent);
+  --pm-color-brand-hover: #c41219;
+  --pm-color-primary: #16a34a;
+  --pm-color-primary-dark: #15803d;
+  --pm-color-secondary: var(--accent);
+  --pm-color-secondary-dark: #c41219;
+  --pm-gradient-start: #0f172a;
+  --pm-gradient-end: #1e293b;
+  --pm-color-card: var(--bg-card);
+  --pm-color-success: #16a34a;
+  --pm-color-warning: #f59e0b;
+  --pm-color-error: var(--accent);
+  --pm-color-highlight: #d97706;
+}
+
+html.theme-light {
+  color-scheme: light;
+  --accent: #e11b22;
+  --bg-page: #f8f9fa;
+  --bg-card: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --nav-bg: #ffffff;
+  --nav-border: #e2e8f0;
+  --pm-color-bg: var(--bg-page);
+  --pm-color-text: var(--text-primary);
+  --pm-color-text-muted: var(--text-secondary);
+  --pm-color-muted-bg: #f1f5f9;
+  --pm-color-border: var(--border);
+  --pm-color-brand: var(--accent);
+  --pm-color-brand-hover: #c41219;
+  --pm-color-primary: #16a34a;
+  --pm-color-primary-dark: #15803d;
+  --pm-color-secondary: var(--accent);
+  --pm-color-secondary-dark: #c41219;
+  --pm-gradient-start: #f5f5f5;
+  --pm-gradient-end: #ffffff;
+  --pm-color-card: var(--bg-card);
+  --pm-color-success: #16a34a;
+  --pm-color-warning: #f59e0b;
+  --pm-color-error: var(--accent);
+  --pm-color-highlight: #d97706;
 }
 
 body {

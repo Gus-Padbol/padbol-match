@@ -14,6 +14,7 @@ import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 
 const HUB_COLUMN_MAX = 390;
 
@@ -117,11 +118,11 @@ const hubPwaInstallButtonStyle = {
   justifyContent: 'center',
   fontSize: '14px',
   fontWeight: 600,
-  color: '#0F0F0F',
+  color: 'var(--text-primary)',
   padding: '14px 24px',
   borderRadius: '8px',
-  border: '1px solid #E0E0E0',
-  background: '#F5F5F5',
+  border: '1px solid var(--border)',
+  background: 'var(--bg-card)',
   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
   cursor: 'pointer',
   fontFamily: 'inherit',
@@ -320,7 +321,7 @@ export default function UserHome() {
       style={{
         position: 'relative',
         minHeight: '100dvh',
-        background: '#FFFFFF',
+        background: 'var(--bg-page)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
@@ -336,11 +337,11 @@ export default function UserHome() {
           right: 0,
           zIndex: 1002,
           minHeight: '56px',
-          background: '#FFFFFF',
+          background: 'var(--nav-bg)',
           paddingBottom: '8px',
           paddingLeft: padL,
           paddingRight: padR,
-          borderBottom: '1px solid #E0E0E0',
+          borderBottom: '1px solid var(--nav-border)',
           paddingTop: 'env(safe-area-inset-top, 0px)',
           boxSizing: 'border-box',
         }}
@@ -387,7 +388,7 @@ export default function UserHome() {
                       borderRadius: '50%',
                       objectFit: 'cover',
                       flexShrink: 0,
-                      border: '2px solid #E0E0E0',
+                      border: '2px solid var(--border)',
                     }}
                   />
                 ) : (
@@ -396,14 +397,14 @@ export default function UserHome() {
                       width: 48,
                       height: 48,
                       borderRadius: '50%',
-                      background: '#F5F5F5',
-                      color: '#E11B22',
+                      background: 'var(--bg-card)',
+                      color: 'var(--accent)',
                       fontSize: 18,
                       fontWeight: 700,
                       display: 'grid',
                       placeItems: 'center',
                       flexShrink: 0,
-                      border: '2px solid #E0E0E0',
+                      border: '2px solid var(--border)',
                     }}
                   >
                     {hubInicial}
@@ -412,7 +413,7 @@ export default function UserHome() {
                 <div style={{ minWidth: 0 }}>
                   <div
                     style={{
-                      color: '#0F0F0F',
+                      color: 'var(--text-primary)',
                       fontSize: 22,
                       fontWeight: 700,
                       lineHeight: 1.2,
@@ -423,7 +424,7 @@ export default function UserHome() {
                   >
                     {nombreTitulo ? `¡Hola ${nombreTitulo}!` : lineaSaludo}
                   </div>
-                  <div style={{ color: '#6B6B6B', fontSize: 14, fontWeight: 400, marginTop: 2 }}>Bienvenido de nuevo.</div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400, marginTop: 2 }}>Bienvenido de nuevo.</div>
                 </div>
               </button>
             ) : (
@@ -433,12 +434,12 @@ export default function UserHome() {
                     width: 48,
                     height: 48,
                     borderRadius: '50%',
-                    background: '#F5F5F5',
+                    background: 'var(--bg-card)',
                     display: 'grid',
                     placeItems: 'center',
                     fontSize: 22,
                     flexShrink: 0,
-                    border: '1px solid #E0E0E0',
+                    border: '1px solid var(--border)',
                   }}
                   aria-hidden
                 >
@@ -447,7 +448,7 @@ export default function UserHome() {
                 <div style={{ minWidth: 0 }}>
                   <div
                     style={{
-                      color: '#0F0F0F',
+                      color: 'var(--text-primary)',
                       fontSize: 22,
                       fontWeight: 700,
                       lineHeight: 1.2,
@@ -464,6 +465,7 @@ export default function UserHome() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <HubThemeSettingsButton compact />
             {showAdminShortcut ? (
               <button
                 type="button"
@@ -482,9 +484,9 @@ export default function UserHome() {
                   height: 36,
                   padding: '0 10px',
                   borderRadius: 8,
-                  border: '1px solid #E0E0E0',
-                  background: '#F5F5F5',
-                  color: '#0F0F0F',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -494,7 +496,7 @@ export default function UserHome() {
               </button>
             ) : null}
             {!session?.user && authLoading ? (
-              <span style={{ color: '#6B6B6B', fontSize: 12 }}>…</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>…</span>
             ) : !session?.user ? (
               <button
                 type="button"
@@ -503,7 +505,7 @@ export default function UserHome() {
                   padding: '10px 14px',
                   borderRadius: 8,
                   border: 'none',
-                  background: '#E11B22',
+                  background: 'var(--accent)',
                   color: '#fff',
                   fontSize: 14,
                   fontWeight: 600,
@@ -562,7 +564,7 @@ export default function UserHome() {
 
           {session?.user ? (
             <label style={{ display: 'block', width: '100%', marginBottom: 18 }}>
-              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6B6B6B', marginBottom: 6 }}>Elegir deporte</span>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Elegir deporte</span>
               <div style={{ position: 'relative' }}>
                 <select
                   value={deporteElegido}
@@ -583,11 +585,11 @@ export default function UserHome() {
                     WebkitAppearance: 'none',
                     padding: '14px 40px 14px 14px',
                     borderRadius: 8,
-                    border: '1px solid #E0E0E0',
-                    background: '#FFFFFF',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-card)',
                     fontSize: 16,
                     fontWeight: 400,
-                    color: '#0F0F0F',
+                    color: 'var(--text-primary)',
                     cursor: 'pointer',
                   }}
                 >
@@ -606,7 +608,7 @@ export default function UserHome() {
                     top: '50%',
                     transform: 'translateY(-50%)',
                     pointerEvents: 'none',
-                    color: '#6B6B6B',
+                    color: 'var(--text-secondary)',
                     fontSize: 12,
                   }}
                 >
@@ -623,7 +625,7 @@ export default function UserHome() {
                 margin: '0 0 16px',
                 fontSize: 14,
                 fontWeight: 400,
-                color: '#6B6B6B',
+                color: 'var(--text-secondary)',
                 lineHeight: 1.45,
               }}
             >
@@ -733,15 +735,15 @@ export default function UserHome() {
               style={{
                 padding: '16px',
                 borderRadius: 12,
-                background: '#F5F5F5',
-                border: '1px solid #E0E0E0',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
                 boxSizing: 'border-box',
                 textAlign: 'center',
-                color: '#0F0F0F',
+                color: 'var(--text-primary)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               }}
             >
-              <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 400, lineHeight: 1.45, color: '#6B6B6B' }}>
+              <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 400, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
                 Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
               </p>
               <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />

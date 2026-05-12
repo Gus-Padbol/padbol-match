@@ -4,7 +4,23 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#F8F9FA" />
+    <script>
+      (function () {
+        try {
+          var k = 'padbol_theme';
+          var s = localStorage.getItem(k);
+          var prefersDark =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var t = s === 'dark' || s === 'light' ? s : prefersDark ? 'dark' : 'light';
+          document.documentElement.classList.add(t === 'dark' ? 'theme-dark' : 'theme-light');
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', t === 'dark' ? '#0F172A' : '#F8F9FA');
+        } catch (e) {
+          document.documentElement.classList.add('theme-light');
+        }
+      })();
+    </script>
     <meta name="application-name" content="Padbol Match" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Padbol Match" />

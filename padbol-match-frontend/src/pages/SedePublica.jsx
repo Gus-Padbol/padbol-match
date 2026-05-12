@@ -31,18 +31,18 @@ import {
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 
-const PADBOL_PAGE_GRADIENT = '#FFFFFF';
+const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
 const FOTOS_DESTACADAS_MAX = 4;
 
-/** Design System Gero — perfil público de sede. */
+/** Design System Gero — perfil público de sede (tema claro/oscuro vía CSS variables). */
 const SEDE_DS = {
-  pageBg: '#FFFFFF',
-  title: '#0F0F0F',
-  subtitle: '#6B6B6B',
-  cardBg: '#FFFFFF',
-  cardBorder: '#E0E0E0',
+  pageBg: 'var(--bg-page)',
+  title: 'var(--text-primary)',
+  subtitle: 'var(--text-secondary)',
+  cardBg: 'var(--bg-card)',
+  cardBorder: 'var(--border)',
   cardRadius: '12px',
-  brand: '#E11B22',
+  brand: 'var(--accent)',
 };
 
 /** Misma apariencia que el CTA inferior «Reservar cancha» en esta vista. */
@@ -73,7 +73,7 @@ const SEDE_BTN_RESERVAR_CANCHA_STYLE = {
 /** CTA secundario «Ver torneos»: borde y texto rojo, fondo blanco. */
 const SEDE_BTN_VER_TORNEOS_STYLE = {
   padding: '12px 16px',
-  background: '#FFFFFF',
+  background: 'var(--bg-card)',
   color: SEDE_DS.brand,
   border: `2px solid ${SEDE_DS.brand}`,
   borderRadius: '12px',

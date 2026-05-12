@@ -279,8 +279,8 @@ const BottomNav = () => {
   };
 
   const navBarStyle = {
-    background: '#ffffff',
-    borderBottom: '1px solid #E0E0E0',
+    background: 'var(--nav-bg)',
+    borderBottom: '1px solid var(--nav-border)',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
   };
 
@@ -325,12 +325,12 @@ const BottomNav = () => {
 
         const btnNav = adminBottomNavActive
           ? {
-              background: isActive ? '#f1f5f9' : 'transparent',
-              color: isActive ? '#0f172a' : '#64748b',
+              background: isActive ? 'rgba(225, 27, 34, 0.12)' : 'transparent',
+              color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
             }
           : {
               background: isActive ? 'rgba(225, 27, 34, 0.1)' : 'transparent',
-              color: isActive ? '#E11B22' : '#6B6B6B',
+              color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
             };
 
         const iconEl =

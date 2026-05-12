@@ -1,7 +1,7 @@
 import React from 'react';
 
-const active = '#E11B22';
-const idle = '#6B6B6B';
+const active = 'var(--accent)';
+const idle = 'var(--text-secondary)';
 
 export function HubIconPerfil({ active: isActive }) {
   const c = isActive ? active : idle;
