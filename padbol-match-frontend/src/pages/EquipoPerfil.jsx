@@ -153,7 +153,7 @@ export default function EquipoPerfil() {
       paddingLeft: 12,
       paddingRight: 12,
       boxSizing: 'border-box',
-      background: 'linear-gradient(135deg,#667eea,#764ba2)',
+      background: '#FFFFFF',
     }),
     [location.pathname]
   );
@@ -280,8 +280,8 @@ export default function EquipoPerfil() {
     background: '#fff',
     borderRadius: 16,
     padding: 18,
-    border: '1px solid rgba(255,255,255,0.35)',
-    boxShadow: '0 8px 28px rgba(15,23,42,0.12)',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 4px 24px rgba(15, 23, 42, 0.08)',
   };
 
   return (

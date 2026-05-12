@@ -18,3 +18,11 @@ input.acceso-cuenta-input:-webkit-autofill {
 .acceso-cuenta-page {
   scroll-behavior: auto;
 }
+
+/* DS Gero: borde gris, foco rojo Padbol */
+.acceso-cuenta-page input:focus,
+.acceso-cuenta-page select:focus {
+  outline: none;
+  border-color: #e11b22 !important;
+  box-shadow: 0 0 0 2px rgba(225, 27, 34, 0.22);
+}

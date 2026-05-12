@@ -220,7 +220,7 @@ export default function FormEquipos() {
   const inscripcionPageShellStyle = useMemo(
     () => ({
       minHeight: '100vh',
-      background: 'linear-gradient(135deg,#667eea,#764ba2)',
+      background: '#FFFFFF',
       boxSizing: 'border-box',
       paddingTop: hubContentPaddingTopCss(location.pathname),
       paddingLeft: 12,
@@ -2294,9 +2294,9 @@ export default function FormEquipos() {
     padding: '8px 12px',
     fontSize: '14px',
     fontWeight: 700,
-    color: 'white',
-    background: 'rgba(0,0,0,0.25)',
-    border: '1px solid rgba(255,255,255,0.35)',
+    color: '#334155',
+    background: '#f1f5f9',
+    border: '1px solid #e2e8f0',
     borderRadius: '8px',
     cursor: 'pointer',
     marginBottom: '12px',
@@ -2362,9 +2362,9 @@ export default function FormEquipos() {
           marginBottom: '16px',
           padding: '14px 16px',
           borderRadius: '12px',
-          background: 'rgba(255,255,255,0.14)',
-          border: '1px solid rgba(255,255,255,0.22)',
-          color: 'white',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          color: '#1e293b',
           fontWeight: 700,
           fontSize: '14px',
           lineHeight: 1.45,
@@ -2404,11 +2404,11 @@ export default function FormEquipos() {
     miEquipo && !torneoCancelado && !torneoFinalizado ? (
       <div
         style={{
-          border: '2px dashed rgba(255,255,255,0.38)',
+          border: '2px dashed #cbd5e1',
           borderRadius: '14px',
           padding: '14px 16px',
           marginBottom: '16px',
-          background: 'rgba(255,255,255,0.07)',
+          background: '#f8fafc',
         }}
       >
         <div
@@ -2420,7 +2420,7 @@ export default function FormEquipos() {
             marginBottom: '8px',
           }}
         >
-          <div style={{ fontWeight: 800, fontSize: '13px', color: 'rgba(255,255,255,0.95)' }}>
+          <div style={{ fontWeight: 800, fontSize: '13px', color: '#0f172a' }}>
             Inscripción al torneo
           </div>
           {estadoInscripcionMiEquipo === 'confirmado' ? (
@@ -2459,7 +2459,7 @@ export default function FormEquipos() {
           <div
             style={{
               fontSize: '12px',
-              color: 'rgba(255,255,255,0.78)',
+              color: '#64748b',
               lineHeight: 1.45,
               marginBottom: soyMiembroMiEquipo ? '12px' : 0,
             }}
@@ -2620,7 +2620,6 @@ export default function FormEquipos() {
             ...padbolLogoImgStyle,
             marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '12px',
-            filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.28))',
           }}
         />
         <h1
@@ -2632,10 +2631,9 @@ export default function FormEquipos() {
             boxSizing: 'border-box',
             fontSize: 'clamp(1.2rem, 4.2vw, 1.6rem)',
             fontWeight: 900,
-            color: 'white',
+            color: '#111827',
             letterSpacing: '-0.02em',
             lineHeight: 1.2,
-            textShadow: '0 2px 24px rgba(0,0,0,0.25)',
           }}
         >
           {mostrarUiAdminFormEquipos
@@ -2660,7 +2658,7 @@ export default function FormEquipos() {
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', padding: '0 12px', boxSizing: 'border-box' }}>
           {!mostrarUiAdminFormEquipos ? bloqueInvitacionEquipoDeepLink : null}
         </div>
-        <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: 'white' }}>Cargando...</div>
+        <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: '#64748b' }}>Cargando...</div>
         <BottomNav />
       </div>
     );
@@ -3228,12 +3226,12 @@ export default function FormEquipos() {
                   marginBottom: '12px',
                   padding: '14px 16px 16px',
                   borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.14)',
-                  border: '1px solid rgba(255,255,255,0.22)',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   textAlign: 'center',
                 }}
               >
-                <p style={{ margin: '0 0 10px', color: 'rgba(255,255,255,0.95)', fontSize: '15px', fontWeight: 600 }}>
+                <p style={{ margin: '0 0 10px', color: '#334155', fontSize: '15px', fontWeight: 600 }}>
                   ¿No encuentras equipo?
                 </p>
                 <button
@@ -3357,21 +3355,7 @@ export default function FormEquipos() {
               gap: '14px',
             }}
           >
-            <button
-              type="button"
-              onClick={() => setMobileVista('inicio')}
-              style={{
-                alignSelf: 'flex-start',
-                padding: '8px 12px',
-                fontSize: '14px',
-                fontWeight: 700,
-                color: 'white',
-                background: 'rgba(0,0,0,0.25)',
-                border: '1px solid rgba(255,255,255,0.35)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
-            >
+            <button type="button" onClick={() => setMobileVista('inicio')} style={btnVolverEleccionStyle}>
               ← Elegir otra opción
             </button>
             {crearEquipoFormulario}
@@ -3388,21 +3372,7 @@ export default function FormEquipos() {
             }}
           >
             {!mobileListaTorneoCerrado && !miSolicitudPendiente ? (
-              <button
-                type="button"
-                onClick={() => setMobileVista('inicio')}
-                style={{
-                  alignSelf: 'flex-start',
-                  padding: '8px 12px',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  color: 'white',
-                  background: 'rgba(0,0,0,0.25)',
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                }}
-              >
+              <button type="button" onClick={() => setMobileVista('inicio')} style={btnVolverEleccionStyle}>
                 ← Elegir otra opción
               </button>
             ) : null}
@@ -3411,12 +3381,12 @@ export default function FormEquipos() {
                 style={{
                   padding: '14px 16px 16px',
                   borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.14)',
-                  border: '1px solid rgba(255,255,255,0.22)',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   textAlign: 'center',
                 }}
               >
-                <p style={{ margin: '0 0 10px', color: 'rgba(255,255,255,0.95)', fontSize: '15px', fontWeight: 600 }}>
+                <p style={{ margin: '0 0 10px', color: '#334155', fontSize: '15px', fontWeight: 600 }}>
                   ¿No encuentras equipo?
                 </p>
                 <button
@@ -3494,9 +3464,9 @@ export default function FormEquipos() {
                 fontWeight: 700,
                 borderRadius: '12px',
                 cursor: otrosEquiposVisibles.length === 0 ? 'default' : 'pointer',
-                background: otrosEquiposVisibles.length === 0 ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.95)',
-                color: '#4f46e5',
-                border: '2px solid rgba(255,255,255,0.85)',
+                background: otrosEquiposVisibles.length === 0 ? '#e2e8f0' : '#ffffff',
+                color: otrosEquiposVisibles.length === 0 ? '#94a3b8' : '#4f46e5',
+                border: '2px solid #c7d2fe',
                 opacity: otrosEquiposVisibles.length === 0 ? 0.6 : 1,
               }}
             >
@@ -3514,21 +3484,7 @@ export default function FormEquipos() {
               gap: '14px',
             }}
           >
-            <button
-              type="button"
-              onClick={() => setMobileVista('mi_equipo')}
-              style={{
-                alignSelf: 'flex-start',
-                padding: '8px 12px',
-                fontSize: '14px',
-                fontWeight: 700,
-                color: 'white',
-                background: 'rgba(0,0,0,0.25)',
-                border: '1px solid rgba(255,255,255,0.35)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
-            >
+            <button type="button" onClick={() => setMobileVista('mi_equipo')} style={btnVolverEleccionStyle}>
               ← Mi equipo
             </button>
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

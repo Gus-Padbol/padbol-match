@@ -30,7 +30,7 @@ import {
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 
-const PADBOL_PAGE_GRADIENT = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+const PADBOL_PAGE_GRADIENT = '#FFFFFF';
 const FOTOS_DESTACADAS_MAX = 4;
 
 /** Misma apariencia que el CTA inferior «Reservar cancha» en esta vista. */
@@ -1797,7 +1797,7 @@ export default function SedePublica() {
             justifyContent: 'center',
           }}
         >
-          <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '15px', fontWeight: 600 }}>Cargando sede…</p>
+          <p style={{ color: '#64748b', fontSize: '15px', fontWeight: 600 }}>Cargando sede…</p>
         </div>
       )}
 
@@ -1813,10 +1813,10 @@ export default function SedePublica() {
             padding: '20px',
           }}
         >
-          <p style={{ color: '#fff', fontSize: '15px', fontWeight: 600, textAlign: 'center' }}>
+          <p style={{ color: '#b91c1c', fontSize: '15px', fontWeight: 600, textAlign: 'center' }}>
             {error || 'Sede no encontrada.'}
           </p>
-          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '12px' }}>sedeId: {sedeId ?? '(undefined)'}</p>
+          <p style={{ color: '#64748b', fontSize: '12px' }}>sedeId: {sedeId ?? '(undefined)'}</p>
         </div>
       )}
 

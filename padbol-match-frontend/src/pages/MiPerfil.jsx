@@ -79,7 +79,7 @@ const MI_PERFIL_CONTENT_WRAP = {
 function miPerfilPageOuterStyle(paddingTopCss) {
   return {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#FFFFFF',
     fontFamily: 'Arial',
     paddingTop: paddingTopCss,
     paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
@@ -1711,7 +1711,7 @@ export default function MiPerfil() {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
         <AppHeader title="Mi Perfil" />
-        <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
           Verificando sesión...
         </div>
         <BottomNav />
@@ -2401,7 +2401,7 @@ export default function MiPerfil() {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
         <AppHeader title="Mi Perfil" />
-        <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.8)' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
           Cargando perfil...
         </div>
         <BottomNav />

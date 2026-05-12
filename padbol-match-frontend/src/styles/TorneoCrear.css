@@ -54,8 +54,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #e11b22;
+  box-shadow: 0 0 0 2px rgba(225, 27, 34, 0.2);
 }
 
 .form-group.checkbox {

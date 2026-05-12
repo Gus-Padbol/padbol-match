@@ -222,14 +222,15 @@ export default function ArmarPartido() {
   const stepStyle = (active) => ({
     borderRadius: 999,
     padding: '7px 10px',
-    background: active ? '#fff' : 'rgba(255,255,255,0.18)',
-    color: active ? '#4f46e5' : '#fff',
+    background: active ? '#E11B22' : '#f1f5f9',
+    color: active ? '#fff' : '#64748b',
     fontSize: 12,
     fontWeight: 900,
+    border: active ? 'none' : '1px solid #e2e8f0',
   });
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'linear-gradient(135deg,#667eea,#764ba2)', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`, boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100dvh', background: '#FFFFFF', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`, boxSizing: 'border-box' }}>
       <AppHeader title="Armar partido" />
       <main style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '18px 16px', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -330,7 +331,7 @@ export default function ArmarPartido() {
           {step < 5 ? (
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <button type="button" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: 12, padding: 12, background: '#fff', fontWeight: 900 }}>Atrás</button>
-              <button type="button" onClick={() => setStep((s) => Math.min(5, s + 1))} style={{ flex: 1, border: 'none', borderRadius: 12, padding: 12, background: '#667eea', color: '#fff', fontWeight: 900 }}>Siguiente</button>
+              <button type="button" onClick={() => setStep((s) => Math.min(5, s + 1))} style={{ flex: 1, border: 'none', borderRadius: 12, padding: 12, background: '#E11B22', color: '#fff', fontWeight: 900 }}>Siguiente</button>
             </div>
           ) : null}
         </section>

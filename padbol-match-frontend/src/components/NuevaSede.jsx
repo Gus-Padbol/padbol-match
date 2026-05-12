@@ -276,7 +276,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg,#667eea,#764ba2)',
+        background: '#FFFFFF',
         paddingTop: hubContentPaddingTopCss('/admin/nueva-sede'),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         paddingLeft: 16,
@@ -293,9 +293,9 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
             marginBottom: '14px',
             padding: '8px 14px',
             borderRadius: '10px',
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: 'rgba(255,255,255,0.15)',
-            color: '#fff',
+            border: '1px solid #e5e7eb',
+            background: '#ffffff',
+            color: '#111827',
             cursor: 'pointer',
             fontWeight: 700,
           }}

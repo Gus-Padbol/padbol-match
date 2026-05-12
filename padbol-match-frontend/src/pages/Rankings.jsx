@@ -348,14 +348,14 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
     ? (renderOptionLabel ? renderOptionLabel(value) : value)
     : 'Todos';
 
-  const labelColor = isSheet ? '#475569' : 'rgba(255,255,255,0.88)';
-  const btnBorder = isSheet ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.28)';
-  const btnBg = isSheet ? '#f8fafc' : 'rgba(15,23,42,0.42)';
-  const btnColor = isSheet ? '#0f172a' : '#f8fafc';
-  const panelBorder = isSheet ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.2)';
-  const panelBg = isSheet ? '#ffffff' : 'rgba(15,23,42,0.92)';
-  const optColor = isSheet ? '#0f172a' : '#fff';
-  const optActiveBg = isSheet ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.28)';
+  const labelColor = '#475569';
+  const btnBorder = '1px solid #cbd5e1';
+  const btnBg = '#ffffff';
+  const btnColor = '#0f172a';
+  const panelBorder = '1px solid #e2e8f0';
+  const panelBg = '#ffffff';
+  const optColor = '#0f172a';
+  const optActiveBg = 'rgba(225, 27, 34, 0.1)';
 
   return (
     <div
@@ -417,7 +417,7 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
             borderRadius: '10px',
             border: panelBorder,
             background: panelBg,
-            backdropFilter: isSheet ? undefined : 'blur(6px)',
+            backdropFilter: undefined,
             boxShadow: '0 10px 24px rgba(0,0,0,0.18)',
             maxHeight: '240px',
             overflowY: 'auto',
@@ -738,7 +738,7 @@ export default function Rankings() {
   const containerStyle = useMemo(
     () => ({
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: '#FFFFFF',
       padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     }),
@@ -809,7 +809,7 @@ export default function Rankings() {
               display: 'block',
               fontSize: '12px',
               fontWeight: 700,
-              color: 'rgba(255,255,255,0.9)',
+              color: '#475569',
               marginBottom: '6px',
               letterSpacing: '0.02em',
             }}
@@ -844,9 +844,9 @@ export default function Rankings() {
               display: 'block',
               marginLeft: 'auto',
               marginRight: 'auto',
-              border: '1px solid rgba(255,255,255,0.35)',
-              background: 'rgba(15,23,42,0.45)',
-              color: '#f8fafc',
+              border: '1px solid #d1d5db',
+              background: '#ffffff',
+              color: '#111827',
             }}
           >
             {TORNEO_DEPORTE_OPTIONS.map((o) => (
@@ -856,7 +856,7 @@ export default function Rankings() {
             ))}
           </select>
           {rankingDeporte !== TORNEO_DEPORTE_PADBOL ? (
-            <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.45, textAlign: 'center' }}>
+            <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.45, textAlign: 'center' }}>
               Nacional e Internacional FIPA aplican solo a torneos de Padbol; aquí ves el ranking local de{' '}
               {etiquetaDeporteTorneo(rankingDeporte)}.
             </p>
@@ -864,7 +864,7 @@ export default function Rankings() {
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', padding: '4px', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', borderRadius: '12px', padding: '4px', marginBottom: '12px' }}>
           {tabsForDeporte.map((tab) => (
             <button
               key={tab.id}
@@ -887,8 +887,8 @@ export default function Rankings() {
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: activeTab === tab.id ? '700' : '500',
-                background: activeTab === tab.id ? 'white' : 'transparent',
-                color: activeTab === tab.id ? '#3b2f6e' : 'rgba(255,255,255,0.72)',
+                background: activeTab === tab.id ? '#E11B22' : 'transparent',
+                color: activeTab === tab.id ? '#ffffff' : '#475569',
                 transition: 'all 0.18s',
                 whiteSpace: 'nowrap',
               }}
@@ -907,16 +907,16 @@ export default function Rankings() {
               alignSelf: 'flex-start',
               padding: '10px 16px',
               borderRadius: '12px',
-              border: rankingActiveFilterCount > 0 ? '2px solid rgba(255,255,255,0.95)' : '1px solid rgba(255,255,255,0.35)',
+              border: rankingActiveFilterCount > 0 ? '2px solid #E11B22' : '1px solid #e2e8f0',
               background:
                 rankingActiveFilterCount > 0
-                  ? 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.22) 100%)'
-                  : 'rgba(255,255,255,0.14)',
-              color: '#fff',
+                  ? '#fef2f2'
+                  : '#f8fafc',
+              color: '#111827',
               fontSize: '14px',
               fontWeight: 800,
               cursor: 'pointer',
-              boxShadow: rankingActiveFilterCount > 0 ? '0 4px 14px rgba(0,0,0,0.2)' : 'none',
+              boxShadow: rankingActiveFilterCount > 0 ? '0 2px 10px rgba(225, 27, 34, 0.12)' : 'none',
             }}
           >
             🔍 Filtrar{rankingActiveFilterCount > 0 ? ` (${rankingActiveFilterCount})` : ''}
@@ -927,7 +927,7 @@ export default function Rankings() {
         </div>
 
         {/* Scope description */}
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginBottom: '12px' }}>
+        <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>
           {activeTab === 'local' &&
             (localPais || localProvincia || localCiudad
               ? `Ranking local · ${etiquetaDeporteTorneo(rankingDeporte)} · ${[localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · ')}`
@@ -945,7 +945,7 @@ export default function Rankings() {
         </div>
 
         {/* Table card */}
-        <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.25)' }}>
+        <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(15, 23, 42, 0.08)', border: '1px solid #e5e7eb' }}>
           {loading ? (
             <div style={{ padding: '60px', textAlign: 'center', color: '#bbb', fontSize: '15px' }}>
               Cargando rankings...
@@ -989,7 +989,7 @@ export default function Rankings() {
                       Torneos
                     </th>
                   ) : null}
-                  <th style={{ ...thStyle, textAlign: 'center', color: '#3b2f6e' }}>Puntos</th>
+                  <th style={{ ...thStyle, textAlign: 'center', color: '#b91c1c' }}>Puntos</th>
                 </tr>
               </thead>
               <tbody>
@@ -1080,7 +1080,7 @@ export default function Rankings() {
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <span style={{
                           background: pos === 1 ? '#fef3c7' : pos === 2 ? '#f1f5f9' : pos === 3 ? '#fdf4eb' : '#ede9fe',
-                          color:      pos === 1 ? '#92400e' : pos === 2 ? '#475569' : pos === 3 ? '#92400e' : '#3b2f6e',
+                          color:      pos === 1 ? '#92400e' : pos === 2 ? '#475569' : pos === 3 ? '#92400e' : '#b91c1c',
                           borderRadius: '10px',
                           padding: narrow ? '2px 8px' : '3px 12px',
                           fontSize: narrow ? '12px' : '14px',
@@ -1100,7 +1100,7 @@ export default function Rankings() {
 
         {/* Footer note */}
         {rankings.length > 0 && (
-          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: '#94a3b8' }}>
             {rankings.length} jugador{rankings.length !== 1 ? 'es' : ''} mostrado{rankings.length !== 1 ? 's' : ''}
             {selectedCategoria && ` · Categoría: ${selectedCategoria}`}
           </div>
@@ -1298,7 +1298,7 @@ export default function Rankings() {
                   fontWeight: 800,
                   borderRadius: '12px',
                   border: 'none',
-                  background: '#4f46e5',
+                  background: '#E11B22',
                   color: '#fff',
                   cursor: 'pointer',
                 }}

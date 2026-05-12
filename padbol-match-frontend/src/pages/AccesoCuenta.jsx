@@ -334,7 +334,7 @@ export default function AccesoCuenta() {
         minHeight: 'auto',
         width: '100%',
         maxWidth: '100%',
-        background: 'linear-gradient(135deg,#667eea,#764ba2)',
+        background: '#FFFFFF',
         paddingTop: accesoPaddingTop,
         paddingLeft: '16px',
         paddingRight: '16px',
@@ -384,8 +384,9 @@ export default function AccesoCuenta() {
           style={{
             marginTop: 0,
             marginBottom: '18px',
-            color: '#ffffff',
+            color: '#111827',
             fontSize: '1.35rem',
+            fontWeight: 700,
             textAlign: 'center',
           }}
         >
@@ -405,9 +406,9 @@ export default function AccesoCuenta() {
               gap: '10px',
               padding: '12px 14px',
               borderRadius: '8px',
-              border: '1px solid #cbd5e1',
+              border: '1px solid #e5e7eb',
               background: '#ffffff',
-              color: '#1e293b',
+              color: '#111827',
               fontSize: '15px',
               fontWeight: 600,
               cursor: busy ? 'not-allowed' : 'pointer',
@@ -429,11 +430,11 @@ export default function AccesoCuenta() {
             }}
             aria-hidden
           >
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.35)' }} />
-            <span style={{ color: 'rgba(255,255,255,0.88)', fontSize: '13px', fontWeight: 600, letterSpacing: '0.02em' }}>
+            <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+            <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 600, letterSpacing: '0.02em' }}>
               — o —
             </span>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.35)' }} />
+            <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
           </div>
         </div>
 
@@ -444,7 +445,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -462,7 +463,7 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #d1d5db',
                 boxSizing: 'border-box',
                 fontSize: '16px',
                 background: '#ffffff',
@@ -473,7 +474,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -490,7 +491,7 @@ export default function AccesoCuenta() {
                   width: '100%',
                   padding: '14px 48px 14px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #d1d5db',
                   boxSizing: 'border-box',
                   fontSize: '16px',
                   background: '#ffffff',
@@ -524,7 +525,7 @@ export default function AccesoCuenta() {
                 padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
-                background: '#dc2626',
+                background: '#E11B22',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
@@ -544,7 +545,7 @@ export default function AccesoCuenta() {
                 padding: 0,
                 border: 'none',
                 background: 'transparent',
-                color: '#fed7aa',
+                color: '#E11B22',
                 fontSize: '15px',
                 fontWeight: 600,
                 cursor: busy ? 'default' : 'pointer',
@@ -564,7 +565,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -582,7 +583,7 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #d1d5db',
                 boxSizing: 'border-box',
                 fontSize: '16px',
                 background: '#ffffff',
@@ -593,7 +594,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -611,7 +612,7 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #d1d5db',
                 boxSizing: 'border-box',
                 fontSize: '16px',
                 background: '#ffffff',
@@ -622,7 +623,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -637,7 +638,7 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #d1d5db',
                 boxSizing: 'border-box',
                 fontSize: '16px',
                 background: '#ffffff',
@@ -654,7 +655,7 @@ export default function AccesoCuenta() {
                 gap: '10px',
                 marginBottom: '16px',
                 cursor: busy ? 'default' : 'pointer',
-                color: 'rgba(255,255,255,0.95)',
+                color: '#334155',
                 fontSize: '14px',
                 lineHeight: 1.45,
                 fontWeight: 500,
@@ -669,7 +670,7 @@ export default function AccesoCuenta() {
               />
               <span>
                 Quiero recibir novedades de torneos y promociones por WhatsApp{' '}
-                <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.75)', fontSize: '12px' }}>(opcional)</span>
+                <span style={{ fontWeight: 600, color: '#64748b', fontSize: '12px' }}>(opcional)</span>
               </span>
             </label>
             <label
@@ -677,7 +678,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -695,7 +696,7 @@ export default function AccesoCuenta() {
                 padding: '14px',
                 marginBottom: '14px',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #d1d5db',
                 boxSizing: 'border-box',
                 fontSize: '16px',
                 background: '#ffffff',
@@ -721,14 +722,14 @@ export default function AccesoCuenta() {
                 selectStyle={{
                   padding: '14px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #d1d5db',
                   fontSize: '16px',
                   background: '#ffffff',
                 }}
                 inputStyle={{
                   padding: '14px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #d1d5db',
                   fontSize: '16px',
                   background: '#ffffff',
                 }}
@@ -739,7 +740,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -756,7 +757,7 @@ export default function AccesoCuenta() {
                   width: '100%',
                   padding: '14px 48px 14px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #d1d5db',
                   boxSizing: 'border-box',
                   fontSize: '16px',
                   background: '#ffffff',
@@ -787,7 +788,7 @@ export default function AccesoCuenta() {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.92)',
+                color: '#334155',
                 marginBottom: '6px',
               }}
             >
@@ -804,7 +805,7 @@ export default function AccesoCuenta() {
                   width: '100%',
                   padding: '14px 48px 14px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #d1d5db',
                   boxSizing: 'border-box',
                   fontSize: '16px',
                   background: '#ffffff',
@@ -849,13 +850,13 @@ export default function AccesoCuenta() {
                 disabled={busy}
                 style={{ marginTop: '4px', width: 18, height: 18, flexShrink: 0 }}
               />
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.92)', lineHeight: 1.45 }}>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155', lineHeight: 1.45 }}>
                 Acepto los{' '}
-                <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: '#fde68a', fontWeight: 800 }}>
+                <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: '#E11B22', fontWeight: 800 }}>
                   Términos y Condiciones
                 </Link>{' '}
                 y la{' '}
-                <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#fde68a', fontWeight: 800 }}>
+                <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#E11B22', fontWeight: 800 }}>
                   Política de Privacidad
                 </Link>{' '}
                 <span style={{ color: '#fecaca' }}>*</span>
@@ -869,7 +870,7 @@ export default function AccesoCuenta() {
                 padding: '16px 12px',
                 borderRadius: '10px',
                 border: 'none',
-                background: '#dc2626',
+                background: '#E11B22',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
@@ -883,10 +884,10 @@ export default function AccesoCuenta() {
         )}
 
         {errorMsg ? (
-          <p style={{ color: '#fecaca', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{errorMsg}</p>
+          <p style={{ color: '#b91c1c', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{errorMsg}</p>
         ) : null}
         {infoMsg ? (
-          <p style={{ color: '#bbf7d0', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{infoMsg}</p>
+          <p style={{ color: '#15803d', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{infoMsg}</p>
         ) : null}
 
         {modo !== 'login' ? (
@@ -899,9 +900,9 @@ export default function AccesoCuenta() {
               width: '100%',
               padding: '12px',
               borderRadius: '10px',
-              border: '1px solid rgba(255,255,255,0.45)',
-              background: 'rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.95)',
+              border: '1px solid #e5e7eb',
+              background: '#ffffff',
+              color: '#111827',
               fontWeight: 700,
               fontSize: '15px',
               cursor: busy ? 'default' : 'pointer',

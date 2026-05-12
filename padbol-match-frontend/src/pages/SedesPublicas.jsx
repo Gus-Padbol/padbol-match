@@ -167,7 +167,7 @@ export default function SedesPublicas() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div style={{ minHeight: '100vh', background: '#FFFFFF', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
 
       <AppHeader title="Sedes" onBack={volverFlujoReserva ? handleSedesAppBack : undefined} />
 
@@ -184,7 +184,7 @@ export default function SedesPublicas() {
               marginBottom: '16px',
             }}
           />
-          <h2 style={{ color: 'white', fontWeight: 900, fontSize: 'clamp(1.3rem, 4vw, 2rem)', margin: '0 0 16px', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+          <h2 style={{ color: '#111827', fontWeight: 900, fontSize: 'clamp(1.3rem, 4vw, 2rem)', margin: '0 0 16px', letterSpacing: '-0.02em' }}>
             {pageTitle}
           </h2>
 
@@ -194,9 +194,9 @@ export default function SedesPublicas() {
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-                background: geoStatus === 'granted' ? 'rgba(74,222,128,0.2)' : 'rgba(255,255,255,0.15)',
-                color: geoStatus === 'granted' ? '#86efac' : 'rgba(255,255,255,0.7)',
-                border: `1px solid ${geoStatus === 'granted' ? 'rgba(74,222,128,0.35)' : 'rgba(255,255,255,0.25)'}`,
+                background: geoStatus === 'granted' ? '#ecfdf5' : '#f1f5f9',
+                color: geoStatus === 'granted' ? '#166534' : '#64748b',
+                border: `1px solid ${geoStatus === 'granted' ? '#bbf7d0' : '#e2e8f0'}`,
               }}>
                 {geoStatus === 'granted' ? '📍 Ordenado por distancia' : '🌍 Mostrando todas las canchas'}
               </span>
@@ -207,9 +207,9 @@ export default function SedesPublicas() {
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-                background: 'rgba(255,255,255,0.15)',
-                color: 'rgba(255,255,255,0.85)',
-                border: '1px solid rgba(255,255,255,0.25)',
+                background: '#f8fafc',
+                color: '#475569',
+                border: '1px solid #e2e8f0',
               }}>
                 📚 Catálogo completo (orden alfabético)
               </span>
@@ -222,16 +222,16 @@ export default function SedesPublicas() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nombre, ciudad o país..."
-              style={{ flex: 1, minWidth: '200px', maxWidth: '340px', padding: '9px 14px', borderRadius: '8px', border: 'none', fontSize: '13px', background: 'rgba(255,255,255,0.95)', color: '#333' }}
+              style={{ flex: 1, minWidth: '200px', maxWidth: '340px', padding: '9px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '13px', background: '#ffffff', color: '#111827' }}
             />
           </div>
         </div>
 
         {/* Grid */}
         {loading ? (
-          <p style={{ color: 'rgba(255,255,255,0.8)', textAlign: 'center', paddingTop: '60px', fontSize: '16px' }}>Cargando canchas...</p>
+          <p style={{ color: '#64748b', textAlign: 'center', paddingTop: '60px', fontSize: '16px' }}>Cargando canchas...</p>
         ) : filtered.length === 0 ? (
-          <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', paddingTop: '60px', fontSize: '15px' }}>
+          <p style={{ color: '#64748b', textAlign: 'center', paddingTop: '60px', fontSize: '15px' }}>
             {search ? 'No hay resultados para esa búsqueda.' : 'No hay sedes habilitadas por el momento.'}
           </p>
         ) : (
@@ -307,12 +307,12 @@ export default function SedesPublicas() {
                       padding: '12px 18px',
                       borderTop: '1px solid #f0f0f0',
                       fontSize: '12px',
-                      fontWeight: 700,
-                      color: '#6366f1',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Toca la tarjeta para ver la sede
+                    fontWeight: 700,
+                    color: '#E11B22',
+                    textAlign: 'center',
+                  }}
+                >
+                  Toca la tarjeta para ver la sede
                   </div>
                 </div>
               );
@@ -326,9 +326,9 @@ export default function SedesPublicas() {
             style={{
               padding: '10px 16px',
               borderRadius: '999px',
-              border: '1px solid rgba(255,255,255,0.45)',
-              background: 'rgba(255,255,255,0.14)',
-              color: '#fff',
+              border: '1px solid #e5e7eb',
+              background: '#ffffff',
+              color: '#111827',
               fontWeight: 700,
               cursor: 'pointer',
             }}

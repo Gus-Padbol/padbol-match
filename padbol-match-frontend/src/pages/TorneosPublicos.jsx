@@ -364,7 +364,7 @@ export default function TorneosPublicos() {
                   padding: '10px 16px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  background: '#E11B22',
                   color: 'white',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -398,7 +398,7 @@ export default function TorneosPublicos() {
                 padding: '10px 16px',
                 borderRadius: '10px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                background: '#E11B22',
                 color: 'white',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -431,7 +431,7 @@ export default function TorneosPublicos() {
                 padding: '10px 16px',
                 borderRadius: '10px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                background: '#E11B22',
                 color: 'white',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -584,7 +584,7 @@ export default function TorneosPublicos() {
                   padding: '10px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  background: '#E11B22',
                   color: 'white',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -618,7 +618,7 @@ export default function TorneosPublicos() {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        background: '#FFFFFF',
         padding: `${hubContentPaddingTopWithLogoClearanceCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
@@ -643,20 +643,20 @@ export default function TorneosPublicos() {
         />
         <div
           style={{
-            background: 'rgba(255,255,255,0.10)',
-            border: '1px solid rgba(255,255,255,0.16)',
-            backdropFilter: 'blur(10px)',
+            background: '#ffffff',
+            border: '1px solid #e5e7eb',
             borderRadius: '16px',
             padding: '14px 16px',
             marginBottom: '10px',
-            color: 'white',
+            color: '#111827',
             textAlign: 'center',
+            boxShadow: '0 4px 24px rgba(15, 23, 42, 0.06)',
           }}
         >
-          <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '4px' }}>
+          <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '4px', color: '#111827' }}>
             {sedeFiltroNombre ? `Torneos · ${sedeFiltroNombre}` : nearMode ? 'Torneos cerca de ti' : 'Torneos disponibles'}
           </div>
-          <div style={{ fontSize: '14px', opacity: 0.92, marginBottom: nearMode || sedeFiltroId != null ? '10px' : 0, lineHeight: 1.45 }}>
+          <div style={{ fontSize: '14px', color: '#475569', marginBottom: nearMode || sedeFiltroId != null ? '10px' : 0, lineHeight: 1.45 }}>
             {sedeFiltroId != null
               ? 'Solo se listan torneos de esta sede.'
               : nearMode
@@ -664,7 +664,7 @@ export default function TorneosPublicos() {
                 : 'Elige un torneo para ver sus detalles, inscribirte y formar o unirte a un equipo.'}
           </div>
           {nearMode && contextLine ? (
-            <div style={{ fontSize: '13px', opacity: 0.88, lineHeight: 1.45 }}>{contextLine}</div>
+            <div style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>{contextLine}</div>
           ) : null}
           {nearMode ? (
             <button
@@ -678,9 +678,9 @@ export default function TorneosPublicos() {
                 padding: '8px 14px',
                 fontSize: '13px',
                 fontWeight: 700,
-                color: '#1e1b4b',
-                background: 'rgba(255,255,255,0.92)',
-                border: 'none',
+                color: '#111827',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
                 borderRadius: '10px',
                 cursor: 'pointer',
                 width: '100%',
@@ -702,9 +702,9 @@ export default function TorneosPublicos() {
                 padding: '8px 14px',
                 fontSize: '13px',
                 fontWeight: 700,
-                color: '#1e1b4b',
-                background: 'rgba(255,255,255,0.92)',
-                border: 'none',
+                color: '#111827',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
                 borderRadius: '10px',
                 cursor: 'pointer',
                 width: '100%',
@@ -723,7 +723,7 @@ export default function TorneosPublicos() {
                 style={{
                   fontSize: '12px',
                   fontWeight: 700,
-                  color: 'rgba(255,255,255,0.88)',
+                  color: '#475569',
                   marginBottom: '8px',
                   letterSpacing: '0.02em',
                 }}
@@ -761,10 +761,10 @@ export default function TorneosPublicos() {
                         fontWeight: 600,
                         fontFamily: 'inherit',
                         cursor: 'pointer',
-                        border: active ? '1px solid #667eea' : '1px solid rgba(255,255,255,0.45)',
-                        background: active ? '#667eea' : 'transparent',
-                        color: active ? '#fff' : 'rgba(255,255,255,0.92)',
-                        boxShadow: active ? '0 2px 10px rgba(0,0,0,0.12)' : 'none',
+                        border: active ? '1px solid #E11B22' : '1px solid #e2e8f0',
+                        background: active ? '#E11B22' : '#f8fafc',
+                        color: active ? '#fff' : '#475569',
+                        boxShadow: active ? '0 2px 10px rgba(225, 27, 34, 0.25)' : 'none',
                       }}
                     >
                       {label}
@@ -778,7 +778,7 @@ export default function TorneosPublicos() {
                 style={{
                   fontSize: '12px',
                   fontWeight: 700,
-                  color: 'rgba(255,255,255,0.88)',
+                  color: '#475569',
                   marginBottom: '8px',
                   letterSpacing: '0.02em',
                 }}
@@ -816,10 +816,10 @@ export default function TorneosPublicos() {
                         fontWeight: 600,
                         fontFamily: 'inherit',
                         cursor: 'pointer',
-                        border: active ? '1px solid #667eea' : '1px solid rgba(255,255,255,0.45)',
-                        background: active ? '#667eea' : 'transparent',
-                        color: active ? '#fff' : 'rgba(255,255,255,0.92)',
-                        boxShadow: active ? '0 2px 10px rgba(0,0,0,0.12)' : 'none',
+                        border: active ? '1px solid #E11B22' : '1px solid #e2e8f0',
+                        background: active ? '#E11B22' : '#f8fafc',
+                        color: active ? '#fff' : '#475569',
+                        boxShadow: active ? '0 2px 10px rgba(225, 27, 34, 0.25)' : 'none',
                       }}
                     >
                       {label}
@@ -864,12 +864,12 @@ export default function TorneosPublicos() {
                   boxSizing: 'border-box',
                   padding: '11px 40px 11px 40px',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  background: 'rgba(255,255,255,0.95)',
+                  border: '1px solid #d1d5db',
+                  background: '#ffffff',
                   fontSize: '15px',
                   color: '#111827',
                   outline: 'none',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
                 }}
               />
               {torneoSearchQuery.trim() ? (

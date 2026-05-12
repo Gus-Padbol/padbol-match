@@ -296,7 +296,7 @@ export default function PerfilPublico() {
 
   const pageStyle = {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#FFFFFF',
     fontFamily: 'Arial',
     paddingTop: '16px',
     paddingBottom: '32px',
@@ -377,7 +377,7 @@ export default function PerfilPublico() {
     return (
       <div style={pageStyle}>
         <div style={wrap}>
-          <p style={{ color: 'rgba(255,255,255,0.9)', textAlign: 'center', padding: '40px 0' }}>Cargando…</p>
+          <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0' }}>Cargando…</p>
         </div>
       </div>
     );
@@ -395,7 +395,7 @@ export default function PerfilPublico() {
               padding: '8px 0',
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255,255,255,0.95)',
+              color: '#111827',
               fontWeight: 700,
               fontSize: '15px',
               cursor: 'pointer',
@@ -432,7 +432,7 @@ export default function PerfilPublico() {
             padding: '8px 0',
             background: 'transparent',
             border: 'none',
-            color: 'rgba(255,255,255,0.95)',
+            color: '#111827',
             fontWeight: 700,
             fontSize: '15px',
             cursor: 'pointer',

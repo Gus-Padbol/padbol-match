@@ -34,8 +34,8 @@ function GateBlockingSpinner() {
         justifyContent: 'center',
         gap: 16,
         padding: 24,
-        background: 'linear-gradient(135deg,#667eea,#764ba2)',
-        color: 'rgba(255,255,255,0.95)',
+        background: '#FFFFFF',
+        color: '#64748b',
         fontWeight: 600,
         fontSize: '16px',
       }}
@@ -45,8 +45,8 @@ function GateBlockingSpinner() {
         style={{
           width: 40,
           height: 40,
-          border: '3px solid rgba(255,255,255,0.25)',
-          borderTopColor: '#fff',
+          border: '3px solid #e2e8f0',
+          borderTopColor: '#E11B22',
           borderRadius: '50%',
           animation: 'pmPerfilGateSpin 0.75s linear infinite',
         }}
