@@ -10495,21 +10495,100 @@ function chatIaAnthropicToolsDefinition() {
   ];
 }
 
+/** Anthropic a veces entrega `input` como string JSON; normalizar a objeto plano. */
+function chatIaParseToolInput(raw) {
+  if (raw == null) return {};
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return {};
+    try {
+      const o = JSON.parse(t);
+      return o != null && typeof o === 'object' && !Array.isArray(o) ? o : {};
+    } catch {
+      return {};
+    }
+  }
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw;
+  return {};
+}
+
+/** Anthropic Messages API: `tool_result.content` debe ser string o bloques; siempre string JSON aquí. */
+function chatIaToolResultContentString(payload) {
+  if (typeof payload === 'string') return payload;
+  try {
+    return JSON.stringify(payload, (_k, v) => (typeof v === 'bigint' ? String(v) : v));
+  } catch (e) {
+    return JSON.stringify({ ok: false, error: 'tool_result_serialización', detail: e?.message || String(e) });
+  }
+}
+
+function chatIaNormalizeFechaYmdReserva(raw) {
+  const s0 = String(raw ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s0)) return s0;
+  const s = s0.slice(0, 40);
+  const d = DateTime.fromISO(s, { zone: 'utc' });
+  if (d.isValid) return d.toFormat('yyyy-LL-dd');
+  const d2 = DateTime.fromFormat(s, 'd/M/yyyy', { zone: 'utc' });
+  if (d2.isValid) return d2.toFormat('yyyy-LL-dd');
+  const d3 = DateTime.fromFormat(s, 'd-M-yyyy', { zone: 'utc' });
+  if (d3.isValid) return d3.toFormat('yyyy-LL-dd');
+  return '';
+}
+
+function chatIaLogConsultarDisponibilidad(payload) {
+  try {
+    console.error('[chat-ia] consultar_disponibilidad', JSON.stringify(payload));
+  } catch (e) {
+    console.error('[chat-ia] consultar_disponibilidad (log falló)', e?.message || e);
+  }
+}
+
 async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
-  const input = toolInput && typeof toolInput === 'object' ? toolInput : {};
+  const input = chatIaParseToolInput(toolInput);
   try {
     if (toolName === 'consultar_disponibilidad') {
-      const sedeId = Number(input.sede_id);
-      const fecha = String(input.fecha || '').trim().slice(0, 10);
-      const dur = Number(input.duracion_minutos);
+      const sedeId = parseInt(String(input.sede_id ?? '').trim(), 10);
+      const fecha = chatIaNormalizeFechaYmdReserva(input.fecha);
+      const dur = parseInt(String(input.duracion_minutos ?? '').trim(), 10);
+      chatIaLogConsultarDisponibilidad({
+        step: 'entrada',
+        toolInput_type: typeof toolInput,
+        keys: Object.keys(input),
+        raw_sede_id: input.sede_id,
+        raw_fecha: input.fecha,
+        raw_duracion_minutos: input.duracion_minutos,
+        parsed_sede_id: sedeId,
+        parsed_fecha: fecha,
+        parsed_duracion_minutos: dur,
+      });
       if (!Number.isFinite(sedeId) || sedeId <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(fecha) || ![60, 90, 120].includes(dur)) {
-        return { ok: false, error: 'Parámetros inválidos: sede_id, fecha YYYY-MM-DD, duracion_minutos 60|90|120' };
+        const errOut = { ok: false, error: 'Parámetros inválidos: sede_id, fecha YYYY-MM-DD, duracion_minutos 60|90|120' };
+        chatIaLogConsultarDisponibilidad({ step: 'params_invalid', ...errOut, sedeId, fecha, dur });
+        return errOut;
       }
       const sedeFull = await chatIaFetchSedeFullForTool(supabaseClient, sedeId);
-      if (!sedeFull) return { ok: false, error: 'Sede no encontrada' };
+      if (!sedeFull) {
+        const errOut = { ok: false, error: 'Sede no encontrada' };
+        chatIaLogConsultarDisponibilidad({ step: 'sede_fetch_null', sedeId, ...errOut });
+        return errOut;
+      }
+      chatIaLogConsultarDisponibilidad({
+        step: 'antes_compute_slots',
+        sedeId,
+        sede_nombre: String(sedeFull.nombre || '').trim(),
+        fecha,
+        duracion_minutos: dur,
+        timezone: sedeFull.timezone,
+        cantidad_canchas: sedeFull.cantidad_canchas,
+        canchas_activas_count: Array.isArray(sedeFull.canchas_activas) ? sedeFull.canchas_activas.length : 0,
+      });
       const { slots, error } = await computeChatIaSlotsReales(supabaseClient, sedeFull, fecha, dur);
-      if (error) return { ok: false, error };
-      return {
+      if (error) {
+        const errOut = { ok: false, error };
+        chatIaLogConsultarDisponibilidad({ step: 'compute_slots_error', sedeId, fecha, dur, ...errOut });
+        return errOut;
+      }
+      const okOut = {
         ok: true,
         sede_id: sedeId,
         sede_nombre: String(sedeFull.nombre || '').trim(),
@@ -10521,6 +10600,8 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
           canchas_libres: s.canchas_libres,
         })),
       };
+      chatIaLogConsultarDisponibilidad({ step: 'ok', sedeId, fecha, dur, slots_count: slots.length });
+      return okOut;
     }
     if (toolName === 'listar_sedes') {
       const paisF = String(input.pais || '').trim();
@@ -10599,6 +10680,13 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
     }
     return { ok: false, error: `Tool desconocida: ${toolName}` };
   } catch (e) {
+    if (toolName === 'consultar_disponibilidad') {
+      chatIaLogConsultarDisponibilidad({
+        step: 'exception',
+        error: e?.message || String(e),
+        stack: typeof e?.stack === 'string' ? e.stack.slice(0, 800) : undefined,
+      });
+    }
     return { ok: false, error: e?.message || String(e) };
   }
 }
@@ -10624,6 +10712,21 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
     });
     const rawJson = await anthroRes.json().catch(() => ({}));
     if (!anthroRes.ok) {
+      const lastUser = msgs.length ? msgs[msgs.length - 1] : null;
+      const lastContent = lastUser?.content;
+      const toolDbg =
+        round > 0 && Array.isArray(lastContent)
+          ? lastContent
+              .filter((b) => b && b.type === 'tool_result')
+              .map((b) => ({
+                tool_use_id: b.tool_use_id,
+                content_type: typeof b.content,
+                content_len: typeof b.content === 'string' ? b.content.length : null,
+              }))
+          : null;
+      if (toolDbg?.length) {
+        console.error('[chat-ia] Anthropic error con tool_result previo', JSON.stringify({ status: anthroRes.status, toolDbg }));
+      }
       return {
         ok: false,
         status: anthroRes.status,
@@ -10648,11 +10751,27 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
     }
     const toolResults = [];
     for (const tu of toolUses) {
-      const out = await chatIaExecuteTool(supabaseClient, tu.name, tu.input || {}, ctx);
+      const rawToolIn = tu.input != null ? tu.input : tu.arguments;
+      const parsedIn = chatIaParseToolInput(rawToolIn);
+      if (tu.name === 'consultar_disponibilidad') {
+        console.error(
+          '[chat-ia] tool_use Claude',
+          JSON.stringify({
+            tool_use_id: tu.id,
+            name: tu.name,
+            raw_input_type: typeof rawToolIn,
+            parsed_keys: Object.keys(parsedIn),
+            parsed_sede_id: parsedIn.sede_id,
+            parsed_fecha: parsedIn.fecha,
+            parsed_duracion_minutos: parsedIn.duracion_minutos,
+          }),
+        );
+      }
+      const out = await chatIaExecuteTool(supabaseClient, tu.name, parsedIn, ctx);
       toolResults.push({
         type: 'tool_result',
         tool_use_id: tu.id,
-        content: JSON.stringify(out),
+        content: chatIaToolResultContentString(out),
       });
     }
     msgs.push({ role: 'user', content: toolResults });
