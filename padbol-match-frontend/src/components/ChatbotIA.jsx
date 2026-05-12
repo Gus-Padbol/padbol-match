@@ -148,7 +148,7 @@ function chatUiStrings(loc) {
       escribiendo: 'Writing…',
       procesando: 'Processing…',
       enviar: 'Send',
-      placeholder: 'Ask something…',
+      placeholder: 'E.g. I want to play tomorrow at 7pm',
       waEscalada: 'Contact the club on WhatsApp',
       waClub: 'Message your usual club',
       fabOpen: 'Open Padbol Match assistant',
@@ -174,6 +174,17 @@ function chatUiStrings(loc) {
       errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
       errVoiceStart: 'Could not start speech recognition.',
       slotsDisponiblesTitulo: 'Free slots (tap to book):',
+      welcomeAssistant: (firstName) => {
+        const n = String(firstName || '').trim();
+        const lead = n ? `Hi ${n} 👋` : 'Hi 👋';
+        return `${lead} I'm your assistant. I can help you book a court, find a game nearby, or check tournaments. What do you need?`;
+      },
+      quickSuggestions: [
+        { label: "See today's court times ⚽" },
+        { label: 'Find a game nearby 🔍' },
+        { label: 'Available tournaments 🏆' },
+        { label: 'How do you play Padbol? ❓' },
+      ],
     };
   }
   if (l === 'pt') {
@@ -181,7 +192,7 @@ function chatUiStrings(loc) {
       escribiendo: 'Escrevendo…',
       procesando: 'Processando…',
       enviar: 'Enviar',
-      placeholder: 'Escreva sua pergunta…',
+      placeholder: 'Ex.: quero jogar amanhã às 19h',
       waEscalada: 'Falar com o clube no WhatsApp',
       waClub: 'Escrever ao clube habitual',
       fabOpen: 'Abrir assistente Padbol Match',
@@ -207,13 +218,24 @@ function chatUiStrings(loc) {
       errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
       errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
       slotsDisponiblesTitulo: 'Horários livres (toque para reservar):',
+      welcomeAssistant: (firstName) => {
+        const n = String(firstName || '').trim();
+        const lead = n ? `Olá ${n} 👋` : 'Olá 👋';
+        return `${lead} Sou seu assistente. Posso ajudar a reservar quadra, buscar partida perto ou consultar torneios. O que você precisa?`;
+      },
+      quickSuggestions: [
+        { label: 'Ver horários hoje ⚽' },
+        { label: 'Buscar partida perto 🔍' },
+        { label: 'Torneios disponíveis 🏆' },
+        { label: 'Como se joga Padbol? ❓' },
+      ],
     };
   }
   return {
     escribiendo: 'Escribiendo…',
     procesando: 'Procesando…',
     enviar: 'Enviar',
-    placeholder: 'Escribe tu consulta…',
+    placeholder: 'Ej: quiero jugar mañana a las 19hs',
     waEscalada: 'Contactar al club por WhatsApp',
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Padbol Match',
@@ -239,12 +261,23 @@ function chatUiStrings(loc) {
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
     slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
+    welcomeAssistant: (firstName) => {
+      const n = String(firstName || '').trim();
+      const lead = n ? `Hola ${n} 👋` : 'Hola 👋';
+      return `${lead} Soy tu asistente. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitás?`;
+    },
+    quickSuggestions: [
+      { label: 'Ver horarios hoy ⚽' },
+      { label: 'Buscar partido cerca 🔍' },
+      { label: 'Torneos disponibles 🏆' },
+      { label: '¿Cómo se juega al Padbol? ❓' },
+    ],
   };
 }
 
 export default function ChatbotIA() {
   const location = useLocation();
-  const { session } = useAuth();
+  const { session, userProfile } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -286,6 +319,20 @@ export default function ChatbotIA() {
     [],
   );
   const ui = useMemo(() => chatUiStrings(deviceLocale), [deviceLocale]);
+
+  const chatWelcomeFirstName = useMemo(() => {
+    const ns = userProfile?.nombre_saludo != null ? String(userProfile.nombre_saludo).trim() : '';
+    if (ns) return ns;
+    const nom = userProfile?.nombre != null ? String(userProfile.nombre).trim() : '';
+    if (nom) {
+      const first = nom.split(/\s+/).filter(Boolean)[0];
+      return first || nom;
+    }
+    const meta = session?.user?.user_metadata || {};
+    const full = String(meta.full_name || meta.name || '').trim();
+    if (full) return full.split(/\s+/).filter(Boolean)[0] || full;
+    return '';
+  }, [userProfile, session?.user]);
 
   useEffect(() => {
     readAloudRef.current = readAloud;
@@ -904,23 +951,46 @@ export default function ChatbotIA() {
               }}
             >
               {messages.length === 0 ? (
-                bootstrap ? (
-                  <div style={{ color: '#334155', fontSize: 14, lineHeight: 1.55 }}>
-                    <div style={{ fontWeight: 800, fontSize: 15, color: '#0f172a', marginBottom: 8 }}>
-                      {bootstrap.saludo_titulo || ui.titulo}
-                    </div>
-                    {(bootstrap.saludo_lineas || []).map((line, idx) => (
-                      <p
-                        key={idx}
-                        style={{ margin: idx === 0 ? '0 0 8px' : '0 0 6px', color: idx === 0 ? '#64748b' : '#475569' }}
+                <div style={{ alignSelf: 'flex-start', maxWidth: '92%', width: '100%' }}>
+                  <div
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 12,
+                      background: '#f1f5f9',
+                      color: '#0f172a',
+                      fontSize: 14,
+                      lineHeight: 1.45,
+                      whiteSpace: 'pre-wrap',
+                      marginBottom: 10,
+                    }}
+                  >
+                    {ui.welcomeAssistant(chatWelcomeFirstName)}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {(Array.isArray(ui.quickSuggestions) ? ui.quickSuggestions : []).map((q, idx) => (
+                      <button
+                        key={`qs-${idx}`}
+                        type="button"
+                        disabled={loading || sessionEnded}
+                        onClick={() => void sendMessage(q.label)}
+                        style={{
+                          textAlign: 'left',
+                          padding: '10px 12px',
+                          borderRadius: 10,
+                          border: '1px solid #c7d2fe',
+                          background: '#eef2ff',
+                          color: '#312e81',
+                          fontWeight: 700,
+                          fontSize: 14,
+                          cursor: loading || sessionEnded ? 'not-allowed' : 'pointer',
+                          opacity: loading || sessionEnded ? 0.55 : 1,
+                        }}
                       >
-                        {line}
-                      </p>
+                        {q.label}
+                      </button>
                     ))}
                   </div>
-                ) : (
-                  <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>{ui.cargando}</p>
-                )
+                </div>
               ) : null}
               {messages.map((m, i) => (
                 <React.Fragment key={`${i}-${m.role}`}>
