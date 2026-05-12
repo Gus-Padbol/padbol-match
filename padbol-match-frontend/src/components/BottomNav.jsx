@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
-import { HubIconCampana, HubIconCorrer, HubIconPerfil } from './HubNavIcons';
+import { HubIconCampana, HubIconCorrer, HubIconPerfil, HubIconTrofeo } from './HubNavIcons';
 import {
   HUB_NAV_HEIGHT_PX,
   hubBottomNavFixedTopCss,
@@ -245,7 +245,7 @@ const BottomNav = () => {
     },
     {
       label: 'Competir',
-      icon: '🏆',
+      iconKind: 'competir',
       path: '/competir',
       match: (p) => {
         const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
@@ -340,6 +340,8 @@ const BottomNav = () => {
             <HubIconCorrer active={isActive} />
           ) : item.iconKind === 'campana' ? (
             <HubIconCampana active={isActive} />
+          ) : item.iconKind === 'competir' ? (
+            <HubIconTrofeo active={isActive} />
           ) : item.icon ? (
             <span style={{ fontSize: 18, lineHeight: 1 }}>{item.icon}</span>
           ) : null;
