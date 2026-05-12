@@ -80,6 +80,7 @@ function chatUiStrings(loc) {
       hintIosSafari: 'On iPhone or iPad, audio may need an extra tap after the reply loads.',
       errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
       errVoiceStart: 'Could not start speech recognition.',
+      slotsDisponiblesTitulo: 'Free slots (tap to book):',
     };
   }
   if (l === 'pt') {
@@ -112,6 +113,7 @@ function chatUiStrings(loc) {
       hintIosSafari: 'No iPhone ou iPad, o áudio pode exigir um toque extra após carregar a resposta.',
       errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
       errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
+      slotsDisponiblesTitulo: 'Horários livres (toque para reservar):',
     };
   }
   return {
@@ -143,6 +145,7 @@ function chatUiStrings(loc) {
     hintIosSafari: 'En iPhone o iPad el audio puede requerir un toque explícito después de cargar la respuesta.',
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
+    slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
   };
 }
 
@@ -435,7 +438,21 @@ export default function ChatbotIA() {
           return;
         }
         const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
-        setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+        const disp =
+          data.disponibilidad &&
+          data.disponibilidad.sede_id != null &&
+          data.disponibilidad.fecha &&
+          Array.isArray(data.disponibilidad.slots) &&
+          data.disponibilidad.slots.length
+            ? {
+                sede_id: Number(data.disponibilidad.sede_id),
+                sede_nombre: String(data.disponibilidad.sede_nombre || '').trim(),
+                fecha: String(data.disponibilidad.fecha).slice(0, 10),
+                duracion_minutos: data.disponibilidad.duracion_minutos,
+                slots: data.disponibilidad.slots,
+              }
+            : null;
+        setMessages((prev) => [...prev, { role: 'assistant', content: reply, disponibilidad: disp }]);
         if (data.reserve?.href) setLastReserve(data.reserve);
         const sc = data.sede_contexto;
         if (sc && sc.id != null && Number.isFinite(Number(sc.id)) && Number(sc.id) > 0) {
@@ -800,22 +817,66 @@ export default function ChatbotIA() {
                 )
               ) : null}
               {messages.map((m, i) => (
-                <div
-                  key={`${i}-${m.role}`}
-                  style={{
-                    alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                    maxWidth: '92%',
-                    padding: '10px 12px',
-                    borderRadius: 12,
-                    background: m.role === 'user' ? '#4f46e5' : '#f1f5f9',
-                    color: m.role === 'user' ? '#fff' : '#0f172a',
-                    fontSize: 14,
-                    lineHeight: 1.45,
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {m.content}
-                </div>
+                <React.Fragment key={`${i}-${m.role}`}>
+                  <div
+                    style={{
+                      alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+                      maxWidth: '92%',
+                      padding: '10px 12px',
+                      borderRadius: 12,
+                      background: m.role === 'user' ? '#4f46e5' : '#f1f5f9',
+                      color: m.role === 'user' ? '#fff' : '#0f172a',
+                      fontSize: 14,
+                      lineHeight: 1.45,
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {m.content}
+                  </div>
+                  {m.role === 'assistant' && m.disponibilidad?.slots?.length ? (
+                    <div
+                      style={{
+                        alignSelf: 'flex-start',
+                        maxWidth: '92%',
+                        marginTop: -2,
+                        marginBottom: 2,
+                        padding: '0 2px 8px',
+                      }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                        {ui.slotsDisponiblesTitulo}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {m.disponibilidad.slots.slice(0, 14).map((s, j) => {
+                          const sid = m.disponibilidad.sede_id;
+                          const fe = m.disponibilidad.fecha;
+                          const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
+                          return (
+                            <Link
+                              key={`${i}-slot-${j}`}
+                              to={href}
+                              onClick={() => setOpen(false)}
+                              style={{
+                                display: 'inline-block',
+                                padding: '6px 10px',
+                                borderRadius: 8,
+                                background: '#e0e7ff',
+                                color: '#312e81',
+                                fontWeight: 700,
+                                fontSize: 13,
+                                textDecoration: 'none',
+                                border: '1px solid #c7d2fe',
+                              }}
+                            >
+                              {s.hora_inicio}
+                              {s.canchas_libres != null ? ` · ${s.canchas_libres}` : ''}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                </React.Fragment>
               ))}
               {loading ? (
                 <div style={{ color: '#64748b', fontSize: 13, fontWeight: 600 }}>{ui.escribiendo}</div>
