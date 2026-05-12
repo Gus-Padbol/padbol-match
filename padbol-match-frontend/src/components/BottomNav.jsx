@@ -236,9 +236,23 @@ const BottomNav = () => {
       match: (p) => {
         const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
         if (x === '/jugar') return true;
+        if (x.startsWith('/jugar/')) return true;
         if (x === '/partidos-abiertos') return true;
         if (x === '/armar-partido') return true;
         if (x === '/reservar' || x.startsWith('/reservar/')) return true;
+        return false;
+      },
+    },
+    {
+      label: 'Competir',
+      icon: '🏆',
+      path: '/competir',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        if (x === '/competir') return true;
+        if (x === '/rankings') return true;
+        if (x === '/torneos' || x.startsWith('/torneos/')) return true;
+        if (x.startsWith('/torneo/')) return true;
         return false;
       },
     },
