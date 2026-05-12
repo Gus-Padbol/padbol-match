@@ -3493,82 +3493,24 @@ export default function MiPerfil() {
                 Cancelar
               </button>
             </div>
-          </form>
-        )}
-      </div>
 
-      {perfil && typeof perfil === 'object' ? (
-        <div
-          style={{
-            background: '#f9f9f9',
-            borderRadius: '12px',
-            padding: '20px 24px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-            marginBottom: '16px',
-            width: '100%',
-            maxWidth: '100%',
-            boxSizing: 'border-box',
-          }}
-        >
-          <h4
-            style={{
-              margin: '0 0 12px',
-              color: '#333',
-              borderBottom: '1px solid #e0e0e0',
-              paddingBottom: '8px',
-            }}
-          >
-            Deportes que practico
-          </h4>
-          {!editando ? (
-            hasDeportesPreferidosCargados(perfil?.deportes_preferidos) ? (
-              <DeportesPreferidosLecturaChips keys={perfil.deportes_preferidos} />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setEditando(true)}
+            <div
+              style={{
+                marginTop: '22px',
+                paddingTop: '18px',
+                borderTop: '1px solid #e5e7eb',
+              }}
+            >
+              <h4
                 style={{
-                  display: 'inline-block',
-                  padding: '10px 18px',
-                  background: '#4f46e5',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  fontSize: '14px',
+                  margin: '0 0 12px',
+                  color: '#333',
+                  borderBottom: '1px solid #e0e0e0',
+                  paddingBottom: '8px',
                 }}
               >
-                Agregar deportes
-              </button>
-            )
-          ) : (
-            <>
-              {!hasDeportesPreferidosCargados(formData.deportes_preferidos) ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    document.getElementById('mi-perfil-deportes-chips')?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'center',
-                    })
-                  }
-                  style={{
-                    display: 'inline-block',
-                    padding: '10px 18px',
-                    marginBottom: 12,
-                    background: '#4f46e5',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                  }}
-                >
-                  Agregar deportes
-                </button>
-              ) : null}
+                Deportes que practico
+              </h4>
               <p style={{ color: '#64748b', fontSize: '12px', marginTop: 0, marginBottom: '8px', lineHeight: 1.4 }}>
                 Selecciona los deportes que practicas (opcional). Mejoran las sugerencias del asistente.
               </p>
@@ -3587,7 +3529,6 @@ export default function MiPerfil() {
               <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
                 <button
                   type="submit"
-                  form="mi-perfil-ficha-form"
                   disabled={
                     isSubmitting ||
                     (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
@@ -3614,7 +3555,62 @@ export default function MiPerfil() {
                       : '✅ Guardar'}
                 </button>
               </div>
-            </>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {perfil && typeof perfil === 'object' && !editando ? (
+        <div
+          style={{
+            background: '#f9f9f9',
+            borderRadius: '12px',
+            padding: '20px 24px',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+            marginBottom: '16px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
+          <h4
+            style={{
+              margin: '0 0 12px',
+              color: '#333',
+              borderBottom: '1px solid #e0e0e0',
+              paddingBottom: '8px',
+            }}
+          >
+            Deportes que practico
+          </h4>
+          {hasDeportesPreferidosCargados(perfil?.deportes_preferidos) ? (
+            <DeportesPreferidosLecturaChips keys={perfil.deportes_preferidos} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setEditando(true);
+                window.setTimeout(() => {
+                  document.getElementById('mi-perfil-deportes-chips')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                }, 150);
+              }}
+              style={{
+                display: 'inline-block',
+                padding: '10px 18px',
+                background: '#4f46e5',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '14px',
+              }}
+            >
+              Agregar deportes
+            </button>
           )}
         </div>
       ) : null}
