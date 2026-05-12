@@ -80,18 +80,10 @@ const TZ_TORNEO_CALENDARIO = 'America/Argentina/Buenos_Aires';
 const MSG_TORNEO_INSCRIPCION_FECHA_PASADA =
   'Este torneo ya finalizó o su fecha de juego ha pasado';
 
+/** yyyy-LL-dd “hoy” en ART (torneos / fecha_referencia del chat-IA). Sin `new Date()` directo. */
 function ymdTodayInTorneoTz() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: TZ_TORNEO_CALENDARIO,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-  const y = parts.find((p) => p.type === 'year')?.value;
-  const mo = parts.find((p) => p.type === 'month')?.value;
-  const da = parts.find((p) => p.type === 'day')?.value;
-  if (!y || !mo || !da) return null;
-  return `${y}-${mo}-${da}`;
+  const dt = DateTime.now().setZone(TZ_TORNEO_CALENDARIO);
+  return dt.isValid ? dt.toFormat('yyyy-LL-dd') : null;
 }
 
 const TZ_SEDE_DEFAULT = 'America/Argentina/Buenos_Aires';
@@ -10284,10 +10276,11 @@ function chatIaNearestSameWeekday(dt, targetLuxonWeekday) {
   return { dt, adjusted: false };
 }
 
-function chatIaNextWeekdayOnOrAfter(refYmd, targetLuxonWeekday) {
+function chatIaNextWeekdayOnOrAfter(refYmd, targetLuxonWeekday, zoneIana) {
+  const z = normalizeSedeTimezone(zoneIana || TZ_TORNEO_CALENDARIO);
   const ref = String(refYmd || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ref) || targetLuxonWeekday == null) return null;
-  let d = DateTime.fromISO(ref, { zone: TZ_TORNEO_CALENDARIO }).startOf('day');
+  let d = DateTime.fromISO(ref, { zone: z }).startOf('day');
   if (!d.isValid) return null;
   for (let i = 0; i < 14; i += 1) {
     if (d.weekday === targetLuxonWeekday) return d.toFormat('yyyy-LL-dd');
@@ -10296,10 +10289,15 @@ function chatIaNextWeekdayOnOrAfter(refYmd, targetLuxonWeekday) {
   return null;
 }
 
-function chatIaResolveFechaParaConsultaArt(text, fechaReferenciaYmd) {
+/**
+ * Resuelve fechas en el texto (ISO, d/m/y, hoy/mañana, días de la semana, etc.).
+ * `fechaReferenciaYmd` debe ser “hoy” en la misma `zoneIana` (p. ej. calendario de la sede).
+ * `zoneIana` IANA de la sede consultada (o ART solo si no hay sede).
+ */
+function chatIaResolveFechaParaConsulta(text, fechaReferenciaYmd, zoneIana) {
   const raw = String(text || '');
   const ref = String(fechaReferenciaYmd || '').trim();
-  const zone = TZ_TORNEO_CALENDARIO;
+  const zone = normalizeSedeTimezone(zoneIana || TZ_TORNEO_CALENDARIO);
 
   const iso = raw.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
   if (iso) {
@@ -10353,7 +10351,7 @@ function chatIaResolveFechaParaConsultaArt(text, fechaReferenciaYmd) {
       let nota = null;
       if (adjusted) {
         const nom = DateTime.fromISO(ymd, { zone }).setLocale('es').toFormat('cccc d \'de\' LLLL yyyy');
-        nota = `El calendario para ${dayNum}/${moNum}/${year} en Argentina no coincide con «${String(wdName).trim()}»; se usó el ${nom} (ART).`;
+        nota = `El calendario para ${dayNum}/${moNum}/${year} (${zone}) no coincide con «${String(wdName).trim()}»; se usó el ${nom}.`;
       }
       return { ymd, nota_correccion: nota };
     }
@@ -10384,7 +10382,7 @@ function chatIaResolveFechaParaConsultaArt(text, fechaReferenciaYmd) {
           let nota = null;
           if (adjusted) {
             const nom = DateTime.fromISO(ymd, { zone }).setLocale('es').toFormat("cccc d 'de' LLLL yyyy");
-            nota = `La fecha numérica no caía en «${String(wdM[1]).trim()}»; se ajustó al ${nom} (ART).`;
+            nota = `La fecha numérica no caía en «${String(wdM[1]).trim()}» (${zone}); se ajustó al ${nom}.`;
           }
           return { ymd, nota_correccion: nota };
         }
@@ -10401,7 +10399,7 @@ function chatIaResolveFechaParaConsultaArt(text, fechaReferenciaYmd) {
   if (mSolo && /^\d{4}-\d{2}-\d{2}$/.test(ref)) {
     const targetWd = chatIaSpanishWeekdayToLuxonWeekday(mSolo[1]);
     if (targetWd != null) {
-      const ymd = chatIaNextWeekdayOnOrAfter(ref, targetWd);
+      const ymd = chatIaNextWeekdayOnOrAfter(ref, targetWd, zone);
       if (ymd) return { ymd, nota_correccion: null };
     }
   }
@@ -10761,7 +10759,12 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
   }
 
   const sedeM = sedeRes.sede;
-  const fechaRes = chatIaResolveFechaParaConsultaArt(combined, ctx.fecha_referencia);
+  const sedeRowChat = (ctx.sedes || []).find((s) => Number(s.id) === Number(sedeM?.id));
+  const zonaConsultaSede = normalizeSedeTimezone(
+    sedeRowChat?.timezone || inferTimezoneFromCiudadPais(sedeRowChat?.ciudad, sedeRowChat?.pais),
+  );
+  const hoyYmdEnZonaSede = DateTime.now().setZone(zonaConsultaSede).toFormat('yyyy-LL-dd');
+  const fechaRes = chatIaResolveFechaParaConsulta(combined, hoyYmdEnZonaSede, zonaConsultaSede);
   const fechaM = fechaRes?.ymd || null;
   const fechaNota = fechaRes?.nota_correccion || null;
   const durGuess = chatIaExtractDuracionMin(combined);
@@ -10845,7 +10848,11 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
     };
   }
 
-  const dtEt = DateTime.fromISO(fechaM, { zone: TZ_TORNEO_CALENDARIO }).setLocale('es');
+  const tzEtiquetaSede = normalizeSedeTimezone(
+    sedeFull?.timezone || inferTimezoneFromCiudadPais(sedeFull?.ciudad, sedeFull?.pais),
+  );
+  const locEtiqueta = chatIaLuxonLocaleForUi(ctx?.idioma_ui || 'es');
+  const dtEt = DateTime.fromISO(fechaM, { zone: tzEtiquetaSede }).setLocale(locEtiqueta);
   const etiqueta_fecha_listado = dtEt.isValid
     ? dtEt.toFormat("cccc d 'de' LLLL")
     : fechaM;
@@ -10885,7 +10892,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
       ' hay lugar a las ' +
       horariosLista.slice(0, 5).join(', ') +
       (horariosLista.length > 5 ? '…' : '') +
-      '. ¿Cuál preferís?» (adaptá al idioma del usuario). Horarios solo de slots_reales. Si nota_fecha, una frase corta ART. ' +
+      '. ¿Cuál preferís?» (adaptá al idioma del usuario). Horarios solo de slots_reales. Usá etiqueta_fecha_listado / etiqueta_fecha_corta (calendario en timezone_consulta de la sede). Si nota_fecha, una frase corta. ' +
       (horaParaReserva
         ? `Cuadra ${horaParaReserva}: una línea final <<<RESERVA:sede_id=${sedeM.id}|fecha=${fechaM}|hora=${horaParaReserva}>>>.`
         : 'Si el usuario elige hora de la lista: <<<RESERVA:sede_id=' +
@@ -10913,6 +10920,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
       etiqueta_fecha_corta,
       horarios_inicio_csv: horariosLista.join(', '),
       nota_fecha: fechaNota,
+      timezone_consulta: tzEtiquetaSede,
       hora_para_reserva_url: horaParaReserva,
       hora_solicitud_usuario: horaSolicitudUsuario,
       hora_solicitud_en_slots: horaSolicitudEnSlots,
@@ -11186,7 +11194,7 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
 
   const sedesQ = await supabaseClient
     .from('sedes')
-    .select('id,nombre,ciudad,pais,precio_turno,moneda,horario_apertura,horario_cierre,franjas_horarias,telefono')
+    .select('id,nombre,ciudad,pais,timezone,precio_turno,moneda,horario_apertura,horario_cierre,franjas_horarias,telefono')
     .order('nombre', { ascending: true })
     .limit(45);
   const sedesRows = sedesQ.error ? [] : sedesQ.data || [];
@@ -11195,13 +11203,14 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
     nombre: s.nombre,
     ciudad: s.ciudad,
     pais: s.pais,
+    timezone: s.timezone,
     precio_turno: s.precio_turno,
     moneda: s.moneda || 'ARS',
     horario: [s.horario_apertura, s.horario_cierre].filter(Boolean).join('–') || null,
     franjas: s.franjas_horarias != null ? JSON.stringify(s.franjas_horarias).slice(0, 500) : null,
   }));
 
-  const todayYmd = ymdTodayInTorneoTz() || new Date().toISOString().slice(0, 10);
+  const todayYmd = ymdTodayInTorneoTz();
   const limiteYmd = DateTime.fromISO(todayYmd, { zone: TZ_TORNEO_CALENDARIO })
     .plus({ days: 7 })
     .toFormat('yyyy-LL-dd');
@@ -11428,7 +11437,7 @@ Logged-in user hints (only if usuario_logueado is non-null):
 - reservas_ultimas_3 / patron_sugerencias_ia / torneos_sede_habitual_7d / ultima_reserva_sede / perfil.pais: one short optional line max; no multi-question prompts.
 - Availability sede resolution (consulta_disponibilidad): message match within player country first; if still ambiguous, candidatas_sede; else perfil.sede_id, else ultima_reserva_sede (see JSON fields fuente_resolucion_sede / sedes_sugeridas_mismo_pais).
 
-Availability (dates in JSON are Argentina ART; consulta_disponibilidad.nota_fecha if corrected). Follow instruccion_para_el_modelo logic; phrase the visible reply in ${langName}:
+Availability (consulta_disponibilidad: fecha relative words use the club timezone; fecha_referencia in JSON is today yyyy-LL-dd in America/Argentina/Buenos_Aires; when estado is ok use etiqueta_fecha_* and timezone_consulta for the weekday shown to the user; nota_fecha if corrected). Follow instruccion_para_el_modelo logic; phrase the visible reply in ${langName}:
 - estado === "ok": answer with concrete free start times from slots_reales immediately. Ideal shape (adapt language): "[When] at [club] there is space at 19:00 and 19:30. Which do you prefer?" If hora_solicitud_usuario is set and hora_solicitud_en_slots is false, say clearly that the requested start is not available and list real alternatives from slots_reales (see instruccion_para_el_modelo). Never ask to "confirm" before listing slots when data is already there.
 - estado === "faltan_datos": at most ONE question in the whole reply—only what falta indicates (sede OR fecha). If sede_ambigua, ask which of candidatas_sede; else if falta sede, prefer listing sedes_sugeridas_mismo_pais. No second question, no preamble.
 - estado === "error": max 2 lines; apology + retry or /reservar.
