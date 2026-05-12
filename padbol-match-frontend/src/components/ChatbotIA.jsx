@@ -1124,20 +1124,14 @@ export default function ChatbotIA() {
                           const sid = m.disponibilidad.sede_id;
                           const fe = m.disponibilidad.fecha;
                           const det = Array.isArray(s.canchas_detalle) ? s.canchas_detalle : [];
-                          const names = det.map((d) => String(d?.nombre || '').trim()).filter(Boolean);
-                          let courtLabel = '';
-                          if (names.length === 1) courtLabel = names[0];
-                          else if (names.length === 2) courtLabel = `${names[0]}, ${names[1]}`;
-                          else if (names.length > 2) courtLabel = `${names[0]}, ${names[1]} +${names.length - 2}`;
-                          else {
-                            const fb = String(s.canchas_nombres || '').trim();
-                            courtLabel = fb || '';
-                          }
-                          const chipText = courtLabel ? `${s.hora_inicio} · ${courtLabel}` : String(s.hora_inicio || '').trim();
-                          let href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
-                          if (det.length === 1 && det[0]?.numero != null && String(det[0].numero).trim() !== '') {
-                            href += `&canchaId=${encodeURIComponent(String(det[0].numero).trim())}`;
-                          }
+                          const nLibresRaw = Number(s.canchas_libres);
+                          const nLibres =
+                            Number.isFinite(nLibresRaw) && nLibresRaw > 0
+                              ? nLibresRaw
+                              : Math.max(1, det.length);
+                          const hora = String(s.hora_inicio || '').trim();
+                          const chipText = hora ? `${hora} · ${nLibres}` : String(nLibres);
+                          const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
                           return (
                             <Link
                               key={`${i}-slot-${j}`}
@@ -1145,16 +1139,15 @@ export default function ChatbotIA() {
                               onClick={() => setOpen(false)}
                               style={{
                                 display: 'inline-block',
-                                padding: '6px 10px',
+                                padding: '5px 9px',
                                 borderRadius: 8,
                                 background: '#e0e7ff',
                                 color: '#312e81',
                                 fontWeight: 700,
-                                fontSize: 13,
+                                fontSize: 12,
                                 textDecoration: 'none',
                                 border: '1px solid #c7d2fe',
-                                maxWidth: '100%',
-                                wordBreak: 'break-word',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               {chipText}

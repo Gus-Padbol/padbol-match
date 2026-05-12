@@ -744,6 +744,11 @@ export default function ReservaForm() {
   const canchasBloqueRef = useRef(null);
   /** Evita re-aplicar el deep link `?sedeId=…` cuando solo cambia la referencia de `sedes` (p. ej. refresh GET /api/sedes/:id). */
   const reservaUrlBootstrapKeyRef = useRef('');
+  /**
+   * URL con sede+fecha+hora pero sin cancha (p. ej. chips del chat): no saltar a pago aunque solo haya una cancha libre;
+   * el usuario debe tocar "Elige tu cancha" igual que en el flujo manual.
+   */
+  const reservaOmitirAutoCanchaUnicaRef = useRef(false);
 
   useEffect(() => {
     if (pantalla !== 4) return;
@@ -752,6 +757,7 @@ export default function ReservaForm() {
 
   // Auto-select + auto-advance cuando solo hay una cancha libre (tras elegir horario)
   useEffect(() => {
+    if (reservaOmitirAutoCanchaUnicaRef.current) return;
     if (pantalla !== 2 || !formData.hora || !canchasDisponibles.length) return;
     const libres = canchasDisponibles.filter((c) => c.libre);
     if (libres.length === 1) {
@@ -801,6 +807,7 @@ export default function ReservaForm() {
       initialSedeId && String(initialSedeId).trim() ? String(initialSedeId).trim() : null;
     if (!sedeIdFromUrl) {
       reservaUrlBootstrapKeyRef.current = '';
+      reservaOmitirAutoCanchaUnicaRef.current = false;
       return;
     }
 
@@ -810,6 +817,7 @@ export default function ReservaForm() {
     const sede = sedes.find((s) => Number(s.id) === id);
     if (!sede) {
       reservaUrlBootstrapKeyRef.current = '';
+      reservaOmitirAutoCanchaUnicaRef.current = false;
       clearReservaGeoMasCercanaIntent();
       setFiltros({ pais: '', ciudad: '', sede_id: '' });
       setPantalla(1);
@@ -830,6 +838,7 @@ export default function ReservaForm() {
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
 
     if (fechaQ && horaQ && canchaQ) {
+      reservaOmitirAutoCanchaUnicaRef.current = false;
       setFormData((prev) => ({
         ...prev,
         fecha: fechaQ,
@@ -846,6 +855,7 @@ export default function ReservaForm() {
       navigate({ pathname: '/reservar', search: `?${next.toString()}` }, { replace: true });
       setError('');
     } else {
+      reservaOmitirAutoCanchaUnicaRef.current = Boolean(fechaQ && horaQ);
       setFormData((prev) => ({
         ...prev,
         fecha: fechaQ || prev.fecha || ymdHoyParaReservaSede(sede),
@@ -1294,8 +1304,25 @@ export default function ReservaForm() {
     }
   }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin]);
 
+  // Hora ya fijada (p. ej. deep link ?sedeId=&fecha=&hora=): cargar canchas sin retocar el botón de horario.
+  useEffect(() => {
+    if (pantalla !== 2) return;
+    if (!formData.fecha || !formData.hora) return;
+    if (filtros.sede_id === '' || filtros.sede_id == null) return;
+    if (!sedeSeleccionada) return;
+    void buscarCanchasDisponibles(formData.hora, formData.fecha);
+  }, [
+    pantalla,
+    formData.fecha,
+    formData.hora,
+    filtros.sede_id,
+    sedeSeleccionada,
+    buscarCanchasDisponibles,
+  ]);
+
   const selectHorario = useCallback(
     (hora) => {
+      reservaOmitirAutoCanchaUnicaRef.current = false;
       const f = formData.fecha;
       setCanchasDisponibles([]);
       setFormData((prev) => ({
