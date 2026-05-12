@@ -3360,6 +3360,27 @@ function normalizeChatIaDeporteToolInput(raw) {
   return '';
 }
 
+/** Plegado del mensaje del usuario para reconocer frases rápidas (sin deporte explícito). */
+function chatIaFoldUsuarioDisponibilidadPhrase(raw) {
+  let t = chatIaFoldText(String(raw || '').trim());
+  t = t.replace(/[''`´]/g, '');
+  t = t.replace(/[\uFE0F]/g, '');
+  try {
+    t = t.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+  } catch {
+    t = t.replace(/[\uD83C-\uDBFF][\uDC00-\uDFFF]/g, '');
+  }
+  t = t.replace(/\s+/g, ' ').trim();
+  return t;
+}
+
+/** Mensajes tipo chip "ver horarios hoy" (es/en/pt): no filtrar por deporte aunque el modelo envíe deporte. */
+function chatIaShouldOmitDeporteDisponibilidadParaUltimoUsuario(ultimoUsuarioTexto) {
+  const k = chatIaFoldUsuarioDisponibilidadPhrase(ultimoUsuarioTexto);
+  if (!k) return false;
+  return new Set(['ver horarios hoy', 'see todays court times', 'ver horarios hoje']).has(k);
+}
+
 async function chatIaFetchCanchasPorDeporteRows(supabaseClient, sedeId) {
   const sid = Number(sedeId);
   if (!Number.isFinite(sid) || sid <= 0) return { rows: [], error: null };
@@ -10618,7 +10639,7 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'consultar_disponibilidad',
       description:
-        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. When the user mentions a specific sport (football, padbol, padel, tennis, pickleball, squash), pass it as deporte so only courts for that sport are considered (canchas.deporte/tipo, cancha names, or canchas_por_deporte). If sede_id is unknown, call listar_sedes or buscar_sedes_por_deporte.',
+        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. Pass deporte ONLY when the user explicitly names a sport in their message (e.g. football, padel, tennis). For generic requests like "today\'s hours" / "ver horarios hoy" (no sport named), omit deporte so all courts count. If sede_id is unknown, call listar_sedes or buscar_sedes_por_deporte.',
       input_schema: {
         type: 'object',
         properties: {
@@ -10628,7 +10649,7 @@ function chatIaAnthropicToolsDefinition() {
           deporte: {
             type: 'string',
             description:
-              'Optional: padbol, padel, tenis, pickleball, squash, futbol (or futbol_5 / futbol_7). Required when the user asks for a specific sport.',
+              'ONLY if the user explicitly names a sport (fútbol, pádel, tenis, padbol, pickleball, squash, etc.). Omit for generic availability ("ver horarios hoy", "horarios hoy", "turnos libres" without a sport). Values: padbol, padel, tenis, pickleball, squash, futbol (or futbol_5 / futbol_7).',
           },
         },
         required: ['sede_id', 'fecha'],
@@ -10779,15 +10800,26 @@ function chatIaLogConsultarDisponibilidad(payload) {
   }
 }
 
-async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
+async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultimoMensajeUsuario) {
   const input = chatIaParseToolInput(toolInput);
+  const ultimoUser = ultimoMensajeUsuario != null ? String(ultimoMensajeUsuario).trim() : '';
   try {
     if (toolName === 'consultar_disponibilidad') {
       const sedeId = Number.parseInt(String(input.sede_id ?? '').trim(), 10);
       const fecha = chatIaResolveDisponibilidadFecha(input.fecha, ctx);
       let dur = Number.parseInt(String(input.duracion_minutos ?? '').trim(), 10);
       if (![60, 90, 120].includes(dur)) dur = 90;
-      const depCanon = normalizeChatIaDeporteToolInput(input.deporte);
+      let depCanon = normalizeChatIaDeporteToolInput(input.deporte);
+      if (ultimoUser && chatIaShouldOmitDeporteDisponibilidadParaUltimoUsuario(ultimoUser)) {
+        if (depCanon) {
+          chatIaLogConsultarDisponibilidad({
+            step: 'deporte_omitido_frase_generica_hoy',
+            ultimo_usuario_fold: chatIaFoldUsuarioDisponibilidadPhrase(ultimoUser),
+            deporte_modelo_descartado: depCanon,
+          });
+        }
+        depCanon = '';
+      }
       chatIaLogConsultarDisponibilidad({
         step: 'entrada',
         toolInput_type: typeof toolInput,
@@ -11002,7 +11034,7 @@ function chatIaSedeIdDesdeHistorialReserva(historial) {
   return lastId;
 }
 
-async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools, supabaseClient, ctx }) {
+async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools, supabaseClient, ctx, ultimoMensajeUsuario }) {
   const msgs = [...messages];
   const toolDefs = tools || chatIaAnthropicToolsDefinition();
   let sedeContextoUltima = null;
@@ -11107,7 +11139,7 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
           }),
         );
       }
-      const out = await chatIaExecuteTool(supabaseClient, tu.name, parsedIn, ctx);
+      const out = await chatIaExecuteTool(supabaseClient, tu.name, parsedIn, ctx, ultimoMensajeUsuario);
       if (tu.name === 'consultar_disponibilidad' && out?.ok && out.sede_id) {
         const id = Number(out.sede_id);
         const nombre =
@@ -11697,10 +11729,10 @@ Out of scope: if the question is unrelated to padbol/padel bookings, tournaments
 Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art and fecha_mañana_art are yyyy-LL-dd in America/Argentina/Buenos_Aires for "hoy" / "mañana"):
 ${JSON.stringify(payload)}
 
-Tools: call consultar_disponibilidad with sede_id + fecha + optional duracion_minutos (default 90) + optional deporte when the user names a sport (padbol, padel, tenis, pickleball, squash, futbol / football → use deporte in the tool). Use buscar_sedes_por_deporte with deporte and optional ciudad/pais when they ask which clubs offer a sport. Use listar_sedes to resolve sede_id from a name or match sedes_resumen. Use listar_torneos / consultar_ranking as needed.
+Tools: call consultar_disponibilidad with sede_id + fecha + optional duracion_minutos (default 90). Pass deporte ONLY when the user explicitly names a sport in their message (padbol, padel, tenis, pickleball, squash, futbol / football). Do NOT pass deporte for generic "today\'s slots" / "ver horarios hoy" / "horarios" requests with no sport—omit deporte so all courts are included. Use buscar_sedes_por_deporte with deporte and optional ciudad/pais when they ask which clubs offer a sport. Use listar_sedes to resolve sede_id from a name or match sedes_resumen. Use listar_torneos / consultar_ranking as needed.
 
 Availability (critical):
-- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result. If they mention a specific sport, ALWAYS pass the same sport as the deporte parameter. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
+- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result. Include deporte in the tool call only if the user clearly names a sport (e.g. "quiero jugar fútbol", "hay pádel"); if they only ask for today\'s times or generic availability, omit deporte. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
 - Never invent times. If slots is empty, say there are no openings that day for that duration and suggest another date or duration—do not send the user to WhatsApp.
 - Never output <<<WHATSAPP>>> for availability, booking help, or missing data. WhatsApp is ONLY when the user clearly asks to message or call the club by phone/WhatsApp.
 
@@ -11827,6 +11859,7 @@ app.post('/api/chat-ia', async (req, res) => {
       tools: chatIaAnthropicToolsDefinition(),
       supabaseClient: supabase,
       ctx: ctxForModel,
+      ultimoMensajeUsuario: mensaje,
     });
     if (!run.ok) {
       console.error('❌ Anthropic chat-ia:', run.status || '', run.error || run.raw);
