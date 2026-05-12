@@ -67,6 +67,41 @@ function normalizeUiLocale(raw) {
   return 'es';
 }
 
+/** es|en|pt según el texto escrito por el usuario (heurística alineada con el backend). */
+function inferWritingLocaleCodeFromText(textRaw) {
+  const text = String(textRaw || '').trim();
+  if (!text) return 'es';
+  const fold = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  const pad = ` ${fold.replace(/\s+/g, ' ')} `;
+
+  let pt = 0;
+  let es = 0;
+  let en = 0;
+
+  if (/[ãõ]|\b(nao|nao)\b/i.test(text) || /não/i.test(text)) pt += 4;
+  if (/ñ|¿|¡/.test(text)) es += 4;
+  if (/\b(nao|nao|voce|voces|torneio|obrigado|obrigada|quadras|disponivel|tambem|amanha)\b/.test(pad)) pt += 3;
+  if (/\b(manana|hoy|cuando|donde|cancha|turno|disponibilidad|quiero|gracias|sedes?|horarios)\b/.test(pad)) es += 3;
+  if (/\b(tomorrow|today|when|where|booking|available|slot|courts|tournament|thanks|please|what\s+time|how\s+do)\b/.test(pad)) en += 3;
+  if (/\b(voce|voces)\b/.test(pad)) pt += 2;
+  if (/\b(the|and|with|for)\b/.test(pad)) en += 1;
+  if (/\b(el|la|los|las|una|por|para)\b/.test(pad)) es += 1;
+
+  if (pt > es && pt > en) return 'pt';
+  if (en > es && en > pt) return 'en';
+  return 'es';
+}
+
+function navigatorLanguageToChatCode(nav) {
+  const n = String(nav || 'es').toLowerCase();
+  if (n.startsWith('pt')) return 'pt';
+  if (n.startsWith('en')) return 'en';
+  return 'es';
+}
+
 function chatUiStrings(loc) {
   const l = normalizeUiLocale(loc);
   if (l === 'en') {
@@ -220,19 +255,28 @@ export default function ChatbotIA() {
   useEffect(() => {
     uiRef.current = ui;
   }, [ui]);
+  const writingLocaleForVoice = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i]?.role === 'user' && String(messages[i].content || '').trim()) {
+        return inferWritingLocaleCodeFromText(messages[i].content);
+      }
+    }
+    return navigatorLanguageToChatCode(typeof navigator !== 'undefined' ? navigator.language : 'es');
+  }, [messages]);
+
   const speechRecLang = useMemo(() => {
-    const l = String(deviceLocale || 'es').toLowerCase();
-    if (l.startsWith('en')) return 'en-US';
-    if (l.startsWith('pt')) return 'pt-BR';
-    if (l.startsWith('fr')) return 'fr-FR';
-    if (l.startsWith('de')) return 'de-DE';
-    if (l.startsWith('it')) return 'it-IT';
+    const c = writingLocaleForVoice;
+    if (c === 'en') return 'en-US';
+    if (c === 'pt') return 'pt-BR';
     return 'es-AR';
-  }, [deviceLocale]);
+  }, [writingLocaleForVoice]);
+
   const ttsUtterLang = useMemo(() => {
-    const l = String(deviceLocale || 'es').trim();
-    return l.length >= 2 ? l : 'es-AR';
-  }, [deviceLocale]);
+    const c = writingLocaleForVoice;
+    if (c === 'en') return 'en-US';
+    if (c === 'pt') return 'pt-BR';
+    return 'es-AR';
+  }, [writingLocaleForVoice]);
 
   const visible = useMemo(() => isChatbotIAVisiblePathname(location.pathname), [location.pathname]);
 
@@ -262,7 +306,14 @@ export default function ChatbotIA() {
         const { data: sess } = await supabase.auth.getSession();
         const tok = sess?.session?.access_token;
         if (tok) headers.Authorization = `Bearer ${tok}`;
-        const loc = typeof navigator !== 'undefined' ? navigator.language || 'es' : 'es';
+        const loc = (() => {
+          for (let i = messages.length - 1; i >= 0; i -= 1) {
+            if (messages[i]?.role === 'user' && String(messages[i].content || '').trim()) {
+              return inferWritingLocaleCodeFromText(messages[i].content);
+            }
+          }
+          return navigatorLanguageToChatCode(typeof navigator !== 'undefined' ? navigator.language : 'es');
+        })();
         const res = await fetch(`${API_BASE}/api/chat-ia/bootstrap?locale=${encodeURIComponent(loc)}`, {
           headers,
         });
@@ -275,7 +326,7 @@ export default function ChatbotIA() {
     return () => {
       canceled = true;
     };
-  }, [open, session?.user?.id]);
+  }, [open, session?.user?.id, messages]);
 
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === 'user').length, [messages]);
 
@@ -437,7 +488,7 @@ export default function ChatbotIA() {
             mensaje: text,
             historial,
             user_id: session?.user?.id || null,
-            locale: deviceLocale,
+            locale: inferWritingLocaleCodeFromText(text),
             client_calendario_art: ymdBuenosAires(),
           }),
         });
@@ -499,7 +550,6 @@ export default function ChatbotIA() {
       session?.user?.id,
       primeSpeechSynthesisFromUserGesture,
       scheduleAssistantSpeak,
-      deviceLocale,
     ]
   );
 

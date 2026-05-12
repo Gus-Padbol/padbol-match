@@ -10991,6 +10991,39 @@ function normalizeChatIaLocale(raw) {
   return 'es';
 }
 
+/** es|en|pt según el texto del usuario en el turno (no navigator). Heurística alineada con el frontend. */
+function chatIaInferWritingLocaleFromConversation(mensaje, historial) {
+  const parts = [];
+  if (Array.isArray(historial)) {
+    for (const row of historial) {
+      if (row && row.role === 'user' && String(row.content || '').trim()) parts.push(String(row.content).trim());
+    }
+  }
+  if (String(mensaje || '').trim()) parts.push(String(mensaje).trim());
+  const text = parts.join('\n');
+  if (!text.trim()) return 'es';
+
+  const fold = chatIaFoldText(text).toLowerCase();
+  const pad = ` ${fold.replace(/\s+/g, ' ')} `;
+
+  let pt = 0;
+  let es = 0;
+  let en = 0;
+
+  if (/[ãõ]|\b(nao|nao)\b/i.test(text) || /não/i.test(text)) pt += 4;
+  if (/ñ|¿|¡/.test(text)) es += 4;
+  if (/\b(nao|nao|voce|voces|torneio|obrigado|obrigada|quadras|disponivel|tambem|amanha)\b/.test(pad)) pt += 3;
+  if (/\b(manana|hoy|cuando|donde|cancha|turno|disponibilidad|quiero|gracias|sedes?|horarios)\b/.test(pad)) es += 3;
+  if (/\b(tomorrow|today|when|where|booking|available|slot|courts|tournament|thanks|please|what\s+time|how\s+do)\b/.test(pad)) en += 3;
+  if (/\b(voce|voces)\b/.test(pad)) pt += 2;
+  if (/\b(the|and|with|for)\b/.test(pad)) en += 1;
+  if (/\b(el|la|los|las|una|por|para)\b/.test(pad)) es += 1;
+
+  if (pt > es && pt > en) return 'pt';
+  if (en > es && en > pt) return 'en';
+  return 'es';
+}
+
 function chatIaLuxonLocaleForUi(lang) {
   const l = normalizeChatIaLocale(lang);
   if (l === 'pt') return 'pt-BR';
@@ -11005,20 +11038,6 @@ function chatIaClaudeLanguageName(lang) {
   const l = normalizeChatIaLocale(lang);
   const m = { es: 'Spanish', en: 'English', pt: 'Portuguese', fr: 'French', de: 'German', it: 'Italian' };
   return m[l] || 'Spanish';
-}
-
-function chatIaOutOfScopeExactReply(lang) {
-  const l = normalizeChatIaLocale(lang);
-  if (l === 'en')
-    return 'I can only help with bookings, tournaments and padel/padbol courts on Padbol Match.';
-  if (l === 'pt') return 'Só posso ajudar com reservas, torneios e quadras no Padbol Match.';
-  if (l === 'fr')
-    return 'Je peux seulement vous aider pour les réservations, tournois et terrains sur Padbol Match.';
-  if (l === 'de')
-    return 'Ich kann dir nur bei Buchungen, Turnieren und Plätzen auf Padbol Match helfen.';
-  if (l === 'it')
-    return 'Posso aiutarti solo con prenotazioni, tornei e campi su Padbol Match.';
-  return 'Solo puedo ayudarte con reservas, torneos y canchas en Padbol Match.';
 }
 
 function chatIaTelefonoToWaMeDigits(telefono) {
@@ -11439,9 +11458,7 @@ function buildChatIaBootstrapPayload(ctx) {
 }
 
 function buildChatIaSystemPrompt(ctxForModel) {
-  const langName = ctxForModel.claude_language || 'Spanish';
   const uiLang = ctxForModel.idioma_ui || 'es';
-  const oos = chatIaOutOfScopeExactReply(uiLang);
   const payload = {
     idioma_ui: ctxForModel.idioma_ui,
     claude_language: ctxForModel.claude_language,
@@ -11460,16 +11477,18 @@ function buildChatIaSystemPrompt(ctxForModel) {
   };
   return `You are the Padbol Match assistant for padbol/padel bookings, tournaments and rankings.
 
-Always respond in ${langName} (UI language code: ${uiLang}).
+LANGUAGE (critical):
+- Always respond in the same language the user writes in (mirror their Spanish, English, or Portuguese, or whichever language they consistently use in this thread). Match their tone when reasonable.
+- Do not choose the reply language from the device or browser. The code ${uiLang} in the Context JSON is only for structured hints (e.g. calendar labels), not for picking your answer language—follow the actual user messages.
+- If the latest message is very short or ambiguous, use the same language as the clearest earlier user message in this chat.
 
 STYLE:
 - Maximum 3 short lines. No long paragraphs or bullet lists.
 - Act without asking for confirmation when tools already returned data: state slots, names, dates and prices directly.
 - Use tools for real data: never invent availability, rankings or tournaments.
-- For Spanish (es), avoid voseo: use "puedes", "quieres", "tienes", "haces", not "podés", "querés", "tenés", "hacés".
+- When you write in Spanish (es), avoid voseo: use "puedes", "quieres", "tienes", "haces", not "podés", "querés", "tenés", "hacés".
 
-Out of scope (reply with exactly this one sentence, nothing else):
-${JSON.stringify(oos)}
+Out of scope: if the question is unrelated to padbol/padel bookings, tournaments or rankings on Padbol Match, reply with exactly one short sentence in the SAME language as the user's message, stating only that limitation.
 
 Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art and fecha_mañana_art are yyyy-LL-dd in America/Argentina/Buenos_Aires for "hoy" / "mañana"):
 ${JSON.stringify(payload)}
@@ -11549,7 +11568,7 @@ app.post('/api/chat-ia', async (req, res) => {
 
     const priorUser = historial.filter((h) => h.role === 'user').length;
     if (priorUser >= CHAT_IA_MAX_USER_MSG) {
-      const localeEarly = normalizeChatIaLocale(b.locale);
+      const localeEarly = chatIaInferWritingLocaleFromConversation(mensaje, historial);
       const ctxEarly = await buildChatIAContextPayload(supabase, user, localeEarly);
       const rid = chatIaSedeIdDesdeHistorialReserva(historial);
       let sede_contexto = null;
@@ -11576,7 +11595,7 @@ app.post('/api/chat-ia', async (req, res) => {
       return res.status(429).json({ error: 'Demasiadas consultas. Intenta de nuevo en una hora.' });
     }
 
-    const locale = normalizeChatIaLocale(b.locale);
+    const locale = chatIaInferWritingLocaleFromConversation(mensaje, historial);
     const ctxBase = await buildChatIAContextPayload(supabase, user, locale);
     console.error(
       '[chat-ia] POST inicio',
