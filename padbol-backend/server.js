@@ -10319,15 +10319,26 @@ async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, durac
 async function chatIaFetchSedeFullForTool(supabaseClient, sedeId) {
   const sid = parseInt(String(sedeId), 10);
   if (!Number.isFinite(sid) || sid <= 0) return null;
+  // No incluir canchas_activas aquí: no es columna de `sedes` (se arma en sedeResponseConCanchasActivas vía tabla canchas).
   const { data: sede, error } = await supabaseClient
     .from('sedes')
     .select(
-      'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,canchas_activas,cantidad_canchas,timezone,ciudad,pais',
+      'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,cantidad_canchas,timezone,ciudad,pais',
     )
     .eq('id', sid)
     .maybeSingle();
-  if (error || !sede) return null;
-  const canchasRows = await fetchCanchasRowsForSede(sid);
+  if (error) {
+    console.error('[chat-ia] chatIaFetchSedeFullForTool sedes', { sede_id: sid, error: error.message || String(error) });
+    return null;
+  }
+  if (!sede) return null;
+  let canchasRows = [];
+  try {
+    canchasRows = await fetchCanchasRowsForSede(sid);
+  } catch (e) {
+    console.error('[chat-ia] chatIaFetchSedeFullForTool canchas', { sede_id: sid, error: e?.message || String(e) });
+    canchasRows = [];
+  }
   return sedeResponseConCanchasActivas(sede, canchasRows);
 }
 
