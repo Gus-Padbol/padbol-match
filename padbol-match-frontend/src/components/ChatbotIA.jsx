@@ -1649,13 +1649,19 @@ export default function ChatbotIA() {
               ) : null}
               <div
                 style={{
-                  display: 'flex',
+                  display: 'grid',
                   width: '100%',
                   maxWidth: '100%',
                   overflow: 'hidden',
                   boxSizing: 'border-box',
                   gap: 8,
-                  alignItems: 'stretch',
+                  alignItems: 'center',
+                  gridTemplateColumns: (() => {
+                    if (voicePhase === 'listening') {
+                      return micSupported ? 'minmax(0, 1fr) 44px' : 'minmax(0, 1fr)';
+                    }
+                    return micSupported ? 'minmax(0, 1fr) 44px auto' : 'minmax(0, 1fr) auto';
+                  })(),
                 }}
               >
                 {voicePhase === 'listening' ? (
@@ -1664,12 +1670,11 @@ export default function ChatbotIA() {
                     aria-live="polite"
                     aria-relevant="additions text"
                     style={{
-                      flex: '1 1 0',
                       minWidth: 0,
                       padding: '10px 12px',
                       borderRadius: 10,
                       border: '1px solid #cbd5e1',
-                      fontSize: 15,
+                      fontSize: 16,
                       minHeight: 44,
                       boxSizing: 'border-box',
                       display: 'flex',
@@ -1696,13 +1701,20 @@ export default function ChatbotIA() {
                     }}
                     disabled={loading || sessionEnded || voicePhase === 'processing'}
                     placeholder={sessionEnded ? '—' : ui.placeholder}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
                     style={{
-                      flex: '1 1 0',
+                      width: '100%',
                       minWidth: 0,
+                      boxSizing: 'border-box',
                       padding: '10px 12px',
                       borderRadius: 10,
                       border: '1px solid #cbd5e1',
-                      fontSize: 15,
+                      fontSize: 16,
+                      lineHeight: 1.25,
+                      minHeight: 44,
+                      WebkitTapHighlightColor: 'transparent',
                     }}
                   />
                 )}
@@ -1718,63 +1730,84 @@ export default function ChatbotIA() {
                     }
                     aria-pressed={voicePhase === 'listening'}
                     disabled={loading || sessionEnded || voicePhase === 'processing'}
-                    onClick={() => startVoice()}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      startVoice();
+                    }}
                     className={voicePhase === 'listening' ? 'chatbotia-mic-recording' : ''}
                     style={{
                       width: 44,
+                      height: 44,
                       minWidth: 44,
                       maxWidth: 44,
-                      flexShrink: 0,
+                      minHeight: 44,
+                      maxHeight: 44,
+                      padding: 0,
+                      margin: 0,
+                      justifySelf: 'center',
                       boxSizing: 'border-box',
                       borderRadius: 10,
                       border: '1px solid #cbd5e1',
                       background: '#fff',
                       fontSize: 22,
+                      lineHeight: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       cursor:
                         loading || sessionEnded || voicePhase === 'processing' ? 'not-allowed' : 'pointer',
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation',
                     }}
                   >
                     🎤
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  disabled={
-                    loading ||
-                    sessionEnded ||
-                    voicePhase === 'listening' ||
-                    voicePhase === 'processing' ||
-                    !input.trim()
-                  }
-                  onClick={() => void sendMessage(input)}
-                  style={{
-                    flexShrink: 0,
-                    whiteSpace: 'nowrap',
-                    padding: '0 14px',
-                    borderRadius: 10,
-                    border: 'none',
-                    background:
+                {voicePhase !== 'listening' ? (
+                  <button
+                    type="button"
+                    disabled={
                       loading ||
                       sessionEnded ||
                       voicePhase === 'listening' ||
                       voicePhase === 'processing' ||
                       !input.trim()
-                        ? '#94a3b8'
-                        : '#4f46e5',
-                    color: '#fff',
-                    fontWeight: 800,
-                    cursor:
-                      loading ||
-                      sessionEnded ||
-                      voicePhase === 'listening' ||
-                      voicePhase === 'processing' ||
-                      !input.trim()
-                        ? 'not-allowed'
-                        : 'pointer',
-                  }}
-                >
-                  {ui.enviar}
-                </button>
+                    }
+                    onClick={() => void sendMessage(input)}
+                    style={{
+                      justifySelf: 'end',
+                      whiteSpace: 'nowrap',
+                      minHeight: 44,
+                      padding: '0 12px',
+                      borderRadius: 10,
+                      border: 'none',
+                      fontSize: 15,
+                      background:
+                        loading ||
+                        sessionEnded ||
+                        voicePhase === 'listening' ||
+                        voicePhase === 'processing' ||
+                        !input.trim()
+                          ? '#94a3b8'
+                          : '#4f46e5',
+                      color: '#fff',
+                      fontWeight: 800,
+                      cursor:
+                        loading ||
+                        sessionEnded ||
+                        voicePhase === 'listening' ||
+                        voicePhase === 'processing' ||
+                        !input.trim()
+                          ? 'not-allowed'
+                          : 'pointer',
+                      WebkitTapHighlightColor: 'transparent',
+                      touchAction: 'manipulation',
+                    }}
+                  >
+                    {ui.enviar}
+                  </button>
+                ) : null}
               </div>
               {(voicePhase === 'listening' || voicePhase === 'processing') && (
                 <div
