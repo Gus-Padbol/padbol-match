@@ -32,6 +32,11 @@ import {
   contarTorneosUnicosConPuntos,
 } from '../utils/perfilPuntosResumen';
 import {
+  torneosJugadosTotalDesdeEstadisticas,
+  sliceEstadisticasJugadorTorneo,
+} from '../utils/jugadorEstadisticasPorDeporte';
+import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
+import {
   whatsappDigitsValido,
   digitsOnly,
   buildFullWhatsDigits,
@@ -905,12 +910,32 @@ export default function MiPerfil() {
   /** Misma respuesta que GET /api/jugador/:alias/estadisticas (backend). */
   const [estadisticasMiPerfil, setEstadisticasMiPerfil] = useState(null);
   const [estadisticasMiPerfilLoading, setEstadisticasMiPerfilLoading] = useState(false);
+  /** Slug canónico (`padbol`, `padel`, …) para filtrar la grilla cuando hay varios deportes con puntos. */
+  const [estadisticasDeporteTab, setEstadisticasDeporteTab] = useState(null);
+
+  useEffect(() => {
+    if (!estadisticasMiPerfil) {
+      setEstadisticasDeporteTab(null);
+      return;
+    }
+    const deps = estadisticasMiPerfil.deportes_jugados;
+    if (!Array.isArray(deps) || !deps.length) {
+      setEstadisticasDeporteTab(null);
+      return;
+    }
+    setEstadisticasDeporteTab((prev) => {
+      const keys = new Set(deps.map((d) => d.deporte));
+      if (prev && keys.has(prev)) return prev;
+      return deps[0].deporte;
+    });
+  }, [estadisticasMiPerfil]);
 
   useEffect(() => {
     let cancelled = false;
     const alias = String(perfil?.alias || '').trim();
     if (!alias) {
       setEstadisticasMiPerfil(null);
+      setEstadisticasDeporteTab(null);
       setEstadisticasMiPerfilLoading(false);
       return undefined;
     }
@@ -3415,27 +3440,33 @@ export default function MiPerfil() {
         const hayPuntosNivel = tieneAlgunoPuntosPorAlcance(puntosAlcanceMiPerfil);
         const st = estadisticasMiPerfil && typeof estadisticasMiPerfil === 'object' ? estadisticasMiPerfil : {};
         const aliasStats = String(perfil?.alias || '').trim();
+        const torneosTot = torneosJugadosTotalDesdeEstadisticas(st);
+        const depsList = Array.isArray(st.deportes_jugados) ? st.deportes_jugados : [];
+        const displayStats =
+          aliasStats && torneosTot > 0 ? sliceEstadisticasJugadorTorneo(st, estadisticasDeporteTab) || st : null;
+        const showGridTorneos = Boolean(aliasStats && torneosTot > 0 && displayStats);
+        const mostrarBloqueEstadisticas = hayPuntosNivel || showGridTorneos || !aliasStats;
         const gridItems = [
           {
             k: 'torneos',
             label: 'Torneos jugados',
-            value: estadisticasMiPerfilLoading ? '…' : `${Number(st.torneos_jugados) || 0}`,
+            value: estadisticasMiPerfilLoading ? '…' : `${Number(displayStats?.torneos_jugados) || 0}`,
             sub:
               !aliasStats
                 ? 'Define tu alias público'
-                : Number(st.torneos_ganados) > 0
-                  ? `${st.torneos_ganados} ganado${Number(st.torneos_ganados) === 1 ? '' : 's'}`
+                : Number(displayStats?.torneos_ganados) > 0
+                  ? `${displayStats.torneos_ganados} ganado${Number(displayStats.torneos_ganados) === 1 ? '' : 's'}`
                   : 'Torneos finalizados',
           },
           {
             k: 'partidos',
             label: 'Partidos jugados',
-            value: estadisticasMiPerfilLoading ? '…' : `${Number(st.partidos_jugados) || 0}`,
+            value: estadisticasMiPerfilLoading ? '…' : `${Number(displayStats?.partidos_jugados) || 0}`,
             sub:
               !aliasStats
                 ? '—'
-                : Number(st.partidos_jugados) > 0
-                  ? `${Number(st.partidos_ganados) || 0} victorias`
+                : Number(displayStats?.partidos_jugados) > 0
+                  ? `${Number(displayStats.partidos_ganados) || 0} victorias`
                   : 'En torneos finalizados',
           },
           {
@@ -3444,8 +3475,8 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : Number(st.partidos_jugados) > 0
-                  ? `${st.win_rate_pct}%`
+                : Number(displayStats?.partidos_jugados) > 0
+                  ? `${displayStats.win_rate_pct}%`
                   : '—',
             sub: 'Victorias / jugados',
           },
@@ -3455,10 +3486,10 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : Number(st.puntos_ranking_total) > 0
-                  ? `${st.puntos_ranking_total}`
+                : Number(displayStats?.puntos_ranking_total) > 0
+                  ? `${displayStats.puntos_ranking_total}`
                   : '—',
-            sub: 'Total tabla de puntos',
+            sub: depsList.length > 1 ? 'Tabla (deporte seleccionado)' : 'Total tabla de puntos',
           },
           {
             k: 'racha',
@@ -3466,15 +3497,15 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : Number(st.racha_victorias_consecutivas) > 0
-                  ? `${st.racha_victorias_consecutivas}`
+                : Number(displayStats?.racha_victorias_consecutivas) > 0
+                  ? `${displayStats.racha_victorias_consecutivas}`
                   : '—',
             sub:
               !aliasStats
                 ? '—'
-                : Number(st.racha_victorias_consecutivas) > 0
-                  ? `Partido${Number(st.racha_victorias_consecutivas) === 1 ? '' : 's'} ganado${
-                      Number(st.racha_victorias_consecutivas) === 1 ? '' : 's'
+                : Number(displayStats?.racha_victorias_consecutivas) > 0
+                  ? `Partido${displayStats.racha_victorias_consecutivas === 1 ? '' : 's'} ganado${
+                      displayStats.racha_victorias_consecutivas === 1 ? '' : 's'
                     } seguidos`
                   : 'Sin racha activa',
           },
@@ -3482,15 +3513,15 @@ export default function MiPerfil() {
             k: 'mejor',
             label: 'Mejor resultado',
             value:
-              estadisticasMiPerfilLoading || !aliasStats ? '—' : st.mejor_resultado || '—',
-            sub: 'Mejor torneo (tabla)',
+              estadisticasMiPerfilLoading || !aliasStats ? '—' : displayStats?.mejor_resultado || '—',
+            sub: depsList.length > 1 ? 'En este deporte' : 'Mejor torneo (tabla)',
           },
           {
             k: 'deporte',
-            label: 'Deporte más jugado',
+            label: depsList.length > 1 ? 'Deporte' : 'Deporte más jugado',
             value:
-              estadisticasMiPerfilLoading || !aliasStats ? '—' : st.deporte_mas_jugado || '—',
-            sub: 'Por sede del torneo',
+              estadisticasMiPerfilLoading || !aliasStats ? '—' : displayStats?.deporte_mas_jugado || '—',
+            sub: depsList.length > 1 ? 'Pestaña activa' : 'Por torneos jugados',
           },
           {
             k: 'sedeRes',
@@ -3498,20 +3529,47 @@ export default function MiPerfil() {
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
-                : st.sede_mas_frecuentada_reservas?.nombre || '—',
+                : displayStats?.sede_mas_frecuentada_reservas?.nombre || '—',
             sub:
               !aliasStats
                 ? '—'
-                : st.sede_mas_frecuentada_reservas?.reservas_en_sede != null
-                  ? `${st.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
-                      st.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
+                : displayStats?.sede_mas_frecuentada_reservas?.reservas_en_sede != null
+                  ? `${displayStats.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
+                      displayStats.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
                     }`
                   : 'Por reservas',
           },
         ];
-        return (
+        if (!mostrarBloqueEstadisticas) return null;
           <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>📊 Estadísticas</h4>
+            {showGridTorneos && depsList.length > 1 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+                {depsList.map((d) => {
+                  const active = estadisticasDeporteTab === d.deporte;
+                  return (
+                    <button
+                      key={d.deporte}
+                      type="button"
+                      onClick={() => setEstadisticasDeporteTab(d.deporte)}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                        background: active ? '#eef2ff' : '#fff',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        color: '#0f172a',
+                      }}
+                    >
+                      {etiquetaDeporteTorneo(d.deporte)}{' '}
+                      <span style={{ color: '#64748b', fontWeight: 700 }}>({d.puntos})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
             {hayPuntosNivel ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
                 {puntosAlcanceMiPerfil.club > 0 ? (
@@ -3541,6 +3599,8 @@ export default function MiPerfil() {
                 Define tu alias público en la ficha para calcular torneos, partidos y racha.
               </p>
             ) : null}
+            {showGridTorneos ? (
+            <>
             <div
               style={{
                 display: 'grid',
@@ -3577,9 +3637,11 @@ export default function MiPerfil() {
             >
               Sede habitual (torneos):{' '}
               <span style={{ color: '#0f172a' }}>
-                {estadisticasMiPerfilLoading ? '…' : st.sede_habitual?.nombre || '—'}
+                {estadisticasMiPerfilLoading ? '…' : displayStats?.sede_habitual?.nombre || '—'}
               </span>
             </p>
+            </>
+            ) : null}
             {flagTorneosPub ? (
               <p style={{ margin: '10px 0 0', fontSize: '12px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
                 En tu perfil público también se muestran torneos con puntos:{' '}

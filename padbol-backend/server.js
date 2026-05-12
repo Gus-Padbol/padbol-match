@@ -6841,6 +6841,7 @@ async function computeEstadisticasJugadorPublico(perfil) {
   const misTorneoIds = [...new Set(misEquipos.map((e) => e.torneo_id).filter((x) => x != null))];
   if (!misTorneoIds.length) {
     return {
+      torneos_jugados_total: 0,
       torneos_jugados: 0,
       torneos_ganados: 0,
       partidos_jugados: 0,
@@ -6848,6 +6849,8 @@ async function computeEstadisticasJugadorPublico(perfil) {
       win_rate_pct: 0,
       puntos_ranking_total: 0,
       puntos_ranking_por_deporte: {},
+      deportes_jugados: [],
+      estadisticas_por_deporte: {},
       sede_habitual: null,
       racha_victorias_consecutivas: 0,
       mejor_resultado: null,
@@ -6875,7 +6878,7 @@ async function computeEstadisticasJugadorPublico(perfil) {
 
   const equiposFinalizados = misEquipos.filter((eq) => finalTorneoIds.has(eq.torneo_id));
   const torneosJugadosSet = new Set(equiposFinalizados.map((e) => e.torneo_id));
-  const torneos_jugados = torneosJugadosSet.size;
+  const torneos_jugados_total = torneosJugadosSet.size;
 
   const equipoIdPorTorneo = new Map();
   for (const eq of equiposFinalizados) {
@@ -6909,16 +6912,18 @@ async function computeEstadisticasJugadorPublico(perfil) {
     deporte_mas_jugado = formatDeporteEstadisticaSlug(bestDep);
   }
 
+  let tpRows = [];
+  const ganadosSet = new Set();
   if (fArr.length && misEquipoIdsFinal.length) {
-    const { data: tpRows, error: tpErr } = await supabase
+    const { data: tpData, error: tpErr } = await supabase
       .from('tabla_puntos')
       .select('torneo_id, equipo_id, posicion, puntos, deporte')
       .in('torneo_id', fArr)
       .in('equipo_id', misEquipoIdsFinal);
     if (tpErr) throw tpErr;
+    tpRows = Array.isArray(tpData) ? tpData : [];
     const depForTorneo = (tid) => normalizeTorneoDeporteForDb(torneoById[tid]?.deporte);
-    const ganadosSet = new Set();
-    for (const row of tpRows || []) {
+    for (const row of tpRows) {
       const tid = row.torneo_id;
       const eid = row.equipo_id;
       if (equipoIdPorTorneo.get(Number(tid)) !== eid) continue;
@@ -6949,14 +6954,16 @@ async function computeEstadisticasJugadorPublico(perfil) {
   let partidos_jugados = 0;
   let partidos_ganados = 0;
   const partidosParaRacha = [];
+  let partidosRows = [];
   if (fArr.length) {
-    const { data: partidosRows, error: pErr } = await supabase
+    const { data: parData, error: pErr } = await supabase
       .from('partidos')
       .select('id, torneo_id, estado, resultado, equipo_a_id, equipo_b_id, ronda, grupo, updated_at')
       .in('torneo_id', fArr)
       .eq('estado', 'finalizado');
     if (pErr) throw pErr;
-    for (const p of partidosRows || []) {
+    partidosRows = Array.isArray(parData) ? parData : [];
+    for (const p of partidosRows) {
       const myEq = equipoIdPorTorneo.get(Number(p.torneo_id));
       if (!myEq) continue;
       if (p.equipo_a_id !== myEq && p.equipo_b_id !== myEq) continue;
@@ -7001,18 +7008,139 @@ async function computeEstadisticasJugadorPublico(perfil) {
     }
   }
 
+  const deportes_jugados = Object.entries(puntos_ranking_por_deporte)
+    .filter(([, pts]) => Number(pts) > 0)
+    .sort((a, b) => Number(b[1]) - Number(a[1]) || String(a[0]).localeCompare(String(b[0])))
+    .map(([deporte, puntos]) => ({ deporte, puntos: Number(puntos) || 0 }));
+
+  const torneoDeporteCanon = (tid) => normalizeTorneoDeporteForDb(torneoById[tid]?.deporte);
+
+  const depMeta = [];
+  for (const { deporte: dep } of deportes_jugados) {
+    const tidsDep = [...torneosJugadosSet].filter((tid) => torneoDeporteCanon(tid) === dep);
+    const tidsDepSet = new Set(tidsDep);
+    let torneos_ganados_dep = 0;
+    for (const tid of ganadosSet) {
+      if (tidsDepSet.has(tid)) torneos_ganados_dep += 1;
+    }
+    let mejor_pos_dep = Infinity;
+    for (const row of tpRows) {
+      const tid = row.torneo_id;
+      if (!tidsDepSet.has(tid)) continue;
+      if (equipoIdPorTorneo.get(Number(tid)) !== row.equipo_id) continue;
+      const posN = Number(row.posicion);
+      if (Number.isFinite(posN) && posN >= 1) mejor_pos_dep = Math.min(mejor_pos_dep, posN);
+    }
+    const partidosParaRachaDep = [];
+    let pj = 0;
+    let pg = 0;
+    for (const p of partidosRows) {
+      const tid = p.torneo_id;
+      if (!tidsDepSet.has(tid)) continue;
+      const myEq = equipoIdPorTorneo.get(Number(tid));
+      if (!myEq) continue;
+      if (p.equipo_a_id !== myEq && p.equipo_b_id !== myEq) continue;
+      pj += 1;
+      const winId = partidoEquipoGanadorId(p);
+      const win = winId != null && winId === myEq;
+      if (win) pg += 1;
+      partidosParaRachaDep.push({ p, torneo: torneoById[p.torneo_id], win });
+    }
+    partidosParaRachaDep.sort((a, b) => tsPartidoOrdenEstadisticas(a.p, a.torneo) - tsPartidoOrdenEstadisticas(b.p, b.torneo));
+    const racha_dep = rachaVictoriasDesdeUltimosPartidos(partidosParaRachaDep.map((x) => ({ win: x.win })));
+    const win_rate_dep = pj > 0 ? Math.round((pg / pj) * 1000) / 10 : 0;
+    const sedeCountDep = new Map();
+    for (const tid of tidsDep) {
+      const sid = torneoById[tid]?.sede_id;
+      if (sid == null) continue;
+      sedeCountDep.set(sid, (sedeCountDep.get(sid) || 0) + 1);
+    }
+    let bestSidDep = null;
+    let bestNdep = 0;
+    for (const [sid, n] of sedeCountDep) {
+      if (n > bestNdep) {
+        bestNdep = n;
+        bestSidDep = sid;
+      }
+    }
+    depMeta.push({
+      dep,
+      torneos_jugados_dep: tidsDep.length,
+      torneos_ganados_dep,
+      partidos_jugados_dep: pj,
+      partidos_ganados_dep: pg,
+      win_rate_dep,
+      racha_dep,
+      mejor_pos_dep,
+      puntos_dep: Number(puntos_ranking_por_deporte[dep]) || 0,
+      bestSidDep,
+      sedeTorneosCount: bestNdep,
+    });
+  }
+
+  const sedeIdsParaDeps = [...new Set(depMeta.map((m) => m.bestSidDep).filter((x) => x != null))];
+  const sedeNombrePorId = new Map();
+  if (sedeIdsParaDeps.length) {
+    const { data: sedesBatch } = await supabase.from('sedes').select('id, nombre').in('id', sedeIdsParaDeps);
+    for (const s of sedesBatch || []) {
+      if (s?.id != null && s.nombre) sedeNombrePorId.set(s.id, String(s.nombre).trim());
+    }
+  }
+
+  const estadisticas_por_deporte = {};
+  for (const m of depMeta) {
+    const nombreSede = m.bestSidDep != null ? sedeNombrePorId.get(m.bestSidDep) : null;
+    const sede_habitual_dep =
+      nombreSede && m.bestSidDep != null
+        ? { sede_id: m.bestSidDep, nombre: nombreSede, torneos_en_sede: m.sedeTorneosCount }
+        : null;
+    estadisticas_por_deporte[m.dep] = {
+      torneos_jugados: m.torneos_jugados_dep,
+      torneos_ganados: m.torneos_ganados_dep,
+      partidos_jugados: m.partidos_jugados_dep,
+      partidos_ganados: m.partidos_ganados_dep,
+      win_rate_pct: m.win_rate_dep,
+      puntos_ranking_total: m.puntos_dep,
+      racha_victorias_consecutivas: m.racha_dep,
+      mejor_resultado: mejorResultadoLabelDesdePosicion(m.mejor_pos_dep),
+      deporte_mas_jugado: formatDeporteEstadisticaSlug(m.dep),
+      sede_habitual: sede_habitual_dep,
+      sede_mas_frecuentada_reservas,
+    };
+  }
+
+  const defaultDepKey = deportes_jugados[0]?.deporte;
+  const flat =
+    defaultDepKey && estadisticas_por_deporte[defaultDepKey]
+      ? estadisticas_por_deporte[defaultDepKey]
+      : {
+          torneos_jugados: torneos_jugados_total,
+          torneos_ganados,
+          partidos_jugados,
+          partidos_ganados,
+          win_rate_pct,
+          puntos_ranking_total,
+          racha_victorias_consecutivas,
+          mejor_resultado,
+          deporte_mas_jugado,
+          sede_habitual,
+        };
+
   return {
-    torneos_jugados,
-    torneos_ganados,
-    partidos_jugados,
-    partidos_ganados,
-    win_rate_pct,
-    puntos_ranking_total,
+    torneos_jugados_total,
+    torneos_jugados: flat.torneos_jugados,
+    torneos_ganados: flat.torneos_ganados,
+    partidos_jugados: flat.partidos_jugados,
+    partidos_ganados: flat.partidos_ganados,
+    win_rate_pct: flat.win_rate_pct,
+    puntos_ranking_total: flat.puntos_ranking_total,
     puntos_ranking_por_deporte,
-    sede_habitual,
-    racha_victorias_consecutivas,
-    mejor_resultado,
-    deporte_mas_jugado,
+    deportes_jugados,
+    estadisticas_por_deporte,
+    sede_habitual: flat.sede_habitual,
+    racha_victorias_consecutivas: flat.racha_victorias_consecutivas,
+    mejor_resultado: flat.mejor_resultado,
+    deporte_mas_jugado: flat.deporte_mas_jugado,
     sede_mas_frecuentada_reservas,
   };
 }

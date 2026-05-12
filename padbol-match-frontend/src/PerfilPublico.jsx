@@ -18,6 +18,11 @@ import {
   tieneAlgunoPuntosPorAlcance,
   contarTorneosUnicosConPuntos,
 } from './utils/perfilPuntosResumen';
+import {
+  torneosJugadosTotalDesdeEstadisticas,
+  sliceEstadisticasJugadorTorneo,
+} from './utils/jugadorEstadisticasPorDeporte';
+import { etiquetaDeporteTorneo } from './utils/torneoDeporteFormato';
 
 const API_BASE_PERFIL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -71,6 +76,7 @@ export default function PerfilPublico() {
   const [qrOpen, setQrOpen] = useState(false);
   /** Respuesta GET /api/jugador/:alias/estadisticas o null mientras carga / sin datos */
   const [estadisticas, setEstadisticas] = useState(null);
+  const [estadisticasDeporteTab, setEstadisticasDeporteTab] = useState(null);
 
   const aliasDecoded = useMemo(() => {
     try {
@@ -92,6 +98,7 @@ export default function PerfilPublico() {
     setCompaneroDisplay(null);
     setTorneosConPuntos([]);
     setEstadisticas(null);
+    setEstadisticasDeporteTab(null);
 
     const { data: rows, error } = await supabase.from('jugadores_perfil').select('*').ilike('alias', a).limit(8);
 
@@ -134,12 +141,15 @@ export default function PerfilPublico() {
         ? String(match.user_id).trim()
         : '');
     const statsEmpty = {
+      torneos_jugados_total: 0,
       torneos_jugados: 0,
       torneos_ganados: 0,
       partidos_jugados: 0,
       partidos_ganados: 0,
       win_rate_pct: 0,
       puntos_ranking_total: 0,
+      deportes_jugados: [],
+      estadisticas_por_deporte: {},
       sede_habitual: null,
       racha_victorias_consecutivas: 0,
       mejor_resultado: null,
@@ -203,6 +213,23 @@ export default function PerfilPublico() {
   useEffect(() => {
     setMostrarTodosTorneosPublico(false);
   }, [torneosConPuntos]);
+
+  useEffect(() => {
+    if (!estadisticas) {
+      setEstadisticasDeporteTab(null);
+      return;
+    }
+    const deps = estadisticas.deportes_jugados;
+    if (!Array.isArray(deps) || !deps.length) {
+      setEstadisticasDeporteTab(null);
+      return;
+    }
+    setEstadisticasDeporteTab((prev) => {
+      const keys = new Set(deps.map((d) => d.deporte));
+      if (prev && keys.has(prev)) return prev;
+      return deps[0].deporte;
+    });
+  }, [estadisticas]);
 
   const puntosAlcancePublico = useMemo(() => {
     try {
@@ -329,6 +356,20 @@ export default function PerfilPublico() {
     const text = url ? `${head}\n\n${url}` : head;
     return { title, text, url };
   }, [nombreCompleto, aliasGrande, perfilShareUrl]);
+
+  const torneosTotPublico = useMemo(
+    () => torneosJugadosTotalDesdeEstadisticas(estadisticas),
+    [estadisticas],
+  );
+  const depsPublico = useMemo(
+    () => (Array.isArray(estadisticas?.deportes_jugados) ? estadisticas.deportes_jugados : []),
+    [estadisticas],
+  );
+  const displayEstadisticas = useMemo(() => {
+    if (!estadisticas || torneosTotPublico <= 0) return null;
+    return sliceEstadisticasJugadorTorneo(estadisticas, estadisticasDeporteTab) || estadisticas;
+  }, [estadisticas, estadisticasDeporteTab, torneosTotPublico]);
+  const showEstadisticasTorneoPub = Boolean(displayEstadisticas);
 
   if (loading) {
     return (
@@ -732,7 +773,7 @@ export default function PerfilPublico() {
           </div>
         </div>
 
-        {estadisticas ? (
+        {showEstadisticasTorneoPub ? (
           <div
             style={{
               background: 'white',
@@ -757,6 +798,33 @@ export default function PerfilPublico() {
             >
               Estadísticas
             </h2>
+            {depsPublico.length > 1 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+                {depsPublico.map((d) => {
+                  const active = estadisticasDeporteTab === d.deporte;
+                  return (
+                    <button
+                      key={d.deporte}
+                      type="button"
+                      onClick={() => setEstadisticasDeporteTab(d.deporte)}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                        background: active ? '#eef2ff' : '#fff',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        color: '#0f172a',
+                      }}
+                    >
+                      {etiquetaDeporteTorneo(d.deporte)}{' '}
+                      <span style={{ color: '#64748b', fontWeight: 700 }}>({d.puntos})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
             <div
               style={{
                 display: 'grid',
@@ -768,71 +836,71 @@ export default function PerfilPublico() {
                 {
                   k: 'torneos',
                   label: 'Torneos jugados',
-                  value: `${estadisticas.torneos_jugados}`,
+                  value: `${displayEstadisticas.torneos_jugados}`,
                   sub:
-                    estadisticas.torneos_ganados > 0
-                      ? `${estadisticas.torneos_ganados} ganado${estadisticas.torneos_ganados === 1 ? '' : 's'}`
+                    displayEstadisticas.torneos_ganados > 0
+                      ? `${displayEstadisticas.torneos_ganados} ganado${displayEstadisticas.torneos_ganados === 1 ? '' : 's'}`
                       : 'Torneos finalizados',
                 },
                 {
                   k: 'partidos',
                   label: 'Partidos jugados',
-                  value: `${estadisticas.partidos_jugados}`,
+                  value: `${displayEstadisticas.partidos_jugados}`,
                   sub:
-                    estadisticas.partidos_jugados > 0
-                      ? `${estadisticas.partidos_ganados} victorias`
+                    displayEstadisticas.partidos_jugados > 0
+                      ? `${displayEstadisticas.partidos_ganados} victorias`
                       : 'En torneos finalizados',
                 },
                 {
                   k: 'win',
                   label: 'Win rate',
                   value:
-                    estadisticas.partidos_jugados > 0 ? `${estadisticas.win_rate_pct}%` : '—',
+                    displayEstadisticas.partidos_jugados > 0 ? `${displayEstadisticas.win_rate_pct}%` : '—',
                   sub: 'Victorias / jugados',
                 },
                 {
                   k: 'pts',
                   label: 'Puntos ranking',
                   value:
-                    Number(estadisticas.puntos_ranking_total) > 0
-                      ? `${estadisticas.puntos_ranking_total}`
+                    Number(displayEstadisticas.puntos_ranking_total) > 0
+                      ? `${displayEstadisticas.puntos_ranking_total}`
                       : '—',
-                  sub: 'Total acumulado (tabla)',
+                  sub: depsPublico.length > 1 ? 'Tabla (deporte seleccionado)' : 'Total acumulado (tabla)',
                 },
                 {
                   k: 'racha',
                   label: 'Racha actual',
                   value:
-                    estadisticas.racha_victorias_consecutivas > 0
-                      ? `${estadisticas.racha_victorias_consecutivas}`
+                    displayEstadisticas.racha_victorias_consecutivas > 0
+                      ? `${displayEstadisticas.racha_victorias_consecutivas}`
                       : '—',
                   sub:
-                    estadisticas.racha_victorias_consecutivas > 0
-                      ? `Partido${estadisticas.racha_victorias_consecutivas === 1 ? '' : 's'} ganado${
-                          estadisticas.racha_victorias_consecutivas === 1 ? '' : 's'
+                    displayEstadisticas.racha_victorias_consecutivas > 0
+                      ? `Partido${displayEstadisticas.racha_victorias_consecutivas === 1 ? '' : 's'} ganado${
+                          displayEstadisticas.racha_victorias_consecutivas === 1 ? '' : 's'
                         } seguidos`
                       : 'Sin racha activa',
                 },
                 {
                   k: 'mejor',
                   label: 'Mejor resultado',
-                  value: estadisticas.mejor_resultado || '—',
-                  sub: 'Mejor torneo (tabla)',
+                  value: displayEstadisticas.mejor_resultado || '—',
+                  sub: depsPublico.length > 1 ? 'En este deporte' : 'Mejor torneo (tabla)',
                 },
                 {
                   k: 'deporte',
-                  label: 'Deporte más jugado',
-                  value: estadisticas.deporte_mas_jugado || '—',
-                  sub: 'Por sede del torneo',
+                  label: depsPublico.length > 1 ? 'Deporte' : 'Deporte más jugado',
+                  value: displayEstadisticas.deporte_mas_jugado || '—',
+                  sub: depsPublico.length > 1 ? 'Pestaña activa' : 'Por torneos jugados',
                 },
                 {
                   k: 'sedeRes',
                   label: 'Sede más frecuentada',
-                  value: estadisticas.sede_mas_frecuentada_reservas?.nombre || '—',
+                  value: displayEstadisticas.sede_mas_frecuentada_reservas?.nombre || '—',
                   sub:
-                    estadisticas.sede_mas_frecuentada_reservas?.reservas_en_sede != null
-                      ? `${estadisticas.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
-                          estadisticas.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
+                    displayEstadisticas.sede_mas_frecuentada_reservas?.reservas_en_sede != null
+                      ? `${displayEstadisticas.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
+                          displayEstadisticas.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
                         }`
                       : 'Por reservas',
                 },
@@ -858,7 +926,7 @@ export default function PerfilPublico() {
                 </div>
               ))}
             </div>
-            {estadisticas.sede_habitual?.nombre ? (
+            {displayEstadisticas.sede_habitual?.nombre ? (
               <p
                 style={{
                   margin: '14px 0 0',
@@ -869,7 +937,7 @@ export default function PerfilPublico() {
                 }}
               >
                 Sede habitual (torneos):{' '}
-                <span style={{ color: '#0f172a' }}>{estadisticas.sede_habitual.nombre}</span>
+                <span style={{ color: '#0f172a' }}>{displayEstadisticas.sede_habitual.nombre}</span>
               </p>
             ) : (
               <p
@@ -929,27 +997,27 @@ export default function PerfilPublico() {
           </div>
         ) : null}
 
-        <div
-          style={{
-            background: '#f9f9f9',
-            borderRadius: '12px',
-            padding: '18px 20px',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-            marginBottom: '12px',
-          }}
-        >
-          <h2
+        {Array.isArray(torneosConPuntos) && torneosConPuntos.length > 0 ? (
+          <div
             style={{
-              margin: '0 0 12px',
-              fontSize: '15px',
-              color: '#334155',
-              borderBottom: '1px solid #e5e7eb',
-              paddingBottom: '8px',
+              background: '#f9f9f9',
+              borderRadius: '12px',
+              padding: '18px 20px',
+              boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+              marginBottom: '12px',
             }}
           >
-            🏆 Competencias y puntos
-          </h2>
-          {Array.isArray(torneosConPuntos) && torneosConPuntos.length > 0 ? (
+            <h2
+              style={{
+                margin: '0 0 12px',
+                fontSize: '15px',
+                color: '#334155',
+                borderBottom: '1px solid #e5e7eb',
+                paddingBottom: '8px',
+              }}
+            >
+              🏆 Competencias y puntos
+            </h2>
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {(mostrarTodosTorneosPublico ? torneosConPuntos : torneosConPuntos.slice(0, 5)).map((row, idx) => {
@@ -1038,12 +1106,8 @@ export default function PerfilPublico() {
                 </div>
               ) : null}
             </>
-          ) : (
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px', fontWeight: 600, textAlign: 'center', padding: '12px 8px' }}>
-              Sin competencias registradas
-            </p>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
       <JugadorPreviewModal
         open={Boolean(jugadorPreviewCompaneroPublico)}
