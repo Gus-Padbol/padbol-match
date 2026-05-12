@@ -8,6 +8,7 @@ import {
   isJugadorHubShellPathname,
   isSedeProfilePathname,
 } from '../constants/hubLayout';
+import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
 
 const MAX_USER_MESSAGES = 6;
 const CHAT_IA_GEO_DENIED_STORAGE_KEY = 'padbol_match_chat_ia_geo_denied';
@@ -180,6 +181,8 @@ function chatUiStrings(loc) {
         const lead = n ? `Hi ${n} 👋` : 'Hi 👋';
         return `${lead} I'm your assistant. I can help you book a court, find a game nearby, or check tournaments. What do you need?`;
       },
+      welcomeDeportesHint:
+        'By the way, if you tell me which sports you play I can help you better 🎯',
       quickSuggestions: [
         { label: "See today's court times ⚽" },
         { label: 'Find a game nearby 🔍', to: '/jugar/buscar' },
@@ -224,6 +227,8 @@ function chatUiStrings(loc) {
         const lead = n ? `Olá ${n} 👋` : 'Olá 👋';
         return `${lead} Sou seu assistente. Posso ajudar a reservar quadra, buscar partida perto ou consultar torneios. O que você precisa?`;
       },
+      welcomeDeportesHint:
+        'Ah, e se você me disser quais esportes pratica posso ajudar melhor 🎯',
       quickSuggestions: [
         { label: 'Ver horários hoje ⚽' },
         { label: 'Buscar partida perto 🔍', to: '/jugar/buscar' },
@@ -267,6 +272,7 @@ function chatUiStrings(loc) {
       const lead = n ? `Hola ${n} 👋` : 'Hola 👋';
       return `${lead} Soy tu asistente. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitás?`;
     },
+    welcomeDeportesHint: 'Por cierto, si me decís qué deportes practicás te puedo ayudar mejor 🎯',
     quickSuggestions: [
       { label: 'Ver horarios hoy ⚽' },
       { label: 'Buscar partido cerca 🔍', to: '/jugar/buscar' },
@@ -1118,7 +1124,16 @@ export default function ChatbotIA() {
                       whiteSpace: 'pre-wrap',
                     }}
                   >
-                    {ui.welcomeAssistant(chatWelcomeFirstName)}
+                    {(() => {
+                      const base = ui.welcomeAssistant(chatWelcomeFirstName);
+                      const hasPrefs =
+                        normalizeDeportesPreferidosArray(userProfile?.deportes_preferidos).length > 0;
+                      const hint =
+                        session?.user && !hasPrefs && ui.welcomeDeportesHint
+                          ? `\n\n${ui.welcomeDeportesHint}`
+                          : '';
+                      return base + hint;
+                    })()}
                   </div>
                 </div>
               ) : null}

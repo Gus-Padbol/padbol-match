@@ -107,6 +107,7 @@ async function refreshUserProfile(session, setUserProfile) {
     apellido: apellidoMeta || null,
     alias: '',
     notificaciones_whatsapp: notificacionesWhatsapp,
+    deportes_preferidos: [],
   };
   if (generoMeta) insertRow.genero = generoMeta;
   const waMeta = String(meta.whatsapp || '').trim();

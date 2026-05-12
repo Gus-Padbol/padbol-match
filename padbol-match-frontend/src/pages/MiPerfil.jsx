@@ -54,6 +54,11 @@ import { getDisplayName, headerNombreVisible } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
+import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
+import {
+  DEPORTES_PREFERIDOS_OPCIONES,
+  normalizeDeportesPreferidosArray,
+} from '../constants/deportesPreferidos';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -87,6 +92,14 @@ function miPerfilPageOuterStyle(paddingTopCss) {
 
 /** Asterisco obligatorio (rojo) para labels del registro. */
 const reqAst = <span style={{ color: '#d32f2f', fontWeight: 800 }}>*</span>;
+
+function textoDeportesPreferidosLista(arr) {
+  const keys = normalizeDeportesPreferidosArray(arr);
+  if (!keys.length) return '—';
+  return keys
+    .map((k) => DEPORTES_PREFERIDOS_OPCIONES.find((o) => o.key === k)?.label || k)
+    .join(' · ');
+}
 
 function emailValidoVisible(raw) {
   const s = String(raw || '').trim();
@@ -372,6 +385,9 @@ export default function MiPerfil() {
   const [torneoPerfil, setTorneoPerfil] = useState(null);
   /** Errores por campo en formulario registro sin sesión */
   const [registroFieldErrors, setRegistroFieldErrors] = useState({});
+  /** Registro sin sesión: 0 = datos cuenta; 1 = deportes preferidos (opcional). */
+  const [registroPasoDeportes, setRegistroPasoDeportes] = useState(0);
+  const [registroDeportesSel, setRegistroDeportesSel] = useState([]);
   const [aceptoTerminosPrivacidadRegistro, setAceptoTerminosPrivacidadRegistro] = useState(false);
   const [fichaFieldErrors, setFichaFieldErrors] = useState({});
   const fichErr = (k) => fichaFieldErrors[k];
@@ -427,6 +443,7 @@ export default function MiPerfil() {
     es_federado: false,
     mostrar_torneos_jugados: false,
     busca_companero: false,
+    deportes_preferidos: [],
   });
 
   const [companeroBusqueda, setCompaneroBusqueda] = useState('');
@@ -816,6 +833,7 @@ export default function MiPerfil() {
           es_federado: data.es_federado || false,
           mostrar_torneos_jugados: Boolean(data.mostrar_torneos_jugados),
           busca_companero: Boolean(data.busca_companero),
+          deportes_preferidos: normalizeDeportesPreferidosArray(data.deportes_preferidos),
         });
         {
           const wa =
@@ -1300,6 +1318,13 @@ export default function MiPerfil() {
         return;
       }
 
+      if (registroPasoDeportes === 0) {
+        setRegistroPasoDeportes(1);
+        perfilSubmitLockRef.current = false;
+        setIsSubmitting(false);
+        return;
+      }
+
       const aliasReg = String(formData.alias || '').trim();
       if (aliasReg && (aliasDuplicado || aliasVerificando)) {
         setErrorMsg(
@@ -1386,6 +1411,7 @@ export default function MiPerfil() {
         companero_id: null,
         mostrar_torneos_jugados: false,
         busca_companero: false,
+        deportes_preferidos: normalizeDeportesPreferidosArray(registroDeportesSel),
       };
 
       const { error: jpErr } = await supabase.from('jugadores_perfil').upsert(
@@ -1418,6 +1444,8 @@ export default function MiPerfil() {
 
       setSuccessMsg(MSG_CUENTA_Y_FICHA_OK);
       setRegistroFieldErrors({});
+      setRegistroPasoDeportes(0);
+      setRegistroDeportesSel([]);
 
       if (isPerfilTorneoCompleto()) {
         await new Promise((r) => setTimeout(r, 450));
@@ -1520,6 +1548,7 @@ export default function MiPerfil() {
             ? String(perfil.ultimo_companero_id).trim()
             : null,
         busca_companero: !!formData.busca_companero,
+        deportes_preferidos: normalizeDeportesPreferidosArray(formData.deportes_preferidos),
       };
 
       const userId = session?.user?.id ?? null;
@@ -1823,6 +1852,8 @@ export default function MiPerfil() {
               {torneoIdValido ? ' Después vuelves al torneo.' : ''}
             </p>
             <form onSubmit={handleRegistroCuenta}>
+              {registroPasoDeportes === 0 ? (
+                <>
               <label style={guestLabelStyle}>
                 Nombre {reqAst}
               </label>
@@ -2299,6 +2330,37 @@ export default function MiPerfil() {
                 </span>
               </label>
               {regErrP('acepto_terminos')}
+                </>
+              ) : (
+                <>
+                  <p style={{ color: '#334155', fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>
+                    ¿Qué deportes practicás?
+                  </p>
+                  <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '14px', lineHeight: 1.45 }}>
+                    Elegí uno o más. Es opcional pero nos ayuda a mostrarte sedes y turnos más acordes. Podés editarlo después en Mi perfil.
+                  </p>
+                  <DeportesPreferidosChips value={registroDeportesSel} onChange={setRegistroDeportesSel} disabled={isSubmitting} />
+                  <button
+                    type="button"
+                    onClick={() => setRegistroPasoDeportes(0)}
+                    disabled={isSubmitting}
+                    style={{
+                      width: '100%',
+                      padding: '11px',
+                      marginTop: '16px',
+                      background: '#fff',
+                      color: '#334155',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                    }}
+                  >
+                    Volver
+                  </button>
+                </>
+              )}
 
               {successMsg ? (
                 <p style={{ color: '#2e7d32', marginBottom: '10px', fontWeight: 600, lineHeight: 1.4 }}>{successMsg}</p>
@@ -2320,7 +2382,7 @@ export default function MiPerfil() {
                   opacity: isSubmitting ? 0.65 : 1,
                 }}
               >
-                {isSubmitting ? 'Guardando...' : torneoIdValido ? 'Guardar y volver al torneo' : 'Crear cuenta'}
+                {isSubmitting ? 'Guardando...' : registroPasoDeportes === 0 ? 'Continuar' : torneoIdValido ? 'Guardar y volver al torneo' : 'Crear cuenta'}
               </button>
             </form>
           </div>
@@ -2762,6 +2824,7 @@ export default function MiPerfil() {
                 </span>
               } />
               <Row label="Lateralidad" value={perfil.lateralidad} />
+              <Row label="Deportes que practicás" value={textoDeportesPreferidosLista(perfil?.deportes_preferidos)} />
               <Row
                 label="Busco compañero"
                 value={perfil.busca_companero ? 'Sí · visible en tu sede' : 'No'}
@@ -3034,6 +3097,18 @@ export default function MiPerfil() {
               <option value="Zurdo">🤛 Zurdo</option>
             </select>
             {fichErrP('lateralidad')}
+
+            <label style={labelStyle}>Deportes que practicás</label>
+            <p style={{ color: '#64748b', fontSize: '12px', marginTop: 0, marginBottom: '8px', lineHeight: 1.4 }}>
+              Opcional. Mejora sugerencias del asistente y reservas.
+            </p>
+            <DeportesPreferidosChips
+              value={formData.deportes_preferidos}
+              onChange={(next) =>
+                setFormData((prev) => ({ ...prev, deportes_preferidos: normalizeDeportesPreferidosArray(next) }))
+              }
+              disabled={isSubmitting}
+            />
 
             <label style={labelStyle}>Categoría {reqAst}</label>
             <select

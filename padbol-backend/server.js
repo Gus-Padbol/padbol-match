@@ -3340,6 +3340,33 @@ const TORNEO_DEPORTE_VALID = new Set([
   'futbol_7',
 ]);
 
+/** `jugadores_perfil.deportes_preferidos` → lista canónica para contexto IA y tools. */
+function chatIaNormalizeDeportesPreferidosDb(raw) {
+  if (raw == null) return [];
+  let arr = [];
+  if (Array.isArray(raw)) arr = raw;
+  else if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (t.startsWith('[') || t.startsWith('{')) {
+      try {
+        const p = JSON.parse(t);
+        if (Array.isArray(p)) arr = p;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  const out = [];
+  const seen = new Set();
+  for (const x of arr) {
+    const k = normalizeTorneoDeporteForDb(x);
+    if (!TORNEO_DEPORTE_VALID.has(k) || seen.has(k)) continue;
+    seen.add(k);
+    out.push(k);
+  }
+  return out;
+}
+
 function normalizeTorneoDeporteForDb(raw) {
   const s = String(raw || '').trim().toLowerCase();
   if (s === 'futbol5') return 'futbol_5';
@@ -10937,7 +10964,7 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'consultar_disponibilidad',
       description:
-        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. Pass deporte ONLY when the user explicitly names a sport in their message (e.g. football, padel, tennis). For generic requests like "today\'s hours" / "ver horarios hoy" (no sport named), omit deporte so all courts count. If sede_id is unknown, call listar_sedes or buscar_sedes_por_deporte.',
+        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. Pass deporte when the user names a sport OR when Context usuario_logueado.deportes_preferidos is non-empty and the user did not name a different sport—then use the first preferred canonical value (or omit for generic "ver horarios hoy" chip / all courts). If sede_id is unknown, call listar_sedes or buscar_sedes_por_deporte.',
       input_schema: {
         type: 'object',
         properties: {
@@ -10947,7 +10974,7 @@ function chatIaAnthropicToolsDefinition() {
           deporte: {
             type: 'string',
             description:
-              'ONLY if the user explicitly names a sport (fútbol, pádel, tenis, padbol, pickleball, squash, etc.). Omit for generic availability ("ver horarios hoy", "horarios hoy", "turnos libres" without a sport). Values: padbol, padel, tenis, pickleball, squash, futbol (or futbol_5 / futbol_7).',
+              'Sport filter: required values padbol, padel, tenis, pickleball, squash, futbol / futbol_5 / futbol_7. Pass when the user names a sport, or when they do not name one but Context JSON usuario_logueado.deportes_preferidos has entries (use first as default). Omit for generic "ver horarios hoy" / all-court availability.',
           },
         },
         required: ['sede_id', 'fecha'],
@@ -10966,13 +10993,14 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'buscar_sedes_por_deporte',
       description:
-        'Lists clubs from an INNER JOIN sedes↔canchas: only rows where canchas.deporte matches the requested sport AND canchas.estado is activa (DB column). canchas_por_deporte is NOT used. If sedes is empty, say honestly there are no clubs with that sport for that city/area (or nearby)—offer to search another city/region—and do NOT suggest clubs from Context sedes_resumen or listar_sedes unless they appear in this tool result. Optional ciudad/pais (ilike on sedes). Optional lat/lng for distance sort when no ciudad/pais.',
+        'Lists clubs from an INNER JOIN sedes↔canchas: only rows where canchas.deporte matches the requested sport AND canchas.estado is activa (DB column). canchas_por_deporte is NOT used. If the user omits a sport but Context usuario_logueado.deportes_preferidos is set, use the first preferred sport. If sedes is empty, say honestly there are no clubs with that sport for that city/area (or nearby)—offer to search another city/region—and do NOT suggest clubs from Context sedes_resumen or listar_sedes unless they appear in this tool result. Optional ciudad/pais (ilike on sedes). Optional lat/lng for distance sort when no ciudad/pais.',
       input_schema: {
         type: 'object',
         properties: {
           deporte: {
             type: 'string',
-            description: 'Required: padbol, padel, futbol, tenis, pickleball, squash, futbol_5, futbol_7',
+            description:
+              'Required unless Context usuario_logueado.deportes_preferidos supplies a default: padbol, padel, futbol, tenis, pickleball, squash, futbol_5, futbol_7',
           },
           ciudad: { type: 'string', description: 'Optional: filters sedes.ciudad (ilike). Use when the user names a city/area in text.' },
           pais: { type: 'string', description: 'Optional: filters sedes.pais (ilike). Use when the user names a country in text.' },
@@ -10986,7 +11014,7 @@ function chatIaAnthropicToolsDefinition() {
             description: 'Optional WGS84 longitude; pair with latitud. Same rules as latitud.',
           },
         },
-        required: ['deporte'],
+        required: [],
       },
     },
     {
@@ -11117,6 +11145,7 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
       let dur = Number.parseInt(String(input.duracion_minutos ?? '').trim(), 10);
       if (![60, 90, 120].includes(dur)) dur = 90;
       let depCanon = normalizeChatIaDeporteToolInput(input.deporte);
+      let omitDeportePorFraseHoy = false;
       if (ultimoUser && chatIaShouldOmitDeporteDisponibilidadParaUltimoUsuario(ultimoUser)) {
         if (depCanon) {
           chatIaLogConsultarDisponibilidad({
@@ -11126,6 +11155,11 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
           });
         }
         depCanon = '';
+        omitDeportePorFraseHoy = true;
+      }
+      if (!depCanon && !omitDeportePorFraseHoy) {
+        const prefs = chatIaNormalizeDeportesPreferidosDb(ctx?.usuario_logueado?.deportes_preferidos);
+        if (prefs.length) depCanon = normalizeChatIaDeporteToolInput(prefs[0]);
       }
       chatIaLogConsultarDisponibilidad({
         step: 'entrada',
@@ -11186,11 +11220,15 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
       return okOut;
     }
     if (toolName === 'buscar_sedes_por_deporte') {
-      const depCanon = normalizeChatIaDeporteToolInput(input.deporte);
+      let depCanon = normalizeChatIaDeporteToolInput(input.deporte);
+      if (!depCanon) {
+        const prefs = chatIaNormalizeDeportesPreferidosDb(ctx?.usuario_logueado?.deportes_preferidos);
+        if (prefs.length) depCanon = normalizeChatIaDeporteToolInput(prefs[0]);
+      }
       if (!depCanon) {
         return {
           ok: false,
-          error: 'Parámetro deporte requerido (padbol, padel, futbol, tenis, pickleball, squash, futbol_5, futbol_7)',
+          error: 'Parámetro deporte requerido (padbol, padel, futbol, tenis, pickleball, squash, futbol_5, futbol_7), o cargá deportes preferidos en tu perfil.',
         };
       }
       const keys = chatIaDeporteDbKeysForFilter(depCanon);
@@ -11945,7 +11983,9 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
     const uid = String(authUser.id || '').trim();
     const perfilQ = await supabaseClient
       .from('jugadores_perfil')
-      .select('nombre,nombre_saludo,email,ciudad,pais,whatsapp,sede_id,user_id,alias,apodo,apellido')
+      .select(
+        'nombre,nombre_saludo,email,ciudad,pais,whatsapp,sede_id,user_id,alias,apodo,apellido,deportes_preferidos'
+      )
       .eq('email', em)
       .maybeSingle();
     const perfil = perfilQ.data || null;
@@ -12046,6 +12086,7 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
       email: em,
       user_id: uid,
       perfil,
+      deportes_preferidos: chatIaNormalizeDeportesPreferidosDb(perfil?.deportes_preferidos),
       reservas_ultimas_3,
       patron_sugerencias_ia,
       sede_habitual,
@@ -12121,12 +12162,16 @@ function buildChatIaBootstrapPayload(ctx) {
       ? Number(sedeHab)
       : null;
   const sede_habitual_nombre = u?.sede_habitual?.nombre ? String(u.sede_habitual.nombre).trim() : null;
+  const deportes_preferidos = chatIaNormalizeDeportesPreferidosDb(
+    u?.deportes_preferidos ?? u?.perfil?.deportes_preferidos
+  );
   return {
     idioma: l,
     saludo_titulo: pack.titulo,
     saludo_lineas: extras,
     sede_habitual_id,
     sede_habitual_nombre,
+    deportes_preferidos,
     whatsapp_club: u?.escalada_whatsapp_default || null,
   };
 }
@@ -12174,7 +12219,9 @@ Out of scope: if the question is unrelated to padbol/padel bookings, tournaments
 Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art and fecha_mañana_art are yyyy-LL-dd in America/Argentina/Buenos_Aires for "hoy" / "mañana"):
 ${JSON.stringify(payload)}
 
-Tools: call consultar_disponibilidad with sede_id + fecha + optional duracion_minutos (default 90). Pass deporte ONLY when the user explicitly names a sport in their message (padbol, padel, tenis, pickleball, squash, futbol / football). Do NOT pass deporte for generic "today\'s slots" / "ver horarios hoy" / "horarios" requests with no sport—omit deporte so all courts are included.
+Tools: call consultar_disponibilidad with sede_id + fecha + optional duracion_minutos (default 90). For deporte: (a) If the user explicitly names a sport, pass it. (b) If they do NOT name a sport but Context JSON usuario_logueado.deportes_preferidos is a non-empty array, pass the first entry as deporte (canonical: padbol, padel, tenis, pickleball, squash, futbol_5, futbol_7) so availability matches their profile—unless they clearly want all sports. (c) For the generic "ver horarios hoy" / "see today\'s court times" chip with no sport, omit deporte so all courts count. (d) If they name multiple sports in one question, prefer separate tool calls or the first one, then summarize.
+
+Deportes preferidos (Context usuario_logueado.deportes_preferidos): sports the player saved in Mi perfil. When searching clubs with buscar_sedes_por_deporte and the user did not name a sport, use the first preferred entry as deporte (same canonical list). If the list has several values and the user asks broadly, you may call the tool once per relevant preference or explain briefly.
 
 Sede for availability (read disponibilidad_sede_implicita in Context JSON):
 - If fuente is pagina_actual or habitual and sede_id is set: when the user asks for today\'s hours or generic availability without naming a club, use that sede_id with fecha = ymd_hoy_local from the same object (or matching sedes_hora_local). Do not ask which club first.
@@ -12185,7 +12232,7 @@ Use buscar_sedes_por_deporte for "which clubs offer sport X" or "near me"; combi
 buscar_sedes_por_deporte (critical): The tool uses a join of sedes with canchas: only clubs with at least one active court (canchas.estado) where canchas.deporte matches the requested sport—no other catalog. If sedes is empty, say clearly there are no clubs with that sport in that city/area (or near them), offer to try another city or region, and do NOT offer sedes from sedes_resumen, listar_sedes, or habitual club as "alternatives" unless they also appear in this tool result with that sport. Never imply a club offers a sport unless it is in the tool output.
 
 Availability (critical):
-- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result—except when disponibilidad_sede_implicita.fuente is ninguna and they have not specified a club yet: then ask which city/club first (no tool). Include deporte in the tool call only if the user clearly names a sport (e.g. "quiero jugar fútbol", "hay pádel"); if they only ask for today\'s times or generic availability, omit deporte. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
+- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result—except when disponibilidad_sede_implicita.fuente is ninguna and they have not specified a club yet: then ask which city/club first (no tool). Include deporte when the user names a sport OR when usuario_logueado.deportes_preferidos is non-empty and they did not ask for all-court generic "hoy" times—use the first preferred sport as in the Tools rule. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
 - Never invent times. If slots is empty, say there are no openings that day for that duration and suggest another date or duration—do not send the user to WhatsApp.
 - Never output <<<WHATSAPP>>> for availability, booking help, or missing data. WhatsApp is ONLY when the user clearly asks to message or call the club by phone/WhatsApp.
 

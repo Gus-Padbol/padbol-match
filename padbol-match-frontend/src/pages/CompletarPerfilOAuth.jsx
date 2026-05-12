@@ -21,6 +21,8 @@ import {
 } from '../utils/authIdentidad';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
+import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
+import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
 
 const OPCIONES_TELEFONO = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
 
@@ -40,6 +42,9 @@ export default function CompletarPerfilOAuth() {
   const [waLocalConfirm, setWaLocalConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  /** 0 = género + WhatsApp; 1 = deportes preferidos (opcional). */
+  const [paso, setPaso] = useState(0);
+  const [deportesPreferidos, setDeportesPreferidos] = useState([]);
 
   useEffect(() => {
     if (!userProfile) return;
@@ -53,33 +58,51 @@ export default function CompletarPerfilOAuth() {
       setWaLocal(local);
       setWaLocalConfirm('');
     }
-  }, [userProfile?.id, userProfile?.genero, userProfile?.whatsapp]);
+    if (Array.isArray(userProfile.deportes_preferidos)) {
+      setDeportesPreferidos(normalizeDeportesPreferidosArray(userProfile.deportes_preferidos));
+    } else {
+      setDeportesPreferidos([]);
+    }
+  }, [userProfile?.id, userProfile?.genero, userProfile?.whatsapp, userProfile?.deportes_preferidos]);
+
+  const validarPasoDatos = useCallback(() => {
+    setErrorMsg('');
+    const gen = String(genero || '').trim().toLowerCase();
+    if (gen !== 'masculino' && gen !== 'femenino') {
+      setErrorMsg('Selecciona género (Masculino o Femenino).');
+      return false;
+    }
+    const waLoc = digitsOnly(waLocal);
+    const waLoc2 = digitsOnly(waLocalConfirm);
+    if (waLoc !== waLoc2) {
+      setErrorMsg('Los números no coinciden.');
+      return false;
+    }
+    if (!whatsappNacionalValido(waLoc)) {
+      setErrorMsg('Número de WhatsApp inválido.');
+      return false;
+    }
+    const waDigitsFull = buildFullWhatsDigits(waCodigo, waLoc);
+    if (!whatsappDigitsValido(waDigitsFull)) {
+      setErrorMsg('Número de WhatsApp inválido.');
+      return false;
+    }
+    return true;
+  }, [genero, waLocal, waLocalConfirm, waCodigo]);
 
   const handleGuardar = useCallback(
     async (e) => {
       e.preventDefault();
       setErrorMsg('');
       if (!session?.user?.id) return;
+      if (paso === 0) {
+        if (!validarPasoDatos()) return;
+        setPaso(1);
+        return;
+      }
+      if (!validarPasoDatos()) return;
       const gen = String(genero || '').trim().toLowerCase();
-      if (gen !== 'masculino' && gen !== 'femenino') {
-        setErrorMsg('Selecciona género (Masculino o Femenino).');
-        return;
-      }
       const waLoc = digitsOnly(waLocal);
-      const waLoc2 = digitsOnly(waLocalConfirm);
-      if (waLoc !== waLoc2) {
-        setErrorMsg('Los números no coinciden.');
-        return;
-      }
-      if (!whatsappNacionalValido(waLoc)) {
-        setErrorMsg('Número de WhatsApp inválido.');
-        return;
-      }
-      const waDigitsFull = buildFullWhatsDigits(waCodigo, waLoc);
-      if (!whatsappDigitsValido(waDigitsFull)) {
-        setErrorMsg('Número de WhatsApp inválido.');
-        return;
-      }
       const waE164 = formatWhatsAppE164(waCodigo, waLoc);
       const email = String(session.user.email || '').trim();
       const meta = session.user.user_metadata || {};
@@ -98,12 +121,14 @@ export default function CompletarPerfilOAuth() {
 
       setBusy(true);
       try {
+        const depNorm = normalizeDeportesPreferidosArray(deportesPreferidos);
         if (userProfile?.id) {
           const { error } = await supabase
             .from('jugadores_perfil')
             .update({
               genero: gen,
               whatsapp: waE164,
+              deportes_preferidos: depNorm,
               ...(full && !String(userProfile.nombre || '').trim() ? { nombre: nombreIns, apellido: apellidoIns } : {}),
             })
             .eq('id', userProfile.id);
@@ -118,6 +143,7 @@ export default function CompletarPerfilOAuth() {
             whatsapp: waE164,
             alias: null,
             notificaciones_whatsapp: false,
+            deportes_preferidos: depNorm,
           };
           const { error } = await supabase.from('jugadores_perfil').insert(insertRow).select().single();
           if (error) throw error;
@@ -138,7 +164,20 @@ export default function CompletarPerfilOAuth() {
         setBusy(false);
       }
     },
-    [session, userProfile, genero, waCodigo, waLocal, waLocalConfirm, refreshSession, location.state, navigate]
+    [
+      session,
+      userProfile,
+      paso,
+      genero,
+      waCodigo,
+      waLocal,
+      waLocalConfirm,
+      deportesPreferidos,
+      validarPasoDatos,
+      refreshSession,
+      location.state,
+      navigate,
+    ]
   );
 
   if (!loading && !profileLoading && session?.user && perfilJugadorDatosMinimosCompletos(userProfile)) {
@@ -192,10 +231,12 @@ export default function CompletarPerfilOAuth() {
             margin: '0 0 8px',
           }}
         >
-          Completa tu perfil
+          {paso === 0 ? 'Completa tu perfil' : '¿Qué deportes practicás?'}
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
-          Completa tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.
+          {paso === 0
+            ? 'Completa tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.'
+            : 'Elegí uno o más (opcional pero recomendado). Podés cambiarlos después en Mi perfil.'}
         </p>
         <form
           onSubmit={(ev) => void handleGuardar(ev)}
@@ -210,6 +251,8 @@ export default function CompletarPerfilOAuth() {
             overflow: 'visible',
           }}
         >
+          {paso === 0 ? (
+            <>
           <label
             style={{
               display: 'block',
@@ -359,8 +402,45 @@ export default function CompletarPerfilOAuth() {
               />
             </div>
           </div>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 12px', lineHeight: 1.45 }}>
+                Elegí los que apliquen. Si preferís no decirlo ahora, dejá todo sin marcar y tocá «Guardar y continuar».
+              </p>
+              <DeportesPreferidosChips
+                value={deportesPreferidos}
+                onChange={setDeportesPreferidos}
+                disabled={busy || loading || profileLoading}
+              />
+            </>
+          )}
           {errorMsg ? (
-            <p style={{ color: '#b91c1c', fontSize: '14px', margin: '0 0 12px' }}>{errorMsg}</p>
+            <p style={{ color: '#b91c1c', fontSize: '14px', margin: '12px 0' }}>{errorMsg}</p>
+          ) : null}
+          {paso === 1 ? (
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg('');
+                setPaso(0);
+              }}
+              disabled={busy || loading || profileLoading}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1px solid #cbd5e1',
+                background: '#fff',
+                color: '#334155',
+                fontWeight: 700,
+                fontSize: '15px',
+                cursor: busy ? 'wait' : 'pointer',
+                marginBottom: '10px',
+              }}
+            >
+              Atrás
+            </button>
           ) : null}
           <button
             type="submit"
@@ -378,7 +458,7 @@ export default function CompletarPerfilOAuth() {
               opacity: busy ? 0.85 : 1,
             }}
           >
-            {busy ? 'Guardando…' : 'Guardar y continuar'}
+            {busy ? 'Guardando…' : paso === 0 ? 'Continuar' : 'Guardar y continuar'}
           </button>
         </form>
       </div>
