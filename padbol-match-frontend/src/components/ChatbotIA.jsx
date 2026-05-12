@@ -21,6 +21,19 @@ function getSpeechRecognitionCtor() {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
 
+function isSpeechRecognitionAvailable() {
+  return getSpeechRecognitionCtor() != null;
+}
+
+function isSpeechSynthesisAvailable() {
+  if (typeof window === 'undefined') return false;
+  const s = window.speechSynthesis;
+  return !!(s && typeof s.speak === 'function');
+}
+
+/** Breve pausa tras cerrar el mic antes de enviar el texto (UX “Procesando…”). */
+const VOICE_POST_TRANSCRIPT_MS = 420;
+
 export default function ChatbotIA() {
   const location = useLocation();
   const { session } = useAuth();
@@ -30,11 +43,26 @@ export default function ChatbotIA() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [sessionEnded, setSessionEnded] = useState(false);
-  const [listening, setListening] = useState(false);
+  /** idle: sin dictado; listening: grabando; processing: entre fin de voz y envío al API */
+  const [voicePhase, setVoicePhase] = useState('idle');
   const [readAloud, setReadAloud] = useState(false);
   const [lastReserve, setLastReserve] = useState(null);
   const recRef = useRef(null);
   const listEndRef = useRef(null);
+  const readAloudRef = useRef(readAloud);
+  const voiceSendTimerRef = useRef(null);
+
+  const micSupported = useMemo(() => isSpeechRecognitionAvailable(), []);
+  const ttsSupported = useMemo(() => isSpeechSynthesisAvailable(), []);
+  const isLikelyIOSWebKit = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }, []);
+
+  useEffect(() => {
+    readAloudRef.current = readAloud;
+  }, [readAloud]);
 
   const visible = useMemo(() => isChatbotIAVisiblePathname(location.pathname), [location.pathname]);
 
@@ -57,32 +85,75 @@ export default function ChatbotIA() {
 
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === 'user').length, [messages]);
 
+  const lastAssistantText = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i]?.role === 'assistant') return String(messages[i].content || '').trim();
+    }
+    return '';
+  }, [messages]);
+
   const stopRecognition = useCallback(() => {
+    if (voiceSendTimerRef.current != null) {
+      window.clearTimeout(voiceSendTimerRef.current);
+      voiceSendTimerRef.current = null;
+    }
     try {
       recRef.current?.stop?.();
     } catch {
       /* ignore */
     }
     recRef.current = null;
-    setListening(false);
+    setVoicePhase('idle');
   }, []);
 
   useEffect(() => () => stopRecognition(), [stopRecognition]);
 
-  const speakText = useCallback((text) => {
-    if (!readAloud || typeof window === 'undefined' || !window.speechSynthesis) return;
+  const speakAssistantReply = useCallback((text) => {
+    if (!ttsSupported || typeof window === 'undefined' || !window.speechSynthesis) return;
+    if (!readAloudRef.current) return;
     const t = String(text || '').trim();
     if (!t) return;
     try {
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(t);
-      u.lang = 'es-419';
-      u.rate = 1;
-      window.speechSynthesis.speak(u);
+      const utter = new SpeechSynthesisUtterance(t);
+      utter.lang = 'es-AR';
+      utter.rate = 0.92;
+      window.speechSynthesis.speak(utter);
     } catch {
       /* ignore */
     }
-  }, [readAloud]);
+  }, [ttsSupported]);
+
+  /** Llamar desde handlers de gesto del usuario (enviar, dictado, activar checkbox). */
+  const primeSpeechSynthesisFromUserGesture = useCallback(() => {
+    if (!ttsSupported || typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      window.speechSynthesis.resume();
+    } catch {
+      /* ignore */
+    }
+  }, [ttsSupported]);
+
+  const scheduleAssistantSpeak = useCallback(
+    (reply) => {
+      if (!ttsSupported) return;
+      const run = () => {
+        if (!readAloudRef.current) return;
+        speakAssistantReply(reply);
+      };
+      run();
+      window.setTimeout(() => {
+        if (!readAloudRef.current) return;
+        try {
+          const s = window.speechSynthesis;
+          if (s && !s.speaking && !s.pending) run();
+        } catch {
+          run();
+        }
+      }, isLikelyIOSWebKit ? 650 : 300);
+    },
+    [isLikelyIOSWebKit, speakAssistantReply, ttsSupported]
+  );
 
   const sendMessage = useCallback(
     async (textRaw) => {
@@ -93,10 +164,12 @@ export default function ChatbotIA() {
         return;
       }
 
+      primeSpeechSynthesisFromUserGesture();
       setError('');
       const historial = messages.map((m) => ({ role: m.role, content: m.content }));
       setMessages((prev) => [...prev, { role: 'user', content: text }]);
       setInput('');
+      setVoicePhase('idle');
       setLoading(true);
       setLastReserve(null);
 
@@ -125,7 +198,7 @@ export default function ChatbotIA() {
         if (data.reserve?.href) setLastReserve(data.reserve);
         const used = Number(data.user_messages_used);
         if (Number.isFinite(used) && used >= MAX_USER_MESSAGES) setSessionEnded(true);
-        speakText(reply);
+        scheduleAssistantSpeak(reply);
       } catch (e) {
         setMessages((prev) => prev.slice(0, -1));
         setError(e?.message || String(e));
@@ -133,47 +206,87 @@ export default function ChatbotIA() {
         setLoading(false);
       }
     },
-    [loading, sessionEnded, messages, userMessageCount, session?.user?.id, speakText]
+    [
+      loading,
+      sessionEnded,
+      messages,
+      userMessageCount,
+      session?.user?.id,
+      primeSpeechSynthesisFromUserGesture,
+      scheduleAssistantSpeak,
+    ]
   );
 
   const startVoice = useCallback(() => {
     const Ctor = getSpeechRecognitionCtor();
-    if (!Ctor) {
-      setError('Tu navegador no permite dictado por voz en esta página.');
+    if (!Ctor || !micSupported) return;
+    if (voicePhase === 'processing' || loading || sessionEnded) return;
+    if (voicePhase === 'listening') {
+      stopRecognition();
       return;
     }
-    if (listening || loading || sessionEnded) return;
     setError('');
+    primeSpeechSynthesisFromUserGesture();
     const rec = new Ctor();
     rec.lang = 'es-AR';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
     rec.onresult = (ev) => {
+      if (voiceSendTimerRef.current != null) {
+        window.clearTimeout(voiceSendTimerRef.current);
+        voiceSendTimerRef.current = null;
+      }
       const transcript = Array.from(ev.results || [])
         .map((r) => r[0]?.transcript)
         .filter(Boolean)
         .join(' ')
         .trim();
-      if (transcript) void sendMessage(transcript);
+      try {
+        rec.stop();
+      } catch {
+        /* ignore */
+      }
+      if (recRef.current === rec) recRef.current = null;
+      if (!transcript) {
+        setVoicePhase('idle');
+        return;
+      }
+      setVoicePhase('processing');
+      voiceSendTimerRef.current = window.setTimeout(() => {
+        voiceSendTimerRef.current = null;
+        void sendMessage(transcript);
+      }, VOICE_POST_TRANSCRIPT_MS);
     };
     rec.onerror = () => {
+      if (voiceSendTimerRef.current != null) {
+        window.clearTimeout(voiceSendTimerRef.current);
+        voiceSendTimerRef.current = null;
+      }
       setError('No se pudo usar el micrófono. Revisa permisos o intenta de nuevo.');
-      setListening(false);
-      recRef.current = null;
+      setVoicePhase('idle');
+      if (recRef.current === rec) recRef.current = null;
     };
     rec.onend = () => {
-      setListening(false);
-      recRef.current = null;
+      if (recRef.current === rec) recRef.current = null;
+      setVoicePhase((prev) => (prev === 'listening' ? 'idle' : prev));
     };
     recRef.current = rec;
-    setListening(true);
+    setVoicePhase('listening');
     try {
       rec.start();
     } catch {
-      setListening(false);
+      setVoicePhase('idle');
       setError('No se pudo iniciar el reconocimiento de voz.');
     }
-  }, [listening, loading, sessionEnded, sendMessage]);
+  }, [
+    voicePhase,
+    loading,
+    sessionEnded,
+    sendMessage,
+    micSupported,
+    primeSpeechSynthesisFromUserGesture,
+    stopRecognition,
+  ]);
 
   const nuevaConsulta = useCallback(() => {
     stopRecognition();
@@ -256,6 +369,20 @@ export default function ChatbotIA() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            <style>
+              {`
+                @keyframes chatbotia-mic-pulse {
+                  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+                  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+                }
+                .chatbotia-mic-recording {
+                  background: #ef4444 !important;
+                  border-color: #fecaca !important;
+                  color: #fff !important;
+                  animation: chatbotia-mic-pulse 1.15s ease-in-out infinite;
+                }
+              `}
+            </style>
             <div
               style={{
                 padding: '12px 14px',
@@ -323,6 +450,11 @@ export default function ChatbotIA() {
               ))}
               {loading ? (
                 <div style={{ color: '#64748b', fontSize: 13, fontWeight: 600 }}>Escribiendo…</div>
+              ) : null}
+              {voicePhase === 'processing' && !loading ? (
+                <div role="status" aria-live="polite" style={{ color: '#b45309', fontSize: 13, fontWeight: 700 }}>
+                  Procesando…
+                </div>
               ) : null}
               {error ? (
                 <div style={{ color: '#b91c1c', fontSize: 13, fontWeight: 600 }}>{error}</div>
@@ -393,14 +525,56 @@ export default function ChatbotIA() {
             </div>
 
             <div style={{ padding: '10px 12px 12px', borderTop: '1px solid #e2e8f0' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12, color: '#64748b' }}>
-                <input
-                  type="checkbox"
-                  checked={readAloud}
-                  onChange={(e) => setReadAloud(e.target.checked)}
-                />
-                Leer respuestas en voz alta
-              </label>
+              {ttsSupported ? (
+                <label
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12, color: '#64748b' }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={readAloud}
+                    onChange={(e) => {
+                      const v = e.target.checked;
+                      setReadAloud(v);
+                      if (v) primeSpeechSynthesisFromUserGesture();
+                      if (!v) {
+                        try {
+                          window.speechSynthesis?.cancel?.();
+                        } catch {
+                          /* ignore */
+                        }
+                      }
+                    }}
+                  />
+                  Leer respuestas en voz alta
+                </label>
+              ) : null}
+              {ttsSupported && isLikelyIOSWebKit && readAloud && lastAssistantText ? (
+                <div style={{ marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      primeSpeechSynthesisFromUserGesture();
+                      speakAssistantReply(lastAssistantText);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      border: '1px solid #cbd5e1',
+                      background: '#f8fafc',
+                      color: '#0f172a',
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Escuchar última respuesta (iOS / Safari)
+                  </button>
+                  <div style={{ marginTop: 4, fontSize: 11, color: '#94a3b8', lineHeight: 1.35 }}>
+                    En iPhone o iPad el audio puede requerir un toque explícito después de cargar la respuesta.
+                  </div>
+                </div>
+              ) : null}
               <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
                 <input
                   type="text"
@@ -423,22 +597,33 @@ export default function ChatbotIA() {
                     fontSize: 15,
                   }}
                 />
-                <button
-                  type="button"
-                  aria-label="Dictar por voz"
-                  disabled={loading || sessionEnded || listening}
-                  onClick={() => startVoice()}
-                  style={{
-                    width: 48,
-                    borderRadius: 10,
-                    border: '1px solid #cbd5e1',
-                    background: listening ? '#e0e7ff' : '#fff',
-                    fontSize: 22,
-                    cursor: loading || sessionEnded ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  🎤
-                </button>
+                {micSupported ? (
+                  <button
+                    type="button"
+                    aria-label={
+                      voicePhase === 'listening'
+                        ? 'Grabando, pulsa de nuevo para cancelar'
+                        : voicePhase === 'processing'
+                          ? 'Procesando dictado'
+                          : 'Dictar por voz'
+                    }
+                    aria-pressed={voicePhase === 'listening'}
+                    disabled={loading || sessionEnded || voicePhase === 'processing'}
+                    onClick={() => startVoice()}
+                    className={voicePhase === 'listening' ? 'chatbotia-mic-recording' : ''}
+                    style={{
+                      width: 48,
+                      borderRadius: 10,
+                      border: '1px solid #cbd5e1',
+                      background: '#fff',
+                      fontSize: 22,
+                      cursor:
+                        loading || sessionEnded || voicePhase === 'processing' ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    🎤
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   disabled={loading || sessionEnded || !input.trim()}

@@ -10631,6 +10631,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
   const etiqueta_fecha_listado = dtEt.isValid
     ? dtEt.toFormat("cccc d 'de' LLLL")
     : fechaM;
+  const etiqueta_fecha_corta = dtEt.isValid ? dtEt.toFormat('cccc d') : fechaM;
   const horaParaReserva = chatIaMatchHoraEnSlots(combined, slots);
   const horariosLista = Array.isArray(slots) ? slots.map((s) => s.hora_inicio).filter(Boolean) : [];
 
@@ -10644,12 +10645,13 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
       canchas_consideradas: chatIaSlotsReservaDesdeSede(sedeFull),
       slots_reales: slots,
       etiqueta_fecha_listado,
+      etiqueta_fecha_corta,
       horarios_inicio_csv: horariosLista.join(', '),
       nota_fecha: fechaNota,
       hora_para_reserva_url: horaParaReserva,
       instruccion_para_el_modelo:
         'OBLIGATORIO: en el cuerpo del mensaje listá primero los horarios libres en una sola línea con este formato exacto: Horarios disponibles el ' +
-        etiqueta_fecha_listado +
+        etiqueta_fecha_corta +
         ': ' +
         (horariosLista.length ? horariosLista.join(', ') : '(ninguno)') +
         '. Usá solo esas horas (hora_inicio de slots_reales); no inventes ni reemplaces por el horario general de la sede. No envíes al usuario solo al enlace de reservar sin esta línea. ' +
