@@ -173,6 +173,7 @@ function chatUiStrings(loc) {
       leerVozAlta: 'Read replies aloud',
       escucharUltimaIos: 'Play last reply (iOS / Safari)',
       hintIosSafari: 'On iPhone or iPad, audio may need an extra tap after the reply loads.',
+      ttsDetener: '⏹ Stop',
       errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
       errVoiceStart: 'Could not start speech recognition.',
       slotsDisponiblesTitulo: 'Free slots (tap to book):',
@@ -219,6 +220,7 @@ function chatUiStrings(loc) {
       leerVozAlta: 'Ler respostas em voz alta',
       escucharUltimaIos: 'Ouvir última resposta (iOS / Safari)',
       hintIosSafari: 'No iPhone ou iPad, o áudio pode exigir um toque extra após carregar a resposta.',
+      ttsDetener: '⏹ Parar',
       errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
       errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
       slotsDisponiblesTitulo: 'Horários livres (toque para reservar):',
@@ -264,6 +266,7 @@ function chatUiStrings(loc) {
     leerVozAlta: 'Leer respuestas en voz alta',
     escucharUltimaIos: 'Escuchar última respuesta (iOS / Safari)',
     hintIosSafari: 'En iPhone o iPad el audio puede requerir un toque explícito después de cargar la respuesta.',
+    ttsDetener: '⏹ Detener',
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
     slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
@@ -353,6 +356,8 @@ export default function ChatbotIA() {
   const [voiceInterim, setVoiceInterim] = useState('');
   const [voiceNotice, setVoiceNotice] = useState('');
   const [readAloud, setReadAloud] = useState(false);
+  /** True mientras `speechSynthesis` está reproduciendo la última respuesta del asistente. */
+  const [ttsPlaying, setTtsPlaying] = useState(false);
   const [lastReserve, setLastReserve] = useState(null);
   const [bootstrap, setBootstrap] = useState(null);
   const [sedeContextoTurno, setSedeContextoTurno] = useState(null);
@@ -610,6 +615,17 @@ export default function ChatbotIA() {
 
   useEffect(() => () => stopRecognition({ hard: true }), [stopRecognition]);
 
+  useEffect(
+    () => () => {
+      try {
+        window.speechSynthesis?.cancel?.();
+      } catch {
+        /* ignore */
+      }
+    },
+    [],
+  );
+
   const speakAssistantReply = useCallback((text) => {
     if (!ttsSupported || typeof window === 'undefined' || !window.speechSynthesis) return;
     if (!readAloudRef.current) return;
@@ -617,12 +633,16 @@ export default function ChatbotIA() {
     if (!t) return;
     try {
       window.speechSynthesis.cancel();
+      setTtsPlaying(false);
       const utter = new SpeechSynthesisUtterance(t);
+      utter.onend = () => setTtsPlaying(false);
+      utter.onerror = () => setTtsPlaying(false);
       utter.lang = bcp47LangForAssistantTts(t);
       utter.rate = 0.92;
+      setTtsPlaying(true);
       window.speechSynthesis.speak(utter);
     } catch {
-      /* ignore */
+      setTtsPlaying(false);
     }
   }, [ttsSupported]);
 
@@ -934,6 +954,7 @@ export default function ChatbotIA() {
     } catch {
       /* ignore */
     }
+    setTtsPlaying(false);
     setMessages([]);
     setInput('');
     setError('');
@@ -1355,11 +1376,40 @@ export default function ChatbotIA() {
                         } catch {
                           /* ignore */
                         }
+                        setTtsPlaying(false);
                       }
                     }}
                   />
                   {ui.leerVozAlta}
                 </label>
+              ) : null}
+              {ttsSupported && ttsPlaying ? (
+                <div style={{ marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        window.speechSynthesis?.cancel?.();
+                      } catch {
+                        /* ignore */
+                      }
+                      setTtsPlaying(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      border: '1px solid #fecaca',
+                      background: '#fef2f2',
+                      color: '#991b1b',
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {ui.ttsDetener}
+                  </button>
+                </div>
               ) : null}
               {ttsSupported && isLikelyIOSWebKit && readAloud && lastAssistantText ? (
                 <div style={{ marginBottom: 8 }}>
