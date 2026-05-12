@@ -10455,22 +10455,82 @@ function chatIaMatchHoraEnSlots(text, slots) {
   return null;
 }
 
+/** Palabras muy genéricas en marcas de sede; solas no eligen sede (p. ej. varias "Padbol Point …"). */
+const CHAT_IA_SEDE_GENERIC_TOKENS = new Set([
+  'padbol',
+  'padel',
+  'club',
+  'cancha',
+  'sede',
+  'point',
+  'center',
+  'centro',
+  'court',
+]);
+
+function chatIaKeywordHitInFoldedUserText(foldedUser, kw) {
+  const k = String(kw || '').trim();
+  if (!k) return false;
+  if (k.includes(' ')) return foldedUser.includes(k);
+  const esc = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`, 'i').test(foldedUser);
+}
+
+/**
+ * Sede por nombre/ciudad: normaliza como chatIaFoldText; acepta subcadenas del nombre completo,
+ * bigramas ("point one"), y tokens significativos (≥3 letras) de nombre o ciudad ("meca", "madrid", "miami").
+ * Si hay empate entre sedes, devuelve null para que el modelo pregunte cuál sede.
+ */
 function chatIaMatchSedeFromText(text, sedesCompact) {
   const folded = chatIaFoldText(text);
   if (!folded || !Array.isArray(sedesCompact) || sedesCompact.length === 0) return null;
-  const sorted = [...sedesCompact].sort(
-    (a, b) => String(b?.nombre || '').length - String(a?.nombre || '').length,
-  );
-  for (const s of sorted) {
-    const n = String(s?.nombre || '').trim();
-    if (!n) continue;
-    const fn = chatIaFoldText(n);
-    if (fn.length >= 4 && folded.includes(fn)) {
-      const id = Number(s.id);
-      if (Number.isFinite(id) && id > 0) return { id, nombre: n };
+
+  const scoreSede = (s) => {
+    const nombre = String(s?.nombre || '').trim();
+    const ciudad = String(s?.ciudad || '').trim();
+    if (!nombre) return 0;
+    const fn = chatIaFoldText(nombre);
+    if (fn.length >= 4 && folded.includes(fn)) return 1000;
+
+    let sc = 0;
+    const nt = fn.split(/[^a-z0-9]+/).filter(Boolean);
+    for (let i = 0; i < nt.length - 1; i += 1) {
+      const bg = `${nt[i]} ${nt[i + 1]}`;
+      if (bg.replace(/\s/g, '').length >= 4 && folded.includes(bg)) sc += 42;
     }
+
+    const bag = new Set([
+      ...fn.split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
+      ...chatIaFoldText(ciudad)
+        .split(/[^a-z0-9]+/)
+        .filter((t) => t.length >= 3),
+    ]);
+    for (const t of bag) {
+      if (CHAT_IA_SEDE_GENERIC_TOKENS.has(t)) continue;
+      if (chatIaKeywordHitInFoldedUserText(folded, t)) sc += 14 + Math.min(10, t.length);
+    }
+    return sc;
+  };
+
+  const ranked = sedesCompact
+    .map((s) => {
+      const nombre = String(s?.nombre || '').trim();
+      const id = Number(s.id);
+      const sc = scoreSede(s);
+      if (!Number.isFinite(id) || id <= 0 || !nombre) return null;
+      return { id, nombre, sc };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.sc - a.sc || b.nombre.length - a.nombre.length);
+
+  const best = ranked[0];
+  if (!best || best.sc < 12) return null;
+
+  const second = ranked[1];
+  if (second && second.id !== best.id && second.sc >= best.sc - 1 && second.sc >= 12) {
+    if (best.sc < 1000) return null;
   }
-  return null;
+  return { id: best.id, nombre: best.nombre };
 }
 
 /**
@@ -10573,7 +10633,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         estado: 'faltan_datos',
         falta: 'sede',
         instruccion_para_el_modelo:
-          'Falta solo identificar la sede. Respondé con UNA sola pregunta corta (una línea): qué sede o club del listado JSON. Sin otras preguntas ni explicaciones.',
+          'Falta solo identificar la sede. UNA pregunta corta (una línea): qué sede del listado JSON. Sin WhatsApp (no <<<WHATSAPP>>>).',
       },
     };
   }
@@ -10584,7 +10644,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         falta: 'fecha',
         sede_detectada: sedeM.nombre,
         instruccion_para_el_modelo:
-          'Falta solo la fecha. Respondé con UNA sola pregunta corta (una línea): qué día quiere (o “mañana”, etc.). Sin otras preguntas.',
+          'Falta solo la fecha. UNA pregunta corta (una línea): qué día (o “mañana”, etc.). Sin WhatsApp (no <<<WHATSAPP>>>).',
       },
     };
   }
@@ -10603,7 +10663,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         estado: 'faltan_datos',
         falta: 'sede',
         instruccion_para_el_modelo:
-          'No se pudo cargar la sede. UNA pregunta corta: que elija otra sede del listado o reformule el nombre.',
+          'No se pudo cargar la sede. UNA pregunta: otra sede del listado o reformular el nombre. Sin WhatsApp (no <<<WHATSAPP>>>).',
       },
     };
   }
@@ -10617,7 +10677,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         falta: 'fecha',
         sede_detectada: sedeM.nombre,
         instruccion_para_el_modelo:
-          'La fecha ya pasó en la sede. UNA pregunta corta: qué día futuro quiere.',
+          'La fecha ya pasó en la sede. UNA pregunta: qué día futuro. Sin WhatsApp (no <<<WHATSAPP>>>).',
       },
     };
   }
@@ -10639,7 +10699,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         fecha: fechaM,
         detalle: error,
         instruccion_para_el_modelo:
-          'Error al calcular disponibilidad. Máximo 2 líneas: disculpas y que intente de nuevo o reserve en /reservar. Sin <<<WHATSAPP>>> salvo que sea imposible orientarlo.',
+          'Error al calcular disponibilidad. Máximo 2 líneas: disculpas y reintento o /reservar. Sin WhatsApp (no <<<WHATSAPP>>>) salvo que el usuario pida explícitamente hablar con el club por WhatsApp.',
       },
     };
   }
@@ -10821,6 +10881,21 @@ function stripChatIaWhatsAppMarkers(rawText) {
     text,
     whatsapp_sede_id: Number.isFinite(lastSedeId) && lastSedeId > 0 ? lastSedeId : null,
   };
+}
+
+/** Usuario pide explícitamente WhatsApp o hablar con el club (no usar para "no entendí la sede"). */
+function chatIaUserExplicitClubWhatsappIntent(text) {
+  const t = chatIaFoldText(text);
+  if (!t.trim()) return false;
+  const wantsW = /\b(whatsapp|wsp|whats\s*app|wasap)\b/.test(t);
+  const wantsHuman = /\b(hablar|habla|contact(ar|o)?|comunic(ar|o)?|que\s+me\s+atend|atenci[oó]n|persona|humano|operador|due[nñ]o|encargad)\b/.test(
+    t,
+  );
+  const clubish = /\b(club|sede|local)\b/.test(t);
+  if (wantsW && (clubish || wantsHuman)) return true;
+  if (/\b(numero|n[uú]mero|telefono|tel[eé]fono|celular)\b.*\b(club|sede)\b/.test(t)) return true;
+  if (/\b(club|sede)\b.*\b(whatsapp|wsp)\b/.test(t)) return true;
+  return false;
 }
 
 async function chatIaResolveWhatsappEscalation(supabaseClient, markerSedeId, ctx) {
@@ -11194,8 +11269,9 @@ Availability (dates in JSON are Argentina ART; consulta_disponibilidad.nota_fech
 - estado === "error": max 2 lines; apology + retry or /reservar.
 - estado === "no_aplica": short factual answer from JSON only; do not invent hourly availability.
 
-WhatsApp marker <<<WHATSAPP>>> (use sparingly):
-- Add it ONLY if you truly cannot resolve with the given JSON (e.g. persistent technical failure after error state, or a request impossible from data AND not fixable by asking the single missing sede/fecha).
+WhatsApp marker <<<WHATSAPP>>> (strict):
+- Add it ONLY if (A) the user explicitly asks to contact the club / a human by WhatsApp or phone, OR (B) you truly cannot help after using the JSON (e.g. repeated technical failure, impossible request outside bookings with no path in the app)—NOT because a sede name was unclear or a date/sede field is missing.
+- NEVER add <<<WHATSAPP>>> when consulta_disponibilidad.estado is "faltan_datos" or "error" unless the user message itself clearly asks to speak/WhatsApp the club (missing sede/fecha → ask one question, do NOT escalate).
 - NEVER add <<<WHATSAPP>>> when consulta_disponibilidad.estado === "ok" or when you already listed slots or answered from context.
 - NEVER offer WhatsApp as the first or main option when availability or booking data exists.
 
@@ -11311,7 +11387,15 @@ app.post('/api/chat-ia', async (req, res) => {
     let { text: respuesta, reserve } = stripChatIaReserveMarker(txt);
     const waSt = stripChatIaWhatsAppMarkers(respuesta);
     respuesta = waSt.text;
-    const whatsapp_escalada = await chatIaResolveWhatsappEscalation(supabase, waSt.whatsapp_sede_id, ctx);
+    let whatsapp_escalada = await chatIaResolveWhatsappEscalation(supabase, waSt.whatsapp_sede_id, ctx);
+    const cdEst = dispExtra.consulta_disponibilidad?.estado;
+    if (
+      whatsapp_escalada &&
+      !chatIaUserExplicitClubWhatsappIntent(mensaje) &&
+      (cdEst === 'faltan_datos' || cdEst === 'error')
+    ) {
+      whatsapp_escalada = null;
+    }
 
     return res.json({
       respuesta,
