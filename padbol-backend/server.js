@@ -544,7 +544,7 @@ async function fetchCanchasRowsForSede(sedeId) {
   if (!Number.isFinite(sid)) return [];
   const { data, error } = await supabase
     .from('canchas')
-    .select('id, sede_id, nombre, estado, descripcion, orden')
+    .select('*')
     .eq('sede_id', sid)
     .order('id', { ascending: true });
   if (error) throw error;
@@ -608,6 +608,8 @@ function sedeResponseConCanchasActivas(sedeRow, canchasRows) {
       .map((c) => ({
         numero: c.numero_reserva,
         nombre: String(c.nombre || `Cancha ${c.numero_reserva}`).trim(),
+        deporte: c.deporte != null && String(c.deporte).trim() !== '' ? String(c.deporte).trim() : null,
+        tipo: c.tipo != null && String(c.tipo).trim() !== '' ? String(c.tipo).trim() : null,
       }))
       .sort((a, b) => a.numero - b.numero),
   };
@@ -2292,26 +2294,28 @@ app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
   }
 });
 
-/** Slots libres por id de sede (misma lógica que ReservaForm y tool consultar_disponibilidad). Query: fecha=YYYY-MM-DD, duracion=60|90|120 (default 90). */
+/** Slots libres por id de sede (misma lógica que ReservaForm y tool consultar_disponibilidad). Query: fecha=YYYY-MM-DD, duracion=60|90|120 (default 90), deporte opcional (mismo criterio que el tool). */
 app.get('/api/sedes/:id/disponibilidad-slots', async (req, res) => {
   try {
     const sid = parseInt(String(req.params.id || '').trim(), 10);
     const fecha = String(req.query?.fecha || '').trim().slice(0, 10);
     const durRaw = parseInt(String(req.query?.duracion ?? '90'), 10);
     const dur = [60, 90, 120].includes(durRaw) ? durRaw : 90;
+    const depCanon = normalizeChatIaDeporteToolInput(req.query?.deporte);
     if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       return res.status(400).json({ error: 'Query fecha requerida (YYYY-MM-DD)' });
     }
     const sedeFull = await chatIaFetchSedeFullForTool(supabase, sid);
     if (!sedeFull) return res.status(404).json({ error: 'Sede no encontrada' });
-    const { slots, error } = await computeChatIaSlotsReales(supabase, sedeFull, fecha, dur);
+    const { slots, error } = await computeChatIaSlotsReales(supabase, sedeFull, fecha, dur, depCanon || null);
     if (error) return res.status(500).json({ error });
     const out = {
       sede_id: sid,
       sede_nombre: String(sedeFull.nombre || '').trim(),
       fecha,
       duracion_minutos: dur,
+      deporte_filtro: depCanon || null,
       slots,
     };
     console.log('[disponibilidad-slots] GET ok', {
@@ -3327,6 +3331,113 @@ function normalizeTorneoDeporteForDb(raw) {
   if (s === 'pádel' || s === 'padel') return 'padel';
   if (TORNEO_DEPORTE_VALID.has(s)) return s;
   return 'padbol';
+}
+
+/** Claves DB para canchas_por_deporte / filtro (fútbol genérico → 5 y 7). */
+function chatIaDeporteDbKeysForFilter(deporteCanon) {
+  const c = String(deporteCanon || '').trim();
+  if (!c) return [];
+  if (c === '__futbol_any__') return ['futbol_5', 'futbol_7'];
+  if (TORNEO_DEPORTE_VALID.has(c)) return [c];
+  return [];
+}
+
+/** Normaliza el parámetro deporte del tool chat-IA; vacío = sin filtro. */
+function normalizeChatIaDeporteToolInput(raw) {
+  const s0 = String(raw ?? '').trim();
+  if (!s0) return '';
+  const s = chatIaFoldText(s0).replace(/\s+/g, ' ').trim();
+  if (TORNEO_DEPORTE_VALID.has(s)) return s;
+  const t = s.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (/\bfutbol\s*7\b|\bf7\b/.test(t)) return 'futbol_7';
+  if (/\bfutbol\s*5\b|\bf5\b/.test(t)) return 'futbol_5';
+  if (/\bfutbol\b|\bfootball\b|futsal/.test(t)) return '__futbol_any__';
+  if (/\bpadel\b|\bpaddle\b/.test(t)) return 'padel';
+  if (/\bpadbol\b/.test(t)) return 'padbol';
+  if (/\bpickleball\b|\bpickle\b/.test(t)) return 'pickleball';
+  if (/\bsquash\b/.test(t)) return 'squash';
+  if (/\btenis\b|\btennis\b/.test(t)) return 'tenis';
+  return '';
+}
+
+async function chatIaFetchCanchasPorDeporteRows(supabaseClient, sedeId) {
+  const sid = Number(sedeId);
+  if (!Number.isFinite(sid) || sid <= 0) return { rows: [], error: null };
+  const { data, error } = await supabaseClient
+    .from('canchas_por_deporte')
+    .select('deporte, cantidad, activo')
+    .eq('sede_id', sid);
+  if (error) return { rows: [], error: error.message };
+  return { rows: Array.isArray(data) ? data : [], error: null };
+}
+
+function chatIaCanchaRowMatchesDeporteKeys(c, keys) {
+  const keysSet = new Set(keys);
+  const d1 = String(c?.deporte || '').trim() ? normalizeTorneoDeporteForDb(c.deporte) : '';
+  const d2 = String(c?.tipo || '').trim() ? normalizeTorneoDeporteForDb(c.tipo) : '';
+  if (d1 && keysSet.has(d1)) return true;
+  if (d2 && keysSet.has(d2)) return true;
+  return false;
+}
+
+function chatIaCanchaNombreSugiereDeporte(c, keys) {
+  const blob = chatIaFoldText(`${c?.nombre || ''} ${c?.descripcion || ''}`);
+  if (!blob.trim()) return false;
+  const hayFutbol = keys.includes('futbol_5') || keys.includes('futbol_7');
+  if (hayFutbol && /\bfutbol\b|futbol|football|futsal|(^|[^a-z])f5([^a-z]|$)|(^|[^a-z])f7([^a-z]|$)/.test(blob)) return true;
+  if (keys.includes('padbol') && /padbol/.test(blob)) return true;
+  if (keys.includes('padel') && /padel|paddle/.test(blob)) return true;
+  if (keys.includes('tenis') && /tenis|tennis/.test(blob)) return true;
+  if (keys.includes('pickleball') && /pickle/.test(blob)) return true;
+  if (keys.includes('squash') && /squash/.test(blob)) return true;
+  return false;
+}
+
+async function chatIaResolveNumerosCanchaParaDeporte(supabaseClient, sedeRow, deporteCanon) {
+  const keys = chatIaDeporteDbKeysForFilter(deporteCanon);
+  if (!keys.length) return { numeros: null };
+
+  const sid = Number(sedeRow?.id);
+  if (!Number.isFinite(sid) || sid <= 0) return { numeros: null };
+
+  const { rows: cpdRows, error: cpdErr } = await chatIaFetchCanchasPorDeporteRows(supabaseClient, sid);
+  if (cpdErr) return { numeros: [], error: cpdErr };
+
+  const cpdActive = (cpdRows || []).filter((r) => r.activo !== false && Number(r.cantidad) > 0);
+  const cpdForSport = cpdActive.filter((r) => keys.includes(normalizeTorneoDeporteForDb(r.deporte)));
+  if (!cpdForSport.length) return { numeros: [] };
+
+  const fullRows = await fetchCanchasRowsForSede(sid);
+  const enriched = canchasConNumeroReserva(fullRows);
+  const activas = enriched
+    .filter((c) => normalizeEstadoCancha(c.estado) === 'activa')
+    .sort((a, b) => Number(a.numero_reserva) - Number(b.numero_reserva));
+
+  const fromRow = [];
+  for (const c of activas) {
+    if (chatIaCanchaRowMatchesDeporteKeys(c, keys)) fromRow.push(Number(c.numero_reserva));
+  }
+  if (fromRow.length) return { numeros: [...new Set(fromRow)].sort((a, b) => a - b) };
+
+  const nameHits = activas.filter((c) => chatIaCanchaNombreSugiereDeporte(c, keys)).map((c) => Number(c.numero_reserva));
+  if (nameHits.length) return { numeros: [...new Set(nameHits)].sort((a, b) => a - b) };
+
+  const orderedCpd = [...cpdActive].sort((a, b) => String(a.deporte || '').localeCompare(String(b.deporte || '')));
+  let cursor = 0;
+  const byDep = {};
+  for (const row of orderedCpd) {
+    const dep = normalizeTorneoDeporteForDb(row.deporte);
+    let k = Math.max(0, Number(row.cantidad) || 0);
+    k = Math.min(k, Math.max(0, activas.length - cursor));
+    byDep[dep] = byDep[dep] || [];
+    for (let i = 0; i < k; i++) {
+      if (cursor < activas.length) byDep[dep].push(Number(activas[cursor++].numero_reserva));
+    }
+  }
+  const merged = [];
+  for (const k of keys) merged.push(...(byDep[k] || []));
+  const out = [...new Set(merged)].filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+  return { numeros: out };
 }
 
 /** Pickleball / squash / tenis: singles o dobles; fútbol 5/7: equipo fijo; padbol/pádel: dobles. */
@@ -10238,8 +10349,9 @@ function chatIaSlotsReservaDesdeSede(sedeRow) {
 
 /**
  * Slots con al menos una cancha ofertada libre (misma grilla que ReservaForm: paso 30 min, duración fija).
+ * @param {string|null|undefined} deporteCanon - resultado de normalizeChatIaDeporteToolInput; vacío = sin filtro por deporte.
  */
-async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, duracionMin) {
+async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, duracionMin, deporteCanon = null) {
   const nombreSede = String(sedeRow?.nombre || '').trim();
   if (!nombreSede || !/^\d{4}-\d{2}-\d{2}$/.test(String(fechaYmd || '').slice(0, 10))) {
     return { slots: [], error: 'Parámetros inválidos' };
@@ -10274,13 +10386,23 @@ async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, durac
     /* keep default */
   }
 
-  const numsSlots = chatIaSlotsReservaDesdeSede(sedeRow);
+  let numsSlots = chatIaSlotsReservaDesdeSede(sedeRow);
+  if (deporteCanon) {
+    const r = await chatIaResolveNumerosCanchaParaDeporte(supabaseClient, sedeRow, deporteCanon);
+    if (r.error) return { slots: [], error: r.error };
+    if (!Array.isArray(r.numeros) || r.numeros.length === 0) {
+      return { slots: [], error: null };
+    }
+    numsSlots = r.numeros;
+  }
+
   const tz = normalizeSedeTimezone(sedeRow?.timezone || inferTimezoneFromCiudadPais(sedeRow?.ciudad, sedeRow?.pais));
   const hoySede = ymdTodayInSedeTimezone(tz);
   const filtrarPasadosHoy = Boolean(hoySede && fecha === hoySede);
   const aperturaMin = horaApertura * 60;
   const cierreMin = horaCierre * 60;
 
+  const canchasMeta = Array.isArray(sedeRow?.canchas_activas) ? sedeRow.canchas_activas : [];
   const slots = [];
   for (let startMin = aperturaMin; startMin + duracion <= cierreMin; startMin += CHAT_IA_SLOT_STEP_MIN) {
     const endMin = startMin + duracion;
@@ -10296,20 +10418,29 @@ async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, durac
           reservasSolapanBackend(startMin, duracion, r),
       )
       .map((r) => parseInt(String(r.cancha), 10));
-    const ocupadas = new Set(ocupadasNums).size;
-    const libres = numsSlots.length - ocupadas;
+    const ocupSet = new Set(ocupadasNums);
+    const libres = numsSlots.length - ocupSet.size;
 
     if (libres > 0) {
       if (filtrarPasadosHoy) {
         const slotMs = reservaWallStartUtcMs(fecha, horaInicio, tz);
         if (slotMs != null && Number.isFinite(slotMs) && slotMs <= Date.now()) continue;
       }
+      const libresNums = numsSlots.filter((n) => !ocupSet.has(n));
+      const detalleCanchas = libresNums.map((num) => {
+        const ca = canchasMeta.find((x) => Number(x.numero) === Number(num));
+        const nom = String(ca?.nombre || '').trim() || `Cancha ${num}`;
+        return { numero: num, nombre: nom };
+      });
+      const nombresTxt = detalleCanchas.map((d) => d.nombre).join(' · ');
       slots.push({
         hora_inicio: horaInicio,
         hora_fin: horaFin,
         horario: `${horaInicio} - ${horaFin}`,
         canchas_libres: libres,
         canchas_ofertadas: numsSlots.length,
+        canchas_detalle: detalleCanchas,
+        canchas_nombres: nombresTxt,
       });
     }
   }
@@ -10487,13 +10618,18 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'consultar_disponibilidad',
       description:
-        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. If the user does not specify duration, omit duracion_minutos (server defaults to 90). For Spanish mañana / English tomorrow use fecha_mañana_art from the Context JSON. If sede_id is unknown, call listar_sedes or match sedes_resumen by name.',
+        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. When the user mentions a specific sport (football, padbol, padel, tennis, pickleball, squash), pass it as deporte so only courts for that sport are considered (canchas.deporte/tipo, cancha names, or canchas_por_deporte). If sede_id is unknown, call listar_sedes or buscar_sedes_por_deporte.',
       input_schema: {
         type: 'object',
         properties: {
           sede_id: { type: 'number', description: 'Numeric club id from listar_sedes or context' },
           fecha: { type: 'string', description: 'Date YYYY-MM-DD, or relative words resolved server-side (mañana/hoy)' },
           duracion_minutos: { type: 'number', enum: [60, 90, 120], description: 'Optional; default 90' },
+          deporte: {
+            type: 'string',
+            description:
+              'Optional: padbol, padel, tenis, pickleball, squash, futbol (or futbol_5 / futbol_7). Required when the user asks for a specific sport.',
+          },
         },
         required: ['sede_id', 'fecha'],
       },
@@ -10506,6 +10642,23 @@ function chatIaAnthropicToolsDefinition() {
         properties: {
           pais: { type: 'string', description: 'Filtro opcional, coincide con sedes.pais (ilike)' },
         },
+      },
+    },
+    {
+      name: 'buscar_sedes_por_deporte',
+      description:
+        'Find clubs that declare the given sport in canchas_por_deporte (with court counts). Use for questions like which clubs near me offer football or padel. Combine with optional ciudad or pais filters (ilike on sedes).',
+      input_schema: {
+        type: 'object',
+        properties: {
+          deporte: {
+            type: 'string',
+            description: 'Required: padbol, padel, futbol, tenis, pickleball, squash, futbol_5, futbol_7',
+          },
+          ciudad: { type: 'string', description: 'Optional: filters sedes.ciudad (ilike)' },
+          pais: { type: 'string', description: 'Optional: filters sedes.pais (ilike)' },
+        },
+        required: ['deporte'],
       },
     },
     {
@@ -10634,6 +10787,7 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
       const fecha = chatIaResolveDisponibilidadFecha(input.fecha, ctx);
       let dur = Number.parseInt(String(input.duracion_minutos ?? '').trim(), 10);
       if (![60, 90, 120].includes(dur)) dur = 90;
+      const depCanon = normalizeChatIaDeporteToolInput(input.deporte);
       chatIaLogConsultarDisponibilidad({
         step: 'entrada',
         toolInput_type: typeof toolInput,
@@ -10641,9 +10795,11 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
         raw_sede_id: input.sede_id,
         raw_fecha: input.fecha,
         raw_duracion_minutos: input.duracion_minutos,
+        raw_deporte: input.deporte,
         parsed_sede_id: sedeId,
         parsed_fecha: fecha,
         parsed_duracion_minutos: dur,
+        deporte_canon: depCanon || null,
       });
       if (!Number.isFinite(sedeId) || sedeId <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
         const errOut = { ok: false, error: 'Parámetros inválidos: sede_id numérico y fecha válida (YYYY-MM-DD o mañana/hoy según contexto)' };
@@ -10666,7 +10822,7 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
         cantidad_canchas: sedeFull.cantidad_canchas,
         canchas_activas_count: Array.isArray(sedeFull.canchas_activas) ? sedeFull.canchas_activas.length : 0,
       });
-      const { slots, error } = await computeChatIaSlotsReales(supabaseClient, sedeFull, fecha, dur);
+      const { slots, error } = await computeChatIaSlotsReales(supabaseClient, sedeFull, fecha, dur, depCanon || null);
       if (error) {
         const errOut = { ok: false, error };
         chatIaLogConsultarDisponibilidad({ step: 'compute_slots_error', sedeId, fecha, dur, ...errOut });
@@ -10678,14 +10834,60 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
         sede_nombre: String(sedeFull.nombre || '').trim(),
         fecha,
         duracion_minutos: dur,
+        deporte_filtro: depCanon || null,
         slots: slots.map((s) => ({
           hora_inicio: s.hora_inicio,
           hora_fin: s.hora_fin,
           canchas_libres: s.canchas_libres,
+          canchas_nombres: s.canchas_nombres || null,
+          canchas_detalle: Array.isArray(s.canchas_detalle) ? s.canchas_detalle.slice(0, 8) : [],
         })),
       };
-      chatIaLogConsultarDisponibilidad({ step: 'ok', sedeId, fecha, dur, slots_count: slots.length });
+      chatIaLogConsultarDisponibilidad({ step: 'ok', sedeId, fecha, dur, deporte: depCanon || null, slots_count: slots.length });
       return okOut;
+    }
+    if (toolName === 'buscar_sedes_por_deporte') {
+      const depCanon = normalizeChatIaDeporteToolInput(input.deporte);
+      if (!depCanon) {
+        return {
+          ok: false,
+          error: 'Parámetro deporte requerido (padbol, padel, futbol, tenis, pickleball, squash, futbol_5, futbol_7)',
+        };
+      }
+      const keys = chatIaDeporteDbKeysForFilter(depCanon);
+      if (!keys.length) return { ok: false, error: 'Deporte no reconocido' };
+      const { data: cpd, error } = await supabaseClient
+        .from('canchas_por_deporte')
+        .select('sede_id, deporte, cantidad, activo')
+        .in('deporte', keys)
+        .gt('cantidad', 0);
+      if (error) return { ok: false, error: error.message };
+      const sidMap = new Map();
+      for (const row of cpd || []) {
+        if (row?.activo === false) continue;
+        const sid = Number(row.sede_id);
+        if (!Number.isFinite(sid) || sid <= 0) continue;
+        const c = Number(row.cantidad) || 0;
+        if (c <= 0) continue;
+        sidMap.set(sid, (sidMap.get(sid) || 0) + c);
+      }
+      const ids = [...sidMap.keys()];
+      if (!ids.length) return { ok: true, deporte_filtro: depCanon, sedes: [] };
+      let sq = supabaseClient.from('sedes').select('id,nombre,ciudad,pais').in('id', ids).order('nombre', { ascending: true }).limit(80);
+      const ciudadF = String(input.ciudad || '').trim();
+      const paisF = String(input.pais || '').trim();
+      if (paisF) sq = sq.ilike('pais', `%${paisF}%`);
+      if (ciudadF) sq = sq.ilike('ciudad', `%${ciudadF}%`);
+      const { data: sedesData, error: sErr } = await sq;
+      if (sErr) return { ok: false, error: sErr.message };
+      const sedes = (sedesData || []).map((s) => ({
+        id: s.id,
+        nombre: s.nombre,
+        ciudad: s.ciudad,
+        pais: s.pais,
+        canchas_declaradas_para_deporte: sidMap.get(Number(s.id)) || 0,
+      }));
+      return { ok: true, deporte_filtro: depCanon, sedes };
     }
     if (toolName === 'listar_sedes') {
       const paisF = String(input.pais || '').trim();
@@ -10901,6 +11103,7 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
             parsed_sede_id: parsedIn.sede_id,
             parsed_fecha: parsedIn.fecha,
             parsed_duracion_minutos: parsedIn.duracion_minutos,
+            parsed_deporte: parsedIn.deporte,
           }),
         );
       }
@@ -10915,6 +11118,7 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
           sede_nombre: String(out.sede_nombre || nombre).trim(),
           fecha: out.fecha || null,
           duracion_minutos: out.duracion_minutos ?? null,
+          deporte_filtro: out.deporte_filtro != null && String(out.deporte_filtro).trim() ? String(out.deporte_filtro).trim() : null,
           slots: Array.isArray(out.slots) ? out.slots.slice(0, 24) : [],
         };
       } else if (tu.name === 'listar_torneos') {
@@ -11493,10 +11697,10 @@ Out of scope: if the question is unrelated to padbol/padel bookings, tournaments
 Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art and fecha_mañana_art are yyyy-LL-dd in America/Argentina/Buenos_Aires for "hoy" / "mañana"):
 ${JSON.stringify(payload)}
 
-Tools: call consultar_disponibilidad with sede_id + fecha (YYYY-MM-DD, or the literal word for tomorrow resolved server-side) + optional duracion_minutos (default 90). Use listar_sedes to resolve sede_id from a club name when needed; you can also match sedes_resumen by nombre. Use listar_torneos / consultar_ranking as needed.
+Tools: call consultar_disponibilidad with sede_id + fecha + optional duracion_minutos (default 90) + optional deporte when the user names a sport (padbol, padel, tenis, pickleball, squash, futbol / football → use deporte in the tool). Use buscar_sedes_por_deporte with deporte and optional ciudad/pais when they ask which clubs offer a sport. Use listar_sedes to resolve sede_id from a name or match sedes_resumen. Use listar_torneos / consultar_ranking as needed.
 
 Availability (critical):
-- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes if needed) and answer ONLY with the tool result. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
+- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result. If they mention a specific sport, ALWAYS pass the same sport as the deporte parameter. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
 - Never invent times. If slots is empty, say there are no openings that day for that duration and suggest another date or duration—do not send the user to WhatsApp.
 - Never output <<<WHATSAPP>>> for availability, booking help, or missing data. WhatsApp is ONLY when the user clearly asks to message or call the club by phone/WhatsApp.
 

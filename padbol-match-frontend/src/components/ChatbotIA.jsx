@@ -552,6 +552,10 @@ export default function ChatbotIA() {
                 sede_nombre: String(data.disponibilidad.sede_nombre || '').trim(),
                 fecha: String(data.disponibilidad.fecha).slice(0, 10),
                 duracion_minutos: data.disponibilidad.duracion_minutos,
+                deporte_filtro:
+                  data.disponibilidad.deporte_filtro != null && String(data.disponibilidad.deporte_filtro).trim()
+                    ? String(data.disponibilidad.deporte_filtro).trim()
+                    : null,
                 slots: data.disponibilidad.slots,
               }
             : null;
@@ -952,7 +956,21 @@ export default function ChatbotIA() {
                         {m.disponibilidad.slots.slice(0, 14).map((s, j) => {
                           const sid = m.disponibilidad.sede_id;
                           const fe = m.disponibilidad.fecha;
-                          const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
+                          const det = Array.isArray(s.canchas_detalle) ? s.canchas_detalle : [];
+                          const names = det.map((d) => String(d?.nombre || '').trim()).filter(Boolean);
+                          let courtLabel = '';
+                          if (names.length === 1) courtLabel = names[0];
+                          else if (names.length === 2) courtLabel = `${names[0]}, ${names[1]}`;
+                          else if (names.length > 2) courtLabel = `${names[0]}, ${names[1]} +${names.length - 2}`;
+                          else {
+                            const fb = String(s.canchas_nombres || '').trim();
+                            courtLabel = fb || '';
+                          }
+                          const chipText = courtLabel ? `${s.hora_inicio} · ${courtLabel}` : String(s.hora_inicio || '').trim();
+                          let href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
+                          if (det.length === 1 && det[0]?.numero != null && String(det[0].numero).trim() !== '') {
+                            href += `&canchaId=${encodeURIComponent(String(det[0].numero).trim())}`;
+                          }
                           return (
                             <Link
                               key={`${i}-slot-${j}`}
@@ -968,10 +986,11 @@ export default function ChatbotIA() {
                                 fontSize: 13,
                                 textDecoration: 'none',
                                 border: '1px solid #c7d2fe',
+                                maxWidth: '100%',
+                                wordBreak: 'break-word',
                               }}
                             >
-                              {s.hora_inicio}
-                              {s.canchas_libres != null ? ` · ${s.canchas_libres}` : ''}
+                              {chipText}
                             </Link>
                           );
                         })}
