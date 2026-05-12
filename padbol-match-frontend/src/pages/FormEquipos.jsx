@@ -2152,7 +2152,7 @@ export default function FormEquipos() {
           ) : yaEnPlantelInvitado || yaEsteEquipo ? (
             <>
               <div style={{ fontWeight: 800, fontSize: '16px', color: '#14532d', marginBottom: '8px' }}>
-                Ya formás parte de {inviteEquipoRow?.nombre ? `«${inviteEquipoRow.nombre}»` : 'este equipo'}.
+                Ya formas parte de {inviteEquipoRow?.nombre ? `«${inviteEquipoRow.nombre}»` : 'este equipo'}.
               </div>
               <button
                 type="button"

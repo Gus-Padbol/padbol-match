@@ -154,15 +154,15 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
       return;
     }
     if (licenciaTipoActual.alcance === 'ciudad' && !form.ciudad_representa.trim()) {
-      setErr('Para Master Ciudad debés indicar la ciudad que representa.');
+      setErr('Para Master Ciudad debes indicar la ciudad que representa.');
       return;
     }
     if (licenciaTipoActual.alcance === 'provincia' && !form.provincia_representa.trim()) {
-      setErr('Para Master Provincia debés indicar la provincia/estado que representa.');
+      setErr('Para Master Provincia debes indicar la provincia/estado que representa.');
       return;
     }
     if (licenciaTipoActual.alcance === 'pais' && !form.pais_representa.trim()) {
-      setErr('Para Master País debés indicar el país que representa.');
+      setErr('Para Master País debes indicar el país que representa.');
       return;
     }
     setSending(true);

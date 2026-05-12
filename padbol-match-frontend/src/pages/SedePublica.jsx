@@ -729,7 +729,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
             rel="noopener noreferrer"
             style={{ color: '#bbf7d0', fontWeight: 700, textDecoration: 'none' }}
           >
-            Escribinos por WhatsApp
+            Escríbenos por WhatsApp
           </a>
         </span>
       </div>

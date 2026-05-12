@@ -4913,7 +4913,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   lineHeight: 1.45,
                 }}
               >
-                Editá títulos, subtítulos e imágenes del hub del jugador. No tenés acceso al resto del panel.
+                Edita títulos, subtítulos e imágenes del hub del jugador. No tienes acceso al resto del panel.
               </p>
               <button
                 type="button"

@@ -12,12 +12,12 @@ export default function TerminosCondiciones() {
   return (
     <LegalStaticPageLayout
       title="Términos y Condiciones"
-      lead="Última actualización: información general para usuarios de Padbol Match. Si tenés dudas, escribinos."
+      lead="Última actualización: información general para usuarios de Padbol Match. Si tienes dudas, escríbenos."
     >
       <LegalSectionTitle>Titular del servicio</LegalSectionTitle>
       <LegalP>
         Padbol Match es operado por <strong style={{ color: '#e2e8f0' }}>Entertainment and Sports Services LLC</strong>,
-        con domicilio en el Estado de Florida, Estados Unidos. Al usar la plataforma aceptás estos términos.
+        con domicilio en el Estado de Florida, Estados Unidos. Al usar la plataforma aceptas estos términos.
       </LegalP>
 
       <LegalSectionTitle>Qué es Padbol Match</LegalSectionTitle>
@@ -29,7 +29,7 @@ export default function TerminosCondiciones() {
 
       <LegalSectionTitle>Condiciones de uso de la plataforma</LegalSectionTitle>
       <LegalUl>
-        <LegalLi>Debés proporcionar datos veraces y mantener tu cuenta segura (contraseña, dispositivo).</LegalLi>
+        <LegalLi>Debes proporcionar datos veraces y mantener tu cuenta segura (contraseña, dispositivo).</LegalLi>
         <LegalLi>Está prohibido usar la plataforma de forma fraudulenta, para perjudicar a terceros o vulnerar la ley.</LegalLi>
         <LegalLi>Podemos suspender o limitar cuentas ante incumplimientos graves o riesgo para la comunidad.</LegalLi>
       </LegalUl>
@@ -43,7 +43,7 @@ export default function TerminosCondiciones() {
         <LegalLi>
           <strong style={{ color: '#e2e8f0' }}>Cancelación y reembolsos:</strong> las reglas de cancelación, cambios y
           penalidades dependen de la <strong style={{ color: '#e2e8f0' }}>política de cada sede</strong> publicada o
-          comunicada por el club. Revisá siempre los detalles antes de confirmar.
+          comunicada por el club. Revisa siempre los detalles antes de confirmar.
         </LegalLi>
         <LegalLi>
           <strong style={{ color: '#e2e8f0' }}>Comisión de servicio:</strong> cuando el pago se procesa online a través
@@ -79,7 +79,7 @@ export default function TerminosCondiciones() {
       <LegalP>
         El nombre <strong style={{ color: '#e2e8f0' }}>PADBOL®</strong> es marca registrada de{' '}
         <strong style={{ color: '#e2e8f0' }}>FIPA</strong> (Federación Internacional de Padbol). Los contenidos de la
-        app (diseño, textos, logos propios de Padbol Match y software) están protegidos; no podés copiarlos ni
+        app (diseño, textos, logos propios de Padbol Match y software) están protegidos; no puedes copiarlos ni
         redistribuirlos sin autorización.
       </LegalP>
 

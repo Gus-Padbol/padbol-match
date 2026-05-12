@@ -375,7 +375,7 @@ export default function PartidosAbiertos() {
           >
             <h2 style={{ margin: '0 0 10px', color: '#0F0F0F', fontSize: 18, fontWeight: 700 }}>No hay partidos disponibles. ¡Inicia uno!</h2>
             <p style={{ margin: '0 0 16px', color: '#6B6B6B', fontSize: 14, fontWeight: 400 }}>
-              {deporteFiltro ? 'Probá con otro deporte o sin filtro.' : 'Publicá el primero y completá jugadores en minutos.'}
+              {deporteFiltro ? 'Prueba con otro deporte o sin filtro.' : 'Publica el primero y completa jugadores en minutos.'}
             </p>
             <button
               type="button"

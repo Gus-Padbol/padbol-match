@@ -1314,7 +1314,7 @@ export default function MiPerfil() {
       }
 
       if (!aceptoTerminosPrivacidadRegistro) {
-        fe.acepto_terminos = 'Debés aceptar los Términos y Condiciones y la Política de Privacidad.';
+        fe.acepto_terminos = 'Debes aceptar los Términos y Condiciones y la Política de Privacidad.';
       }
 
       if (Object.keys(fe).length > 0) {
@@ -2339,10 +2339,10 @@ export default function MiPerfil() {
               ) : (
                 <>
                   <p style={{ color: '#334155', fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>
-                    ¿Qué deportes practicás?
+                    ¿Qué deportes practicas?
                   </p>
                   <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '14px', lineHeight: 1.45 }}>
-                    Elegí uno o más. Es opcional pero nos ayuda a mostrarte sedes y turnos más acordes. Podés editarlo después en Mi perfil.
+                    Elige uno o más. Es opcional pero nos ayuda a mostrarte sedes y turnos más acordes. Puedes editarlo después en Mi perfil.
                   </p>
                   <DeportesPreferidosChips value={registroDeportesSel} onChange={setRegistroDeportesSel} disabled={isSubmitting} />
                   <button

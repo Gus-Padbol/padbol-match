@@ -285,7 +285,7 @@ export default function AccesoCuenta() {
       return;
     }
     if (!aceptoTerminosPrivacidad) {
-      setErrorMsg('Debés aceptar los Términos y Condiciones y la Política de Privacidad.');
+      setErrorMsg('Debes aceptar los Términos y Condiciones y la Política de Privacidad.');
       return;
     }
     const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);

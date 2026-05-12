@@ -13,7 +13,7 @@ export default function PoliticaPrivacidad() {
   return (
     <LegalStaticPageLayout
       title="Política de Privacidad"
-      lead="Te explicamos de forma clara qué datos usamos en Padbol Match y con qué fines. Podés contactarnos cuando quieras."
+      lead="Te explicamos de forma clara qué datos usamos en Padbol Match y con qué fines. Puedes contactarnos cuando quieras."
     >
       <LegalSectionTitle>Qué datos recolectamos</LegalSectionTitle>
       <LegalP>Según cómo uses la cuenta y el perfil, podemos tratar, entre otros:</LegalP>
@@ -22,7 +22,7 @@ export default function PoliticaPrivacidad() {
         <LegalLi>Correo electrónico</LegalLi>
         <LegalLi>Teléfono y número de WhatsApp</LegalLi>
         <LegalLi>Género u otra información de perfil deportivo que indiques</LegalLi>
-        <LegalLi>Foto de perfil (si la subís)</LegalLi>
+        <LegalLi>Foto de perfil (si la subes)</LegalLi>
         <LegalLi>Historial de reservas y participación en torneos dentro de la plataforma</LegalLi>
         <LegalLi>Datos técnicos mínimos (por ejemplo tipo de dispositivo o logs de seguridad) necesarios para el servicio</LegalLi>
       </LegalUl>
@@ -60,7 +60,7 @@ export default function PoliticaPrivacidad() {
 
       <LegalSectionTitle>Derecho a eliminar tu cuenta y tus datos</LegalSectionTitle>
       <LegalP>
-        Podés solicitar la baja de tu cuenta y, en la medida de lo posible, la eliminación o anonimización de tus datos
+        Puedes solicitar la baja de tu cuenta y, en la medida de lo posible, la eliminación o anonimización de tus datos
         personales escribiendo a{' '}
         <a href={CONTACT} style={{ color: '#a5b4fc', fontWeight: 700 }}>
           padbolinternacional@gmail.com
@@ -77,10 +77,10 @@ export default function PoliticaPrivacidad() {
 
       <LegalSectionTitle>Usuarios en Europa (GDPR)</LegalSectionTitle>
       <LegalP>
-        Si residís en el Espacio Económico Europeo o en el Reino Unido, tenés derechos reconocidos por el RGPD (GDPR) de
+        Si resides en el Espacio Económico Europeo o en el Reino Unido, tienes derechos reconocidos por el RGPD (GDPR) de
         forma general: acceder a tus datos, rectificarlos, limitar u oponerte a ciertos tratamientos, solicitar portabilidad
         cuando corresponda y presentar una reclamación ante la autoridad de protección de datos de tu país. Para ejercer
-        estos derechos, escribinos al correo de contacto indicado abajo.
+        estos derechos, escríbenos al correo de contacto indicado abajo.
       </LegalP>
 
       <LegalSectionTitle>Contacto por privacidad</LegalSectionTitle>

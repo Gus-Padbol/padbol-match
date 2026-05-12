@@ -6713,7 +6713,7 @@ app.post('/api/cancelar-reserva', async (req, res) => {
 🏟️ ${reserva.sede} — Cancha ${reserva.cancha}
 ${creditLine}
 
-Si necesitás ayuda, escribinos por WhatsApp.
+Si necesitas ayuda, escríbenos por WhatsApp.
 
 *PADBOL MATCH*`;
 
@@ -10689,8 +10689,8 @@ cron.schedule('*/5 * * * *', async () => {
 Tu reserva es en 2 horas:
 ⏰ ${r.hora}hs${meta.direccion ? `\n📍 ${meta.direccion}` : ''}
 
-Recordá llegar 10 minutos antes.
-💬 Ante cualquier consulta escribinos por WhatsApp.
+Recuerda llegar 10 minutos antes.
+💬 Ante cualquier consulta escríbenos por WhatsApp.
 
 *PADBOL MATCH*`;
 
@@ -11028,7 +11028,7 @@ async function chatIaRankingsForTool(supabaseClient, { nivel, deporte, categoria
         return {
           ok: false,
           error:
-            'Ranking local: pasá sede_id (id numérico de la sede) o pais para acotar sedes; si no, usá nivel internacional o nacional.',
+            'Ranking local: pasa sede_id (id numérico de la sede) o pais para acotar sedes; si no, usa nivel internacional o nacional.',
         };
       }
       let sedesQ = supabaseClient.from('sedes').select('id').ilike('pais', pPais);

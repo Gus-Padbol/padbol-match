@@ -459,7 +459,7 @@ export default function UnirsePage() {
 
           <FormSection
             title="Datos legales y fiscales"
-            subtitle="Opcional pero recomendado para facturación y contrato. Puedes completarlo más adelante si lo preferís."
+            subtitle="Opcional pero recomendado para facturación y contrato. Puedes completarlo más adelante si lo prefieres."
           >
             <label style={labelStyle}>Nombre legal de la empresa o persona</label>
             <input style={inputStyle} value={form.nombre_legal} onChange={(e) => onField('nombre_legal', e.target.value)} />

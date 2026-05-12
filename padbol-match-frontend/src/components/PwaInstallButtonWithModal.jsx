@@ -125,7 +125,7 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                   {installing ? 'Instalando…' : 'Instalar con el sistema'}
                 </button>
                 <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-                  Si preferís hacerlo a mano: menú <strong>⋮</strong> del navegador → <strong>Instalar aplicación</strong> o{' '}
+                  Si prefieres hacerlo a mano: menú <strong>⋮</strong> del navegador → <strong>Instalar aplicación</strong> o{' '}
                   <strong>Añadir a la pantalla principal</strong>.
                 </p>
                 </div>

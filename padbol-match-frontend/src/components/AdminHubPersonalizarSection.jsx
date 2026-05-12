@@ -143,7 +143,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         Personalizar Hub
       </h2>
       <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', lineHeight: 1.45, marginBottom: '16px' }}>
-        Editá título, subtítulo e imagen de cada card del inicio del jugador. Los cambios se reflejan en la app al recargar el hub.
+        Edita título, subtítulo e imagen de cada card del inicio del jugador. Los cambios se reflejan en la app al recargar el hub.
       </p>
       {msg ? (
         <p style={{ color: '#fef08a', fontSize: '14px', marginBottom: '14px', fontWeight: 600 }}>{msg}</p>
@@ -152,7 +152,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
 
       {!rows.length ? (
         <p style={{ color: 'rgba(255,255,255,0.88)' }}>
-          No hay filas en <code style={{ color: '#fff' }}>hub_config</code>. Creá registros en Supabase (7 cards con <code>id</code> texto y{' '}
+          No hay filas en <code style={{ color: '#fff' }}>hub_config</code>. Crea registros en Supabase (7 cards con <code>id</code> texto y{' '}
           <code>orden</code>).
         </p>
       ) : null}

@@ -1072,7 +1072,7 @@ export default function TorneoVista() {
               </button>
             ) : (
               <div className="torneo-busca-dupla__yo-anunciado">
-                <span>Figurás como buscando dupla.</span>
+                <span>Figuras como buscando dupla.</span>
                 <button
                   type="button"
                   className="torneo-busca-dupla__btn-link"
