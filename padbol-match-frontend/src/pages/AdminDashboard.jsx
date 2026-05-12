@@ -1109,6 +1109,16 @@ function canchasConNumeroReservaAdminDash(rows) {
   });
 }
 
+const CANCHA_DEPORTE_ADMIN_OPTIONS = [
+  { value: 'padbol', label: 'Padbol' },
+  { value: 'padel', label: 'Pádel' },
+  { value: 'tenis', label: 'Tenis' },
+  { value: 'pickleball', label: 'Pickleball' },
+  { value: 'squash', label: 'Squash' },
+  { value: 'futbol_5', label: 'Fútbol 5' },
+  { value: 'futbol_7', label: 'Fútbol 7' },
+];
+
 function parseHorarioHoraEnteraAdminDash(raw, defaultH) {
   const s = String(raw || '').trim();
   const m = /^(\d{1,2})/.exec(s);
@@ -3885,7 +3895,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [canchaModalOpen, setCanchaModalOpen] = useState(false);
   const [canchaModalMode, setCanchaModalMode] = useState('add');
   const [canchaEditId, setCanchaEditId] = useState(null);
-  const [canchaModalDraft, setCanchaModalDraft] = useState({ nombre: '', estado: 'activa', descripcion: '' });
+  const [canchaModalDraft, setCanchaModalDraft] = useState({ nombre: '', estado: 'activa', descripcion: '', deporte: 'padbol' });
   const [canchaModalMsg, setCanchaModalMsg] = useState('');
   const [canchaApiBusy, setCanchaApiBusy] = useState(false);
   const [licenciaForm,  setLicenciaForm]  = useState({ numero_licencia: '', fecha_licencia: '', licencia_activa: true });
@@ -4639,7 +4649,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const abrirModalCanchaNueva = useCallback(() => {
     setCanchaModalMode('add');
     setCanchaEditId(null);
-    setCanchaModalDraft({ nombre: '', estado: 'activa', descripcion: '' });
+    setCanchaModalDraft({ nombre: '', estado: 'activa', descripcion: '', deporte: 'padbol' });
     setCanchaModalMsg('');
     setCanchaModalOpen(true);
   }, []);
@@ -4651,6 +4661,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       nombre: c.nombre || '',
       estado: c.estado === 'inactiva' ? 'inactiva' : 'activa',
       descripcion: c.descripcion || '',
+      deporte: c.deporte && CANCHA_DEPORTE_ADMIN_OPTIONS.some((o) => o.value === c.deporte) ? c.deporte : 'padbol',
     });
     setCanchaModalMsg('');
     setCanchaModalOpen(true);
@@ -4680,6 +4691,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             nombre,
             estado: canchaModalDraft.estado === 'inactiva' ? 'inactiva' : 'activa',
             descripcion: String(canchaModalDraft.descripcion || '').trim() || null,
+            deporte: canchaModalDraft.deporte || 'padbol',
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -4707,6 +4719,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           nombre,
           estado: canchaModalDraft.estado === 'inactiva' ? 'inactiva' : 'activa',
           descripcion: String(canchaModalDraft.descripcion || '').trim() || null,
+          deporte: canchaModalDraft.deporte || 'padbol',
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -9416,6 +9429,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <option value="inactiva">Inactiva (no reservable)</option>
                 </select>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                  Deporte
+                </label>
+                <select
+                  value={canchaModalDraft.deporte || 'padbol'}
+                  onChange={(e) => setCanchaModalDraft((p) => ({ ...p, deporte: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: '9px 11px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    marginBottom: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  {CANCHA_DEPORTE_ADMIN_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
                   Descripción (opcional)
                 </label>
                 <textarea
@@ -10434,6 +10469,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <tr style={{ background: '#f5f5f5' }}>
                       <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555', width: '48px' }}>#</th>
                       <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#555' }}>Nombre</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555' }}>Deporte</th>
                       <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555' }}>Nota</th>
                       <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#555', width: '100px' }}>Estado</th>
                       <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#555' }}></th>
@@ -10444,6 +10480,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <tr key={c.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                         <td style={{ padding: '10px 10px', fontSize: '13px', color: '#64748b', fontWeight: 700 }}>{c.orden ?? '—'}</td>
                         <td style={{ padding: '10px 12px', fontSize: '14px', color: '#333' }}>{c.nombre}</td>
+                        <td style={{ padding: '10px 12px', fontSize: '13px', color: '#475569' }}>
+                          {CANCHA_DEPORTE_ADMIN_OPTIONS.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                        </td>
                         <td style={{ padding: '10px 12px', fontSize: '12px', color: '#64748b', maxWidth: '180px' }}>
                           {c.descripcion ? (
                             <span title={c.descripcion}>{c.descripcion.length > 48 ? `${c.descripcion.slice(0, 48)}…` : c.descripcion}</span>

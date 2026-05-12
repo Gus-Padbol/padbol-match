@@ -489,15 +489,36 @@ function ReservaStripeSection({
 /** Solo se ofrecen / muestran las primeras 2 canchas en el flujo de reserva. */
 const MAX_CANCHAS_RESERVA_UI = 2;
 
-/** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. */
-function slotsReservaDesdeSede(sedeData) {
+const RESERVA_CANCHA_DEPORTES = new Set(['padbol', 'padel', 'tenis', 'pickleball', 'squash', 'futbol_5', 'futbol_7']);
+
+function normalizeReservaDeporteUrl(raw) {
+  const s = String(raw ?? '').trim().toLowerCase();
+  if (!s || !RESERVA_CANCHA_DEPORTES.has(s)) return null;
+  return s;
+}
+
+function reservaSedeApiQuery(deporteCanon) {
+  return deporteCanon ? `?deporte=${encodeURIComponent(deporteCanon)}` : '';
+}
+
+/** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
+function slotsReservaDesdeSede(sedeData, deporteCanon) {
   const active = sedeData?.canchas_activas;
   if (Array.isArray(active) && active.length > 0) {
-    const sorted = [...active].sort((a, b) => Number(a.numero) - Number(b.numero));
+    let sorted = [...active].sort((a, b) => Number(a.numero) - Number(b.numero));
+    if (deporteCanon && RESERVA_CANCHA_DEPORTES.has(deporteCanon)) {
+      sorted = sorted.filter((x) => {
+        const d = String(x.deporte || 'padbol').trim().toLowerCase();
+        return d === deporteCanon;
+      });
+    }
     return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
       numero: Number(x.numero),
       nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
     }));
+  }
+  if (deporteCanon) {
+    return [];
   }
   const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
   const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
@@ -526,6 +547,10 @@ export default function ReservaForm() {
   const [searchParams] = useSearchParams();
 
   const initialSedeId = searchParams.get('sedeId');
+  const reservaDeporteUrl = useMemo(
+    () => normalizeReservaDeporteUrl(searchParams.get('deporte')),
+    [searchParams],
+  );
 
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
@@ -583,7 +608,7 @@ export default function ReservaForm() {
     if (rawId === '' || rawId == null) return;
     if (pantalla !== 2 && pantalla !== 4) return;
     let cancelled = false;
-    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}`))
+    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}${reservaSedeApiQuery(reservaDeporteUrl)}`))
       .then(async (res) => {
         const text = await res.text();
         if (cancelled) return;
@@ -611,7 +636,7 @@ export default function ReservaForm() {
     return () => {
       cancelled = true;
     };
-  }, [filtros.sede_id, pantalla]);
+  }, [filtros.sede_id, pantalla, reservaDeporteUrl]);
 
   const [mostrarEtiquetaSedeMasCercanaGeo, setMostrarEtiquetaSedeMasCercanaGeo] = useState(false);
 
@@ -694,9 +719,10 @@ export default function ReservaForm() {
       const p = { sedeId: sid, fecha: formData.fecha };
       if (formData.hora) p.hora = formData.hora;
       if (formData.cancha != null && String(formData.cancha).trim() !== '') p.canchaId = String(formData.cancha);
+      if (reservaDeporteUrl) p.deporte = reservaDeporteUrl;
       navigate({ pathname: '/reservar', search: `?${createSearchParams(p).toString()}` }, { replace: true });
     }
-  }, [filtros.sede_id, formData.fecha, formData.hora, formData.cancha, navigate]);
+  }, [filtros.sede_id, formData.fecha, formData.hora, formData.cancha, reservaDeporteUrl, navigate]);
 
   const handleCancelarReservaDesdeResumen = useCallback(async () => {
     try {
@@ -832,6 +858,7 @@ export default function ReservaForm() {
     const fechaQ = (sp.get('fecha') || '').trim();
     const horaQ = (sp.get('hora') || '').trim();
     const canchaQ = (sp.get('canchaId') || sp.get('cancha') || '').trim();
+    const depPreserve = normalizeReservaDeporteUrl(sp.get('deporte'));
 
     const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
     setCiudades(ciudadesDelPais);
@@ -852,6 +879,7 @@ export default function ReservaForm() {
         hora: horaQ,
         canchaId: canchaQ,
       });
+      if (depPreserve) next.set('deporte', depPreserve);
       navigate({ pathname: '/reservar', search: `?${next.toString()}` }, { replace: true });
       setError('');
     } else {
@@ -865,6 +893,7 @@ export default function ReservaForm() {
       setPantalla(2);
       if (sp.has('rw')) {
         const next = createSearchParams({ sedeId: String(id) });
+        if (depPreserve) next.set('deporte', depPreserve);
         navigate({ pathname: '/reservar', search: `?${next.toString()}` }, { replace: true });
       }
     }
@@ -1172,7 +1201,7 @@ export default function ReservaForm() {
       }
 
       const duracion = duracionSeleccionadaMin;
-      const slotsOferta = slotsReservaDesdeSede(sedeData);
+      const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl);
       const numsSlots = slotsOferta.map((s) => s.numero);
       const hoyCalendarioNegocio = ymdHoyParaReservaSede(sedeData);
       const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
@@ -1230,7 +1259,7 @@ export default function ReservaForm() {
     } finally {
       setLoading(false);
     }
-  }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin]);
+  }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
 
   // Auto-load time slots when date is selected (pantalla 2)
   useEffect(() => {
@@ -1290,7 +1319,7 @@ export default function ReservaForm() {
           ))
           .map((r) => parseInt(String(r.cancha), 10))
         : [];
-      const slots = slotsReservaDesdeSede(sedeSeleccionada);
+      const slots = slotsReservaDesdeSede(sedeSeleccionada, reservaDeporteUrl);
 
       setCanchasDisponibles(
         slots.map((s) => ({
@@ -1302,7 +1331,7 @@ export default function ReservaForm() {
     } catch {
       setError('Error al buscar canchas disponibles');
     }
-  }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin]);
+  }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
 
   // Hora ya fijada (p. ej. deep link ?sedeId=&fecha=&hora=): cargar canchas sin retocar el botón de horario.
   useEffect(() => {

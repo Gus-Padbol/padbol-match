@@ -623,6 +623,7 @@ function enrichSingleCanchaAdminDto(row, allRowsSameSede) {
     sede_id: row.sede_id,
     nombre: String(row.nombre || '').trim(),
     estado: normalizeEstadoCancha(row.estado),
+    deporte: row.deporte != null && String(row.deporte).trim() !== '' ? String(row.deporte).trim() : 'padbol',
     descripcion: row.descripcion != null && String(row.descripcion).trim() !== '' ? String(row.descripcion).trim() : null,
     orden: hit ? hit.numero_reserva : null,
   };
@@ -1510,6 +1511,7 @@ app.post('/api/sedes', async (req, res) => {
         sede_id: created.id,
         nombre: `Cancha ${idx + 1}`,
         estado: 'activa',
+        deporte: 'padbol',
       }));
       const { error: canErr } = await supabase.from('canchas').insert(rows);
       if (canErr) {
@@ -1788,8 +1790,10 @@ app.get('/api/sedes/:id', async (req, res) => {
     console.log('Precio sede:', sede.precio_turno);
     let out = sede;
     try {
+      const depQ = parseDeporteCanchaQueryParamExpress(req.query?.deporte);
       const cr = await fetchCanchasRowsForSede(id);
-      if (cr.length) out = sedeResponseConCanchasActivas(sede, cr);
+      const crFiltered = depQ ? filterCanchasRowsByDeporteCanon(cr, depQ) : cr;
+      if (crFiltered.length) out = sedeResponseConCanchasActivas(sede, crFiltered);
     } catch (e) {
       console.warn('GET /api/sedes/:id canchas_activas:', e?.message || e);
     }
@@ -1970,8 +1974,10 @@ app.get('/api/sedes/:id/canchas', async (req, res) => {
     const id = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID de sede inválido' });
     await assertUsuarioPuedeAdministrarSede(req, id);
-    const rows = await fetchCanchasRowsForSede(id);
-    const canchas = rows.map((r) => enrichSingleCanchaAdminDto(r, rows));
+    const depQ = parseDeporteCanchaQueryParamExpress(req.query?.deporte);
+    const rowsAll = await fetchCanchasRowsForSede(id);
+    const rows = depQ ? filterCanchasRowsByDeporteCanon(rowsAll, depQ) : rowsAll;
+    const canchas = rows.map((r) => enrichSingleCanchaAdminDto(r, rowsAll));
     res.json({ canchas });
   } catch (err) {
     const st = err.status || 500;
@@ -1994,12 +2000,15 @@ app.post('/api/sedes/:id/canchas', async (req, res) => {
     const descripcion =
       b.descripcion != null && String(b.descripcion).trim() !== '' ? String(b.descripcion).trim() : null;
 
+    const depCol = normalizeCanchaDeporteColumnaBody(b.deporte);
+    if (depCol === null) return res.status(400).json({ error: 'deporte inválido' });
+
     const existing = await fetchCanchasRowsForSede(id);
     const enriched = canchasConNumeroReserva(existing);
     const nextOrden =
       enriched.length > 0 ? Math.max(...enriched.map((c) => c.numero_reserva)) + 1 : 1;
 
-    const insertPayload = { sede_id: id, nombre, estado, orden: nextOrden };
+    const insertPayload = { sede_id: id, nombre, estado, orden: nextOrden, deporte: depCol };
     if (descripcion) insertPayload.descripcion = descripcion;
 
     const { data: created, error } = await supabase.from('canchas').insert(insertPayload).select('*').single();
@@ -2039,6 +2048,11 @@ app.patch('/api/canchas/:id', async (req, res) => {
     if (hop('descripcion')) {
       patch.descripcion =
         b.descripcion == null || String(b.descripcion).trim() === '' ? null : String(b.descripcion).trim();
+    }
+    if (hop('deporte')) {
+      const d = normalizeCanchaDeporteColumnaBody(b.deporte);
+      if (d === null) return res.status(400).json({ error: 'deporte inválido' });
+      patch.deporte = d;
     }
     if (Object.keys(patch).length === 0) {
       return res.status(400).json({ error: 'Ningún campo reconocido para actualizar' });
@@ -3362,6 +3376,31 @@ function normalizeChatIaDeporteToolInput(raw) {
   return '';
 }
 
+/** ?deporte= en API pública/admin: mismo criterio que tool IA; null = sin filtro. */
+function parseDeporteCanchaQueryParamExpress(raw) {
+  const c = normalizeChatIaDeporteToolInput(raw);
+  return c || null;
+}
+
+function filterCanchasRowsByDeporteCanon(rows, deporteCanon) {
+  if (!deporteCanon || !Array.isArray(rows) || !rows.length) return rows || [];
+  const keys = chatIaDeporteDbKeysForFilter(deporteCanon);
+  if (!keys.length) return rows;
+  return rows.filter((r) => {
+    const d = normalizeTorneoDeporteForDb(r.deporte != null && String(r.deporte).trim() !== '' ? r.deporte : 'padbol');
+    return keys.includes(d);
+  });
+}
+
+/** Body admin: solo valores de columna canchas.deporte (sin __futbol_any__). */
+function normalizeCanchaDeporteColumnaBody(raw) {
+  const s0 = String(raw ?? '').trim().toLowerCase();
+  if (!s0) return 'padbol';
+  const s = s0 === 'futbol5' ? 'futbol_5' : s0 === 'futbol7' ? 'futbol_7' : s0;
+  if (TORNEO_DEPORTE_VALID.has(s)) return s;
+  return null;
+}
+
 /** Plegado del mensaje del usuario para reconocer frases rápidas (sin deporte explícito). */
 function chatIaFoldUsuarioDisponibilidadPhrase(raw) {
   let t = chatIaFoldText(String(raw || '').trim());
@@ -3478,18 +3517,25 @@ async function chatIaResolveNumerosCanchaParaDeporte(supabaseClient, sedeRow, de
   const sid = Number(sedeRow?.id);
   if (!Number.isFinite(sid) || sid <= 0) return { numeros: null };
 
+  const fullRows = await fetchCanchasRowsForSede(sid);
+  const enriched = canchasConNumeroReserva(fullRows);
+  const activas = enriched
+    .filter((c) => normalizeEstadoCancha(c.estado) === 'activa')
+    .sort((a, b) => Number(a.numero_reserva) - Number(b.numero_reserva));
+
+  const fromColumn = activas
+    .filter((c) =>
+      keys.includes(normalizeTorneoDeporteForDb(c.deporte != null && String(c.deporte).trim() !== '' ? c.deporte : 'padbol')),
+    )
+    .map((c) => Number(c.numero_reserva));
+  if (fromColumn.length) return { numeros: [...new Set(fromColumn)].sort((a, b) => a - b) };
+
   const { rows: cpdRows, error: cpdErr } = await chatIaFetchCanchasPorDeporteRows(supabaseClient, sid);
   if (cpdErr) return { numeros: [], error: cpdErr };
 
   const cpdActive = (cpdRows || []).filter((r) => r.activo !== false && Number(r.cantidad) > 0);
   const cpdForSport = cpdActive.filter((r) => keys.includes(normalizeTorneoDeporteForDb(r.deporte)));
   if (!cpdForSport.length) return { numeros: [] };
-
-  const fullRows = await fetchCanchasRowsForSede(sid);
-  const enriched = canchasConNumeroReserva(fullRows);
-  const activas = enriched
-    .filter((c) => normalizeEstadoCancha(c.estado) === 'activa')
-    .sort((a, b) => Number(a.numero_reserva) - Number(b.numero_reserva));
 
   const fromRow = [];
   for (const c of activas) {
