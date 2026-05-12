@@ -423,6 +423,7 @@ function resolveAlcanceFromRoleRow(row) {
   if (['sede', 'ciudad', 'provincia', 'pais', 'global'].includes(raw)) return raw;
   const role = String(row?.role || '').trim().toLowerCase();
   if (role === 'super_admin') return 'global';
+  if (role === 'editor_contenido') return 'global';
   if (role === 'admin_nacional') return 'pais';
   if (role === 'admin_club') return 'sede';
   if (role === 'empleado') return 'sede';
@@ -431,6 +432,9 @@ function resolveAlcanceFromRoleRow(row) {
 
 async function sedesPermitidasPorScope(scope) {
   if (!scope) return { mode: 'none', sedes: [] };
+  if (String(scope.rol || '').trim().toLowerCase() === 'editor_contenido') {
+    return { mode: 'none', sedes: [] };
+  }
   if (scope.superA || scope.alcance === 'global') {
     const { data, error } = await supabase.from('sedes').select('*');
     if (error) throw error;
@@ -1416,10 +1420,10 @@ app.get('/api/hub-config', async (req, res) => {
   }
 });
 
-/** PATCH /api/hub-config/:id — super_admin: titulo, subtitulo, foto_url, fotos_urls. */
+/** PATCH /api/hub-config/:id — super_admin o editor_contenido: titulo, subtitulo, foto_url, fotos_urls. */
 app.patch('/api/hub-config/:id', async (req, res) => {
   try {
-    await assertSuperAdminReq(req);
+    await assertEsEditorContenidoOSuperAdmin(req);
     const id = String(req.params.id || '').trim();
     if (!id) return res.status(400).json({ error: 'id requerido' });
     const body = req.body && typeof req.body === 'object' ? req.body : {};
@@ -1451,11 +1455,11 @@ app.patch('/api/hub-config/:id', async (req, res) => {
 
 /**
  * POST /api/hub-config/:id/foto — multipart campo `foto`; sube a Storage bucket hub-images y guarda foto_url.
- * Solo super_admin.
+ * super_admin o editor_contenido.
  */
 app.post('/api/hub-config/:id/foto', uploadHubFoto.single('foto'), async (req, res) => {
   try {
-    await assertSuperAdminReq(req);
+    await assertEsEditorContenidoOSuperAdmin(req);
     const id = String(req.params.id || '').trim();
     if (!id) return res.status(400).json({ error: 'id requerido' });
     if (!req.file?.buffer) return res.status(400).json({ error: 'Archivo requerido (campo "foto")' });
@@ -9218,6 +9222,27 @@ async function assertSuperAdminReq(req) {
   return { user, roleRow: rowRole };
 }
 
+/** Hub CMS: super_admin o rol `editor_contenido` (solo PATCH/POST hub-config). */
+async function assertEsEditorContenidoOSuperAdmin(req) {
+  const user = await authUserFromBearer(req);
+  if (!user?.email) {
+    const e = new Error('No autorizado');
+    e.status = 401;
+    throw e;
+  }
+  const rowRole = await fetchUserRoleRow(user.email);
+  const role = String(rowRole?.role || '').trim().toLowerCase();
+  if (isSuperAdminApi(user.email, rowRole?.role)) {
+    return { user, roleRow: rowRole };
+  }
+  if (role === 'editor_contenido') {
+    return { user, roleRow: rowRole };
+  }
+  const e = new Error('Solo super admin o editor de contenido');
+  e.status = 403;
+  throw e;
+}
+
 /** Top países por cantidad de sedes (todas las filas `sedes`). */
 function topPaisesPorCantidadSedes(sedesRows, limit = 5) {
   const map = {};
@@ -9342,7 +9367,7 @@ app.get('/api/admin/roles', async (req, res) => {
     const { data: rolesRows, error: rErr } = await supabase
       .from('user_roles')
       .select('email, nombre, role, alcance, sede_id, ciudad, provincia, pais')
-      .in('role', ['admin_club', 'admin_nacional', 'super_admin', 'empleado'])
+      .in('role', ['admin_club', 'admin_nacional', 'super_admin', 'empleado', 'editor_contenido'])
       .order('email', { ascending: true });
     if (rErr) throw rErr;
     const sedeIds = [...new Set((rolesRows || []).map((r) => r.sede_id).filter((id) => id != null))];
@@ -9364,15 +9389,40 @@ app.get('/api/admin/roles', async (req, res) => {
   }
 });
 
-/** POST /api/admin/roles — super_admin: asigna/actualiza rol + alcance. */
+/** POST /api/admin/roles — super_admin: asigna/actualiza rol + alcance (o solo editor_contenido). */
 app.post('/api/admin/roles', async (req, res) => {
   try {
     await assertSuperAdminReq(req);
     const b = req.body || {};
     const email = String(b.email || '').trim().toLowerCase();
     const role = String(b.role || '').trim().toLowerCase();
-    const alcance = String(b.alcance || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ error: 'Email obligatorio' });
+
+    if (role === 'editor_contenido') {
+      const nombre = String(b.nombre || '').trim() || null;
+      const payload = {
+        email,
+        role: 'editor_contenido',
+        alcance: 'global',
+        sede_id: null,
+        ciudad: null,
+        provincia: null,
+        pais: null,
+        nombre,
+        torneos_oficiales_habilitados: false,
+      };
+      const { data: existing } = await supabase.from('user_roles').select('email').eq('email', email).maybeSingle();
+      let r;
+      if (existing?.email) {
+        r = await supabase.from('user_roles').update(payload).eq('email', email).select('*').single();
+      } else {
+        r = await supabase.from('user_roles').insert(payload).select('*').single();
+      }
+      if (r.error) throw r.error;
+      return res.json(r.data);
+    }
+
+    const alcance = String(b.alcance || '').trim().toLowerCase();
     if (!['admin_club', 'admin_nacional', 'empleado'].includes(role)) return res.status(400).json({ error: 'Rol inválido' });
     if (!['sede', 'ciudad', 'provincia', 'pais'].includes(alcance)) {
       return res.status(400).json({ error: 'Alcance inválido' });

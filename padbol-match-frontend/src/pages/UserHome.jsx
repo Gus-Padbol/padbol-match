@@ -42,7 +42,7 @@ function hubCardNavigate(navigate, cardId, deporteElegido) {
   else navigate('/');
 }
 
-const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
+const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado', 'editor_contenido'];
 const LEGACY_GLOBAL_ADMIN_EMAILS = [
   'padbolinternacional@gmail.com',
   'admin@padbol.com',
@@ -455,7 +455,15 @@ export default function UserHome() {
             {showAdminShortcut ? (
               <button
                 type="button"
-                onClick={() => navigate(isOnAdmin ? '/' : '/admin')}
+                onClick={() =>
+                  navigate(
+                    isOnAdmin
+                      ? '/'
+                      : rolEffective === 'editor_contenido'
+                        ? '/admin?tab=personalizar_hub'
+                        : '/admin'
+                  )
+                }
                 aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
                 title={isOnAdmin ? 'App' : 'Admin'}
                 style={{

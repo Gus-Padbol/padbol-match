@@ -413,7 +413,8 @@ function torneoConsideradoActivoPanelNacional(t) {
   return !esEstadoFinalizadoTorneo(t?.estado) && !esEstadoCanceladoTorneo(t?.estado);
 }
 
-function sanitizeAdminActiveTab(raw) {
+function sanitizeAdminActiveTab(raw, rolUsuario = null) {
+  if (rolUsuario === 'editor_contenido') return 'personalizar_hub';
   const t0 = String(raw || '').trim();
   const t = t0 === 'sedes_pendientes' ? 'solicitudes' : t0;
   return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
@@ -1484,6 +1485,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const isSuperAdmin = rol === 'super_admin';
   const esEmpleado = rol === 'empleado';
+  const esEditorContenido = rol === 'editor_contenido';
   const isAdmin =
     isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club' || esEmpleado;
 
@@ -1515,6 +1517,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     admin_nacional: '🌎 Admin Nacional',
     admin_club:     '🏠 Admin Club',
     empleado:       '👤 Empleado',
+    editor_contenido: '📝 Editor Hub',
   };
 
   const [reservas, setReservas] = useState([]);
@@ -1570,8 +1573,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       return [];
     }
   });
-  const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab')));
+  const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab'), rol));
   const [nuevaSedeModalOpen, setNuevaSedeModalOpen] = useState(false);
+  const [editorContenidoEmail, setEditorContenidoEmail] = useState('');
+  const [editorContenidoNombre, setEditorContenidoNombre] = useState('');
+  const [editorContenidoSaving, setEditorContenidoSaving] = useState(false);
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
@@ -1639,7 +1645,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const applyOnboardingTab = useCallback(
     (tabId) => {
-      const id = sanitizeAdminActiveTab(tabId);
+      const id = sanitizeAdminActiveTab(tabId, rol);
       setActiveTab(id);
       try {
         sessionStorage.setItem('adminActiveTab', id);
@@ -1648,7 +1654,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       }
       navigate(`/admin?tab=${encodeURIComponent(id)}`, { replace: true });
     },
-    [navigate]
+    [navigate, rol]
   );
 
   const [vistaReservasAdminTarjetas, setVistaReservasAdminTarjetas] = useState(false);
@@ -1820,6 +1826,41 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setAdminRolesLoading(false);
     }
   }, [apiBaseUrl, isSuperAdmin]);
+
+  const asignarEditorContenido = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    const email = String(editorContenidoEmail || '').trim().toLowerCase();
+    if (!email) {
+      alert('Email obligatorio');
+      return;
+    }
+    setEditorContenidoSaving(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/roles`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          role: 'editor_contenido',
+          nombre: String(editorContenidoNombre || '').trim() || null,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setMensajeExito(`✅ Editor de contenido asignado a ${email}`);
+      setEditorContenidoEmail('');
+      setEditorContenidoNombre('');
+      setTimeout(() => setMensajeExito(''), 4000);
+      void cargarRolesAdmin();
+    } catch (e) {
+      alert(e?.message || String(e));
+    } finally {
+      setEditorContenidoSaving(false);
+    }
+  }, [apiBaseUrl, cargarRolesAdmin, editorContenidoEmail, editorContenidoNombre, isSuperAdmin]);
 
   const cargarInvitacionesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -2100,23 +2141,27 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   useEffect(() => {
     console.log('[AdminDashboard] fetchData triggered — rol:', rol, 'sedeId:', sedeId);
+    if (esEditorContenido) {
+      setLoading(false);
+      return;
+    }
     fetchData();
     fetchPendientes();
-  }, [apiBaseUrl, rol, sedeId, session?.access_token]); // token: alcance correcto en GET torneos/reservas
+  }, [apiBaseUrl, rol, sedeId, session?.access_token, esEditorContenido]); // token: alcance correcto en GET torneos/reservas
 
   useEffect(() => {
     const raw = searchParams.get('tab');
     if (raw == null || String(raw).trim() === '') {
-      setActiveTab(esEmpleado ? 'reservas' : 'resumen');
+      setActiveTab(esEmpleado ? 'reservas' : esEditorContenido ? 'personalizar_hub' : 'resumen');
       return;
     }
-    const t = sanitizeAdminActiveTab(raw);
+    const t = sanitizeAdminActiveTab(raw, rol);
     setActiveTab((prev) => {
       if (prev === t) return prev;
       sessionStorage.setItem('adminActiveTab', t);
       return t;
     });
-  }, [searchParams, esEmpleado]);
+  }, [searchParams, esEmpleado, esEditorContenido, rol]);
 
   useEffect(() => {
     if (activeTab !== 'reservas') {
@@ -3165,11 +3210,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [esEmpleado, activeTab, navigate]);
 
   useEffect(() => {
-    if (isSuperAdmin) return;
+    if (isSuperAdmin || esEditorContenido) return;
     if (activeTab !== 'personalizar_hub') return;
     setActiveTab('resumen');
     navigate('/admin?tab=resumen', { replace: true });
-  }, [isSuperAdmin, activeTab, navigate]);
+  }, [isSuperAdmin, esEditorContenido, activeTab, navigate]);
 
   // ── Config puntos (superAdmin only) ──
   const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
@@ -4779,7 +4824,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     navigate('/');
   };
 
-  if (loading) {
+  if (loading && !esEditorContenido) {
     return (
       <div
         style={{
@@ -4797,6 +4842,108 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       >
         <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         Cargando...
+      </div>
+    );
+  }
+
+  if (esEditorContenido) {
+    return (
+      <div
+        className="admin-dashboard"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+          width: '100%',
+          maxWidth: '100%',
+          overflow: 'hidden',
+          overscrollBehavior: 'none',
+          boxSizing: 'border-box',
+        }}
+      >
+        <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        <div
+          ref={adminMainScrollRef}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            paddingTop: hubContentPaddingTopCss(location.pathname),
+            paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+            boxSizing: 'border-box',
+          }}
+        >
+          <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: 0,
+              }}
+            >
+              <img
+                src="/logo-padbol-match.png"
+                alt=""
+                style={{
+                  ...padbolLogoImgStyle,
+                  display: 'block',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  height: '72px',
+                  marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
+                  marginBottom: '8px',
+                }}
+              />
+              <p style={{ margin: '0 0 8px', color: '#fff', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
+                Editor de contenido
+              </p>
+              <p
+                style={{
+                  margin: '0 0 16px',
+                  color: '#cbd5e1',
+                  fontSize: '13px',
+                  textAlign: 'center',
+                  maxWidth: 380,
+                  lineHeight: 1.45,
+                }}
+              >
+                Editá títulos, subtítulos e imágenes del hub del jugador. No tenés acceso al resto del panel.
+              </p>
+              <button
+                type="button"
+                onClick={handleVolverHubDesdeAdmin}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 10,
+                  border: 'none',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  background: '#fff',
+                  color: '#1e293b',
+                  marginBottom: 16,
+                }}
+              >
+                Volver al hub
+              </button>
+            </div>
+          </div>
+          <div
+            style={{
+              ...hubInstagramColumnWrapStyle,
+              paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+              paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+            }}
+          >
+            <AdminHubPersonalizarSection apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -8137,7 +8284,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       </>}
 
-      {activeTab === 'personalizar_hub' && isSuperAdmin ? (
+      {activeTab === 'personalizar_hub' && (isSuperAdmin || esEditorContenido) ? (
         <AdminHubPersonalizarSection apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
       ) : null}
 
@@ -8734,14 +8881,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: '#1e293b' }}>
                         <td style={{ padding: '8px', color: '#1e293b' }}>{row.nombre || '—'}</td>
                         <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>{row.email}</td>
-                        <td style={{ padding: '8px', color: '#1e293b' }}>{row.role || '—'}</td>
+                        <td style={{ padding: '8px', color: '#1e293b' }}>
+                          {row.role === 'editor_contenido' ? 'Editor de contenido' : row.role || '—'}
+                        </td>
                         <td style={{ padding: '8px', color: '#1e293b' }}>{row.alcance || '—'}</td>
                         <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>
-                          {row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
-                          {row.alcance === 'ciudad' ? row.ciudad || '—' : null}
-                          {row.alcance === 'provincia' ? row.provincia || '—' : null}
-                          {row.alcance === 'pais' ? row.pais || '—' : null}
-                          {row.alcance === 'global' ? 'Global' : null}
+                          {row.role === 'editor_contenido' ? 'Hub del jugador (cards)' : null}
+                          {row.role !== 'editor_contenido' && row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
+                          {row.role !== 'editor_contenido' && row.alcance === 'ciudad' ? row.ciudad || '—' : null}
+                          {row.role !== 'editor_contenido' && row.alcance === 'provincia' ? row.provincia || '—' : null}
+                          {row.role !== 'editor_contenido' && row.alcance === 'pais' ? row.pais || '—' : null}
+                          {row.role !== 'editor_contenido' && row.alcance === 'global' ? 'Global' : null}
                         </td>
                         <td style={{ padding: '8px', color: '#1e293b' }}>
                           {row.role === 'super_admin' ? (
@@ -8761,6 +8911,81 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   )}
                 </tbody>
               </table>
+            </div>
+            <div
+              style={{
+                marginTop: '28px',
+                paddingTop: '20px',
+                borderTop: '1px solid rgba(255,255,255,0.25)',
+              }}
+            >
+              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '10px', fontSize: '16px' }}>
+                Editor de contenido del hub
+              </h3>
+              <p style={{ color: 'rgba(226,232,240,0.95)', fontSize: '13px', lineHeight: 1.45, marginBottom: '14px', maxWidth: 520 }}>
+                Asigná acceso solo a la sección «Personalizar Hub» (fotos, títulos y subtítulos de las cards del inicio del jugador).
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end', marginBottom: '12px' }}>
+                <div style={{ flex: '1 1 220px', minWidth: '180px' }}>
+                  <label htmlFor="editor-contenido-email" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
+                    Email
+                  </label>
+                  <input
+                    id="editor-contenido-email"
+                    type="email"
+                    value={editorContenidoEmail}
+                    onChange={(e) => setEditorContenidoEmail(e.target.value)}
+                    placeholder="correo@ejemplo.com"
+                    autoComplete="off"
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid #c4b5fd',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: '1 1 200px', minWidth: '160px' }}>
+                  <label htmlFor="editor-contenido-nombre" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
+                    Nombre (opcional)
+                  </label>
+                  <input
+                    id="editor-contenido-nombre"
+                    type="text"
+                    value={editorContenidoNombre}
+                    onChange={(e) => setEditorContenidoNombre(e.target.value)}
+                    placeholder="Nombre visible"
+                    autoComplete="off"
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid #c4b5fd',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  disabled={editorContenidoSaving}
+                  onClick={() => void asignarEditorContenido()}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: editorContenidoSaving ? '#64748b' : '#0d9488',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    cursor: editorContenidoSaving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {editorContenidoSaving ? 'Guardando…' : 'Asignar editor'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

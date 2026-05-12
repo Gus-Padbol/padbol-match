@@ -24,7 +24,7 @@ const btnVolver = {
 
 const LOGOUT_BTN_SIZE = 34;
 
-const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
+const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado', 'editor_contenido'];
 
 const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
 
@@ -59,11 +59,13 @@ function readCachedRolHeader() {
 
 /** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
 function hubChipNavigatePath(rolActual, roleLoading) {
+  if (rolActual === 'editor_contenido') return '/admin?tab=personalizar_hub';
   if (ADMIN_ROLES_CHIP.includes(rolActual || '')) return '/admin';
   if (roleLoading) {
     try {
       const raw = localStorage.getItem('user_role_data');
       const d = raw ? JSON.parse(raw) : null;
+      if (d?.rol === 'editor_contenido') return '/admin?tab=personalizar_hub';
       if (ADMIN_ROLES_CHIP.includes(d?.rol || '')) return '/admin';
     } catch {
       /* ignore */
