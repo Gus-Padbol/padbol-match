@@ -183,7 +183,7 @@ function chatUiStrings(loc) {
         { label: "See today's court times ⚽" },
         { label: 'Find a game nearby 🔍' },
         { label: 'Available tournaments 🏆' },
-        { label: 'How do you play Padbol? ❓' },
+        { label: 'Book a court 📅' },
       ],
     };
   }
@@ -227,7 +227,7 @@ function chatUiStrings(loc) {
         { label: 'Ver horários hoje ⚽' },
         { label: 'Buscar partida perto 🔍' },
         { label: 'Torneios disponíveis 🏆' },
-        { label: 'Como se joga Padbol? ❓' },
+        { label: 'Reservar quadra 📅' },
       ],
     };
   }
@@ -270,9 +270,48 @@ function chatUiStrings(loc) {
       { label: 'Ver horarios hoy ⚽' },
       { label: 'Buscar partido cerca 🔍' },
       { label: 'Torneos disponibles 🏆' },
-      { label: '¿Cómo se juega al Padbol? ❓' },
+      { label: 'Reservar cancha 📅' },
     ],
   };
+}
+
+function QuickSuggestionBar({ items, disabled, onPick }) {
+  const list = Array.isArray(items) ? items : [];
+  return (
+    <div
+      style={{
+        alignSelf: 'flex-start',
+        maxWidth: '92%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      {list.map((q, idx) => (
+        <button
+          key={`qs-row-${idx}`}
+          type="button"
+          disabled={disabled}
+          onClick={() => onPick(q.label)}
+          style={{
+            textAlign: 'left',
+            padding: '10px 12px',
+            borderRadius: 10,
+            border: '1px solid #c7d2fe',
+            background: '#eef2ff',
+            color: '#312e81',
+            fontWeight: 700,
+            fontSize: 14,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.55 : 1,
+          }}
+        >
+          {q.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export default function ChatbotIA() {
@@ -334,6 +373,19 @@ export default function ChatbotIA() {
     return '';
   }, [userProfile, session?.user]);
 
+  const lastAssistantIndex = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i]?.role === 'assistant') return i;
+    }
+    return -1;
+  }, [messages]);
+
+  const lastMessageIsAssistant =
+    messages.length > 0 && messages[messages.length - 1]?.role === 'assistant';
+
+  const showQuickSuggestionBar =
+    !loading && !sessionEnded && (messages.length === 0 || lastMessageIsAssistant);
+
   useEffect(() => {
     readAloudRef.current = readAloud;
   }, [readAloud]);
@@ -374,7 +426,7 @@ export default function ChatbotIA() {
   useEffect(() => {
     if (!open) return;
     listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [open, messages, loading, error]);
+  }, [open, messages, loading, error, showQuickSuggestionBar]);
 
   useEffect(() => {
     if (!open) return;
@@ -976,36 +1028,18 @@ export default function ChatbotIA() {
                       fontSize: 14,
                       lineHeight: 1.45,
                       whiteSpace: 'pre-wrap',
-                      marginBottom: 10,
                     }}
                   >
                     {ui.welcomeAssistant(chatWelcomeFirstName)}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {(Array.isArray(ui.quickSuggestions) ? ui.quickSuggestions : []).map((q, idx) => (
-                      <button
-                        key={`qs-${idx}`}
-                        type="button"
-                        disabled={loading || sessionEnded}
-                        onClick={() => void sendMessage(q.label)}
-                        style={{
-                          textAlign: 'left',
-                          padding: '10px 12px',
-                          borderRadius: 10,
-                          border: '1px solid #c7d2fe',
-                          background: '#eef2ff',
-                          color: '#312e81',
-                          fontWeight: 700,
-                          fontSize: 14,
-                          cursor: loading || sessionEnded ? 'not-allowed' : 'pointer',
-                          opacity: loading || sessionEnded ? 0.55 : 1,
-                        }}
-                      >
-                        {q.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
+              ) : null}
+              {showQuickSuggestionBar && messages.length === 0 ? (
+                <QuickSuggestionBar
+                  items={ui.quickSuggestions}
+                  disabled={loading || sessionEnded}
+                  onPick={(label) => void sendMessage(label)}
+                />
               ) : null}
               {messages.map((m, i) => (
                 <React.Fragment key={`${i}-${m.role}`}>
@@ -1081,6 +1115,13 @@ export default function ChatbotIA() {
                         })}
                       </div>
                     </div>
+                  ) : null}
+                  {m.role === 'assistant' && showQuickSuggestionBar && i === lastAssistantIndex ? (
+                    <QuickSuggestionBar
+                      items={ui.quickSuggestions}
+                      disabled={loading || sessionEnded}
+                      onPick={(label) => void sendMessage(label)}
+                    />
                   ) : null}
                 </React.Fragment>
               ))}
