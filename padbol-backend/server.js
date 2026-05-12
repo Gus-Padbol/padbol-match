@@ -2307,13 +2307,21 @@ app.get('/api/sedes/:id/disponibilidad-slots', async (req, res) => {
     if (!sedeFull) return res.status(404).json({ error: 'Sede no encontrada' });
     const { slots, error } = await computeChatIaSlotsReales(supabase, sedeFull, fecha, dur);
     if (error) return res.status(500).json({ error });
-    res.json({
+    const out = {
       sede_id: sid,
       sede_nombre: String(sedeFull.nombre || '').trim(),
       fecha,
       duracion_minutos: dur,
       slots,
+    };
+    console.log('[disponibilidad-slots] GET ok', {
+      sede_id: sid,
+      fecha,
+      duracion_minutos: dur,
+      slots_count: Array.isArray(slots) ? slots.length : 0,
+      primeras_horas: (Array.isArray(slots) ? slots : []).slice(0, 5).map((s) => s?.hora_inicio),
     });
+    res.json(out);
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }
@@ -10468,15 +10476,15 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'consultar_disponibilidad',
       description:
-        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. If the user does not specify duration, use 90. If sede_id is unknown, call listar_sedes first to map name to id.',
+        'Returns real free court time slots for one club (sede_id) on a calendar date YYYY-MM-DD and duration 60, 90 or 120 minutes. Same rules as the public booking form. If the user does not specify duration, omit duracion_minutos (server defaults to 90). For Spanish mañana / English tomorrow use fecha_mañana_art from the Context JSON. If sede_id is unknown, call listar_sedes or match sedes_resumen by name.',
       input_schema: {
         type: 'object',
         properties: {
           sede_id: { type: 'number', description: 'Numeric club id from listar_sedes or context' },
-          fecha: { type: 'string', description: 'Date in the club local calendar, YYYY-MM-DD' },
-          duracion_minutos: { type: 'number', enum: [60, 90, 120] },
+          fecha: { type: 'string', description: 'Date YYYY-MM-DD, or relative words resolved server-side (mañana/hoy)' },
+          duracion_minutos: { type: 'number', enum: [60, 90, 120], description: 'Optional; default 90' },
         },
-        required: ['sede_id', 'fecha', 'duracion_minutos'],
+        required: ['sede_id', 'fecha'],
       },
     },
     {
@@ -10562,6 +10570,43 @@ function chatIaNormalizeFechaYmdReserva(raw) {
   return '';
 }
 
+/** Resuelve "mañana"/"hoy" usando el calendario ART del contexto (misma zona que fecha_referencia). */
+function chatIaResolveDisponibilidadFecha(raw, ctx) {
+  const direct = chatIaNormalizeFechaYmdReserva(raw);
+  if (direct) return direct;
+  const rawStr = String(raw ?? '').trim();
+  if (!rawStr) return '';
+  const fold = chatIaFoldText(rawStr)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!fold) return '';
+  const ref = String(ctx?.fecha_referencia || '').trim();
+  const man = String(ctx?.fecha_mañana_art || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref)) return '';
+  const hasPasadoManana =
+    /\bpasado manana\b/.test(fold) ||
+    /\bday after tomorrow\b/.test(fold) ||
+    /\bdepois de amanha\b/.test(fold);
+  const hasManana =
+    !hasPasadoManana &&
+    (/\bmanana\b/.test(fold) ||
+      /\b tomorrow\b/.test(` ${fold} `) ||
+      /\btomorrow\b/.test(fold) ||
+      /\bamanha\b/.test(fold) ||
+      /\bproximo dia\b/.test(fold));
+  if (hasManana) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(man)) return man;
+    return DateTime.fromISO(ref, { zone: TZ_TORNEO_CALENDARIO }).plus({ days: 1 }).toFormat('yyyy-LL-dd');
+  }
+  if (hasPasadoManana) {
+    return DateTime.fromISO(ref, { zone: TZ_TORNEO_CALENDARIO }).plus({ days: 2 }).toFormat('yyyy-LL-dd');
+  }
+  if (/\bhoy\b/.test(fold) || /\btoday\b/.test(fold) || /\bhoje\b/.test(fold)) return ref;
+  return '';
+}
+
 function chatIaLogConsultarDisponibilidad(payload) {
   try {
     console.error('[chat-ia] consultar_disponibilidad', JSON.stringify(payload));
@@ -10574,9 +10619,10 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
   const input = chatIaParseToolInput(toolInput);
   try {
     if (toolName === 'consultar_disponibilidad') {
-      const sedeId = parseInt(String(input.sede_id ?? '').trim(), 10);
-      const fecha = chatIaNormalizeFechaYmdReserva(input.fecha);
-      const dur = parseInt(String(input.duracion_minutos ?? '').trim(), 10);
+      const sedeId = Number.parseInt(String(input.sede_id ?? '').trim(), 10);
+      const fecha = chatIaResolveDisponibilidadFecha(input.fecha, ctx);
+      let dur = Number.parseInt(String(input.duracion_minutos ?? '').trim(), 10);
+      if (![60, 90, 120].includes(dur)) dur = 90;
       chatIaLogConsultarDisponibilidad({
         step: 'entrada',
         toolInput_type: typeof toolInput,
@@ -10588,8 +10634,8 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
         parsed_fecha: fecha,
         parsed_duracion_minutos: dur,
       });
-      if (!Number.isFinite(sedeId) || sedeId <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(fecha) || ![60, 90, 120].includes(dur)) {
-        const errOut = { ok: false, error: 'Parámetros inválidos: sede_id, fecha YYYY-MM-DD, duracion_minutos 60|90|120' };
+      if (!Number.isFinite(sedeId) || sedeId <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        const errOut = { ok: false, error: 'Parámetros inválidos: sede_id numérico y fecha válida (YYYY-MM-DD o mañana/hoy según contexto)' };
         chatIaLogConsultarDisponibilidad({ step: 'params_invalid', ...errOut, sedeId, fecha, dur });
         return errOut;
       }
@@ -10749,6 +10795,7 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
   let sedeContextoUltima = null;
   let ultimaConsultaDisponibilidad = null;
   for (let round = 0; round < 8; round += 1) {
+    console.error('[chat-ia] Anthropic request', JSON.stringify({ round, model, msg_count: msgs.length }));
     const anthroRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -10766,6 +10813,14 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
     });
     const rawJson = await anthroRes.json().catch(() => ({}));
     if (!anthroRes.ok) {
+      console.error(
+        '[chat-ia] Anthropic HTTP error',
+        JSON.stringify({
+          round,
+          status: anthroRes.status,
+          err: rawJson?.error || rawJson,
+        }),
+      );
       const lastUser = msgs.length ? msgs[msgs.length - 1] : null;
       const lastContent = lastUser?.content;
       const toolDbg =
@@ -10789,6 +10844,16 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
       };
     }
     const content = Array.isArray(rawJson.content) ? rawJson.content : [];
+    console.error(
+      '[chat-ia] Anthropic response ok',
+      JSON.stringify({
+        round,
+        status: anthroRes.status,
+        stop_reason: rawJson.stop_reason,
+        block_types: content.map((b) => b?.type).filter(Boolean),
+        usage: rawJson.usage || null,
+      }),
+    );
     msgs.push({ role: 'assistant', content });
     const stop = rawJson.stop_reason;
     if (stop !== 'tool_use') {
@@ -10854,13 +10919,28 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
         content: chatIaToolResultContentString(out),
       });
     }
+    console.error(
+      '[chat-ia] tool_results enviados',
+      JSON.stringify(
+        toolResults.map((tr) => ({
+          tool_use_id: tr.tool_use_id,
+          content_len: typeof tr.content === 'string' ? tr.content.length : 0,
+          ok_flag:
+            typeof tr.content === 'string' && tr.content.includes('"ok":true')
+              ? true
+              : typeof tr.content === 'string' && tr.content.includes('"ok":false')
+                ? false
+                : null,
+        })),
+      ),
+    );
     msgs.push({ role: 'user', content: toolResults });
   }
   return { ok: false, error: 'Demasiadas rondas de tools' };
 }
 
 // ─── IA Chat (Anthropic Claude) ─────────────────────────────────────────────
-const CHAT_IA_MODEL = 'claude-sonnet-4-20250514';
+const CHAT_IA_MODEL = process.env.CHAT_IA_MODEL?.trim() || 'claude-sonnet-4-5-20250929';
 const CHAT_IA_RATE_WINDOW_MS = 60 * 60 * 1000;
 const CHAT_IA_RATE_MAX = 20;
 const CHAT_IA_MAX_USER_MSG = 6;
@@ -11140,6 +11220,10 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
   }));
 
   const todayYmd = ymdTodayInTorneoTz();
+  const fecha_mañana_art =
+    todayYmd && /^\d{4}-\d{2}-\d{2}$/.test(todayYmd)
+      ? DateTime.fromISO(todayYmd, { zone: TZ_TORNEO_CALENDARIO }).plus({ days: 1 }).toFormat('yyyy-LL-dd')
+      : null;
   const limiteYmd = DateTime.fromISO(todayYmd, { zone: TZ_TORNEO_CALENDARIO })
     .plus({ days: 7 })
     .toFormat('yyyy-LL-dd');
@@ -11271,6 +11355,7 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
     idioma_ui,
     claude_language: chatIaClaudeLanguageName(idioma_ui),
     fecha_referencia: todayYmd,
+    fecha_mañana_art,
     sedes_hora_local: sedesRows.map((s) => {
       const tz = normalizeSedeTimezone(s.timezone || inferTimezoneFromCiudadPais(s.ciudad, s.pais));
       const now = DateTime.now().setZone(tz);
@@ -11350,6 +11435,7 @@ function buildChatIaSystemPrompt(ctxForModel) {
     idioma_ui: ctxForModel.idioma_ui,
     claude_language: ctxForModel.claude_language,
     fecha_referencia_art: ctxForModel.fecha_referencia,
+    fecha_mañana_art: ctxForModel.fecha_mañana_art,
     sedes_hora_local: ctxForModel.sedes_hora_local,
     sedes_resumen: (ctxForModel.sedes || []).map((s) => ({
       id: s.id,
@@ -11374,13 +11460,13 @@ STYLE:
 Out of scope (reply with exactly this one sentence, nothing else):
 ${JSON.stringify(oos)}
 
-Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art is yyyy-LL-dd in America/Argentina/Buenos_Aires):
+Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art and fecha_mañana_art are yyyy-LL-dd in America/Argentina/Buenos_Aires for "hoy" / "mañana"):
 ${JSON.stringify(payload)}
 
-Tools: call consultar_disponibilidad with sede_id + fecha (YYYY-MM-DD in the club calendar) + duracion_minutos (default 90 if the user did not specify). Use listar_sedes to resolve sede_id from a club name. Use listar_torneos / consultar_ranking as needed.
+Tools: call consultar_disponibilidad with sede_id + fecha (YYYY-MM-DD, or the literal word for tomorrow resolved server-side) + optional duracion_minutos (default 90). Use listar_sedes to resolve sede_id from a club name when needed; you can also match sedes_resumen by nombre. Use listar_torneos / consultar_ranking as needed.
 
 Availability (critical):
-- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes if needed) and answer ONLY with the tool result. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
+- When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes if needed) and answer ONLY with the tool result. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
 - Never invent times. If slots is empty, say there are no openings that day for that duration and suggest another date or duration—do not send the user to WhatsApp.
 - Never output <<<WHATSAPP>>> for availability, booking help, or missing data. WhatsApp is ONLY when the user clearly asks to message or call the club by phone/WhatsApp.
 
@@ -11433,6 +11519,10 @@ app.post('/api/chat-ia', async (req, res) => {
     const b = req.body || {};
     const mensaje = String(b.mensaje || '').trim();
     const historialRaw = Array.isArray(b.historial) ? b.historial : [];
+    const clientCal = String(b.client_calendario_art || '').trim().slice(0, 10);
+    if (clientCal && /^\d{4}-\d{2}-\d{2}$/.test(clientCal)) {
+      console.error('[chat-ia] POST client_calendario_art (referencia navegador ART)', clientCal);
+    }
     if (!mensaje) return res.status(400).json({ error: 'mensaje requerido' });
 
     const historial = historialRaw
@@ -11477,6 +11567,17 @@ app.post('/api/chat-ia', async (req, res) => {
 
     const locale = normalizeChatIaLocale(b.locale);
     const ctxBase = await buildChatIAContextPayload(supabase, user, locale);
+    console.error(
+      '[chat-ia] POST inicio',
+      JSON.stringify({
+        usuario: user?.id || 'anon',
+        historial_turnos: historial.length,
+        mensaje_preview: mensaje.slice(0, 140),
+        locale,
+        fecha_referencia_art: ctxBase.fecha_referencia,
+        fecha_mañana_art: ctxBase.fecha_mañana_art,
+      }),
+    );
     const ctxForModel = { ...ctxBase };
     delete ctxForModel._sedes_rows_chat_ia;
 
@@ -11499,6 +11600,15 @@ app.post('/api/chat-ia', async (req, res) => {
         error: run.error || 'No se pudo obtener respuesta del asistente.',
       });
     }
+    console.error(
+      '[chat-ia] POST respuesta modelo',
+      JSON.stringify({
+        stop_reason: run.stop_reason,
+        disponibilidad_slots: run.disponibilidad?.slots?.length ?? 0,
+        disponibilidad_sede_id: run.disponibilidad?.sede_id ?? null,
+        disponibilidad_fecha: run.disponibilidad?.fecha ?? null,
+      }),
+    );
     const txt = String(run.text || '');
     let { text: respuesta, reserve } = stripChatIaReserveMarker(txt);
     const waSt = stripChatIaWhatsAppMarkers(respuesta);

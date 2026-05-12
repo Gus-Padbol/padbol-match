@@ -16,6 +16,25 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
+/** yyyy-LL-dd en America/Argentina/Buenos_Aires (referencia cruzada con el servidor en /api/chat-ia). */
+function ymdBuenosAires(d = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(d);
+    const y = parts.find((p) => p.type === 'year')?.value;
+    const mo = parts.find((p) => p.type === 'month')?.value;
+    const da = parts.find((p) => p.type === 'day')?.value;
+    if (y && mo && da) return `${y}-${mo}-${da}`;
+  } catch (_) {
+    /* ignore */
+  }
+  return '';
+}
+
 function getSpeechRecognitionCtor() {
   if (typeof window === 'undefined') return null;
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -419,6 +438,7 @@ export default function ChatbotIA() {
             historial,
             user_id: session?.user?.id || null,
             locale: deviceLocale,
+            client_calendario_art: ymdBuenosAires(),
           }),
         });
         const data = await res.json().catch(() => ({}));
