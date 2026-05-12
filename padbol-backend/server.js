@@ -10476,61 +10476,182 @@ function chatIaKeywordHitInFoldedUserText(foldedUser, kw) {
   return new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`, 'i').test(foldedUser);
 }
 
-/**
- * Sede por nombre/ciudad: normaliza como chatIaFoldText; acepta subcadenas del nombre completo,
- * bigramas ("point one"), y tokens significativos (≥3 letras) de nombre o ciudad ("meca", "madrid", "miami").
- * Si hay empate entre sedes, devuelve null para que el modelo pregunte cuál sede.
- */
-function chatIaMatchSedeFromText(text, sedesCompact) {
+/** Clave laxa para filtrar sedes por `jugadores_perfil.pais` vs `sedes.pais`. */
+function chatIaPaisBucket(raw) {
+  const s = chatIaFoldText(String(raw || '')).replace(/[^a-z0-9]/g, '');
+  if (!s) return '';
+  if (/argentin|^ar$/.test(s)) return 'ar';
+  if (/espana|spain|^es$/.test(s)) return 'es';
+  if (/uruguay|^uy/.test(s)) return 'uy';
+  if (/colombia|^co$/.test(s)) return 'co';
+  if (/chile|^cl$/.test(s)) return 'cl';
+  if (/mexico|^mx$/.test(s)) return 'mx';
+  if (/paraguay|^py$/.test(s)) return 'py';
+  if (/brasil|brazil/.test(s)) return 'br';
+  if (/estadosunidos|unitedstates|usa|^us$|miami|florida/.test(s)) return 'us';
+  return s;
+}
+
+function chatIaPaisSedeCoincideConJugador(paisSede, paisJugador) {
+  const pj = String(paisJugador || '').trim();
+  if (!pj) return true;
+  const ps = String(paisSede || '').trim();
+  if (!ps) return true;
+  const bj = chatIaPaisBucket(pj);
+  const bs = chatIaPaisBucket(ps);
+  if (bj && bs && bj === bs) return true;
+  const fj = chatIaFoldText(pj).replace(/[^a-z0-9]/g, '');
+  const fs = chatIaFoldText(ps).replace(/[^a-z0-9]/g, '');
+  if (fj.length >= 3 && fs.length >= 3 && (fs.includes(fj) || fj.includes(fs))) return true;
+  return chatIaFoldText(ps) === chatIaFoldText(pj);
+}
+
+function chatIaSedesFiltradasPorPaisJugador(sedesCompact, paisJugador) {
+  if (!Array.isArray(sedesCompact) || !sedesCompact.length) return [];
+  const pj = String(paisJugador || '').trim();
+  if (!pj) return sedesCompact;
+  const out = sedesCompact.filter((s) => chatIaPaisSedeCoincideConJugador(String(s?.pais || ''), pj));
+  return out.length ? out : sedesCompact;
+}
+
+function chatIaScoreSedePorTextoUsuario(foldedUser, s) {
+  const nombre = String(s?.nombre || '').trim();
+  const ciudad = String(s?.ciudad || '').trim();
+  if (!nombre) return 0;
+  const fn = chatIaFoldText(nombre);
+  if (fn.length >= 4 && foldedUser.includes(fn)) return 1000;
+
+  let sc = 0;
+  const nt = fn.split(/[^a-z0-9]+/).filter(Boolean);
+  for (let i = 0; i < nt.length - 1; i += 1) {
+    const bg = `${nt[i]} ${nt[i + 1]}`;
+    if (bg.replace(/\s/g, '').length >= 4 && foldedUser.includes(bg)) sc += 42;
+  }
+
+  const bag = new Set([
+    ...fn.split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
+    ...chatIaFoldText(ciudad)
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length >= 3),
+  ]);
+  for (const t of bag) {
+    if (CHAT_IA_SEDE_GENERIC_TOKENS.has(t)) continue;
+    if (chatIaKeywordHitInFoldedUserText(foldedUser, t)) sc += 14 + Math.min(10, t.length);
+    else if (t.length >= 4 && fn.includes(t) && foldedUser.includes(t)) sc += 16;
+  }
+  return sc;
+}
+
+function chatIaRankSedesPorTexto(text, sedesCompact) {
   const folded = chatIaFoldText(text);
-  if (!folded || !Array.isArray(sedesCompact) || sedesCompact.length === 0) return null;
-
-  const scoreSede = (s) => {
-    const nombre = String(s?.nombre || '').trim();
-    const ciudad = String(s?.ciudad || '').trim();
-    if (!nombre) return 0;
-    const fn = chatIaFoldText(nombre);
-    if (fn.length >= 4 && folded.includes(fn)) return 1000;
-
-    let sc = 0;
-    const nt = fn.split(/[^a-z0-9]+/).filter(Boolean);
-    for (let i = 0; i < nt.length - 1; i += 1) {
-      const bg = `${nt[i]} ${nt[i + 1]}`;
-      if (bg.replace(/\s/g, '').length >= 4 && folded.includes(bg)) sc += 42;
-    }
-
-    const bag = new Set([
-      ...fn.split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
-      ...chatIaFoldText(ciudad)
-        .split(/[^a-z0-9]+/)
-        .filter((t) => t.length >= 3),
-    ]);
-    for (const t of bag) {
-      if (CHAT_IA_SEDE_GENERIC_TOKENS.has(t)) continue;
-      if (chatIaKeywordHitInFoldedUserText(folded, t)) sc += 14 + Math.min(10, t.length);
-    }
-    return sc;
-  };
-
-  const ranked = sedesCompact
+  if (!folded || !Array.isArray(sedesCompact) || sedesCompact.length === 0) return [];
+  return sedesCompact
     .map((s) => {
       const nombre = String(s?.nombre || '').trim();
       const id = Number(s.id);
-      const sc = scoreSede(s);
+      const sc = chatIaScoreSedePorTextoUsuario(folded, s);
       if (!Number.isFinite(id) || id <= 0 || !nombre) return null;
       return { id, nombre, sc };
     })
     .filter(Boolean)
     .sort((a, b) => b.sc - a.sc || b.nombre.length - a.nombre.length);
+}
 
-  const best = ranked[0];
-  if (!best || best.sc < 12) return null;
-
-  const second = ranked[1];
-  if (second && second.id !== best.id && second.sc >= best.sc - 1 && second.sc >= 12) {
-    if (best.sc < 1000) return null;
+function chatIaPickSedeDesdeRanking(ranked) {
+  const withScore = (ranked || []).filter((x) => x.sc >= 12);
+  if (!withScore.length) return { tipo: 'none' };
+  const best = withScore[0];
+  const tied = withScore.filter((x) => x.sc >= best.sc - 1 && x.sc >= 12);
+  if (tied.length >= 2 && best.sc < 1000) {
+    return {
+      tipo: 'tie',
+      candidatas: tied.map((t) => ({ id: t.id, nombre: t.nombre })),
+    };
   }
-  return { id: best.id, nombre: best.nombre };
+  return { tipo: 'ok', sede: { id: best.id, nombre: best.nombre } };
+}
+
+/**
+ * Resolución de sede para consulta de disponibilidad:
+ * 1) Nombre en el mensaje (prioriza sedes del mismo país que el jugador; si no hay match, busca en todas).
+ * 2) Empate → devolver candidatas (el modelo pregunta cuál).
+ * 3) Sin match en texto → sede_id del perfil → última reserva.
+ * 4) Si sigue sin sede → listado corto por país para una sola pregunta.
+ */
+function chatIaResolveSedeParaConsultaDisponibilidad(combined, ctx) {
+  const sedesAll = Array.isArray(ctx?.sedes) ? ctx.sedes : [];
+  const u = ctx?.usuario_logueado;
+  const paisJ = String(u?.perfil?.pais || '').trim();
+  const sedesPais = chatIaSedesFiltradasPorPaisJugador(sedesAll, paisJ);
+
+  const listadoPais = sedesPais.slice(0, 22).map((s) => ({
+    id: Number(s.id),
+    nombre: String(s.nombre || '').trim(),
+  }));
+
+  const tryList = (list) => {
+    const ranked = chatIaRankSedesPorTexto(combined, list);
+    return { ranked, pick: chatIaPickSedeDesdeRanking(ranked) };
+  };
+
+  const primaryList = sedesPais.length ? sedesPais : sedesAll;
+  let { pick } = tryList(primaryList);
+  if (pick.tipo === 'none' && paisJ && sedesPais.length && sedesPais.length < sedesAll.length) {
+    pick = tryList(sedesAll).pick;
+  }
+
+  if (pick.tipo === 'ok') {
+    return {
+      sede: pick.sede,
+      fuente_resolucion_sede: 'mensaje',
+      sede_ambigua: false,
+      candidatas_sede: null,
+      sedes_sugeridas_mismo_pais: listadoPais,
+    };
+  }
+  if (pick.tipo === 'tie') {
+    return {
+      sede: null,
+      fuente_resolucion_sede: null,
+      sede_ambigua: true,
+      candidatas_sede: pick.candidatas.slice(0, 6),
+      sedes_sugeridas_mismo_pais: listadoPais,
+    };
+  }
+
+  const sidProf = u?.perfil?.sede_id != null && Number.isFinite(Number(u.perfil.sede_id)) ? Number(u.perfil.sede_id) : null;
+  if (sidProf) {
+    const row = sedesAll.find((s) => Number(s.id) === sidProf);
+    const nom = String(row?.nombre || '').trim();
+    if (nom) {
+      return {
+        sede: { id: sidProf, nombre: nom },
+        fuente_resolucion_sede: 'perfil_habitual',
+        sede_ambigua: false,
+        candidatas_sede: null,
+        sedes_sugeridas_mismo_pais: listadoPais,
+      };
+    }
+  }
+
+  const ur = u?.ultima_reserva_sede;
+  if (ur && Number.isFinite(Number(ur.sede_id)) && Number(ur.sede_id) > 0 && String(ur.nombre || '').trim()) {
+    return {
+      sede: { id: Number(ur.sede_id), nombre: String(ur.nombre).trim() },
+      fuente_resolucion_sede: 'ultima_reserva',
+      sede_ambigua: false,
+      candidatas_sede: null,
+      sedes_sugeridas_mismo_pais: listadoPais,
+    };
+  }
+
+  return {
+    sede: null,
+    fuente_resolucion_sede: null,
+    sede_ambigua: false,
+    candidatas_sede: null,
+    sedes_sugeridas_mismo_pais: listadoPais,
+  };
 }
 
 /**
@@ -10621,7 +10742,25 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
     return { consulta_disponibilidad: { estado: 'no_aplica' } };
   }
 
-  const sedeM = chatIaMatchSedeFromText(combined, ctx.sedes || []);
+  const sedeRes = chatIaResolveSedeParaConsultaDisponibilidad(combined, ctx);
+  const paisJugador = String(ctx?.usuario_logueado?.perfil?.pais || '').trim();
+
+  if (sedeRes.sede_ambigua) {
+    return {
+      consulta_disponibilidad: {
+        estado: 'faltan_datos',
+        falta: 'sede',
+        sede_ambigua: true,
+        jugador_pais: paisJugador || null,
+        candidatas_sede: sedeRes.candidatas_sede,
+        sedes_sugeridas_mismo_pais: sedeRes.sedes_sugeridas_mismo_pais,
+        instruccion_para_el_modelo:
+          'Varias sedes encajan (candidatas_sede). UNA pregunta (una línea): cuál eligen, con el nombre exacto de la lista. Sin WhatsApp (no <<<WHATSAPP>>>).',
+      },
+    };
+  }
+
+  const sedeM = sedeRes.sede;
   const fechaRes = chatIaResolveFechaParaConsultaArt(combined, ctx.fecha_referencia);
   const fechaM = fechaRes?.ymd || null;
   const fechaNota = fechaRes?.nota_correccion || null;
@@ -10632,8 +10771,10 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
       consulta_disponibilidad: {
         estado: 'faltan_datos',
         falta: 'sede',
+        jugador_pais: paisJugador || null,
+        sedes_sugeridas_mismo_pais: sedeRes.sedes_sugeridas_mismo_pais,
         instruccion_para_el_modelo:
-          'Falta solo identificar la sede. UNA pregunta corta (una línea): qué sede del listado JSON. Sin WhatsApp (no <<<WHATSAPP>>>).',
+          'No se infirió sede. UNA pregunta (una línea): qué sede quieren; priorizá nombres de sedes_sugeridas_mismo_pais (mismo país que jugador_pais si existe). Sin WhatsApp (no <<<WHATSAPP>>>).',
       },
     };
   }
@@ -10699,7 +10840,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
         fecha: fechaM,
         detalle: error,
         instruccion_para_el_modelo:
-          'Error al calcular disponibilidad. Máximo 2 líneas: disculpas y reintento o /reservar. Sin WhatsApp (no <<<WHATSAPP>>>) salvo que el usuario pida explícitamente hablar con el club por WhatsApp.',
+          'Error al calcular disponibilidad. Máximo 2 líneas: disculpas y reintento o /reservar. Sin WhatsApp (no <<<WHATSAPP>>>).',
       },
     };
   }
@@ -10775,6 +10916,7 @@ async function buildChatIaConsultaDisponibilidad(supabaseClient, ctx, historial,
       hora_para_reserva_url: horaParaReserva,
       hora_solicitud_usuario: horaSolicitudUsuario,
       hora_solicitud_en_slots: horaSolicitudEnSlots,
+      fuente_resolucion_sede: sedeRes.fuente_resolucion_sede || null,
       instruccion_para_el_modelo: instruccionOk,
     },
   };
@@ -10895,6 +11037,15 @@ function chatIaUserExplicitClubWhatsappIntent(text) {
   if (wantsW && (clubish || wantsHuman)) return true;
   if (/\b(numero|n[uú]mero|telefono|tel[eé]fono|celular)\b.*\b(club|sede)\b/.test(t)) return true;
   if (/\b(club|sede)\b.*\b(whatsapp|wsp)\b/.test(t)) return true;
+  return false;
+}
+
+/** El servidor solo muestra escalada WhatsApp si el mensaje del usuario lo autoriza (pedido explícito). */
+function chatIaUserAllowsWhatsappEscalada(text) {
+  if (chatIaUserExplicitClubWhatsappIntent(text)) return true;
+  const t = chatIaFoldText(text);
+  if (/\b(pasame|dame|mandame|quiero)\s+(el\s+)?(whatsapp|wsp|telefono|tel[eé]fono)\s+(del\s+)?(club|sede)\b/.test(t)) return true;
+  if (/\b(hablar|contact(ar|o)?|comunic(ar|o)?)\s+con\s+(el\s+)?(club|la\s+sede|administraci|encargad)\b/.test(t)) return true;
   return false;
 }
 
@@ -11070,7 +11221,7 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
     const uid = String(authUser.id || '').trim();
     const perfilQ = await supabaseClient
       .from('jugadores_perfil')
-      .select('nombre,nombre_saludo,email,ciudad,whatsapp,sede_id,user_id,alias,apodo,apellido')
+      .select('nombre,nombre_saludo,email,ciudad,pais,whatsapp,sede_id,user_id,alias,apodo,apellido')
       .eq('email', em)
       .maybeSingle();
     const perfil = perfilQ.data || null;
@@ -11153,6 +11304,18 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
       }
     }
 
+    let ultima_reserva_sede = null;
+    const rUlt = reservasLista[0];
+    if (rUlt && String(rUlt.sede || '').trim()) {
+      const rowMatch = sedesRows.find((s) => String(s.nombre || '').trim() === String(rUlt.sede).trim());
+      if (rowMatch) {
+        ultima_reserva_sede = {
+          sede_id: rowMatch.id,
+          nombre: String(rowMatch.nombre || '').trim(),
+        };
+      }
+    }
+
     usuarioBloque = {
       email: em,
       user_id: uid,
@@ -11160,6 +11323,7 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
       reservas_ultimas_3,
       patron_sugerencias_ia,
       sede_habitual,
+      ultima_reserva_sede,
       torneos_sede_habitual_7d,
       escalada_whatsapp_default,
     };
@@ -11261,17 +11425,17 @@ App how-to (translate into ${langName} when answering; keys are Spanish hints):
 ${JSON.stringify(ctxForModel.guia_app || {})}
 
 Logged-in user hints (only if usuario_logueado is non-null):
-- reservas_ultimas_3 / patron_sugerencias_ia / torneos_sede_habitual_7d: one short optional line max; no multi-question prompts.
+- reservas_ultimas_3 / patron_sugerencias_ia / torneos_sede_habitual_7d / ultima_reserva_sede / perfil.pais: one short optional line max; no multi-question prompts.
+- Availability sede resolution (consulta_disponibilidad): message match within player country first; if still ambiguous, candidatas_sede; else perfil.sede_id, else ultima_reserva_sede (see JSON fields fuente_resolucion_sede / sedes_sugeridas_mismo_pais).
 
 Availability (dates in JSON are Argentina ART; consulta_disponibilidad.nota_fecha if corrected). Follow instruccion_para_el_modelo logic; phrase the visible reply in ${langName}:
 - estado === "ok": answer with concrete free start times from slots_reales immediately. Ideal shape (adapt language): "[When] at [club] there is space at 19:00 and 19:30. Which do you prefer?" If hora_solicitud_usuario is set and hora_solicitud_en_slots is false, say clearly that the requested start is not available and list real alternatives from slots_reales (see instruccion_para_el_modelo). Never ask to "confirm" before listing slots when data is already there.
-- estado === "faltan_datos": at most ONE question in the whole reply—only what falta indicates (sede OR fecha). No second question, no preamble.
+- estado === "faltan_datos": at most ONE question in the whole reply—only what falta indicates (sede OR fecha). If sede_ambigua, ask which of candidatas_sede; else if falta sede, prefer listing sedes_sugeridas_mismo_pais. No second question, no preamble.
 - estado === "error": max 2 lines; apology + retry or /reservar.
 - estado === "no_aplica": short factual answer from JSON only; do not invent hourly availability.
 
 WhatsApp marker <<<WHATSAPP>>> (strict):
-- Add it ONLY if (A) the user explicitly asks to contact the club / a human by WhatsApp or phone, OR (B) you truly cannot help after using the JSON (e.g. repeated technical failure, impossible request outside bookings with no path in the app)—NOT because a sede name was unclear or a date/sede field is missing.
-- NEVER add <<<WHATSAPP>>> when consulta_disponibilidad.estado is "faltan_datos" or "error" unless the user message itself clearly asks to speak/WhatsApp the club (missing sede/fecha → ask one question, do NOT escalate).
+- The app ONLY shows a WhatsApp button if the USER message clearly requests club contact (phone/WhatsApp/human). Do NOT output <<<WHATSAPP>>> for missing sede/fecha, ambiguous sede, or generic errors—ask or suggest /reservar instead.
 - NEVER add <<<WHATSAPP>>> when consulta_disponibilidad.estado === "ok" or when you already listed slots or answered from context.
 - NEVER offer WhatsApp as the first or main option when availability or booking data exists.
 
@@ -11388,12 +11552,7 @@ app.post('/api/chat-ia', async (req, res) => {
     const waSt = stripChatIaWhatsAppMarkers(respuesta);
     respuesta = waSt.text;
     let whatsapp_escalada = await chatIaResolveWhatsappEscalation(supabase, waSt.whatsapp_sede_id, ctx);
-    const cdEst = dispExtra.consulta_disponibilidad?.estado;
-    if (
-      whatsapp_escalada &&
-      !chatIaUserExplicitClubWhatsappIntent(mensaje) &&
-      (cdEst === 'faltan_datos' || cdEst === 'error')
-    ) {
+    if (whatsapp_escalada && !chatIaUserAllowsWhatsappEscalada(mensaje)) {
       whatsapp_escalada = null;
     }
 
