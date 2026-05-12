@@ -2855,7 +2855,7 @@ export default function MiPerfil() {
           </>
 
         ) : (
-          <form onSubmit={handleGuardar}>
+          <form id="mi-perfil-ficha-form" onSubmit={handleGuardar}>
             <h4 style={{ margin: '0 0 16px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Editar datos</h4>
 
             <label style={labelStyle}>Nombre {reqAst}</label>
@@ -3544,11 +3544,7 @@ export default function MiPerfil() {
             )
           ) : (
             <>
-              {hasDeportesPreferidosCargados(formData.deportes_preferidos) ? (
-                <div style={{ marginBottom: 12 }}>
-                  <DeportesPreferidosLecturaChips keys={formData.deportes_preferidos} />
-                </div>
-              ) : (
+              {!hasDeportesPreferidosCargados(formData.deportes_preferidos) ? (
                 <button
                   type="button"
                   onClick={() =>
@@ -3572,7 +3568,7 @@ export default function MiPerfil() {
                 >
                   Agregar deportes
                 </button>
-              )}
+              ) : null}
               <p style={{ color: '#64748b', fontSize: '12px', marginTop: 0, marginBottom: '8px', lineHeight: 1.4 }}>
                 Selecciona los deportes que practicas (opcional). Mejoran las sugerencias del asistente.
               </p>
@@ -3587,6 +3583,36 @@ export default function MiPerfil() {
                   }
                   disabled={isSubmitting}
                 />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                <button
+                  type="submit"
+                  form="mi-perfil-ficha-form"
+                  disabled={
+                    isSubmitting ||
+                    (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                  }
+                  style={{
+                    flex: 1,
+                    padding: '11px',
+                    background: '#d32f2f',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    opacity:
+                      isSubmitting || (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                        ? 0.6
+                        : 1,
+                  }}
+                >
+                  {isSubmitting
+                    ? 'Guardando...'
+                    : torneoIdValido
+                      ? 'Guardar y volver al torneo'
+                      : '✅ Guardar'}
+                </button>
               </div>
             </>
           )}
