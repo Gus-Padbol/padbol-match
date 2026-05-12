@@ -65,7 +65,9 @@ function chatUiStrings(loc) {
       sinVoz: 'No voice detected. Try again.',
       noReconocer: 'Could not recognize speech. Try again.',
       limiteSesion: 'You have reached the limit for this session.',
-      verDisponibilidad: 'See availability',
+      verSedePrimario: (nombre) => (nombre ? `See ${nombre}` : 'See club'),
+      limiteCtaJugar: 'Play',
+      limiteCtaVerSede: 'See club',
       nuevaConsultaSesion: 'New chat',
     };
   }
@@ -84,7 +86,9 @@ function chatUiStrings(loc) {
       sinVoz: 'Nenhuma voz detectada. Tente de novo.',
       noReconocer: 'Não foi possível reconhecer. Tente de novo.',
       limiteSesion: 'Você chegou ao limite desta sessão.',
-      verDisponibilidad: 'Ver disponibilidade',
+      verSedePrimario: (nombre) => (nombre ? `Ver ${nombre}` : 'Ver clube'),
+      limiteCtaJugar: 'Jogar',
+      limiteCtaVerSede: 'Ver clube',
       nuevaConsultaSesion: 'Nova conversa',
     };
   }
@@ -102,7 +106,9 @@ function chatUiStrings(loc) {
     sinVoz: 'No se detectó voz. Intenta de nuevo.',
     noReconocer: 'No se pudo reconocer. Intenta de nuevo.',
     limiteSesion: 'Llegaste al límite de esta sesión.',
-    verDisponibilidad: 'Ver disponibilidad',
+    verSedePrimario: (nombre) => (nombre ? `Ver ${nombre}` : 'Ver sede'),
+    limiteCtaJugar: 'Jugar',
+    limiteCtaVerSede: 'Ver sede',
     nuevaConsultaSesion: 'Nueva consulta',
   };
 }
@@ -124,6 +130,7 @@ export default function ChatbotIA() {
   const [readAloud, setReadAloud] = useState(false);
   const [lastReserve, setLastReserve] = useState(null);
   const [bootstrap, setBootstrap] = useState(null);
+  const [sedeContextoTurno, setSedeContextoTurno] = useState(null);
   const [whatsappEscalada, setWhatsappEscalada] = useState(null);
   const recRef = useRef(null);
   const listEndRef = useRef(null);
@@ -217,13 +224,26 @@ export default function ChatbotIA() {
 
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === 'user').length, [messages]);
 
-  const reservarDesdeLimiteHref = useMemo(() => {
-    const sid = bootstrap?.sede_habitual_id;
-    if (sid != null && Number.isFinite(Number(sid)) && Number(sid) > 0) {
-      return `/reservar?sedeId=${encodeURIComponent(String(sid))}`;
+  const limiteSesionCta = useMemo(() => {
+    const fromTurno = sedeContextoTurno?.id;
+    const fromHab = bootstrap?.sede_habitual_id;
+    const sid =
+      fromTurno != null && Number.isFinite(Number(fromTurno)) && Number(fromTurno) > 0
+        ? Number(fromTurno)
+        : fromHab != null && Number.isFinite(Number(fromHab)) && Number(fromHab) > 0
+          ? Number(fromHab)
+          : null;
+    if (sid != null) {
+      const nombre =
+        (sedeContextoTurno && Number(sedeContextoTurno.id) === sid && String(sedeContextoTurno.nombre || '').trim()) ||
+        (bootstrap?.sede_habitual_id != null && Number(bootstrap.sede_habitual_id) === sid
+          ? String(bootstrap.sede_habitual_nombre || '').trim()
+          : '') ||
+        '';
+      return { href: `/sede/${encodeURIComponent(String(sid))}`, nombre };
     }
-    return '/reservar';
-  }, [bootstrap?.sede_habitual_id]);
+    return { href: '/jugar', nombre: '' };
+  }, [sedeContextoTurno, bootstrap?.sede_habitual_id, bootstrap?.sede_habitual_nombre]);
 
   const lastAssistantText = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -346,6 +366,7 @@ export default function ChatbotIA() {
       setVoiceNotice('');
       setLoading(true);
       setLastReserve(null);
+      setSedeContextoTurno(null);
       setWhatsappEscalada(null);
 
       try {
@@ -368,6 +389,10 @@ export default function ChatbotIA() {
         if (!res.ok) {
           if (data?.limit_reached) {
             setSessionEnded(true);
+            const sc = data.sede_contexto;
+            if (sc && sc.id != null && Number.isFinite(Number(sc.id)) && Number(sc.id) > 0) {
+              setSedeContextoTurno({ id: Number(sc.id), nombre: String(sc.nombre || '').trim() });
+            }
             setError('');
             setLoading(false);
             return;
@@ -379,6 +404,12 @@ export default function ChatbotIA() {
         const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
         setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
         if (data.reserve?.href) setLastReserve(data.reserve);
+        const sc = data.sede_contexto;
+        if (sc && sc.id != null && Number.isFinite(Number(sc.id)) && Number(sc.id) > 0) {
+          setSedeContextoTurno({ id: Number(sc.id), nombre: String(sc.nombre || '').trim() });
+        } else {
+          setSedeContextoTurno(null);
+        }
         if (data.whatsapp_escalada?.href) setWhatsappEscalada(data.whatsapp_escalada);
         const used = Number(data.user_messages_used);
         if (Number.isFinite(used) && used >= MAX_USER_MESSAGES) setSessionEnded(true);
@@ -552,6 +583,7 @@ export default function ChatbotIA() {
     setError('');
     setSessionEnded(false);
     setLastReserve(null);
+    setSedeContextoTurno(null);
     setWhatsappEscalada(null);
     setVoiceFinal('');
     setVoiceInterim('');
@@ -772,7 +804,7 @@ export default function ChatbotIA() {
                   <div style={{ marginBottom: 12, lineHeight: 1.45 }}>{ui.limiteSesion}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <Link
-                      to={reservarDesdeLimiteHref}
+                      to={limiteSesionCta.href}
                       onClick={() => setOpen(false)}
                       style={{
                         display: 'block',
@@ -786,7 +818,11 @@ export default function ChatbotIA() {
                         textAlign: 'center',
                       }}
                     >
-                      {ui.verDisponibilidad}
+                      {limiteSesionCta.href === '/jugar'
+                        ? ui.limiteCtaJugar
+                        : limiteSesionCta.nombre
+                          ? ui.verSedePrimario(limiteSesionCta.nombre)
+                          : ui.limiteCtaVerSede}
                     </Link>
                     <button
                       type="button"

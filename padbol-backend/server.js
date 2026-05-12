@@ -10691,9 +10691,35 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx) {
   }
 }
 
+function chatIaSedeNombreDesdeCtx(ctx, sedeId) {
+  const sid = Number(sedeId);
+  if (!Number.isFinite(sid) || sid <= 0) return '';
+  const list = Array.isArray(ctx?.sedes) ? ctx.sedes : [];
+  const row = list.find((s) => Number(s.id) === sid);
+  return row ? String(row.nombre || '').trim() : '';
+}
+
+/** Último sede_id mencionado en un marcador RESERVA del historial (asistente). */
+function chatIaSedeIdDesdeHistorialReserva(historial) {
+  const rows = Array.isArray(historial) ? historial : [];
+  let lastId = null;
+  for (const h of rows) {
+    if (h?.role !== 'assistant') continue;
+    const t = String(h.content || '');
+    const re = /<<<RESERVA:sede_id=(\d+)/gi;
+    let m;
+    while ((m = re.exec(t)) !== null) {
+      const id = parseInt(m[1], 10);
+      if (Number.isFinite(id) && id > 0) lastId = id;
+    }
+  }
+  return lastId;
+}
+
 async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools, supabaseClient, ctx }) {
   const msgs = [...messages];
   const toolDefs = tools || chatIaAnthropicToolsDefinition();
+  let sedeContextoUltima = null;
   for (let round = 0; round < 8; round += 1) {
     const anthroRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -10743,7 +10769,7 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
         .map((b) => b.text)
         .join('\n')
         .trim();
-      return { ok: true, text, stop_reason: stop, raw: rawJson };
+      return { ok: true, text, stop_reason: stop, raw: rawJson, sede_contexto: sedeContextoUltima };
     }
     const toolUses = content.filter((b) => b && b.type === 'tool_use' && b.name && b.id);
     if (!toolUses.length) {
@@ -10768,6 +10794,18 @@ async function chatIaRunClaudeWithTools({ apiKey, model, system, messages, tools
         );
       }
       const out = await chatIaExecuteTool(supabaseClient, tu.name, parsedIn, ctx);
+      if (tu.name === 'consultar_disponibilidad' && out?.ok && out.sede_id) {
+        const id = Number(out.sede_id);
+        const nombre =
+          String(out.sede_nombre || '').trim() || chatIaSedeNombreDesdeCtx(ctx, id) || `Sede ${id}`;
+        sedeContextoUltima = { id, nombre };
+      } else if (tu.name === 'listar_torneos') {
+        const sid = parsedIn.sede_id != null ? parseInt(String(parsedIn.sede_id).trim(), 10) : NaN;
+        if (Number.isFinite(sid) && sid > 0) {
+          const nombre = chatIaSedeNombreDesdeCtx(ctx, sid) || `Sede ${sid}`;
+          sedeContextoUltima = { id: sid, nombre };
+        }
+      }
       toolResults.push({
         type: 'tool_result',
         tool_use_id: tu.id,
@@ -11222,7 +11260,7 @@ function buildChatIaBootstrapPayload(ctx) {
         const p = u?.patron_sugerencias_ia;
         if (!p?.weekday_label || !p?.sede_favorita_nombre) return null;
         const h = p.hora_tipica ? ` a las ${p.hora_tipica}` : '';
-        return `Sueles reservar los ${p.weekday_label}${h} en ${p.sede_favorita_nombre}. ¿Busco algo parecido?`;
+        return `Sueles reservar los ${p.weekday_label}${h}\nen ${p.sede_favorita_nombre}. ¿Busco algo parecido?`;
       })(),
     },
     en: {
@@ -11251,11 +11289,13 @@ function buildChatIaBootstrapPayload(ctx) {
     sedeHab != null && String(sedeHab).trim() !== '' && Number.isFinite(Number(sedeHab)) && Number(sedeHab) > 0
       ? Number(sedeHab)
       : null;
+  const sede_habitual_nombre = u?.sede_habitual?.nombre ? String(u.sede_habitual.nombre).trim() : null;
   return {
     idioma: l,
     saludo_titulo: pack.titulo,
     saludo_lineas: extras,
     sede_habitual_id,
+    sede_habitual_nombre,
     whatsapp_club: u?.escalada_whatsapp_default || null,
   };
 }
@@ -11361,7 +11401,26 @@ app.post('/api/chat-ia', async (req, res) => {
 
     const priorUser = historial.filter((h) => h.role === 'user').length;
     if (priorUser >= CHAT_IA_MAX_USER_MSG) {
-      return res.status(400).json({ error: 'Llegaste al límite de esta sesión.', limit_reached: true });
+      const localeEarly = normalizeChatIaLocale(b.locale);
+      const ctxEarly = await buildChatIAContextPayload(supabase, user, localeEarly);
+      const rid = chatIaSedeIdDesdeHistorialReserva(historial);
+      let sede_contexto = null;
+      if (rid != null) {
+        const nombre = chatIaSedeNombreDesdeCtx(ctxEarly, rid) || `Sede ${rid}`;
+        sede_contexto = { id: rid, nombre };
+      } else {
+        const h = ctxEarly?.usuario_logueado?.sede_habitual;
+        if (h?.sede_id != null && Number.isFinite(Number(h.sede_id)) && Number(h.sede_id) > 0) {
+          const sid = Number(h.sede_id);
+          const nombre = String(h.nombre || '').trim() || chatIaSedeNombreDesdeCtx(ctxEarly, sid) || `Sede ${sid}`;
+          sede_contexto = { id: sid, nombre };
+        }
+      }
+      return res.status(400).json({
+        error: 'Llegaste al límite de esta sesión.',
+        limit_reached: true,
+        sede_contexto,
+      });
     }
 
     const key = chatIaRateKey(req, user);
@@ -11402,12 +11461,25 @@ app.post('/api/chat-ia', async (req, res) => {
       whatsapp_escalada = null;
     }
 
+    let sede_contexto = run.sede_contexto || null;
+    if (reserve?.sede_id) {
+      const rid = parseInt(String(reserve.sede_id), 10);
+      if (Number.isFinite(rid) && rid > 0) {
+        const nombre =
+          chatIaSedeNombreDesdeCtx(ctxBase, rid) ||
+          (sede_contexto && Number(sede_contexto.id) === rid ? String(sede_contexto.nombre || '').trim() : '') ||
+          `Sede ${rid}`;
+        sede_contexto = { id: rid, nombre: nombre || `Sede ${rid}` };
+      }
+    }
+
     return res.json({
       respuesta,
       reserve: reserve && reserve.sede_id ? reserve : null,
       whatsapp_escalada: whatsapp_escalada && whatsapp_escalada.href ? whatsapp_escalada : null,
       user_messages_used: priorUser + 1,
       user_messages_max: CHAT_IA_MAX_USER_MSG,
+      sede_contexto,
     });
   } catch (err) {
     console.error('❌ POST /api/chat-ia:', err?.message || err);
