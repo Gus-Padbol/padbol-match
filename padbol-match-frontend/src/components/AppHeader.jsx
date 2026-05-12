@@ -6,7 +6,11 @@ import { formatAliasConArroba } from '../utils/jugadorPerfil';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { clearAdminNavContext } from '../utils/adminNavContext';
-import { HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX, isJugadorHubShellPathname } from '../constants/hubLayout';
+import {
+  HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
+  isJugadorHubShellPathname,
+  isSedeProfilePathname,
+} from '../constants/hubLayout';
 import JugadorNotificationsBell from './JugadorNotificationsBell';
 
 const btnVolver = {
@@ -216,7 +220,7 @@ export default function AppHeader({
   }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
 
   const hubLightBar =
-    jugadorHubShellPath && !adminFlowSurface && !adminPanelMinimalHeader;
+    (jugadorHubShellPath || isSedeProfilePathname(pathOnly)) && !adminFlowSurface && !adminPanelMinimalHeader;
 
   const authEmail = String(session?.user?.email || '').trim().toLowerCase();
   /** Panel admin (barra compacta): logout rápido. En flujo jugador el cierre va en Mi Perfil. */

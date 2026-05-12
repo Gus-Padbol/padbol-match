@@ -221,7 +221,7 @@ export default function UnirsePage() {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(160deg, #1e1b4b 0%, #4c1d95 40%, #7c3aed 100%)',
+        background: '#FFFFFF',
         paddingTop: hubContentPaddingTopCss('/unirse'),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
@@ -274,7 +274,7 @@ export default function UnirsePage() {
             >
               30 días gratis sin tarjeta
             </span>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#4c1d95' }}>{PRECIO_MENSUAL_USD}</span>
+            <span style={{ fontSize: '15px', fontWeight: 800, color: '#E11B22' }}>{PRECIO_MENSUAL_USD}</span>
           </div>
           <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
             Después del período de prueba, puedes elegir facturación mensual o anual.

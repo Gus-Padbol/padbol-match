@@ -33,6 +33,17 @@ const MAP_THUMB_MAX_H = 120;
 const PADBOL_PAGE_GRADIENT = '#FFFFFF';
 const FOTOS_DESTACADAS_MAX = 4;
 
+/** Design System Gero — perfil público de sede. */
+const SEDE_DS = {
+  pageBg: '#FFFFFF',
+  title: '#0F0F0F',
+  subtitle: '#6B6B6B',
+  cardBg: '#FFFFFF',
+  cardBorder: '#E0E0E0',
+  cardRadius: '12px',
+  brand: '#E11B22',
+};
+
 /** Misma apariencia que el CTA inferior «Reservar cancha» en esta vista. */
 /** CTAs principales: no al borde lateral, centrados. */
 const SEDE_CTA_NARROW_CENTERED = {
@@ -47,14 +58,27 @@ const SEDE_CTA_NARROW_CENTERED = {
 const SEDE_BTN_RESERVAR_CANCHA_STYLE = {
   width: '100%',
   padding: '14px 16px',
-  background: 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)',
+  background: SEDE_DS.brand,
   color: '#fff',
   border: 'none',
   borderRadius: '12px',
   cursor: 'pointer',
   fontWeight: 800,
   fontSize: '15px',
-  boxShadow: '0 4px 14px rgba(22, 163, 74, 0.45)',
+  boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
+  boxSizing: 'border-box',
+};
+
+/** CTA secundario «Ver torneos»: borde y texto rojo, fondo blanco. */
+const SEDE_BTN_VER_TORNEOS_STYLE = {
+  padding: '12px 16px',
+  background: '#FFFFFF',
+  color: SEDE_DS.brand,
+  border: `2px solid ${SEDE_DS.brand}`,
+  borderRadius: '12px',
+  cursor: 'pointer',
+  fontWeight: 800,
+  fontSize: '14px',
   boxSizing: 'border-box',
 };
 
@@ -84,39 +108,6 @@ function normalizeHexColor(raw) {
   return null;
 }
 
-function heroGradientSedePublica(sede) {
-  const p = normalizeHexColor(sede?.color_hero_primario) || '#4C1D95';
-  const s = normalizeHexColor(sede?.color_hero_secundario) || '#7C3AED';
-  return `linear-gradient(135deg, ${p} 0%, ${s} 100%)`;
-}
-
-function heroBordeExteriorSede(sede) {
-  return normalizeHexColor(sede?.color_borde_hero) || '#6D28D9';
-}
-
-function luminanciaRelativaHex(hex) {
-  const h = normalizeHexColor(hex) || '#4C1D95';
-  const r = parseInt(h.slice(1, 3), 16) / 255;
-  const g = parseInt(h.slice(3, 5), 16) / 255;
-  const b = parseInt(h.slice(5, 7), 16) / 255;
-  const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-}
-
-/** Texto principal del hero según luminosidad del color primario de la sede. */
-function heroTextoTituloSede(sede) {
-  const prim = normalizeHexColor(sede?.color_hero_primario) || '#4C1D95';
-  return luminanciaRelativaHex(prim) < 0.5 ? '#ffffff' : '#0f172a';
-}
-
-function heroTextoFraseSede(sede) {
-  return heroTextoTituloSede(sede) === '#ffffff' ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.88)';
-}
-
-function heroBordeBloqueDerechoSede(sede) {
-  return heroTextoTituloSede(sede) === '#ffffff' ? 'rgba(255,255,255,0.22)' : 'rgba(15,23,42,0.2)';
-}
-
 function colorFondoLogoSede(sedeRow) {
   return normalizeHexColor(sedeRow?.color_fondo_logo) || '#000000';
 }
@@ -137,7 +128,7 @@ const SEDE_HERO_FRASE_DEFAULT =
  * Margen extra bajo AppHeader + BottomNav + chrome del header (ref. hubLayout) + safe-area.
  * Incluye {@link APP_HEADER_OUTER_PADDING_PX} como en {@link hubContentPaddingTopCss} para que el hero no quede bajo la barra fija.
  */
-const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 36;
+const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 52;
 
 function formatHorario(apertura, cierre) {
   if (!apertura && !cierre) return null;
@@ -229,11 +220,11 @@ function SedeFotosCarruselDestacado({ urls, onOpenAtIndex }) {
               maxWidth: CARRUSEL_SLIDE_BASIS,
               scrollSnapAlign: 'start',
               height: PHOTO_STRIP_H,
-              borderRadius: '12px',
+              borderRadius: SEDE_DS.cardRadius,
               overflow: 'hidden',
-              background: '#e2e8f0',
-              boxShadow: '0 2px 10px rgba(15, 23, 42, 0.15)',
-              border: 'none',
+              background: '#f0f0f0',
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.08)',
+              border: `1px solid ${SEDE_DS.cardBorder}`,
               padding: 0,
               cursor: 'pointer',
               position: 'relative',
@@ -401,11 +392,13 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
         <div
           style={{
             position: 'relative',
-            borderRadius: '12px',
+            borderRadius: SEDE_DS.cardRadius,
             overflow: 'hidden',
             maxHeight: MAP_THUMB_MAX_H,
-            boxShadow: '0 1px 6px rgba(15, 23, 42, 0.12)',
+            boxShadow: '0 1px 6px rgba(15, 23, 42, 0.08)',
             background: '#e2e8f0',
+            border: `1px solid ${SEDE_DS.cardBorder}`,
+            boxSizing: 'border-box',
           }}
         >
           <iframe
@@ -471,7 +464,7 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
   );
 }
 
-/** Icono en fila de contacto: integrado al fondo púrpura, sin caja blanca. */
+/** Icono en fila de contacto: caja neutra sobre fondo claro. */
 function iconWrapSedeContacto(emoji) {
   return (
     <span
@@ -480,8 +473,8 @@ function iconWrapSedeContacto(emoji) {
         width: '24px',
         height: '24px',
         borderRadius: '8px',
-        background: 'rgba(255,255,255,0.12)',
-        border: '1px solid rgba(255,255,255,0.2)',
+        background: '#F5F5F5',
+        border: `1px solid ${SEDE_DS.cardBorder}`,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -599,7 +592,7 @@ function SedeSocialChips({ sede }) {
         style={{
           fontSize: '11px',
           fontWeight: 700,
-          color: '#64748b',
+          color: SEDE_DS.subtitle,
           marginBottom: '6px',
         }}
       >
@@ -684,7 +677,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
     gap: '10px',
     minHeight: '24px',
     fontSize: '13px',
-    color: 'rgba(248,250,252,0.92)',
+    color: SEDE_DS.subtitle,
     lineHeight: 1.45,
   };
 
@@ -711,8 +704,8 @@ function CompactContactCard({ sede, horario, hasAddress }) {
             width: '24px',
             height: '24px',
             borderRadius: '8px',
-            background: 'rgba(255,255,255,0.12)',
-            border: '1px solid rgba(255,255,255,0.2)',
+            background: '#F5F5F5',
+            border: `1px solid ${SEDE_DS.cardBorder}`,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -727,7 +720,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
             href={`https://wa.me/${waNumber}`}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#bbf7d0', fontWeight: 700, textDecoration: 'none' }}
+            style={{ color: '#15803d', fontWeight: 700, textDecoration: 'none' }}
           >
             Escríbenos por WhatsApp
           </a>
@@ -741,7 +734,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
         '✉️',
         <a
           href={`mailto:${sede.email_contacto}`}
-          style={{ color: '#bae6fd', fontWeight: 600, textDecoration: 'none', wordBreak: 'break-all' }}
+          style={{ color: SEDE_DS.brand, fontWeight: 600, textDecoration: 'none', wordBreak: 'break-all' }}
         >
           {sede.email_contacto}
         </a>
@@ -754,8 +747,13 @@ function CompactContactCard({ sede, horario, hasAddress }) {
       <div
         style={{
           marginBottom: '14px',
+          padding: '14px 12px',
+          borderRadius: SEDE_DS.cardRadius,
+          background: SEDE_DS.cardBg,
+          border: `1px solid ${SEDE_DS.cardBorder}`,
+          boxSizing: 'border-box',
           fontSize: '13px',
-          color: 'rgba(248,250,252,0.55)',
+          color: SEDE_DS.subtitle,
           fontStyle: 'italic',
         }}
       >
@@ -768,6 +766,11 @@ function CompactContactCard({ sede, horario, hasAddress }) {
     <div
       style={{
         marginBottom: '14px',
+        padding: '16px 14px',
+        borderRadius: SEDE_DS.cardRadius,
+        background: SEDE_DS.cardBg,
+        border: `1px solid ${SEDE_DS.cardBorder}`,
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
@@ -775,10 +778,10 @@ function CompactContactCard({ sede, horario, hasAddress }) {
     >
       <h3
         style={{
-          margin: '4px 0 2px',
+          margin: '0 0 2px',
           fontSize: '14px',
           fontWeight: 800,
-          color: '#e2e8f0',
+          color: SEDE_DS.title,
           letterSpacing: '0.02em',
         }}
       >
@@ -822,7 +825,7 @@ function EstrellasSoloLectura({ value }) {
           key={i}
           style={{
             fontSize: '13px',
-            color: i <= v ? '#fbbf24' : 'rgba(226,232,240,0.35)',
+            color: i <= v ? '#fbbf24' : 'rgba(107, 107, 107, 0.35)',
           }}
         >
           ★
@@ -851,7 +854,7 @@ function EstrellasInteractivas({ value, onChange, disabled }) {
             fontSize: '26px',
             lineHeight: 1,
             padding: 0,
-            color: v >= n ? '#fbbf24' : 'rgba(248,250,252,0.28)',
+            color: v >= n ? '#fbbf24' : 'rgba(107, 107, 107, 0.28)',
           }}
         >
           ★
@@ -873,7 +876,7 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
         display: 'flex',
         gap: '10px',
         padding: '12px 0',
-        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.12)',
+        borderBottom: isLast ? 'none' : `1px solid ${SEDE_DS.cardBorder}`,
         boxSizing: 'border-box',
       }}
     >
@@ -884,7 +887,8 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
           borderRadius: '999px',
           overflow: 'hidden',
           flexShrink: 0,
-          background: 'rgba(15,23,42,0.55)',
+          background: '#F0F0F0',
+          border: `1px solid ${SEDE_DS.cardBorder}`,
           boxSizing: 'border-box',
         }}
       >
@@ -900,7 +904,7 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
               justifyContent: 'center',
               fontWeight: 800,
               fontSize: '16px',
-              color: '#e2e8f0',
+              color: SEDE_DS.subtitle,
             }}
             aria-hidden
           >
@@ -927,14 +931,14 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
                 gap: '6px 10px',
               }}
             >
-              <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>{nombre}</span>
+              <span style={{ fontWeight: 700, fontSize: '14px', color: SEDE_DS.title }}>{nombre}</span>
               <EstrellasSoloLectura value={r.estrellas} />
-              <span style={{ fontSize: '12px', color: 'rgba(226,232,240,0.65)' }}>
+              <span style={{ fontSize: '12px', color: SEDE_DS.subtitle }}>
                 {formatFechaResenaPublica(r.created_at)}
               </span>
             </div>
             {showApodoSub ? (
-              <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(226,232,240,0.55)', fontWeight: 600 }}>
+              <div style={{ marginTop: '4px', fontSize: '12px', color: SEDE_DS.subtitle, fontWeight: 600 }}>
                 {apodo}
               </div>
             ) : null}
@@ -947,9 +951,9 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
               aria-label="Eliminar reseña"
               style={{
                 flexShrink: 0,
-                border: '1px solid rgba(248,113,113,0.45)',
-                background: 'rgba(127,29,29,0.35)',
-                color: '#fecaca',
+                border: '1px solid #fecaca',
+                background: '#fef2f2',
+                color: '#b91c1c',
                 borderRadius: '8px',
                 padding: '4px 8px',
                 fontSize: '11px',
@@ -968,7 +972,7 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
               margin: '8px 0 0',
               fontSize: '13px',
               lineHeight: 1.45,
-              color: 'rgba(248,250,252,0.9)',
+              color: SEDE_DS.subtitle,
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
             }}
@@ -1145,9 +1149,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
     marginTop: '6px',
     marginBottom: '18px',
     padding: '16px 14px',
-    borderRadius: '14px',
-    background: 'rgba(255,255,255,0.12)',
-    border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: SEDE_DS.cardRadius,
+    background: SEDE_DS.cardBg,
+    border: `1px solid ${SEDE_DS.cardBorder}`,
     boxSizing: 'border-box',
   };
 
@@ -1166,15 +1170,15 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
           margin: '0 0 10px',
           fontSize: '17px',
           fontWeight: 800,
-          color: '#f8fafc',
+          color: SEDE_DS.title,
         }}
       >
         Reseñas
       </h2>
       {loading ? (
-        <p style={{ margin: 0, color: 'rgba(248,250,252,0.65)', fontSize: '13px' }}>Cargando reseñas…</p>
+        <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '13px' }}>Cargando reseñas…</p>
       ) : err ? (
-        <p style={{ margin: 0, color: '#fecaca', fontSize: '13px' }}>{err}</p>
+        <p style={{ margin: 0, color: '#b91c1c', fontSize: '13px' }}>{err}</p>
       ) : (
         <>
           <div
@@ -1189,7 +1193,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
             <span style={{ fontSize: '28px', fontWeight: 800, color: '#fbbf24' }}>{promedioTxt}</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <EstrellasSoloLectura value={estrellasPromedio} />
-              <span style={{ fontSize: '12px', color: 'rgba(226,232,240,0.75)' }}>
+              <span style={{ fontSize: '12px', color: SEDE_DS.subtitle }}>
                 {payload?.total
                   ? `${payload.total} reseña${payload.total === 1 ? '' : 's'}`
                   : 'Sin reseñas aún'}
@@ -1198,14 +1202,14 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
           </div>
 
           {!accessToken ? (
-            <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(248,250,252,0.88)' }}>
+            <p style={{ margin: '0 0 12px', fontSize: '13px', color: SEDE_DS.subtitle }}>
               <button
                 type="button"
                 onClick={() => navigate('/auth')}
                 style={{
                   border: 'none',
                   background: 'transparent',
-                  color: '#93c5fd',
+                  color: SEDE_DS.brand,
                   textDecoration: 'underline',
                   cursor: 'pointer',
                   fontWeight: 700,
@@ -1218,7 +1222,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
               para dejar tu reseña.
             </p>
           ) : payload?.ya_reseño ? (
-            <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(226,232,240,0.88)' }}>
+            <p style={{ margin: '0 0 12px', fontSize: '13px', color: SEDE_DS.subtitle }}>
               Ya dejaste tu reseña en esta sede. ¡Gracias!
             </p>
           ) : payload?.puede_reseñar ? (
@@ -1230,9 +1234,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                   width: '100%',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.35)',
-                  background: 'rgba(255,255,255,0.14)',
-                  color: '#f8fafc',
+                  border: `2px solid ${SEDE_DS.brand}`,
+                  background: '#FFFFFF',
+                  color: SEDE_DS.brand,
                   fontWeight: 800,
                   fontSize: '14px',
                   cursor: 'pointer',
@@ -1243,8 +1247,8 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
               </button>
             </div>
           ) : (
-            <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(226,232,240,0.82)', lineHeight: 1.45 }}>
-              Solo jugadores con al menos una <strong>reserva confirmada</strong> en esta sede pueden dejar una reseña.
+            <p style={{ margin: '0 0 12px', fontSize: '13px', color: SEDE_DS.subtitle, lineHeight: 1.45 }}>
+              Solo jugadores con al menos una <strong style={{ color: SEDE_DS.title }}>reserva confirmada</strong> en esta sede pueden dejar una reseña.
             </p>
           )}
 
@@ -1253,7 +1257,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
               style={{
                 margin: 0,
                 fontSize: '13px',
-                color: 'rgba(248,250,252,0.55)',
+                color: SEDE_DS.subtitle,
                 fontStyle: 'italic',
               }}
             >
@@ -1283,9 +1287,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 width: '100%',
                 padding: '11px',
                 borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.35)',
-                background: 'rgba(255,255,255,0.1)',
-                color: '#f8fafc',
+                border: `1px solid ${SEDE_DS.cardBorder}`,
+                background: '#F8F8F8',
+                color: SEDE_DS.title,
                 fontWeight: 700,
                 fontSize: '13px',
                 cursor: 'pointer',
@@ -1327,9 +1331,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
               display: 'flex',
               flexDirection: 'column',
               borderRadius: '16px',
-              background: 'linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%)',
-              border: '1px solid rgba(255,255,255,0.25)',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.45)',
+              background: '#FFFFFF',
+              border: `1px solid ${SEDE_DS.cardBorder}`,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.18)',
               boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1340,20 +1344,20 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '14px 16px',
-                borderBottom: '1px solid rgba(255,255,255,0.15)',
+                borderBottom: `1px solid ${SEDE_DS.cardBorder}`,
                 flexShrink: 0,
               }}
             >
-              <span id="sede-resenas-modal-title" style={{ fontWeight: 800, color: '#f8fafc', fontSize: '16px' }}>
+              <span id="sede-resenas-modal-title" style={{ fontWeight: 800, color: SEDE_DS.title, fontSize: '16px' }}>
                 Todas las reseñas
               </span>
               <button
                 type="button"
                 onClick={() => setVerTodasOpen(false)}
                 style={{
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.15)',
-                  color: '#fff',
+                  border: `1px solid ${SEDE_DS.cardBorder}`,
+                  background: '#F5F5F5',
+                  color: SEDE_DS.title,
                   width: '34px',
                   height: '34px',
                   borderRadius: '10px',
@@ -1374,7 +1378,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
               }}
             >
               {todasLoading ? (
-                <p style={{ margin: 0, color: '#e2e8f0', fontSize: '14px' }}>Cargando…</p>
+                <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '14px' }}>Cargando…</p>
               ) : (
                 todasRows.map((row, idx) => (
                   <ListaResenaCard
@@ -1392,7 +1396,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                   style={{
                     margin: '10px 0 0',
                     fontSize: '11px',
-                    color: 'rgba(226,232,240,0.65)',
+                    color: SEDE_DS.subtitle,
                     textAlign: 'center',
                   }}
                 >
@@ -1431,9 +1435,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
               width: 'min(420px, 100%)',
               padding: '18px 16px 16px',
               borderRadius: '16px',
-              background: 'linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%)',
-              border: '1px solid rgba(255,255,255,0.25)',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.45)',
+              background: '#FFFFFF',
+              border: `1px solid ${SEDE_DS.cardBorder}`,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.18)',
               boxSizing: 'border-box',
             }}
           >
@@ -1446,7 +1450,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 marginBottom: '14px',
               }}
             >
-              <span id="sede-resena-form-title" style={{ fontWeight: 800, color: '#f8fafc', fontSize: '16px' }}>
+              <span id="sede-resena-form-title" style={{ fontWeight: 800, color: SEDE_DS.title, fontSize: '16px' }}>
                 Tu reseña
               </span>
               <button
@@ -1454,9 +1458,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 disabled={submitting}
                 onClick={() => setFormModalOpen(false)}
                 style={{
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.15)',
-                  color: '#fff',
+                  border: `1px solid ${SEDE_DS.cardBorder}`,
+                  background: '#F5F5F5',
+                  color: SEDE_DS.title,
                   width: '34px',
                   height: '34px',
                   borderRadius: '10px',
@@ -1470,15 +1474,15 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 ×
               </button>
             </div>
-            <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'rgba(226,232,240,0.85)', lineHeight: 1.4 }}>
+            <p style={{ margin: '0 0 10px', fontSize: '12px', color: SEDE_DS.subtitle, lineHeight: 1.4 }}>
               Elige las estrellas y, si quieres, escribe un comentario. Solo se publica cuando tocas «Publicar reseña».
             </p>
-            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#e2e8f0' }}>
-              Calificación <span style={{ color: '#fecaca' }}>*</span>
+            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: SEDE_DS.title }}>
+              Calificación <span style={{ color: SEDE_DS.brand }}>*</span>
             </div>
             <EstrellasInteractivas value={estrellasForm} onChange={setEstrellasForm} disabled={submitting} />
             <label
-              style={{ display: 'block', marginTop: '14px', fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}
+              style={{ display: 'block', marginTop: '14px', fontSize: '12px', fontWeight: 700, color: SEDE_DS.title }}
               htmlFor="sede-resena-comentario-modal"
             >
               Comentario (opcional, máx. {RESENA_MAX_CHARS} caracteres)
@@ -1495,9 +1499,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 marginTop: '6px',
                 boxSizing: 'border-box',
                 borderRadius: '10px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(15,23,42,0.45)',
-                color: '#f8fafc',
+                border: `1px solid ${SEDE_DS.cardBorder}`,
+                background: '#FFFFFF',
+                color: SEDE_DS.title,
                 padding: '10px',
                 fontSize: '13px',
                 resize: 'vertical',
@@ -1514,7 +1518,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 gap: '8px',
               }}
             >
-              <span style={{ fontSize: '11px', color: 'rgba(226,232,240,0.55)' }}>
+              <span style={{ fontSize: '11px', color: SEDE_DS.subtitle }}>
                 {comentarioForm.length}/{RESENA_MAX_CHARS}
               </span>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1525,9 +1529,9 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                   style={{
                     padding: '10px 14px',
                     borderRadius: '10px',
-                    border: '1px solid rgba(255,255,255,0.35)',
-                    background: 'transparent',
-                    color: '#e2e8f0',
+                    border: `1px solid ${SEDE_DS.cardBorder}`,
+                    background: '#FFFFFF',
+                    color: SEDE_DS.title,
                     fontWeight: 700,
                     fontSize: '13px',
                     cursor: submitting ? 'not-allowed' : 'pointer',
@@ -1542,7 +1546,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                     padding: '10px 16px',
                     borderRadius: '10px',
                     border: 'none',
-                    background: '#22c55e',
+                    background: SEDE_DS.brand,
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: '13px',
@@ -1558,7 +1562,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 style={{
                   margin: '12px 0 0',
                   fontSize: '12px',
-                  color: formMsg.startsWith('¡') ? '#bbf7d0' : '#fecaca',
+                  color: formMsg.startsWith('¡') ? '#15803d' : '#b91c1c',
                 }}
               >
                 {formMsg}
@@ -1797,7 +1801,7 @@ export default function SedePublica() {
             justifyContent: 'center',
           }}
         >
-          <p style={{ color: '#64748b', fontSize: '15px', fontWeight: 600 }}>Cargando sede…</p>
+          <p style={{ color: SEDE_DS.subtitle, fontSize: '15px', fontWeight: 600 }}>Cargando sede…</p>
         </div>
       )}
 
@@ -1871,13 +1875,14 @@ export default function SedePublica() {
             <div
               style={{
                 position: 'relative',
-                borderRadius: '16px',
+                borderRadius: SEDE_DS.cardRadius,
                 marginLeft: '6px',
                 marginRight: '6px',
-                marginTop: '6px',
-                boxShadow: '0 8px 28px rgba(0, 0, 0, 0.22)',
+                marginTop: '10px',
+                boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)',
                 overflow: 'visible',
-                border: `2px solid ${heroBordeExteriorSede(sede)}`,
+                border: `1px solid ${SEDE_DS.cardBorder}`,
+                background: SEDE_DS.cardBg,
                 boxSizing: 'border-box',
               }}
             >
@@ -1886,8 +1891,8 @@ export default function SedePublica() {
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: heroGradientSedePublica(sede),
-                  borderRadius: '14px',
+                  background: '#F8F8F8',
+                  borderRadius: SEDE_DS.cardRadius,
                   zIndex: 0,
                 }}
               />
@@ -1916,11 +1921,9 @@ export default function SedePublica() {
                       width: '32px',
                       height: '32px',
                       borderRadius: '10px',
-                      border: '1px solid rgba(255,255,255,0.38)',
-                      background: 'rgba(15,23,42,0.32)',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                      color: '#ffffff',
+                      border: `1px solid ${SEDE_DS.cardBorder}`,
+                      background: '#FFFFFF',
+                      color: SEDE_DS.title,
                       lineHeight: 1,
                       cursor: 'pointer',
                       display: 'flex',
@@ -1928,7 +1931,7 @@ export default function SedePublica() {
                       justifyContent: 'center',
                       padding: 0,
                       margin: 0,
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                       boxSizing: 'border-box',
                     }}
                   >
@@ -1958,12 +1961,13 @@ export default function SedePublica() {
                         pointerEvents: 'none',
                         fontSize: '10px',
                         fontWeight: 700,
-                        color: '#f8fafc',
-                        background: 'rgba(15,23,42,0.72)',
+                        color: SEDE_DS.title,
+                        background: '#FFFFFF',
                         padding: '4px 8px',
                         borderRadius: '8px',
-                        border: '1px solid rgba(255,255,255,0.22)',
+                        border: `1px solid ${SEDE_DS.cardBorder}`,
                         whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                       }}
                     >
                       Copiado
@@ -2002,14 +2006,14 @@ export default function SedePublica() {
                       aspectRatio: '1',
                       flexShrink: 0,
                       alignSelf: 'center',
-                      borderRadius: '16px',
+                      borderRadius: '12px',
                       background: colorFondoLogoSede(sede),
                       boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       overflow: 'hidden',
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12)',
+                      boxShadow: `inset 0 0 0 1px ${SEDE_DS.cardBorder}`,
                     }}
                   >
                     {sede.logo_url ? (
@@ -2019,9 +2023,11 @@ export default function SedePublica() {
                         style={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'cover',
+                          objectFit: 'contain',
                           objectPosition: 'center center',
                           display: 'block',
+                          padding: '6px',
+                          boxSizing: 'border-box',
                         }}
                       />
                     ) : (
@@ -2051,17 +2057,17 @@ export default function SedePublica() {
                       flexDirection: 'column',
                       alignItems: 'stretch',
                       gap: '8px',
-                      background: heroGradientSedePublica(sede),
-                      borderRadius: '12px',
+                      background: '#FFFFFF',
+                      borderRadius: SEDE_DS.cardRadius,
                       padding: '10px 12px',
                       boxSizing: 'border-box',
-                      border: `1px solid ${heroBordeBloqueDerechoSede(sede)}`,
+                      border: `1px solid ${SEDE_DS.cardBorder}`,
                       justifyContent: 'center',
                     }}
                   >
                     <h1
                       style={{
-                        color: heroTextoTituloSede(sede),
+                        color: SEDE_DS.title,
                         fontSize: `${heroClubNameFontSizePx(sede.nombre)}px`,
                         fontWeight: 800,
                         margin: 0,
@@ -2069,10 +2075,6 @@ export default function SedePublica() {
                         minWidth: 0,
                         textAlign: 'center',
                         wordBreak: 'break-word',
-                        textShadow:
-                          heroTextoTituloSede(sede) === '#ffffff'
-                            ? '0 1px 8px rgba(0,0,0,0.35)'
-                            : '0 1px 4px rgba(255,255,255,0.35)',
                         boxSizing: 'border-box',
                       }}
                       title={sede.nombre || ''}
@@ -2099,9 +2101,10 @@ export default function SedePublica() {
                             fontSize: '10px',
                             fontWeight: 700,
                             letterSpacing: '0.02em',
-                            background: 'rgba(254, 243, 199, 0.92)',
-                            color: '#92400e',
-                            border: '1px solid rgba(217,119,6,0.45)',
+                            background: 'linear-gradient(180deg, #fffbeb 0%, #fde68a 55%, #fcd34d 100%)',
+                            color: '#78350f',
+                            border: '1px solid rgba(180, 83, 9, 0.4)',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
                           }}
                         >
                           ⭐ Licencia PADBOL Activa
@@ -2114,7 +2117,7 @@ export default function SedePublica() {
                             borderRadius: '999px',
                             fontSize: '10px',
                             fontWeight: 600,
-                            background: 'rgba(254,226,226,0.9)',
+                            background: 'rgba(254,226,226,0.95)',
                             color: '#b91c1c',
                             border: '1px solid rgba(220,38,38,0.25)',
                           }}
@@ -2127,7 +2130,7 @@ export default function SedePublica() {
                     <p
                       style={{
                         margin: 0,
-                        color: heroTextoFraseSede(sede),
+                        color: SEDE_DS.subtitle,
                         fontSize: '13px',
                         lineHeight: 1.45,
                         fontStyle: 'italic',
@@ -2187,10 +2190,10 @@ export default function SedePublica() {
                     ...SEDE_CTA_NARROW_CENTERED,
                     marginBottom: '16px',
                     padding: '12px 14px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255,255,255,0.35)',
-                    background: 'rgba(255,255,255,0.14)',
-                    color: '#f8fafc',
+                    borderRadius: SEDE_DS.cardRadius,
+                    border: `2px solid ${SEDE_DS.brand}`,
+                    background: '#FFFFFF',
+                    color: SEDE_DS.brand,
                     fontWeight: 800,
                     fontSize: '14px',
                     cursor: 'pointer',
@@ -2206,9 +2209,9 @@ export default function SedePublica() {
                     marginTop: '6px',
                     marginBottom: '14px',
                     padding: '16px 14px',
-                    borderRadius: '14px',
-                    background: 'rgba(255,255,255,0.12)',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: SEDE_DS.cardRadius,
+                    background: SEDE_DS.cardBg,
+                    border: `1px solid ${SEDE_DS.cardBorder}`,
                     boxSizing: 'border-box',
                   }}
                 >
@@ -2217,7 +2220,7 @@ export default function SedePublica() {
                       margin: '0 0 12px',
                       fontSize: '17px',
                       fontWeight: 800,
-                      color: '#f8fafc',
+                      color: SEDE_DS.title,
                     }}
                   >
                     En números
@@ -2240,12 +2243,12 @@ export default function SedePublica() {
                           alignItems: 'baseline',
                           gap: '12px',
                           fontSize: '14px',
-                          color: 'rgba(248,250,252,0.95)',
+                          color: SEDE_DS.subtitle,
                           lineHeight: 1.45,
                         }}
                       >
-                        <span style={{ fontWeight: 700 }}>Torneos realizados en esta sede</span>
-                        <span style={{ fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Torneos realizados en esta sede</span>
+                        <span style={{ fontWeight: 800, color: SEDE_DS.title, whiteSpace: 'nowrap' }}>
                           {(Number(estadisticasPublicas.torneos_realizados_total) || 0).toLocaleString('es-AR')}
                         </span>
                       </li>
@@ -2258,12 +2261,12 @@ export default function SedePublica() {
                           alignItems: 'baseline',
                           gap: '12px',
                           fontSize: '14px',
-                          color: 'rgba(248,250,252,0.95)',
+                          color: SEDE_DS.subtitle,
                           lineHeight: 1.45,
                         }}
                       >
-                        <span style={{ fontWeight: 700 }}>Jugadores que han reservado</span>
-                        <span style={{ fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Jugadores que han reservado</span>
+                        <span style={{ fontWeight: 800, color: SEDE_DS.title, whiteSpace: 'nowrap' }}>
                           {(Number(estadisticasPublicas.jugadores_reservaron_total) || 0).toLocaleString('es-AR')}
                         </span>
                       </li>
@@ -2285,15 +2288,15 @@ export default function SedePublica() {
                             alignItems: 'baseline',
                             gap: '12px',
                             fontSize: '14px',
-                            color: 'rgba(248,250,252,0.95)',
+                            color: SEDE_DS.subtitle,
                             lineHeight: 1.45,
                           }}
                         >
-                          <span style={{ fontWeight: 700 }}>Deporte más jugado</span>
+                          <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Deporte más jugado</span>
                           <span
                             style={{
                               fontWeight: 800,
-                              color: '#fff',
+                              color: SEDE_DS.title,
                               textAlign: 'right',
                               maxWidth: '52%',
                             }}
@@ -2304,7 +2307,7 @@ export default function SedePublica() {
                                 display: 'block',
                                 fontSize: '12px',
                                 fontWeight: 600,
-                                color: 'rgba(226,232,240,0.85)',
+                                color: SEDE_DS.subtitle,
                                 marginTop: '2px',
                               }}
                             >
@@ -2322,12 +2325,12 @@ export default function SedePublica() {
                           alignItems: 'baseline',
                           gap: '12px',
                           fontSize: '14px',
-                          color: 'rgba(248,250,252,0.95)',
+                          color: SEDE_DS.subtitle,
                           lineHeight: 1.45,
                         }}
                       >
-                        <span style={{ fontWeight: 700 }}>Año de fundación</span>
-                        <span style={{ fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Año de fundación</span>
+                        <span style={{ fontWeight: 800, color: SEDE_DS.title, whiteSpace: 'nowrap' }}>
                           {parseAnioFundacionSedePublica(sede.anio_fundacion)}
                         </span>
                       </li>
@@ -2341,9 +2344,9 @@ export default function SedePublica() {
                   marginTop: '6px',
                   marginBottom: '18px',
                   padding: '16px 14px',
-                  borderRadius: '14px',
-                  background: 'rgba(255,255,255,0.12)',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: SEDE_DS.cardRadius,
+                  background: SEDE_DS.cardBg,
+                  border: `1px solid ${SEDE_DS.cardBorder}`,
                   boxSizing: 'border-box',
                 }}
               >
@@ -2352,7 +2355,7 @@ export default function SedePublica() {
                     margin: '0 0 10px',
                     fontSize: '17px',
                     fontWeight: 800,
-                    color: '#f8fafc',
+                    color: SEDE_DS.title,
                   }}
                 >
                   Sobre el club
@@ -2362,7 +2365,7 @@ export default function SedePublica() {
                     margin: 0,
                     fontSize: '14px',
                     lineHeight: 1.55,
-                    color: 'rgba(248,250,252,0.92)',
+                    color: SEDE_DS.title,
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word',
                   }}
@@ -2370,7 +2373,7 @@ export default function SedePublica() {
                   {String(sede.historia || '').trim() ? (
                     String(sede.historia).trim()
                   ) : (
-                    <span style={{ fontStyle: 'italic', color: 'rgba(248,250,252,0.55)' }}>
+                    <span style={{ fontStyle: 'italic', color: SEDE_DS.subtitle, opacity: 0.85 }}>
                       El club aún no cargó una historia en el panel Mi Sede.
                     </span>
                   )}
@@ -2381,19 +2384,19 @@ export default function SedePublica() {
                     margin: '18px 0 10px',
                     fontSize: '14px',
                     fontWeight: 800,
-                    color: '#e2e8f0',
+                    color: SEDE_DS.title,
                     letterSpacing: '0.02em',
                   }}
                 >
                   Próximos torneos
                 </h3>
                 {proximosTorneosLoading ? (
-                  <p style={{ margin: 0, color: 'rgba(248,250,252,0.65)', fontSize: '13px' }}>Cargando torneos…</p>
+                  <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '13px' }}>Cargando torneos…</p>
                 ) : proximosTorneos.length === 0 ? (
                   <p
                     style={{
                       margin: 0,
-                      color: 'rgba(248,250,252,0.55)',
+                      color: SEDE_DS.subtitle,
                       fontSize: '13px',
                       fontStyle: 'italic',
                     }}
@@ -2426,9 +2429,9 @@ export default function SedePublica() {
                               width: '100%',
                               textAlign: 'left',
                               padding: '12px 12px',
-                              borderRadius: '12px',
-                              border: '1px solid rgba(255,255,255,0.22)',
-                              background: 'rgba(15,23,42,0.25)',
+                              borderRadius: SEDE_DS.cardRadius,
+                              border: `1px solid ${SEDE_DS.cardBorder}`,
+                              background: '#FFFFFF',
                               cursor: 'pointer',
                               display: 'flex',
                               flexDirection: 'column',
@@ -2440,13 +2443,13 @@ export default function SedePublica() {
                               style={{
                                 fontWeight: 800,
                                 fontSize: '14px',
-                                color: '#f8fafc',
+                                color: SEDE_DS.title,
                                 lineHeight: 1.3,
                               }}
                             >
                               {String(t.nombre || 'Torneo').trim()}
                             </span>
-                            <span style={{ fontSize: '13px', color: 'rgba(226,232,240,0.95)' }}>
+                            <span style={{ fontSize: '13px', color: SEDE_DS.subtitle }}>
                               📅 {fi}
                             </span>
                             <span
@@ -2457,8 +2460,8 @@ export default function SedePublica() {
                                 borderRadius: '999px',
                                 fontSize: '11px',
                                 fontWeight: 700,
-                                background: badge?.bg || 'rgba(148,163,184,0.35)',
-                                color: badge?.color || '#f1f5f9',
+                                background: badge?.bg || '#E5E7EB',
+                                color: badge?.color || '#374151',
                               }}
                             >
                               {estadoLabel}
@@ -2478,14 +2481,7 @@ export default function SedePublica() {
                     style={{
                       marginTop: '14px',
                       width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255,255,255,0.35)',
-                      background: 'rgba(255,255,255,0.12)',
-                      color: '#f8fafc',
-                      fontWeight: 800,
-                      fontSize: '14px',
-                      cursor: 'pointer',
+                      ...SEDE_BTN_VER_TORNEOS_STYLE,
                       boxSizing: 'border-box',
                     }}
                   >
@@ -2526,9 +2522,10 @@ export default function SedePublica() {
                 display: 'flex',
                 flexDirection: 'column',
                 paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
-                background: 'linear-gradient(to top, rgba(102,126,234,0.96) 55%, rgba(118,75,162,0.12) 100%)',
+                background: '#FFFFFF',
+                borderTop: `1px solid ${SEDE_DS.cardBorder}`,
                 paddingTop: '10px',
-                boxShadow: '0 -6px 20px rgba(15, 23, 42, 0.08)',
+                boxShadow: '0 -4px 16px rgba(15, 23, 42, 0.06)',
                 boxSizing: 'border-box',
               }}
             >
@@ -2548,14 +2545,7 @@ export default function SedePublica() {
                   title={torneosCtaLabel}
                   style={{
                     ...SEDE_CTA_NARROW_CENTERED,
-                    padding: '12px 16px',
-                    background: '#fff',
-                    color: '#15803d',
-                    border: '2px solid #22c55e',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    fontWeight: 800,
-                    fontSize: '14px',
+                    ...SEDE_BTN_VER_TORNEOS_STYLE,
                     minWidth: 0,
                     overflow: 'hidden',
                   }}
