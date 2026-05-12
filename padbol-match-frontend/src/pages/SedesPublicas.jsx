@@ -154,7 +154,7 @@ export default function SedesPublicas() {
       ? '⚡ Reserva tu cancha'
       : from === 'explorar'
         ? '🗺️ Explorar sedes'
-        : '🏟️ Canchas de Padbol cerca tuyo';
+        : '🏟️ Clubes cerca de ti';
 
   const filtered = sorted.filter(s => {
     if (!search) return true;
