@@ -50,6 +50,7 @@ function normalizeUiLocale(raw) {
 
 function chatUiStrings(loc) {
   const l = normalizeUiLocale(loc);
+  const max = MAX_USER_MESSAGES;
   if (l === 'en') {
     return {
       escribiendo: 'Writing…',
@@ -59,7 +60,8 @@ function chatUiStrings(loc) {
       waEscalada: 'Contact the club on WhatsApp',
       waClub: 'Message your usual club',
       fabOpen: 'Open Padbol Match assistant',
-      titulo: 'Assistant',
+      titulo: 'Padbol Match Assistant',
+      hintSesion: `You can ask up to ${max} questions in this chat.`,
       cargando: 'Loading…',
       escuchando: 'Listening…',
       sinVoz: 'No voice detected. Try again.',
@@ -69,6 +71,17 @@ function chatUiStrings(loc) {
       limiteCtaJugar: 'Play',
       limiteCtaVerSede: 'See club',
       nuevaConsultaSesion: 'New chat',
+      cerrar: 'Close',
+      micRecordingAria: 'Recording — tap again to cancel',
+      micProcessingAria: 'Processing dictation',
+      micDictateAria: 'Voice input',
+      reservaLink: 'Go to booking',
+      reservaLinkTitle: 'Open the booking form with the details shown',
+      leerVozAlta: 'Read replies aloud',
+      escucharUltimaIos: 'Play last reply (iOS / Safari)',
+      hintIosSafari: 'On iPhone or iPad, audio may need an extra tap after the reply loads.',
+      errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
+      errVoiceStart: 'Could not start speech recognition.',
     };
   }
   if (l === 'pt') {
@@ -80,7 +93,8 @@ function chatUiStrings(loc) {
       waEscalada: 'Falar com o clube no WhatsApp',
       waClub: 'Escrever ao clube habitual',
       fabOpen: 'Abrir assistente Padbol Match',
-      titulo: 'Assistente',
+      titulo: 'Assistente Padbol Match',
+      hintSesion: `Você pode fazer até ${max} perguntas neste chat.`,
       cargando: 'Carregando…',
       escuchando: 'Ouvindo…',
       sinVoz: 'Nenhuma voz detectada. Tente de novo.',
@@ -90,6 +104,17 @@ function chatUiStrings(loc) {
       limiteCtaJugar: 'Jogar',
       limiteCtaVerSede: 'Ver clube',
       nuevaConsultaSesion: 'Nova conversa',
+      cerrar: 'Fechar',
+      micRecordingAria: 'Gravando — toque de novo para cancelar',
+      micProcessingAria: 'Processando ditado',
+      micDictateAria: 'Ditar por voz',
+      reservaLink: 'Ir para reservar',
+      reservaLinkTitle: 'Abrir o formulário de reserva com os dados indicados',
+      leerVozAlta: 'Ler respostas em voz alta',
+      escucharUltimaIos: 'Ouvir última resposta (iOS / Safari)',
+      hintIosSafari: 'No iPhone ou iPad, o áudio pode exigir um toque extra após carregar a resposta.',
+      errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
+      errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
     };
   }
   return {
@@ -100,7 +125,8 @@ function chatUiStrings(loc) {
     waEscalada: 'Contactar al club por WhatsApp',
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Padbol Match',
-    titulo: 'Asistente Padbol',
+    titulo: 'Asistente Padbol Match',
+    hintSesion: `Puedes hacer hasta ${max} preguntas en esta consulta.`,
     cargando: 'Cargando…',
     escuchando: 'Escuchando…',
     sinVoz: 'No se detectó voz. Intenta de nuevo.',
@@ -110,6 +136,17 @@ function chatUiStrings(loc) {
     limiteCtaJugar: 'Jugar',
     limiteCtaVerSede: 'Ver sede',
     nuevaConsultaSesion: 'Nueva consulta',
+    cerrar: 'Cerrar',
+    micRecordingAria: 'Grabando: pulsa de nuevo para cancelar',
+    micProcessingAria: 'Procesando dictado',
+    micDictateAria: 'Dictar por voz',
+    reservaLink: 'Ir a reservar',
+    reservaLinkTitle: 'Abrir formulario de reserva con los datos indicados',
+    leerVozAlta: 'Leer respuestas en voz alta',
+    escucharUltimaIos: 'Escuchar última respuesta (iOS / Safari)',
+    hintIosSafari: 'En iPhone o iPad el audio puede requerir un toque explícito después de cargar la respuesta.',
+    errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
+    errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
   };
 }
 
@@ -484,7 +521,8 @@ export default function ChatbotIA() {
       const code = ev?.error || '';
       if (code === 'aborted') return;
       if (code === 'not-allowed') {
-        setError('Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.');
+        const u = uiRef.current;
+        setError(u?.errMicDenied || 'Permiso de micrófono denegado.');
         recRef.current = null;
         setVoicePhase('idle');
         setVoiceFinal('');
@@ -556,7 +594,8 @@ export default function ChatbotIA() {
     } catch {
       clearVoiceSilenceTimer();
       setVoicePhase('idle');
-      setError('No se pudo iniciar el reconocimiento de voz.');
+      const u = uiRef.current;
+      setError(u?.errVoiceStart || 'Error de voz.');
     }
   }, [
     voicePhase,
@@ -628,7 +667,7 @@ export default function ChatbotIA() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Asistente Padbol Match"
+          aria-label={ui.titulo}
           style={{
             position: 'fixed',
             inset: 0,
@@ -728,7 +767,7 @@ export default function ChatbotIA() {
                   color: '#64748b',
                   padding: 4,
                 }}
-                aria-label="Cerrar"
+                aria-label={ui.cerrar}
               >
                 ×
               </button>
@@ -759,6 +798,7 @@ export default function ChatbotIA() {
                         {line}
                       </p>
                     ))}
+                    <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: 13 }}>{ui.hintSesion}</p>
                   </div>
                 ) : (
                   <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>{ui.cargando}</p>
@@ -847,10 +887,7 @@ export default function ChatbotIA() {
                 <Link
                   to={lastReserve.href}
                   onClick={() => setOpen(false)}
-                  title={
-                    [lastReserve.fecha, lastReserve.hora].filter(Boolean).join(' · ') ||
-                    'Abrir formulario de reserva con los datos indicados'
-                  }
+                  title={lastReserve.fecha || lastReserve.hora ? [lastReserve.fecha, lastReserve.hora].filter(Boolean).join(' · ') : ui.reservaLinkTitle}
                   style={{
                     alignSelf: 'center',
                     marginTop: 4,
@@ -864,7 +901,7 @@ export default function ChatbotIA() {
                     textAlign: 'center',
                   }}
                 >
-                  Ir a reservar
+                  {ui.reservaLink}
                   {lastReserve.hora
                     ? ` · ${lastReserve.hora}${lastReserve.fecha ? ` (${lastReserve.fecha})` : ''}`
                     : lastReserve.fecha
@@ -918,7 +955,7 @@ export default function ChatbotIA() {
                       }
                     }}
                   />
-                  Leer respuestas en voz alta
+                  {ui.leerVozAlta}
                 </label>
               ) : null}
               {ttsSupported && isLikelyIOSWebKit && readAloud && lastAssistantText ? (
@@ -941,10 +978,10 @@ export default function ChatbotIA() {
                       cursor: 'pointer',
                     }}
                   >
-                    Escuchar última respuesta (iOS / Safari)
+                    {ui.escucharUltimaIos}
                   </button>
                   <div style={{ marginTop: 4, fontSize: 11, color: '#94a3b8', lineHeight: 1.35 }}>
-                    En iPhone o iPad el audio puede requerir un toque explícito después de cargar la respuesta.
+                    {ui.hintIosSafari}
                   </div>
                 </div>
               ) : null}
@@ -1011,10 +1048,10 @@ export default function ChatbotIA() {
                     type="button"
                     aria-label={
                       voicePhase === 'listening'
-                        ? 'Grabando, pulsa de nuevo para cancelar'
+                        ? ui.micRecordingAria
                         : voicePhase === 'processing'
-                          ? 'Procesando dictado'
-                          : 'Dictar por voz'
+                          ? ui.micProcessingAria
+                          : ui.micDictateAria
                     }
                     aria-pressed={voicePhase === 'listening'}
                     disabled={loading || sessionEnded || voicePhase === 'processing'}
