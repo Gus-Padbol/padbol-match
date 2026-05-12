@@ -10966,7 +10966,7 @@ function chatIaAnthropicToolsDefinition() {
     {
       name: 'buscar_sedes_por_deporte',
       description:
-        'Find clubs that declare the given sport in canchas_por_deporte (with court counts). If the user names a city or country in their message, pass ciudad and/or pais (ilike on sedes)—that overrides proximity sorting. If they do not name a place, pass latitud and longitud from Context JSON client_geolocalizacion when present so results are ordered by distance; otherwise the server may fall back to the user habitual club city/country. You may pass latitud/longitud explicitly when the user asks for clubs "near me" / "cerca" and coords exist in context.',
+        'Lists clubs that have at least one ACTIVE court (canchas.estado) whose canchas.deporte column matches the requested sport—strict match only; canchas_por_deporte is NOT used. If the tool returns an empty sedes array, tell the user honestly that no clubs offer that sport for the filters used—do NOT suggest other clubs from Context sedes_resumen or listar_sedes unless they appear in this tool result. Optional ciudad/pais (ilike on sedes). Optional lat/lng for distance sort when no ciudad/pais.',
       input_schema: {
         type: 'object',
         properties: {
@@ -11195,23 +11195,29 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
       }
       const keys = chatIaDeporteDbKeysForFilter(depCanon);
       if (!keys.length) return { ok: false, error: 'Deporte no reconocido' };
-      const { data: cpd, error } = await supabaseClient
-        .from('canchas_por_deporte')
-        .select('sede_id, deporte, cantidad, activo')
-        .in('deporte', keys)
-        .gt('cantidad', 0);
-      if (error) return { ok: false, error: error.message };
+
+      const { data: canRows, error: canErr } = await supabaseClient.from('canchas').select('sede_id, deporte, estado').in('deporte', keys);
+      if (canErr) return { ok: false, error: canErr.message };
       const sidMap = new Map();
-      for (const row of cpd || []) {
-        if (row?.activo === false) continue;
+      for (const row of canRows || []) {
+        if (normalizeEstadoCancha(row?.estado) !== 'activa') continue;
+        const dnorm = normalizeTorneoDeporteForDb(row?.deporte != null && String(row.deporte).trim() !== '' ? row.deporte : 'padbol');
+        if (!keys.includes(dnorm)) continue;
         const sid = Number(row.sede_id);
         if (!Number.isFinite(sid) || sid <= 0) continue;
-        const c = Number(row.cantidad) || 0;
-        if (c <= 0) continue;
-        sidMap.set(sid, (sidMap.get(sid) || 0) + c);
+        sidMap.set(sid, (sidMap.get(sid) || 0) + 1);
       }
       const ids = [...sidMap.keys()];
-      if (!ids.length) return { ok: true, deporte_filtro: depCanon, sedes: [], orden: 'ninguno' };
+      if (!ids.length) {
+        return {
+          ok: true,
+          deporte_filtro: depCanon,
+          criterio_sede: 'solo_canchas_activas_columna_deporte',
+          sedes: [],
+          orden: 'ninguno',
+          aviso: 'Ninguna sede tiene al menos una cancha activa con este deporte en canchas.deporte (coincidencia estricta). No sugieras otras sedes como si ofrecieran este deporte.',
+        };
+      }
 
       let ciudadF = String(input.ciudad || '').trim();
       let paisF = String(input.pais || '').trim();
@@ -11288,6 +11294,7 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
       return {
         ok: true,
         deporte_filtro: depCanon,
+        criterio_sede: 'solo_canchas_activas_columna_deporte',
         orden: sortByDistance ? 'distancia_km' : 'nombre',
         referencia_geo: sortByDistance ? { latitud: refLat, longitud: refLng } : null,
         sedes: sedes.slice(0, 40),
@@ -12116,7 +12123,9 @@ Sede for availability (read disponibilidad_sede_implicita in Context JSON):
 - If fuente is pagina_actual or habitual and sede_id is set: when the user asks for today\'s hours or generic availability without naming a club, use that sede_id with fecha = ymd_hoy_local from the same object (or matching sedes_hora_local). Do not ask which club first.
 - If fuente is ninguna (sede_id null): do NOT call consultar_disponibilidad until the user names a city or club (or picks from sedes_resumen). Ask one short line which city/club they want—in Spanish use tú: "¿En qué ciudad o club quieres jugar?" (mirror EN/PT if the user writes in those languages).
 
-Use buscar_sedes_por_deporte for "which clubs offer sport X" or "near me"; combine with listar_sedes to resolve sede_id from a name or sedes_resumen; use listar_torneos / consultar_ranking as needed. Location priority (critical): (1) If the user message names a city, region or country (e.g. Madrid, Buenos Aires, Spain), pass ciudad and/or pais in the tool—do not use GPS for ordering. (2) If they do not name a place and Context JSON client_geolocalizacion has latitud/longitud, pass those in the tool or omit them (the server injects the same coords) so results include distancia_km sorted nearest-first. (3) If there is no named place and client_geolocalizacion is null, use usuario_logueado.sede_habitual.ciudad / .pais from context when the user is logged in and has a habitual club.
+Use buscar_sedes_por_deporte for "which clubs offer sport X" or "near me"; combine with listar_sedes only to resolve sede_id when the user names a specific club you already know exists. Location priority (critical): (1) If the user message names a city, region or country (e.g. Madrid, Buenos Aires, Spain), pass ciudad and/or pais in the tool—do not use GPS for ordering. (2) If they do not name a place and Context JSON client_geolocalizacion has latitud/longitud, pass those in the tool or omit them (the server injects the same coords) so results include distancia_km sorted nearest-first. (3) If there is no named place and client_geolocalizacion is null, use usuario_logueado.sede_habitual.ciudad / .pais from context when the user is logged in and has a habitual club.
+
+buscar_sedes_por_deporte (critical): The tool returns ONLY clubs with at least one active court where the database column canchas.deporte matches the requested sport—no other catalog. If sedes is empty, say clearly that there are no clubs with that sport for that city/area (or near them)—do NOT offer sedes from sedes_resumen, listar_sedes, or habitual club as "alternatives" unless they also appear in this tool result with that sport. Never imply a club offers a sport unless it is in the tool output.
 
 Availability (critical):
 - When the user asks for free slots, horarios, turnos or disponibilidad, you MUST call consultar_disponibilidad (after listar_sedes or buscar_sedes_por_deporte if needed) and answer ONLY with the tool result—except when disponibilidad_sede_implicita.fuente is ninguna and they have not specified a club yet: then ask which city/club first (no tool). Include deporte in the tool call only if the user clearly names a sport (e.g. "quiero jugar fútbol", "hay pádel"); if they only ask for today\'s times or generic availability, omit deporte. For "mañana"/"tomorrow" pass that word as fecha or use fecha_mañana_art from the Context JSON. List several concrete start times (hora_inicio) from the slots array in plain language within the 3-line limit (you may group as a short comma list).
