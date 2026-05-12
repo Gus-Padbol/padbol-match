@@ -50,6 +50,17 @@ const HUB_FIXED_ACTIONS = [
   },
 ];
 
+/** Fondo por defecto (Unsplash) si el CMS no define `foto_url`. */
+const HUB_CARD_UNSPLASH_BG = {
+  reservar: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
+  buscar_partido: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
+  torneos: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800&q=80',
+  armar_partido: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
+};
+
+const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.55)';
+const HUB_CARD_FALLBACK_BG = '#2d2d2d';
+
 const HUB_CARD_HEIGHT_PX = 180;
 
 function deporteQuery(deporteElegido) {
@@ -169,6 +180,8 @@ export default function UserHome() {
   });
   const [hubCmsStatus, setHubCmsStatus] = useState('loading');
   const [hubCmsRows, setHubCmsRows] = useState([]);
+  /** Si la URL de fondo falla al cargar, se oculta y se usa el fondo gris oscuro. */
+  const [hubCardImageFailed, setHubCardImageFailed] = useState({});
   const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
     if (ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')) return true;
     if (emailEsLegacyAdminHub(session?.user?.email)) return true;
@@ -258,6 +271,10 @@ export default function UserHome() {
   }, []);
 
   useEffect(() => {
+    setHubCardImageFailed({});
+  }, [hubCmsRows, hubCmsStatus]);
+
+  useEffect(() => {
     if (!session?.user) return;
     if (authLoading || profileLoading) return;
     if (!userProfile) {
@@ -303,7 +320,9 @@ export default function UserHome() {
     const q = deporteQuery(deporteElegido);
     const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
     return HUB_FIXED_ACTIONS.map((slot) => {
-      const imageUrl = pickHubCmsPhotoUrl(rows, slot.cmsPhotoIds);
+      const cmsUrl = pickHubCmsPhotoUrl(rows, slot.cmsPhotoIds);
+      const fallbackUrl = HUB_CARD_UNSPLASH_BG[slot.key] || '';
+      const imageUrl = cmsUrl || fallbackUrl;
       return {
         key: slot.key,
         titulo: tituloHubCardConDeporte(slot.titulo, deporteElegido),
@@ -620,7 +639,8 @@ export default function UserHome() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', marginBottom: 20 }}>
             {bigCards.map((c) => {
-              const hasPhoto = Boolean(c.imageUrl);
+              const failId = `${c.key}|${c.imageUrl || ''}`;
+              const showPhoto = Boolean(c.imageUrl) && !hubCardImageFailed[failId];
               return (
               <button
                 key={c.key}
@@ -640,19 +660,32 @@ export default function UserHome() {
                   fontFamily: 'inherit',
                   padding: 0,
                   boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                  backgroundColor: hasPhoto ? '#1a1a1a' : '#2d2d2d',
-                  backgroundImage: hasPhoto ? `url(${c.imageUrl})` : 'none',
+                  backgroundColor: showPhoto ? '#1a1a1a' : HUB_CARD_FALLBACK_BG,
+                  backgroundImage: showPhoto ? `url(${c.imageUrl})` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat',
                 }}
               >
+                {c.imageUrl ? (
+                  <img
+                    alt=""
+                    src={c.imageUrl}
+                    style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+                    onError={() => {
+                      setHubCardImageFailed((prev) => {
+                        if (prev[failId]) return prev;
+                        return { ...prev, [failId]: true };
+                      });
+                    }}
+                  />
+                ) : null}
                 <div
                   aria-hidden
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'rgba(225, 27, 34, 0.48)',
+                    background: HUB_CARD_OVERLAY,
                   }}
                 />
                 <div
