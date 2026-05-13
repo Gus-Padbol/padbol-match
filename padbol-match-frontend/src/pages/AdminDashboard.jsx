@@ -17,6 +17,7 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 import {
@@ -541,13 +542,22 @@ const ADMIN_FILTER_PILL_BASE = {
   boxSizing: 'border-box',
 };
 
-function adminFilterPillButtonStyle(active) {
+/** inactiveSurface `lightMuted`: chips sobre fondo claro (p. ej. período Semana/Mes en resumen super admin). */
+function adminFilterPillButtonStyle(active, inactiveSurface = 'default') {
   if (active) {
     return {
       ...ADMIN_FILTER_PILL_BASE,
       background: '#E11B22',
       color: '#fff',
       border: 'none',
+    };
+  }
+  if (inactiveSurface === 'lightMuted') {
+    return {
+      ...ADMIN_FILTER_PILL_BASE,
+      background: '#F1F5F9',
+      color: '#0F172A',
+      border: '1px solid #CBD5E1',
     };
   }
   return {
@@ -1526,7 +1536,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
+  const { theme } = useTheme();
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
+  const adminPillInactiveSurface = theme === 'light' ? 'lightMuted' : 'default';
 
   const isSuperAdmin = rol === 'super_admin';
   const esEmpleado = rol === 'empleado';
@@ -2977,12 +2989,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const p = resumenPanelDiario;
     return (
       <>
-        <div className="section" style={{ marginBottom: '18px', color: '#1e293b' }}>
+        <div className="section admin-resumen-hoy" style={{ marginBottom: '18px', color: '#1e293b' }}>
           <h2 style={{ marginTop: 0, color: '#334155' }}>Hoy</h2>
           <p style={{ margin: '0 0 12px', color: '#64748b', fontSize: '14px' }}>{p.fechaLabelHoy}</p>
           <div style={{ display: 'grid', gap: '14px' }}>
             <div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div className="admin-resumen-hoy-kicker" style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Reservas ({p.reservasHoy})
               </div>
               {p.reservasHoyOrdenadas.length === 0 ? (
@@ -3016,22 +3028,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               )}
             </div>
             {puedeVerFinanzas ? <div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div className="admin-resumen-hoy-kicker" style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Ingresos del día (por moneda de cada sede)
               </div>
-              <p style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{p.ingresosHoyTexto}</p>
+              <p className="admin-resumen-hoy-ingresos-valor" style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{p.ingresosHoyTexto}</p>
               <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#94a3b8' }}>
                 Suma de precios de reservas de hoy no canceladas.
               </p>
             </div> : null}
             <div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div className="admin-resumen-hoy-kicker" style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Canchas ahora (hora Argentina)
               </div>
               {p.ocupacionSedes.length === 0 ? (
                 <p style={{ margin: '8px 0 0', color: '#94a3b8' }}>Sin sedes en tu alcance.</p>
               ) : isSuperAdmin ? (
-                <p style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: '#0f172a', lineHeight: 1.4 }}>
+                <p className="admin-resumen-hoy-canchas-copy" style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: '#0f172a', lineHeight: 1.4 }}>
                   {p.canchasOcupacionGlobal.ocupadas === 1
                     ? `1 cancha ocupada de ${p.canchasOcupacionGlobal.totalActivas} totales activas`
                     : `${p.canchasOcupacionGlobal.ocupadas} canchas ocupadas de ${p.canchasOcupacionGlobal.totalActivas} totales activas`}
@@ -3072,6 +3084,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [
     resumenPanelDiario,
     puedeVerFinanzas,
+    isSuperAdmin,
   ]);
 
   const fetchPendientes = async () => {
@@ -5830,7 +5843,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
                   }
                 }}
-                style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id)}
+                style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id, adminPillInactiveSurface)}
               >
                 {opt.label}
               </button>
@@ -7559,7 +7572,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
                         }
                       }}
-                      style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id)}
+                      style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id, adminPillInactiveSurface)}
                     >
                       {opt.label}
                     </button>
@@ -8060,7 +8073,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
                       }
                     }}
-                    style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id)}
+                    style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id, adminPillInactiveSurface)}
                   >
                     {opt.label}
                   </button>
@@ -8498,7 +8511,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
             Puntos base por nivel de torneo
           </h3>
-          <table style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+          <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
             <thead>
               <tr style={{ background: '#E11B22', color: 'white' }}>
                 <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Nivel</th>
@@ -8650,7 +8663,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   ))}
                 </select>
               </div>
-              <table style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+              <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                 <thead>
                   <tr style={{ background: '#E11B22', color: 'white' }}>
                     <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Posición</th>

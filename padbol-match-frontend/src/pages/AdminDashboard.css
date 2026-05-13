@@ -663,3 +663,46 @@ html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analyt
 html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analytics-sedes-por-pais ol span {
   color: #64748b !important;
 }
+
+/* Configuración de puntos: columna Nivel / celdas (evita --text-primary en tbody sobre filas claras/oscuras) */
+html.theme-light .admin-dashboard--super .admin-config-puntos-table tbody td {
+  color: #111827 !important;
+}
+
+html.theme-dark .admin-dashboard--super .admin-config-puntos-table tbody td {
+  color: #ffffff !important;
+}
+
+/* Resumen «Hoy» — etiquetas en modo claro */
+html.theme-light .admin-dashboard--super .admin-resumen-hoy .admin-resumen-hoy-kicker,
+html.theme-light .admin-dashboard--super .admin-resumen-hoy .admin-resumen-hoy-ingresos-valor,
+html.theme-light .admin-dashboard--super .admin-resumen-hoy .admin-resumen-hoy-canchas-copy {
+  color: #0f172a !important;
+}
+
+/* Tarjeta Ingresos del período (resumen super admin) — modo claro */
+html.theme-light .admin-dashboard--super .card.ingresos > h2 {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .card.ingresos .ingreso-codigo {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .card.ingresos .ingreso-valor {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--sin-ingresos .ingreso-codigo,
+html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--sin-ingresos .ingreso-valor,
+html.theme-light .admin-dashboard--super .card.ingresos .ingreso-valor.ingreso-valor--sin-ingresos-msg {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--total-ok .ingreso-codigo {
+  color: #166534 !important;
+}
+
+html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--total-ok .ingreso-valor {
+  color: #15803d !important;
+}
