@@ -5,11 +5,9 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
@@ -316,11 +314,11 @@ const RANKING_SHEET_SELECT_STYLE = {
   minHeight: '44px',
   padding: '10px 12px',
   borderRadius: '10px',
-  border: '1px solid #cbd5e1',
+  border: '1px solid var(--border)',
   fontSize: '15px',
   fontWeight: 600,
-  background: '#f8fafc',
-  color: '#0f172a',
+  background: 'var(--bg-card)',
+  color: 'var(--text-primary)',
   boxSizing: 'border-box',
   cursor: 'pointer',
   outline: 'none',
@@ -348,14 +346,14 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
     ? (renderOptionLabel ? renderOptionLabel(value) : value)
     : 'Todos';
 
-  const labelColor = '#475569';
-  const btnBorder = '1px solid #cbd5e1';
-  const btnBg = '#ffffff';
-  const btnColor = '#0f172a';
-  const panelBorder = '1px solid #e2e8f0';
-  const panelBg = '#ffffff';
-  const optColor = '#0f172a';
-  const optActiveBg = 'rgba(225, 27, 34, 0.1)';
+  const labelColor = 'var(--text-secondary)';
+  const btnBorder = '1px solid var(--border)';
+  const btnBg = 'var(--bg-card)';
+  const btnColor = 'var(--text-primary)';
+  const panelBorder = '1px solid var(--border)';
+  const panelBg = 'var(--bg-card)';
+  const optColor = 'var(--text-primary)';
+  const optActiveBg = 'rgba(225, 27, 34, 0.14)';
 
   return (
     <div
@@ -737,8 +735,9 @@ export default function Rankings() {
 
   const containerStyle = useMemo(
     () => ({
-      minHeight: '100vh',
-      background: '#FFFFFF',
+      minHeight: '100dvh',
+      background: 'var(--bg-page)',
+      color: 'var(--text-primary)',
       padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     }),
@@ -755,17 +754,24 @@ export default function Rankings() {
     padding: narrow ? '8px 6px' : '11px 14px',
     fontSize: narrow ? '10px' : '11px',
     fontWeight: '700',
-    color: '#6b7280',
+    color: 'var(--text-secondary)',
     textTransform: 'uppercase',
     letterSpacing: narrow ? '0.04em' : '0.06em',
-    background: '#f9fafb',
-    borderBottom: '2px solid #e5e7eb',
+    background: 'var(--pm-color-muted-bg)',
+    borderBottom: '2px solid var(--border)',
     whiteSpace: 'nowrap',
   };
 
   const trStyle = (idx) => ({
-    background: idx === 0 ? '#fffbeb' : idx === 1 ? '#f9fafb' : idx === 2 ? '#fdf8f0' : 'white',
-    borderBottom: '1px solid #f3f4f6',
+    background:
+      idx === 0
+        ? 'rgba(217, 119, 6, 0.14)'
+        : idx === 1
+          ? 'var(--pm-color-muted-bg)'
+          : idx === 2
+            ? 'rgba(217, 119, 6, 0.08)'
+            : 'var(--bg-card)',
+    borderBottom: '1px solid var(--border)',
     transition: 'background 0.15s',
   });
 
@@ -777,9 +783,9 @@ export default function Rankings() {
 
   const posStyle = (pos) => {
     if (pos === 1) return { fontSize: '20px', fontWeight: '900', color: '#d97706' };
-    if (pos === 2) return { fontSize: '17px', fontWeight: '800', color: '#6b7280' };
+    if (pos === 2) return { fontSize: '17px', fontWeight: '800', color: 'var(--text-secondary)' };
     if (pos === 3) return { fontSize: '16px', fontWeight: '700', color: '#b45309' };
-    return { fontSize: '14px', fontWeight: '600', color: '#9ca3af' };
+    return { fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)' };
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -788,19 +794,6 @@ export default function Rankings() {
     <div style={containerStyle}>
       <AppHeader title="Ranking" />
       <div style={innerStyle}>
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          style={{
-            ...padbolLogoImgStyle,
-            display: 'block',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-            marginBottom: '14px',
-          }}
-        />
-
         {/* Deporte del ranking (encima de Local / Nacional / FIPA) */}
         <div style={{ marginBottom: '12px' }}>
           <label
@@ -809,7 +802,7 @@ export default function Rankings() {
               display: 'block',
               fontSize: '12px',
               fontWeight: 700,
-              color: '#475569',
+              color: 'var(--text-secondary)',
               marginBottom: '6px',
               letterSpacing: '0.02em',
             }}
@@ -844,19 +837,16 @@ export default function Rankings() {
               display: 'block',
               marginLeft: 'auto',
               marginRight: 'auto',
-              border: '1px solid #d1d5db',
-              background: '#ffffff',
-              color: '#111827',
             }}
           >
             {TORNEO_DEPORTE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value} style={{ color: '#0f172a' }}>
+              <option key={o.value} value={o.value} style={{ color: 'var(--text-primary)' }}>
                 {o.label}
               </option>
             ))}
           </select>
           {rankingDeporte !== TORNEO_DEPORTE_PADBOL ? (
-            <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.45, textAlign: 'center' }}>
+            <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45, textAlign: 'center' }}>
               Nacional e Internacional FIPA aplican solo a torneos de Padbol; aquí ves el ranking local de{' '}
               {etiquetaDeporteTorneo(rankingDeporte)}.
             </p>
@@ -864,7 +854,7 @@ export default function Rankings() {
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', borderRadius: '12px', padding: '4px', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'var(--pm-color-muted-bg)', borderRadius: '12px', padding: '4px', marginBottom: '12px', border: '1px solid var(--border)' }}>
           {tabsForDeporte.map((tab) => (
             <button
               key={tab.id}
@@ -887,8 +877,8 @@ export default function Rankings() {
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: activeTab === tab.id ? '700' : '500',
-                background: activeTab === tab.id ? '#E11B22' : 'transparent',
-                color: activeTab === tab.id ? '#ffffff' : '#475569',
+                background: activeTab === tab.id ? 'var(--accent)' : 'transparent',
+                color: activeTab === tab.id ? '#ffffff' : 'var(--text-secondary)',
                 transition: 'all 0.18s',
                 whiteSpace: 'nowrap',
               }}
@@ -907,12 +897,12 @@ export default function Rankings() {
               alignSelf: 'flex-start',
               padding: '10px 16px',
               borderRadius: '12px',
-              border: rankingActiveFilterCount > 0 ? '2px solid #E11B22' : '1px solid #e2e8f0',
+              border: rankingActiveFilterCount > 0 ? '2px solid var(--accent)' : '1px solid var(--border)',
               background:
                 rankingActiveFilterCount > 0
-                  ? '#fef2f2'
-                  : '#f8fafc',
-              color: '#111827',
+                  ? 'rgba(225, 27, 34, 0.12)'
+                  : 'var(--bg-card)',
+              color: 'var(--text-primary)',
               fontSize: '14px',
               fontWeight: 800,
               cursor: 'pointer',
@@ -922,12 +912,12 @@ export default function Rankings() {
             🔍 Filtrar{rankingActiveFilterCount > 0 ? ` (${rankingActiveFilterCount})` : ''}
           </button>
           {activeTab === 'local' && sedesLoadError ? (
-            <span style={{ fontSize: '12px', color: '#fecaca' }}>{sedesLoadError}</span>
+            <span style={{ fontSize: '12px', color: 'var(--accent)' }}>{sedesLoadError}</span>
           ) : null}
         </div>
 
         {/* Scope description */}
-        <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
           {activeTab === 'local' &&
             (localPais || localProvincia || localCiudad
               ? `Ranking local · ${etiquetaDeporteTorneo(rankingDeporte)} · ${[localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · ')}`
@@ -945,24 +935,24 @@ export default function Rankings() {
         </div>
 
         {/* Table card */}
-        <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(15, 23, 42, 0.08)', border: '1px solid #e5e7eb' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)', border: '1px solid var(--border)' }}>
           {loading ? (
-            <div style={{ padding: '60px', textAlign: 'center', color: '#bbb', fontSize: '15px' }}>
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '15px' }}>
               Cargando rankings...
             </div>
           ) : rankings.length === 0 ? (
             <div style={{ padding: '60px', textAlign: 'center' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏆</div>
-              <div style={{ color: '#9ca3af', fontSize: '15px', fontWeight: '600' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600' }}>
                 {rankingSinDatosDisponibles ? 'Sin datos disponibles' : 'Sin datos de ranking todavía'}
               </div>
               {!rankingSinDatosDisponibles ? (
-                <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '6px', opacity: 0.9 }}>
                   No hay jugadores con puntos para esta combinación de filtros, o los puntos aún no se asignaron.
                 </div>
               ) : (
-                <div style={{ color: '#d1d5db', fontSize: '12px', marginTop: '6px' }}>
-                  No pudimos cargar el ranking en este momento.
+                <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '6px', lineHeight: 1.5 }}>
+                  Aún no hay torneos finalizados en esta categoría. ¡Jugá un torneo y aparecé en el ranking!
                 </div>
               )}
             </div>
@@ -989,7 +979,7 @@ export default function Rankings() {
                       Torneos
                     </th>
                   ) : null}
-                  <th style={{ ...thStyle, textAlign: 'center', color: '#b91c1c' }}>Puntos</th>
+                  <th style={{ ...thStyle, textAlign: 'center', color: 'var(--accent)' }}>Puntos</th>
                 </tr>
               </thead>
               <tbody>
@@ -1039,7 +1029,7 @@ export default function Rankings() {
                                 transform: 'scale(0.85)',
                                 transformOrigin: 'top center',
                                 flexShrink: 0,
-                                border: '2px solid #e5e7eb',
+                                border: '2px solid var(--border)',
                               }}
                             />
                           ) : (
@@ -1048,11 +1038,11 @@ export default function Rankings() {
                             </div>
                           )}
                           <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: narrow ? '12px' : '14px', fontWeight: '600', color: '#111', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontSize: narrow ? '12px' : '14px', fontWeight: '600', color: 'var(--text-primary)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {etiquetaRankingJugador(player)}
                             </div>
                             {String(player.alias || '').trim() ? (
-                              <div style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {formatAliasConArroba(String(player.alias).trim())}
                               </div>
                             ) : null}
@@ -1062,16 +1052,16 @@ export default function Rankings() {
 
                       {showPaisCol ? (
                         <td style={{ ...tdStyle, textAlign: 'center', fontSize: narrow ? '18px' : '22px' }}>
-                          {flag || <span style={{ fontSize: '13px', color: '#d1d5db' }}>—</span>}
+                          {flag || <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>—</span>}
                         </td>
                       ) : null}
 
-                      <td style={{ ...tdStyle, fontSize: narrow ? '11px' : '12px', color: '#6b7280', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {player.equipo_nombre || <span style={{ color: '#d1d5db' }}>—</span>}
+                      <td style={{ ...tdStyle, fontSize: narrow ? '11px' : '12px', color: 'var(--text-secondary)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {player.equipo_nombre || <span style={{ color: 'var(--text-secondary)' }}>—</span>}
                       </td>
 
                       {showTorneosCol ? (
-                        <td style={{ ...tdStyle, textAlign: 'center', fontSize: narrow ? '11px' : '13px', color: '#6b7280' }}>
+                        <td style={{ ...tdStyle, textAlign: 'center', fontSize: narrow ? '11px' : '13px', color: 'var(--text-secondary)' }}>
                           {player.torneos_count}
                         </td>
                       ) : null}
@@ -1079,8 +1069,8 @@ export default function Rankings() {
                       {/* Points */}
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <span style={{
-                          background: pos === 1 ? '#fef3c7' : pos === 2 ? '#f1f5f9' : pos === 3 ? '#fdf4eb' : '#ede9fe',
-                          color:      pos === 1 ? '#92400e' : pos === 2 ? '#475569' : pos === 3 ? '#92400e' : '#b91c1c',
+                          background: pos === 1 ? 'rgba(217, 119, 6, 0.22)' : pos === 2 ? 'var(--pm-color-muted-bg)' : pos === 3 ? 'rgba(217, 119, 6, 0.12)' : 'rgba(139, 92, 246, 0.18)',
+                          color:      pos === 1 ? '#92400e' : pos === 2 ? 'var(--text-secondary)' : pos === 3 ? '#92400e' : 'var(--accent)',
                           borderRadius: '10px',
                           padding: narrow ? '2px 8px' : '3px 12px',
                           fontSize: narrow ? '12px' : '14px',
@@ -1100,7 +1090,7 @@ export default function Rankings() {
 
         {/* Footer note */}
         {rankings.length > 0 && (
-          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: '#94a3b8' }}>
+          <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'var(--text-secondary)' }}>
             {rankings.length} jugador{rankings.length !== 1 ? 'es' : ''} mostrado{rankings.length !== 1 ? 's' : ''}
             {selectedCategoria && ` · Categoría: ${selectedCategoria}`}
           </div>
@@ -1130,7 +1120,7 @@ export default function Rankings() {
             aria-labelledby="ranking-filters-sheet-title"
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: '18px 18px 0 0',
               maxHeight: 'min(88vh, 640px)',
               overflowY: 'auto',
@@ -1147,13 +1137,13 @@ export default function Rankings() {
                 width: '40px',
                 height: '4px',
                 borderRadius: '2px',
-                background: '#e2e8f0',
+                background: 'var(--border)',
                 margin: '0 auto 14px',
               }}
             />
             <h2
               id="ranking-filters-sheet-title"
-              style={{ margin: '0 0 18px', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}
+              style={{ margin: '0 0 18px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}
             >
               Filtros
             </h2>
@@ -1189,7 +1179,7 @@ export default function Rankings() {
                   <div style={RANKING_SHEET_FILTER_ROW}>
                     <label
                       htmlFor="ranking-sheet-local-ciudad"
-                      style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}
+                      style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}
                     >
                       Ciudad
                     </label>
@@ -1230,7 +1220,7 @@ export default function Rankings() {
             <div style={RANKING_SHEET_FILTER_ROW}>
               <label
                 htmlFor="ranking-sheet-categoria"
-                style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}
+                style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}
               >
                 Categoría
               </label>
@@ -1257,7 +1247,7 @@ export default function Rankings() {
             <div style={{ ...RANKING_SHEET_FILTER_ROW, marginBottom: '8px' }}>
               <label
                 htmlFor="ranking-sheet-tipo-torneo"
-                style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}
+                style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}
               >
                 Tipo de torneo
               </label>
@@ -1286,7 +1276,7 @@ export default function Rankings() {
                 gap: '10px',
                 marginTop: '8px',
                 paddingTop: '16px',
-                borderTop: '1px solid #e2e8f0',
+                borderTop: '1px solid var(--border)',
               }}
             >
               <button
@@ -1298,7 +1288,7 @@ export default function Rankings() {
                   fontWeight: 800,
                   borderRadius: '12px',
                   border: 'none',
-                  background: '#E11B22',
+                  background: 'var(--accent)',
                   color: '#fff',
                   cursor: 'pointer',
                 }}
@@ -1313,9 +1303,9 @@ export default function Rankings() {
                   fontSize: '15px',
                   fontWeight: 700,
                   borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  background: '#f8fafc',
-                  color: '#475569',
+                  border: '1px solid var(--border)',
+                  background: 'var(--pm-color-muted-bg)',
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                 }}
               >
