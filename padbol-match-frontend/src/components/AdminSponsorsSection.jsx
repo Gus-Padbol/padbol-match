@@ -55,6 +55,14 @@ const PAIS_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].
   label: `${p.bandera} ${p.nombre}`,
 }));
 
+const DEFAULT_SPONSOR_CUPOS = {
+  max_global: 5,
+  max_por_sede_starter: 2,
+  max_por_sede_pro: 5,
+  max_por_sede_elite: 20,
+  max_por_nacion: 3,
+};
+
 function emptyForm() {
   return {
     id: null,
@@ -62,6 +70,7 @@ function emptyForm() {
     logo_url: '',
     url_destino: '',
     texto_boton: 'Ver oferta',
+    descripcion: '',
     scope: 'global',
     sede_id: '',
     torneo_id: '',
@@ -83,7 +92,7 @@ const inputStyle = {
   boxSizing: 'border-box',
 };
 
-export default function AdminSponsorsSection() {
+export default function AdminSponsorsSection({ isSuperAdmin = false }) {
   const { session } = useAuth();
   const [rows, setRows] = useState([]);
   const [sedesOpts, setSedesOpts] = useState([]);
@@ -95,6 +104,9 @@ export default function AdminSponsorsSection() {
   const [form, setForm] = useState(emptyForm);
   /** Errores de validación por campo (clave → mensaje). */
   const [fieldErrors, setFieldErrors] = useState({});
+  const [cupos, setCupos] = useState(() => ({ ...DEFAULT_SPONSOR_CUPOS }));
+  const [cuposSaving, setCuposSaving] = useState(false);
+  const [cuposMsg, setCuposMsg] = useState('');
 
   const formCardRef = useRef(null);
   const nombreRef = useRef(null);
@@ -135,10 +147,28 @@ export default function AdminSponsorsSection() {
     setLoading(false);
   }, []);
 
+  const loadSponsorCupos = useCallback(async () => {
+    setCuposMsg('');
+    const { data, error } = await supabase.from('sponsor_config').select('*').eq('id', 1).maybeSingle();
+    if (error) {
+      setCuposMsg(error.message);
+      return;
+    }
+    if (!data) return;
+    setCupos({
+      max_global: Number(data.max_global) || DEFAULT_SPONSOR_CUPOS.max_global,
+      max_por_sede_starter: Number(data.max_por_sede_starter) || DEFAULT_SPONSOR_CUPOS.max_por_sede_starter,
+      max_por_sede_pro: Number(data.max_por_sede_pro) || DEFAULT_SPONSOR_CUPOS.max_por_sede_pro,
+      max_por_sede_elite: Number(data.max_por_sede_elite) || DEFAULT_SPONSOR_CUPOS.max_por_sede_elite,
+      max_por_nacion: Number(data.max_por_nacion) || DEFAULT_SPONSOR_CUPOS.max_por_nacion,
+    });
+  }, []);
+
   useEffect(() => {
     void loadRefs();
     void loadSponsors();
-  }, [loadRefs, loadSponsors]);
+    void loadSponsorCupos();
+  }, [loadRefs, loadSponsors, loadSponsorCupos]);
 
   const resetForm = () => {
     setForm(emptyForm());
@@ -153,6 +183,7 @@ export default function AdminSponsorsSection() {
       logo_url: String(r.logo_url || ''),
       url_destino: String(r.url_destino || ''),
       texto_boton: String(r.texto_boton || 'Ver oferta'),
+      descripcion: String(r.descripcion || ''),
       scope: String(r.scope || 'global').toLowerCase(),
       sede_id: r.sede_id != null ? String(r.sede_id) : '',
       torneo_id: r.torneo_id != null ? String(r.torneo_id) : '',
@@ -260,6 +291,7 @@ export default function AdminSponsorsSection() {
       logo_url: String(form.logo_url || '').trim() || null,
       url_destino: String(form.url_destino || '').trim() || null,
       texto_boton: String(form.texto_boton || '').trim() || 'Ver oferta',
+      descripcion: String(form.descripcion || '').trim() || null,
       scope,
       sede_id: scope === 'sede' ? sedeId : null,
       torneo_id: scope === 'torneo' ? torneoId : null,
@@ -278,7 +310,11 @@ export default function AdminSponsorsSection() {
         setFieldErrors({});
         setMsg('Sponsor actualizado');
       } else {
-        const insert = { ...payload, creado_por: session.user.id };
+        const insert = {
+          ...payload,
+          creado_por: session.user.id,
+          aprobado: Boolean(isSuperAdmin),
+        };
         const { error } = await supabase.from('sponsors').insert([insert]);
         if (error) throw error;
         setMsg('Sponsor creado');
@@ -324,6 +360,42 @@ export default function AdminSponsorsSection() {
     await loadSponsors();
   };
 
+  const guardarCupos = async () => {
+    setCuposMsg('');
+    setCuposSaving(true);
+    try {
+      const payload = {
+        max_global: Math.max(0, parseInt(String(cupos.max_global), 10) || 0),
+        max_por_sede_starter: Math.max(0, parseInt(String(cupos.max_por_sede_starter), 10) || 0),
+        max_por_sede_pro: Math.max(0, parseInt(String(cupos.max_por_sede_pro), 10) || 0),
+        max_por_sede_elite: Math.max(0, parseInt(String(cupos.max_por_sede_elite), 10) || 0),
+        max_por_nacion: Math.max(0, parseInt(String(cupos.max_por_nacion), 10) || 0),
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('sponsor_config').update(payload).eq('id', 1);
+      if (error) throw error;
+      setCuposMsg('✅ Configuración de cupos guardada');
+      setTimeout(() => setCuposMsg(''), 4000);
+      await loadSponsorCupos();
+    } catch (err) {
+      setCuposMsg(err?.message || String(err));
+    } finally {
+      setCuposSaving(false);
+    }
+  };
+
+  const aprobarSponsor = async (id) => {
+    setMsg('');
+    const { error } = await supabase.from('sponsors').update({ aprobado: true }).eq('id', id);
+    if (error) {
+      setMsg(error.message);
+      scrollToEl(formCardRef);
+      return;
+    }
+    setMsg('Sponsor aprobado');
+    await loadSponsors();
+  };
+
   const torneoLabel = useCallback((t) => {
     const sid = t.sede_id != null ? ` · sede ${t.sede_id}` : '';
     return `${String(t.nombre || 'Torneo').slice(0, 80)} (id ${t.id})${sid}`;
@@ -339,7 +411,7 @@ export default function AdminSponsorsSection() {
 
   const bannerIsSuccess =
     Boolean(msg) &&
-    /logo subido|sponsor actualizado|sponsor creado|sponsor eliminado|^desactivado$/i.test(String(msg).trim());
+    /logo subido|sponsor actualizado|sponsor creado|sponsor eliminado|sponsor aprobado|^desactivado$/i.test(String(msg).trim());
 
   const inputErrBorder = (key) => (fieldErrors[key] ? `2px solid ${PADBOL_RED}` : '1px solid #cbd5e1');
 
@@ -349,6 +421,78 @@ export default function AdminSponsorsSection() {
       <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.45 }}>
         Patrocinios por alcance: torneo tiene prioridad sobre sede, país y global.
       </p>
+
+      <div
+        style={{
+          background: 'white',
+          borderRadius: 12,
+          padding: 18,
+          marginBottom: 18,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }}
+      >
+        <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#0f172a' }}>Configuración de cupos</h3>
+        <p style={{ margin: '0 0 14px', fontSize: 13, color: '#475569', lineHeight: 1.45 }}>
+          Límites de patrocinadores (fila única <code style={{ fontSize: 12 }}>sponsor_config.id = 1</code>). La aplicación
+          puede usar estos valores para validar altas futuras.
+        </p>
+        {cuposMsg ? (
+          <div
+            role="alert"
+            style={
+              String(cuposMsg).startsWith('✅')
+                ? { ...successBannerStyle, marginBottom: 12 }
+                : { ...errorBannerStyle, marginBottom: 12 }
+            }
+          >
+            {cuposMsg.replace(/^✅\s*/i, '')}
+          </div>
+        ) : null}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 12,
+            marginBottom: 14,
+          }}
+        >
+          {[
+            { key: 'max_global', label: 'Sponsors globales máximo' },
+            { key: 'max_por_sede_starter', label: 'Sponsors por sede — Starter' },
+            { key: 'max_por_sede_pro', label: 'Sponsors por sede — Pro' },
+            { key: 'max_por_sede_elite', label: 'Sponsors por sede — Elite' },
+            { key: 'max_por_nacion', label: 'Sponsors por nación máximo' },
+          ].map(({ key, label }) => (
+            <div key={key}>
+              <label style={{ ...labelStyle, color: '#334155' }}>{label}</label>
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                style={{ ...inputStyle, color: '#0f172a' }}
+                value={cupos[key]}
+                onChange={(e) => setCupos((p) => ({ ...p, [key]: e.target.value }))}
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={cuposSaving}
+          onClick={() => void guardarCupos()}
+          style={{
+            padding: '12px 24px',
+            borderRadius: 10,
+            border: 'none',
+            background: cuposSaving ? '#94a3b8' : PADBOL_RED,
+            color: '#fff',
+            fontWeight: 800,
+            cursor: cuposSaving ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {cuposSaving ? 'Guardando…' : 'Guardar configuración de cupos'}
+        </button>
+      </div>
 
       {msg ? (
         <div role={bannerIsSuccess ? 'status' : 'alert'} style={bannerIsSuccess ? successBannerStyle : errorBannerStyle}>
@@ -424,6 +568,22 @@ export default function AdminSponsorsSection() {
           value={form.texto_boton}
           onChange={(e) => setForm((p) => ({ ...p, texto_boton: e.target.value }))}
           placeholder="Ver oferta"
+        />
+
+        <label style={{ ...labelStyle, color: '#334155' }}>Descripción corta (opcional, p. ej. hub 3er tiempo)</label>
+        <textarea
+          style={{
+            ...inputStyle,
+            color: '#0f172a',
+            marginBottom: 12,
+            minHeight: 72,
+            resize: 'vertical',
+            fontFamily: 'inherit',
+          }}
+          value={form.descripcion}
+          onChange={(e) => setForm((p) => ({ ...p, descripcion: e.target.value }))}
+          placeholder="Una o dos líneas sobre la marca u oferta"
+          maxLength={500}
         />
 
         <label style={{ ...labelStyle, color: '#334155' }}>Scope</label>
@@ -633,7 +793,7 @@ export default function AdminSponsorsSection() {
         <table
           style={{
             width: '100%',
-            minWidth: 720,
+            minWidth: 880,
             borderCollapse: 'collapse',
             background: 'white',
             borderRadius: 10,
@@ -645,6 +805,7 @@ export default function AdminSponsorsSection() {
             <tr style={{ background: PADBOL_RED, color: '#fff' }}>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Marca</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Scope</th>
+              <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Estado</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Activo</th>
               <th style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }} />
             </tr>
@@ -652,18 +813,20 @@ export default function AdminSponsorsSection() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
                   No hay sponsors. Creá uno con el formulario de arriba.
                 </td>
               </tr>
             ) : (
-              rows.map((r, i) => (
+              rows.map((r, i) => {
+                const aprobado = r.aprobado === true || r.aprobado === 'true' || r.aprobado === 1;
+                return (
                 <tr key={r.id} style={{ borderBottom: '1px solid #eee', background: i % 2 ? '#fafafa' : '#fff' }}>
                   <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -679,10 +842,36 @@ export default function AdminSponsorsSection() {
                     {r.torneo_id != null ? ` · torneo ${r.torneo_id}` : ''}
                     {r.pais ? ` · ${r.pais}` : ''}
                   </td>
+                  <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, fontSize: 13 }}>
+                    {aprobado ? (
+                      <span style={{ color: '#15803d' }}>Aprobado</span>
+                    ) : (
+                      <span style={{ color: '#ca8a04' }}>Pendiente</span>
+                    )}
+                  </td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: r.activo ? '#15803d' : '#b91c1c' }}>
                     {r.activo ? 'Sí' : 'No'}
                   </td>
                   <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {!aprobado ? (
+                      <button
+                        type="button"
+                        onClick={() => void aprobarSponsor(r.id)}
+                        style={{
+                          padding: '6px 10px',
+                          marginRight: 6,
+                          borderRadius: 6,
+                          border: 'none',
+                          background: '#15803d',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: 12,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Aprobar
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => editRow(r)}
@@ -736,7 +925,8 @@ export default function AdminSponsorsSection() {
                     ) : null}
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>

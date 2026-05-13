@@ -13,6 +13,9 @@ import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
+import { useHubSponsors } from '../hooks/useHubSponsors';
+import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
+import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { pickHubDeporteRow } from '../utils/hubDeporteConfig';
@@ -194,7 +197,7 @@ export default function UserHome() {
     if (!em) return null;
     return { email: em };
   }, [session?.user?.email]);
-  const { rol, loading: roleLoading } = useUserRole(currentCliente);
+  const { rol, loading: roleLoading, sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
 
   useEffect(() => {
     if (!session?.user) {
@@ -342,6 +345,13 @@ export default function UserHome() {
 
   const padL = 'calc(12px + env(safe-area-inset-left, 0px))';
   const padR = 'calc(16px + env(safe-area-inset-right, 0px))';
+
+  const paisParaSponsors = String(hubPaisUsuario || userProfile?.pais || '').trim();
+  const { tercerTiempoSponsor, tickerSponsors } = useHubSponsors({
+    sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
+    pais: paisParaSponsors,
+    enabled: true,
+  });
 
   const bigCards = useMemo(() => {
     const q = deporteQuery(deporteElegido);
@@ -805,6 +815,8 @@ export default function UserHome() {
             );
             })}
           </div>
+          <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
+          <HubSponsorsTicker sponsors={tickerSponsors} />
         </div>
 
         {!isPwaStandalone() ? (

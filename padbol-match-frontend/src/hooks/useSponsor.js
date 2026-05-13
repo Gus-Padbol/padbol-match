@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { pickSponsorForContext, sponsorDateYmdLocal } from '../utils/sponsorPick';
+import { sponsorRowApproved } from '../utils/hubSponsorsFilter';
 
 /**
  * Sponsor vigente más específico para la vista (torneo > sede > nacional > global).
@@ -45,6 +46,7 @@ export function useSponsor(sedeId, torneoId, options = {}) {
       const ymd = sponsorDateYmdLocal();
       const activeRows = (Array.isArray(rows) ? rows : []).filter((r) => {
         if (r.activo === false) return false;
+        if (!sponsorRowApproved(r)) return false;
         const desde = r.fecha_desde != null && String(r.fecha_desde).trim() !== '' ? String(r.fecha_desde).slice(0, 10) : null;
         const hasta = r.fecha_hasta != null && String(r.fecha_hasta).trim() !== '' ? String(r.fecha_hasta).slice(0, 10) : null;
         if (desde && ymd < desde) return false;

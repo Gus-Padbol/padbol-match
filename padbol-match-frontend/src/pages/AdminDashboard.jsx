@@ -8761,7 +8761,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </p>
         </div>
 
-        <AdminSponsorsSection />
+        <AdminSponsorsSection isSuperAdmin={isSuperAdmin} />
 
       </div>}
 

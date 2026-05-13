@@ -28,7 +28,7 @@ export function sponsorVigenteEnFecha(row, ymd = sponsorDateYmdLocal()) {
   return true;
 }
 
-function normPais(p) {
+export function normPais(p) {
   return String(p || '')
     .trim()
     .toLowerCase()
