@@ -67,6 +67,7 @@ html {
   --pm-radius-button: 8px;
   --pm-radius-input: 8px;
   --pm-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --input-placeholder: #94a3b8;
 }
 
 /* Tema: clase en `document.documentElement` (ver ThemeContext + script en index.html). */
@@ -98,6 +99,7 @@ html.theme-dark {
   --pm-color-warning: #f59e0b;
   --pm-color-error: var(--accent);
   --pm-color-highlight: #d97706;
+  --input-placeholder: #64748b;
 }
 
 html.theme-light {
@@ -128,6 +130,13 @@ html.theme-light {
   --pm-color-warning: #f59e0b;
   --pm-color-error: var(--accent);
   --pm-color-highlight: #d97706;
+  --input-placeholder: #94a3b8;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder);
+  opacity: 1;
 }
 
 body {

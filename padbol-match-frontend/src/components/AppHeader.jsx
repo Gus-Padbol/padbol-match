@@ -507,10 +507,10 @@ export default function AppHeader({
     adminPanelMinimalHeader || (Boolean(session?.user) && isOnAdmin);
 
   const renderSearchResultsSection = (titleTxt, rows, renderRow, onViewAll) => (
-    <div style={{ padding: '6px 0', borderBottom: '1px solid #e2e8f0' }}>
-      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 800, marginBottom: '4px' }}>{titleTxt}</div>
+    <div style={{ padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 800, marginBottom: '4px' }}>{titleTxt}</div>
       {rows.length === 0 ? (
-        <div style={{ fontSize: '12px', color: '#94a3b8' }}>Sin resultados</div>
+        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Sin resultados</div>
       ) : (
         rows.map(renderRow)
       )}
@@ -561,10 +561,10 @@ export default function AppHeader({
                 'min(85vh, calc(100svh - max(24px, env(safe-area-inset-top, 0px)) - max(24px, env(safe-area-inset-bottom, 0px))))',
               display: 'flex',
               flexDirection: 'column',
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: '14px',
               boxShadow: '0 14px 34px rgba(2,6,23,0.25)',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
               overflow: 'hidden',
               boxSizing: 'border-box',
             }}
@@ -576,7 +576,7 @@ export default function AppHeader({
                 alignItems: 'center',
                 gap: 8,
                 padding: '12px',
-                borderBottom: '1px solid #e2e8f0',
+                borderBottom: '1px solid var(--border)',
               }}
             >
               <input
@@ -590,9 +590,11 @@ export default function AppHeader({
                   minWidth: 0,
                   boxSizing: 'border-box',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--border)',
                   padding: '10px 12px',
                   fontSize: '16px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
                 }}
               />
               <button
@@ -605,8 +607,8 @@ export default function AppHeader({
                   height: 40,
                   borderRadius: '10px',
                   border: 'none',
-                  background: '#f1f5f9',
-                  color: '#334155',
+                  background: 'var(--pm-color-muted-bg)',
+                  color: 'var(--text-primary)',
                   fontSize: 22,
                   lineHeight: 1,
                   cursor: 'pointer',
@@ -629,9 +631,9 @@ export default function AppHeader({
               }}
             >
               {String(searchTerm || '').trim().length < 3 ? (
-                <div style={{ fontSize: '13px', color: '#94a3b8' }}>Escribe al menos 3 caracteres.</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Escribe al menos 3 caracteres.</div>
               ) : searchLoading ? (
-                <div style={{ fontSize: '13px', color: '#64748b' }}>Buscando…</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Buscando…</div>
               ) : (
                 <div style={{ display: 'grid', gap: '6px' }}>
                   {renderSearchResultsSection(
@@ -660,9 +662,9 @@ export default function AppHeader({
                         {j.foto_url ? (
                           <img src={j.foto_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
                         ) : (
-                          <span style={{ width: 24, height: 24, borderRadius: '50%', background: '#e2e8f0' }} />
+                          <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--border)' }} />
                         )}
-                        <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
                           {String(j.nombre || '').trim() || String(j.nombre_completo || '').trim() || 'Jugador'} ·{' '}
                           {formatAliasConArroba(j.alias)} · {j.nivel || '—'}
                         </span>
@@ -696,7 +698,7 @@ export default function AppHeader({
                           textAlign: 'left',
                         }}
                       >
-                        <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
                           {t.nombre} · {t.sede_nombre || 'Sin sede'} · {String(t.fecha_inicio || '').slice(0, 10)} · {t.estado || '—'}
                         </span>
                       </button>
@@ -729,7 +731,7 @@ export default function AppHeader({
                           textAlign: 'left',
                         }}
                       >
-                        <span style={{ fontSize: '12px', color: '#0f172a' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
                           {s.nombre} · {s.ciudad || '—'} · {s.pais || '—'}
                         </span>
                       </button>

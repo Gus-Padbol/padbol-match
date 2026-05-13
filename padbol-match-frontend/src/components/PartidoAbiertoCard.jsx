@@ -45,10 +45,10 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
       style={{
         width: '100%',
         borderRadius: 12,
-        background: '#FFFFFF',
-        color: '#0F0F0F',
+        background: 'var(--bg-card)',
+        color: 'var(--text-primary)',
         boxShadow: compact ? '0 2px 8px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid #E0E0E0',
+        border: '1px solid var(--border)',
         overflow: 'hidden',
         boxSizing: 'border-box',
       }}
@@ -84,7 +84,7 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
             <img
               src={capitanFoto}
               alt={capitanNombre}
-              style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#F5F5F5', border: '1px solid #E0E0E0' }}
+              style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: 'var(--pm-color-muted-bg)', border: '1px solid var(--border)' }}
             />
           ) : (
             <div
@@ -93,32 +93,32 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
                 width: 44,
                 height: 44,
                 borderRadius: '50%',
-                background: '#F5F5F5',
-                color: '#E11B22',
+                background: 'var(--pm-color-muted-bg)',
+                color: 'var(--accent)',
                 display: 'grid',
                 placeItems: 'center',
                 fontWeight: 700,
                 fontSize: 16,
-                border: '1px solid #E0E0E0',
+                border: '1px solid var(--border)',
               }}
             >
               {capitanNombre.charAt(0).toUpperCase()}
             </div>
           )}
           <div style={{ minWidth: 0, flex: 1 }}>
-            <strong style={{ display: 'block', fontSize: 16, fontWeight: 700, color: '#0F0F0F' }}>{capitanNombre}</strong>
-            <span style={{ display: 'block', color: '#6B6B6B', fontSize: 12, fontWeight: 600 }}>Organizador</span>
+            <strong style={{ display: 'block', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{capitanNombre}</strong>
+            <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600 }}>Organizador</span>
           </div>
         </div>
 
-        <h3 style={{ margin: '0 0 10px', fontSize: compact ? 17 : 18, lineHeight: 1.25, fontWeight: 700 }}>
+        <h3 style={{ margin: '0 0 10px', fontSize: compact ? 17 : 18, lineHeight: 1.25, fontWeight: 700, color: 'var(--text-primary)' }}>
           {DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido'} · {partido?.sede_nombre || 'Sede'}
         </h3>
         <ul
           style={{
             margin: '0 0 14px',
             paddingLeft: 18,
-            color: '#6B6B6B',
+            color: 'var(--text-secondary)',
             fontSize: 14,
             fontWeight: 400,
             lineHeight: 1.55,
@@ -142,7 +142,7 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
                 src={foto}
                 alt={nombre}
                 title={nombre}
-                style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E0E0E0' }}
+                style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)' }}
               />
             ) : (
               <span
@@ -152,9 +152,9 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
                   width: 32,
                   height: 32,
                   borderRadius: '50%',
-                  border: jugador ? '2px solid #E0E0E0' : '2px dashed #B0B0B0',
-                  background: jugador ? '#F5F5F5' : '#FFFFFF',
-                  color: jugador ? '#0F0F0F' : '#94a3b8',
+                  border: jugador ? '2px solid var(--border)' : '2px dashed var(--text-secondary)',
+                  background: jugador ? 'var(--pm-color-muted-bg)' : 'var(--bg-card)',
+                  color: jugador ? 'var(--text-primary)' : 'var(--text-secondary)',
                   display: 'inline-grid',
                   placeItems: 'center',
                   fontSize: 11,
@@ -177,7 +177,7 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
               border: 'none',
               borderRadius: 8,
               padding: '14px 16px',
-              background: joining || faltan <= 0 ? '#E0E0E0' : '#16A34A',
+              background: joining || faltan <= 0 ? 'var(--border)' : 'var(--pm-color-primary)',
               color: '#fff',
               fontWeight: 600,
               fontSize: 16,

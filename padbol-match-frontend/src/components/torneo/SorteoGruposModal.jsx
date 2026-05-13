@@ -356,7 +356,7 @@ export default function SorteoGruposModal({
         aria-modal="true"
         aria-labelledby="sorteo-grupos-titulo"
         style={{
-          background: '#fff',
+          background: 'var(--bg-card)',
           borderRadius: '16px',
           maxWidth: tipoSorteo === 'manual' ? 'min(960px, 96vw)' : '520px',
           width: '100%',
@@ -368,11 +368,11 @@ export default function SorteoGruposModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
           <h2 id="sorteo-grupos-titulo" style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>
             Sorteo de grupos
           </h2>
-          <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+          <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
             {String(torneo?.nombre || '').trim() || `Torneo #${torneo?.id}`}
           </p>
         </div>
@@ -474,7 +474,7 @@ export default function SorteoGruposModal({
                       <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', lineHeight: 1.25 }}>
                         {op.titulo}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#64748b', lineHeight: 1.35 }}>{op.desc}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.35 }}>{op.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -539,7 +539,7 @@ export default function SorteoGruposModal({
                       </label>
                       {modoCabezas === 'manual' ? (
                         <div style={{ marginTop: '10px' }}>
-                          <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 8px' }}>
+                          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
                             Elige hasta {Math.min(numCabezas, numGrupos)} equipos en orden (1.º → grupo A, 2.º → B…)
                           </p>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -639,7 +639,7 @@ export default function SorteoGruposModal({
                 </>
               ) : (
                 <div style={{ marginBottom: '14px' }}>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.45 }}>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 10px', lineHeight: 1.45 }}>
                     Arrastra equipos a un grupo o usa el menú «Mover a…». Toca un equipo dentro del grupo para marcarlo
                     como cabeza de serie (dorado). Cada grupo debe tener al menos un equipo. Sin pendientes para confirmar.
                   </p>
@@ -662,7 +662,7 @@ export default function SorteoGruposModal({
                       border: '2px dashed #cbd5e1',
                       background: '#f8fafc',
                       fontSize: '12px',
-                      color: '#64748b',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     <strong style={{ color: '#334155' }}>Sin asignar</strong> — suelta aquí para quitar de un grupo (
@@ -701,8 +701,8 @@ export default function SorteoGruposModal({
                               style={{
                                 padding: '8px 10px',
                                 borderRadius: '10px',
-                                border: '1px solid #e2e8f0',
-                                background: '#fff',
+                                border: '1px solid var(--border)',
+                                background: 'var(--bg-card)',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 gap: '6px',
@@ -793,10 +793,10 @@ export default function SorteoGruposModal({
                                       textAlign: 'left',
                                       padding: '8px 10px',
                                       borderRadius: '10px',
-                                      border: esCabeza ? '2px solid #ca8a04' : '1px solid #e2e8f0',
+                                      border: esCabeza ? '2px solid #ca8a04' : '1px solid var(--border)',
                                       background: esCabeza
                                         ? 'linear-gradient(135deg,#fef9c3,#fde68a)'
-                                        : '#ffffff',
+                                        : 'var(--bg-card)',
                                       fontSize: '12px',
                                       fontWeight: 700,
                                       color: '#1e293b',
@@ -880,7 +880,7 @@ export default function SorteoGruposModal({
         <div
           style={{
             padding: '12px 18px',
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid var(--border)',
             display: 'flex',
             gap: '10px',
             justifyContent: 'flex-end',
@@ -894,7 +894,7 @@ export default function SorteoGruposModal({
               padding: '10px 16px',
               borderRadius: '10px',
               border: '1px solid #cbd5e1',
-              background: '#fff',
+              background: 'var(--bg-card)',
               fontWeight: 700,
               cursor: 'pointer',
             }}

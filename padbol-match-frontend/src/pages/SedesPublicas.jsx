@@ -185,7 +185,7 @@ export default function SedesPublicas() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-primary)', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
 
       <AppHeader title="Sedes" onBack={volverFlujoReserva ? handleSedesAppBack : undefined} />
 

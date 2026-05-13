@@ -138,7 +138,8 @@ export default function PartidosAbiertos() {
     <div
       style={{
         minHeight: '100dvh',
-        background: '#FFFFFF',
+        background: 'var(--bg-page)',
+        color: 'var(--text-primary)',
         paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
@@ -200,7 +201,7 @@ export default function PartidosAbiertos() {
       <main style={{ width: '100%', maxWidth: 560, margin: '0 auto', padding: '16px 16px 24px', boxSizing: 'border-box' }}>
         {showFilters ? (
           <label style={{ display: 'block', marginBottom: 14 }}>
-            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6B6B6B', marginBottom: 6 }}>Elegir deporte</span>
+            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Elegir deporte</span>
             <div style={{ position: 'relative' }}>
               <select
                 value={deporteFiltro}
@@ -212,11 +213,11 @@ export default function PartidosAbiertos() {
                   WebkitAppearance: 'none',
                   padding: '14px 40px 14px 14px',
                   borderRadius: 8,
-                  border: '1px solid #E0E0E0',
+                  border: '1px solid var(--border)',
                   fontSize: 16,
                   fontWeight: 400,
-                  color: '#0F0F0F',
-                  background: '#fff',
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-card)',
                 }}
               >
                 <option value="">Todos</option>
@@ -234,7 +235,7 @@ export default function PartidosAbiertos() {
                   top: '50%',
                   transform: 'translateY(-50%)',
                   pointerEvents: 'none',
-                  color: '#6B6B6B',
+                  color: 'var(--text-secondary)',
                   fontSize: 11,
                 }}
               >
@@ -247,7 +248,8 @@ export default function PartidosAbiertos() {
         {joinSuccess ? (
           <section
             style={{
-              border: '1px solid #E0E0E0',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: 12,
               padding: 22,
               marginBottom: 16,
@@ -256,8 +258,8 @@ export default function PartidosAbiertos() {
             }}
           >
             <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 10 }}>✓</div>
-            <h2 style={{ margin: '0 0 8px', color: '#0F0F0F', fontSize: 20, fontWeight: 700 }}>¡Te has unido con éxito!</h2>
-            <p style={{ margin: '0 0 16px', color: '#6B6B6B', fontSize: 14, fontWeight: 400 }}>
+            <h2 style={{ margin: '0 0 8px', color: 'var(--text-primary)', fontSize: 20, fontWeight: 700 }}>¡Te has unido con éxito!</h2>
+            <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400 }}>
               El capitán verá tu solicitud. Te avisaremos cuando confirme tu cupo.
             </p>
             <button
@@ -284,14 +286,14 @@ export default function PartidosAbiertos() {
         {msg ? (
           <div
             style={{
-              background: '#FFFFFF',
+              background: 'var(--bg-card)',
               borderRadius: 12,
               padding: 14,
               marginBottom: 12,
-              color: '#0F0F0F',
+              color: 'var(--text-primary)',
               fontSize: 14,
               fontWeight: 600,
-              border: '1px solid #E0E0E0',
+              border: '1px solid var(--border)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}
           >
@@ -302,20 +304,20 @@ export default function PartidosAbiertos() {
         {solicitudes.length > 0 ? (
           <section
             style={{
-              background: '#FFFFFF',
+              background: 'var(--bg-card)',
               borderRadius: 12,
               padding: 16,
               marginBottom: 14,
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              border: '1px solid #E0E0E0',
+              border: '1px solid var(--border)',
             }}
           >
-            <h2 style={{ margin: '0 0 10px', color: '#0F0F0F', fontSize: 17, fontWeight: 700 }}>Solicitudes para tus partidos</h2>
+            <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 17, fontWeight: 700 }}>Solicitudes para tus partidos</h2>
             <div style={{ display: 'grid', gap: 10 }}>
               {solicitudes.map((s) => (
-                <div key={s.id} style={{ border: '1px solid #E0E0E0', borderRadius: 8, padding: 12 }}>
-                  <strong style={{ display: 'block', color: '#0F0F0F', fontSize: 14, fontWeight: 700 }}>{s.jugador_nombre}</strong>
-                  <span style={{ display: 'block', color: '#6B6B6B', fontSize: 13, marginTop: 4, fontWeight: 400 }}>
+                <div key={s.id} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
+                  <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 14, fontWeight: 700 }}>{s.jugador_nombre}</strong>
+                  <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, fontWeight: 400 }}>
                     Quiere jugar en {s.partido?.sede_nombre || 'tu partido'} · {String(s.partido?.hora || '').slice(0, 5)}
                   </span>
                   <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
@@ -342,11 +344,11 @@ export default function PartidosAbiertos() {
                       disabled={updatingSolicitudId === s.id}
                       style={{
                         flex: 1,
-                        border: '1px solid #E0E0E0',
+                        border: '1px solid var(--border)',
                         borderRadius: 8,
                         padding: '12px 10px',
-                        background: '#fff',
-                        color: '#0F0F0F',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}
@@ -361,20 +363,20 @@ export default function PartidosAbiertos() {
         ) : null}
 
         {loading ? (
-          <p style={{ color: '#6B6B6B', textAlign: 'center', padding: 30, fontWeight: 400 }}>Cargando partidos...</p>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 30, fontWeight: 400 }}>Cargando partidos...</p>
         ) : partidosFiltrados.length === 0 ? (
           <section
             style={{
-              background: '#FFFFFF',
+              background: 'var(--bg-card)',
               borderRadius: 12,
               padding: 24,
               textAlign: 'center',
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              border: '1px solid #E0E0E0',
+              border: '1px solid var(--border)',
             }}
           >
-            <h2 style={{ margin: '0 0 10px', color: '#0F0F0F', fontSize: 18, fontWeight: 700 }}>No hay partidos disponibles. ¡Inicia uno!</h2>
-            <p style={{ margin: '0 0 16px', color: '#6B6B6B', fontSize: 14, fontWeight: 400 }}>
+            <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 18, fontWeight: 700 }}>No hay partidos disponibles. ¡Inicia uno!</h2>
+            <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400 }}>
               {deporteFiltro ? 'Prueba con otro deporte o sin filtro.' : 'Publica el primero y completa jugadores en minutos.'}
             </p>
             <button

@@ -289,9 +289,9 @@
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--bg-card);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--border);
 }
 
 .reserva-sede-seleccion .reserva-search-option {
@@ -300,9 +300,9 @@
   text-align: left;
   padding: 12px 16px;
   border: none;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid var(--border);
   background: transparent;
-  color: #1e293b;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -320,7 +320,7 @@
 .reserva-sede-seleccion .reserva-search-empty {
   padding: 14px 16px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-secondary);
   text-align: center;
 }
 

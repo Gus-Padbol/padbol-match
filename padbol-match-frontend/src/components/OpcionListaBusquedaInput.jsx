@@ -83,15 +83,16 @@ export default function OpcionListaBusquedaInput({
           boxSizing: 'border-box',
           padding: '8px 12px',
           borderRadius: '8px',
-          border: 'none',
+          border: '1px solid var(--border)',
           fontSize: '13px',
-          background: 'white',
-          color: '#333',
+          background: 'var(--bg-card)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border)',
           ...inputStyle,
         }}
       />
       {minChars > 0 && text.trim().length > 0 && text.trim().length < minChars ? (
-        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginTop: '6px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '6px' }}>
           Escribe al menos {minChars} caracteres
         </div>
       ) : null}
@@ -107,10 +108,10 @@ export default function OpcionListaBusquedaInput({
             padding: '6px 0',
             maxHeight: '220px',
             overflowY: 'auto',
-            background: '#fff',
+            background: 'var(--bg-card)',
             borderRadius: '10px',
             boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             zIndex: 50,
             listStyle: 'none',
           }}
@@ -135,7 +136,7 @@ export default function OpcionListaBusquedaInput({
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: 700,
-                color: '#64748b',
+                color: 'var(--text-secondary)',
               }}
             >
               {allLabel}
@@ -160,7 +161,7 @@ export default function OpcionListaBusquedaInput({
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: '#0f172a',
+                  color: 'var(--text-primary)',
                 }}
               >
                 {o}

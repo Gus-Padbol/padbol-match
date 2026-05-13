@@ -119,8 +119,8 @@ export default function SedeSearchInput({
             margin: '4px 0 0',
             padding: '6px 0',
             listStyle: 'none',
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
             borderRadius: '10px',
             boxShadow: '0 12px 28px rgba(15, 23, 42, 0.16)',
             maxHeight: '280px',
@@ -146,12 +146,12 @@ export default function SedeSearchInput({
                     padding: '9px 12px',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    color: '#0f172a',
+                    color: 'var(--text-primary)',
                   }}
                 >
                   <span style={{ display: 'block', fontSize: '14px', fontWeight: 800 }}>{label}</span>
                   {detail ? (
-                    <span style={{ display: 'block', marginTop: '2px', fontSize: '12px', color: '#64748b' }}>
+                    <span style={{ display: 'block', marginTop: '2px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                       {detail}
                     </span>
                   ) : null}

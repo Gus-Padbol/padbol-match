@@ -35,16 +35,16 @@ export default function TorneoPuntosDistribucionModal({ open, onClose, torneo })
         style={{
           width: '100%',
           maxWidth: '460px',
-          background: '#fff',
+          background: 'var(--bg-card)',
           borderRadius: '14px',
           boxShadow: '0 20px 50px rgba(15, 23, 42, 0.35)',
           overflow: 'hidden',
           boxSizing: 'border-box',
         }}
       >
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid #e2e8f0' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', color: '#111827' }}>Distribución de puntos</h3>
-          <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#64748b' }}>
+        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-primary)' }}>Distribución de puntos</h3>
+          <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
             Total: <strong>{Number(puntosTotal) || 0}</strong> puntos · {formato}
           </p>
         </div>
@@ -52,9 +52,9 @@ export default function TorneoPuntosDistribucionModal({ open, onClose, torneo })
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', padding: '8px 6px', borderBottom: '1px solid #e2e8f0' }}>Posición</th>
-                <th style={{ textAlign: 'right', padding: '8px 6px', borderBottom: '1px solid #e2e8f0' }}>%</th>
-                <th style={{ textAlign: 'right', padding: '8px 6px', borderBottom: '1px solid #e2e8f0' }}>Puntos</th>
+                <th style={{ textAlign: 'left', padding: '8px 6px', borderBottom: '1px solid var(--border)' }}>Posición</th>
+                <th style={{ textAlign: 'right', padding: '8px 6px', borderBottom: '1px solid var(--border)' }}>%</th>
+                <th style={{ textAlign: 'right', padding: '8px 6px', borderBottom: '1px solid var(--border)' }}>Puntos</th>
               </tr>
             </thead>
             <tbody>
@@ -71,7 +71,7 @@ export default function TorneoPuntosDistribucionModal({ open, onClose, torneo })
               ))}
             </tbody>
           </table>
-          <p style={{ margin: '12px 0 0', fontSize: '12px', color: '#64748b', lineHeight: 1.4 }}>
+          <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
             Por defecto: 1ro 40%, 2do 25%, 3ro 15%, 4to 10%; el 10% restante se reparte entre las demás posiciones.
           </p>
         </div>

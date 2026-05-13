@@ -795,8 +795,109 @@ export default function ArmarPartido() {
             <>
               <h1 style={AP.title}>Jugadores confirmados</h1>
               <p style={AP.sub}>El partido necesita {form.jugadoresRequeridos} jugadores. Cuenta contigo y con quienes ya tienes confirmados.</p>
-              <input type="number" min={1} max={form.jugadoresRequeridos} value={form.jugadoresConfirmados} onChange={(e) => setForm((f) => ({ ...f, jugadoresConfirmados: Math.max(1, Math.min(Number(f.jugadoresRequeridos), Number(e.target.value) || 1)) }))} style={AP.field} />
-              <p style={{ margin: '12px 0 0', color: 'var(--accent)', fontWeight: 900 }}>Faltan {Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados)} jugadores.</p>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 22,
+                  marginTop: 14,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <button
+                  type="button"
+                  aria-label="Quitar jugador confirmado"
+                  disabled={form.jugadoresConfirmados <= 1}
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      jugadoresConfirmados: Math.max(1, Number(f.jugadoresConfirmados) - 1),
+                    }))
+                  }
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'var(--accent)',
+                    color: '#fff',
+                    fontSize: 28,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    cursor: form.jugadoresConfirmados <= 1 ? 'not-allowed' : 'pointer',
+                    opacity: form.jugadoresConfirmados <= 1 ? 0.42 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
+                  }}
+                >
+                  −
+                </button>
+                <span
+                  style={{
+                    fontSize: 32,
+                    fontWeight: 900,
+                    minWidth: 52,
+                    textAlign: 'center',
+                    color: 'var(--text-primary)',
+                    letterSpacing: '-0.02em',
+                  }}
+                  aria-live="polite"
+                >
+                  {form.jugadoresConfirmados}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Agregar jugador confirmado"
+                  disabled={form.jugadoresConfirmados >= form.jugadoresRequeridos}
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      jugadoresConfirmados: Math.min(
+                        Number(f.jugadoresRequeridos),
+                        Number(f.jugadoresConfirmados) + 1,
+                      ),
+                    }))
+                  }
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'var(--accent)',
+                    color: '#fff',
+                    fontSize: 28,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    cursor: form.jugadoresConfirmados >= form.jugadoresRequeridos ? 'not-allowed' : 'pointer',
+                    opacity: form.jugadoresConfirmados >= form.jugadoresRequeridos ? 0.42 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+              <p
+                style={{
+                  margin: '16px 0 0',
+                  fontWeight: 900,
+                  fontSize: 16,
+                  textAlign: 'center',
+                  color:
+                    Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados) === 0
+                      ? 'var(--accent)'
+                      : 'var(--pm-color-primary)',
+                }}
+              >
+                {Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados) === 0
+                  ? '¡Equipo completo!'
+                  : `Faltan ${Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados)} jugadores`}
+              </p>
             </>
           ) : null}
 
@@ -820,7 +921,7 @@ export default function ArmarPartido() {
               <h1 style={AP.title}>Partido publicado</h1>
               <p style={AP.body}>Tu partido ya aparece para que otros se unan.</p>
               <div style={{ display: 'grid', gap: 10 }}>
-                <a href={shareUrl(publicado)} target="_blank" rel="noreferrer" style={{ textAlign: 'center', borderRadius: 12, padding: 13, background: '#22c55e', color: '#fff', fontWeight: 900, textDecoration: 'none' }}>Compartir por WhatsApp</a>
+                <a href={shareUrl(publicado)} target="_blank" rel="noreferrer" style={{ textAlign: 'center', borderRadius: 12, padding: 13, background: 'var(--pm-color-primary)', color: '#fff', fontWeight: 900, textDecoration: 'none' }}>Compartir por WhatsApp</a>
                 <button type="button" onClick={() => navigate('/partidos-abiertos')} style={AP.linkSec}>Ver cupos para unirte</button>
               </div>
             </>

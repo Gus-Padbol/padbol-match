@@ -203,16 +203,16 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
             width: 'min(340px, calc(100vw - 24px))',
             maxHeight: '430px',
             overflowY: 'auto',
-            background: '#fff',
-            color: '#0f172a',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
             borderRadius: 14,
             boxShadow: '0 20px 45px rgba(15,23,42,0.28)',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             zIndex: 15000,
             textAlign: 'left',
           }}
         >
-          <div style={{ padding: '12px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', gap: 10 }}>
             <strong style={{ fontSize: 14 }}>Notificaciones</strong>
             <button
               type="button"
@@ -223,11 +223,11 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
             </button>
           </div>
           {loading ? (
-            <p style={{ margin: 0, padding: 14, color: '#64748b', fontSize: 13 }}>Cargando...</p>
+            <p style={{ margin: 0, padding: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Cargando...</p>
           ) : msg ? (
             <p style={{ margin: 0, padding: 14, color: '#991b1b', fontSize: 13 }}>{msg}</p>
           ) : items.length === 0 ? (
-            <p style={{ margin: 0, padding: 14, color: '#64748b', fontSize: 13 }}>Sin notificaciones por ahora.</p>
+            <p style={{ margin: 0, padding: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Sin notificaciones por ahora.</p>
           ) : (
             <div style={{ display: 'grid', gap: 8, padding: 10 }}>
               {items.map((n) => (
@@ -237,11 +237,11 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
                   onClick={() => handleItem(n)}
                   style={{
                     textAlign: 'left',
-                    border: '1px solid #e2e8f0',
-                    borderLeft: n.leida ? '4px solid #cbd5e1' : '4px solid #E11B22',
+                    border: '1px solid var(--border)',
+                    borderLeft: n.leida ? '4px solid var(--border)' : '4px solid var(--accent)',
                     borderRadius: 10,
                     padding: 10,
-                    background: n.leida ? '#f8fafc' : '#eef2ff',
+                    background: n.leida ? 'var(--pm-color-muted-bg)' : 'rgba(99, 102, 241, 0.12)',
                     cursor: 'pointer',
                   }}
                 >
@@ -251,7 +251,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
                       fontSize: 10,
                       fontWeight: 800,
                       color: '#b91c1c',
-                      background: '#e0e7ff',
+                      background: 'rgba(99, 102, 241, 0.2)',
                       padding: '2px 7px',
                       borderRadius: 6,
                       marginBottom: 6,
@@ -259,11 +259,11 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
                   >
                     {TIPO_ETIQUETA[n.tipo] || 'Aviso'}
                   </span>
-                  <strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{n.titulo}</strong>
-                  <span style={{ display: 'block', color: '#475569', fontSize: 12, lineHeight: 1.4, marginTop: 4 }}>
+                  <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 13 }}>{n.titulo}</strong>
+                  <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.4, marginTop: 4 }}>
                     {n.mensaje}
                   </span>
-                  <span style={{ display: 'block', color: '#94a3b8', fontSize: 11, marginTop: 6 }}>
+                  <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 11, marginTop: 6 }}>
                     {fechaNotifLabel(n.created_at)}
                   </span>
                 </button>

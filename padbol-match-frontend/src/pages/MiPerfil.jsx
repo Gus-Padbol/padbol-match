@@ -392,7 +392,7 @@ export default function MiPerfil() {
         {fichErr(k)}
       </p>
     ) : null;
-  const fichBorder = (k) => (fichErr(k) ? '2px solid #d32f2f' : '1px solid #ddd');
+  const fichBorder = (k) => (fichErr(k) ? '2px solid #d32f2f' : '1px solid var(--border)');
 
   /** Sin sesión: pantalla única de alta de cuenta + ficha. */
   const esRegistroSinSesion = Boolean(!authLoading && !sessionOwnerEmail);
@@ -1747,14 +1747,14 @@ export default function MiPerfil() {
             ) : null}
             <div
               style={{
-                background: 'white',
+                background: 'var(--bg-card)',
                 borderRadius: '12px',
                 padding: '24px',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
               }}
             >
               <h3 style={{ marginTop: 0, marginBottom: '12px', color: '#222' }}>Mi perfil</h3>
-              <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
                 Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión.
               </p>
               <button
@@ -1800,7 +1800,7 @@ export default function MiPerfil() {
     }
 
     const regErr = (k) => registroFieldErrors[k];
-    const regBorder = (k) => (regErr(k) ? '1px solid #d32f2f' : '1px solid #ddd');
+    const regBorder = (k) => (regErr(k) ? '1px solid #d32f2f' : '1px solid var(--border)');
     const regErrP = (k) =>
       regErr(k) ? (
         <p style={{ color: '#d32f2f', fontSize: '13px', marginTop: '-2px', marginBottom: '10px', lineHeight: 1.35 }}>
@@ -1848,14 +1848,14 @@ export default function MiPerfil() {
           ) : null}
           <div
             style={{
-              background: 'white',
+              background: 'var(--bg-card)',
               borderRadius: '12px',
               padding: '24px',
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
             }}
           >
             <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#222' }}>Crear tu cuenta</h3>
-            <p style={{ color: '#666', fontSize: '14px', marginBottom: '18px', lineHeight: 1.45 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '18px', lineHeight: 1.45 }}>
               Completa tus datos con un email real: se crea tu usuario en Padbol Match y se guarda tu ficha de jugador.
               {torneoIdValido ? ' Después vuelves al torneo.' : ''}
             </p>
@@ -1924,7 +1924,7 @@ export default function MiPerfil() {
                 autoComplete="off"
               />
               {aliasSugerenciasCargando ? (
-                <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
               ) : null}
               {aliasSuggestions.length > 0 ? (
                 <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px' }}>
@@ -1945,7 +1945,7 @@ export default function MiPerfil() {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '8px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid var(--border)',
                           borderRadius: '8px',
                           padding: '6px 10px',
                           background: libre ? '#fff' : '#fef2f2',
@@ -2102,7 +2102,7 @@ export default function MiPerfil() {
                   }}
                 />
               </div>
-              <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.4 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.4 }}>
                 Elige país (bandera + código) y escribe solo el número local (mín. 10 dígitos). Se guarda en formato internacional.
               </p>
               {regErrP('whatsapp')}
@@ -2187,7 +2187,7 @@ export default function MiPerfil() {
                     {paisHtmlRequired ? <> {reqAst}</> : null}
                   </label>
                   {torneoPerfil && nivelTorneoScope === 'nacional' ? (
-                    <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
                       Por defecto Argentina; puedes cambiar el país si corresponde.
                     </p>
                   ) : null}
@@ -2277,9 +2277,9 @@ export default function MiPerfil() {
                     flex: 1,
                     padding: '10px',
                     border: '2px solid',
-                    borderColor: formData.es_federado ? '#388e3c' : '#ddd',
-                    background: formData.es_federado ? '#e8f5e9' : 'white',
-                    color: formData.es_federado ? '#388e3c' : '#666',
+                    borderColor: formData.es_federado ? '#388e3c' : 'var(--border)',
+                    background: formData.es_federado ? '#e8f5e9' : 'var(--bg-card)',
+                    color: formData.es_federado ? '#388e3c' : 'var(--text-secondary)',
                     borderRadius: '5px',
                     cursor: 'pointer',
                     fontWeight: 'bold',
@@ -2294,9 +2294,9 @@ export default function MiPerfil() {
                     flex: 1,
                     padding: '10px',
                     border: '2px solid',
-                    borderColor: !formData.es_federado ? '#d32f2f' : '#ddd',
-                    background: !formData.es_federado ? '#fff3f3' : 'white',
-                    color: !formData.es_federado ? '#d32f2f' : '#666',
+                    borderColor: !formData.es_federado ? '#d32f2f' : 'var(--border)',
+                    background: !formData.es_federado ? '#fff3f3' : 'var(--bg-card)',
+                    color: !formData.es_federado ? '#d32f2f' : 'var(--text-secondary)',
                     borderRadius: '5px',
                     cursor: 'pointer',
                     fontWeight: 'bold',
@@ -2314,7 +2314,7 @@ export default function MiPerfil() {
                   marginBottom: regErr('acepto_terminos') ? '6px' : '16px',
                   cursor: 'pointer',
                   fontSize: '14px',
-                  color: '#334155',
+                  color: 'var(--text-primary)',
                   lineHeight: 1.45,
                 }}
               >
@@ -2343,10 +2343,10 @@ export default function MiPerfil() {
                 </>
               ) : (
                 <>
-                  <p style={{ color: '#334155', fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>
+                  <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>
                     ¿Qué deportes practicas?
                   </p>
-                  <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '14px', lineHeight: 1.45 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '14px', lineHeight: 1.45 }}>
                     Elige uno o más. Es opcional pero nos ayuda a mostrarte sedes y turnos más acordes. Puedes editarlo después en Mi perfil.
                   </p>
                   <DeportesPreferidosChips value={registroDeportesSel} onChange={setRegistroDeportesSel} disabled={isSubmitting} />
@@ -2358,8 +2358,8 @@ export default function MiPerfil() {
                       width: '100%',
                       padding: '11px',
                       marginTop: '16px',
-                      background: '#fff',
-                      color: '#334155',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-primary)',
                       border: '1px solid #cbd5e1',
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -2986,7 +2986,7 @@ export default function MiPerfil() {
             {!String(perfil?.alias || '').trim() ? (
               <>
             {aliasSugerenciasCargando ? (
-              <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
             ) : null}
             {aliasSuggestions.length > 0 ? (
               <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px' }}>
@@ -3007,7 +3007,7 @@ export default function MiPerfil() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--border)',
                         borderRadius: '8px',
                         padding: '6px 10px',
                         background: libre ? '#fff' : '#fef2f2',
@@ -3140,7 +3140,7 @@ export default function MiPerfil() {
                 Mostrar en mi perfil público la cantidad de torneos jugados (solo el número; por defecto no se muestra).
               </span>
             </label>
-            <p style={{ color: '#666', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
               No revela nombres de torneos ni resultados; solo el total si activas esta opción.
             </p>
 
@@ -3156,7 +3156,7 @@ export default function MiPerfil() {
                 Busco compañero: aparecer en el inicio para jugadores de mi club habitual (misma sede).
               </span>
             </label>
-            <p style={{ color: '#666', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '-4px', marginBottom: '14px', lineHeight: 1.4 }}>
               Necesitas tener club habitual o sede en tu ficha. Otros te contactan por WhatsApp si tienes número en el perfil o en una reserva.
             </p>
 
@@ -3180,7 +3180,7 @@ export default function MiPerfil() {
                 }}
               />
             </div>
-            <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '14px', lineHeight: 1.4 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: 0, marginBottom: '14px', lineHeight: 1.4 }}>
               Elige país (bandera + código) y el número local (mín. 10 dígitos). Se guarda en formato internacional.
             </p>
 
@@ -3217,7 +3217,7 @@ export default function MiPerfil() {
                   {!torneoPerfil || nivelTorneoScope === 'internacional' ? ' *' : ''}
                 </label>
                 {torneoPerfil && nivelTorneoScope === 'nacional' ? (
-                  <p style={{ color: '#666', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: 0, marginBottom: '6px', lineHeight: 1.35 }}>
                     Por defecto Argentina; puedes cambiar el país si corresponde.
                   </p>
                 ) : null}
@@ -3287,7 +3287,7 @@ export default function MiPerfil() {
                   padding: '8px 10px',
                   background: '#f8fafc',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                 }}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontSize: '14px', minWidth: 0 }}>
@@ -3317,7 +3317,7 @@ export default function MiPerfil() {
                       {inicialDesdeNombreCompanero(nombreCompletoCompaneroOp(companeroSeleccionado))}
                     </div>
                   )}
-                  <span style={{ fontWeight: 700, color: '#334155', minWidth: 0, lineHeight: 1.3 }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text-primary)', minWidth: 0, lineHeight: 1.3 }}>
                     {etiquetaCompaneroNombreYAlias(companeroSeleccionado)}
                   </span>
                 </span>
@@ -3371,8 +3371,8 @@ export default function MiPerfil() {
                       margin: '4px 0 0',
                       padding: '4px 0',
                       listStyle: 'none',
-                      background: '#fff',
-                      border: '1px solid #e2e8f0',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
                       boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
                       maxHeight: '220px',
@@ -3381,7 +3381,7 @@ export default function MiPerfil() {
                     }}
                   >
                     {companeroCargando && companeroOpciones.length === 0 ? (
-                      <li style={{ padding: '10px 12px', fontSize: '13px', color: '#64748b' }}>Buscando…</li>
+                      <li style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>Buscando…</li>
                     ) : null}
                     {companeroOpciones.map((op) => {
                       const nom = nombreCompletoCompaneroOp(op);
@@ -3455,7 +3455,7 @@ export default function MiPerfil() {
             <p
               style={{
                 fontSize: '12px',
-                color: '#64748b',
+                color: 'var(--text-secondary)',
                 marginTop: '-4px',
                 marginBottom: '14px',
                 lineHeight: 1.45,
@@ -3473,11 +3473,11 @@ export default function MiPerfil() {
             <label style={{ ...labelStyle, marginBottom: '8px' }}>¿Eres federado?</label>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
               <button type="button" onClick={() => setFormData(prev => ({ ...prev, es_federado: true }))}
-                style={{ flex: 1, padding: '10px', border: '2px solid', borderColor: formData.es_federado ? '#388e3c' : '#ddd', background: formData.es_federado ? '#e8f5e9' : 'white', color: formData.es_federado ? '#388e3c' : '#666', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                style={{ flex: 1, padding: '10px', border: '2px solid', borderColor: formData.es_federado ? '#388e3c' : 'var(--border)', background: formData.es_federado ? '#e8f5e9' : 'var(--bg-card)', color: formData.es_federado ? '#388e3c' : 'var(--text-secondary)', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
                 ✅ Sí
               </button>
               <button type="button" onClick={() => setFormData(prev => ({ ...prev, es_federado: false }))}
-                style={{ flex: 1, padding: '10px', border: '2px solid', borderColor: !formData.es_federado ? '#d32f2f' : '#ddd', background: !formData.es_federado ? '#fff3f3' : 'white', color: !formData.es_federado ? '#d32f2f' : '#666', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                style={{ flex: 1, padding: '10px', border: '2px solid', borderColor: !formData.es_federado ? '#d32f2f' : 'var(--border)', background: !formData.es_federado ? '#fff3f3' : 'var(--bg-card)', color: !formData.es_federado ? '#d32f2f' : 'var(--text-secondary)', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
                 ❌ No
               </button>
             </div>
@@ -4126,7 +4126,7 @@ export default function MiPerfil() {
                         type="button"
                         onClick={() => setReservaCancelModal(r)}
                         disabled={cancelando === r.id}
-                        style={{ fontSize: '11px', padding: '6px 10px', border: '1px solid #fca5a5', borderRadius: '6px', background: '#fff', color: '#dc2626', cursor: 'pointer', fontWeight: 600, opacity: cancelando === r.id ? 0.6 : 1 }}
+                        style={{ fontSize: '11px', padding: '6px 10px', border: '1px solid #fca5a5', borderRadius: '6px', background: 'var(--bg-card)', color: '#dc2626', cursor: 'pointer', fontWeight: 600, opacity: cancelando === r.id ? 0.6 : 1 }}
                       >
                         {cancelando === r.id ? 'Cancelando...' : 'Cancelar'}
                       </button>
@@ -4180,7 +4180,7 @@ export default function MiPerfil() {
             style={{
               width: '100%',
               maxWidth: fotoAccionModalStep === 'avatars' ? 400 : 360,
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
               padding: '20px 18px 16px',
               boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
@@ -4281,7 +4281,7 @@ export default function MiPerfil() {
                     padding: '10px',
                     border: 'none',
                     background: 'transparent',
-                    color: '#64748b',
+                    color: 'var(--text-secondary)',
                     fontWeight: 700,
                     fontSize: '15px',
                     cursor: guardandoFoto ? 'default' : 'pointer',
@@ -4291,7 +4291,7 @@ export default function MiPerfil() {
                   Cancelar
                 </button>
                 {guardandoFoto ? (
-                  <p style={{ margin: '12px 0 0', textAlign: 'center', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
+                  <p style={{ margin: '12px 0 0', textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
                     Guardando…
                   </p>
                 ) : null}
@@ -4304,13 +4304,13 @@ export default function MiPerfil() {
                     disabled={guardandoFoto}
                     onClick={() => setFotoAccionModalStep('menu')}
                     style={{
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       background: '#f8fafc',
                       borderRadius: '10px',
                       padding: '8px 12px',
                       fontWeight: 800,
                       cursor: guardandoFoto ? 'default' : 'pointer',
-                      color: '#334155',
+                      color: 'var(--text-primary)',
                       fontFamily: 'inherit',
                     }}
                   >
@@ -4337,7 +4337,7 @@ export default function MiPerfil() {
                       style={{
                         aspectRatio: '1',
                         borderRadius: '14px',
-                        border: '2px solid #e2e8f0',
+                        border: '2px solid var(--border)',
                         padding: 0,
                         overflow: 'hidden',
                         cursor: guardandoFoto ? 'default' : 'pointer',
@@ -4350,7 +4350,7 @@ export default function MiPerfil() {
                   ))}
                 </div>
                 {guardandoFoto ? (
-                  <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
+                  <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
                     Guardando…
                   </p>
                 ) : null}
@@ -4384,18 +4384,18 @@ export default function MiPerfil() {
             style={{
               width: '100%',
               maxWidth: '420px',
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
             }}
             onClick={(ev) => ev.stopPropagation()}
           >
-            <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--border)' }}>
               <h3 id="titulo-recorte-foto" style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>
                 Recortar foto
               </h3>
-              <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                 Mueve la imagen con el dedo y pellizca para acercar o alejar. Confirma cuando quede bien el rostro.
               </p>
             </div>
@@ -4449,7 +4449,7 @@ export default function MiPerfil() {
                     borderRadius: '10px',
                     border: '1px solid #cbd5e1',
                     background: '#f8fafc',
-                    color: '#334155',
+                    color: 'var(--text-primary)',
                     cursor: 'pointer',
                   }}
                 >
@@ -4534,7 +4534,7 @@ export default function MiPerfil() {
             style={{
               width: '100%',
               maxWidth: 340,
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: 14,
               padding: '20px 18px 16px',
               boxShadow: '0 20px 50px rgba(15,23,42,0.25)',
@@ -4553,7 +4553,7 @@ export default function MiPerfil() {
                   borderRadius: 10,
                   border: '1px solid #cbd5e1',
                   background: '#f8fafc',
-                  color: '#334155',
+                  color: 'var(--text-primary)',
                   fontSize: 14,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -4573,8 +4573,8 @@ export default function MiPerfil() {
                   padding: '10px 16px',
                   borderRadius: 10,
                   border: 'none',
-                  background: '#334155',
-                  color: '#f8fafc',
+                  background: 'var(--accent)',
+                  color: '#fff',
                   fontSize: 14,
                   fontWeight: 600,
                   cursor: 'pointer',

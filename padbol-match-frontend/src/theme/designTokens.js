@@ -1,12 +1,12 @@
-/** Padbol Match — design tokens (Gero refresh, UI only) */
+/** Padbol Match — design tokens (alineados a `html.theme-light` / `html.theme-dark` en index.css). */
 
-export const colorBg = '#FFFFFF';
-export const colorText = '#0F0F0F';
+export const colorBg = 'var(--bg-page)';
+export const colorText = 'var(--text-primary)';
 export const colorAccent = '#E11B22';
 export const colorAccentHover = '#C41219';
-export const colorMutedBg = '#F5F5F5';
-export const colorTextMuted = '#6B6B6B';
-export const colorBorder = '#E0E0E0';
+export const colorMutedBg = 'var(--pm-color-muted-bg)';
+export const colorTextMuted = 'var(--text-secondary)';
+export const colorBorder = 'var(--border)';
 
 /** Acción positiva (unirse, confirmar) */
 export const colorPrimary = '#16A34A';
@@ -20,11 +20,11 @@ export const colorBrandHover = '#C41219';
 export const colorSecondary = colorBrand;
 export const colorSecondaryDark = colorBrandHover;
 
-export const gradientStart = colorMutedBg;
-export const gradientEnd = colorBg;
+export const gradientStart = 'var(--pm-gradient-start)';
+export const gradientEnd = 'var(--pm-gradient-end)';
 
-export const colorCard = '#ffffff';
-export const colorCardMuted = colorMutedBg;
+export const colorCard = 'var(--bg-card)';
+export const colorCardMuted = 'var(--pm-color-muted-bg)';
 
 export const colorSuccess = '#16A34A';
 export const colorSuccessStrong = '#15803d';

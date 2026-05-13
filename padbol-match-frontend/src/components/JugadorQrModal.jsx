@@ -147,7 +147,7 @@ export default function JugadorQrModal({
           width: '100%',
           maxWidth: '380px',
           borderRadius: '16px',
-          background: '#fff',
+          background: 'var(--bg-card)',
           padding: '20px 18px 18px',
           boxSizing: 'border-box',
           textAlign: 'center',
@@ -165,9 +165,9 @@ export default function JugadorQrModal({
             width: '36px',
             height: '36px',
             borderRadius: '10px',
-            border: '1px solid #e2e8f0',
-            background: '#f8fafc',
-            color: '#475569',
+            border: '1px solid var(--border)',
+            background: 'var(--pm-color-muted-bg)',
+            color: 'var(--text-secondary)',
             fontSize: '18px',
             lineHeight: 1,
             cursor: 'pointer',
@@ -183,7 +183,7 @@ export default function JugadorQrModal({
             margin: '0 44px 14px 0',
             fontSize: '16px',
             fontWeight: 800,
-            color: '#0f172a',
+            color: 'var(--text-primary)',
             textAlign: 'left',
           }}
         >
@@ -210,8 +210,8 @@ export default function JugadorQrModal({
             marginBottom: '12px',
             padding: '12px 14px',
             borderRadius: '12px',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
+            background: 'var(--pm-color-muted-bg)',
+            border: '1px solid var(--border)',
           }}
         >
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
@@ -224,7 +224,7 @@ export default function JugadorQrModal({
                   height: '48px',
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   flexShrink: 0,
                 }}
               />
@@ -248,23 +248,23 @@ export default function JugadorQrModal({
               </div>
             )}
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '15px', lineHeight: 1.3 }}>
+              <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '15px', lineHeight: 1.3 }}>
                 {nombre || 'Jugador'}
               </div>
               {apodoTxt ? (
-                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>{apodoTxt}</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '4px' }}>{apodoTxt}</div>
               ) : null}
-              <div style={{ fontSize: '13px', color: '#334155', marginTop: '10px', lineHeight: 1.45 }}>
-                <span style={{ color: '#64748b', fontWeight: 700 }}>Categoría:</span> {categoriaTxt}
+              <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '10px', lineHeight: 1.45 }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Categoría:</span> {categoriaTxt}
               </div>
-              <div style={{ fontSize: '13px', color: '#334155', marginTop: '4px', lineHeight: 1.45 }}>
-                <span style={{ color: '#64748b', fontWeight: 700 }}>Sede:</span> {sedeTxt}
+              <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '4px', lineHeight: 1.45 }}>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Sede:</span> {sedeTxt}
               </div>
             </div>
           </div>
         </div>
 
-        <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '14px', wordBreak: 'break-all', textAlign: 'left' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '14px', wordBreak: 'break-all', textAlign: 'left' }}>
           {profileUrl}
         </div>
 
