@@ -382,7 +382,8 @@ export default function AppHeader({
     ) : null;
 
   const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
-  const padR = 'calc(8px + env(safe-area-inset-right, 0px))';
+  /** Mín. 12px al borde derecho (p. ej. toggle ☀️/🌙 en ~390px) + safe area. */
+  const padR = 'calc(12px + env(safe-area-inset-right, 0px))';
 
   useEffect(() => {
     if (!showHeaderSearch) {
