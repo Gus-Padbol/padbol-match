@@ -888,7 +888,6 @@ export default function AppHeader({
       <div
         className="app-header-shell"
         style={{
-          overflowX: 'hidden',
           minHeight: '56px',
           background: '#0f172a',
           paddingBottom: '8px',
@@ -909,6 +908,9 @@ export default function AppHeader({
               justifyContent: 'space-between',
               gap: '12px',
               minHeight: '56px',
+              minWidth: 0,
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
             {adminMinimalRow}
@@ -918,9 +920,10 @@ export default function AppHeader({
     );
   }
 
+  /** `auto | 1fr | auto`: la columna central cede espacio al título con ellipsis; izq./der. al ancho intrínseco (chip, ☀️/🌙, campana) sin recortar en ~390px. */
   const headerGridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'minmax(0,1fr) auto minmax(0,1fr)',
+    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
     alignItems: 'center',
     columnGap: '8px',
     minHeight: '56px',
@@ -930,7 +933,6 @@ export default function AppHeader({
     <div
       className="app-header-shell"
       style={{
-        overflowX: 'hidden',
         minHeight: '56px',
         background: hubLightBar ? 'var(--nav-bg)' : '#0f172a',
         paddingBottom: '8px',
@@ -1067,7 +1069,9 @@ export default function AppHeader({
           justifyContent: 'center',
           alignItems: 'center',
           minWidth: 0,
+          width: '100%',
           maxWidth: compactHubChip ? 'min(38vw, 168px)' : 'min(72vw, 420px)',
+          justifySelf: 'center',
         }}
       >
         {headerTitleDisplay ? (
@@ -1128,9 +1132,8 @@ export default function AppHeader({
           justifyContent:
             showAdminShortcutHub || (hubDirectLogin && !session?.user && !authLoading) ? 'flex-end' : 'flex-start',
           alignItems: 'center',
-          minWidth: 0,
-          width: '100%',
-          marginRight: showAdminShortcutHub ? '16px' : 0,
+          flexShrink: 0,
+          minWidth: 'min-content',
           boxSizing: 'border-box',
           justifySelf: hubDirectLogin && !session?.user && !authLoading ? 'end' : undefined,
         }}
