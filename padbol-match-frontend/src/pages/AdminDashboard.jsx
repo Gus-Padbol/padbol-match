@@ -1623,6 +1623,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [editorContenidoEmail, setEditorContenidoEmail] = useState('');
   const [editorContenidoNombre, setEditorContenidoNombre] = useState('');
   const [editorContenidoSaving, setEditorContenidoSaving] = useState(false);
+  /** Formulario «Asignar editor»: colapsado hasta que el usuario pulse agregar. */
+  const [editorContenidoFormAbierto, setEditorContenidoFormAbierto] = useState(false);
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
@@ -1707,6 +1709,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (typeof window === 'undefined' || !window.matchMedia) return;
     const mq = window.matchMedia('(max-width: 768px)');
     const apply = () => setVistaReservasAdminTarjetas(Boolean(mq.matches));
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  /** Tab Gestión de administradores: filas compactas en pantallas estrechas (~390px). */
+  const [rolesTabViewportNarrow, setRolesTabViewportNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    const apply = () => setRolesTabViewportNarrow(Boolean(mq.matches));
     apply();
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
@@ -1898,6 +1911,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setMensajeExito(`✅ Editor de contenido asignado a ${email}`);
       setEditorContenidoEmail('');
       setEditorContenidoNombre('');
+      setEditorContenidoFormAbierto(false);
       setTimeout(() => setMensajeExito(''), 4000);
       void cargarRolesAdmin();
     } catch (e) {
@@ -2181,6 +2195,38 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       return bits.some((b) => b.includes(q));
     });
   }, [adminRolesRows, busquedaRolesAdmin]);
+
+  const editorContenidoAsignado = useMemo(() => {
+    const hit = adminRolesRows.find((r) => String(r?.role || '').trim().toLowerCase() === 'editor_contenido');
+    return hit || null;
+  }, [adminRolesRows]);
+
+  const asignacionGestionAdminTexto = useCallback((row) => {
+    if (String(row?.role || '').trim().toLowerCase() === 'editor_contenido') return 'Hub del jugador (cards)';
+    const ac = String(row?.alcance || '').trim().toLowerCase();
+    if (ac === 'sede') return row.sede_nombre || `Sede ${row.sede_id || '—'}`;
+    if (ac === 'ciudad') return row.ciudad || '—';
+    if (ac === 'provincia') return row.provincia || '—';
+    if (ac === 'pais') {
+      const p = String(row.pais || '').trim();
+      if (!p) return '—';
+      const f = banderaEmojiDesdeNombrePais(p);
+      const nombre = paisTextoSinBanderaInicial(p) || p;
+      return f ? `${f} ${nombre}`.trim() : nombre;
+    }
+    if (ac === 'global') return 'Global';
+    return row?.alcance ? String(row.alcance) : '—';
+  }, []);
+
+  const textoRolGestionAdminCompleto = useCallback(
+    (row) => {
+      const badge = ROLE_BADGE[row.role] || row.role || '—';
+      const alc = row.alcance || '—';
+      const asig = asignacionGestionAdminTexto(row);
+      return `${badge} · Alcance: ${alc} · ${asig}`;
+    },
+    [asignacionGestionAdminTexto],
+  );
 
   useEffect(() => {
     if (!isSuperAdmin) return;
@@ -8997,65 +9043,183 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 />
               </div>
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
+            <div style={{ overflowX: rolesTabViewportNarrow ? 'visible' : 'auto' }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  background: 'white',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  tableLayout: rolesTabViewportNarrow ? 'fixed' : 'auto',
+                }}
+              >
                 <thead>
-                  <tr style={{ background: '#E11B22', color: '#fff' }}>
-                    <th style={{ padding: '8px' }}>Nombre</th>
-                    <th style={{ padding: '8px' }}>Email</th>
-                    <th style={{ padding: '8px' }}>Rol</th>
-                    <th style={{ padding: '8px' }}>Alcance</th>
-                    <th style={{ padding: '8px' }}>Asignación</th>
-                    <th style={{ padding: '8px' }}>Acción</th>
-                  </tr>
+                  {rolesTabViewportNarrow ? (
+                    <tr style={{ background: '#E11B22', color: '#fff' }}>
+                      <th style={{ padding: '8px', textAlign: 'left', width: '34%' }}>Nombre</th>
+                      <th style={{ padding: '8px', textAlign: 'left' }}>Rol</th>
+                      <th style={{ padding: '8px', textAlign: 'right', width: '22%', whiteSpace: 'nowrap' }}>Acción</th>
+                    </tr>
+                  ) : (
+                    <tr style={{ background: '#E11B22', color: '#fff' }}>
+                      <th style={{ padding: '8px' }}>Nombre</th>
+                      <th style={{ padding: '8px' }}>Email</th>
+                      <th style={{ padding: '8px' }}>Rol</th>
+                      <th style={{ padding: '8px' }}>Alcance</th>
+                      <th style={{ padding: '8px' }}>Asignación</th>
+                      <th style={{ padding: '8px' }}>Acción</th>
+                    </tr>
+                  )}
                 </thead>
                 <tbody>
                   {adminRolesLoading ? (
-                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>Cargando…</td></tr>
+                    <tr>
+                      <td
+                        colSpan={rolesTabViewportNarrow ? 3 : 6}
+                        style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}
+                      >
+                        Cargando…
+                      </td>
+                    </tr>
                   ) : adminRolesRows.length === 0 ? (
-                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>Sin administradores registrados</td></tr>
+                    <tr>
+                      <td
+                        colSpan={rolesTabViewportNarrow ? 3 : 6}
+                        style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}
+                      >
+                        Sin administradores registrados
+                      </td>
+                    </tr>
                   ) : adminRolesRowsFiltrados.length === 0 ? (
-                    <tr><td colSpan={6} style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}>Ningún administrador coincide con la búsqueda.</td></tr>
+                    <tr>
+                      <td
+                        colSpan={rolesTabViewportNarrow ? 3 : 6}
+                        style={{ padding: '10px', textAlign: 'center', color: '#334155', fontWeight: 600 }}
+                      >
+                        Ningún administrador coincide con la búsqueda.
+                      </td>
+                    </tr>
                   ) : (
-                    adminRolesRowsFiltrados.map((row) => (
-                      <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: '#1e293b' }}>
-                        <td style={{ padding: '8px', color: '#1e293b' }}>{row.nombre || '—'}</td>
-                        <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>{row.email}</td>
-                        <td style={{ padding: '8px', color: '#1e293b' }}>
-                          {row.role === 'editor_contenido' ? 'Editor de contenido' : row.role || '—'}
-                        </td>
-                        <td style={{ padding: '8px', color: '#1e293b' }}>{row.alcance || '—'}</td>
-                        <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>
-                          {row.role === 'editor_contenido' ? 'Hub del jugador (cards)' : null}
-                          {row.role !== 'editor_contenido' && row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
-                          {row.role !== 'editor_contenido' && row.alcance === 'ciudad' ? row.ciudad || '—' : null}
-                          {row.role !== 'editor_contenido' && row.alcance === 'provincia' ? row.provincia || '—' : null}
-                          {row.role !== 'editor_contenido' && row.alcance === 'pais'
-                            ? (() => {
-                                const p = String(row.pais || '').trim();
-                                if (!p) return '—';
-                                const f = banderaEmojiDesdeNombrePais(p);
-                                const nombre = paisTextoSinBanderaInicial(p) || p;
-                                return f ? `${f} ${nombre}`.trim() : nombre;
-                              })()
-                            : null}
-                          {row.role !== 'editor_contenido' && row.alcance === 'global' ? 'Global' : null}
-                        </td>
-                        <td style={{ padding: '8px', color: '#1e293b' }}>
-                          {row.role === 'super_admin' ? (
-                            <span style={{ color: '#475569', fontSize: '12px' }}>—</span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => void revocarRolAdmin(row.email)}
-                              style={{ padding: '4px 9px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer' }}
+                    adminRolesRowsFiltrados.map((row) =>
+                      rolesTabViewportNarrow ? (
+                        <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: '#1e293b' }}>
+                          <td
+                            style={{
+                              padding: '10px 8px',
+                              verticalAlign: 'top',
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            <div style={{ fontWeight: 700, fontSize: '14px', lineHeight: 1.3 }}>
+                              {row.nombre || '—'}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '11px',
+                                color: '#64748b',
+                                marginTop: '4px',
+                                wordBreak: 'break-all',
+                                lineHeight: 1.25,
+                              }}
                             >
-                              Revocar rol
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                              {row.email}
+                            </div>
+                          </td>
+                          <td
+                            style={{
+                              padding: '10px 8px',
+                              verticalAlign: 'top',
+                              fontSize: '13px',
+                              lineHeight: 1.4,
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word',
+                              color: '#1e293b',
+                            }}
+                          >
+                            {textoRolGestionAdminCompleto(row)}
+                          </td>
+                          <td
+                            style={{
+                              padding: '10px 8px',
+                              verticalAlign: 'middle',
+                              textAlign: 'right',
+                            }}
+                          >
+                            {row.role === 'super_admin' ? (
+                              <span style={{ color: '#475569', fontSize: '12px' }}>—</span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => void revocarRolAdmin(row.email)}
+                                style={{
+                                  padding: '6px 10px',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  background: '#dc2626',
+                                  color: '#fff',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  whiteSpace: 'normal',
+                                  maxWidth: '100%',
+                                  lineHeight: 1.2,
+                                }}
+                              >
+                                Revocar rol
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: '#1e293b' }}>
+                          <td style={{ padding: '8px', color: '#1e293b' }}>{row.nombre || '—'}</td>
+                          <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>{row.email}</td>
+                          <td style={{ padding: '8px', color: '#1e293b' }}>
+                            {row.role === 'editor_contenido' ? 'Editor de contenido' : row.role || '—'}
+                          </td>
+                          <td style={{ padding: '8px', color: '#1e293b' }}>{row.alcance || '—'}</td>
+                          <td style={{ padding: '8px', fontSize: '12px', color: '#1e293b' }}>
+                            {row.role === 'editor_contenido' ? 'Hub del jugador (cards)' : null}
+                            {row.role !== 'editor_contenido' && row.alcance === 'sede'
+                              ? row.sede_nombre || `Sede ${row.sede_id || '—'}`
+                              : null}
+                            {row.role !== 'editor_contenido' && row.alcance === 'ciudad' ? row.ciudad || '—' : null}
+                            {row.role !== 'editor_contenido' && row.alcance === 'provincia' ? row.provincia || '—' : null}
+                            {row.role !== 'editor_contenido' && row.alcance === 'pais'
+                              ? (() => {
+                                  const p = String(row.pais || '').trim();
+                                  if (!p) return '—';
+                                  const f = banderaEmojiDesdeNombrePais(p);
+                                  const nombre = paisTextoSinBanderaInicial(p) || p;
+                                  return f ? `${f} ${nombre}`.trim() : nombre;
+                                })()
+                              : null}
+                            {row.role !== 'editor_contenido' && row.alcance === 'global' ? 'Global' : null}
+                          </td>
+                          <td style={{ padding: '8px', color: '#1e293b' }}>
+                            {row.role === 'super_admin' ? (
+                              <span style={{ color: '#475569', fontSize: '12px' }}>—</span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => void revocarRolAdmin(row.email)}
+                                style={{
+                                  padding: '4px 9px',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  background: '#dc2626',
+                                  color: '#fff',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Revocar rol
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ),
+                    )
                   )}
                 </tbody>
               </table>
@@ -9073,67 +9237,154 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <p style={{ color: 'rgba(226,232,240,0.95)', fontSize: '13px', lineHeight: 1.45, marginBottom: '14px', maxWidth: 520 }}>
                 Asigná acceso solo a la sección «Personalizar Hub» (fotos, títulos y subtítulos de las cards del inicio del jugador).
               </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end', marginBottom: '12px' }}>
-                <div style={{ flex: '1 1 220px', minWidth: '180px' }}>
-                  <label htmlFor="editor-contenido-email" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
-                    Email
-                  </label>
-                  <input
-                    id="editor-contenido-email"
-                    type="email"
-                    value={editorContenidoEmail}
-                    onChange={(e) => setEditorContenidoEmail(e.target.value)}
-                    placeholder="correo@ejemplo.com"
-                    autoComplete="off"
+              {editorContenidoAsignado ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: '12px',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'rgba(248,250,252,0.98)' }}>
+                      {String(editorContenidoAsignado.nombre || '').trim() || editorContenidoAsignado.email}
+                    </div>
+                    {String(editorContenidoAsignado.nombre || '').trim() ? (
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          color: 'rgba(226,232,240,0.88)',
+                          marginTop: '4px',
+                          wordBreak: 'break-all',
+                        }}
+                      >
+                        {editorContenidoAsignado.email}
+                      </div>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void revocarRolAdmin(editorContenidoAsignado.email)}
                     style={{
-                      width: '100%',
-                      padding: '8px 10px',
+                      padding: '10px 16px',
                       borderRadius: '8px',
-                      border: '1px solid #c4b5fd',
+                      border: 'none',
+                      background: '#dc2626',
+                      color: '#fff',
+                      fontWeight: 700,
                       fontSize: '14px',
-                      boxSizing: 'border-box',
+                      cursor: 'pointer',
+                      flexShrink: 0,
                     }}
-                  />
+                  >
+                    Revocar acceso
+                  </button>
                 </div>
-                <div style={{ flex: '1 1 200px', minWidth: '160px' }}>
-                  <label htmlFor="editor-contenido-nombre" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
-                    Nombre (opcional)
-                  </label>
-                  <input
-                    id="editor-contenido-nombre"
-                    type="text"
-                    value={editorContenidoNombre}
-                    onChange={(e) => setEditorContenidoNombre(e.target.value)}
-                    placeholder="Nombre visible"
-                    autoComplete="off"
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      border: '1px solid #c4b5fd',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
+              ) : !editorContenidoFormAbierto ? (
                 <button
                   type="button"
-                  disabled={editorContenidoSaving}
-                  onClick={() => void asignarEditorContenido()}
+                  onClick={() => setEditorContenidoFormAbierto(true)}
                   style={{
                     padding: '10px 16px',
                     borderRadius: '8px',
-                    border: 'none',
-                    background: editorContenidoSaving ? '#64748b' : '#0d9488',
-                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    background: 'rgba(255,255,255,0.08)',
+                    color: 'rgba(248,250,252,0.98)',
                     fontWeight: 700,
                     fontSize: '14px',
-                    cursor: editorContenidoSaving ? 'not-allowed' : 'pointer',
+                    cursor: 'pointer',
                   }}
                 >
-                  {editorContenidoSaving ? 'Guardando…' : 'Asignar editor'}
+                  ＋ Agregar editor de contenido
                 </button>
-              </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end', marginBottom: '12px' }}>
+                    <div style={{ flex: '1 1 220px', minWidth: '180px' }}>
+                      <label htmlFor="editor-contenido-email" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
+                        Email
+                      </label>
+                      <input
+                        id="editor-contenido-email"
+                        type="email"
+                        value={editorContenidoEmail}
+                        onChange={(e) => setEditorContenidoEmail(e.target.value)}
+                        placeholder="correo@ejemplo.com"
+                        autoComplete="off"
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          border: '1px solid #c4b5fd',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <div style={{ flex: '1 1 200px', minWidth: '160px' }}>
+                      <label htmlFor="editor-contenido-nombre" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
+                        Nombre (opcional)
+                      </label>
+                      <input
+                        id="editor-contenido-nombre"
+                        type="text"
+                        value={editorContenidoNombre}
+                        onChange={(e) => setEditorContenidoNombre(e.target.value)}
+                        placeholder="Nombre visible"
+                        autoComplete="off"
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          border: '1px solid #c4b5fd',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={editorContenidoSaving}
+                      onClick={() => void asignarEditorContenido()}
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: editorContenidoSaving ? '#64748b' : '#0d9488',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        cursor: editorContenidoSaving ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {editorContenidoSaving ? 'Guardando…' : 'Asignar editor'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={editorContenidoSaving}
+                      onClick={() => {
+                        setEditorContenidoFormAbierto(false);
+                        setEditorContenidoEmail('');
+                        setEditorContenidoNombre('');
+                      }}
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.4)',
+                        background: 'transparent',
+                        color: 'rgba(248,250,252,0.95)',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        cursor: editorContenidoSaving ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
