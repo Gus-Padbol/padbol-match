@@ -39,6 +39,7 @@ import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/rese
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
+import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 
 // Returns the correct price for a given sede + time slot.
 // Base desde `sedes` (precio_turno en Supabase, luego legacy precio_por_reserva); luego franjas o mañana/tarde.
@@ -558,6 +559,7 @@ export default function ReservaForm() {
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
+  const [reservaStripeExitoOpen, setReservaStripeExitoOpen] = useState(false);
 
   const [formData, setFormData] = useState(() => {
     const p = readPrimedSedeReserva();
@@ -1504,6 +1506,24 @@ export default function ReservaForm() {
     }
   };
 
+  const cerrarReservaStripeExito = useCallback(() => {
+    setReservaStripeExitoOpen(false);
+    clearMpReservaPendingSlot();
+    setPantalla(1);
+    setFormData({
+      fecha: '',
+      hora: '',
+      cancha: '',
+      duracion: '90',
+      nombre: '',
+      email: '',
+      numeroTel: '',
+      codigoPais: '+54',
+    });
+    setWhatsapp('');
+    setError('');
+  }, []);
+
   // PANTALLA 1: País + cards de sedes (rediseño)
   if (pantalla === 1) {
     return (
@@ -2114,21 +2134,7 @@ export default function ReservaForm() {
               }}
               disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk}
               onPaid={() => {
-                clearMpReservaPendingSlot();
-                alert('¡Reserva confirmada! Te enviamos los detalles por WhatsApp.');
-                setPantalla(1);
-                setFormData({
-                  fecha: '',
-                  hora: '',
-                  cancha: '',
-                  duracion: '90',
-                  nombre: '',
-                  email: '',
-                  numeroTel: '',
-                  codigoPais: '+54',
-                });
-                setWhatsapp('');
-                setError('');
+                setReservaStripeExitoOpen(true);
               }}
             />
           ) : (
@@ -2161,6 +2167,68 @@ export default function ReservaForm() {
           )}
         </div>
         </div>
+        {reservaStripeExitoOpen ? (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reserva-stripe-exito-title"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 20000,
+              background: 'rgba(15, 23, 42, 0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding:
+                'max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))',
+              boxSizing: 'border-box',
+            }}
+            onClick={cerrarReservaStripeExito}
+          >
+            <div
+              role="document"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: 400,
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                borderRadius: 16,
+                padding: '28px 22px 24px',
+                textAlign: 'center',
+                boxShadow: '0 20px 50px rgba(2, 6, 23, 0.25)',
+                border: '1px solid var(--border)',
+                boxSizing: 'border-box',
+              }}
+            >
+              <SuccessPaymentHeroCheck />
+              <h2 id="reserva-stripe-exito-title" style={{ margin: '0 0 10px', fontSize: '1.35rem', fontWeight: 800 }}>
+                ¡Reserva confirmada!
+              </h2>
+              <p style={{ margin: '0 0 20px', fontSize: '14px', lineHeight: 1.55, color: 'var(--text-secondary)' }}>
+                Te enviamos los detalles por WhatsApp.
+              </p>
+              <button
+                type="button"
+                onClick={cerrarReservaStripeExito}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  color: '#fff',
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        ) : null}
         <ConfirmCancelReservaModal
           open={cancelReservaDesdeResumenOpen}
           title="¿Cancelar la reserva y salir?"

@@ -281,7 +281,7 @@ export default function PerfilPublico() {
       'perfil.ciudad': ciudadClub,
       'UI club habitual': ciudadTrim ? `Club habitual: ${ciudadTrim}` : 'Sin definir',
       'perfil.localidad': localidad,
-      'UI línea 📍 (si hay)': localidadTrimLog || '(oculta)',
+      'UI línea ubicación (si hay)': localidadTrimLog || '(oculta)',
       'perfil.nivel': nivelCat,
       'UI categoría (texto tal cual)': nivelTxt || '(vacío → Sin definir)',
       'perfil.pendiente_validacion': pendVal,
@@ -1041,8 +1041,11 @@ export default function PerfilPublico() {
             }}
           >
             {puntosAlcancePublico.club > 0 ? (
-              <span>
-                📍 Club: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.club} pts</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <IconGeroUbicacion size={16} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                <span>
+                  Club: <span style={{ color: '#15803d' }}>{puntosAlcancePublico.club} pts</span>
+                </span>
               </span>
             ) : null}
             {puntosAlcancePublico.nacional > 0 ? (

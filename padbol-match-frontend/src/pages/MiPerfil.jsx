@@ -3847,8 +3847,20 @@ export default function MiPerfil() {
             {hayPuntosNivel ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
                 {puntosAlcanceMiPerfil.club > 0 ? (
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    📍 Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.club}</span>
+                  <div
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <IconGeroUbicacion size={18} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                    <span>
+                      Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.club}</span>
+                    </span>
                   </div>
                 ) : null}
                 {puntosAlcanceMiPerfil.nacional > 0 ? (

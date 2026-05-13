@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
+import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 
 const ACCENT = '#E11B22';
 const BG = '#FFFFFF';
@@ -68,7 +69,7 @@ const btnOutline = {
   boxShadow: 'none',
 };
 
-function HowCard({ emoji, title, description }) {
+function HowCard({ lead, emoji, title, description }) {
   return (
     <div
       style={{
@@ -80,8 +81,18 @@ function HowCard({ emoji, title, description }) {
       }}
     >
       <div style={{ width: 36, height: 4, borderRadius: 2, background: ACCENT, marginBottom: 12 }} aria-hidden />
-      <div style={{ fontSize: 26, lineHeight: 1, marginBottom: 10 }} aria-hidden>
-        {emoji}
+      <div
+        style={{
+          fontSize: lead ? undefined : 26,
+          lineHeight: 1,
+          marginBottom: 10,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        aria-hidden
+      >
+        {lead != null ? lead : emoji}
       </div>
       <h3
         style={{
@@ -173,7 +184,7 @@ export default function LandingPage() {
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <HowCard
-              emoji="📍"
+              lead={<IconGeroUbicacion size={26} style={{ color: ACCENT }} />}
               title="Encuentra tu sede"
               description="Busca clubes y elige el que mejor te quede por ubicación y horarios."
             />

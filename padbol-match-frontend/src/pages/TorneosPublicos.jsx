@@ -24,7 +24,7 @@ import {
 } from '../utils/torneoEstadoFiltroPills';
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import { getDistanceKm } from '../utils/sedeCardUi';
-import { IconGeroUbicacion } from '../components/icons/GeroIcons';
+import { IconGeroFiltros, IconGeroUbicacion } from '../components/icons/GeroIcons';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
@@ -864,17 +864,19 @@ export default function TorneosPublicos() {
               <span
                 style={{
                   position: 'absolute',
-                  left: '12px',
+                  left: '10px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  fontSize: '15px',
-                  lineHeight: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-secondary)',
                   pointerEvents: 'none',
-                  opacity: 0.85,
+                  opacity: 0.92,
                 }}
                 aria-hidden
               >
-                🔍
+                <IconGeroFiltros size={18} />
               </span>
               <input
                 ref={torneoSearchInputRef}

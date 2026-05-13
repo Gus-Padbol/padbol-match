@@ -8,27 +8,8 @@ import {
 } from '../constants/hubLayout';
 import { clearMpReservaPendingSlot } from '../utils/reservaReturnUrl';
 import { supabase } from '../supabaseClient';
-import { IconGeroCheck, IconGeroUbicacion } from '../components/icons/GeroIcons';
-
-function PagoExitosoHeroCheck() {
-  return (
-    <div
-      style={{
-        width: 72,
-        height: 72,
-        margin: '0 auto 16px',
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 6px 20px rgba(22,163,74,0.35)',
-      }}
-    >
-      <IconGeroCheck size={40} style={{ color: '#fff' }} />
-    </div>
-  );
-}
+import { IconGeroUbicacion } from '../components/icons/GeroIcons';
+import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -252,7 +233,7 @@ export default function PagoExitoso() {
           </>
         ) : pagoKind === 'partido' ? (
           <>
-            <PagoExitosoHeroCheck />
+            <SuccessPaymentHeroCheck />
             <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#065f46', marginBottom: '8px' }}>
               ¡Partido publicado!
             </h1>
@@ -296,7 +277,7 @@ export default function PagoExitoso() {
           </>
         ) : pagoKind === 'torneo' && torneoInscripcion ? (
           <>
-            <PagoExitosoHeroCheck />
+            <SuccessPaymentHeroCheck />
             <h1
               style={{
                 fontSize: '1.6rem',
@@ -345,7 +326,7 @@ export default function PagoExitoso() {
           </>
         ) : (
           <>
-            <PagoExitosoHeroCheck />
+            <SuccessPaymentHeroCheck />
             <h1
               style={{
                 fontSize: '1.6rem',
