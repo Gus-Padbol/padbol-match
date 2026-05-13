@@ -204,7 +204,7 @@ export default function AppHeader({
     return titleStr;
   }, [pathOnly, location.state?.fromAdmin, titleStr]);
 
-  /** Rutas del hub jugador (/, /hub, …): chip con apodo o nombre real; sí ⚙ Admin para admins (logout en Mi Perfil). */
+  /** Rutas del hub jugador (/, /hub, …): chip con apodo o nombre real; atajo Admin para admins (logout en Mi Perfil). */
   const hubInicioPath =
     pathOnly === '/' ||
     pathOnly === '/inicio' ||
@@ -283,7 +283,11 @@ export default function AppHeader({
     (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
 
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
-  const showJugadorNotifications = Boolean(session?.user) && !isOnAdmin && !adminFlowSurface;
+  const showJugadorNotifications =
+    Boolean(session?.user) &&
+    !isOnAdmin &&
+    !adminFlowSurface &&
+    !isSedeProfilePathname(pathOnly);
   /** Torneo / equipo desde el panel: sin chip @ a la derecha; volver = avatar + nombre (no texto «← Admin»). */
   const adminTorneoEquipoDesdePanel = adminFlowSurface && !isOnAdmin;
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
@@ -1232,7 +1236,9 @@ export default function AppHeader({
               </div>
             ) : null}
             {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
-            {hubLightBar ? <HubThemeSettingsButton compact={compactHubChip} /> : null}
+            {jugadorHubShellPath && hubLightBar ? (
+              <HubThemeSettingsButton compact={compactHubChip} />
+            ) : null}
             {showJugadorNotifications ? (
               <JugadorNotificationsBell compact={compactHubChip} headerLight={hubLightBar} />
             ) : null}
