@@ -1,13 +1,10 @@
 /**
- * Fotos de fondo del hub principal por deporte y por card.
- * Valores son URLs ya usadas en el repo (UserHome, hubCardDefaults, PartidoAbiertoCard).
- * Podés sustituir por rutas locales, p. ej. `${process.env.PUBLIC_URL}/assets/fotos/padel-reservar.jpg`,
- * colocando los archivos en `public/assets/fotos/`.
+ * Fotos de fondo del hub principal por deporte y por card (Unsplash).
+ * Podés sustituir por rutas locales en `public/assets/fotos/` si preferís.
  *
  * Si falta una entrada, {@link hubCardPhotoFallback} usa {@link HUB_CARD_UNSPLASH_GENERIC}.
  * Claves de card: reservar | buscar_partido | torneos | armar_partido.
  */
-import { HUB_CARD_DEFAULT_IMAGES } from './hubCardDefaults';
 
 /** Fallback genérico (comportamiento histórico del hub cuando no hay CMS ni deporte). */
 export const HUB_CARD_UNSPLASH_GENERIC = {
@@ -17,60 +14,50 @@ export const HUB_CARD_UNSPLASH_GENERIC = {
   armar_partido: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=800&q=80',
 };
 
-/** Heroes por deporte (mismas URLs que PartidoAbiertoCard `DEPORTE_HERO`). */
-const HERO = {
-  padbol: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
-  padel: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
-  tenis: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
-  pickleball: 'https://images.unsplash.com/photo-1622163642998-1ea36b1adcd3?w=800&q=80',
-  futbol_5: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
-  futbol_7: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
-};
-
-const D = HUB_CARD_DEFAULT_IMAGES;
-
 export const FOTOS_POR_DEPORTE = {
   padbol: {
-    reservar: HUB_CARD_UNSPLASH_GENERIC.reservar,
-    buscar_partido: HUB_CARD_UNSPLASH_GENERIC.buscar_partido,
-    torneos: HUB_CARD_UNSPLASH_GENERIC.torneos,
-    armar_partido: HUB_CARD_UNSPLASH_GENERIC.armar_partido,
+    reservar: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
+    buscar_partido: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
+    torneos: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
+    armar_partido: 'https://images.unsplash.com/photo-1543357480-c60d40fafa5f?w=800&q=80',
   },
   padel: {
-    reservar: D.reservar,
-    buscar_partido: D.partidos,
-    torneos: D.torneos,
-    armar_partido: D.jugar,
+    reservar: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80',
+    buscar_partido: 'https://images.unsplash.com/photo-1625134673337-519d4d10b313?w=800&q=80',
+    torneos: 'https://images.unsplash.com/photo-1599474924187-334a4ae5051f?w=800&q=80',
+    armar_partido: 'https://images.unsplash.com/photo-1602211844066-d3bb556e983b?w=800&q=80',
   },
   pickleball: {
-    reservar: HERO.pickleball,
-    buscar_partido: D.partidos,
-    torneos: D.torneos_lista,
-    armar_partido: D.jugar,
+    reservar: 'https://images.unsplash.com/photo-1686311613688-eb1882ed0e25?w=800&q=80',
+    buscar_partido: 'https://images.unsplash.com/photo-1686311613696-7f02f1b7dc6f?w=800&q=80',
+    torneos: 'https://images.unsplash.com/photo-1686311613705-b4ed85c94a7b?w=800&q=80',
+    armar_partido: 'https://images.unsplash.com/photo-1686311613713-24c63e5c83f4?w=800&q=80',
   },
   squash: {
-    reservar: D.sedes,
-    buscar_partido: D.partidos,
-    torneos: D.torneos,
-    armar_partido: D.jugar,
+    reservar: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
+    buscar_partido: 'https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?w=800&q=80',
+    torneos: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80',
+    armar_partido: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
   },
   tenis: {
-    reservar: HERO.tenis,
-    buscar_partido: D.partidos,
-    torneos: D.rankings,
-    armar_partido: D.jugar,
+    reservar: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&q=80',
+    buscar_partido: 'https://images.unsplash.com/photo-1542144582-1ba00456b5e3?w=800&q=80',
+    torneos: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=800&q=80',
+    armar_partido: 'https://images.unsplash.com/photo-1544298621-35a989e4e54a?w=800&q=80',
   },
   futbol_5: {
-    reservar: HERO.futbol_5,
-    buscar_partido: HERO.futbol_5,
-    torneos: D.torneos,
-    armar_partido: D.jugar,
+    reservar: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+    buscar_partido: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80',
+    torneos: 'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=800&q=80',
+    /* Mensaje original cortado en "photo-1…"; misma imagen que padbol.armar_partido del set pedido. */
+    armar_partido: 'https://images.unsplash.com/photo-1543357480-c60d40fafa5f?w=800&q=80',
   },
+  /* Bloque no incluido en el mensaje; variación del set fútbol 5 para cancha 7. */
   futbol_7: {
-    reservar: HERO.futbol_7,
-    buscar_partido: HERO.futbol_7,
-    torneos: D.torneos_lista,
-    armar_partido: D.jugar,
+    reservar: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
+    buscar_partido: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+    torneos: 'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=800&q=80',
+    armar_partido: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80',
   },
 };
 

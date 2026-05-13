@@ -1520,6 +1520,154 @@ app.post('/api/hub-config/:id/foto', uploadHubFoto.single('foto'), async (req, r
   }
 });
 
+const HUB_DEPORTE_CONFIG_DEPORTES = new Set([
+  'padbol',
+  'padel',
+  'pickleball',
+  'squash',
+  'tenis',
+  'futbol_5',
+  'futbol_7',
+]);
+const HUB_DEPORTE_CONFIG_CARD_KEYS = new Set(['reservar', 'buscar_partido', 'torneos', 'armar_partido']);
+
+function assertHubDeporteParams(deporteRaw, cardKeyRaw) {
+  const deporte = String(deporteRaw || '').trim().toLowerCase();
+  const card_key = String(cardKeyRaw || '').trim();
+  if (!HUB_DEPORTE_CONFIG_DEPORTES.has(deporte)) {
+    return { ok: false, status: 400, error: 'deporte inválido' };
+  }
+  if (!HUB_DEPORTE_CONFIG_CARD_KEYS.has(card_key)) {
+    return { ok: false, status: 400, error: 'card_key inválido' };
+  }
+  return { ok: true, deporte, card_key };
+}
+
+/** GET /api/hub-deporte-config — público: filas { deporte, card_key, foto_url, titulo, subtitulo } para el hub. */
+app.get('/api/hub-deporte-config', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('hub_deporte_config')
+      .select('id,deporte,card_key,foto_url,titulo,subtitulo,updated_at')
+      .order('deporte', { ascending: true })
+      .order('card_key', { ascending: true });
+    if (error) throw error;
+    res.json(Array.isArray(data) ? data : []);
+  } catch (err) {
+    const msg = String(err.message || err);
+    if (/relation|does not exist|schema cache/i.test(msg)) {
+      return res.json([]);
+    }
+    console.error('❌ GET /api/hub-deporte-config:', msg);
+    res.status(500).json({ error: msg });
+  }
+});
+
+/**
+ * PATCH /api/hub-deporte-config — super_admin o editor_contenido: upsert por (deporte, card_key).
+ * Body: { deporte, card_key, titulo?, subtitulo?, foto_url? }
+ */
+app.patch('/api/hub-deporte-config', async (req, res) => {
+  try {
+    await assertEsEditorContenidoOSuperAdmin(req);
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const chk = assertHubDeporteParams(body.deporte, body.card_key);
+    if (!chk.ok) return res.status(chk.status).json({ error: chk.error });
+    const { deporte, card_key } = chk;
+    const titulo = Object.prototype.hasOwnProperty.call(body, 'titulo') ? String(body.titulo ?? '') : undefined;
+    const subtitulo = Object.prototype.hasOwnProperty.call(body, 'subtitulo') ? String(body.subtitulo ?? '') : undefined;
+    const foto_url = Object.prototype.hasOwnProperty.call(body, 'foto_url')
+      ? String(body.foto_url ?? '').trim() || null
+      : undefined;
+    if (titulo === undefined && subtitulo === undefined && foto_url === undefined) {
+      return res.status(400).json({ error: 'Nada que actualizar' });
+    }
+
+    const { data: ex, error: exErr } = await supabase
+      .from('hub_deporte_config')
+      .select('*')
+      .eq('deporte', deporte)
+      .eq('card_key', card_key)
+      .maybeSingle();
+    if (exErr) throw exErr;
+
+    const merged = {
+      deporte,
+      card_key,
+      titulo: titulo !== undefined ? titulo : String(ex?.titulo ?? ''),
+      subtitulo: subtitulo !== undefined ? subtitulo : ex?.subtitulo != null ? String(ex.subtitulo) : '',
+      foto_url: foto_url !== undefined ? foto_url : ex?.foto_url != null ? ex.foto_url : null,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabase
+      .from('hub_deporte_config')
+      .upsert(merged, { onConflict: 'deporte,card_key' })
+      .select('*')
+      .maybeSingle();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ PATCH /api/hub-deporte-config:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/hub-deporte-config/foto — multipart: campos deporte, card_key + archivo `foto`.
+ * super_admin o editor_contenido.
+ */
+app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (req, res) => {
+  try {
+    await assertEsEditorContenidoOSuperAdmin(req);
+    const chk = assertHubDeporteParams(req.body?.deporte, req.body?.card_key);
+    if (!chk.ok) return res.status(chk.status).json({ error: chk.error });
+    const { deporte, card_key } = chk;
+    if (!req.file?.buffer) return res.status(400).json({ error: 'Archivo requerido (campo "foto")' });
+
+    const safeName = String(req.file.originalname || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `deporte/${deporte}/${card_key}/${Date.now()}_${safeName}`;
+    const up = await supabase.storage.from('hub-images').upload(storagePath, req.file.buffer, {
+      contentType: req.file.mimetype || 'image/jpeg',
+      upsert: false,
+    });
+    if (up.error) throw up.error;
+    const pub = supabase.storage.from('hub-images').getPublicUrl(storagePath);
+    const fotoUrl = pub?.data?.publicUrl || null;
+    if (!fotoUrl) return res.status(500).json({ error: 'No se pudo obtener URL pública' });
+
+    const { data: ex, error: exErr } = await supabase
+      .from('hub_deporte_config')
+      .select('*')
+      .eq('deporte', deporte)
+      .eq('card_key', card_key)
+      .maybeSingle();
+    if (exErr) throw exErr;
+
+    const merged = {
+      deporte,
+      card_key,
+      titulo: String(ex?.titulo ?? ''),
+      subtitulo: ex?.subtitulo != null ? String(ex.subtitulo) : '',
+      foto_url: fotoUrl,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabase
+      .from('hub_deporte_config')
+      .upsert(merged, { onConflict: 'deporte,card_key' })
+      .select('*')
+      .maybeSingle();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/hub-deporte-config/foto:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** PATCH /api/plan-pricing/:id — super_admin: actualiza precio_usd. */
 app.patch('/api/plan-pricing/:id', async (req, res) => {
   try {

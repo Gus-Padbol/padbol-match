@@ -15,6 +15,7 @@ import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
+import { pickHubDeporteRow } from '../utils/hubDeporteConfig';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 
@@ -178,6 +179,8 @@ export default function UserHome() {
   });
   const [hubCmsStatus, setHubCmsStatus] = useState('loading');
   const [hubCmsRows, setHubCmsRows] = useState([]);
+  const [hubDeporteStatus, setHubDeporteStatus] = useState('loading');
+  const [hubDeporteRows, setHubDeporteRows] = useState([]);
   /** Si la URL de fondo falla al cargar, se oculta y se usa el fondo gris oscuro. */
   const [hubCardImageFailed, setHubCardImageFailed] = useState({});
   const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
@@ -269,8 +272,34 @@ export default function UserHome() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${HUB_API_BASE}/api/hub-deporte-config`);
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (!res.ok || !Array.isArray(data)) {
+          setHubDeporteStatus('error');
+          setHubDeporteRows([]);
+          return;
+        }
+        setHubDeporteRows(data);
+        setHubDeporteStatus('ok');
+      } catch {
+        if (!cancelled) {
+          setHubDeporteStatus('error');
+          setHubDeporteRows([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     setHubCardImageFailed({});
-  }, [hubCmsRows, hubCmsStatus]);
+  }, [hubCmsRows, hubCmsStatus, hubDeporteRows, hubDeporteStatus, deporteElegido]);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -317,20 +346,28 @@ export default function UserHome() {
   const bigCards = useMemo(() => {
     const q = deporteQuery(deporteElegido);
     const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
+    const depRows = Array.isArray(hubDeporteRows) ? hubDeporteRows : [];
+    const hubDeporteOk = hubDeporteStatus === 'ok';
     return HUB_FIXED_ACTIONS.map((slot) => {
+      const depRow = hubDeporteOk ? pickHubDeporteRow(depRows, deporteElegido, slot.key) : null;
+      const depFoto = depRow && String(depRow.foto_url || '').trim();
       const cmsUrl = pickHubCmsPhotoUrl(rows, slot.cmsPhotoIds);
       const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, slot.key) : '';
       const fallbackUrl = porDeporte || hubCardPhotoFallback(slot.key);
-      const imageUrl = cmsUrl || fallbackUrl;
+      const imageUrl = depFoto || cmsUrl || fallbackUrl;
+      const tituloBase =
+        depRow && String(depRow.titulo || '').trim() ? String(depRow.titulo).trim() : slot.titulo;
+      const subtitulo =
+        depRow != null && depRow.subtitulo != null ? String(depRow.subtitulo) : slot.subtitulo;
       return {
         key: slot.key,
-        titulo: tituloHubCardConDeporte(slot.titulo, deporteElegido),
-        subtitulo: slot.subtitulo,
+        titulo: tituloHubCardConDeporte(tituloBase, deporteElegido),
+        subtitulo,
         imageUrl,
         onClick: () => navigate(`${slot.to}${q}`),
       };
     });
-  }, [hubCmsStatus, hubCmsRows, navigate, deporteElegido]);
+  }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido]);
 
   const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
   const userHomeChromeSpacerH = hubUserHomeChromeSpacerHeightCss(location.pathname);
