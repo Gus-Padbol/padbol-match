@@ -52,16 +52,16 @@ const HUB_FIXED_ACTIONS = [
 
 /** Fondo por defecto (Unsplash) si el CMS no define `foto_url`. */
 const HUB_CARD_UNSPLASH_BG = {
-  reservar: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=800&q=80',
-  buscar_partido: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
-  torneos: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800&q=80',
-  armar_partido: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
+  reservar: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80',
+  buscar_partido: 'https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=800&q=80',
+  torneos: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80',
+  armar_partido: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=800&q=80',
 };
 
-const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.40)';
+const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
-
-const HUB_CARD_HEIGHT_PX = 180;
+/** Altura mínima por card (flex reparte el resto; ~iPhone 14 con header + nav + selector). */
+const HUB_CARD_MIN_HEIGHT_PX = 52;
 
 function deporteQuery(deporteElegido) {
   const dep = String(deporteElegido || '').trim().toLowerCase();
@@ -340,7 +340,7 @@ export default function UserHome() {
       style={{
         position: 'relative',
         minHeight: '100dvh',
-        background: 'var(--bg-page)',
+        background: '#F8F9FA',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
@@ -552,7 +552,8 @@ export default function UserHome() {
           paddingBottom: scrollPaddingBottom,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'stretch',
+          background: '#F8F9FA',
         }}
       >
         <div
@@ -560,15 +561,22 @@ export default function UserHome() {
             ...hubInstagramColumnWrapStyle,
             width: '100%',
             maxWidth: HUB_COLUMN_MAX,
+            marginLeft: 'auto',
+            marginRight: 'auto',
             paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
             paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-            paddingTop: 16,
+            paddingTop: 8,
+            paddingBottom: 4,
             boxSizing: 'border-box',
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {session?.user ? (
-            <label style={{ display: 'block', width: '100%', marginBottom: 18 }}>
-              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Elegir deporte</span>
+            <label style={{ display: 'block', width: '100%', marginBottom: 10, flexShrink: 0 }}>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Elegir deporte</span>
               <div style={{ position: 'relative' }}>
                 <select
                   value={deporteElegido}
@@ -587,11 +595,11 @@ export default function UserHome() {
                     boxSizing: 'border-box',
                     appearance: 'none',
                     WebkitAppearance: 'none',
-                    padding: '14px 40px 14px 14px',
+                    padding: '10px 40px 10px 12px',
                     borderRadius: 8,
                     border: '1px solid var(--border)',
                     background: 'var(--bg-card)',
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: 400,
                     color: 'var(--text-primary)',
                     cursor: 'pointer',
@@ -626,18 +634,29 @@ export default function UserHome() {
             <p
               style={{
                 textAlign: 'center',
-                margin: '0 0 16px',
-                fontSize: 14,
+                margin: '0 0 8px',
+                fontSize: 13,
                 fontWeight: 400,
                 color: 'var(--text-secondary)',
-                lineHeight: 1.45,
+                lineHeight: 1.35,
+                flexShrink: 0,
               }}
             >
               Puedes explorar sin registrarte
             </p>
           ) : null}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', marginBottom: 20 }}>
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+              width: '100%',
+              marginBottom: 0,
+            }}
+          >
             {bigCards.map((c) => {
               const failId = `${c.key}|${c.imageUrl || ''}`;
               const showPhoto = Boolean(c.imageUrl) && !hubCardImageFailed[failId];
@@ -649,9 +668,8 @@ export default function UserHome() {
                 style={{
                   position: 'relative',
                   width: '100%',
-                  height: HUB_CARD_HEIGHT_PX,
-                  minHeight: HUB_CARD_HEIGHT_PX,
-                  maxHeight: HUB_CARD_HEIGHT_PX,
+                  flex: '1 1 0',
+                  minHeight: HUB_CARD_MIN_HEIGHT_PX,
                   textAlign: 'left',
                   border: 'none',
                   borderRadius: 12,
@@ -698,7 +716,7 @@ export default function UserHome() {
                     flexDirection: 'column',
                     justifyContent: 'flex-end',
                     alignItems: 'flex-start',
-                    padding: '14px 16px 16px',
+                    padding: '8px 12px 10px',
                     boxSizing: 'border-box',
                   }}
                 >
@@ -706,9 +724,9 @@ export default function UserHome() {
                     style={{
                       display: 'block',
                       color: '#fff',
-                      fontSize: 18,
+                      fontSize: 'clamp(14px, 3.6vw, 17px)',
                       fontWeight: 800,
-                      lineHeight: 1.2,
+                      lineHeight: 1.15,
                       textShadow: '0 1px 3px rgba(0,0,0,0.45)',
                     }}
                   >
@@ -718,11 +736,11 @@ export default function UserHome() {
                     <span
                       style={{
                         display: 'block',
-                        marginTop: 6,
+                        marginTop: 4,
                         color: '#fff',
-                        fontSize: 14,
+                        fontSize: 'clamp(11px, 2.9vw, 13px)',
                         fontWeight: 700,
-                        lineHeight: 1.35,
+                        lineHeight: 1.3,
                         textShadow: '0 1px 3px rgba(0,0,0,0.45)',
                       }}
                     >
@@ -742,16 +760,18 @@ export default function UserHome() {
               marginTop: 'auto',
               flexShrink: 0,
               width: '100%',
-              maxWidth: HUB_COLUMN_MAX,
+              maxWidth: Math.min(HUB_COLUMN_MAX, hubBottomNavMaxWidthPx),
+              marginLeft: 'auto',
+              marginRight: 'auto',
               boxSizing: 'border-box',
               paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
               paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-              paddingTop: 12,
+              paddingTop: 8,
             }}
           >
             <div
               style={{
-                padding: '16px',
+                padding: '12px 14px',
                 borderRadius: 12,
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
@@ -761,7 +781,7 @@ export default function UserHome() {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               }}
             >
-              <p style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 400, lineHeight: 1.45, color: 'var(--text-secondary)' }}>
+              <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 400, lineHeight: 1.4, color: 'var(--text-secondary)' }}>
                 Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
               </p>
               <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
