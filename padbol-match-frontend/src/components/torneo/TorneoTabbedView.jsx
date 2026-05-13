@@ -36,6 +36,7 @@ import {
   speechRecognitionDisponible,
 } from '../../utils/speechResultadoPartido';
 import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresExcel';
+import { IconGeroUbicacion } from '../icons/GeroIcons';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
 
@@ -521,9 +522,6 @@ export default function TorneoTabbedView({
   const sedeTorneo = sedesMap[String(torneo?.sede_id)];
   const navOpts = navigateState != null ? { state: navigateState } : undefined;
   const sedeUbicacion = [sedeTorneo?.ciudad, sedeTorneo?.pais].filter(Boolean).join(', ');
-  const sedeTexto = sedeTorneo
-    ? `📍 ${sedeTorneo.nombre}${sedeUbicacion ? ` · ${sedeUbicacion}` : ''}`
-    : null;
 
   useEffect(() => {
     if (!shareTorneoCopied) return undefined;
@@ -2067,7 +2065,25 @@ export default function TorneoTabbedView({
             </span>
           ) : null}
         </div>
-        {sedeTexto ? <p>{sedeTexto}</p> : null}
+        {sedeTorneo ? (
+          <p
+            style={{
+              margin: '8px 0 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ display: 'inline-flex', flexShrink: 0, color: 'inherit' }}>
+              <IconGeroUbicacion size={16} />
+            </span>
+            <span>
+              {sedeTorneo.nombre}
+              {sedeUbicacion ? ` · ${sedeUbicacion}` : ''}
+            </span>
+          </p>
+        ) : null}
         <p style={{ margin: '6px 0 4px', fontWeight: 700, color: '#475569', fontSize: 'clamp(0.85rem, 2.8vw, 0.95rem)' }}>
           🎾 {resumenDeporteFormatoTorneo(torneo)}
         </p>

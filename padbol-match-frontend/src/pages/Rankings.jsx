@@ -11,6 +11,7 @@ import {
 import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
+import { IconGeroFiltros } from '../components/icons/GeroIcons';
 import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
 import { TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
 import { torneoTipoCompetenciaDb } from '../utils/torneoFormatters';
@@ -907,9 +908,13 @@ export default function Rankings() {
               fontWeight: 800,
               cursor: 'pointer',
               boxShadow: rankingActiveFilterCount > 0 ? '0 2px 10px rgba(225, 27, 34, 0.12)' : 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
-            🔍 Filtrar{rankingActiveFilterCount > 0 ? ` (${rankingActiveFilterCount})` : ''}
+            <IconGeroFiltros size={18} style={{ color: 'inherit' }} />
+            Filtrar{rankingActiveFilterCount > 0 ? ` (${rankingActiveFilterCount})` : ''}
           </button>
           {activeTab === 'local' && sedesLoadError ? (
             <span style={{ fontSize: '12px', color: 'var(--accent)' }}>{sedesLoadError}</span>

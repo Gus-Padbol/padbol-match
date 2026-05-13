@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchSedeFavoritaId } from '../utils/sedeFavorita';
 import { getDistanceKm } from '../utils/sedeCardUi';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 
 function sedeTieneDeporteOfrecido(sede, deporteKey) {
   const rows = sede.canchas_por_deporte;
@@ -205,7 +206,14 @@ export default function SedesPublicas() {
                 color: geoStatus === 'granted' ? '#166534' : '#64748b',
                 border: `1px solid ${geoStatus === 'granted' ? '#bbf7d0' : '#e2e8f0'}`,
               }}>
-                {geoStatus === 'granted' ? '📍 Ordenado por distancia' : '🌍 Mostrando todas las canchas'}
+                {geoStatus === 'granted' ? (
+                  <>
+                    <IconGeroUbicacion size={14} style={{ color: 'inherit' }} />
+                    Ordenado por distancia
+                  </>
+                ) : (
+                  '🌍 Mostrando todas las canchas'
+                )}
               </span>
             </div>
           )}
@@ -312,8 +320,12 @@ export default function SedesPublicas() {
                         fontSize: '11px', fontWeight: 700,
                         border: '1px solid rgba(74,222,128,0.3)',
                         whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
                       }}>
-                        📍 {formatKm(sede.distKm)}
+                        <IconGeroUbicacion size={12} style={{ color: '#86efac' }} />
+                        {formatKm(sede.distKm)}
                       </span>
                     )}
                   </div>

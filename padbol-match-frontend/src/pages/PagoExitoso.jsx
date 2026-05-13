@@ -8,6 +8,27 @@ import {
 } from '../constants/hubLayout';
 import { clearMpReservaPendingSlot } from '../utils/reservaReturnUrl';
 import { supabase } from '../supabaseClient';
+import { IconGeroCheck, IconGeroUbicacion } from '../components/icons/GeroIcons';
+
+function PagoExitosoHeroCheck() {
+  return (
+    <div
+      style={{
+        width: 72,
+        height: 72,
+        margin: '0 auto 16px',
+        borderRadius: '50%',
+        background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 6px 20px rgba(22,163,74,0.35)',
+      }}
+    >
+      <IconGeroCheck size={40} style={{ color: '#fff' }} />
+    </div>
+  );
+}
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -231,7 +252,7 @@ export default function PagoExitoso() {
           </>
         ) : pagoKind === 'partido' ? (
           <>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>✅</div>
+            <PagoExitosoHeroCheck />
             <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#065f46', marginBottom: '8px' }}>
               ¡Partido publicado!
             </h1>
@@ -275,7 +296,7 @@ export default function PagoExitoso() {
           </>
         ) : pagoKind === 'torneo' && torneoInscripcion ? (
           <>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>✅</div>
+            <PagoExitosoHeroCheck />
             <h1
               style={{
                 fontSize: '1.6rem',
@@ -324,7 +345,7 @@ export default function PagoExitoso() {
           </>
         ) : (
           <>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>✅</div>
+            <PagoExitosoHeroCheck />
             <h1
               style={{
                 fontSize: '1.6rem',
@@ -358,8 +379,22 @@ export default function PagoExitoso() {
                 }}
               >
                 {reserva.sede && (
-                  <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#166534' }}>
-                    <strong>📍 Sede:</strong> {reserva.sede}
+                  <p
+                    style={{
+                      margin: '0 0 6px',
+                      fontSize: '13px',
+                      color: '#166534',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, display: 'inline-flex', marginTop: 1, color: '#166534' }}>
+                      <IconGeroUbicacion size={16} />
+                    </span>
+                    <span>
+                      <strong>Sede:</strong> {reserva.sede}
+                    </span>
                   </p>
                 )}
                 {reserva.fecha && (

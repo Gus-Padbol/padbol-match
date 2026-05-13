@@ -35,6 +35,7 @@ import {
   torneosJugadosTotalDesdeEstadisticas,
   sliceEstadisticasJugadorTorneo,
 } from '../utils/jugadorEstadisticasPorDeporte';
+import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
 import {
   whatsappDigitsValido,
@@ -2724,8 +2725,20 @@ export default function MiPerfil() {
           </p>
         )}
         {perfil && !editando && String(perfil.localidad || perfil.ciudad_residencia || '').trim() ? (
-          <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-            📍 {String(perfil.localidad || perfil.ciudad_residencia).trim()}
+          <p
+            style={{
+              margin: '0 0 3px',
+              color: 'var(--text-secondary)',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span style={{ display: 'inline-flex', flexShrink: 0, color: 'inherit' }}>
+              <IconGeroUbicacion size={14} />
+            </span>
+            {String(perfil.localidad || perfil.ciudad_residencia).trim()}
           </p>
         ) : null}
         {perfil?.ciudad && (

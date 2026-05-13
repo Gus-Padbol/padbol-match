@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import { IconGeroCheck, IconGeroFiltros } from '../components/icons/GeroIcons';
 import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -191,8 +192,12 @@ export default function PartidosAbiertos() {
               borderRadius: 8,
               cursor: 'pointer',
               backdropFilter: 'blur(6px)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
+            <IconGeroFiltros size={18} style={{ color: '#fff' }} />
             Filtros
           </button>
         </div>
@@ -257,7 +262,21 @@ export default function PartidosAbiertos() {
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             }}
           >
-            <div style={{ fontSize: 48, lineHeight: 1, marginBottom: 10 }}>✓</div>
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                margin: '0 auto 10px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 6px 20px rgba(22,163,74,0.35)',
+              }}
+            >
+              <IconGeroCheck size={30} style={{ color: '#fff' }} />
+            </div>
             <h2 style={{ margin: '0 0 8px', color: 'var(--text-primary)', fontSize: 20, fontWeight: 700 }}>¡Te has unido con éxito!</h2>
             <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400 }}>
               El capitán verá tu solicitud. Te avisaremos cuando confirme tu cupo.

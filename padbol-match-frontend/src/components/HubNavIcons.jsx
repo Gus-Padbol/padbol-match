@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconGeroJugarNav, IconGeroNotificacionesNav, IconGeroUserNav } from './icons/GeroIcons';
 
 const active = 'var(--accent)';
 const idle = 'var(--text-secondary)';
@@ -6,48 +7,27 @@ const idle = 'var(--text-secondary)';
 export function HubIconPerfil({ active: isActive }) {
   const c = isActive ? active : idle;
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-        stroke={c}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="7" r="4" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span style={{ color: c, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IconGeroUserNav size={22} />
+    </span>
   );
 }
 
 export function HubIconCorrer({ active: isActive }) {
   const c = isActive ? active : idle;
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="14" cy="4" r="2" stroke={c} strokeWidth="2" />
-      <path
-        d="M6 21l3-7 2 2 3-5 4 2-2 5h6"
-        stroke={c}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M9 14l-3 7" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span style={{ color: c, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IconGeroJugarNav size={22} />
+    </span>
   );
 }
 
 export function HubIconCampana({ active: isActive }) {
   const c = isActive ? active : idle;
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 7h18s-3 0-3-7M13.73 21a2 2 0 0 1-3.46 0"
-        stroke={c}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <span style={{ color: c, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IconGeroNotificacionesNav size={22} />
+    </span>
   );
 }
 

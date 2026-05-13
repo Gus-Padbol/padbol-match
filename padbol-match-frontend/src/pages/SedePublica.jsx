@@ -21,6 +21,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
+import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { getDisplayName } from '../utils/displayName';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
@@ -465,7 +466,8 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
 }
 
 /** Icono en fila de contacto: caja neutra sobre fondo claro. */
-function iconWrapSedeContacto(emoji) {
+function iconWrapSedeContacto(icon) {
+  const isStr = typeof icon === 'string';
   return (
     <span
       style={{
@@ -478,11 +480,12 @@ function iconWrapSedeContacto(emoji) {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '12px',
+        fontSize: isStr ? '12px' : undefined,
         lineHeight: 1,
+        color: isStr ? undefined : '#64748b',
       }}
     >
-      {emoji}
+      {icon}
     </span>
   );
 }
@@ -691,7 +694,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
   const rows = [];
   if (hasAddress) {
     rows.push(
-      line('📍', [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', '))
+      line(<IconGeroUbicacion size={14} />, [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', '))
     );
   }
   if (horario) rows.push(line('⏰', `Abierto ${horario}`));

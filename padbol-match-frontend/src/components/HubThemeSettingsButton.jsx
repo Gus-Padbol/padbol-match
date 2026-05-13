@@ -1,24 +1,24 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { IconGeroDarkTheme, IconGeroWhiteTheme } from './icons/GeroIcons';
 
 /**
- * Toggle directo claro/oscuro en el header del hub (misma huella que el antiguo ⚙).
- * Modo oscuro activo → ☀️ (pasa a claro); modo claro → 🌙 (pasa a oscuro).
+ * Toggle claro/oscuro (assets Gero: sol / luna, 24×24).
+ * Modo oscuro activo → sol (pasa a claro); modo claro → luna (pasa a oscuro).
  */
 export default function HubThemeSettingsButton({ compact = false }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
-  const size = compact ? 32 : 36;
+  const outer = compact ? 32 : 36;
   const btnStyle = {
-    width: size,
-    height: size,
-    minWidth: size,
+    width: outer,
+    height: outer,
+    minWidth: outer,
     borderRadius: 8,
     border: '1px solid var(--border)',
     background: 'var(--bg-card)',
     color: 'var(--text-primary)',
     cursor: 'pointer',
-    fontSize: compact ? 16 : 18,
     lineHeight: 1,
     display: 'inline-flex',
     alignItems: 'center',
@@ -37,7 +37,7 @@ export default function HubThemeSettingsButton({ compact = false }) {
       aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       title={isDark ? 'Modo claro' : 'Modo oscuro'}
     >
-      {isDark ? '☀️' : '🌙'}
+      {isDark ? <IconGeroWhiteTheme size={24} /> : <IconGeroDarkTheme size={24} />}
     </button>
   );
 }

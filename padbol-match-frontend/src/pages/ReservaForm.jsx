@@ -38,6 +38,7 @@ import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 
 // Returns the correct price for a given sede + time slot.
 // Base desde `sedes` (precio_turno en Supabase, luego legacy precio_por_reserva); luego franjas o mañana/tarde.
@@ -1669,8 +1670,15 @@ export default function ReservaForm() {
             📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
           </h1>
           {mostrarEtiquetaSedeMasCercanaGeo && sedeSeleccionada ? (
-            <p className="reserva-p2-sede-mas-cercana" role="status">
-              📍 Sede más cercana a ti
+            <p
+              className="reserva-p2-sede-mas-cercana"
+              role="status"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+              <span style={{ display: 'inline-flex', flexShrink: 0, color: 'inherit' }}>
+                <IconGeroUbicacion size={16} />
+              </span>
+              Sede más cercana a ti
             </p>
           ) : null}
 
@@ -1897,8 +1905,13 @@ export default function ReservaForm() {
               color: 'var(--text-primary)',
             }}
           >
-            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>📍 Sede:</strong> {sedeSeleccionada?.nombre || '—'}
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <span style={{ flexShrink: 0, display: 'inline-flex', marginTop: 2, color: 'inherit' }}>
+                <IconGeroUbicacion size={16} />
+              </span>
+              <span>
+                <strong>Sede:</strong> {sedeSeleccionada?.nombre || '—'}
+              </span>
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
               <strong>📅 Fecha:</strong> {formData.fecha || '—'}

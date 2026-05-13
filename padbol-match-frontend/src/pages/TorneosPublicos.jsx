@@ -24,6 +24,7 @@ import {
 } from '../utils/torneoEstadoFiltroPills';
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import { getDistanceKm } from '../utils/sedeCardUi';
+import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
@@ -63,9 +64,23 @@ function formatFecha(str) {
 }
 
 function Row({ icon, label }) {
+  const iconIsEl = React.isValidElement(icon);
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-      <span style={{ flexShrink: 0, width: '18px', textAlign: 'center' }}>{icon}</span>
+      <span
+        style={{
+          flexShrink: 0,
+          width: iconIsEl ? 20 : 18,
+          minHeight: 18,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          color: 'inherit',
+        }}
+      >
+        {icon}
+      </span>
       <span style={{ lineHeight: 1.4 }}>{label}</span>
     </div>
   );
@@ -565,7 +580,7 @@ export default function TorneosPublicos() {
                   lineHeight: 1.5,
                 }}
               >
-                <Row icon="📍" label={sede?.nombre || 'Sede no encontrada'} />
+                <Row icon={<IconGeroUbicacion size={14} />} label={sede?.nombre || 'Sede no encontrada'} />
                 <Row
                   icon="🗺️"
                   label={

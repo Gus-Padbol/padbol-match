@@ -25,6 +25,7 @@ import {
 import { etiquetaDeporteTorneo } from './utils/torneoDeporteFormato';
 import DeportesPreferidosLecturaChips from './components/DeportesPreferidosLecturaChips';
 import { hasDeportesPreferidosCargados } from './constants/deportesPreferidos';
+import { IconGeroUbicacion } from './components/icons/GeroIcons';
 
 const API_BASE_PERFIL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -541,8 +542,23 @@ export default function PerfilPublico() {
             </p>
           ) : null}
           {localidadTrim ? (
-            <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center', lineHeight: 1.35 }}>
-              📍 {localidadTrim}
+            <p
+              style={{
+                margin: '0 0 3px',
+                color: 'var(--text-secondary)',
+                fontSize: '13px',
+                textAlign: 'center',
+                lineHeight: 1.35,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+            >
+              <span style={{ display: 'inline-flex', flexShrink: 0, color: 'inherit' }}>
+                <IconGeroUbicacion size={14} />
+              </span>
+              {localidadTrim}
             </p>
           ) : null}
 
