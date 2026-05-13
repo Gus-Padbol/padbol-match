@@ -1825,15 +1825,7 @@ export default function ReservaForm() {
                         setPantalla(4);
                         setError('');
                       }}
-                      style={{
-                        padding: '14px 18px', textAlign: 'left', fontWeight: 700, fontSize: '14px',
-                        borderRadius: '10px', cursor: c.libre ? 'pointer' : 'not-allowed',
-                        border: `2px solid ${c.libre ? '#16a34a' : '#dc2626'}`,
-                        background: c.libre ? '#f0fdf4' : '#fef2f2',
-                        color: c.libre ? '#15803d' : '#dc2626',
-                        opacity: c.libre ? 1 : 0.65,
-                        marginBottom: '2px',
-                      }}
+                      className={`reserva-cancha-elegir-btn ${c.libre ? 'reserva-cancha-elegir-btn--libre' : 'reserva-cancha-elegir-btn--ocupada'}`}
                     >
                       {c.label || `Cancha ${c.num}`} {c.libre ? '✅ Disponible' : '🔴 Reservada'}
                     </button>

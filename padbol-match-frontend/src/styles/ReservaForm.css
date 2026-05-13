@@ -453,6 +453,41 @@
   gap: 14px;
 }
 
+/** Elegir cancha (pantalla 2): marca Padbol #E11B22, no verde. */
+.reserva-cancha-elegir-btn {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 18px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 10px;
+  margin-bottom: 2px;
+  font-family: inherit;
+}
+
+.reserva-cancha-elegir-btn--libre {
+  cursor: pointer;
+  border: 2px solid #e11b22;
+  background: rgba(225, 27, 34, 0.08);
+  color: #e11b22;
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .reserva-cancha-elegir-btn--libre:hover:not(:disabled) {
+    background: rgba(225, 27, 34, 0.14);
+  }
+}
+
+.reserva-cancha-elegir-btn--ocupada {
+  cursor: not-allowed;
+  border: 2px solid #dc2626;
+  background: #fef2f2;
+  color: #dc2626;
+  opacity: 0.65;
+}
+
 .form-group input,
 .form-group select {
   width: 100%;
