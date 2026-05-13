@@ -316,8 +316,7 @@ export default function AdminSponsorsSection() {
     <div style={{ marginTop: 28, marginBottom: 32, maxWidth: 900 }}>
       <h2 style={{ margin: '0 0 12px', paddingBottom: 8, color: 'rgba(255,255,255,0.95)' }}>🤝 Sponsors</h2>
       <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.45 }}>
-        Patrocinios por alcance: torneo tiene prioridad sobre sede, país y global. Logos en el bucket{' '}
-        <code style={{ color: '#fef08a' }}>sponsors</code> (público).
+        Patrocinios por alcance: torneo tiene prioridad sobre sede, país y global.
       </p>
 
       {msg ? (
