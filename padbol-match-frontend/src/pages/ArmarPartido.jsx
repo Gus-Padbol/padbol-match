@@ -84,6 +84,21 @@ function shareUrl(partido) {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
+function findSedeById(sedesList, sedeIdRaw) {
+  const id = String(sedeIdRaw ?? '').trim();
+  if (!id) return null;
+  return sedesList.find((s) => String(s?.id ?? '') === id) || null;
+}
+
+function canchaFormOk(canchaRaw) {
+  const n = Number(canchaRaw);
+  return Number.isFinite(n) && n >= 1;
+}
+
+function horaFormOk(horaRaw) {
+  return String(horaRaw ?? '').trim().length > 0;
+}
+
 export default function ArmarPartido() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,7 +144,7 @@ export default function ArmarPartido() {
       .finally(() => setLoadingSedes(false));
   }, []);
 
-  const sede = useMemo(() => sedes.find((s) => Number(s.id) === Number(form.sedeId)) || null, [sedes, form.sedeId]);
+  const sede = useMemo(() => findSedeById(sedes, form.sedeId), [sedes, form.sedeId]);
   const canchas = useMemo(() => {
     const n = Math.max(1, Number(sede?.cantidad_canchas || sede?.canchas_activas || 2) || 2);
     return Array.from({ length: n }, (_, idx) => idx + 1);
@@ -165,12 +180,60 @@ export default function ArmarPartido() {
     }));
   };
 
+  const validarYAvanzar = () => {
+    setMsg('');
+    if (step === 1) {
+      setStep(2);
+      return;
+    }
+    if (step === 2) {
+      if (!String(form.sedeId || '').trim()) {
+        setMsg('Selecciona una sede.');
+        return;
+      }
+      if (!canchaFormOk(form.cancha)) {
+        setMsg('Selecciona una cancha.');
+        return;
+      }
+      setStep(3);
+      return;
+    }
+    if (step === 3) {
+      if (!String(form.fecha || '').trim()) {
+        setMsg('Indica la fecha.');
+        return;
+      }
+      if (slots.length === 0) {
+        setMsg('No hay horarios disponibles para esta cancha y duración. Cambia cancha, duración o fecha.');
+        return;
+      }
+      if (!horaFormOk(form.hora)) {
+        setMsg('Selecciona un horario en la grilla.');
+        return;
+      }
+      setStep(4);
+      return;
+    }
+    if (step === 4) {
+      setStep(5);
+    }
+  };
+
+  const retrocederPaso = () => {
+    setMsg('');
+    setStep((s) => Math.max(1, s - 1));
+  };
+
   const pagarYPublicar = async () => {
     if (!session?.user) {
       navigate('/login?redirect=/armar-partido');
       return;
     }
-    if (!sede || !form.cancha || !form.fecha || !form.hora) {
+    const sedeActual = findSedeById(sedes, form.sedeId);
+    const fechaOk = String(form.fecha || '').trim();
+    const horaOk = horaFormOk(form.hora);
+    const canchaOk = canchaFormOk(form.cancha);
+    if (!sedeActual || !canchaOk || !fechaOk || !horaOk) {
       setMsg('Completa sede, cancha, fecha y horario.');
       return;
     }
@@ -183,17 +246,17 @@ export default function ArmarPartido() {
     const reservaData = {
       tipo: 'partido_abierto',
       share_token: shareToken,
-      sede: sede.nombre,
-      sede_id: sede.id,
-      fecha: form.fecha,
-      hora: form.hora,
+      sede: sedeActual.nombre,
+      sede_id: sedeActual.id,
+      fecha: fechaOk,
+      hora: String(form.hora).trim(),
       cancha: Number(form.cancha),
       nombre,
       email: session.user.email,
       whatsapp: userProfile?.whatsapp || userProfile?.telefono || '+540000000000',
       nivel: form.nivel,
       precio,
-      moneda: sede.moneda || 'ARS',
+      moneda: sedeActual.moneda || 'ARS',
       duracion: Number(form.duracion),
       deporte: form.deporte,
       jugadores_requeridos: Number(form.jugadoresRequeridos),
@@ -209,11 +272,11 @@ export default function ArmarPartido() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          titulo: `Partido abierto — ${sede.nombre}`,
+          titulo: `Partido abierto — ${sedeActual.nombre}`,
           precio,
-          moneda: sede.moneda || 'ARS',
-          sedeNombre: sede.nombre,
-          sedeId: sede.id,
+          moneda: sedeActual.moneda || 'ARS',
+          sedeNombre: sedeActual.nombre,
+          sedeId: sedeActual.id,
           reservaData,
         }),
       });
@@ -324,7 +387,8 @@ export default function ArmarPartido() {
               <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Pagar y publicar</h1>
               <p style={{ color: '#475569', lineHeight: 1.55 }}>Al pagar la reserva, el partido queda publicado automáticamente como abierto y vas a poder compartirlo por WhatsApp.</p>
               <div style={{ background: '#f8fafc', borderRadius: 14, padding: 12, marginBottom: 12, color: '#334155', fontSize: 14 }}>
-                {sede?.nombre} · Cancha {form.cancha} · {form.fecha} {form.hora} · {form.duracion} min<br />
+                {sede?.nombre} · Cancha {form.cancha} · {form.fecha}
+                {horaFormOk(form.hora) ? ` · ${String(form.hora).trim()}` : ' · (sin horario)'} · {form.duracion} min<br />
                 Total reserva: <strong>{sede?.moneda || 'ARS'} {precio}</strong>
               </div>
               <button type="button" onClick={pagarYPublicar} disabled={paying} style={{ width: '100%', border: 'none', borderRadius: 12, padding: 14, background: paying ? '#94a3b8' : 'linear-gradient(135deg,#22c55e,#16a34a)', color: '#fff', fontWeight: 900, cursor: paying ? 'not-allowed' : 'pointer' }}>
@@ -346,8 +410,8 @@ export default function ArmarPartido() {
 
           {step < 5 ? (
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              <button type="button" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: 12, padding: 12, background: '#fff', fontWeight: 900 }}>Atrás</button>
-              <button type="button" onClick={() => setStep((s) => Math.min(5, s + 1))} style={{ flex: 1, border: 'none', borderRadius: 12, padding: 12, background: '#E11B22', color: '#fff', fontWeight: 900 }}>Siguiente</button>
+              <button type="button" onClick={retrocederPaso} disabled={step === 1} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: 12, padding: 12, background: '#fff', fontWeight: 900 }}>Atrás</button>
+              <button type="button" onClick={validarYAvanzar} style={{ flex: 1, border: 'none', borderRadius: 12, padding: 12, background: '#E11B22', color: '#fff', fontWeight: 900 }}>Siguiente</button>
             </div>
           ) : null}
         </section>
