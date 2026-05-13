@@ -4,8 +4,8 @@ import BottomNav from '../components/BottomNav';
 import {
   HUB_NAV_HEIGHT_PX,
   hubBottomNavMaxWidthPx,
-  hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
+  hubUserHomeChromeSpacerHeightCss,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { nombreRealDesdePerfilOauth } from '../utils/displayName';
@@ -60,12 +60,12 @@ const HUB_CARD_UNSPLASH_BG = {
 
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
-/** Altura fija de las tres primeras cards del hub. */
+/** Altura fija de cada card del hub (las 4 iguales). */
 const HUB_CARD_HEIGHT_PX = 150;
-/** Cuarta card a media altura (indica que hay más al hacer scroll). */
-const HUB_CARD_LAST_HEIGHT_PX = 75;
 /** Separación entre cards del hub. */
 const HUB_CARD_GAP_PX = 8;
+/** Aire bajo la barra fija Jugar/Competir antes del selector (el spacer ya reservó el chrome). */
+const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 12;
 
 function deporteQuery(deporteElegido) {
   const dep = String(deporteElegido || '').trim().toLowerCase();
@@ -338,6 +338,7 @@ export default function UserHome() {
   }, [hubCmsStatus, hubCmsRows, navigate, deporteElegido]);
 
   const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
+  const userHomeChromeSpacerH = hubUserHomeChromeSpacerHeightCss(location.pathname);
 
   return (
     <div
@@ -544,6 +545,16 @@ export default function UserHome() {
       </header>
 
       <div
+        aria-hidden
+        style={{
+          flexShrink: 0,
+          width: '100%',
+          height: userHomeChromeSpacerH,
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
         style={{
           flex: 1,
           minHeight: 0,
@@ -552,7 +563,7 @@ export default function UserHome() {
           WebkitOverflowScrolling: 'touch',
           width: '100%',
           boxSizing: 'border-box',
-          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingTop: USER_HOME_SCROLL_INNER_PAD_TOP_PX,
           paddingBottom: scrollPaddingBottom,
           display: 'flex',
           flexDirection: 'column',
@@ -661,8 +672,6 @@ export default function UserHome() {
             {bigCards.map((c) => {
               const failId = `${c.key}|${c.imageUrl || ''}`;
               const showPhoto = Boolean(c.imageUrl) && !hubCardImageFailed[failId];
-              const cardH =
-                c.key === 'armar_partido' ? HUB_CARD_LAST_HEIGHT_PX : HUB_CARD_HEIGHT_PX;
               return (
               <button
                 key={c.key}
@@ -672,8 +681,8 @@ export default function UserHome() {
                   position: 'relative',
                   width: '100%',
                   flex: '0 0 auto',
-                  height: cardH,
-                  minHeight: cardH,
+                  height: HUB_CARD_HEIGHT_PX,
+                  minHeight: HUB_CARD_HEIGHT_PX,
                   textAlign: 'left',
                   border: 'none',
                   borderRadius: 12,

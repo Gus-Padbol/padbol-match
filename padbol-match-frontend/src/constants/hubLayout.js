@@ -133,6 +133,22 @@ export function hubContentPaddingTopCss(pathname) {
 }
 
 /**
+ * UserHome: reserva en el flujo la misma vertical que el chrome fijo (header saludo + barra
+ * Jugar/Competir/Perfil) más un extra para la segunda línea («Bienvenido»). Así el scroll no
+ * ocupa todo el viewport, el saludo queda descubierto y las cards se recortan por el borde inferior.
+ */
+export const HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX = 18;
+
+export function hubUserHomeChromeSpacerHeightCss(pathname) {
+  const basePx =
+    hubContentPaddingTopPx(pathname) +
+    APP_HEADER_OUTER_PADDING_PX +
+    HUB_FIXED_CHROME_SLACK_PX +
+    HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX;
+  return `calc(${basePx}px + env(safe-area-inset-top, 0px))`;
+}
+
+/**
  * Como {@link hubContentPaddingTopCss} más {@link HUB_LOGO_CLEARANCE_TOP_PX} para logos/hero que no queden bajo la barra fija.
  */
 export function hubContentPaddingTopWithLogoClearanceCss(pathname) {
