@@ -851,37 +851,47 @@ export default function AppHeader({
           <span aria-hidden style={{ width: 32, height: 32, flexShrink: 0 }} />
         )}
         {searchUiBlock}
-        {showLogoutAdminHeader && session?.user ? (
-          <button
-            type="button"
-            onClick={async () => {
-              await signOutAndClear();
-              navigate('/');
-            }}
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
-            style={{
-              width: LOGOUT_BTN_SIZE,
-              height: LOGOUT_BTN_SIZE,
-              padding: 0,
-              borderRadius: '50%',
-              border: 'none',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#e2e8f0',
-              fontSize: 16,
-              lineHeight: 1,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            ⏻
-          </button>
-        ) : (
-          <span aria-hidden style={{ width: LOGOUT_BTN_SIZE, height: LOGOUT_BTN_SIZE, flexShrink: 0 }} />
-        )}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexShrink: 0,
+          }}
+        >
+          {session?.user ? <HubThemeSettingsButton compact barOnDark /> : null}
+          {showLogoutAdminHeader && session?.user ? (
+            <button
+              type="button"
+              onClick={async () => {
+                await signOutAndClear();
+                navigate('/');
+              }}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+              style={{
+                width: LOGOUT_BTN_SIZE,
+                height: LOGOUT_BTN_SIZE,
+                padding: 0,
+                borderRadius: '50%',
+                border: 'none',
+                background: 'rgba(255,255,255,0.1)',
+                color: '#e2e8f0',
+                fontSize: 16,
+                lineHeight: 1,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              ⏻
+            </button>
+          ) : (
+            <span aria-hidden style={{ width: LOGOUT_BTN_SIZE, height: LOGOUT_BTN_SIZE, flexShrink: 0 }} />
+          )}
+        </div>
       </>
     );
     return (

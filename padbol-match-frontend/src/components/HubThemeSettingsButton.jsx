@@ -5,8 +5,9 @@ import { IconGeroDarkTheme, IconGeroWhiteTheme } from './icons/GeroIcons';
 /**
  * Toggle claro/oscuro (assets Gero: sol / luna, 24×24).
  * Modo oscuro activo → sol (pasa a claro); modo claro → luna (pasa a oscuro).
+ * `barOnDark`: barra siempre oscura (p. ej. header del panel admin) para buen contraste del ícono.
  */
-export default function HubThemeSettingsButton({ compact = false }) {
+export default function HubThemeSettingsButton({ compact = false, barOnDark = false }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
   const outer = compact ? 32 : 36;
@@ -15,9 +16,9 @@ export default function HubThemeSettingsButton({ compact = false }) {
     height: outer,
     minWidth: outer,
     borderRadius: 8,
-    border: '1px solid var(--border)',
-    background: 'var(--bg-card)',
-    color: 'var(--text-primary)',
+    border: barOnDark ? '1px solid rgba(255,255,255,0.22)' : '1px solid var(--border)',
+    background: barOnDark ? 'rgba(255,255,255,0.1)' : 'var(--bg-card)',
+    color: barOnDark ? '#e2e8f0' : 'var(--text-primary)',
     cursor: 'pointer',
     lineHeight: 1,
     display: 'inline-flex',
