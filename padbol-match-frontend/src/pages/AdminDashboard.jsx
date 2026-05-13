@@ -917,9 +917,51 @@ function esFutura(reserva) {
 
 // Build a lookup: country name (lowercase) → flag emoji
 const FLAG_MAP = {};
-[...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach(p => {
+[...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].forEach((p) => {
   FLAG_MAP[p.nombre.toLowerCase()] = p.bandera;
 });
+for (const p of [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]) {
+  const nk = normalizePaisKeyAdmin(p.nombre);
+  if (nk) FLAG_MAP[nk] = p.bandera;
+}
+
+/** Sin acentos, minúsculas — para matchear variantes de país en datos. */
+function normalizePaisKeyAdmin(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Variantes comunes en datos → nombre canónico del catálogo de banderas. */
+const PAISES_BANDERA_ALIASES = {
+  espana: 'España',
+  spain: 'España',
+  usa: 'Estados Unidos',
+  eeuu: 'Estados Unidos',
+  'eeuu': 'Estados Unidos',
+  'ee.uu': 'Estados Unidos',
+  'ee. uu': 'Estados Unidos',
+  'estados unidos de america': 'Estados Unidos',
+  uk: 'Reino Unido',
+};
+
+/** Bandera emoji a partir del texto de país (sede, analytics, roles). */
+function banderaEmojiDesdeNombrePais(paisRaw) {
+  const raw = String(paisRaw || '').trim();
+  if (!raw) return '';
+  const rif = banderaRegionalAlInicio(raw);
+  if (rif) return rif;
+  const sin = paisTextoSinBanderaInicial(raw);
+  const lk = sin.toLowerCase();
+  const nk = normalizePaisKeyAdmin(sin);
+  if (FLAG_MAP[lk]) return FLAG_MAP[lk];
+  if (FLAG_MAP[nk]) return FLAG_MAP[nk];
+  const aliasTarget = PAISES_BANDERA_ALIASES[nk] || PAISES_BANDERA_ALIASES[lk];
+  if (aliasTarget && FLAG_MAP[aliasTarget.toLowerCase()]) return FLAG_MAP[aliasTarget.toLowerCase()];
+  return '';
+}
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim() }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
@@ -956,17 +998,14 @@ function etiquetaPaisFiltroMobile(valorRaw) {
   const raw = String(valorRaw || '').trim();
   if (!raw) return '';
   const sinBandera = paisTextoSinBanderaInicial(raw);
-  const flag = banderaRegionalAlInicio(raw) || FLAG_MAP[sinBandera.toLowerCase()] || FLAG_MAP[raw.toLowerCase()] || '';
+  const flag = banderaEmojiDesdeNombrePais(raw);
   const nombre = sinBandera || raw;
   return flag ? `${flag} ${nombre}`.trim() : nombre;
 }
 
 function sedeFlag(sede) {
   if (!sede?.pais) return '';
-  const pais = sede.pais.trim();
-  const regional = banderaRegionalAlInicio(pais);
-  if (regional) return regional;
-  return FLAG_MAP[pais.toLowerCase()] || '';
+  return banderaEmojiDesdeNombrePais(sede.pais);
 }
 
 /** Filtro país super admin: valor del `<select>` vs `sede.pais` de la reserva. */
@@ -990,6 +1029,12 @@ function comisionPadbolTresPorcientoPorMoneda(ingresosPorMoneda) {
   return out;
 }
 
+const SIN_INGRESOS_PERIODO_MSG = 'Sin ingresos en el período';
+
+function monetarioObjTodoCero(obj) {
+  return ['ARS', 'USD', 'EUR'].every((k) => (Number(obj?.[k]) || 0) === 0);
+}
+
 function fmtIngresosSuperAdmin(obj) {
   const MONEDA_ORDEN = ['ARS', 'USD', 'EUR'];
   const keys = Object.keys(obj || {});
@@ -1000,10 +1045,9 @@ function fmtIngresosSuperAdmin(obj) {
   const parts = ordered
     .filter((m) => (Number(obj?.[m]) || 0) > 0)
     .map((m) => `${m} ${(Number(obj?.[m]) || 0).toLocaleString('es-AR')}`);
-  return parts.length ? parts.join(' · ') : 'Sin ingresos en el período';
+  return parts.length ? parts.join(' · ') : SIN_INGRESOS_PERIODO_MSG;
 }
 
-/** Clave numérica solo para ordenar filas con varias monedas (ingresos ≈ suma nominal). */
 function ingresoTotalOrdenRanking(ingresosObj) {
   return (Number(ingresosObj?.ARS) || 0) + (Number(ingresosObj?.USD) || 0) + (Number(ingresosObj?.EUR) || 0);
 }
@@ -5589,6 +5633,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 </div>
                 <div
+                  className="admin-analytics-sedes-por-pais"
                   style={{
                     borderTop: '1px solid #e2e8f0',
                     paddingTop: '14px',
@@ -5601,15 +5646,24 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   {Array.isArray(analyticsGlobales.sedes_por_pais_top5) &&
                   analyticsGlobales.sedes_por_pais_top5.length > 0 ? (
                     <ol style={{ margin: 0, paddingLeft: '20px', color: '#334155', fontSize: '14px', lineHeight: 1.65 }}>
-                      {analyticsGlobales.sedes_por_pais_top5.map((row) => (
-                        <li key={String(row.pais)}>
-                          <strong>{String(row.pais)}</strong>
-                          <span style={{ color: '#64748b', fontWeight: 600 }}>
-                            {' '}
-                            — {(Number(row.cantidad) || 0).toLocaleString('es-AR')} sedes
-                          </span>
-                        </li>
-                      ))}
+                      {analyticsGlobales.sedes_por_pais_top5.map((row) => {
+                        const n = Number(row.cantidad) || 0;
+                        const paisNombre = String(row.pais || '').trim();
+                        const flag = banderaEmojiDesdeNombrePais(paisNombre);
+                        const nombreSinFlag = paisTextoSinBanderaInicial(paisNombre) || paisNombre;
+                        const sedeLabel = n === 1 ? '1 sede' : `${n.toLocaleString('es-AR')} sedes`;
+                        return (
+                          <li key={String(row.pais)}>
+                            <strong>
+                              {flag ? `${flag} ${nombreSinFlag}`.trim() : nombreSinFlag}
+                            </strong>
+                            <span style={{ color: '#64748b', fontWeight: 600 }}>
+                              {' '}
+                              — {sedeLabel}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ol>
                   ) : (
                     <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>Sin datos de país en sedes.</p>
@@ -5802,40 +5856,62 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     if (m === 'USD') return `US$ ${n.toLocaleString('en-US')} USD`;
                     return `€ ${n.toLocaleString('de-DE')} EUR`;
                   })
-                  .join(' · ') || 'Sin ingresos en el período';
+                  .join(' · ') || SIN_INGRESOS_PERIODO_MSG;
               const pf = cifrasFinanzasResumen.porFuente;
+              const resVac = monetarioObjTodoCero(pf.reservas);
+              const insVac = monetarioObjTodoCero(pf.inscripciones);
+              const totVac = monetarioObjTodoCero(cifrasFinanzasResumen.total);
+              const rowSin = (v) => `ingreso-fila${v ? ' ingreso-fila--sin-ingresos ingreso-fila--centro' : ''}`;
+              const valSin = (v) => `ingreso-valor${v ? ' ingreso-valor--sin-ingresos-msg' : ''}`;
               return (
                 <div className="ingresos-por-moneda">
-                  <div className="ingreso-fila" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
+                  <div
+                    className={rowSin(resVac)}
+                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
+                  >
                     <span className="ingreso-codigo" style={{ width: '100%' }}>
                       ⚽ Reservas de canchas
                     </span>
-                    <span className="ingreso-valor" style={{ fontSize: '0.95rem', textAlign: 'right' }}>
+                    <span
+                      className={valSin(resVac)}
+                      style={{ fontSize: '0.95rem', textAlign: resVac ? 'center' : 'right' }}
+                    >
                       {fmt(pf.reservas)}
                     </span>
                   </div>
-                  <div className="ingreso-fila" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
+                  <div
+                    className={rowSin(insVac)}
+                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
+                  >
                     <span className="ingreso-codigo" style={{ width: '100%' }}>
                       🏆 Inscripciones a torneos
                     </span>
-                    <span className="ingreso-valor" style={{ fontSize: '0.95rem', textAlign: 'right' }}>
+                    <span
+                      className={valSin(insVac)}
+                      style={{ fontSize: '0.95rem', textAlign: insVac ? 'center' : 'right' }}
+                    >
                       {fmt(pf.inscripciones)}
                     </span>
                   </div>
                   <div
-                    className="ingreso-fila"
+                    className={
+                      totVac
+                        ? 'ingreso-fila ingreso-fila--sin-ingresos ingreso-fila--centro'
+                        : 'ingreso-fila ingreso-fila--total-ok'
+                    }
                     style={{
                       flexDirection: 'column',
                       alignItems: 'stretch',
                       gap: '6px',
-                      borderLeftColor: '#16a34a',
-                      background: '#f0fdf4',
                     }}
                   >
-                    <span className="ingreso-codigo" style={{ width: '100%', color: '#166534' }}>
+                    <span className="ingreso-codigo" style={{ width: '100%' }}>
                       Total
                     </span>
-                    <span className="ingreso-valor" style={{ fontSize: '1rem', textAlign: 'right', color: '#15803d' }}>
+                    <span
+                      className={valSin(totVac)}
+                      style={{ fontSize: '1rem', textAlign: totVac ? 'center' : 'right' }}
+                    >
                       {fmt(cifrasFinanzasResumen.total)}
                     </span>
                   </div>
@@ -5854,17 +5930,27 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       </div>
       <div
-        className="section"
-        style={{
-          marginTop: '16px',
-          background: '#fff',
-          borderRadius: '14px',
-          padding: '16px',
-          boxShadow: '0 10px 26px rgba(15,23,42,0.12)',
-        }}
+        className={`section${isSuperAdmin ? ' admin-financiero-super' : ''}`}
+        style={
+          isSuperAdmin
+            ? {
+                marginTop: '16px',
+                borderRadius: '14px',
+                padding: '16px',
+                boxShadow: '0 10px 26px rgba(0,0,0,0.35)',
+                border: '1px solid #374151',
+              }
+            : {
+                marginTop: '16px',
+                background: '#fff',
+                borderRadius: '14px',
+                padding: '16px',
+                boxShadow: '0 10px 26px rgba(15,23,42,0.12)',
+              }
+        }
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0, color: '#0f172a' }}>💰 Financiero</h2>
+          <h2 style={{ margin: 0, color: isSuperAdmin ? '#f8fafc' : '#0f172a' }}>💰 Financiero</h2>
           <button
             type="button"
             onClick={exportarFinanzasExcel}
@@ -5882,13 +5968,27 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '10px', marginTop: '12px' }}>
-          <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px' }}>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700 }}>Transacciones</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>{dashboardFinanciero.totalTransacciones}</div>
+          <div
+            style={
+              isSuperAdmin
+                ? { background: '#1f2937', border: '1px solid #374151', borderRadius: '10px', padding: '10px' }
+                : { background: '#f8fafc', borderRadius: '10px', padding: '10px' }
+            }
+          >
+            <div style={{ fontSize: '12px', color: isSuperAdmin ? '#cbd5e1' : '#64748b', fontWeight: 700 }}>Transacciones</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: isSuperAdmin ? '#ffffff' : '#0f172a' }}>
+              {dashboardFinanciero.totalTransacciones}
+            </div>
           </div>
-          <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px' }}>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700 }}>Ticket promedio</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
+          <div
+            style={
+              isSuperAdmin
+                ? { background: '#1f2937', border: '1px solid #374151', borderRadius: '10px', padding: '10px' }
+                : { background: '#f8fafc', borderRadius: '10px', padding: '10px' }
+            }
+          >
+            <div style={{ fontSize: '12px', color: isSuperAdmin ? '#cbd5e1' : '#64748b', fontWeight: 700 }}>Ticket promedio</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: isSuperAdmin ? '#ffffff' : '#0f172a' }}>
               {isSuperAdmin
                 ? Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })
                 : `$ ${Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })} ${cifrasFinanzasResumen.moneda || 'ARS'}`}
@@ -5896,20 +5996,48 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
         </div>
         <div style={{ marginTop: '14px' }}>
-          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, marginBottom: '8px' }}>Ingresos por día</div>
+          <div
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              marginBottom: '8px',
+              color: isSuperAdmin ? '#ffffff' : '#64748b',
+            }}
+          >
+            Ingresos por día
+          </div>
           {dashboardFinanciero.dailyRows.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#94a3b8' }}>Sin movimientos en el período seleccionado.</div>
+            <div style={{ fontSize: '13px', color: isSuperAdmin ? 'rgba(255,255,255,0.75)' : '#94a3b8' }}>
+              Sin movimientos en el período seleccionado.
+            </div>
           ) : (
             <div style={{ display: 'grid', gap: '6px' }}>
               {dashboardFinanciero.dailyRows.map((row) => {
                 const pct = dashboardFinanciero.maxDaily > 0 ? Math.max(4, (row.total / dashboardFinanciero.maxDaily) * 100) : 0;
                 return (
                   <div key={row.fecha} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: '#475569', fontWeight: 700 }}>{ymdToLabelShort(row.fecha)}</span>
-                    <div style={{ height: '12px', borderRadius: '999px', background: '#e2e8f0', overflow: 'hidden' }}>
+                    <span style={{ fontSize: '12px', color: isSuperAdmin ? '#ffffff' : '#475569', fontWeight: 700 }}>
+                      {ymdToLabelShort(row.fecha)}
+                    </span>
+                    <div
+                      style={{
+                        height: '12px',
+                        borderRadius: '999px',
+                        background: isSuperAdmin ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+                        overflow: 'hidden',
+                      }}
+                    >
                       <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#E11B22,#fecaca)' }} />
                     </div>
-                    <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: 700 }}>{Number(row.total).toLocaleString('es-AR')}</span>
+                    <span
+                      style={{
+                        fontSize: '12px',
+                        color: isSuperAdmin ? 'rgba(255,255,255,0.8)' : '#0f172a',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {Number(row.total).toLocaleString('es-AR')}
+                    </span>
                   </div>
                 );
               })}
@@ -8899,7 +9027,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           {row.role !== 'editor_contenido' && row.alcance === 'sede' ? row.sede_nombre || `Sede ${row.sede_id || '—'}` : null}
                           {row.role !== 'editor_contenido' && row.alcance === 'ciudad' ? row.ciudad || '—' : null}
                           {row.role !== 'editor_contenido' && row.alcance === 'provincia' ? row.provincia || '—' : null}
-                          {row.role !== 'editor_contenido' && row.alcance === 'pais' ? row.pais || '—' : null}
+                          {row.role !== 'editor_contenido' && row.alcance === 'pais'
+                            ? (() => {
+                                const p = String(row.pais || '').trim();
+                                if (!p) return '—';
+                                const f = banderaEmojiDesdeNombrePais(p);
+                                const nombre = paisTextoSinBanderaInicial(p) || p;
+                                return f ? `${f} ${nombre}`.trim() : nombre;
+                              })()
+                            : null}
                           {row.role !== 'editor_contenido' && row.alcance === 'global' ? 'Global' : null}
                         </td>
                         <td style={{ padding: '8px', color: '#1e293b' }}>

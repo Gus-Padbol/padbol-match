@@ -458,6 +458,65 @@
   border-left-color: #e11b22;
 }
 
+.admin-dashboard--super .card.ingresos .ingreso-fila {
+  background: rgba(255, 255, 255, 0.06);
+  border-left-color: #e11b22;
+}
+
+.admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos {
+  background: #1f2937 !important;
+  border-left-color: #4b5563 !important;
+}
+
+.admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos .ingreso-codigo,
+.admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos .ingreso-valor {
+  color: #94a3b8 !important;
+}
+
+.admin-dashboard--super .card.ingresos .ingreso-valor.ingreso-valor--sin-ingresos-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 3.25rem;
+  width: 100%;
+  font-weight: 600 !important;
+}
+
+.admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--centro {
+  justify-content: center;
+  min-height: 5.5rem;
+}
+
+.admin-dashboard--super .admin-analytics-sedes-por-pais {
+  border-top-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.admin-dashboard--super .admin-analytics-sedes-por-pais h3 {
+  color: rgba(248, 250, 252, 0.95) !important;
+}
+
+.admin-dashboard--super .admin-analytics-sedes-por-pais ol {
+  color: #e2e8f0 !important;
+}
+
+.admin-dashboard--super .admin-analytics-sedes-por-pais ol strong {
+  color: #f8fafc !important;
+}
+
+.admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok {
+  background: rgba(22, 163, 74, 0.22) !important;
+  border-left-color: #22c55e !important;
+}
+
+.admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-codigo {
+  color: #bbf7d0 !important;
+}
+
+.admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-valor {
+  color: #dcfce7 !important;
+}
+
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-codigo {
   color: #94a3b8 !important;
 }
