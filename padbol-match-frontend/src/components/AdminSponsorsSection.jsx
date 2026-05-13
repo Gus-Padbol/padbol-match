@@ -1,9 +1,47 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 
 const PADBOL_RED = '#E11B22';
+const ERROR_TEXT = '#E11B22';
+const ERROR_BG = 'rgba(225,27,34,0.08)';
+
+const errorBannerStyle = {
+  margin: '0 0 12px',
+  padding: '12px 14px',
+  borderRadius: 10,
+  border: '1px solid rgba(225,27,34,0.28)',
+  borderLeft: `4px solid ${PADBOL_RED}`,
+  background: ERROR_BG,
+  color: ERROR_TEXT,
+  fontWeight: 700,
+  fontSize: 14,
+  lineHeight: 1.45,
+};
+
+const successBannerStyle = {
+  margin: '0 0 12px',
+  padding: '12px 14px',
+  borderRadius: 10,
+  border: '1px solid rgba(22,163,74,0.35)',
+  borderLeft: '4px solid #16a34a',
+  background: 'rgba(22,163,74,0.08)',
+  color: '#15803d',
+  fontWeight: 700,
+  fontSize: 14,
+  lineHeight: 1.45,
+};
+
+function scrollToEl(ref) {
+  requestAnimationFrame(() => {
+    try {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch {
+      /* ignore */
+    }
+  });
+}
 
 const SCOPE_OPTIONS = [
   { value: 'global', label: 'Global' },
@@ -55,6 +93,24 @@ export default function AdminSponsorsSection() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  /** Errores de validación por campo (clave → mensaje). */
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const formCardRef = useRef(null);
+  const nombreRef = useRef(null);
+  const sedeRef = useRef(null);
+  const torneoRef = useRef(null);
+  const paisRef = useRef(null);
+  const guardarRowRef = useRef(null);
+
+  const clearField = (key) => {
+    setFieldErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
 
   const loadRefs = useCallback(async () => {
     const [sr, tr] = await Promise.all([
@@ -70,8 +126,9 @@ export default function AdminSponsorsSection() {
     setMsg('');
     const { data, error } = await supabase.from('sponsors').select('*').order('id', { ascending: false });
     if (error) {
-      setMsg(`⚠️ ${error.message}`);
+      setMsg(error.message);
       setRows([]);
+      scrollToEl(formCardRef);
     } else {
       setRows(Array.isArray(data) ? data : []);
     }
@@ -83,7 +140,11 @@ export default function AdminSponsorsSection() {
     void loadSponsors();
   }, [loadRefs, loadSponsors]);
 
-  const resetForm = () => setForm(emptyForm());
+  const resetForm = () => {
+    setForm(emptyForm());
+    setFieldErrors({});
+    setMsg('');
+  };
 
   const editRow = (r) => {
     setForm({
@@ -101,6 +162,7 @@ export default function AdminSponsorsSection() {
       fecha_hasta: r.fecha_hasta ? String(r.fecha_hasta).slice(0, 10) : '',
     });
     setMsg('');
+    setFieldErrors({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -109,11 +171,13 @@ export default function AdminSponsorsSection() {
     e.target.value = '';
     if (!file) return;
     if (!String(file.type || '').startsWith('image/')) {
-      setMsg('⚠️ Elige una imagen (JPEG, PNG, WebP o GIF).');
+      setMsg('Elige una imagen (JPEG, PNG, WebP o GIF).');
+      scrollToEl(formCardRef);
       return;
     }
     if (file.size > 4 * 1024 * 1024) {
-      setMsg('⚠️ Máximo 4MB para el logo.');
+      setMsg('Máximo 4MB para el logo.');
+      scrollToEl(formCardRef);
       return;
     }
     setUploading(true);
@@ -126,7 +190,8 @@ export default function AdminSponsorsSection() {
       cacheControl: '3600',
     });
     if (upErr) {
-      setMsg(`⚠️ Subida: ${upErr.message}`);
+      setMsg(`Subida: ${upErr.message}`);
+      scrollToEl(formCardRef);
       setUploading(false);
       return;
     }
@@ -135,34 +200,45 @@ export default function AdminSponsorsSection() {
     } = supabase.storage.from('sponsors').getPublicUrl(path);
     setForm((p) => ({ ...p, logo_url: publicUrl }));
     setUploading(false);
-    setMsg('✅ Logo subido');
+    setMsg('Logo subido');
     setTimeout(() => setMsg(''), 2500);
   };
 
   const guardar = async () => {
+    setMsg('');
+    setFieldErrors({});
+
     if (!session?.user?.id) {
-      setMsg('⚠️ Inicia sesión como super admin.');
+      setFieldErrors({ _session: 'Iniciá sesión como super admin para guardar.' });
+      scrollToEl(guardarRowRef);
       return;
     }
+
     const nombre = String(form.nombre || '').trim();
     if (!nombre) {
-      setMsg('⚠️ Indica el nombre de la marca.');
+      setFieldErrors({ nombre: 'Indicá el nombre de la marca.' });
+      scrollToEl(nombreRef);
       return;
     }
+
     const scope = String(form.scope || 'global').toLowerCase();
     const sedeId = scope === 'sede' && form.sede_id ? parseInt(String(form.sede_id), 10) : null;
     const torneoId = scope === 'torneo' && form.torneo_id ? parseInt(String(form.torneo_id), 10) : null;
     const pais = scope === 'nacional' ? String(form.pais || '').trim() : null;
+
     if (scope === 'sede' && (!sedeId || sedeId <= 0)) {
-      setMsg('⚠️ Elige una sede.');
+      setFieldErrors({ sede_id: 'Elegí una sede.' });
+      scrollToEl(sedeRef);
       return;
     }
     if (scope === 'torneo' && (!torneoId || torneoId <= 0)) {
-      setMsg('⚠️ Elige un torneo.');
+      setFieldErrors({ torneo_id: 'Elegí un torneo.' });
+      scrollToEl(torneoRef);
       return;
     }
     if (scope === 'nacional' && !pais) {
-      setMsg('⚠️ Elige un país.');
+      setFieldErrors({ pais: 'Elegí un país.' });
+      scrollToEl(paisRef);
       return;
     }
 
@@ -186,17 +262,19 @@ export default function AdminSponsorsSection() {
       if (form.id != null) {
         const { error } = await supabase.from('sponsors').update(payload).eq('id', form.id);
         if (error) throw error;
-        setMsg('✅ Sponsor actualizado');
+        setFieldErrors({});
+        setMsg('Sponsor actualizado');
       } else {
         const insert = { ...payload, creado_por: session.user.id };
         const { error } = await supabase.from('sponsors').insert([insert]);
         if (error) throw error;
-        setMsg('✅ Sponsor creado');
+        setMsg('Sponsor creado');
         resetForm();
       }
       await loadSponsors();
     } catch (err) {
-      setMsg(`⚠️ ${err?.message || String(err)}`);
+      setMsg(err?.message || String(err));
+      scrollToEl(formCardRef);
     } finally {
       setSaving(false);
     }
@@ -206,10 +284,11 @@ export default function AdminSponsorsSection() {
     if (!window.confirm('¿Desactivar este sponsor? Dejará de mostrarse en la app.')) return;
     const { error } = await supabase.from('sponsors').update({ activo: false }).eq('id', id);
     if (error) {
-      setMsg(`⚠️ ${error.message}`);
+      setMsg(error.message);
+      scrollToEl(formCardRef);
       return;
     }
-    setMsg('✅ Desactivado');
+    setMsg('Desactivado');
     if (form.id === id) resetForm();
     await loadSponsors();
   };
@@ -218,6 +297,20 @@ export default function AdminSponsorsSection() {
     const sid = t.sede_id != null ? ` · sede ${t.sede_id}` : '';
     return `${String(t.nombre || 'Torneo').slice(0, 80)} (id ${t.id})${sid}`;
   }, []);
+
+  const fieldHintStyle = {
+    margin: '6px 0 0',
+    fontSize: 13,
+    fontWeight: 600,
+    color: ERROR_TEXT,
+    lineHeight: 1.35,
+  };
+
+  const bannerIsSuccess =
+    Boolean(msg) &&
+    /logo subido|sponsor actualizado|sponsor creado|^desactivado$/i.test(String(msg).trim());
+
+  const inputErrBorder = (key) => (fieldErrors[key] ? `2px solid ${PADBOL_RED}` : '1px solid #cbd5e1');
 
   return (
     <div style={{ marginTop: 28, marginBottom: 32, maxWidth: 900 }}>
@@ -228,12 +321,13 @@ export default function AdminSponsorsSection() {
       </p>
 
       {msg ? (
-        <p style={{ margin: '0 0 12px', fontWeight: 700, fontSize: 14, color: msg.startsWith('✅') ? '#86efac' : '#fde68a' }}>
-          {msg}
-        </p>
+        <div role={bannerIsSuccess ? 'status' : 'alert'} style={bannerIsSuccess ? successBannerStyle : errorBannerStyle}>
+          {msg.replace(/^✅\s*/i, '')}
+        </div>
       ) : null}
 
       <div
+        ref={formCardRef}
         style={{
           background: 'white',
           borderRadius: 12,
@@ -244,13 +338,31 @@ export default function AdminSponsorsSection() {
       >
         <h3 style={{ margin: '0 0 14px', fontSize: 16, color: '#0f172a' }}>{form.id != null ? 'Editar sponsor' : 'Nuevo sponsor'}</h3>
 
-        <label style={{ ...labelStyle, color: '#334155' }}>Nombre de la marca *</label>
-        <input
-          style={{ ...inputStyle, color: '#0f172a', marginBottom: 12 }}
-          value={form.nombre}
-          onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
-          placeholder="Ej: Marca deportiva"
-        />
+        <div ref={nombreRef} style={{ marginBottom: 12 }}>
+          <label style={{ ...labelStyle, color: '#334155' }}>Nombre de la marca *</label>
+          <input
+            style={{
+              ...inputStyle,
+              color: '#0f172a',
+              marginBottom: 0,
+              border: inputErrBorder('nombre'),
+            }}
+            value={form.nombre}
+            onChange={(e) => {
+              clearField('nombre');
+              clearField('_session');
+              setForm((p) => ({ ...p, nombre: e.target.value }));
+            }}
+            placeholder="Ej: Marca deportiva"
+            aria-invalid={Boolean(fieldErrors.nombre)}
+            aria-describedby={fieldErrors.nombre ? 'sponsor-err-nombre' : undefined}
+          />
+          {fieldErrors.nombre ? (
+            <p id="sponsor-err-nombre" style={fieldHintStyle}>
+              {fieldErrors.nombre}
+            </p>
+          ) : null}
+        </div>
 
         <label style={{ ...labelStyle, color: '#334155' }}>Logo (bucket sponsors)</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12 }}>
@@ -286,7 +398,17 @@ export default function AdminSponsorsSection() {
         <select
           style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
           value={form.scope}
-          onChange={(e) => setForm((p) => ({ ...p, scope: e.target.value }))}
+          onChange={(e) => {
+            const v = e.target.value;
+            setForm((p) => ({ ...p, scope: v }));
+            setFieldErrors((fe) => {
+              const n = { ...fe };
+              delete n.sede_id;
+              delete n.torneo_id;
+              delete n.pais;
+              return n;
+            });
+          }}
         >
           {SCOPE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -296,12 +418,22 @@ export default function AdminSponsorsSection() {
         </select>
 
         {form.scope === 'sede' ? (
-          <>
+          <div ref={sedeRef} style={{ marginBottom: 12 }}>
             <label style={{ ...labelStyle, color: '#334155' }}>Sede</label>
             <select
-              style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
+              style={{
+                ...inputStyle,
+                marginBottom: 0,
+                cursor: 'pointer',
+                border: inputErrBorder('sede_id'),
+              }}
               value={form.sede_id}
-              onChange={(e) => setForm((p) => ({ ...p, sede_id: e.target.value }))}
+              onChange={(e) => {
+                clearField('sede_id');
+                setForm((p) => ({ ...p, sede_id: e.target.value }));
+              }}
+              aria-invalid={Boolean(fieldErrors.sede_id)}
+              aria-describedby={fieldErrors.sede_id ? 'sponsor-err-sede' : undefined}
             >
               <option value="">— Elegir —</option>
               {sedesOpts.map((s) => (
@@ -310,16 +442,31 @@ export default function AdminSponsorsSection() {
                 </option>
               ))}
             </select>
-          </>
+            {fieldErrors.sede_id ? (
+              <p id="sponsor-err-sede" style={fieldHintStyle}>
+                {fieldErrors.sede_id}
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {form.scope === 'torneo' ? (
-          <>
+          <div ref={torneoRef} style={{ marginBottom: 12 }}>
             <label style={{ ...labelStyle, color: '#334155' }}>Torneo</label>
             <select
-              style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
+              style={{
+                ...inputStyle,
+                marginBottom: 0,
+                cursor: 'pointer',
+                border: inputErrBorder('torneo_id'),
+              }}
               value={form.torneo_id}
-              onChange={(e) => setForm((p) => ({ ...p, torneo_id: e.target.value }))}
+              onChange={(e) => {
+                clearField('torneo_id');
+                setForm((p) => ({ ...p, torneo_id: e.target.value }));
+              }}
+              aria-invalid={Boolean(fieldErrors.torneo_id)}
+              aria-describedby={fieldErrors.torneo_id ? 'sponsor-err-torneo' : undefined}
             >
               <option value="">— Elegir —</option>
               {torneosOpts.map((t) => (
@@ -328,16 +475,31 @@ export default function AdminSponsorsSection() {
                 </option>
               ))}
             </select>
-          </>
+            {fieldErrors.torneo_id ? (
+              <p id="sponsor-err-torneo" style={fieldHintStyle}>
+                {fieldErrors.torneo_id}
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {form.scope === 'nacional' ? (
-          <>
+          <div ref={paisRef} style={{ marginBottom: 12 }}>
             <label style={{ ...labelStyle, color: '#334155' }}>País</label>
             <select
-              style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
+              style={{
+                ...inputStyle,
+                marginBottom: 0,
+                cursor: 'pointer',
+                border: inputErrBorder('pais'),
+              }}
               value={form.pais}
-              onChange={(e) => setForm((p) => ({ ...p, pais: e.target.value }))}
+              onChange={(e) => {
+                clearField('pais');
+                setForm((p) => ({ ...p, pais: e.target.value }));
+              }}
+              aria-invalid={Boolean(fieldErrors.pais)}
+              aria-describedby={fieldErrors.pais ? 'sponsor-err-pais' : undefined}
             >
               <option value="">— Elegir —</option>
               {PAIS_OPTIONS.map((o) => (
@@ -346,7 +508,12 @@ export default function AdminSponsorsSection() {
                 </option>
               ))}
             </select>
-          </>
+            {fieldErrors.pais ? (
+              <p id="sponsor-err-pais" style={fieldHintStyle}>
+                {fieldErrors.pais}
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 12 }}>
@@ -379,40 +546,53 @@ export default function AdminSponsorsSection() {
           Activo
         </label>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-          <button
-            type="button"
-            disabled={saving || uploading}
-            onClick={() => void guardar()}
-            style={{
-              padding: '12px 24px',
-              borderRadius: 10,
-              border: 'none',
-              background: saving || uploading ? '#94a3b8' : PADBOL_RED,
-              color: '#fff',
-              fontWeight: 800,
-              cursor: saving || uploading ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
-          {form.id != null ? (
-            <button
-              type="button"
-              disabled={saving}
-              onClick={resetForm}
+        <div ref={guardarRowRef}>
+          {fieldErrors._session ? (
+            <div
+              role="alert"
               style={{
-                padding: '12px 18px',
-                borderRadius: 10,
-                border: '1px solid #cbd5e1',
-                background: '#f8fafc',
-                fontWeight: 700,
-                cursor: saving ? 'not-allowed' : 'pointer',
+                ...errorBannerStyle,
+                marginBottom: 12,
               }}
             >
-              Cancelar edición
-            </button>
+              {fieldErrors._session}
+            </div>
           ) : null}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            <button
+              type="button"
+              disabled={saving || uploading}
+              onClick={() => void guardar()}
+              style={{
+                padding: '12px 24px',
+                borderRadius: 10,
+                border: 'none',
+                background: saving || uploading ? '#94a3b8' : PADBOL_RED,
+                color: '#fff',
+                fontWeight: 800,
+                cursor: saving || uploading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {saving ? 'Guardando…' : 'Guardar'}
+            </button>
+            {form.id != null ? (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={resetForm}
+                style={{
+                  padding: '12px 18px',
+                  borderRadius: 10,
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  fontWeight: 700,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancelar edición
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
 
