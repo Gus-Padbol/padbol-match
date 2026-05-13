@@ -105,13 +105,13 @@
 }
 
 .reservas-table th, .canchas-table th {
-  background: #f5f5f5;
+  background: #e11b22;
   padding: 10px 12px;
   text-align: left;
   font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #E11B22;
-  border-right: 1px solid rgba(0,0,0,0.07);
+  color: #fff;
+  border-bottom: 2px solid #991b1b;
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .reservas-table th:last-child, .canchas-table th:last-child {
@@ -417,4 +417,87 @@
   .sedes-admin-table-wrap {
     display: block;
   }
+}
+
+/* ─── Panel Super Admin: fondo #0F172A; cards gris 800; tablas legibles ─── */
+.admin-dashboard--super {
+  background: #0f172a !important;
+  color: #e2e8f0;
+}
+
+.admin-dashboard--super .section:not(.admin-mi-sede-form),
+.admin-dashboard--super .card {
+  background: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+.admin-dashboard--super .section:not(.admin-mi-sede-form) h2,
+.admin-dashboard--super .section:not(.admin-mi-sede-form) h3 {
+  color: #f8fafc !important;
+  border-bottom-color: #e11b22 !important;
+}
+
+.admin-dashboard--super .card h2 {
+  color: #cbd5e1 !important;
+  border-bottom-color: #e11b22 !important;
+}
+
+.admin-dashboard--super .card .currency {
+  color: #94a3b8 !important;
+}
+
+.admin-dashboard--super .card .count,
+.admin-dashboard--super .card .amount {
+  color: #fb7185 !important;
+}
+
+.admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-fila {
+  background: rgba(255, 255, 255, 0.06);
+  border-left-color: #e11b22;
+}
+
+.admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-codigo {
+  color: #94a3b8 !important;
+}
+
+.admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-valor {
+  color: #fecaca !important;
+}
+
+.admin-dashboard--super .section:not(.admin-mi-sede-form) table {
+  background-color: #1f2937 !important;
+}
+
+.admin-dashboard--super .section:not(.admin-mi-sede-form) tbody td {
+  color: #e2e8f0 !important;
+  border-bottom-color: #374151 !important;
+}
+
+.admin-dashboard--super .sedes-admin-filter-label {
+  color: #cbd5e1 !important;
+}
+
+.admin-dashboard--super .sedes-admin-filter-select {
+  background: #111827 !important;
+  color: #f1f5f9 !important;
+  border-color: #4b5563 !important;
+}
+
+.admin-dashboard--super .sede-admin-card {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #e5e7eb !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+}
+
+.admin-dashboard--super .admin-torneo-list-card {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-dashboard--super .admin-torneo-list-card label {
+  color: #94a3b8 !important;
 }

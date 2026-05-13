@@ -5011,7 +5011,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   return (
     <div
-      className="admin-dashboard"
+      className={isSuperAdmin ? 'admin-dashboard admin-dashboard--super' : 'admin-dashboard'}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -5520,14 +5520,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             className="section"
             style={{
               marginBottom: '22px',
-              background: '#fff',
               borderRadius: '14px',
               padding: '18px 20px',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-              color: '#1e293b',
             }}
           >
-            <h2 style={{ marginTop: 0, marginBottom: '14px', color: '#334155', fontSize: '18px' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '14px', fontSize: '18px' }}>
               Analytics globales
             </h2>
             {!analyticsGlobales ? (
@@ -6014,7 +6011,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const inp = { padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '13px', width: '100%', boxSizing: 'border-box' };
 
               return (
-                <div key={torneo.id} style={{
+                <div
+                  key={torneo.id}
+                  className={isSuperAdmin ? 'admin-torneo-list-card' : undefined}
+                  style={{
                   background: 'white',
                   border: isEditingThis ? '2px solid #E11B22' : '1px solid #e5e7eb',
                   borderRadius: '8px',
@@ -7427,7 +7427,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     margin: 0,
                     font: 'inherit',
                     fontWeight: 800,
-                    color: '#475569',
+                    color: '#fff',
                     cursor: 'pointer',
                     textDecoration: active ? 'underline' : 'none',
                   }}
@@ -7542,20 +7542,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     >
                       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '520px' }}>
                         <thead>
-                          <tr style={{ background: '#f8fafc' }}>
-                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                          <tr style={{ background: '#E11B22' }}>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
                               Sede
                             </th>
-                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
                               País
                             </th>
-                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
                               Ciudad
                             </th>
-                            <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                            <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
                               {sortHeaderBtn('reservas', 'Reservas')}
                             </th>
-                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#64748b' }}>
+                            <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
                               {sortHeaderBtn('ingresos', 'Ingresos')}
                             </th>
                           </tr>
@@ -8297,7 +8297,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </h3>
           <table style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
             <thead>
-              <tr style={{ background: '#3b2f6e', color: 'white' }}>
+              <tr style={{ background: '#E11B22', color: 'white' }}>
                 <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Nivel</th>
                 <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '130px' }}>Pts totales torneo</th>
                 <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '90px' }}></th>
@@ -8449,7 +8449,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
               <table style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                 <thead>
-                  <tr style={{ background: '#3b2f6e', color: 'white' }}>
+                  <tr style={{ background: '#E11B22', color: 'white' }}>
                     <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Posición</th>
                     <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px' }}>% del total</th>
                     <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap' }}>Puntos</th>
@@ -8565,7 +8565,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               }}
             >
               <thead>
-                <tr style={{ background: '#312e81', color: '#fff' }}>
+                <tr style={{ background: '#E11B22', color: '#fff' }}>
                   <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>Nombre</th>
                   <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>Canchas</th>
                   <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600 }}>Precio USD/mes</th>
@@ -8744,7 +8744,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
                 <thead>
-                  <tr style={{ background: '#312e81', color: '#fff' }}>
+                  <tr style={{ background: '#E11B22', color: '#fff' }}>
                     <th style={{ padding: '8px' }}>Tipo</th>
                     <th style={{ padding: '8px' }}>Email</th>
                     <th style={{ padding: '8px' }}>Club (sugerido)</th>
@@ -8860,7 +8860,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
                 <thead>
-                  <tr style={{ background: '#312e81', color: '#fff' }}>
+                  <tr style={{ background: '#E11B22', color: '#fff' }}>
                     <th style={{ padding: '8px' }}>Nombre</th>
                     <th style={{ padding: '8px' }}>Email</th>
                     <th style={{ padding: '8px' }}>Rol</th>
@@ -10705,13 +10705,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
                   <thead>
-                    <tr style={{ background: '#f5f5f5' }}>
-                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555', width: '48px' }}>#</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#555' }}>Nombre</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555' }}>Deporte</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#555' }}>Nota</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#555', width: '100px' }}>Estado</th>
-                      <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#555' }}></th>
+                    <tr style={{ background: '#E11B22' }}>
+                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#fff', width: '48px' }}>#</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#fff' }}>Nombre</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#fff' }}>Deporte</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#fff' }}>Nota</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#fff', width: '100px' }}>Estado</th>
+                      <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#fff' }}></th>
                     </tr>
                   </thead>
                   <tbody>
