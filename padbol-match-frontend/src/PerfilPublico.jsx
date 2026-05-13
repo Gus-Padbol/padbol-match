@@ -296,7 +296,8 @@ export default function PerfilPublico() {
 
   const pageStyle = {
     minHeight: '100vh',
-    background: '#FFFFFF',
+    background: 'var(--bg-page)',
+    color: 'var(--text-primary)',
     fontFamily: 'Arial',
     paddingTop: '16px',
     paddingBottom: '32px',
@@ -377,7 +378,7 @@ export default function PerfilPublico() {
     return (
       <div style={pageStyle}>
         <div style={wrap}>
-          <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0' }}>Cargando…</p>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '40px 0' }}>Cargando…</p>
         </div>
       </div>
     );
@@ -395,7 +396,7 @@ export default function PerfilPublico() {
               padding: '8px 0',
               background: 'transparent',
               border: 'none',
-              color: '#111827',
+              color: 'var(--text-primary)',
               fontWeight: 700,
               fontSize: '15px',
               cursor: 'pointer',
@@ -405,12 +406,13 @@ export default function PerfilPublico() {
           </button>
           <div
             style={{
-              background: 'white',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '12px',
               padding: '28px 22px',
               textAlign: 'center',
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-              color: '#64748b',
+              color: 'var(--text-secondary)',
               fontWeight: 600,
             }}
           >
@@ -432,7 +434,7 @@ export default function PerfilPublico() {
             padding: '8px 0',
             background: 'transparent',
             border: 'none',
-            color: '#111827',
+            color: 'var(--text-primary)',
             fontWeight: 700,
             fontSize: '15px',
             cursor: 'pointer',
@@ -443,7 +445,8 @@ export default function PerfilPublico() {
 
         <div
           style={{
-            background: 'white',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
             borderRadius: '12px',
             padding: '28px 22px 22px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
@@ -494,11 +497,11 @@ export default function PerfilPublico() {
 
           {aliasGrande ? (
             <>
-              <h1 style={{ margin: '4px 0 4px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>{formatAliasConArroba(aliasGrande)}</h1>
-              <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#94a3b8', fontWeight: 400 }}>{nombreCompleto || '—'}</p>
+              <h1 style={{ margin: '4px 0 4px', fontSize: '22px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatAliasConArroba(aliasGrande)}</h1>
+              <p style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 400 }}>{nombreCompleto || '—'}</p>
             </>
           ) : (
-            <h1 style={{ margin: '4px 0 8px', fontSize: '22px', fontWeight: 'bold', color: '#222' }}>
+            <h1 style={{ margin: '4px 0 8px', fontSize: '22px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
               {nombreCompleto || 'Jugador'}
             </h1>
           )}
@@ -522,7 +525,7 @@ export default function PerfilPublico() {
                 border: 'none',
                 borderRadius: '10px',
                 padding: '10px 12px',
-                background: '#0f172a',
+                background: 'var(--accent)',
                 color: '#fff',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -533,12 +536,12 @@ export default function PerfilPublico() {
           </div>
 
           {perfil.pais ? (
-            <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px', textAlign: 'center', lineHeight: 1.35 }}>
-              {paisFlag} <span style={{ color: '#777', fontSize: '13px' }}>{paisNombre}</span>
+            <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center', lineHeight: 1.35 }}>
+              {paisFlag} <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{paisNombre}</span>
             </p>
           ) : null}
           {localidadTrim ? (
-            <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px', textAlign: 'center', lineHeight: 1.35 }}>
+            <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center', lineHeight: 1.35 }}>
               📍 {localidadTrim}
             </p>
           ) : null}
@@ -547,7 +550,7 @@ export default function PerfilPublico() {
             style={{
               marginTop: '14px',
               paddingTop: '14px',
-              borderTop: '1px solid #eee',
+              borderTop: '1px solid var(--border)',
               textAlign: 'left',
               width: '100%',
             }}
@@ -559,12 +562,12 @@ export default function PerfilPublico() {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '8px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid var(--border)',
               }}
             >
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Club habitual</span>
-              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
-                {clubCiudadTrim ? clubCiudadTrim : <span style={{ color: '#94a3b8' }}>Sin definir</span>}
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Club habitual</span>
+              <span style={{ fontSize: '14px', color: 'var(--text-primary)', textAlign: 'right' }}>
+                {clubCiudadTrim ? clubCiudadTrim : <span style={{ color: 'var(--text-secondary)' }}>Sin definir</span>}
               </span>
             </div>
             <div
@@ -574,16 +577,16 @@ export default function PerfilPublico() {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '6px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid var(--border)',
               }}
             >
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, flexShrink: 0 }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600, flexShrink: 0 }}>
                 {companeroDisplay?.kind === 'ultimo' ? 'Último compañero: ' : 'Compañero habitual: '}
               </span>
               <span
                 style={{
                   fontSize: '14px',
-                  color: '#0f172a',
+                  color: 'var(--text-primary)',
                   textAlign: 'right',
                   display: 'inline-flex',
                   justifyContent: 'flex-end',
@@ -645,7 +648,7 @@ export default function PerfilPublico() {
                     )}
                   </span>
                 ) : (
-                  <span style={{ color: '#94a3b8', textAlign: 'right', width: '100%' }}>Sin definir</span>
+                  <span style={{ color: 'var(--text-secondary)', textAlign: 'right', width: '100%' }}>Sin definir</span>
                 )}
               </span>
             </div>
@@ -656,10 +659,10 @@ export default function PerfilPublico() {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '6px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid var(--border)',
               }}
             >
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Categoría</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Categoría</span>
               <span
                 style={{
                   fontSize: '14px',
@@ -675,11 +678,24 @@ export default function PerfilPublico() {
                   <>
                     <span style={{ fontWeight: 'bold', color: categoriaColor }}>{nivelPerfilTexto}</span>
                     {esCategoriaPendienteValidacion(perfil) ? (
-                      <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>(pendiente de validación)</span>
+                      <span
+                        title="Pendiente de validación"
+                        style={{
+                          fontSize: '11px',
+                          background: 'var(--bg-page)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '10px',
+                          padding: '1px 7px',
+                          fontWeight: 700,
+                        }}
+                      >
+                        ⏳ pendiente
+                      </span>
                     ) : null}
                   </>
                 ) : (
-                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>Sin definir</span>
                 )}
               </span>
             </div>
@@ -690,12 +706,12 @@ export default function PerfilPublico() {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '6px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid var(--border)',
               }}
             >
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Lateralidad</span>
-              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
-                {perfil.lateralidad ? perfil.lateralidad : <span style={{ color: '#94a3b8' }}>Sin definir</span>}
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Lateralidad</span>
+              <span style={{ fontSize: '14px', color: 'var(--text-primary)', textAlign: 'right' }}>
+                {perfil.lateralidad ? perfil.lateralidad : <span style={{ color: 'var(--text-secondary)' }}>Sin definir</span>}
               </span>
             </div>
             <div
@@ -705,16 +721,16 @@ export default function PerfilPublico() {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '6px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid var(--border)',
               }}
             >
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Federado</span>
-              <span style={{ fontSize: '14px', color: '#0f172a', textAlign: 'right' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Federado</span>
+              <span style={{ fontSize: '14px', color: 'var(--text-primary)', textAlign: 'right' }}>
                 {esFederadoBool === true ? (
                   <>
                     Sí
                     {String(perfil.numero_fipa || '').trim() ? (
-                      <span style={{ color: '#64748b', fontSize: '13px', marginLeft: '6px' }}>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '13px', marginLeft: '6px' }}>
                         · N° {String(perfil.numero_fipa).trim()}
                       </span>
                     ) : null}
@@ -722,7 +738,7 @@ export default function PerfilPublico() {
                 ) : esFederadoBool === false ? (
                   'No'
                 ) : (
-                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>Sin definir</span>
                 )}
               </span>
             </div>
@@ -735,7 +751,7 @@ export default function PerfilPublico() {
                 padding: '6px 0 0',
               }}
             >
-              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Instagram</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>Instagram</span>
               <span style={{ fontSize: '14px', textAlign: 'right' }}>
                 {instagramHref ? (
                   <a
@@ -768,7 +784,7 @@ export default function PerfilPublico() {
                     <span>Instagram</span>
                   </a>
                 ) : (
-                  <span style={{ color: '#94a3b8' }}>Sin definir</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>Sin definir</span>
                 )}
               </span>
             </div>
@@ -778,7 +794,8 @@ export default function PerfilPublico() {
         {hasDeportesPreferidosCargados(perfil?.deportes_preferidos) ? (
           <div
             style={{
-              background: 'white',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '12px',
               padding: '18px 20px',
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
@@ -792,9 +809,9 @@ export default function PerfilPublico() {
               style={{
                 margin: '0 0 12px',
                 fontSize: '16px',
-                color: '#334155',
+                color: 'var(--text-primary)',
                 fontWeight: 800,
-                borderBottom: '1px solid #e5e7eb',
+                borderBottom: '1px solid var(--border)',
                 paddingBottom: '8px',
               }}
             >
@@ -807,7 +824,8 @@ export default function PerfilPublico() {
         {showEstadisticasTorneoPub ? (
           <div
             style={{
-              background: 'white',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '12px',
               padding: '18px 20px',
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
@@ -821,9 +839,9 @@ export default function PerfilPublico() {
               style={{
                 margin: '0 0 14px',
                 fontSize: '16px',
-                color: '#334155',
+                color: 'var(--text-primary)',
                 fontWeight: 800,
-                borderBottom: '1px solid #e5e7eb',
+                borderBottom: '1px solid var(--border)',
                 paddingBottom: '8px',
               }}
             >
@@ -841,16 +859,16 @@ export default function PerfilPublico() {
                       style={{
                         padding: '8px 12px',
                         borderRadius: '10px',
-                        border: active ? '2px solid #E11B22' : '1px solid #cbd5e1',
-                        background: active ? '#eef2ff' : '#fff',
+                        border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
+                        background: active ? 'rgba(225, 27, 34, 0.12)' : 'var(--bg-page)',
                         fontWeight: 800,
                         fontSize: '13px',
                         cursor: 'pointer',
-                        color: '#0f172a',
+                        color: 'var(--text-primary)',
                       }}
                     >
                       {etiquetaDeporteTorneo(d.deporte)}{' '}
-                      <span style={{ color: '#64748b', fontWeight: 700 }}>({d.puntos})</span>
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>({d.puntos})</span>
                     </button>
                   );
                 })}
@@ -939,21 +957,21 @@ export default function PerfilPublico() {
                 <div
                   key={c.k}
                   style={{
-                    background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
+                    background: 'var(--bg-page)',
                     borderRadius: '12px',
                     padding: '14px 12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     textAlign: 'center',
                     minWidth: 0,
                   }}
                 >
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                     {c.label}
                   </div>
-                  <div style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', marginTop: '6px', lineHeight: 1.15 }}>
+                  <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-primary)', marginTop: '6px', lineHeight: 1.15 }}>
                     {c.value}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>{c.sub}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 600 }}>{c.sub}</div>
                 </div>
               ))}
             </div>
@@ -962,20 +980,20 @@ export default function PerfilPublico() {
                 style={{
                   margin: '14px 0 0',
                   fontSize: '13px',
-                  color: '#475569',
+                  color: 'var(--text-secondary)',
                   textAlign: 'center',
                   fontWeight: 600,
                 }}
               >
                 Sede habitual (torneos):{' '}
-                <span style={{ color: '#0f172a' }}>{displayEstadisticas.sede_habitual.nombre}</span>
+                <span style={{ color: 'var(--text-primary)' }}>{displayEstadisticas.sede_habitual.nombre}</span>
               </p>
             ) : (
               <p
                 style={{
                   margin: '14px 0 0',
                   fontSize: '13px',
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary)',
                   textAlign: 'center',
                   fontWeight: 600,
                 }}
@@ -989,14 +1007,15 @@ export default function PerfilPublico() {
         {tieneAlgunoPuntosPorAlcance(puntosAlcancePublico) || perfil?.mostrar_torneos_jugados ? (
           <div
             style={{
-              background: '#f9f9f9',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '10px',
               padding: '10px 14px',
               boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
               marginBottom: '12px',
               fontSize: '13px',
               fontWeight: 700,
-              color: '#0f172a',
+              color: 'var(--text-primary)',
               display: 'flex',
               flexWrap: 'nowrap',
               gap: '12px',
@@ -1031,7 +1050,8 @@ export default function PerfilPublico() {
         {Array.isArray(torneosConPuntos) && torneosConPuntos.length > 0 ? (
           <div
             style={{
-              background: '#f9f9f9',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '12px',
               padding: '18px 20px',
               boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
@@ -1042,8 +1062,8 @@ export default function PerfilPublico() {
               style={{
                 margin: '0 0 12px',
                 fontSize: '15px',
-                color: '#334155',
-                borderBottom: '1px solid #e5e7eb',
+                color: 'var(--text-primary)',
+                borderBottom: '1px solid var(--border)',
                 paddingBottom: '8px',
               }}
             >
@@ -1074,11 +1094,11 @@ export default function PerfilPublico() {
                           gap: '8px',
                           padding: '8px 12px',
                           borderRadius: '10px',
-                          border: '1px solid #e2e8f0',
-                          background: '#f1f5f9',
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-page)',
                           cursor: 'pointer',
                           fontSize: '14px',
-                          color: '#334155',
+                          color: 'var(--text-primary)',
                           textAlign: 'left',
                           overflow: 'hidden',
                           minHeight: 0,
@@ -1090,7 +1110,7 @@ export default function PerfilPublico() {
                             flexShrink: 0,
                             whiteSpace: 'nowrap',
                             fontWeight: 700,
-                            color: '#0f172a',
+                            color: 'var(--text-primary)',
                           }}
                         >
                           {nombreT}
@@ -1103,7 +1123,7 @@ export default function PerfilPublico() {
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                             fontWeight: 600,
-                            color: '#475569',
+                            color: 'var(--text-secondary)',
                           }}
                         >
                           {` · ${nivelTxt} · ${pts} pts · ${fechaM}`}
@@ -1126,9 +1146,9 @@ export default function PerfilPublico() {
                       fontSize: '14px',
                       fontWeight: 700,
                       borderRadius: '10px',
-                      border: '1px solid #cbd5e1',
-                      background: 'white',
-                      color: '#334155',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-page)',
+                      color: 'var(--text-primary)',
                       cursor: 'pointer',
                     }}
                   >

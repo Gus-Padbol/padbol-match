@@ -1701,19 +1701,19 @@ export default function MiPerfil() {
 
   const inputStyle = {
     width: '100%', padding: '10px', marginBottom: '6px',
-    border: '1px solid #ddd', borderRadius: '5px',
-    boxSizing: 'border-box', fontSize: '14px', background: 'white',
+    border: '1px solid var(--border)', borderRadius: '5px',
+    boxSizing: 'border-box', fontSize: '14px', background: 'var(--bg-card)', color: 'var(--text-primary)',
   };
   const labelStyle = {
     display: 'block', fontWeight: 'bold',
-    marginBottom: '5px', color: '#333', fontSize: '13px',
+    marginBottom: '5px', color: 'var(--text-secondary)', fontSize: '13px',
   };
 
   if (authLoading) {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
         <AppHeader title="Mi Perfil" />
-        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           Verificando sesión...
         </div>
         <BottomNav />
@@ -1811,17 +1811,18 @@ export default function MiPerfil() {
       width: '100%',
       padding: '10px',
       marginBottom: '6px',
-      border: '1px solid #ddd',
+      border: '1px solid var(--border)',
       borderRadius: '5px',
       boxSizing: 'border-box',
       fontSize: '14px',
-      background: 'white',
+      background: 'var(--bg-card)',
+      color: 'var(--text-primary)',
     };
     const guestLabelStyle = {
       display: 'block',
       fontWeight: 'bold',
       marginBottom: '5px',
-      color: '#333',
+      color: 'var(--text-secondary)',
       fontSize: '13px',
     };
     return (
@@ -2014,10 +2015,10 @@ export default function MiPerfil() {
                   alignItems: 'center',
                   width: '100%',
                   marginBottom: '14px',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--border)',
                   borderRadius: '5px',
                   boxSizing: 'border-box',
-                  background: 'white',
+                  background: 'var(--bg-card)',
                   overflow: 'hidden',
                 }}
               >
@@ -2025,7 +2026,7 @@ export default function MiPerfil() {
                   style={{
                     padding: '10px 0 10px 10px',
                     fontWeight: 700,
-                    color: '#64748b',
+                    color: 'var(--text-secondary)',
                     fontSize: '14px',
                     flexShrink: 0,
                   }}
@@ -2050,6 +2051,8 @@ export default function MiPerfil() {
                     padding: '10px 10px 10px 4px',
                     fontSize: '14px',
                     boxSizing: 'border-box',
+                    background: 'transparent',
+                    color: 'var(--text-primary)',
                   }}
                 />
               </div>
@@ -2403,7 +2406,7 @@ export default function MiPerfil() {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
         <AppHeader title="Mi Perfil" />
-        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           Cargando perfil...
         </div>
         <BottomNav />
@@ -2696,7 +2699,7 @@ export default function MiPerfil() {
             margin: aliasLineaSecundaria ? '2px 0 4px' : '2px 0 6px',
             fontSize: '22px',
             fontWeight: 'bold',
-            color: '#222',
+            color: 'var(--text-primary)',
           }}
         >
           {tituloPrincipalDebajoFoto}
@@ -2706,7 +2709,7 @@ export default function MiPerfil() {
             style={{
               margin: '0 0 6px',
               fontSize: '13px',
-              color: '#94a3b8',
+              color: 'var(--text-secondary)',
               fontWeight: 400,
               lineHeight: 1.35,
             }}
@@ -2716,22 +2719,22 @@ export default function MiPerfil() {
         ) : null}
 
         {perfil?.pais && (
-          <p style={{ margin: '0 0 4px', fontSize: '16px' }}>
-            {paisFlag} <span style={{ color: '#555', fontSize: '14px' }}>{paisNombre}</span>
+          <p style={{ margin: '0 0 4px', fontSize: '16px', color: 'var(--text-primary)' }}>
+            {paisFlag} <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{paisNombre}</span>
           </p>
         )}
         {perfil && !editando && String(perfil.localidad || perfil.ciudad_residencia || '').trim() ? (
-          <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>
+          <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
             📍 {String(perfil.localidad || perfil.ciudad_residencia).trim()}
           </p>
         ) : null}
         {perfil?.ciudad && (
-          <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>
+          <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
             Club habitual: {perfil.ciudad}
           </p>
         )}
         {perfil && !editando ? (
-          <p style={{ margin: '0 0 3px', color: '#777', fontSize: '13px' }}>
+          <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
             {perfilCompaneroDisplay?.kind === 'ultimo' ? 'Último compañero' : 'Compañero habitual'}:{' '}
             {perfilCompaneroDisplay?.row && String(perfilCompaneroDisplay.row.alias || '').trim() ? (
               <button
@@ -2788,7 +2791,18 @@ export default function MiPerfil() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', color: 'white', background: categoriaColor }}>
               {perfil.nivel}
               {esCategoriaPendienteValidacion(perfil) && (
-                <span title="Pendiente de validación por administrador" style={{ fontSize: '11px', background: 'rgba(255,255,255,0.25)', borderRadius: '10px', padding: '1px 6px' }}>
+                <span
+                  title="Pendiente de validación por administrador"
+                  style={{
+                    fontSize: '11px',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    color: '#713f12',
+                    border: '1px solid rgba(253, 224, 71, 0.85)',
+                    borderRadius: '10px',
+                    padding: '1px 6px',
+                    fontWeight: 700,
+                  }}
+                >
                   ⏳ pendiente
                 </span>
               )}
@@ -2803,11 +2817,20 @@ export default function MiPerfil() {
       </div>
 
       {/* Ficha detail card */}
-      <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+      <div
+        style={{
+          background: 'var(--bg-card)',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+          marginBottom: '16px',
+          border: '1px solid var(--border)',
+        }}
+      >
 
         {!perfil && !editando ? (
           <div style={{ textAlign: 'center', padding: '10px 0' }}>
-            <p style={{ color: '#666', marginBottom: '16px' }}>Aún no tienes ficha de jugador creada.</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>Aún no tienes ficha de jugador creada.</p>
             <button
               onClick={() => setEditando(true)}
               style={{ padding: '12px 24px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -2818,7 +2841,7 @@ export default function MiPerfil() {
 
         ) : !editando ? (
           <>
-            <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Datos del jugador</h4>
+            <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Datos del jugador</h4>
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
               <Row
                 label="Nombre y apellido"
@@ -2864,7 +2887,18 @@ export default function MiPerfil() {
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: categoriaColor }}>{perfil.nivel}</span>
                   {esCategoriaPendienteValidacion(perfil) && (
-                    <span title="Pendiente de validación" style={{ fontSize: '11px', background: '#fff3cd', color: '#856404', border: '1px solid #ffc107', borderRadius: '10px', padding: '1px 7px' }}>
+                    <span
+                      title="Pendiente de validación"
+                      style={{
+                        fontSize: '11px',
+                        background: 'var(--bg-page)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        padding: '1px 7px',
+                        fontWeight: 700,
+                      }}
+                    >
                       ⏳ pendiente
                     </span>
                   )}
@@ -2898,7 +2932,7 @@ export default function MiPerfil() {
 
         ) : (
           <form id="mi-perfil-ficha-form" onSubmit={handleGuardar}>
-            <h4 style={{ margin: '0 0 16px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>Editar datos</h4>
+            <h4 style={{ margin: '0 0 16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Editar datos</h4>
 
             <label style={labelStyle}>Nombre {reqAst}</label>
             <input
@@ -3052,10 +3086,10 @@ export default function MiPerfil() {
                 alignItems: 'center',
                 width: '100%',
                 marginBottom: '14px',
-                border: '1px solid #ddd',
+                border: '1px solid var(--border)',
                 borderRadius: '5px',
                 boxSizing: 'border-box',
-                background: 'white',
+                background: 'var(--bg-card)',
                 overflow: 'hidden',
               }}
             >
@@ -3063,7 +3097,7 @@ export default function MiPerfil() {
                 style={{
                   padding: '10px 0 10px 10px',
                   fontWeight: 700,
-                  color: '#64748b',
+                  color: 'var(--text-secondary)',
                   fontSize: '14px',
                   flexShrink: 0,
                 }}
@@ -3088,6 +3122,8 @@ export default function MiPerfil() {
                   padding: '10px 10px 10px 4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
                 }}
               />
             </div>
@@ -3530,7 +3566,7 @@ export default function MiPerfil() {
                     };
                   });
                 }}
-                style={{ flex: 1, padding: '11px', background: 'transparent', color: '#666', border: '1px solid #ccc', borderRadius: '5px', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '11px', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: '5px', cursor: 'pointer' }}
               >
                 Cancelar
               </button>
@@ -3540,20 +3576,20 @@ export default function MiPerfil() {
               style={{
                 marginTop: '22px',
                 paddingTop: '18px',
-                borderTop: '1px solid #e5e7eb',
+                borderTop: '1px solid var(--border)',
               }}
             >
               <h4
                 style={{
                   margin: '0 0 12px',
-                  color: '#333',
-                  borderBottom: '1px solid #e0e0e0',
+                  color: 'var(--text-primary)',
+                  borderBottom: '1px solid var(--border)',
                   paddingBottom: '8px',
                 }}
               >
                 Deportes que practico
               </h4>
-              <p style={{ color: '#64748b', fontSize: '12px', marginTop: 0, marginBottom: '8px', lineHeight: 1.4 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: 0, marginBottom: '8px', lineHeight: 1.4 }}>
                 Selecciona los deportes que practicas (opcional). Mejoran las sugerencias del asistente.
               </p>
               <div id="mi-perfil-deportes-chips">
@@ -3605,7 +3641,7 @@ export default function MiPerfil() {
       {perfil && typeof perfil === 'object' && !editando ? (
         <div
           style={{
-            background: '#f9f9f9',
+            background: 'var(--bg-card)',
             borderRadius: '12px',
             padding: '20px 24px',
             boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
@@ -3613,13 +3649,14 @@ export default function MiPerfil() {
             width: '100%',
             maxWidth: '100%',
             boxSizing: 'border-box',
+            border: '1px solid var(--border)',
           }}
         >
           <h4
             style={{
               margin: '0 0 12px',
-              color: '#333',
-              borderBottom: '1px solid #e0e0e0',
+              color: 'var(--text-primary)',
+              borderBottom: '1px solid var(--border)',
               paddingBottom: '8px',
             }}
           >
@@ -3765,8 +3802,8 @@ export default function MiPerfil() {
           },
         ];
         return (
-          <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
-            <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>📊 Estadísticas</h4>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+            <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>📊 Estadísticas</h4>
             {mostrarTabsDeporteStats ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
                 {depsList.map((d) => {
@@ -3779,16 +3816,16 @@ export default function MiPerfil() {
                       style={{
                         padding: '8px 12px',
                         borderRadius: '10px',
-                        border: active ? '2px solid #E11B22' : '1px solid #cbd5e1',
-                        background: active ? '#eef2ff' : '#fff',
+                        border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
+                        background: active ? 'rgba(225, 27, 34, 0.12)' : 'var(--bg-page)',
                         fontWeight: 800,
                         fontSize: '13px',
                         cursor: 'pointer',
-                        color: '#0f172a',
+                        color: 'var(--text-primary)',
                       }}
                     >
                       {etiquetaDeporteTorneo(d.deporte)}{' '}
-                      <span style={{ color: '#64748b', fontWeight: 700 }}>({d.puntos})</span>
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>({d.puntos})</span>
                     </button>
                   );
                 })}
@@ -3797,25 +3834,25 @@ export default function MiPerfil() {
             {hayPuntosNivel ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
                 {puntosAlcanceMiPerfil.club > 0 ? (
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     📍 Puntos Club: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.club}</span>
                   </div>
                 ) : null}
                 {puntosAlcanceMiPerfil.nacional > 0 ? (
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     🌎 Puntos Nacional: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.nacional}</span>
                   </div>
                 ) : null}
                 {puntosAlcanceMiPerfil.fipa > 0 ? (
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     🌐 Puntos FIPA: <span style={{ color: '#15803d' }}>{puntosAlcanceMiPerfil.fipa}</span>
                   </div>
                 ) : null}
               </div>
             ) : (
-              <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
                 Puntos ranking (por alcance):{' '}
-                <span style={{ color: '#94a3b8' }}>—</span>
+                <span style={{ color: 'var(--text-secondary)' }}>—</span>
               </p>
             )}
             {!aliasStats ? (
@@ -3835,17 +3872,17 @@ export default function MiPerfil() {
                 <div
                   key={c.k}
                   style={{
-                    background: 'linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)',
+                    background: 'var(--bg-page)',
                     borderRadius: '12px',
                     padding: '14px 12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     textAlign: 'center',
                     minWidth: 0,
                   }}
                 >
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{c.label}</div>
-                  <div style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', marginTop: '6px', lineHeight: 1.15 }}>{c.value}</div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>{c.sub}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{c.label}</div>
+                  <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-primary)', marginTop: '6px', lineHeight: 1.15 }}>{c.value}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 600 }}>{c.sub}</div>
                 </div>
               ))}
             </div>
@@ -3853,19 +3890,19 @@ export default function MiPerfil() {
               style={{
                 margin: '14px 0 0',
                 fontSize: '13px',
-                color: estadisticasMiPerfilLoading ? '#94a3b8' : '#475569',
+                color: estadisticasMiPerfilLoading ? 'var(--text-secondary)' : 'var(--text-secondary)',
                 textAlign: 'center',
                 fontWeight: 600,
               }}
             >
               Sede habitual (torneos):{' '}
-              <span style={{ color: '#0f172a' }}>
+              <span style={{ color: 'var(--text-primary)' }}>
                 {estadisticasMiPerfilLoading ? '…' : rowStats?.sede_habitual?.nombre || '—'}
               </span>
             </p>
             </>
             {flagTorneosPub ? (
-              <p style={{ margin: '10px 0 0', fontSize: '12px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
+              <p style={{ margin: '10px 0 0', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 600 }}>
                 En tu perfil público también se muestran torneos con puntos:{' '}
                 <span style={{ color: '#15803d' }}>{torneosUnicosConPuntosMiPerfil}</span>
               </p>
@@ -3884,7 +3921,7 @@ export default function MiPerfil() {
           {creditItems.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {creditItems.map(c => (
-                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#166534', background: 'white', borderRadius: '6px', padding: '6px 10px' }}>
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#166534', background: 'var(--bg-page)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 10px' }}>
                   <span>📅 {new Date(c.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                   <span style={{ fontWeight: 700 }}>+${Number(c.monto).toLocaleString('es-AR')}</span>
                   <span style={{ color: '#86efac' }}>vence {new Date(c.vence_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
@@ -3896,8 +3933,8 @@ export default function MiPerfil() {
       )}
 
       {torneosConPuntosMiPerfil.length > 0 && !ocultarUiJugadorPorAdmin ? (
-        <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 14px', color: '#333', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {(mostrarTodosTorneosMiPerfil ? torneosConPuntosMiPerfil : torneosConPuntosMiPerfil.slice(0, 5)).map((row) => {
               const med = emojiMedallaPosicionCompacta(row.posicion);
@@ -3916,11 +3953,11 @@ export default function MiPerfil() {
                     gap: '8px',
                     padding: '8px 12px',
                     borderRadius: '10px',
-                    border: '1px solid #e2e8f0',
-                    background: '#f1f5f9',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-page)',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    color: '#334155',
+                    color: 'var(--text-primary)',
                     textAlign: 'left',
                     overflow: 'hidden',
                     minHeight: 0,
@@ -3932,7 +3969,7 @@ export default function MiPerfil() {
                       flexShrink: 0,
                       whiteSpace: 'nowrap',
                       fontWeight: 700,
-                      color: '#0f172a',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {row.nombreTorneo}
@@ -3945,7 +3982,7 @@ export default function MiPerfil() {
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       fontWeight: 600,
-                      color: '#475569',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {` · ${nivelTxt} · ${pts} pts · ${row.fechaMostrar}`}
@@ -3964,9 +4001,9 @@ export default function MiPerfil() {
                   fontSize: '14px',
                   fontWeight: 700,
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  background: 'white',
-                  color: '#334155',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-page)',
+                  color: 'var(--text-primary)',
                   cursor: 'pointer',
                 }}
               >
@@ -3978,7 +4015,7 @@ export default function MiPerfil() {
       ) : null}
 
       {/* Próximas reservas (jugador) */}
-      <div style={{ background: '#f9f9f9', borderRadius: '12px', padding: '12px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
         <button
           type="button"
           onClick={() => setMisReservasColapsado((v) => !v)}
@@ -3991,12 +4028,12 @@ export default function MiPerfil() {
             margin: 0,
             padding: '10px 0 12px',
             border: 'none',
-            borderBottom: misReservasColapsado ? 'none' : '1px solid #e0e0e0',
+            borderBottom: misReservasColapsado ? 'none' : '1px solid var(--border)',
             background: 'transparent',
             cursor: 'pointer',
             fontSize: '16px',
             fontWeight: 700,
-            color: '#333',
+            color: 'var(--text-primary)',
             textAlign: 'left',
             fontFamily: 'inherit',
           }}
@@ -4005,7 +4042,7 @@ export default function MiPerfil() {
         </button>
         {!misReservasColapsado && reservasProximasOrdenadas.length === 0 ? (
           <div style={{ textAlign: 'center', margin: '12px 0 8px' }}>
-            <p style={{ color: '#64748b', margin: '0 0 12px', fontSize: '14px', fontWeight: 600 }}>No tienes reservas próximas</p>
+            <p style={{ color: 'var(--text-secondary)', margin: '0 0 12px', fontSize: '14px', fontWeight: 600 }}>No tienes reservas próximas</p>
             <button
               type="button"
               onClick={() => navigate('/reservar')}
@@ -4034,14 +4071,14 @@ export default function MiPerfil() {
               const montoNum = r.monto_pagado != null && r.monto_pagado !== '' ? Number(r.monto_pagado) : Number(r.precio) || 0;
               const mpId = String(r.mp_payment_id || '').trim();
               return (
-                <div key={r.id} style={{ background: 'white', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div key={r.id} style={{ background: 'var(--bg-page)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
                         📅 {r.fecha} &nbsp;⏰ {r.hora}
                       </div>
-                      <div style={{ fontWeight: 700, fontSize: '14px', color: '#1e1b4b', marginTop: '6px' }}>{r.sede}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>⚽ Cancha {r.cancha}</div>
+                      <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', marginTop: '6px' }}>{r.sede}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>⚽ Cancha {r.cancha}</div>
                     </div>
                     <span
                       style={{
@@ -4060,7 +4097,7 @@ export default function MiPerfil() {
                     Monto pagado: {montoNum > 0 ? `${Number(montoNum).toLocaleString('es-AR')} ${mon}` : '—'}
                   </div>
                   {mpId ? (
-                    <div style={{ fontSize: '11px', color: '#64748b', wordBreak: 'break-all' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', wordBreak: 'break-all' }}>
                       ID transacción MP: <span style={{ fontFamily: 'monospace' }}>{mpId}</span>
                     </div>
                   ) : null}
@@ -4558,9 +4595,18 @@ export default function MiPerfil() {
 
 function Row({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #eee' }}>
-      <span style={{ color: '#777', fontSize: '13px' }}>{label}</span>
-      <span style={{ fontSize: '14px', color: '#333' }}>{value}</span>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '9px 0',
+        borderBottom: '1px solid var(--border)',
+        gap: '12px',
+      }}
+    >
+      <span style={{ color: 'var(--text-secondary)', fontSize: '13px', flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: '14px', color: 'var(--text-primary)', textAlign: 'right' }}>{value}</span>
     </div>
   );
 }
