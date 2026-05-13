@@ -345,7 +345,7 @@ export default function UserHome() {
       style={{
         position: 'relative',
         minHeight: '100dvh',
-        background: '#F8F9FA',
+        background: 'var(--bg-page)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
@@ -551,6 +551,7 @@ export default function UserHome() {
           width: '100%',
           height: userHomeChromeSpacerH,
           pointerEvents: 'none',
+          background: 'var(--bg-page)',
         }}
       />
 
@@ -568,7 +569,7 @@ export default function UserHome() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'stretch',
-          background: '#F8F9FA',
+          background: 'var(--bg-page)',
         }}
       >
         <div
