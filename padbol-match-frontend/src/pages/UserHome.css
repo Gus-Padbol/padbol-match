@@ -1,0 +1,18 @@
+/* Transición al cambiar deporte / foto del hub (capa de cover). */
+.hub-card-cover-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: hubCardCoverFadeIn 300ms ease forwards;
+}
+
+@keyframes hubCardCoverFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

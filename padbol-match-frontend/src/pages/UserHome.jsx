@@ -14,7 +14,9 @@ import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
+import './UserHome.css';
 
 const HUB_COLUMN_MAX = 390;
 
@@ -49,14 +51,6 @@ const HUB_FIXED_ACTIONS = [
     cmsPhotoIds: ['armar_partido', 'jugar', 'armar-partido'],
   },
 ];
-
-/** Fondo por defecto (Unsplash) si el CMS no define `foto_url`. */
-const HUB_CARD_UNSPLASH_BG = {
-  reservar: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80',
-  buscar_partido: 'https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=800&q=80',
-  torneos: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80',
-  armar_partido: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=800&q=80',
-};
 
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
@@ -325,7 +319,8 @@ export default function UserHome() {
     const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
     return HUB_FIXED_ACTIONS.map((slot) => {
       const cmsUrl = pickHubCmsPhotoUrl(rows, slot.cmsPhotoIds);
-      const fallbackUrl = HUB_CARD_UNSPLASH_BG[slot.key] || '';
+      const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, slot.key) : '';
+      const fallbackUrl = porDeporte || hubCardPhotoFallback(slot.key);
       const imageUrl = cmsUrl || fallbackUrl;
       return {
         key: slot.key,
@@ -696,12 +691,16 @@ export default function UserHome() {
                   padding: 0,
                   boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
                   backgroundColor: showPhoto ? '#1a1a1a' : HUB_CARD_FALLBACK_BG,
-                  backgroundImage: showPhoto ? `url(${c.imageUrl})` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
                 }}
               >
+                {showPhoto && c.imageUrl ? (
+                  <div
+                    key={failId}
+                    className="hub-card-cover-layer"
+                    style={{ backgroundImage: `url(${c.imageUrl})` }}
+                    aria-hidden
+                  />
+                ) : null}
                 {c.imageUrl ? (
                   <img
                     alt=""
