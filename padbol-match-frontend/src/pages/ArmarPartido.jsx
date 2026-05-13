@@ -88,11 +88,18 @@ function shareUrl(partido) {
 function findSedeById(sedesList, sedeIdRaw) {
   const id = String(sedeIdRaw ?? '').trim();
   if (!id) return null;
-  return sedesList.find((s) => String(s?.id ?? '') === id) || null;
+  const list = Array.isArray(sedesList) ? sedesList : [];
+  const exact = list.find((s) => String(s?.id ?? '').trim() === id);
+  if (exact) return exact;
+  const n = Number(id);
+  if (Number.isFinite(n)) {
+    return list.find((s) => Number(s?.id) === n) || null;
+  }
+  return null;
 }
 
 function canchaFormOk(canchaRaw) {
-  const n = Number(canchaRaw);
+  const n = Number(String(canchaRaw ?? '').trim());
   return Number.isFinite(n) && n >= 1;
 }
 
@@ -502,6 +509,19 @@ export default function ArmarPartido() {
     const fechaOk = String(form.fecha || '').trim();
     const horaOk = horaFormOk(form.hora);
     const canchaOk = canchaFormOk(form.cancha);
+    // TEMP: depurar validación paso 5 (quitar tras confirmar fix)
+    console.log('[ArmarPartido pagarYPublicar] form + validación', {
+      sedeId: form.sedeId,
+      sedeNombreResuelta: sedeActual?.nombre ?? null,
+      sedeIdResuelto: sedeActual?.id ?? null,
+      cancha: form.cancha,
+      canchaOk,
+      fecha: form.fecha,
+      fechaOk: Boolean(fechaOk),
+      hora: form.hora,
+      horaOk,
+      sedesCount: Array.isArray(sedes) ? sedes.length : 0,
+    });
     if (!sedeActual || !canchaOk || !fechaOk || !horaOk) {
       setMsg('Completa sede, cancha, fecha y horario.');
       return;
