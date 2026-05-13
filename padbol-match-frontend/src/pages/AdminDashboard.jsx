@@ -70,6 +70,7 @@ import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDist
 import AdminClubOnboardingTour, { readOnboardingDone } from '../components/AdminClubOnboardingTour';
 import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
+import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
@@ -5125,12 +5126,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 borderRadius: '999px',
                 padding: '8px 12px',
                 cursor: 'pointer',
-                fontSize: '18px',
                 lineHeight: 1,
                 boxShadow: '0 4px 14px rgba(15,23,42,0.18)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              🔔
+              <IconGeroNotificacionesNav size={28} aria-hidden />
               {notificacionesNoLeidas > 0 ? (
                 <span
                   style={{
