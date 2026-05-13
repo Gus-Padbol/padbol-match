@@ -52,13 +52,13 @@ const HUB_FIXED_ACTIONS = [
 
 /** Fondo por defecto (Unsplash) si el CMS no define `foto_url`. */
 const HUB_CARD_UNSPLASH_BG = {
-  reservar: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
-  buscar_partido: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
+  reservar: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=800&q=80',
+  buscar_partido: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
   torneos: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800&q=80',
-  armar_partido: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
+  armar_partido: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
 };
 
-const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.55)';
+const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.40)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
 
 const HUB_CARD_HEIGHT_PX = 180;
