@@ -1310,7 +1310,7 @@ app.get('/api/sedes', async (req, res) => {
     console.log('📡 GET /api/sedes - Conectando a Supabase...');
     const { data, error } = await supabase
       .from('sedes')
-      .select('*');
+      .select('*, canchas_por_deporte(deporte, cantidad, activo)');
     
     console.log('📊 Respuesta Supabase:', { data, error });
     

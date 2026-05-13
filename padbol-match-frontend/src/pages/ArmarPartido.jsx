@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { getDisplayName } from '../utils/displayName';
-import { precioBaseTurnoDesdeSede } from '../utils/sedeCardUi';
+import { precioBaseTurnoDesdeSede, getDistanceKm } from '../utils/sedeCardUi';
 import { precioDesdeFranjas } from '../utils/franjasHorarias';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -98,6 +99,51 @@ function canchaFormOk(canchaRaw) {
 function horaFormOk(horaRaw) {
   return String(horaRaw ?? '').trim().length > 0;
 }
+
+function normalizeTextForSearch(raw) {
+  return String(raw || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Si la sede tiene filas en canchas_por_deporte, exige el deporte; si no hay datos, no filtra (sedes legacy). */
+function sedeTieneDeporteArmar(sede, deporteKey) {
+  const rows = sede.canchas_por_deporte;
+  if (!Array.isArray(rows) || rows.length === 0) return true;
+  return rows.some(
+    (r) =>
+      r.activo !== false &&
+      Number(r.cantidad) > 0 &&
+      String(r.deporte || '').trim().toLowerCase() === deporteKey
+  );
+}
+
+function sedeCoincideBusqueda(sede, queryNorm) {
+  if (queryNorm.length < 2) return true;
+  const blob = normalizeTextForSearch([sede.nombre, sede.ciudad, sede.pais].filter(Boolean).join(' '));
+  return blob.includes(queryNorm);
+}
+
+function deportesOfrecidosResumen(sede) {
+  const rows = sede.canchas_por_deporte;
+  if (!Array.isArray(rows) || !rows.length) return 'Consultá en la sede';
+  const keys = [
+    ...new Set(
+      rows
+        .filter((r) => r.activo !== false && Number(r.cantidad) > 0)
+        .map((r) => String(r.deporte || '').trim().toLowerCase())
+        .filter(Boolean)
+    ),
+  ];
+  if (!keys.length) return '—';
+  return keys
+    .map((k) => DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === k)?.label || k)
+    .join(', ');
+}
+
+const SEDE_SUGGEST_MAX_VISIBLE_PX = 312;
 
 /** Estilos alineados al design system (var(--bg-page), --bg-card, --border, --text-*, --accent)). */
 const AP = {
@@ -232,6 +278,51 @@ export default function ArmarPartido() {
     nivel: 'Intermedio',
   });
 
+  const sedeBlurTimerRef = useRef(null);
+  const [sedeBusqueda, setSedeBusqueda] = useState('');
+  const [sedeDropdownOpen, setSedeDropdownOpen] = useState(false);
+  const [userGeo, setUserGeo] = useState(null);
+  const [geoStatus, setGeoStatus] = useState('pending');
+
+  useEffect(() => {
+    if (step !== 2) return;
+    if (!navigator.geolocation) {
+      setUserGeo(null);
+      setGeoStatus('denied');
+      return;
+    }
+    setGeoStatus('pending');
+    const t = window.setTimeout(() => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserGeo({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+          setGeoStatus('granted');
+        },
+        () => {
+          setUserGeo(null);
+          setGeoStatus('denied');
+        },
+        { timeout: 8000, maximumAge: 600000 },
+      );
+    }, 0);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  useEffect(() => {
+    if (step !== 2) {
+      setSedeDropdownOpen(false);
+      return;
+    }
+    const s = findSedeById(sedes, form.sedeId);
+    if (s) setSedeBusqueda(String(s.nombre || '').trim());
+  }, [step, form.sedeId, sedes]);
+
+  useEffect(() => {
+    return () => {
+      if (sedeBlurTimerRef.current) window.clearTimeout(sedeBlurTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
     if (!d) return;
@@ -279,14 +370,83 @@ export default function ArmarPartido() {
     return Number(precioDesdeFranjas(sede, form.hora, form.fecha) ?? precioBaseTurnoDesdeSede(sede) ?? 0);
   }, [sede, form.hora, form.fecha]);
 
+  const sedesParaArmar = useMemo(() => {
+    const hasAny = sedes.some((s) => Array.isArray(s.canchas_por_deporte) && s.canchas_por_deporte.length > 0);
+    if (!hasAny) return sedes;
+    return sedes.filter((s) => sedeTieneDeporteArmar(s, form.deporte));
+  }, [sedes, form.deporte]);
+
+  const sedeBusquedaNorm = useMemo(() => normalizeTextForSearch(sedeBusqueda), [sedeBusqueda]);
+
+  const sedesOrdenadasParaLista = useMemo(() => {
+    const base = [...sedesParaArmar];
+    const granted = geoStatus === 'granted' && userGeo;
+    const withKm = base.map((s) => {
+      const la = Number(s.latitud);
+      const lo = Number(s.longitud);
+      const km = granted && [la, lo].every(Number.isFinite) ? getDistanceKm(userGeo.lat, userGeo.lon, la, lo) : null;
+      return { ...s, _km: km };
+    });
+    if (granted) {
+      return withKm.sort((a, b) => {
+        if (a._km == null && b._km == null) return 0;
+        if (a._km == null) return 1;
+        if (b._km == null) return -1;
+        return a._km - b._km;
+      });
+    }
+    return withKm.sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), undefined, { sensitivity: 'base' }),
+    );
+  }, [sedesParaArmar, geoStatus, userGeo]);
+
+  const sedesListaMostrada = useMemo(() => {
+    const q = sedeBusquedaNorm;
+    if (q.length >= 2) return sedesOrdenadasParaLista.filter((s) => sedeCoincideBusqueda(s, q));
+    return sedesOrdenadasParaLista.slice(0, 5);
+  }, [sedesOrdenadasParaLista, sedeBusquedaNorm]);
+
+  const onSedeInputChange = (e) => {
+    const v = e.target.value;
+    setSedeBusqueda(v);
+    const sel = findSedeById(sedes, form.sedeId);
+    if (sel) {
+      const nm = normalizeTextForSearch(String(sel.nombre || '').trim());
+      if (nm !== normalizeTextForSearch(v)) {
+        setForm((f) => ({ ...f, sedeId: '', cancha: '', hora: '' }));
+      }
+    }
+    setSedeDropdownOpen(true);
+  };
+
+  const limpiarSedeSeleccion = () => {
+    setSedeBusqueda('');
+    setForm((f) => ({ ...f, sedeId: '', cancha: '', hora: '' }));
+    setSedeDropdownOpen(true);
+  };
+
   const setDeporte = (deporte) => {
     const item = DEPORTES.find((d) => d.id === deporte) || DEPORTES[0];
-    setForm((f) => ({
-      ...f,
-      deporte,
-      jugadoresRequeridos: deporte === 'pickleball' ? f.jugadoresRequeridos : item.jugadores,
-      jugadoresConfirmados: 1,
-    }));
+    const hasAny = sedes.some((s) => Array.isArray(s.canchas_por_deporte) && s.canchas_por_deporte.length > 0);
+    const cur = findSedeById(sedes, form.sedeId);
+    if (hasAny && cur && !sedeTieneDeporteArmar(cur, deporte)) setSedeBusqueda('');
+    setForm((f) => {
+      const next = {
+        ...f,
+        deporte,
+        jugadoresRequeridos: deporte === 'pickleball' ? f.jugadoresRequeridos : item.jugadores,
+        jugadoresConfirmados: 1,
+      };
+      if (hasAny && f.sedeId) {
+        const sRow = findSedeById(sedes, f.sedeId);
+        if (sRow && !sedeTieneDeporteArmar(sRow, deporte)) {
+          next.sedeId = '';
+          next.cancha = '';
+          next.hora = '';
+        }
+      }
+      return next;
+    });
   };
 
   const validarYAvanzar = () => {
@@ -452,13 +612,140 @@ export default function ArmarPartido() {
           {step === 2 ? (
             <>
               <h1 style={AP.title}>Elige sede y cancha</h1>
-              <label style={AP.label}>
+              <label style={{ ...AP.label, marginBottom: 0 }} htmlFor="armar-partido-sede-busqueda">
                 Sede
-                <select value={form.sedeId} onChange={(e) => setForm((f) => ({ ...f, sedeId: e.target.value, cancha: '', hora: '' }))} disabled={loadingSedes} style={AP.selectMt}>
-                  <option value="">{loadingSedes ? 'Cargando...' : 'Seleccionar sede'}</option>
-                  {sedes.map((s) => <option key={s.id} value={s.id}>{s.nombre} {s.ciudad ? `· ${s.ciudad}` : ''}</option>)}
-                </select>
               </label>
+              <p style={{ ...AP.sub, margin: '6px 0 0', fontSize: 12 }}>
+                {sedeBusquedaNorm.length >= 2
+                  ? 'Resultados según tu búsqueda.'
+                  : geoStatus === 'granted'
+                    ? 'Mostrando las 5 sedes más cercanas a tu ubicación.'
+                    : 'Mostrando 5 sedes (orden alfabético). Activá la ubicación para ver las más cercanas.'}
+              </p>
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: 'min(100%, calc(100vw - 32px))',
+                  marginTop: 10,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
+                  <input
+                    id="armar-partido-sede-busqueda"
+                    type="text"
+                    role="combobox"
+                    aria-expanded={sedeDropdownOpen}
+                    aria-autocomplete="list"
+                    autoComplete="off"
+                    placeholder="Buscar sede o ciudad..."
+                    value={sedeBusqueda}
+                    onChange={onSedeInputChange}
+                    onFocus={() => {
+                      if (sedeBlurTimerRef.current) window.clearTimeout(sedeBlurTimerRef.current);
+                      setSedeDropdownOpen(true);
+                    }}
+                    onBlur={() => {
+                      if (sedeBlurTimerRef.current) window.clearTimeout(sedeBlurTimerRef.current);
+                      sedeBlurTimerRef.current = window.setTimeout(() => setSedeDropdownOpen(false), 180);
+                    }}
+                    disabled={loadingSedes}
+                    style={{ ...AP.field, flex: 1, minWidth: 0, marginTop: 0 }}
+                  />
+                  {sedeBusqueda.trim() || form.sedeId ? (
+                    <button
+                      type="button"
+                      aria-label="Limpiar sede"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={limpiarSedeSeleccion}
+                      style={{
+                        flexShrink: 0,
+                        width: 44,
+                        minHeight: 44,
+                        borderRadius: 10,
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-page)',
+                        color: 'var(--text-secondary)',
+                        fontSize: 22,
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+                {sedeDropdownOpen && step === 2 ? (
+                  <div
+                    role="listbox"
+                    onMouseDown={(e) => e.preventDefault()}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: '100%',
+                      marginTop: 6,
+                      zIndex: 50,
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      maxHeight: SEDE_SUGGEST_MAX_VISIBLE_PX,
+                      overflowY: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      boxShadow: '0 12px 28px rgba(0,0,0,0.18)',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {loadingSedes ? (
+                      <div style={{ padding: 14, color: 'var(--text-secondary)', fontSize: 14 }}>Cargando sedes…</div>
+                    ) : sedesListaMostrada.length === 0 ? (
+                      <div style={{ padding: 14, color: 'var(--text-secondary)', fontSize: 14 }}>
+                        {sedeBusquedaNorm.length >= 2 ? 'No hay sedes que coincidan.' : 'No hay sedes disponibles.'}
+                      </div>
+                    ) : (
+                      sedesListaMostrada.map((s, idx) => {
+                        const loc = [s.ciudad, s.pais].filter(Boolean).join(' · ');
+                        const depLine = deportesOfrecidosResumen(s);
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            role="option"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setForm((f) => ({
+                                ...f,
+                                sedeId: String(s.id),
+                                cancha: '',
+                                hora: '',
+                              }));
+                              setSedeBusqueda(String(s.nombre || '').trim());
+                              setSedeDropdownOpen(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              textAlign: 'left',
+                              padding: '10px 12px',
+                              border: 'none',
+                              borderBottom: idx < sedesListaMostrada.length - 1 ? '1px solid var(--border)' : 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            <span style={{ fontWeight: 800, display: 'block' }}>{s.nombre}</span>
+                            <span style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.35 }}>
+                              {loc || '—'} · {depLine}
+                            </span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : null}
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
                 {canchas.map((c) => (
                   <button
