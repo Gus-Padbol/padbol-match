@@ -4,10 +4,8 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { fetchSedeFavoritaId } from '../utils/sedeFavorita';
@@ -193,15 +191,6 @@ export default function SedesPublicas() {
 
         {/* Title + search + geo status */}
         <div style={{ marginBottom: '28px' }}>
-          <img
-            src="/logo-padbol-match.png"
-            alt="Padbol Match"
-            style={{
-              ...padbolLogoImgStyle,
-              marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-              marginBottom: '16px',
-            }}
-          />
           <h2 style={{ color: '#111827', fontWeight: 900, fontSize: 'clamp(1.3rem, 4vw, 2rem)', margin: '0 0 16px', letterSpacing: '-0.02em' }}>
             {pageTitle}
           </h2>

@@ -9,7 +9,6 @@ import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import {
   HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
@@ -1528,12 +1527,6 @@ export default function ReservaForm() {
         >
         <div className="reserva-sede-inner">
           <header className="reserva-sede-hero">
-            <img
-              src="/logo-padbol-match.png"
-              alt="Padbol Match"
-              className="reserva-sede-hero-logo"
-              style={{ marginTop: HUB_LOGO_CLEARANCE_TOP_PX }}
-            />
             <h1 className="reserva-sede-hero-title">Reserva tu cancha</h1>
             <p className="reserva-sede-hero-sub">Elige tu sede y horario favorito</p>
           </header>

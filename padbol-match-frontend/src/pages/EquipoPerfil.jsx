@@ -4,10 +4,8 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { formatNivelTorneo } from '../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
@@ -287,15 +285,6 @@ export default function EquipoPerfil() {
   return (
     <div style={shellStyle}>
       <AppHeader title="Equipo" />
-      <img
-        src="/logo-padbol-match.png"
-        alt="Padbol Match"
-        style={{
-          ...padbolLogoImgStyle,
-          marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-          marginBottom: '14px',
-        }}
-      />
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {loading ? (
           <div style={cardWhite}>

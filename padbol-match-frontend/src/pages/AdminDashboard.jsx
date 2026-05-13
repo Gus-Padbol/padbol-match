@@ -2121,9 +2121,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [pendientes, busquedaValidaciones]);
 
   const adminRolesRowsFiltrados = useMemo(() => {
+    const legacyTemporal = (row) => {
+      const em = String(row?.email || '').trim().toLowerCase();
+      if (em === 'admin@padbol.com') return false;
+      const nom = String(row?.nombre || '').trim().toLowerCase();
+      if (nom.includes('admin temporal')) return false;
+      return true;
+    };
+    const base = adminRolesRows.filter(legacyTemporal);
     const q = String(busquedaRolesAdmin || '').trim().toLowerCase();
-    if (!q) return adminRolesRows;
-    return adminRolesRows.filter((row) => {
+    if (!q) return base;
+    return base.filter((row) => {
       const bits = [row.nombre, row.email].map((x) => String(x || '').trim().toLowerCase());
       return bits.some((b) => b.includes(q));
     });
@@ -5031,7 +5039,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
-          overflowX: 'hidden',
+          overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
           paddingTop: hubContentPaddingTopCss(location.pathname),
           paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
@@ -8552,10 +8560,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.45 }}>
             Precio mensual en USD según la cantidad de canchas del club. Solo super admin puede editar.
           </p>
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', width: '100%', maxWidth: '100%', boxSizing: 'border-box', WebkitOverflowScrolling: 'touch' }}>
             <table
               style={{
                 width: '100%',
+                minWidth: 520,
                 maxWidth: '640px',
                 borderCollapse: 'collapse',
                 background: 'white',

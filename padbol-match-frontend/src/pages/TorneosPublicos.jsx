@@ -5,10 +5,9 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  hubContentPaddingTopWithLogoClearanceCss,
+  hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import {
   formatNivelTorneo,
   formatTipoTorneo,
@@ -639,7 +638,7 @@ export default function TorneosPublicos() {
         minHeight: '100vh',
         background: 'var(--bg-page)',
         color: 'var(--text-primary)',
-        padding: `${hubContentPaddingTopWithLogoClearanceCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
+        padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
     >
@@ -652,15 +651,6 @@ export default function TorneosPublicos() {
           paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
         }}
       >
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          style={{
-            ...padbolLogoImgStyle,
-            marginTop: 0,
-            marginBottom: '14px',
-          }}
-        />
         <div
           style={{
             background: 'var(--bg-card)',

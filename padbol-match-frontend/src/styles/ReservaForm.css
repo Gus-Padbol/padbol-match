@@ -618,20 +618,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin-bottom: 18px;
 }
 
-.reserva-sede-seleccion .reserva-sede-hero-logo {
-  display: block;
-  margin: 0 auto;
-  padding-top: 0;
-  height: 110px;
-  width: auto;
-  max-width: none;
-  object-fit: contain;
-  border-radius: 12px;
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.22));
-}
-
 .reserva-sede-seleccion .reserva-sede-hero-title {
-  margin: 14px 0 0;
+  margin: 4px 0 0;
   color: var(--text-primary);
   font-size: clamp(1.35rem, 5vw, 1.75rem);
   font-weight: 900;

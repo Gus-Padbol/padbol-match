@@ -4,10 +4,8 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
@@ -2613,15 +2611,6 @@ export default function FormEquipos() {
           padding: '2px 8px 0',
         }}
       >
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          style={{
-            ...padbolLogoImgStyle,
-            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-            marginBottom: '12px',
-          }}
-        />
         <h1
           style={{
             margin: '8px 0 0',
