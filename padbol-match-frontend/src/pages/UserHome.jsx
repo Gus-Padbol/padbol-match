@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
@@ -60,8 +60,10 @@ const HUB_CARD_UNSPLASH_BG = {
 
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
-/** Altura mínima por card (hub Gero: más presencia visual). */
-const HUB_CARD_MIN_HEIGHT_PX = 140;
+/** Altura fija de las tres primeras cards del hub. */
+const HUB_CARD_HEIGHT_PX = 150;
+/** Cuarta card a media altura (indica que hay más al hacer scroll). */
+const HUB_CARD_LAST_HEIGHT_PX = 75;
 /** Separación entre cards del hub. */
 const HUB_CARD_GAP_PX = 8;
 
@@ -189,41 +191,6 @@ export default function UserHome() {
     if (emailEsLegacyAdminHub(session?.user?.email)) return true;
     return false;
   });
-  const [hubCardHeightPx, setHubCardHeightPx] = useState(HUB_CARD_MIN_HEIGHT_PX);
-  const mainScrollRef = useRef(null);
-  const hubColumnRef = useRef(null);
-  const hubCardsStackRef = useRef(null);
-
-  const measureHubCardHeight = useCallback(() => {
-    const scrollEl = mainScrollRef.current;
-    const cardsEl = hubCardsStackRef.current;
-    if (!scrollEl || !cardsEl) return;
-    const cs = getComputedStyle(scrollEl);
-    const borderBottom = parseFloat(cs.borderBottomWidth) || 0;
-    const padBottom = parseFloat(cs.paddingBottom) || 0;
-    const contentBottom = scrollEl.getBoundingClientRect().bottom - borderBottom - padBottom;
-    const avail = Math.max(0, contentBottom - cardsEl.getBoundingClientRect().top);
-    const raw = (avail - 3 * HUB_CARD_GAP_PX) / 3.5;
-    const h = Math.max(HUB_CARD_MIN_HEIGHT_PX, Math.round(raw * 10) / 10);
-    setHubCardHeightPx(h);
-  }, []);
-
-  useLayoutEffect(() => {
-    measureHubCardHeight();
-    const scrollEl = mainScrollRef.current;
-    const columnEl = hubColumnRef.current;
-    const vv = window.visualViewport;
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => measureHubCardHeight()) : null;
-    if (ro && scrollEl) ro.observe(scrollEl);
-    if (ro && columnEl) ro.observe(columnEl);
-    window.addEventListener('resize', measureHubCardHeight);
-    vv?.addEventListener('resize', measureHubCardHeight);
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener('resize', measureHubCardHeight);
-      vv?.removeEventListener('resize', measureHubCardHeight);
-    };
-  }, [measureHubCardHeight, session?.user, authLoading, hubCmsStatus]);
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -577,7 +544,6 @@ export default function UserHome() {
       </header>
 
       <div
-        ref={mainScrollRef}
         style={{
           flex: 1,
           minHeight: 0,
@@ -595,7 +561,6 @@ export default function UserHome() {
         }}
       >
         <div
-          ref={hubColumnRef}
           style={{
             ...hubInstagramColumnWrapStyle,
             width: '100%',
@@ -685,7 +650,6 @@ export default function UserHome() {
           ) : null}
 
           <div
-            ref={hubCardsStackRef}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -697,6 +661,8 @@ export default function UserHome() {
             {bigCards.map((c) => {
               const failId = `${c.key}|${c.imageUrl || ''}`;
               const showPhoto = Boolean(c.imageUrl) && !hubCardImageFailed[failId];
+              const cardH =
+                c.key === 'armar_partido' ? HUB_CARD_LAST_HEIGHT_PX : HUB_CARD_HEIGHT_PX;
               return (
               <button
                 key={c.key}
@@ -706,8 +672,8 @@ export default function UserHome() {
                   position: 'relative',
                   width: '100%',
                   flex: '0 0 auto',
-                  height: hubCardHeightPx,
-                  minHeight: HUB_CARD_MIN_HEIGHT_PX,
+                  height: cardH,
+                  minHeight: cardH,
                   textAlign: 'left',
                   border: 'none',
                   borderRadius: 12,
