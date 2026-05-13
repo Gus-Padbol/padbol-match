@@ -42,6 +42,7 @@ import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimo
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 import ChatbotIA from './components/ChatbotIA';
 import LegalFooterBar from './components/LegalFooterBar';
+import CookieConsentBanner from './components/CookieConsentBanner';
 import TerminosCondiciones from './pages/TerminosCondiciones';
 import PoliticaPrivacidad from './pages/PoliticaPrivacidad';
 import {
@@ -408,6 +409,7 @@ function AppShell() {
       </div>
       <LegalFooterBar />
       <ChatbotIA />
+      <CookieConsentBanner />
     </>
   );
 }
