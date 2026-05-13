@@ -581,3 +581,85 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
 .admin-dashboard--super .admin-torneo-list-card label {
   color: var(--text-secondary) !important;
 }
+
+/* Cabecera Panel Super Admin: contraste en modo claro */
+.admin-dashboard--super .admin-super-header__title {
+  color: #ffffff;
+}
+
+html.theme-light .admin-dashboard--super .admin-super-header__title {
+  color: #0f172a !important;
+}
+
+.admin-dashboard--super .admin-super-header__date {
+  color: #cbd5e1;
+}
+
+html.theme-light .admin-dashboard--super .admin-super-header__date {
+  color: #64748b !important;
+}
+
+.admin-dashboard--super .admin-super-header__bell {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+html.theme-light .admin-dashboard--super .admin-super-header__bell {
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.2) !important;
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Analytics globales (super admin): cards legibles en modo claro */
+html.theme-light .admin-dashboard--super .admin-analytics-globales.section {
+  background: #f8f9fa !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06) !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales.section > h2 {
+  color: #0f172a !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .card {
+  background: #f8f9fa !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .card h2 {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .card .count {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .card p:not(.count) {
+  color: #64748b !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales > p {
+  color: #64748b !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analytics-sedes-por-pais {
+  border-top-color: #e2e8f0 !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analytics-sedes-por-pais h3 {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analytics-sedes-por-pais ol,
+html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analytics-sedes-por-pais ol strong {
+  color: #0f172a !important;
+}
+
+html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analytics-sedes-por-pais ol span {
+  color: #64748b !important;
+}

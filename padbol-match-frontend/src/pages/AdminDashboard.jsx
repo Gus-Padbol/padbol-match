@@ -5153,22 +5153,40 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               borderRadius: sedeClubHeader?.logo_url ? 12 : padbolLogoImgStyle.borderRadius,
             }}
           />
-          <p style={{ margin: '0 0 12px', color: '#fff', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
+          <p
+            className={isSuperAdmin ? 'admin-super-header__title' : undefined}
+            style={{
+              margin: '0 0 12px',
+              color: isSuperAdmin ? undefined : '#fff',
+              fontSize: '18px',
+              fontWeight: 700,
+              textAlign: 'center',
+            }}
+          >
             {tituloPanelAdmin}
           </p>
-          <p style={{ margin: '0 0 10px', color: '#cbd5e1', fontSize: '12px', textAlign: 'center' }}>
+          <p
+            className={isSuperAdmin ? 'admin-super-header__date' : undefined}
+            style={{
+              margin: '0 0 10px',
+              color: isSuperAdmin ? undefined : '#cbd5e1',
+              fontSize: '12px',
+              textAlign: 'center',
+            }}
+          >
             {fechaActualLarga}
           </p>
           <div style={{ position: 'relative', marginBottom: '12px' }}>
             <button
               type="button"
+              className={isSuperAdmin ? 'admin-super-header__bell' : undefined}
               aria-label={`Notificaciones: ${notificacionesNoLeidas} no leídas`}
               onClick={() => setNotificacionesOpen((v) => !v)}
               style={{
                 position: 'relative',
-                border: '1px solid rgba(255,255,255,0.45)',
-                background: 'rgba(255,255,255,0.16)',
-                color: '#fff',
+                border: isSuperAdmin ? undefined : '1px solid rgba(255,255,255,0.45)',
+                background: isSuperAdmin ? undefined : 'rgba(255,255,255,0.16)',
+                color: isSuperAdmin ? undefined : '#fff',
                 borderRadius: '999px',
                 padding: '8px 12px',
                 cursor: 'pointer',
@@ -5395,12 +5413,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               padding: '10px 16px',
               borderRadius: '10px',
               border: 'none',
-              background: 'linear-gradient(135deg, #22c55e, #15803d)',
+              background: '#E11B22',
               color: '#fff',
               fontWeight: 800,
               fontSize: '14px',
               cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(21,128,61,0.35)',
+              boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
             }}
           >
             ➕ Nueva sede
@@ -5618,7 +5636,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <>
         {isSuperAdmin ? (
           <div
-            className="section"
+            className="section admin-analytics-globales"
             style={{
               marginBottom: '22px',
               borderRadius: '14px',
