@@ -9,7 +9,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
-  hubContentPaddingTopCss,
+  hubAccesoContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
@@ -324,7 +324,7 @@ export default function AccesoCuenta() {
     }
   };
 
-  const accesoPaddingTop = hubContentPaddingTopCss(location.pathname);
+  const accesoPaddingTop = hubAccesoContentPaddingTopCss(location.pathname);
   const accesoPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
 
   return (

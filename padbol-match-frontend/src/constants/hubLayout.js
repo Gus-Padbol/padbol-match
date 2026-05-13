@@ -132,6 +132,15 @@ export function hubContentPaddingTopCss(pathname) {
   return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px))`;
 }
 
+/** Extra bajo el header en `/login` y `/auth` para que el logo no quede cortado al scroll (móvil ~390px). */
+export const HUB_ACCESO_LOGIN_EXTRA_TOP_PX = 20;
+
+/** Igual que {@link hubContentPaddingTopCss} más {@link HUB_ACCESO_LOGIN_EXTRA_TOP_PX} (login / acceso). */
+export function hubAccesoContentPaddingTopCss(pathname) {
+  const basePx = hubContentPaddingTopPx(pathname);
+  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX + HUB_ACCESO_LOGIN_EXTRA_TOP_PX}px + env(safe-area-inset-top, 0px))`;
+}
+
 /**
  * UserHome: reserva en el flujo la misma vertical que el chrome fijo (header saludo + barra
  * Jugar/Competir/Perfil) más un extra para la segunda línea («Bienvenido»). Así el scroll no
