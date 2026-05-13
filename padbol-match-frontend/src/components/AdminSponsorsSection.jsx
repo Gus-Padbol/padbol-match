@@ -190,24 +190,31 @@ export default function AdminSponsorsSection() {
     setMsg('');
     const safe = String(file.name || 'logo').replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `${Date.now()}_${safe}`;
-    const { error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
-      upsert: true,
-      contentType: file.type || 'image/jpeg',
-      cacheControl: '3600',
-    });
-    if (upErr) {
-      setMsg(`Subida: ${upErr.message}`);
-      scrollToEl(formCardRef);
+    try {
+      const { data: uploadData, error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+        cacheControl: '3600',
+      });
+      if (upErr) {
+        setMsg(`Subida: ${upErr.message}`);
+        scrollToEl(formCardRef);
+        return;
+      }
+      const filePath = uploadData?.path != null && String(uploadData.path).trim() !== '' ? String(uploadData.path).trim() : path;
+      const { data } = supabase.storage.from('sponsors').getPublicUrl(filePath);
+      const publicUrl = data?.publicUrl != null ? String(data.publicUrl).trim() : '';
+      if (!publicUrl) {
+        setMsg('No se pudo obtener la URL pública del logo. Revisá que el bucket sponsors sea público.');
+        scrollToEl(formCardRef);
+        return;
+      }
+      setForm((p) => ({ ...p, logo_url: publicUrl }));
+      setMsg('Logo subido');
+      setTimeout(() => setMsg(''), 2500);
+    } finally {
       setUploading(false);
-      return;
     }
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('sponsors').getPublicUrl(path);
-    setForm((p) => ({ ...p, logo_url: publicUrl }));
-    setUploading(false);
-    setMsg('Logo subido');
-    setTimeout(() => setMsg(''), 2500);
   };
 
   const guardar = async () => {
