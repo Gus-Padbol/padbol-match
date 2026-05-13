@@ -14,8 +14,8 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
-const HERO_BUSCAR =
-  'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&q=80';
+/** Hero “Buscar partido”: placeholder sólido hasta assets definitivos (Padbol / deporte equipo). */
+const HERO_BUSCAR_PARTIDOS_BG = '#0F172A';
 
 export default function PartidosAbiertos() {
   const navigate = useNavigate();
@@ -152,7 +152,7 @@ export default function PartidosAbiertos() {
           maxWidth: 560,
           margin: '0 auto',
           height: 160,
-          background: `#374151 url(${HERO_BUSCAR}) center/cover no-repeat`,
+          background: HERO_BUSCAR_PARTIDOS_BG,
           position: 'relative',
         }}
       >
@@ -160,7 +160,7 @@ export default function PartidosAbiertos() {
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)',
+            background: 'linear-gradient(180deg, rgba(15,23,42,0.35) 0%, rgba(15,23,42,0.75) 100%)',
           }}
         />
         <div
@@ -175,7 +175,7 @@ export default function PartidosAbiertos() {
             gap: 12,
           }}
         >
-          <h1 style={{ margin: 0, color: '#fff', fontSize: 24, fontWeight: 700, textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
+          <h1 style={{ margin: 0, color: '#f8fafc', fontSize: 24, fontWeight: 700, textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
             Buscar partido
           </h1>
           <button
@@ -368,14 +368,17 @@ export default function PartidosAbiertos() {
           <section
             style={{
               background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
               borderRadius: 12,
               padding: 24,
               textAlign: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
               border: '1px solid var(--border)',
             }}
           >
-            <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 18, fontWeight: 700 }}>No hay partidos disponibles. ¡Inicia uno!</h2>
+            <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 18, fontWeight: 700 }}>
+              No hay partidos disponibles. ¡Inicia uno!
+            </h2>
             <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400 }}>
               {deporteFiltro ? 'Prueba con otro deporte o sin filtro.' : 'Publica el primero y completa jugadores en minutos.'}
             </p>
@@ -386,7 +389,7 @@ export default function PartidosAbiertos() {
                 border: 'none',
                 borderRadius: 8,
                 padding: '14px 24px',
-                background: '#E11B22',
+                background: 'var(--accent)',
                 color: '#fff',
                 fontWeight: 600,
                 fontSize: 16,

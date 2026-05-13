@@ -318,7 +318,7 @@ export default function UserHome() {
     .toUpperCase();
 
   const padL = 'calc(12px + env(safe-area-inset-left, 0px))';
-  const padR = 'calc(12px + env(safe-area-inset-right, 0px))';
+  const padR = 'calc(16px + env(safe-area-inset-right, 0px))';
 
   const bigCards = useMemo(() => {
     const q = deporteQuery(deporteElegido);
