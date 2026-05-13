@@ -325,7 +325,8 @@
 }
 
 .reserva-card {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 30px;
@@ -335,7 +336,7 @@
 
 .reserva-card h1 {
   text-align: center;
-  color: #d32f2f;
+  color: var(--accent);
   margin-bottom: 30px;
 }
 
@@ -356,7 +357,7 @@
   display: block;
   margin-bottom: 8px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-secondary);
 }
 
 .reserva-horario-bloque {
@@ -385,9 +386,9 @@
   min-width: 0;
   box-sizing: border-box;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #1e293b;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
   padding: 0.625rem 0.75rem;
   text-align: left;
   font-size: 0.875rem;
@@ -398,8 +399,8 @@
 }
 
 .reserva-horario-btn:hover {
-  border-color: #22c55e;
-  background: #f0fdf4;
+  border-color: var(--accent);
+  background: rgba(225, 27, 34, 0.06);
 }
 
 @media (min-width: 640px) {
@@ -409,16 +410,16 @@
 }
 
 .reserva-horario-btnActive {
-  border-color: #16a34a;
-  background: #16a34a;
+  border-color: #e11b22;
+  background: #e11b22;
   color: #fff;
-  outline: 2px solid #16a34a;
+  outline: 2px solid #e11b22;
   outline-offset: 2px;
 }
 
 .reserva-horario-btnActive:hover {
-  border-color: #16a34a;
-  background: #16a34a;
+  border-color: #e11b22;
+  background: #e11b22;
   color: #fff;
 }
 
@@ -431,11 +432,11 @@
   margin-top: 2px;
   font-size: 0.75rem;
   font-weight: 400;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .reserva-horario-btnActive .reserva-horario-meta {
-  color: #dcfce7;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .reserva-select-horario {
@@ -456,11 +457,12 @@
 .form-group select {
   width: 100%;
   padding: 14px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 14px;
   box-sizing: border-box;
-  background: #fff;
+  background: var(--bg-card);
+  color: var(--text-primary);
   transition: all 0.2s ease;
 }
 
@@ -491,14 +493,14 @@
 .phone-preview {
   display: block;
   margin-top: 6px;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .precio-display {
   font-size: 18px;
   font-weight: bold;
-  color: #d32f2f;
+  color: var(--accent);
   margin: 0;
 }
 

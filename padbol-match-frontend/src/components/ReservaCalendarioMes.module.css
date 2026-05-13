@@ -4,8 +4,8 @@
   margin-left: auto;
   margin-right: auto;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
   padding: 0.75rem;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
@@ -26,9 +26,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
-  color: #334155;
-  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  background: var(--bg-card);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -36,7 +36,7 @@
 }
 
 .navBtn:hover:not(:disabled) {
-  background: #f8fafc;
+  background: rgba(225, 27, 34, 0.08);
 }
 
 .navBtn:disabled {
@@ -51,7 +51,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   text-transform: capitalize;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 @media (min-width: 640px) {
@@ -69,7 +69,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 @media (min-width: 640px) {
@@ -120,44 +120,44 @@
 
 .dayPast {
   cursor: not-allowed;
-  background: #f1f5f9;
-  color: #94a3b8;
+  background: var(--bg-page);
+  color: var(--text-secondary);
   border: 1px solid transparent;
 }
 
 .dayAvailable {
   cursor: pointer;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #1e293b;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .dayAvailable:hover:not(:disabled) {
-  border-color: #22c55e;
-  background: #f0fdf4;
+  border-color: #e11b22;
+  background: rgba(225, 27, 34, 0.08);
 }
 
 .dayToday {
   cursor: pointer;
-  border: 2px solid #16a34a;
-  background: #fff;
-  color: #0f172a;
+  border: 2px solid #e11b22;
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .dayTodayPast {
   cursor: not-allowed;
-  border: 1px solid #e2e8f0;
-  background: #f1f5f9;
-  color: #94a3b8;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-secondary);
   text-decoration: line-through;
 }
 
 .daySelected {
   cursor: pointer;
-  border: 2px solid #16a34a;
-  background: #16a34a;
+  border: 2px solid #e11b22;
+  background: #e11b22;
   color: #fff;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.12);
-  outline: 2px solid #16a34a;
+  outline: 2px solid #e11b22;
   outline-offset: 2px;
 }

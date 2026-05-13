@@ -1653,12 +1653,15 @@ export default function ReservaForm() {
     const hoyIso = ymdHoyParaReservaSede(sedeSeleccionada);
     return (
       <div className="reserva-container" style={{
+        background: 'var(--bg-page)',
+        color: 'var(--text-primary)',
         paddingTop: reservaPaddingTopCss,
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         overflowX: 'hidden',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',
+        minHeight: '100dvh',
       }}>
         <AppHeader title="Reservar" onBack={handleReservaBack} />
         <div
@@ -1679,7 +1682,7 @@ export default function ReservaForm() {
           ) : null}
 
           {sedeSeleccionada && (
-          <p style={{ color: '#666', marginBottom: '30px', textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
             {(() => {
               const { flag, linea } = ciudadPaisConBandera(sedeSeleccionada);
               return (
@@ -1719,9 +1722,9 @@ export default function ReservaForm() {
                       style={{
                         padding: '10px 8px',
                         borderRadius: '10px',
-                        border: `2px solid ${active ? '#16a34a' : '#e2e8f0'}`,
-                        background: active ? '#f0fdf4' : '#ffffff',
-                        color: active ? '#15803d' : '#334155',
+                        border: `2px solid ${active ? '#E11B22' : 'var(--border)'}`,
+                        background: active ? '#E11B22' : 'var(--bg-card)',
+                        color: active ? '#fff' : 'var(--text-primary)',
                         fontWeight: 800,
                         cursor: 'pointer',
                       }}
@@ -1768,8 +1771,8 @@ export default function ReservaForm() {
 
             {/* Price badge — shown as soon as a time is selected */}
             {formData.hora && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#0369a1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
                   💰 {Number(getPrecio(sedeSeleccionada, formData.hora, formData.fecha)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
                 {(() => {
@@ -1782,7 +1785,7 @@ export default function ReservaForm() {
                       : '');
                   if (!subEtiqueta) return null;
                   return (
-                    <span style={{ fontSize: '12px', color: '#6b7280' }}>{subEtiqueta}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{subEtiqueta}</span>
                   );
                 })()}
               </div>
@@ -1794,7 +1797,7 @@ export default function ReservaForm() {
                 className="reserva-canchas-bloque"
                 style={{ scrollMarginTop: reservaPaddingTopCss }}
               >
-                <label style={{ display: 'block', fontWeight: 600, color: '#333', marginBottom: '10px' }}>Elige tu cancha:</label>
+                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px' }}>Elige tu cancha:</label>
                 <div className="reserva-canchas-botones">
                   {canchasDisponibles.map(c => (
                     <button
@@ -1875,10 +1878,12 @@ export default function ReservaForm() {
       <div
         className="reserva-container"
         style={{
+          background: 'var(--bg-page)',
+          color: 'var(--text-primary)',
           paddingTop: resumenPaddingTop,
           paddingBottom: `${resumenPaddingBottomPx}px`,
           margin: '16px auto 0',
-          minHeight: 'auto',
+          minHeight: '100dvh',
           overflowX: 'hidden',
           width: '100%',
           maxWidth: '100%',
@@ -1927,8 +1932,9 @@ export default function ReservaForm() {
                 const match = Array.isArray(canchasDisponibles)
                   ? canchasDisponibles.find((c) => String(c?.num ?? c?.id ?? c?.cancha_id ?? '') === id)
                   : null;
-                const label = match && (match.label || match.nombre || match.descripcion);
-                return label ? `${label} (${id})` : id;
+                const rawLabel = match && (match.label || match.nombre || match.descripcion);
+                if (rawLabel) return String(rawLabel).trim();
+                return `Cancha ${id}`;
               })()}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
@@ -1948,12 +1954,12 @@ export default function ReservaForm() {
                     <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
                     {formatMoneyMain(stripeMinorToMain(cargoServicioMinor, moneda), moneda)}
                   </p>
-                  <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: '#d32f2f' }}>
+                  <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
                     <strong>Total:</strong> {formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)}
                   </p>
                 </div>
               ) : (
-                <p style={{ margin: '12px 0 0', fontSize: '18px', fontWeight: 800, color: '#d32f2f' }}>
+                <p style={{ margin: '12px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
                   💰 {Number(precio).toLocaleString('es-AR')} {moneda}
                   {metodoPagoEfectivo ? (
                     <span style={{ display: 'block', marginTop: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
@@ -2005,11 +2011,11 @@ export default function ReservaForm() {
               style={{
                 margin: '0 0 16px',
                 padding: '12px 14px',
-                background: '#ecfdf5',
-                border: '1px solid #6ee7b7',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
                 borderRadius: '8px',
                 fontSize: '13px',
-                color: '#065f46',
+                color: 'var(--text-primary)',
                 lineHeight: 1.6,
               }}
             >
@@ -2020,16 +2026,17 @@ export default function ReservaForm() {
             </div>
           ) : null}
 
-          <div style={{
-            margin: '0 0 16px',
-            padding: '12px 14px',
-            background: '#fffbeb',
-            border: '1px solid #fcd34d',
-            borderRadius: '8px',
-            fontSize: '13px',
-            color: '#78350f',
-            lineHeight: 1.6,
-          }}
+          <div
+            style={{
+              margin: '0 0 16px',
+              padding: '12px 14px',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              fontSize: '13px',
+              color: 'var(--text-primary)',
+              lineHeight: 1.6,
+            }}
           >
             <strong>📋 Política de cancelación</strong><br />
             ✅ Más de 24hs de anticipación: crédito total<br />
@@ -2052,11 +2059,12 @@ export default function ReservaForm() {
                 padding: '12px 16px',
                 borderRadius: '10px',
                 border: '2px solid #E11B22',
-                background: 'rgba(225, 27, 34, 0.1)',
-                color: '#991b1b',
+                background: 'transparent',
+                color: '#E11B22',
                 fontWeight: 800,
                 fontSize: '15px',
                 cursor: 'pointer',
+                boxShadow: '0 0 0 1px rgba(225, 27, 34, 0.15)',
               }}
             >
               Modificar reserva
@@ -2068,9 +2076,9 @@ export default function ReservaForm() {
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: '10px',
-                border: '1px solid #cbd5e1',
-                background: '#f8fafc',
-                color: '#64748b',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-secondary)',
                 fontWeight: 700,
                 fontSize: '14px',
                 cursor: 'pointer',
@@ -2137,7 +2145,7 @@ export default function ReservaForm() {
                   ? '#aaa'
                   : metodoPagoEfectivo
                     ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
-                    : 'linear-gradient(135deg, #009ee3 0%, #0077c8 100%)',
+                    : 'linear-gradient(135deg, #e11b22 0%, #b91c1c 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -2146,7 +2154,7 @@ export default function ReservaForm() {
                 cursor: mpLoading ? 'not-allowed' : 'pointer',
                 boxShadow: metodoPagoEfectivo
                   ? '0 3px 12px rgba(22,163,74,0.35)'
-                  : '0 3px 12px rgba(0,158,227,0.4)',
+                  : '0 3px 12px rgba(225, 27, 34, 0.35)',
                 marginBottom: '12px',
               }}
             >
