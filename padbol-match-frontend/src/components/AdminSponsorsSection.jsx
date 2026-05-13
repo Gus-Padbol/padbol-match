@@ -299,6 +299,24 @@ export default function AdminSponsorsSection() {
     await loadSponsors();
   };
 
+  const eliminar = async (r) => {
+    const nombre = String(r?.nombre || '').trim() || 'sin nombre';
+    if (
+      !window.confirm(`¿Eliminar el sponsor ${nombre}? Esta acción no se puede deshacer.`)
+    ) {
+      return;
+    }
+    const { error } = await supabase.from('sponsors').delete().eq('id', r.id);
+    if (error) {
+      setMsg(error.message);
+      scrollToEl(formCardRef);
+      return;
+    }
+    if (String(form.id) === String(r.id)) resetForm();
+    setMsg('Sponsor eliminado');
+    await loadSponsors();
+  };
+
   const torneoLabel = useCallback((t) => {
     const sid = t.sede_id != null ? ` · sede ${t.sede_id}` : '';
     return `${String(t.nombre || 'Torneo').slice(0, 80)} (id ${t.id})${sid}`;
@@ -314,7 +332,7 @@ export default function AdminSponsorsSection() {
 
   const bannerIsSuccess =
     Boolean(msg) &&
-    /logo subido|sponsor actualizado|sponsor creado|^desactivado$/i.test(String(msg).trim());
+    /logo subido|sponsor actualizado|sponsor creado|sponsor eliminado|^desactivado$/i.test(String(msg).trim());
 
   const inputErrBorder = (key) => (fieldErrors[key] ? `2px solid ${PADBOL_RED}` : '1px solid #cbd5e1');
 
@@ -608,7 +626,7 @@ export default function AdminSponsorsSection() {
         <table
           style={{
             width: '100%',
-            minWidth: 640,
+            minWidth: 720,
             borderCollapse: 'collapse',
             background: 'white',
             borderRadius: 10,
@@ -674,6 +692,23 @@ export default function AdminSponsorsSection() {
                       }}
                     >
                       Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void eliminar(r)}
+                      style={{
+                        padding: '6px 10px',
+                        marginRight: 6,
+                        borderRadius: 6,
+                        border: 'none',
+                        background: '#b91c1c',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Eliminar
                     </button>
                     {r.activo ? (
                       <button
