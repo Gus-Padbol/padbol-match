@@ -12,7 +12,6 @@ import {
   isSedeProfilePathname,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
-import JugadorNotificationsBell from './JugadorNotificationsBell';
 import HubThemeSettingsButton from './HubThemeSettingsButton';
 import { useTheme } from '../context/ThemeContext';
 
@@ -285,11 +284,6 @@ export default function AppHeader({
     (!adminFlowSurface || (hubDirectLogin && hubInicioPath));
 
   const isOnAdmin = pathOnly === '/admin' || pathOnly.startsWith('/admin/');
-  const showJugadorNotifications =
-    Boolean(session?.user) &&
-    !isOnAdmin &&
-    !adminFlowSurface &&
-    !isSedeProfilePathname(pathOnly);
   /** Torneo / equipo desde el panel: sin chip @ a la derecha; volver = avatar + nombre (no texto «← Admin»). */
   const adminTorneoEquipoDesdePanel = adminFlowSurface && !isOnAdmin;
   /** Hub: chip más chico y título más angosto para no tapar “Inicio”. */
@@ -303,9 +297,7 @@ export default function AppHeader({
     Boolean(session?.user) &&
     !(hubHomeCompactHeader && esRolAdminHub);
   const hubHeaderControlCount =
-    (showAdminShortcutHub ? 1 : 0) +
-    (showJugadorNotifications ? 1 : 0) +
-    (muestraChipUsuarioHubDerecha ? 1 : 0);
+    (showAdminShortcutHub ? 1 : 0) + (muestraChipUsuarioHubDerecha ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
   /** Hub inicio (UserHome): ⚙ Admin siempre columna izquierda — mismo criterio para super_admin y admin_club. */
   const botonAdminIzquierdaEnHub =
@@ -933,7 +925,7 @@ export default function AppHeader({
     );
   }
 
-  /** `auto | 1fr | auto`: la columna central cede espacio al título con ellipsis; izq./der. al ancho intrínseco (chip, ☀️/🌙, campana) sin recortar en ~390px. */
+  /** `auto | 1fr | auto`: la columna central cede espacio al título con ellipsis; izq./der. al ancho intrínseco (chip, ☀️/🌙) sin recortar en ~390px. */
   const headerGridStyle = {
     display: 'grid',
     gridTemplateColumns: 'auto minmax(0, 1fr) auto',
@@ -1257,9 +1249,6 @@ export default function AppHeader({
             {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
             {jugadorHubShellPath && hubLightBar ? (
               <HubThemeSettingsButton compact={compactHubChip} />
-            ) : null}
-            {showJugadorNotifications ? (
-              <JugadorNotificationsBell compact={compactHubChip} headerLight={hubLightBar} />
             ) : null}
             {searchUiBlock}
             {hubDirectLogin && !session?.user && !authLoading ? (
