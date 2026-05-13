@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
@@ -60,8 +60,10 @@ const HUB_CARD_UNSPLASH_BG = {
 
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
-/** Altura mínima por card (flex reparte el resto; ~iPhone 14 con header + nav + selector). */
-const HUB_CARD_MIN_HEIGHT_PX = 52;
+/** Altura mínima por card (hub Gero: más presencia visual). */
+const HUB_CARD_MIN_HEIGHT_PX = 140;
+/** Separación entre cards del hub. */
+const HUB_CARD_GAP_PX = 8;
 
 function deporteQuery(deporteElegido) {
   const dep = String(deporteElegido || '').trim().toLowerCase();
@@ -187,6 +189,41 @@ export default function UserHome() {
     if (emailEsLegacyAdminHub(session?.user?.email)) return true;
     return false;
   });
+  const [hubCardHeightPx, setHubCardHeightPx] = useState(HUB_CARD_MIN_HEIGHT_PX);
+  const mainScrollRef = useRef(null);
+  const hubColumnRef = useRef(null);
+  const hubCardsStackRef = useRef(null);
+
+  const measureHubCardHeight = useCallback(() => {
+    const scrollEl = mainScrollRef.current;
+    const cardsEl = hubCardsStackRef.current;
+    if (!scrollEl || !cardsEl) return;
+    const cs = getComputedStyle(scrollEl);
+    const borderBottom = parseFloat(cs.borderBottomWidth) || 0;
+    const padBottom = parseFloat(cs.paddingBottom) || 0;
+    const contentBottom = scrollEl.getBoundingClientRect().bottom - borderBottom - padBottom;
+    const avail = Math.max(0, contentBottom - cardsEl.getBoundingClientRect().top);
+    const raw = (avail - 3 * HUB_CARD_GAP_PX) / 3.5;
+    const h = Math.max(HUB_CARD_MIN_HEIGHT_PX, Math.round(raw * 10) / 10);
+    setHubCardHeightPx(h);
+  }, []);
+
+  useLayoutEffect(() => {
+    measureHubCardHeight();
+    const scrollEl = mainScrollRef.current;
+    const columnEl = hubColumnRef.current;
+    const vv = window.visualViewport;
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => measureHubCardHeight()) : null;
+    if (ro && scrollEl) ro.observe(scrollEl);
+    if (ro && columnEl) ro.observe(columnEl);
+    window.addEventListener('resize', measureHubCardHeight);
+    vv?.addEventListener('resize', measureHubCardHeight);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', measureHubCardHeight);
+      vv?.removeEventListener('resize', measureHubCardHeight);
+    };
+  }, [measureHubCardHeight, session?.user, authLoading, hubCmsStatus]);
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -540,6 +577,7 @@ export default function UserHome() {
       </header>
 
       <div
+        ref={mainScrollRef}
         style={{
           flex: 1,
           minHeight: 0,
@@ -557,6 +595,7 @@ export default function UserHome() {
         }}
       >
         <div
+          ref={hubColumnRef}
           style={{
             ...hubInstagramColumnWrapStyle,
             width: '100%',
@@ -568,10 +607,9 @@ export default function UserHome() {
             paddingTop: 8,
             paddingBottom: 4,
             boxSizing: 'border-box',
-            flex: 1,
-            minHeight: 0,
             display: 'flex',
             flexDirection: 'column',
+            flexShrink: 0,
           }}
         >
           {session?.user ? (
@@ -647,12 +685,11 @@ export default function UserHome() {
           ) : null}
 
           <div
+            ref={hubCardsStackRef}
             style={{
-              flex: 1,
-              minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
-              gap: 6,
+              gap: HUB_CARD_GAP_PX,
               width: '100%',
               marginBottom: 0,
             }}
@@ -668,7 +705,8 @@ export default function UserHome() {
                 style={{
                   position: 'relative',
                   width: '100%',
-                  flex: '1 1 0',
+                  flex: '0 0 auto',
+                  height: hubCardHeightPx,
                   minHeight: HUB_CARD_MIN_HEIGHT_PX,
                   textAlign: 'left',
                   border: 'none',
@@ -757,9 +795,9 @@ export default function UserHome() {
         {!isPwaStandalone() ? (
           <div
             style={{
-              marginTop: 'auto',
               flexShrink: 0,
               width: '100%',
+              paddingBottom: 16,
               maxWidth: Math.min(HUB_COLUMN_MAX, hubBottomNavMaxWidthPx),
               marginLeft: 'auto',
               marginRight: 'auto',
