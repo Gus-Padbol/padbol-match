@@ -1434,6 +1434,7 @@ export default function ReservaForm() {
     const precioFinal = Math.max(0, precio - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
+      sede_id: sedeSeleccionada.id,
       sede: sedeSeleccionada.nombre,
       fecha: formData.fecha,
       hora: formData.hora,

@@ -70,6 +70,7 @@ import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/t
 import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDistribucionModal';
 import AdminClubOnboardingTour, { readOnboardingDone } from '../components/AdminClubOnboardingTour';
 import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSection';
+import AdminSponsorsSection from '../components/AdminSponsorsSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -8759,6 +8760,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </span>
           )}
         </div>
+
+        <AdminSponsorsSection />
 
       </div>}
 

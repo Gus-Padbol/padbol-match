@@ -354,6 +354,8 @@ export default function TorneoTabbedView({
   userProfile = null,
   /** Si viene definido, ícono compartir (esquina superior derecha del bloque título del torneo). */
   shareTorneoMeta = null,
+  /** Sponsor vigente (torneo/sede/país/global) — línea «Presentado por» bajo el título. */
+  presentadoPorSponsor = null,
 }) {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
@@ -2083,6 +2085,35 @@ export default function TorneoTabbedView({
               {sedeUbicacion ? ` · ${sedeUbicacion}` : ''}
             </span>
           </p>
+        ) : null}
+        {presentadoPorSponsor &&
+        (presentadoPorSponsor.nombre || presentadoPorSponsor.logo_url) ? (
+          <div
+            style={{
+              marginTop: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              gap: 10,
+              padding: '10px 12px',
+              borderRadius: 12,
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>Presentado por</span>
+            {presentadoPorSponsor.logo_url ? (
+              <img
+                src={presentadoPorSponsor.logo_url}
+                alt=""
+                style={{ maxHeight: 36, maxWidth: 120, objectFit: 'contain' }}
+              />
+            ) : null}
+            {presentadoPorSponsor.nombre ? (
+              <span style={{ fontSize: 15, fontWeight: 900, color: '#0f172a' }}>{presentadoPorSponsor.nombre}</span>
+            ) : null}
+          </div>
         ) : null}
         <p style={{ margin: '6px 0 4px', fontWeight: 700, color: '#475569', fontSize: 'clamp(0.85rem, 2.8vw, 0.95rem)' }}>
           🎾 {resumenDeporteFormatoTorneo(torneo)}

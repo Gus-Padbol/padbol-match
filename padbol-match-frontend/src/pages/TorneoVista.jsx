@@ -32,6 +32,7 @@ import {
   puedeExportarJugadoresTorneoExcel,
 } from '../utils/torneoAdminAccess';
 import { clearAdminNavContext } from '../utils/adminNavContext';
+import { useSponsor } from '../hooks/useSponsor';
 import {
   fetchJugadoresPerfilPorJugadores,
   buildJugadorPerfilLookupMaps,
@@ -97,6 +98,30 @@ export default function TorneoVista() {
     [session?.user?.id]
   );
   const sedeTorneo = torneo ? sedesMap[String(torneo.sede_id)] : null;
+
+  const torneoIdNum = useMemo(() => {
+    const n = parseInt(String(torneoId), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [torneoId]);
+
+  const sedeIdParaSponsor = useMemo(() => {
+    if (torneo?.sede_id == null) return null;
+    const n = Number(torneo.sede_id);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [torneo?.sede_id]);
+
+  const sponsorTorneoEnabled = !loading && Boolean(torneo);
+  const { sponsor: sponsorPresentadoRaw } = useSponsor(sedeIdParaSponsor, torneoIdNum, {
+    enabled: sponsorTorneoEnabled,
+  });
+
+  const presentadoPorSponsor = useMemo(() => {
+    if (!sponsorPresentadoRaw || !String(sponsorPresentadoRaw.nombre || '').trim()) return null;
+    return {
+      nombre: String(sponsorPresentadoRaw.nombre).trim(),
+      logo_url: sponsorPresentadoRaw.logo_url ? String(sponsorPresentadoRaw.logo_url).trim() : '',
+    };
+  }, [sponsorPresentadoRaw]);
 
   const jugadoresParaLookupVista = useMemo(() => {
     const out = [];
@@ -1220,6 +1245,7 @@ export default function TorneoVista() {
           stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname)}
           showTorneoLogo
           shareTorneoMeta={torneo && torneoShareUrl ? torneoShareMeta : null}
+          presentadoPorSponsor={presentadoPorSponsor}
           apiBaseUrl={apiBaseUrlTorneo}
           puedeExportarJugadoresExcel={puedeExportarJugadoresExcelVista}
           adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}

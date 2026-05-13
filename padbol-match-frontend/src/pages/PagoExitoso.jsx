@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -10,6 +10,8 @@ import { clearMpReservaPendingSlot } from '../utils/reservaReturnUrl';
 import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
+import { useSponsor } from '../hooks/useSponsor';
+import SponsorBannerReserva from '../components/SponsorBannerReserva';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -32,6 +34,20 @@ export default function PagoExitoso() {
   const [pagoKind, setPagoKind] = useState(null);
   const [torneoInscripcion, setTorneoInscripcion] = useState(null);
   const savedRef = useRef(false);
+
+  const reservaSedeId = useMemo(() => {
+    if (!reserva) return null;
+    const raw = reserva.sede_id ?? reserva.sedeId;
+    const n = parseInt(String(raw), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [reserva]);
+
+  const sponsorReservaEnabled =
+    !saving && !saveError && pagoKind === 'reserva' && Boolean(reserva);
+
+  const { sponsor: sponsorReserva } = useSponsor(reservaSedeId, null, {
+    enabled: sponsorReservaEnabled,
+  });
 
   useEffect(() => {
     if (savedRef.current) return;
@@ -405,6 +421,8 @@ export default function PagoExitoso() {
                 )}
               </div>
             )}
+
+            <SponsorBannerReserva sponsor={sponsorReserva} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
