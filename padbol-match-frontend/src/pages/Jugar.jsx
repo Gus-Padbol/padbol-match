@@ -5,11 +5,11 @@ import BottomNav from '../components/BottomNav';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
 
 const IMG_RESERVA =
-  'https://images.unsplash.com/photo-1529900740304-2e06a23f9fee?w=800&q=80';
+  'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80';
 const IMG_BUSCAR =
-  'https://images.unsplash.com/photo-1575367420392-2c71baa18656?w=800&q=80';
+  'https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=800&q=80';
 const IMG_ARMAR =
-  'https://images.unsplash.com/photo-1624526267942-ab0d87887cfd?w=800&q=80';
+  'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80';
 
 const opciones = [
   {
@@ -32,6 +32,8 @@ const opciones = [
   },
 ];
 
+const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
+
 export default function Jugar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,15 +47,31 @@ export default function Jugar() {
     <div
       style={{
         minHeight: '100dvh',
-        background: '#FFFFFF',
+        background: 'var(--bg-page)',
         paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
       }}
     >
       <AppHeader title="Jugar" />
-      <main style={{ width: '100%', maxWidth: 460, margin: '0 auto', padding: '20px 16px', boxSizing: 'border-box' }}>
-        <h1 style={{ color: '#0F0F0F', margin: '0 0 20px', fontSize: 26, lineHeight: 1.15, fontWeight: 700 }}>
+      <main
+        style={{
+          width: '100%',
+          maxWidth: 460,
+          margin: '0 auto',
+          padding: '20px 16px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <h1
+          style={{
+            color: 'var(--text-primary)',
+            margin: '0 0 20px',
+            fontSize: 26,
+            lineHeight: 1.15,
+            fontWeight: 700,
+          }}
+        >
           ¡Vamos a jugar!
         </h1>
         <div style={{ display: 'grid', gap: 14 }}>
@@ -64,29 +82,70 @@ export default function Jugar() {
               onClick={() => navigate(`${op.path}${deporteQ}`)}
               style={{
                 textAlign: 'left',
-                border: '1px solid #E0E0E0',
+                border: '1px solid var(--border)',
                 borderRadius: 12,
-                background: '#FFFFFF',
+                background: 'var(--bg-card)',
                 padding: 0,
                 overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
                 cursor: 'pointer',
                 display: 'block',
               }}
             >
               <div
                 style={{
-                  height: 120,
-                  background: `#6B6B6B url(${op.image}) center/cover no-repeat`,
+                  position: 'relative',
+                  height: 140,
+                  backgroundColor: '#1a1a1a',
+                  backgroundImage: `url(${op.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
                 }}
-              />
-              <div style={{ padding: 16 }}>
-                <strong style={{ display: 'block', color: '#0F0F0F', fontSize: 17, fontWeight: 700, marginBottom: 6 }}>
-                  {op.title}
-                </strong>
-                <span style={{ display: 'block', color: '#6B6B6B', fontSize: 14, fontWeight: 400, lineHeight: 1.45 }}>
-                  {op.body}
-                </span>
+              >
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: CARD_OVERLAY,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 12,
+                    right: 12,
+                    bottom: 10,
+                    zIndex: 1,
+                  }}
+                >
+                  <strong
+                    style={{
+                      display: 'block',
+                      color: '#fff',
+                      fontSize: 17,
+                      fontWeight: 800,
+                      lineHeight: 1.15,
+                      textShadow: '0 1px 3px rgba(0,0,0,0.45)',
+                    }}
+                  >
+                    {op.title}
+                  </strong>
+                  <span
+                    style={{
+                      display: 'block',
+                      marginTop: 4,
+                      color: '#fff',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      lineHeight: 1.35,
+                      textShadow: '0 1px 3px rgba(0,0,0,0.45)',
+                    }}
+                  >
+                    {op.body}
+                  </span>
+                </div>
               </div>
             </button>
           ))}

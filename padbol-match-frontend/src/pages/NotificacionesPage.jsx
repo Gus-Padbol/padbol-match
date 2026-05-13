@@ -119,7 +119,7 @@ export default function NotificacionesPage() {
     <div
       style={{
         minHeight: '100dvh',
-        background: '#FFFFFF',
+        background: 'var(--bg-page)',
         paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
@@ -130,14 +130,17 @@ export default function NotificacionesPage() {
         {!session?.user ? (
           <section
             style={{
-              border: '1px solid #E0E0E0',
+              border: '1px solid var(--border)',
               borderRadius: 12,
               padding: 20,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              background: 'var(--bg-card)',
+              boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
               textAlign: 'center',
             }}
           >
-            <p style={{ margin: '0 0 16px', color: '#6B6B6B', fontSize: 15, fontWeight: 400 }}>Iniciá sesión para ver tus avisos.</p>
+            <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 400 }}>
+              Iniciá sesión para ver tus avisos.
+            </p>
             <button
               type="button"
               onClick={() => navigate('/login?redirect=/notificaciones')}
@@ -158,7 +161,7 @@ export default function NotificacionesPage() {
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0F0F0F' }}>Tus notificaciones</h1>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>Tus notificaciones</h1>
               {unreadIds.length ? (
                 <button
                   type="button"
@@ -179,18 +182,19 @@ export default function NotificacionesPage() {
               ) : null}
             </div>
             {loading ? (
-              <p style={{ color: '#6B6B6B', textAlign: 'center', padding: 24 }}>Cargando…</p>
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 24 }}>Cargando…</p>
             ) : msg ? (
-              <p style={{ color: '#C41219', fontWeight: 600 }}>{msg}</p>
+              <p style={{ color: 'var(--accent)', fontWeight: 600 }}>{msg}</p>
             ) : items.length === 0 ? (
               <section
                 style={{
-                  border: '1px solid #E0E0E0',
+                  border: '1px solid var(--border)',
                   borderRadius: 12,
                   padding: 24,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  background: 'var(--bg-card)',
+                  boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
                   textAlign: 'center',
-                  color: '#6B6B6B',
+                  color: 'var(--text-secondary)',
                 }}
               >
                 Sin notificaciones por ahora.
@@ -204,12 +208,12 @@ export default function NotificacionesPage() {
                     onClick={() => void onItem(n)}
                     style={{
                       textAlign: 'left',
-                      border: '1px solid #E0E0E0',
-                      borderLeft: n.leida ? '4px solid #E0E0E0' : '4px solid #E11B22',
+                      border: '1px solid var(--border)',
+                      borderLeft: n.leida ? '4px solid var(--border)' : '4px solid var(--accent)',
                       borderRadius: 12,
                       padding: 16,
-                      background: n.leida ? '#FFFFFF' : '#FFF5F5',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                      background: n.leida ? 'var(--bg-card)' : 'rgba(225, 27, 34, 0.12)',
+                      boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.06))',
                       cursor: 'pointer',
                     }}
                   >
@@ -218,8 +222,8 @@ export default function NotificacionesPage() {
                         display: 'inline-block',
                         fontSize: 10,
                         fontWeight: 700,
-                        color: '#E11B22',
-                        background: 'rgba(225,27,34,0.1)',
+                        color: 'var(--accent)',
+                        background: 'rgba(225,27,34,0.12)',
                         padding: '3px 8px',
                         borderRadius: 6,
                         marginBottom: 8,
@@ -227,11 +231,24 @@ export default function NotificacionesPage() {
                     >
                       {TIPO_ETIQUETA[n.tipo] || 'Aviso'}
                     </span>
-                    <strong style={{ display: 'block', color: '#0F0F0F', fontSize: 15, fontWeight: 700 }}>{n.titulo}</strong>
-                    <span style={{ display: 'block', color: '#6B6B6B', fontSize: 14, lineHeight: 1.45, marginTop: 6, fontWeight: 400 }}>
+                    <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 15, fontWeight: 700 }}>
+                      {n.titulo}
+                    </strong>
+                    <span
+                      style={{
+                        display: 'block',
+                        color: 'var(--text-secondary)',
+                        fontSize: 14,
+                        lineHeight: 1.45,
+                        marginTop: 6,
+                        fontWeight: 400,
+                      }}
+                    >
                       {n.mensaje}
                     </span>
-                    <span style={{ display: 'block', color: '#6B6B6B', fontSize: 12, marginTop: 8 }}>{fechaNotifLabel(n.created_at)}</span>
+                    <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, marginTop: 8 }}>
+                      {fechaNotifLabel(n.created_at)}
+                    </span>
                   </button>
                 ))}
               </div>

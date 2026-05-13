@@ -1896,17 +1896,50 @@ export default function ReservaForm() {
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: '20px' }}>⚽ Resumen de reserva</h1>
 
-          <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
-            <p style={{ margin: '0 0 8px' }}><strong>📍 Sede:</strong> {sedeSeleccionada?.nombre}</p>
-            <p style={{ margin: '0 0 8px' }}><strong>📅 Fecha:</strong> {formData.fecha}</p>
-            <p style={{ margin: '0 0 8px' }}><strong>🕐 Hora:</strong> {formData.hora}</p>
-            <p style={{ margin: '0 0 8px' }}><strong>⏱️ Duración:</strong> {duracionReservaMinP4} min</p>
-            <p style={{ margin: '0 0 8px' }}><strong>🏟️ Cancha:</strong> {formData.cancha}</p>
-            <p style={{ margin: '0 0 8px' }}><strong>👤 Jugador:</strong> {currentCliente?.nombre}</p>
-            <p style={{ margin: '0 0 8px' }}><strong>📧 Email:</strong> {currentCliente?.email}</p>
+          <div
+            className="reserva-resumen-datos"
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              padding: '20px',
+              borderRadius: '8px',
+              marginBottom: '20px',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
+              <strong>📍 Sede:</strong> {sedeSeleccionada?.nombre || '—'}
+            </p>
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
+              <strong>📅 Fecha:</strong> {formData.fecha || '—'}
+            </p>
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
+              <strong>🕐 Hora:</strong> {formData.hora || '—'}
+            </p>
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
+              <strong>⏱️ Duración:</strong> {duracionReservaMinP4} min
+            </p>
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
+              <strong>🏟️ Cancha:</strong>{' '}
+              {(() => {
+                const id = formData.cancha != null && String(formData.cancha).trim() !== '' ? String(formData.cancha) : '';
+                if (!id) return '—';
+                const match = Array.isArray(canchasDisponibles)
+                  ? canchasDisponibles.find((c) => String(c?.num ?? c?.id ?? c?.cancha_id ?? '') === id)
+                  : null;
+                const label = match && (match.label || match.nombre || match.descripcion);
+                return label ? `${label} (${id})` : id;
+              })()}
+            </p>
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
+              <strong>👤 Jugador:</strong> {currentCliente?.nombre || '—'}
+            </p>
+            <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
+              <strong>📧 Email:</strong> {currentCliente?.email || '—'}
+            </p>
             {precio ? (
               metodoPagoStripe ? (
-                <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: '#333' }}>
+                <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
                   <p style={{ margin: '0 0 4px' }}>
                     <strong>Reserva:</strong>{' '}
                     {formatMoneyMain(stripeMinorToMain(montoBaseMinor, moneda), moneda)}
@@ -1923,7 +1956,7 @@ export default function ReservaForm() {
                 <p style={{ margin: '12px 0 0', fontSize: '18px', fontWeight: 800, color: '#d32f2f' }}>
                   💰 {Number(precio).toLocaleString('es-AR')} {moneda}
                   {metodoPagoEfectivo ? (
-                    <span style={{ display: 'block', marginTop: '8px', fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+                    <span style={{ display: 'block', marginTop: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                       Sin cargo del 3% de Padbol Match (cobro en sede).
                     </span>
                   ) : null}

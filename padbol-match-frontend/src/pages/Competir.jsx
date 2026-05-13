@@ -32,7 +32,7 @@ export default function Competir() {
     <div
       style={{
         minHeight: '100dvh',
-        background: '#FFFFFF',
+        background: 'var(--bg-page)',
         paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
@@ -40,8 +40,10 @@ export default function Competir() {
     >
       <AppHeader title="Competir" />
       <main style={{ width: '100%', maxWidth: 460, margin: '0 auto', padding: '20px 16px', boxSizing: 'border-box' }}>
-        <h1 style={{ color: '#0F0F0F', margin: '0 0 8px', fontSize: 26, lineHeight: 1.1, fontWeight: 700 }}>¿Cómo quieres competir?</h1>
-        <p style={{ color: '#6B6B6B', margin: '0 0 20px', fontSize: 15, lineHeight: 1.5, fontWeight: 400 }}>
+        <h1 style={{ color: 'var(--text-primary)', margin: '0 0 8px', fontSize: 26, lineHeight: 1.1, fontWeight: 700 }}>
+          ¿Cómo quieres competir?
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', margin: '0 0 20px', fontSize: 15, lineHeight: 1.5, fontWeight: 400 }}>
           Torneos oficiales o consulta el ranking de jugadores.
         </p>
         <div style={{ display: 'grid', gap: 14 }}>
@@ -55,20 +57,24 @@ export default function Competir() {
                 gap: 14,
                 alignItems: 'center',
                 textAlign: 'left',
-                border: '1px solid #E0E0E0',
+                border: '1px solid var(--border)',
                 borderRadius: 12,
-                background: '#FFFFFF',
+                background: 'var(--bg-card)',
                 padding: 16,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
                 cursor: 'pointer',
               }}
             >
               <span style={{ fontSize: 28, width: 42, textAlign: 'center' }}>{op.icon}</span>
               <span style={{ minWidth: 0, flex: 1 }}>
-                <strong style={{ display: 'block', color: '#0F0F0F', fontSize: 17, marginBottom: 4, fontWeight: 700 }}>{op.title}</strong>
-                <span style={{ display: 'block', color: '#6B6B6B', fontSize: 14, lineHeight: 1.45, fontWeight: 400 }}>{op.body}</span>
+                <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 17, marginBottom: 4, fontWeight: 700 }}>
+                  {op.title}
+                </strong>
+                <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.45, fontWeight: 400 }}>
+                  {op.body}
+                </span>
               </span>
-              <span style={{ color: '#E11B22', fontSize: 20, fontWeight: 700 }}>›</span>
+              <span style={{ color: 'var(--accent)', fontSize: 20, fontWeight: 700 }}>›</span>
             </button>
           ))}
         </div>
