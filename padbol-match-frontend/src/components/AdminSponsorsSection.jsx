@@ -33,10 +33,10 @@ const successBannerStyle = {
   lineHeight: 1.45,
 };
 
-function scrollToEl(ref) {
+function scrollToEl(ref, block = 'center') {
   requestAnimationFrame(() => {
     try {
-      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      ref.current?.scrollIntoView({ behavior: 'smooth', block });
     } catch {
       /* ignore */
     }
@@ -163,7 +163,13 @@ export default function AdminSponsorsSection() {
     });
     setMsg('');
     setFieldErrors({});
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      try {
+        formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        /* ignore */
+      }
+    }, 0);
   };
 
   const onLogoFile = async (e) => {
@@ -259,7 +265,7 @@ export default function AdminSponsorsSection() {
     setSaving(true);
     setMsg('');
     try {
-      if (form.id != null) {
+      if (form.id != null && form.id !== '') {
         const { error } = await supabase.from('sponsors').update(payload).eq('id', form.id);
         if (error) throw error;
         setFieldErrors({});
@@ -335,7 +341,9 @@ export default function AdminSponsorsSection() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         }}
       >
-        <h3 style={{ margin: '0 0 14px', fontSize: 16, color: '#0f172a' }}>{form.id != null ? 'Editar sponsor' : 'Nuevo sponsor'}</h3>
+        <h3 style={{ margin: '0 0 14px', fontSize: 16, color: '#0f172a' }}>
+          {form.id != null && form.id !== '' ? 'Editar sponsor' : 'Nuevo sponsor'}
+        </h3>
 
         <div ref={nombreRef} style={{ marginBottom: 12 }}>
           <label style={{ ...labelStyle, color: '#334155' }}>Nombre de la marca *</label>
@@ -574,7 +582,7 @@ export default function AdminSponsorsSection() {
             >
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
-            {form.id != null ? (
+            {form.id != null && form.id !== '' ? (
               <button
                 type="button"
                 disabled={saving}
@@ -583,12 +591,13 @@ export default function AdminSponsorsSection() {
                   padding: '12px 18px',
                   borderRadius: 10,
                   border: '1px solid #cbd5e1',
-                  background: '#f8fafc',
+                  background: '#e2e8f0',
+                  color: '#334155',
                   fontWeight: 700,
                   cursor: saving ? 'not-allowed' : 'pointer',
                 }}
               >
-                Cancelar edición
+                Cancelar
               </button>
             ) : null}
           </div>
