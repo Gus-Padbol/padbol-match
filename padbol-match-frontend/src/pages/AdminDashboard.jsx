@@ -8649,7 +8649,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           const pctSum = [1,2,3,4,5,6,7,8,9,10].reduce((acc, pos) => acc + (configPosiciones[pos] ?? 0), 0);
           const pctDiff = pctSum - 100;
           return (
-            <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: 0 }}>
               <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: '4px', marginBottom: '8px', fontSize: '16px' }}>
                 Distribución de puntos por posición
               </h3>
@@ -8715,27 +8715,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           );
         })()}
 
-        <div
-          style={{
-            marginBottom: '20px',
-            padding: '12px 14px',
-            background: 'rgba(255,255,255,0.08)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.12)',
-            maxWidth: '640px',
-          }}
-        >
-          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
-            <strong>Datos de la sede:</strong> si tienes la pestaña <strong>«Mi Sede»</strong>, usa el botón{' '}
-            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
-            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
-            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
-            se ofrecen en el flujo de reservas público.
-          </p>
-        </div>
-
-        {/* Save button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
+        {/* Save button — directly under distribution (no info block in between) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '10px', marginBottom: '16px' }}>
           <button
             onClick={guardarConfig}
             disabled={configSaving}
@@ -8759,6 +8740,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               {configMsg}
             </span>
           )}
+        </div>
+
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '12px 14px',
+            background: 'rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            maxWidth: '640px',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
+            <strong>Datos de la sede:</strong> si tienes la pestaña <strong>«Mi Sede»</strong>, usa el botón{' '}
+            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
+            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
+            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
+            se ofrecen en el flujo de reservas público.
+          </p>
         </div>
 
         <AdminSponsorsSection />
