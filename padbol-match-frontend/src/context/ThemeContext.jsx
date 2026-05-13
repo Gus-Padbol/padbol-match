@@ -2,6 +2,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
@@ -9,14 +10,26 @@ import React, {
 
 export const PADBOL_THEME_STORAGE_KEY = 'padbol_theme';
 
-function readInitialTheme() {
-  if (typeof window === 'undefined') return 'light';
+/** Misma preferencia que `padbol_theme` (hub / panel admin / script en index.html). */
+export const THEME_PUBLIC_STORAGE_KEY = 'theme';
+
+function readStoredThemePreference() {
+  if (typeof window === 'undefined') return null;
   try {
-    const v = localStorage.getItem(PADBOL_THEME_STORAGE_KEY);
-    if (v === 'dark' || v === 'light') return v;
+    const primary = localStorage.getItem(PADBOL_THEME_STORAGE_KEY);
+    if (primary === 'dark' || primary === 'light') return primary;
+    const mirror = localStorage.getItem(THEME_PUBLIC_STORAGE_KEY);
+    if (mirror === 'dark' || mirror === 'light') return mirror;
   } catch {
     /* ignore */
   }
+  return null;
+}
+
+function readInitialTheme() {
+  const stored = readStoredThemePreference();
+  if (stored) return stored;
+  if (typeof window === 'undefined') return 'light';
   try {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
@@ -26,10 +39,21 @@ function readInitialTheme() {
   }
 }
 
+function persistThemeKeys(normalized) {
+  try {
+    localStorage.setItem(PADBOL_THEME_STORAGE_KEY, normalized);
+    localStorage.setItem(THEME_PUBLIC_STORAGE_KEY, normalized);
+  } catch {
+    /* ignore */
+  }
+}
+
 function applyThemeClassToDocument(theme) {
   const root = document.documentElement;
   root.classList.remove('theme-dark', 'theme-light');
   root.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+  if (theme === 'dark') root.classList.add('dark');
+  else root.classList.remove('dark');
   try {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
@@ -49,11 +73,7 @@ export function ThemeProvider({ children }) {
     setThemeState((prev) => {
       const resolved = typeof next === 'function' ? next(prev) : next;
       const normalized = resolved === 'dark' ? 'dark' : 'light';
-      try {
-        localStorage.setItem(PADBOL_THEME_STORAGE_KEY, normalized);
-      } catch {
-        /* ignore */
-      }
+      persistThemeKeys(normalized);
       return normalized;
     });
   }, []);
@@ -65,6 +85,23 @@ export function ThemeProvider({ children }) {
   useLayoutEffect(() => {
     applyThemeClassToDocument(theme);
   }, [theme]);
+
+  /** Alinea ambas claves si solo existía una; otra pestaña del navegador vía `storage`. */
+  useEffect(() => {
+    persistThemeKeys(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.storageArea !== localStorage) return;
+      if (e.key !== PADBOL_THEME_STORAGE_KEY && e.key !== THEME_PUBLIC_STORAGE_KEY) return;
+      const v = e.newValue;
+      if (v !== 'dark' && v !== 'light') return;
+      setThemeState(v);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const value = useMemo(
     () => ({

@@ -14,6 +14,7 @@ import {
 } from '../constants/hubLayout';
 import JugadorNotificationsBell from './JugadorNotificationsBell';
 import HubThemeSettingsButton from './HubThemeSettingsButton';
+import { useTheme } from '../context/ThemeContext';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -103,6 +104,7 @@ export default function AppHeader({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme } = useTheme();
   const { session, signOutAndClear, userProfile, loading: authLoading } = useAuth();
   const titleStr = String(title ?? '').trim();
   const hideLogoutEffective = hideLogout;
@@ -794,9 +796,9 @@ export default function AppHeader({
               maxWidth: 'min(58vw, 220px)',
               padding: '3px 8px 3px 3px',
               borderRadius: '999px',
-              border: '1px solid rgba(255,255,255,0.28)',
-              background: 'rgba(255,255,255,0.12)',
-              color: '#f8fafc',
+              border: '1px solid var(--border)',
+              background: 'var(--pm-color-muted-bg)',
+              color: 'var(--text-primary)',
               cursor: 'pointer',
               flexShrink: 1,
               minWidth: 0,
@@ -812,7 +814,7 @@ export default function AppHeader({
                   borderRadius: '50%',
                   objectFit: 'cover',
                   flexShrink: 0,
-                  border: '1px solid rgba(255,255,255,0.25)',
+                  border: '1px solid var(--border)',
                 }}
               />
             ) : (
@@ -829,6 +831,7 @@ export default function AppHeader({
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
+                  border: '1px solid var(--border)',
                 }}
               >
                 {adminMinimalInicial}
@@ -859,7 +862,7 @@ export default function AppHeader({
             flexShrink: 0,
           }}
         >
-          {session?.user ? <HubThemeSettingsButton compact barOnDark /> : null}
+          {session?.user ? <HubThemeSettingsButton compact barOnDark={theme === 'dark'} /> : null}
           {showLogoutAdminHeader && session?.user ? (
             <button
               type="button"
@@ -875,8 +878,8 @@ export default function AppHeader({
                 padding: 0,
                 borderRadius: '50%',
                 border: 'none',
-                background: 'rgba(255,255,255,0.1)',
-                color: '#e2e8f0',
+                background: 'var(--pm-color-muted-bg)',
+                color: 'var(--text-primary)',
                 fontSize: 16,
                 lineHeight: 1,
                 cursor: 'pointer',
@@ -899,11 +902,11 @@ export default function AppHeader({
         className="app-header-shell"
         style={{
           minHeight: '56px',
-          background: '#0f172a',
+          background: 'var(--nav-bg)',
           paddingBottom: '8px',
           paddingLeft: padL,
           paddingRight: padR,
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid var(--nav-border)',
         }}
       >
         <div

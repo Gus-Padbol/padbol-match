@@ -419,33 +419,38 @@
   }
 }
 
-/* ─── Panel Super Admin: fondo #0F172A; cards gris 800; tablas legibles ─── */
+/* ─── Panel Super Admin: colores ligados a `html.theme-dark` / `html.theme-light` (ThemeContext) ─── */
 .admin-dashboard--super {
-  background: #0f172a !important;
-  color: #e2e8f0;
+  background: var(--bg-page) !important;
+  color: var(--text-primary);
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form),
 .admin-dashboard--super .card {
-  background: #1f2937 !important;
-  border: 1px solid #374151 !important;
-  color: #f8fafc !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+html.theme-dark .admin-dashboard--super .section:not(.admin-mi-sede-form),
+html.theme-dark .admin-dashboard--super .card {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) h2,
 .admin-dashboard--super .section:not(.admin-mi-sede-form) h3 {
-  color: #f8fafc !important;
-  border-bottom-color: #e11b22 !important;
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--accent) !important;
 }
 
 .admin-dashboard--super .card h2 {
-  color: #cbd5e1 !important;
-  border-bottom-color: #e11b22 !important;
+  color: var(--text-secondary) !important;
+  border-bottom-color: var(--accent) !important;
 }
 
 .admin-dashboard--super .card .currency {
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
 }
 
 .admin-dashboard--super .card .count,
@@ -454,23 +459,23 @@
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-fila {
-  background: rgba(255, 255, 255, 0.06);
-  border-left-color: #e11b22;
+  background: var(--pm-color-muted-bg);
+  border-left-color: var(--accent);
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila {
-  background: rgba(255, 255, 255, 0.06);
-  border-left-color: #e11b22;
+  background: var(--pm-color-muted-bg);
+  border-left-color: var(--accent);
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos {
-  background: #1f2937 !important;
-  border-left-color: #4b5563 !important;
+  background: var(--bg-card) !important;
+  border-left-color: var(--border) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos .ingreso-codigo,
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos .ingreso-valor {
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-valor.ingreso-valor--sin-ingresos-msg {
@@ -489,19 +494,19 @@
 }
 
 .admin-dashboard--super .admin-analytics-sedes-por-pais {
-  border-top-color: rgba(255, 255, 255, 0.12) !important;
+  border-top-color: var(--border) !important;
 }
 
 .admin-dashboard--super .admin-analytics-sedes-por-pais h3 {
-  color: rgba(248, 250, 252, 0.95) !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-dashboard--super .admin-analytics-sedes-por-pais ol {
-  color: #e2e8f0 !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-dashboard--super .admin-analytics-sedes-por-pais ol strong {
-  color: #f8fafc !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok {
@@ -510,53 +515,69 @@
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-codigo {
+  color: #166534 !important;
+}
+
+html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-codigo {
   color: #bbf7d0 !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-valor {
+  color: #14532d !important;
+}
+
+html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-valor {
   color: #dcfce7 !important;
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-codigo {
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-valor {
   color: #fecaca !important;
 }
 
+html.theme-light .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-valor {
+  color: #b91c1c !important;
+}
+
 .admin-dashboard--super .section:not(.admin-mi-sede-form) table {
-  background-color: #1f2937 !important;
+  background-color: var(--bg-card) !important;
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) tbody td {
-  color: #e2e8f0 !important;
-  border-bottom-color: #374151 !important;
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--border) !important;
 }
 
 .admin-dashboard--super .sedes-admin-filter-label {
-  color: #cbd5e1 !important;
+  color: var(--text-secondary) !important;
 }
 
 .admin-dashboard--super .sedes-admin-filter-select {
-  background: #111827 !important;
-  color: #f1f5f9 !important;
-  border-color: #4b5563 !important;
+  background: var(--pm-color-muted-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
 }
 
 .admin-dashboard--super .sede-admin-card {
-  background: #1f2937 !important;
-  border-color: #374151 !important;
-  color: #e5e7eb !important;
+  background: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12) !important;
+}
+
+html.theme-dark .admin-dashboard--super .sede-admin-card {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
 }
 
 .admin-dashboard--super .admin-torneo-list-card {
-  background: #1f2937 !important;
-  border-color: #374151 !important;
-  color: #e2e8f0 !important;
+  background: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-dashboard--super .admin-torneo-list-card label {
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
 }
