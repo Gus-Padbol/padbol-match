@@ -45,7 +45,6 @@ const SEDE_DS = {
   brand: 'var(--accent)',
 };
 
-/** Misma apariencia que el CTA inferior «Reservar cancha» en esta vista. */
 /** CTAs principales: no al borde lateral, centrados. */
 const SEDE_CTA_NARROW_CENTERED = {
   width: '85%',
@@ -1838,8 +1837,6 @@ export default function SedePublica() {
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const desc = sede.descripcion ? String(sede.descripcion).trim() : '';
         const fraseHero = desc || SEDE_HERO_FRASE_DEFAULT;
-        const nombreSedeCta = String(sede.nombre || 'esta sede').trim();
-        const torneosCtaLabel = `Ver torneos de ${nombreSedeCta}`;
         return (
           <>
           <div
@@ -2518,64 +2515,6 @@ export default function SedePublica() {
               ) : null}
             </div>
             </div>
-            </div>
-
-            <div
-              style={{
-                flexShrink: 0,
-                width: '100%',
-                maxWidth: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
-                background: '#FFFFFF',
-                borderTop: `1px solid ${SEDE_DS.cardBorder}`,
-                paddingTop: '10px',
-                boxShadow: '0 -4px 16px rgba(15, 23, 42, 0.06)',
-                boxSizing: 'border-box',
-              }}
-            >
-              <div
-                style={{
-                  ...hubInstagramColumnWrapStyle,
-                  padding: '0 12px 6px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  alignItems: 'center',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
-                  title={torneosCtaLabel}
-                  style={{
-                    ...SEDE_CTA_NARROW_CENTERED,
-                    ...SEDE_BTN_VER_TORNEOS_STYLE,
-                    minWidth: 0,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <span
-                    style={{
-                      display: 'block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '100%',
-                    }}
-                  >
-                    {torneosCtaLabel}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
-                  style={{ ...SEDE_BTN_RESERVAR_CANCHA_STYLE, ...SEDE_CTA_NARROW_CENTERED }}
-                >
-                  ⚽ Reservar cancha
-                </button>
-              </div>
             </div>
           </div>
 

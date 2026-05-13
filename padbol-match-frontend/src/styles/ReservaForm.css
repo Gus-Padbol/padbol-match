@@ -8,7 +8,7 @@
   overflow-x: hidden;
 }
 
-/* Pantalla 1 /reservar: fondo degradado sin card (estilo registro) */
+/* Pantalla 1 /reservar: fondo de página según tema; el rojo de marca solo en CTAs (CSS/JSX). */
 .reserva-container.reserva-sede-seleccion {
   position: relative;
   width: 100%;
@@ -22,7 +22,7 @@
   padding-top: 0;
   padding-bottom: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #b91c1c 0%, #e11b22 50%, #991b1b 100%);
+  background: var(--bg-page);
 }
 
 .reserva-sede-seleccion .reserva-sede-inner {
@@ -52,14 +52,14 @@
   font-size: 15px;
   font-weight: 600;
   font-family: inherit;
-  color: #1e293b;
-  background-color: rgba(255, 255, 255, 0.92);
-  border: none;
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 50px;
-  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 18px center;
   background-size: 14px;
@@ -85,10 +85,9 @@
 
 .reserva-sede-seleccion .reserva-sede-title {
   text-align: center;
-  color: #fff;
+  color: var(--text-primary);
   font-size: clamp(1.15rem, 4.5vw, 1.45rem);
   font-weight: 800;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
   max-width: 100%;
   box-sizing: border-box;
   overflow-wrap: break-word;
@@ -99,7 +98,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--text-secondary);
   margin-bottom: 8px;
   margin-top: 4px;
   max-width: 100%;
@@ -132,9 +131,9 @@
 .reserva-sede-seleccion .reserva-pill {
   padding: 10px 16px;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.38);
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -150,16 +149,17 @@
 
 @media (hover: hover) {
   .reserva-sede-seleccion .reserva-pill:hover {
-    background: rgba(255, 255, 255, 0.24);
+    background: rgba(225, 27, 34, 0.08);
+    border-color: var(--accent);
     transform: translateY(-1px);
   }
 }
 
 .reserva-sede-seleccion .reserva-pill.is-active {
-  background: rgba(255, 255, 255, 0.95);
-  color: #991b1b;
-  border-color: #fff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  background: rgba(225, 27, 34, 0.14);
+  color: var(--text-primary);
+  border: 2px solid var(--accent);
+  box-shadow: 0 2px 10px rgba(225, 27, 34, 0.2);
 }
 
 .reserva-sede-seleccion .error-message {
@@ -169,12 +169,12 @@
 .reserva-sede-seleccion .reserva-pais-unico {
   font-size: 15px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
   margin-bottom: 18px;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--bg-card);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--border);
   max-width: 100%;
   box-sizing: border-box;
   overflow-wrap: anywhere;
@@ -205,9 +205,9 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
   font-size: 22px;
   line-height: 1;
   font-weight: 700;
@@ -222,7 +222,8 @@
 
 @media (hover: hover) {
   .reserva-sede-seleccion .reserva-pill-clear:hover {
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(225, 27, 34, 0.1);
+    color: var(--text-primary);
     transform: scale(1.05);
   }
 }
@@ -242,8 +243,8 @@
   gap: 10px;
   padding: 10px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -262,7 +263,7 @@
   min-width: 0;
   border: none;
   background: transparent;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 15px;
   font-weight: 600;
   outline: none;
@@ -270,7 +271,7 @@
 }
 
 .reserva-sede-seleccion .reserva-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -594,17 +595,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .reserva-sede-seleccion .reserva-sede-hero-title {
   margin: 14px 0 0;
-  color: #fff;
+  color: var(--text-primary);
   font-size: clamp(1.35rem, 5vw, 1.75rem);
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1.15;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
 }
 
 .reserva-sede-seleccion .reserva-sede-hero-sub {
   margin: 8px 0 0;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text-secondary);
   font-size: clamp(0.85rem, 3.2vw, 0.95rem);
   font-weight: 500;
   line-height: 1.35;
@@ -613,7 +613,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .reserva-sede-seleccion .reserva-sede-pais-question {
   display: block;
   margin: 0 0 10px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 15px;
   font-weight: 700;
   text-align: center;
@@ -649,11 +649,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
-  color: #1e293b;
-  background: rgba(255, 255, 255, 0.95);
-  border: none;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.14);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
   min-height: 52px;
 }
 
@@ -666,7 +666,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-color: var(--bg-card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 18px center;
   background-size: 14px;
@@ -693,9 +694,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 14px;
   padding: 14px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: var(--bg-card);
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--border);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -773,7 +774,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   line-height: 1.25;
 }
 
@@ -789,7 +790,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-secondary);
   line-height: 1.35;
 }
 
@@ -801,17 +802,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin: 2px 0 0;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .reserva-sede-seleccion .reserva-sede-card-price {
   margin: 4px 0 0;
   font-size: 13px;
-  color: #334155;
+  color: var(--text-secondary);
 }
 
 .reserva-sede-seleccion .reserva-sede-card-price strong {
-  color: #b91c1c;
+  color: var(--accent);
   font-weight: 800;
 }
 
@@ -845,9 +846,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-align: center;
   font-size: 16px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 14px;
   line-height: 1.45;
 }
