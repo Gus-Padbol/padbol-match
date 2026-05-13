@@ -110,7 +110,7 @@ function LinkVerPerfilJugadorPublico({ jugador, style }) {
   const base = {
     fontSize: '11px',
     fontWeight: 700,
-    color: '#4f46e5',
+    color: '#b91c1c',
     textDecoration: 'underline',
     whiteSpace: 'nowrap',
   };
@@ -1785,10 +1785,10 @@ export default function FormEquipos() {
                     fontWeight: 600,
                     fontFamily: 'inherit',
                     cursor: 'pointer',
-                    border: active ? '1px solid #667eea' : '1px solid rgba(15, 23, 42, 0.18)',
-                    background: active ? '#667eea' : 'transparent',
+                    border: active ? '1px solid #E11B22' : '1px solid rgba(15, 23, 42, 0.18)',
+                    background: active ? '#E11B22' : 'transparent',
                     color: active ? '#fff' : '#334155',
-                    boxShadow: active ? '0 2px 10px rgba(102, 126, 234, 0.25)' : 'none',
+                    boxShadow: active ? '0 2px 10px rgba(225, 27, 34, 0.25)' : 'none',
                   }}
                 >
                   Equipo de {n}
@@ -2136,7 +2136,7 @@ export default function FormEquipos() {
             padding: '18px 20px',
             borderRadius: '16px',
             background: 'linear-gradient(135deg, #eef2ff 0%, #ffffff 55%)',
-            border: '2px solid #6366f1',
+            border: '2px solid #E11B22',
             boxShadow: '0 10px 36px rgba(79, 70, 229, 0.18)',
             textAlign: 'left',
           }}
@@ -2184,7 +2184,7 @@ export default function FormEquipos() {
                   fontSize: '11px',
                   fontWeight: 900,
                   letterSpacing: '0.14em',
-                  color: '#4338ca',
+                  color: '#b91c1c',
                   marginBottom: '8px',
                 }}
               >
@@ -2566,10 +2566,10 @@ export default function FormEquipos() {
               fontSize: '15px',
               fontWeight: 800,
               borderRadius: '12px',
-              border: '2px solid #6366f1',
+              border: '2px solid #E11B22',
               cursor: 'pointer',
               background: '#eef2ff',
-              color: '#4338ca',
+              color: '#b91c1c',
             }}
           >
             Ver equipos disponibles
@@ -2779,7 +2779,7 @@ export default function FormEquipos() {
                           borderRadius: '8px',
                           border: 'none',
                           cursor: 'pointer',
-                          background: '#4f46e5',
+                          background: '#b91c1c',
                           color: 'white',
                         }}
                       >
@@ -3087,7 +3087,7 @@ export default function FormEquipos() {
                                   width: '36px',
                                   height: '36px',
                                   borderRadius: '50%',
-                                  background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                                  background: 'linear-gradient(135deg,#E11B22,#b91c1c)',
                                   color: '#fff',
                                   fontWeight: 800,
                                   fontSize: '14px',
@@ -3145,7 +3145,7 @@ export default function FormEquipos() {
                               fontWeight: 800,
                               borderRadius: '8px',
                               border: 'none',
-                              background: tieneEquipoTorneo ? '#e2e8f0' : '#4f46e5',
+                              background: tieneEquipoTorneo ? '#e2e8f0' : '#b91c1c',
                               color: tieneEquipoTorneo ? '#94a3b8' : '#fff',
                               cursor: saving || tieneEquipoTorneo ? 'default' : 'pointer',
                               fontFamily: 'inherit',
@@ -3336,8 +3336,8 @@ export default function FormEquipos() {
                   borderRadius: '12px',
                   cursor: 'pointer',
                   background: '#eef2ff',
-                  color: '#4338ca',
-                  border: '2px solid #6366f1',
+                  color: '#b91c1c',
+                  border: '2px solid #E11B22',
                 }}
               >
                 Ver equipos disponibles
@@ -3465,7 +3465,7 @@ export default function FormEquipos() {
                 borderRadius: '12px',
                 cursor: otrosEquiposVisibles.length === 0 ? 'default' : 'pointer',
                 background: otrosEquiposVisibles.length === 0 ? '#e2e8f0' : '#ffffff',
-                color: otrosEquiposVisibles.length === 0 ? '#94a3b8' : '#4f46e5',
+                color: otrosEquiposVisibles.length === 0 ? '#94a3b8' : '#b91c1c',
                 border: '2px solid #c7d2fe',
                 opacity: otrosEquiposVisibles.length === 0 ? 0.6 : 1,
               }}
@@ -3512,7 +3512,7 @@ export default function FormEquipos() {
                         textAlign: 'center',
                       }}
                     >
-                      <p style={{ margin: '0 0 10px', color: '#4338ca', fontSize: '15px', fontWeight: 600 }}>
+                      <p style={{ margin: '0 0 10px', color: '#b91c1c', fontSize: '15px', fontWeight: 600 }}>
                         ¿No encuentras equipo?
                       </p>
                       <button

@@ -260,7 +260,7 @@ export default function ArmarPartido() {
               <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Elige deporte</h1>
               <div style={{ display: 'grid', gap: 10 }}>
                 {DEPORTES.map((d) => (
-                  <button key={d.id} type="button" onClick={() => setDeporte(d.id)} style={{ border: form.deporte === d.id ? '2px solid #667eea' : '1px solid #e2e8f0', borderRadius: 14, padding: 13, background: form.deporte === d.id ? '#eef2ff' : '#fff', textAlign: 'left', fontWeight: 900, cursor: 'pointer' }}>
+                  <button key={d.id} type="button" onClick={() => setDeporte(d.id)} style={{ border: form.deporte === d.id ? '2px solid #E11B22' : '1px solid #e2e8f0', borderRadius: 14, padding: 13, background: form.deporte === d.id ? '#fef2f2' : '#fff', textAlign: 'left', fontWeight: 900, cursor: 'pointer' }}>
                     {d.label} · {d.jugadores} jugadores
                   </button>
                 ))}
@@ -289,7 +289,7 @@ export default function ArmarPartido() {
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
                 {canchas.map((c) => (
-                  <button key={c} type="button" onClick={() => setForm((f) => ({ ...f, cancha: c, hora: '' }))} disabled={!sede} style={{ border: Number(form.cancha) === c ? '2px solid #667eea' : '1px solid #e2e8f0', borderRadius: 12, padding: 12, background: Number(form.cancha) === c ? '#eef2ff' : '#fff', fontWeight: 900, cursor: sede ? 'pointer' : 'not-allowed' }}>
+                  <button key={c} type="button" onClick={() => setForm((f) => ({ ...f, cancha: c, hora: '' }))} disabled={!sede} style={{ border: Number(form.cancha) === c ? '2px solid #E11B22' : '1px solid #e2e8f0', borderRadius: 12, padding: 12, background: Number(form.cancha) === c ? '#fef2f2' : '#fff', fontWeight: 900, cursor: sede ? 'pointer' : 'not-allowed' }}>
                     Cancha {c}
                   </button>
                 ))}
@@ -302,7 +302,7 @@ export default function ArmarPartido() {
               <h1 style={{ margin: '0 0 12px', color: '#0f172a' }}>Fecha, hora y duración</h1>
               <input type="date" min={todayISO()} value={form.fecha} onChange={(e) => setForm((f) => ({ ...f, fecha: e.target.value, hora: '' }))} style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #cbd5e1', boxSizing: 'border-box', marginBottom: 12 }} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 12 }}>
-                {DURACIONES.map((d) => <button key={d} type="button" onClick={() => setForm((f) => ({ ...f, duracion: d, hora: '' }))} style={{ border: Number(form.duracion) === d ? '2px solid #667eea' : '1px solid #e2e8f0', borderRadius: 12, padding: 10, background: Number(form.duracion) === d ? '#eef2ff' : '#fff', fontWeight: 900 }}>{d} min</button>)}
+                {DURACIONES.map((d) => <button key={d} type="button" onClick={() => setForm((f) => ({ ...f, duracion: d, hora: '' }))} style={{ border: Number(form.duracion) === d ? '2px solid #E11B22' : '1px solid #e2e8f0', borderRadius: 12, padding: 10, background: Number(form.duracion) === d ? '#fef2f2' : '#fff', fontWeight: 900 }}>{d} min</button>)}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
                 {slots.length ? slots.map((h) => <button key={h} type="button" onClick={() => setForm((f) => ({ ...f, hora: h }))} style={{ border: form.hora === h ? '2px solid #16a34a' : '1px solid #e2e8f0', borderRadius: 12, padding: 10, background: form.hora === h ? '#dcfce7' : '#fff', fontWeight: 900 }}>{h}</button>) : <p style={{ gridColumn: '1/-1', color: '#64748b' }}>No hay horarios disponibles para esa cancha y duración.</p>}

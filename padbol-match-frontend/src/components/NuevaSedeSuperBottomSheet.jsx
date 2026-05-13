@@ -456,7 +456,7 @@ export default function NuevaSedeSuperBottomSheet({
                 flex: 1,
                 height: 6,
                 borderRadius: 999,
-                background: st.step >= n ? '#4f46e5' : '#e2e8f0',
+                background: st.step >= n ? '#E11B22' : '#e2e8f0',
               }}
             />
           ))}
@@ -627,7 +627,7 @@ export default function NuevaSedeSuperBottomSheet({
               <div style={{ fontSize: 15, fontWeight: 800, color: '#312e81' }}>
                 Total de canchas declaradas: {totalCanchas}
               </div>
-              <div style={{ marginTop: 8, fontSize: 14, color: '#4338ca', lineHeight: 1.45 }}>
+              <div style={{ marginTop: 8, fontSize: 14, color: '#b91c1c', lineHeight: 1.45 }}>
                 {planPricingLoading ? (
                   'Cargando planes…'
                 ) : planMatch ? (
@@ -747,7 +747,7 @@ export default function NuevaSedeSuperBottomSheet({
                 fontWeight: 800,
                 borderRadius: 12,
                 border: 'none',
-                background: saving ? '#94a3b8' : '#4f46e5',
+                background: saving ? '#94a3b8' : '#E11B22',
                 color: '#fff',
                 cursor: saving ? 'not-allowed' : 'pointer',
               }}

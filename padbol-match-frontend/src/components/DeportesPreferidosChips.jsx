@@ -25,7 +25,7 @@ export default function DeportesPreferidosChips({ value, onChange, disabled }) {
             style={{
               padding: '8px 14px',
               borderRadius: 9999,
-              border: on ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+              border: on ? '2px solid #E11B22' : '1px solid #cbd5e1',
               background: on ? '#eef2ff' : '#fff',
               color: on ? '#312e81' : '#475569',
               fontWeight: 700,

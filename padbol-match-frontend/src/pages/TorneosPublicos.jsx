@@ -533,7 +533,7 @@ export default function TorneosPublicos() {
                           fontSize: '12px',
                           fontWeight: 700,
                           background: '#ede9fe',
-                          color: '#5b21b6',
+                          color: '#991b1b',
                           border: '1px solid #c4b5fd',
                         }}
                       >

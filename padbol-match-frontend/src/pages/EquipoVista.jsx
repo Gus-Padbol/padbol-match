@@ -62,7 +62,7 @@ const API_BACKEND_BASE = (
 );
 
 const AVATAR_JUGADOR_EQ_SIZE = 36;
-const AVATAR_JUGADOR_EQ_VIOLETA = '#7c3aed';
+const AVATAR_JUGADOR_EQ_ACENTO = '#E11B22';
 
 function initialAvatarJugadorEquipo(p, ctx) {
   const label = nombreDisplayJugadorTorneo(p, ctx) || jugadorNombreTorneoEtiqueta(p, ctx);
@@ -86,7 +86,7 @@ function AvatarJugadorEquipoLista({ p, ctx }) {
         flexShrink: 0,
         borderRadius: '50%',
         overflow: 'hidden',
-        background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_VIOLETA,
+        background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_ACENTO,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -2145,7 +2145,7 @@ export default function EquipoVista() {
                               flexShrink: 0,
                               borderRadius: '50%',
                               overflow: 'hidden',
-                              background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_VIOLETA,
+                              background: foto ? '#e2e8f0' : AVATAR_JUGADOR_EQ_ACENTO,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -2216,7 +2216,7 @@ export default function EquipoVista() {
                             fontWeight: 800,
                             borderRadius: '10px',
                             border: 'none',
-                            background: tieneEquipoTorneo ? '#e2e8f0' : '#4f46e5',
+                            background: tieneEquipoTorneo ? '#e2e8f0' : '#E11B22',
                             color: tieneEquipoTorneo ? '#94a3b8' : '#fff',
                             cursor: busy || tieneEquipoTorneo ? 'default' : 'pointer',
                             fontFamily: 'inherit',

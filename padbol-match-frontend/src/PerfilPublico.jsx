@@ -613,7 +613,7 @@ export default function PerfilPublico() {
                           border: 'none',
                           padding: 0,
                           cursor: 'pointer',
-                          color: '#5b21b6',
+                          color: '#991b1b',
                           fontWeight: 700,
                           textDecoration: 'underline',
                         }}
@@ -633,7 +633,7 @@ export default function PerfilPublico() {
                           border: 'none',
                           padding: 0,
                           cursor: 'pointer',
-                          color: '#5b21b6',
+                          color: '#991b1b',
                           fontWeight: 700,
                           textDecoration: 'underline',
                         }}
@@ -841,7 +841,7 @@ export default function PerfilPublico() {
                       style={{
                         padding: '8px 12px',
                         borderRadius: '10px',
-                        border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                        border: active ? '2px solid #E11B22' : '1px solid #cbd5e1',
                         background: active ? '#eef2ff' : '#fff',
                         fontWeight: 800,
                         fontSize: '13px',

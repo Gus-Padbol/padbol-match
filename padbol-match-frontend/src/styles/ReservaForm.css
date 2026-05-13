@@ -22,7 +22,7 @@
   padding-top: 0;
   padding-bottom: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #b91c1c 0%, #e11b22 50%, #991b1b 100%);
 }
 
 .reserva-sede-seleccion .reserva-sede-inner {
@@ -157,7 +157,7 @@
 
 .reserva-sede-seleccion .reserva-pill.is-active {
   background: rgba(255, 255, 255, 0.95);
-  color: #5b21b6;
+  color: #991b1b;
   border-color: #fff;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
@@ -466,8 +466,8 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #7c3aed; /* violeta más moderno */
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  border-color: #e11b22;
+  box-shadow: 0 0 0 3px rgba(225, 27, 34, 0.18);
 }
 
 .phone-field {
@@ -510,7 +510,7 @@ button {
 button[type="submit"] {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  background: linear-gradient(135deg, #e11b22, #b91c1c);
   color: white;
   border: none;
   font-size: 16px;
@@ -738,7 +738,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-height: 96px;
   border-radius: 14px;
   overflow: hidden;
-  background: linear-gradient(145deg, #e0e7ff, #ede9fe);
+  background: linear-gradient(145deg, #fee2e2, #fef2f2);
 }
 
 .reserva-sede-seleccion .reserva-sede-card-photo {
@@ -756,7 +756,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   font-size: 36px;
-  background: linear-gradient(145deg, #c7d2fe, #ddd6fe);
+  background: linear-gradient(145deg, #fecaca, #fee2e2);
 }
 
 .reserva-sede-seleccion .reserva-sede-card-body {
@@ -811,7 +811,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .reserva-sede-seleccion .reserva-sede-card-price strong {
-  color: #5b21b6;
+  color: #b91c1c;
   font-weight: 800;
 }
 
@@ -827,15 +827,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-family: inherit;
   cursor: pointer;
   color: #fff;
-  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-  box-shadow: 0 4px 14px rgba(91, 33, 182, 0.35);
+  background: linear-gradient(135deg, #e11b22 0%, #b91c1c 100%);
+  box-shadow: 0 4px 14px rgba(225, 27, 34, 0.35);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 @media (hover: hover) {
   .reserva-sede-seleccion .reserva-sede-card-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(91, 33, 182, 0.42);
+    box-shadow: 0 6px 18px rgba(225, 27, 34, 0.42);
   }
 }
 

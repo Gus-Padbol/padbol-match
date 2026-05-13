@@ -83,7 +83,7 @@ export default function TorneoPuntosDistribucionModal({ open, onClose, torneo })
               padding: '9px 14px',
               borderRadius: '8px',
               border: 'none',
-              background: '#4f46e5',
+              background: '#E11B22',
               color: '#fff',
               fontWeight: 700,
               cursor: 'pointer',

@@ -217,7 +217,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
             <button
               type="button"
               onClick={() => markRead(items.filter((n) => !n.leida).map((n) => n.id))}
-              style={{ border: 'none', background: 'transparent', color: '#4f46e5', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+              style={{ border: 'none', background: 'transparent', color: '#b91c1c', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
             >
               Marcar leídas
             </button>
@@ -238,7 +238,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
                   style={{
                     textAlign: 'left',
                     border: '1px solid #e2e8f0',
-                    borderLeft: n.leida ? '4px solid #cbd5e1' : '4px solid #667eea',
+                    borderLeft: n.leida ? '4px solid #cbd5e1' : '4px solid #E11B22',
                     borderRadius: 10,
                     padding: 10,
                     background: n.leida ? '#f8fafc' : '#eef2ff',
@@ -250,7 +250,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
                       display: 'inline-block',
                       fontSize: 10,
                       fontWeight: 800,
-                      color: '#4338ca',
+                      color: '#b91c1c',
                       background: '#e0e7ff',
                       padding: '2px 7px',
                       borderRadius: 6,

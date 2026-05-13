@@ -234,7 +234,7 @@ export default function JugadorQrModal({
                   width: '48px',
                   height: '48px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg,#667eea,#764ba2)',
+                  background: 'linear-gradient(135deg,#E11B22,#b91c1c)',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',

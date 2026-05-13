@@ -519,13 +519,13 @@ export default function UnirsePage() {
               padding: '15px 18px',
               border: 'none',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+              background: 'linear-gradient(135deg, #E11B22, #b91c1c)',
               color: '#fff',
               fontWeight: 800,
               fontSize: '16px',
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.85 : 1,
-              boxShadow: '0 8px 24px rgba(79, 70, 229, 0.35)',
+              boxShadow: '0 8px 24px rgba(225, 27, 34, 0.35)',
             }}
           >
             {saving ? 'Enviando…' : 'Enviar solicitud de alta'}

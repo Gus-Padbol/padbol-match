@@ -114,7 +114,7 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                     padding: '14px 16px',
                     borderRadius: '12px',
                     border: 'none',
-                    background: installing ? '#94a3b8' : '#4f46e5',
+                    background: installing ? '#94a3b8' : '#E11B22',
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: '15px',

@@ -1,6 +1,6 @@
 .admin-dashboard {
   padding: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #E11B22 0%, #991b1b 100%);
   min-height: 0;
   color: #333;
 }
@@ -36,7 +36,7 @@
 .amount {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #667eea;
+  color: #E11B22;
   margin: 0;
 }
 
@@ -58,9 +58,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #f5f5ff;
+  background: #fef2f2;
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #E11B22;
 }
 
 .ingreso-codigo {
@@ -73,13 +73,13 @@
 .ingreso-valor {
   font-size: 1.4rem;
   font-weight: bold;
-  color: #667eea;
+  color: #E11B22;
 }
 
 .count {
   font-size: 3rem;
   font-weight: bold;
-  color: #667eea;
+  color: #E11B22;
   margin: 0;
 }
 
@@ -94,7 +94,7 @@
 .section h2 {
   margin-top: 0;
   color: #333;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #E11B22;
   padding-bottom: 15px;
 }
 
@@ -110,7 +110,7 @@
   text-align: left;
   font-weight: 600;
   color: #333;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #E11B22;
   border-right: 1px solid rgba(0,0,0,0.07);
 }
 
@@ -146,7 +146,7 @@
 }
 
 .btn-edit {
-  background: #667eea;
+  background: #E11B22;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -156,7 +156,7 @@
 }
 
 .btn-edit:hover {
-  background: #5568d3;
+  background: #b91c1c;
 }
 
 @media (max-width: 768px) {
@@ -206,7 +206,7 @@
   position: sticky;
   top: 0;
   z-index: 6;
-  background: linear-gradient(180deg, #667eea 0%, #667eea 88%, rgba(102, 126, 234, 0) 100%);
+  background: linear-gradient(180deg, #E11B22 0%, #E11B22 88%, rgba(225, 27, 34, 0) 100%);
   scrollbar-width: thin;
 }
 
@@ -228,7 +228,7 @@
 
 .admin-mi-sede-nav-pill--active {
   background: rgba(255, 255, 255, 0.98);
-  color: #3730a3;
+  color: #991b1b;
   border-color: #fff;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
 }
@@ -248,10 +248,10 @@
 }
 
 .admin-mi-sede-nav-btn--active {
-  border-color: #4f46e5;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-  color: #312e81;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+  border-color: #E11B22;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #7f1d1d;
+  box-shadow: 0 2px 8px rgba(225, 27, 34, 0.2);
 }
 
 .admin-mi-sede-main {

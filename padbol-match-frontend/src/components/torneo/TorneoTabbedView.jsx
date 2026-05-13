@@ -1172,7 +1172,7 @@ export default function TorneoTabbedView({
                                   width: '28px',
                                   height: '28px',
                                   borderRadius: '50%',
-                                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                                  background: 'linear-gradient(135deg, #E11B22, #b91c1c)',
                                   color: 'white',
                                   fontSize: '11px',
                                   fontWeight: 800,
@@ -1303,7 +1303,7 @@ export default function TorneoTabbedView({
                     <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
                       {row.gp}
                     </td>
-                    <td className="tabla-grupos-col-stat" style={{ fontWeight: 900, color: '#4f46e5', background: bgFila }}>
+                    <td className="tabla-grupos-col-stat" style={{ fontWeight: 900, color: '#b91c1c', background: bgFila }}>
                       {row.pts}
                     </td>
                   </tr>
@@ -1331,7 +1331,7 @@ export default function TorneoTabbedView({
                     padding: '12px 20px',
                     borderRadius: '12px',
                     border: 'none',
-                    background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+                    background: 'linear-gradient(135deg,#E11B22,#b91c1c)',
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: '15px',
@@ -1901,7 +1901,7 @@ export default function TorneoTabbedView({
                                     width: '44px',
                                     height: '44px',
                                     borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                                    background: 'linear-gradient(135deg, #E11B22, #b91c1c)',
                                     color: 'white',
                                     fontSize: '16px',
                                     fontWeight: 800,
@@ -2135,8 +2135,8 @@ export default function TorneoTabbedView({
               onClick={() => setActiveTab(tab.id)}
               style={{
                 ...TAB_BTN,
-                color: activeTab === tab.id ? '#4f46e5' : '#64748b',
-                borderBottomColor: activeTab === tab.id ? '#4f46e5' : 'transparent',
+                color: activeTab === tab.id ? '#b91c1c' : '#64748b',
+                borderBottomColor: activeTab === tab.id ? '#E11B22' : 'transparent',
               }}
             >
               {tab.label}
@@ -2211,7 +2211,7 @@ export default function TorneoTabbedView({
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                            background: 'linear-gradient(135deg, #E11B22, #b91c1c)',
                             color: '#fff',
                             fontSize: '12px',
                             fontWeight: 800,
@@ -2406,7 +2406,7 @@ export default function TorneoTabbedView({
                   borderRadius: '12px',
                 }}
               >
-                <p style={{ margin: '0 0 6px', fontSize: '13px', fontWeight: 800, color: '#4338ca', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <p style={{ margin: '0 0 6px', fontSize: '13px', fontWeight: 800, color: '#b91c1c', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Confirmar resultado
                 </p>
                 <p style={{ margin: '0 0 10px', fontSize: '16px', fontWeight: 800, color: '#1e1b4b', lineHeight: 1.35 }}>
@@ -2422,7 +2422,7 @@ export default function TorneoTabbedView({
                 </p>
                 <p style={{ margin: '0 0 14px', fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>¿Confirmas?</p>
                 {voicePending.transcript ? (
-                  <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#6366f1', fontStyle: 'italic' }}>
+                  <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#E11B22', fontStyle: 'italic' }}>
                     Escuchado: «{voicePending.transcript}»
                   </p>
                 ) : null}

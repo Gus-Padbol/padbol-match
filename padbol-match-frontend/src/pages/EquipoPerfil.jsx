@@ -113,7 +113,7 @@ function Avatar({ src, label, size }) {
         borderRadius: '50%',
         overflow: 'hidden',
         flexShrink: 0,
-        background: src ? '#e2e8f0' : 'linear-gradient(135deg, #6366f1, #7c3aed)',
+        background: src ? '#e2e8f0' : 'linear-gradient(135deg, #E11B22, #b91c1c)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

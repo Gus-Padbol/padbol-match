@@ -564,7 +564,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               padding: '14px 18px',
               borderRadius: '12px',
               border: 'none',
-              background: isSuper ? '#15803d' : '#4f46e5',
+              background: isSuper ? '#15803d' : '#E11B22',
               color: '#fff',
               fontWeight: 800,
               fontSize: '16px',

@@ -468,7 +468,7 @@ function AdminReservaJugadorContacto({ reserva }) {
           <a
             href={`mailto:${encodeURIComponent(email)}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ color: '#4f46e5', wordBreak: 'break-all' }}
+            style={{ color: '#E11B22', wordBreak: 'break-all' }}
           >
             {email}
           </a>
@@ -516,7 +516,7 @@ function AdminReservaJugadorContacto({ reserva }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            style={{ color: '#4f46e5', fontWeight: 700, textDecoration: 'underline' }}
+            style={{ color: '#E11B22', fontWeight: 700, textDecoration: 'underline' }}
           >
             Ver perfil
           </a>
@@ -526,7 +526,7 @@ function AdminReservaJugadorContacto({ reserva }) {
   );
 }
 
-/** Pills de filtro: inactivo blanco + borde gris; activo #667eea + texto blanco (Resumen, Torneos, Reservas). */
+/** Pills de filtro: inactivo blanco + borde gris; activo #E11B22 + texto blanco (Resumen, Torneos, Reservas). */
 const ADMIN_FILTER_PILL_BASE = {
   padding: '8px 14px',
   borderRadius: '999px',
@@ -544,7 +544,7 @@ function adminFilterPillButtonStyle(active) {
   if (active) {
     return {
       ...ADMIN_FILTER_PILL_BASE,
-      background: '#667eea',
+      background: '#E11B22',
       color: '#fff',
       border: 'none',
     };
@@ -866,7 +866,7 @@ function EstadoBadge({ reserva }) {
   if (reserva.estado === 'completada' || !esFutura(reserva)) {
     return <span style={{ background: '#e2e8f0', color: '#475569', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>✅ Completada</span>;
   }
-  return <span style={{ background: '#ede9fe', color: '#3b2f6e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>🟢 Confirmada</span>;
+  return <span style={{ background: '#fef2f2', color: '#3b2f6e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>🟢 Confirmada</span>;
 }
 
 /** Pills filtro listado reservas (pestaña Reservas). */
@@ -5091,7 +5091,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     borderRadius: '999px',
                     background: '#ef4444',
                     color: '#fff',
-                    border: '2px solid #667eea',
+                    border: '2px solid #E11B22',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -5131,7 +5131,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <button
                       type="button"
                       onClick={() => setNotificacionesLeidas(adminNotificaciones.map((n) => String(n.id)))}
-                      style={{ border: 'none', background: 'transparent', color: '#4f46e5', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+                      style={{ border: 'none', background: 'transparent', color: '#E11B22', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
                     >
                       Marcar leídas
                     </button>
@@ -5174,7 +5174,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 border: 'none',
                                 borderRadius: '8px',
                                 padding: '6px 10px',
-                                background: '#4f46e5',
+                                background: '#E11B22',
                                 color: '#fff',
                                 fontSize: '12px',
                                 fontWeight: 800,
@@ -5308,7 +5308,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       )}
 
       {/* Tab navigation — rueda vertical desplaza scroll horizontal */}
-      <div ref={adminTabsStripRef} style={{ display: 'flex', gap: '4px', marginTop: '8px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingTop: 0, paddingBottom: '0', overflowX: 'auto', overflowY: 'hidden', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#667eea' }}>
+      <div ref={adminTabsStripRef} style={{ display: 'flex', gap: '4px', marginTop: '8px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingTop: 0, paddingBottom: '0', overflowX: 'auto', overflowY: 'hidden', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#E11B22' }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -5902,7 +5902,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div key={row.fecha} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '12px', color: '#475569', fontWeight: 700 }}>{ymdToLabelShort(row.fecha)}</span>
                     <div style={{ height: '12px', borderRadius: '999px', background: '#e2e8f0', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#6366f1,#0ea5e9)' }} />
+                      <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#E11B22,#fecaca)' }} />
                     </div>
                     <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: 700 }}>{Number(row.total).toLocaleString('es-AR')}</span>
                   </div>
@@ -5978,13 +5978,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               const NIVEL_COLOR = {
                 club:          { bg: '#e2e8f0', color: '#475569' },
                 nacional:      { bg: '#dbeafe', color: '#1e40af' },
-                internacional: { bg: '#ede9fe', color: '#5b21b6' },
+                internacional: { bg: '#fef2f2', color: '#991b1b' },
                 fipa:          { bg: '#fef3c7', color: '#b45309' },
               };
               const FORMATO_COLOR = {
-                round_robin:     { bg: '#ede9fe', color: '#5b21b6' },
+                round_robin:     { bg: '#fef2f2', color: '#991b1b' },
                 knockout:        { bg: '#fee2e2', color: '#991b1b' },
-                grupos_knockout: { bg: '#e0e7ff', color: '#3730a3' },
+                grupos_knockout: { bg: '#fee2e2', color: '#991b1b' },
               };
               const nivelTorneoRaw = String(torneo.nivel_torneo || '').trim().toLowerCase();
               const nivelCanonico = (
@@ -6016,7 +6016,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               return (
                 <div key={torneo.id} style={{
                   background: 'white',
-                  border: isEditingThis ? '2px solid #667eea' : '1px solid #e5e7eb',
+                  border: isEditingThis ? '2px solid #E11B22' : '1px solid #e5e7eb',
                   borderRadius: '8px',
                   padding: '12px 16px',
                 }}>
@@ -6269,7 +6269,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 padding: '6px 10px',
                                 borderRadius: '6px',
                                 border: 'none',
-                                background: '#4f46e5',
+                                background: '#E11B22',
                                 color: '#fff',
                                 fontSize: '11px',
                                 fontWeight: 700,
@@ -6328,7 +6328,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         {torneo.nivel_torneo
                           ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
                           : null}
-                        <span style={badge('#ede9fe', '#5b21b6')}>{resumenDeporteFormatoTorneo(torneo)}</span>
+                        <span style={badge('#fef2f2', '#991b1b')}>{resumenDeporteFormatoTorneo(torneo)}</span>
                         <span style={badge('#f0fdf4', '#166534')}>{formatCategoriaTorneo(torneo.categoria)}</span>
                         <span style={badge('#fef9c3', '#854d0e')}>{formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))}</span>
                         <span style={badge('#e0f2fe', '#0369a1')}>{formatCategoriaEdadTorneo(torneo.categoria_edad)}</span>
@@ -6383,7 +6383,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               onClick={() => void abrirModalSorteoGrupos(torneo)}
                               style={{
                                 padding: '6px 12px',
-                                background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+                                background: 'linear-gradient(135deg,#E11B22,#b91c1c)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '5px',
@@ -6400,7 +6400,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         })()}
                         <button
                           onClick={() => navigate(`/torneo/${torneo.id}`, { state: { fromAdmin: true } })}
-                          style={{ padding: '6px 14px', background: '#667eea', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                          style={{ padding: '6px 14px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
                         >
                           Ver →
                         </button>
@@ -6665,7 +6665,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           </div>
                           {email ? (
                             <div style={{ marginTop: '6px', fontSize: '13px' }}>
-                              <a href={`mailto:${email}`} style={{ color: '#4f46e5', wordBreak: 'break-all' }}>
+                              <a href={`mailto:${email}`} style={{ color: '#E11B22', wordBreak: 'break-all' }}>
                                 {email}
                               </a>
                             </div>
@@ -6815,7 +6815,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <td>{String(j.pais || '').trim() || '—'}</td>
                         <td style={{ fontSize: '13px' }}>
                           {perfilFed ? (
-                            <a href={perfilFed} target="_blank" rel="noopener noreferrer" style={{ color: '#4f46e5', fontWeight: 700 }}>
+                            <a href={perfilFed} target="_blank" rel="noopener noreferrer" style={{ color: '#E11B22', fontWeight: 700 }}>
                               Ver perfil
                             </a>
                           ) : (
@@ -7785,7 +7785,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     padding: '14px 20px',
                     borderRadius: '12px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #E11B22 0%, #991b1b 100%)',
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: '16px',
@@ -7999,7 +7999,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   {String(r.estado || '').toLowerCase() === 'pendiente_pago_efectivo' ? 'Confirmar cobro en sede' : 'Confirmar pago'}
                 </button>
               ) : null}
-              <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#667eea' })}>
+              <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#E11B22' })}>
                 ✏️ Editar
               </button>
               <button type="button" onClick={() => setCancelReservaModalId(r.id)} style={BTN({ background: '#d32f2f' })}>
@@ -8340,7 +8340,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
-                          style={{ padding: '3px 8px', background: '#667eea', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
                         <button onClick={() => { if (window.confirm(`¿Eliminar el nivel "${configNivelesLabels[key]}"? Se ocultará de los torneos nuevos.`)) setConfigNivelesHidden(prev => new Set([...prev, key])); }}
                           style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
                       </td>
@@ -8352,7 +8352,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               {/* Custom rows — with edit/delete */}
               {configTiposCustom.length > 0 && (
                 <tr>
-                  <td colSpan="3" style={{ padding: '6px 16px 2px', fontSize: '11px', fontWeight: '600', color: '#7c3aed', background: '#f5f3ff', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  <td colSpan="3" style={{ padding: '6px 16px 2px', fontSize: '11px', fontWeight: '600', color: '#b91c1c', background: '#fef2f2', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                     Tipos personalizados
                   </td>
                 </tr>
@@ -8387,7 +8387,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
-                          style={{ padding: '3px 8px', background: '#667eea', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
                         <button onClick={() => setConfigTiposCustom(prev => prev.filter(t => t.id !== tipo.id))}
                           style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
                       </td>
@@ -8412,7 +8412,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <button
                     onClick={() => { if (!nuevoTipo.nombre.trim()) return; setConfigTiposCustom(prev => [...prev, { id: Date.now().toString(), nombre: nuevoTipo.nombre.trim(), puntos: nuevoTipo.puntos || 0 }]); setNuevoTipo({ nombre: '', puntos: 0 }); }}
-                    style={{ padding: '5px 12px', background: 'linear-gradient(135deg, #7c3aed, #4c1d95)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                    style={{ padding: '5px 12px', background: 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', whiteSpace: 'nowrap' }}>
                     + Agregar
                   </button>
                 </td>
@@ -8524,7 +8524,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             disabled={configSaving}
             style={{
               padding: '12px 28px',
-              background: configSaving ? '#a78bfa' : 'linear-gradient(135deg, #7c3aed, #4c1d95)',
+              background: configSaving ? '#fca5a5' : 'linear-gradient(135deg, #E11B22, #991b1b)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -8732,7 +8732,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   padding: '9px 14px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, #6366f1, #4338ca)',
+                  background: 'linear-gradient(135deg, #E11B22, #b91c1c)',
                   color: '#fff',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -8809,7 +8809,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                   padding: '4px 9px',
                                   border: 'none',
                                   borderRadius: '6px',
-                                  background: '#4f46e5',
+                                  background: '#E11B22',
                                   color: '#fff',
                                   cursor: 'pointer',
                                   fontSize: '12px',
@@ -9072,8 +9072,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           fontWeight: 700,
                           padding: '4px 10px',
                           borderRadius: '999px',
-                          background: '#e0e7ff',
-                          color: '#3730a3',
+                          background: '#fee2e2',
+                          color: '#991b1b',
                         }}
                       >
                         {origenLabel}
@@ -9089,7 +9089,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <div>
                         <strong>Email:</strong>{' '}
                         {row.email && row.email !== '—' ? (
-                          <a href={`mailto:${encodeURIComponent(row.email)}`} style={{ color: '#4f46e5' }}>
+                          <a href={`mailto:${encodeURIComponent(row.email)}`} style={{ color: '#E11B22' }}>
                             {row.email}
                           </a>
                         ) : (
@@ -9583,7 +9583,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       padding: '10px 18px',
                       borderRadius: '10px',
                       border: 'none',
-                      background: miSedeSaving ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                      background: miSedeSaving ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                       color: '#fff',
                       fontWeight: 800,
                       cursor: miSedeSaving ? 'not-allowed' : 'pointer',
@@ -9736,7 +9736,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       padding: '10px 18px',
                       borderRadius: '10px',
                       border: 'none',
-                      background: canchaApiBusy ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                      background: canchaApiBusy ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                       color: '#fff',
                       fontWeight: 800,
                       cursor: canchaApiBusy ? 'not-allowed' : 'pointer',
@@ -9824,7 +9824,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <button onClick={guardarLicencia} disabled={licenciaSaving}
-                      style={{ padding: '10px 24px', background: licenciaSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '8px', cursor: licenciaSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
+                      style={{ padding: '10px 24px', background: licenciaSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: licenciaSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
                       {licenciaSaving ? '⏳ Guardando...' : '💾 Guardar licencia'}
                     </button>
                     {licenciaMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: licenciaMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{licenciaMsg}</span>}
@@ -10078,7 +10078,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={guardarMiSede} disabled={miSedeSaving}
-                  style={{ padding: '10px 24px', background: miSedeSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
+                  style={{ padding: '10px 24px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
                   {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar cambios'}
                 </button>
                 {miSedeMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: miSedeMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedeMsg}</span>}
@@ -10215,7 +10215,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 gap: '5px',
                                 padding: '6px 8px',
                                 borderRadius: '999px',
-                                border: checked ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+                                border: checked ? '1px solid #E11B22' : '1px solid #cbd5e1',
                                 background: checked ? '#eef2ff' : '#f8fafc',
                                 color: checked ? '#312e81' : '#475569',
                                 fontSize: '12px',
@@ -10306,8 +10306,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   }
                   style={{
                     padding: '8px 16px',
-                    background: '#e0e7ff',
-                    color: '#3730a3',
+                    background: '#fee2e2',
+                    color: '#991b1b',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
@@ -10344,7 +10344,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   disabled={franjasSaving}
                   style={{
                     padding: '8px 20px',
-                    background: franjasSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    background: franjasSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -10360,7 +10360,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 ) : null}
               </div>
               <button onClick={guardarMiSede} disabled={miSedeSaving} type="button"
-                style={{ marginTop: '16px', padding: '8px 20px', background: miSedeSaving ? '#a5b4fc' : 'linear-gradient(135deg, #6366f1, #4338ca)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                style={{ marginTop: '16px', padding: '8px 20px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
                 {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar precio base'}
               </button>
             </div>
@@ -10644,7 +10644,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   disabled={pagosParcialSaving}
                   style={{
                     padding: '8px 20px',
-                    background: pagosParcialSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    background: pagosParcialSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -10686,7 +10686,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
               ))}
               <button onClick={guardarMiSede} disabled={miSedeSaving}
-                style={{ marginTop: '8px', padding: '8px 20px', background: miSedeSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                style={{ marginTop: '8px', padding: '8px 20px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
                 {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar redes'}
               </button>
             </div>
@@ -10750,8 +10750,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             style={{
                               padding: '4px 10px',
                               marginRight: '6px',
-                              background: '#e0e7ff',
-                              color: '#3730a3',
+                              background: '#fee2e2',
+                              color: '#991b1b',
                               border: 'none',
                               borderRadius: '6px',
                               cursor: 'pointer',
@@ -10788,7 +10788,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 onClick={abrirModalCanchaNueva}
                 style={{
                   padding: '10px 18px',
-                  background: 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                  background: 'linear-gradient(135deg, #E11B22, #991b1b)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -10844,7 +10844,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{
                   display: 'inline-block', padding: '9px 18px',
-                  background: logoUploading ? '#e5e7eb' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                  background: logoUploading ? '#e5e7eb' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                   color: logoUploading ? '#9ca3af' : 'white',
                   borderRadius: '8px', cursor: logoUploading ? 'not-allowed' : 'pointer',
                   fontWeight: 700, fontSize: '13px',
@@ -10902,7 +10902,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                   <label style={{
                     display: 'inline-block', padding: '7px 16px',
-                    background: fotosUploading ? '#e5e7eb' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    background: fotosUploading ? '#e5e7eb' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                     color: fotosUploading ? '#9ca3af' : 'white',
                     borderRadius: '8px', cursor: fotosUploading ? 'not-allowed' : 'pointer',
                     fontWeight: 700, fontSize: '13px',
@@ -10930,8 +10930,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       display: 'inline-block',
                       padding: '7px 14px',
                       background: fotosUploading ? '#f1f5f9' : '#fff',
-                      color: fotosUploading ? '#94a3b8' : '#3730a3',
-                      border: '2px solid #a5b4fc',
+                      color: fotosUploading ? '#94a3b8' : '#991b1b',
+                      border: '2px solid #fecaca',
                       borderRadius: '8px',
                       cursor: fotosUploading ? 'not-allowed' : 'pointer',
                       fontWeight: 700,
@@ -10960,7 +10960,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               )}
             </div>
             {fotosUploadLabel ? (
-              <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#6366f1' }}>{fotosUploadLabel}</p>
+              <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#E11B22' }}>{fotosUploadLabel}</p>
             ) : null}
             <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
               Marca hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). Guarda con el botón inferior.
@@ -11054,7 +11054,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   disabled={fotosDestacadasSaving}
                   style={{
                     padding: '8px 20px',
-                    background: fotosDestacadasSaving ? '#a5b4fc' : 'linear-gradient(135deg, #4f46e5, #3730a3)',
+                    background: fotosDestacadasSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -11305,7 +11305,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     padding: '4px 0',
                     border: 'none',
                     background: 'none',
-                    color: '#4f46e5',
+                    color: '#E11B22',
                     fontWeight: 700,
                     fontSize: '13px',
                     cursor: inviteClubSaving ? 'not-allowed' : 'pointer',
@@ -11419,7 +11419,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       padding: '8px 16px',
                       border: 'none',
                       borderRadius: '8px',
-                      background: inviteClubSaving || !inviteAdminTipo ? '#94a3b8' : '#4f46e5',
+                      background: inviteClubSaving || !inviteAdminTipo ? '#94a3b8' : '#E11B22',
                       color: '#fff',
                       fontWeight: 700,
                       cursor: inviteClubSaving || !inviteAdminTipo ? 'not-allowed' : 'pointer',

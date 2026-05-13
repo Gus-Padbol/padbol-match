@@ -325,7 +325,7 @@ export default function ModalJugador({ open, onClose, hint }) {
                     height: '88px',
                     borderRadius: '50%',
                     margin: '0 auto',
-                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    background: 'linear-gradient(135deg, #E11B22, #b91c1c)',
                     color: '#fff',
                     fontSize: '32px',
                     fontWeight: 800,
@@ -349,7 +349,7 @@ export default function ModalJugador({ open, onClose, hint }) {
               >
                 {nombreCompleto}
               </h2>
-              <p style={{ margin: '6px 0 0', fontSize: '13px', fontWeight: 600, color: '#6366f1' }}>{aliasUi}</p>
+              <p style={{ margin: '6px 0 0', fontSize: '13px', fontWeight: 600, color: '#b91c1c' }}>{aliasUi}</p>
             </div>
 
             {rowLine('Categoría', categoria === '—' ? null : categoria)}
@@ -423,9 +423,9 @@ export default function ModalJugador({ open, onClose, hint }) {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '10px',
-                  border: '2px solid #4f46e5',
+                  border: '2px solid #E11B22',
                   background: puedeVerPerfil ? '#fff' : '#f1f5f9',
-                  color: puedeVerPerfil ? '#4f46e5' : '#94a3b8',
+                  color: puedeVerPerfil ? '#E11B22' : '#94a3b8',
                   fontWeight: 800,
                   fontSize: '15px',
                   cursor: puedeVerPerfil ? 'pointer' : 'not-allowed',

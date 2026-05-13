@@ -6,7 +6,7 @@ function svgAvatarDataUrl(innerShapes) {
 
 export const PRESET_PROFILE_AVATAR_URLS = [
   svgAvatarDataUrl(
-    '<defs><linearGradient id="g0" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#4338ca"/></linearGradient></defs><circle cx="50" cy="50" r="48" fill="url(#g0)"/><text x="50" y="62" text-anchor="middle" font-size="44" dominant-baseline="middle">🎾</text>'
+    '<defs><linearGradient id="g0" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#E11B22"/><stop offset="100%" stop-color="#b91c1c"/></linearGradient></defs><circle cx="50" cy="50" r="48" fill="url(#g0)"/><text x="50" y="62" text-anchor="middle" font-size="44" dominant-baseline="middle">🎾</text>'
   ),
   svgAvatarDataUrl(
     '<circle cx="50" cy="50" r="48" fill="#0d9488"/><text x="50" y="62" text-anchor="middle" font-size="44" dominant-baseline="middle">🏃</text>'
@@ -15,7 +15,7 @@ export const PRESET_PROFILE_AVATAR_URLS = [
     '<circle cx="50" cy="50" r="48" fill="#ea580c"/><text x="50" y="62" text-anchor="middle" font-size="44" dominant-baseline="middle">🔥</text>'
   ),
   svgAvatarDataUrl(
-    '<circle cx="50" cy="50" r="48" fill="#7c3aed"/><text x="50" y="62" text-anchor="middle" font-size="40" dominant-baseline="middle">⭐</text>'
+    '<circle cx="50" cy="50" r="48" fill="#dc2626"/><text x="50" y="62" text-anchor="middle" font-size="40" dominant-baseline="middle">⭐</text>'
   ),
   svgAvatarDataUrl(
     '<circle cx="50" cy="50" r="48" fill="#2563eb"/><text x="50" y="62" text-anchor="middle" font-size="44" dominant-baseline="middle">🎯</text>'

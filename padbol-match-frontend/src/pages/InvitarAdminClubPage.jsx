@@ -230,7 +230,7 @@ export default function InvitarAdminClubPage() {
               fontWeight: 800,
               fontSize: 16,
               cursor: geoSubmitting ? 'not-allowed' : 'pointer',
-              background: geoSubmitting ? '#64748b' : '#4f46e5',
+              background: geoSubmitting ? '#64748b' : '#E11B22',
               color: '#fff',
               marginBottom: 12,
             }}

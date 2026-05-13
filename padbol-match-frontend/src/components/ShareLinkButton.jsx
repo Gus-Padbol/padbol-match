@@ -108,9 +108,9 @@ export default function ShareLinkButton({
     ...(variant === 'solid'
       ? {
           border: 'none',
-          background: '#667eea',
+          background: '#E11B22',
           color: '#fff',
-          boxShadow: '0 2px 10px rgba(102, 126, 234, 0.35)',
+          boxShadow: '0 2px 10px rgba(225, 27, 34, 0.35)',
         }
       : {
           border: '1px solid #cbd5e1',

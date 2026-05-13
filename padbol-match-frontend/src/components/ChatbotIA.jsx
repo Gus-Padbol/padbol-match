@@ -1088,7 +1088,7 @@ export default function ChatbotIA() {
           borderRadius: '50%',
           border: 'none',
           cursor: 'pointer',
-          background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
+          background: 'linear-gradient(135deg,#E11B22,#b91c1c)',
           color: '#fff',
           boxShadow: '0 10px 28px rgba(15,23,42,0.35)',
           display: 'flex',
@@ -1181,7 +1181,7 @@ export default function ChatbotIA() {
                   width: 4px;
                   height: 18px;
                   border-radius: 2px;
-                  background: #6366f1;
+                  background: #e11b22;
                   transform-origin: bottom center;
                   animation: chatbotia-voice-bar 0.55s ease-in-out infinite;
                 }
@@ -1276,7 +1276,7 @@ export default function ChatbotIA() {
                       maxWidth: '92%',
                       padding: '10px 12px',
                       borderRadius: 12,
-                      background: m.role === 'user' ? '#4f46e5' : '#f1f5f9',
+                      background: m.role === 'user' ? '#E11B22' : '#f1f5f9',
                       color: m.role === 'user' ? '#fff' : '#0f172a',
                       fontSize: 14,
                       lineHeight: 1.45,
@@ -1382,7 +1382,7 @@ export default function ChatbotIA() {
                                   style={{
                                     padding: '6px 10px',
                                     borderRadius: 8,
-                                    border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                                    border: active ? '2px solid #E11B22' : '1px solid #cbd5e1',
                                     background: active ? '#eef2ff' : '#fff',
                                     color: '#0f172a',
                                     fontWeight: 700,
@@ -1790,7 +1790,7 @@ export default function ChatbotIA() {
                         voicePhase === 'processing' ||
                         !input.trim()
                           ? '#94a3b8'
-                          : '#4f46e5',
+                          : '#E11B22',
                       color: '#fff',
                       fontWeight: 800,
                       cursor:

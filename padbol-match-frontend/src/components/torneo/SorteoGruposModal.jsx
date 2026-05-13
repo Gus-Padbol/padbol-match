@@ -460,7 +460,7 @@ export default function SorteoGruposModal({
                       style={{
                         padding: '12px 10px',
                         borderRadius: '12px',
-                        border: tipoSorteo === op.id ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                        border: tipoSorteo === op.id ? '2px solid #E11B22' : '1px solid #cbd5e1',
                         background: tipoSorteo === op.id ? '#eef2ff' : '#f8fafc',
                         cursor: 'pointer',
                         textAlign: 'left',
@@ -557,7 +557,7 @@ export default function SorteoGruposModal({
                                   style={{
                                     padding: '6px 10px',
                                     borderRadius: '999px',
-                                    border: active ? '2px solid #4f46e5' : '1px solid #cbd5e1',
+                                    border: active ? '2px solid #E11B22' : '1px solid #cbd5e1',
                                     background: active ? '#eef2ff' : '#f8fafc',
                                     fontSize: '12px',
                                     fontWeight: 700,
@@ -580,7 +580,7 @@ export default function SorteoGruposModal({
                             style={{
                               marginTop: '8px',
                               fontSize: '12px',
-                              color: '#4f46e5',
+                              color: '#b91c1c',
                               background: 'none',
                               border: 'none',
                               cursor: 'pointer',
@@ -684,7 +684,7 @@ export default function SorteoGruposModal({
                         maxWidth: '100%',
                       }}
                     >
-                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#3730a3', marginBottom: '8px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#991b1b', marginBottom: '8px' }}>
                         Equipos sin grupo
                       </div>
                       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -771,7 +771,7 @@ export default function SorteoGruposModal({
                             boxSizing: 'border-box',
                           }}
                         >
-                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#4338ca', marginBottom: '8px' }}>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#b91c1c', marginBottom: '8px' }}>
                             Grupo {LETRAS[gi] || gi + 1}
                           </div>
                           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -856,7 +856,7 @@ export default function SorteoGruposModal({
                   <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Vista previa</div>
                   {preview.map((grupoIds, gi) => (
                     <div key={LETRAS[gi] || gi} style={{ marginBottom: '10px' }}>
-                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#3730a3', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#991b1b', marginBottom: '4px' }}>
                         Grupo {LETRAS[gi] || gi + 1}
                       </div>
                       <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#334155' }}>

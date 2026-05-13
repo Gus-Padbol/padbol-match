@@ -16,7 +16,7 @@ export default function DeportesPreferidosLecturaChips({ keys }) {
               display: 'inline-block',
               padding: '8px 14px',
               borderRadius: 9999,
-              border: '2px solid #4f46e5',
+              border: '2px solid #E11B22',
               background: '#eef2ff',
               color: '#312e81',
               fontWeight: 700,
