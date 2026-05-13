@@ -766,7 +766,7 @@ export default function NuevaSedeSuperBottomSheet({
                 fontWeight: 800,
                 borderRadius: 12,
                 border: 'none',
-                background: saving ? '#94a3b8' : '#16a34a',
+                background: saving ? '#94a3b8' : '#E11B22',
                 color: '#fff',
                 cursor: saving ? 'not-allowed' : 'pointer',
               }}

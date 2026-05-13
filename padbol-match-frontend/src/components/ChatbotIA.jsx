@@ -9,6 +9,7 @@ import {
   isSedeProfilePathname,
 } from '../constants/hubLayout';
 import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
+import { useTheme } from '../context/ThemeContext';
 
 const MAX_USER_MESSAGES = 6;
 /** Por encima de este número de turnos se agrupa por franja (si aplica más de una franja con datos). */
@@ -376,7 +377,129 @@ function chatUiStrings(loc) {
   };
 }
 
-function QuickSuggestionBar({ items, disabled, onPick }) {
+/** Paleta del modal del asistente (inline styles; alineado a gray-900/800/700 en oscuro). */
+function getChatbotModalTheme(isDark) {
+  if (isDark) {
+    return {
+      panelBg: '#111827',
+      borderHairline: '#374151',
+      headerBg: 'linear-gradient(135deg,#1f2937,#111827)',
+      titleColor: '#ffffff',
+      closeColor: '#9ca3af',
+      scrollBg: '#111827',
+      welcomeBg: '#1f2937',
+      welcomeColor: '#ffffff',
+      assistantBg: '#1f2937',
+      assistantColor: '#ffffff',
+      userBg: '#E11B22',
+      userColor: '#ffffff',
+      secondaryLabel: '#9ca3af',
+      chipBg: '#1f2937',
+      chipBorder: '#4b5563',
+      chipColor: '#ffffff',
+      franjaInactiveBg: '#1f2937',
+      franjaActiveBg: '#374151',
+      franjaBorderActive: '#E11B22',
+      franjaBorderInactive: '#4b5563',
+      franjaCount: '#9ca3af',
+      franjaText: '#ffffff',
+      slotBg: '#4338ca',
+      slotColor: '#e0e7ff',
+      slotBorder: '#6366f1',
+      loadingColor: '#9ca3af',
+      errorColor: '#fca5a5',
+      footerTopBorder: '#374151',
+      readAloudColor: '#9ca3af',
+      inputBg: '#1f2937',
+      inputColor: '#ffffff',
+      inputBorder: '#4b5563',
+      micBg: '#1f2937',
+      micBorder: '#4b5563',
+      dictationBg: '#1f2937',
+      dictationBorder: '#4b5563',
+      dictationSolid: '#ffffff',
+      dictationInterim: '#9ca3af',
+      iosTapBg: '#1f2937',
+      iosTapColor: '#ffffff',
+      iosTapBorder: '#4b5563',
+      hintIos: '#9ca3af',
+      voiceStatus: '#fbbf24',
+      voiceNotice: '#fdba74',
+      reservaCtaBg: '#E11B22',
+      limitePrimaryCta: '#E11B22',
+      sessionBoxBg: '#422006',
+      sessionBoxBorder: '#b45309',
+      sessionBoxText: '#fcd34d',
+      nuevaConsultaBg: 'transparent',
+      nuevaConsultaBorder: '#ca8a04',
+      nuevaConsultaText: '#fcd34d',
+      stopTtsBg: '#450a0a',
+      stopTtsBorder: '#991b1b',
+      stopTtsColor: '#fecaca',
+      waEscalada: '#128C7E',
+    };
+  }
+  return {
+    panelBg: '#fff',
+    borderHairline: '#e2e8f0',
+    headerBg: 'linear-gradient(135deg,#eef2ff,#fff)',
+    titleColor: '#1e293b',
+    closeColor: '#64748b',
+    scrollBg: 'transparent',
+    welcomeBg: '#f1f5f9',
+    welcomeColor: '#0f172a',
+    assistantBg: '#f1f5f9',
+    assistantColor: '#0f172a',
+    userBg: '#E11B22',
+    userColor: '#fff',
+    secondaryLabel: '#475569',
+    chipBg: '#fff',
+    chipBorder: '#cbd5e1',
+    chipColor: '#0f172a',
+    franjaInactiveBg: '#fff',
+    franjaActiveBg: '#eef2ff',
+    franjaBorderActive: '#E11B22',
+    franjaBorderInactive: '#cbd5e1',
+    franjaCount: '#64748b',
+    franjaText: '#0f172a',
+    slotBg: '#e0e7ff',
+    slotColor: '#312e81',
+    slotBorder: '#c7d2fe',
+    loadingColor: '#64748b',
+    errorColor: '#b91c1c',
+    footerTopBorder: '#e2e8f0',
+    readAloudColor: '#64748b',
+    inputBg: '#ffffff',
+    inputColor: '#0f172a',
+    inputBorder: '#cbd5e1',
+    micBg: '#fff',
+    micBorder: '#cbd5e1',
+    dictationBg: '#fafafa',
+    dictationBorder: '#cbd5e1',
+    dictationSolid: '#0f172a',
+    dictationInterim: '#94a3b8',
+    iosTapBg: '#f8fafc',
+    iosTapColor: '#0f172a',
+    iosTapBorder: '#cbd5e1',
+    hintIos: '#94a3b8',
+    voiceStatus: '#b45309',
+    voiceNotice: '#c2410c',
+    reservaCtaBg: '#E11B22',
+    limitePrimaryCta: '#E11B22',
+    sessionBoxBg: '#fef3c7',
+    sessionBoxBorder: '#fcd34d',
+    sessionBoxText: '#78350f',
+    nuevaConsultaBg: '#fffbeb',
+    nuevaConsultaBorder: '#ca8a04',
+    nuevaConsultaText: '#92400e',
+    stopTtsBg: '#fef2f2',
+    stopTtsBorder: '#fecaca',
+    stopTtsColor: '#991b1b',
+    waEscalada: '#128C7E',
+  };
+}
+
+function QuickSuggestionBar({ items, disabled, onPick, isDark }) {
   const list = Array.isArray(items) ? items : [];
   return (
     <div
@@ -410,9 +533,9 @@ function QuickSuggestionBar({ items, disabled, onPick }) {
             padding: '6px 12px',
             boxSizing: 'border-box',
             borderRadius: 9999,
-            border: '1px solid #d1d5f8',
-            background: 'transparent',
-            color: '#64748b',
+            border: isDark ? '1px solid #4b5563' : '1px solid #d1d5f8',
+            background: isDark ? '#374151' : 'transparent',
+            color: isDark ? '#ffffff' : '#64748b',
             fontSize: 12,
             fontWeight: 500,
             lineHeight: 1.25,
@@ -434,6 +557,8 @@ export default function ChatbotIA() {
   const location = useLocation();
   const navigate = useNavigate();
   const { session, userProfile, refreshSession } = useAuth();
+  const { theme } = useTheme();
+  const c = useMemo(() => getChatbotModalTheme(theme === 'dark'), [theme]);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -1139,11 +1264,12 @@ export default function ChatbotIA() {
           }}
         >
           <div
+            className={theme === 'dark' ? 'chatbotia-modal--dark' : undefined}
             style={{
               width: '100%',
               maxWidth: 420,
               maxHeight: 'min(88vh, 640px)',
-              background: '#fff',
+              background: c.panelBg,
               borderRadius: 16,
               display: 'flex',
               flexDirection: 'column',
@@ -1190,20 +1316,27 @@ export default function ChatbotIA() {
                 .chatbotia-voice-bars span:nth-child(3) { animation-delay: 180ms; }
                 .chatbotia-voice-bars span:nth-child(4) { animation-delay: 120ms; }
                 .chatbotia-voice-bars span:nth-child(5) { animation-delay: 60ms; }
+                .chatbotia-modal--dark input::placeholder {
+                  color: #9ca3af;
+                  opacity: 1;
+                }
+                .chatbotia-modal--dark input {
+                  caret-color: #ffffff;
+                }
               `}
             </style>
             <div
               style={{
                 padding: '12px 14px',
-                borderBottom: '1px solid #e2e8f0',
+                borderBottom: `1px solid ${c.borderHairline}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: 8,
-                background: 'linear-gradient(135deg,#eef2ff,#fff)',
+                background: c.headerBg,
               }}
             >
-              <div style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>{ui.titulo}</div>
+              <div style={{ fontWeight: 800, fontSize: 16, color: c.titleColor }}>{ui.titulo}</div>
               <button
                 type="button"
                 onClick={() => {
@@ -1216,7 +1349,7 @@ export default function ChatbotIA() {
                   fontSize: 22,
                   lineHeight: 1,
                   cursor: 'pointer',
-                  color: '#64748b',
+                  color: c.closeColor,
                   padding: 4,
                 }}
                 aria-label={ui.cerrar}
@@ -1234,6 +1367,7 @@ export default function ChatbotIA() {
                 flexDirection: 'column',
                 gap: 10,
                 minHeight: 200,
+                background: c.scrollBg,
               }}
             >
               {messages.length === 0 ? (
@@ -1242,8 +1376,8 @@ export default function ChatbotIA() {
                     style={{
                       padding: '10px 12px',
                       borderRadius: 12,
-                      background: '#f1f5f9',
-                      color: '#0f172a',
+                      background: c.welcomeBg,
+                      color: c.welcomeColor,
                       fontSize: 14,
                       lineHeight: 1.45,
                       whiteSpace: 'pre-wrap',
@@ -1266,6 +1400,7 @@ export default function ChatbotIA() {
                   items={ui.quickSuggestions}
                   disabled={loading || sessionEnded}
                   onPick={handleQuickSuggestion}
+                  isDark={theme === 'dark'}
                 />
               ) : null}
               {messages.map((m, i) => (
@@ -1276,8 +1411,8 @@ export default function ChatbotIA() {
                       maxWidth: '92%',
                       padding: '10px 12px',
                       borderRadius: 12,
-                      background: m.role === 'user' ? '#E11B22' : '#f1f5f9',
-                      color: m.role === 'user' ? '#fff' : '#0f172a',
+                      background: m.role === 'user' ? c.userBg : c.assistantBg,
+                      color: m.role === 'user' ? c.userColor : c.assistantColor,
                       fontSize: 14,
                       lineHeight: 1.45,
                       whiteSpace: 'pre-wrap',
@@ -1297,7 +1432,7 @@ export default function ChatbotIA() {
                         padding: '0 2px 8px',
                       }}
                     >
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: c.secondaryLabel, marginBottom: 6 }}>
                         {ui.deportesElegirTitulo}
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -1310,9 +1445,9 @@ export default function ChatbotIA() {
                             style={{
                               padding: '6px 10px',
                               borderRadius: 8,
-                              border: '1px solid #cbd5e1',
-                              background: '#fff',
-                              color: '#0f172a',
+                              border: `1px solid ${c.chipBorder}`,
+                              background: c.chipBg,
+                              color: c.chipColor,
                               fontWeight: 700,
                               fontSize: 12,
                               cursor: loading || sessionEnded ? 'not-allowed' : 'pointer',
@@ -1352,7 +1487,7 @@ export default function ChatbotIA() {
                           padding: '0 2px 8px',
                         }}
                       >
-                        <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: c.secondaryLabel, marginBottom: 6 }}>
                           {ui.slotsDisponiblesTitulo}
                         </div>
                         {useFranjaNav ? (
@@ -1382,9 +1517,9 @@ export default function ChatbotIA() {
                                   style={{
                                     padding: '6px 10px',
                                     borderRadius: 8,
-                                    border: active ? '2px solid #E11B22' : '1px solid #cbd5e1',
-                                    background: active ? '#eef2ff' : '#fff',
-                                    color: '#0f172a',
+                                    border: active ? `2px solid ${c.franjaBorderActive}` : `1px solid ${c.franjaBorderInactive}`,
+                                    background: active ? c.franjaActiveBg : c.franjaInactiveBg,
+                                    color: c.franjaText,
                                     fontWeight: 700,
                                     fontSize: 12,
                                     cursor: 'pointer',
@@ -1392,7 +1527,7 @@ export default function ChatbotIA() {
                                   }}
                                 >
                                   {label}{' '}
-                                  <span style={{ color: '#64748b', fontWeight: 700 }}>({groups[k].length})</span>
+                                  <span style={{ color: c.franjaCount, fontWeight: 700 }}>({groups[k].length})</span>
                                 </button>
                               );
                             })}
@@ -1420,12 +1555,12 @@ export default function ChatbotIA() {
                                   display: 'inline-block',
                                   padding: '5px 9px',
                                   borderRadius: 8,
-                                  background: '#e0e7ff',
-                                  color: '#312e81',
+                                  background: c.slotBg,
+                                  color: c.slotColor,
                                   fontWeight: 700,
                                   fontSize: 12,
                                   textDecoration: 'none',
-                                  border: '1px solid #c7d2fe',
+                                  border: `1px solid ${c.slotBorder}`,
                                   whiteSpace: 'nowrap',
                                 }}
                               >
@@ -1442,24 +1577,25 @@ export default function ChatbotIA() {
                       items={ui.quickSuggestions}
                       disabled={loading || sessionEnded}
                       onPick={handleQuickSuggestion}
+                      isDark={theme === 'dark'}
                     />
                   ) : null}
                 </React.Fragment>
               ))}
               {loading ? (
-                <div style={{ color: '#64748b', fontSize: 13, fontWeight: 600 }}>{ui.escribiendo}</div>
+                <div style={{ color: c.loadingColor, fontSize: 13, fontWeight: 600 }}>{ui.escribiendo}</div>
               ) : null}
               {error ? (
-                <div style={{ color: '#b91c1c', fontSize: 13, fontWeight: 600 }}>{error}</div>
+                <div style={{ color: c.errorColor, fontSize: 13, fontWeight: 600 }}>{error}</div>
               ) : null}
               {sessionEnded ? (
                 <div
                   style={{
                     padding: 14,
                     borderRadius: 12,
-                    background: '#fef3c7',
-                    border: '1px solid #fcd34d',
-                    color: '#78350f',
+                    background: c.sessionBoxBg,
+                    border: `1px solid ${c.sessionBoxBorder}`,
+                    color: c.sessionBoxText,
                     fontSize: 14,
                     fontWeight: 700,
                     textAlign: 'center',
@@ -1474,7 +1610,7 @@ export default function ChatbotIA() {
                         display: 'block',
                         padding: '12px 16px',
                         borderRadius: 10,
-                        background: '#16a34a',
+                        background: c.limitePrimaryCta,
                         color: '#fff',
                         fontWeight: 800,
                         fontSize: 15,
@@ -1492,13 +1628,13 @@ export default function ChatbotIA() {
                       type="button"
                       onClick={nuevaConsulta}
                       style={{
-                        border: '1px solid #ca8a04',
+                        border: `1px solid ${c.nuevaConsultaBorder}`,
                         borderRadius: 10,
                         padding: '10px 16px',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        background: '#fffbeb',
-                        color: '#92400e',
+                        background: c.nuevaConsultaBg,
+                        color: c.nuevaConsultaText,
                         fontSize: 14,
                       }}
                     >
@@ -1517,7 +1653,7 @@ export default function ChatbotIA() {
                     marginTop: 4,
                     padding: '10px 16px',
                     borderRadius: 10,
-                    background: '#16a34a',
+                    background: c.reservaCtaBg,
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: 14,
@@ -1543,7 +1679,7 @@ export default function ChatbotIA() {
                     marginTop: 4,
                     padding: '10px 16px',
                     borderRadius: 10,
-                    background: '#128C7E',
+                    background: c.waEscalada,
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: 14,
@@ -1558,10 +1694,10 @@ export default function ChatbotIA() {
               <div ref={listEndRef} />
             </div>
 
-            <div style={{ padding: '10px 12px 12px', borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '10px 12px 12px', borderTop: `1px solid ${c.footerTopBorder}`, background: c.panelBg }}>
               {ttsSupported ? (
                 <label
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12, color: '#64748b' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12, color: c.readAloudColor }}
                 >
                   <input
                     type="checkbox"
@@ -1599,9 +1735,9 @@ export default function ChatbotIA() {
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: 8,
-                      border: '1px solid #fecaca',
-                      background: '#fef2f2',
-                      color: '#991b1b',
+                      border: `1px solid ${c.stopTtsBorder}`,
+                      background: c.stopTtsBg,
+                      color: c.stopTtsColor,
                       fontWeight: 700,
                       fontSize: 12,
                       cursor: 'pointer',
@@ -1623,9 +1759,9 @@ export default function ChatbotIA() {
                       width: '100%',
                       padding: '8px 10px',
                       borderRadius: 8,
-                      border: '1px solid #cbd5e1',
-                      background: '#f8fafc',
-                      color: '#0f172a',
+                      border: `1px solid ${c.iosTapBorder}`,
+                      background: c.iosTapBg,
+                      color: c.iosTapColor,
                       fontWeight: 700,
                       fontSize: 12,
                       cursor: 'pointer',
@@ -1633,7 +1769,7 @@ export default function ChatbotIA() {
                   >
                     {ui.escucharUltimaIos}
                   </button>
-                  <div style={{ marginTop: 4, fontSize: 11, color: '#94a3b8', lineHeight: 1.35 }}>
+                  <div style={{ marginTop: 4, fontSize: 11, color: c.hintIos, lineHeight: 1.35 }}>
                     {ui.hintIosSafari}
                   </div>
                 </div>
@@ -1673,18 +1809,18 @@ export default function ChatbotIA() {
                       minWidth: 0,
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: '1px solid #cbd5e1',
+                      border: `1px solid ${c.dictationBorder}`,
                       fontSize: 16,
                       minHeight: 44,
                       boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
                       flexWrap: 'wrap',
-                      background: '#fafafa',
+                      background: c.dictationBg,
                     }}
                   >
-                    <span style={{ color: '#0f172a', whiteSpace: 'pre-wrap' }}>{voiceFinal}</span>
-                    <span style={{ color: '#94a3b8', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+                    <span style={{ color: c.dictationSolid, whiteSpace: 'pre-wrap' }}>{voiceFinal}</span>
+                    <span style={{ color: c.dictationInterim, fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
                       {voiceInterim}
                     </span>
                   </div>
@@ -1710,11 +1846,13 @@ export default function ChatbotIA() {
                       boxSizing: 'border-box',
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: '1px solid #cbd5e1',
+                      border: `1px solid ${c.inputBorder}`,
                       fontSize: 16,
                       lineHeight: 1.25,
                       minHeight: 44,
                       WebkitTapHighlightColor: 'transparent',
+                      background: c.inputBg,
+                      color: c.inputColor,
                     }}
                   />
                 )}
@@ -1748,8 +1886,9 @@ export default function ChatbotIA() {
                       justifySelf: 'center',
                       boxSizing: 'border-box',
                       borderRadius: 10,
-                      border: '1px solid #cbd5e1',
-                      background: '#fff',
+                      border: `1px solid ${c.micBorder}`,
+                      background: c.micBg,
+                      color: c.inputColor,
                       fontSize: 22,
                       lineHeight: 1,
                       display: 'flex',
@@ -1813,13 +1952,13 @@ export default function ChatbotIA() {
                 <div
                   role="status"
                   aria-live="polite"
-                  style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: '#b45309' }}
+                  style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: c.voiceStatus }}
                 >
                   {voicePhase === 'listening' ? ui.escuchando : ui.procesando}
                 </div>
               )}
               {voiceNotice ? (
-                <div style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: '#c2410c' }}>{voiceNotice}</div>
+                <div style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: c.voiceNotice }}>{voiceNotice}</div>
               ) : null}
             </div>
           </div>
