@@ -534,15 +534,6 @@ export default function ReservaForm() {
   const reservaPaddingTopCss = hubContentPaddingTopCss(location.pathname);
   const { session, loading: authLoading, userProfile } = useAuth();
 
-  /** Al cambiar de paso o volver atrás, el scroll del documento puede dejar el bloque bajo el header fijo. */
-  useLayoutEffect(() => {
-    const base = String(location.pathname || '').split('?')[0].split('#')[0];
-    if (base !== '/reservar' && !base.startsWith('/reservar/')) return;
-    window.scrollTo(0, 0);
-    if (document.documentElement) document.documentElement.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
-  }, [pantalla, location.pathname]);
-
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
@@ -580,6 +571,15 @@ export default function ReservaForm() {
       numeroTel: '',
     };
   });
+
+  /** Al cambiar de paso o volver atrás, el scroll del documento puede dejar el bloque bajo el header fijo. */
+  useLayoutEffect(() => {
+    const base = String(location.pathname || '').split('?')[0].split('#')[0];
+    if (base !== '/reservar' && !base.startsWith('/reservar/')) return;
+    window.scrollTo(0, 0);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, [pantalla, location.pathname]);
 
   const sedeSeleccionada = useMemo(() => {
     if (!Array.isArray(sedes) || sedes.length === 0 || filtros.sede_id === '' || filtros.sede_id == null) {
