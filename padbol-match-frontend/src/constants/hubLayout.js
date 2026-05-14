@@ -1,4 +1,12 @@
 /**
+ * Constantes de chrome fijo (header, BottomNav, paddings de contenido).
+ *
+ * ANTES DE COMMIT si tocás este archivo: verificar en la app que sigan bien
+ * — /reservar pantalla 1 (logo Padbol Match visible bajo el header),
+ * — /hub (selector «Elegir deporte» + cards sin recorte arriba),
+ * — /auth y /login (logo y formulario no cortados; usan hubAccesoContentPaddingTopCss / hubContentPaddingTopCss).
+ */
+/**
  * Layout hub: AppHeader fijo + barra de navegación (Jugar, Competir, Perfil)
  * justo debajo del header.
  */

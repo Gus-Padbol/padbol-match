@@ -40,6 +40,14 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 
+/**
+ * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
+ *
+ * ANTES DE COMMIT si tocás este archivo: pantalla 1 con logo Padbol Match bajo AppHeader; paddings
+ * `reservaPaddingTopCss` en todas las pantallas del flujo; no declarar hooks que usen `pantalla`
+ * antes del `useState` de `pantalla` (evita crash / boundary «Algo salió mal»).
+ */
+
 // Returns the correct price for a given sede + time slot.
 // Base desde `sedes` (precio_turno en Supabase, luego legacy precio_por_reserva); luego franjas o mañana/tarde.
 function getPrecio(sede, hora, fecha) {
@@ -1556,6 +1564,7 @@ export default function ReservaForm() {
           }}
         >
         <div className="reserva-sede-inner">
+          <img src="/logo-padbol-match.png" alt="Padbol Match" className="reserva-sede-logo" />
           <header className="reserva-sede-hero">
             <h1 className="reserva-sede-hero-title">Reserva tu cancha</h1>
             <p className="reserva-sede-hero-sub">Elige tu sede y horario favorito</p>

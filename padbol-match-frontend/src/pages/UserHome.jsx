@@ -22,6 +22,13 @@ import { pickHubDeporteRow } from '../utils/hubDeporteConfig';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 
+/**
+ * Hub principal (cards + deporte + PWA…).
+ *
+ * ANTES DE COMMIT si tocás este archivo: /hub con y sin sesión — selector «Elegir deporte» siempre visible,
+ * cards y bloque inferior sin quedar bajo el header fijo (spacer + paddingTop del scroll).
+ */
+
 const HUB_COLUMN_MAX = 390;
 
 /** Cuatro acciones fijas del hub (orden fijo). `cmsPhotoIds`: ids en hub-config para foto opcional. */
