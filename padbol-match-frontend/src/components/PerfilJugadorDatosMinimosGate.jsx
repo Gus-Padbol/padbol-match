@@ -102,7 +102,7 @@ export default function PerfilJugadorDatosMinimosGate({ children }) {
     const id = window.setTimeout(() => {
       void (async () => {
         try {
-          await signOutAndClear();
+          signOutAndClear();
         } catch {
           /* ignore */
         }

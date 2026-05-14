@@ -4591,7 +4591,7 @@ export default function MiPerfil() {
                 type="button"
                 onClick={async () => {
                   setModalConfirmarCerrarSesion(false);
-                  await signOutAndClear();
+                  signOutAndClear();
                   navigate('/');
                 }}
                 style={{

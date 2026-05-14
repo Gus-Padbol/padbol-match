@@ -859,7 +859,7 @@ export default function AppHeader({
             <button
               type="button"
               onClick={async () => {
-                await signOutAndClear();
+                signOutAndClear();
                 navigate('/');
               }}
               aria-label="Cerrar sesión"

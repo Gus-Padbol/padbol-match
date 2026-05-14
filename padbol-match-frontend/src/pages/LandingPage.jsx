@@ -5,10 +5,6 @@ import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 
 const ACCENT = '#E11B22';
-const BG = '#FFFFFF';
-const TEXT = '#0F172A';
-const TEXT_MUTED = '#64748B';
-const BORDER = '#E2E8F0';
 const COL_MAX = 390;
 
 const shell = {
@@ -17,8 +13,8 @@ const shell = {
   maxWidth: '100%',
   margin: 0,
   boxSizing: 'border-box',
-  background: BG,
-  color: TEXT,
+  background: 'var(--bg-page)',
+  color: 'var(--text-primary)',
   paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
   paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
 };
@@ -53,19 +49,40 @@ const btnPrimary = {
 };
 
 const btnSecondary = {
-  ...btnPrimary,
-  background: BG,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%',
+  padding: '15px 18px',
+  borderRadius: 12,
+  fontWeight: 800,
+  fontSize: 16,
+  cursor: 'pointer',
+  textDecoration: 'none',
+  boxSizing: 'border-box',
+  fontFamily: 'inherit',
   color: ACCENT,
+  background: 'transparent',
   border: `2px solid ${ACCENT}`,
   boxShadow: 'none',
 };
 
-const btnOutline = {
-  ...btnPrimary,
-  background: BG,
-  color: TEXT,
-  border: `1px solid ${BORDER}`,
+const btnCuenta = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%',
+  padding: '15px 18px',
+  borderRadius: 12,
+  border: '1px solid #475569',
   fontWeight: 700,
+  fontSize: 16,
+  cursor: 'pointer',
+  textDecoration: 'none',
+  color: '#fff',
+  background: '#334155',
+  boxSizing: 'border-box',
+  fontFamily: 'inherit',
   boxShadow: 'none',
 };
 
@@ -73,10 +90,10 @@ function HowCard({ lead, emoji, title, description }) {
   return (
     <div
       style={{
-        border: `1px solid ${BORDER}`,
+        border: '1px solid var(--border)',
         borderRadius: 12,
         padding: '20px 18px',
-        background: BG,
+        background: 'var(--bg-card)',
         boxSizing: 'border-box',
       }}
     >
@@ -99,13 +116,13 @@ function HowCard({ lead, emoji, title, description }) {
           margin: '0 0 8px',
           fontSize: 17,
           fontWeight: 800,
-          color: TEXT,
+          color: 'var(--text-primary)',
           lineHeight: 1.25,
         }}
       >
         {title}
       </h3>
-      <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: TEXT_MUTED, lineHeight: 1.5 }}>{description}</p>
+      <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{description}</p>
     </div>
   );
 }
@@ -127,7 +144,7 @@ export default function LandingPage() {
               fontSize: 28,
               fontWeight: 900,
               lineHeight: 1.15,
-              color: TEXT,
+              color: 'var(--text-primary)',
               letterSpacing: '-0.02em',
             }}
           >
@@ -139,7 +156,7 @@ export default function LandingPage() {
               fontSize: 28,
               fontWeight: 900,
               lineHeight: 1.15,
-              color: TEXT,
+              color: 'var(--text-primary)',
               letterSpacing: '-0.02em',
             }}
           >
@@ -151,7 +168,7 @@ export default function LandingPage() {
               fontSize: 15,
               fontWeight: 500,
               lineHeight: 1.5,
-              color: TEXT_MUTED,
+              color: 'var(--text-secondary)',
             }}
           >
             La plataforma que lleva el Padbol al mundo, y abre sus puertas al Pádel, Pickleball, Fútbol y más.
@@ -165,7 +182,7 @@ export default function LandingPage() {
           <Link to="/sedes" style={btnSecondary}>
             Explorar Padbol Match
           </Link>
-          <Link to="/auth?modo=registro" style={btnOutline}>
+          <Link to="/auth?modo=registro" style={btnCuenta}>
             Crear una cuenta
           </Link>
         </section>
@@ -177,7 +194,7 @@ export default function LandingPage() {
               textAlign: 'center',
               fontSize: 22,
               fontWeight: 800,
-              color: TEXT,
+              color: 'var(--text-primary)',
             }}
           >
             ¿Cómo funciona?
@@ -203,7 +220,7 @@ export default function LandingPage() {
 
         <footer
           style={{
-            borderTop: `1px solid ${BORDER}`,
+            borderTop: '1px solid var(--border)',
             paddingTop: 28,
             display: 'flex',
             flexDirection: 'column',
@@ -233,16 +250,16 @@ export default function LandingPage() {
             style={{
               marginTop: 24,
               paddingTop: 16,
-              borderTop: `1px solid ${BORDER}`,
+              borderTop: '1px solid var(--border)',
               fontSize: 13,
               textAlign: 'center',
             }}
           >
-            <Link to="/terminos" style={{ color: TEXT_MUTED, fontWeight: 600, textDecoration: 'none' }}>
+            <Link to="/terminos" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
               Términos
             </Link>
-            <span style={{ color: BORDER, margin: '0 8px' }}>|</span>
-            <Link to="/privacidad" style={{ color: TEXT_MUTED, fontWeight: 600, textDecoration: 'none' }}>
+            <span style={{ color: 'var(--border)', margin: '0 8px' }}>|</span>
+            <Link to="/privacidad" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
               Privacidad
             </Link>
           </div>

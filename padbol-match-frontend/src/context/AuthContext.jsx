@@ -256,9 +256,8 @@ export function AuthProvider({ children }) {
     await loadProfile(s ?? null);
   }, [loadProfile]);
 
-  const signOutAndClear = useCallback(async () => {
+  const signOutAndClear = useCallback(() => {
     profileLoadChainRef.current = Promise.resolve();
-    await supabase.auth.signOut();
     try {
       localStorage.removeItem('userProfile');
     } catch (_) {
@@ -268,6 +267,8 @@ export function AuthProvider({ children }) {
     setSession(null);
     setUserProfile(null);
     setProfileLoading(false);
+    /** Cierre remoto en segundo plano: el estado local ya es “sin sesión” para pintar la landing sin esperar la red. */
+    void supabase.auth.signOut().catch(() => {});
   }, []);
 
   const value = useMemo(
