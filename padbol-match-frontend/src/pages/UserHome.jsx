@@ -61,7 +61,7 @@ const HUB_CARD_FALLBACK_BG = '#2d2d2d';
 const HUB_CARD_HEIGHT_PX = 130;
 /** Separación entre cards del hub. */
 const HUB_CARD_GAP_PX = 8;
-/** Alto del bloque de cards: 3.5 cards visibles + 3 gaps (media cuarta card invita a scroll). */
+/** Alto del bloque con scroll interno (cards + 3er Tiempo + PWA): ~3.5 cards + gaps; el resto se ve al desplazar. */
 const HUB_CARDS_STACK_MAX_PX = 3.5 * HUB_CARD_HEIGHT_PX + 3 * HUB_CARD_GAP_PX;
 /** Aire bajo el chrome fijo antes del contenido (máx. compacto para acercar «Elegir deporte» arriba). */
 const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 0;
@@ -806,38 +806,38 @@ export default function UserHome() {
               </button>
             );
             })}
-          </div>
-          <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
+            <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
 
-          {!isPwaStandalone() ? (
-            <div
-              style={{
-                flexShrink: 0,
-                width: '100%',
-                marginTop: 14,
-                paddingBottom: 8,
-                boxSizing: 'border-box',
-              }}
-            >
+            {!isPwaStandalone() ? (
               <div
                 style={{
-                  padding: '12px 14px',
-                  borderRadius: 12,
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
+                  flexShrink: 0,
+                  width: '100%',
+                  marginTop: 14,
+                  paddingBottom: 8,
                   boxSizing: 'border-box',
-                  textAlign: 'center',
-                  color: 'var(--text-primary)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 }}
               >
-                <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 400, lineHeight: 1.4, color: 'var(--text-secondary)' }}>
-                  Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
-                </p>
-                <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 12,
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    boxSizing: 'border-box',
+                    textAlign: 'center',
+                    color: 'var(--text-primary)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 400, lineHeight: 1.4, color: 'var(--text-secondary)' }}>
+                    Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
+                  </p>
+                  <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
       <BottomNav />
