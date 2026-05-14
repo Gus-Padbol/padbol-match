@@ -30,7 +30,7 @@
   width: max-content;
   gap: 10px;
   align-items: center;
-  animation: hub-sponsors-marquee 6s linear infinite;
+  animation: hub-sponsors-marquee 3s linear infinite;
 }
 
 .hub-sponsors-ticker__track:hover {
@@ -74,10 +74,10 @@
 }
 
 .hub-sponsors-ticker__logo {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  min-height: 20px;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
@@ -86,13 +86,13 @@
 }
 
 .hub-sponsors-ticker__initial {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   border-radius: 4px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   background: #e2e8f0;
   color: #475569;

@@ -79,7 +79,7 @@ export default function Jugar() {
           width: '100%',
           maxWidth: 460,
           margin: '0 auto',
-          padding: '12px 14px 16px',
+          padding: '8px 14px 16px',
           boxSizing: 'border-box',
         }}
       >

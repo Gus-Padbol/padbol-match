@@ -60,8 +60,8 @@ const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
 /** Separación entre cards del hub. */
 const HUB_CARD_GAP_PX = 6;
-/** Aire bajo la barra fija Jugar/Competir antes del selector (el spacer ya reservó el chrome). */
-const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 8;
+/** Aire bajo el chrome fijo antes del contenido (máx. compacto para acercar «Elegir deporte» arriba). */
+const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 0;
 
 function deporteQuery(deporteElegido) {
   const dep = String(deporteElegido || '').trim().toLowerCase();
@@ -624,7 +624,7 @@ export default function UserHome() {
             marginRight: 'auto',
             paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
             paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-            paddingTop: 4,
+            paddingTop: 0,
             paddingBottom: 2,
             boxSizing: 'border-box',
             display: 'flex',
@@ -633,8 +633,8 @@ export default function UserHome() {
           }}
         >
           {session?.user ? (
-            <label style={{ display: 'block', width: '100%', marginBottom: 6, flexShrink: 0 }}>
-              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Elegir deporte</span>
+            <label style={{ display: 'block', width: '100%', marginBottom: 4, marginTop: 0, flexShrink: 0 }}>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 2 }}>Elegir deporte</span>
               <div style={{ position: 'relative' }}>
                 <select
                   value={deporteElegido}
