@@ -21,6 +21,19 @@ function clearSaludoHomeLocalStorage() {
   }
 }
 
+/** Tras cerrar sesión o ir a la landing: evita scroll heredado (contenido “abajo”, pantalla negra arriba). */
+function resetViewportScroll() {
+  try {
+    window.scrollTo(0, 0);
+    if (typeof document !== 'undefined') {
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Carga o crea `jugadores_perfil`: primero por email de la sesión, luego por `user_id`.
  * Nunca usa `email.split` como nombre al crear filas nuevas.
@@ -269,6 +282,11 @@ export function AuthProvider({ children }) {
     setProfileLoading(false);
     /** Cierre remoto en segundo plano: el estado local ya es “sin sesión” para pintar la landing sin esperar la red. */
     void supabase.auth.signOut().catch(() => {});
+    resetViewportScroll();
+    requestAnimationFrame(() => {
+      resetViewportScroll();
+      window.setTimeout(resetViewportScroll, 0);
+    });
   }, []);
 
   const value = useMemo(

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
@@ -11,6 +11,7 @@ const shell = {
   width: '100%',
   maxWidth: '100%',
   margin: 0,
+  marginTop: 0,
   boxSizing: 'border-box',
   background: 'var(--bg-page)',
   color: 'var(--text-primary)',
@@ -127,6 +128,18 @@ function HowCard({ lead, emoji, title, description }) {
 }
 
 export default function LandingPage() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    try {
+      if (typeof document !== 'undefined') {
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   return (
     <div style={shell}>
       <header style={{ ...column, textAlign: 'center', paddingBottom: 8 }}>
