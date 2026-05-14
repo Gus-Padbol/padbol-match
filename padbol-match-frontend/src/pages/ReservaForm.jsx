@@ -1826,24 +1826,8 @@ export default function ReservaForm() {
                       key={c.num}
                       type="button"
                       disabled={!c.libre}
-                      onClick={async () => {
-                        const { data } = await supabase.auth.getSession();
-                        if (!data?.session?.user) {
-                          saveReservaFormSessionState({
-                            pantalla: 2,
-                            filtros,
-                            formData: { ...formData, cancha: String(c.num) },
-                          });
-                          saveReservaReturnUrl({
-                            sedeId: filtros.sede_id,
-                            fecha: formData.fecha,
-                            hora: formData.hora,
-                            cancha: c.num,
-                          });
-                          navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
-                          return;
-                        }
-                        setFormData(prev => ({ ...prev, cancha: String(c.num) }));
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, cancha: String(c.num) }));
                         setPantalla(4);
                         setError('');
                       }}

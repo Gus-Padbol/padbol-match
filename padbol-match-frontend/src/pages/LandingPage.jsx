@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
-import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 
 const ACCENT = '#E11B22';
@@ -128,8 +127,6 @@ function HowCard({ lead, emoji, title, description }) {
 }
 
 export default function LandingPage() {
-  const reservarConLogin = authUrlWithRedirect('/reservar');
-
   return (
     <div style={shell}>
       <header style={{ ...column, textAlign: 'center', paddingBottom: 8 }}>
@@ -175,17 +172,36 @@ export default function LandingPage() {
           </p>
         </section>
 
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 40 }}>
-          <Link to={reservarConLogin} style={btnPrimary}>
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          <Link to="/reservar" style={btnPrimary}>
             Reservar un turno
           </Link>
-          <Link to="/sedes" style={btnSecondary}>
+          <Link to="/hub" style={btnSecondary}>
             Explorar Padbol Match
           </Link>
           <Link to="/auth?modo=registro" style={btnCuenta}>
             Crear una cuenta
           </Link>
         </section>
+
+        <p
+          style={{
+            margin: '0 0 40px',
+            padding: '14px 16px',
+            borderRadius: 12,
+            border: '1px solid var(--border)',
+            background: 'var(--bg-card)',
+            fontSize: 14,
+            fontWeight: 500,
+            lineHeight: 1.5,
+            color: 'var(--text-secondary)',
+            textAlign: 'center',
+            boxSizing: 'border-box',
+          }}
+        >
+          Podés explorar la app sin registrarte. Te pediremos iniciar sesión solo al confirmar una reserva, al
+          inscribirte o al comprar.
+        </p>
 
         <section style={{ marginBottom: 44 }}>
           <h2
