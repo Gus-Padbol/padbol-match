@@ -1358,7 +1358,9 @@ function sedeLicenciaChip(s) {
       </span>
     );
   }
-  return <span style={{ color: '#64748b', fontSize: '13px' }}>Sin licencia</span>;
+  return (
+    <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 600 }}>Sin licencia</span>
+  );
 }
 
 /** Búsqueda en vivo (nombre o número de licencia) sobre la lista en memoria. */
@@ -6749,7 +6751,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '14px',
-                    margin: '12px 0 14px',
+                    margin: '6px 0 8px',
                     fontSize: '14px',
                     fontWeight: 600,
                     color: '#334155',
@@ -6870,45 +6872,43 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   const locLine = [pais || null, ciudad || null].filter(Boolean).join(' · ') || '—';
                   return (
                     <div key={s.id} className="sede-admin-card">
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                        <span style={{ fontSize: '1.35rem', lineHeight: 1.2, flexShrink: 0 }} aria-hidden>
-                          {flagS || ''}
-                        </span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 800, fontSize: '15px', color: '#111827', wordBreak: 'break-word' }}>
-                            {String(s.nombre || '').trim() || '—'}
+                      <div className="sede-admin-card__hero">
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                          <span style={{ fontSize: '1.35rem', lineHeight: 1.2, flexShrink: 0 }} aria-hidden>
+                            {flagS || ''}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="sede-admin-card__name">{String(s.nombre || '').trim() || '—'}</div>
+                            <div className="sede-admin-card__loc">{locLine}</div>
+                            {email ? (
+                              <div className="sede-admin-card__email">
+                                <a href={`mailto:${email}`}>{email}</a>
+                              </div>
+                            ) : null}
                           </div>
-                          <div style={{ marginTop: '4px', fontSize: '13px', color: '#64748b', lineHeight: 1.4 }}>
-                            {locLine}
-                          </div>
-                          {email ? (
-                            <div style={{ marginTop: '6px', fontSize: '13px' }}>
-                              <a href={`mailto:${email}`} style={{ color: '#E11B22', wordBreak: 'break-all' }}>
-                                {email}
-                              </a>
-                            </div>
-                          ) : null}
                         </div>
                       </div>
-                      <div style={{ marginTop: '10px' }}>{sedeLicenciaChip(s)}</div>
-                      {isSuperAdmin ? (
-                        <button
-                          type="button"
-                          onClick={() => setSedeDetalleAbiertoId(s.id)}
-                          style={{
-                            marginTop: '10px',
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            borderRadius: '8px',
-                            border: '1px solid #cbd5e1',
-                            background: '#f8fafc',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Detalle
-                        </button>
-                      ) : null}
+                      <div className="sede-admin-card__body">
+                        <div>{sedeLicenciaChip(s)}</div>
+                        {isSuperAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => setSedeDetalleAbiertoId(s.id)}
+                            style={{
+                              marginTop: '8px',
+                              padding: '6px 12px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              borderRadius: '8px',
+                              border: '1px solid #cbd5e1',
+                              background: '#f8fafc',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Detalle
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}
