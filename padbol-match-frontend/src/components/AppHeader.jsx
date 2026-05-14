@@ -858,7 +858,7 @@ export default function AppHeader({
           {showLogoutAdminHeader && session?.user ? (
             <button
               type="button"
-              onClick={async () => {
+              onClick={() => {
                 signOutAndClear();
                 navigate('/');
               }}
