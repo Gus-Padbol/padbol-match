@@ -192,7 +192,7 @@ export default function LandingPage() {
             Reservar un turno
           </Link>
           <Link to="/hub" style={btnSecondary}>
-            Explorar Padbol Match
+            Entrá y empezá a jugar
           </Link>
           <Link to="/auth?modo=registro" style={btnCuenta}>
             Crear una cuenta
