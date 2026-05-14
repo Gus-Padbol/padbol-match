@@ -16,7 +16,7 @@ function logoUrlValid(raw) {
   return u;
 }
 
-/** Logo 26×26 o inicial si falla la carga / no hay URL. */
+/** Logo 28×28 o inicial si falla la carga / no hay URL. */
 function ChipAvatar({ nombre, logoRaw }) {
   const logo = logoUrlValid(logoRaw);
   const [imgFailed, setImgFailed] = useState(false);
@@ -28,8 +28,8 @@ function ChipAvatar({ nombre, logoRaw }) {
         className="hub-sponsors-ticker__logo"
         src={logo}
         alt=""
-        width={26}
-        height={26}
+        width={28}
+        height={28}
         loading="eager"
         decoding="async"
         referrerPolicy="no-referrer-when-downgrade"

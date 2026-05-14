@@ -4,7 +4,11 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
-import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import {
+  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_NAV_HEIGHT_PX,
+  hubContentPaddingTopCss,
+} from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import useUserRole from '../hooks/useUserRole';
@@ -79,14 +83,17 @@ export default function Jugar() {
           width: '100%',
           maxWidth: 460,
           margin: '0 auto',
-          padding: '8px 14px 16px',
+          paddingLeft: 14,
+          paddingRight: 14,
+          paddingTop: 0,
+          paddingBottom: `calc(20px + ${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`,
           boxSizing: 'border-box',
         }}
       >
         <h1
           style={{
             color: 'var(--text-primary)',
-            margin: '0 0 12px',
+            margin: '0 0 10px',
             fontSize: 24,
             lineHeight: 1.15,
             fontWeight: 700,

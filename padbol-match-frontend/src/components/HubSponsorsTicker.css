@@ -30,7 +30,7 @@
   width: max-content;
   gap: 10px;
   align-items: center;
-  animation: hub-sponsors-marquee 3s linear infinite;
+  animation: hub-sponsors-marquee 2s linear infinite;
 }
 
 .hub-sponsors-ticker__track:hover {
@@ -49,14 +49,14 @@
 .hub-sponsors-ticker__chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-shrink: 0;
-  padding: 6px 12px 6px 8px;
+  padding: 10px 22px;
   border-radius: 999px;
   background: var(--bg-card, #fff);
   border: 1px solid var(--border, #e2e8f0);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary, #0f172a);
   text-decoration: none;
@@ -74,10 +74,10 @@
 }
 
 .hub-sponsors-ticker__logo {
-  width: 26px;
-  height: 26px;
-  min-width: 26px;
-  min-height: 26px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
@@ -86,13 +86,13 @@
 }
 
 .hub-sponsors-ticker__initial {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   background: #e2e8f0;
   color: #475569;

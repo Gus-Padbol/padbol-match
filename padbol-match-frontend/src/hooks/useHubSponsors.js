@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { hubTickerSponsors, pickTercerTiempoSedeSponsor } from '../utils/hubSponsorsFilter';
+import { hubTickerSponsors, hubSponsorsEligibles, pickTercerTiempoSedeSponsor } from '../utils/hubSponsorsFilter';
 
 /**
  * Sponsors del hub: card 3er tiempo (sede) + lista para banda rotativa.
@@ -45,10 +45,12 @@ export function useHubSponsors(ctx) {
     [rows, sedeKey],
   );
 
-  const tickerList = useMemo(
-    () => hubTickerSponsors(rows, { sedeId: sedeKey, pais: paisKey }, tercerTiempo?.id ?? null),
-    [rows, sedeKey, paisKey, tercerTiempo?.id],
-  );
+  const tickerList = useMemo(() => {
+    const exId = tercerTiempo?.id ?? null;
+    const withExclude = hubTickerSponsors(rows, { sedeId: sedeKey, pais: paisKey }, exId);
+    if (withExclude.length > 0) return withExclude;
+    return hubSponsorsEligibles(rows, { sedeId: sedeKey, pais: paisKey });
+  }, [rows, sedeKey, paisKey, tercerTiempo?.id]);
 
   return useMemo(
     () => ({

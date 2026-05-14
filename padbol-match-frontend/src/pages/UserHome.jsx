@@ -625,7 +625,7 @@ export default function UserHome() {
             paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
             paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
             paddingTop: 0,
-            paddingBottom: 2,
+            paddingBottom: 0,
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
@@ -633,8 +633,8 @@ export default function UserHome() {
           }}
         >
           {session?.user ? (
-            <label style={{ display: 'block', width: '100%', marginBottom: 4, marginTop: 0, flexShrink: 0 }}>
-              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 2 }}>Elegir deporte</span>
+            <label style={{ display: 'block', width: '100%', marginBottom: 2, marginTop: 0, flexShrink: 0 }}>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 0 }}>Elegir deporte</span>
               <div style={{ position: 'relative' }}>
                 <select
                   value={deporteElegido}
@@ -692,7 +692,7 @@ export default function UserHome() {
             <p
               style={{
                 textAlign: 'center',
-                margin: '0 0 8px',
+                margin: '0 0 6px',
                 fontSize: 13,
                 fontWeight: 400,
                 color: 'var(--text-secondary)',
