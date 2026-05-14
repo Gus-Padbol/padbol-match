@@ -16,7 +16,9 @@ import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
+import HubDeporteSelect from '../components/HubDeporteSelect';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { pickHubDeporteRow } from '../utils/hubDeporteConfig';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
@@ -101,9 +103,6 @@ function pickHubCmsPhotoUrl(rows, cmsPhotoIds) {
   return '';
 }
 
-/** Persiste el filtro «Elegir deporte» del hub entre visitas (misma pestaña / sesión). */
-const HUB_DEPORTE_SESSION_KEY = 'padbol_hub_deporte_filter';
-
 const HUB_API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -176,15 +175,7 @@ export default function UserHome() {
   const location = useLocation();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [nombreFinal, setNombreFinal] = useState(null);
-  const [deporteElegido, setDeporteElegido] = useState(() => {
-    try {
-      const raw = sessionStorage.getItem(HUB_DEPORTE_SESSION_KEY);
-      const k = String(raw || '').trim().toLowerCase();
-      return DEPORTES_CANCHA_SEDE_KEYS.includes(k) ? k : '';
-    } catch {
-      return '';
-    }
-  });
+  const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
   const [hubCmsStatus, setHubCmsStatus] = useState('loading');
   const [hubCmsRows, setHubCmsRows] = useState([]);
   const [hubDeporteStatus, setHubDeporteStatus] = useState('loading');
@@ -639,69 +630,13 @@ export default function UserHome() {
             flexShrink: 0,
           }}
         >
-          <label style={{ display: 'block', width: '100%', marginBottom: 0, marginTop: 0, flexShrink: 0 }}>
-            <span
-              style={{
-                display: 'block',
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                marginBottom: 10,
-              }}
-            >
-              Elegir deporte
-            </span>
-            <div style={{ position: 'relative', marginBottom: 10 }}>
-              <select
-                value={deporteElegido}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setDeporteElegido(v);
-                  try {
-                    if (v) sessionStorage.setItem(HUB_DEPORTE_SESSION_KEY, v);
-                    else sessionStorage.removeItem(HUB_DEPORTE_SESSION_KEY);
-                  } catch {
-                    /* ignore */
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  padding: '10px 40px 10px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  fontSize: 15,
-                  fontWeight: 400,
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="">Todos los deportes</option>
-                {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
-                  <option key={d.key} value={d.key}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-              <span
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  right: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  pointerEvents: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: 12,
-                }}
-              >
-                ▼
-              </span>
-            </div>
-          </label>
+          <HubDeporteSelect
+            value={deporteElegido}
+            onChange={(v) => {
+              setDeporteElegido(v);
+              writeHubDeporteFilterToSession(v);
+            }}
+          />
 
           {!authLoading && !session?.user ? (
             <p

@@ -1,57 +1,74 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
+import HubDeporteSelect from '../components/HubDeporteSelect';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_NAV_HEIGHT_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
+import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
+import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { useAuth } from '../context/AuthContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import useUserRole from '../hooks/useUserRole';
 import './Jugar.css';
 
-const IMG_RESERVA =
-  'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80';
-const IMG_BUSCAR =
-  'https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=800&q=80';
-const IMG_ARMAR =
-  'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80';
-
-const opciones = [
+const JUGAR_OPCIONES_BASE = [
   {
     title: 'Reservar cancha',
     body: 'Ya tengo equipo completo, quiero una cancha.',
-    image: IMG_RESERVA,
     path: '/reservar',
+    hubKey: 'reservar',
   },
   {
     title: 'Buscar partido',
     body: 'Quiero unirme a un partido que ya existe.',
-    image: IMG_BUSCAR,
     path: '/partidos-abiertos',
+    hubKey: 'buscar_partido',
   },
   {
     title: 'Armar partido',
     body: 'Quiero crear un partido y sumar jugadores.',
-    image: IMG_ARMAR,
     path: '/jugar/armar',
+    hubKey: 'armar_partido',
   },
 ];
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
+
+function deporteQuery(deporteElegido) {
+  const dep = String(deporteElegido || '').trim().toLowerCase();
+  return dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep) ? `?deporte=${encodeURIComponent(dep)}` : '';
+}
 
 export default function Jugar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { session, userProfile } = useAuth();
-  const deporteQ = useMemo(() => {
+
+  const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
+
+  useEffect(() => {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
-    return d ? `?deporte=${encodeURIComponent(d)}` : '';
+    if (!DEPORTES_CANCHA_SEDE_KEYS.includes(d)) return;
+    setDeporteElegido(d);
+    writeHubDeporteFilterToSession(d);
   }, [searchParams]);
+
+  const opciones = useMemo(
+    () =>
+      JUGAR_OPCIONES_BASE.map((op) => {
+        const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, op.hubKey) : '';
+        const image = porDeporte || hubCardPhotoFallback(op.hubKey);
+        return { ...op, image };
+      }),
+    [deporteElegido]
+  );
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -65,6 +82,8 @@ export default function Jugar() {
     pais: paisParaSponsors,
     enabled: true,
   });
+
+  const q = deporteQuery(deporteElegido);
 
   return (
     <div
@@ -89,6 +108,14 @@ export default function Jugar() {
           boxSizing: 'border-box',
         }}
       >
+        <HubDeporteSelect
+          id="jugar-deporte-select"
+          value={deporteElegido}
+          onChange={(v) => {
+            setDeporteElegido(v);
+            writeHubDeporteFilterToSession(v);
+          }}
+        />
         <h1
           style={{
             color: 'var(--text-primary)',
@@ -105,7 +132,7 @@ export default function Jugar() {
             <button
               key={op.title}
               type="button"
-              onClick={() => navigate(`${op.path}${deporteQ}`)}
+              onClick={() => navigate(`${op.path}${q}`)}
               style={{
                 textAlign: 'left',
                 border: '1px solid var(--border)',
