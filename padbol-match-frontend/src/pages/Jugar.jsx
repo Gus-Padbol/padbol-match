@@ -8,6 +8,7 @@ import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../const
 import { useAuth } from '../context/AuthContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import useUserRole from '../hooks/useUserRole';
+import './Jugar.css';
 
 const IMG_RESERVA =
   'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80';
@@ -38,8 +39,6 @@ const opciones = [
 ];
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
-/** Altura imagen de card: compacta para dejar sponsors visibles sin scroll en viewport típico. */
-const JUGAR_CARD_IMG_HEIGHT_PX = 104;
 
 export default function Jugar() {
   const navigate = useNavigate();
@@ -114,15 +113,9 @@ export default function Jugar() {
               }}
             >
               <div
+                className="jugar-card-media"
                 style={{
-                  position: 'relative',
-                  height: JUGAR_CARD_IMG_HEIGHT_PX,
-                  minHeight: JUGAR_CARD_IMG_HEIGHT_PX,
-                  backgroundColor: '#1a1a1a',
                   backgroundImage: `url(${op.image})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
                 }}
               >
                 <div
@@ -133,40 +126,9 @@ export default function Jugar() {
                     background: CARD_OVERLAY,
                   }}
                 />
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    right: 12,
-                    bottom: 10,
-                    zIndex: 1,
-                  }}
-                >
-                  <strong
-                    style={{
-                      display: 'block',
-                      color: '#fff',
-                      fontSize: 17,
-                      fontWeight: 800,
-                      lineHeight: 1.15,
-                      textShadow: '0 1px 3px rgba(0,0,0,0.45)',
-                    }}
-                  >
-                    {op.title}
-                  </strong>
-                  <span
-                    style={{
-                      display: 'block',
-                      marginTop: 4,
-                      color: '#fff',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      lineHeight: 1.35,
-                      textShadow: '0 1px 3px rgba(0,0,0,0.45)',
-                    }}
-                  >
-                    {op.body}
-                  </span>
+                <div className="jugar-card-copy">
+                  <strong className="jugar-card-title">{op.title}</strong>
+                  <span className="jugar-card-body">{op.body}</span>
                 </div>
               </div>
             </button>

@@ -1,0 +1,59 @@
+/* Altura de cards: compacta en móvil (~390px) para dejar sponsors visibles sin scroll. */
+.jugar-card-media {
+  position: relative;
+  height: 112px;
+  min-height: 112px;
+  background-color: #1a1a1a;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.jugar-card-copy {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  z-index: 1;
+}
+
+.jugar-card-title {
+  display: block;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.jugar-card-body {
+  display: block;
+  margin-top: 4px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 430px) {
+  .jugar-card-media {
+    height: 85px;
+    min-height: 85px;
+  }
+
+  .jugar-card-copy {
+    left: 8px;
+    right: 8px;
+    bottom: 6px;
+  }
+
+  .jugar-card-title {
+    font-size: 14px;
+  }
+
+  .jugar-card-body {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+}

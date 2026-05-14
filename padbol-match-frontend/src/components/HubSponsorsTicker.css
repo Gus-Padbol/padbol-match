@@ -30,7 +30,7 @@
   width: max-content;
   gap: 10px;
   align-items: center;
-  animation: hub-sponsors-marquee 8s linear infinite;
+  animation: hub-sponsors-marquee 6s linear infinite;
 }
 
 .hub-sponsors-ticker__track:hover {
@@ -69,12 +69,19 @@
   cursor: default;
 }
 
+.hub-sponsors-ticker__chip-label {
+  flex-shrink: 0;
+}
+
 .hub-sponsors-ticker__logo {
   width: 20px;
   height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   border-radius: 4px;
-  object-fit: contain;
+  object-fit: cover;
   flex-shrink: 0;
+  display: block;
   background: #f1f5f9;
 }
 

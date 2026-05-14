@@ -58,9 +58,6 @@ const HUB_FIXED_ACTIONS = [
 
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
-/** Altura fija de cada card del hub (las 4 iguales). */
-/** Cards más compactas para dejar sponsors visibles antes del fold en ~390px de ancho. */
-const HUB_CARD_HEIGHT_PX = 124;
 /** Separación entre cards del hub. */
 const HUB_CARD_GAP_PX = 6;
 /** Aire bajo la barra fija Jugar/Competir antes del selector (el spacer ya reservó el chrome). */
@@ -724,12 +721,11 @@ export default function UserHome() {
                 key={c.key}
                 type="button"
                 onClick={c.onClick}
+                className="hub-surface-card"
                 style={{
                   position: 'relative',
                   width: '100%',
                   flex: '0 0 auto',
-                  height: HUB_CARD_HEIGHT_PX,
-                  minHeight: HUB_CARD_HEIGHT_PX,
                   textAlign: 'left',
                   border: 'none',
                   borderRadius: 12,
@@ -771,6 +767,7 @@ export default function UserHome() {
                   }}
                 />
                 <div
+                  className="hub-surface-card__text"
                   style={{
                     position: 'relative',
                     zIndex: 1,
@@ -780,36 +777,12 @@ export default function UserHome() {
                     flexDirection: 'column',
                     justifyContent: 'flex-end',
                     alignItems: 'flex-start',
-                    padding: '8px 12px 10px',
                     boxSizing: 'border-box',
                   }}
                 >
-                  <span
-                    style={{
-                      display: 'block',
-                      color: '#fff',
-                      fontSize: 'clamp(14px, 3.6vw, 17px)',
-                      fontWeight: 800,
-                      lineHeight: 1.15,
-                      textShadow: '0 1px 3px rgba(0,0,0,0.45)',
-                    }}
-                  >
-                    {c.titulo}
-                  </span>
+                  <span className="hub-surface-card__title">{c.titulo}</span>
                   {c.subtitulo ? (
-                    <span
-                      style={{
-                        display: 'block',
-                        marginTop: 4,
-                        color: '#fff',
-                        fontSize: 'clamp(11px, 2.9vw, 13px)',
-                        fontWeight: 700,
-                        lineHeight: 1.3,
-                        textShadow: '0 1px 3px rgba(0,0,0,0.45)',
-                      }}
-                    >
-                      {c.subtitulo}
-                    </span>
+                    <span className="hub-surface-card__sub">{c.subtitulo}</span>
                   ) : null}
                 </div>
               </button>

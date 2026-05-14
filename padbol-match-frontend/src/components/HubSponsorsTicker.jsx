@@ -1,10 +1,47 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import './HubSponsorsTicker.css';
 
 function chipInitial(nombre) {
   const t = String(nombre || '').trim();
   if (!t) return '★';
   return t.charAt(0).toUpperCase();
+}
+
+function logoUrlValid(raw) {
+  if (raw == null) return '';
+  const u = String(raw).trim();
+  if (!u) return '';
+  if (/^https?:\/\//i.test(u)) return u;
+  if (u.startsWith('//')) return `https:${u}`;
+  return u;
+}
+
+/** Logo 20×20 o inicial si falla la carga / no hay URL. */
+function ChipAvatar({ nombre, logoRaw }) {
+  const logo = logoUrlValid(logoRaw);
+  const [imgFailed, setImgFailed] = useState(false);
+  const onErr = useCallback(() => setImgFailed(true), []);
+
+  if (logo && !imgFailed) {
+    return (
+      <img
+        className="hub-sponsors-ticker__logo"
+        src={logo}
+        alt=""
+        width={20}
+        height={20}
+        loading="eager"
+        decoding="async"
+        referrerPolicy="no-referrer-when-downgrade"
+        onError={onErr}
+      />
+    );
+  }
+  return (
+    <span className="hub-sponsors-ticker__initial" aria-hidden title={nombre}>
+      {chipInitial(nombre)}
+    </span>
+  );
 }
 
 /**
@@ -25,18 +62,12 @@ export default function HubSponsorsTicker({ sponsors }) {
         <div className="hub-sponsors-ticker__track">
           {loop.map((s, i) => {
             const nombre = String(s.nombre || '').trim();
-            const logo = s.logo_url != null ? String(s.logo_url).trim() : '';
+            const logoRaw = s.logo_url ?? s.logoUrl;
             const url = s.url_destino != null ? String(s.url_destino).trim() : '';
             const inner = (
               <>
-                {logo ? (
-                  <img className="hub-sponsors-ticker__logo" src={logo} alt="" loading="lazy" />
-                ) : (
-                  <span className="hub-sponsors-ticker__initial" aria-hidden>
-                    {chipInitial(nombre)}
-                  </span>
-                )}
-                <span>{nombre}</span>
+                <ChipAvatar nombre={nombre} logoRaw={logoRaw} />
+                <span className="hub-sponsors-ticker__chip-label">{nombre}</span>
               </>
             );
             if (url) {

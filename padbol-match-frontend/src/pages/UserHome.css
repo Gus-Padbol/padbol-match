@@ -16,3 +16,55 @@
     opacity: 1;
   }
 }
+
+/* Cards de acciones: más bajas en móvil para banda de sponsors above the fold. */
+.hub-surface-card {
+  height: 128px;
+  min-height: 128px;
+}
+
+.hub-surface-card__text {
+  padding: 8px 12px 10px;
+}
+
+.hub-surface-card__title {
+  display: block;
+  color: #fff;
+  font-size: clamp(13px, 3.5vw, 17px);
+  font-weight: 800;
+  line-height: 1.15;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.hub-surface-card__sub {
+  display: block;
+  margin-top: 4px;
+  color: #fff;
+  font-size: clamp(11px, 2.9vw, 13px);
+  font-weight: 700;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 430px) {
+  .hub-surface-card {
+    height: 85px;
+    min-height: 85px;
+  }
+
+  .hub-surface-card__text {
+    padding: 5px 8px 6px;
+  }
+
+  .hub-surface-card__title {
+    font-size: 12px;
+    line-height: 1.1;
+  }
+
+  .hub-surface-card__sub {
+    font-size: 10px;
+    margin-top: 2px;
+    line-height: 1.2;
+  }
+}
+
