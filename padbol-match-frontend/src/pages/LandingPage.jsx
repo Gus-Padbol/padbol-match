@@ -143,17 +143,28 @@ export default function LandingPage() {
 
   return (
     <div style={shell}>
-      <header style={{ ...column, textAlign: 'center', paddingBottom: 8 }}>
-        <img src="/logo-padbol-match.png" alt="Padbol Match" style={{ ...padbolLogoImgStyle, height: 72, maxWidth: '100%' }} />
+      <header style={{ ...column, textAlign: 'center', paddingBottom: 0 }}>
+        <img
+          src="/logo-padbol-match.png"
+          alt="Padbol Match"
+          style={{
+            ...padbolLogoImgStyle,
+            width: 120,
+            height: 120,
+            maxWidth: '100%',
+            objectFit: 'contain',
+            marginBottom: 20,
+          }}
+        />
       </header>
 
       <main style={column}>
-        <section style={{ paddingTop: 8, paddingBottom: 28, textAlign: 'center' }}>
+        <section style={{ paddingTop: 0, paddingBottom: 28, textAlign: 'center' }}>
           <h1
             style={{
               margin: 0,
-              fontSize: 28,
-              fontWeight: 600,
+              fontSize: 22,
+              fontWeight: 500,
               lineHeight: 1.3,
               color: 'var(--text-primary)',
               letterSpacing: '-0.02em',
