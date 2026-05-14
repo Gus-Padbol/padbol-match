@@ -830,13 +830,14 @@ html.theme-dark .admin-mi-sede-theme-panel {
 .admin-mi-sede-theme-panel textarea {
   background: var(--bg-page) !important;
   color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
   border: 1px solid var(--border) !important;
 }
 
 .admin-mi-sede-theme-panel input::placeholder,
 .admin-mi-sede-theme-panel textarea::placeholder {
   color: var(--text-secondary);
-  opacity: 1;
+  opacity: 0.7;
 }
 
 .admin-mi-sede-theme-panel label,
@@ -909,13 +910,15 @@ html.theme-dark .admin-editar-sede-dialog {
 .admin-editar-sede-dialog textarea {
   background: var(--bg-page) !important;
   color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
   border: 1px solid var(--border) !important;
 }
 
 .admin-editar-sede-dialog input::placeholder,
 .admin-editar-sede-dialog textarea::placeholder {
-  color: var(--text-secondary);
-  opacity: 1;
+  color: var(--text-secondary) !important;
+  opacity: 0.7 !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
 }
 
 .admin-editar-sede-dialog .admin-editar-sede-hint {
@@ -936,4 +939,36 @@ html.theme-dark .admin-editar-sede-dialog {
   background: var(--pm-color-muted-bg) !important;
   color: var(--text-primary) !important;
   border: 1px solid var(--border) !important;
+}
+
+/* ─── Mobile: shell admin a ancho completo (evita columna ~50% + banda vacía) ─── */
+@media (max-width: 767px) {
+  .admin-dashboard,
+  .admin-dashboard-main-scroll,
+  .admin-dashboard-body-surface,
+  .admin-dashboard-brand-shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* Panel admin: texto y placeholders legibles en tema oscuro (incl. Safari / autofill) */
+.admin-dashboard input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']),
+.admin-dashboard select,
+.admin-dashboard textarea {
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+}
+
+.admin-dashboard input::placeholder,
+.admin-dashboard textarea::placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 0.7 !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+}
+
+.admin-dashboard label {
+  color: var(--text-primary) !important;
 }

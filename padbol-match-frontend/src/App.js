@@ -425,19 +425,7 @@ function App() {
   return (
     <Router>
       <GlobalErrorBoundary>
-        <div
-          style={{
-            width: '100%',
-            maxWidth: '900px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            boxSizing: 'border-box',
-            flex: 1,
-            minHeight: 0,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
+        <div className="pm-app-shell-column">
           <AppShell />
         </div>
       </GlobalErrorBoundary>

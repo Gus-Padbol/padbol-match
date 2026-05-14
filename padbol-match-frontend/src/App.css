@@ -367,3 +367,31 @@ h3 {
     flex-wrap: wrap;
   }
 }
+
+/**
+ * Columna principal de la app (~900px centrada en desktop).
+ * En mobile debe ocupar el 100% del viewport (evita columna estrecha + bandas laterales).
+ */
+.pm-app-shell-column {
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+@media (max-width: 767px) {
+  .pm-app-shell-column {
+    max-width: none;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
