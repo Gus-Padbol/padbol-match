@@ -59,11 +59,12 @@ const HUB_FIXED_ACTIONS = [
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
 /** Altura fija de cada card del hub (las 4 iguales). */
-const HUB_CARD_HEIGHT_PX = 150;
+/** Cards más compactas para dejar sponsors visibles antes del fold en ~390px de ancho. */
+const HUB_CARD_HEIGHT_PX = 124;
 /** Separación entre cards del hub. */
-const HUB_CARD_GAP_PX = 8;
+const HUB_CARD_GAP_PX = 6;
 /** Aire bajo la barra fija Jugar/Competir antes del selector (el spacer ya reservó el chrome). */
-const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 12;
+const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 8;
 
 function deporteQuery(deporteElegido) {
   const dep = String(deporteElegido || '').trim().toLowerCase();
@@ -626,8 +627,8 @@ export default function UserHome() {
             marginRight: 'auto',
             paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
             paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-            paddingTop: 8,
-            paddingBottom: 4,
+            paddingTop: 4,
+            paddingBottom: 2,
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
@@ -635,7 +636,7 @@ export default function UserHome() {
           }}
         >
           {session?.user ? (
-            <label style={{ display: 'block', width: '100%', marginBottom: 10, flexShrink: 0 }}>
+            <label style={{ display: 'block', width: '100%', marginBottom: 6, flexShrink: 0 }}>
               <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Elegir deporte</span>
               <div style={{ position: 'relative' }}>
                 <select

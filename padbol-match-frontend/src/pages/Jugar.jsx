@@ -2,7 +2,12 @@ import React, { useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import HubSponsorsTicker from '../components/HubSponsorsTicker';
+import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { useAuth } from '../context/AuthContext';
+import { useHubSponsors } from '../hooks/useHubSponsors';
+import useUserRole from '../hooks/useUserRole';
 
 const IMG_RESERVA =
   'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80';
@@ -33,15 +38,31 @@ const opciones = [
 ];
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
+/** Altura imagen de card: compacta para dejar sponsors visibles sin scroll en viewport típico. */
+const JUGAR_CARD_IMG_HEIGHT_PX = 104;
 
 export default function Jugar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { session, userProfile } = useAuth();
   const deporteQ = useMemo(() => {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
     return d ? `?deporte=${encodeURIComponent(d)}` : '';
   }, [searchParams]);
+
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
+  const paisParaSponsors = String(hubPaisUsuario || userProfile?.pais || '').trim();
+  const { tercerTiempoSponsor, tickerSponsors } = useHubSponsors({
+    sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
+    pais: paisParaSponsors,
+    enabled: true,
+  });
 
   return (
     <div
@@ -59,22 +80,22 @@ export default function Jugar() {
           width: '100%',
           maxWidth: 460,
           margin: '0 auto',
-          padding: '20px 16px',
+          padding: '12px 14px 16px',
           boxSizing: 'border-box',
         }}
       >
         <h1
           style={{
             color: 'var(--text-primary)',
-            margin: '0 0 20px',
-            fontSize: 26,
+            margin: '0 0 12px',
+            fontSize: 24,
             lineHeight: 1.15,
             fontWeight: 700,
           }}
         >
           ¡Vamos a jugar!
         </h1>
-        <div style={{ display: 'grid', gap: 14 }}>
+        <div style={{ display: 'grid', gap: 10 }}>
           {opciones.map((op) => (
             <button
               key={op.title}
@@ -95,7 +116,8 @@ export default function Jugar() {
               <div
                 style={{
                   position: 'relative',
-                  height: 140,
+                  height: JUGAR_CARD_IMG_HEIGHT_PX,
+                  minHeight: JUGAR_CARD_IMG_HEIGHT_PX,
                   backgroundColor: '#1a1a1a',
                   backgroundImage: `url(${op.image})`,
                   backgroundSize: 'cover',
@@ -150,6 +172,8 @@ export default function Jugar() {
             </button>
           ))}
         </div>
+        <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
+        <HubSponsorsTicker sponsors={tickerSponsors} />
       </main>
       <BottomNav />
     </div>

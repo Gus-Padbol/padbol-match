@@ -1,5 +1,5 @@
 .hub-sponsors-ticker {
-  margin-top: 14px;
+  margin-top: 8px;
   width: 100%;
   flex-shrink: 0;
 }
@@ -30,7 +30,7 @@
   width: max-content;
   gap: 10px;
   align-items: center;
-  animation: hub-sponsors-marquee 48s linear infinite;
+  animation: hub-sponsors-marquee 8s linear infinite;
 }
 
 .hub-sponsors-ticker__track:hover {

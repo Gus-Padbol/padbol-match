@@ -21,7 +21,7 @@ export default function HubTercerTiempoSponsor({ sponsor }) {
   return (
     <div
       style={{
-        marginTop: 14,
+        marginTop: 8,
         width: '100%',
         flexShrink: 0,
         borderRadius: 12,
