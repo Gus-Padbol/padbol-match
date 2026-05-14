@@ -17,10 +17,10 @@
   }
 }
 
-/* Cards de acciones: más bajas en móvil para banda de sponsors above the fold. */
+/* Cards de acciones — altura alineada a UserHome.jsx (HUB_CARD_HEIGHT_PX). */
 .hub-surface-card {
-  height: 128px;
-  min-height: 128px;
+  height: 130px;
+  min-height: 130px;
 }
 
 .hub-surface-card__text {
@@ -47,24 +47,18 @@
 }
 
 @media (max-width: 430px) {
-  .hub-surface-card {
-    height: 85px;
-    min-height: 85px;
-  }
-
   .hub-surface-card__text {
-    padding: 5px 8px 6px;
+    padding: 6px 10px 8px;
   }
 
   .hub-surface-card__title {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.1;
   }
 
   .hub-surface-card__sub {
-    font-size: 10px;
-    margin-top: 2px;
+    font-size: 11px;
+    margin-top: 3px;
     line-height: 1.2;
   }
 }
-
