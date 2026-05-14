@@ -632,7 +632,7 @@ export default function UserHome() {
           }}
         >
           {session?.user ? (
-            <label style={{ display: 'block', width: '100%', marginBottom: 2, marginTop: 0, flexShrink: 0 }}>
+            <label style={{ display: 'block', width: '100%', marginBottom: 0, marginTop: 0, flexShrink: 0 }}>
               <span
                 style={{
                   display: 'block',
@@ -644,7 +644,7 @@ export default function UserHome() {
               >
                 Elegir deporte
               </span>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', marginBottom: 10 }}>
                 <select
                   value={deporteElegido}
                   onChange={(e) => {
