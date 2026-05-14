@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import './AdminHubPromoSedeSection.css';
 
 const emptyForm = () => ({
   activo: false,
@@ -9,6 +10,15 @@ const emptyForm = () => ({
   texto_boton: 'Ver más',
   url_destino: '',
 });
+
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+const TEXT_FIELDS = [
+  { k: 'titulo', label: 'Título', ph: 'Ej: Pro shop del club' },
+  { k: 'subtitulo', label: 'Subtítulo', ph: 'Opcional' },
+  { k: 'texto_boton', label: 'Texto del botón', ph: 'Ver más' },
+  { k: 'url_destino', label: 'URL al hacer clic', ph: 'https://… o /ruta' },
+];
 
 /**
  * Edición de la promo «Del club» en Jugar (tab Mi Sede, admin_club / super_admin).
@@ -21,6 +31,8 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [imagenUploading, setImagenUploading] = useState(false);
+  const imagenFileRef = useRef(null);
 
   const load = useCallback(async () => {
     if (sid == null) {
@@ -70,6 +82,54 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
     return true;
   }, [sid, form.titulo, form.url_destino]);
 
+  const extFromFile = (file) => {
+    const t = String(file?.type || '');
+    if (t.includes('png')) return 'png';
+    if (t.includes('webp')) return 'webp';
+    if (t.includes('jpeg') || t.includes('jpg')) return 'jpg';
+    const n = String(file?.name || '');
+    const m = n.match(/\.([a-zA-Z0-9]+)$/);
+    return m ? m[1].toLowerCase().slice(0, 5) : 'jpg';
+  };
+
+  const onImagenFileChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || sid == null) return;
+    if (!String(file.type || '').startsWith('image/')) {
+      setMsg('⚠️ Elegí un archivo de imagen');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setMsg('⚠️ La imagen supera los 2MB');
+      return;
+    }
+    setImagenUploading(true);
+    setMsg('');
+    const ext = extFromFile(file);
+    const path = `hub-promo/${sid}/${Date.now()}.${ext}`;
+    try {
+      const { error: upErr } = await supabase.storage.from('sedes').upload(path, file, {
+        upsert: false,
+        contentType: file.type || 'image/jpeg',
+        cacheControl: '3600',
+      });
+      if (upErr) throw upErr;
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('sedes').getPublicUrl(path);
+      const url = String(publicUrl || '').trim();
+      if (!url) throw new Error('No se obtuvo URL pública');
+      patch({ imagen_url: url });
+      setMsg('✅ Imagen subida');
+      window.setTimeout(() => setMsg(''), 3000);
+    } catch (err) {
+      setMsg(`⚠️ ${err?.message || String(err)}`);
+    } finally {
+      setImagenUploading(false);
+    }
+  };
+
   const guardar = async () => {
     if (!canSave || sid == null) {
       setMsg('⚠️ Completá al menos título y URL de destino.');
@@ -98,8 +158,8 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
       }
       setMsg('✅ Promo guardada');
       window.setTimeout(() => setMsg(''), 3500);
-    } catch (e) {
-      setMsg(`⚠️ ${e?.message || String(e)}`);
+    } catch (err) {
+      setMsg(`⚠️ ${err?.message || String(err)}`);
     } finally {
       setSaving(false);
     }
@@ -108,66 +168,99 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
   if (sid == null) return null;
 
   return (
-    <div style={{ marginBottom: '32px' }}>
-      <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Promo en «Jugar» (hub)</h3>
-      <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
-        <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+    <div className="admin-hub-promo-sede">
+      <h3 className="admin-hub-promo-sede__title">Promo en «Jugar» (hub)</h3>
+      <div className="admin-hub-promo-sede__panel">
+        <p className="admin-hub-promo-sede__intro">
           Card promocional bajo las tres acciones (Reservar / Buscar / Armar) en la pantalla <strong>Jugar</strong>. Solo se
           muestra a jugadores de tu sede si está <strong>activa</strong> y con datos mínimos.
         </p>
         {loading ? (
-          <p style={{ color: '#64748b', fontSize: '14px' }}>Cargando…</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Cargando…</p>
         ) : (
           <>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', cursor: 'pointer' }}>
+            <label className="admin-hub-promo-sede__check-row">
               <input type="checkbox" checked={form.activo} onChange={(e) => patch({ activo: e.target.checked })} />
-              <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>Promo activa</span>
+              <span>Promo activa</span>
             </label>
-            {[
-              { k: 'imagen_url', label: 'URL de imagen (fondo de la card)', ph: 'https://…' },
-              { k: 'titulo', label: 'Título', ph: 'Ej: Pro shop del club' },
-              { k: 'subtitulo', label: 'Subtítulo', ph: 'Opcional' },
-              { k: 'texto_boton', label: 'Texto del botón', ph: 'Ver más' },
-              { k: 'url_destino', label: 'URL al hacer clic', ph: 'https://… o /ruta' },
-            ].map(({ k, label, ph }) => (
-              <div key={k} style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>{label}</label>
+
+            <div className="admin-hub-promo-sede__field">
+              <label className="admin-hub-promo-sede__label" htmlFor="hub-promo-imagen-url">
+                URL de imagen (fondo de la card)
+              </label>
+              <input
+                id="hub-promo-imagen-url"
+                className="admin-hub-promo-sede__input"
+                value={form.imagen_url}
+                onChange={(e) => patch({ imagen_url: e.target.value })}
+                placeholder="https://…"
+                autoComplete="off"
+              />
+              <input
+                ref={imagenFileRef}
+                type="file"
+                className="admin-hub-promo-sede__file"
+                accept="image/*"
+                capture="environment"
+                aria-label="Subir imagen desde el dispositivo"
+                onChange={(ev) => void onImagenFileChange(ev)}
+              />
+              <button
+                type="button"
+                className="admin-hub-promo-sede__upload-btn"
+                disabled={imagenUploading}
+                onClick={() => imagenFileRef.current?.click()}
+              >
+                {imagenUploading ? '⏳ Subiendo…' : '📷 Subir desde dispositivo'}
+              </button>
+              <p className="admin-hub-promo-sede__intro" style={{ marginTop: '8px', marginBottom: 0 }}>
+                La imagen se guarda en el almacenamiento del club (bucket sedes). Podés pegar una URL externa o subir un archivo.
+              </p>
+              {String(form.imagen_url || '').trim() ? (
+                <div className="admin-hub-promo-sede__preview">
+                  <img
+                    src={form.imagen_url}
+                    alt="Vista previa de la imagen de la promo"
+                    onError={(ev) => {
+                      ev.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              ) : null}
+            </div>
+
+            {TEXT_FIELDS.map(({ k, label, ph }) => (
+              <div key={k} className="admin-hub-promo-sede__field">
+                <label className="admin-hub-promo-sede__label" htmlFor={`hub-promo-${k}`}>
+                  {label}
+                </label>
                 <input
+                  id={`hub-promo-${k}`}
+                  className="admin-hub-promo-sede__input"
                   value={form[k]}
                   onChange={(e) => patch({ [k]: e.target.value })}
                   placeholder={ph}
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '8px 10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    color: '#333',
-                  }}
+                  autoComplete="off"
                 />
               </div>
             ))}
+
             <button
               type="button"
+              className="admin-hub-promo-sede__primary"
               disabled={saving || !canSave}
               onClick={() => void guardar()}
-              style={{
-                marginTop: '8px',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                border: 'none',
-                fontWeight: 800,
-                fontSize: '14px',
-                cursor: saving || !canSave ? 'not-allowed' : 'pointer',
-                background: saving || !canSave ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #b91c1c)',
-                color: '#fff',
-              }}
             >
               {saving ? 'Guardando…' : 'Guardar promo'}
             </button>
             {msg ? (
-              <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: msg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{msg}</p>
+              <p
+                className={`admin-hub-promo-sede__msg ${
+                  msg.startsWith('✅') ? 'admin-hub-promo-sede__msg--ok' : 'admin-hub-promo-sede__msg--err'
+                }`}
+              >
+                {msg}
+              </p>
             ) : null}
           </>
         )}

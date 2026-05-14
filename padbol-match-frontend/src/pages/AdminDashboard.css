@@ -752,3 +752,144 @@ html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--total-ok 
 html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--total-ok .ingreso-valor {
   color: #15803d !important;
 }
+
+/* ─── Mi Sede: paneles a ancho completo (sin bandas rojas laterales) + tema ─── */
+.admin-mi-sede-theme-panel {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--pm-shadow-card, 0 2px 8px rgba(0, 0, 0, 0.08));
+}
+
+html.theme-dark .admin-mi-sede-theme-panel {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.admin-mi-sede-block-title {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.admin-mi-sede-theme-input,
+.admin-mi-sede-theme-panel input[type='text'],
+.admin-mi-sede-theme-panel input[type='number'],
+.admin-mi-sede-theme-panel input[type='date'],
+.admin-mi-sede-theme-panel input[type='color'],
+.admin-mi-sede-theme-panel select,
+.admin-mi-sede-theme-panel textarea {
+  background: var(--bg-page) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.admin-mi-sede-theme-panel input::placeholder,
+.admin-mi-sede-theme-panel textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+.admin-mi-sede-theme-panel label,
+.admin-mi-sede-theme-panel .admin-mi-sede-field-label {
+  color: var(--text-primary) !important;
+}
+
+.admin-mi-sede-theme-muted,
+.admin-mi-sede-theme-panel .admin-mi-sede-theme-muted {
+  color: var(--text-secondary) !important;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 4px 0 0;
+}
+
+.section.admin-mi-sede-form {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.section.admin-mi-sede-form h2 {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+/* Modal «Editar sede» — inputs según tema claro/oscuro */
+.admin-editar-sede-dialog {
+  background: var(--bg-card) !important;
+  color: var(--text-primary);
+  border-radius: 16px;
+  max-width: 540px;
+  width: 100%;
+  padding: 22px 20px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+html.theme-dark .admin-editar-sede-dialog {
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.admin-editar-sede-dialog h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--text-primary) !important;
+}
+
+.admin-editar-sede-dialog .admin-editar-sede-intro {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary) !important;
+}
+
+.admin-editar-sede-dialog .admin-editar-sede-intro strong {
+  color: var(--text-primary);
+}
+
+.admin-editar-sede-dialog label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary) !important;
+  margin-bottom: 4px;
+}
+
+.admin-editar-sede-dialog input:not([type='checkbox']):not([type='radio']),
+.admin-editar-sede-dialog select,
+.admin-editar-sede-dialog textarea {
+  background: var(--bg-page) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.admin-editar-sede-dialog input::placeholder,
+.admin-editar-sede-dialog textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+.admin-editar-sede-dialog .admin-editar-sede-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary) !important;
+}
+
+.admin-editar-sede-dialog .admin-editar-sede-msg {
+  color: var(--pm-color-error, #dc2626) !important;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.admin-editar-sede-dialog .admin-editar-sede-btn-cancel {
+  background: var(--pm-color-muted-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}

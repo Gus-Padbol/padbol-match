@@ -9736,9 +9736,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
 
         {miSedeLoading ? (
-          <p style={{ color: '#999' }}>Cargando datos de la sede...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Cargando datos de la sede...</p>
         ) : !miSede ? (
-          <p style={{ color: '#f87171' }}>No se encontró información de la sede.</p>
+          <p style={{ color: 'var(--pm-color-error, #f87171)' }}>No se encontró información de la sede.</p>
         ) : (<>
           {editarSedeModalOpen ? (
             <div
@@ -9762,23 +9762,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="editar-sede-modal-titulo"
+                className="admin-editar-sede-dialog"
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  background: '#fff',
-                  borderRadius: '16px',
-                  maxWidth: '540px',
-                  width: '100%',
                   maxHeight: 'min(90vh, 760px)',
                   overflowY: 'auto',
-                  padding: '22px 20px',
-                  boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
-                  boxSizing: 'border-box',
                 }}
               >
-                <h3 id="editar-sede-modal-titulo" style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a' }}>
+                <h3 id="editar-sede-modal-titulo" style={{ margin: '0 0 8px', fontSize: '18px' }}>
                   Editar sede
                 </h3>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+                <p className="admin-editar-sede-intro">
                   Datos del perfil público. Al guardar se actualizan en la base y se ven al entrar de nuevo a{' '}
                   <strong>/sede/…</strong>.
                 </p>
@@ -9790,15 +9784,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   { label: 'País', k: 'pais' },
                   { label: 'Horario apertura', k: 'horario_apertura', ph: 'Ej: 08:00' },
                   { label: 'Horario cierre', k: 'horario_cierre', ph: 'Ej: 23:00' },
-                  { label: 'WhatsApp del club', k: 'telefono', ph: 'Sin 0 ni 15' },
+                  {
+                    label: 'WhatsApp del club',
+                    k: 'telefono',
+                    ph: 'Ej: 5493512345678',
+                    hint: 'Sin 0 adelante, sin 15. Usá número internacional con código de país (549…).',
+                  },
                   { label: 'Email de contacto', k: 'email_contacto' },
                   { label: 'Latitud', k: 'latitud', ph: '-34.6037' },
                   { label: 'Longitud', k: 'longitud', ph: '-58.3816' },
-                ].map(({ label, k, ph }) => (
+                ].map(({ label, k, ph, hint }) => (
                   <div key={k} style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                      {label}
-                    </label>
+                    <label>{label}</label>
                     <input
                       type="text"
                       value={editarSedeDraft[k] || ''}
@@ -9807,25 +9804,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       style={{
                         width: '100%',
                         padding: '8px 10px',
-                        border: '1px solid #e2e8f0',
                         borderRadius: '8px',
                         fontSize: '14px',
                         boxSizing: 'border-box',
                       }}
                     />
+                    {hint ? <p className="admin-editar-sede-hint">{hint}</p> : null}
                   </div>
                 ))}
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Moneda
-                  </label>
+                  <label>Moneda</label>
                   <select
                     value={editarSedeDraft.moneda || 'ARS'}
                     onChange={(e) => setEditarSedeDraft((p) => ({ ...p, moneda: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       fontSize: '14px',
                     }}
@@ -9839,9 +9833,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </select>
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Precio por turno (90 min)
-                  </label>
+                  <label>Precio por turno (90 min)</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -9857,7 +9849,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       fontSize: '14px',
                       boxSizing: 'border-box',
@@ -9865,9 +9856,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   />
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Descripción del club
-                  </label>
+                  <label>Descripción del club</label>
                   <textarea
                     rows={4}
                     maxLength={300}
@@ -9876,7 +9865,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       fontSize: '14px',
                       resize: 'vertical',
@@ -9886,9 +9874,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   />
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Historia / Sobre el club
-                  </label>
+                  <label>Historia / Sobre el club</label>
                   <textarea
                     rows={5}
                     maxLength={500}
@@ -9899,7 +9885,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       fontSize: '14px',
                       resize: 'vertical',
@@ -9909,16 +9894,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   />
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                    Método de pago
-                  </label>
+                  <label>Método de pago</label>
                   <select
                     value={editarSedeDraft.metodo_pago || 'mercadopago'}
                     onChange={(e) => setEditarSedeDraft((p) => ({ ...p, metodo_pago: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '8px 10px',
-                      border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       fontSize: '14px',
                     }}
@@ -9931,9 +9913,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
                 {String(editarSedeDraft.metodo_pago || '') === 'mercadopago' ? (
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                      Access token MP (opcional)
-                    </label>
+                    <label>Access token MP (opcional)</label>
                     <input
                       type="password"
                       autoComplete="off"
@@ -9942,7 +9922,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       style={{
                         width: '100%',
                         padding: '8px 10px',
-                        border: '1px solid #e2e8f0',
                         borderRadius: '8px',
                         fontSize: '13px',
                         boxSizing: 'border-box',
@@ -9952,9 +9931,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'stripe' ? (
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                      Stripe Connect account ID
-                    </label>
+                    <label>Stripe Connect account ID</label>
                     <input
                       type="text"
                       value={editarSedeDraft.stripe_account_id || ''}
@@ -9963,7 +9940,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       style={{
                         width: '100%',
                         padding: '8px 10px',
-                        border: '1px solid #e2e8f0',
                         borderRadius: '8px',
                         fontSize: '14px',
                         boxSizing: 'border-box',
@@ -9972,15 +9948,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'efectivo' ? (
-                  <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+                  <p className="admin-editar-sede-hint" style={{ margin: '0 0 12px' }}>
                     Reservas sin Mercado Pago ni Stripe; el jugador paga al llegar. Sin fee del 3% en el flujo de reserva.
                   </p>
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'manual' ? (
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                      Instrucciones de pago manual
-                    </label>
+                    <label>Instrucciones de pago manual</label>
                     <textarea
                       rows={3}
                       value={editarSedeDraft.pago_manual_instrucciones || ''}
@@ -9990,7 +9964,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       style={{
                         width: '100%',
                         padding: '8px 10px',
-                        border: '1px solid #e2e8f0',
                         borderRadius: '8px',
                         fontSize: '14px',
                         resize: 'vertical',
@@ -10001,18 +9974,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 ) : null}
                 {editarSedeModalMsg ? (
-                  <p style={{ color: '#b91c1c', fontSize: '13px', fontWeight: 600, margin: '0 0 12px' }}>{editarSedeModalMsg}</p>
+                  <p className="admin-editar-sede-msg">{editarSedeModalMsg}</p>
                 ) : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
                   <button
                     type="button"
+                    className="admin-editar-sede-btn-cancel"
                     onClick={() => !miSedeSaving && setEditarSedeModalOpen(false)}
                     disabled={miSedeSaving}
                     style={{
                       padding: '10px 18px',
                       borderRadius: '10px',
-                      border: '1px solid #cbd5e1',
-                      background: '#f8fafc',
                       fontWeight: 700,
                       cursor: miSedeSaving ? 'not-allowed' : 'pointer',
                     }}
@@ -10231,36 +10203,39 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <div id="admin-mi-sede-info">
           {/* ── 0. Licencia PADBOL ── */}
           <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>🔐 Licencia PADBOL</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>🔐 Licencia PADBOL</h3>
+            <div className="admin-mi-sede-theme-panel">
               {isSuperAdmin ? (
                 /* Editable for super_admin */
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Número de licencia</label>
+                    <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>Número de licencia</label>
                     <input
                       type="text"
                       value={licenciaForm.numero_licencia}
                       placeholder="Ej: FIPA-ARG-001"
                       onChange={e => setLicenciaForm(p => ({ ...p, numero_licencia: e.target.value }))}
-                      style={{ flex: 1, padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', fontFamily: 'monospace' }}
+                      className="admin-mi-sede-theme-input"
+                      style={{ flex: 1, padding: '7px 10px', borderRadius: '6px', fontSize: '14px', fontFamily: 'monospace', boxSizing: 'border-box' }}
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Fecha de otorgamiento</label>
+                    <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>Fecha de otorgamiento</label>
                     <input
                       type="date"
                       value={licenciaForm.fecha_licencia}
                       onChange={e => setLicenciaForm(p => ({ ...p, fecha_licencia: e.target.value }))}
-                      style={{ padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                      className="admin-mi-sede-theme-input"
+                      style={{ padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                    <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Estado</label>
+                    <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>Estado</label>
                     <select
                       value={licenciaForm.licencia_activa ? 'activa' : 'suspendida'}
                       onChange={e => setLicenciaForm(p => ({ ...p, licencia_activa: e.target.value === 'activa' }))}
-                      style={{ padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                      className="admin-mi-sede-theme-input"
+                      style={{ padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
                     >
                       <option value="activa">✅ Activa</option>
                       <option value="suspendida">❌ Suspendida</option>
@@ -10313,9 +10288,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           {/* ── Colores del hero (página pública de la sede) ── */}
           <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Colores del hero</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
-              <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>Colores del hero</h3>
+            <div className="admin-mi-sede-theme-panel">
+              <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
                 El bloque derecho del hero público usa siempre un degradado del color principal al secundario. El texto se ajusta solo según la luminosidad del color principal.
               </p>
               {[
@@ -10324,18 +10299,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 { label: 'Color del borde / filete', field: 'color_borde_hero' },
               ].map(({ label, field }) => (
                 <div key={field} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                  <label style={{ width: '200px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>{label}</label>
+                  <label className="admin-mi-sede-field-label" style={{ width: '200px', flexShrink: 0, fontSize: '13px', fontWeight: 600, paddingTop: '4px' }}>{label}</label>
                   <input
                     type="color"
                     value={normalizeHexSedeAdmin(miSedeForm[field]) || (field === 'color_hero_primario' ? '#4C1D95' : field === 'color_hero_secundario' ? '#7C3AED' : '#6D28D9')}
                     onChange={(e) => setMiSedeForm((p) => ({ ...p, [field]: e.target.value }))}
-                    style={{ width: 48, height: 36, padding: 0, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer' }}
+                    style={{ width: 48, height: 36, padding: 0, border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer' }}
                   />
                   <input
                     type="text"
+                    className="admin-mi-sede-theme-input"
                     value={miSedeForm[field] || ''}
                     onChange={(e) => setMiSedeForm((p) => ({ ...p, [field]: e.target.value }))}
-                    style={{ flex: 1, minWidth: '120px', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', fontFamily: 'monospace' }}
+                    style={{ flex: 1, minWidth: '120px', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', fontFamily: 'monospace', boxSizing: 'border-box' }}
                   />
                 </div>
               ))}
@@ -10386,14 +10362,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 </div>
               </div>
-              <p style={{ margin: '14px 0 0', fontSize: '12px', color: '#94a3b8' }}>Guarda los cambios con «Guardar cambios» en Información general.</p>
+              <p className="admin-mi-sede-theme-muted" style={{ margin: '14px 0 0', fontSize: '12px' }}>
+                Guarda los cambios con «Guardar cambios» en Información general.
+              </p>
             </div>
           </div>
 
           {/* ── 1. Info General ── */}
           <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Información General</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>Información General</h3>
+            <div className="admin-mi-sede-theme-panel">
               {[
                 { label: 'Nombre del club',        field: 'nombre' },
                 { label: 'Dirección',              field: 'direccion' },
@@ -10415,9 +10393,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       value={miSedeForm[field] || ''}
                       placeholder={placeholder || ''}
                       onChange={e => setMiSedeForm(p => ({ ...p, [field]: e.target.value }))}
-                      style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', boxSizing: 'border-box' }}
+                      className="admin-mi-sede-theme-input"
+                      style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
                     />
-                    {hint && <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#9ca3af' }}>{hint}</p>}
+                    {hint && <p className="admin-mi-sede-theme-muted" style={{ margin: '3px 0 0', fontSize: '11px' }}>{hint}</p>}
                   </div>
                 </div>
               ))}
@@ -10430,7 +10409,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     value={miSedeForm.descripcion || ''}
                     placeholder="Ej: Primer club de PADBOL del mundo, donde todo comenzó..."
                     onChange={e => setMiSedeForm(p => ({ ...p, descripcion: e.target.value }))}
-                    style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    className="admin-mi-sede-theme-input"
+                    style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
                   />
                   <div style={{ textAlign: 'right', fontSize: '12px', color: (miSedeForm.descripcion || '').length >= 280 ? '#dc2626' : '#9ca3af', marginTop: '3px' }}>
                     {(miSedeForm.descripcion || '').length}/300
@@ -10450,14 +10430,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     onChange={(e) =>
                       setMiSedeForm((p) => ({ ...p, historia: e.target.value.slice(0, 500) }))
                     }
+                    className="admin-mi-sede-theme-input"
                     style={{
                       width: '100%',
                       maxWidth: '100%',
                       padding: '7px 10px',
-                      border: '1px solid #ddd',
                       borderRadius: '6px',
                       fontSize: '14px',
-                      color: '#333',
                       resize: 'vertical',
                       fontFamily: 'inherit',
                       boxSizing: 'border-box',
@@ -10494,26 +10473,29 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     onChange={(e) =>
                       setMiSedeForm((p) => ({ ...p, anio_fundacion: e.target.value.replace(/[^\d]/g, '').slice(0, 4) }))
                     }
+                    className="admin-mi-sede-theme-input"
                     style={{
                       width: '100%',
                       maxWidth: '160px',
                       padding: '7px 10px',
-                      border: '1px solid #ddd',
                       borderRadius: '6px',
                       fontSize: '14px',
-                      color: '#333',
                       boxSizing: 'border-box',
                     }}
                   />
-                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#9ca3af', lineHeight: 1.45 }}>
+                  <p className="admin-mi-sede-theme-muted" style={{ margin: '4px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
                     Opcional. Se muestra en la sección «En números» del perfil público del club.
                   </p>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Moneda</label>
-                <select value={miSedeForm.moneda || 'ARS'} onChange={e => setMiSedeForm(p => ({ ...p, moneda: e.target.value }))}
-                  style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333', boxSizing: 'border-box', flex: 1, minWidth: 0 }}>
+                <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>Moneda</label>
+                <select
+                  value={miSedeForm.moneda || 'ARS'}
+                  onChange={(e) => setMiSedeForm((p) => ({ ...p, moneda: e.target.value }))}
+                  className="admin-mi-sede-theme-input"
+                  style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', flex: 1, minWidth: 0 }}
+                >
                   <option value="ARS">ARS — Peso argentino</option>
                   <option value="USD">USD — Dólar estadounidense</option>
                   <option value="EUR">EUR — Euro</option>
@@ -10535,8 +10517,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           {/* ── 2. Precios ── */}
           <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>Precios</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>Precios</h3>
+            <div className="admin-mi-sede-theme-panel">
               <div className="admin-mi-sede-field-row admin-mi-sede-precio-base" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Precio por turno (90 min)</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '100%' }}>
@@ -10815,7 +10797,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {/* ── 3. Configuración de pagos (MP / Stripe por sede) ── */}
           {(esAdminClub || isSuperAdmin) && (
             <div id="admin-mi-sede-pagos" style={{ marginBottom: '32px' }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>💳 Configuración de pagos</h3>
+              <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>💳 Configuración de pagos</h3>
               <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '520px' }}>
                 <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
                   Cada sede cobra con su propia cuenta. Mercado Pago usa el Access Token de tu aplicación MP; Stripe usa el
@@ -11107,7 +11089,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           {/* ── 4. Redes Sociales ── */}
           <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>📱 Redes Sociales</h3>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>📱 Redes Sociales</h3>
             <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '480px' }}>
               <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#555', lineHeight: 1.5 }}>
                 Ingresa las URLs completas (incluye https://). Solo se muestran las redes que tengas cargadas.
@@ -11140,7 +11122,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           {/* ── 5. Mis Canchas ── */}
           <div id="admin-mi-sede-canchas" style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>⚽ Mis Canchas</h3>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>⚽ Mis Canchas</h3>
             <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '640px' }}>
               <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
                 Las canchas <strong>inactivas</strong> no aparecen como opción en las reservas públicas. El número en
@@ -11255,10 +11237,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
         {/* ── 4. Fotos ── always visible when tab is active */}
         {!miSedeLoading && <div id="admin-mi-sede-contrato" style={{ marginBottom: '32px' }}>
-          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '16px', fontSize: '16px' }}>📸 Fotos</h3>
+          <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>📸 Fotos</h3>
 
           {/* Logo */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px', marginBottom: '20px' }}>
+          <div className="admin-mi-sede-theme-panel" style={{ marginBottom: '20px' }}>
             <p style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 700, color: '#1e1b4b' }}>Logo del club</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
               {logoUrl ? (
@@ -11336,7 +11318,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
 
           {/* Fotos de canchas */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '560px' }}>
+          <div className="admin-mi-sede-theme-panel">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
               <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#1e1b4b' }}>
                 Fotos de las canchas
