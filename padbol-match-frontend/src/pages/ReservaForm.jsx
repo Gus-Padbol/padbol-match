@@ -546,11 +546,14 @@ export default function ReservaForm() {
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
+    const waProfile = String(userProfile?.whatsapp || '').trim();
+    const waMeta = String(session?.user?.user_metadata?.whatsapp || '').trim();
+    const tel = waProfile || waMeta;
     return {
       email: em,
       nombre: nombreRealDesdePerfilOauth(userProfile, session) || getDisplayName(userProfile, session),
-      whatsapp: String(userProfile?.whatsapp || '').trim(),
-      telefono: String(userProfile?.whatsapp || '').trim(),
+      whatsapp: tel,
+      telefono: tel,
     };
   }, [session, userProfile]);
   const [searchParams] = useSearchParams();
@@ -580,6 +583,10 @@ export default function ReservaForm() {
       numeroTel: '',
     };
   });
+
+  /** Snapshot para el gate de invitado en p4 (evita deps en `formData` que re-disparan el efecto). */
+  const formDataParaGuestKickRef = useRef(formData);
+  formDataParaGuestKickRef.current = formData;
 
   /** Al cambiar de paso o volver atrás, el scroll del documento puede dejar el bloque bajo el header fijo. */
   useLayoutEffect(() => {
@@ -797,6 +804,13 @@ export default function ReservaForm() {
 
   const redirectGuestAntesResumen = useCallback(
     (formDataWithCancha) => {
+      // TEMP: quitar cuando el gate esté verificado en producción
+      console.log('[ReservaForm gate TEMP] redirectGuestAntesResumen (sin sesión, ir a login)', {
+        sedeId: filtros?.sede_id,
+        fecha: formDataWithCancha?.fecha,
+        hora: formDataWithCancha?.hora,
+        cancha: formDataWithCancha?.cancha,
+      });
       saveReservaFormSessionState({
         pantalla: 4,
         filtros,
@@ -823,6 +837,7 @@ export default function ReservaForm() {
   useEffect(() => {
     if (reservaOmitirAutoCanchaUnicaRef.current) return;
     if (pantalla !== 2 || !formData.hora || !canchasDisponibles.length) return;
+    if (authLoading) return;
     const libres = canchasDisponibles.filter((c) => c.libre);
     if (libres.length === 1) {
       const next = { ...formData, cancha: String(libres[0].num) };
@@ -834,7 +849,7 @@ export default function ReservaForm() {
       setPantalla(4);
       setError('');
     }
-  }, [canchasDisponibles, pantalla, formData, session?.user, redirectGuestAntesResumen]);
+  }, [canchasDisponibles, pantalla, formData, session?.user, authLoading, redirectGuestAntesResumen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -915,6 +930,19 @@ export default function ReservaForm() {
         hora: horaQ,
         cancha: canchaQ,
       }));
+      if (authLoading) {
+        return;
+      }
+      if (!session?.user) {
+        reservaOmitirAutoCanchaUnicaRef.current = Boolean(fechaQ && horaQ);
+        setPantalla(2);
+        const p2 = createSearchParams({ sedeId: String(id), fecha: fechaQ, hora: horaQ });
+        if (depPreserve) p2.set('deporte', depPreserve);
+        navigate({ pathname: '/reservar', search: `?${p2.toString()}` }, { replace: true });
+        setError('');
+        reservaUrlBootstrapKeyRef.current = urlBootstrapKey;
+        return;
+      }
       setPantalla(4);
       const next = createSearchParams({
         sedeId: String(id),
@@ -941,7 +969,21 @@ export default function ReservaForm() {
       }
     }
     reservaUrlBootstrapKeyRef.current = urlBootstrapKey;
-  }, [sedes, initialSedeId, location.search, navigate]);
+  }, [sedes, initialSedeId, location.search, navigate, authLoading, session?.user?.id]);
+
+  const reservaP4GuestKickRef = useRef(false);
+
+  /** Invitado en resumen (p. ej. carrera con URL o estado previo): forzar login y guardar estado. */
+  useEffect(() => {
+    if (authLoading || pantalla !== 4) return;
+    if (session?.user) {
+      reservaP4GuestKickRef.current = false;
+      return;
+    }
+    if (reservaP4GuestKickRef.current) return;
+    reservaP4GuestKickRef.current = true;
+    redirectGuestAntesResumen({ ...formDataParaGuestKickRef.current });
+  }, [authLoading, pantalla, session?.user?.id, redirectGuestAntesResumen]);
 
   // Tras login: restaurar estado guardado en sessionStorage (v2 o legacy) antes de redirigir a login.
   useEffect(() => {
@@ -1892,6 +1934,7 @@ export default function ReservaForm() {
                       type="button"
                       disabled={!c.libre}
                       onClick={() => {
+                        if (authLoading) return;
                         const next = { ...formData, cancha: String(c.num) };
                         if (!session?.user) {
                           redirectGuestAntesResumen(next);
