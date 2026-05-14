@@ -546,16 +546,22 @@ export default function ReservaForm() {
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
-    const waProfile = String(userProfile?.whatsapp || '').trim();
-    const waMeta = String(session?.user?.user_metadata?.whatsapp || '').trim();
-    const tel = waProfile || waMeta;
+    const wa = String(userProfile?.whatsapp || '').trim();
     return {
       email: em,
       nombre: nombreRealDesdePerfilOauth(userProfile, session) || getDisplayName(userProfile, session),
-      whatsapp: tel,
-      telefono: tel,
+      whatsapp: wa,
+      telefono: wa,
     };
   }, [session, userProfile]);
+
+  /** Teléfono para validar pago: perfil BD y, si falta, WhatsApp en metadata de auth. */
+  const clienteReservaTelefonoEfectivo = useMemo(() => {
+    if (!currentCliente) return null;
+    const waMeta = String(session?.user?.user_metadata?.whatsapp || '').trim();
+    const wa = String(currentCliente.whatsapp || waMeta).trim();
+    return { ...currentCliente, whatsapp: wa, telefono: wa };
+  }, [currentCliente, session?.user?.user_metadata?.whatsapp]);
   const [searchParams] = useSearchParams();
 
   const initialSedeId = searchParams.get('sedeId');
@@ -1512,6 +1518,8 @@ export default function ReservaForm() {
     }
     const sesEm = session.user.email;
     const meta = session.user.user_metadata || {};
+    const waPerfil = String(userProfile?.whatsapp || '').trim();
+    const usaWhatsappResumen = !perfilTelefonoValido({ whatsapp: waPerfil, telefono: waPerfil });
     const ccEff =
       currentCliente && String(currentCliente.email || '').trim()
         ? currentCliente
@@ -1520,12 +1528,12 @@ export default function ReservaForm() {
             nombre: getDisplayName(userProfile, session),
             whatsapp: meta.whatsapp || '',
           };
-    const usaWhatsappResumen = !perfilTelefonoValido(ccEff);
+    const ccParaTelefono = currentCliente ? clienteReservaTelefonoEfectivo : ccEff;
     const formParaTel = usaWhatsappResumen ? { ...formData, numeroTel: whatsapp } : formData;
-    const { ok, whatsappCompleto } = telefonoPagoResuelto(ccEff, formParaTel);
+    const { ok, whatsappCompleto } = telefonoPagoResuelto(ccParaTelefono || ccEff, formParaTel);
     if (!ok) {
       setError(
-        clienteTieneTelefonoGuardado(ccEff)
+        clienteTieneTelefonoGuardado(ccParaTelefono || ccEff)
           ? 'El teléfono del perfil no es válido. Completa un número de contacto válido.'
           : `Ingresa un número de WhatsApp válido (al menos ${MIN_DIGITOS_TELEFONO} dígitos).`
       );
@@ -1974,10 +1982,14 @@ export default function ReservaForm() {
     const montoBaseMinor = amountMainToStripeMinor(precioFinal, moneda);
     const cargoServicioMinor = Math.round(montoBaseMinor * 0.03);
     const totalMinor = montoBaseMinor + cargoServicioMinor;
-    const muestraInputWhatsappResumen = !perfilTelefonoValido(currentCliente);
+    const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
+    const muestraInputWhatsappResumen = !perfilTelefonoValido({
+      whatsapp: waPerfilResumen,
+      telefono: waPerfilResumen,
+    });
     const formParaTelStripe = muestraInputWhatsappResumen ? { ...formData, numeroTel: whatsapp } : formData;
     const telefonoStripe = telefonoPagoResuelto(
-      currentCliente || { email: '', nombre: '', whatsapp: '' },
+      clienteReservaTelefonoEfectivo || { email: '', nombre: '', whatsapp: '' },
       formParaTelStripe
     );
     const duracionReservaMinP4 = duracionSeleccionadaMin;
