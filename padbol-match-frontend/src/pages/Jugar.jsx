@@ -130,17 +130,6 @@ export default function Jugar() {
             writeHubDeporteFilterToSession(v);
           }}
         />
-        <h1
-          style={{
-            color: 'var(--text-primary)',
-            margin: '0 0 10px',
-            fontSize: 24,
-            lineHeight: 1.15,
-            fontWeight: 700,
-          }}
-        >
-          ¡Vamos a jugar!
-        </h1>
         <div style={{ display: 'grid', gap: 10 }}>
           {opciones.map((op) => (
             <button
