@@ -9,6 +9,7 @@ import {
   hubBottomNavMaxWidthPx,
   isHubNavBarHiddenPathname,
 } from '../constants/hubLayout';
+import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 
 const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
 
@@ -275,7 +276,11 @@ const BottomNav = () => {
 
   const go = (item) => {
     if (authLoading) return;
+    const pathOnly = item.path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
     navigate(item.path);
+    if (isUserHomeHubPath(pathOnly)) {
+      scheduleHubEntryScrollReset();
+    }
   };
 
   const navBarStyle = {

@@ -17,6 +17,7 @@ import {
   clearReservaFlowSessionStorage,
   clearReservaReturnLocalStorage,
 } from '../utils/reservaReturnUrl';
+import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -73,8 +74,10 @@ export default function PagoFallido() {
       clearReservaFlowSessionStorage();
       clearReservaReturnLocalStorage();
       const sid = p?.sedeId != null ? Number(p.sedeId) : null;
-      if (session?.user) navigate('/hub', { replace: true });
-      else if (sid) navigate(`/sede/${sid}`, { replace: true });
+      if (session?.user) {
+        navigate('/hub', { replace: true });
+        scheduleHubEntryScrollReset();
+      } else if (sid) navigate(`/sede/${sid}`, { replace: true });
       else navigate('/reservar', { replace: true });
       setBusy(false);
     }

@@ -13,6 +13,7 @@ import {
   isSedeProfilePathname,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
+import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import HubThemeSettingsButton from './HubThemeSettingsButton';
 import { useTheme } from '../context/ThemeContext';
 
@@ -336,13 +337,16 @@ export default function AppHeader({
       if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) {
         clearAdminNavContext();
         navigate('/');
+        if (session?.user) scheduleHubEntryScrollReset();
         return;
       }
       navigate('/admin');
       return;
     }
     if (isSedeProfilePathname(pathOnly)) {
-      navigate(resolveSedePublicaBackToPath(location.state));
+      const dest = resolveSedePublicaBackToPath(location.state);
+      navigate(dest);
+      if (isUserHomeHubPath(dest)) scheduleHubEntryScrollReset();
       return;
     }
     if (typeof window !== 'undefined') window.history.back();
@@ -352,7 +356,14 @@ export default function AppHeader({
     showAdminShortcutHub ? (
       <button
         type="button"
-        onClick={() => navigate(isOnAdmin ? '/' : '/admin')}
+        onClick={() => {
+          if (isOnAdmin) {
+            navigate('/');
+            if (session?.user) scheduleHubEntryScrollReset();
+          } else {
+            navigate('/admin');
+          }
+        }}
         aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
         title={isOnAdmin ? 'Volver a la app' : 'Admin'}
         style={{
@@ -779,6 +790,7 @@ export default function AppHeader({
             onClick={() => {
               clearAdminNavContext();
               navigate('/');
+              scheduleHubEntryScrollReset();
             }}
             aria-label="Volver al hub como jugador"
             title="Volver al hub"
@@ -1084,7 +1096,10 @@ export default function AppHeader({
           !shouldHideHubCenterTitle ? (
             <button
               type="button"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                navigate('/');
+                if (session?.user) scheduleHubEntryScrollReset();
+              }}
               style={{
                 color: titleColor || (hubLightBar ? 'var(--text-primary)' : '#fff'),
                 fontSize: '15px',

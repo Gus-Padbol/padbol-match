@@ -19,6 +19,7 @@ import {
   hubInstagramColumnWrapStyle,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
+import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import { useAuth } from '../context/AuthContext';
 import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import useUserRole from '../hooks/useUserRole';
@@ -1807,7 +1808,11 @@ export default function SedePublica() {
         title=""
         showBack
         hideLogout
-        onBack={() => navigate(resolveSedePublicaBackToPath(location.state))}
+        onBack={() => {
+          const dest = resolveSedePublicaBackToPath(location.state);
+          navigate(dest);
+          if (isUserHomeHubPath(dest)) scheduleHubEntryScrollReset();
+        }}
       />
 
       {loading && (

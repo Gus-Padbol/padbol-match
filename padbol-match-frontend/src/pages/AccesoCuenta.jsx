@@ -20,6 +20,7 @@ import {
   peekReservaLoginGateMessage,
   clearReservaLoginGateMessage,
 } from '../utils/reservaReturnUrl';
+import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import {
   digitsOnly,
@@ -174,6 +175,9 @@ export default function AccesoCuenta() {
         /* ignore */
       }
       navigate(destinoTrasLogin, { replace: true });
+      if (isUserHomeHubPath(destinoTrasLogin)) {
+        scheduleHubEntryScrollReset();
+      }
     },
     [navigate, refreshSession, location.search]
   );

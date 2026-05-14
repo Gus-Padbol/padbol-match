@@ -24,6 +24,7 @@ import {
   clearReservaFlowSessionStorage,
   clearReservaReturnLocalStorage,
 } from '../utils/reservaReturnUrl';
+import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName, nombreRealDesdePerfilOauth } from '../utils/displayName';
 import {
@@ -779,14 +780,17 @@ export default function ReservaForm() {
     clearReservaReturnLocalStorage();
     clearMpReservaPendingSlot();
     const sidRaw = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;
-    if (session?.user) navigate('/hub', { replace: true });
-    else if (sidRaw) navigate(`/sede/${sidRaw}`, { replace: true });
+    if (session?.user) {
+      navigate('/hub', { replace: true });
+      scheduleHubEntryScrollReset();
+    } else if (sidRaw) navigate(`/sede/${sidRaw}`, { replace: true });
     else navigate('/reservar', { replace: true });
   }, [sedeSeleccionada, formData.fecha, formData.hora, formData.cancha, filtros.sede_id, session?.user, navigate]);
 
   const handleReservaBack = useCallback(() => {
     if (pantalla === 1) {
       navigate('/', { replace: true });
+      if (session?.user) scheduleHubEntryScrollReset();
       return;
     }
     if (pantalla === 4) {
@@ -796,7 +800,7 @@ export default function ReservaForm() {
     const sid = filtros.sede_id !== '' && filtros.sede_id != null ? Number(filtros.sede_id) : null;
     if (sid) navigate(`/sede/${sid}`);
     else window.history.back();
-  }, [pantalla, filtros.sede_id, navigate, irAModificarReservaDesdeResumen]);
+  }, [pantalla, filtros.sede_id, navigate, irAModificarReservaDesdeResumen, session?.user]);
   /** Número local en pantalla resumen — controlado aparte de formData para no re-disparar efectos al escribir */
   const [whatsapp, setWhatsapp] = useState('');
   const canchasBloqueRef = useRef(null);

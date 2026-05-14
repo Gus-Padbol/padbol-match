@@ -55,6 +55,7 @@ import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import { getDisplayName } from './utils/displayName';
+import { scheduleHubEntryScrollReset } from './utils/hubEntryScrollReset';
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -277,7 +278,10 @@ function AdminDashboardGate() {
       </p>
       <button
         type="button"
-        onClick={() => navigate('/hub')}
+        onClick={() => {
+          navigate('/hub');
+          scheduleHubEntryScrollReset();
+        }}
         style={{
           padding: '12px 20px',
           borderRadius: 12,
