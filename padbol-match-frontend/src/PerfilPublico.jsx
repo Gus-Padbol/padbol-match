@@ -26,6 +26,8 @@ import { etiquetaDeporteTorneo } from './utils/torneoDeporteFormato';
 import DeportesPreferidosLecturaChips from './components/DeportesPreferidosLecturaChips';
 import { hasDeportesPreferidosCargados } from './constants/deportesPreferidos';
 import { IconGeroUbicacion } from './components/icons/GeroIcons';
+import HubSponsorsTicker from './components/HubSponsorsTicker';
+import { useHubSponsors } from './hooks/useHubSponsors';
 
 const API_BASE_PERFIL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -80,6 +82,18 @@ export default function PerfilPublico() {
   /** Respuesta GET /api/jugador/:alias/estadisticas o null mientras carga / sin datos */
   const [estadisticas, setEstadisticas] = useState(null);
   const [estadisticasDeporteTab, setEstadisticasDeporteTab] = useState(null);
+
+  const hubSedePerfil = useMemo(() => {
+    if (!perfil?.sede_id) return null;
+    const n = Number(perfil.sede_id);
+    return Number.isFinite(n) ? n : null;
+  }, [perfil?.sede_id]);
+
+  const { tickerSponsors } = useHubSponsors({
+    sedeId: hubSedePerfil,
+    pais: String(perfil?.pais || '').trim(),
+    enabled: Boolean(perfil),
+  });
 
   const aliasDecoded = useMemo(() => {
     try {
@@ -1178,7 +1192,12 @@ export default function PerfilPublico() {
             </>
           </div>
         ) : null}
+
+        <div style={{ marginTop: '24px', marginBottom: '4px', width: '100%', maxWidth: '100%' }}>
+          <HubSponsorsTicker sponsors={tickerSponsors} />
+        </div>
       </div>
+
       <JugadorPreviewModal
         open={Boolean(jugadorPreviewCompaneroPublico)}
         onClose={() => setJugadorPreviewCompaneroPublico(null)}

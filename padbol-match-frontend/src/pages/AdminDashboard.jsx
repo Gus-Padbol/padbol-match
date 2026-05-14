@@ -71,6 +71,7 @@ import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDist
 import AdminClubOnboardingTour, { readOnboardingDone } from '../components/AdminClubOnboardingTour';
 import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSection';
 import AdminSponsorsSection from '../components/AdminSponsorsSection';
+import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -10297,6 +10298,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               )}
             </div>
           </div>
+
+          {(esAdminClub || isSuperAdmin) && sedeId ? <AdminHubPromoSedeSection sedeId={Number(sedeId)} /> : null}
 
           {/* ── Colores del hero (página pública de la sede) ── */}
           <div style={{ marginBottom: '32px' }}>

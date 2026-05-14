@@ -3,6 +3,10 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
+import HubSponsorsTicker from '../components/HubSponsorsTicker';
+import { useAuth } from '../context/AuthContext';
+import useUserRole from '../hooks/useUserRole';
+import { useHubSponsors } from '../hooks/useHubSponsors';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
@@ -109,6 +113,18 @@ function badgeEstadoTorneoListado(t) {
 export default function TorneosPublicos() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { session } = useAuth();
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
+  const { tickerSponsors } = useHubSponsors({
+    sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
+    pais: String(hubPaisUsuario || '').trim(),
+    enabled: true,
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const nearMode = searchParams.get('context') === 'near';
 
@@ -933,6 +949,10 @@ export default function TorneosPublicos() {
             </div>
           </div>
         ) : null}
+
+        <div style={{ marginBottom: '14px' }}>
+          <HubSponsorsTicker sponsors={tickerSponsors} />
+        </div>
 
         {listaTorneos}
       </div>

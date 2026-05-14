@@ -11,7 +11,11 @@ import {
 import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
+import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { IconGeroFiltros } from '../components/icons/GeroIcons';
+import { useAuth } from '../context/AuthContext';
+import useUserRole from '../hooks/useUserRole';
+import { useHubSponsors } from '../hooks/useHubSponsors';
 import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
 import { TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
 import { torneoTipoCompetenciaDb } from '../utils/torneoFormatters';
@@ -478,6 +482,19 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
 
 export default function Rankings() {
   const location = useLocation();
+  const { session } = useAuth();
+  const currentCliente = useMemo(() => {
+    const em = String(session?.user?.email || '').trim();
+    if (!em) return null;
+    return { email: em };
+  }, [session?.user?.email]);
+  const { sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
+  const { tickerSponsors } = useHubSponsors({
+    sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
+    pais: String(hubPaisUsuario || '').trim(),
+    enabled: true,
+  });
+
   const [searchParams, setSearchParams] = useSearchParams();
   const narrow = useMediaNarrow(520);
   const [activeTab, setActiveTab] = useState('local');
@@ -937,6 +954,22 @@ export default function Rankings() {
               {selectedCategoria ? ` · Categoría: ${selectedCategoria}` : ''}
             </>
           )}
+        </div>
+
+        <div style={{ marginBottom: '14px' }}>
+          <div
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              color: 'var(--text-secondary)',
+              marginBottom: '8px',
+              textAlign: 'center',
+              letterSpacing: '0.02em',
+            }}
+          >
+            Rankings presentados por
+          </div>
+          <HubSponsorsTicker sponsors={tickerSponsors} />
         </div>
 
         {/* Table card */}
