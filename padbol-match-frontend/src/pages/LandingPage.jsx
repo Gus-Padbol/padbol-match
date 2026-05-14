@@ -134,31 +134,21 @@ export default function LandingPage() {
       </header>
 
       <main style={column}>
-        <section style={{ paddingTop: 8, paddingBottom: 28 }}>
+        <section style={{ paddingTop: 8, paddingBottom: 28, textAlign: 'center' }}>
           <h1
             style={{
               margin: 0,
               fontSize: 28,
-              fontWeight: 900,
-              lineHeight: 1.15,
+              fontWeight: 600,
+              lineHeight: 1.3,
               color: 'var(--text-primary)',
               letterSpacing: '-0.02em',
             }}
           >
             Nació con Padbol.
-          </h1>
-          <p
-            style={{
-              margin: '10px 0 0',
-              fontSize: 28,
-              fontWeight: 900,
-              lineHeight: 1.15,
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-            }}
-          >
+            <br />
             Hoy es para todos los deportes.
-          </p>
+          </h1>
           <p
             style={{
               margin: '16px 0 0',

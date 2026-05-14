@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'react-router-dom';
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
@@ -533,6 +533,15 @@ export default function ReservaForm() {
   const location = useLocation();
   const reservaPaddingTopCss = hubContentPaddingTopCss(location.pathname);
   const { session, loading: authLoading, userProfile } = useAuth();
+
+  /** Al cambiar de paso o volver atrás, el scroll del documento puede dejar el bloque bajo el header fijo. */
+  useLayoutEffect(() => {
+    const base = String(location.pathname || '').split('?')[0].split('#')[0];
+    if (base !== '/reservar' && !base.startsWith('/reservar/')) return;
+    window.scrollTo(0, 0);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, [pantalla, location.pathname]);
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();

@@ -2,7 +2,10 @@
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 20px;
+  /* Sin padding-top en CSS: lo fija el inline (hubContentPaddingTopCss) para no pisar el hueco del header fijo. */
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
   font-family: Arial, sans-serif;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -19,7 +22,6 @@
   /* 20px + safe area; el padding vertical lo fija el inline en JSX */
   padding-left: calc(20px + env(safe-area-inset-left, 0px));
   padding-right: calc(20px + env(safe-area-inset-right, 0px));
-  padding-top: 0;
   padding-bottom: 0;
   min-height: 100vh;
   background: var(--bg-page);

@@ -11,53 +11,36 @@ export default function LegalFooterBar() {
   const { theme } = useTheme();
   if (!isLegalFooterGlobalBarVisiblePathname(pathname)) return null;
 
-  const isAdminPanel = pathname === '/admin' || pathname.startsWith('/admin/');
-  const linkFontSize = 'clamp(0.82rem, 2.8vw, 0.9rem)';
-  const linkBase = { fontWeight: 700, fontSize: linkFontSize, textDecoration: 'none' };
+  const linkColor =
+    theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 23, 42, 0.38)';
 
-  const footerStyle = isAdminPanel
-    ? {
-        flexShrink: 0,
-        width: '100%',
-        boxSizing: 'border-box',
-        padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))',
-        borderTop:
-          theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(148, 163, 184, 0.35)',
-        background: 'transparent',
-        textAlign: 'center',
-      }
-    : {
-        flexShrink: 0,
-        width: '100%',
-        boxSizing: 'border-box',
-        padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))',
-        borderTop: '1px solid rgba(148, 163, 184, 0.35)',
-        background: 'rgba(248, 250, 252, 0.98)',
-        textAlign: 'center',
-      };
+  const footerStyle = {
+    flexShrink: 0,
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '8px 16px calc(8px + env(safe-area-inset-bottom, 0px))',
+    background: 'transparent',
+    borderTop: 'none',
+    textAlign: 'center',
+  };
 
-  const linkColor = isAdminPanel
-    ? theme === 'dark'
-      ? 'rgba(255, 255, 255, 0.4)'
-      : '#64748B'
-    : '#334155';
-
-  const sepColor = isAdminPanel
-    ? theme === 'dark'
-      ? 'rgba(255, 255, 255, 0.25)'
-      : '#94a3b8'
-    : '#94a3b8';
+  const linkBase = {
+    fontWeight: 600,
+    fontSize: '11px',
+    textDecoration: 'none',
+    color: linkColor,
+  };
 
   return (
     <footer role="contentinfo" style={footerStyle}>
-      <nav aria-label="Información legal" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 12px' }}>
-        <Link to="/terminos" style={{ ...linkBase, color: linkColor }}>
+      <nav
+        aria-label="Información legal"
+        style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '14px' }}
+      >
+        <Link to="/terminos" style={linkBase}>
           Términos y Condiciones
         </Link>
-        <span style={{ color: sepColor }} aria-hidden>
-          ·
-        </span>
-        <Link to="/privacidad" style={{ ...linkBase, color: linkColor }}>
+        <Link to="/privacidad" style={linkBase}>
           Política de Privacidad
         </Link>
       </nav>
