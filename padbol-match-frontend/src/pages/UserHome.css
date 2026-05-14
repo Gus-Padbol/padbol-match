@@ -17,7 +17,7 @@
   }
 }
 
-/* Cards de acciones — altura alineada a UserHome.jsx (HUB_CARD_HEIGHT_PX). */
+/* Cards de acciones — altura fija 130px (hub). */
 .hub-surface-card {
   height: 130px;
   min-height: 130px;

@@ -57,12 +57,8 @@ const HUB_FIXED_ACTIONS = [
 
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
-/** Altura fija de cada card del hub (impacto visual). */
-const HUB_CARD_HEIGHT_PX = 130;
 /** Separación entre cards del hub. */
 const HUB_CARD_GAP_PX = 8;
-/** Alto del bloque con scroll interno (cards + 3er Tiempo + PWA): ~3.5 cards + gaps; el resto se ve al desplazar. */
-const HUB_CARDS_STACK_MAX_PX = 3.5 * HUB_CARD_HEIGHT_PX + 3 * HUB_CARD_GAP_PX;
 /** Aire bajo el chrome fijo antes del contenido (máx. compacto para acercar «Elegir deporte» arriba). */
 const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 0;
 
@@ -643,7 +639,7 @@ export default function UserHome() {
                   fontSize: 12,
                   fontWeight: 600,
                   color: 'var(--text-secondary)',
-                  marginBottom: 6,
+                  marginBottom: 10,
                 }}
               >
                 Elegir deporte
@@ -723,10 +719,7 @@ export default function UserHome() {
               flexDirection: 'column',
               gap: HUB_CARD_GAP_PX,
               width: '100%',
-              maxHeight: HUB_CARDS_STACK_MAX_PX,
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              WebkitOverflowScrolling: 'touch',
+              height: 'auto',
               flexShrink: 0,
               marginBottom: 0,
             }}
