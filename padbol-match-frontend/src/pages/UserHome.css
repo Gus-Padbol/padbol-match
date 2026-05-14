@@ -17,10 +17,10 @@
   }
 }
 
-/* Cards de acciones — altura fija 130px (hub). */
+/* Cards de acciones — altura fija 150px (hub). */
 .hub-surface-card {
-  height: 130px;
-  min-height: 130px;
+  height: 150px;
+  min-height: 150px;
 }
 
 .hub-surface-card__text {

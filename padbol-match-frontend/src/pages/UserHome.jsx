@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
@@ -173,6 +173,7 @@ function primerNombreDesdePerfil(userProfile) {
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
+  const hubMainScrollRef = useRef(null);
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [nombreFinal, setNombreFinal] = useState(null);
   const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
@@ -377,6 +378,21 @@ export default function UserHome() {
 
   const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
   const userHomeChromeSpacerH = hubUserHomeChromeSpacerHeightCss(location.pathname);
+
+  /** Al entrar al hub (/hub, /inicio, /home): scroll arriba (viewport + panel interno). */
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    try {
+      if (typeof document !== 'undefined') {
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      }
+    } catch {
+      /* ignore */
+    }
+    const el = hubMainScrollRef.current;
+    if (el) el.scrollTop = 0;
+  }, [location.pathname, location.key]);
 
   return (
     <div
@@ -597,6 +613,7 @@ export default function UserHome() {
       />
 
       <div
+        ref={hubMainScrollRef}
         style={{
           flex: 1,
           minHeight: 0,
