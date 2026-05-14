@@ -109,7 +109,7 @@ export default function Jugar() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Jugar" />
+      <AppHeader title="¡Vamos a jugar!" />
       <main
         style={{
           width: '100%',
