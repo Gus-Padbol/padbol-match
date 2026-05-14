@@ -7,7 +7,6 @@ import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import {
-  HUB_APP_HEADER_HEIGHT_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
@@ -1868,8 +1867,7 @@ export default function ReservaForm() {
       formParaTelStripe
     );
     const duracionReservaMinP4 = duracionSeleccionadaMin;
-    /** Header fijo + margen 24px + notch para que el título del resumen se vea completo en todos los dispositivos. */
-    const resumenPaddingTop = `calc(${HUB_APP_HEADER_HEIGHT_PX + 24}px + env(safe-area-inset-top, 0px))`;
+    const resumenPaddingTop = reservaPaddingTopCss;
     const resumenPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
 
     return (

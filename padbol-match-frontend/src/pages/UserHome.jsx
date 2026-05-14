@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
+  HUB_APP_HEADER_HEIGHT_PX,
   HUB_NAV_HEIGHT_PX,
   hubBottomNavMaxWidthPx,
   hubInstagramColumnWrapStyle,
@@ -399,13 +400,13 @@ export default function UserHome() {
           left: 0,
           right: 0,
           zIndex: 1002,
-          minHeight: '56px',
+          minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
           background: 'var(--nav-bg)',
           paddingBottom: '8px',
           paddingLeft: padL,
           paddingRight: padR,
           borderBottom: '1px solid var(--nav-border)',
-          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingTop: 'calc(8px + env(safe-area-inset-top, 0px))',
           boxSizing: 'border-box',
         }}
       >
@@ -421,7 +422,7 @@ export default function UserHome() {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 10,
-            minHeight: 56,
+            minHeight: HUB_APP_HEADER_HEIGHT_PX,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>

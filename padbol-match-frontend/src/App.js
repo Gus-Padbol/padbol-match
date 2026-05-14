@@ -394,6 +394,7 @@ function AppShell() {
     ? LEGAL_FOOTER_GLOBAL_SPACER_PX
     : 0;
 
+  /** Sin padding-top global: cada ruta aplica `hubContentPaddingTopCss` (hubLayout) según header fijo + BottomNav. */
   return (
     <>
       <div

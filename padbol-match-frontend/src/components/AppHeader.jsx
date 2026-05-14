@@ -7,6 +7,7 @@ import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import {
+  HUB_APP_HEADER_HEIGHT_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   isJugadorHubShellPathname,
   isSedeProfilePathname,
@@ -893,7 +894,7 @@ export default function AppHeader({
       <div
         className="app-header-shell"
         style={{
-          minHeight: '56px',
+          minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
           background: 'var(--nav-bg)',
           paddingBottom: '8px',
           paddingLeft: padL,
@@ -912,7 +913,7 @@ export default function AppHeader({
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '12px',
-              minHeight: '56px',
+              minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
               minWidth: 0,
               width: '100%',
               boxSizing: 'border-box',
@@ -931,14 +932,14 @@ export default function AppHeader({
     gridTemplateColumns: 'auto minmax(0, 1fr) auto',
     alignItems: 'center',
     columnGap: '8px',
-    minHeight: '56px',
+    minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
   };
 
   return (
     <div
       className="app-header-shell"
       style={{
-        minHeight: '56px',
+        minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
         background: hubLightBar ? 'var(--nav-bg)' : '#0f172a',
         paddingBottom: '8px',
         paddingLeft: padL,

@@ -2,14 +2,18 @@
  * Layout hub: AppHeader fijo + barra de navegación (Jugar, Competir, Perfil)
  * justo debajo del header.
  */
-export const HUB_APP_HEADER_HEIGHT_PX = 56;
+/**
+ * Altura mínima de la fila interna del header (título / saludo); el shell suma paddings en
+ * `.app-header-shell` (index.css) + `paddingBottom` en AppHeader.jsx.
+ */
+export const HUB_APP_HEADER_HEIGHT_PX = 64;
 /** Padding vertical del AppHeader (8px arriba + 8px abajo, alineado con AppHeader.jsx). */
 export const APP_HEADER_OUTER_PADDING_PX = 16;
 /**
  * Margen extra bajo el bloque fijo medido (bordes, tipografía, iOS): evita que logos/hero
  * queden visualmente bajo {@link AppHeader} cuando el chrome real supera unos píxeles al cálculo.
  */
-export const HUB_FIXED_CHROME_SLACK_PX = 8;
+export const HUB_FIXED_CHROME_SLACK_PX = 14;
 export const HUB_NAV_HEIGHT_PX = 54;
 export const HUB_CONTENT_PADDING_TOP_PX =
   HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
@@ -133,7 +137,7 @@ export function hubContentPaddingTopCss(pathname) {
 }
 
 /** Extra bajo el header en `/login` y `/auth` para que el logo no quede cortado al scroll (móvil ~390px). */
-export const HUB_ACCESO_LOGIN_EXTRA_TOP_PX = 20;
+export const HUB_ACCESO_LOGIN_EXTRA_TOP_PX = 36;
 
 /** Igual que {@link hubContentPaddingTopCss} más {@link HUB_ACCESO_LOGIN_EXTRA_TOP_PX} (login / acceso). */
 export function hubAccesoContentPaddingTopCss(pathname) {
@@ -146,7 +150,8 @@ export function hubAccesoContentPaddingTopCss(pathname) {
  * Jugar/Competir/Perfil) más un extra para la segunda línea («Bienvenido»). Así el scroll no
  * ocupa todo el viewport, el saludo queda descubierto y las cards se recortan por el borde inferior.
  */
-export const HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX = 18;
+/** UserHome: aire extra bajo header+BottomNav antes del primer bloque scroll (saludo en barra fija + «Elegir deporte»). */
+export const HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX = 70;
 
 export function hubUserHomeChromeSpacerHeightCss(pathname) {
   const basePx =
