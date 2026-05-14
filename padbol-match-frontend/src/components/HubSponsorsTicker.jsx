@@ -45,35 +45,47 @@ function ChipAvatar({ nombre, logoRaw }) {
 }
 
 /**
- * Banda horizontal con marquee infinito (lista duplicada + animación CSS).
+ * Marquee infinito: lista base + placeholders hasta mín. 6 ítems, duplicado y translateX(-50%).
  * @param {{ sponsors?: unknown[] }} props
  */
 export default function HubSponsorsTicker({ sponsors }) {
-  const list = Array.isArray(sponsors)
-    ? sponsors.filter((s) => s && String(s.nombre || '').trim())
-    : [];
-  if (list.length === 0) return null;
+  const raw = Array.isArray(sponsors) ? sponsors : [];
+  const BASE_SPONSORS = raw.length > 0 ? raw : [];
 
-  const loop = [...list, ...list];
+  const placeholders = Array.from({ length: Math.max(0, 6 - BASE_SPONSORS.length) }, (_, i) => ({
+    id: `placeholder-${i}`,
+    isPlaceholder: true,
+  }));
+
+  const allItems = [...BASE_SPONSORS, ...placeholders];
+  const tickerItems = [...allItems, ...allItems];
 
   return (
     <div className="hub-sponsors-ticker" aria-label="Patrocinadores">
       <div className="hub-sponsors-ticker__viewport">
-        <div className="hub-sponsors-ticker__track">
-          {loop.map((s, i) => {
-            const nombre = String(s.nombre || '').trim();
-            const logoRaw = s.logo_url ?? s.logoUrl;
-            const url = s.url_destino != null ? String(s.url_destino).trim() : '';
+        <div className="sponsor-track">
+          {tickerItems.map((item, i) => {
+            if (item.isPlaceholder) {
+              return (
+                <span key={`${item.id}-${i}`} className="sponsor-chip--placeholder">
+                  Tu marca aquí
+                </span>
+              );
+            }
+            const nombre = String(item.nombre || '').trim();
+            const logoRaw = item.logo_url ?? item.logoUrl;
+            const url = item.url_destino != null ? String(item.url_destino).trim() : '';
             const inner = (
               <>
                 <ChipAvatar nombre={nombre} logoRaw={logoRaw} />
                 <span className="hub-sponsors-ticker__chip-label">{nombre}</span>
               </>
             );
+            const key = `${item.id != null ? item.id : nombre}-${i}`;
             if (url) {
               return (
                 <a
-                  key={`${s.id}-${i}`}
+                  key={key}
                   className="hub-sponsors-ticker__chip"
                   href={url}
                   target="_blank"
@@ -84,7 +96,7 @@ export default function HubSponsorsTicker({ sponsors }) {
               );
             }
             return (
-              <span key={`${s.id}-${i}`} className="hub-sponsors-ticker__chip hub-sponsors-ticker__chip--static">
+              <span key={key} className="hub-sponsors-ticker__chip hub-sponsors-ticker__chip--static">
                 {inner}
               </span>
             );

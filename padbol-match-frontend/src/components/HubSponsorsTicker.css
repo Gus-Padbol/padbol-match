@@ -24,26 +24,45 @@
   );
 }
 
-.hub-sponsors-ticker__track {
-  display: flex;
-  flex-wrap: nowrap;
-  width: max-content;
-  gap: 10px;
-  align-items: center;
-  animation: hub-sponsors-marquee 2s linear infinite;
-}
-
-.hub-sponsors-ticker__track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes hub-sponsors-marquee {
+@keyframes ticker {
   0% {
     transform: translateX(0);
   }
   100% {
     transform: translateX(-50%);
   }
+}
+
+.sponsor-track {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: max-content;
+  animation: ticker 8s linear infinite;
+  will-change: transform;
+}
+
+.sponsor-track:hover {
+  animation-play-state: paused;
+}
+
+.sponsor-chip--placeholder {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: inherit;
 }
 
 .hub-sponsors-ticker__chip {
