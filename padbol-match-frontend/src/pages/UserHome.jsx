@@ -21,7 +21,6 @@ import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../cons
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { pickHubDeporteRow } from '../utils/hubDeporteConfig';
-import { resetHubEntryScroll } from '../utils/hubEntryScrollReset';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 
@@ -385,9 +384,23 @@ export default function UserHome() {
     [location.pathname, session?.user]
   );
 
-  /** Misma posición de scroll al entrar al hub desde cualquier flujo (ruta /hub, /inicio, /home). */
+  /** Scroll arriba al montar y en cada cambio de ruta del hub (/hub, /inicio, /home). */
   useEffect(() => {
-    resetHubEntryScroll();
+    try {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+    try {
+      if (typeof document !== 'undefined') {
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+        const container = document.querySelector('.hub-scroll-container');
+        if (container) container.scrollTop = 0;
+      }
+    } catch {
+      /* ignore */
+    }
   }, [location.pathname]);
 
   return (
