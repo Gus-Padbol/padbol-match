@@ -1,8 +1,51 @@
 .admin-dashboard {
   padding: 0;
-  background: linear-gradient(135deg, #E11B22 0%, #991b1b 100%);
   min-height: 0;
-  color: #333;
+  box-sizing: border-box;
+}
+
+/* Fondo de página (club / editor): el rojo solo vive en .admin-dashboard-brand-shell */
+.admin-dashboard:not(.admin-dashboard--super) {
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+/* Scroll principal: tapa cualquier bleed del padre y da superficie tema bajo el bloque marca */
+.admin-dashboard-main-scroll {
+  background: var(--bg-page);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Logo, título, fecha, campana, licencia y tabs: gradiente acotado (no llena toda la pantalla) */
+.admin-dashboard-brand-shell {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-brand-shell {
+  background: linear-gradient(135deg, #e11b22 0%, #991b1b 100%);
+}
+
+/* Super admin: mismo shell sin gradiente (el panel ya usa --bg-page) */
+.admin-dashboard--super .admin-dashboard-brand-shell {
+  background: transparent;
+}
+
+/* Contenido tabulado: superficie explícita tema sobre el scroll */
+.admin-dashboard-body-surface {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 
 .admin-dashboard h1 {
@@ -160,8 +203,9 @@
 }
 
 @media (max-width: 768px) {
-  .admin-dashboard {
-    padding: 20px;
+  /* Sin padding en el shell: evita franjas/márgenes donde se veía el rojo del padre */
+  .admin-dashboard:not(.admin-dashboard--super) {
+    padding: 0;
   }
 
   .dashboard-grid {

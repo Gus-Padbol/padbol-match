@@ -4990,6 +4990,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div
           ref={adminMainScrollRef}
+          className="admin-dashboard-main-scroll"
           style={{
             flex: 1,
             minHeight: 0,
@@ -5001,6 +5002,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             boxSizing: 'border-box',
           }}
         >
+          <div className="admin-dashboard-brand-shell">
           <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
             <div
               style={{
@@ -5059,7 +5061,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </button>
             </div>
           </div>
+          </div>
           <div
+            className="admin-dashboard-body-surface"
             style={{
               ...hubInstagramColumnWrapStyle,
               paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
@@ -5153,6 +5157,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
       <div
         ref={adminMainScrollRef}
+        className="admin-dashboard-main-scroll"
         style={{
           flex: 1,
           minHeight: 0,
@@ -5164,6 +5169,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           boxSizing: 'border-box',
         }}
       >
+      <div className="admin-dashboard-brand-shell">
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
           <img
@@ -5414,46 +5420,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       </div>
 
-      <div
-        style={{
-          ...hubInstagramColumnWrapStyle,
-          paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
-        }}
-      >
-      {isSuperAdmin && ['resumen', 'sedes'].includes(activeTab) && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '10px',
-            flexWrap: 'wrap',
-            marginBottom: '12px',
-            paddingLeft: '12px',
-            paddingRight: '12px',
-          }}
-        >
-          <button
-            type="button"
-            onClick={abrirNuevaSedeModal}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border: 'none',
-              background: '#E11B22',
-              color: '#fff',
-              fontWeight: 800,
-              fontSize: '14px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
-            }}
-          >
-            ➕ Nueva sede
-          </button>
-        </div>
-      )}
-
-      {/* Tab navigation — rueda vertical desplaza scroll horizontal */}
+      {/* Tab navigation — rueda vertical desplaza scroll horizontal; dentro del bloque marca */}
       <div ref={adminTabsStripRef} style={{ display: 'flex', gap: '4px', marginTop: '8px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingTop: 0, paddingBottom: '0', overflowX: 'auto', overflowY: 'hidden', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#E11B22' }}>
         {TABS.map(tab => (
           <button
@@ -5503,6 +5470,47 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </button>
         ))}
       </div>
+      </div>
+
+      <div
+        className="admin-dashboard-body-surface"
+        style={{
+          ...hubInstagramColumnWrapStyle,
+          paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+        }}
+      >
+      {isSuperAdmin && ['resumen', 'sedes'].includes(activeTab) && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '10px',
+            flexWrap: 'wrap',
+            marginBottom: '12px',
+            paddingLeft: '12px',
+            paddingRight: '12px',
+          }}
+        >
+          <button
+            type="button"
+            onClick={abrirNuevaSedeModal}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              background: '#E11B22',
+              color: '#fff',
+              fontWeight: 800,
+              fontSize: '14px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
+            }}
+          >
+            ➕ Nueva sede
+          </button>
+        </div>
+      )}
 
       {mensajeExito && (
         <div style={{ background: '#4caf50', color: 'white', padding: '15px', borderRadius: '5px', marginBottom: '20px', textAlign: 'center' }}>
