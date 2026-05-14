@@ -432,8 +432,8 @@ function App() {
             marginLeft: 'auto',
             marginRight: 'auto',
             boxSizing: 'border-box',
-            minHeight: '100dvh',
             flex: 1,
+            minHeight: 0,
             display: 'flex',
             flexDirection: 'column',
           }}

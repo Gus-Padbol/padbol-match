@@ -4115,8 +4115,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const el = adminTabsStripRef.current;
     if (!el) return;
     const onWheel = (e) => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll <= 0) return;
+      const nextLeft = el.scrollLeft + e.deltaY;
+      const atStart = el.scrollLeft <= 0;
+      const atEnd = el.scrollLeft >= maxScroll - 1;
+      if ((e.deltaY < 0 && atStart && nextLeft <= 0) || (e.deltaY > 0 && atEnd && nextLeft >= maxScroll)) {
+        return;
+      }
       e.preventDefault();
-      el.scrollLeft += e.deltaY;
+      el.scrollLeft = nextLeft;
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
@@ -4971,6 +4979,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           flexDirection: 'column',
           flex: 1,
           minHeight: 0,
+          maxHeight: '100dvh',
           width: '100%',
           maxWidth: '100%',
           overflow: 'hidden',
@@ -5133,6 +5142,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         flexDirection: 'column',
         flex: 1,
         minHeight: 0,
+        maxHeight: '100dvh',
         width: '100%',
         maxWidth: '100%',
         overflow: 'hidden',
