@@ -14,7 +14,12 @@ import {
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
-import { RESERVA_RETURN_STORAGE_KEY, resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
+import {
+  RESERVA_RETURN_STORAGE_KEY,
+  resolvePostLoginNavigatePath,
+  peekReservaLoginGateMessage,
+  clearReservaLoginGateMessage,
+} from '../utils/reservaReturnUrl';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import {
   digitsOnly,
@@ -186,7 +191,7 @@ export default function AccesoCuenta() {
 
   useEffect(() => {
     setErrorMsg('');
-    setInfoMsg('');
+    setInfoMsg(peekReservaLoginGateMessage() || '');
     setShowLoginPassword(false);
     setShowRegPassword(false);
     setShowRegPassword2(false);
@@ -203,7 +208,7 @@ export default function AccesoCuenta() {
   const handleIngresar = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    setInfoMsg('');
+    setInfoMsg(peekReservaLoginGateMessage() || '');
     if (busy) return;
     const em = email.trim().toLowerCase();
     if (!em) {
@@ -239,7 +244,7 @@ export default function AccesoCuenta() {
   const handleRegistrar = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    setInfoMsg('');
+    setInfoMsg(peekReservaLoginGateMessage() || '');
     if (busy) return;
     const em = email.trim().toLowerCase();
     if (!em) {

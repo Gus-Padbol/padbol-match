@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   RESERVA_FORM_RESTORE_KEY,
   RESERVA_FORM_RESTORE_VERSION,
+  armReservaLoginGateMessage,
   saveReservaFormSessionState,
   saveReservaReturnUrl,
   saveMpReservaPendingSlot,
@@ -24,7 +25,7 @@ import {
   clearReservaReturnLocalStorage,
 } from '../utils/reservaReturnUrl';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
-import { getDisplayName } from '../utils/displayName';
+import { getDisplayName, nombreRealDesdePerfilOauth } from '../utils/displayName';
 import {
   ciudadPaisConBandera,
   getDistanceKm,
@@ -547,7 +548,7 @@ export default function ReservaForm() {
     if (!em) return null;
     return {
       email: em,
-      nombre: getDisplayName(userProfile, session),
+      nombre: nombreRealDesdePerfilOauth(userProfile, session) || getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       telefono: String(userProfile?.whatsapp || '').trim(),
     };
@@ -794,6 +795,25 @@ export default function ReservaForm() {
    */
   const reservaOmitirAutoCanchaUnicaRef = useRef(false);
 
+  const redirectGuestAntesResumen = useCallback(
+    (formDataWithCancha) => {
+      saveReservaFormSessionState({
+        pantalla: 4,
+        filtros,
+        formData: formDataWithCancha,
+      });
+      saveReservaReturnUrl({
+        sedeId: filtros.sede_id,
+        fecha: formDataWithCancha.fecha,
+        hora: formDataWithCancha.hora,
+        cancha: formDataWithCancha.cancha,
+      });
+      armReservaLoginGateMessage();
+      navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
+    },
+    [filtros, location, navigate]
+  );
+
   useEffect(() => {
     if (pantalla !== 4) return;
     setWhatsapp(formData.numeroTel || '');
@@ -805,11 +825,16 @@ export default function ReservaForm() {
     if (pantalla !== 2 || !formData.hora || !canchasDisponibles.length) return;
     const libres = canchasDisponibles.filter((c) => c.libre);
     if (libres.length === 1) {
+      const next = { ...formData, cancha: String(libres[0].num) };
+      if (!session?.user) {
+        redirectGuestAntesResumen(next);
+        return;
+      }
       setFormData((prev) => ({ ...prev, cancha: String(libres[0].num) }));
       setPantalla(4);
       setError('');
     }
-  }, [canchasDisponibles, pantalla, formData.hora]);
+  }, [canchasDisponibles, pantalla, formData, session?.user, redirectGuestAntesResumen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1000,6 +1025,23 @@ export default function ReservaForm() {
       if (full) {
         clearKey();
         mergeFiltrosForm(filt, fd, sedeObj);
+        if (!session?.user) {
+          reservaOmitirAutoCanchaUnicaRef.current = Boolean(fecha && hora);
+          setPantalla(2);
+          navigate(
+            {
+              pathname: '/reservar',
+              search: `?${createSearchParams({
+                sedeId: String(sedeObj.id),
+                fecha,
+                hora,
+              }).toString()}`,
+            },
+            { replace: true }
+          );
+          setError('');
+          return;
+        }
         setPantalla(4);
         navigate(
           {
@@ -1056,6 +1098,23 @@ export default function ReservaForm() {
     if (fecha && hora && cancha) {
       clearKey();
       mergeFiltrosForm(filt, fdLegacy, sedeObj);
+      if (!session?.user) {
+        reservaOmitirAutoCanchaUnicaRef.current = Boolean(fecha && hora);
+        setPantalla(2);
+        navigate(
+          {
+            pathname: '/reservar',
+            search: `?${createSearchParams({
+              sedeId: String(sedeObj.id),
+              fecha,
+              hora,
+            }).toString()}`,
+          },
+          { replace: true }
+        );
+        setError('');
+        return;
+      }
       setPantalla(4);
       navigate(
         {
@@ -1080,7 +1139,7 @@ export default function ReservaForm() {
     if (fecha) params.fecha = fecha;
     navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` }, { replace: true });
     setError('');
-  }, [sedes.length, sedes, authLoading, navigate]);
+  }, [sedes.length, sedes, authLoading, navigate, session?.user]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
@@ -1406,18 +1465,7 @@ export default function ReservaForm() {
   const handlePagarConMP = async () => {
     if (authLoading) return;
     if (!session?.user) {
-      saveReservaFormSessionState({
-        pantalla: 4,
-        filtros,
-        formData,
-      });
-      saveReservaReturnUrl({
-        sedeId: filtros.sede_id,
-        fecha: formData.fecha,
-        hora: formData.hora,
-        cancha: formData.cancha,
-      });
-      navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
+      redirectGuestAntesResumen({ ...formData });
       return;
     }
     const sesEm = session.user.email;
@@ -1844,7 +1892,12 @@ export default function ReservaForm() {
                       type="button"
                       disabled={!c.libre}
                       onClick={() => {
-                        setFormData((prev) => ({ ...prev, cancha: String(c.num) }));
+                        const next = { ...formData, cancha: String(c.num) };
+                        if (!session?.user) {
+                          redirectGuestAntesResumen(next);
+                          return;
+                        }
+                        setFormData(next);
                         setPantalla(4);
                         setError('');
                       }}

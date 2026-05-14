@@ -1,3 +1,35 @@
+/** Mensaje mostrado en /login o /auth cuando la reserva exige cuenta antes del resumen. */
+const RESERVA_LOGIN_GATE_MSG_KEY = 'padbol_reserva_login_gate_msg';
+const RESERVA_LOGIN_GATE_TEXT =
+  'Para continuar con tu reserva, ingresá o creá una cuenta. Es rápido.';
+
+export function armReservaLoginGateMessage() {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(RESERVA_LOGIN_GATE_MSG_KEY, RESERVA_LOGIN_GATE_TEXT);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function peekReservaLoginGateMessage() {
+  try {
+    if (typeof window === 'undefined') return '';
+    return sessionStorage.getItem(RESERVA_LOGIN_GATE_MSG_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function clearReservaLoginGateMessage() {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem(RESERVA_LOGIN_GATE_MSG_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Clave localStorage: vuelta al flujo de reserva tras login (pathname + search + hash). */
 export const RESERVA_RETURN_STORAGE_KEY = 'padbol_reserva_return';
 
