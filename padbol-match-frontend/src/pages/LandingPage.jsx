@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 
@@ -128,6 +128,7 @@ function HowCard({ lead, emoji, title, description }) {
 }
 
 export default function LandingPage() {
+  const location = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
     try {
@@ -138,7 +139,7 @@ export default function LandingPage() {
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [location.pathname, location.key]);
 
   return (
     <div style={shell}>

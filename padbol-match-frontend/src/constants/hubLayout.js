@@ -161,12 +161,21 @@ export function hubAccesoContentPaddingTopCss(pathname) {
 /** UserHome: aire extra bajo header+BottomNav antes del primer bloque scroll (saludo en barra fija + «Elegir deporte»). */
 export const HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX = 70;
 
-export function hubUserHomeChromeSpacerHeightCss(pathname) {
+/** UserHome invitado: header una sola línea (sin «Bienvenido de nuevo»); menos hueco bajo el chrome fijo. */
+export const HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX = 10;
+
+/**
+ * Altura del bloque “spacer” bajo el header fijo de UserHome.
+ * @param {{ guest?: boolean }} [opts] — `guest: true` sin sesión (invitado).
+ */
+export function hubUserHomeChromeSpacerHeightCss(pathname, opts) {
+  const guest = Boolean(opts?.guest);
+  const extra = guest ? HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX : HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX;
   const basePx =
     hubContentPaddingTopPx(pathname) +
     APP_HEADER_OUTER_PADDING_PX +
     HUB_FIXED_CHROME_SLACK_PX +
-    HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX;
+    extra;
   return `calc(${basePx}px + env(safe-area-inset-top, 0px))`;
 }
 

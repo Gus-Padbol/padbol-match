@@ -377,7 +377,13 @@ export default function UserHome() {
   }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido]);
 
   const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
-  const userHomeChromeSpacerH = hubUserHomeChromeSpacerHeightCss(location.pathname);
+  const userHomeChromeSpacerH = useMemo(
+    () =>
+      hubUserHomeChromeSpacerHeightCss(location.pathname, {
+        guest: !session?.user,
+      }),
+    [location.pathname, session?.user]
+  );
 
   /** Al entrar al hub (/hub, /inicio, /home): scroll arriba (viewport + panel interno). */
   useLayoutEffect(() => {
@@ -392,7 +398,7 @@ export default function UserHome() {
     }
     const el = hubMainScrollRef.current;
     if (el) el.scrollTop = 0;
-  }, [location.pathname, location.key]);
+  }, [location.pathname, location.key, authLoading, session?.user?.id]);
 
   return (
     <div
