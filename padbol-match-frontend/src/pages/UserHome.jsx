@@ -808,42 +808,37 @@ export default function UserHome() {
             })}
           </div>
           <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
-        </div>
 
-        {!isPwaStandalone() ? (
-          <div
-            style={{
-              flexShrink: 0,
-              width: '100%',
-              paddingBottom: 16,
-              maxWidth: Math.min(HUB_COLUMN_MAX, hubBottomNavMaxWidthPx),
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              boxSizing: 'border-box',
-              paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
-              paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-              paddingTop: 8,
-            }}
-          >
+          {!isPwaStandalone() ? (
             <div
               style={{
-                padding: '12px 14px',
-                borderRadius: 12,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
+                flexShrink: 0,
+                width: '100%',
+                marginTop: 14,
+                paddingBottom: 8,
                 boxSizing: 'border-box',
-                textAlign: 'center',
-                color: 'var(--text-primary)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               }}
             >
-              <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 400, lineHeight: 1.4, color: 'var(--text-secondary)' }}>
-                Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
-              </p>
-              <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
+              <div
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  boxSizing: 'border-box',
+                  textAlign: 'center',
+                  color: 'var(--text-primary)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+              >
+                <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 400, lineHeight: 1.4, color: 'var(--text-secondary)' }}>
+                  Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
+                </p>
+                <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
       <BottomNav />
     </div>
