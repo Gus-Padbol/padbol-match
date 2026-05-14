@@ -632,71 +632,69 @@ export default function UserHome() {
             flexShrink: 0,
           }}
         >
-          {session?.user ? (
-            <label style={{ display: 'block', width: '100%', marginBottom: 0, marginTop: 0, flexShrink: 0 }}>
-              <span
+          <label style={{ display: 'block', width: '100%', marginBottom: 0, marginTop: 0, flexShrink: 0 }}>
+            <span
+              style={{
+                display: 'block',
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                marginBottom: 10,
+              }}
+            >
+              Elegir deporte
+            </span>
+            <div style={{ position: 'relative', marginBottom: 10 }}>
+              <select
+                value={deporteElegido}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setDeporteElegido(v);
+                  try {
+                    if (v) sessionStorage.setItem(HUB_DEPORTE_SESSION_KEY, v);
+                    else sessionStorage.removeItem(HUB_DEPORTE_SESSION_KEY);
+                  } catch {
+                    /* ignore */
+                  }
+                }}
                 style={{
-                  display: 'block',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  marginBottom: 10,
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  appearance: 'none',
+                  WebkitAppearance: 'none',
+                  padding: '10px 40px 10px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  fontSize: 15,
+                  fontWeight: 400,
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
                 }}
               >
-                Elegir deporte
+                <option value="">Todos los deportes</option>
+                {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
+                  <option key={d.key} value={d.key}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: 12,
+                }}
+              >
+                ▼
               </span>
-              <div style={{ position: 'relative', marginBottom: 10 }}>
-                <select
-                  value={deporteElegido}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setDeporteElegido(v);
-                    try {
-                      if (v) sessionStorage.setItem(HUB_DEPORTE_SESSION_KEY, v);
-                      else sessionStorage.removeItem(HUB_DEPORTE_SESSION_KEY);
-                    } catch {
-                      /* ignore */
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    appearance: 'none',
-                    WebkitAppearance: 'none',
-                    padding: '10px 40px 10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-card)',
-                    fontSize: 15,
-                    fontWeight: 400,
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">Todos los deportes</option>
-                  {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
-                    <option key={d.key} value={d.key}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-                <span
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    right: 14,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                    color: 'var(--text-secondary)',
-                    fontSize: 12,
-                  }}
-                >
-                  ▼
-                </span>
-              </div>
-            </label>
-          ) : null}
+            </div>
+          </label>
 
           {!authLoading && !session?.user ? (
             <p
