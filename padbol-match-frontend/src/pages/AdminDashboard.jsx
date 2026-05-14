@@ -5420,8 +5420,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       </div>
 
-      {/* Tab navigation — rueda vertical desplaza scroll horizontal; dentro del bloque marca */}
-      <div ref={adminTabsStripRef} style={{ display: 'flex', gap: '4px', marginTop: '8px', marginBottom: '24px', borderBottom: '2px solid rgba(255,255,255,0.3)', paddingTop: 0, paddingBottom: '0', overflowX: 'auto', overflowY: 'hidden', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch', position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#E11B22' }}>
+      {/* Tab navigation — scroll horizontal (mobile); dentro del bloque marca */}
+      <div
+        ref={adminTabsStripRef}
+        className={`admin-dashboard-tabs-strip${isSuperAdmin ? ' admin-dashboard-tabs-strip--super' : ''}`}
+        style={{
+          marginTop: '8px',
+          marginBottom: '24px',
+          borderBottom: isSuperAdmin ? '2px solid var(--border)' : '2px solid rgba(255,255,255,0.3)',
+          paddingTop: 0,
+          paddingBottom: 0,
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          backgroundColor: isSuperAdmin ? 'var(--bg-card)' : '#E11B22',
+        }}
+      >
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -5436,11 +5450,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               position: 'relative',
               padding: '10px 18px',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '3px solid white' : '3px solid transparent',
+              borderBottom:
+                activeTab === tab.id
+                  ? isSuperAdmin
+                    ? '3px solid var(--accent)'
+                    : '3px solid white'
+                  : '3px solid transparent',
               background: 'none',
               cursor: 'pointer',
               fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-              color: activeTab === tab.id ? '#fff' : '#1f2937',
+              color:
+                activeTab === tab.id
+                  ? isSuperAdmin
+                    ? 'var(--text-primary)'
+                    : '#fff'
+                  : isSuperAdmin
+                    ? 'var(--text-secondary)'
+                    : 'rgba(255,255,255,0.88)',
               fontSize: '14px',
               marginBottom: '-2px',
               whiteSpace: 'nowrap',
@@ -10806,8 +10832,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {(esAdminClub || isSuperAdmin) && (
             <div id="admin-mi-sede-pagos" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>💳 Configuración de pagos</h3>
-              <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '520px' }}>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+              <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '520px' }}>
+                <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
                   Cada sede cobra con su propia cuenta. Mercado Pago usa el Access Token de tu aplicación MP; Stripe usa el
                   Account ID (acct_…) para cuentas internacionales.
                 </p>
@@ -10820,16 +10846,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     gap: '10px',
                     padding: '12px 14px',
                     borderRadius: '10px',
-                    border: '1px solid #e2e8f0',
-                    background: '#f8fafc',
+                    border: '1px solid var(--border)',
+                    background: 'var(--pm-color-muted-bg)',
                     marginBottom: '12px',
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <div className="admin-mi-sede-theme-muted" style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Mercado Pago
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
                       {Boolean(String(miSede?.mp_access_token || '').trim()) ? 'Conectado ✅' : 'Sin configurar ⚠️'}
                     </div>
                   </div>
@@ -10839,12 +10865,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       padding: '8px 14px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      background: '#fff',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-input)',
                       fontWeight: 700,
                       fontSize: '13px',
                       cursor: 'pointer',
-                      color: '#334155',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {pagosMpPanelAbierto ? 'Ocultar' : 'Conectar Mercado Pago'}
@@ -10852,11 +10878,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
                 {pagosMpPanelAbierto ? (
                   <div style={{ marginBottom: '18px', paddingLeft: '4px' }}>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                    <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                       Access Token de Mercado Pago
                     </label>
                     <input
                       type="password"
+                      className="admin-mi-sede-theme-input"
                       autoComplete="off"
                       value={miSedeForm.mp_access_token || ''}
                       placeholder={Boolean(String(miSede?.mp_access_token || '').trim()) ? 'Token actual guardado — ingresa uno nuevo para reemplazar' : 'APP_USR-...'}
@@ -10864,10 +10891,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       style={{
                         width: '100%',
                         padding: '8px 10px',
-                        border: '1px solid #ddd',
                         borderRadius: '6px',
                         fontSize: '13px',
-                        color: '#333',
                         boxSizing: 'border-box',
                         fontFamily: 'monospace',
                         marginBottom: '10px',
@@ -10909,16 +10934,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     gap: '10px',
                     padding: '12px 14px',
                     borderRadius: '10px',
-                    border: '1px solid #e2e8f0',
-                    background: '#f8fafc',
+                    border: '1px solid var(--border)',
+                    background: 'var(--pm-color-muted-bg)',
                     marginBottom: '12px',
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <div className="admin-mi-sede-theme-muted" style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Stripe
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
                       {String(miSede?.stripe_account_id || '')
                         .trim()
                         .startsWith('acct_')
@@ -10932,12 +10957,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       padding: '8px 14px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      background: '#fff',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-input)',
                       fontWeight: 700,
                       fontSize: '13px',
                       cursor: 'pointer',
-                      color: '#334155',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {pagosStripePanelAbierto ? 'Ocultar' : 'Conectar Stripe'}
@@ -10945,20 +10970,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
                 {pagosStripePanelAbierto ? (
                   <div style={{ marginBottom: '18px', paddingLeft: '4px' }}>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                    <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                       Stripe Account ID
                     </label>
                     <input
+                      className="admin-mi-sede-theme-input"
                       value={miSedeForm.stripe_account_id || ''}
                       placeholder="acct_..."
                       onChange={(e) => setMiSedeForm((p) => ({ ...p, stripe_account_id: e.target.value }))}
                       style={{
                         width: '100%',
                         padding: '8px 10px',
-                        border: '1px solid #ddd',
                         borderRadius: '6px',
                         fontSize: '13px',
-                        color: '#333',
                         boxSizing: 'border-box',
                         marginBottom: '10px',
                         fontFamily: 'monospace',
@@ -11018,20 +11042,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 ) : null}
 
-                <hr style={{ border: 0, borderTop: '1px solid #e2e8f0', margin: '18px 0' }} />
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                <hr style={{ border: 0, borderTop: '1px solid var(--border)', margin: '18px 0' }} />
+                <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                   Método de cobro para reservas y torneos
                 </label>
                 <select
+                  className="admin-mi-sede-theme-input"
                   value={miSedeForm.metodo_pago || 'mercadopago'}
                   onChange={(e) => setMiSedeForm((p) => ({ ...p, metodo_pago: e.target.value }))}
                   style={{
                     width: '100%',
                     padding: '8px 10px',
-                    border: '1px solid #ddd',
                     borderRadius: '6px',
                     fontSize: '13px',
-                    color: '#333',
                     boxSizing: 'border-box',
                     marginBottom: '12px',
                   }}
@@ -11042,26 +11065,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <option value="efectivo">Efectivo en sede (sin pasarela ni fee 3%)</option>
                 </select>
                 {String(miSedeForm.metodo_pago || '') === 'efectivo' ? (
-                  <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#555', lineHeight: 1.45 }}>
+                  <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 12px', fontSize: '12px', lineHeight: 1.45 }}>
                     Las reservas quedan pendientes de cobro en el club hasta que confirmes el pago recibido.
                   </p>
                 ) : null}
                 {String(miSedeForm.metodo_pago || '') === 'manual' ? (
                   <>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>
+                    <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                       Instrucciones para el jugador
                     </label>
                     <textarea
+                      className="admin-mi-sede-theme-input"
                       rows={4}
                       value={miSedeForm.pago_manual_instrucciones || ''}
                       onChange={(e) => setMiSedeForm((p) => ({ ...p, pago_manual_instrucciones: e.target.value }))}
                       style={{
                         width: '100%',
                         padding: '8px 10px',
-                        border: '1px solid #ddd',
                         borderRadius: '6px',
                         fontSize: '13px',
-                        color: '#333',
                         boxSizing: 'border-box',
                         marginBottom: '14px',
                         resize: 'vertical',
@@ -11098,8 +11120,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {/* ── 4. Redes Sociales ── */}
           <div style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>📱 Redes Sociales</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '480px' }}>
-              <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#555', lineHeight: 1.5 }}>
+            <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '480px' }}>
+              <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
                 Ingresa las URLs completas (incluye https://). Solo se muestran las redes que tengas cargadas.
               </p>
               {[
@@ -11111,13 +11133,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 { field: 'website',   label: '🌐 Sitio web', placeholder: 'https://tusede.com' },
               ].map(({ field, label, placeholder }) => (
                 <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <label style={{ width: '150px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>{label}</label>
+                  <label className="admin-mi-sede-field-label" style={{ width: '150px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>{label}</label>
                   <input
                     type="url"
+                    className="admin-mi-sede-theme-input"
                     value={miSedeForm[field] || ''}
                     placeholder={placeholder}
                     onChange={e => setMiSedeForm(p => ({ ...p, [field]: e.target.value }))}
-                    style={{ flex: 1, minWidth: 0, maxWidth: '100%', width: '100%', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', color: '#333', boxSizing: 'border-box' }}
+                    style={{ flex: 1, minWidth: 0, maxWidth: '100%', width: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box' }}
                   />
                 </div>
               ))}
@@ -11131,15 +11154,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {/* ── 5. Mis Canchas ── */}
           <div id="admin-mi-sede-canchas" style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>⚽ Mis Canchas</h3>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', maxWidth: '640px' }}>
-              <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+            <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
+              <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 14px', fontSize: '13px', lineHeight: 1.5 }}>
                 Las canchas <strong>inactivas</strong> no aparecen como opción en las reservas públicas. El número en
                 la primera columna es el que usa el sistema de reservas para esa cancha.
               </p>
               {canchas.length === 0 ? (
-                <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '16px' }}>No hay canchas registradas para esta sede.</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>No hay canchas registradas para esta sede.</p>
               ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                <>
+                  <div className="admin-mi-sede-canchas-table-wrap">
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#E11B22' }}>
                       <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#fff', width: '48px' }}>#</th>
@@ -11152,13 +11177,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </thead>
                   <tbody>
                     {canchas.map((c) => (
-                      <tr key={c.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '10px 10px', fontSize: '13px', color: '#64748b', fontWeight: 700 }}>{c.orden ?? '—'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: '14px', color: '#333' }}>{c.nombre}</td>
-                        <td style={{ padding: '10px 12px', fontSize: '13px', color: '#475569' }}>
+                      <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '10px 10px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 700 }}>{c.orden ?? '—'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)' }}>{c.nombre}</td>
+                        <td style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                           {CANCHA_DEPORTE_ADMIN_OPTIONS.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: '12px', color: '#64748b', maxWidth: '180px' }}>
+                        <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '180px' }}>
                           {c.descripcion ? (
                             <span title={c.descripcion}>{c.descripcion.length > 48 ? `${c.descripcion.slice(0, 48)}…` : c.descripcion}</span>
                           ) : (
@@ -11218,6 +11243,91 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     ))}
                   </tbody>
                 </table>
+                  </div>
+                  <div className="admin-mi-sede-canchas-cards" role="list">
+                    {canchas.map((c) => (
+                      <div key={`card-${c.id}`} className="admin-mi-sede-cancha-card" role="listitem">
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">Orden</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.orden ?? '—'}</span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">Nombre</span>
+                          <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{c.nombre}</span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">Deporte</span>
+                          <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
+                            {CANCHA_DEPORTE_ADMIN_OPTIONS.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                          </span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row" style={{ alignItems: 'flex-start' }}>
+                          <span className="admin-mi-sede-cancha-card__label">Nota</span>
+                          <span style={{ color: 'var(--text-secondary)', textAlign: 'right', fontSize: '13px', lineHeight: 1.4, wordBreak: 'break-word' }}>
+                            {c.descripcion ? (
+                              <span title={c.descripcion}>{c.descripcion.length > 120 ? `${c.descripcion.slice(0, 120)}…` : c.descripcion}</span>
+                            ) : (
+                              '—'
+                            )}
+                          </span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">Estado</span>
+                          <span
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              background: c.estado === 'activa' ? '#dcfce7' : '#fee2e2',
+                              color: c.estado === 'activa' ? '#16a34a' : '#dc2626',
+                            }}
+                          >
+                            {c.estado === 'activa' ? 'Activa' : 'Inactiva'}
+                          </span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__actions">
+                          <button
+                            type="button"
+                            onClick={() => abrirModalCanchaEditar(c)}
+                            style={{
+                              flex: '1 1 auto',
+                              minWidth: '120px',
+                              padding: '8px 12px',
+                              background: '#fee2e2',
+                              color: '#991b1b',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCanchaEstado(c)}
+                            style={{
+                              flex: '1 1 auto',
+                              minWidth: '120px',
+                              padding: '8px 12px',
+                              background: c.estado === 'activa' ? '#fee2e2' : '#dcfce7',
+                              color: c.estado === 'activa' ? '#dc2626' : '#16a34a',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {c.estado === 'activa' ? 'Desactivar' : 'Activar'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
               <button
                 type="button"
@@ -11249,7 +11359,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           {/* Logo */}
           <div className="admin-mi-sede-theme-panel" style={{ marginBottom: '20px' }}>
-            <p style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 700, color: '#1e1b4b' }}>Logo del club</p>
+            <p className="admin-mi-sede-block-title" style={{ margin: '0 0 16px', fontSize: '14px' }}>Logo del club</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
               {logoUrl ? (
                 <div
@@ -11257,7 +11367,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     width: '100px',
                     height: '100px',
                     borderRadius: '10px',
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid var(--border)',
                     background: normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000',
                     display: 'flex',
                     alignItems: 'center',
@@ -11272,9 +11382,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   />
                 </div>
               ) : (
-                <div style={{ width: '100px', height: '100px', borderRadius: '10px', border: '2px dashed #d1d5db', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ width: '100px', height: '100px', borderRadius: '10px', border: '2px dashed var(--border)', background: 'var(--pm-color-muted-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '4px' }}>
                   <span style={{ fontSize: '28px' }}>🏟️</span>
-                  <span style={{ fontSize: '11px', color: '#9ca3af' }}>Sin logo</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Sin logo</span>
                 </div>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -11297,15 +11407,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   />
                 </label>
-                <span style={{ fontSize: '12px', color: '#9ca3af' }}>JPG, PNG o WEBP · máx. 2MB</span>
-                <span style={{ fontSize: '11px', color: '#c4b5fd', lineHeight: 1.4 }}>💡 Recomendado: PNG transparente, mín. 300×300 px</span>
-                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e5e7eb', width: '100%', maxWidth: '320px' }}>
-                  <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>JPG, PNG o WEBP · máx. 2MB</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>💡 Recomendado: PNG transparente, mín. 300×300 px</span>
+                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', width: '100%', maxWidth: '320px' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     Fondo del logo en la página pública de la sede
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <input
                       type="color"
+                      className="admin-mi-sede-logo-color-input"
                       aria-label="Color de fondo del logo"
                       value={normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000'}
                       onChange={(e) => {
@@ -11313,9 +11424,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         setMiSedeForm((prev) => ({ ...prev, color_fondo_logo: v }));
                         schedulePersistColorFondoLogo(v);
                       }}
-                      style={{ width: '48px', height: '40px', padding: 0, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: '#fff' }}
                     />
-                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                       Se aplica detrás del logo en el hero. Por defecto negro (#000000).
                     </span>
                   </div>
@@ -11328,14 +11438,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {/* Fotos de canchas */}
           <div className="admin-mi-sede-theme-panel">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
-              <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#1e1b4b' }}>
+              <p className="admin-mi-sede-block-title" style={{ margin: 0, fontSize: '14px' }}>
                 Fotos de las canchas
-                <span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af', marginLeft: '8px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-secondary)', marginLeft: '8px' }}>
                   ({fotosUrls.length}/{MAX_FOTOS_SEDE})
                 </span>
               </p>
               {fotosUrls.length < MAX_FOTOS_SEDE && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'stretch' }}>
                   <label style={{
                     display: 'inline-block', padding: '7px 16px',
                     background: fotosUploading ? '#e5e7eb' : 'linear-gradient(135deg, #E11B22, #991b1b)',
@@ -11362,20 +11472,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     />
                   </label>
                   <label
+                    className="admin-mi-sede-photo-upload-once"
                     style={{
-                      display: 'inline-block',
-                      padding: '7px 14px',
-                      background: fotosUploading ? '#f1f5f9' : '#fff',
-                      color: fotosUploading ? '#94a3b8' : '#991b1b',
-                      border: '2px solid #fecaca',
-                      borderRadius: '8px',
                       cursor: fotosUploading ? 'not-allowed' : 'pointer',
-                      fontWeight: 700,
-                      fontSize: '13px',
+                      opacity: fotosUploading ? 0.55 : 1,
                     }}
                     title="Recomendado en Safari iPhone: una foto por vez"
                   >
-                    + Agregar una foto
+                    + 1 foto (Safari)
                     <input
                       type="file"
                       accept="image/*"

@@ -25,7 +25,10 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  /* No recortar la franja de tabs: el scroll horizontal vive en .admin-dashboard-tabs-strip */
+  overflow-x: visible;
+  overflow-y: visible;
+  min-width: 0;
 }
 
 .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-brand-shell {
@@ -823,15 +826,30 @@ html.theme-dark .admin-mi-sede-theme-panel {
 
 .admin-mi-sede-theme-input,
 .admin-mi-sede-theme-panel input[type='text'],
+.admin-mi-sede-theme-panel input[type='url'],
 .admin-mi-sede-theme-panel input[type='number'],
 .admin-mi-sede-theme-panel input[type='date'],
+.admin-mi-sede-theme-panel input[type='password'],
 .admin-mi-sede-theme-panel input[type='color'],
 .admin-mi-sede-theme-panel select,
 .admin-mi-sede-theme-panel textarea {
-  background: var(--bg-page) !important;
+  background: var(--bg-input) !important;
   color: var(--text-primary) !important;
   -webkit-text-fill-color: var(--text-primary) !important;
   border: 1px solid var(--border) !important;
+}
+
+/* Selector nativo: el well del color sigue legible en tema oscuro */
+.admin-mi-sede-logo-color-input {
+  flex-shrink: 0;
+  width: 48px;
+  height: 40px;
+  padding: 2px;
+  box-sizing: border-box;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--bg-input) !important;
 }
 
 .admin-mi-sede-theme-panel input::placeholder,
@@ -952,14 +970,43 @@ html.theme-dark .admin-editar-sede-dialog {
     min-width: 0;
     box-sizing: border-box;
   }
+
+  /* Club / editor: header rojo más compacto (menos altura útil perdida) */
+  .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-brand-shell {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+    padding-bottom: 2px;
+  }
+
+  .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-brand-shell .admin-header img {
+    height: 72px !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-brand-shell .admin-header > div > p {
+    margin-bottom: 6px !important;
+  }
+
+  .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-tabs-strip {
+    margin-top: 4px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-tabs-strip button {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
 }
 
 /* Panel admin: texto y placeholders legibles en tema oscuro (incl. Safari / autofill) */
-.admin-dashboard input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']),
+.admin-dashboard input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='button']):not([type='submit']),
 .admin-dashboard select,
 .admin-dashboard textarea {
   color: var(--text-primary) !important;
   -webkit-text-fill-color: var(--text-primary) !important;
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border) !important;
 }
 
 .admin-dashboard input::placeholder,
@@ -970,5 +1017,110 @@ html.theme-dark .admin-editar-sede-dialog {
 }
 
 .admin-dashboard label {
+  color: var(--text-primary) !important;
+}
+
+/* Franja de tabs: scroll horizontal sin cortar la última pestaña (iOS / flex) */
+.admin-dashboard-tabs-strip {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.admin-dashboard-tabs-strip > button {
+  flex: 0 0 auto;
+}
+
+.admin-dashboard-tabs-strip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.admin-dashboard-tabs-strip::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+}
+
+.admin-dashboard-tabs-strip--super::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+/* Mi Sede — Mis canchas: tabla con scroll en desktop; tarjetas en mobile */
+.admin-mi-sede-canchas-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.admin-mi-sede-canchas-table-wrap table {
+  min-width: 640px;
+}
+
+.admin-mi-sede-canchas-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-mi-sede-cancha-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  background: var(--bg-input);
+  box-sizing: border-box;
+}
+
+.admin-mi-sede-cancha-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.admin-mi-sede-cancha-card__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.admin-mi-sede-cancha-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+@media (max-width: 767px) {
+  .admin-mi-sede-canchas-table-wrap {
+    display: none;
+  }
+
+  .admin-mi-sede-canchas-cards {
+    display: flex;
+  }
+}
+
+/* Segundo control «una foto» (Safari): mismo lenguaje visual que el primario, sin bloque blanco */
+.admin-mi-sede-photo-upload-once {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  box-sizing: border-box;
+  border: 1px solid var(--border) !important;
+  background: var(--bg-input) !important;
   color: var(--text-primary) !important;
 }

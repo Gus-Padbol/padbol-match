@@ -63,6 +63,8 @@ html {
 :root {
   /** Misma anchura que la columna central del hub (`HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX`). */
   --pm-app-body-max-width: 900px;
+  --bg-input: #ffffff;
+  --input-bg: var(--bg-input);
   --pm-radius-card: 12px;
   --pm-radius-button: 8px;
   --pm-radius-input: 8px;
@@ -76,6 +78,9 @@ html.theme-dark {
   --accent: #e11b22;
   --bg-page: #0f172a;
   --bg-card: #1e293b;
+  /* Inputs sobre tarjetas: distinto de --bg-card para borde/área clara */
+  --bg-input: #334155;
+  --input-bg: var(--bg-input);
   --border: #334155;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
@@ -107,6 +112,8 @@ html.theme-light {
   --accent: #e11b22;
   --bg-page: #f8f9fa;
   --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --input-bg: var(--bg-input);
   --border: #e2e8f0;
   --text-primary: #0f172a;
   --text-secondary: #64748b;
