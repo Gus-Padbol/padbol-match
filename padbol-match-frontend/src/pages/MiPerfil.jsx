@@ -61,7 +61,6 @@ import {
   normalizeDeportesPreferidosArray,
   hasDeportesPreferidosCargados,
 } from '../constants/deportesPreferidos';
-import { ThemeDarkModeSwitch } from '../context/ThemeContext';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -2532,46 +2531,6 @@ export default function MiPerfil() {
           {errorMsg}
         </div>
       ) : null}
-
-      <div
-        style={{
-          marginBottom: '16px',
-          padding: '16px 18px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: '12px',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-        }}
-      >
-        <h4
-          style={{
-            margin: '0 0 12px',
-            color: 'var(--text-primary)',
-            fontSize: '15px',
-            fontWeight: 700,
-            borderBottom: '1px solid var(--border)',
-            paddingBottom: '8px',
-          }}
-        >
-          Preferencias
-        </h4>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-          }}
-        >
-          <label
-            htmlFor="mi-perfil-pref-mod-oscuro"
-            style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}
-          >
-            Modo oscuro
-          </label>
-          <ThemeDarkModeSwitch id="mi-perfil-pref-mod-oscuro" />
-        </div>
-      </div>
 
       <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '30px 24px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', marginBottom: '16px', textAlign: 'center', border: '1px solid var(--border)' }}>
         {/* Foto de perfil: avatar + overlay + input file */}
