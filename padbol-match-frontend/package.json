@@ -23,8 +23,11 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
+    "prestart": "node scripts/emit-pwa-build-id.js",
     "start": "react-scripts start",
+    "prebuild": "node scripts/emit-pwa-build-id.js",
     "build": "react-scripts build",
+    "pretest": "node scripts/emit-pwa-build-id.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

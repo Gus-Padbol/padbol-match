@@ -1,7 +1,9 @@
 /**
- * Registro del SW en producción: actualización inmediata (el SW usa skipWaiting + clients.claim)
- * y aviso al documento cuando hay build nuevo o cuando el SW se activó.
+ * Registro del SW en producción: nueva versión por build (CACHE_VERSION + ?v=),
+ * skipWaiting + clients.claim en el SW, y banner para recargar cuando el usuario elija.
  */
+
+import { PWA_BUILD_ID } from './pwaBuildId';
 
 const SW_URL_REL = '/sw.js';
 
@@ -33,7 +35,6 @@ function attachRegistrationHandlers(registration) {
     installing.addEventListener('statechange', () => {
       requestSkipWaiting(installing);
       if (installing.state !== 'installed') return;
-      // Primera instalación: no hay controller aún; no es “actualización” para el usuario.
       if (!navigator.serviceWorker.controller) return;
       const payload = { phase: 'installed', waiting: Boolean(registration.waiting) };
       postSwMessageToPage({ type: 'PM_SW_UPDATE_AVAILABLE', ...payload });
@@ -53,13 +54,6 @@ export function registerServiceWorker() {
     return;
   }
 
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    window.location.reload();
-  });
-
   navigator.serviceWorker.addEventListener('message', (event) => {
     const data = event.data;
     if (!data || typeof data !== 'object') return;
@@ -68,7 +62,9 @@ export function registerServiceWorker() {
 
   window.addEventListener('load', () => {
     const base = String(process.env.PUBLIC_URL || '').replace(/\/$/, '');
-    const swUrl = `${base}${SW_URL_REL}`;
+    const swPath = `${base}${SW_URL_REL}`;
+    const sep = swPath.includes('?') ? '&' : '?';
+    const swUrl = `${swPath}${sep}v=${encodeURIComponent(PWA_BUILD_ID)}`;
 
     navigator.serviceWorker
       .register(swUrl)
