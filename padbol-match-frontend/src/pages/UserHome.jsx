@@ -15,7 +15,6 @@ import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
-import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { pickHubDeporteRow } from '../utils/hubDeporteConfig';
@@ -345,7 +344,7 @@ export default function UserHome() {
   const padR = 'calc(16px + env(safe-area-inset-right, 0px))';
 
   const paisParaSponsors = String(hubPaisUsuario || userProfile?.pais || '').trim();
-  const { tercerTiempoSponsor, tickerSponsors } = useHubSponsors({
+  const { tercerTiempoSponsor } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: paisParaSponsors,
     enabled: true,
@@ -790,7 +789,6 @@ export default function UserHome() {
             })}
           </div>
           <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
-          <HubSponsorsTicker sponsors={tickerSponsors} />
         </div>
 
         {!isPwaStandalone() ? (

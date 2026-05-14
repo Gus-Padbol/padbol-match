@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -61,7 +60,7 @@ export default function Jugar() {
   }, [session?.user?.email]);
   const { sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
   const paisParaSponsors = String(hubPaisUsuario || userProfile?.pais || '').trim();
-  const { tercerTiempoSponsor, tickerSponsors } = useHubSponsors({
+  const { tercerTiempoSponsor } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: paisParaSponsors,
     enabled: true,
@@ -142,7 +141,6 @@ export default function Jugar() {
           ))}
         </div>
         <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
-        <HubSponsorsTicker sponsors={tickerSponsors} />
       </main>
       <BottomNav />
     </div>

@@ -9,6 +9,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
+import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import {
   APP_HEADER_OUTER_PADDING_PX,
   HUB_CONTENT_PADDING_BOTTOM_PX,
@@ -19,6 +20,7 @@ import {
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
+import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
@@ -1598,6 +1600,14 @@ export default function SedePublica() {
 
   const { rol: userRol } = useUserRole(currentCliente);
   const isSuperAdmin = userRol === 'super_admin';
+
+  const sedeIdNumTicker = useMemo(() => {
+    const n = parseInt(String(sedeId), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [sedeId]);
+  const { sponsors: sedeTickerSponsors } = useSedeTickerSponsors(sedeIdNumTicker, {
+    enabled: Boolean(sedeIdNumTicker),
+  });
   /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
@@ -2166,6 +2176,9 @@ export default function SedePublica() {
                 alignItems: 'center',
               }}
             >
+              <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+                <HubSponsorsTicker sponsors={sedeTickerSponsors} />
+              </div>
               <button
                 type="button"
                 onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}

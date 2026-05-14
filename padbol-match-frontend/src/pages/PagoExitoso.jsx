@@ -11,7 +11,9 @@ import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 import { useSponsor } from '../hooks/useSponsor';
+import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import SponsorBannerReserva from '../components/SponsorBannerReserva';
+import HubSponsorsTicker from '../components/HubSponsorsTicker';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -44,6 +46,13 @@ export default function PagoExitoso() {
 
   const sponsorReservaEnabled =
     !saving && !saveError && pagoKind === 'reserva' && Boolean(reserva);
+
+  const sedeTickerPagoEnabled =
+    !saving && !saveError && pagoKind === 'reserva' && Boolean(reservaSedeId);
+
+  const { sponsors: sedeTickerPago } = useSedeTickerSponsors(reservaSedeId, {
+    enabled: sedeTickerPagoEnabled,
+  });
 
   const { sponsor: sponsorReserva } = useSponsor(reservaSedeId, null, {
     enabled: sponsorReservaEnabled,
@@ -423,6 +432,8 @@ export default function PagoExitoso() {
             )}
 
             <SponsorBannerReserva sponsor={sponsorReserva} />
+
+            <HubSponsorsTicker sponsors={sedeTickerPago} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
