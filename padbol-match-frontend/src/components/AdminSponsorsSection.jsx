@@ -2,6 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
+import {
+  DEFAULT_SPONSOR_CUPOS,
+  matchPlanForTotal,
+  maxPorSedeSegunNombrePlan,
+} from '../utils/sponsorQuotaShared';
 
 const PADBOL_RED = '#E11B22';
 const ERROR_TEXT = '#E11B22';
@@ -54,39 +59,6 @@ const PAIS_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].
   value: p.nombre,
   label: `${p.bandera} ${p.nombre}`,
 }));
-
-const DEFAULT_SPONSOR_CUPOS = {
-  max_global: 5,
-  max_por_sede_starter: 2,
-  max_por_sede_pro: 5,
-  max_por_sede_elite: 20,
-  max_por_nacion: 3,
-};
-
-/** Igual que en NuevaSedeSuperBottomSheet: plan por cantidad de canchas de la sede. */
-function matchPlanForTotal(planes, total) {
-  const n = Math.max(0, Math.floor(Number(total) || 0));
-  const list = [...(planes || [])].sort((a, b) => Number(a.canchas_min) - Number(b.canchas_min));
-  for (const p of list) {
-    const min = Number(p.canchas_min);
-    const maxRaw = p.canchas_max;
-    const max = maxRaw == null || maxRaw === '' ? null : Number(maxRaw);
-    if (!Number.isFinite(min) || min < 0) continue;
-    if (n < min) continue;
-    if (max != null && Number.isFinite(max) && n > max) continue;
-    return p;
-  }
-  return null;
-}
-
-function maxPorSedeSegunNombrePlan(nombrePlan, cupos) {
-  const n = String(nombrePlan || '').trim().toLowerCase();
-  if (n === 'enterprise') return cupos.max_por_sede_elite;
-  if (n === 'elite') return cupos.max_por_sede_elite;
-  if (n === 'pro') return cupos.max_por_sede_pro;
-  if (n === 'starter') return cupos.max_por_sede_starter;
-  return cupos.max_por_sede_starter;
-}
 
 function normalizeScopeVal(raw) {
   return String(raw || '').trim().toLowerCase();

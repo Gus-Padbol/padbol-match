@@ -29,6 +29,11 @@ import {
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { notifyMakeAdminInvite } from '../utils/makeAdminInviteWebhook';
+import {
+  DEFAULT_SPONSOR_CUPOS,
+  maxPorSedeSegunNombrePlan,
+  resolveSedeCommercialPlanNombre,
+} from '../utils/sponsorQuotaShared';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
   FILTROS_ESTADO_TORNEO_PILLS,
@@ -4238,6 +4243,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [fotosDestacadas, setFotosDestacadas] = useState([]);
   const [fotosDestacadasSaving, setFotosDestacadasSaving] = useState(false);
   const [fotosDestacadasMsg, setFotosDestacadasMsg] = useState('');
+  /** Cupos de sponsors con scope sede (Mi Sede, lectura). */
+  const [miSedeSponsorSlots, setMiSedeSponsorSlots] = useState({
+    loading: false,
+    used: 0,
+    max: 0,
+    planLabel: '',
+    usedConfigFallback: false,
+    error: null,
+  });
 
   useEffect(() => {
     if (loading) return;
@@ -4330,6 +4344,96 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       })
       .catch(() => setMiSedeLoading(false));
   }, [activeTab, sedeId, apiBaseUrl, session?.access_token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeTab !== 'mi_sede' || !sedeId || !miSede) {
+      setMiSedeSponsorSlots((p) => ({ ...p, loading: false }));
+      return;
+    }
+    if (!puedeVerMiSede || esEditorContenido) {
+      setMiSedeSponsorSlots((p) => ({ ...p, loading: false }));
+      return;
+    }
+
+    let cancelled = false;
+    setMiSedeSponsorSlots((p) => ({ ...p, loading: true, error: null, usedConfigFallback: false }));
+
+    (async () => {
+      try {
+        const [cfgRes, plansRes, spRes] = await Promise.all([
+          supabase
+            .from('sponsor_config')
+            .select('max_por_sede_starter, max_por_sede_pro, max_por_sede_elite')
+            .eq('id', 1)
+            .maybeSingle(),
+          supabase
+            .from('plan_pricing')
+            .select('nombre, canchas_min, canchas_max')
+            .eq('activo', true)
+            .order('canchas_min', { ascending: true }),
+          supabase
+            .from('sponsors')
+            .select('id')
+            .eq('scope', 'sede')
+            .eq('sede_id', Number(sedeId))
+            .eq('activo', true)
+            .eq('aprobado', true),
+        ]);
+        if (cancelled) return;
+
+        const usedConfigFallback = Boolean(cfgRes.error) || !cfgRes.data;
+        const base = { ...DEFAULT_SPONSOR_CUPOS };
+        if (cfgRes.data) {
+          base.max_por_sede_starter =
+            Number(cfgRes.data.max_por_sede_starter) || DEFAULT_SPONSOR_CUPOS.max_por_sede_starter;
+          base.max_por_sede_pro = Number(cfgRes.data.max_por_sede_pro) || DEFAULT_SPONSOR_CUPOS.max_por_sede_pro;
+          base.max_por_sede_elite =
+            Number(cfgRes.data.max_por_sede_elite) || DEFAULT_SPONSOR_CUPOS.max_por_sede_elite;
+        }
+
+        const plans = !plansRes.error && Array.isArray(plansRes.data) ? plansRes.data : [];
+        const planLabel = resolveSedeCommercialPlanNombre(miSede, plans);
+        const max = Math.max(0, maxPorSedeSegunNombrePlan(planLabel, base));
+        const used = Array.isArray(spRes.data) ? spRes.data.length : 0;
+
+        if (spRes.error) {
+          setMiSedeSponsorSlots({
+            loading: false,
+            used: 0,
+            max: 0,
+            planLabel: '',
+            usedConfigFallback,
+            error: spRes.error.message || String(spRes.error),
+          });
+          return;
+        }
+
+        setMiSedeSponsorSlots({
+          loading: false,
+          used,
+          max,
+          planLabel,
+          usedConfigFallback,
+          error: null,
+        });
+      } catch (e) {
+        if (!cancelled) {
+          setMiSedeSponsorSlots({
+            loading: false,
+            used: 0,
+            max: 0,
+            planLabel: '',
+            usedConfigFallback: true,
+            error: e?.message || String(e),
+          });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, sedeId, miSede, puedeVerMiSede, esEditorContenido]);
 
   useEffect(() => {
     if (!sedeId || !esAdminClub) return;
@@ -10406,6 +10510,47 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </nav>
 
           <div id="admin-mi-sede-info">
+          {puedeVerMiSede && !esEditorContenido ? (
+            <div
+              style={{
+                marginBottom: '24px',
+                padding: '14px 16px',
+                borderRadius: '12px',
+                border: '1px solid var(--border, #e2e8f0)',
+                background: 'var(--bg-card)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              }}
+            >
+              <h3 className="admin-mi-sede-block-title" style={{ margin: '0 0 10px', fontSize: '15px', color: 'var(--text-primary)' }}>
+                Mis sponsors disponibles
+              </h3>
+              {miSedeSponsorSlots.loading ? (
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>Cargando cupos de sponsors…</p>
+              ) : miSedeSponsorSlots.error ? (
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 }}>
+                  {miSedeSponsorSlots.error}
+                </p>
+              ) : (
+                <>
+                  <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                    📢 Sponsors de tu sede: {miSedeSponsorSlots.used} de {miSedeSponsorSlots.max} slots usados (
+                    {Math.max(0, miSedeSponsorSlots.max - miSedeSponsorSlots.used)} disponible
+                    {Math.max(0, miSedeSponsorSlots.max - miSedeSponsorSlots.used) === 1 ? '' : 's'})
+                  </p>
+                  <p style={{ margin: '0 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    Plan considerado: <strong>{miSedeSponsorSlots.planLabel}</strong> (límite según configuración de Padbol Match). Solo lectura:
+                    no podés cambiar el cupo desde acá.
+                  </p>
+                  {miSedeSponsorSlots.usedConfigFallback ? (
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                      Se muestran límites por defecto tipo Starter hasta que tu sede pueda leer la tabla global de cupos (si ya aplicaste la
+                      migración en Supabase, ignorá este aviso).
+                    </p>
+                  ) : null}
+                </>
+              )}
+            </div>
+          ) : null}
           {/* ── 0. Licencia PADBOL ── */}
           <div style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>🔐 Licencia PADBOL</h3>
