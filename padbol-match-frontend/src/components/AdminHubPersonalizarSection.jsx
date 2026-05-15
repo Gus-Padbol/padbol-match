@@ -335,6 +335,14 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         deporte: target.deporte,
         card_key: target.cardKey,
       });
+      // eslint-disable-next-line no-console
+      console.log('[AdminHubPersonalizar] hub-deporte-config/foto upload', {
+        deporte: target.deporte,
+        card_key: target.cardKey,
+        formDataDeporte: fd.get('deporte'),
+        formDataCardKey: fd.get('card_key'),
+        queryString: qs.toString(),
+      });
       const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config/foto?${qs}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },

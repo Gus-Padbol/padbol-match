@@ -1432,6 +1432,32 @@ app.get('/api/hub-config', async (req, res) => {
   }
 });
 
+/** GET /api/hub-config/inicio-cards — equivalente a hub_config WHERE id LIKE 'hub_inicio_card_%' (público). */
+const HUB_INICIO_CARD_IDS_API = [
+  'hub_inicio_card_1',
+  'hub_inicio_card_2',
+  'hub_inicio_card_3',
+  'hub_inicio_card_4',
+];
+app.get('/api/hub-config/inicio-cards', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('hub_config')
+      .select('*')
+      .in('id', HUB_INICIO_CARD_IDS_API)
+      .order('orden', { ascending: true });
+    if (error) throw error;
+    res.json(Array.isArray(data) ? data : []);
+  } catch (err) {
+    const msg = String(err.message || err);
+    if (/relation|does not exist|schema cache|column/i.test(msg)) {
+      return res.json([]);
+    }
+    console.error('❌ GET /api/hub-config/inicio-cards:', msg);
+    res.status(500).json({ error: msg });
+  }
+});
+
 /**
  * GET /api/registro/email-perfil-libre — JWT: el email de la sesión no debe estar en `jugadores_perfil` de otro usuario.
  * Evita duplicate key al completar perfil OAuth (paso deportes).
@@ -1684,8 +1710,22 @@ app.patch('/api/hub-deporte-config', async (req, res) => {
 app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (req, res) => {
   try {
     await assertEsEditorContenidoOSuperAdmin(req);
-    const deporteField = req.body?.deporte ?? req.query?.deporte;
-    const cardKeyField = req.body?.card_key ?? req.query?.card_key;
+    const deporteBody = req.body?.deporte;
+    const cardKeyBody = req.body?.card_key;
+    const deporteQuery = req.query?.deporte;
+    const cardKeyQuery = req.query?.card_key;
+    console.log('[hub-deporte-config/foto] multipart body', {
+      deporte: deporteBody,
+      card_key: cardKeyBody,
+      bodyKeys: req.body && typeof req.body === 'object' ? Object.keys(req.body) : [],
+    });
+    console.log('[hub-deporte-config/foto] query string', {
+      deporte: deporteQuery,
+      card_key: cardKeyQuery,
+      queryKeys: req.query && typeof req.query === 'object' ? Object.keys(req.query) : [],
+    });
+    const deporteField = deporteBody ?? deporteQuery;
+    const cardKeyField = cardKeyBody ?? cardKeyQuery;
     const chk = assertHubDeporteParams(deporteField, cardKeyField);
     if (!chk.ok) {
       console.warn('POST /api/hub-deporte-config/foto: body/query inválido o incompleto (¿orden multipart?)', {
@@ -1695,6 +1735,8 @@ app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (re
       return res.status(chk.status).json({ error: chk.error });
     }
     const { deporte, card_key } = chk;
+    /* hub_deporte_config no tiene sede_id; la fila es única por (deporte, card_key). */
+    console.log('[hub-deporte-config/foto] upsert WHERE deporte + card_key', { deporte, card_key });
     if (!req.file?.buffer) return res.status(400).json({ error: 'Archivo requerido (campo "foto")' });
 
     const safeName = String(req.file.originalname || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_');

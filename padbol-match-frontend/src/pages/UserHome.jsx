@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
@@ -23,7 +23,7 @@ import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from 
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { pickHubDeporteRow, dedupeHubDeporteConfigRows } from '../utils/hubDeporteConfig';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
-import { hasDeportesPreferidosCargados, normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
+import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 
@@ -158,10 +158,10 @@ export default function UserHome() {
   const [hubCmsRows, setHubCmsRows] = useState([]);
   const [hubDeporteStatus, setHubDeporteStatus] = useState('loading');
   const [hubDeporteRows, setHubDeporteRows] = useState([]);
+  /** Filas hub_config solo para la grilla de inicio (fetch dedicado). */
+  const [hubInicioRows, setHubInicioRows] = useState([]);
   /** Si la URL de fondo falla al cargar, se oculta y se usa el fondo gris oscuro. */
   const [hubCardImageFailed, setHubCardImageFailed] = useState({});
-  /** Una sola vez por sesión: deporte preferido del perfil si sessionStorage está vacío. */
-  const appliedPreferredHubDeporteRef = useRef(false);
   const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
     if (ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')) return true;
     if (emailEsLegacyAdminHub(session?.user?.email)) return true;
@@ -224,25 +224,28 @@ export default function UserHome() {
   }, [session?.user]);
 
   useEffect(() => {
-    if (!session?.user) {
-      appliedPreferredHubDeporteRef.current = false;
-    }
-  }, [session?.user]);
-
-  useEffect(() => {
-    if (appliedPreferredHubDeporteRef.current) return;
-    if (!session?.user || !userProfile) return;
-    if (!hasDeportesPreferidosCargados(userProfile.deportes_preferidos)) return;
-    const first = normalizeDeportesPreferidosArray(userProfile.deportes_preferidos)[0];
-    if (!first) return;
-    if (readHubDeporteFilterFromSession()) {
-      appliedPreferredHubDeporteRef.current = true;
-      return;
-    }
-    setDeporteElegido(first);
-    writeHubDeporteFilterToSession(first);
-    appliedPreferredHubDeporteRef.current = true;
-  }, [session?.user, userProfile]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${HUB_API_BASE}/api/hub-config/inicio-cards`);
+        const data = await res.json().catch(() => null);
+        // eslint-disable-next-line no-console
+        console.log('[UserHome] hub_inicio_cards fetch', {
+          ok: res.ok,
+          status: res.status,
+          raw: data,
+          rows: Array.isArray(data) ? data : [],
+        });
+        if (cancelled) return;
+        setHubInicioRows(Array.isArray(data) ? data : []);
+      } catch {
+        if (!cancelled) setHubInicioRows([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -320,25 +323,32 @@ export default function UserHome() {
     enabled: true,
   });
 
-  /** Invitados o jugadores sin deportes preferidos en el perfil: grilla inicial de 4 deportes. */
-  const showInicioSportGrid = useMemo(() => {
-    if (!session?.user) return true;
-    if (!userProfile) return true;
-    return !hasDeportesPreferidosCargados(userProfile.deportes_preferidos);
-  }, [session?.user, userProfile]);
-
-  const showBienvenidaCuatroDeportes = showInicioSportGrid && !deporteElegido;
+  /** Grilla: sin deporte ya elegido en el hub; y (sin preferidos en perfil o sin filtro en sessionStorage). */
+  const showBienvenidaCuatroDeportes = useMemo(() => {
+    const dep = String(deporteElegido || '').trim().toLowerCase();
+    const eligioDeporte = Boolean(dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep));
+    if (eligioDeporte) return false;
+    const hubFiltroSession = readHubDeporteFilterFromSession();
+    const tienePrefs =
+      Boolean(session?.user) &&
+      Boolean(userProfile) &&
+      hasDeportesPreferidosCargados(userProfile?.deportes_preferidos);
+    if (!tienePrefs) return true;
+    return !hubFiltroSession;
+  }, [session?.user, userProfile, deporteElegido]);
 
   const inicioTiles = useMemo(() => {
-    const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
+    const rows = Array.isArray(hubInicioRows) ? hubInicioRows : [];
     return HUB_INICIO_CARD_IDS.map((id, idx) => {
-      const row = rows.find((r) => String(r.id) === id);
+      const row = rows.find((r) => String(r?.id || '') === id) || null;
+      const tituloRow = String(row?.titulo ?? '').trim();
       const deporte = deporteHubInicioDesdeRow(row, idx);
-      const foto = String(row?.foto_url || '').trim() || hubCardPhotoPorDeporte(deporte, 'reservar');
-      const label = etiquetaDeporteHub(deporte) || deporte;
+      const foto =
+        String(row?.foto_url || '').trim() || hubCardPhotoPorDeporte(deporte, 'reservar');
+      const label = tituloRow || etiquetaDeporteHub(deporte) || deporte;
       return { id, deporte, foto, label };
     });
-  }, [hubCmsStatus, hubCmsRows]);
+  }, [hubInicioRows]);
 
   const bigCards = useMemo(() => {
     const q = deporteQuery(deporteElegido);
