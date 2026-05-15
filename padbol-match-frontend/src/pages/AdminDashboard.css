@@ -78,7 +78,7 @@
 
 .card h2 {
   font-size: 1.2rem;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin-bottom: 20px;
 }
 
@@ -107,9 +107,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #fef2f2;
+  background: var(--bg-card);
   border-radius: 8px;
-  border-left: 4px solid #E11B22;
+  border: 1px solid var(--border);
 }
 
 .ingreso-codigo {
@@ -122,13 +122,13 @@
 .ingreso-valor {
   font-size: 1.4rem;
   font-weight: bold;
-  color: #E11B22;
+  color: var(--text-primary);
 }
 
 .count {
   font-size: 3rem;
   font-weight: bold;
-  color: #E11B22;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -543,7 +543,7 @@ html.theme-dark .admin-dashboard--super .card {
 }
 
 .admin-dashboard--super .card h2 {
-  color: var(--text-secondary) !important;
+  color: var(--text-primary) !important;
   border-bottom-color: var(--accent) !important;
 }
 
@@ -553,22 +553,22 @@ html.theme-dark .admin-dashboard--super .card {
 
 .admin-dashboard--super .card .count,
 .admin-dashboard--super .card .amount {
-  color: #fb7185 !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-fila {
-  background: var(--pm-color-muted-bg);
-  border-left-color: var(--accent);
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila {
-  background: var(--pm-color-muted-bg);
-  border-left-color: var(--accent);
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos {
   background: var(--bg-card) !important;
-  border-left-color: var(--border) !important;
+  border: 1px solid var(--border) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos .ingreso-codigo,
@@ -608,24 +608,16 @@ html.theme-dark .admin-dashboard--super .card {
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok {
-  background: rgba(22, 163, 74, 0.22) !important;
-  border-left-color: #22c55e !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-codigo {
-  color: #166534 !important;
-}
-
-html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-codigo {
-  color: #bbf7d0 !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-valor {
-  color: #14532d !important;
-}
-
-html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--total-ok .ingreso-valor {
-  color: #dcfce7 !important;
+  color: var(--text-primary) !important;
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-codigo {
@@ -633,7 +625,7 @@ html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fil
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-valor {
-  color: #fecaca !important;
+  color: var(--text-primary) !important;
 }
 
 html.theme-light .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-valor {
@@ -900,7 +892,7 @@ html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-valor.ingreso-va
 }
 
 html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila:not(.ingreso-fila--sin-ingresos):not(.ingreso-fila--total-ok) .ingreso-valor {
-  color: #fecaca !important;
+  color: var(--text-primary) !important;
 }
 
 /* Resumen «Hoy» — etiquetas en modo claro */
@@ -930,11 +922,11 @@ html.theme-light .admin-dashboard--super .card.ingresos .ingreso-valor.ingreso-v
 }
 
 html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--total-ok .ingreso-codigo {
-  color: #166534 !important;
+  color: var(--text-primary) !important;
 }
 
 html.theme-light .admin-dashboard--super .card.ingresos .ingreso-fila--total-ok .ingreso-valor {
-  color: #15803d !important;
+  color: var(--text-primary) !important;
 }
 
 /* ─── Mi Sede: paneles a ancho completo (sin bandas rojas laterales) + tema ─── */

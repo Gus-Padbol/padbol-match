@@ -5985,12 +5985,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
               <div
                 className="ingreso-fila"
-                style={{ textAlign: 'left', borderLeftColor: '#16a34a', background: '#f0fdf4' }}
+                style={{ textAlign: 'left' }}
               >
-                <span className="ingreso-codigo" style={{ flex: 1, color: '#166534' }}>
+                <span className="ingreso-codigo" style={{ flex: 1, color: 'var(--text-primary)' }}>
                   Total
                 </span>
-                <span className="ingreso-valor" style={{ fontSize: '1.25rem', color: '#15803d' }}>
+                <span className="ingreso-valor" style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>
                   $ {cifrasFinanzasResumen.total.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
                 </span>
               </div>
@@ -6100,7 +6100,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         }
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0, color: isSuperAdmin ? '#f8fafc' : '#0f172a' }}>💰 Financiero</h2>
+          <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>💰 Financiero</h2>
           <button
             type="button"
             onClick={exportarFinanzasExcel}
@@ -6125,8 +6125,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 : { background: 'var(--bg-card)', borderRadius: '10px', padding: '10px' }
             }
           >
-            <div style={{ fontSize: '12px', color: isSuperAdmin ? '#cbd5e1' : '#64748b', fontWeight: 700 }}>Transacciones</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, color: isSuperAdmin ? '#ffffff' : '#0f172a' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>Transacciones</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
               {dashboardFinanciero.totalTransacciones}
             </div>
           </div>
@@ -6137,8 +6137,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 : { background: 'var(--bg-card)', borderRadius: '10px', padding: '10px' }
             }
           >
-            <div style={{ fontSize: '12px', color: isSuperAdmin ? '#cbd5e1' : '#64748b', fontWeight: 700 }}>Ticket promedio</div>
-            <div style={{ fontSize: '22px', fontWeight: 800, color: isSuperAdmin ? '#ffffff' : '#0f172a' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>Ticket promedio</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
               {isSuperAdmin
                 ? Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })
                 : `$ ${Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })} ${cifrasFinanzasResumen.moneda || 'ARS'}`}
