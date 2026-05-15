@@ -635,11 +635,6 @@ export default function ArmarPartido() {
     setStep(3);
   };
 
-  const retrocederPaso = () => {
-    setMsg('');
-    setStep((s) => Math.max(1, s - 1));
-  };
-
   const pagarYPublicar = async () => {
     if (!session?.user) {
       navigate('/login?redirect=/armar-partido');
@@ -1200,7 +1195,7 @@ export default function ArmarPartido() {
                 <div>
                   <strong>Precio del turno:</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
                 </div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.35 }}>
                   Cargo por servicio Padbol Match (3%): {sede?.moneda || 'ARS'}{' '}
                   {cargoPlataforma.toLocaleString('es-AR')}
                 </div>
@@ -1298,29 +1293,6 @@ export default function ArmarPartido() {
                 Ir a buscar partido
               </button>
             </>
-          ) : null}
-
-          {step < 4 ? (
-            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              <button
-                type="button"
-                onClick={retrocederPaso}
-                disabled={step === 1}
-                style={{
-                  flex: 1,
-                  border: '1px solid var(--border)',
-                  borderRadius: 12,
-                  padding: 12,
-                  background: 'var(--bg-page)',
-                  color: 'var(--text-primary)',
-                  fontWeight: 900,
-                  opacity: step === 1 ? 0.45 : 1,
-                  cursor: step === 1 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Atrás
-              </button>
-            </div>
           ) : null}
         </section>
       </main>
