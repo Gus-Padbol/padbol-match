@@ -26,3 +26,23 @@ input.acceso-cuenta-input:-webkit-autofill {
   border-color: #e11b22 !important;
   box-shadow: 0 0 0 2px rgba(225, 27, 34, 0.22);
 }
+
+/* Registro: campos torneo bajo checkbox (altura suave) */
+.acceso-cuenta-torneo-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.35s ease-out, opacity 0.28s ease-out, margin-bottom 0.28s ease-out;
+  margin-bottom: 0;
+}
+
+.acceso-cuenta-torneo-reveal--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-bottom: 14px;
+}
+
+.acceso-cuenta-torneo-reveal-inner {
+  overflow: hidden;
+  min-height: 0;
+}

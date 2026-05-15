@@ -13,6 +13,7 @@ import {
 } from '../constants/hubLayout';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { supabase } from '../supabaseClient';
 import {
   RESERVA_RETURN_STORAGE_KEY,
@@ -22,6 +23,8 @@ import {
 } from '../utils/reservaReturnUrl';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
+import { PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
+import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import {
   digitsOnly,
   formatWhatsAppE164,
@@ -116,10 +119,29 @@ function readModoDesdeSearch(search) {
   return 'login';
 }
 
+/** Lateralidad extendida (registro opt-in torneos). */
+const LATERALIDAD_TORNEO_OPCIONES = ['Diestro', 'Zurdo', 'Ambidiestro'];
+
+/** `select` / inputs del formulario de registro (tema). */
+function accesoRegFieldStyle(mb = '14px') {
+  return {
+    width: '100%',
+    padding: '14px',
+    marginBottom: mb,
+    borderRadius: '8px',
+    border: '1px solid var(--border)',
+    boxSizing: 'border-box',
+    fontSize: '16px',
+    background: 'var(--bg-card)',
+    color: 'var(--text-primary)',
+  };
+}
+
 export default function AccesoCuenta() {
   const navigate = useNavigate();
   const location = useLocation();
   const navigationType = useNavigationType();
+  const { navDock } = useHubNavLayout();
   const { refreshSession, session, loading } = useAuth();
 
   const [modo, setModo] = useState(() => readModoDesdeSearch(location.search));
@@ -140,6 +162,11 @@ export default function AccesoCuenta() {
   const [regWaLocal, setRegWaLocal] = useState('');
   const [regWaLocalConfirm, setRegWaLocalConfirm] = useState('');
   const [aceptoTerminosPrivacidad, setAceptoTerminosPrivacidad] = useState(false);
+  const [regPaisJugador, setRegPaisJugador] = useState('');
+  const [regParticiparTorneos, setRegParticiparTorneos] = useState(false);
+  const [regLateralidadTorneo, setRegLateralidadTorneo] = useState('');
+  const [regNivelTorneo, setRegNivelTorneo] = useState('');
+  const [regPaisTorneoExtra, setRegPaisTorneoExtra] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
 
   /** Volver solo tras navegación interna (push/replace), no en carga directa ni desde la landing. */
@@ -147,6 +174,28 @@ export default function AccesoCuenta() {
     if (location.state?.[LOGIN_NAV_HIDE_VOLVER]) return false;
     return navigationType === 'PUSH' || navigationType === 'REPLACE';
   }, [location.state, navigationType]);
+
+  useEffect(() => {
+    if (!regParticiparTorneos) {
+      setRegLateralidadTorneo('');
+      setRegNivelTorneo('');
+      setRegPaisTorneoExtra('');
+    }
+  }, [regParticiparTorneos]);
+
+  useEffect(() => {
+    if (String(regPaisJugador || '').trim()) {
+      setRegPaisTorneoExtra('');
+    }
+  }, [regPaisJugador]);
+
+  const categoriasTorneoRegistro = useMemo(() => categoriasNivelPorGenero(regGenero), [regGenero]);
+
+  useEffect(() => {
+    if (regNivelTorneo && !categoriasTorneoRegistro.includes(regNivelTorneo)) {
+      setRegNivelTorneo('');
+    }
+  }, [categoriasTorneoRegistro, regNivelTorneo]);
 
   const handleAccesoBack = useCallback(() => {
     navigate(-1);
@@ -335,6 +384,26 @@ export default function AccesoCuenta() {
       return;
     }
     const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
+    const paisPrincipal = String(regPaisJugador || '').trim();
+    const paisTorneoExtra = String(regPaisTorneoExtra || '').trim();
+    const paisGuardadoRegistro = paisPrincipal || paisTorneoExtra;
+
+    const signUpMeta = {
+      nombre: nom,
+      apellido: ap,
+      genero: gen,
+      notificaciones_whatsapp: regNotificacionesWhatsapp,
+      whatsapp: waE164,
+      es_jugador_torneos: regParticiparTorneos,
+    };
+    if (paisGuardadoRegistro) signUpMeta.pais = paisGuardadoRegistro;
+    if (regParticiparTorneos) {
+      const lat = String(regLateralidadTorneo || '').trim();
+      const niv = String(regNivelTorneo || '').trim();
+      if (lat) signUpMeta.lateralidad = lat;
+      if (niv) signUpMeta.nivel = niv;
+    }
+
     setBusy(true);
     try {
       const { data, error } = await handleAuthOnce({
@@ -342,13 +411,7 @@ export default function AccesoCuenta() {
         email: em,
         password,
         options: {
-          data: {
-            nombre: nom,
-            apellido: ap,
-            genero: gen,
-            notificaciones_whatsapp: regNotificacionesWhatsapp,
-            whatsapp: waE164,
-          },
+          data: signUpMeta,
         },
       });
       if (error) {
@@ -370,7 +433,7 @@ export default function AccesoCuenta() {
     }
   };
 
-  const accesoPaddingTop = hubAccesoContentPaddingTopCss(location.pathname);
+  const accesoPaddingTop = hubAccesoContentPaddingTopCss(location.pathname, navDock);
   const accesoPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
 
   return (
@@ -726,6 +789,32 @@ export default function AccesoCuenta() {
             </select>
             <label
               style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                marginBottom: '6px',
+              }}
+            >
+              País{' '}
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+            </label>
+            <select
+              className="acceso-cuenta-input"
+              value={regPaisJugador}
+              onChange={(e) => setRegPaisJugador(e.target.value)}
+              aria-label="País del jugador"
+              style={accesoRegFieldStyle('14px')}
+            >
+              <option value="">— Elegir país —</option>
+              {PAISES_TELEFONO_PRINCIPALES.map((p) => (
+                <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
+                  {p.bandera} {p.nombre}
+                </option>
+              ))}
+            </select>
+            <label
+              style={{
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: '10px',
@@ -810,6 +899,117 @@ export default function AccesoCuenta() {
                   background: 'var(--bg-card)',
                 }}
               />
+            </div>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                marginBottom: '12px',
+                cursor: busy ? 'default' : 'pointer',
+                color: 'var(--text-primary)',
+                fontSize: '14px',
+                lineHeight: 1.45,
+                fontWeight: 500,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={regParticiparTorneos}
+                onChange={(e) => setRegParticiparTorneos(e.target.checked)}
+                disabled={busy}
+                style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0, cursor: busy ? 'default' : 'pointer' }}
+              />
+              <span>¿Querés participar en torneos?</span>
+            </label>
+            <div
+              className={`acceso-cuenta-torneo-reveal${regParticiparTorneos ? ' acceso-cuenta-torneo-reveal--open' : ''}`}
+              aria-hidden={!regParticiparTorneos}
+            >
+              <div className="acceso-cuenta-torneo-reveal-inner">
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginBottom: '6px',
+                  }}
+                >
+                  Lateralidad{' '}
+                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                </label>
+                <select
+                  className="acceso-cuenta-input"
+                  value={regLateralidadTorneo}
+                  onChange={(e) => setRegLateralidadTorneo(e.target.value)}
+                  style={accesoRegFieldStyle('10px')}
+                  aria-label="Lateralidad para torneos"
+                >
+                  <option value="">— Elegir —</option>
+                  {LATERALIDAD_TORNEO_OPCIONES.map((lat) => (
+                    <option key={lat} value={lat}>
+                      {lat}
+                    </option>
+                  ))}
+                </select>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginBottom: '6px',
+                  }}
+                >
+                  Nivel / categoría{' '}
+                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                </label>
+                <select
+                  className="acceso-cuenta-input"
+                  value={regNivelTorneo}
+                  onChange={(e) => setRegNivelTorneo(e.target.value)}
+                  style={accesoRegFieldStyle('10px')}
+                  aria-label="Nivel o categoría para torneos"
+                >
+                  <option value="">— Elegir —</option>
+                  {categoriasTorneoRegistro.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                {!String(regPaisJugador || '').trim() ? (
+                  <>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        marginBottom: '6px',
+                      }}
+                    >
+                      País{' '}
+                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                    </label>
+                    <select
+                      className="acceso-cuenta-input"
+                      value={regPaisTorneoExtra}
+                      onChange={(e) => setRegPaisTorneoExtra(e.target.value)}
+                      aria-label="País para torneos"
+                      style={accesoRegFieldStyle('14px')}
+                    >
+                      <option value="">— Elegir país —</option>
+                      {PAISES_TELEFONO_PRINCIPALES.map((p) => (
+                        <option key={`torneo-${p.nombre}`} value={`${p.bandera} ${p.nombre}`}>
+                          {p.bandera} {p.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : null}
+              </div>
             </div>
             <label
               style={{

@@ -114,6 +114,12 @@ async function refreshUserProfile(session, setUserProfile) {
   const nw = meta.notificaciones_whatsapp;
   const notificacionesWhatsapp =
     nw === true || nw === 'true' || String(nw || '').toLowerCase() === 'true';
+  const ejt = meta.es_jugador_torneos;
+  const esJugadorTorneos =
+    ejt === true || ejt === 'true' || String(ejt || '').toLowerCase() === 'true';
+  const paisMeta = String(meta.pais || '').trim();
+  const lateralidadMeta = String(meta.lateralidad || '').trim();
+  const nivelMeta = String(meta.nivel || '').trim();
   const insertRow = {
     user_id: userId,
     nombre: nombreMeta || 'Jugador',
@@ -121,10 +127,14 @@ async function refreshUserProfile(session, setUserProfile) {
     alias: '',
     notificaciones_whatsapp: notificacionesWhatsapp,
     deportes_preferidos: [],
+    es_jugador_torneos: esJugadorTorneos,
   };
   if (generoMeta) insertRow.genero = generoMeta;
   const waMeta = String(meta.whatsapp || '').trim();
   if (waMeta) insertRow.whatsapp = waMeta;
+  if (paisMeta) insertRow.pais = paisMeta;
+  if (lateralidadMeta) insertRow.lateralidad = lateralidadMeta;
+  if (nivelMeta) insertRow.nivel = nivelMeta;
   if (email) {
     insertRow.email = email;
   }
