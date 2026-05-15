@@ -40,7 +40,11 @@ export function useSponsor(sedeId, torneoId, options = {}) {
         paisEff = sedeRow?.pais != null ? String(sedeRow.pais).trim() : '';
       }
 
-      const { data: rows, error: qErr } = await supabase.from('sponsors').select('*').eq('activo', true);
+      const { data: rows, error: qErr } = await supabase
+        .from('sponsors')
+        .select('*')
+        .eq('activo', true)
+        .eq('aprobado', true);
       if (qErr) throw qErr;
 
       const ymd = sponsorDateYmdLocal();

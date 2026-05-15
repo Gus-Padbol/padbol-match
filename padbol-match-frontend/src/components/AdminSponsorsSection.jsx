@@ -63,6 +63,35 @@ const DEFAULT_SPONSOR_CUPOS = {
   max_por_nacion: 3,
 };
 
+/** Igual que en NuevaSedeSuperBottomSheet: plan por cantidad de canchas de la sede. */
+function matchPlanForTotal(planes, total) {
+  const n = Math.max(0, Math.floor(Number(total) || 0));
+  const list = [...(planes || [])].sort((a, b) => Number(a.canchas_min) - Number(b.canchas_min));
+  for (const p of list) {
+    const min = Number(p.canchas_min);
+    const maxRaw = p.canchas_max;
+    const max = maxRaw == null || maxRaw === '' ? null : Number(maxRaw);
+    if (!Number.isFinite(min) || min < 0) continue;
+    if (n < min) continue;
+    if (max != null && Number.isFinite(max) && n > max) continue;
+    return p;
+  }
+  return null;
+}
+
+function maxPorSedeSegunNombrePlan(nombrePlan, cupos) {
+  const n = String(nombrePlan || '').trim().toLowerCase();
+  if (n === 'enterprise') return cupos.max_por_sede_elite;
+  if (n === 'elite') return cupos.max_por_sede_elite;
+  if (n === 'pro') return cupos.max_por_sede_pro;
+  if (n === 'starter') return cupos.max_por_sede_starter;
+  return cupos.max_por_sede_starter;
+}
+
+function normalizeScopeVal(raw) {
+  return String(raw || '').trim().toLowerCase();
+}
+
 function emptyForm() {
   return {
     id: null,
@@ -107,6 +136,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
   const [cupos, setCupos] = useState(() => ({ ...DEFAULT_SPONSOR_CUPOS }));
   const [cuposSaving, setCuposSaving] = useState(false);
   const [cuposMsg, setCuposMsg] = useState('');
+  const [planPricingRows, setPlanPricingRows] = useState([]);
 
   const formCardRef = useRef(null);
   const nombreRef = useRef(null);
@@ -125,12 +155,19 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
   };
 
   const loadRefs = useCallback(async () => {
-    const [sr, tr] = await Promise.all([
-      supabase.from('sedes').select('id, nombre').order('nombre', { ascending: true }),
+    const [sr, tr, pr] = await Promise.all([
+      supabase.from('sedes').select('id, nombre, cantidad_canchas').order('nombre', { ascending: true }),
       supabase.from('torneos').select('id, nombre, sede_id').order('id', { ascending: false }).limit(400),
+      supabase
+        .from('plan_pricing')
+        .select('nombre, canchas_min, canchas_max')
+        .eq('activo', true)
+        .order('canchas_min', { ascending: true }),
     ]);
     if (!sr.error && Array.isArray(sr.data)) setSedesOpts(sr.data);
     if (!tr.error && Array.isArray(tr.data)) setTorneosOpts(tr.data);
+    if (!pr.error && Array.isArray(pr.data)) setPlanPricingRows(pr.data);
+    else setPlanPricingRows([]);
   }, []);
 
   const loadSponsors = useCallback(async () => {
@@ -300,6 +337,39 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       fecha_desde: form.fecha_desde ? String(form.fecha_desde).slice(0, 10) : null,
       fecha_hasta: form.fecha_hasta ? String(form.fecha_hasta).slice(0, 10) : null,
     };
+
+    const isNew = form.id == null || form.id === '';
+    if (isNew && payload.activo) {
+      if (scope === 'global') {
+        const activosGlobales = rows.filter(
+          (r) => normalizeScopeVal(r.scope) === 'global' && r.activo !== false,
+        ).length;
+        const maxG = Math.max(0, parseInt(String(cupos.max_global), 10) || 0);
+        if (activosGlobales >= maxG) {
+          setMsg('Límite de sponsors alcanzado para este plan');
+          scrollToEl(formCardRef);
+          return;
+        }
+      }
+      if (scope === 'sede' && sedeId) {
+        const sedeRow = sedesOpts.find((s) => Number(s.id) === Number(sedeId));
+        const totalCanchas = Math.max(0, Math.floor(Number(sedeRow?.cantidad_canchas) || 0));
+        const canchasParaPlan = totalCanchas > 0 ? totalCanchas : 1;
+        const plan = matchPlanForTotal(planPricingRows, canchasParaPlan);
+        const maxSede = Math.max(0, maxPorSedeSegunNombrePlan(plan?.nombre, cupos));
+        const activosEnSede = rows.filter(
+          (r) =>
+            normalizeScopeVal(r.scope) === 'sede' &&
+            Number(r.sede_id) === Number(sedeId) &&
+            r.activo !== false,
+        ).length;
+        if (activosEnSede >= maxSede) {
+          setMsg('Límite de sponsors alcanzado para este plan');
+          scrollToEl(formCardRef);
+          return;
+        }
+      }
+    }
 
     setSaving(true);
     setMsg('');

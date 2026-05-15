@@ -22,7 +22,11 @@ export function useSedeTickerSponsors(sedeId, options = {}) {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('sponsors').select('*').eq('activo', true);
+      const { data, error } = await supabase
+        .from('sponsors')
+        .select('*')
+        .eq('activo', true)
+        .eq('aprobado', true);
       if (error) throw error;
       const rows = Array.isArray(data) ? data : [];
       setSponsors(hubSponsorsEligibles(rows, { sedeId: sid, pais: '' }));

@@ -25,7 +25,11 @@ export function useHubSponsors(ctx) {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: qErr } = await supabase.from('sponsors').select('*').eq('activo', true);
+      const { data, error: qErr } = await supabase
+        .from('sponsors')
+        .select('*')
+        .eq('activo', true)
+        .eq('aprobado', true);
       if (qErr) throw qErr;
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
