@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -511,6 +511,30 @@ export default function ArmarPartido() {
     setStep(2);
   };
 
+  /** Al elegir un horario en el paso 1, avanza al paso 2 sin depender del botón (fallback). */
+  const avanzarPaso2DesdeHorario = useCallback(
+    (horaInicio) => {
+      setMsg('');
+      if (!String(form.sedeId || '').trim()) {
+        setMsg('Seleccioná una sede.');
+        return;
+      }
+      if (!form.fecha) {
+        setMsg('Elegí una fecha.');
+        return;
+      }
+      const h = String(horaInicio || '').trim();
+      if (!h) return;
+      if (!form.duracion) {
+        setMsg('Elegí una duración.');
+        return;
+      }
+      setForm((f) => ({ ...f, hora: h, cancha: '' }));
+      setStep(2);
+    },
+    [form.sedeId, form.fecha, form.duracion],
+  );
+
   const irPaso3 = () => {
     setMsg('');
     const num = parseInt(String(form.cancha), 10);
@@ -636,7 +660,7 @@ export default function ArmarPartido() {
           {msg ? <div style={AP.errBanner}>{msg}</div> : null}
 
           {step === 1 ? (
-            <>
+            <div style={{ paddingTop: 22 }}>
               <h1 style={AP.title}>Fecha y hora</h1>
               <p style={AP.body}>Elegí deporte y sede, después el día y el turno.</p>
 
@@ -798,6 +822,54 @@ export default function ArmarPartido() {
 
               {sede ? (
                 <>
+                  {duracionesOfrecidas.length > 1 ? (
+                    <>
+                      <label style={{ ...AP.label, marginTop: 16 }}>Duración</label>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: 8,
+                          flexWrap: 'wrap',
+                          marginTop: 8,
+                        }}
+                      >
+                        {duracionesOfrecidas.map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, duracion: d, hora: '' }))}
+                            style={{
+                              padding: '12px 16px',
+                              borderRadius: 12,
+                              border:
+                                Number(form.duracion) === d ? `2px solid ${ACCENT}` : '1px solid var(--border)',
+                              background:
+                                Number(form.duracion) === d ? 'rgba(229, 57, 53, 0.12)' : 'var(--bg-page)',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            {d} min
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p
+                      style={{
+                        ...AP.sub,
+                        marginTop: 16,
+                        marginBottom: 0,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      Duración: {duracionesOfrecidas[0] ?? form.duracion} min
+                    </p>
+                  )}
+
                   <label style={{ ...AP.label, marginTop: 16 }}>Día</label>
                   <div
                     style={{
@@ -836,41 +908,6 @@ export default function ArmarPartido() {
                     })}
                   </div>
 
-                  {duracionesOfrecidas.length > 1 ? (
-                    <>
-                      <label style={{ ...AP.label, marginTop: 14 }}>Duración</label>
-                      <div
-                        style={{
-                          display: 'flex',
-                          gap: 8,
-                          flexWrap: 'wrap',
-                          marginTop: 8,
-                        }}
-                      >
-                        {duracionesOfrecidas.map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            onClick={() => setForm((f) => ({ ...f, duracion: d, hora: '' }))}
-                            style={{
-                              padding: '12px 16px',
-                              borderRadius: 12,
-                              border:
-                                Number(form.duracion) === d ? `2px solid ${ACCENT}` : '1px solid var(--border)',
-                              background:
-                                Number(form.duracion) === d ? 'rgba(229, 57, 53, 0.12)' : 'var(--bg-page)',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              color: 'var(--text-primary)',
-                            }}
-                          >
-                            {d} min
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-
                   <label style={{ ...AP.label, marginTop: 16 }}>Horarios disponibles</label>
                   {slotsLoading ? (
                     <p style={{ ...AP.sub, marginTop: 8 }}>Cargando horarios…</p>
@@ -894,7 +931,7 @@ export default function ArmarPartido() {
                           <button
                             key={`${h}-${s.hora_fin || ''}`}
                             type="button"
-                            onClick={() => setForm((f) => ({ ...f, hora: h, cancha: '' }))}
+                            onClick={() => avanzarPaso2DesdeHorario(h)}
                             style={{
                               padding: '12px 8px',
                               borderRadius: 12,
@@ -935,7 +972,7 @@ export default function ArmarPartido() {
                   </button>
                 </>
               ) : null}
-            </>
+            </div>
           ) : null}
 
           {step === 2 ? (
