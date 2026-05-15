@@ -8198,7 +8198,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               (sedeId != null && sedeId !== '' ? sedesMap[String(sedeId)]?.moneda : null) ||
               'ARS'
           );
-          const comisClubPm = Math.round(totalFactResClub * 0.03 * 100) / 100;
+          const comisClubPm = isSuperAdmin
+            ? Math.round(totalFactResClub * 0.03 * 100) / 100
+            : 0;
           const usarTarjetasReservasClub = vistaReservasAdminTarjetas && editandoId == null;
 
           const tarjetasClubReservas = mostrarResumenClubNacional ? (
@@ -8244,23 +8246,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   {totalFactResClub.toLocaleString('es-AR', { maximumFractionDigits: 2 })}
                 </div>
               </div>
-              <div
-                style={{
-                  background: 'var(--bg-card)',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  border: '1px solid #e5e7eb',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                  Padbol Match (3% comisión)
+              {isSuperAdmin ? (
+                <div
+                  style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '10px',
+                    padding: '14px',
+                    border: '1px solid #e5e7eb',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
+                    Padbol Match (3% comisión)
+                  </div>
+                  <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800, marginTop: '8px' }}>
+                    {monResClub}{' '}
+                    {comisClubPm.toLocaleString('es-AR', { maximumFractionDigits: 2 })}
+                  </div>
                 </div>
-                <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800, marginTop: '8px' }}>
-                  {monResClub}{' '}
-                  {comisClubPm.toLocaleString('es-AR', { maximumFractionDigits: 2 })}
-                </div>
-              </div>
+              ) : null}
             </div>
           ) : null;
 
