@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
@@ -22,6 +22,8 @@ import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../cons
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { pickHubDeporteRow, dedupeHubDeporteConfigRows } from '../utils/hubDeporteConfig';
+import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
+import { hasDeportesPreferidosCargados, normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 
@@ -158,6 +160,8 @@ export default function UserHome() {
   const [hubDeporteRows, setHubDeporteRows] = useState([]);
   /** Si la URL de fondo falla al cargar, se oculta y se usa el fondo gris oscuro. */
   const [hubCardImageFailed, setHubCardImageFailed] = useState({});
+  /** Una sola vez por sesión: deporte preferido del perfil si sessionStorage está vacío. */
+  const appliedPreferredHubDeporteRef = useRef(false);
   const [hubAdminRolEver, setHubAdminRolEver] = useState(() => {
     if (ADMIN_ROLES_CHIP.includes(readCachedRolHeader() || '')) return true;
     if (emailEsLegacyAdminHub(session?.user?.email)) return true;
@@ -218,6 +222,27 @@ export default function UserHome() {
       /* ignore */
     }
   }, [session?.user]);
+
+  useEffect(() => {
+    if (!session?.user) {
+      appliedPreferredHubDeporteRef.current = false;
+    }
+  }, [session?.user]);
+
+  useEffect(() => {
+    if (appliedPreferredHubDeporteRef.current) return;
+    if (!session?.user || !userProfile) return;
+    if (!hasDeportesPreferidosCargados(userProfile.deportes_preferidos)) return;
+    const first = normalizeDeportesPreferidosArray(userProfile.deportes_preferidos)[0];
+    if (!first) return;
+    if (readHubDeporteFilterFromSession()) {
+      appliedPreferredHubDeporteRef.current = true;
+      return;
+    }
+    setDeporteElegido(first);
+    writeHubDeporteFilterToSession(first);
+    appliedPreferredHubDeporteRef.current = true;
+  }, [session?.user, userProfile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -294,6 +319,26 @@ export default function UserHome() {
     pais: paisParaSponsors,
     enabled: true,
   });
+
+  /** Invitados o jugadores sin deportes preferidos en el perfil: grilla inicial de 4 deportes. */
+  const showInicioSportGrid = useMemo(() => {
+    if (!session?.user) return true;
+    if (!userProfile) return true;
+    return !hasDeportesPreferidosCargados(userProfile.deportes_preferidos);
+  }, [session?.user, userProfile]);
+
+  const showBienvenidaCuatroDeportes = showInicioSportGrid && !deporteElegido;
+
+  const inicioTiles = useMemo(() => {
+    const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
+    return HUB_INICIO_CARD_IDS.map((id, idx) => {
+      const row = rows.find((r) => String(r.id) === id);
+      const deporte = deporteHubInicioDesdeRow(row, idx);
+      const foto = String(row?.foto_url || '').trim() || hubCardPhotoPorDeporte(deporte, 'reservar');
+      const label = etiquetaDeporteHub(deporte) || deporte;
+      return { id, deporte, foto, label };
+    });
+  }, [hubCmsStatus, hubCmsRows]);
 
   const bigCards = useMemo(() => {
     const q = deporteQuery(deporteElegido);
@@ -606,6 +651,111 @@ export default function UserHome() {
             flexShrink: 0,
           }}
         >
+          {showBienvenidaCuatroDeportes ? (
+            <>
+              <p
+                style={{
+                  margin: '0 0 10px',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.4,
+                  flexShrink: 0,
+                }}
+              >
+                Selecciona un deporte para ver el hub completo.
+              </p>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: HUB_CARD_GAP_PX,
+                  width: '100%',
+                  marginBottom: 12,
+                  flexShrink: 0,
+                }}
+              >
+                {inicioTiles.map((t) => {
+                  const failId = `inicio|${t.id}|${t.foto || ''}`;
+                  const showPhoto = Boolean(t.foto) && !hubCardImageFailed[failId];
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className="hub-surface-card"
+                      onClick={() => {
+                        setDeporteElegido(t.deporte);
+                        writeHubDeporteFilterToSession(t.deporte);
+                      }}
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        minHeight: 140,
+                        aspectRatio: '1',
+                        textAlign: 'left',
+                        border: 'none',
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        padding: 0,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                        backgroundColor: showPhoto ? '#1a1a1a' : HUB_CARD_FALLBACK_BG,
+                      }}
+                    >
+                      {showPhoto && t.foto ? (
+                        <div
+                          className="hub-card-cover-layer"
+                          style={{ backgroundImage: `url(${t.foto})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                          aria-hidden
+                        />
+                      ) : null}
+                      {t.foto ? (
+                        <img
+                          alt=""
+                          src={t.foto}
+                          style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+                          onError={() => {
+                            setHubCardImageFailed((prev) => {
+                              if (prev[failId]) return prev;
+                              return { ...prev, [failId]: true };
+                            });
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        aria-hidden
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: HUB_CARD_OVERLAY,
+                        }}
+                      />
+                      <div
+                        className="hub-surface-card__text"
+                        style={{
+                          position: 'relative',
+                          zIndex: 1,
+                          height: '100%',
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'flex-end',
+                          alignItems: 'flex-start',
+                          boxSizing: 'border-box',
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <span className="hub-surface-card__title" style={{ fontSize: 16 }}>
+                          {t.label}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : null}
           <HubDeporteSelect
             value={deporteElegido}
             onChange={(v) => {
@@ -641,7 +791,8 @@ export default function UserHome() {
               marginBottom: 0,
             }}
           >
-            {bigCards.map((c) => {
+            {!showBienvenidaCuatroDeportes
+              ? bigCards.map((c) => {
               const failId = `${c.key}|${c.imageUrl || ''}`;
               const showPhoto = Boolean(c.imageUrl) && !hubCardImageFailed[failId];
               return (
@@ -715,7 +866,8 @@ export default function UserHome() {
                 </div>
               </button>
             );
-            })}
+            })
+              : null}
             <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
 
             {!isPwaStandalone() ? (

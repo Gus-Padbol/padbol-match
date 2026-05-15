@@ -1684,10 +1684,13 @@ app.patch('/api/hub-deporte-config', async (req, res) => {
 app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (req, res) => {
   try {
     await assertEsEditorContenidoOSuperAdmin(req);
-    const chk = assertHubDeporteParams(req.body?.deporte, req.body?.card_key);
+    const deporteField = req.body?.deporte ?? req.query?.deporte;
+    const cardKeyField = req.body?.card_key ?? req.query?.card_key;
+    const chk = assertHubDeporteParams(deporteField, cardKeyField);
     if (!chk.ok) {
-      console.warn('POST /api/hub-deporte-config/foto: body inválido o incompleto (¿orden multipart?)', {
+      console.warn('POST /api/hub-deporte-config/foto: body/query inválido o incompleto (¿orden multipart?)', {
         bodyKeys: req.body && typeof req.body === 'object' ? Object.keys(req.body) : [],
+        queryKeys: req.query && typeof req.query === 'object' ? Object.keys(req.query) : [],
       });
       return res.status(chk.status).json({ error: chk.error });
     }

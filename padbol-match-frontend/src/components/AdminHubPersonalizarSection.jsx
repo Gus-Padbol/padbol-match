@@ -1,6 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
+import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { dedupeHubDeporteConfigRows, pickHubDeporteRow } from '../utils/hubDeporteConfig';
 
 const cardWrap = {
@@ -80,6 +82,12 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   const [uploadingDeporteKey, setUploadingDeporteKey] = useState(null);
   const fileRefDeporte = useRef(null);
   const uploadDeporteTargetRef = useRef(null);
+  const [inicioDeporteById, setInicioDeporteById] = useState({});
+  const [inicioMsg, setInicioMsg] = useState('');
+  const [savingInicioId, setSavingInicioId] = useState(null);
+  const [uploadingInicioId, setUploadingInicioId] = useState(null);
+  const fileRefInicio = useRef(null);
+  const uploadInicioTargetIdRef = useRef(null);
   const sportSelRef = useRef(sportSel);
   sportSelRef.current = sportSel;
   /** Tras el primer paint, solo refrescamos filas cuando el deporte del selector cambia de verdad. */
@@ -94,10 +102,16 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       if (!res.ok) throw new Error(data?.error || 'No se pudo cargar el hub');
       const list = Array.isArray(data) ? data : [];
       setRows(list);
+      const ini = {};
+      HUB_INICIO_CARD_IDS.forEach((hubId, idx) => {
+        const row = list.find((x) => String(x.id) === hubId);
+        ini[hubId] = deporteHubInicioDesdeRow(row, idx);
+      });
+      setInicioDeporteById(ini);
       const d = {};
       for (const r of list) {
         const id = String(r.id || '').trim();
-        if (!id) continue;
+        if (!id || HUB_INICIO_CARD_IDS.includes(id)) continue;
         d[id] = {
           titulo: String(r.titulo ?? ''),
           subtitulo: String(r.subtitulo ?? ''),
@@ -108,6 +122,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       setMsg(e?.message || String(e));
       setRows([]);
       setDrafts({});
+      setInicioDeporteById({});
     } finally {
       setLoading(false);
     }
@@ -140,6 +155,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       setDeporteLoading(false);
     }
   }, [apiBaseUrl]);
+
+  const legacyHubRows = useMemo(
+    () => rows.filter((r) => !HUB_INICIO_CARD_IDS.includes(String(r.id || ''))),
+    [rows],
+  );
 
   useEffect(() => {
     void load();
@@ -311,7 +331,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       fd.append('deporte', target.deporte);
       fd.append('card_key', target.cardKey);
       fd.append('foto', file);
-      const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config/foto`, {
+      const qs = new URLSearchParams({
+        deporte: target.deporte,
+        card_key: target.cardKey,
+      });
+      const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config/foto?${qs}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
         body: fd,
@@ -337,6 +361,73 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     }
   };
 
+  const guardarInicioDeporte = async (slotId) => {
+    if (!accessToken) {
+      setInicioMsg('Iniciá sesión de nuevo.');
+      return;
+    }
+    const dep = String(inicioDeporteById[slotId] || '').trim().toLowerCase();
+    if (!dep) {
+      setInicioMsg('Elegí un deporte.');
+      return;
+    }
+    setSavingInicioId(slotId);
+    setInicioMsg('');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(slotId)}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ titulo: dep, subtitulo: '' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Error al guardar');
+      setRows((prev) => prev.map((r) => (String(r.id) === String(slotId) ? { ...r, ...data } : r)));
+      setInicioMsg('Guardado correctamente.');
+      window.setTimeout(() => setInicioMsg(''), 2500);
+    } catch (e) {
+      setInicioMsg(e?.message || String(e));
+    } finally {
+      setSavingInicioId(null);
+    }
+  };
+
+  const clickCambiarFotoInicio = (slotId) => {
+    uploadInicioTargetIdRef.current = slotId;
+    fileRefInicio.current?.click();
+  };
+
+  const onFileChangeInicio = async (e) => {
+    const id = uploadInicioTargetIdRef.current;
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    uploadInicioTargetIdRef.current = null;
+    if (!id || !file) return;
+    if (!accessToken) {
+      setInicioMsg('Iniciá sesión de nuevo para subir imágenes.');
+      return;
+    }
+    setUploadingInicioId(id);
+    setInicioMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('foto', file);
+      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(id)}/foto`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
+      setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
+      setInicioMsg('Foto actualizada.');
+      window.setTimeout(() => setInicioMsg(''), 2500);
+    } catch (err) {
+      setInicioMsg(err?.message || String(err));
+    } finally {
+      setUploadingInicioId(null);
+    }
+  };
+
   const rowDeporteActual = (cardKey) => pickHubDeporteRow(deporteRows, sportSel, cardKey);
 
   if (loading) {
@@ -357,6 +448,138 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         ) y las cards globales legacy (<code style={{ color: 'var(--accent)' }}>hub_config</code>). El jugador ve primero la
         config por deporte si existe; si no, el CMS global y las fotos por defecto.
       </p>
+
+      <h3
+        style={{
+          margin: '0 0 10px',
+          fontSize: '16px',
+          fontWeight: 800,
+          color: 'var(--text-primary)',
+        }}
+      >
+        Pantalla de inicio
+      </h3>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '12px', lineHeight: 1.45 }}>
+        Cuatro deportes en la grilla de bienvenida del hub (sin deporte preferido en el perfil). Se guardan en{' '}
+        <code style={{ color: 'var(--accent)' }}>hub_config</code> como{' '}
+        <code style={{ color: 'var(--accent)' }}>hub_inicio_card_1</code> … <code style={{ color: 'var(--accent)' }}>4</code>: el
+        campo <code style={{ color: 'var(--accent)' }}>titulo</code> es la clave del deporte y <code style={{ color: 'var(--accent)' }}>foto_url</code> la imagen (equivalente a <code style={{ color: 'var(--accent)' }}>&#123; deporte, foto_url &#125;</code>).
+      </p>
+      {inicioMsg ? (
+        <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(inicioMsg) }}>
+          {inicioMsg}
+        </p>
+      ) : null}
+      <input
+        ref={fileRefInicio}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={(ev) => void onFileChangeInicio(ev)}
+      />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '14px',
+          marginBottom: '22px',
+          maxWidth: '390px',
+        }}
+      >
+        {HUB_INICIO_CARD_IDS.map((slotId, idx) => {
+          const row = rows.find((r) => String(r.id) === slotId);
+          const depSel = inicioDeporteById[slotId] ?? deporteHubInicioDesdeRow(row, idx);
+          const previewUrl =
+            String(row?.foto_url || '').trim() || hubCardPhotoPorDeporte(depSel, 'reservar');
+          const saving = savingInicioId === slotId;
+          const uploading = uploadingInicioId === slotId;
+          return (
+            <div key={slotId} className="admin-hub-editor-card" style={cardWrap}>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>
+                Deporte {idx + 1}
+              </div>
+              <label style={{ ...labelStyle, color: 'var(--text-secondary)' }} htmlFor={`hub-inicio-deporte-${slotId}`}>
+                Deporte
+              </label>
+              <select
+                id={`hub-inicio-deporte-${slotId}`}
+                value={depSel}
+                onChange={(e) =>
+                  setInicioDeporteById((p) => ({
+                    ...p,
+                    [slotId]: e.target.value,
+                  }))
+                }
+                style={{
+                  ...inputStyle,
+                  maxWidth: '360px',
+                  marginBottom: '14px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                }}
+              >
+                {DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => (
+                  <option key={o.key} value={o.key}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
+                <div style={{ flex: '0 0 140px' }}>
+                  <span style={labelStyle}>Vista previa</span>
+                  <div
+                    style={{
+                      width: '140px',
+                      height: '88px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--border)',
+                      background: '#64748b center/cover no-repeat',
+                      backgroundImage: `url(${previewUrl})`,
+                    }}
+                  />
+                </div>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <button
+                    type="button"
+                    disabled={uploading || !accessToken}
+                    onClick={() => clickCambiarFotoInicio(slotId)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: uploading ? '#94a3b8' : '#E11B22',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: uploading || !accessToken ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {uploading ? 'Subiendo…' : 'Cambiar foto'}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={saving || !accessToken}
+                onClick={() => void guardarInicioDeporte(slotId)}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: saving ? '#94a3b8' : '#E11B22',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: saving || !accessToken ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {saving ? 'Guardando…' : 'Guardar deporte'}
+              </button>
+            </div>
+          );
+        })}
+      </div>
 
       <h3
         style={{
@@ -518,14 +741,14 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       ) : null}
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(ev) => void onFileChange(ev)} />
 
-      {!rows.length ? (
+      {!legacyHubRows.length ? (
         <p style={{ color: 'var(--text-secondary)' }}>
-          No hay filas en <code style={{ color: 'var(--accent)' }}>hub_config</code>. Crea registros en Supabase (7 cards con{' '}
+          No hay filas legacy en <code style={{ color: 'var(--accent)' }}>hub_config</code>. Crea registros en Supabase (7 cards con{' '}
           <code>id</code> texto y <code>orden</code>).
         </p>
       ) : null}
 
-      {rows.map((row) => {
+      {legacyHubRows.map((row) => {
         const id = String(row.id || '').trim();
         const draft = drafts[id] || { titulo: '', subtitulo: '' };
         const fb = fallbackCopyForHubCardId(id);
