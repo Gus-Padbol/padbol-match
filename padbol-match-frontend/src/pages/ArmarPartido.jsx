@@ -661,7 +661,7 @@ export default function ArmarPartido() {
 
           {step === 1 ? (
             <div style={{ paddingTop: 22 }}>
-              <h1 style={AP.title}>Fecha y hora</h1>
+              <h1 style={AP.title}>{sede ? 'Fecha y hora' : 'Deporte y sede'}</h1>
               <p style={AP.body}>Elegí deporte y sede, después el día y el turno.</p>
 
               <label style={{ ...AP.label, marginTop: 14 }} htmlFor="armar-deporte-select">
