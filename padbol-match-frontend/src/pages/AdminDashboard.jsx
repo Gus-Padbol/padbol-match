@@ -28,6 +28,7 @@ import {
 } from '../constants/torneoCompetencia';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
+import { notifyMakeAdminInvite } from '../utils/makeAdminInviteWebhook';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
   FILTROS_ESTADO_TORNEO_PILLS,
@@ -1995,6 +1996,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (magicLink) {
         setInviteMagicLinkModal({ email, magic_link: magicLink, contexto: 'editor_contenido' });
       }
+      void notifyMakeAdminInvite({
+        email,
+        nombre,
+        rol: 'editor_contenido',
+        sede_id: null,
+      });
       setMensajeExito(`✅ Editor de contenido asignado a ${email}`);
       setEditorContenidoEmail('');
       setEditorContenidoNombre('');
@@ -2095,6 +2102,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (magicLink) {
         setInviteMagicLinkModal({ email, magic_link: magicLink, invite_url: j.invite_url || null, contexto: 'invitacion_admin' });
       }
+      const rolInvitado = String(j.invited_role || inviteAdminTipoToRol(tipo)).trim().toLowerCase();
+      void notifyMakeAdminInvite({
+        email,
+        nombre: String(inviteClubForm.nombre_club || j.nombre_club || '').trim() || null,
+        rol: rolInvitado,
+        sede_id: j.sede_id ?? null,
+      });
       if (j.email_sent === false) {
         setMensajeExito('Invitación creada (no se pudo enviar el email; configura RESEND o reenvía desde la lista).');
       } else {
@@ -2129,6 +2143,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j?.error || res.statusText);
+        const inv = adminInvitacionesRows.find((r) => String(r?.id) === String(id));
+        if (inv?.email) {
+          void notifyMakeAdminInvite({
+            email: inv.email,
+            nombre: inv.nombre_club || null,
+            rol: String(inv.invited_role || 'admin_club').trim().toLowerCase(),
+            sede_id: inv.sede_id ?? null,
+          });
+        }
         if (j.email_sent === false) {
           alert('No se pudo enviar el email (revisa RESEND).');
         } else {
@@ -2140,7 +2163,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         alert(e?.message || 'No se pudo reenviar');
       }
     },
-    [apiBaseUrl, cargarInvitacionesAdmin, isSuperAdmin],
+    [adminInvitacionesRows, apiBaseUrl, cargarInvitacionesAdmin, isSuperAdmin],
   );
 
   const revocarRolAdmin = useCallback(async (email) => {
