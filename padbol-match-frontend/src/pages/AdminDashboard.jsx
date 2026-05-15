@@ -5266,15 +5266,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             >
               <img
                 src="/logo-padbol-match.png"
-                alt=""
+                alt="Padbol Match"
                 style={{
                   ...padbolLogoImgStyle,
                   display: 'block',
                   marginLeft: 'auto',
                   marginRight: 'auto',
-                  height: '72px',
+                  width: '120px',
+                  height: 'auto',
+                  maxWidth: '120px',
+                  objectFit: 'contain',
+                  borderRadius: '16px',
                   marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-                  marginBottom: '8px',
+                  marginBottom: '10px',
                 }}
               />
               <p className="admin-super-header__title" style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>

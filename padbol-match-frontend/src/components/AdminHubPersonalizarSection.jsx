@@ -385,7 +385,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           const saving = savingDeporteKey === dk;
           const uploading = uploadingDeporteKey === dk;
           return (
-            <div key={dk} style={cardWrap}>
+            <div key={dk} className="admin-hub-editor-card" style={cardWrap}>
               <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>{label}</div>
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
                 <div style={{ flex: '0 0 140px' }}>
@@ -500,7 +500,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         const fb = fallbackCopyForHubCardId(id);
         const previewUrl = String(row.foto_url || '').trim() || defaultHubCardImageForId(id);
         return (
-          <div key={id} style={cardWrap}>
+          <div key={id} className="admin-hub-editor-card" style={cardWrap}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.04em', marginBottom: '10px' }}>
               ID: {id}
             </div>

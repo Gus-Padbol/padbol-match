@@ -1141,6 +1141,26 @@ html.theme-dark .admin-editar-sede-dialog {
   color: var(--text-primary);
 }
 
+/* Cards del editor hub (Gero): forzar superficie tema; evita fondos claros residuales en oscuro */
+.admin-hub-personalizar-root .admin-hub-editor-card {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--pm-shadow-card, 0 2px 12px rgba(0, 0, 0, 0.12)) !important;
+}
+
+html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+.admin-hub-personalizar-root .admin-hub-editor-card input[type='text'],
+.admin-hub-personalizar-root .admin-hub-editor-card select {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+}
+
 /* Panel admin: texto y placeholders legibles en tema oscuro (incl. Safari / autofill) */
 .admin-dashboard input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='button']):not([type='submit']),
 .admin-dashboard select,
