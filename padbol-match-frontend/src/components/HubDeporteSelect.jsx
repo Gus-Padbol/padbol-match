@@ -6,8 +6,8 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
  * La persistencia en sessionStorage la maneja el padre si hace falta.
  */
 export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-select', compact = false }) {
-  const labelGap = compact ? 6 : 10;
-  const blockGap = compact ? 6 : 10;
+  const labelGap = compact ? 4 : 10;
+  const blockGap = compact ? 4 : 10;
   return (
     <label style={{ display: 'block', width: '100%', marginBottom: 0, marginTop: 0, flexShrink: 0 }} htmlFor={id}>
       <span

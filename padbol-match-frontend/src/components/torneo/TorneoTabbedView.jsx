@@ -1072,7 +1072,7 @@ export default function TorneoTabbedView({
               <div
                 key={equipo.id}
                 style={{
-                  background: '#fff',
+                  background: 'var(--bg-card)',
                   borderRadius: '14px',
                   padding: '14px 16px',
                   border: '1px solid #e2e8f0',
@@ -1201,7 +1201,7 @@ export default function TorneoTabbedView({
                               onClick={() => abrirQrJugador(p)}
                               style={{
                                 border: '1px solid #cbd5e1',
-                                background: '#fff',
+                                background: 'var(--bg-card)',
                                 borderRadius: '8px',
                                 padding: '4px 8px',
                                 fontSize: '14px',
@@ -1346,7 +1346,7 @@ export default function TorneoTabbedView({
             <div
               style={{
                 padding: '24px 16px',
-                background: '#fff',
+                background: 'var(--bg-card)',
                 borderRadius: '14px',
                 textAlign: 'center',
                 color: '#475569',
@@ -1444,7 +1444,7 @@ export default function TorneoTabbedView({
   };
 
   const renderTabFixture = () => (
-    <div className="partidos-box" style={{ marginTop: '8px', background: 'white', borderRadius: '16px', padding: '16px' }}>
+    <div className="partidos-box" style={{ marginTop: '8px', background: 'var(--bg-card)', borderRadius: '16px', padding: '16px' }}>
       {mostrarCartelIniciarTorneoParaResultados ? (
         <p
           style={{
@@ -1562,7 +1562,7 @@ export default function TorneoTabbedView({
         <div
           style={{
             padding: '24px 16px',
-            background: '#fff',
+            background: 'var(--bg-card)',
             borderRadius: '14px',
             textAlign: 'center',
             color: '#64748b',
@@ -1811,7 +1811,7 @@ export default function TorneoTabbedView({
                     onClick={() => setParticipacionPaso('menu')}
                     style={{
                       border: '1px solid #e2e8f0',
-                      background: '#f8fafc',
+                      background: 'var(--bg-card)',
                       borderRadius: '10px',
                       padding: '8px 12px',
                       fontWeight: 800,
@@ -1875,7 +1875,7 @@ export default function TorneoTabbedView({
                               border: '1px solid #e2e8f0',
                               borderRadius: '14px',
                               padding: '12px 14px',
-                              background: '#f8fafc',
+                              background: 'var(--bg-card)',
                               display: 'flex',
                               flexDirection: 'column',
                               gap: '10px',
@@ -2098,7 +2098,7 @@ export default function TorneoTabbedView({
               gap: 10,
               padding: '10px 12px',
               borderRadius: 12,
-              background: '#f8fafc',
+              background: 'var(--bg-card)',
               border: '1px solid #e2e8f0',
             }}
           >
@@ -2216,7 +2216,7 @@ export default function TorneoTabbedView({
                       border: '1px solid #e2e8f0',
                       borderRadius: '10px',
                       padding: '8px',
-                      background: '#f8fafc',
+                      background: 'var(--bg-card)',
                     }}
                   >
                     <button
@@ -2288,7 +2288,7 @@ export default function TorneoTabbedView({
                         onClick={() => abrirQrJugador(p)}
                         style={{
                           border: '1px solid #cbd5e1',
-                          background: '#fff',
+                          background: 'var(--bg-card)',
                           borderRadius: '8px',
                           padding: '4px 8px',
                           fontSize: '14px',
@@ -2402,7 +2402,7 @@ export default function TorneoTabbedView({
                 style={{
                   margin: '0 0 14px',
                   padding: '10px 12px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card)',
                   borderRadius: '10px',
                   fontSize: '13px',
                   color: '#475569',

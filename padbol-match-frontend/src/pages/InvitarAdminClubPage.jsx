@@ -146,7 +146,7 @@ export default function InvitarAdminClubPage() {
             fontWeight: 700,
             fontSize: 15,
             cursor: 'pointer',
-            background: '#fff',
+            background: 'var(--bg-card)',
             color: '#1e293b',
           }}
         >

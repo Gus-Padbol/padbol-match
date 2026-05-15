@@ -105,7 +105,7 @@ export default function Perfil() {
 
 const styles = {
   container: { maxWidth: '500px', margin: '0 auto', padding: '20px' },
-  btnVolver: { padding: '10px 20px', marginBottom: '20px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+  btnVolver: { padding: '10px 20px', marginBottom: '20px', backgroundcolor: 'var(--text-primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' },
   card: { backgroundColor: '#f5f5f5', padding: '30px', borderRadius: '8px', textAlign: 'center' },
   fotoContainer: { marginBottom: '20px' },
   foto: {

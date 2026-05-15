@@ -70,7 +70,7 @@ h3 {
 }
 
 .location-card {
-  background: white;
+  background: var(--bg-card);
   border: 2px solid #ddd;
   border-radius: 8px;
   padding: 20px;
@@ -96,7 +96,7 @@ h3 {
 
 /* DETALLES DE SEDE */
 .location-details {
-  background: white;
+  background: var(--bg-card);
   border-radius: 8px;
   padding: 20px;
 }
@@ -139,7 +139,7 @@ h3 {
 }
 
 .details-info p {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 10px;
   font-size: 14px;
   line-height: 1.6;
@@ -185,7 +185,7 @@ h3 {
   font-size: 16px;
   margin-bottom: 20px;
   color: #1a1a1a;
-  background: white;
+  background: var(--bg-card);
 }
 
 .date-input:focus {
@@ -202,7 +202,7 @@ h3 {
   border-radius: 6px;
   font-size: 14px;
   color: #1a1a1a;
-  background: white;
+  background: var(--bg-card);
 }
 
 .input-field:focus {
@@ -224,7 +224,7 @@ h3 {
 }
 
 .slot-card {
-  background: white;
+  background: var(--bg-card);
   border: 2px solid #ddd;
   border-radius: 6px;
   padding: 15px;
@@ -235,7 +235,7 @@ h3 {
 
 .slot-card:hover {
   border-color: #d32f2f;
-  background: #fff5f5;
+  background: var(--bg-card)5f5;
   transform: translateY(-2px);
 }
 
@@ -260,7 +260,7 @@ h3 {
 }
 
 .booking-summary p {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 8px;
   font-size: 14px;
 }
@@ -275,7 +275,7 @@ h3 {
 
 /* BOTONES */
 .back-btn {
-  background: white;
+  background: var(--bg-card);
   color: #1a1a1a;
   border: 2px solid #ddd;
   padding: 10px 20px;

@@ -192,7 +192,7 @@ export default function SedesPublicas() {
 
         {/* Title + search + geo status */}
         <div style={{ marginBottom: '28px' }}>
-          <h2 style={{ color: '#111827', fontWeight: 900, fontSize: 'clamp(1.3rem, 4vw, 2rem)', margin: '0 0 16px', letterSpacing: '-0.02em' }}>
+          <h2 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 'clamp(1.3rem, 4vw, 2rem)', margin: '0 0 16px', letterSpacing: '-0.02em' }}>
             {pageTitle}
           </h2>
 
@@ -222,7 +222,7 @@ export default function SedesPublicas() {
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-                background: '#f8fafc',
+                background: 'var(--bg-card)',
                 color: '#475569',
                 border: '1px solid #e2e8f0',
               }}>
@@ -258,7 +258,7 @@ export default function SedesPublicas() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nombre, ciudad o país..."
-              style={{ flex: 1, minWidth: '200px', maxWidth: '340px', padding: '9px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '13px', background: '#ffffff', color: '#111827' }}
+              style={{ flex: 1, minWidth: '200px', maxWidth: '340px', padding: '9px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
             />
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function SedesPublicas() {
                     }
                   }}
                   style={{
-                  background: 'white', borderRadius: '16px',
+                  background: 'var(--bg-card)', borderRadius: '16px',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                   overflow: 'hidden', display: 'flex', flexDirection: 'column',
                   transition: 'transform 0.15s, box-shadow 0.15s',
@@ -300,7 +300,7 @@ export default function SedesPublicas() {
                   <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', padding: '20px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
                     {sede.logo_url ? (
                       <img src={sede.logo_url} alt={`Logo ${sede.nombre}`}
-                        style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'contain', background: 'white', padding: '6px', flexShrink: 0 }} />
+                        style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'contain', background: 'var(--bg-card)', padding: '6px', flexShrink: 0 }} />
                     ) : (
                       <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>🏟️</div>
                     )}
@@ -367,8 +367,8 @@ export default function SedesPublicas() {
               padding: '10px 16px',
               borderRadius: '999px',
               border: '1px solid #e5e7eb',
-              background: '#ffffff',
-              color: '#111827',
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
               fontWeight: 700,
               cursor: 'pointer',
             }}

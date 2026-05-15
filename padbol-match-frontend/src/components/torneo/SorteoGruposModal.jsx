@@ -660,7 +660,7 @@ export default function SorteoGruposModal({
                       padding: '10px',
                       borderRadius: '12px',
                       border: '2px dashed #cbd5e1',
-                      background: '#f8fafc',
+                      background: 'var(--bg-card)',
                       fontSize: '12px',
                       color: 'var(--text-secondary)',
                     }}

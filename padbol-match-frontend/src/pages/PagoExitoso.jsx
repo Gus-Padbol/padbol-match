@@ -181,7 +181,7 @@ export default function PagoExitoso() {
       <AppHeader title="Pago" />
       <div
         style={{
-          background: 'white',
+          background: 'var(--bg-card)',
           borderRadius: '20px',
           padding: '48px 36px',
           maxWidth: '460px',

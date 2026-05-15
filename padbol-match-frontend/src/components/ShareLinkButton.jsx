@@ -114,7 +114,7 @@ export default function ShareLinkButton({
         }
       : {
           border: '1px solid #cbd5e1',
-          background: '#fff',
+          background: 'var(--bg-card)',
           color: '#334155',
         }),
     ...styleProp,

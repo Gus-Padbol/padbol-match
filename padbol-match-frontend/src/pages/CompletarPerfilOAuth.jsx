@@ -49,7 +49,7 @@ const btnSecundarioStyle = {
   padding: '12px',
   borderRadius: '10px',
   border: '1px solid #E0E0E0',
-  background: '#fff',
+  background: 'var(--bg-card)',
   color: '#6B6B6B',
   fontWeight: 700,
   fontSize: '15px',
@@ -267,7 +267,7 @@ export default function CompletarPerfilOAuth() {
         minHeight: '100dvh',
         width: '100%',
         maxWidth: '100%',
-        background: '#FFFFFF',
+        background: 'var(--bg-card)',
         paddingTop: hubContentPaddingTopCss(location.pathname),
         paddingLeft: '16px',
         paddingRight: '16px',
@@ -301,7 +301,7 @@ export default function CompletarPerfilOAuth() {
         />
         <h1
           style={{
-            color: '#111827',
+            color: 'var(--text-primary)',
             fontSize: '1.25rem',
             fontWeight: 700,
             textAlign: 'center',
@@ -318,7 +318,7 @@ export default function CompletarPerfilOAuth() {
         <form
           onSubmit={(ev) => void handleGuardar(ev)}
           style={{
-            background: '#FFFFFF',
+            background: 'var(--bg-card)',
             borderRadius: '14px',
             padding: '20px 18px',
             boxSizing: 'border-box',
@@ -401,7 +401,7 @@ export default function CompletarPerfilOAuth() {
                   boxSizing: 'border-box',
                   maxWidth: '100%',
                   display: 'block',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
               >
                 {OPCIONES_TELEFONO.map((p) => (
@@ -442,7 +442,7 @@ export default function CompletarPerfilOAuth() {
                   boxSizing: 'border-box',
                   maxWidth: '100%',
                   display: 'block',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
               />
             </div>
@@ -476,7 +476,7 @@ export default function CompletarPerfilOAuth() {
                   boxSizing: 'border-box',
                   maxWidth: '100%',
                   display: 'block',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                 }}
               />
             </div>

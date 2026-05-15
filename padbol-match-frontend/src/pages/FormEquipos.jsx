@@ -218,7 +218,7 @@ export default function FormEquipos() {
   const inscripcionPageShellStyle = useMemo(
     () => ({
       minHeight: '100vh',
-      background: '#FFFFFF',
+      background: 'var(--bg-card)',
       boxSizing: 'border-box',
       paddingTop: hubContentPaddingTopCss(location.pathname),
       paddingLeft: 12,
@@ -1439,7 +1439,7 @@ export default function FormEquipos() {
           padding: '16px',
           borderRadius: '12px',
           marginBottom: '10px',
-          background: '#ffffff',
+          background: 'var(--bg-card)',
           border: '2px solid #22c55e',
           boxShadow: '0 6px 22px rgba(22, 163, 74, 0.2)',
         }
@@ -1447,7 +1447,7 @@ export default function FormEquipos() {
           padding: '14px',
           borderRadius: '10px',
           marginBottom: '10px',
-          background: '#f8fafc',
+          background: 'var(--bg-card)',
           border: '1px solid #e2e8f0',
           boxShadow: 'none',
         };
@@ -1633,7 +1633,7 @@ export default function FormEquipos() {
               <div
                 key={`${eq.id}-req-${idx}`}
                 style={{
-                  background: '#fff',
+                  background: 'var(--bg-card)',
                   borderRadius: '8px',
                   padding: '8px',
                   marginBottom: '8px',
@@ -1701,7 +1701,7 @@ export default function FormEquipos() {
   const minJugadoresTorneoCrearUi = torneo ? jugadoresMinimosEquipoTorneo(torneo) : 2;
 
   const crearEquipoFormulario = (
-    <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+    <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
       <h3>👥 Crear equipo</h3>
 
       <div
@@ -1873,7 +1873,7 @@ export default function FormEquipos() {
         padding: '14px',
         borderRadius: '10px',
         marginBottom: '10px',
-        background: '#f8fafc',
+        background: 'var(--bg-card)',
         border: '1px solid #e2e8f0',
       }}
     >
@@ -2006,7 +2006,7 @@ export default function FormEquipos() {
                 marginBottom: '14px',
                 padding: '12px 14px',
                 borderRadius: '10px',
-                background: '#f8fafc',
+                background: 'var(--bg-card)',
                 border: '1px solid #e2e8f0',
                 fontSize: '14px',
                 color: '#64748b',
@@ -2273,7 +2273,7 @@ export default function FormEquipos() {
                       borderRadius: '12px',
                       border: '2px solid #cbd5e1',
                       cursor: inviteAccionPending ? 'default' : 'pointer',
-                      background: '#fff',
+                      background: 'var(--bg-card)',
                       color: '#475569',
                     }}
                   >
@@ -2360,7 +2360,7 @@ export default function FormEquipos() {
           marginBottom: '16px',
           padding: '14px 16px',
           borderRadius: '12px',
-          background: '#f8fafc',
+          background: 'var(--bg-card)',
           border: '1px solid #e2e8f0',
           color: '#1e293b',
           fontWeight: 700,
@@ -2406,7 +2406,7 @@ export default function FormEquipos() {
           borderRadius: '14px',
           padding: '14px 16px',
           marginBottom: '16px',
-          background: '#f8fafc',
+          background: 'var(--bg-card)',
         }}
       >
         <div
@@ -2506,7 +2506,7 @@ export default function FormEquipos() {
       >
         <div
           style={{
-            background: '#fff',
+            background: 'var(--bg-card)',
             borderRadius: '16px',
             padding: '22px 20px',
             boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
@@ -2541,7 +2541,7 @@ export default function FormEquipos() {
         </div>
         <div
           style={{
-            background: '#fff',
+            background: 'var(--bg-card)',
             borderRadius: '16px',
             padding: '22px 20px',
             boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
@@ -2620,7 +2620,7 @@ export default function FormEquipos() {
             boxSizing: 'border-box',
             fontSize: 'clamp(1.2rem, 4.2vw, 1.6rem)',
             fontWeight: 900,
-            color: '#111827',
+            color: 'var(--text-primary)',
             letterSpacing: '-0.02em',
             lineHeight: 1.2,
           }}
@@ -2688,7 +2688,7 @@ export default function FormEquipos() {
             >
               Este torneo fue cancelado
             </div>
-            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
               <h3 style={{ marginTop: 0, marginBottom: '14px', color: '#334155', fontWeight: 800 }}>
                 Equipos ({equiposVisibles.length})
               </h3>
@@ -2922,7 +2922,7 @@ export default function FormEquipos() {
           <div
             style={{
               marginBottom: '18px',
-              background: '#fff',
+              background: 'var(--bg-card)',
               padding: '16px 18px',
               borderRadius: '12px',
               border: '1px solid #e5e7eb',
@@ -2935,7 +2935,7 @@ export default function FormEquipos() {
                     style={{
                       marginBottom: '14px',
                       padding: '12px 14px',
-                      background: '#f8fafc',
+                      background: 'var(--bg-card)',
                       borderRadius: '10px',
                       border: '1px solid #e2e8f0',
                     }}
@@ -2986,7 +2986,7 @@ export default function FormEquipos() {
                     </label>
                   </div>
                 ) : null}
-                <div style={{ fontWeight: 700, marginBottom: '10px', color: '#111' }}>Agregar compañero</div>
+                <div style={{ fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>Agregar compañero</div>
                 <input
                   type="search"
                   placeholder="Buscar por nombre, apellido o alias…"
@@ -3013,7 +3013,7 @@ export default function FormEquipos() {
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       marginBottom: '10px',
-                      background: '#f8fafc',
+                      background: 'var(--bg-card)',
                     }}
                   >
                     {companeroOpciones.map((row) => {
@@ -3215,7 +3215,7 @@ export default function FormEquipos() {
                   marginBottom: '12px',
                   padding: '14px 16px 16px',
                   borderRadius: '12px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card)',
                   border: '1px solid #e2e8f0',
                   textAlign: 'center',
                 }}
@@ -3244,14 +3244,14 @@ export default function FormEquipos() {
                 </button>
               </div>
             ) : null}
-            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
               {listaEquiposContenido('+ Pedir unirme', irACrearEquipo)}
             </div>
           </div>
         )}
 
         {!isMobile && !mostrarEleccionDesktop && !miEquipo && !miSolicitudPendiente && (
-          <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+          <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
             {listaEquiposContenido('+ Pedir unirme', irACrearEquipo)}
           </div>
         )}
@@ -3267,7 +3267,7 @@ export default function FormEquipos() {
           >
             <div
               style={{
-                background: '#fff',
+                background: 'var(--bg-card)',
                 borderRadius: '16px',
                 padding: '20px 18px',
                 border: '2px solid rgba(34,197,94,0.35)',
@@ -3301,7 +3301,7 @@ export default function FormEquipos() {
             </div>
             <div
               style={{
-                background: '#fff',
+                background: 'var(--bg-card)',
                 borderRadius: '16px',
                 padding: '20px 18px',
                 border: '2px solid rgba(99,102,241,0.35)',
@@ -3370,7 +3370,7 @@ export default function FormEquipos() {
                 style={{
                   padding: '14px 16px 16px',
                   borderRadius: '12px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card)',
                   border: '1px solid #e2e8f0',
                   textAlign: 'center',
                 }}
@@ -3399,7 +3399,7 @@ export default function FormEquipos() {
                 </button>
               </div>
             ) : null}
-            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
               {listaEquiposContenido(
                 mobileListaTorneoCerrado ? '+ Pedir unirme' : 'Unirme',
                 irACrearEquipo
@@ -3476,7 +3476,7 @@ export default function FormEquipos() {
             <button type="button" onClick={() => setMobileVista('mi_equipo')} style={btnVolverEleccionStyle}>
               ← Mi equipo
             </button>
-            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
               <h3 style={{ marginTop: 0, color: '#334155', fontWeight: 800 }}>Otros equipos disponibles</h3>
               {otrosEquiposDisponiblesParaUnirse.length === 0 ? (
                 <div>
@@ -3576,7 +3576,7 @@ export default function FormEquipos() {
               aria-modal="true"
               aria-labelledby="form-salir-equipo-msg"
               style={{
-                background: '#fff',
+                background: 'var(--bg-card)',
                 borderRadius: '14px',
                 padding: '22px 20px',
                 maxWidth: '400px',
@@ -3610,7 +3610,7 @@ export default function FormEquipos() {
                     fontWeight: 700,
                     borderRadius: '10px',
                     border: '1px solid #cbd5e1',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card)',
                     color: '#334155',
                     cursor: savingSalirEquipo ? 'default' : 'pointer',
                   }}

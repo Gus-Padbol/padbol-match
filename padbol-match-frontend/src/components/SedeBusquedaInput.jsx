@@ -138,7 +138,7 @@ export default function SedeBusquedaInput(props) {
             padding: '6px 0',
             maxHeight: '220px',
             overflowY: 'auto',
-            background: '#fff',
+            background: 'var(--bg-card)',
             borderRadius: '10px',
             boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
             border: '1px solid #e2e8f0',

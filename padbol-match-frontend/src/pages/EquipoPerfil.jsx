@@ -151,7 +151,7 @@ export default function EquipoPerfil() {
       paddingLeft: 12,
       paddingRight: 12,
       boxSizing: 'border-box',
-      background: '#FFFFFF',
+      background: 'var(--bg-card)',
     }),
     [location.pathname]
   );
@@ -275,7 +275,7 @@ export default function EquipoPerfil() {
   }, [equipo, perfilPorUserId]);
 
   const cardWhite = {
-    background: '#fff',
+    background: 'var(--bg-card)',
     borderRadius: 16,
     padding: 18,
     border: '1px solid #e2e8f0',
@@ -301,7 +301,7 @@ export default function EquipoPerfil() {
                   ...cardWhite,
                   marginBottom: 0,
                   padding: '16px 14px',
-                  background: '#fff',
+                  background: 'var(--bg-card)',
                 }}
               >
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
@@ -345,7 +345,7 @@ export default function EquipoPerfil() {
                       onClick={() => setJugadorPreviewPublico(buildJugadorPreviewModalData(p, null))}
                       style={{
                         border: '1px solid #e2e8f0',
-                        background: '#fff',
+                        background: 'var(--bg-card)',
                         borderRadius: 12,
                         padding: '8px 10px',
                         display: 'flex',
@@ -409,7 +409,7 @@ export default function EquipoPerfil() {
                         style={{
                           width: '100%',
                           border: '1px solid #e2e8f0',
-                          background: '#fff',
+                          background: 'var(--bg-card)',
                           borderRadius: 10,
                           padding: '8px 12px',
                           display: 'flex',

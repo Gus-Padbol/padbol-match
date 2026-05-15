@@ -160,7 +160,7 @@ export function ThemeDarkModeSwitch({ id, disabled = false }) {
           width: 20,
           height: 20,
           borderRadius: '50%',
-          background: '#fff',
+          background: 'var(--bg-card)',
           transition: 'left 0.2s ease',
           boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
         }}

@@ -51,7 +51,7 @@ export default function ConfirmCancelReservaModal({
         style={{
           width: '100%',
           maxWidth: '400px',
-          background: '#fff',
+          background: 'var(--bg-card)',
           borderRadius: '16px',
           padding: '22px 20px',
           boxShadow: '0 20px 50px rgba(0, 0, 0, 0.25)',

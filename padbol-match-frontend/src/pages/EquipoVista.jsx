@@ -834,7 +834,7 @@ export default function EquipoVista() {
     borderRadius: '8px',
     cursor: 'pointer',
     border: '1px solid #cbd5e1',
-    background: '#fff',
+    background: 'var(--bg-card)',
     color: '#475569',
     lineHeight: 1.2,
   };
@@ -1530,7 +1530,7 @@ export default function EquipoVista() {
                   padding: '8px 12px',
                   borderRadius: 10,
                   border: '1px solid #cbd5e1',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card)',
                   fontSize: 13,
                   fontWeight: 700,
                   color: '#334155',
@@ -1859,7 +1859,7 @@ export default function EquipoVista() {
                           fontWeight: 700,
                           border: '1px solid #fecaca',
                           borderRadius: '8px',
-                          background: '#fff',
+                          background: 'var(--bg-card)',
                           color: '#b91c1c',
                           cursor: 'pointer',
                         }}
@@ -2115,7 +2115,7 @@ export default function EquipoVista() {
                           textAlign: 'left',
                           borderRadius: '12px',
                           border: '1px solid #e2e8f0',
-                          background: '#f8fafc',
+                          background: 'var(--bg-card)',
                           opacity: busy ? 0.7 : tieneEquipoTorneo ? 0.72 : 1,
                           boxSizing: 'border-box',
                         }}
@@ -2357,7 +2357,7 @@ export default function EquipoVista() {
               aria-modal="true"
               aria-labelledby="salir-equipo-titulo"
               style={{
-                background: '#fff',
+                background: 'var(--bg-card)',
                 borderRadius: '14px',
                 padding: '22px 20px',
                 maxWidth: '400px',
@@ -2385,7 +2385,7 @@ export default function EquipoVista() {
                     fontWeight: 700,
                     borderRadius: '10px',
                     border: '1px solid #cbd5e1',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card)',
                     color: '#334155',
                     cursor: savingSalirEquipo ? 'default' : 'pointer',
                   }}
@@ -2435,7 +2435,7 @@ export default function EquipoVista() {
               aria-modal="true"
               aria-labelledby="eliminar-jugador-titulo"
               style={{
-                background: '#fff',
+                background: 'var(--bg-card)',
                 borderRadius: '14px',
                 padding: '22px 20px',
                 maxWidth: '400px',
@@ -2461,7 +2461,7 @@ export default function EquipoVista() {
                     fontWeight: 700,
                     borderRadius: '10px',
                     border: '1px solid #cbd5e1',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card)',
                     color: '#334155',
                     cursor: savingEliminarJugador ? 'default' : 'pointer',
                   }}

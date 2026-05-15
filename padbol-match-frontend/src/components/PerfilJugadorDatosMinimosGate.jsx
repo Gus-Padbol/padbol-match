@@ -34,7 +34,7 @@ function GateBlockingSpinner() {
         justifyContent: 'center',
         gap: 16,
         padding: 24,
-        background: '#FFFFFF',
+        background: 'var(--bg-card)',
         color: '#64748b',
         fontWeight: 600,
         fontSize: '16px',

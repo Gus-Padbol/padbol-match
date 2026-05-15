@@ -290,7 +290,7 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
         minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        background: '#FFFFFF',
+        background: 'var(--bg-card)',
         boxSizing: 'border-box',
       }}
     >

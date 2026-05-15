@@ -260,7 +260,7 @@ export default function ModalJugador({ open, onClose, hint }) {
         aria-labelledby="modal-jugador-titulo"
         style={{
           position: 'relative',
-          background: '#fff',
+          background: 'var(--bg-card)',
           borderRadius: '16px',
           maxWidth: '400px',
           width: '100%',
@@ -363,7 +363,7 @@ export default function ModalJugador({ open, onClose, hint }) {
                   marginBottom: '14px',
                   padding: '10px 12px',
                   borderRadius: '10px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card)',
                   border: '1px solid #e2e8f0',
                   fontSize: '13px',
                   color: '#475569',

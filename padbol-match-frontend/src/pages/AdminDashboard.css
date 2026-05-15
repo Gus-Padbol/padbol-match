@@ -429,7 +429,7 @@
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #cbd5e1;
-  background: #fff;
+  background: var(--bg-card);
   color: #0f172a;
 }
 

@@ -73,7 +73,7 @@ function FormSection({ title, subtitle, children }) {
         borderRadius: '14px',
         padding: '20px 18px',
         marginBottom: '20px',
-        background: '#f8fafc',
+        background: 'var(--bg-card)',
         boxSizing: 'border-box',
       }}
     >
@@ -212,7 +212,7 @@ export default function UnirsePage() {
     border: '1px solid #cbd5e1',
     fontSize: '16px',
     boxSizing: 'border-box',
-    background: '#fff',
+    background: 'var(--bg-card)',
   };
   const labelStyle = { display: 'block', fontWeight: 700, color: '#334155', marginBottom: '6px', fontSize: '13px' };
   const rowGap = { marginTop: 14 };
@@ -221,7 +221,7 @@ export default function UnirsePage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#FFFFFF',
+        background: 'var(--bg-card)',
         paddingTop: hubContentPaddingTopCss('/unirse'),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
       }}
@@ -236,7 +236,7 @@ export default function UnirsePage() {
 
         <section
           style={{
-            background: '#fff',
+            background: 'var(--bg-card)',
             borderRadius: '16px',
             padding: '22px 20px',
             marginBottom: '16px',
@@ -314,7 +314,7 @@ export default function UnirsePage() {
         <form
           onSubmit={onSubmit}
           style={{
-            background: '#fff',
+            background: 'var(--bg-card)',
             borderRadius: '16px',
             padding: '22px 18px 24px',
             boxSizing: 'border-box',

@@ -15,7 +15,7 @@
   margin: 0 0 16px;
   padding: 18px 20px;
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--bg-card)fff;
   border: 2px solid #E11B22;
   box-shadow: 0 10px 32px rgba(79, 70, 229, 0.22);
   box-sizing: border-box;
@@ -70,7 +70,7 @@
 .torneo-modal-participacion-card {
   width: 100%;
   max-width: 420px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 18px;
   padding: 22px 20px 18px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
@@ -145,7 +145,7 @@
 }
 
 .btn-atras {
-  background: #ffffff;
+  background: var(--bg-card)fff;
   color: #E11B22;
   border: none;
   padding: 10px 20px;
@@ -163,7 +163,7 @@
 }
 
 .torneo-header {
-  background: #ffffff;
+  background: var(--bg-card)fff;
   border-radius: 16px;
   padding: 30px;
   margin-bottom: 30px;
@@ -173,7 +173,7 @@
 
 .torneo-header h1 {
   margin: 0;
-  color: #333;
+  color: var(--text-primary);
   font-size: 32px;
   margin-bottom: 10px;
 }
@@ -288,7 +288,7 @@
   -webkit-overflow-scrolling: touch;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .tabla-grupos-stats {
@@ -296,7 +296,7 @@
   min-width: 580px;
   border-collapse: collapse;
   font-size: 12px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .tabla-grupos-col-equipo {
@@ -385,7 +385,7 @@
 
 .tabla-posiciones-box,
 .partidos-box {
-  background: #ffffff;
+  background: var(--bg-card)fff;
   border-radius: 16px;
   padding: 25px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -394,7 +394,7 @@
 .tabla-posiciones-box h2,
 .partidos-box h2 {
   margin: 0 0 20px 0;
-  color: #333;
+  color: var(--text-primary);
   font-size: 20px;
   border-bottom: 3px solid #E11B22;
   padding-bottom: 12px;
@@ -414,7 +414,7 @@
 .tabla-posiciones th {
   padding: 12px 8px;
   text-align: center;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 700;
   border-bottom: 2px solid #ddd;
 }
@@ -529,7 +529,7 @@
   flex: 1;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   transition: color 0.3s;
 }
 
@@ -555,7 +555,7 @@
 }
 
 .estado.pendiente {
-  background: #fff3cd;
+  background: var(--bg-card)3cd;
   color: #856404;
 }
 
@@ -579,7 +579,7 @@
 }
 
 .modal-content {
-  background: #ffffff;
+  background: var(--bg-card)fff;
   border-radius: 16px;
   padding: 30px;
   max-width: 400px;
@@ -640,7 +640,7 @@
 
 .modal-content h3 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: var(--text-primary);
   font-size: 22px;
 }
 
@@ -672,7 +672,7 @@
 
 .input-group label {
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   font-size: 13px;
 }
 
@@ -722,7 +722,7 @@
 
 .btn-cancelar {
   background: #f0f0f0;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .btn-cancelar:hover {
@@ -731,12 +731,12 @@
 
 .loading,
 .error {
-  background: #ffffff;
+  background: var(--bg-card)fff;
   border-radius: 16px;
   padding: 40px;
   text-align: center;
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
@@ -1231,7 +1231,7 @@ button.podium-player-avatar-wrap {
   margin: 0 0 16px;
   padding: 16px 18px;
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--bg-card)fff;
   border: 2px solid #a855f7;
   box-shadow: 0 8px 28px rgba(168, 85, 247, 0.18);
   box-sizing: border-box;
@@ -1415,7 +1415,7 @@ button.podium-player-avatar-wrap {
   border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
-  background: #fff7ed;
+  background: var(--bg-card)7ed;
   color: #9a3412;
   border: 1px solid #fdba74;
 }
@@ -1633,7 +1633,7 @@ button.podium-player-avatar-wrap {
 }
 
 .torneo-bracket-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 10px 10px 10px 12px;
   border: 1px solid #e2e8f0;

@@ -8,10 +8,12 @@
   justify-content: flex-start;
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-primary);
 }
 
 .torneo-crear-card {
-  background: white;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: 40px;
@@ -21,89 +23,96 @@
 
 .torneo-crear-card h1 {
   text-align: center;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 30px;
   font-size: 28px;
 }
 
-.form-group {
+.torneo-crear-card .form-group {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
 }
 
-.form-group label {
+.torneo-crear-card .form-group label {
   font-weight: 600;
   margin-bottom: 8px;
-  color: #333;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.torneo-crear-card .form-group input,
+.torneo-crear-card .form-group select,
+.torneo-crear-card .form-group textarea {
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 5px;
   font-size: 14px;
   transition: border-color 0.3s;
   box-sizing: border-box;
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.torneo-crear-card .form-group input::placeholder,
+.torneo-crear-card .form-group textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+.torneo-crear-card .form-group input:focus,
+.torneo-crear-card .form-group select:focus,
+.torneo-crear-card .form-group textarea:focus {
   outline: none;
-  border-color: #e11b22;
+  border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(225, 27, 34, 0.2);
 }
 
-.form-group.checkbox {
+.torneo-crear-card .form-group.checkbox {
   flex-direction: row;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.form-group.checkbox input {
+.torneo-crear-card .form-group.checkbox input {
   width: 20px;
   height: 20px;
   margin-right: 10px;
 }
 
-.form-group.checkbox label {
+.torneo-crear-card .form-group.checkbox label {
   margin: 0;
   font-weight: 500;
 }
 
-.form-row {
+.torneo-crear-card .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
-.error-message {
-  background: #fee;
-  color: #c33;
+.torneo-crear-card .error-message {
+  background: rgba(225, 27, 34, 0.12);
+  color: var(--accent);
   padding: 12px;
   border-radius: 5px;
   margin-bottom: 15px;
-  border-left: 4px solid #c33;
+  border-left: 4px solid var(--accent);
 }
 
-.success-message {
-  background: #efe;
-  color: #3c3;
+.torneo-crear-card .success-message {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
   padding: 12px;
   border-radius: 5px;
   margin-bottom: 15px;
-  border-left: 4px solid #3c3;
+  border-left: 4px solid #16a34a;
 }
 
-.btn-submit {
+.torneo-crear-card .btn-submit {
   width: 100%;
   padding: 14px;
-  background: #d32f2f;
-  color: white;
+  background: var(--accent);
+  color: #fff;
   border: none;
   border-radius: 5px;
   font-size: 16px;
@@ -113,12 +122,18 @@
   margin-top: 10px;
 }
 
-.btn-submit:hover:not(:disabled) {
-  background: #b71c1c;
+.torneo-crear-card .btn-submit:hover:not(:disabled) {
+  filter: brightness(0.92);
 }
 
-.btn-submit:disabled {
-  background: #ccc;
+.torneo-crear-card .btn-submit:disabled {
+  background: var(--border);
+  color: var(--text-secondary);
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.torneo-crear-card p,
+.torneo-crear-card small {
+  color: var(--text-secondary);
 }

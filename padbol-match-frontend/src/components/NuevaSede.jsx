@@ -263,7 +263,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   };
   const labelStyle = { display: 'block', fontWeight: 700, color: '#1e293b', marginBottom: '6px', fontSize: '14px' };
   const sectionStyle = {
-    background: '#fff',
+    background: 'var(--bg-card)',
     borderRadius: '14px',
     padding: '18px 16px',
     marginBottom: '16px',
@@ -276,7 +276,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
     <div
       style={{
         minHeight: '100vh',
-        background: '#FFFFFF',
+        background: 'var(--bg-card)',
         paddingTop: hubContentPaddingTopCss('/admin/nueva-sede'),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         paddingLeft: 16,
@@ -294,8 +294,8 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
             padding: '8px 14px',
             borderRadius: '10px',
             border: '1px solid #e5e7eb',
-            background: '#ffffff',
-            color: '#111827',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
             cursor: 'pointer',
             fontWeight: 700,
           }}

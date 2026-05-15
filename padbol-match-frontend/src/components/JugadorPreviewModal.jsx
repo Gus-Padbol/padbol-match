@@ -46,7 +46,7 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
         aria-modal="true"
         aria-labelledby="jugador-preview-titulo"
         style={{
-          background: '#fff',
+          background: 'var(--bg-card)',
           borderRadius: '16px',
           maxWidth: '380px',
           width: '100%',
@@ -116,7 +116,7 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
                 padding: '12px',
                 borderRadius: '10px',
                 border: '2px solid #E11B22',
-                background: '#fff',
+                background: 'var(--bg-card)',
                 color: '#E11B22',
                 fontWeight: 800,
                 fontSize: '15px',

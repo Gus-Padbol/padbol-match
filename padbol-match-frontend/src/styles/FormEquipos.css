@@ -8,7 +8,7 @@
 .form-equipos-card {
   max-width: 1200px;
   margin: 0 auto;
-  background: white;
+  background: var(--bg-card);
   border-radius: 15px;
   padding: 30px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
@@ -34,7 +34,7 @@
 
 h1 {
   text-align: center;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 10px;
 }
 
@@ -62,7 +62,7 @@ h1 {
 
 .seccion-jugadores h2,
 .seccion-equipos h2 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 20px;
   font-size: 18px;
 }
@@ -78,7 +78,7 @@ h1 {
   display: flex;
   align-items: center;
   padding: 12px;
-  background: white;
+  background: var(--bg-card);
   border-radius: 5px;
   margin-bottom: 10px;
   border: 1px solid #ddd;
@@ -128,7 +128,7 @@ h1 {
 }
 
 .jugador-item strong {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 3px;
 }
 
@@ -154,7 +154,7 @@ h1 {
 }
 
 .equipo-item {
-  background: white;
+  background: var(--bg-card);
   padding: 15px;
   border-radius: 5px;
   margin-bottom: 15px;

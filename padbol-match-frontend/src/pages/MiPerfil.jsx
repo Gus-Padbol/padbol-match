@@ -1753,7 +1753,7 @@ export default function MiPerfil() {
                 boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
               }}
             >
-              <h3 style={{ marginTop: 0, marginBottom: '12px', color: '#222' }}>Mi perfil</h3>
+              <h3 style={{ marginTop: 0, marginBottom: '12px', color: 'var(--text-primary)' }}>Mi perfil</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
                 Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión.
               </p>
@@ -1854,7 +1854,7 @@ export default function MiPerfil() {
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
             }}
           >
-            <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#222' }}>Crear tu cuenta</h3>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', color: 'var(--text-primary)' }}>Crear tu cuenta</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '18px', lineHeight: 1.45 }}>
               Completa tus datos con un email real: se crea tu usuario en Padbol Match y se guarda tu ficha de jugador.
               {torneoIdValido ? ' Después vuelves al torneo.' : ''}
@@ -3257,7 +3257,7 @@ export default function MiPerfil() {
                   gap: '10px',
                   marginBottom: '14px',
                   padding: '8px 10px',
-                  background: '#f8fafc',
+                  background: 'var(--bg-card)',
                   borderRadius: '8px',
                   border: '1px solid var(--border)',
                 }}
@@ -4289,7 +4289,7 @@ export default function MiPerfil() {
                     onClick={() => setFotoAccionModalStep('menu')}
                     style={{
                       border: '1px solid var(--border)',
-                      background: '#f8fafc',
+                      background: 'var(--bg-card)',
                       borderRadius: '10px',
                       padding: '8px 12px',
                       fontWeight: 800,
@@ -4325,7 +4325,7 @@ export default function MiPerfil() {
                         padding: 0,
                         overflow: 'hidden',
                         cursor: guardandoFoto ? 'default' : 'pointer',
-                        background: '#f8fafc',
+                        background: 'var(--bg-card)',
                       }}
                       aria-label={`Avatar predeterminado ${idx + 1}`}
                     >
@@ -4432,7 +4432,7 @@ export default function MiPerfil() {
                     fontWeight: 700,
                     borderRadius: '10px',
                     border: '1px solid #cbd5e1',
-                    background: '#f8fafc',
+                    background: 'var(--bg-card)',
                     color: 'var(--text-primary)',
                     cursor: 'pointer',
                   }}
@@ -4536,7 +4536,7 @@ export default function MiPerfil() {
                   padding: '10px 16px',
                   borderRadius: 10,
                   border: '1px solid #cbd5e1',
-                  background: '#ffffff',
+                  background: 'var(--bg-card)',
                   color: '#0f172a',
                   fontSize: 14,
                   fontWeight: 600,

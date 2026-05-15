@@ -71,7 +71,7 @@ export default class GlobalErrorBoundary extends React.Component {
               fontWeight: 700,
               fontSize: '15px',
               cursor: 'pointer',
-              background: '#fff',
+              background: 'var(--bg-card)',
               color: '#0f172a',
             }}
           >
