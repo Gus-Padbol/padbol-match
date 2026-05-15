@@ -7,8 +7,7 @@ import HubDeporteSelect from '../components/HubDeporteSelect';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
-  hubJugarContentPaddingTopCss,
-  hubMainPaddingBottomCss,
+  hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
@@ -111,23 +110,31 @@ export default function Jugar() {
     <div
       style={{
         minHeight: '100dvh',
+        height: '100dvh',
+        maxHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
         background: 'var(--bg-page)',
-        paddingTop: hubJugarContentPaddingTopCss(location.pathname, navDock),
-        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
+        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
         boxSizing: 'border-box',
       }}
     >
       <AppHeader title="¡Vamos a jugar!" />
       <main
         style={{
+          flex: 1,
+          minHeight: 0,
           width: '100%',
           maxWidth: 460,
           margin: '0 auto',
           paddingLeft: 14,
           paddingRight: 14,
-          paddingTop: 0,
+          paddingTop: 4,
           paddingBottom: mainBottomPad,
           boxSizing: 'border-box',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         <HubDeporteSelect
