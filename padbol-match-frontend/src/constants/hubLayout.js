@@ -150,7 +150,7 @@ export const HUB_JUGAR_BELOW_NAV_GAP_PX = 8;
 /** Padding-top del shell /jugar (header + nav + aire mínimo bajo la barra). */
 export function hubJugarContentPaddingTopCss(pathname) {
   const basePx = hubContentPaddingTopPx(pathname);
-  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_JUGAR_BELOW_NAV_GAP_PX}px + env(safe-area-inset-top, 0px))`;
+  return `calc(${basePx + HUB_JUGAR_BELOW_NAV_GAP_PX}px + env(safe-area-inset-top, 0px))`;
 }
 
 /** Extra bajo el header en `/login` y `/auth` para que el logo no quede cortado al scroll (móvil ~390px). */

@@ -424,15 +424,15 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
       <div
         style={{
-          background: 'white',
+          background: 'var(--bg-card)',
           borderRadius: 12,
           padding: 18,
           marginBottom: 18,
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         }}
       >
-        <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#0f172a' }}>Configuración de cupos</h3>
-        <p style={{ margin: '0 0 14px', fontSize: 13, color: '#475569', lineHeight: 1.45 }}>
+        <h3 style={{ margin: '0 0 12px', fontSize: 16, color: 'var(--text-primary)' }}>Configuración de cupos</h3>
+        <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
           Límites de patrocinadores (fila única <code style={{ fontSize: 12 }}>sponsor_config.id = 1</code>). La aplicación
           puede usar estos valores para validar altas futuras.
         </p>
@@ -469,7 +469,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                 type="number"
                 min={0}
                 inputMode="numeric"
-                style={{ ...inputStyle, color: '#0f172a' }}
+                style={{ ...inputStyle, color: 'var(--text-primary)' }}
                 value={cupos[key]}
                 onChange={(e) => setCupos((p) => ({ ...p, [key]: e.target.value }))}
               />
@@ -503,14 +503,14 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       <div
         ref={formCardRef}
         style={{
-          background: 'white',
+          background: 'var(--bg-card)',
           borderRadius: 12,
           padding: 18,
           marginBottom: 20,
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         }}
       >
-        <h3 style={{ margin: '0 0 14px', fontSize: 16, color: '#0f172a' }}>
+        <h3 style={{ margin: '0 0 14px', fontSize: 16, color: 'var(--text-primary)' }}>
           {form.id != null && form.id !== '' ? 'Editar sponsor' : 'Nuevo sponsor'}
         </h3>
 
@@ -519,7 +519,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           <input
             style={{
               ...inputStyle,
-              color: '#0f172a',
+              color: 'var(--text-primary)',
               marginBottom: 0,
               border: inputErrBorder('nombre'),
             }}
@@ -548,7 +548,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           ) : null}
         </div>
         <input
-          style={{ ...inputStyle, color: '#0f172a', marginBottom: 12 }}
+          style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
           value={form.logo_url}
           onChange={(e) => setForm((p) => ({ ...p, logo_url: e.target.value }))}
           placeholder="URL pública del logo (o sube archivo arriba)"
@@ -556,7 +556,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
         <label style={labelStyle}>URL destino (opcional)</label>
         <input
-          style={{ ...inputStyle, color: '#0f172a', marginBottom: 12 }}
+          style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
           value={form.url_destino}
           onChange={(e) => setForm((p) => ({ ...p, url_destino: e.target.value }))}
           placeholder="https://…"
@@ -564,7 +564,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
         <label style={labelStyle}>Texto del botón</label>
         <input
-          style={{ ...inputStyle, color: '#0f172a', marginBottom: 12 }}
+          style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
           value={form.texto_boton}
           onChange={(e) => setForm((p) => ({ ...p, texto_boton: e.target.value }))}
           placeholder="Ver oferta"
@@ -574,7 +574,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
         <textarea
           style={{
             ...inputStyle,
-            color: '#0f172a',
+            color: 'var(--text-primary)',
             marginBottom: 12,
             minHeight: 72,
             resize: 'vertical',
@@ -713,7 +713,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
             <label style={labelStyle}>Fecha desde (opcional)</label>
             <input
               type="date"
-              style={{ ...inputStyle, color: '#0f172a' }}
+              style={{ ...inputStyle, color: 'var(--text-primary)' }}
               value={form.fecha_desde}
               onChange={(e) => setForm((p) => ({ ...p, fecha_desde: e.target.value }))}
             />
@@ -722,14 +722,14 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
             <label style={labelStyle}>Fecha hasta (opcional)</label>
             <input
               type="date"
-              style={{ ...inputStyle, color: '#0f172a' }}
+              style={{ ...inputStyle, color: 'var(--text-primary)' }}
               value={form.fecha_hasta}
               onChange={(e) => setForm((p) => ({ ...p, fecha_hasta: e.target.value }))}
             />
           </div>
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontWeight: 700, color: '#334155' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontWeight: 700, color: 'var(--text-secondary)' }}>
           <input
             type="checkbox"
             checked={form.activo}
@@ -777,7 +777,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                   borderRadius: 10,
                   border: '1px solid #cbd5e1',
                   background: '#e2e8f0',
-                  color: '#334155',
+                  color: 'var(--text-secondary)',
                   fontWeight: 700,
                   cursor: saving ? 'not-allowed' : 'pointer',
                 }}
@@ -795,7 +795,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
             width: '100%',
             minWidth: 880,
             borderCollapse: 'collapse',
-            background: 'white',
+            background: 'var(--bg-card)',
             borderRadius: 10,
             overflow: 'hidden',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -827,8 +827,8 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
               rows.map((r, i) => {
                 const aprobado = r.aprobado === true || r.aprobado === 'true' || r.aprobado === 1;
                 return (
-                <tr key={r.id} style={{ borderBottom: '1px solid #eee', background: i % 2 ? '#fafafa' : '#fff' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>
+                <tr key={r.id} style={{ borderBottom: '1px solid #eee', background: i % 2 ? 'var(--bg-page)' : 'var(--bg-card)' }}>
+                  <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {r.logo_url ? (
                         <img src={r.logo_url} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
@@ -836,7 +836,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                       {r.nombre}
                     </div>
                   </td>
-                  <td style={{ padding: '10px 12px', fontSize: 13, color: '#334155' }}>
+                  <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
                     {String(r.scope || '')}
                     {r.sede_id != null ? ` · sede ${r.sede_id}` : ''}
                     {r.torneo_id != null ? ` · torneo ${r.torneo_id}` : ''}

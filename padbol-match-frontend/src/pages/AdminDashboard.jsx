@@ -212,7 +212,7 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
             padding: '10px 18px',
             borderRadius: '8px',
             border: '1px solid #cbd5e1',
-            background: '#fff',
+            background: 'var(--bg-card)',
             fontWeight: 600,
             cursor: busy ? 'not-allowed' : 'pointer',
           }}
@@ -564,9 +564,9 @@ function adminFilterPillButtonStyle(active, inactiveSurface = 'default') {
   }
   return {
     ...ADMIN_FILTER_PILL_BASE,
-    background: '#fff',
+    background: 'var(--bg-card)',
     color: '#1e293b',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border)',
   };
 }
 
@@ -763,7 +763,7 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
   const label = labelNavegacionFinanzas(periodo, anclaISO);
   const btn = {
     border: '1px solid #cbd5e1',
-    background: '#fff',
+    background: 'var(--bg-card)',
     borderRadius: '8px',
     width: '36px',
     height: '34px',
@@ -879,7 +879,7 @@ function EstadoBadge({ reserva }) {
   if (reserva.estado === 'completada' || !esFutura(reserva)) {
     return <span style={{ background: '#e2e8f0', color: '#475569', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>✅ Completada</span>;
   }
-  return <span style={{ background: '#fef2f2', color: '#3b2f6e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>🟢 Confirmada</span>;
+  return <span style={{ background: '#fef2f2', color: 'var(--text-primary)', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>🟢 Confirmada</span>;
 }
 
 /** Pills filtro listado reservas (pestaña Reservas). */
@@ -3062,7 +3062,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         padding: '10px 12px',
                         background: '#f8fafc',
                         borderRadius: '10px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--border)',
                       }}
                     >
                       <strong>{row.nombre}</strong>
@@ -5172,20 +5172,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       <div className="admin-dashboard-brand-shell">
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
-          <img
-            src={logoPanelSrc}
-            alt=""
-            style={{
-              ...padbolLogoImgStyle,
-              display: 'block',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              height: '110px',
-              marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-              marginBottom: '8px',
-              borderRadius: sedeClubHeader?.logo_url ? 12 : padbolLogoImgStyle.borderRadius,
-            }}
-          />
+          <div className="admin-super-header__logo-wrap">
+            <img className="admin-super-header__logo" src={logoPanelSrc} alt="" />
+          </div>
           <p
             className="admin-super-header__title"
             style={{
@@ -5662,17 +5651,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <div className="card reservas">
                 <h2>Total sedes</h2>
                 <p className="count">{sedesNacionalLista.length}</p>
-                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Clubes dentro de tu alcance</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>Clubes dentro de tu alcance</p>
               </div>
               <div className="card torneos">
                 <h2>Total jugadores</h2>
                 <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
-                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Fichas en tu alcance</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>Fichas en tu alcance</p>
               </div>
               <div className="card torneos">
                 <h2>Torneos activos</h2>
                 <p className="count">{torneosActivosNacionalCount}</p>
-                <p style={{ color: '#888', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
               </div>
             </div>
             {resumenOperativoSecciones}
@@ -5702,14 +5691,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.jugadores_registrados_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Perfiles en la plataforma</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Perfiles en la plataforma</p>
                   </div>
                   <div className="card torneos" style={{ padding: '22px 18px' }}>
                     <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Jugadores nuevos (este mes)</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.jugadores_nuevos_este_mes) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>
                       Mes calendario UTC · {new Date().toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
                     </p>
                   </div>
@@ -5718,28 +5707,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.sedes_activas_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Licencia activa con número asignado</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Licencia activa con número asignado</p>
                   </div>
                   <div className="card torneos" style={{ padding: '22px 18px' }}>
                     <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Torneos finalizados</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.torneos_finalizados_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Estado finalizado (histórico)</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Estado finalizado (histórico)</p>
                   </div>
                   <div className="card reservas" style={{ padding: '22px 18px' }}>
                     <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Reservas (últimos 30 días)</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.reservas_ultimo_mes_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>Por fecha de creación del registro</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Por fecha de creación del registro</p>
                   </div>
                   <div className="card ingresos" style={{ padding: '22px 18px' }}>
                     <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Deporte más popular</h2>
                     <p className="count" style={{ fontSize: '1.65rem', lineHeight: 1.25, wordBreak: 'break-word' }}>
                       {String(analyticsGlobales.deporte_mas_popular?.label || '—')}
                     </p>
-                    <p style={{ color: '#888', marginTop: '6px', fontSize: '0.82rem' }}>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>
                       {(Number(analyticsGlobales.deporte_mas_popular?.torneos_creados) || 0).toLocaleString('es-AR')}{' '}
                       torneos (por deporte al crear)
                     </p>
@@ -5792,7 +5781,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             className="section"
             style={{
               marginBottom: '18px',
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: '14px',
               padding: '16px 18px',
               boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
@@ -5818,7 +5807,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       padding: '12px 14px',
                       borderRadius: '12px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       background: '#f8fafc',
                     }}
                   >
@@ -5893,10 +5882,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   width: '100%',
                   padding: '8px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   fontSize: '14px',
                   color: '#334155',
-                  background: '#fff',
+                  background: 'var(--bg-card)',
                   boxSizing: 'border-box',
                 }}
               />
@@ -5909,10 +5898,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   width: '100%',
                   padding: '8px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   fontSize: '14px',
                   color: '#334155',
-                  background: '#fff',
+                  background: 'var(--bg-card)',
                   boxSizing: 'border-box',
                 }}
               />
@@ -6055,7 +6044,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               }
             : {
                 marginTop: '16px',
-                background: '#fff',
+                background: 'var(--bg-card)',
                 borderRadius: '14px',
                 padding: '16px',
                 boxShadow: '0 10px 26px rgba(15,23,42,0.12)',
@@ -6210,9 +6199,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           ) : null}
         </div>
         {torneos.length === 0 ? (
-          <p style={{ color: '#999' }}>Sin torneos</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Sin torneos</p>
         ) : torneosFiltradosAdminEstado.length === 0 ? (
-          <p style={{ color: '#999' }}>No hay torneos con este estado.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>No hay torneos con este estado.</p>
         ) : (
           <div style={{ display: 'grid', gap: '10px' }}>
             {torneosFiltradosAdminEstado.map(torneo => {
@@ -6264,7 +6253,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   key={torneo.id}
                   className={isSuperAdmin ? 'admin-torneo-list-card' : undefined}
                   style={{
-                  background: 'white',
+                  background: 'var(--bg-card)',
                   border: isEditingThis ? '2px solid #E11B22' : '1px solid #e5e7eb',
                   borderRadius: '8px',
                   padding: '12px 16px',
@@ -6544,7 +6533,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <button
                           onClick={() => setEditandoTorneoId(null)}
-                          style={{ padding: '6px 14px', background: 'transparent', color: '#666', border: '1px solid #d1d5db', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                          style={{ padding: '6px 14px', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid #d1d5db', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
                         >
                           Cancelar
                         </button>
@@ -6565,7 +6554,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           {flag && <span style={{ fontSize: '18px', flexShrink: 0 }}>{flag}</span>}
                           <strong style={{ fontSize: '14px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{torneo.nombre}</strong>
                         </div>
-                        {sede ? <div style={{ fontSize: '11px', color: '#aaa', marginTop: '3px' }}>{sede.nombre}</div> : null}
+                        {sede ? <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '3px' }}>{sede.nombre}</div> : null}
                         {ubicacionSede ? (
                           <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
                             {flag ? `${flag} ${ubicacionSede}` : ubicacionSede}
@@ -6710,7 +6699,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <div className="section">
           <h2>{isSuperAdmin ? 'Sedes registradas' : 'Sedes en tu país'}</h2>
           {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).length === 0 ? (
-            <p style={{ color: '#999' }}>
+            <p style={{ color: 'var(--text-secondary)' }}>
               {isSuperAdmin
                 ? 'No hay sedes creadas todavía.'
                 : 'No hay sedes que coincidan con tu alcance nacional.'}
@@ -6780,7 +6769,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '14px',
-                    margin: '6px 0 8px',
+                    margin: '0 0 8px',
                     fontSize: '14px',
                     fontWeight: 600,
                     color: '#334155',
@@ -6970,7 +6959,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       maxHeight: 'min(90dvh, 880px)',
                       overflowY: 'auto',
                       WebkitOverflowScrolling: 'touch',
-                      background: '#fff',
+                      background: 'var(--bg-card)',
                       borderRadius: '16px',
                       padding: '20px',
                       boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
@@ -7032,9 +7021,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <div className="section">
           <h2>Jugadores federados en tu país</h2>
           {nacionalJugadoresLoading ? (
-            <p style={{ color: '#999' }}>Cargando…</p>
+            <p style={{ color: 'var(--text-secondary)' }}>Cargando…</p>
           ) : jugadoresFederadosPais.length === 0 ? (
-            <p style={{ color: '#999' }}>No hay jugadores marcados como federados en tu país.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>No hay jugadores marcados como federados en tu país.</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table className="reservas-table">
@@ -7082,9 +7071,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {activeTab === 'validaciones' && <div className="section">
         <h2>⏳ Jugadores Pendientes de Validación</h2>
         {pendientesLoading ? (
-          <p style={{ color: '#999' }}>Cargando...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Cargando...</p>
         ) : pendientes.length === 0 ? (
-          <p style={{ color: '#999' }}>No hay jugadores pendientes de validación.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>No hay jugadores pendientes de validación.</p>
         ) : (
           <>
             <div style={{ marginBottom: '14px', maxWidth: '420px' }}>
@@ -7103,14 +7092,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   maxWidth: '400px',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   fontSize: '15px',
                   boxSizing: 'border-box',
                 }}
               />
             </div>
             {pendientesFiltradosValidaciones.length === 0 ? (
-              <p style={{ color: '#999' }}>Ningún jugador coincide con la búsqueda.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>Ningún jugador coincide con la búsqueda.</p>
             ) : (
               <div style={{ display: 'grid', gap: '12px' }}>
             {pendientesFiltradosValidaciones.map(jugador => {
@@ -7122,12 +7111,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 .trim();
               const perfilPathVal = pathJugadorPerfilPublico(jugador);
               return (
-                <div key={jugador.email} style={{ background: 'white', border: '1px solid #ffe082', borderRadius: '8px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
+                <div key={jugador.email} className="admin-validacion-pendiente-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: '180px' }}>
-                    <strong style={{ fontSize: '15px' }}>{nombreMostrar || jugador.nombre || '—'}</strong>
-                    <div style={{ color: '#888', fontSize: '12px', marginTop: '2px' }}>{jugador.email}</div>
-                    <div style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>
+                    <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{nombreMostrar || jugador.nombre || '—'}</strong>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '2px' }}>{jugador.email}</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '2px' }}>
                       Género: {String(jugador.genero || '').trim() || '—'}
                     </div>
                     <div style={{ marginTop: '5px', display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -7179,7 +7168,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <select
                           value={vs.categoria || jugador.nivel}
                           onChange={e => setValidacionState(prev => ({ ...prev, [jugador.email]: { ...prev[jugador.email], categoria: e.target.value } }))}
-                          style={{ padding: '7px 10px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '13px' }}
+                          style={{ padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px' }}
                         >
                           {categoriasNivelPorGenero(jugador.genero).map((c) => (
                             <option key={c} value={c}>{c}</option>
@@ -7276,7 +7265,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             borderRadius: '8px',
             fontSize: '14px',
             boxSizing: 'border-box',
-            background: '#fff',
+            background: 'var(--bg-card)',
           };
           const manualActionButton = (extra) => ({
             padding: '9px 14px',
@@ -7293,7 +7282,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <div
               style={{
                 background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
                 padding: '14px',
                 marginBottom: '16px',
@@ -7620,10 +7609,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         width: '100%',
                         padding: '8px',
                         borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--border)',
                         fontSize: '16px',
                         color: '#334155',
-                        background: '#fff',
+                        background: 'var(--bg-card)',
                         boxSizing: 'border-box',
                       }}
                     />
@@ -7636,10 +7625,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         width: '100%',
                         padding: '8px',
                         borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--border)',
                         fontSize: '16px',
                         color: '#334155',
-                        background: '#fff',
+                        background: 'var(--bg-card)',
                         boxSizing: 'border-box',
                       }}
                     />
@@ -7699,7 +7688,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       padding: '10px 16px',
                       borderRadius: '10px',
                       border: '1px solid #cbd5e1',
-                      background: '#fff',
+                      background: 'var(--bg-card)',
                       fontWeight: 700,
                       cursor: 'pointer',
                       color: '#334155',
@@ -7726,10 +7715,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         style={{
                           padding: '10px',
                           borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid var(--border)',
                           fontSize: '15px',
                           color: '#334155',
-                          background: '#fff',
+                          background: 'var(--bg-card)',
                         }}
                       >
                         <option value="">Todos los países</option>
@@ -7750,10 +7739,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         style={{
                           padding: '10px',
                           borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid var(--border)',
                           fontSize: '15px',
                           color: '#334155',
-                          background: '#fff',
+                          background: 'var(--bg-card)',
                         }}
                       />
                     </label>
@@ -7767,10 +7756,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         style={{
                           padding: '10px',
                           borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid var(--border)',
                           fontSize: '15px',
                           color: '#334155',
-                          background: '#fff',
+                          background: 'var(--bg-card)',
                         }}
                       />
                     </label>
@@ -7781,7 +7770,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   ) : (
                     <div
                       style={{
-                        background: 'white',
+                        background: 'var(--bg-card)',
                         borderRadius: '10px',
                         border: '1px solid #e5e7eb',
                         overflow: 'auto',
@@ -7863,7 +7852,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       style={{
                         background: '#f8fafc',
                         borderRadius: '10px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--border)',
                         padding: '12px',
                       }}
                     >
@@ -7881,8 +7870,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               alignItems: 'start',
                               fontSize: '12px',
                               color: '#334155',
-                              background: '#fff',
-                              border: '1px solid #e2e8f0',
+                              background: 'var(--bg-card)',
+                              border: '1px solid var(--border)',
                               borderRadius: '6px',
                               padding: '6px 8px',
                             }}
@@ -7920,10 +7909,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{
                       padding: '10px',
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       fontSize: '15px',
                       color: '#334155',
-                      background: '#fff',
+                      background: 'var(--bg-card)',
                       maxWidth: '400px',
                     }}
                   >
@@ -7946,7 +7935,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 >
                   <div
                     style={{
-                      background: 'white',
+                      background: 'var(--bg-card)',
                       borderRadius: '10px',
                       padding: '14px',
                       border: '1px solid #e5e7eb',
@@ -7970,7 +7959,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                   <div
                     style={{
-                      background: 'white',
+                      background: 'var(--bg-card)',
                       borderRadius: '10px',
                       padding: '14px',
                       border: '1px solid #e5e7eb',
@@ -7996,7 +7985,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                   <div
                     style={{
-                      background: 'white',
+                      background: 'var(--bg-card)',
                       borderRadius: '10px',
                       padding: '14px',
                       border: '1px solid #e5e7eb',
@@ -8121,10 +8110,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       width: '100%',
                       padding: '8px',
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       fontSize: '16px',
                       color: '#334155',
-                      background: '#fff',
+                      background: 'var(--bg-card)',
                       boxSizing: 'border-box',
                     }}
                   />
@@ -8137,10 +8126,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       width: '100%',
                       padding: '8px',
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       fontSize: '16px',
                       color: '#334155',
-                      background: '#fff',
+                      background: 'var(--bg-card)',
                       boxSizing: 'border-box',
                     }}
                   />
@@ -8176,7 +8165,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             >
               <div
                 style={{
-                  background: 'white',
+                  background: 'var(--bg-card)',
                   borderRadius: '10px',
                   padding: '14px',
                   border: '1px solid #e5e7eb',
@@ -8192,7 +8181,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
               <div
                 style={{
-                  background: 'white',
+                  background: 'var(--bg-card)',
                   borderRadius: '10px',
                   padding: '14px',
                   border: '1px solid #e5e7eb',
@@ -8209,7 +8198,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
               <div
                 style={{
-                  background: 'white',
+                  background: 'var(--bg-card)',
                   borderRadius: '10px',
                   padding: '14px',
                   border: '1px solid #e5e7eb',
@@ -8233,7 +8222,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 {mostrarResumenClubNacional ? periodoNavClubReservas : null}
                 {tarjetasClubReservas}
                 {reservaManualPanel}
-                <p style={{ color: '#aaa', padding: '10px 0' }}>Sin reservas en este período</p>
+                <p style={{ color: 'var(--text-secondary)', padding: '10px 0' }}>Sin reservas en este período</p>
               </>
             );
           }
@@ -8266,10 +8255,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <div
                       key={r.id}
                       style={{
-                        background: '#fff',
+                        background: 'var(--bg-card)',
                         borderRadius: '12px',
                         padding: '12px 14px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--border)',
                         boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
                         minWidth: 0,
                         boxSizing: 'border-box',
@@ -8410,7 +8399,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               <select
                                 value={editFormData.estado || 'reservada'}
                                 onChange={(e) => setEditFormData({ ...editFormData, estado: e.target.value })}
-                                style={{ padding: '4px 6px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', width: '100%' }}
+                                style={{ padding: '4px 6px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', width: '100%' }}
                               >
                                 <option value="reservada">📋 Reservada</option>
                                 <option value="pendiente_pago_manual">🟡 Pendiente pago manual</option>
@@ -8542,18 +8531,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <h3 style={{ color: 'var(--text-primary)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
             Puntos base por nivel de torneo
           </h3>
-          <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+          <div className="admin-config-puntos-wrap">
+          <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#E11B22', color: 'white' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Nivel</th>
-                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '130px' }}>Pts totales torneo</th>
-                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '90px' }}></th>
+              <tr style={{ background: 'var(--accent)', color: '#fff' }}>
+                <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600, color: '#fff' }}>Nivel</th>
+                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '130px', color: '#fff' }}>Pts totales torneo</th>
+                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '90px', color: '#fff' }}></th>
               </tr>
             </thead>
             <tbody>
               {/* Standard rows — editable names and deletable */}
               {STANDARD_KEYS.filter(key => !configNivelesHidden.has(key)).map((key, i) => (
-                <tr key={key} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : 'white' }}>
+                <tr key={key} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg-page)' : 'var(--bg-card)' }}>
                   {editandoTipoId === key ? (
                     <>
                       <td style={{ padding: '7px 12px' }}>
@@ -8582,8 +8572,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
                         <input type="number" min="0" value={configNiveles[key] ?? 0}
                           onChange={e => setConfigNiveles(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
-                          style={{ width: '80px', padding: '5px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', textAlign: 'center', fontWeight: 'bold', color: '#3b2f6e' }} />
-                        <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>pts totales</div>
+                          style={{ width: '80px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', textAlign: 'center', fontWeight: 'bold', color: 'var(--text-primary)' }} />
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>pts totales</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
@@ -8605,7 +8595,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </tr>
               )}
               {configTiposCustom.map((tipo, i) => (
-                <tr key={tipo.id} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fdf8ff' : 'white' }}>
+                <tr key={tipo.id} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg-page)' : 'var(--bg-card)' }}>
                   {editandoTipoId === tipo.id ? (
                     <>
                       <td style={{ padding: '7px 12px' }}>
@@ -8629,8 +8619,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <>
                       <td className="admin-config-puntos-nivel" style={{ padding: '10px 16px', fontSize: '14px' }}>{tipo.nombre || tipo.id}</td>
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#3b2f6e' }}>{tipo.puntos}</div>
-                        <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>pts totales</div>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{tipo.puntos}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>pts totales</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
@@ -8649,12 +8639,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <input type="text" placeholder="Ej: FIPA Qualifier" value={nuevoTipo.nombre}
                     onChange={e => setNuevoTipo(p => ({ ...p, nombre: e.target.value }))}
                     onKeyDown={e => { if (e.key === 'Enter' && nuevoTipo.nombre.trim()) { setConfigTiposCustom(prev => [...prev, { id: Date.now().toString(), nombre: nuevoTipo.nombre.trim(), puntos: nuevoTipo.puntos || 0 }]); setNuevoTipo({ nombre: '', puntos: 0 }); } }}
-                    style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #c4b5fd', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', background: 'white', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', background: 'var(--bg-input)', boxSizing: 'border-box' }} />
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <input type="number" placeholder="Pts" min="0" value={nuevoTipo.puntos || ''}
                     onChange={e => setNuevoTipo(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
-                    style={{ width: '72px', padding: '6px 8px', border: '1.5px solid #c4b5fd', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', textAlign: 'center', background: 'white' }} />
+                    style={{ width: '72px', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', textAlign: 'center', background: 'var(--bg-input)' }} />
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <button
@@ -8666,6 +8656,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Distribución por posición */}
@@ -8688,18 +8679,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   Previsualizar con:
                 </label>
                 <select value={previewNivel} onChange={e => setPreviewNivel(e.target.value)}
-                  style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '13px', fontWeight: '600', color: '#3b2f6e', background: 'white', cursor: 'pointer' }}>
+                  style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', background: 'var(--bg-input)', cursor: 'pointer' }}>
                   {todosNiveles.map(n => (
                     <option key={n.value} value={n.value}>{n.label} ({n.pts} pts totales)</option>
                   ))}
                 </select>
               </div>
-              <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+              <div className="admin-config-puntos-wrap">
+              <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#E11B22', color: 'white' }}>
-                    <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600 }}>Posición</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px' }}>% del total</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap' }}>Puntos</th>
+                  <tr style={{ background: 'var(--accent)', color: '#fff' }}>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#fff' }}>Posición</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px', color: '#fff' }}>% del total</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap', color: '#fff' }}>Puntos</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -8707,16 +8699,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     const pct = configPosiciones[pos] ?? 0;
                     const pts = Math.round((pct / 100) * totalPts);
                     return (
-                      <tr key={pos} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : 'white' }}>
-                        <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333' }}>
+                      <tr key={pos} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg-page)' : 'var(--bg-card)' }}>
+                        <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-primary)' }}>
                           {pos === 1 ? '🥇 1ro' : pos === 2 ? '🥈 2do' : pos === 3 ? '🥉 3ro' : `${pos}°`}
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
                           <div style={{ position: 'relative', display: 'inline-block' }}>
                             <input type="number" min="0" max="100" value={pct}
                               onChange={e => setConfigPosiciones(prev => ({ ...prev, [pos]: parseInt(e.target.value) || 0 }))}
-                              style={{ width: '70px', padding: '5px 24px 5px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', textAlign: 'right', fontWeight: 'bold', color: '#3b2f6e' }} />
-                            <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#999', pointerEvents: 'none' }}>%</span>
+                              style={{ width: '70px', padding: '5px 24px 5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', textAlign: 'right', fontWeight: 'bold', color: 'var(--text-primary)' }} />
+                            <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: 'var(--text-secondary)', pointerEvents: 'none' }}>%</span>
                           </div>
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'right', width: '100px', verticalAlign: 'middle', fontSize: '15px', fontWeight: 'bold', color: pts > 0 ? '#3b2f6e' : '#ccc', whiteSpace: 'nowrap' }}>
@@ -8727,6 +8719,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   })}
                 </tbody>
               </table>
+              </div>
               {/* Percentage sum indicator */}
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
@@ -8808,7 +8801,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 minWidth: 520,
                 maxWidth: '640px',
                 borderCollapse: 'collapse',
-                background: 'white',
+                background: 'var(--bg-card)',
                 borderRadius: '10px',
                 overflow: 'hidden',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -8992,7 +8985,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--bg-card)', borderRadius: '10px', overflow: 'hidden' }}>
                 <thead>
                   <tr style={{ background: '#E11B22', color: '#fff' }}>
                     <th style={{ padding: '8px' }}>Tipo</th>
@@ -9112,7 +9105,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
-                  background: 'white',
+                  background: 'var(--bg-card)',
                   borderRadius: '10px',
                   overflow: 'hidden',
                   tableLayout: rolesTabViewportNarrow ? 'fixed' : 'auto',
@@ -9508,7 +9501,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div
                     key={row.idKey}
                     style={{
-                      background: '#fff',
+                      background: 'var(--bg-card)',
                       borderRadius: '14px',
                       padding: '16px',
                       boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
@@ -10055,7 +10048,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 style={{
                   width: '100%',
                   maxWidth: '420px',
-                  background: '#fff',
+                  background: 'var(--bg-card)',
                   borderRadius: '14px',
                   padding: '22px',
                   boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
@@ -10076,7 +10069,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   style={{
                     width: '100%',
                     padding: '9px 11px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
                     fontSize: '14px',
                     marginBottom: '14px',
@@ -10092,7 +10085,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   style={{
                     width: '100%',
                     padding: '9px 11px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
                     fontSize: '14px',
                     marginBottom: '14px',
@@ -10111,7 +10104,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   style={{
                     width: '100%',
                     padding: '9px 11px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
                     fontSize: '14px',
                     marginBottom: '14px',
@@ -10135,7 +10128,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   style={{
                     width: '100%',
                     padding: '9px 11px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
                     fontSize: '14px',
                     resize: 'vertical',
@@ -10541,7 +10534,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <div className="admin-mi-sede-field-row admin-mi-sede-precio-base" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Precio por turno (90 min)</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '100%' }}>
-                  <span style={{ fontSize: '13px', color: '#888', fontWeight: 600 }}>{miSedeForm.moneda || 'ARS'}</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>{miSedeForm.moneda || 'ARS'}</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -10552,7 +10545,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
                       setMiSedeForm(p => ({ ...p, precio_turno: digits }));
                     }}
-                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
+                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
@@ -10569,7 +10562,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   key={fj.id}
                   className="admin-franja-bloque"
                   style={{
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '10px',
                     padding: '12px',
                     marginBottom: '12px',
@@ -10607,7 +10600,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       const v = e.target.value;
                       setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, nombre: v } : r)));
                     }}
-                    style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                    style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', color: 'var(--text-primary)' }}
                   />
                   <div style={{ display: 'grid', gap: '8px' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: '#555' }}>Aplicación</label>
@@ -10628,7 +10621,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           )
                         );
                       }}
-                      style={{ width: '100%', maxWidth: '220px', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                      style={{ width: '100%', maxWidth: '220px', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', color: 'var(--text-primary)' }}
                     >
                       <option value="semanal">Semanal</option>
                       <option value="fecha_especial">Fecha especial</option>
@@ -10644,7 +10637,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           const v = e.target.value;
                           setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, fecha: v } : r)));
                         }}
-                        style={{ width: '100%', maxWidth: '220px', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                        style={{ width: '100%', maxWidth: '220px', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', color: 'var(--text-primary)' }}
                       />
                     </div>
                   ) : (
@@ -10704,7 +10697,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           const v = e.target.value;
                           setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, hora_inicio: v } : r)));
                         }}
-                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', color: 'var(--text-primary)' }}
                       />
                     </div>
                     <div style={{ flex: '1 1 120px', minWidth: 0 }}>
@@ -10716,7 +10709,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           const v = e.target.value;
                           setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, hora_fin: v } : r)));
                         }}
-                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', color: '#333' }}
+                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', color: 'var(--text-primary)' }}
                       />
                     </div>
                     <div style={{ flex: '1 1 140px', minWidth: 0 }}>
@@ -10736,7 +10729,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, precio: digits } : r)));
                         }}
                         placeholder="Ej: 8000"
-                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right' }}
+                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right' }}
                       />
                     </div>
                   </div>
@@ -11491,7 +11484,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               Marca hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). Guarda con el botón inferior.
             </p>
             {fotosUrls.length === 0 ? (
-              <p style={{ color: '#aaa', fontSize: '13px', margin: 0 }}>No hay fotos cargadas aún.</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>No hay fotos cargadas aún.</p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 {fotosUrls.map((url, i) => {
@@ -11631,7 +11624,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             style={{
               width: '100%',
               maxWidth: 440,
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: 16,
               padding: '22px 20px',
               boxShadow: '0 20px 50px rgba(15,23,42,0.25)',
@@ -11728,7 +11721,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             }
           }}
         >
-          <div style={{ width: '100%', maxWidth: '520px', background: '#fff', borderRadius: '14px', padding: '18px' }}>
+          <div style={{ width: '100%', maxWidth: '520px', background: 'var(--bg-card)', borderRadius: '14px', padding: '18px' }}>
             <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>✉️ Invitar nuevo admin</h3>
             {inviteAdminModalStep === 'tipo' ? (
               <>
@@ -12007,7 +12000,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             style={{
               width: '100%',
               maxWidth: '440px',
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
               padding: '20px',
               boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
@@ -12067,7 +12060,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             style={{
               width: '100%',
               maxWidth: '420px',
-              background: '#fff',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
