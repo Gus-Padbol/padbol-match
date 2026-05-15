@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { dedupeHubDeporteConfigRows, pickHubDeporteRow } from '../utils/hubDeporteConfig';
 
 const cardWrap = {
   marginBottom: '20px',
@@ -43,6 +44,14 @@ function draftKeyDeporte(deporte, cardKey) {
   return `${String(deporte || '').trim().toLowerCase()}|${String(cardKey || '').trim()}`;
 }
 
+/** Evita filas inconsistentes si la API devolviera deporte/card_key distintos del pedido. */
+function normalizeHubDeporteRowPayload(data, deporte, cardKey) {
+  if (!data || typeof data !== 'object') return data;
+  const d = String(deporte || '').trim().toLowerCase();
+  const c = String(cardKey || '').trim();
+  return { ...data, deporte: d, card_key: c };
+}
+
 /** Mensajes de éxito vs error legibles en claro y oscuro. */
 function hubEditorNoticeStyle(text) {
   const t = String(text || '');
@@ -71,6 +80,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   const [uploadingDeporteKey, setUploadingDeporteKey] = useState(null);
   const fileRefDeporte = useRef(null);
   const uploadDeporteTargetRef = useRef(null);
+  const sportSelRef = useRef(sportSel);
+  sportSelRef.current = sportSel;
+  /** Tras el primer paint, solo refrescamos filas cuando el deporte del selector cambia de verdad. */
+  const lastRefreshSportSelRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -107,7 +120,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config`);
       const data = await res.json().catch(() => []);
       if (!res.ok) throw new Error(data?.error || 'No se pudo cargar hub por deporte');
-      const list = Array.isArray(data) ? data : [];
+      const list = dedupeHubDeporteConfigRows(Array.isArray(data) ? data : []);
       setDeporteRows(list);
       const next = {};
       for (const r of list) {
@@ -135,6 +148,28 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   useEffect(() => {
     void loadDeporte();
   }, [loadDeporte]);
+
+  const refreshDeporteRowsSilently = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config`);
+      const data = await res.json().catch(() => []);
+      if (!res.ok) return;
+      const list = dedupeHubDeporteConfigRows(Array.isArray(data) ? data : []);
+      setDeporteRows(list);
+    } catch {
+      /* best-effort: no tapar el editor */
+    }
+  }, [apiBaseUrl]);
+
+  useEffect(() => {
+    if (lastRefreshSportSelRef.current === null) {
+      lastRefreshSportSelRef.current = sportSel;
+      return;
+    }
+    if (lastRefreshSportSelRef.current === sportSel) return;
+    lastRefreshSportSelRef.current = sportSel;
+    void refreshDeporteRowsSilently();
+  }, [sportSel, refreshDeporteRowsSilently]);
 
   const authHeaders = useCallback(() => {
     const h = { 'Content-Type': 'application/json' };
@@ -174,7 +209,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       setDeporteMsg('Iniciá sesión de nuevo.');
       return;
     }
-    const dep = String(sportSel || '').trim().toLowerCase();
+    const dep = String(sportSelRef.current || '').trim().toLowerCase();
     const dk = draftKeyDeporte(dep, cardKey);
     const d = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
     setSavingDeporteKey(dk);
@@ -192,12 +227,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Error al guardar');
+      const normalized = normalizeHubDeporteRowPayload(data, dep, cardKey);
       setDeporteRows((prev) => {
         const others = prev.filter(
           (r) =>
             String(r.deporte || '').toLowerCase() !== dep || String(r.card_key || '').trim() !== cardKey
         );
-        return [...others, data];
+        return dedupeHubDeporteConfigRows([...others, normalized]);
       });
       setDeporteMsg('Guardado correctamente.');
       window.setTimeout(() => setDeporteMsg(''), 2500);
@@ -214,7 +250,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   };
 
   const clickCambiarFotoDeporte = (cardKey) => {
-    uploadDeporteTargetRef.current = { deporte: String(sportSel || '').trim().toLowerCase(), cardKey };
+    uploadDeporteTargetRef.current = {
+      deporte: String(sportSelRef.current || '').trim().toLowerCase(),
+      cardKey,
+    };
     fileRefDeporte.current?.click();
   };
 
@@ -279,13 +318,15 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
+      const normalized = normalizeHubDeporteRowPayload(data, target.deporte, target.cardKey);
       setDeporteRows((prev) => {
+        const dep = String(target.deporte || '').trim().toLowerCase();
+        const ck = String(target.cardKey || '').trim();
         const others = prev.filter(
           (r) =>
-            String(r.deporte || '').toLowerCase() !== String(target.deporte).toLowerCase() ||
-            String(r.card_key || '').trim() !== String(target.cardKey).trim()
+            String(r.deporte || '').toLowerCase() !== dep || String(r.card_key || '').trim() !== ck
         );
-        return [...others, data];
+        return dedupeHubDeporteConfigRows([...others, normalized]);
       });
       setDeporteMsg('Foto actualizada.');
       window.setTimeout(() => setDeporteMsg(''), 2500);
@@ -296,12 +337,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     }
   };
 
-  const rowDeporteActual = (cardKey) => {
-    const dep = String(sportSel || '').trim().toLowerCase();
-    return deporteRows.find(
-      (r) => String(r.deporte || '').toLowerCase() === dep && String(r.card_key || '').trim() === cardKey
-    );
-  };
+  const rowDeporteActual = (cardKey) => pickHubDeporteRow(deporteRows, sportSel, cardKey);
 
   if (loading) {
     return (

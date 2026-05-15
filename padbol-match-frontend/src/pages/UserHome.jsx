@@ -21,7 +21,7 @@ import HubDeporteSelect from '../components/HubDeporteSelect';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
-import { pickHubDeporteRow } from '../utils/hubDeporteConfig';
+import { pickHubDeporteRow, dedupeHubDeporteConfigRows } from '../utils/hubDeporteConfig';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 
@@ -284,7 +284,7 @@ export default function UserHome() {
           setHubDeporteRows([]);
           return;
         }
-        setHubDeporteRows(data);
+        setHubDeporteRows(dedupeHubDeporteConfigRows(data));
         setHubDeporteStatus('ok');
       } catch {
         if (!cancelled) {
