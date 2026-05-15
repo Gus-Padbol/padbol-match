@@ -380,7 +380,7 @@ export default function ArmarPartido() {
       .then((d) => {
         if (cancelled) return;
         setSlotsApi(Array.isArray(d?.slots) ? d.slots : []);
-        if (Array.isArray(d?.duraciones) && d.duraciones.length) {
+        if (d && 'duraciones' in d && Array.isArray(d.duraciones)) {
           setDuracionesApi(
             d.duraciones
               .filter((row) => row && Number.isFinite(Number(row.duracion_minutos)))
