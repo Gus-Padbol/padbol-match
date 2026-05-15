@@ -11,6 +11,18 @@
   color: var(--text-primary);
 }
 
+.torneo-crear-container--embedded {
+  padding: 0;
+  align-items: stretch;
+}
+
+.torneo-crear-container--embedded .torneo-crear-card {
+  max-width: 100%;
+  padding: 24px 20px;
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+
 .torneo-crear-card {
   background: var(--bg-card);
   border: 1px solid var(--border);

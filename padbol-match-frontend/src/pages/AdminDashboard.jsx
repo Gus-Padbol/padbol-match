@@ -73,6 +73,7 @@ import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSecti
 import AdminSponsorsSection from '../components/AdminSponsorsSection';
 import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
+import TorneoCrear from './TorneoCrear';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import { preciosDuracionToApiPatch, parsePrecioDuracionField } from '../utils/sedePreciosDuracion';
@@ -1589,6 +1590,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const [reservas, setReservas] = useState([]);
   const [torneos, setTorneos] = useState([]);
+  const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
   const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
   const [sedesMap, setSedesMap] = useState({});
@@ -6200,6 +6202,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ))}
 
       {activeTab === 'torneos' && <>
+        {crearTorneoEmbedOpen ? (
+          <div className="section admin-torneo-crear-embed" style={{ marginBottom: '18px' }}>
+            <TorneoCrear
+              embedded
+              apiBaseUrl={apiBaseUrl}
+              rol={rol}
+              onClose={() => setCrearTorneoEmbedOpen(false)}
+              onCreated={() => {
+                void fetchData();
+                setCrearTorneoEmbedOpen(false);
+              }}
+            />
+          </div>
+        ) : (
+        <>
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
             Estado del torneo
@@ -6239,7 +6256,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <h2 style={{ margin: 0 }}>📋 Torneos Creados</h2>
           {!esEmpleado ? (
             <button
-              onClick={() => navigate('/torneo/crear')}
+              onClick={() => setCrearTorneoEmbedOpen(true)}
               style={{ padding: '8px 16px', background: '#e53935', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
             >
               + Nuevo Torneo
@@ -6741,6 +6758,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         onClose={() => setPuntosDistribucionTorneo(null)}
         torneo={puntosDistribucionTorneo}
       />
+        </>
+        )}
       </>}
 
       {activeTab === 'sedes' && (esAdminNacional || isSuperAdmin) && (

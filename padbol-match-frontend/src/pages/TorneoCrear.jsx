@@ -41,7 +41,14 @@ function formatSedeTorneoOption(sede) {
   return ciudad ? `${nombre} - ${ciudad}` : nombre;
 }
 
-export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol: rolProp = null }) {
+export default function TorneoCrear({
+  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  rol: rolProp = null,
+  /** Dentro del panel /admin: sin AppHeader ni BottomNav. */
+  embedded = false,
+  onClose,
+  onCreated,
+}) {
   const [sedes, setSedes] = useState([]);
   const [tiposCustom, setTiposCustom] = useState([]);
   const [formData, setFormData] = useState({
@@ -269,9 +276,17 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
 
       if (response.ok) {
         setMensaje('✅ Torneo creado correctamente');
-        setTimeout(() => {
-          navigate(`/torneo/${result[0].id}`);
-        }, 1500);
+        const nuevoId = result?.[0]?.id;
+        if (embedded) {
+          if (nuevoId != null) onCreated?.(nuevoId);
+          window.setTimeout(() => {
+            onClose?.();
+          }, 900);
+        } else {
+          setTimeout(() => {
+            navigate(`/torneo/${result[0].id}`);
+          }, 1500);
+        }
       } else {
         setError(result.error || 'Error al crear torneo');
       }
@@ -281,38 +296,32 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
       setLoading(false);
     }
   };
-
   const esGruposKnockout = formData.tipo_torneo === 'grupos_knockout';
 
-  return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--bg-card)',
-        boxSizing: 'border-box',
-      }}
-    >
-      <AppHeader title="Crear torneo" />
-      <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          WebkitOverflowScrolling: 'touch',
-          width: '100%',
-          boxSizing: 'border-box',
-          paddingTop: hubContentPaddingTopCss(location.pathname),
-          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
-        }}
-      >
-        <div className="torneo-crear-container">
-          <div className="torneo-crear-card">
-            <h1>🏆 Crear Nuevo Torneo</h1>
-
-            <form onSubmit={handleSubmit}>
+  const formulario = (
+    <div className={embedded ? 'torneo-crear-container torneo-crear-container--embedded' : 'torneo-crear-container'}>
+      <div className="torneo-crear-card">
+        {embedded && onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              marginBottom: '16px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-input)',
+              color: 'var(--text-primary)',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
+          >
+            ← Volver a torneos
+          </button>
+        ) : null}
+        <h1>🏆 Crear Nuevo Torneo</h1>
+        <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Nombre del Torneo *</label>
                 <input
@@ -701,16 +710,56 @@ export default function TorneoCrear({ apiBaseUrl = 'https://padbol-backend.onren
               <button type="submit" disabled={loading} className="btn-submit">
                 {loading ? 'Creando...' : '✅ Crear Torneo'}
               </button>
-            </form>
-          </div>
-        </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  const puntosModal = (
+    <TorneoPuntosDistribucionModal
+      open={puntosModalOpen}
+      onClose={() => setPuntosModalOpen(false)}
+      torneo={formData}
+    />
+  );
+
+  if (embedded) {
+    return (
+      <>
+        {formulario}
+        {puntosModal}
+      </>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--bg-card)',
+        boxSizing: 'border-box',
+      }}
+    >
+      <AppHeader title="Crear torneo" />
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          width: '100%',
+          boxSizing: 'border-box',
+          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        }}
+      >
+        {formulario}
       </div>
       <BottomNav />
-      <TorneoPuntosDistribucionModal
-        open={puntosModalOpen}
-        onClose={() => setPuntosModalOpen(false)}
-        torneo={formData}
-      />
+      {puntosModal}
     </div>
   );
 }
