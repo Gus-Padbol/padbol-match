@@ -133,7 +133,12 @@ export default function PagoExitoso() {
         .then(({ ok, data }) => {
           if (ok) {
             clearMpReservaPendingSlot();
-            setPagoKind('partido');
+            if (data?.partido) {
+              setPagoKind('partido');
+            } else {
+              setReserva(data?.reserva || null);
+              setPagoKind('reserva');
+            }
           } else {
             setSaveError(data?.error || 'No se pudo publicar el partido.');
           }

@@ -5,8 +5,9 @@ import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { getDisplayName } from '../utils/displayName';
-import { precioBaseTurnoDesdeSede, getDistanceKm } from '../utils/sedeCardUi';
+import { getDistanceKm } from '../utils/sedeCardUi';
 import { precioDesdeFranjas } from '../utils/franjasHorarias';
+import { duracionesReservaDisponibles, precioReservaTurno, RESERVA_DURACIONES_MIN } from '../utils/sedePreciosDuracion';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
@@ -17,7 +18,8 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
-const DURACIONES = [60, 90, 120];
+const ACCENT = '#e53935';
+
 const DEPORTES = [
   { id: 'padbol', label: 'Padbol', jugadores: 4 },
   { id: 'padel', label: 'Pádel', jugadores: 4 },
@@ -33,55 +35,29 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function horaAMin(hora) {
-  const m = /^(\d{1,2}):(\d{2})/.exec(String(hora || '').split(' - ')[0].trim());
-  if (!m) return null;
-  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+function addDaysISO(baseYmd, days) {
+  const [y, m, da] = baseYmd.split('-').map((x) => parseInt(x, 10));
+  const d = new Date(y, m - 1, da);
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function minAHora(min) {
-  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+function next7DaysFrom(todayStr) {
+  return Array.from({ length: 7 }, (_, i) => addDaysISO(todayStr, i));
 }
 
-function duracionReserva(r) {
-  const d = parseInt(String(r?.duracion_minutos ?? r?.duracion ?? ''), 10);
-  return Number.isFinite(d) && d > 0 ? d : 90;
+function labelDiaCorta(iso, index) {
+  if (index === 0) return 'Hoy';
+  if (index === 1) return 'Mañana';
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const w = d.toLocaleDateString('es', { weekday: 'short' });
+  const day = d.getDate();
+  const mo = d.toLocaleDateString('es', { month: 'short' });
+  return `${w} ${day} ${mo}`;
 }
 
-function slotSolapa(reserva, inicio, fin) {
-  if (String(reserva?.estado || '').toLowerCase() === 'cancelada') return false;
-  const ri = horaAMin(reserva?.hora);
-  if (ri == null) return false;
-  const rf = ri + duracionReserva(reserva);
-  return inicio < rf && fin > ri;
-}
-
-function slotsDisponibles({ sede, reservas, cancha, duracion }) {
-  if (!sede || !cancha) return [];
-  const apertura = horaAMin(sede.horario_apertura || '08:00') ?? 8 * 60;
-  const cierre = horaAMin(sede.horario_cierre || '23:00') ?? 23 * 60;
-  const out = [];
-  for (let t = apertura; t + duracion <= cierre; t += 30) {
-    const fin = t + duracion;
-    const mismo = (reservas || []).filter((r) => Number(r.cancha) === Number(cancha) && String(r.estado || '').toLowerCase() !== 'cancelada');
-    if (mismo.some((r) => slotSolapa(r, t, fin))) continue;
-    const ordenadas = mismo
-      .map((r) => {
-        const i = horaAMin(r.hora);
-        return i == null ? null : { i, f: i + duracionReserva(r) };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.i - b.i);
-    const prev = [...ordenadas].reverse().find((r) => r.f <= t);
-    const next = ordenadas.find((r) => r.i >= fin);
-    if (prev && t - prev.f > 0 && t - prev.f < 60) continue;
-    if (next && next.i - fin > 0 && next.i - fin < 60) continue;
-    out.push(minAHora(t));
-  }
-  return out;
-}
-
-function shareUrl(partido) {
+function shareUrl() {
   const text = `Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
@@ -99,15 +75,6 @@ function findSedeById(sedesList, sedeIdRaw) {
   return null;
 }
 
-function canchaFormOk(canchaRaw) {
-  const n = Number(String(canchaRaw ?? '').trim());
-  return Number.isFinite(n) && n >= 1;
-}
-
-function horaFormOk(horaRaw) {
-  return String(horaRaw ?? '').trim().length > 0;
-}
-
 function normalizeTextForSearch(raw) {
   return String(raw || '')
     .trim()
@@ -116,7 +83,6 @@ function normalizeTextForSearch(raw) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-/** Si la sede tiene filas en canchas_por_deporte, exige el deporte; si no hay datos, no filtra (sedes legacy). */
 function sedeTieneDeporteArmar(sede, deporteKey) {
   const rows = sede.canchas_por_deporte;
   if (!Array.isArray(rows) || rows.length === 0) return true;
@@ -124,7 +90,7 @@ function sedeTieneDeporteArmar(sede, deporteKey) {
     (r) =>
       r.activo !== false &&
       Number(r.cantidad) > 0 &&
-      String(r.deporte || '').trim().toLowerCase() === deporteKey
+      String(r.deporte || '').trim().toLowerCase() === deporteKey,
   );
 }
 
@@ -142,7 +108,7 @@ function deportesOfrecidosResumen(sede) {
       rows
         .filter((r) => r.activo !== false && Number(r.cantidad) > 0)
         .map((r) => String(r.deporte || '').trim().toLowerCase())
-        .filter(Boolean)
+        .filter(Boolean),
     ),
   ];
   if (!keys.length) return '—';
@@ -152,8 +118,61 @@ function deportesOfrecidosResumen(sede) {
 }
 
 const SEDE_SUGGEST_MAX_VISIBLE_PX = 312;
+const MAIN_MAX = 390;
 
-/** Estilos alineados al design system (var(--bg-page), --bg-card, --border, --text-*, --accent)). */
+function ProgressBar3({ current }) {
+  const dot = (n) => {
+    const done = current > n;
+    const active = current === n;
+    const bg = done ? ACCENT : active ? 'rgba(229, 57, 53, 0.45)' : '#9ca3af';
+    return (
+      <div
+        key={`d${n}`}
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: '50%',
+          background: bg,
+          flexShrink: 0,
+        }}
+        aria-hidden
+      />
+    );
+  };
+  const line = (n) => (
+    <div
+      key={`l${n}`}
+      style={{
+        flex: 1,
+        height: 3,
+        background: current > n ? ACCENT : '#e5e7eb',
+        borderRadius: 1,
+        minWidth: 8,
+      }}
+      aria-hidden
+    />
+  );
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        maxWidth: MAIN_MAX,
+        marginBottom: 14,
+        gap: 0,
+      }}
+      aria-hidden
+    >
+      {dot(1)}
+      {line(1)}
+      {dot(2)}
+      {line(2)}
+      {dot(3)}
+    </div>
+  );
+}
+
 const AP = {
   card: {
     background: 'var(--bg-card)',
@@ -162,13 +181,12 @@ const AP = {
     padding: 18,
     boxShadow: '0 16px 34px rgba(0,0,0,0.14)',
   },
-  title: { margin: '0 0 12px', color: 'var(--text-primary)' },
+  title: { margin: '0 0 12px', color: 'var(--text-primary)', fontSize: 20 },
   body: { color: 'var(--text-secondary)', lineHeight: 1.55 },
-  sub: { color: 'var(--text-secondary)', fontSize: 14 },
   errBanner: {
-    background: 'rgba(225, 27, 34, 0.12)',
+    background: 'rgba(229, 57, 53, 0.12)',
     color: 'var(--text-primary)',
-    border: '1px solid var(--accent)',
+    border: `1px solid ${ACCENT}`,
     borderRadius: 12,
     padding: 10,
     marginBottom: 12,
@@ -184,82 +202,8 @@ const AP = {
     background: 'var(--bg-card)',
     color: 'var(--text-primary)',
   },
-  selectMt: {
-    width: '100%',
-    marginTop: 6,
-    padding: 12,
-    borderRadius: 10,
-    border: '1px solid var(--border)',
-    background: 'var(--bg-card)',
-    color: 'var(--text-primary)',
-  },
-  label: { display: 'block', fontWeight: 800, color: 'var(--text-primary)' },
-  deporteBtn: (active) => ({
-    border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
-    borderRadius: 14,
-    padding: 13,
-    background: active ? 'rgba(225, 27, 34, 0.14)' : 'var(--bg-page)',
-    textAlign: 'left',
-    fontWeight: 900,
-    cursor: 'pointer',
-    color: 'var(--text-primary)',
-  }),
-  gridBtn: (active) => ({
-    border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
-    borderRadius: 12,
-    padding: 12,
-    background: active ? 'rgba(225, 27, 34, 0.14)' : 'var(--bg-page)',
-    color: 'var(--text-primary)',
-    fontWeight: 900,
-    cursor: 'pointer',
-  }),
-  gridBtnSm: (active) => ({
-    border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
-    borderRadius: 12,
-    padding: 10,
-    background: active ? 'rgba(225, 27, 34, 0.14)' : 'var(--bg-page)',
-    color: 'var(--text-primary)',
-    fontWeight: 900,
-    cursor: 'pointer',
-  }),
-  resumen: {
-    background: 'var(--bg-page)',
-    border: '1px solid var(--border)',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 12,
-    color: 'var(--text-primary)',
-    fontSize: 14,
-  },
-  navAtrás: {
-    flex: 1,
-    border: '1px solid var(--border)',
-    borderRadius: 12,
-    padding: 12,
-    background: 'var(--bg-page)',
-    color: 'var(--text-primary)',
-    fontWeight: 900,
-  },
-  navSig: { flex: 1, border: 'none', borderRadius: 12, padding: 12, background: 'var(--accent)', color: '#fff', fontWeight: 900 },
-  pay: (disabled) => ({
-    width: '100%',
-    border: 'none',
-    borderRadius: 12,
-    padding: 14,
-    background: disabled ? 'var(--text-secondary)' : 'linear-gradient(135deg, var(--accent), #b91c1c)',
-    color: '#fff',
-    fontWeight: 900,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.75 : 1,
-  }),
-  linkSec: {
-    border: '1px solid var(--border)',
-    borderRadius: 12,
-    padding: 13,
-    background: 'var(--bg-page)',
-    color: 'var(--text-primary)',
-    fontWeight: 900,
-  },
+  label: { display: 'block', fontWeight: 800, color: 'var(--text-primary)', fontSize: 14 },
+  sub: { color: 'var(--text-secondary)', fontSize: 12, margin: '6px 0 0' },
 };
 
 export default function ArmarPartido() {
@@ -268,13 +212,28 @@ export default function ArmarPartido() {
   const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
   const { session, userProfile } = useAuth();
+
   const [step, setStep] = useState(1);
   const [sedes, setSedes] = useState([]);
-  const [reservas, setReservas] = useState([]);
   const [loadingSedes, setLoadingSedes] = useState(true);
   const [paying, setPaying] = useState(false);
   const [msg, setMsg] = useState('');
   const [publicado, setPublicado] = useState(null);
+
+  const [slotsApi, setSlotsApi] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
+  const [dispCanchas, setDispCanchas] = useState([]);
+  const [dispLoading, setDispLoading] = useState(false);
+
+  const [publicarPartido, setPublicarPartido] = useState(false);
+
+  const sedeBlurTimerRef = useRef(null);
+  const [sedeBusqueda, setSedeBusqueda] = useState('');
+  const [sedeDropdownOpen, setSedeDropdownOpen] = useState(false);
+  const [userGeo, setUserGeo] = useState(null);
+  const [geoStatus, setGeoStatus] = useState('pending');
+
   const [form, setForm] = useState({
     deporte: 'padbol',
     jugadoresRequeridos: 4,
@@ -287,14 +246,8 @@ export default function ArmarPartido() {
     nivel: 'Intermedio',
   });
 
-  const sedeBlurTimerRef = useRef(null);
-  const [sedeBusqueda, setSedeBusqueda] = useState('');
-  const [sedeDropdownOpen, setSedeDropdownOpen] = useState(false);
-  const [userGeo, setUserGeo] = useState(null);
-  const [geoStatus, setGeoStatus] = useState('pending');
-
   useEffect(() => {
-    if (step !== 2) return;
+    if (step !== 1) return;
     if (!navigator.geolocation) {
       setUserGeo(null);
       setGeoStatus('denied');
@@ -318,7 +271,7 @@ export default function ArmarPartido() {
   }, [step]);
 
   useEffect(() => {
-    if (step !== 2) {
+    if (step !== 1) {
       setSedeDropdownOpen(false);
       return;
     }
@@ -354,30 +307,89 @@ export default function ArmarPartido() {
   }, []);
 
   const sede = useMemo(() => findSedeById(sedes, form.sedeId), [sedes, form.sedeId]);
-  const canchas = useMemo(() => {
-    const n = Math.max(1, Number(sede?.cantidad_canchas || sede?.canchas_activas || 2) || 2);
-    return Array.from({ length: n }, (_, idx) => idx + 1);
+
+  const duracionesOfrecidas = useMemo(() => {
+    if (!sede) return RESERVA_DURACIONES_MIN;
+    const d = duracionesReservaDisponibles(sede);
+    return d.length > 0 ? d : RESERVA_DURACIONES_MIN;
   }, [sede]);
 
   useEffect(() => {
-    if (!sede?.nombre || !form.fecha) {
-      setReservas([]);
+    if (!sede) return;
+    const cur = Number(form.duracion);
+    if (!duracionesOfrecidas.includes(cur)) {
+      setForm((f) => ({ ...f, duracion: duracionesOfrecidas[0], hora: '' }));
+    }
+  }, [sede, duracionesOfrecidas, form.duracion]);
+
+  useEffect(() => {
+    if (!sede?.id || !form.fecha || !form.duracion) {
+      setSlotsApi([]);
       return;
     }
-    fetch(`${API_BASE}/api/disponibilidad/${encodeURIComponent(sede.nombre)}/${encodeURIComponent(form.fecha)}`)
+    let cancelled = false;
+    setSlotsLoading(true);
+    const url = `${API_BASE}/api/sedes/${encodeURIComponent(sede.id)}/disponibilidad-slots?${new URLSearchParams({
+      fecha: form.fecha,
+      duracion: String(form.duracion),
+      deporte: form.deporte,
+    })}`;
+    fetch(url)
       .then((r) => r.json())
-      .then((d) => setReservas(Array.isArray(d) ? d : []))
-      .catch(() => setReservas([]));
-  }, [sede?.nombre, form.fecha]);
+      .then((d) => {
+        if (cancelled) return;
+        setSlotsApi(Array.isArray(d?.slots) ? d.slots : []);
+      })
+      .catch(() => {
+        if (!cancelled) setSlotsApi([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSlotsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sede?.id, form.fecha, form.duracion, form.deporte]);
 
-  const slots = useMemo(
-    () => slotsDisponibles({ sede, reservas, cancha: form.cancha, duracion: Number(form.duracion) }),
-    [sede, reservas, form.cancha, form.duracion]
-  );
-  const precio = useMemo(() => {
-    if (!sede) return 0;
-    return Number(precioDesdeFranjas(sede, form.hora, form.fecha) ?? precioBaseTurnoDesdeSede(sede) ?? 0);
-  }, [sede, form.hora, form.fecha]);
+  useEffect(() => {
+    if (step !== 2 || !sede?.id || !form.fecha || !form.hora || !form.duracion) {
+      setDispCanchas([]);
+      return;
+    }
+    let cancelled = false;
+    setDispLoading(true);
+    const horaLimpia = String(form.hora).split(' - ')[0].trim();
+    const url = `${API_BASE}/api/reservas/disponibilidad?${new URLSearchParams({
+      sede_id: String(sede.id),
+      fecha: form.fecha,
+      hora_inicio: horaLimpia,
+      duracion_minutos: String(form.duracion),
+      deporte: form.deporte,
+    })}`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        setDispCanchas(Array.isArray(d?.canchas) ? d.canchas : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDispCanchas([]);
+      })
+      .finally(() => {
+        if (!cancelled) setDispLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [step, sede?.id, form.fecha, form.hora, form.duracion, form.deporte]);
+
+  const precioBase = useMemo(() => {
+    if (!sede || !form.hora) return 0;
+    return Number(precioReservaTurno(sede, form.hora, form.fecha, Number(form.duracion), precioDesdeFranjas) ?? 0);
+  }, [sede, form.hora, form.fecha, form.duracion]);
+
+  const cargoPlataforma = useMemo(() => Math.round(precioBase * 0.03), [precioBase]);
+  const precioTotal = useMemo(() => precioBase + cargoPlataforma, [precioBase, cargoPlataforma]);
 
   const sedesParaArmar = useMemo(() => {
     const hasAny = sedes.some((s) => Array.isArray(s.canchas_por_deporte) && s.canchas_por_deporte.length > 0);
@@ -415,6 +427,8 @@ export default function ArmarPartido() {
     return sedesOrdenadasParaLista.slice(0, 5);
   }, [sedesOrdenadasParaLista, sedeBusquedaNorm]);
 
+  const dias7 = useMemo(() => next7DaysFrom(todayISO()), []);
+
   const onSedeInputChange = (e) => {
     const v = e.target.value;
     setSedeBusqueda(v);
@@ -445,6 +459,8 @@ export default function ArmarPartido() {
         deporte,
         jugadoresRequeridos: deporte === 'pickleball' ? f.jugadoresRequeridos : item.jugadores,
         jugadoresConfirmados: 1,
+        hora: '',
+        cancha: '',
       };
       if (hasAny && f.sedeId) {
         const sRow = findSedeById(sedes, f.sedeId);
@@ -458,43 +474,31 @@ export default function ArmarPartido() {
     });
   };
 
-  const validarYAvanzar = () => {
+  const irPaso2 = () => {
     setMsg('');
-    if (step === 1) {
-      setStep(2);
+    if (!String(form.sedeId || '').trim()) {
+      setMsg('Seleccioná una sede.');
       return;
     }
-    if (step === 2) {
-      if (!String(form.sedeId || '').trim()) {
-        setMsg('Selecciona una sede.');
-        return;
-      }
-      if (!canchaFormOk(form.cancha)) {
-        setMsg('Selecciona una cancha.');
-        return;
-      }
-      setStep(3);
+    if (!form.fecha) {
+      setMsg('Elegí una fecha.');
       return;
     }
-    if (step === 3) {
-      if (!String(form.fecha || '').trim()) {
-        setMsg('Indica la fecha.');
-        return;
-      }
-      if (slots.length === 0) {
-        setMsg('No hay horarios disponibles para esta cancha y duración. Cambia cancha, duración o fecha.');
-        return;
-      }
-      if (!horaFormOk(form.hora)) {
-        setMsg('Selecciona un horario en la grilla.');
-        return;
-      }
-      setStep(4);
+    if (!form.hora) {
+      setMsg('Elegí un horario disponible.');
       return;
     }
-    if (step === 4) {
-      setStep(5);
+    setStep(2);
+  };
+
+  const irPaso3 = () => {
+    setMsg('');
+    const num = parseInt(String(form.cancha), 10);
+    if (!Number.isFinite(num) || num < 1) {
+      setMsg('Elegí una cancha libre.');
+      return;
     }
+    setStep(3);
   };
 
   const retrocederPaso = () => {
@@ -508,24 +512,8 @@ export default function ArmarPartido() {
       return;
     }
     const sedeActual = findSedeById(sedes, form.sedeId);
-    const fechaOk = String(form.fecha || '').trim();
-    const horaOk = horaFormOk(form.hora);
-    const canchaOk = canchaFormOk(form.cancha);
-    // TEMP: depurar validación paso 5 (quitar tras confirmar fix)
-    console.log('[ArmarPartido pagarYPublicar] form + validación', {
-      sedeId: form.sedeId,
-      sedeNombreResuelta: sedeActual?.nombre ?? null,
-      sedeIdResuelto: sedeActual?.id ?? null,
-      cancha: form.cancha,
-      canchaOk,
-      fecha: form.fecha,
-      fechaOk: Boolean(fechaOk),
-      hora: form.hora,
-      horaOk,
-      sedesCount: Array.isArray(sedes) ? sedes.length : 0,
-    });
-    if (!sedeActual || !canchaOk || !fechaOk || !horaOk) {
-      setMsg('Completa sede, cancha, fecha y horario.');
+    if (!sedeActual || !form.cancha || !form.fecha || !form.hora) {
+      setMsg('Completá sede, cancha, fecha y horario.');
       return;
     }
     setPaying(true);
@@ -536,17 +524,18 @@ export default function ArmarPartido() {
     const shareToken = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 9)}`;
     const reservaData = {
       tipo: 'partido_abierto',
+      publicar_partido: Boolean(publicarPartido),
       share_token: shareToken,
       sede: sedeActual.nombre,
       sede_id: sedeActual.id,
-      fecha: fechaOk,
+      fecha: String(form.fecha).trim(),
       hora: String(form.hora).trim(),
       cancha: Number(form.cancha),
       nombre,
       email: session.user.email,
       whatsapp: userProfile?.whatsapp || userProfile?.telefono || '+540000000000',
       nivel: form.nivel,
-      precio,
+      precio: precioTotal,
       moneda: sedeActual.moneda || 'ARS',
       duracion: Number(form.duracion),
       deporte: form.deporte,
@@ -564,7 +553,7 @@ export default function ArmarPartido() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           titulo: `Partido abierto — ${sedeActual.nombre}`,
-          precio,
+          precio: precioTotal,
           moneda: sedeActual.moneda || 'ARS',
           sedeNombre: sedeActual.nombre,
           sedeId: sedeActual.id,
@@ -578,7 +567,14 @@ export default function ArmarPartido() {
       }
       if (res.ok && (data.manual_payment || data.efectivo_payment)) {
         setPublicado(data.partido || null);
-        setStep(6);
+        setStep(4);
+        return;
+      }
+      if (res.ok && data.stripe_checkout_pending) {
+        setMsg(
+          data.message ||
+            'El cobro con tarjeta para esta sede está en configuración. Probá con otra sede o contactá al club.',
+        );
         return;
       }
       throw new Error(data?.error || data?.message || 'No se pudo iniciar el pago');
@@ -589,79 +585,95 @@ export default function ArmarPartido() {
     }
   };
 
-  const stepStyle = (active) => ({
-    borderRadius: 999,
-    padding: '7px 10px',
-    background: active ? 'var(--accent)' : 'var(--bg-card)',
-    color: active ? '#fff' : 'var(--text-secondary)',
-    fontSize: 12,
-    fontWeight: 900,
-    border: active ? 'none' : '1px solid var(--border)',
-  });
+  const sedeNombreCancha = (num) => {
+    const row = dispCanchas.find((c) => Number(c.numero) === Number(num));
+    return row?.nombre || `Cancha ${num}`;
+  };
+
+  const canchaLibreSeleccionada = useMemo(() => {
+    const n = parseInt(String(form.cancha), 10);
+    if (!Number.isFinite(n)) return false;
+    const row = dispCanchas.find((c) => Number(c.numero) === n);
+    return Boolean(row?.disponible);
+  }, [form.cancha, dispCanchas]);
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--bg-page)', color: 'var(--text-primary)', paddingTop: hubContentPaddingTopCss(location.pathname, navDock), paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock), boxSizing: 'border-box' }}>
+    <div
+      style={{
+        minHeight: '100dvh',
+        background: 'var(--bg-page)',
+        color: 'var(--text-primary)',
+        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
+        boxSizing: 'border-box',
+      }}
+    >
       <AppHeader title="Armar partido" />
-      <main style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '18px 16px', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-          {[1, 2, 3, 4, 5, 6].map((n) => <span key={n} style={stepStyle(step === n)}>Paso {n}</span>)}
-        </div>
+      <main style={{ width: '100%', maxWidth: MAIN_MAX, margin: '0 auto', padding: '18px 14px', boxSizing: 'border-box' }}>
+        {step < 4 ? <ProgressBar3 current={step} /> : null}
+
         <section style={AP.card}>
           {msg ? <div style={AP.errBanner}>{msg}</div> : null}
 
           {step === 1 ? (
             <>
-              <h1 style={AP.title}>Elige deporte</h1>
-              <div style={{ display: 'grid', gap: 10 }}>
+              <h1 style={AP.title}>Fecha y hora</h1>
+              <p style={AP.body}>Elegí deporte y sede, después el día y el turno.</p>
+
+              <label style={{ ...AP.label, marginTop: 14 }} htmlFor="armar-deporte-select">
+                Deporte
+              </label>
+              <select
+                id="armar-deporte-select"
+                value={form.deporte}
+                onChange={(e) => setDeporte(e.target.value)}
+                style={{ ...AP.field, marginTop: 8 }}
+              >
                 {DEPORTES.map((d) => (
-                  <button key={d.id} type="button" onClick={() => setDeporte(d.id)} style={AP.deporteBtn(form.deporte === d.id)}>
+                  <option key={d.id} value={d.id}>
                     {d.label} · {d.jugadores} jugadores
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
               {form.deporte === 'pickleball' ? (
                 <label style={{ ...AP.label, marginTop: 12 }}>
-                  Modalidad Pickleball
-                  <select value={form.jugadoresRequeridos} onChange={(e) => setForm((f) => ({ ...f, jugadoresRequeridos: Number(e.target.value), jugadoresConfirmados: 1 }))} style={AP.selectMt}>
+                  Modalidad pickleball
+                  <select
+                    value={form.jugadoresRequeridos}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        jugadoresRequeridos: Number(e.target.value),
+                        jugadoresConfirmados: 1,
+                      }))
+                    }
+                    style={{ ...AP.field, marginTop: 8 }}
+                  >
                     <option value={2}>Singles (2)</option>
                     <option value={4}>Dobles (4)</option>
                   </select>
                 </label>
               ) : null}
-            </>
-          ) : null}
 
-          {step === 2 ? (
-            <>
-              <h1 style={AP.title}>Elige sede y cancha</h1>
-              <label style={{ ...AP.label, marginBottom: 0 }} htmlFor="armar-partido-sede-busqueda">
+              <label style={{ ...AP.label, marginTop: 14 }} htmlFor="armar-sede-busqueda">
                 Sede
               </label>
-              <p style={{ ...AP.sub, margin: '6px 0 0', fontSize: 12 }}>
+              <p style={AP.sub}>
                 {sedeBusquedaNorm.length >= 2
                   ? 'Resultados según tu búsqueda.'
                   : geoStatus === 'granted'
-                    ? 'Mostrando las 5 sedes más cercanas a tu ubicación.'
-                    : 'Mostrando 5 sedes (orden alfabético). Activá la ubicación para ver las más cercanas.'}
+                    ? 'Mostrando las 5 sedes más cercanas.'
+                    : 'Mostrando 5 sedes. Activá la ubicación para ver las más cercanas.'}
               </p>
-              <div
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: 'min(100%, calc(100vw - 32px))',
-                  marginTop: 10,
-                  boxSizing: 'border-box',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
+              <div style={{ position: 'relative', marginTop: 8 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
                   <input
-                    id="armar-partido-sede-busqueda"
+                    id="armar-sede-busqueda"
                     type="text"
                     role="combobox"
                     aria-expanded={sedeDropdownOpen}
-                    aria-autocomplete="list"
                     autoComplete="off"
-                    placeholder="Buscar sede o ciudad..."
+                    placeholder="Buscar sede o ciudad…"
                     value={sedeBusqueda}
                     onChange={onSedeInputChange}
                     onFocus={() => {
@@ -673,7 +685,7 @@ export default function ArmarPartido() {
                       sedeBlurTimerRef.current = window.setTimeout(() => setSedeDropdownOpen(false), 180);
                     }}
                     disabled={loadingSedes}
-                    style={{ ...AP.field, flex: 1, minWidth: 0, marginTop: 0 }}
+                    style={{ ...AP.field, flex: 1, marginTop: 0 }}
                   />
                   {sedeBusqueda.trim() || form.sedeId ? (
                     <button
@@ -682,7 +694,6 @@ export default function ArmarPartido() {
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={limpiarSedeSeleccion}
                       style={{
-                        flexShrink: 0,
                         width: 44,
                         minHeight: 44,
                         borderRadius: 10,
@@ -690,16 +701,14 @@ export default function ArmarPartido() {
                         background: 'var(--bg-page)',
                         color: 'var(--text-secondary)',
                         fontSize: 22,
-                        lineHeight: 1,
                         cursor: 'pointer',
-                        fontWeight: 700,
                       }}
                     >
                       ×
                     </button>
                   ) : null}
                 </div>
-                {sedeDropdownOpen && step === 2 ? (
+                {sedeDropdownOpen && step === 1 ? (
                   <div
                     role="listbox"
                     onMouseDown={(e) => e.preventDefault()}
@@ -715,16 +724,14 @@ export default function ArmarPartido() {
                       borderRadius: 12,
                       maxHeight: SEDE_SUGGEST_MAX_VISIBLE_PX,
                       overflowY: 'auto',
-                      WebkitOverflowScrolling: 'touch',
                       boxShadow: '0 12px 28px rgba(0,0,0,0.18)',
-                      boxSizing: 'border-box',
                     }}
                   >
                     {loadingSedes ? (
-                      <div style={{ padding: 14, color: 'var(--text-secondary)', fontSize: 14 }}>Cargando sedes…</div>
+                      <div style={{ padding: 14, fontSize: 14 }}>Cargando sedes…</div>
                     ) : sedesListaMostrada.length === 0 ? (
-                      <div style={{ padding: 14, color: 'var(--text-secondary)', fontSize: 14 }}>
-                        {sedeBusquedaNorm.length >= 2 ? 'No hay sedes que coincidan.' : 'No hay sedes disponibles.'}
+                      <div style={{ padding: 14, fontSize: 14, color: 'var(--text-secondary)' }}>
+                        No hay sedes disponibles.
                       </div>
                     ) : (
                       sedesListaMostrada.map((s, idx) => {
@@ -758,7 +765,7 @@ export default function ArmarPartido() {
                             }}
                           >
                             <span style={{ fontWeight: 800, display: 'block' }}>{s.nombre}</span>
-                            <span style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.35 }}>
+                            <span style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
                               {loc || '—'} · {depLine}
                             </span>
                           </button>
@@ -768,191 +775,372 @@ export default function ArmarPartido() {
                   </div>
                 ) : null}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-                {canchas.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, cancha: c, hora: '' }))}
-                    disabled={!sede}
+
+              {sede ? (
+                <>
+                  <label style={{ ...AP.label, marginTop: 16 }}>Día</label>
+                  <div
                     style={{
-                      ...AP.gridBtn(Number(form.cancha) === c),
-                      opacity: sede ? 1 : 0.5,
-                      cursor: sede ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      gap: 8,
+                      overflowX: 'auto',
+                      paddingBottom: 6,
+                      marginTop: 8,
+                      WebkitOverflowScrolling: 'touch',
                     }}
                   >
-                    Cancha {c}
+                    {dias7.map((iso, idx) => {
+                      const active = form.fecha === iso;
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, fecha: iso, hora: '' }))}
+                          style={{
+                            flex: '0 0 auto',
+                            minWidth: 88,
+                            padding: '12px 14px',
+                            borderRadius: 12,
+                            border: active ? `2px solid ${ACCENT}` : '1px solid var(--border)',
+                            background: active ? 'rgba(229, 57, 53, 0.12)' : 'var(--bg-page)',
+                            color: 'var(--text-primary)',
+                            fontWeight: 800,
+                            fontSize: 13,
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {labelDiaCorta(iso, idx)}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {duracionesOfrecidas.length > 1 ? (
+                    <>
+                      <label style={{ ...AP.label, marginTop: 14 }}>Duración</label>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: 8,
+                          flexWrap: 'wrap',
+                          marginTop: 8,
+                        }}
+                      >
+                        {duracionesOfrecidas.map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, duracion: d, hora: '' }))}
+                            style={{
+                              padding: '12px 16px',
+                              borderRadius: 12,
+                              border:
+                                Number(form.duracion) === d ? `2px solid ${ACCENT}` : '1px solid var(--border)',
+                              background:
+                                Number(form.duracion) === d ? 'rgba(229, 57, 53, 0.12)' : 'var(--bg-page)',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            {d} min
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  <label style={{ ...AP.label, marginTop: 16 }}>Horarios disponibles</label>
+                  {slotsLoading ? (
+                    <p style={{ ...AP.sub, marginTop: 8 }}>Cargando horarios…</p>
+                  ) : slotsApi.length === 0 ? (
+                    <p style={{ ...AP.sub, marginTop: 8 }}>
+                      No hay turnos libres para esta fecha y duración. Probá otro día o duración.
+                    </p>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, minmax(0,1fr))',
+                        gap: 8,
+                        marginTop: 10,
+                      }}
+                    >
+                      {slotsApi.map((s) => {
+                        const h = s.hora_inicio || String(s.horario || '').split(' - ')[0];
+                        const active = String(form.hora).split(' - ')[0].trim() === h;
+                        return (
+                          <button
+                            key={`${h}-${s.hora_fin || ''}`}
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, hora: h, cancha: '' }))}
+                            style={{
+                              padding: '12px 8px',
+                              borderRadius: 12,
+                              border: active ? `2px solid ${ACCENT}` : '1px solid var(--border)',
+                              background: active ? 'rgba(229, 57, 53, 0.12)' : 'var(--bg-page)',
+                              fontWeight: 800,
+                              fontSize: 14,
+                              cursor: 'pointer',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            {h}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={irPaso2}
+                    style={{
+                      width: '100%',
+                      marginTop: 18,
+                      padding: 14,
+                      border: 'none',
+                      borderRadius: 12,
+                      background: ACCENT,
+                      color: '#fff',
+                      fontWeight: 900,
+                      fontSize: 16,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Ver canchas →
                   </button>
-                ))}
-              </div>
+                </>
+              ) : null}
+            </>
+          ) : null}
+
+          {step === 2 ? (
+            <>
+              <h1 style={AP.title}>Canchas disponibles</h1>
+              <p style={AP.body}>
+                {sede?.nombre} · {form.fecha} · {String(form.hora).split(' - ')[0]} · {form.duracion} min
+              </p>
+              {dispLoading ? (
+                <p style={AP.sub}>Consultando disponibilidad…</p>
+              ) : dispCanchas.length === 0 ? (
+                <p style={AP.sub}>No hay canchas para mostrar. Volvé al paso anterior.</p>
+              ) : (
+                <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                  {dispCanchas.map((c) => {
+                    const sel = Number(form.cancha) === Number(c.numero);
+                    const ok = c.disponible;
+                    return (
+                      <button
+                        key={c.numero}
+                        type="button"
+                        disabled={!ok}
+                        onClick={() => ok && setForm((f) => ({ ...f, cancha: c.numero }))}
+                        style={{
+                          textAlign: 'left',
+                          padding: 14,
+                          borderRadius: 14,
+                          border: sel ? `2px solid ${ACCENT}` : '1px solid var(--border)',
+                          background: sel ? 'rgba(229, 57, 53, 0.1)' : 'var(--bg-page)',
+                          opacity: ok ? 1 : 0.65,
+                          cursor: ok ? 'pointer' : 'not-allowed',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        <strong style={{ display: 'block', fontSize: 16 }}>{c.nombre}</strong>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            marginTop: 8,
+                            fontWeight: 900,
+                            fontSize: 13,
+                            color: ok ? '#16a34a' : '#dc2626',
+                          }}
+                        >
+                          {ok ? 'Libre' : 'Ocupada'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <button
+                type="button"
+                disabled={!canchaLibreSeleccionada}
+                onClick={irPaso3}
+                style={{
+                  width: '100%',
+                  marginTop: 18,
+                  padding: 14,
+                  border: 'none',
+                  borderRadius: 12,
+                  background: canchaLibreSeleccionada ? ACCENT : '#9ca3af',
+                  color: '#fff',
+                  fontWeight: 900,
+                  fontSize: 16,
+                  cursor: canchaLibreSeleccionada ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Reservar {form.cancha ? sedeNombreCancha(form.cancha) : 'cancha'}
+              </button>
             </>
           ) : null}
 
           {step === 3 ? (
             <>
-              <h1 style={AP.title}>Fecha, hora y duración</h1>
-              <input type="date" min={todayISO()} value={form.fecha} onChange={(e) => setForm((f) => ({ ...f, fecha: e.target.value, hora: '' }))} style={{ ...AP.field, marginBottom: 12 }} />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 12 }}>
-                {DURACIONES.map((d) => (
-                  <button key={d} type="button" onClick={() => setForm((f) => ({ ...f, duracion: d, hora: '' }))} style={AP.gridBtnSm(Number(form.duracion) === d)}>
-                    {d} min
-                  </button>
-                ))}
+              <h1 style={AP.title}>Confirmar y pagar</h1>
+              <div
+                style={{
+                  background: 'var(--bg-page)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 14,
+                  padding: 14,
+                  marginBottom: 14,
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <div>
+                  <strong>Sede:</strong> {sede?.nombre}
+                </div>
+                <div>
+                  <strong>Cancha:</strong> {sedeNombreCancha(form.cancha)}
+                </div>
+                <div>
+                  <strong>Fecha:</strong> {form.fecha}
+                </div>
+                <div>
+                  <strong>Hora:</strong> {String(form.hora).split(' - ')[0]}
+                </div>
+                <div>
+                  <strong>Duración:</strong> {form.duracion} minutos
+                </div>
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
+                <div>
+                  <strong>Precio del turno:</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                  Cargo por servicio Padbol Match (3%): {sede?.moneda || 'ARS'}{' '}
+                  {cargoPlataforma.toLocaleString('es-AR')}
+                </div>
+                <div style={{ marginTop: 8, fontWeight: 900, fontSize: 16 }}>
+                  Total a pagar: {sede?.moneda || 'ARS'} {precioTotal.toLocaleString('es-AR')}
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                {slots.length ? (
-                  slots.map((h) => (
-                    <button key={h} type="button" onClick={() => setForm((f) => ({ ...f, hora: h }))} style={AP.gridBtnSm(form.hora === h)}>
-                      {h}
-                    </button>
-                  ))
-                ) : (
-                  <p style={{ gridColumn: '1/-1', color: 'var(--text-secondary)' }}>No hay horarios disponibles para esa cancha y duración.</p>
-                )}
-              </div>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  cursor: 'pointer',
+                  marginBottom: 16,
+                  fontWeight: 700,
+                  fontSize: 15,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={publicarPartido}
+                  onChange={(e) => setPublicarPartido(e.target.checked)}
+                />
+                ¿Publicar este partido en «Buscar partido»?
+              </label>
+              <p style={{ ...AP.body, fontSize: 13, marginTop: -8 }}>
+                Si lo activás, otros jugadores van a poder pedir unirse. Si no, solo queda tu reserva
+                confirmada.
+              </p>
+
+              <button
+                type="button"
+                onClick={pagarYPublicar}
+                disabled={paying}
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: 14,
+                  background: paying ? '#9ca3af' : `linear-gradient(135deg, ${ACCENT}, #b91c1c)`,
+                  color: '#fff',
+                  fontWeight: 900,
+                  cursor: paying ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {paying ? 'Preparando pago…' : 'Ir a pagar'}
+              </button>
             </>
           ) : null}
 
           {step === 4 ? (
             <>
-              <h1 style={AP.title}>Jugadores confirmados</h1>
-              <p style={AP.sub}>El partido necesita {form.jugadoresRequeridos} jugadores. Cuenta contigo y con quienes ya tienes confirmados.</p>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 22,
-                  marginTop: 14,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <button
-                  type="button"
-                  aria-label="Quitar jugador confirmado"
-                  disabled={form.jugadoresConfirmados <= 1}
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      jugadoresConfirmados: Math.max(1, Number(f.jugadoresConfirmados) - 1),
-                    }))
-                  }
-                  style={{
-                    width: 54,
-                    height: 54,
-                    borderRadius: '50%',
-                    border: 'none',
-                    background: 'var(--accent)',
-                    color: '#fff',
-                    fontSize: 28,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    cursor: form.jugadoresConfirmados <= 1 ? 'not-allowed' : 'pointer',
-                    opacity: form.jugadoresConfirmados <= 1 ? 0.42 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
-                  }}
-                >
-                  −
-                </button>
-                <span
-                  style={{
-                    fontSize: 32,
-                    fontWeight: 900,
-                    minWidth: 52,
-                    textAlign: 'center',
-                    color: 'var(--text-primary)',
-                    letterSpacing: '-0.02em',
-                  }}
-                  aria-live="polite"
-                >
-                  {form.jugadoresConfirmados}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Agregar jugador confirmado"
-                  disabled={form.jugadoresConfirmados >= form.jugadoresRequeridos}
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      jugadoresConfirmados: Math.min(
-                        Number(f.jugadoresRequeridos),
-                        Number(f.jugadoresConfirmados) + 1,
-                      ),
-                    }))
-                  }
-                  style={{
-                    width: 54,
-                    height: 54,
-                    borderRadius: '50%',
-                    border: 'none',
-                    background: 'var(--accent)',
-                    color: '#fff',
-                    fontSize: 28,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    cursor: form.jugadoresConfirmados >= form.jugadoresRequeridos ? 'not-allowed' : 'pointer',
-                    opacity: form.jugadoresConfirmados >= form.jugadoresRequeridos ? 0.42 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
-                  }}
-                >
-                  +
-                </button>
-              </div>
-              <p
-                style={{
-                  margin: '16px 0 0',
-                  fontWeight: 900,
-                  fontSize: 16,
-                  textAlign: 'center',
-                  color:
-                    Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados) === 0
-                      ? 'var(--accent)'
-                      : 'var(--pm-color-primary)',
-                }}
-              >
-                {Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados) === 0
-                  ? '¡Equipo completo!'
-                  : `Faltan ${Math.max(0, form.jugadoresRequeridos - form.jugadoresConfirmados)} jugadores`}
+              <h1 style={AP.title}>{publicado ? 'Partido publicado' : 'Reserva registrada'}</h1>
+              <p style={AP.body}>
+                {publicado
+                  ? 'Tu reserva está confirmada y el partido ya está visible para que otros se sumen.'
+                  : 'Tu reserva quedó registrada. Te vamos a contactar según la configuración de la sede.'}
               </p>
-            </>
-          ) : null}
-
-          {step === 5 ? (
-            <>
-              <h1 style={AP.title}>Pagar y publicar</h1>
-              <p style={AP.body}>Al pagar la reserva, el partido queda publicado automáticamente como abierto y vas a poder compartirlo por WhatsApp.</p>
-              <div style={AP.resumen}>
-                {sede?.nombre} · Cancha {form.cancha} · {form.fecha}
-                {horaFormOk(form.hora) ? ` · ${String(form.hora).trim()}` : ' · (sin horario)'} · {form.duracion} min<br />
-                Total reserva: <strong>{sede?.moneda || 'ARS'} {precio}</strong>
-              </div>
-              <button type="button" onClick={pagarYPublicar} disabled={paying} style={AP.pay(paying)}>
-                {paying ? 'Preparando pago...' : 'Pagar reserva y publicar'}
+              {publicado ? (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <a
+                    href={shareUrl()}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      textAlign: 'center',
+                      borderRadius: 12,
+                      padding: 13,
+                      background: '#22c55e',
+                      color: '#fff',
+                      fontWeight: 900,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Compartir por WhatsApp
+                  </a>
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => navigate('/partidos-abiertos')}
+                style={{
+                  marginTop: 12,
+                  width: '100%',
+                  border: '1px solid var(--border)',
+                  borderRadius: 12,
+                  padding: 13,
+                  background: 'var(--bg-page)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                }}
+              >
+                Ir a buscar partido
               </button>
             </>
           ) : null}
 
-          {step === 6 ? (
-            <>
-              <h1 style={AP.title}>Partido publicado</h1>
-              <p style={AP.body}>Tu partido ya aparece para que otros se unan.</p>
-              <div style={{ display: 'grid', gap: 10 }}>
-                <a href={shareUrl(publicado)} target="_blank" rel="noreferrer" style={{ textAlign: 'center', borderRadius: 12, padding: 13, background: 'var(--pm-color-primary)', color: '#fff', fontWeight: 900, textDecoration: 'none' }}>Compartir por WhatsApp</a>
-                <button type="button" onClick={() => navigate('/partidos-abiertos')} style={AP.linkSec}>Ver cupos para unirte</button>
-              </div>
-            </>
-          ) : null}
-
-          {step < 5 ? (
+          {step < 4 ? (
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              <button type="button" onClick={retrocederPaso} disabled={step === 1} style={{ ...AP.navAtrás, opacity: step === 1 ? 0.45 : 1 }}>Atrás</button>
-              <button type="button" onClick={validarYAvanzar} style={AP.navSig}>Siguiente</button>
+              <button
+                type="button"
+                onClick={retrocederPaso}
+                disabled={step === 1}
+                style={{
+                  flex: 1,
+                  border: '1px solid var(--border)',
+                  borderRadius: 12,
+                  padding: 12,
+                  background: 'var(--bg-page)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 900,
+                  opacity: step === 1 ? 0.45 : 1,
+                  cursor: step === 1 ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Atrás
+              </button>
             </div>
           ) : null}
         </section>

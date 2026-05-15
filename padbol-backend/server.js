@@ -2686,6 +2686,87 @@ app.get('/api/sedes/:id/disponibilidad-slots', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/reservas/disponibilidad?sede_id=&fecha=YYYY-MM-DD&hora_inicio=HH:MM&duracion_minutos=90&deporte=
+ * Público: por cada cancha activa de la sede indica si el intervalo [hora_inicio, hora_inicio+duracion]
+ * está libre u ocupado (solape con reservas no canceladas).
+ */
+app.get('/api/reservas/disponibilidad', async (req, res) => {
+  try {
+    const sedeId = parseInt(String(req.query.sede_id || '').trim(), 10);
+    const fecha = String(req.query.fecha || '').trim().slice(0, 10);
+    const horaInicioRaw = String(req.query.hora_inicio || '').trim();
+    const durRaw = parseInt(String(req.query.duracion_minutos ?? '90'), 10);
+    const deporteCanon = normalizeChatIaDeporteToolInput(req.query?.deporte);
+    if (!Number.isFinite(sedeId) || sedeId <= 0) return res.status(400).json({ error: 'sede_id inválido' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return res.status(400).json({ error: 'fecha requerida (YYYY-MM-DD)' });
+    }
+    const duracion = [60, 90, 120].includes(durRaw) ? durRaw : 90;
+    const horaLimpia = horaInicioRaw.split(' - ')[0].trim();
+    const inicioMin = minutosDesdeHoraReservaBackend(horaLimpia);
+    if (inicioMin == null) return res.status(400).json({ error: 'hora_inicio inválida (HH:MM)' });
+    const sedeFull = await chatIaFetchSedeFullForTool(supabase, sedeId);
+    if (!sedeFull) return res.status(404).json({ error: 'Sede no encontrada' });
+    const nombreSede = String(sedeFull.nombre || '').trim();
+    if (!nombreSede) return res.status(500).json({ error: 'Sede sin nombre' });
+
+    let numsSlots = chatIaSlotsReservaDesdeSede(sedeFull);
+    if (deporteCanon) {
+      const r = await chatIaResolveNumerosCanchaParaDeporte(supabase, sedeFull, deporteCanon);
+      if (r.error) return res.status(500).json({ error: r.error });
+      if (!Array.isArray(r.numeros) || r.numeros.length === 0) {
+        return res.json({
+          sede_id: sedeId,
+          sede_nombre: nombreSede,
+          fecha,
+          hora_inicio: horaLimpia,
+          duracion_minutos: duracion,
+          canchas: [],
+        });
+      }
+      numsSlots = r.numeros;
+    }
+
+    const { data: reservadas, error: rErr } = await supabase
+      .from('reservas')
+      .select('*')
+      .eq('sede', nombreSede)
+      .eq('fecha', fecha);
+    if (rErr) throw rErr;
+    const lista = Array.isArray(reservadas) ? reservadas : [];
+
+    const canchasMeta = Array.isArray(sedeFull.canchas_activas) ? sedeFull.canchas_activas : [];
+    const canchas = numsSlots.map((num) => {
+      const ca = canchasMeta.find((x) => Number(x.numero) === Number(num));
+      const nombreC = String(ca?.nombre || '').trim() || `Cancha ${num}`;
+      const ocupada = lista.some(
+        (row) =>
+          reservaEstadoBloqueaSlotBackend(row) &&
+          parseInt(String(row.cancha), 10) === Number(num) &&
+          reservasSolapanBackend(inicioMin, duracion, row),
+      );
+      return {
+        numero: Number(num),
+        nombre: nombreC,
+        disponible: !ocupada,
+      };
+    });
+
+    res.json({
+      sede_id: sedeId,
+      sede_nombre: nombreSede,
+      fecha,
+      hora_inicio: horaLimpia,
+      duracion_minutos: duracion,
+      canchas,
+    });
+  } catch (err) {
+    console.error('❌ GET /api/reservas/disponibilidad:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 function minutosDesdeHoraReservaBackend(horaRaw) {
   const t = String(horaRaw || '').split(' - ')[0].trim();
   const m = /^(\d{1,2}):(\d{2})/.exec(t);
@@ -8541,7 +8622,15 @@ async function publicarPartidoAbiertoDesdePayload(payload, reservaRow = null) {
 async function crearReservaYPartidoAbiertoDesdePayload(payload) {
   const reservaRes = await crearReservaConfirmadaDesdePayloadMp(payload);
   const reservaRow = Array.isArray(reservaRes?.data) ? reservaRes.data[0] : null;
-  return publicarPartidoAbiertoDesdePayload(payload, reservaRow);
+  const publicar =
+    payload.publicar_partido === true ||
+    payload.publicar_partido === 'true' ||
+    String(payload.publicar_partido || '').toLowerCase() === 'true';
+  if (!publicar) {
+    return { ok: true, reserva: reservaRow || null, partido: null };
+  }
+  const pub = await publicarPartidoAbiertoDesdePayload(payload, reservaRow);
+  return { ...pub, reserva: reservaRow || null };
 }
 
 app.get('/api/partidos-abiertos', async (req, res) => {
@@ -9077,8 +9166,14 @@ app.post('/api/crear-preferencia', async (req, res) => {
       if (resErr) throw resErr;
       let partidoCreado = null;
       if (String(r.tipo || '').trim().toLowerCase() === 'partido_abierto') {
-        const pub = await publicarPartidoAbiertoDesdePayload(r, reservaCreada);
-        partidoCreado = pub.partido || null;
+        const publicar =
+          r.publicar_partido === true ||
+          r.publicar_partido === 'true' ||
+          String(r.publicar_partido || '').toLowerCase() === 'true';
+        if (publicar) {
+          const pub = await publicarPartidoAbiertoDesdePayload(r, reservaCreada);
+          partidoCreado = pub.partido || null;
+        }
       }
       if (reservaCreada?.id != null) {
         await insertReservaHistorialEstado(supabase, {
