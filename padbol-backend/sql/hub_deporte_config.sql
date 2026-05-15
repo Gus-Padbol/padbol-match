@@ -1,6 +1,9 @@
 -- Hub: fotos y textos por deporte y card (Reservar / Buscar partido / Torneos / Armar partido).
 -- No reemplaza la tabla legacy `hub_config` (CMS por id texto + orden); conviven.
 -- Ejecutar en Supabase SQL Editor o como migración.
+--
+-- Si las fotos de un deporte pisaban a otro, puede haber existido UNIQUE errónea solo en card_key:
+-- ver `hub_deporte_config_fix_unique_deporte_card.sql`.
 
 CREATE TABLE IF NOT EXISTS hub_deporte_config (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,

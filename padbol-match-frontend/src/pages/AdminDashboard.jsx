@@ -7528,11 +7528,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           const manualInput = {
             width: '100%',
             padding: '9px 10px',
-            border: '1px solid #cbd5e1',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
             fontSize: '14px',
             boxSizing: 'border-box',
-            background: 'var(--bg-card)',
+            background: 'var(--bg-input)',
+            color: 'var(--text-primary)',
+            WebkitTextFillColor: 'var(--text-primary)',
           };
           const manualActionButton = (extra) => ({
             padding: '9px 14px',

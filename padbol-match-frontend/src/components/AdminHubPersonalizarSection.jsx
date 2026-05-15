@@ -6,18 +6,27 @@ const cardWrap = {
   marginBottom: '20px',
   padding: '16px',
   borderRadius: '12px',
-  background: 'rgba(255,255,255,0.95)',
-  color: '#0f172a',
-  boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+  background: 'var(--bg-card)',
+  color: 'var(--text-primary)',
+  border: '1px solid var(--border)',
+  boxShadow: 'var(--pm-shadow-card, 0 2px 12px rgba(0,0,0,0.12))',
 };
 
-const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px' };
+const labelStyle = {
+  display: 'block',
+  fontSize: '12px',
+  fontWeight: 700,
+  color: 'var(--text-secondary)',
+  marginBottom: '6px',
+};
 const inputStyle = {
   width: '100%',
   boxSizing: 'border-box',
   padding: '10px 12px',
   borderRadius: '8px',
-  border: '1px solid #cbd5e1',
+  border: '1px solid var(--border)',
+  background: 'var(--bg-input)',
+  color: 'var(--text-primary)',
   fontSize: '15px',
   marginBottom: '10px',
 };
@@ -32,6 +41,15 @@ const HUB_DEPORTE_CARDS = [
 
 function draftKeyDeporte(deporte, cardKey) {
   return `${String(deporte || '').trim().toLowerCase()}|${String(cardKey || '').trim()}`;
+}
+
+/** Mensajes de éxito vs error legibles en claro y oscuro. */
+function hubEditorNoticeStyle(text) {
+  const t = String(text || '');
+  if (/Guardado correctamente|Foto actualizada/i.test(t)) {
+    return { color: 'var(--pm-color-success, #16a34a)', fontWeight: 600 };
+  }
+  return { color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 };
 }
 
 export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken }) {
@@ -205,7 +223,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     const file = e.target.files?.[0];
     e.target.value = '';
     uploadTargetIdRef.current = null;
-    if (!id || !file || !accessToken) return;
+    if (!id || !file) return;
+    if (!accessToken) {
+      setMsg('Iniciá sesión de nuevo para subir imágenes.');
+      return;
+    }
     setUploadingId(id);
     setMsg('');
     try {
@@ -233,14 +255,23 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     const file = e.target.files?.[0];
     e.target.value = '';
     uploadDeporteTargetRef.current = null;
-    if (!target?.deporte || !target?.cardKey || !file || !accessToken) return;
+    if (!accessToken) {
+      setDeporteMsg('Iniciá sesión de nuevo para subir imágenes.');
+      return;
+    }
+    if (!target?.deporte || !target?.cardKey) {
+      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
+      return;
+    }
+    if (!file) return;
     setUploadingDeporteKey(draftKeyDeporte(target.deporte, target.cardKey));
     setDeporteMsg('');
     try {
       const fd = new FormData();
-      fd.append('foto', file);
+      /* Campos de texto primero: algunos stacks multipart no rellenan req.body si el archivo va antes. */
       fd.append('deporte', target.deporte);
       fd.append('card_key', target.cardKey);
+      fd.append('foto', file);
       const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config/foto`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -274,20 +305,20 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
 
   if (loading) {
     return (
-      <div className="section" style={{ color: 'rgba(255,255,255,0.92)' }}>
+      <div className="section" style={{ color: 'var(--text-primary)' }}>
         <p style={{ margin: 0 }}>Cargando configuración del hub…</p>
       </div>
     );
   }
 
   return (
-    <div className="section">
-      <h2 style={{ marginBottom: '12px', paddingBottom: '8px', color: 'rgba(255,255,255,0.95)' }}>
+    <div className="section admin-hub-personalizar-root" style={{ color: 'var(--text-primary)' }}>
+      <h2 style={{ marginBottom: '12px', paddingBottom: '8px', color: 'var(--text-primary)' }}>
         Personalizar Hub
       </h2>
-      <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', lineHeight: 1.45, marginBottom: '16px' }}>
-        Editá título, subtítulo e imagen por deporte (tabla <code style={{ color: '#fff' }}>hub_deporte_config</code>
-        ) y las cards globales legacy (<code style={{ color: '#fff' }}>hub_config</code>). El jugador ve primero la
+      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.45, marginBottom: '16px' }}>
+        Editá título, subtítulo e imagen por deporte (tabla <code style={{ color: 'var(--accent)' }}>hub_deporte_config</code>
+        ) y las cards globales legacy (<code style={{ color: 'var(--accent)' }}>hub_config</code>). El jugador ve primero la
         config por deporte si existe; si no, el CMS global y las fotos por defecto.
       </p>
 
@@ -296,17 +327,20 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           margin: '0 0 10px',
           fontSize: '16px',
           fontWeight: 800,
-          color: 'rgba(255,255,255,0.95)',
+          color: 'var(--text-primary)',
         }}
       >
         Fotos y textos por deporte
       </h3>
-      <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', marginBottom: '12px', lineHeight: 1.45 }}>
-        Ejecutá en Supabase el SQL <code style={{ color: '#fef08a' }}>padbol-backend/sql/hub_deporte_config.sql</code>{' '}
-        si la tabla aún no existe.
+      <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '12px', lineHeight: 1.45 }}>
+        Ejecutá en Supabase el SQL <code style={{ color: 'var(--accent)' }}>padbol-backend/sql/hub_deporte_config.sql</code>{' '}
+        si la tabla aún no existe. Si un deporte pisaba a otro, corregí la UNIQUE con{' '}
+        <code style={{ color: 'var(--accent)' }}>hub_deporte_config_fix_unique_deporte_card.sql</code>.
       </p>
       {deporteMsg ? (
-        <p style={{ color: '#fef08a', fontSize: '14px', marginBottom: '14px', fontWeight: 600 }}>{deporteMsg}</p>
+        <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(deporteMsg) }}>
+          {deporteMsg}
+        </p>
       ) : null}
       <input
         ref={fileRefDeporte}
@@ -316,7 +350,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         onChange={(ev) => void onFileChangeDeporte(ev)}
       />
 
-      <label style={{ ...labelStyle, color: 'rgba(255,255,255,0.9)' }} htmlFor="hub-admin-deporte-select">
+      <label style={{ ...labelStyle, color: 'var(--text-secondary)' }} htmlFor="hub-admin-deporte-select">
         Deporte
       </label>
       <select
@@ -339,7 +373,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       </select>
 
       {deporteLoading ? (
-        <p style={{ color: 'rgba(255,255,255,0.88)' }}>Cargando configuración por deporte…</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Cargando configuración por deporte…</p>
       ) : (
         HUB_DEPORTE_CARDS.map(({ key: cardKey, label }) => {
           const dk = draftKeyDeporte(sportSel, cardKey);
@@ -352,7 +386,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           const uploading = uploadingDeporteKey === dk;
           return (
             <div key={dk} style={cardWrap}>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>{label}</div>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>{label}</div>
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
                 <div style={{ flex: '0 0 140px' }}>
                   <span style={labelStyle}>Vista previa</span>
@@ -362,7 +396,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                       height: '88px',
                       borderRadius: '8px',
                       overflow: 'hidden',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       background: '#64748b center/cover no-repeat',
                       backgroundImage: `url(${previewUrl})`,
                     }}
@@ -441,17 +475,21 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           margin: '28px 0 10px',
           fontSize: '16px',
           fontWeight: 800,
-          color: 'rgba(255,255,255,0.95)',
+          color: 'var(--text-primary)',
         }}
       >
         Cards globales (legacy)
       </h3>
-      {msg ? <p style={{ color: '#fef08a', fontSize: '14px', marginBottom: '14px', fontWeight: 600 }}>{msg}</p> : null}
+      {msg ? (
+        <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(msg) }}>
+          {msg}
+        </p>
+      ) : null}
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(ev) => void onFileChange(ev)} />
 
       {!rows.length ? (
-        <p style={{ color: 'rgba(255,255,255,0.88)' }}>
-          No hay filas en <code style={{ color: '#fff' }}>hub_config</code>. Crea registros en Supabase (7 cards con{' '}
+        <p style={{ color: 'var(--text-secondary)' }}>
+          No hay filas en <code style={{ color: 'var(--accent)' }}>hub_config</code>. Crea registros en Supabase (7 cards con{' '}
           <code>id</code> texto y <code>orden</code>).
         </p>
       ) : null}
@@ -463,7 +501,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         const previewUrl = String(row.foto_url || '').trim() || defaultHubCardImageForId(id);
         return (
           <div key={id} style={cardWrap}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', letterSpacing: '0.04em', marginBottom: '10px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.04em', marginBottom: '10px' }}>
               ID: {id}
             </div>
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
@@ -475,7 +513,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                     height: '88px',
                     borderRadius: '8px',
                     overflow: 'hidden',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     background: '#64748b center/cover no-repeat',
                     backgroundImage: `url(${previewUrl})`,
                   }}

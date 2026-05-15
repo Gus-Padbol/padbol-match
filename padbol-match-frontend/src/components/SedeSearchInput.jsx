@@ -103,6 +103,8 @@ export default function SedeSearchInput({
         style={{
           width: '100%',
           boxSizing: 'border-box',
+          color: 'var(--text-primary)',
+          WebkitTextFillColor: 'var(--text-primary)',
           ...inputStyle,
         }}
       />

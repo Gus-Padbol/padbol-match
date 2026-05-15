@@ -417,7 +417,7 @@
 .sedes-admin-filter-label {
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .sedes-admin-filter-select {
@@ -428,9 +428,9 @@
   font-size: 16px;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: var(--bg-card);
-  color: #0f172a;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
 
 @media (min-width: 768px) {
@@ -646,7 +646,7 @@ html.theme-light .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingr
 }
 
 .admin-dashboard--super .sedes-admin-filter-select {
-  background: var(--pm-color-muted-bg) !important;
+  background: var(--bg-input) !important;
   color: var(--text-primary) !important;
   border-color: var(--border) !important;
 }
@@ -1136,6 +1136,11 @@ html.theme-dark .admin-editar-sede-dialog {
   }
 }
 
+/* Editor hub: hereda texto del tema (evita texto blanco al pasar de oscuro a claro) */
+.admin-hub-personalizar-root {
+  color: var(--text-primary);
+}
+
 /* Panel admin: texto y placeholders legibles en tema oscuro (incl. Safari / autofill) */
 .admin-dashboard input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='button']):not([type='submit']),
 .admin-dashboard select,
@@ -1144,6 +1149,12 @@ html.theme-dark .admin-editar-sede-dialog {
   -webkit-text-fill-color: var(--text-primary) !important;
   background-color: var(--bg-input) !important;
   border: 1px solid var(--border) !important;
+}
+
+.admin-dashboard select option,
+.admin-dashboard select optgroup {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
 }
 
 .admin-dashboard input::placeholder,

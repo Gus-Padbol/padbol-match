@@ -1555,6 +1555,59 @@ function assertHubDeporteParams(deporteRaw, cardKeyRaw) {
   return { ok: true, deporte, card_key };
 }
 
+/**
+ * INSERT/UPDATE explícito por (deporte, card_key) — equivalente a ON CONFLICT (deporte, card_key) DO UPDATE.
+ * Evita depender del target de upsert de PostgREST y asegura que nunca se pisen filas de otro deporte.
+ */
+async function upsertHubDeporteConfigByDeporteCard({
+  deporte,
+  card_key,
+  titulo,
+  subtitulo,
+  foto_url,
+}) {
+  const updated_at = new Date().toISOString();
+  const { data: updated, error: upErr } = await supabase
+    .from('hub_deporte_config')
+    .update({ titulo, subtitulo, foto_url, updated_at })
+    .eq('deporte', deporte)
+    .eq('card_key', card_key)
+    .select('*');
+  if (upErr) throw upErr;
+  if (Array.isArray(updated) && updated.length > 0) return updated[0];
+
+  const { data: inserted, error: inErr } = await supabase
+    .from('hub_deporte_config')
+    .insert({
+      deporte,
+      card_key,
+      titulo,
+      subtitulo,
+      foto_url,
+      updated_at,
+    })
+    .select('*')
+    .maybeSingle();
+
+  if (!inErr) return inserted;
+
+  const duplicate =
+    inErr.code === '23505' ||
+    /duplicate key|unique constraint/i.test(String(inErr.message || ''));
+  if (duplicate) {
+    const { data: retry, error: rErr } = await supabase
+      .from('hub_deporte_config')
+      .update({ titulo, subtitulo, foto_url, updated_at })
+      .eq('deporte', deporte)
+      .eq('card_key', card_key)
+      .select('*')
+      .maybeSingle();
+    if (rErr) throw rErr;
+    return retry;
+  }
+  throw inErr;
+}
+
 /** GET /api/hub-deporte-config — público: filas { deporte, card_key, foto_url, titulo, subtitulo } para el hub. */
 app.get('/api/hub-deporte-config', async (req, res) => {
   try {
@@ -1604,19 +1657,17 @@ app.patch('/api/hub-deporte-config', async (req, res) => {
     if (exErr) throw exErr;
 
     const merged = {
-      deporte,
-      card_key,
       titulo: titulo !== undefined ? titulo : String(ex?.titulo ?? ''),
       subtitulo: subtitulo !== undefined ? subtitulo : ex?.subtitulo != null ? String(ex.subtitulo) : '',
       foto_url: foto_url !== undefined ? foto_url : ex?.foto_url != null ? ex.foto_url : null,
-      updated_at: new Date().toISOString(),
     };
-    const { data, error } = await supabase
-      .from('hub_deporte_config')
-      .upsert(merged, { onConflict: 'deporte,card_key' })
-      .select('*')
-      .maybeSingle();
-    if (error) throw error;
+    const data = await upsertHubDeporteConfigByDeporteCard({
+      deporte,
+      card_key,
+      titulo: merged.titulo,
+      subtitulo: merged.subtitulo,
+      foto_url: merged.foto_url,
+    });
     res.json(data);
   } catch (err) {
     const st = err.status || 500;
@@ -1634,7 +1685,12 @@ app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (re
   try {
     await assertEsEditorContenidoOSuperAdmin(req);
     const chk = assertHubDeporteParams(req.body?.deporte, req.body?.card_key);
-    if (!chk.ok) return res.status(chk.status).json({ error: chk.error });
+    if (!chk.ok) {
+      console.warn('POST /api/hub-deporte-config/foto: body inválido o incompleto (¿orden multipart?)', {
+        bodyKeys: req.body && typeof req.body === 'object' ? Object.keys(req.body) : [],
+      });
+      return res.status(chk.status).json({ error: chk.error });
+    }
     const { deporte, card_key } = chk;
     if (!req.file?.buffer) return res.status(400).json({ error: 'Archivo requerido (campo "foto")' });
 
@@ -1657,20 +1713,13 @@ app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (re
       .maybeSingle();
     if (exErr) throw exErr;
 
-    const merged = {
+    const data = await upsertHubDeporteConfigByDeporteCard({
       deporte,
       card_key,
       titulo: String(ex?.titulo ?? ''),
       subtitulo: ex?.subtitulo != null ? String(ex.subtitulo) : '',
       foto_url: fotoUrl,
-      updated_at: new Date().toISOString(),
-    };
-    const { data, error } = await supabase
-      .from('hub_deporte_config')
-      .upsert(merged, { onConflict: 'deporte,card_key' })
-      .select('*')
-      .maybeSingle();
-    if (error) throw error;
+    });
     res.json(data);
   } catch (err) {
     const st = err.status || 500;
