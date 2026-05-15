@@ -368,11 +368,6 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       >
         Fotos y textos por deporte
       </h3>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '12px', lineHeight: 1.45 }}>
-        Ejecutá en Supabase el SQL <code style={{ color: 'var(--accent)' }}>padbol-backend/sql/hub_deporte_config.sql</code>{' '}
-        si la tabla aún no existe. Si un deporte pisaba a otro, corregí la UNIQUE con{' '}
-        <code style={{ color: 'var(--accent)' }}>hub_deporte_config_fix_unique_deporte_card.sql</code>.
-      </p>
       {deporteMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(deporteMsg) }}>
           {deporteMsg}
