@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url';
 import { checkMorasSedes } from './suscripciones/checkMorasSedes.js';
 import { createCheckSuscripcionActiva } from './suscripciones/checkSuscripcionActiva.js';
 import { sendMakeEvent } from './make/sendMakeEvent.js';
+import { notifyMakeAdminInviteWebhook } from './make/sendMakeAdminInviteWebhook.js';
 import {
   assertInvitacionWebhookSecret,
   createGenerateAdminInviteMagicLink,
@@ -9631,6 +9632,12 @@ app.post('/api/admin/roles', async (req, res) => {
       } catch (mlErr) {
         console.warn('⚠️ magic link editor_contenido:', mlErr?.message || mlErr);
       }
+      void notifyMakeAdminInviteWebhook({
+        email,
+        nombre,
+        rol: 'editor_contenido',
+        sede_id: null,
+      });
       return res.json({ ...r.data, magic_link });
     }
 
@@ -10042,6 +10049,13 @@ app.post('/api/admin/invitaciones-admin', async (req, res) => {
       console.warn('⚠️ magic link invitación admin:', mlErr?.message || mlErr);
     }
 
+    void notifyMakeAdminInviteWebhook({
+      email: row.email,
+      nombre: row.nombre_club ?? nombreClub ?? null,
+      rol: String(row.invited_role || invitedRole).trim().toLowerCase(),
+      sede_id: row.sede_id ?? null,
+    });
+
     res.status(201).json({ ...row, email_sent: mailed, invite_url: url, magic_link });
   } catch (err) {
     console.error('❌ POST /api/admin/invitaciones-admin:', err.message);
@@ -10091,6 +10105,14 @@ app.post('/api/admin/invitaciones-admin/:id/reenviar', async (req, res) => {
           nombreClub: row.nombre_club,
           paisLabel: row.pais,
         });
+
+    void notifyMakeAdminInviteWebhook({
+      email: row.email,
+      nombre: row.nombre_club ?? null,
+      rol: String(row.invited_role || 'admin_club').trim().toLowerCase(),
+      sede_id: row.sede_id ?? null,
+    });
+
     res.json({ ok: true, email_sent: mailed, expires_at: expiresAt });
   } catch (err) {
     console.error('❌ POST /api/admin/invitaciones-admin/:id/reenviar:', err.message);
