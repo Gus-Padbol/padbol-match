@@ -5,7 +5,9 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
  * Selector «Elegir deporte» del hub (UserHome, Jugar, etc.).
  * La persistencia en sessionStorage la maneja el padre si hace falta.
  */
-export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-select' }) {
+export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-select', compact = false }) {
+  const labelGap = compact ? 6 : 10;
+  const blockGap = compact ? 6 : 10;
   return (
     <label style={{ display: 'block', width: '100%', marginBottom: 0, marginTop: 0, flexShrink: 0 }} htmlFor={id}>
       <span
@@ -14,12 +16,12 @@ export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-se
           fontSize: 12,
           fontWeight: 600,
           color: 'var(--text-secondary)',
-          marginBottom: 10,
+          marginBottom: labelGap,
         }}
       >
         Elegir deporte
       </span>
-      <div style={{ position: 'relative', marginBottom: 10 }}>
+      <div style={{ position: 'relative', marginBottom: blockGap }}>
         <select
           id={id}
           value={value}

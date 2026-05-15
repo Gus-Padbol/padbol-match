@@ -81,7 +81,7 @@ function emptyForm() {
   };
 }
 
-const labelStyle = { display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.88)', marginBottom: 6 };
+const labelStyle = { display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 };
 const inputStyle = {
   width: '100%',
   maxWidth: 420,
@@ -464,7 +464,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
             { key: 'max_por_nacion', label: 'Sponsors por nación máximo' },
           ].map(({ key, label }) => (
             <div key={key}>
-              <label style={{ ...labelStyle, color: '#334155' }}>{label}</label>
+              <label style={labelStyle}>{label}</label>
               <input
                 type="number"
                 min={0}
@@ -515,7 +515,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
         </h3>
 
         <div ref={nombreRef} style={{ marginBottom: 12 }}>
-          <label style={{ ...labelStyle, color: '#334155' }}>Nombre de la marca *</label>
+          <label style={labelStyle}>Nombre de la marca *</label>
           <input
             style={{
               ...inputStyle,
@@ -540,7 +540,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           ) : null}
         </div>
 
-        <label style={{ ...labelStyle, color: '#334155' }}>Logo (bucket sponsors)</label>
+        <label style={labelStyle}>Logo (bucket sponsors)</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12 }}>
           <input type="file" accept="image/*" disabled={uploading || saving} onChange={(e) => void onLogoFile(e)} />
           {form.logo_url ? (
@@ -554,7 +554,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           placeholder="URL pública del logo (o sube archivo arriba)"
         />
 
-        <label style={{ ...labelStyle, color: '#334155' }}>URL destino (opcional)</label>
+        <label style={labelStyle}>URL destino (opcional)</label>
         <input
           style={{ ...inputStyle, color: '#0f172a', marginBottom: 12 }}
           value={form.url_destino}
@@ -562,7 +562,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           placeholder="https://…"
         />
 
-        <label style={{ ...labelStyle, color: '#334155' }}>Texto del botón</label>
+        <label style={labelStyle}>Texto del botón</label>
         <input
           style={{ ...inputStyle, color: '#0f172a', marginBottom: 12 }}
           value={form.texto_boton}
@@ -570,7 +570,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           placeholder="Ver oferta"
         />
 
-        <label style={{ ...labelStyle, color: '#334155' }}>Descripción corta (opcional, p. ej. hub 3er tiempo)</label>
+        <label style={labelStyle}>Descripción corta (opcional, p. ej. hub 3er tiempo)</label>
         <textarea
           style={{
             ...inputStyle,
@@ -586,7 +586,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           maxLength={500}
         />
 
-        <label style={{ ...labelStyle, color: '#334155' }}>Scope</label>
+        <label style={labelStyle}>Scope</label>
         <select
           style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
           value={form.scope}
@@ -611,7 +611,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
         {form.scope === 'sede' ? (
           <div ref={sedeRef} style={{ marginBottom: 12 }}>
-            <label style={{ ...labelStyle, color: '#334155' }}>Sede</label>
+            <label style={labelStyle}>Sede</label>
             <select
               style={{
                 ...inputStyle,
@@ -644,7 +644,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
         {form.scope === 'torneo' ? (
           <div ref={torneoRef} style={{ marginBottom: 12 }}>
-            <label style={{ ...labelStyle, color: '#334155' }}>Torneo</label>
+            <label style={labelStyle}>Torneo</label>
             <select
               style={{
                 ...inputStyle,
@@ -677,7 +677,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
         {form.scope === 'nacional' ? (
           <div ref={paisRef} style={{ marginBottom: 12 }}>
-            <label style={{ ...labelStyle, color: '#334155' }}>País</label>
+            <label style={labelStyle}>País</label>
             <select
               style={{
                 ...inputStyle,
@@ -710,7 +710,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 12 }}>
           <div>
-            <label style={{ ...labelStyle, color: '#334155' }}>Fecha desde (opcional)</label>
+            <label style={labelStyle}>Fecha desde (opcional)</label>
             <input
               type="date"
               style={{ ...inputStyle, color: '#0f172a' }}
@@ -719,7 +719,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, color: '#334155' }}>Fecha hasta (opcional)</label>
+            <label style={labelStyle}>Fecha hasta (opcional)</label>
             <input
               type="date"
               style={{ ...inputStyle, color: '#0f172a' }}

@@ -77,6 +77,10 @@ html.theme-dark .admin-hub-promo-sede__panel {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-bottom: 14px;
   cursor: pointer;
   color: var(--text-primary);

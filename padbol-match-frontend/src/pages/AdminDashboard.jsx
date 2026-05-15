@@ -7316,7 +7316,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   border: 'none',
                   borderRadius: '10px',
                   padding: '10px 14px',
-                  background: '#0f172a',
+                  background: 'var(--accent)',
                   color: '#fff',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -8559,12 +8559,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <td style={{ padding: '7px 12px' }}>
                         <input type="text" value={editandoTipoData.nombre}
                           onChange={e => setEditandoTipoData(p => ({ ...p, nombre: e.target.value }))}
-                          style={{ width: '100%', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', color: '#1e1b4b', boxSizing: 'border-box' }} />
+                          style={{ width: '100%', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', color: 'var(--text-primary)', boxSizing: 'border-box' }} />
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
                         <input type="number" min="0" value={editandoTipoData.puntos}
                           onChange={e => setEditandoTipoData(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
-                          style={{ width: '72px', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', textAlign: 'center', color: '#1e1b4b' }} />
+                          style={{ width: '72px', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', textAlign: 'center', color: 'var(--text-primary)' }} />
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
                         <button onClick={() => {
@@ -8578,7 +8578,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </>
                   ) : (
                     <>
-                      <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333' }}>{configNivelesLabels[key]}</td>
+                      <td className="admin-config-puntos-nivel" style={{ padding: '10px 16px', fontSize: '14px' }}>{configNivelesLabels[key] || CONFIG_NIVELES_LABELS_DEFAULT[key] || key}</td>
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
                         <input type="number" min="0" value={configNiveles[key] ?? 0}
                           onChange={e => setConfigNiveles(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
@@ -8611,12 +8611,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <td style={{ padding: '7px 12px' }}>
                         <input type="text" value={editandoTipoData.nombre}
                           onChange={e => setEditandoTipoData(p => ({ ...p, nombre: e.target.value }))}
-                          style={{ width: '100%', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', color: '#1e1b4b', boxSizing: 'border-box' }} />
+                          style={{ width: '100%', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', color: 'var(--text-primary)', boxSizing: 'border-box' }} />
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
                         <input type="number" min="0" value={editandoTipoData.puntos}
                           onChange={e => setEditandoTipoData(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
-                          style={{ width: '72px', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', textAlign: 'center', color: '#1e1b4b' }} />
+                          style={{ width: '72px', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', textAlign: 'center', color: 'var(--text-primary)' }} />
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
                         <button onClick={() => { setConfigTiposCustom(prev => prev.map(t => t.id === tipo.id ? { ...t, ...editandoTipoData } : t)); setEditandoTipoId(null); }}
@@ -8627,7 +8627,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </>
                   ) : (
                     <>
-                      <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333' }}>{tipo.nombre}</td>
+                      <td className="admin-config-puntos-nivel" style={{ padding: '10px 16px', fontSize: '14px' }}>{tipo.nombre || tipo.id}</td>
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#3b2f6e' }}>{tipo.puntos}</div>
                         <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>pts totales</div>
@@ -8649,12 +8649,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <input type="text" placeholder="Ej: FIPA Qualifier" value={nuevoTipo.nombre}
                     onChange={e => setNuevoTipo(p => ({ ...p, nombre: e.target.value }))}
                     onKeyDown={e => { if (e.key === 'Enter' && nuevoTipo.nombre.trim()) { setConfigTiposCustom(prev => [...prev, { id: Date.now().toString(), nombre: nuevoTipo.nombre.trim(), puntos: nuevoTipo.puntos || 0 }]); setNuevoTipo({ nombre: '', puntos: 0 }); } }}
-                    style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #c4b5fd', borderRadius: '5px', fontSize: '13px', color: '#1e1b4b', background: 'white', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', padding: '6px 10px', border: '1.5px solid #c4b5fd', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', background: 'white', boxSizing: 'border-box' }} />
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <input type="number" placeholder="Pts" min="0" value={nuevoTipo.puntos || ''}
                     onChange={e => setNuevoTipo(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
-                    style={{ width: '72px', padding: '6px 8px', border: '1.5px solid #c4b5fd', borderRadius: '5px', fontSize: '13px', color: '#1e1b4b', textAlign: 'center', background: 'white' }} />
+                    style={{ width: '72px', padding: '6px 8px', border: '1.5px solid #c4b5fd', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', textAlign: 'center', background: 'white' }} />
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                   <button
@@ -8801,8 +8801,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
             Precio mensual en USD según la cantidad de canchas del club. Solo super admin puede editar.
           </p>
-          <div style={{ overflowX: 'auto', width: '100%', maxWidth: '100%', boxSizing: 'border-box', WebkitOverflowScrolling: 'touch' }}>
-            <table
+          <div className="admin-planes-table-wrap" style={{ overflowX: 'auto', width: '100%', maxWidth: '100%', boxSizing: 'border-box', WebkitOverflowScrolling: 'touch' }}>
+            <table className="admin-planes-table"
               style={{
                 width: '100%',
                 minWidth: 520,
@@ -8854,7 +8854,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           background: idx % 2 === 0 ? '#fafafa' : '#fff',
                         }}
                       >
-                        <td style={{ padding: '10px 16px', fontWeight: 700, color: '#1e293b' }}>{p.nombre}</td>
+                        <td className="admin-planes-nombre" style={{ padding: '10px 16px', fontWeight: 700 }}>{p.nombre}</td>
                         <td style={{ padding: '10px 16px', color: '#334155', fontSize: '14px' }}>{rango}</td>
                         <td style={{ padding: '10px 16px', textAlign: 'right', verticalAlign: 'middle' }}>
                           {isEditing ? (
@@ -10271,22 +10271,22 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               ) : (
                 /* Read-only for admin_club / admin_nacional */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Número de licencia</span>
-                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b', fontFamily: 'monospace', letterSpacing: '0.5px' }}>
-                      {licenciaForm.numero_licencia || <span style={{ color: '#aaa', fontFamily: 'inherit', fontWeight: 400 }}>—</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Número de licencia</span>
+                    <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'monospace', letterSpacing: '0.5px' }}>
+                      {licenciaForm.numero_licencia || <span style={{ color: 'var(--text-secondary)', fontFamily: 'inherit', fontWeight: 400 }}>—</span>}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Fecha de otorgamiento</span>
-                    <span style={{ fontSize: '14px', color: '#333' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Fecha de otorgamiento</span>
+                    <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
                       {licenciaForm.fecha_licencia
                         ? new Date(licenciaForm.fecha_licencia + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
-                        : <span style={{ color: '#aaa' }}>—</span>}
+                        : <span style={{ color: 'var(--text-secondary)' }}>—</span>}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Estado</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Estado</span>
                     <span style={{
                       padding: '4px 14px', borderRadius: '12px', fontSize: '13px', fontWeight: 700,
                       background: licenciaForm.licencia_activa ? '#dcfce7' : '#fee2e2',
@@ -10295,7 +10295,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       {licenciaForm.licencia_activa ? '✅ Activa' : '❌ Suspendida'}
                     </span>
                   </div>
-                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
                     🔒 Solo un Super Admin puede modificar estos datos.
                   </p>
                 </div>
@@ -10552,7 +10552,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
                       setMiSedeForm(p => ({ ...p, precio_turno: digits }));
                     }}
-                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: '#1e1b4b', textAlign: 'right', boxSizing: 'border-box' }}
+                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
@@ -10736,7 +10736,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, precio: digits } : r)));
                         }}
                         placeholder="Ej: 8000"
-                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: '#1e1b4b', textAlign: 'right' }}
+                        style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right' }}
                       />
                     </div>
                   </div>

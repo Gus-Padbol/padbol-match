@@ -7,7 +7,7 @@ import HubDeporteSelect from '../components/HubDeporteSelect';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_NAV_HEIGHT_PX,
-  hubContentPaddingTopCss,
+  hubJugarContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
@@ -104,7 +104,7 @@ export default function Jugar() {
       style={{
         minHeight: '100dvh',
         background: 'var(--bg-page)',
-        paddingTop: hubContentPaddingTopCss(location.pathname),
+        paddingTop: hubJugarContentPaddingTopCss(location.pathname),
         paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
         boxSizing: 'border-box',
       }}
@@ -123,6 +123,7 @@ export default function Jugar() {
         }}
       >
         <HubDeporteSelect
+          compact
           id="jugar-deporte-select"
           value={deporteElegido}
           onChange={(v) => {

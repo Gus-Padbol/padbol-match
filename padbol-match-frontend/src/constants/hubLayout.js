@@ -144,6 +144,15 @@ export function hubContentPaddingTopCss(pathname) {
   return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px))`;
 }
 
+/** /jugar: ~8–12px entre BottomNav y «Elegir deporte» (menos slack que el hub genérico). */
+export const HUB_JUGAR_BELOW_NAV_GAP_PX = 8;
+
+/** Padding-top del shell /jugar (header + nav + aire mínimo bajo la barra). */
+export function hubJugarContentPaddingTopCss(pathname) {
+  const basePx = hubContentPaddingTopPx(pathname);
+  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_JUGAR_BELOW_NAV_GAP_PX}px + env(safe-area-inset-top, 0px))`;
+}
+
 /** Extra bajo el header en `/login` y `/auth` para que el logo no quede cortado al scroll (móvil ~390px). */
 export const HUB_ACCESO_LOGIN_EXTRA_TOP_PX = 36;
 

@@ -383,7 +383,11 @@
 }
 
 .sedes-admin-sedes-table {
-  margin-top: 4px;
+  margin-top: 8px;
+}
+
+.sedes-admin-table-wrap {
+  margin-top: 8px;
 }
 
 /* Filtros país/ciudad (super_admin): desktop y mobile; paginación debajo */
@@ -391,7 +395,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 10px 0 2px;
+  margin: 10px 0 0;
 }
 
 .sedes-admin-filter-field {
@@ -450,7 +454,7 @@
     display: flex !important;
     flex-direction: column;
     gap: 10px;
-    margin-top: 4px;
+    margin-top: 8px;
   }
 
   .sede-admin-card {
@@ -746,13 +750,72 @@ html.theme-light .admin-dashboard--super .admin-analytics-globales .admin-analyt
   color: #64748b !important;
 }
 
-/* Configuración de puntos: columna Nivel / celdas (evita --text-primary en tbody sobre filas claras/oscuras) */
+/* Configuración de puntos: columna Nivel legible en tema claro y oscuro */
 html.theme-light .admin-dashboard--super .admin-config-puntos-table tbody td {
   color: #111827 !important;
 }
 
-html.theme-dark .admin-dashboard--super .admin-config-puntos-table tbody td {
-  color: #ffffff !important;
+html.theme-dark .admin-dashboard--super .admin-config-puntos-table {
+  background: var(--bg-card) !important;
+  box-shadow: none !important;
+}
+
+html.theme-dark .admin-dashboard--super .admin-config-puntos-table tbody tr {
+  background: var(--bg-card) !important;
+}
+
+html.theme-dark .admin-dashboard--super .admin-config-puntos-table tbody td,
+html.theme-dark .admin-dashboard--super .admin-config-puntos-table .admin-config-puntos-nivel {
+  color: var(--text-primary) !important;
+}
+
+.admin-dashboard--super .admin-config-puntos-table .admin-config-puntos-nivel {
+  color: var(--text-primary);
+}
+
+/* Planes y precios: scroll horizontal + columna Nombre */
+.admin-dashboard--super .admin-planes-table-wrap {
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-dashboard--super .admin-planes-table .admin-planes-nombre {
+  color: var(--text-primary) !important;
+}
+
+html.theme-dark .admin-dashboard--super .admin-planes-table tbody tr {
+  background: var(--bg-card) !important;
+}
+
+html.theme-dark .admin-dashboard--super .admin-planes-table tbody td {
+  color: var(--text-primary) !important;
+}
+
+/* Resumen financiero super admin — contraste en tema oscuro */
+html.theme-dark .admin-dashboard--super .card.ingresos {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+}
+
+html.theme-dark .admin-dashboard--super .card.ingresos > h2 {
+  color: var(--text-primary) !important;
+}
+
+html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-codigo {
+  color: var(--text-primary) !important;
+}
+
+html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila--sin-ingresos .ingreso-codigo,
+html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila--sin-ingresos .ingreso-valor,
+html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-valor.ingreso-valor--sin-ingresos-msg {
+  color: var(--text-secondary) !important;
+  opacity: 1 !important;
+}
+
+html.theme-dark .admin-dashboard--super .card.ingresos .ingreso-fila:not(.ingreso-fila--sin-ingresos):not(.ingreso-fila--total-ok) .ingreso-valor {
+  color: #fecaca !important;
 }
 
 /* Resumen «Hoy» — etiquetas en modo claro */
