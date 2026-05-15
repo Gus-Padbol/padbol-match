@@ -42,8 +42,10 @@ function addDaysISO(baseYmd, days) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function next7DaysFrom(todayStr) {
-  return Array.from({ length: 7 }, (_, i) => addDaysISO(todayStr, i));
+function nextNDaysFrom(todayStr, count) {
+  const n = Number(count);
+  const len = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+  return Array.from({ length: len }, (_, i) => addDaysISO(todayStr, i));
 }
 
 function labelDiaCorta(iso, index) {
@@ -316,9 +318,20 @@ export default function ArmarPartido() {
 
   useEffect(() => {
     if (!sede) return;
+    const list = duracionesOfrecidas;
+    if (!list.length) return;
+    if (list.length === 1) {
+      const only = list[0];
+      setForm((f) => {
+        const cur = Number(f.duracion);
+        if (Number.isFinite(cur) && cur === only) return f;
+        return { ...f, duracion: only, hora: '' };
+      });
+      return;
+    }
     const cur = Number(form.duracion);
-    if (!duracionesOfrecidas.includes(cur)) {
-      setForm((f) => ({ ...f, duracion: duracionesOfrecidas[0], hora: '' }));
+    if (!list.includes(cur)) {
+      setForm((f) => ({ ...f, duracion: list[0], hora: '' }));
     }
   }, [sede, duracionesOfrecidas, form.duracion]);
 
@@ -383,6 +396,12 @@ export default function ArmarPartido() {
     };
   }, [step, sede?.id, form.fecha, form.hora, form.duracion, form.deporte]);
 
+  const puedeVerCanchasPaso1 = useMemo(
+    () =>
+      Boolean(sede && String(form.fecha || '').trim() && String(form.hora || '').trim()),
+    [sede, form.fecha, form.hora],
+  );
+
   const precioBase = useMemo(() => {
     if (!sede || !form.hora) return 0;
     return Number(precioReservaTurno(sede, form.hora, form.fecha, Number(form.duracion), precioDesdeFranjas) ?? 0);
@@ -427,7 +446,8 @@ export default function ArmarPartido() {
     return sedesOrdenadasParaLista.slice(0, 5);
   }, [sedesOrdenadasParaLista, sedeBusquedaNorm]);
 
-  const dias7 = useMemo(() => next7DaysFrom(todayISO()), []);
+  /** Hoy + 29 días (30 turnos de calendario), máx. anticipación de reserva. */
+  const diasReserva = useMemo(() => nextNDaysFrom(todayISO(), 30), []);
 
   const onSedeInputChange = (e) => {
     const v = e.target.value;
@@ -789,7 +809,7 @@ export default function ArmarPartido() {
                       WebkitOverflowScrolling: 'touch',
                     }}
                   >
-                    {dias7.map((iso, idx) => {
+                    {diasReserva.map((iso, idx) => {
                       const active = form.fecha === iso;
                       return (
                         <button
@@ -895,6 +915,7 @@ export default function ArmarPartido() {
 
                   <button
                     type="button"
+                    disabled={!puedeVerCanchasPaso1}
                     onClick={irPaso2}
                     style={{
                       width: '100%',
@@ -902,11 +923,12 @@ export default function ArmarPartido() {
                       padding: 14,
                       border: 'none',
                       borderRadius: 12,
-                      background: ACCENT,
+                      background: puedeVerCanchasPaso1 ? ACCENT : '#94a3b8',
                       color: '#fff',
                       fontWeight: 900,
                       fontSize: 16,
-                      cursor: 'pointer',
+                      cursor: puedeVerCanchasPaso1 ? 'pointer' : 'not-allowed',
+                      opacity: puedeVerCanchasPaso1 ? 1 : 0.9,
                     }}
                   >
                     Ver canchas →
