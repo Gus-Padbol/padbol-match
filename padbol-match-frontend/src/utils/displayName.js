@@ -101,3 +101,35 @@ export function headerNombreVisible(perfil, session) {
   const em = String(session?.user?.email || perfil?.email || '').trim();
   return em || 'Cuenta';
 }
+
+/**
+ * Nombre corto para el saludo del hub: apodo; si no, primera palabra del nombre del perfil;
+ * si no, primera palabra del nombre real/OAuth; si no, parte local del email (nombre de usuario).
+ */
+export function nombreSaludoParaHub(perfil, session) {
+  if (!session?.user) return '';
+
+  const apodo = String(perfil?.apodo ?? '').trim();
+  if (apodo) return capitalizarPrimeraLetraSaludo(apodo);
+
+  const nomPerfil = String(perfil?.nombre ?? '').trim();
+  if (nomPerfil && !esNombrePlaceholderJugador(nomPerfil)) {
+    const firstWord = nomPerfil.split(/\s+/).filter(Boolean)[0] || '';
+    if (firstWord) return capitalizarPrimeraLetraSaludo(firstWord);
+  }
+
+  const oauthLine = nombreRealDesdePerfilOauth(perfil, session);
+  if (oauthLine) {
+    const firstWord = oauthLine.split(/\s+/).filter(Boolean)[0] || '';
+    if (firstWord) return capitalizarPrimeraLetraSaludo(firstWord);
+  }
+
+  const em = String(session?.user?.email ?? perfil?.email ?? '').trim();
+  const local = parteLocalEmailLower(em);
+  if (local) {
+    const chunk = local.split(/[._-]/)[0] || local;
+    return capitalizarPrimeraLetraSaludo(chunk);
+  }
+
+  return '';
+}

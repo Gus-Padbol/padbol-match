@@ -1575,7 +1575,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
-  const { session } = useAuth();
+  const { session, refreshSession } = useAuth();
   const { theme } = useTheme();
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const adminPillInactiveSurface = theme === 'light' ? 'lightMuted' : 'default';
@@ -5196,8 +5196,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   };
 
-  const handleVolverHubDesdeAdmin = () => {
+  const handleVolverHubDesdeAdmin = async () => {
     clearAdminNavContext();
+    try {
+      await refreshSession();
+    } catch {
+      /* ignore */
+    }
     navigate('/');
   };
 

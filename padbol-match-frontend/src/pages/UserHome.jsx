@@ -10,7 +10,7 @@ import {
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
-import { nombreRealDesdePerfilOauth } from '../utils/displayName';
+import { nombreSaludoParaHub } from '../utils/displayName';
 import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { isPwaStandalone } from '../utils/isPwaStandalone';
@@ -146,37 +146,11 @@ const hubPwaInstallButtonStyle = {
   fontFamily: 'inherit',
 };
 
-function esPlaceholderJugador(s) {
-  return String(s || '').trim().toLowerCase() === 'jugador';
-}
-
-function capitalizarPalabraSaludo(w) {
-  const t = String(w || '').trim();
-  if (!t) return '';
-  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
-}
-
-function nombreDesdeApodoPerfil(userProfile) {
-  if (!userProfile || typeof userProfile !== 'object') return '';
-  const raw = userProfile.apodo;
-  if (raw == null) return '';
-  const v = String(raw).trim();
-  return v || '';
-}
-
-function primerNombreDesdePerfil(userProfile) {
-  const v = String(userProfile?.nombre || '').trim();
-  if (!v || esPlaceholderJugador(v)) return '';
-  const first = v.split(/\s+/).filter(Boolean)[0] || '';
-  return first ? capitalizarPalabraSaludo(first) : '';
-}
-
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
-  const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
-  const [nombreFinal, setNombreFinal] = useState(null);
+  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
   const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
   const [hubCmsStatus, setHubCmsStatus] = useState('loading');
   const [hubCmsRows, setHubCmsRows] = useState([]);
@@ -237,7 +211,6 @@ export default function UserHome() {
 
   useEffect(() => {
     if (session?.user) return;
-    setNombreFinal(null);
     try {
       localStorage.removeItem('padbol_nombre_saludo');
       localStorage.removeItem('padbol_nombre_saludo_uid');
@@ -302,42 +275,13 @@ export default function UserHome() {
     setHubCardImageFailed({});
   }, [hubCmsRows, hubCmsStatus, hubDeporteRows, hubDeporteStatus, deporteElegido]);
 
-  useEffect(() => {
-    if (!session?.user) return;
-    if (authLoading || profileLoading) return;
-    if (!userProfile) {
-      setNombreFinal('');
-      return;
-    }
-    const ap = nombreDesdeApodoPerfil(userProfile);
-    if (ap) {
-      setNombreFinal(ap.charAt(0).toUpperCase() + ap.slice(1));
-      return;
-    }
-    const nom = primerNombreDesdePerfil(userProfile);
-    if (nom) {
-      setNombreFinal(nom);
-      return;
-    }
-    const fullLine = nombreRealDesdePerfilOauth(userProfile, session);
-    if (fullLine) {
-      const first = fullLine.split(/\s+/).filter(Boolean)[0] || fullLine;
-      setNombreFinal(capitalizarPalabraSaludo(first));
-      return;
-    }
-    setNombreFinal('');
-  }, [session, userProfile, authLoading, profileLoading]);
-
-  const lineaSaludo = useMemo(() => {
-    if (!session?.user) return 'Hola';
-    if (nombreFinal) return `Hola, ${nombreFinal}`;
-    return 'Hola';
-  }, [session?.user, nombreFinal]);
-
-  const nombreTitulo = nombreFinal || (session?.user ? lineaSaludo.replace(/^Hola,?\s*/i, '').trim() : '');
+  const nombreTitulo = useMemo(
+    () => (session?.user ? nombreSaludoParaHub(userProfile, session) : ''),
+    [session, userProfile],
+  );
 
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
-  const hubInicial = String(lineaSaludo.replace(/^Hola,?\s*/i, '').trim() || '?')
+  const hubInicial = String((nombreTitulo || '').trim() || '?')
     .charAt(0)
     .toUpperCase();
 
@@ -518,7 +462,7 @@ export default function UserHome() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {nombreTitulo ? `¡Hola ${nombreTitulo}!` : lineaSaludo}
+                    {nombreTitulo ? `¡Hola, ${nombreTitulo}!` : '¡Hola!'}
                   </div>
                   <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400, marginTop: 2 }}>Bienvenido de nuevo.</div>
                 </div>
@@ -553,7 +497,7 @@ export default function UserHome() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {lineaSaludo}
+                    Hola
                   </div>
                 </div>
               </>

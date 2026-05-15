@@ -204,8 +204,14 @@ export function hubAccesoContentPaddingTopCss(pathname, navDock = 'top') {
  * Jugar/Competir/Perfil) más un extra para la segunda línea («Bienvenido»). Así el scroll no
  * ocupa todo el viewport, el saludo queda descubierto y las cards se recortan por el borde inferior.
  */
-/** UserHome: aire extra bajo header+BottomNav antes del primer bloque scroll (saludo en barra fija + «Elegir deporte»). */
+/** UserHome: aire extra bajo header+barra hub superior antes del primer bloque scroll (saludo + «Elegir deporte»). */
 export const HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX = 70;
+
+/**
+ * UserHome con {@link HUB_NAV_DOCK_BOTTOM_BREAKPOINT_PX|nav anclada abajo}: solo 8–12px entre header de saludo y el scroll
+ * (la fila Jugar/Competir no suma altura bajo el header).
+ */
+export const HUB_USERHOME_CHROME_EXTRA_GREETING_BOTTOM_DOCK_PX = 10;
 
 /** UserHome invitado: header una sola línea (sin «Bienvenido de nuevo»); menos hueco bajo el chrome fijo. */
 export const HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX = 10;
@@ -216,7 +222,11 @@ export const HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX = 10;
  */
 export function hubUserHomeChromeSpacerHeightCss(pathname, opts, navDock = 'top') {
   const guest = Boolean(opts?.guest);
-  const extra = guest ? HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX : HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX;
+  const extra = guest
+    ? HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX
+    : navDock === 'bottom'
+      ? HUB_USERHOME_CHROME_EXTRA_GREETING_BOTTOM_DOCK_PX
+      : HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX;
   const basePx =
     hubContentPaddingTopPx(pathname, navDock) +
     APP_HEADER_OUTER_PADDING_PX +
