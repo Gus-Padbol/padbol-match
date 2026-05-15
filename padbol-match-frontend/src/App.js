@@ -51,6 +51,7 @@ import {
   LEGAL_FOOTER_GLOBAL_SPACER_PX,
 } from './constants/hubLayout';
 import CompletarPerfilOAuth from './pages/CompletarPerfilOAuth';
+import AuthOAuthCallback from './pages/AuthOAuthCallback';
 import NuevaSede from './components/NuevaSede';
 import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
@@ -315,6 +316,7 @@ function AppRoutes() {
         <Route path="/home" element={<UserHome />} />
 
         <Route path="/auth" element={<AuthRoute />} />
+        <Route path="/auth/callback" element={<AuthOAuthCallback />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
 
         <Route path="/reserva" element={<Navigate to="/reservar" replace />} />

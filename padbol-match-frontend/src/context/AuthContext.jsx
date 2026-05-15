@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { refreshJugadorPerfilFromSupabase, clearJugadorPerfilLocalStorage } from '../utils/jugadorPerfil';
-import { authSessionUsaProveedorGoogle } from '../utils/perfilJugadorMinimo';
+import { authSessionUsaOAuthProveedorSocial } from '../utils/perfilJugadorMinimo';
 
 const AuthContext = createContext(null);
 
@@ -75,10 +75,10 @@ async function refreshUserProfile(session, setUserProfile) {
     console.log(`${PM_AUTH_LOG} refreshUserProfile user_id query done`, { hasRow: Boolean(data), hasError: Boolean(r2.error) });
   }
 
-  /** Google OAuth: no crear fila vacía; el usuario completa WhatsApp y género en `/completar-perfil`. */
-  if (!data && !error && authSessionUsaProveedorGoogle(session)) {
+  /** Google / Facebook OAuth: no crear fila vacía; el usuario completa WhatsApp y género en `/completar-perfil`. */
+  if (!data && !error && authSessionUsaOAuthProveedorSocial(session)) {
     setUserProfile(null);
-    console.log(`${PM_AUTH_LOG} refreshUserProfile exit (Google sin fila, perfil null)`);
+    console.log(`${PM_AUTH_LOG} refreshUserProfile exit (OAuth social sin fila, perfil null)`);
     return;
   }
 

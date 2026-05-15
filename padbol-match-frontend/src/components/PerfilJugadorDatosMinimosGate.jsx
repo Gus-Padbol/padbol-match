@@ -64,7 +64,7 @@ function GateBlockingSpinner() {
 
 /**
  * Redirige a `/completar-perfil` si hay sesión pero falta género o WhatsApp en `jugadores_perfil`
- * (p. ej. primer login con Google OAuth).
+ * (p. ej. primer login con Google o Facebook OAuth).
  * Mientras `loading` o `profileLoading`, no redirige: muestra spinner (evita hub violeta “vacío” por carrera de perfil).
  */
 export default function PerfilJugadorDatosMinimosGate({ children }) {

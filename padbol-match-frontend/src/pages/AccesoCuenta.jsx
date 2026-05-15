@@ -57,6 +57,18 @@ function GoogleMarkIcon() {
   );
 }
 
+/** Ícono Facebook «f» (sobre botón #1877F2 el trazo va en blanco vía currentColor). */
+function FacebookMarkIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
+      />
+    </svg>
+  );
+}
+
 function PasswordEyeIcon({ revealed }) {
   const svgProps = {
     xmlns: 'http://www.w3.org/2000/svg',
@@ -140,17 +152,42 @@ export default function AccesoCuenta() {
     navigate(-1);
   }, [navigate]);
 
+  /**
+   * OAuth (Google / Facebook): `redirectTo` tras el proveedor. Agregar en Supabase → Authentication → URL Configuration → Redirect URLs:
+   * `https://TU_DOMINIO/auth/callback`
+   *
+   * Facebook Login en Supabase (Gus):
+   * - Supabase Dashboard → Authentication → Providers → Facebook → activar y pegar App ID + App Secret de developers.facebook.com
+   * - En la Facebook App: «Valid OAuth Redirect URIs» debe incluir la URL exacta que indica Supabase para Facebook.
+   * - La app de Meta debe estar en modo Live (no solo Development) para usuarios externos; en Development solo testers invitados.
+   */
   const handleGoogleLogin = useCallback(async () => {
     setErrorMsg('');
+    const redirectTo = `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo,
       },
     });
     if (error) {
       console.error('Error Google OAuth:', error.message);
       setErrorMsg('No se pudo iniciar sesión con Google. Intenta de nuevo.');
+    }
+  }, []);
+
+  const handleFacebookLogin = useCallback(async () => {
+    setErrorMsg('');
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo,
+      },
+    });
+    if (error) {
+      console.error('Error Facebook OAuth:', error.message);
+      setErrorMsg('No se pudo iniciar sesión con Facebook. Intenta de nuevo.');
     }
   }, []);
 
@@ -428,6 +465,35 @@ export default function AccesoCuenta() {
           >
             <GoogleMarkIcon />
             Continuar con Google
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleFacebookLogin()}
+            disabled={busy}
+            style={{
+              width: '100%',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              marginTop: '10px',
+              padding: '12px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#1877F2',
+              color: '#fff',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: busy ? 'not-allowed' : 'pointer',
+              boxSizing: 'border-box',
+              fontFamily: 'inherit',
+              opacity: busy ? 0.65 : 1,
+            }}
+          >
+            <span style={{ color: '#fff', display: 'inline-flex' }}>
+              <FacebookMarkIcon />
+            </span>
+            Continuar con Facebook
           </button>
           <div
             style={{

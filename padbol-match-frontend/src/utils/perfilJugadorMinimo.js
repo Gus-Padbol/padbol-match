@@ -13,7 +13,7 @@ export function perfilJugadorDatosMinimosCompletos(perfil) {
   return true;
 }
 
-/** Sesión iniciada con Google (u otro proveedor OAuth de Google). */
+/** Sesión iniciada con Google. */
 export function authSessionUsaProveedorGoogle(session) {
   const p = String(session?.user?.app_metadata?.provider || '').toLowerCase();
   if (p === 'google') return true;
@@ -22,4 +22,23 @@ export function authSessionUsaProveedorGoogle(session) {
     return idents.some((i) => String(i?.provider || '').toLowerCase() === 'google');
   }
   return false;
+}
+
+/** Sesión iniciada con Facebook (mismo flujo de completar perfil que Google). */
+export function authSessionUsaProveedorFacebook(session) {
+  const p = String(session?.user?.app_metadata?.provider || '').toLowerCase();
+  if (p === 'facebook') return true;
+  const idents = session?.user?.identities;
+  if (Array.isArray(idents)) {
+    return idents.some((i) => String(i?.provider || '').toLowerCase() === 'facebook');
+  }
+  return false;
+}
+
+/**
+ * OAuth social (Google / Facebook): no crear `jugadores_perfil` vacío desde AuthContext;
+ * el usuario completa WhatsApp y género en `/completar-perfil`.
+ */
+export function authSessionUsaOAuthProveedorSocial(session) {
+  return authSessionUsaProveedorGoogle(session) || authSessionUsaProveedorFacebook(session);
 }
