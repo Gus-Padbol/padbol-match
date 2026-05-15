@@ -8619,13 +8619,18 @@ async function publicarPartidoAbiertoDesdePayload(payload, reservaRow = null) {
   return { ok: true, partido: data };
 }
 
+/** Si el payload no incluye `publicar_partido` (pagos viejos), se mantiene el comportamiento anterior. */
+function payloadQuierePublicarPartidoAbierto(payload) {
+  if (payload == null || typeof payload !== 'object') return true;
+  if (!Object.prototype.hasOwnProperty.call(payload, 'publicar_partido')) return true;
+  const v = payload.publicar_partido;
+  return v === true || v === 'true' || String(v).toLowerCase() === 'true';
+}
+
 async function crearReservaYPartidoAbiertoDesdePayload(payload) {
   const reservaRes = await crearReservaConfirmadaDesdePayloadMp(payload);
   const reservaRow = Array.isArray(reservaRes?.data) ? reservaRes.data[0] : null;
-  const publicar =
-    payload.publicar_partido === true ||
-    payload.publicar_partido === 'true' ||
-    String(payload.publicar_partido || '').toLowerCase() === 'true';
+  const publicar = payloadQuierePublicarPartidoAbierto(payload);
   if (!publicar) {
     return { ok: true, reserva: reservaRow || null, partido: null };
   }
@@ -9166,10 +9171,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
       if (resErr) throw resErr;
       let partidoCreado = null;
       if (String(r.tipo || '').trim().toLowerCase() === 'partido_abierto') {
-        const publicar =
-          r.publicar_partido === true ||
-          r.publicar_partido === 'true' ||
-          String(r.publicar_partido || '').toLowerCase() === 'true';
+        const publicar = payloadQuierePublicarPartidoAbierto(r);
         if (publicar) {
           const pub = await publicarPartidoAbiertoDesdePayload(r, reservaCreada);
           partidoCreado = pub.partido || null;
