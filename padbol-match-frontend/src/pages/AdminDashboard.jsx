@@ -679,10 +679,25 @@ function isoWeekYearAndNumberLocal(d) {
   return { isoYear, weekNum };
 }
 
+/** YYYY-MM-DD desde reserva.fecha (date, timestamptz u otros formatos). */
+function fechaReservaDiaISO(fechaRaw) {
+  const s = String(fechaRaw ?? '').trim();
+  if (!s) return '';
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${da}`;
+}
+
 /** `fechaISO` = YYYY-MM-DD (reserva o fecha derivada de equipo). `anclaISO` ancla el día/semana/mes/año mostrado. */
 function fechaDentroDePeriodoFinanzas(fechaISO, periodo, fechaDesde, fechaHasta, anclaISO) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fechaISO || '').trim())) return false;
-  const [y, m, d] = String(fechaISO).trim().split('-').map(Number);
+  const dia = fechaReservaDiaISO(fechaISO);
+  if (!dia) return false;
+  const [y, m, d] = dia.split('-').map(Number);
   const fecha = new Date(y, m - 1, d);
   if (Number.isNaN(fecha.getTime())) return false;
 
@@ -2323,7 +2338,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         finanzasAnclaISO
       );
 
-    const reservasFiltradas = reservas.filter((r) => inP(String(r?.fecha || '').trim()));
+    const reservasFiltradas = reservas.filter((r) => inP(fechaReservaDiaISO(r?.fecha)));
 
     const fechaInscripcionEquipo = (eq) => {
       const u = eq?.updated_at || eq?.created_at;
@@ -2425,7 +2440,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       const k = String(s?.nombre || '').trim().toLowerCase();
       if (k) sedeByNombreLower[k] = s;
     });
-    const reservasPeriodo = reservas.filter((r) => inP(String(r?.fecha || '').slice(0, 10)));
+    const reservasPeriodo = reservas.filter((r) => inP(fechaReservaDiaISO(r?.fecha)));
     const fechaInscripcionEquipo = (eq) => String(eq?.updated_at || eq?.created_at || '').slice(0, 10);
     const inscripcionesPeriodo = equiposInscripcionRows.filter(
       (eq) => String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado' && inP(fechaInscripcionEquipo(eq))
@@ -3726,6 +3741,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       const resRes = await fetch(`${apiBaseUrl}/api/reservas`, { headers: { ...listAuthHeaders } });
       let resData = await resRes.json();
+      if (!Array.isArray(resData)) {
+        console.warn('[Admin] GET /api/reservas: respuesta no es array', resData);
+        resData = [];
+      }
 
       if (!isSuperAdmin) {
         if (sedesAlcance.length === 0) resData = [];
@@ -7557,7 +7576,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 superAdminFechaHasta,
                 finanzasAnclaISO
               );
-            const reservasPeriodo = reservas.filter((r) => isInPeriodo(String(r?.fecha || '').trim()));
+            const reservasPeriodo = reservas.filter((r) => isInPeriodo(fechaReservaDiaISO(r?.fecha)));
             const reservasPeriodoFiltradas = reservasPeriodo.filter((r) =>
               reservaPasaFiltroEstadoPill(r, filtroPillReservas)
             );
@@ -8120,7 +8139,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             reservas.filter(
               (r) =>
                 reservaPasaFiltroEstadoPill(r, filtroPillReservas) &&
-                isInPeriodoClub(String(r?.fecha || '').trim())
+                isInPeriodoClub(fechaReservaDiaISO(r?.fecha))
             )
           );
 
