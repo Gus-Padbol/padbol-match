@@ -11,7 +11,7 @@ import {
 } from '../constants/hubLayout';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
-import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
+import { hubCardPhotoFallback, hubCardPhotoPorDeporte, HUB_CARD_UNSPLASH_GENERIC } from '../constants/hubFotosPorDeporte';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
@@ -66,8 +66,12 @@ export default function Jugar() {
   const opciones = useMemo(
     () =>
       JUGAR_OPCIONES_BASE.map((op) => {
-        const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, op.hubKey) : '';
-        const image = porDeporte || hubCardPhotoFallback(op.hubKey);
+        const cardKey = String(op.hubKey || '').trim();
+        const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, cardKey) : '';
+        const desdeDeporte = porDeporte && String(porDeporte).trim() ? String(porDeporte).trim() : '';
+        const desdeFallback = hubCardPhotoFallback(cardKey);
+        const fb = desdeFallback && String(desdeFallback).trim() ? String(desdeFallback).trim() : '';
+        const image = desdeDeporte || fb || HUB_CARD_UNSPLASH_GENERIC.reservar || '';
         return { ...op, image };
       }),
     [deporteElegido]

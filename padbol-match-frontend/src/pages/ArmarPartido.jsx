@@ -20,6 +20,31 @@ const API_BASE = (
 
 const ACCENT = '#e53935';
 
+/** Normaliza `duraciones` del GET disponibilidad-slots (variantes de payload y precio numérico/string). */
+function normalizarDuracionesDisponibilidadSlotsPayload(d) {
+  if (!d || typeof d !== 'object') return [];
+  const listRaw = Array.isArray(d.duraciones)
+    ? d.duraciones
+    : Array.isArray(d?.data?.duraciones)
+      ? d.data.duraciones
+      : [];
+  const out = [];
+  for (const row of listRaw) {
+    if (!row || typeof row !== 'object') continue;
+    const dm = Number(row.duracion_minutos ?? row.duracionMinutos ?? row.minutos);
+    if (!Number.isFinite(dm) || dm < 15) continue;
+    const rawPr = row.precio;
+    let pr = null;
+    if (rawPr != null && rawPr !== '') {
+      const n = Number(String(rawPr).replace(/\./g, '').replace(',', '.'));
+      if (Number.isFinite(n) && n >= 0) pr = Math.round(n);
+    }
+    out.push({ duracion_minutos: Math.floor(dm), precio: pr });
+  }
+  out.sort((a, b) => a.duracion_minutos - b.duracion_minutos);
+  return out;
+}
+
 const DEPORTES = [
   { id: 'padbol', label: 'Padbol', jugadores: 4 },
   { id: 'padel', label: 'Pádel', jugadores: 4 },
@@ -203,6 +228,8 @@ const AP = {
     boxSizing: 'border-box',
     background: 'var(--bg-card)',
     color: 'var(--text-primary)',
+    /* iOS: menos de 16px en inputs dispara zoom al enfocar */
+    fontSize: 16,
   },
   label: { display: 'block', fontWeight: 800, color: 'var(--text-primary)', fontSize: 14 },
   sub: { color: 'var(--text-secondary)', fontSize: 12, margin: '6px 0 0' },
@@ -250,10 +277,6 @@ export default function ArmarPartido() {
     jugadoresConfirmados: 1,
     nivel: 'Intermedio',
   });
-
-  useEffect(() => {
-    setDuracionesApi([]);
-  }, [form.sedeId]);
 
   useEffect(() => {
     if (step !== 1) return;
@@ -363,6 +386,40 @@ export default function ArmarPartido() {
     });
   }, [sede, duracionesOfrecidas]);
 
+  /** Oferta de duraciones: misma API que los slots, pero sin depender de `form.duracion` (evita quedar en legacy de una sola fila). */
+  useEffect(() => {
+    if (!sede?.id || !form.fecha) {
+      setDuracionesApi([]);
+      return;
+    }
+    let cancelled = false;
+    const url = `${API_BASE}/api/sedes/${encodeURIComponent(sede.id)}/disponibilidad-slots?${new URLSearchParams({
+      fecha: form.fecha,
+      duracion: '90',
+      deporte: form.deporte,
+    })}`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[ArmarPartido] disponibilidad-slots (oferta duraciones)', {
+            url,
+            keys: d && typeof d === 'object' ? Object.keys(d) : [],
+            duracionesRaw: d?.duraciones,
+            normalizadas: normalizarDuracionesDisponibilidadSlotsPayload(d),
+          });
+        }
+        setDuracionesApi(normalizarDuracionesDisponibilidadSlotsPayload(d));
+      })
+      .catch(() => {
+        if (!cancelled) setDuracionesApi([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sede?.id, form.fecha, form.deporte]);
+
   useEffect(() => {
     if (!sede?.id || !form.fecha || !form.duracion) {
       setSlotsApi([]);
@@ -380,16 +437,6 @@ export default function ArmarPartido() {
       .then((d) => {
         if (cancelled) return;
         setSlotsApi(Array.isArray(d?.slots) ? d.slots : []);
-        if (d && 'duraciones' in d && Array.isArray(d.duraciones)) {
-          setDuracionesApi(
-            d.duraciones
-              .filter((row) => row && Number.isFinite(Number(row.duracion_minutos)))
-              .map((row) => ({
-                duracion_minutos: Number(row.duracion_minutos),
-                precio: row.precio != null && Number.isFinite(Number(row.precio)) ? Number(row.precio) : null,
-              })),
-          );
-        }
       })
       .catch(() => {
         if (!cancelled) setSlotsApi([]);
