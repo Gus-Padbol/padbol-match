@@ -9,7 +9,12 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
-import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
+import {
+  HUB_BOTTOM_NAV_CONTENT_GAP_PX,
+  HUB_NAV_HEIGHT_PX,
+  hubJugarContentPaddingTopCss,
+  hubMainPaddingBottomCss,
+} from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 const API_BASE = (
@@ -17,9 +22,6 @@ const API_BASE = (
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );
-
-/** Hero “Buscar partido”: placeholder sólido hasta assets definitivos (Padbol / deporte equipo). */
-const HERO_BUSCAR_PARTIDOS_BG = '#0F172A';
 
 export default function PartidosAbiertos() {
   const navigate = useNavigate();
@@ -157,58 +159,43 @@ export default function PartidosAbiertos() {
     }
   };
 
+  const mainBottomPad =
+    navDock === 'bottom'
+      ? `calc(20px + ${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
+      : `calc(20px + env(safe-area-inset-bottom, 0px))`;
+
   return (
     <div
       style={{
         minHeight: '100dvh',
         background: 'var(--bg-page)',
         color: 'var(--text-primary)',
-        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
+        paddingTop: hubJugarContentPaddingTopCss(location.pathname, navDock),
         paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         boxSizing: 'border-box',
       }}
     >
       <AppHeader title="Buscar partido" />
-      <div
+      <main
         style={{
           width: '100%',
-          maxWidth: 560,
+          maxWidth: 460,
           margin: '0 auto',
-          height: 160,
-          background: HERO_BUSCAR_PARTIDOS_BG,
-          position: 'relative',
+          paddingLeft: 14,
+          paddingRight: 14,
+          paddingTop: 0,
+          paddingBottom: mainBottomPad,
+          boxSizing: 'border-box',
         }}
       >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, rgba(15,23,42,0.35) 0%, rgba(15,23,42,0.75) 100%)',
-          }}
+        <HubDeporteSelect
+          compact
+          id="partidos-abiertos-deporte"
+          value={deporteFiltro}
+          onChange={setDeporteFiltro}
         />
-        <div
-          style={{
-            position: 'absolute',
-            left: 16,
-            right: 16,
-            bottom: 16,
-          }}
-        >
-          <h1 style={{ margin: 0, color: '#f8fafc', fontSize: 24, fontWeight: 700, textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
-            Buscar partido
-          </h1>
-        </div>
-      </div>
 
-      <main style={{ width: '100%', maxWidth: 560, margin: '0 auto', padding: '16px 16px 24px', boxSizing: 'border-box' }}>
-        <div style={{ marginBottom: 14 }}>
-          <HubDeporteSelect
-            id="partidos-abiertos-deporte"
-            value={deporteFiltro}
-            onChange={setDeporteFiltro}
-          />
-        </div>
-
+        <div style={{ marginTop: 10 }}>
         {joinSuccess ? (
           <section
             style={{
@@ -384,6 +371,7 @@ export default function PartidosAbiertos() {
             ))}
           </div>
         )}
+        </div>
       </main>
       <BottomNav />
     </div>
