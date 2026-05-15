@@ -4,7 +4,7 @@
   box-sizing: border-box;
 }
 
-/* Fondo de página (club / editor): el rojo solo vive en .admin-dashboard-brand-shell */
+/* Fondo de página (club / editor / nacional): contenido sobre --bg-page */
 .admin-dashboard:not(.admin-dashboard--super) {
   background: var(--bg-page);
   color: var(--text-primary);
@@ -19,7 +19,7 @@
   align-items: stretch;
 }
 
-/* Logo, título, fecha, campana, licencia y tabs: gradiente acotado (no llena toda la pantalla) */
+/* Logo, título, fecha, campana, licencia y tabs — tarjeta tema (sin bloque rojo) */
 .admin-dashboard-brand-shell {
   flex-shrink: 0;
   width: 100%;
@@ -32,12 +32,14 @@
 }
 
 .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-brand-shell {
-  background: linear-gradient(135deg, #e11b22 0%, #991b1b 100%);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
 }
 
-/* Super admin: mismo shell sin gradiente (el panel ya usa --bg-page) */
+/* Super admin: shell transparente sobre --bg-page (separación en la franja de tabs) */
 .admin-dashboard--super .admin-dashboard-brand-shell {
   background: transparent;
+  border-bottom: none;
 }
 
 /* Contenido tabulado: superficie explícita tema sobre el scroll */
@@ -206,7 +208,7 @@
 }
 
 @media (max-width: 768px) {
-  /* Sin padding en el shell: evita franjas/márgenes donde se veía el rojo del padre */
+  /* Sin padding extra en el shell en mobile */
   .admin-dashboard:not(.admin-dashboard--super) {
     padding: 0;
   }
@@ -253,7 +255,8 @@
   position: sticky;
   top: 0;
   z-index: 6;
-  background: linear-gradient(180deg, #E11B22 0%, #E11B22 88%, rgba(225, 27, 34, 0) 100%);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
   scrollbar-width: thin;
 }
 
@@ -261,9 +264,9 @@
   flex: 0 0 auto;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -274,10 +277,10 @@
 }
 
 .admin-mi-sede-nav-pill--active {
-  background: rgba(255, 255, 255, 0.98);
-  color: #991b1b;
-  border-color: #fff;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+  background: var(--bg-page);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
 }
 
 .admin-mi-sede-nav-btn {
@@ -285,9 +288,9 @@
   text-align: left;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  background: rgba(248, 250, 252, 0.96);
-  color: #334155;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -295,10 +298,10 @@
 }
 
 .admin-mi-sede-nav-btn--active {
-  border-color: #E11B22;
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  color: #7f1d1d;
-  box-shadow: 0 2px 8px rgba(225, 27, 34, 0.2);
+  border-color: var(--accent);
+  background: var(--bg-page);
+  color: var(--accent);
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.1);
 }
 
 .admin-mi-sede-main {
@@ -675,33 +678,19 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   color: var(--text-secondary) !important;
 }
 
-/* Cabecera Panel Super Admin: contraste en modo claro */
-.admin-dashboard--super .admin-super-header__title {
-  color: #ffffff;
+/* Cabecera panel admin (super + club + editor): colores de tema */
+.admin-dashboard .admin-super-header__title {
+  color: var(--text-primary);
 }
 
-html.theme-light .admin-dashboard--super .admin-super-header__title {
-  color: #0f172a !important;
+.admin-dashboard .admin-super-header__date {
+  color: var(--text-secondary);
 }
 
-.admin-dashboard--super .admin-super-header__date {
-  color: #cbd5e1;
-}
-
-html.theme-light .admin-dashboard--super .admin-super-header__date {
-  color: #64748b !important;
-}
-
-.admin-dashboard--super .admin-super-header__bell {
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
-}
-
-html.theme-light .admin-dashboard--super .admin-super-header__bell {
-  color: #0f172a !important;
-  border-color: rgba(15, 23, 42, 0.2) !important;
-  background: rgba(15, 23, 42, 0.06) !important;
+.admin-dashboard .admin-super-header__bell {
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
 
 /* Analytics globales (super admin): cards legibles en modo claro */
@@ -971,7 +960,7 @@ html.theme-dark .admin-editar-sede-dialog {
     box-sizing: border-box;
   }
 
-  /* Club / editor: header rojo más compacto (menos altura útil perdida) */
+  /* Club / editor: cabecera compacta en mobile */
   .admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-brand-shell {
     padding-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: max(8px, env(safe-area-inset-right, 0px));
@@ -1020,7 +1009,7 @@ html.theme-dark .admin-editar-sede-dialog {
   color: var(--text-primary) !important;
 }
 
-/* Franja de tabs: scroll horizontal sin cortar la última pestaña (iOS / flex) */
+/* Franja de tabs: tema + scroll horizontal (iOS / flex) */
 .admin-dashboard-tabs-strip {
   display: flex;
   gap: 4px;
@@ -1033,6 +1022,15 @@ html.theme-dark .admin-editar-sede-dialog {
   flex-wrap: nowrap;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  background: var(--bg-card);
+}
+
+.admin-dashboard--super .admin-dashboard-tabs-strip {
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-dashboard:not(.admin-dashboard--super) .admin-dashboard-tabs-strip {
+  border-bottom: none;
 }
 
 .admin-dashboard-tabs-strip > button {
@@ -1044,12 +1042,8 @@ html.theme-dark .admin-editar-sede-dialog {
 }
 
 .admin-dashboard-tabs-strip::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.35);
-  border-radius: 999px;
-}
-
-.admin-dashboard-tabs-strip--super::-webkit-scrollbar-thumb {
   background: var(--border);
+  border-radius: 999px;
 }
 
 /* Mi Sede — Mis canchas: tabla con scroll en desktop; tarjetas en mobile */

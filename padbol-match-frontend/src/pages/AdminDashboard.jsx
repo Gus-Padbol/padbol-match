@@ -5027,13 +5027,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   marginBottom: '8px',
                 }}
               />
-              <p style={{ margin: '0 0 8px', color: '#fff', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
+              <p className="admin-super-header__title" style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
                 Editor de contenido
               </p>
               <p
+                className="admin-super-header__date"
                 style={{
                   margin: '0 0 16px',
-                  color: '#cbd5e1',
                   fontSize: '13px',
                   textAlign: 'center',
                   maxWidth: 380,
@@ -5048,12 +5048,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 style={{
                   padding: '10px 18px',
                   borderRadius: 10,
-                  border: 'none',
+                  border: '1px solid var(--border)',
                   fontWeight: 700,
                   fontSize: '14px',
                   cursor: 'pointer',
-                  background: '#fff',
-                  color: '#1e293b',
+                  background: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
                   marginBottom: 16,
                 }}
               >
@@ -5187,10 +5187,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             }}
           />
           <p
-            className={isSuperAdmin ? 'admin-super-header__title' : undefined}
+            className="admin-super-header__title"
             style={{
               margin: '0 0 12px',
-              color: isSuperAdmin ? undefined : '#fff',
               fontSize: '18px',
               fontWeight: 700,
               textAlign: 'center',
@@ -5199,10 +5198,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             {tituloPanelAdmin}
           </p>
           <p
-            className={isSuperAdmin ? 'admin-super-header__date' : undefined}
+            className="admin-super-header__date"
             style={{
               margin: '0 0 10px',
-              color: isSuperAdmin ? undefined : '#cbd5e1',
               fontSize: '12px',
               textAlign: 'center',
             }}
@@ -5212,19 +5210,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <div style={{ position: 'relative', marginBottom: '12px' }}>
             <button
               type="button"
-              className={isSuperAdmin ? 'admin-super-header__bell' : undefined}
+              className="admin-super-header__bell"
               aria-label={`Notificaciones: ${notificacionesNoLeidas} no leídas`}
               onClick={() => setNotificacionesOpen((v) => !v)}
               style={{
                 position: 'relative',
-                border: isSuperAdmin ? undefined : '1px solid rgba(255,255,255,0.45)',
-                background: isSuperAdmin ? undefined : 'rgba(255,255,255,0.16)',
-                color: isSuperAdmin ? undefined : '#fff',
                 borderRadius: '999px',
                 padding: '8px 12px',
                 cursor: 'pointer',
                 lineHeight: 1,
-                boxShadow: '0 4px 14px rgba(15,23,42,0.18)',
+                boxShadow: '0 1px 6px rgba(15,23,42,0.08)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -5241,9 +5236,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     height: '20px',
                     padding: '0 5px',
                     borderRadius: '999px',
-                    background: '#ef4444',
-                    color: '#fff',
-                    border: '2px solid #E11B22',
+                    background: 'var(--accent)',
+                    color: 'var(--bg-card)',
+                    border: '2px solid var(--border)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -5268,51 +5263,55 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   width: 'min(340px, calc(100vw - 24px))',
                   maxHeight: '420px',
                   overflowY: 'auto',
-                  background: '#fff',
-                  color: '#0f172a',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
                   borderRadius: '14px',
                   boxShadow: '0 20px 45px rgba(15,23,42,0.28)',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   zIndex: 250,
                   textAlign: 'left',
                 }}
               >
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                  <strong style={{ fontSize: '14px' }}>Notificaciones</strong>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                  <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>Notificaciones</strong>
                   {adminNotificaciones.length > 0 ? (
                     <button
                       type="button"
                       onClick={() => setNotificacionesLeidas(adminNotificaciones.map((n) => String(n.id)))}
-                      style={{ border: 'none', background: 'transparent', color: '#E11B22', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+                      style={{ border: 'none', background: 'transparent', color: 'var(--accent)', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
                     >
                       Marcar leídas
                     </button>
                   ) : null}
                 </div>
                 {adminNotificaciones.length === 0 ? (
-                  <p style={{ margin: 0, padding: '14px', color: '#64748b', fontSize: '13px' }}>Sin notificaciones prioritarias.</p>
+                  <p style={{ margin: 0, padding: '14px', color: 'var(--text-secondary)', fontSize: '13px' }}>Sin notificaciones prioritarias.</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '8px', padding: '10px' }}>
                     {adminNotificaciones.map((n) => {
                       const leida = notificacionesLeidas.includes(String(n.id));
-                      const borderColor =
-                        n.tone === 'danger' ? '#f87171' : n.tone === 'warning' ? '#fbbf24' : '#818cf8';
+                      const borderVar =
+                        n.tone === 'danger'
+                          ? 'var(--pm-color-error, #dc2626)'
+                          : n.tone === 'warning'
+                            ? 'var(--pm-color-warning, #f59e0b)'
+                            : 'var(--accent)';
                       return (
                         <div
                           key={n.id}
                           style={{
-                            border: `1px solid ${borderColor}`,
-                            borderLeft: `4px solid ${borderColor}`,
+                            border: `1px solid var(--border)`,
+                            borderLeft: `4px solid ${borderVar}`,
                             borderRadius: '10px',
                             padding: '10px',
-                            background: leida ? '#f8fafc' : '#fff7ed',
+                            background: leida ? 'var(--bg-input)' : 'var(--pm-color-muted-bg)',
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                            <strong style={{ fontSize: '13px', color: '#0f172a' }}>{n.title}</strong>
-                            {!leida ? <span style={{ color: '#ef4444', fontSize: '11px', fontWeight: 900 }}>Nuevo</span> : null}
+                            <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{n.title}</strong>
+                            {!leida ? <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 900 }}>Nuevo</span> : null}
                           </div>
-                          <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.4, color: '#475569' }}>{n.body}</p>
+                          <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.4, color: 'var(--text-secondary)' }}>{n.body}</p>
                           {n.actionLabel ? (
                             <button
                               type="button"
@@ -5326,8 +5325,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 border: 'none',
                                 borderRadius: '8px',
                                 padding: '6px 10px',
-                                background: '#E11B22',
-                                color: '#fff',
+                                background: 'var(--accent)',
+                                color: 'var(--bg-card)',
                                 fontSize: '12px',
                                 fontWeight: 800,
                                 cursor: 'pointer',
@@ -5358,10 +5357,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       borderRadius: '999px',
                       fontSize: '11px',
                       fontWeight: 600,
-                      background: 'rgba(241,245,249,0.95)',
-                      color: '#64748b',
-                      border: '1px solid rgba(148,163,184,0.5)',
-                      boxShadow: '0 1px 4px rgba(15,23,42,0.08)',
+                      background: 'var(--bg-input)',
+                      color: 'var(--text-secondary)',
+                      border: '1px solid var(--border)',
+                      boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
                     }}
                   >
                     📋 Sin licencia asignada
@@ -5385,8 +5384,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       background: 'linear-gradient(145deg, #C9A84C 0%, #dcc062 42%, #F0D060 100%)',
                       color: '#5a3e00',
                       border: '1px solid #9a7b2e',
-                      boxShadow:
-                        '0 2px 12px rgba(201, 168, 76, 0.45), 0 1px 3px rgba(90, 62, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.35)',
+                      boxShadow: '0 1px 6px rgba(15,23,42,0.1)',
                     }}
                   >
                     <span style={{ fontSize: '0.8rem', lineHeight: 1 }} aria-hidden>⭐</span>
@@ -5406,10 +5404,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     borderRadius: '999px',
                     fontSize: '11px',
                     fontWeight: 700,
-                    background: 'linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%)',
-                    color: '#991b1b',
-                    border: '1px solid #fca5a5',
-                    boxShadow: '0 1px 6px rgba(220,38,38,0.15)',
+                    background: 'var(--bg-input)',
+                    color: 'var(--accent)',
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
                   }}
                 >
                   ⚠️ Licencia Suspendida
@@ -5423,17 +5421,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {/* Tab navigation — scroll horizontal (mobile); dentro del bloque marca */}
       <div
         ref={adminTabsStripRef}
-        className={`admin-dashboard-tabs-strip${isSuperAdmin ? ' admin-dashboard-tabs-strip--super' : ''}`}
+        className="admin-dashboard-tabs-strip"
         style={{
           marginTop: '8px',
           marginBottom: '24px',
-          borderBottom: isSuperAdmin ? '2px solid var(--border)' : '2px solid rgba(255,255,255,0.3)',
           paddingTop: 0,
           paddingBottom: 0,
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          backgroundColor: isSuperAdmin ? 'var(--bg-card)' : '#E11B22',
         }}
       >
         {TABS.map(tab => (
@@ -5450,23 +5446,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               position: 'relative',
               padding: '10px 18px',
               border: 'none',
-              borderBottom:
-                activeTab === tab.id
-                  ? isSuperAdmin
-                    ? '3px solid var(--accent)'
-                    : '3px solid white'
-                  : '3px solid transparent',
+              borderBottom: activeTab === tab.id ? '3px solid var(--accent)' : '3px solid transparent',
               background: 'none',
               cursor: 'pointer',
               fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-              color:
-                activeTab === tab.id
-                  ? isSuperAdmin
-                    ? 'var(--text-primary)'
-                    : '#fff'
-                  : isSuperAdmin
-                    ? 'var(--text-secondary)'
-                    : 'rgba(255,255,255,0.88)',
+              color: activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)',
               fontSize: '14px',
               marginBottom: '-2px',
               whiteSpace: 'nowrap',
@@ -5479,8 +5463,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 position: 'absolute',
                 top: '4px',
                 right: '4px',
-                background: '#d32f2f',
-                color: 'white',
+                background: 'var(--accent)',
+                color: 'var(--bg-card)',
                 borderRadius: '50%',
                 width: '18px',
                 height: '18px',
@@ -5489,6 +5473,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                border: '1px solid var(--border)',
               }}>
                 {tab.badge}
               </span>
@@ -5661,7 +5646,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             style={{
               marginBottom: '14px',
               textAlign: 'center',
-              color: 'rgba(255,255,255,0.92)',
+              color: 'var(--text-primary)',
               fontSize: '14px',
               fontWeight: 600,
             }}
@@ -5860,7 +5845,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         ) : null}
         {puedeVerFinanzas ? <>
         <div style={{ marginBottom: '18px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
             Período del resumen financiero
           </div>
           <div
@@ -6129,13 +6114,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               fontSize: '12px',
               fontWeight: 700,
               marginBottom: '8px',
-              color: isSuperAdmin ? '#ffffff' : '#64748b',
+              color: 'var(--text-primary)',
             }}
           >
             Ingresos por día
           </div>
           {dashboardFinanciero.dailyRows.length === 0 ? (
-            <div style={{ fontSize: '13px', color: isSuperAdmin ? 'rgba(255,255,255,0.75)' : '#94a3b8' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
               Sin movimientos en el período seleccionado.
             </div>
           ) : (
@@ -6144,23 +6129,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 const pct = dashboardFinanciero.maxDaily > 0 ? Math.max(4, (row.total / dashboardFinanciero.maxDaily) * 100) : 0;
                 return (
                   <div key={row.fecha} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: isSuperAdmin ? '#ffffff' : '#475569', fontWeight: 700 }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>
                       {ymdToLabelShort(row.fecha)}
                     </span>
                     <div
                       style={{
                         height: '12px',
                         borderRadius: '999px',
-                        background: isSuperAdmin ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+                        background: 'var(--border)',
                         overflow: 'hidden',
                       }}
                     >
-                      <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#E11B22,#fecaca)' }} />
+                      <div style={{ height: '100%', width: `${pct}%`, background: 'var(--accent)' }} />
                     </div>
                     <span
                       style={{
                         fontSize: '12px',
-                        color: isSuperAdmin ? 'rgba(255,255,255,0.8)' : '#0f172a',
+                        color: 'var(--text-primary)',
                         fontWeight: 700,
                       }}
                     >
@@ -6179,7 +6164,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       {activeTab === 'torneos' && <>
         <div style={{ marginBottom: '18px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
             Estado del torneo
           </div>
           <div
@@ -7103,7 +7088,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         ) : (
           <>
             <div style={{ marginBottom: '14px', maxWidth: '420px' }}>
-              <label htmlFor="admin-busqueda-validaciones" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '6px' }}>
+              <label htmlFor="admin-busqueda-validaciones" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
                 Buscar por nombre, apellido o email
               </label>
               <input
@@ -7221,7 +7206,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       {activeTab === 'reservas' && <>
         <div style={{ marginBottom: '18px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', marginBottom: '8px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
             Estado de la reserva
           </div>
           <div
@@ -7733,7 +7718,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
                     }}
                   >
-                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>
                       País
                       <select
                         value={superReservasFiltroPais}
@@ -7755,7 +7740,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         ))}
                       </select>
                     </label>
-                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>
                       Ciudad
                       <input
                         type="text"
@@ -7772,7 +7757,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         }}
                       />
                     </label>
-                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                    <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>
                       Nombre del club
                       <input
                         type="text"
@@ -7927,7 +7912,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <div style={{ display: 'grid', gap: '16px', minWidth: 0, maxWidth: '100%' }}>
                 {reservaManualPanel}
                 {periodoReservasSuperRow}
-                <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.92)' }}>
+                <label style={{ display: 'grid', gap: '6px', fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>
                   País
                   <select
                     value={superReservasFiltroPais}
@@ -8554,7 +8539,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>⚙️ Configuración de Puntos</h2>
         {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
         <div style={{ marginBottom: '4px' }}>
-          <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
+          <h3 style={{ color: 'var(--text-primary)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
             Puntos base por nivel de torneo
           </h3>
           <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse', background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
@@ -8695,11 +8680,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           const pctDiff = pctSum - 100;
           return (
             <div style={{ marginBottom: 0 }}>
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginTop: '4px', marginBottom: '8px', fontSize: '16px' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginTop: '4px', marginBottom: '8px', fontSize: '16px' }}>
                 Distribución de puntos por posición
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <label style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                <label style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   Previsualizar con:
                 </label>
                 <select value={previewNivel} onChange={e => setPreviewNivel(e.target.value)}
@@ -8791,13 +8776,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           style={{
             marginBottom: '20px',
             padding: '12px 14px',
-            background: 'rgba(255,255,255,0.08)',
+            background: 'var(--bg-input)',
             borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.12)',
+            border: '1px solid var(--border)',
             maxWidth: '640px',
           }}
         >
-          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
             <strong>Datos de la sede:</strong> si tienes la pestaña <strong>«Mi Sede»</strong>, usa el botón{' '}
             <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
             se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
@@ -8813,7 +8798,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {activeTab === 'planes' && puedeVerConfig && (
         <div className="section">
           <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>💳 Planes y Precios</h2>
-          <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.45 }}>
+          <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
             Precio mensual en USD según la cantidad de canchas del club. Solo super admin puede editar.
           </p>
           <div style={{ overflowX: 'auto', width: '100%', maxWidth: '100%', boxSizing: 'border-box', WebkitOverflowScrolling: 'touch' }}>
@@ -8981,7 +8966,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <div className="section">
           <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>👥 Roles</h2>
           <div style={{ marginBottom: '28px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '12px', fontSize: '16px' }}>
               Invitaciones de administradores
             </h3>
             <div style={{ marginBottom: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
@@ -9096,7 +9081,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
           <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '12px', fontSize: '16px' }}>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '12px', fontSize: '16px' }}>
               Gestión de Administradores
             </h3>
             <div style={{ marginBottom: '10px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
@@ -9307,13 +9292,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               style={{
                 marginTop: '28px',
                 paddingTop: '20px',
-                borderTop: '1px solid rgba(255,255,255,0.25)',
+                borderTop: '1px solid var(--border)',
               }}
             >
-              <h3 style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '10px', fontSize: '16px' }}>
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '10px', fontSize: '16px' }}>
                 Editor de contenido del hub
               </h3>
-              <p style={{ color: 'rgba(226,232,240,0.95)', fontSize: '13px', lineHeight: 1.45, marginBottom: '14px', maxWidth: 520 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.45, marginBottom: '14px', maxWidth: 520 }}>
                 Asigná acceso solo a la sección «Personalizar Hub» (fotos, títulos y subtítulos de las cards del inicio del jugador).
               </p>
               {editorContenidoAsignado ? (
@@ -9327,14 +9312,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   }}
                 >
                   <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'rgba(248,250,252,0.98)' }}>
+                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
                       {String(editorContenidoAsignado.nombre || '').trim() || editorContenidoAsignado.email}
                     </div>
                     {String(editorContenidoAsignado.nombre || '').trim() ? (
                       <div
                         style={{
                           fontSize: '12px',
-                          color: 'rgba(226,232,240,0.88)',
+                          color: 'var(--text-secondary)',
                           marginTop: '4px',
                           wordBreak: 'break-all',
                         }}
@@ -9350,8 +9335,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       padding: '10px 16px',
                       borderRadius: '8px',
                       border: 'none',
-                      background: '#dc2626',
-                      color: '#fff',
+                      background: 'var(--accent)',
+                      color: 'var(--bg-card)',
                       fontWeight: 700,
                       fontSize: '14px',
                       cursor: 'pointer',
@@ -9368,9 +9353,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   style={{
                     padding: '10px 16px',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.35)',
-                    background: 'rgba(255,255,255,0.08)',
-                    color: 'rgba(248,250,252,0.98)',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-input)',
+                    color: 'var(--text-primary)',
                     fontWeight: 700,
                     fontSize: '14px',
                     cursor: 'pointer',
@@ -9382,7 +9367,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end', marginBottom: '12px' }}>
                     <div style={{ flex: '1 1 220px', minWidth: '180px' }}>
-                      <label htmlFor="editor-contenido-email" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
+                      <label htmlFor="editor-contenido-email" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
                         Email
                       </label>
                       <input
@@ -9396,14 +9381,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           width: '100%',
                           padding: '8px 10px',
                           borderRadius: '8px',
-                          border: '1px solid #c4b5fd',
+                          border: '1px solid var(--border)',
                           fontSize: '14px',
                           boxSizing: 'border-box',
                         }}
                       />
                     </div>
                     <div style={{ flex: '1 1 200px', minWidth: '160px' }}>
-                      <label htmlFor="editor-contenido-nombre" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(248,250,252,0.98)', marginBottom: '4px' }}>
+                      <label htmlFor="editor-contenido-nombre" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
                         Nombre (opcional)
                       </label>
                       <input
@@ -9417,7 +9402,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           width: '100%',
                           padding: '8px 10px',
                           borderRadius: '8px',
-                          border: '1px solid #c4b5fd',
+                          border: '1px solid var(--border)',
                           fontSize: '14px',
                           boxSizing: 'border-box',
                         }}
@@ -9431,8 +9416,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         padding: '10px 16px',
                         borderRadius: '8px',
                         border: 'none',
-                        background: editorContenidoSaving ? '#64748b' : '#E11B22',
-                        color: '#fff',
+                        background: editorContenidoSaving ? 'var(--text-secondary)' : 'var(--accent)',
+                        color: 'var(--bg-card)',
                         fontWeight: 700,
                         fontSize: '14px',
                         cursor: editorContenidoSaving ? 'not-allowed' : 'pointer',
@@ -9451,9 +9436,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       style={{
                         padding: '10px 16px',
                         borderRadius: '8px',
-                        border: '1px solid rgba(255,255,255,0.4)',
+                        border: '1px solid var(--border)',
                         background: 'transparent',
-                        color: 'rgba(248,250,252,0.95)',
+                        color: 'var(--text-primary)',
                         fontWeight: 600,
                         fontSize: '14px',
                         cursor: editorContenidoSaving ? 'not-allowed' : 'pointer',
@@ -9472,8 +9457,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {/* ── Solicitudes (super admin): altas nacionales + interés web, unificado ── */}
       {activeTab === 'solicitudes' && isSuperAdmin && (
         <div className="section" style={{ maxWidth: '980px', margin: '0 auto' }}>
-          <h2 style={{ color: '#fff', textAlign: 'center', marginBottom: '8px' }}>📝 Solicitudes</h2>
-          <p style={{ color: '#e2e8f0', textAlign: 'center', marginBottom: '16px', fontSize: '14px' }}>
+          <h2 style={{ color: 'var(--text-primary)', textAlign: 'center', marginBottom: '8px' }}>📝 Solicitudes</h2>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '16px', fontSize: '14px' }}>
             Altas enviadas por admin nacional e interés desde la web. Filtra por estado; las aprobadas y rechazadas siguen
             visibles.
           </p>
@@ -10367,7 +10352,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     background: `linear-gradient(135deg, ${normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95'} 0%, ${normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED'} 100%)`,
                   }}
                 >
-                  <div style={{ width: '72px', flexShrink: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.35)', fontSize: '22px' }}>⚽</div>
+                  <div style={{ width: '72px', flexShrink: 0, background: 'rgba(15, 23, 42, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(248, 250, 252, 0.45)', fontSize: '22px' }}>⚽</div>
                   <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                     <div
                       style={{
@@ -11166,13 +11151,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div className="admin-mi-sede-canchas-table-wrap">
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ background: '#E11B22' }}>
-                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#fff', width: '48px' }}>#</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#fff' }}>Nombre</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#fff' }}>Deporte</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#fff' }}>Nota</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#fff', width: '100px' }}>Estado</th>
-                      <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#fff' }}></th>
+                    <tr style={{ background: 'var(--accent)' }}>
+                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)', width: '48px' }}>#</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)' }}>Nombre</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>Deporte</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>Nota</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)', width: '100px' }}>Estado</th>
+                      <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}></th>
                     </tr>
                   </thead>
                   <tbody>
