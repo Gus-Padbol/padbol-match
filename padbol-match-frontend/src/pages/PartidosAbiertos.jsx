@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { IconGeroCheck, IconGeroFiltros } from '../components/icons/GeroIcons';
+import HubDeporteSelect from '../components/HubDeporteSelect';
+import { IconGeroCheck } from '../components/icons/GeroIcons';
 import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
-import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
+import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
@@ -31,8 +33,8 @@ export default function PartidosAbiertos() {
   const [joiningId, setJoiningId] = useState(null);
   const [solicitudes, setSolicitudes] = useState([]);
   const [updatingSolicitudId, setUpdatingSolicitudId] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [joinSuccess, setJoinSuccess] = useState(false);
+  const hubDeporteHydratedRef = useRef(false);
 
   const deporteFiltro = String(searchParams.get('deporte') || '').trim().toLowerCase();
 
@@ -41,7 +43,25 @@ export default function PartidosAbiertos() {
     if (key) next.set('deporte', key);
     else next.delete('deporte');
     setSearchParams(next, { replace: true });
+    writeHubDeporteFilterToSession(key);
   };
+
+  useEffect(() => {
+    if (hubDeporteHydratedRef.current) return;
+    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
+    if (DEPORTES_CANCHA_SEDE_KEYS.includes(d)) {
+      writeHubDeporteFilterToSession(d);
+      hubDeporteHydratedRef.current = true;
+      return;
+    }
+    const fromSession = readHubDeporteFilterFromSession();
+    if (fromSession) {
+      const next = new URLSearchParams(searchParams);
+      next.set('deporte', fromSession);
+      setSearchParams(next, { replace: true });
+    }
+    hubDeporteHydratedRef.current = true;
+  }, [searchParams, setSearchParams]);
 
   const cargar = useCallback(() => {
     setLoading(true);
@@ -172,85 +192,22 @@ export default function PartidosAbiertos() {
             left: 16,
             right: 16,
             bottom: 16,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 12,
           }}
         >
           <h1 style={{ margin: 0, color: '#f8fafc', fontSize: 24, fontWeight: 700, textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
             Buscar partido
           </h1>
-          <button
-            type="button"
-            onClick={() => setShowFilters((v) => !v)}
-            style={{
-              border: '1px solid rgba(255,255,255,0.85)',
-              background: 'rgba(255,255,255,0.15)',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: 13,
-              padding: '10px 14px',
-              borderRadius: 8,
-              cursor: 'pointer',
-              backdropFilter: 'blur(6px)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <IconGeroFiltros size={18} style={{ color: '#fff' }} />
-            Filtros
-          </button>
         </div>
       </div>
 
       <main style={{ width: '100%', maxWidth: 560, margin: '0 auto', padding: '16px 16px 24px', boxSizing: 'border-box' }}>
-        {showFilters ? (
-          <label style={{ display: 'block', marginBottom: 14 }}>
-            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Elegir deporte</span>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={deporteFiltro}
-                onChange={(e) => setDeporteFiltro(e.target.value)}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                  padding: '14px 40px 14px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  fontSize: 16,
-                  fontWeight: 400,
-                  color: 'var(--text-primary)',
-                  background: 'var(--bg-card)',
-                }}
-              >
-                <option value="">Todos</option>
-                {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
-                  <option key={d.key} value={d.key}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-              <span
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  right: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  pointerEvents: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: 11,
-                }}
-              >
-                ▼
-              </span>
-            </div>
-          </label>
-        ) : null}
+        <div style={{ marginBottom: 14 }}>
+          <HubDeporteSelect
+            id="partidos-abiertos-deporte"
+            value={deporteFiltro}
+            onChange={setDeporteFiltro}
+          />
+        </div>
 
         {joinSuccess ? (
           <section
