@@ -2121,6 +2121,21 @@ app.patch('/api/sedes/:id', async (req, res) => {
         patch.precio_turno = p;
       }
     }
+    for (const key of ['precio_60min', 'precio_90min', 'precio_120min']) {
+      if (!hop(key)) continue;
+      if (b[key] === null || b[key] === '') {
+        patch[key] = null;
+      } else {
+        const p = Number(String(b[key]).replace(/\./g, '').replace(',', '.'));
+        if (!Number.isFinite(p) || p < 0) {
+          return res.status(400).json({ error: `${key} inválido` });
+        }
+        patch[key] = p;
+      }
+    }
+    if (hop('precio_90min') && patch.precio_90min != null) {
+      patch.precio_turno = patch.precio_90min;
+    }
     if (hop('moneda')) {
       const m = String(b.moneda || 'ARS').trim().toUpperCase().slice(0, 8);
       patch.moneda = m || 'ARS';

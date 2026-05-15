@@ -36,6 +36,11 @@ import {
   primeraFotoSede,
 } from '../utils/sedeCardUi';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
+import {
+  duracionesReservaDisponibles,
+  precioReservaTurno,
+  RESERVA_DURACIONES_MIN,
+} from '../utils/sedePreciosDuracion';
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -50,17 +55,8 @@ import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
  * antes del `useState` de `pantalla` (evita crash / boundary «Algo salió mal»).
  */
 
-// Returns the correct price for a given sede + time slot.
-// Base desde `sedes` (precio_turno en Supabase, luego legacy precio_por_reserva); luego franjas o mañana/tarde.
-function getPrecio(sede, hora, fecha) {
-  const base = precioBaseTurnoDesdeSede(sede);
-  if (!hora || !sede) return base;
-  const desdeFranjas = precioDesdeFranjas(sede, hora, fecha);
-  if (desdeFranjas != null) return desdeFranjas;
-  const h = parseInt(hora.split(':')[0], 10);
-  return h < 16
-    ? Number(sede.precio_manana || base)
-    : Number(sede.precio_tarde  || base);
+function getPrecio(sede, hora, fecha, duracionMin) {
+  return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas);
 }
 
 /** Texto visible en el selector de país; el `value` sigue siendo el string exacto de la sede. */
@@ -98,7 +94,6 @@ function clienteTieneTelefonoGuardado(c) {
 
 /** Mínimo de dígitos (sin contar +) para considerar un teléfono válido al confirmar pago */
 const MIN_DIGITOS_TELEFONO = 8;
-const RESERVA_DURACIONES_MIN = [60, 90, 120];
 const SLOT_STEP_MIN = 30;
 
 /** Perfil con teléfono/WhatsApp con cantidad de dígitos suficiente (no se re-evalúa en cada tecla del resumen). */
@@ -153,8 +148,11 @@ function horaDesdeMinutosReserva(totalMin) {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 
-function duracionReservaSeleccionada(formData) {
+function duracionReservaSeleccionada(formData, sede) {
+  const disponibles = duracionesReservaDisponibles(sede);
   const d = parseInt(String(formData?.duracion || ''), 10);
+  if (disponibles.length > 0 && disponibles.includes(d)) return d;
+  if (disponibles.length > 0) return disponibles[0];
   return RESERVA_DURACIONES_MIN.includes(d) ? d : 90;
 }
 
@@ -742,7 +740,27 @@ export default function ReservaForm() {
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
-  const duracionSeleccionadaMin = duracionReservaSeleccionada(formData);
+  const duracionesOfrecidas = useMemo(
+    () => duracionesReservaDisponibles(sedeSeleccionada),
+    [sedeSeleccionada]
+  );
+
+  const duracionSeleccionadaMin = duracionReservaSeleccionada(formData, sedeSeleccionada);
+
+  useEffect(() => {
+    if (!sedeSeleccionada || duracionesOfrecidas.length === 0) return;
+    const cur = parseInt(String(formData.duracion || ''), 10);
+    if (duracionesOfrecidas.includes(cur)) return;
+    setFormData((prev) => ({
+      ...prev,
+      duracion: String(duracionesOfrecidas[0]),
+      hora: '',
+      cancha: '',
+    }));
+    setHorariosDisponibles([]);
+    setCanchasDisponibles([]);
+    setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
+  }, [sedeSeleccionada, duracionesOfrecidas, formData.duracion]);
 
   const irAModificarReservaDesdeResumen = useCallback(() => {
     setPantalla(2);
@@ -1547,7 +1565,7 @@ export default function ReservaForm() {
     setMpLoading(true);
     setError('');
 
-    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha);
+    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
     const creditoAplicado = 0;
     const precioFinal = Math.max(0, precio - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
@@ -1852,29 +1870,56 @@ export default function ReservaForm() {
 
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>Duración</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                {RESERVA_DURACIONES_MIN.map((duracion) => {
-                  const active = duracionSeleccionadaMin === duracion;
-                  return (
-                    <button
-                      key={duracion}
-                      type="button"
-                      onClick={() => handleSelectDuracion(duracion)}
-                      style={{
-                        padding: '10px 8px',
-                        borderRadius: '10px',
-                        border: `2px solid ${active ? '#E11B22' : 'var(--border)'}`,
-                        background: active ? '#E11B22' : 'var(--bg-card)',
-                        color: active ? '#fff' : 'var(--text-primary)',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {duracion} min
-                    </button>
-                  );
-                })}
-              </div>
+              {duracionesOfrecidas.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
+                  Esta sede no tiene precios cargados para ninguna duración. Contactá al club.
+                </p>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${Math.min(duracionesOfrecidas.length, 3)}, 1fr)`,
+                      gap: '8px',
+                    }}
+                  >
+                    {duracionesOfrecidas.map((duracion) => {
+                      const active = duracionSeleccionadaMin === duracion;
+                      const precioDur = getPrecio(sedeSeleccionada, '', formData.fecha, duracion);
+                      return (
+                        <button
+                          key={duracion}
+                          type="button"
+                          onClick={() => handleSelectDuracion(duracion)}
+                          style={{
+                            padding: '10px 8px',
+                            borderRadius: '10px',
+                            border: `2px solid ${active ? '#E11B22' : 'var(--border)'}`,
+                            background: active ? '#E11B22' : 'var(--bg-card)',
+                            color: active ? '#fff' : 'var(--text-primary)',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <span>⏱ {duracion} min</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, opacity: active ? 0.95 : 0.85 }}>
+                            ${Number(precioDur).toLocaleString('es-AR')}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {duracionesOfrecidas.length === 1 ? (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+                      Única duración disponible para esta sede.
+                    </p>
+                  ) : null}
+                </>
+              )}
             </div>
 
             {horariosDisponibles.length > 0 && (
@@ -1914,7 +1959,7 @@ export default function ReservaForm() {
             {formData.hora && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  💰 {Number(getPrecio(sedeSeleccionada, formData.hora, formData.fecha)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
+                  💰 {Number(getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
                 {(() => {
                   const subEtiqueta =
@@ -1976,7 +2021,7 @@ export default function ReservaForm() {
 
   // PANTALLA 4: Resumen + pago
   if (pantalla === 4) {
-    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha);
+    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const creditoAplicado = 0;
     const precioFinal = Math.max(0, precio - creditoAplicado);

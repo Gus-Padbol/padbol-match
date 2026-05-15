@@ -75,6 +75,7 @@ import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { getCroppedImgBlob } from '../utils/cropImage';
+import { preciosDuracionToApiPatch, parsePrecioDuracionField } from '../utils/sedePreciosDuracion';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -312,7 +313,10 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     email_contacto: sedeData.email_contacto || '',
     horario_apertura: sedeData.horario_apertura || '',
     horario_cierre: sedeData.horario_cierre || '',
-    precio_turno: sedeData.precio_turno ?? '',
+    precio_60min: sedeData.precio_60min ?? '',
+    precio_90min: sedeData.precio_90min ?? sedeData.precio_turno ?? '',
+    precio_120min: sedeData.precio_120min ?? '',
+    precio_turno: sedeData.precio_turno ?? sedeData.precio_90min ?? '',
     moneda: sedeData.moneda || 'ARS',
     descripcion: sedeData.descripcion || '',
     historia: sedeData.historia != null ? String(sedeData.historia) : '',
@@ -339,14 +343,16 @@ function sedeDbRowToMiSedeFormState(sedeData) {
   };
 }
 
+
+function precioDuracionInputDisplay(raw) {
+  if (raw === '' || raw == null) return '';
+  const n = parsePrecioDuracionField(raw);
+  return n != null ? Number(n).toLocaleString('es-AR') : '';
+}
+
 /** Body para PATCH /api/sedes/:id (campos alineados con el panel). */
 function miSedeFormToApiPatchBody(form) {
-  const precioRaw = form.precio_turno;
-  let precio_turno = null;
-  if (precioRaw !== '' && precioRaw != null) {
-    const p = parseFloat(String(precioRaw).replace(/\./g, '').replace(',', '.'));
-    if (Number.isFinite(p)) precio_turno = p;
-  }
+  const duracionPrecios = preciosDuracionToApiPatch(form);
   const latOk = form.latitud !== '' && form.latitud != null && Number.isFinite(parseFloat(form.latitud));
   const lngOk = form.longitud !== '' && form.longitud != null && Number.isFinite(parseFloat(form.longitud));
   const mpTrim = String(form.mp_access_token ?? '').trim();
@@ -362,7 +368,7 @@ function miSedeFormToApiPatchBody(form) {
     email_contacto: form.email_contacto || null,
     horario_apertura: form.horario_apertura || null,
     horario_cierre: form.horario_cierre || null,
-    precio_turno,
+    ...duracionPrecios,
     moneda: form.moneda || 'ARS',
     descripcion: form.descripcion || null,
     historia:
@@ -4045,6 +4051,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [miSedeLoading, setMiSedeLoading] = useState(false);
   const [miSedeForm,    setMiSedeForm]    = useState({});
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
+  const [miSedePreciosSaving, setMiSedePreciosSaving] = useState(false);
+  const [miSedePreciosMsg, setMiSedePreciosMsg] = useState('');
   const [suscripcionEstadoSuperSavingId, setSuscripcionEstadoSuperSavingId] = useState(null);
   const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
   const [cancelReservaModalId, setCancelReservaModalId] = useState(null);
@@ -4300,6 +4308,46 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           }),
         }).catch(() => {});
       }
+      setMiSede(updated);
+      setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+      setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+    }
+  };
+
+
+  const guardarPreciosDuracion = async () => {
+    if (!sedeId || !session?.access_token) {
+      setMiSedePreciosMsg('⚠️ Inicia sesión de nuevo.');
+      setTimeout(() => setMiSedePreciosMsg(''), 4000);
+      return;
+    }
+    setMiSedePreciosSaving(true);
+    setMiSedePreciosMsg('');
+    const body = preciosDuracionToApiPatch(miSedeForm);
+    let errorMsg = null;
+    let updated = null;
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errorMsg = data.error || res.statusText || 'Error al guardar';
+      } else {
+        updated = data.sede;
+      }
+    } catch (e) {
+      errorMsg = e?.message || String(e);
+    }
+    setMiSedePreciosSaving(false);
+    setMiSedePreciosMsg(errorMsg ? `⚠️ ${errorMsg}` : '✅ Precios guardados');
+    setTimeout(() => setMiSedePreciosMsg(''), errorMsg ? 5000 : 3000);
+    if (!errorMsg && updated) {
       setMiSede(updated);
       setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
@@ -9844,29 +9892,32 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <option value="UYU">UYU</option>
                   </select>
                 </div>
-                <div style={{ marginBottom: '12px' }}>
-                  <label>Precio por turno (90 min)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={
-                      editarSedeDraft.precio_turno !== '' && editarSedeDraft.precio_turno != null
-                        ? Number(String(editarSedeDraft.precio_turno).replace(/\./g, '')).toLocaleString('es-AR')
-                        : ''
-                    }
-                    onChange={(e) => {
-                      const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
-                      setEditarSedeDraft((p) => ({ ...p, precio_turno: digits }));
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: 'var(--text-secondary)' }}>Precios por duración ({editarSedeDraft.moneda || 'ARS'})</p>
+                {[
+                  { field: 'precio_60min', label: '60 min' },
+                  { field: 'precio_90min', label: '90 min' },
+                  { field: 'precio_120min', label: '120 min' },
+                ].map(({ field, label }) => (
+                  <div key={field} style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', marginBottom: '4px' }}>{label}</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={precioDuracionInputDisplay(editarSedeDraft[field])}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                        setEditarSedeDraft((p) => ({ ...p, [field]: digits }));
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                ))}
                 <div style={{ marginBottom: '12px' }}>
                   <label>Descripción del club</label>
                   <textarea
@@ -10531,26 +10582,51 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>Precios</h3>
             <div className="admin-mi-sede-theme-panel">
-              <div className="admin-mi-sede-field-row admin-mi-sede-precio-base" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555' }}>Precio por turno (90 min)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '100%' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>{miSedeForm.moneda || 'ARS'}</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={miSedeForm.precio_turno !== '' && miSedeForm.precio_turno !== null
-                      ? Number(miSedeForm.precio_turno).toLocaleString('es-AR')
-                      : ''}
-                    onChange={e => {
-                      const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
-                      setMiSedeForm(p => ({ ...p, precio_turno: digits }));
-                    }}
-                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
-                  />
+              <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Precio base por duración de turno ({miSedeForm.moneda || 'ARS'}). Solo se ofrecen en reservas las duraciones con precio cargado.
+              </p>
+              {[
+                { field: 'precio_60min', label: '60 min' },
+                { field: 'precio_90min', label: '90 min (turno estándar)' },
+                { field: 'precio_120min', label: '120 min' },
+              ].map(({ field, label }) => (
+                <div
+                  key={field}
+                  className="admin-mi-sede-field-row admin-mi-sede-precio-base"
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}
+                >
+                  <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: '#555', minWidth: '140px' }}>{label}</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>{miSedeForm.moneda || 'ARS'}</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={precioDuracionInputDisplay(miSedeForm[field])}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                        setMiSedeForm((p) => ({ ...p, [field]: digits }));
+                      }}
+                      placeholder="Vacío = no ofrecer"
+                      style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
+                    />
+                  </div>
                 </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={guardarPreciosDuracion}
+                  disabled={miSedePreciosSaving}
+                  style={{ padding: '8px 20px', background: miSedePreciosSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedePreciosSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                >
+                  {miSedePreciosSaving ? '⏳ Guardando...' : '💾 Guardar precios'}
+                </button>
+                {miSedePreciosMsg ? (
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: miSedePreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedePreciosMsg}</span>
+                ) : null}
               </div>
-              <p style={{ margin: '4px 0 18px', fontSize: '12px', color: '#9ca3af', lineHeight: 1.5 }}>
-                Precio base cuando ninguna franja cubre el horario del turno.
+              <p style={{ margin: '0 0 18px', fontSize: '12px', color: '#9ca3af', lineHeight: 1.5 }}>
+                Las franjas horarias pueden sobrescribir estos precios según la hora de inicio del turno.
               </p>
 
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 700, color: '#334155' }}>Franjas horarias y precios</p>
@@ -10799,10 +10875,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <span style={{ fontSize: '13px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{franjasMsg}</span>
                 ) : null}
               </div>
-              <button onClick={guardarMiSede} disabled={miSedeSaving} type="button"
-                style={{ marginTop: '16px', padding: '8px 20px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar precio base'}
-              </button>
+
             </div>
           </div>
 
