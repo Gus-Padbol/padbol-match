@@ -1407,6 +1407,210 @@ function sedeMatchesSuperAdminBusqueda(s, queryRaw) {
   return Boolean(qCompact && licCompact && licCompact.includes(qCompact));
 }
 
+/** Duraciones sedes_duraciones — edición super admin (alta/baja) en modal detalle sede. */
+function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda }) {
+  const sid = Number(sedeId);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState('');
+  const [nueva, setNueva] = useState({ duracion_minutos: '', precio: '', activo: true });
+  const [guardandoId, setGuardandoId] = useState(null);
+  const [agregando, setAgregando] = useState(false);
+
+  const cargar = useCallback(async () => {
+    if (!accessToken || !Number.isFinite(sid) || sid <= 0) {
+      setRows([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setMsg('');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${sid}/duraciones`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || res.statusText);
+      setRows(Array.isArray(j.duraciones) ? j.duraciones : []);
+    } catch (e) {
+      setMsg(e?.message || String(e));
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBaseUrl, accessToken, sid]);
+
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
+
+  const mon = moneda || 'ARS';
+
+  return (
+    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '14px', marginTop: '4px' }}>
+      <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>Duraciones y precios (tabla)</div>
+      <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+        Solo super admin puede agregar o quitar duraciones. Los clubes editan precio y activo desde su panel.
+      </p>
+      {msg ? (
+        <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 700, color: '#b91c1c' }}>{msg}</p>
+      ) : null}
+      {loading ? (
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando…</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '10px' }}>
+          {rows.map((row) => (
+            <div
+              key={row.id}
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-page)',
+              }}
+            >
+              <span style={{ fontWeight: 800, minWidth: '72px' }}>{row.duracion_minutos} min</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                {mon} {Number(row.precio ?? 0).toLocaleString('es-AR')} · {row.activo ? 'Activa' : 'Inactiva'}
+              </span>
+              <button
+                type="button"
+                disabled={guardandoId === row.id}
+                onClick={() => {
+                  if (!window.confirm(`¿Eliminar la duración de ${row.duracion_minutos} min de esta sede?`)) return;
+                  void (async () => {
+                    setGuardandoId(row.id);
+                    setMsg('');
+                    try {
+                      const res = await fetch(`${apiBaseUrl}/api/sedes/${sid}/duraciones/${row.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${accessToken}` },
+                      });
+                      const j = await res.json().catch(() => ({}));
+                      if (!res.ok) throw new Error(j.error || res.statusText);
+                      await cargar();
+                    } catch (e) {
+                      setMsg(e?.message || String(e));
+                    } finally {
+                      setGuardandoId(null);
+                    }
+                  })();
+                }}
+                style={{
+                  marginLeft: 'auto',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #fecaca',
+                  background: '#fef2f2',
+                  color: '#991b1b',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  cursor: guardandoId === row.id ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
+          <div
+            style={{
+              padding: '12px',
+              borderRadius: '10px',
+              border: '1px dashed #cbd5e1',
+              display: 'grid',
+              gap: '8px',
+            }}
+          >
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Agregar duración</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={15}
+                max={480}
+                placeholder="Minutos"
+                value={nueva.duracion_minutos}
+                onChange={(e) => setNueva((p) => ({ ...p, duracion_minutos: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
+                style={{ width: '100px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
+              />
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder={`Precio (${mon})`}
+                value={nueva.precio}
+                onChange={(e) => setNueva((p) => ({ ...p, precio: e.target.value.replace(/[^\d]/g, '') }))}
+                style={{ flex: '1 1 120px', minWidth: '120px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
+              />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={nueva.activo}
+                  onChange={(e) => setNueva((p) => ({ ...p, activo: e.target.checked }))}
+                />
+                Activa
+              </label>
+              <button
+                type="button"
+                disabled={agregando}
+                onClick={() => {
+                  void (async () => {
+                    const dm = parseInt(String(nueva.duracion_minutos), 10);
+                    const pr = parseInt(String(nueva.precio).replace(/\D/g, ''), 10);
+                    if (!Number.isFinite(dm) || dm < 15 || dm > 480) {
+                      setMsg('Indicá duración entre 15 y 480 minutos.');
+                      return;
+                    }
+                    if (!Number.isFinite(pr) || pr < 0) {
+                      setMsg('Indicá un precio válido.');
+                      return;
+                    }
+                    setAgregando(true);
+                    setMsg('');
+                    try {
+                      const res = await fetch(`${apiBaseUrl}/api/sedes/${sid}/duraciones`, {
+                        method: 'POST',
+                        headers: {
+                          Authorization: `Bearer ${accessToken}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ duracion_minutos: dm, precio: pr, activo: nueva.activo }),
+                      });
+                      const j = await res.json().catch(() => ({}));
+                      if (!res.ok) throw new Error(j.error || res.statusText);
+                      setNueva({ duracion_minutos: '', precio: '', activo: true });
+                      await cargar();
+                    } catch (e) {
+                      setMsg(e?.message || String(e));
+                    } finally {
+                      setAgregando(false);
+                    }
+                  })();
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: agregando ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: agregando ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {agregando ? '…' : 'Agregar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Panel contrato + suscripción (super admin) — modal detalle sede en listado; mismo bloque que antes en fila expandida. */
 function SedeSuperDetallePanel({
   s,
@@ -4159,6 +4363,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
   const [miSedePreciosSaving, setMiSedePreciosSaving] = useState(false);
   const [miSedePreciosMsg, setMiSedePreciosMsg] = useState('');
+  const [miSedeDuraciones, setMiSedeDuraciones] = useState([]);
+  const [miSedeDuracionesLoading, setMiSedeDuracionesLoading] = useState(false);
+  const [miSedeDuracionesMsg, setMiSedeDuracionesMsg] = useState('');
+  const [miSedeDuracionDrafts, setMiSedeDuracionDrafts] = useState({});
+  const [miSedeDuracionGuardandoId, setMiSedeDuracionGuardandoId] = useState(null);
   const [suscripcionEstadoSuperSavingId, setSuscripcionEstadoSuperSavingId] = useState(null);
   const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
   const [cancelReservaModalId, setCancelReservaModalId] = useState(null);
@@ -4324,6 +4533,52 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       })
       .catch(() => setMiSedeLoading(false));
   }, [activeTab, sedeId, apiBaseUrl, session?.access_token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeTab !== 'mi_sede' || !sedeId || !session?.access_token) {
+      setMiSedeDuraciones([]);
+      setMiSedeDuracionesLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setMiSedeDuracionesLoading(true);
+    setMiSedeDuracionesMsg('');
+    fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then(async (r) => {
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || r.statusText);
+        return Array.isArray(j.duraciones) ? j.duraciones : [];
+      })
+      .then((list) => {
+        if (cancelled) return;
+        setMiSedeDuraciones(list);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setMiSedeDuraciones([]);
+          setMiSedeDuracionesMsg(e?.message || 'No se pudieron cargar las duraciones');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setMiSedeDuracionesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, sedeId, apiBaseUrl, session?.access_token]);
+
+  useEffect(() => {
+    const next = {};
+    for (const r of miSedeDuraciones) {
+      next[r.id] = {
+        precio: r.precio != null ? String(r.precio) : '',
+        activo: !!r.activo,
+      };
+    }
+    setMiSedeDuracionDrafts(next);
+  }, [miSedeDuraciones]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId || !miSede) {
@@ -4556,6 +4811,53 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setMiSede(updated);
       setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+    }
+  };
+
+  const guardarMiSedeFilaDuracion = async (rowId) => {
+    if (!sedeId || !session?.access_token) {
+      setMiSedeDuracionesMsg('Inicia sesión de nuevo.');
+      setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
+      return;
+    }
+    const draft = miSedeDuracionDrafts[rowId];
+    if (!draft) return;
+    const pr = parseInt(String(draft.precio || '').replace(/\D/g, ''), 10);
+    if (!Number.isFinite(pr) || pr < 0) {
+      setMiSedeDuracionesMsg('Indicá un precio válido.');
+      setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
+      return;
+    }
+    setMiSedeDuracionGuardandoId(rowId);
+    setMiSedeDuracionesMsg('');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones/${encodeURIComponent(rowId)}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ precio: pr, activo: !!draft.activo }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || res.statusText);
+      const d = j.duracion;
+      if (d && d.id != null) {
+        setMiSedeDuraciones((prev) => prev.map((x) => (Number(x.id) === Number(d.id) ? { ...x, ...d } : x)));
+      } else {
+        const refetch = await fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const jr = await refetch.json().catch(() => ({}));
+        if (refetch.ok && Array.isArray(jr.duraciones)) setMiSedeDuraciones(jr.duraciones);
+      }
+      setMiSedeDuracionesMsg('✅ Guardado');
+      setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
+    } catch (e) {
+      setMiSedeDuracionesMsg(e?.message || String(e));
+      setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
+    } finally {
+      setMiSedeDuracionGuardandoId(null);
     }
   };
 
@@ -7288,6 +7590,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
                       activarSuscripcionStripeSede={activarSuscripcionStripeSede}
                     />
+                    {session?.access_token ? (
+                      <SedeSuperDuracionesSection
+                        apiBaseUrl={apiBaseUrl}
+                        accessToken={session.access_token}
+                        sedeId={Number(sedeSuperAdminDetalleModal.id)}
+                        moneda={String(sedeSuperAdminDetalleModal.moneda || 'ARS')}
+                      />
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -10906,6 +11216,124 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <p style={{ margin: '0 0 18px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 Las franjas horarias pueden sobrescribir estos precios según la hora de inicio del turno.
               </p>
+
+              <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 800 }}>
+                Duraciones y precios
+              </h4>
+              <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Editá el precio y si cada duración está activa para reservas públicas. Agregar o quitar duraciones solo lo hace el equipo Padbol Match (super admin).
+              </p>
+              {miSedeDuracionesMsg ? (
+                <p
+                  style={{
+                    margin: '0 0 10px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: miSedeDuracionesMsg.startsWith('✅') ? '#4ade80' : '#fca5a5',
+                  }}
+                >
+                  {miSedeDuracionesMsg}
+                </p>
+              ) : null}
+              {miSedeDuracionesLoading ? (
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando duraciones…</p>
+              ) : miSedeDuraciones.length === 0 ? (
+                <p style={{ margin: '0 0 18px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  No hay filas en la tabla de duraciones para esta sede. Las reservas usan los precios por columna de arriba (compatibilidad) hasta que se carguen duraciones.
+                </p>
+              ) : (
+                <div style={{ margin: '0 0 20px', display: 'grid', gap: '10px' }}>
+                  {miSedeDuraciones.map((row) => {
+                    const dr = miSedeDuracionDrafts[row.id] || { precio: '', activo: !!row.activo };
+                    const mon = miSedeForm.moneda || 'ARS';
+                    return (
+                      <div
+                        key={row.id}
+                        style={{
+                          border: '1px solid var(--border)',
+                          borderRadius: '10px',
+                          padding: '12px',
+                          display: 'grid',
+                          gap: '10px',
+                          maxWidth: '100%',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <div style={{ fontWeight: 800, fontSize: '14px', color: 'var(--text-primary)' }}>
+                          {row.duracion_minutos} minutos
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>Precio ({mon})</label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={precioDuracionInputDisplay(dr.precio === '' ? '' : dr.precio)}
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                              setMiSedeDuracionDrafts((p) => ({
+                                ...p,
+                                [row.id]: { ...dr, precio: digits },
+                              }));
+                            }}
+                            style={{
+                              flex: '1 1 120px',
+                              minWidth: '100px',
+                              maxWidth: '100%',
+                              padding: '8px 10px',
+                              borderRadius: '8px',
+                              border: '1px solid var(--border)',
+                              fontSize: '14px',
+                              fontWeight: 700,
+                              textAlign: 'right',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                          <label
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!dr.activo}
+                              onChange={(e) =>
+                                setMiSedeDuracionDrafts((p) => ({
+                                  ...p,
+                                  [row.id]: { ...dr, activo: e.target.checked },
+                                }))
+                              }
+                            />
+                            Activa para reservas
+                          </label>
+                          <button
+                            type="button"
+                            disabled={miSedeDuracionGuardandoId === row.id}
+                            onClick={() => void guardarMiSedeFilaDuracion(row.id)}
+                            style={{
+                              marginLeft: 'auto',
+                              padding: '8px 16px',
+                              borderRadius: '8px',
+                              border: 'none',
+                              background: miSedeDuracionGuardandoId === row.id ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)',
+                              color: '#fff',
+                              fontWeight: 700,
+                              fontSize: '13px',
+                              cursor: miSedeDuracionGuardandoId === row.id ? 'not-allowed' : 'pointer',
+                            }}
+                          >
+                            {miSedeDuracionGuardandoId === row.id ? 'Guardando…' : 'Guardar'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Franjas horarias y precios</p>
               <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>

@@ -224,6 +224,8 @@ export default function ArmarPartido() {
 
   const [slotsApi, setSlotsApi] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  /** Oferta { duracion_minutos, precio } desde GET disponibilidad-slots (prioridad sobre columnas legacy de sede). */
+  const [duracionesApi, setDuracionesApi] = useState([]);
 
   const [dispCanchas, setDispCanchas] = useState([]);
   const [dispLoading, setDispLoading] = useState(false);
@@ -244,9 +246,14 @@ export default function ArmarPartido() {
     fecha: todayISO(),
     hora: '',
     duracion: 90,
+    precioTurnoBase: null,
     jugadoresConfirmados: 1,
     nivel: 'Intermedio',
   });
+
+  useEffect(() => {
+    setDuracionesApi([]);
+  }, [form.sedeId]);
 
   useEffect(() => {
     if (step !== 1) return;
@@ -311,10 +318,22 @@ export default function ArmarPartido() {
   const sede = useMemo(() => findSedeById(sedes, form.sedeId), [sedes, form.sedeId]);
 
   const duracionesOfrecidas = useMemo(() => {
-    if (!sede) return RESERVA_DURACIONES_MIN;
-    const d = duracionesReservaDisponibles(sede);
-    return d.length > 0 ? d : RESERVA_DURACIONES_MIN;
-  }, [sede]);
+    if (duracionesApi.length > 0) {
+      return duracionesApi
+        .filter((x) => x && Number.isFinite(Number(x.duracion_minutos)))
+        .map((x) => ({
+          duracion_minutos: Number(x.duracion_minutos),
+          precio: x.precio != null && Number.isFinite(Number(x.precio)) ? Number(x.precio) : null,
+        }))
+        .sort((a, b) => a.duracion_minutos - b.duracion_minutos);
+    }
+    if (!sede) {
+      return RESERVA_DURACIONES_MIN.map((min) => ({ duracion_minutos: min, precio: null }));
+    }
+    const mins = duracionesReservaDisponibles(sede);
+    const list = mins.length > 0 ? mins : RESERVA_DURACIONES_MIN;
+    return list.map((min) => ({ duracion_minutos: min, precio: null }));
+  }, [sede, duracionesApi]);
 
   useEffect(() => {
     if (!sede) return;
@@ -323,17 +342,26 @@ export default function ArmarPartido() {
     if (list.length === 1) {
       const only = list[0];
       setForm((f) => {
-        const cur = Number(f.duracion);
-        if (Number.isFinite(cur) && cur === only) return f;
-        return { ...f, duracion: only, hora: '' };
+        const pb = only.precio != null && Number.isFinite(Number(only.precio)) ? Number(only.precio) : null;
+        if (Number(f.duracion) === only.duracion_minutos && (f.precioTurnoBase == null ? pb == null : Number(f.precioTurnoBase) === pb)) {
+          return f;
+        }
+        return { ...f, duracion: only.duracion_minutos, precioTurnoBase: pb, hora: '' };
       });
       return;
     }
-    const cur = Number(form.duracion);
-    if (!list.includes(cur)) {
-      setForm((f) => ({ ...f, duracion: list[0], hora: '' }));
-    }
-  }, [sede, duracionesOfrecidas, form.duracion]);
+    setForm((f) => {
+      const cur = Number(f.duracion);
+      const match = list.find((x) => Number(x.duracion_minutos) === cur);
+      if (!match) {
+        const first = list[0];
+        return { ...f, duracion: first.duracion_minutos, precioTurnoBase: first.precio ?? null, hora: '' };
+      }
+      const p = match.precio != null && Number.isFinite(Number(match.precio)) ? Number(match.precio) : null;
+      if (p != null && Number(f.precioTurnoBase) !== p) return { ...f, precioTurnoBase: p };
+      return f;
+    });
+  }, [sede, duracionesOfrecidas]);
 
   useEffect(() => {
     if (!sede?.id || !form.fecha || !form.duracion) {
@@ -352,6 +380,16 @@ export default function ArmarPartido() {
       .then((d) => {
         if (cancelled) return;
         setSlotsApi(Array.isArray(d?.slots) ? d.slots : []);
+        if (Array.isArray(d?.duraciones) && d.duraciones.length) {
+          setDuracionesApi(
+            d.duraciones
+              .filter((row) => row && Number.isFinite(Number(row.duracion_minutos)))
+              .map((row) => ({
+                duracion_minutos: Number(row.duracion_minutos),
+                precio: row.precio != null && Number.isFinite(Number(row.precio)) ? Number(row.precio) : null,
+              })),
+          );
+        }
       })
       .catch(() => {
         if (!cancelled) setSlotsApi([]);
@@ -404,8 +442,12 @@ export default function ArmarPartido() {
 
   const precioBase = useMemo(() => {
     if (!sede || !form.hora) return 0;
-    return Number(precioReservaTurno(sede, form.hora, form.fecha, Number(form.duracion), precioDesdeFranjas) ?? 0);
-  }, [sede, form.hora, form.fecha, form.duracion]);
+    const baseTabla =
+      form.precioTurnoBase != null && Number.isFinite(Number(form.precioTurnoBase)) && Number(form.precioTurnoBase) >= 0
+        ? Number(form.precioTurnoBase)
+        : null;
+    return Number(precioReservaTurno(sede, form.hora, form.fecha, Number(form.duracion), precioDesdeFranjas, baseTabla) ?? 0);
+  }, [sede, form.hora, form.fecha, form.duracion, form.precioTurnoBase]);
 
   const cargoPlataforma = useMemo(() => Math.round(precioBase * 0.03), [precioBase]);
   const precioTotal = useMemo(() => precioBase + cargoPlataforma, [precioBase, cargoPlataforma]);
@@ -456,7 +498,7 @@ export default function ArmarPartido() {
     if (sel) {
       const nm = normalizeTextForSearch(String(sel.nombre || '').trim());
       if (nm !== normalizeTextForSearch(v)) {
-        setForm((f) => ({ ...f, sedeId: '', cancha: '', hora: '' }));
+        setForm((f) => ({ ...f, sedeId: '', cancha: '', hora: '', precioTurnoBase: null }));
       }
     }
     setSedeDropdownOpen(true);
@@ -464,7 +506,7 @@ export default function ArmarPartido() {
 
   const limpiarSedeSeleccion = () => {
     setSedeBusqueda('');
-    setForm((f) => ({ ...f, sedeId: '', cancha: '', hora: '' }));
+    setForm((f) => ({ ...f, sedeId: '', cancha: '', hora: '', precioTurnoBase: null }));
     setSedeDropdownOpen(true);
   };
 
@@ -488,6 +530,7 @@ export default function ArmarPartido() {
           next.sedeId = '';
           next.cancha = '';
           next.hora = '';
+          next.precioTurnoBase = null;
         }
       }
       return next;
@@ -793,6 +836,7 @@ export default function ArmarPartido() {
                                 sedeId: String(s.id),
                                 cancha: '',
                                 hora: '',
+                                precioTurnoBase: null,
                               }));
                               setSedeBusqueda(String(s.nombre || '').trim());
                               setSedeDropdownOpen(false);
@@ -833,26 +877,46 @@ export default function ArmarPartido() {
                           marginTop: 8,
                         }}
                       >
-                        {duracionesOfrecidas.map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            onClick={() => setForm((f) => ({ ...f, duracion: d, hora: '' }))}
-                            style={{
-                              padding: '12px 16px',
-                              borderRadius: 12,
-                              border:
-                                Number(form.duracion) === d ? `2px solid ${ACCENT}` : '1px solid var(--border)',
-                              background:
-                                Number(form.duracion) === d ? 'rgba(229, 57, 53, 0.12)' : 'var(--bg-page)',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              color: 'var(--text-primary)',
-                            }}
-                          >
-                            {d} min
-                          </button>
-                        ))}
+                        {duracionesOfrecidas.map((opt) => {
+                          const d = opt.duracion_minutos;
+                          const mon = sede?.moneda || 'ARS';
+                          const labelPrecio =
+                            opt.precio != null && Number.isFinite(Number(opt.precio))
+                              ? `${mon} ${Number(opt.precio).toLocaleString('es-AR')}`
+                              : null;
+                          const label = labelPrecio ? `${d} min — ${labelPrecio}` : `${d} min`;
+                          return (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() =>
+                                setForm((f) => ({
+                                  ...f,
+                                  duracion: d,
+                                  precioTurnoBase: opt.precio != null ? Number(opt.precio) : null,
+                                  hora: '',
+                                }))
+                              }
+                              style={{
+                                padding: '12px 16px',
+                                borderRadius: 12,
+                                border:
+                                  Number(form.duracion) === d ? `2px solid ${ACCENT}` : '1px solid var(--border)',
+                                background:
+                                  Number(form.duracion) === d ? 'rgba(229, 57, 53, 0.12)' : 'var(--bg-page)',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                color: 'var(--text-primary)',
+                                fontSize: 13,
+                                lineHeight: 1.25,
+                                textAlign: 'left',
+                                maxWidth: '100%',
+                              }}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
                       </div>
                     </>
                   ) : (
@@ -866,7 +930,16 @@ export default function ArmarPartido() {
                         color: 'var(--text-primary)',
                       }}
                     >
-                      Duración: {duracionesOfrecidas[0] ?? form.duracion} min
+                      {(() => {
+                        const only = duracionesOfrecidas[0];
+                        const dm = only?.duracion_minutos ?? form.duracion;
+                        const mon = sede?.moneda || 'ARS';
+                        const pr =
+                          only?.precio != null && Number.isFinite(Number(only.precio))
+                            ? `${mon} ${Number(only.precio).toLocaleString('es-AR')}`
+                            : null;
+                        return pr ? `Duración: ${dm} minutos · precio base ${pr}` : `Duración: ${dm} minutos`;
+                      })()}
                     </p>
                   )}
 

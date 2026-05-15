@@ -49,8 +49,11 @@ export function duracionesReservaDisponibles(sede) {
  * @param {number} duracionMin
  * @param {function} precioDesdeFranjasFn inyectado para evitar ciclo con franjasHorarias
  */
-export function precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjasFn) {
-  const baseDuracion = precioSedeParaDuracionMin(sede, duracionMin);
+export function precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjasFn, precioBaseTabla = null) {
+  const baseDuracion =
+    precioBaseTabla != null && Number.isFinite(Number(precioBaseTabla)) && Number(precioBaseTabla) >= 0
+      ? Number(precioBaseTabla)
+      : precioSedeParaDuracionMin(sede, duracionMin);
   const base = baseDuracion != null ? baseDuracion : 0;
   if (!hora || !sede) return base;
   if (typeof precioDesdeFranjasFn === 'function') {

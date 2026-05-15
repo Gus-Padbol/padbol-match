@@ -2694,13 +2694,121 @@ app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
   }
 });
 
-/** Slots libres por id de sede (misma lógica que ReservaForm y tool consultar_disponibilidad). Query: fecha=YYYY-MM-DD, duracion=60|90|120 (default 90), deporte opcional (mismo criterio que el tool). */
+// ─── sedes_duraciones (oferta pública y precio por duración) ─────────────────
+function parsePrecioMonedaBackend(raw) {
+  if (raw == null || raw === '') return null;
+  const n = Number(String(raw).replace(/\./g, '').replace(',', '.'));
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+}
+
+async function fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas = false } = {}) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0) return [];
+  let q = supabaseClient
+    .from('sedes_duraciones')
+    .select('id,sede_id,duracion_minutos,precio,activo')
+    .eq('sede_id', sid)
+    .order('duracion_minutos', { ascending: true });
+  if (soloActivas) q = q.eq('activo', true);
+  const { data, error } = await q;
+  if (error) {
+    console.warn('[sedes_duraciones] lectura:', error.message || String(error));
+    return [];
+  }
+  return Array.isArray(data) ? data : [];
+}
+
+function legacyDuracionesOfertaDesdeSedeRow(sedePreciosRow) {
+  if (!sedePreciosRow || typeof sedePreciosRow !== 'object') return [];
+  const out = [];
+  const p60 = parsePrecioMonedaBackend(sedePreciosRow.precio_60min);
+  if (p60 != null) out.push({ duracion_minutos: 60, precio: p60 });
+  const p90col = parsePrecioMonedaBackend(sedePreciosRow.precio_90min);
+  const p90 = p90col ?? parsePrecioMonedaBackend(sedePreciosRow.precio_turno);
+  const p90b = p90 ?? parsePrecioMonedaBackend(sedePreciosRow.precio_por_reserva);
+  if (p90b != null) out.push({ duracion_minutos: 90, precio: p90b });
+  const p120 = parsePrecioMonedaBackend(sedePreciosRow.precio_120min);
+  if (p120 != null) out.push({ duracion_minutos: 120, precio: p120 });
+  return out.sort((a, b) => a.duracion_minutos - b.duracion_minutos);
+}
+
+/** Oferta pública: filas activas en sedes_duraciones; si no hay filas, columnas legacy en sedes. */
+async function resolveDuracionesOfertaPublico(supabaseClient, sedeId, sedePreciosRow) {
+  const rows = await fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas: true });
+  if (rows.length) {
+    return rows.map((r) => ({
+      duracion_minutos: Number(r.duracion_minutos),
+      precio: Math.round(Number(r.precio)),
+    }));
+  }
+  return legacyDuracionesOfertaDesdeSedeRow(sedePreciosRow);
+}
+
+function pickDuracionPermitida(allowedMins, durRaw) {
+  const uniq = [
+    ...new Set((allowedMins || []).filter((m) => Number.isFinite(Number(m)) && Number(m) >= 15).map((m) => Math.floor(Number(m)))),
+  ].sort((a, b) => a - b);
+  if (!uniq.length) {
+    const d = parseInt(String(durRaw), 10);
+    return Number.isFinite(d) && d >= 15 && d <= 480 ? d : 90;
+  }
+  const d = parseInt(String(durRaw), 10);
+  if (Number.isFinite(d) && uniq.includes(d)) return d;
+  return uniq[0];
+}
+
+/** Precio base del turno (sin cargo plataforma): fila activa sedes_duraciones o fallback en sedes. */
+async function precioBaseReservaSedeDuracion(supabaseClient, sedeId, duracionMin, sedePreciosRow = null) {
+  const sid = parseInt(String(sedeId), 10);
+  const d = parseInt(String(duracionMin), 10);
+  if (!Number.isFinite(sid) || sid <= 0 || !Number.isFinite(d) || d <= 0) return null;
+  const rows = await fetchSedesDuracionesFromDb(supabaseClient, sid, { soloActivas: true });
+  const hit = rows.find((r) => Number(r.duracion_minutos) === d);
+  if (hit && hit.precio != null) return Math.round(Number(hit.precio));
+  let sede = sedePreciosRow;
+  if (!sede) {
+    const { data, error } = await supabaseClient
+      .from('sedes')
+      .select('precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva')
+      .eq('id', sid)
+      .maybeSingle();
+    if (error) console.warn('[precioBaseReservaSedeDuracion] sedes', error.message);
+    sede = data;
+  }
+  if (!sede) return null;
+  const col = d === 60 ? 'precio_60min' : d === 90 ? 'precio_90min' : d === 120 ? 'precio_120min' : null;
+  if (col) {
+    const p = parsePrecioMonedaBackend(sede[col]);
+    if (p != null) return p;
+  }
+  if (d === 90) {
+    const p9 = parsePrecioMonedaBackend(sede.precio_turno) ?? parsePrecioMonedaBackend(sede.precio_por_reserva);
+    if (p9 != null) return p9;
+  }
+  return parsePrecioMonedaBackend(sede.precio_por_reserva);
+}
+
+async function fetchSedePreciosResolucionRow(supabaseClient, sedeId) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0) return null;
+  const { data, error } = await supabaseClient
+    .from('sedes')
+    .select('id,precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva,duracion_reserva_minutos')
+    .eq('id', sid)
+    .maybeSingle();
+  if (error) {
+    console.warn('[sedes] fetchSedePreciosResolucionRow:', error.message);
+    return null;
+  }
+  return data;
+}
+
+/** Slots libres por id de sede (misma lógica que ReservaForm y tool consultar_disponibilidad). Query: fecha=YYYY-MM-DD, duracion en minutos (debe estar en la oferta de la sede), deporte opcional. */
 app.get('/api/sedes/:id/disponibilidad-slots', async (req, res) => {
   try {
     const sid = parseInt(String(req.params.id || '').trim(), 10);
     const fecha = String(req.query?.fecha || '').trim().slice(0, 10);
     const durRaw = parseInt(String(req.query?.duracion ?? '90'), 10);
-    const dur = [60, 90, 120].includes(durRaw) ? durRaw : 90;
     const depCanon = normalizeChatIaDeporteToolInput(req.query?.deporte);
     if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
@@ -2708,13 +2816,18 @@ app.get('/api/sedes/:id/disponibilidad-slots', async (req, res) => {
     }
     const sedeFull = await chatIaFetchSedeFullForTool(supabase, sid);
     if (!sedeFull) return res.status(404).json({ error: 'Sede no encontrada' });
-    const { slots, error } = await computeChatIaSlotsReales(supabase, sedeFull, fecha, dur, depCanon || null);
+    const sedePrecios = await fetchSedePreciosResolucionRow(supabase, sid);
+    const duraciones = await resolveDuracionesOfertaPublico(supabase, sid, sedePrecios);
+    const allowedMins = duraciones.map((x) => x.duracion_minutos);
+    const dur = pickDuracionPermitida(allowedMins, durRaw);
+    const { slots, error } = await computeChatIaSlotsReales(supabase, sedeFull, fecha, dur, depCanon || null, allowedMins);
     if (error) return res.status(500).json({ error });
     const out = {
       sede_id: sid,
       sede_nombre: String(sedeFull.nombre || '').trim(),
       fecha,
       duracion_minutos: dur,
+      duraciones,
       deporte_filtro: depCanon || null,
       slots,
     };
@@ -2747,7 +2860,21 @@ app.get('/api/reservas/disponibilidad', async (req, res) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       return res.status(400).json({ error: 'fecha requerida (YYYY-MM-DD)' });
     }
-    const duracion = [60, 90, 120].includes(durRaw) ? durRaw : 90;
+    const sedePrecios = await fetchSedePreciosResolucionRow(supabase, sedeId);
+    const duracionesPub = await resolveDuracionesOfertaPublico(supabase, sedeId, sedePrecios);
+    const allowedMins = duracionesPub.map((x) => x.duracion_minutos);
+    let duracion;
+    if (allowedMins.length) {
+      if (!Number.isFinite(durRaw) || !allowedMins.includes(durRaw)) {
+        return res.status(400).json({
+          error: 'duracion_minutos no disponible para esta sede',
+          duraciones_permitidas: allowedMins,
+        });
+      }
+      duracion = durRaw;
+    } else {
+      duracion = pickDuracionPermitida(allowedMins, durRaw);
+    }
     const horaLimpia = horaInicioRaw.split(' - ')[0].trim();
     const inicioMin = minutosDesdeHoraReservaBackend(horaLimpia);
     if (inicioMin == null) return res.status(400).json({ error: 'hora_inicio inválida (HH:MM)' });
@@ -2809,6 +2936,132 @@ app.get('/api/reservas/disponibilidad', async (req, res) => {
   } catch (err) {
     console.error('❌ GET /api/reservas/disponibilidad:', err?.message || err);
     res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+/** Listado de filas sedes_duraciones (JWT: admin de la sede o super_admin). */
+app.get('/api/sedes/:id/duraciones', async (req, res) => {
+  try {
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const rows = await fetchSedesDuracionesFromDb(supabase, sid, { soloActivas: false });
+    res.json({ duraciones: rows });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+/** Actualizar precio y/o activo de una fila (JWT: admin de la sede; no permite crear/eliminar aquí). */
+app.patch('/api/sedes/:id/duraciones/:rowId', async (req, res) => {
+  try {
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    const rowId = parseInt(String(req.params.rowId || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0 || !Number.isFinite(rowId) || rowId <= 0) {
+      return res.status(400).json({ error: 'Parámetros inválidos' });
+    }
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const { data: existing, error: exErr } = await supabase
+      .from('sedes_duraciones')
+      .select('id,sede_id')
+      .eq('id', rowId)
+      .maybeSingle();
+    if (exErr) throw exErr;
+    if (!existing || Number(existing.sede_id) !== sid) {
+      return res.status(404).json({ error: 'Duración no encontrada en esta sede' });
+    }
+    const b = req.body || {};
+    const patch = {};
+    if (Object.prototype.hasOwnProperty.call(b, 'precio')) {
+      if (b.precio === null || b.precio === '') return res.status(400).json({ error: 'precio inválido' });
+      const p = Number(String(b.precio).replace(/\./g, '').replace(',', '.'));
+      if (!Number.isFinite(p) || p < 0) return res.status(400).json({ error: 'precio inválido' });
+      patch.precio = Math.round(p);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'activo')) patch.activo = Boolean(b.activo);
+    if (!Object.keys(patch).length) return res.status(400).json({ error: 'Nada que actualizar' });
+    const { data, error } = await supabase.from('sedes_duraciones').update(patch).eq('id', rowId).select('*').single();
+    if (error) throw error;
+    res.json({ duracion: data });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+/** Crear fila sedes_duraciones (solo super_admin). */
+app.post('/api/sedes/:id/duraciones', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'Se requiere sesión' });
+    const emailNorm = String(user.email).trim().toLowerCase();
+    const rowRole = await fetchUserRoleRow(emailNorm);
+    const rol = rowRole?.role || null;
+    if (!isSuperAdminApi(emailNorm, rol)) {
+      return res.status(403).json({ error: 'Solo super admin puede crear duraciones' });
+    }
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const b = req.body || {};
+    const dm = parseInt(String(b.duracion_minutos ?? '').trim(), 10);
+    const pr = Number(String(b.precio ?? '').replace(/\./g, '').replace(',', '.'));
+    if (!Number.isFinite(dm) || dm < 15 || dm > 480) {
+      return res.status(400).json({ error: 'duracion_minutos inválida (15–480)' });
+    }
+    if (!Number.isFinite(pr) || pr < 0) return res.status(400).json({ error: 'precio inválido' });
+    const activo = b.activo === undefined ? true : Boolean(b.activo);
+    const { data, error } = await supabase
+      .from('sedes_duraciones')
+      .insert([{ sede_id: sid, duracion_minutos: dm, precio: Math.round(pr), activo }])
+      .select('*')
+      .single();
+    if (error) {
+      if (String(error.message || '').toLowerCase().includes('duplicate') || error.code === '23505') {
+        return res.status(409).json({ error: 'Ya existe esa duración para la sede' });
+      }
+      throw error;
+    }
+    res.status(201).json({ duracion: data });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+/** Eliminar fila sedes_duraciones (solo super_admin). */
+app.delete('/api/sedes/:id/duraciones/:rowId', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'Se requiere sesión' });
+    const emailNorm = String(user.email).trim().toLowerCase();
+    const rowRole = await fetchUserRoleRow(emailNorm);
+    const rol = rowRole?.role || null;
+    if (!isSuperAdminApi(emailNorm, rol)) {
+      return res.status(403).json({ error: 'Solo super admin puede eliminar duraciones' });
+    }
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    const rowId = parseInt(String(req.params.rowId || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0 || !Number.isFinite(rowId) || rowId <= 0) {
+      return res.status(400).json({ error: 'Parámetros inválidos' });
+    }
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const { data: existing, error: exErr } = await supabase
+      .from('sedes_duraciones')
+      .select('id,sede_id')
+      .eq('id', rowId)
+      .maybeSingle();
+    if (exErr) throw exErr;
+    if (!existing || Number(existing.sede_id) !== sid) {
+      return res.status(404).json({ error: 'Duración no encontrada en esta sede' });
+    }
+    const { error } = await supabase.from('sedes_duraciones').delete().eq('id', rowId);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
   }
 });
 
@@ -9108,7 +9361,7 @@ app.post('/api/crear-preferencia', async (req, res) => {
       torneo_id,
       email,
     } = b;
-    const unitPrice = Number(monto != null && monto !== '' ? monto : precio);
+    let unitPrice = Number(monto != null && monto !== '' ? monto : precio);
     if (!titulo || !Number.isFinite(unitPrice) || unitPrice < 0) {
       return res.status(400).json({ error: 'Faltan campos requeridos: titulo, precio o monto' });
     }
@@ -9150,6 +9403,21 @@ app.post('/api/crear-preferencia', async (req, res) => {
     let sedeCfg = effectiveSedeId ? await sedePaymentConfigBySedeId(effectiveSedeId) : null;
     if (!sedeCfg && reservaData && typeof reservaData === 'object' && reservaData.sede) {
       sedeCfg = await sedePaymentConfigByNombre(String(reservaData.sede).trim());
+    }
+    if (tipoEff === 'partido_abierto' && reservaData && typeof reservaData === 'object') {
+      const rd = reservaData;
+      const sidR = Number(rd.sede_id != null && rd.sede_id !== '' ? rd.sede_id : Number.isFinite(sidNum) && sidNum > 0 ? sidNum : effectiveSedeId);
+      const durR = parseInt(String(rd.duracion ?? ''), 10);
+      if (Number.isFinite(sidR) && sidR > 0 && Number.isFinite(durR) && durR > 0) {
+        const baseDb = await precioBaseReservaSedeDuracion(supabase, sidR, durR);
+        if (baseDb != null) {
+          const totalSrv = baseDb + Math.round(baseDb * 0.03);
+          if (Number.isFinite(totalSrv) && totalSrv >= 0) {
+            unitPrice = totalSrv;
+            rd.precio = totalSrv;
+          }
+        }
+      }
     }
     const metodoPago = normalizeMetodoPago(sedeCfg?.metodo_pago || 'mercadopago');
     const instruccionesManual = String(sedeCfg?.pago_manual_instrucciones || '').trim();
@@ -11357,15 +11625,26 @@ function chatIaSlotsReservaDesdeSede(sedeRow) {
 
 /**
  * Slots con al menos una cancha ofertada libre (misma grilla que ReservaForm: paso 30 min, duración fija).
- * @param {string|null|undefined} deporteCanon - resultado de normalizeChatIaDeporteToolInput; vacío = sin filtro por deporte.
+ * @param {number[]|null} duracionesPermitidasMin - si viene, la duración debe pertenecer a esta lista (minutos).
  */
-async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, duracionMin, deporteCanon = null) {
+async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, duracionMin, deporteCanon = null, duracionesPermitidasMin = null) {
   const nombreSede = String(sedeRow?.nombre || '').trim();
   if (!nombreSede || !/^\d{4}-\d{2}-\d{2}$/.test(String(fechaYmd || '').slice(0, 10))) {
     return { slots: [], error: 'Parámetros inválidos' };
   }
   const fecha = String(fechaYmd).trim().slice(0, 10);
-  const duracion = [60, 90, 120].includes(Number(duracionMin)) ? Number(duracionMin) : 90;
+  const dIn = Number(duracionMin);
+  let duracion;
+  const perm = Array.isArray(duracionesPermitidasMin)
+    ? [...new Set(duracionesPermitidasMin.filter((m) => Number.isFinite(Number(m)) && Number(m) >= 15).map((m) => Math.floor(Number(m))))].sort(
+        (a, b) => a - b,
+      )
+    : [];
+  if (perm.length) {
+    duracion = perm.includes(dIn) ? dIn : perm[0];
+  } else {
+    duracion = [60, 90, 120].includes(dIn) ? dIn : 90;
+  }
 
   const { data: reservadas, error } = await supabaseClient
     .from('reservas')
@@ -11866,7 +12145,6 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
       const sedeId = Number.parseInt(String(input.sede_id ?? '').trim(), 10);
       const fecha = chatIaResolveDisponibilidadFecha(input.fecha, ctx);
       let dur = Number.parseInt(String(input.duracion_minutos ?? '').trim(), 10);
-      if (![60, 90, 120].includes(dur)) dur = 90;
       let depFromInput = normalizeChatIaDeporteToolInput(input.deporte);
       let omitDeportePorFraseHoy = false;
       if (ultimoUser && chatIaShouldOmitDeporteDisponibilidadParaUltimoUsuario(ultimoUser)) {
@@ -11906,6 +12184,10 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
         chatIaLogConsultarDisponibilidad({ step: 'sede_fetch_null', sedeId, ...errOut });
         return errOut;
       }
+      const sedePrecios = await fetchSedePreciosResolucionRow(supabaseClient, sedeId);
+      const duracionesPub = await resolveDuracionesOfertaPublico(supabaseClient, sedeId, sedePrecios);
+      const allowedMins = duracionesPub.map((x) => x.duracion_minutos);
+      dur = pickDuracionPermitida(allowedMins, dur);
       const deportesEnSede = chatIaDeportesActivosDistintosSede(sedeFull);
       const depSetSede = new Set(deportesEnSede);
       const depFromPrefs = omitDeportePorFraseHoy
@@ -11953,7 +12235,14 @@ async function chatIaExecuteTool(supabaseClient, toolName, toolInput, ctx, ultim
         deportes_en_sede: deportesEnSede,
         deporte_canon: depCanon || null,
       });
-      const { slots, error } = await computeChatIaSlotsReales(supabaseClient, sedeFull, fecha, dur, depCanon || null);
+      const { slots, error } = await computeChatIaSlotsReales(
+        supabaseClient,
+        sedeFull,
+        fecha,
+        dur,
+        depCanon || null,
+        allowedMins.length ? allowedMins : null,
+      );
       if (error) {
         const errOut = { ok: false, error };
         chatIaLogConsultarDisponibilidad({ step: 'compute_slots_error', sedeId, fecha, dur, ...errOut });
@@ -13135,7 +13424,18 @@ app.post('/api/chat-ia', async (req, res) => {
           try {
             const sedeFull = await chatIaFetchSedeFullForTool(supabase, sid);
             if (sedeFull) {
-              const { slots, error } = await computeChatIaSlotsReales(supabase, sedeFull, fecha, 90, null);
+              const sedePrecios = await fetchSedePreciosResolucionRow(supabase, sid);
+              const duracionesPub = await resolveDuracionesOfertaPublico(supabase, sid, sedePrecios);
+              const allowedMins = duracionesPub.map((x) => x.duracion_minutos);
+              const durEf = pickDuracionPermitida(allowedMins, 90);
+              const { slots, error } = await computeChatIaSlotsReales(
+                supabase,
+                sedeFull,
+                fecha,
+                durEf,
+                null,
+                allowedMins.length ? allowedMins : null,
+              );
               if (!error) {
                 const sedeNombre =
                   String(sedeFull.nombre || disponibilidadSedeImplicita.sede_nombre || '').trim() || `Sede ${sid}`;
@@ -13144,7 +13444,7 @@ app.post('/api/chat-ia', async (req, res) => {
                   sede_id: sid,
                   sede_nombre: sedeNombre,
                   fecha,
-                  duracion_minutos: 90,
+                  duracion_minutos: durEf,
                   deporte_filtro: null,
                   slots: (slots || []).slice(0, 24).map((s) => ({
                     hora_inicio: s.hora_inicio,
