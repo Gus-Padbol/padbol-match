@@ -1556,6 +1556,12 @@ function labelInvitacionAdminTipo(inv) {
   return '🏆 Admin Club';
 }
 
+function inviteAdminTipoToRol(tipo) {
+  const t = String(tipo || 'club').trim().toLowerCase();
+  if (t === 'nacional' || t === 'ciudad_region') return 'admin_nacional';
+  return 'admin_club';
+}
+
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
@@ -1720,6 +1726,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     provincia: '',
     ciudad: '',
   });
+  /** Magic link Supabase Auth (fallback si el backend no lo devolvió al crear invitación). */
+  const [inviteMagicLinkModal, setInviteMagicLinkModal] = useState(null);
   const [adminClubOnboardingOpen, setAdminClubOnboardingOpen] = useState(false);
 
   useEffect(() => {
@@ -1924,6 +1932,30 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   }, [apiBaseUrl, isSuperAdmin]);
 
+  const solicitarMagicLinkAdmin = useCallback(
+    async ({ email, rol, nombre, sede_id }) => {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('Sin sesión');
+      const res = await fetch(`${apiBaseUrl}/api/admin/invite-magic-link`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          rol,
+          nombre: nombre || null,
+          sede_id: sede_id ?? undefined,
+          assign_role: rol === 'editor_contenido',
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      if (!j?.magic_link) throw new Error('No se recibió magic link');
+      return j.magic_link;
+    },
+    [apiBaseUrl],
+  );
+
   const asignarEditorContenido = useCallback(async () => {
     if (!isSuperAdmin) return;
     const email = String(editorContenidoEmail || '').trim().toLowerCase();
@@ -1936,17 +1968,33 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
       if (!token) throw new Error('Sin sesión');
+      const nombre = String(editorContenidoNombre || '').trim() || null;
       const res = await fetch(`${apiBaseUrl}/api/admin/roles`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           role: 'editor_contenido',
-          nombre: String(editorContenidoNombre || '').trim() || null,
+          nombre,
         }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || res.statusText);
+      let magicLink = j.magic_link || null;
+      if (!magicLink) {
+        try {
+          magicLink = await solicitarMagicLinkAdmin({
+            email,
+            rol: 'editor_contenido',
+            nombre,
+          });
+        } catch (mlErr) {
+          console.warn('[AdminDashboard] magic link editor:', mlErr);
+        }
+      }
+      if (magicLink) {
+        setInviteMagicLinkModal({ email, magic_link: magicLink, contexto: 'editor_contenido' });
+      }
       setMensajeExito(`✅ Editor de contenido asignado a ${email}`);
       setEditorContenidoEmail('');
       setEditorContenidoNombre('');
@@ -1958,7 +2006,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     } finally {
       setEditorContenidoSaving(false);
     }
-  }, [apiBaseUrl, cargarRolesAdmin, editorContenidoEmail, editorContenidoNombre, isSuperAdmin]);
+  }, [
+    apiBaseUrl,
+    cargarRolesAdmin,
+    editorContenidoEmail,
+    editorContenidoNombre,
+    isSuperAdmin,
+    solicitarMagicLinkAdmin,
+  ]);
 
   const cargarInvitacionesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -2021,10 +2076,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || res.statusText);
+      let magicLink = j.magic_link || null;
+      if (!magicLink) {
+        try {
+          magicLink = await solicitarMagicLinkAdmin({
+            email,
+            rol: inviteAdminTipoToRol(tipo),
+            nombre: String(inviteClubForm.nombre_club || '').trim() || null,
+          });
+        } catch (mlErr) {
+          console.warn('[AdminDashboard] magic link invitación:', mlErr);
+        }
+      }
       setInviteClubModalOpen(false);
       setInviteAdminModalStep('tipo');
       setInviteAdminTipo(null);
       setInviteClubForm({ email: '', nombre_club: '', pais: '', provincia: '', ciudad: '' });
+      if (magicLink) {
+        setInviteMagicLinkModal({ email, magic_link: magicLink, invite_url: j.invite_url || null, contexto: 'invitacion_admin' });
+      }
       if (j.email_sent === false) {
         setMensajeExito('Invitación creada (no se pudo enviar el email; configura RESEND o reenvía desde la lista).');
       } else {
@@ -2037,7 +2107,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     } finally {
       setInviteClubSaving(false);
     }
-  }, [apiBaseUrl, cargarInvitacionesAdmin, inviteAdminTipo, inviteClubForm, isSuperAdmin]);
+  }, [
+    apiBaseUrl,
+    cargarInvitacionesAdmin,
+    inviteAdminTipo,
+    inviteClubForm,
+    isSuperAdmin,
+    solicitarMagicLinkAdmin,
+  ]);
 
   const reenviarInvitacionClub = useCallback(
     async (id) => {
@@ -12271,6 +12348,109 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           tabsStripRef={adminTabsStripRef}
           puedeVerMiSede={puedeVerMiSede}
         />
+      ) : null}
+
+      {inviteMagicLinkModal ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Magic link de acceso"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 19050,
+            background: 'rgba(15, 23, 42, 0.78)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget) setInviteMagicLinkModal(null);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              background: 'var(--bg-card)',
+              borderRadius: '14px',
+              padding: '18px',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px' }}>🔗 Magic link de acceso</h3>
+            <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.45, fontWeight: 500 }}>
+              Enlace de inicio de sesión para <strong>{inviteMagicLinkModal.email}</strong>. Compartilo por un canal
+              seguro si Make no envió el email automáticamente. Válido un solo uso (Supabase Auth).
+            </p>
+            {inviteMagicLinkModal.invite_url ? (
+              <p style={{ margin: '0 0 10px', fontSize: '12px', lineHeight: 1.4 }}>
+                <span style={{ fontWeight: 700 }}>Invitación sede (48 h):</span>{' '}
+                <a href={inviteMagicLinkModal.invite_url} style={{ wordBreak: 'break-all', color: '#4f46e5' }}>
+                  {inviteMagicLinkModal.invite_url}
+                </a>
+              </p>
+            ) : null}
+            <textarea
+              readOnly
+              value={inviteMagicLinkModal.magic_link}
+              rows={4}
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                fontSize: '12px',
+                padding: '10px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                resize: 'vertical',
+                fontFamily: 'monospace',
+                color: 'var(--text-primary)',
+                background: 'var(--bg-page, #f8fafc)',
+              }}
+            />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '14px' }}>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(inviteMagicLinkModal.magic_link);
+                    setMensajeExito('Magic link copiado');
+                    setTimeout(() => setMensajeExito(''), 2500);
+                  } catch {
+                    alert('No se pudo copiar al portapapeles');
+                  }
+                }}
+                style={{
+                  padding: '9px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: '#E11B22',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Copiar magic link
+              </button>
+              <button
+                type="button"
+                onClick={() => setInviteMagicLinkModal(null)}
+                style={{
+                  padding: '9px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

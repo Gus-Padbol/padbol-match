@@ -14,6 +14,12 @@ import { fileURLToPath } from 'url';
 import { checkMorasSedes } from './suscripciones/checkMorasSedes.js';
 import { createCheckSuscripcionActiva } from './suscripciones/checkSuscripcionActiva.js';
 import { sendMakeEvent } from './make/sendMakeEvent.js';
+import {
+  assertInvitacionWebhookSecret,
+  createGenerateAdminInviteMagicLink,
+  MAGIC_INVITE_ROLES,
+  parseInvitacionAdminWebhookBody,
+} from './lib/adminInviteMagicLink.js';
 import { DateTime } from 'luxon';
 
 dotenv.config();
@@ -719,6 +725,11 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://padbol-match.netlify.a
 if (!process.env.FRONTEND_URL) {
   console.warn(`⚠️  FRONTEND_URL no está configurado — usando fallback: ${FRONTEND_URL}`);
 }
+
+const generateAdminInviteMagicLink = createGenerateAdminInviteMagicLink({
+  supabase,
+  getFrontendUrl: () => FRONTEND_URL,
+});
 
 const STRIPE_SECRET_KEY = String(process.env.STRIPE_SECRET_KEY || '').trim();
 const stripeClient = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
@@ -9607,7 +9618,20 @@ app.post('/api/admin/roles', async (req, res) => {
         r = await supabase.from('user_roles').insert(payload).select('*').single();
       }
       if (r.error) throw r.error;
-      return res.json(r.data);
+
+      let magic_link = null;
+      try {
+        const ml = await generateAdminInviteMagicLink({
+          email,
+          rol: 'editor_contenido',
+          nombre,
+          assignRole: true,
+        });
+        magic_link = ml.magic_link;
+      } catch (mlErr) {
+        console.warn('⚠️ magic link editor_contenido:', mlErr?.message || mlErr);
+      }
+      return res.json({ ...r.data, magic_link });
     }
 
     const alcance = String(b.alcance || '').trim().toLowerCase();
@@ -9826,6 +9850,69 @@ async function insertDeportesSedeSinAuth(sedeId, deportesArr) {
   return ins || [];
 }
 
+/** POST /api/admin/invite-magic-link — super_admin: Supabase Auth magic link + rol opcional. */
+app.post('/api/admin/invite-magic-link', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase();
+    const rol = String(b.rol || b.role || '').trim().toLowerCase();
+    const nombre = String(b.nombre || '').trim() || null;
+    const sede_id =
+      b.sede_id != null && String(b.sede_id).trim() !== '' ? Number(b.sede_id) : null;
+    if (!email) return res.status(400).json({ error: 'Email obligatorio' });
+    if (!rol || !MAGIC_INVITE_ROLES.has(rol)) {
+      return res.status(400).json({
+        error: 'Rol inválido (editor_contenido, admin_club, admin_nacional, empleado)',
+      });
+    }
+    const assignRole =
+      b.assign_role === true ||
+      b.assign_role === 'true' ||
+      rol === 'editor_contenido' ||
+      (rol === 'empleado' && sede_id != null);
+    const out = await generateAdminInviteMagicLink({
+      email,
+      rol,
+      nombre,
+      sede_id,
+      assignRole,
+    });
+    res.json(out);
+  } catch (err) {
+    console.error('❌ POST /api/admin/invite-magic-link:', err.message);
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/webhooks/invitacion-admin — Make / Database Webhook (Supabase INSERT invitaciones_admin).
+ * Header: x-webhook-secret = INVITATION_WEBHOOK_SECRET o MERCADOPAGO_WEBHOOK_SECRET.
+ */
+app.post('/api/webhooks/invitacion-admin', async (req, res) => {
+  try {
+    assertInvitacionWebhookSecret(req);
+    const parsed = parseInvitacionAdminWebhookBody(req.body);
+    if (!parsed.email) return res.status(400).json({ success: false, error: 'Email obligatorio en payload' });
+    const rol = parsed.rol || 'admin_club';
+    if (!MAGIC_INVITE_ROLES.has(rol)) {
+      return res.status(400).json({ success: false, error: `Rol inválido: ${rol}` });
+    }
+    const assignRole = rol === 'editor_contenido' || (rol === 'empleado' && parsed.sede_id != null);
+    const out = await generateAdminInviteMagicLink({
+      email: parsed.email,
+      rol,
+      nombre: parsed.nombre,
+      sede_id: parsed.sede_id,
+      assignRole,
+    });
+    res.json({ success: true, magic_link: out.magic_link, email: out.email, nombre: out.nombre, rol: out.rol });
+  } catch (err) {
+    console.error('❌ POST /api/webhooks/invitacion-admin:', err.message);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
 /** GET /api/admin/invitaciones-admin — super_admin: invitaciones (filtro ?estado=pendiente). */
 app.get('/api/admin/invitaciones-admin', async (req, res) => {
   try {
@@ -9928,7 +10015,34 @@ app.post('/api/admin/invitaciones-admin', async (req, res) => {
           nombreClub,
           paisLabel: pais,
         });
-    res.status(201).json({ ...row, email_sent: mailed });
+
+    void sendMakeEvent('invitacion_admin_creada', {
+      invitacion_id: row.id,
+      email: row.email,
+      invited_role: row.invited_role || invitedRole,
+      invited_alcance: row.invited_alcance,
+      pais: row.pais,
+      nombre_club: row.nombre_club,
+      provincia: row.provincia,
+      ciudad: row.ciudad,
+      invite_token_url: url,
+    });
+
+    let magic_link = null;
+    try {
+      const ml = await generateAdminInviteMagicLink({
+        email: row.email,
+        rol: row.invited_role || invitedRole,
+        nombre: row.nombre_club || nombreClub,
+        sede_id: row.sede_id,
+        assignRole: false,
+      });
+      magic_link = ml.magic_link;
+    } catch (mlErr) {
+      console.warn('⚠️ magic link invitación admin:', mlErr?.message || mlErr);
+    }
+
+    res.status(201).json({ ...row, email_sent: mailed, invite_url: url, magic_link });
   } catch (err) {
     console.error('❌ POST /api/admin/invitaciones-admin:', err.message);
     res.status(err.status || 500).json({ error: err.message });
