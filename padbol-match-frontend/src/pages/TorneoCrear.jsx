@@ -3,12 +3,13 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import SedeSearchInput from '../components/SedeSearchInput';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import '../styles/TorneoCrear.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 import {
@@ -81,6 +82,7 @@ export default function TorneoCrear({
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
@@ -752,8 +754,8 @@ export default function TorneoCrear({
           WebkitOverflowScrolling: 'touch',
           width: '100%',
           boxSizing: 'border-box',
-          paddingTop: hubContentPaddingTopCss(location.pathname),
-          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
+          paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         }}
       >
         {formulario}

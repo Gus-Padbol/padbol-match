@@ -12,15 +12,16 @@ import BottomNav from '../components/BottomNav';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import {
   APP_HEADER_OUTER_PADDING_PX,
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_FIXED_CHROME_SLACK_PX,
   hubContentPaddingTopCss,
   hubContentPaddingTopPx,
   hubInstagramColumnWrapStyle,
+  hubMainPaddingBottomCss,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
@@ -1586,6 +1587,7 @@ export default function SedePublica() {
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -1612,8 +1614,8 @@ export default function SedePublica() {
   /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
-      `calc(${hubContentPaddingTopPx(location.pathname) + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
-    [location.pathname]
+      `calc(${hubContentPaddingTopPx(location.pathname, navDock) + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
+    [location.pathname, navDock]
   );
   const [sede, setSede] = useState(null);
   /** Viene en `GET /api/sedes/:id` como `estadisticas_publicas` (null si solo fallback Supabase). */
@@ -1794,8 +1796,8 @@ export default function SedePublica() {
     : {
         minHeight: '100dvh',
         background: PADBOL_PAGE_GRADIENT,
-        paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         boxSizing: 'border-box',
         width: '100%',
         maxWidth: '100%',

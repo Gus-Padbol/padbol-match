@@ -9,6 +9,7 @@ import {
   hubBottomNavMaxWidthPx,
   isHubNavBarHiddenPathname,
 } from '../constants/hubLayout';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 
 const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
@@ -23,6 +24,8 @@ function readCachedRol() {
 }
 
 const BottomNav = () => {
+  const { navDock } = useHubNavLayout();
+  const dockBottom = navDock === 'bottom';
   const navigate = useNavigate();
   const location = useLocation();
   const { loading: authLoading, session } = useAuth();
@@ -285,8 +288,16 @@ const BottomNav = () => {
 
   const navBarStyle = {
     background: 'var(--nav-bg)',
-    borderBottom: '1px solid var(--nav-border)',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+    ...(dockBottom
+      ? {
+          borderTop: '1px solid var(--nav-border)',
+          borderBottom: 'none',
+          boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.06)',
+        }
+      : {
+          borderBottom: '1px solid var(--nav-border)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+        }),
   };
 
   return (
@@ -294,11 +305,9 @@ const BottomNav = () => {
       aria-label="Navegación principal"
       style={{
         position: 'fixed',
-        top: hubBottomNavFixedTopCss(),
         left: 0,
         right: 0,
         width: '100%',
-        height: HUB_NAV_HEIGHT_PX,
         boxSizing: 'border-box',
         padding: 0,
         display: 'flex',
@@ -308,6 +317,20 @@ const BottomNav = () => {
         overflowX: 'hidden',
         background: 'transparent',
         pointerEvents: 'none',
+        ...(dockBottom
+          ? {
+              top: 'auto',
+              bottom: 0,
+              height: 'auto',
+              minHeight: HUB_NAV_HEIGHT_PX,
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            }
+          : {
+              top: hubBottomNavFixedTopCss(),
+              bottom: 'auto',
+              height: HUB_NAV_HEIGHT_PX,
+              paddingBottom: 0,
+            }),
       }}
     >
       <div
@@ -315,7 +338,8 @@ const BottomNav = () => {
           pointerEvents: 'auto',
           width: '100%',
           maxWidth: hubBottomNavMaxWidthPx,
-          height: '100%',
+          height: dockBottom ? 'auto' : '100%',
+          minHeight: dockBottom ? HUB_NAV_HEIGHT_PX : undefined,
           boxSizing: 'border-box',
           padding: '2px max(4px, env(safe-area-inset-left, 0px)) 2px max(4px, env(safe-area-inset-right, 0px))',
           display: 'flex',

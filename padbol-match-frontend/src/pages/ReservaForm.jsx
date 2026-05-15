@@ -10,9 +10,11 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import {
   RESERVA_FORM_RESTORE_KEY,
   RESERVA_FORM_RESTORE_VERSION,
@@ -539,7 +541,15 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
 export default function ReservaForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const reservaPaddingTopCss = hubContentPaddingTopCss(location.pathname);
+  const { navDock } = useHubNavLayout();
+  const reservaPaddingTopCss = useMemo(
+    () => hubContentPaddingTopCss(location.pathname, navDock),
+    [location.pathname, navDock]
+  );
+  const reservaPaddingBottomCss = useMemo(
+    () => hubMainPaddingBottomCss(location.pathname, navDock),
+    [location.pathname, navDock]
+  );
   const { session, loading: authLoading, userProfile } = useAuth();
 
   const currentCliente = useMemo(() => {
@@ -1668,7 +1678,7 @@ export default function ReservaForm() {
         className="reserva-container reserva-sede-seleccion"
         style={{
           paddingTop: reservaPaddingTopCss,
-          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          paddingBottom: reservaPaddingBottomCss,
           boxSizing: 'border-box',
           width: '100%',
           maxWidth: '100%',
@@ -1808,7 +1818,7 @@ export default function ReservaForm() {
         background: 'var(--bg-page)',
         color: 'var(--text-primary)',
         paddingTop: reservaPaddingTopCss,
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingBottom: reservaPaddingBottomCss,
         overflowX: 'hidden',
         width: '100%',
         maxWidth: '100%',

@@ -4,12 +4,16 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_BOTTOM_NAV_CONTENT_GAP_PX,
+  HUB_NAV_HEIGHT_PX,
   isChatbotIAVisiblePathname,
+  isHubNavBarHiddenPathname,
   isJugadorHubShellPathname,
   isSedeProfilePathname,
 } from '../constants/hubLayout';
 import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 import { useTheme } from '../context/ThemeContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 const MAX_USER_MESSAGES = 6;
 /** Por encima de este número de turnos se agrupa por franja (si aplica más de una franja con datos). */
@@ -556,6 +560,7 @@ function QuickSuggestionBar({ items, disabled, onPick, isDark }) {
 export default function ChatbotIA() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { navDock } = useHubNavLayout();
   const { session, userProfile, refreshSession } = useAuth();
   const { theme } = useTheme();
   const c = useMemo(() => getChatbotModalTheme(theme === 'dark'), [theme]);
@@ -680,11 +685,17 @@ export default function ChatbotIA() {
   }, [location.pathname]);
 
   const fabBottom = useMemo(() => {
+    const pathOnly = (location.pathname || '').split('?')[0] || '/';
+    const bottomNavShown = !isHubNavBarHiddenPathname(pathOnly);
+    const liftForBottomNav =
+      bottomNavShown && navDock === 'bottom'
+        ? `(${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
+        : 'env(safe-area-inset-bottom, 0px)';
     if (hubShell) {
-      return `calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px) + 8px)`;
+      return `calc(${liftForBottomNav} + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + 8px)`;
     }
-    return `calc(16px + env(safe-area-inset-bottom, 0px))`;
-  }, [hubShell]);
+    return `calc(16px + ${liftForBottomNav})`;
+  }, [hubShell, location.pathname, navDock]);
 
   useEffect(() => {
     if (!open) return;

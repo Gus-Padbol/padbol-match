@@ -4,12 +4,13 @@ import AppHeader from '../components/AppHeader';
 import ShareLinkButton from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import * as T from '../theme/designTokens';
 import { cardStyle, pageBackgroundStyle, buttonPrimaryStyle } from '../theme/uiStyles';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
@@ -281,6 +282,7 @@ export default function EquipoVista() {
   const { id, equipoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session, loading: authLoading, userProfile } = useAuth();
 
   const authEmail = useMemo(() => String(session?.user?.email || '').trim(), [session?.user?.email]);
@@ -1335,12 +1337,12 @@ export default function EquipoVista() {
     () => ({
       ...pageBackgroundStyle,
       boxSizing: 'border-box',
-      paddingTop: hubContentPaddingTopCss(location.pathname),
+      paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
       paddingLeft: 0,
       paddingRight: 0,
-      paddingBottom: `calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+      paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
     }),
-    [location.pathname]
+    [location.pathname, navDock]
   );
 
   const equipoColumnWrapStyle = useMemo(

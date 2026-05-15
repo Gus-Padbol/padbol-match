@@ -56,6 +56,7 @@ import NuevaSede from './components/NuevaSede';
 import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
+import { HubNavLayoutProvider } from './context/HubNavLayoutContext';
 import { getDisplayName } from './utils/displayName';
 import { scheduleHubEntryScrollReset } from './utils/hubEntryScrollReset';
 
@@ -426,11 +427,13 @@ function AppShell() {
 function App() {
   return (
     <Router>
-      <GlobalErrorBoundary>
-        <div className="pm-app-shell-column">
-          <AppShell />
-        </div>
-      </GlobalErrorBoundary>
+      <HubNavLayoutProvider>
+        <GlobalErrorBoundary>
+          <div className="pm-app-shell-column">
+            <AppShell />
+          </div>
+        </GlobalErrorBoundary>
+      </HubNavLayoutProvider>
     </Router>
   );
 }

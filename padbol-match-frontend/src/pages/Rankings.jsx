@@ -4,15 +4,16 @@ import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { IconGeroFiltros } from '../components/icons/GeroIcons';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { useHubSponsors } from '../hooks/useHubSponsors';
@@ -482,6 +483,7 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
 
 export default function Rankings() {
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -756,7 +758,7 @@ export default function Rankings() {
       minHeight: '100dvh',
       background: 'var(--bg-page)',
       color: 'var(--text-primary)',
-      padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
+      padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 0 ${hubMainPaddingBottomCss(location.pathname, navDock)} 0`,
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     }),
     [location.pathname]

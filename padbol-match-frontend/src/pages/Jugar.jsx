@@ -5,14 +5,16 @@ import BottomNav from '../components/BottomNav';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
+  HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
   hubJugarContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import useUserRole from '../hooks/useUserRole';
 import { useHubPromoSedeActiva } from '../hooks/useHubPromoSedeActiva';
@@ -49,6 +51,7 @@ function deporteQuery(deporteElegido) {
 export default function Jugar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
   const { session, userProfile } = useAuth();
 
@@ -99,13 +102,18 @@ export default function Jugar() {
 
   const q = deporteQuery(deporteElegido);
 
+  const mainBottomPad =
+    navDock === 'bottom'
+      ? `calc(20px + ${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
+      : `calc(20px + env(safe-area-inset-bottom, 0px))`;
+
   return (
     <div
       style={{
         minHeight: '100dvh',
         background: 'var(--bg-page)',
-        paddingTop: hubJugarContentPaddingTopCss(location.pathname),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingTop: hubJugarContentPaddingTopCss(location.pathname, navDock),
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         boxSizing: 'border-box',
       }}
     >
@@ -118,7 +126,7 @@ export default function Jugar() {
           paddingLeft: 14,
           paddingRight: 14,
           paddingTop: 0,
-          paddingBottom: `calc(20px + ${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`,
+          paddingBottom: mainBottomPad,
           boxSizing: 'border-box',
         }}
       >

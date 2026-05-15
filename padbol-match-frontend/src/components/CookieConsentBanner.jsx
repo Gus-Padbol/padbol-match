@@ -1,17 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
+  HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
   LEGAL_FOOTER_GLOBAL_SPACER_PX,
   isHubNavBarHiddenPathname,
   isLegalFooterGlobalBarVisiblePathname,
 } from '../constants/hubLayout';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 export const COOKIES_CONSENT_STORAGE_KEY = 'cookies_consent';
 export const COOKIES_CONSENT_ACCEPTED = 'accepted';
 export const COOKIES_CONSENT_ESSENTIAL = 'essential';
-
-const NARROW_MOBILE_MQ = '(max-width: 430px)';
 
 function readConsent() {
   if (typeof window === 'undefined') return null;
@@ -24,30 +24,13 @@ function readConsent() {
   return null;
 }
 
-function useNarrowMobile() {
-  const [narrow, setNarrow] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia(NARROW_MOBILE_MQ).matches;
-  });
-
-  useEffect(() => {
-    const mq = window.matchMedia(NARROW_MOBILE_MQ);
-    const onChange = () => setNarrow(mq.matches);
-    onChange();
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-
-  return narrow;
-}
-
 /**
  * Banner único de consentimiento de cookies (localStorage `cookies_consent`).
- * En móvil estrecho despega del borde inferior si hay barra hub o pie legal, para no tapar navegación.
+ * Se despega del borde inferior si hay pie legal o barra hub fija abajo, para no tapar navegación.
  */
 export default function CookieConsentBanner() {
   const location = useLocation();
-  const narrowMobile = useNarrowMobile();
+  const { navDock } = useHubNavLayout();
   const [visible, setVisible] = useState(() => readConsent() == null);
 
   const bottomOffsetPx = useMemo(() => {
@@ -55,11 +38,11 @@ export default function CookieConsentBanner() {
     if (isLegalFooterGlobalBarVisiblePathname(location.pathname)) {
       extra += LEGAL_FOOTER_GLOBAL_SPACER_PX;
     }
-    if (narrowMobile && !isHubNavBarHiddenPathname(location.pathname)) {
-      extra += HUB_NAV_HEIGHT_PX;
+    if (!isHubNavBarHiddenPathname(location.pathname) && navDock === 'bottom') {
+      extra += HUB_NAV_HEIGHT_PX + HUB_BOTTOM_NAV_CONTENT_GAP_PX;
     }
     return extra;
-  }, [location.pathname, narrowMobile]);
+  }, [location.pathname, navDock]);
 
   const persist = useCallback((value) => {
     try {

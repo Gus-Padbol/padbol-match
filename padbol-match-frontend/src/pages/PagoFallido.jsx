@@ -3,14 +3,15 @@ import { useNavigate, useLocation, createSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import AppButton from '../components/AppButton';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import * as T from '../theme/designTokens';
 import { cardStyle } from '../theme/uiStyles';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import {
   readMpReservaPendingSlot,
   clearMpReservaPendingSlot,
@@ -37,6 +38,7 @@ function reservarUrlFromPending(pending) {
 export default function PagoFallido() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const [busy, setBusy] = useState(false);
   const [cancelReservaModalOpen, setCancelReservaModalOpen] = useState(false);
@@ -90,7 +92,7 @@ export default function PagoFallido() {
         background: `linear-gradient(135deg, ${T.colorErrorDark} 0%, ${T.colorError} 100%)`,
         display: 'flex',
         flexDirection: 'column',
-        padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 0 ${hubMainPaddingBottomCss(location.pathname, navDock)}`,
         boxSizing: 'border-box',
       }}
     >

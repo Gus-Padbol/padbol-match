@@ -3,14 +3,15 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { formatNivelTorneo } from '../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 function safeJugadores(eq) {
   let j = eq?.jugadores;
@@ -137,6 +138,7 @@ export default function EquipoPerfil() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [loading, setLoading] = useState(true);
   const [equipo, setEquipo] = useState(null);
   const [historial, setHistorial] = useState([]);
@@ -146,14 +148,14 @@ export default function EquipoPerfil() {
   const shellStyle = useMemo(
     () => ({
       minHeight: '100vh',
-      paddingTop: hubContentPaddingTopCss(location.pathname),
-      paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+      paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
+      paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
       paddingLeft: 12,
       paddingRight: 12,
       boxSizing: 'border-box',
       background: 'var(--bg-card)',
     }),
-    [location.pathname]
+    [location.pathname, navDock]
   );
 
   useEffect(() => {

@@ -3,11 +3,12 @@ import { useNavigate, useParams, useLocation, useSearchParams } from 'react-rout
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import {
   isPerfilTorneoCompleto,
@@ -202,6 +203,7 @@ export default function FormEquipos() {
   const torneoId = parseInt(id, 10);
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const enRutaAdminEquipos = pathnameIsAdminRoute(location.pathname);
   const [searchParams] = useSearchParams();
   const wantsCrearEquipo = searchParams.get('crear') === '1';
@@ -220,12 +222,12 @@ export default function FormEquipos() {
       minHeight: '100vh',
       background: 'var(--bg-card)',
       boxSizing: 'border-box',
-      paddingTop: hubContentPaddingTopCss(location.pathname),
+      paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
       paddingLeft: 12,
       paddingRight: 12,
-      paddingBottom: `calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+      paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
     }),
-    [location.pathname]
+    [location.pathname, navDock]
   );
 
   const nombreCreador = session?.user ? getDisplayName(userProfile, session) : '';

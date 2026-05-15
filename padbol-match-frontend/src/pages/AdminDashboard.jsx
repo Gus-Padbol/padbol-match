@@ -11,12 +11,14 @@ import {
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useTheme } from '../context/ThemeContext';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { CATEGORIA_TORNEO_DEFAULT, TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
@@ -1571,6 +1573,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
   const { theme } = useTheme();
@@ -5209,7 +5212,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           width: '100%',
           maxWidth: '100%',
           overflowY: 'auto',
-          padding: `${hubContentPaddingTopCss(location.pathname)} 20px calc(${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
+          padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 20px ${hubMainPaddingBottomCss(location.pathname, navDock)}`,
           textAlign: 'center',
           boxSizing: 'border-box',
         }}
@@ -5247,7 +5250,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             overflowY: 'auto',
             overflowX: 'hidden',
             WebkitOverflowScrolling: 'touch',
-            paddingTop: hubContentPaddingTopCss(location.pathname),
+            paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
             paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
             boxSizing: 'border-box',
           }}
@@ -5418,7 +5421,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           overflowY: 'auto',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
-          paddingTop: hubContentPaddingTopCss(location.pathname),
+          paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
           paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
           boxSizing: 'border-box',
         }}

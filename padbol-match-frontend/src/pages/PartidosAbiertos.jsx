@@ -7,7 +7,8 @@ import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -21,6 +22,7 @@ const HERO_BUSCAR_PARTIDOS_BG = '#0F172A';
 export default function PartidosAbiertos() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [searchParams, setSearchParams] = useSearchParams();
   const { session } = useAuth();
   const [partidos, setPartidos] = useState([]);
@@ -141,8 +143,8 @@ export default function PartidosAbiertos() {
         minHeight: '100dvh',
         background: 'var(--bg-page)',
         color: 'var(--text-primary)',
-        paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         boxSizing: 'border-box',
       }}
     >

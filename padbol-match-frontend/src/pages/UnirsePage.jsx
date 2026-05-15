@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 const API_BASE =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -92,6 +93,8 @@ function FormSection({ title, subtitle, children }) {
 
 export default function UnirsePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -222,8 +225,8 @@ export default function UnirsePage() {
       style={{
         minHeight: '100vh',
         background: 'var(--bg-card)',
-        paddingTop: hubContentPaddingTopCss('/unirse'),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingTop: hubContentPaddingTopCss(location.pathname || '/unirse', navDock),
+        paddingBottom: hubMainPaddingBottomCss(location.pathname || '/unirse', navDock),
       }}
     >
       <AppHeader title="Alta de club" onBack={() => navigate(-1)} />

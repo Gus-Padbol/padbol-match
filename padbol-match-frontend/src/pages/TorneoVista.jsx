@@ -8,12 +8,13 @@ import TorneoTabbedView, {
   safeJugadores,
 } from '../components/torneo/TorneoTabbedView';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   hubContentPaddingTopWithLogoClearanceCss,
   hubInstagramColumnWrapStyle,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
@@ -64,6 +65,7 @@ export default function TorneoVista() {
   const { torneoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session, userProfile, loading: authLoading } = useAuth();
   const [modalInscribirseOpen, setModalInscribirseOpen] = useState(false);
   const [listaEsperaEnrolled, setListaEsperaEnrolled] = useState(false);
@@ -989,8 +991,8 @@ export default function TorneoVista() {
       <div
         style={{
           minHeight: '100vh',
-          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
-          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock),
+          paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
           boxSizing: 'border-box',
         }}
       >
@@ -1007,8 +1009,8 @@ export default function TorneoVista() {
       <div
         style={{
           minHeight: '100vh',
-          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
-          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock),
+          paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
           boxSizing: 'border-box',
         }}
       >
@@ -1028,8 +1030,8 @@ export default function TorneoVista() {
       <div
         style={{
           minHeight: '100vh',
-          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
-          paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+          paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock),
+          paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
           boxSizing: 'border-box',
         }}
       >
@@ -1213,8 +1215,8 @@ export default function TorneoVista() {
     <div
       className="torneo-vista-container"
       style={{
-        paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock),
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
       }}
     >
       <div style={torneoVistaColumnStyle}>
@@ -1242,7 +1244,7 @@ export default function TorneoVista() {
               {buscaDuplaSeccion}
             </>
           }
-          stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname)}
+          stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock)}
           showTorneoLogo
           shareTorneoMeta={torneo && torneoShareUrl ? torneoShareMeta : null}
           presentadoPorSponsor={presentadoPorSponsor}

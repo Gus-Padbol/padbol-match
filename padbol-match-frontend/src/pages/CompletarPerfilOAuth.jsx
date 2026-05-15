@@ -3,14 +3,15 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import AppHeader from '../components/AppHeader';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import {
   digitsOnly,
   formatWhatsAppE164,
@@ -80,6 +81,7 @@ function capitalizar(s) {
 
 export default function CompletarPerfilOAuth() {
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const navigate = useNavigate();
   const { session, userProfile, profileLoading, loading, refreshSession } = useAuth();
   const [genero, setGenero] = useState('');
@@ -268,10 +270,10 @@ export default function CompletarPerfilOAuth() {
         width: '100%',
         maxWidth: '100%',
         background: 'var(--bg-card)',
-        paddingTop: hubContentPaddingTopCss(location.pathname),
+        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
         paddingLeft: '16px',
         paddingRight: '16px',
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         boxSizing: 'border-box',
         overflow: 'visible',
         display: 'flex',

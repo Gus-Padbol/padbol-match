@@ -5,12 +5,13 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import useUserRole from '../hooks/useUserRole';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import {
   formatNivelTorneo,
@@ -113,6 +114,7 @@ function badgeEstadoTorneoListado(t) {
 export default function TorneosPublicos() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -669,7 +671,7 @@ export default function TorneosPublicos() {
         minHeight: '100vh',
         background: 'var(--bg-page)',
         color: 'var(--text-primary)',
-        padding: `${hubContentPaddingTopCss(location.pathname)} 0 ${HUB_CONTENT_PADDING_BOTTOM_PX}px 0`,
+        padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 0 ${hubMainPaddingBottomCss(location.pathname, navDock)} 0`,
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
     >

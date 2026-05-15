@@ -3,11 +3,12 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { fetchSedeFavoritaId } from '../utils/sedeFavorita';
 import { getDistanceKm } from '../utils/sedeCardUi';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
@@ -39,6 +40,7 @@ function formatKm(km) {
 export default function SedesPublicas() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
   const from = searchParams.get('from'); // 'reserva' | 'explorar' | null
   const deporteCatalogo = String(searchParams.get('deporte') || '').trim().toLowerCase();
@@ -184,7 +186,7 @@ export default function SedesPublicas() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-primary)', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px` }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-primary)', paddingTop: hubContentPaddingTopCss(location.pathname, navDock), paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock) }}>
 
       <AppHeader title="Sedes" onBack={volverFlujoReserva ? handleSedesAppBack : undefined} />
 

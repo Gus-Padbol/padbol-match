@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { clearMpReservaPendingSlot } from '../utils/reservaReturnUrl';
 import { supabase } from '../supabaseClient';
@@ -14,6 +14,7 @@ import { useSponsor } from '../hooks/useSponsor';
 import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import SponsorBannerReserva from '../components/SponsorBannerReserva';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -24,6 +25,7 @@ const API_BASE = (
 export default function PagoExitoso() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [params] = useSearchParams();
 
   const paymentId = params.get('payment_id');
@@ -174,7 +176,7 @@ export default function PagoExitoso() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: `${hubContentPaddingTopCss(location.pathname)} 24px ${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 24px ${hubMainPaddingBottomCss(location.pathname, navDock)}`,
         boxSizing: 'border-box',
       }}
     >

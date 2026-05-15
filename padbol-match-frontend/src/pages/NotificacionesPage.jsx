@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
-import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 
@@ -34,6 +35,7 @@ function fechaNotifLabel(value) {
 export default function NotificacionesPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -120,8 +122,8 @@ export default function NotificacionesPage() {
       style={{
         minHeight: '100dvh',
         background: 'var(--bg-page)',
-        paddingTop: hubContentPaddingTopCss(location.pathname),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         boxSizing: 'border-box',
       }}
     >

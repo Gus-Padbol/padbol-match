@@ -1,7 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { isLegalFooterGlobalBarVisiblePathname } from '../constants/hubLayout';
+import {
+  HUB_BOTTOM_NAV_CONTENT_GAP_PX,
+  HUB_NAV_HEIGHT_PX,
+  isHubNavBarHiddenPathname,
+  isLegalFooterGlobalBarVisiblePathname,
+} from '../constants/hubLayout';
 import { useTheme } from '../context/ThemeContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 /**
  * Pie global con enlaces a documentos legales. No se muestra en la landing (tiene su propio pie) ni en las páginas legales.
@@ -9,16 +15,22 @@ import { useTheme } from '../context/ThemeContext';
 export default function LegalFooterBar() {
   const { pathname } = useLocation();
   const { theme } = useTheme();
+  const { navDock } = useHubNavLayout();
   if (!isLegalFooterGlobalBarVisiblePathname(pathname)) return null;
 
   const linkColor =
     theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 23, 42, 0.38)';
 
+  const footerNavLift =
+    !isHubNavBarHiddenPathname(pathname) && navDock === 'bottom'
+      ? HUB_NAV_HEIGHT_PX + HUB_BOTTOM_NAV_CONTENT_GAP_PX
+      : 0;
+
   const footerStyle = {
     flexShrink: 0,
     width: '100%',
     boxSizing: 'border-box',
-    padding: '8px 16px calc(8px + env(safe-area-inset-bottom, 0px))',
+    padding: `8px 16px calc(8px + env(safe-area-inset-bottom, 0px) + ${footerNavLift}px)`,
     background: 'transparent',
     borderTop: 'none',
     textAlign: 'center',

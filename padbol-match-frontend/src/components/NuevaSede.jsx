@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from './AppHeader';
-import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 
@@ -87,6 +88,7 @@ async function fetchWithAuth(url, options = {}) {
 export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -277,8 +279,8 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
       style={{
         minHeight: '100vh',
         background: 'var(--bg-card)',
-        paddingTop: hubContentPaddingTopCss('/admin/nueva-sede'),
-        paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+        paddingTop: hubContentPaddingTopCss('/admin/nueva-sede', navDock),
+        paddingBottom: hubMainPaddingBottomCss('/admin/nueva-sede', navDock),
         paddingLeft: 16,
         paddingRight: 16,
         boxSizing: 'border-box',

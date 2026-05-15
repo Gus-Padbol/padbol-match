@@ -3,12 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_APP_HEADER_HEIGHT_PX,
-  HUB_NAV_HEIGHT_PX,
   hubBottomNavMaxWidthPx,
+  hubHubScrollPaddingBottomCss,
   hubInstagramColumnWrapStyle,
   hubUserHomeChromeSpacerHeightCss,
 } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { nombreRealDesdePerfilOauth } from '../utils/displayName';
 import PwaInstallButtonWithModal from '../components/PwaInstallButtonWithModal';
 import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
@@ -173,6 +174,7 @@ function primerNombreDesdePerfil(userProfile) {
 export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
   const [nombreFinal, setNombreFinal] = useState(null);
   const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
@@ -375,13 +377,17 @@ export default function UserHome() {
     });
   }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido]);
 
-  const scrollPaddingBottom = `calc(${HUB_NAV_HEIGHT_PX + 28}px + env(safe-area-inset-bottom, 0px))`;
+  const scrollPaddingBottom = hubHubScrollPaddingBottomCss(navDock);
   const userHomeChromeSpacerH = useMemo(
     () =>
-      hubUserHomeChromeSpacerHeightCss(location.pathname, {
-        guest: !session?.user,
-      }),
-    [location.pathname, session?.user]
+      hubUserHomeChromeSpacerHeightCss(
+        location.pathname,
+        {
+          guest: !session?.user,
+        },
+        navDock,
+      ),
+    [location.pathname, session?.user, navDock],
   );
 
   /** Scroll arriba al montar y en cada cambio de ruta del hub (/hub, /inicio, /home). */

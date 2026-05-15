@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AppHeader from './AppHeader';
 import { hubContentPaddingTopCss, HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 const titleColor = '#f1f5f9';
 const bodyColor = '#cbd5e1';
@@ -59,9 +60,10 @@ const bottomLink = {
 export default function LegalStaticPageLayout({ title, lead, children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const home = session?.user ? '/hub' : '/';
-  const paddingTop = hubContentPaddingTopCss(location.pathname);
+  const paddingTop = hubContentPaddingTopCss(location.pathname, navDock);
 
   return (
     <div

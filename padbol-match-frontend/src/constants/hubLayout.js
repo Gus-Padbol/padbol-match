@@ -1,14 +1,17 @@
 /**
  * Constantes de chrome fijo (header, BottomNav, paddings de contenido).
  *
+ * Hasta 768px de ancho la barra Perfil / Jugar / Competir / Notificaciones va fija abajo; en desktop
+ * permanece bajo el header. El padding de las pantallas usa {@link hubContentPaddingTopCss} /
+ * `navDock` desde `HubNavLayoutProvider`.
+ *
  * ANTES DE COMMIT si tocás este archivo: verificar en la app que sigan bien
  * — /reservar pantalla 1 (logo Padbol Match visible bajo el header),
  * — /hub (selector «Elegir deporte» + cards sin recorte arriba),
  * — /auth y /login (logo y formulario no cortados; usan hubAccesoContentPaddingTopCss / hubContentPaddingTopCss).
  */
 /**
- * Layout hub: AppHeader fijo + barra de navegación (Jugar, Competir, Perfil)
- * justo debajo del header.
+ * Layout hub: AppHeader fijo + barra de navegación (en móvil anclada abajo; en escritorio bajo el header).
  */
 /**
  * Altura mínima de la fila interna del header (título / saludo); el shell suma paddings en
@@ -23,6 +26,14 @@ export const APP_HEADER_OUTER_PADDING_PX = 16;
  */
 export const HUB_FIXED_CHROME_SLACK_PX = 14;
 export const HUB_NAV_HEIGHT_PX = 54;
+/**
+ * Aire entre el último contenido scrolleable y la barra fija inferior (tap target cómodo).
+ */
+export const HUB_BOTTOM_NAV_CONTENT_GAP_PX = 12;
+/**
+ * Bajo este ancho, la barra Perfil / Jugar / Competir / Notificaciones se fija abajo; desde desktop queda bajo el header.
+ */
+export const HUB_NAV_DOCK_BOTTOM_BREAKPOINT_PX = 768;
 export const HUB_CONTENT_PADDING_TOP_PX =
   HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
 /** Sin barra inferior fija */
@@ -119,14 +130,11 @@ export function resolveSedePublicaBackToPath(locationState) {
  * Padding-top en px bajo el header fijo (y la barra hub si aplica).
  * Perfil público `/sede` y `/sede/:id` siempre muestran header + BottomNav bajo el header.
  */
-export function hubContentPaddingTopPx(pathname) {
-  if (isSedeProfilePathname(pathname)) {
-    return HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
-  }
-  if (isHubNavBarHiddenPathname(pathname)) {
-    return HUB_APP_HEADER_HEIGHT_PX;
-  }
-  return HUB_APP_HEADER_HEIGHT_PX + HUB_NAV_HEIGHT_PX;
+export function hubContentPaddingTopPx(pathname, navDock = 'top') {
+  const dockBottom = navDock === 'bottom';
+  const navVisible = !isHubNavBarHiddenPathname(pathname);
+  const includeTopNavRow = navVisible && !dockBottom;
+  return HUB_APP_HEADER_HEIGHT_PX + (includeTopNavRow ? HUB_NAV_HEIGHT_PX : 0);
 }
 
 /**
@@ -139,9 +147,35 @@ export function appHeaderStackHeightCss() {
 /**
  * Offset bajo header fijo (+ barra hub si aplica) + chrome del header + safe-area.
  */
-export function hubContentPaddingTopCss(pathname) {
-  const basePx = hubContentPaddingTopPx(pathname);
+export function hubContentPaddingTopCss(pathname, navDock = 'top') {
+  const basePx = hubContentPaddingTopPx(pathname, navDock);
   return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px))`;
+}
+
+/**
+ * Padding inferior del “main” cuando hay {@link BottomNav} fija abajo (móvil): evita que el contenido quede bajo la barra.
+ */
+export function hubMainPaddingBottomCss(pathname, navDock = 'top') {
+  const b = HUB_CONTENT_PADDING_BOTTOM_PX;
+  const safe = 'env(safe-area-inset-bottom, 0px)';
+  if (isHubNavBarHiddenPathname(pathname)) {
+    return `calc(${b}px + ${safe})`;
+  }
+  if (navDock === 'bottom') {
+    return `calc(${b + HUB_NAV_HEIGHT_PX + HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + ${safe})`;
+  }
+  return `calc(${b}px + ${safe})`;
+}
+
+/**
+ * Área inferior reservada en el scroll interno del hub (/hub) para la nav fija abajo.
+ */
+export function hubHubScrollPaddingBottomCss(navDock = 'top') {
+  const gap = 28;
+  if (navDock === 'bottom') {
+    return `calc(${HUB_NAV_HEIGHT_PX + gap}px + env(safe-area-inset-bottom, 0px))`;
+  }
+  return `calc(${gap}px + env(safe-area-inset-bottom, 0px))`;
 }
 
 /** /jugar: ~8–12px entre BottomNav y «Elegir deporte» (menos slack que el hub genérico). */
@@ -150,8 +184,8 @@ export const HUB_JUGAR_BELOW_NAV_GAP_PX = 8;
 export const HUB_JUGAR_CHROME_TRIM_PX = 20;
 
 /** Padding-top del shell /jugar (header + nav + aire mínimo bajo la barra). */
-export function hubJugarContentPaddingTopCss(pathname) {
-  const basePx = hubContentPaddingTopPx(pathname);
+export function hubJugarContentPaddingTopCss(pathname, navDock = 'top') {
+  const basePx = hubContentPaddingTopPx(pathname, navDock);
   const chromePx = Math.max(HUB_APP_HEADER_HEIGHT_PX, basePx - HUB_JUGAR_CHROME_TRIM_PX);
   return `calc(${chromePx + HUB_JUGAR_BELOW_NAV_GAP_PX}px + env(safe-area-inset-top, 0px))`;
 }
@@ -160,8 +194,8 @@ export function hubJugarContentPaddingTopCss(pathname) {
 export const HUB_ACCESO_LOGIN_EXTRA_TOP_PX = 36;
 
 /** Igual que {@link hubContentPaddingTopCss} más {@link HUB_ACCESO_LOGIN_EXTRA_TOP_PX} (login / acceso). */
-export function hubAccesoContentPaddingTopCss(pathname) {
-  const basePx = hubContentPaddingTopPx(pathname);
+export function hubAccesoContentPaddingTopCss(pathname, navDock = 'top') {
+  const basePx = hubContentPaddingTopPx(pathname, navDock);
   return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX + HUB_ACCESO_LOGIN_EXTRA_TOP_PX}px + env(safe-area-inset-top, 0px))`;
 }
 
@@ -180,11 +214,11 @@ export const HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX = 10;
  * Altura del bloque “spacer” bajo el header fijo de UserHome.
  * @param {{ guest?: boolean }} [opts] — `guest: true` sin sesión (invitado).
  */
-export function hubUserHomeChromeSpacerHeightCss(pathname, opts) {
+export function hubUserHomeChromeSpacerHeightCss(pathname, opts, navDock = 'top') {
   const guest = Boolean(opts?.guest);
   const extra = guest ? HUB_USERHOME_CHROME_EXTRA_FOR_GUEST_PX : HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX;
   const basePx =
-    hubContentPaddingTopPx(pathname) +
+    hubContentPaddingTopPx(pathname, navDock) +
     APP_HEADER_OUTER_PADDING_PX +
     HUB_FIXED_CHROME_SLACK_PX +
     extra;
@@ -194,9 +228,9 @@ export function hubUserHomeChromeSpacerHeightCss(pathname, opts) {
 /**
  * Como {@link hubContentPaddingTopCss} más {@link HUB_LOGO_CLEARANCE_TOP_PX} para logos/hero que no queden bajo la barra fija.
  */
-export function hubContentPaddingTopWithLogoClearanceCss(pathname) {
+export function hubContentPaddingTopWithLogoClearanceCss(pathname, navDock = 'top') {
   const basePx =
-    hubContentPaddingTopPx(pathname) +
+    hubContentPaddingTopPx(pathname, navDock) +
     APP_HEADER_OUTER_PADDING_PX +
     HUB_LOGO_CLEARANCE_TOP_PX +
     HUB_FIXED_CHROME_SLACK_PX;
@@ -204,7 +238,7 @@ export function hubContentPaddingTopWithLogoClearanceCss(pathname) {
 }
 
 /**
- * Posición `top` del {@link BottomNav} fijo, bajo el AppHeader (misma pila que {@link hubContentPaddingTopCss} sin nav).
+ * Posición `top` del {@link BottomNav} cuando va bajo el AppHeader (viewport ancho; misma pila que el padding superior sin fila de tabs).
  */
 export function hubBottomNavFixedTopCss() {
   return appHeaderStackHeightCss();

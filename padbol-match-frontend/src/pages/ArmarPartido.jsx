@@ -7,7 +7,8 @@ import { supabase } from '../supabaseClient';
 import { getDisplayName } from '../utils/displayName';
 import { precioBaseTurnoDesdeSede, getDistanceKm } from '../utils/sedeCardUi';
 import { precioDesdeFranjas } from '../utils/franjasHorarias';
-import { HUB_CONTENT_PADDING_BOTTOM_PX, hubContentPaddingTopCss } from '../constants/hubLayout';
+import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 
 const API_BASE = (
@@ -264,6 +265,7 @@ const AP = {
 export default function ArmarPartido() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
   const { session, userProfile } = useAuth();
   const [step, setStep] = useState(1);
@@ -598,7 +600,7 @@ export default function ArmarPartido() {
   });
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--bg-page)', color: 'var(--text-primary)', paddingTop: hubContentPaddingTopCss(location.pathname), paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`, boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--bg-page)', color: 'var(--text-primary)', paddingTop: hubContentPaddingTopCss(location.pathname, navDock), paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock), boxSizing: 'border-box' }}>
       <AppHeader title="Armar partido" />
       <main style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '18px 16px', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>

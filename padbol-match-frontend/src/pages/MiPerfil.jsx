@@ -12,8 +12,8 @@ import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import {
-  HUB_CONTENT_PADDING_BOTTOM_PX,
   hubContentPaddingTopCss,
+  hubMainPaddingBottomCss,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
 } from '../constants/hubLayout';
 import {
@@ -51,6 +51,7 @@ import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { useAuth } from '../context/AuthContext';
+import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { getDisplayName, headerNombreVisible } from '../utils/displayName';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
@@ -77,14 +78,14 @@ const MI_PERFIL_CONTENT_WRAP = {
   boxSizing: 'border-box',
 };
 
-function miPerfilPageOuterStyle(paddingTopCss) {
+function miPerfilPageOuterStyle(paddingTopCss, paddingBottomCss) {
   return {
     minHeight: '100vh',
     background: 'var(--bg-page)',
     color: 'var(--text-primary)',
     fontFamily: 'Arial',
     paddingTop: paddingTopCss,
-    paddingBottom: `${HUB_CONTENT_PADDING_BOTTOM_PX}px`,
+    paddingBottom: paddingBottomCss,
     width: '100%',
     maxWidth: '100%',
     boxSizing: 'border-box',
@@ -265,6 +266,7 @@ function puedeMostrarComprobanteMp(r) {
 export default function MiPerfil() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { navDock } = useHubNavLayout();
   const { session, loading: authLoading, userProfile, refreshSession, signOutAndClear } = useAuth();
   const [searchParams] = useSearchParams();
   const torneoIdPerfil = searchParams.get('id');
@@ -1711,7 +1713,7 @@ export default function MiPerfil() {
 
   if (authLoading) {
     return (
-      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
+      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           Verificando sesión...
@@ -1725,7 +1727,7 @@ export default function MiPerfil() {
     if (!torneoIdValido) {
       const goAuth = () => navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return (
-        <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
+        <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
           <AppHeader title="Mi Perfil" />
           <div style={MI_PERFIL_CONTENT_WRAP}>
             {avisoPerfilTorneoMsg ? (
@@ -1826,7 +1828,7 @@ export default function MiPerfil() {
       fontSize: '13px',
     };
     return (
-      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
+      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
         <AppHeader title="Mi Perfil" />
         <div style={MI_PERFIL_CONTENT_WRAP}>
           {avisoPerfilTorneoMsg ? (
@@ -2404,7 +2406,7 @@ export default function MiPerfil() {
 
   if (loading) {
     return (
-      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
+      <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
         <AppHeader title="Mi Perfil" />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           Cargando perfil...
@@ -2453,7 +2455,7 @@ export default function MiPerfil() {
     'Jugador';
 
   return (
-    <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname))}>
+    <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
 
       <AppHeader title="Mi Perfil" />
 
