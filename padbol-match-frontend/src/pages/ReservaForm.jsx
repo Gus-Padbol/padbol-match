@@ -2361,13 +2361,16 @@ export default function ReservaForm() {
                 style={{
                   fontSize: 16,
                   fontWeight: 800,
-                  margin: '0 0 12px',
+                  margin: '0 0 6px',
                   color: 'var(--text-primary)',
                   lineHeight: 1.3,
                 }}
               >
                 ¿Qué querés para el tercer tiempo? 🍕
               </h2>
+              <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                Opcional: sumá productos o servicios del club.
+              </p>
               <div style={{ display: 'grid', gap: 10 }}>
                 {reservaExtrasDisponibles.map((ex) => {
                   const id = Number(ex.id);
