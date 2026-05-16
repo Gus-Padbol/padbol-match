@@ -42,6 +42,27 @@ const MAX_USER_MESSAGES = 6;
 /** Por encima de este número de turnos se agrupa por franja (si aplica más de una franja con datos). */
 const DISPO_SLOTS_FRANJA_THRESHOLD = 8;
 const CHAT_IA_GEO_DENIED_STORAGE_KEY = 'padbol_match_chat_ia_geo_denied';
+/** Si el usuario ya abrió el chat desde el FAB: mostrar solo el botón colapsado con badge. */
+const CHATBOT_SEEN_STORAGE_KEY = 'chatbot_seen';
+const CHATBOT_FAB_EXPAND_MS = 4000;
+
+function readChatbotFabInitiallyCollapsed() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(CHATBOT_SEEN_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Burbuja para badge del FAB colapsado (fondo azul). */
+function FabChatBadgeBubbleIcon() {
+  return (
+    <span style={{ fontSize: 11, lineHeight: 1, display: 'block', transform: 'translateY(0.5px)' }} aria-hidden>
+      💬
+    </span>
+  );
+}
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -257,6 +278,8 @@ function chatUiStrings(loc) {
       waEscalada: 'Contact the club on WhatsApp',
       waClub: 'Message your usual club',
       fabOpen: 'Open Padbol Match assistant',
+      fabLine1: 'Any questions?',
+      fabLine2: 'Chat with Padbol Match',
       titulo: 'Padbol Match IA',
       cargando: 'Loading…',
       escuchando: 'Listening…',
@@ -309,6 +332,8 @@ function chatUiStrings(loc) {
       waEscalada: 'Falar com o clube no WhatsApp',
       waClub: 'Escrever ao clube habitual',
       fabOpen: 'Abrir assistente Padbol Match',
+      fabLine1: 'Tem dúvidas?',
+      fabLine2: 'Fale com o Padbol Match',
       titulo: 'Padbol Match IA',
       cargando: 'Carregando…',
       escuchando: 'Ouvindo…',
@@ -360,6 +385,8 @@ function chatUiStrings(loc) {
     waEscalada: 'Contactar al club por WhatsApp',
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Padbol Match',
+    fabLine1: '¿Tenés dudas?',
+    fabLine2: 'Hablá con Padbol Match',
     titulo: 'Padbol Match IA',
     cargando: 'Cargando…',
     escuchando: 'Escuchando…',
@@ -588,6 +615,7 @@ export default function ChatbotIA() {
   const { theme } = useTheme();
   const c = useMemo(() => getChatbotModalTheme(theme === 'dark'), [theme]);
   const [open, setOpen] = useState(false);
+  const [fabCollapsed, setFabCollapsed] = useState(readChatbotFabInitiallyCollapsed);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -719,6 +747,25 @@ export default function ChatbotIA() {
     }
     return `calc(16px + ${liftForBottomNav})`;
   }, [hubShell, location.pathname, navDock]);
+
+  useEffect(() => {
+    if (!visible) return undefined;
+    if (fabCollapsed) return undefined;
+    const tid = window.setTimeout(() => setFabCollapsed(true), CHATBOT_FAB_EXPAND_MS);
+    return () => window.clearTimeout(tid);
+  }, [visible, fabCollapsed]);
+
+  const openChatFromFab = useCallback(() => {
+    try {
+      window.localStorage.setItem(CHATBOT_SEEN_STORAGE_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+    setFabCollapsed(true);
+    setOpen(true);
+    setError('');
+    setVoiceNotice('');
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -1229,42 +1276,115 @@ export default function ChatbotIA() {
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={ui.fabOpen}
-        onClick={() => {
-          setOpen(true);
-          setError('');
-          setVoiceNotice('');
-        }}
+      <div
         style={{
           position: 'fixed',
           right: 'max(12px, env(safe-area-inset-right, 0px))',
           bottom: fabBottom,
           zIndex: 10050,
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
-          border: 'none',
-          cursor: 'pointer',
-          background: '#e53935',
-          color: '#fff',
-          boxShadow: '0 10px 28px rgba(15,23,42,0.35)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 0,
+          pointerEvents: 'none',
         }}
       >
-        <img
-          src="/logo-padbol-match.png"
-          alt=""
-          width={34}
-          height={34}
-          style={{ display: 'block', width: 34, height: 34, objectFit: 'contain' }}
-          aria-hidden
-        />
-      </button>
+        <button
+          type="button"
+          aria-label={ui.fabOpen}
+          onClick={openChatFromFab}
+          style={{
+            pointerEvents: 'auto',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: fabCollapsed ? 0 : 8,
+            border: 'none',
+            cursor: 'pointer',
+            background: 'var(--accent)',
+            color: '#fff',
+            boxSizing: 'border-box',
+            transition: 'all 0.3s ease',
+            borderRadius: fabCollapsed ? '50%' : 28,
+            width: fabCollapsed ? 52 : 280,
+            height: fabCollapsed ? 52 : 'auto',
+            minHeight: fabCollapsed ? 52 : 48,
+            padding: fabCollapsed ? 0 : '10px 16px 10px 10px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            overflow: 'hidden',
+          }}
+        >
+          {fabCollapsed ? (
+            <img
+              src="/logo-padbol-match.png"
+              alt=""
+              width={30}
+              height={30}
+              style={{ display: 'block', width: 30, height: 30, objectFit: 'contain' }}
+              aria-hidden
+            />
+          ) : (
+            <>
+              <span
+                aria-hidden
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <img
+                  src="/logo-padbol-match.png"
+                  alt=""
+                  width={26}
+                  height={26}
+                  style={{ display: 'block', width: 26, height: 26, objectFit: 'contain' }}
+                  aria-hidden
+                />
+              </span>
+              <span
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  textAlign: 'left',
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
+                <span style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.2, whiteSpace: 'nowrap' }}>{ui.fabLine1}</span>
+                <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.85, lineHeight: 1.25, marginTop: 2, whiteSpace: 'nowrap' }}>
+                  {ui.fabLine2}
+                </span>
+              </span>
+            </>
+          )}
+          {fabCollapsed ? (
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                top: -3,
+                right: -3,
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: '#2563eb',
+                border: '2px solid var(--bg-page, #f8f9fa)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+              }}
+            >
+              <FabChatBadgeBubbleIcon />
+            </span>
+          ) : null}
+        </button>
+      </div>
 
       {open ? (
         <div
