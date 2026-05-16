@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import '../pages/LandingPage.css';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
@@ -70,7 +71,7 @@ function FormSection({ title, subtitle, children }) {
   return (
     <section
       style={{
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border)',
         borderRadius: '14px',
         padding: '20px 18px',
         marginBottom: '20px',
@@ -78,11 +79,19 @@ function FormSection({ title, subtitle, children }) {
         boxSizing: 'border-box',
       }}
     >
-      <h2 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+      <h2
+        style={{
+          margin: '0 0 6px',
+          fontSize: '17px',
+          fontWeight: 800,
+          color: 'var(--text-primary)',
+          letterSpacing: '-0.02em',
+        }}
+      >
         {title}
       </h2>
       {subtitle ? (
-        <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>{subtitle}</p>
+        <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>{subtitle}</p>
       ) : (
         <div style={{ marginBottom: 14 }} />
       )}
@@ -100,6 +109,18 @@ export default function UnirsePage() {
   const [err, setErr] = useState('');
   const [form, setForm] = useState(getInitialForm);
   const paises = useMemo(() => countries(), []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('landing-page-active');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const prevThemeColor = meta?.getAttribute('content') ?? null;
+    if (meta) meta.setAttribute('content', '#0F172A');
+    return () => {
+      root.classList.remove('landing-page-active');
+      if (meta && prevThemeColor != null) meta.setAttribute('content', prevThemeColor);
+    };
+  }, []);
 
   const onField = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -212,19 +233,28 @@ export default function UnirsePage() {
     width: '100%',
     padding: '11px 12px',
     borderRadius: '10px',
-    border: '1px solid #cbd5e1',
+    border: '1px solid var(--border)',
     fontSize: '16px',
     boxSizing: 'border-box',
-    background: 'var(--bg-card)',
+    background: 'var(--bg-input)',
+    color: 'var(--text-primary)',
   };
-  const labelStyle = { display: 'block', fontWeight: 700, color: '#334155', marginBottom: '6px', fontSize: '13px' };
+  const labelStyle = {
+    display: 'block',
+    fontWeight: 700,
+    color: 'var(--text-primary)',
+    marginBottom: '6px',
+    fontSize: '13px',
+  };
   const rowGap = { marginTop: 14 };
 
   return (
     <div
+      className="landing-page"
       style={{
         minHeight: '100vh',
-        background: 'var(--bg-card)',
+        background: 'var(--bg-page)',
+        color: 'var(--text-primary)',
         paddingTop: hubContentPaddingTopCss(location.pathname || '/unirse', navDock),
         paddingBottom: hubMainPaddingBottomCss(location.pathname || '/unirse', navDock),
       }}
@@ -249,7 +279,7 @@ export default function UnirsePage() {
         >
           <h1
             style={{
-              color: '#0f172a',
+              color: 'var(--text-primary)',
               margin: '0 0 10px',
               fontSize: 'clamp(1.35rem, 4vw, 1.75rem)',
               fontWeight: 900,
@@ -259,7 +289,15 @@ export default function UnirsePage() {
           >
             Suma tu club a Padbol Match
           </h1>
-          <p style={{ color: '#475569', margin: '0 0 16px', lineHeight: 1.55, fontSize: '15px', textAlign: 'center' }}>
+          <p
+            style={{
+              color: 'var(--text-secondary)',
+              margin: '0 0 16px',
+              lineHeight: 1.55,
+              fontSize: '15px',
+              textAlign: 'center',
+            }}
+          >
             Dejanos los datos básicos del club y un contacto. Horarios, tipo de instalación y el resto de la ficha los
             completas después desde tu panel.
           </p>
@@ -279,7 +317,7 @@ export default function UnirsePage() {
             </span>
             <span style={{ fontSize: '15px', fontWeight: 800, color: '#E11B22' }}>{PRECIO_MENSUAL_USD}</span>
           </div>
-          <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
+          <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
             Después del período de prueba, puedes elegir facturación mensual o anual.
           </p>
         </section>
@@ -287,8 +325,9 @@ export default function UnirsePage() {
         {err ? (
           <div
             style={{
-              background: '#fef2f2',
-              color: '#991b1b',
+              background: 'rgba(239, 68, 68, 0.15)',
+              color: '#fca5a5',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
               padding: '12px 14px',
               borderRadius: 12,
               marginBottom: 12,
@@ -302,8 +341,9 @@ export default function UnirsePage() {
         {msg ? (
           <div
             style={{
-              background: '#ecfdf5',
-              color: '#065f46',
+              background: 'rgba(22, 163, 74, 0.15)',
+              color: '#86efac',
+              border: '1px solid rgba(22, 163, 74, 0.35)',
               padding: '12px 14px',
               borderRadius: 12,
               marginBottom: 12,
@@ -390,7 +430,7 @@ export default function UnirsePage() {
                     gap: 10,
                     cursor: 'pointer',
                     fontSize: '15px',
-                    color: '#334155',
+                    color: 'var(--text-primary)',
                   }}
                 >
                   <input
@@ -403,7 +443,9 @@ export default function UnirsePage() {
                     <strong>{d.label}</strong>
                     {form.deportes[d.key] ? (
                       <span style={{ display: 'block', marginTop: 8 }}>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Cantidad de canchas (opcional)</span>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                          Cantidad de canchas (opcional)
+                        </span>
                         <input
                           type="number"
                           min="0"
@@ -479,7 +521,7 @@ export default function UnirsePage() {
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#334155',
+                color: 'var(--text-primary)',
               }}
             >
               <input
