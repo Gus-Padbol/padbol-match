@@ -6,7 +6,6 @@ import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
 import HubJugarSponsorsTicker from '../components/HubJugarSponsorsTicker';
 import HubJugarFinalSponsorCard from '../components/HubJugarFinalSponsorCard';
-import { HubJugarSlotStrip } from '../components/HubJugarSponsorSurfaces';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
@@ -46,7 +45,6 @@ const JUGAR_OPCIONES_BASE = [
 ];
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
-const HUB_JUGAR_STRIP_H_PX = 40;
 
 function deporteQuery(deporteElegido) {
   const dep = String(deporteElegido || '').trim().toLowerCase();
@@ -115,10 +113,8 @@ export default function Jugar() {
 
   const dockBottom = navDock === 'bottom';
   const mainBottomPad = dockBottom
-    ? `calc(20px + ${HUB_JUGAR_STRIP_H_PX}px + ${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
+    ? `calc(20px + ${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
     : `calc(20px + env(safe-area-inset-bottom, 0px))`;
-
-  const stripBottom = `calc(${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`;
 
   return (
     <div
@@ -281,39 +277,6 @@ export default function Jugar() {
 
         <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
       </main>
-
-      {dockBottom ? (
-        <div
-          style={{
-            position: 'fixed',
-            left: 0,
-            right: 0,
-            bottom: stripBottom,
-            height: HUB_JUGAR_STRIP_H_PX,
-            zIndex: 1000,
-            maxWidth: 460,
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            paddingLeft: 14,
-            paddingRight: 14,
-            boxSizing: 'border-box',
-            pointerEvents: 'auto',
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              borderRadius: '10px 10px 0 0',
-              overflow: 'hidden',
-              border: '1px solid var(--border)',
-              borderBottom: 'none',
-              background: 'var(--bg-card)',
-            }}
-          >
-            <HubJugarSlotStrip slot={getSlot(HUB_JUGAR_SLOT.STRIP)} />
-          </div>
-        </div>
-      ) : null}
 
       <BottomNav />
     </div>
