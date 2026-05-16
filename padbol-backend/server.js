@@ -22,6 +22,7 @@ import {
   parseInvitacionAdminWebhookBody,
 } from './lib/adminInviteMagicLink.js';
 import { DateTime } from 'luxon';
+import { registerModuloClasesRoutes } from './lib/moduloClases.js';
 
 dotenv.config();
 
@@ -80,7 +81,18 @@ app.use(
 // Supabase (desde .env)
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const SUPABASE_SERVICE_ROLE_KEY =
+  String(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '').trim();
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseAdmin =
+  SUPABASE_SERVICE_ROLE_KEY && SUPABASE_URL
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    : supabase;
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn(
+    '⚠️ SUPABASE_SERVICE_ROLE_KEY no configurada: escrituras del módulo clases usan SUPABASE_KEY (puede fallar con RLS).',
+  );
+}
 const uploadContrato = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 const uploadHubFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
@@ -13945,6 +13957,19 @@ app.post('/api/chat-ia', async (req, res) => {
     console.error('❌ POST /api/chat-ia:', err?.message || err);
     res.status(500).json({ error: err.message || String(err) });
   }
+});
+
+registerModuloClasesRoutes(app, {
+  supabase,
+  supabaseAdmin,
+  authUserFromBearer,
+  adminListScopeFromRequest,
+  assertUsuarioPuedeAdministrarSede,
+  assertSuperAdminReq,
+  isSuperAdminApi,
+  fetchUserRoleRow,
+  canchasConNumeroReserva,
+  assertReservaSinSolapeBackend,
 });
 
 cron.schedule('*/10 * * * *', async () => {
