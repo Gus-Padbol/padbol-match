@@ -1311,7 +1311,7 @@ export default function ArmarPartido() {
                           >
                             <div
                               style={{
-                                width: 100,
+                                width: 130,
                                 flexShrink: 0,
                                 background: 'var(--bg-input)',
                                 display: 'flex',
