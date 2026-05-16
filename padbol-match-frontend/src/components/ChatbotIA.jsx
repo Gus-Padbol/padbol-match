@@ -42,7 +42,7 @@ const MAX_USER_MESSAGES = 6;
 /** Por encima de este número de turnos se agrupa por franja (si aplica más de una franja con datos). */
 const DISPO_SLOTS_FRANJA_THRESHOLD = 8;
 const CHAT_IA_GEO_DENIED_STORAGE_KEY = 'padbol_match_chat_ia_geo_denied';
-/** Si el usuario ya abrió el chat desde el FAB: mostrar solo el botón colapsado con badge. */
+/** Si el usuario ya abrió el chat desde el FAB: mostrar solo el botón colapsado (logo + etiqueta). */
 const CHATBOT_SEEN_STORAGE_KEY = 'chatbot_seen';
 const CHATBOT_FAB_EXPAND_MS = 4000;
 
@@ -55,14 +55,6 @@ function readChatbotFabInitiallyCollapsed() {
   }
 }
 
-/** Burbuja para badge del FAB colapsado (fondo azul). */
-function FabChatBadgeBubbleIcon() {
-  return (
-    <span style={{ fontSize: 11, lineHeight: 1, display: 'block', transform: 'translateY(0.5px)' }} aria-hidden>
-      💬
-    </span>
-  );
-}
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -1289,37 +1281,84 @@ export default function ChatbotIA() {
           type="button"
           aria-label={ui.fabOpen}
           onClick={openChatFromFab}
-          style={{
-            pointerEvents: 'auto',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: fabCollapsed ? 0 : 8,
-            border: 'none',
-            cursor: 'pointer',
-            background: 'var(--accent)',
-            color: '#fff',
-            boxSizing: 'border-box',
-            transition: 'all 0.3s ease',
-            borderRadius: fabCollapsed ? '50%' : 28,
-            width: fabCollapsed ? 52 : 280,
-            height: fabCollapsed ? 52 : 'auto',
-            minHeight: fabCollapsed ? 52 : 48,
-            padding: fabCollapsed ? 0 : '10px 16px 10px 10px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-            overflow: 'hidden',
-          }}
+          style={
+            fabCollapsed
+              ? {
+                  pointerEvents: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: 0,
+                  margin: 0,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.3s ease',
+                }
+              : {
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: 'var(--accent)',
+                  color: '#fff',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.3s ease',
+                  borderRadius: 28,
+                  width: 280,
+                  height: 'auto',
+                  minHeight: 48,
+                  padding: '10px 16px 10px 10px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                  overflow: 'hidden',
+                }
+          }
         >
           {fabCollapsed ? (
-            <img
-              src="/logo-padbol-match.png"
-              alt=""
-              width={30}
-              height={30}
-              style={{ display: 'block', width: 30, height: 30, objectFit: 'contain' }}
-              aria-hidden
-            />
+            <>
+              <span
+                aria-hidden
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                  flexShrink: 0,
+                }}
+              >
+                <img
+                  src="/logo-padbol-match.png"
+                  alt=""
+                  width={32}
+                  height={32}
+                  style={{ display: 'block', width: 32, height: 32, objectFit: 'contain' }}
+                />
+              </span>
+              <span
+                style={{
+                  color: '#fff',
+                  background: 'var(--accent)',
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontWeight: 500,
+                  padding: '3px 10px',
+                  lineHeight: 1.2,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ¿Consultas?
+              </span>
+            </>
           ) : (
             <>
               <span
@@ -1361,28 +1400,6 @@ export default function ChatbotIA() {
               </span>
             </>
           )}
-          {fabCollapsed ? (
-            <span
-              aria-hidden
-              style={{
-                position: 'absolute',
-                top: -3,
-                right: -3,
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: '#2563eb',
-                border: '2px solid var(--bg-page, #f8f9fa)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxSizing: 'border-box',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-              }}
-            >
-              <FabChatBadgeBubbleIcon />
-            </span>
-          ) : null}
         </button>
       </div>
 
