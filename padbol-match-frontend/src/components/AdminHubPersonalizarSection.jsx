@@ -448,14 +448,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
 
   return (
     <div className="section admin-hub-personalizar-root" style={{ color: 'var(--text-primary)' }}>
-      <h2 style={{ marginBottom: '12px', paddingBottom: '8px', color: 'var(--text-primary)' }}>
+      <h2 style={{ marginBottom: '16px', paddingBottom: '8px', color: 'var(--text-primary)' }}>
         Personalizar Hub
       </h2>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.45, marginBottom: '16px' }}>
-        Editá título, subtítulo e imagen por deporte (tabla <code style={{ color: 'var(--accent)' }}>hub_deporte_config</code>
-        ) y las cards globales legacy (<code style={{ color: 'var(--accent)' }}>hub_config</code>). El jugador ve primero la
-        config por deporte si existe; si no, el CMS global y las fotos por defecto.
-      </p>
 
       <h3
         style={{
@@ -467,12 +462,6 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       >
         Pantalla de inicio
       </h3>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '12px', lineHeight: 1.45 }}>
-        Cuatro deportes en la grilla de bienvenida del hub (sin deporte preferido en el perfil). Se guardan en{' '}
-        <code style={{ color: 'var(--accent)' }}>hub_config</code> como{' '}
-        <code style={{ color: 'var(--accent)' }}>hub_inicio_card_1</code> … <code style={{ color: 'var(--accent)' }}>4</code>: el
-        campo <code style={{ color: 'var(--accent)' }}>titulo</code> es la clave del deporte y <code style={{ color: 'var(--accent)' }}>foto_url</code> la imagen (equivalente a <code style={{ color: 'var(--accent)' }}>&#123; deporte, foto_url &#125;</code>).
-      </p>
       {inicioMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(inicioMsg) }}>
           {inicioMsg}
@@ -750,10 +739,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(ev) => void onFileChange(ev)} />
 
       {!legacyHubRows.length ? (
-        <p style={{ color: 'var(--text-secondary)' }}>
-          No hay filas legacy en <code style={{ color: 'var(--accent)' }}>hub_config</code>. Crea registros en Supabase (7 cards con{' '}
-          <code>id</code> texto y <code>orden</code>).
-        </p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '14px' }}>No hay cards globales configuradas.</p>
       ) : null}
 
       {legacyHubRows.map((row) => {
