@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS hub_deporte_config (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   deporte text NOT NULL,
   card_key text NOT NULL,
-  foto_url text,
+  imagen_url text,
   titulo text,
   subtitulo text,
   updated_at timestamptz DEFAULT now(),

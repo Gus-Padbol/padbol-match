@@ -1653,12 +1653,12 @@ async function upsertHubDeporteConfigByDeporteCard({
   card_key,
   titulo,
   subtitulo,
-  foto_url,
+  imagen_url,
 }) {
   const updated_at = new Date().toISOString();
   const { data: updated, error: upErr } = await supabase
     .from('hub_deporte_config')
-    .update({ titulo, subtitulo, foto_url, updated_at })
+    .update({ titulo, subtitulo, imagen_url, updated_at })
     .eq('deporte', deporte)
     .eq('card_key', card_key)
     .select('*');
@@ -1672,7 +1672,7 @@ async function upsertHubDeporteConfigByDeporteCard({
       card_key,
       titulo,
       subtitulo,
-      foto_url,
+      imagen_url,
       updated_at,
     })
     .select('*')
@@ -1686,7 +1686,7 @@ async function upsertHubDeporteConfigByDeporteCard({
   if (duplicate) {
     const { data: retry, error: rErr } = await supabase
       .from('hub_deporte_config')
-      .update({ titulo, subtitulo, foto_url, updated_at })
+      .update({ titulo, subtitulo, imagen_url, updated_at })
       .eq('deporte', deporte)
       .eq('card_key', card_key)
       .select('*')
@@ -1697,12 +1697,12 @@ async function upsertHubDeporteConfigByDeporteCard({
   throw inErr;
 }
 
-/** GET /api/hub-deporte-config — público: filas { deporte, card_key, foto_url, titulo, subtitulo } para el hub. */
+/** GET /api/hub-deporte-config — público: filas { deporte, card_key, imagen_url, titulo, subtitulo } para el hub. */
 app.get('/api/hub-deporte-config', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('hub_deporte_config')
-      .select('id,deporte,card_key,foto_url,titulo,subtitulo,updated_at')
+      .select('id,deporte,card_key,imagen_url,titulo,subtitulo,updated_at')
       .order('deporte', { ascending: true })
       .order('card_key', { ascending: true });
     if (error) throw error;
@@ -1719,7 +1719,7 @@ app.get('/api/hub-deporte-config', async (req, res) => {
 
 /**
  * PATCH /api/hub-deporte-config — super_admin o editor_contenido: upsert por (deporte, card_key).
- * Body: { deporte, card_key, titulo?, subtitulo?, foto_url? }
+ * Body: { deporte, card_key, titulo?, subtitulo?, imagen_url? } (acepta foto_url legacy en body)
  */
 app.patch('/api/hub-deporte-config', async (req, res) => {
   try {
@@ -1730,10 +1730,12 @@ app.patch('/api/hub-deporte-config', async (req, res) => {
     const { deporte, card_key } = chk;
     const titulo = Object.prototype.hasOwnProperty.call(body, 'titulo') ? String(body.titulo ?? '') : undefined;
     const subtitulo = Object.prototype.hasOwnProperty.call(body, 'subtitulo') ? String(body.subtitulo ?? '') : undefined;
-    const foto_url = Object.prototype.hasOwnProperty.call(body, 'foto_url')
-      ? String(body.foto_url ?? '').trim() || null
-      : undefined;
-    if (titulo === undefined && subtitulo === undefined && foto_url === undefined) {
+    const imagen_url = Object.prototype.hasOwnProperty.call(body, 'imagen_url')
+      ? String(body.imagen_url ?? '').trim() || null
+      : Object.prototype.hasOwnProperty.call(body, 'foto_url')
+        ? String(body.foto_url ?? '').trim() || null
+        : undefined;
+    if (titulo === undefined && subtitulo === undefined && imagen_url === undefined) {
       return res.status(400).json({ error: 'Nada que actualizar' });
     }
 
@@ -1745,17 +1747,24 @@ app.patch('/api/hub-deporte-config', async (req, res) => {
       .maybeSingle();
     if (exErr) throw exErr;
 
+    const exImagen =
+      ex?.imagen_url != null && String(ex.imagen_url).trim()
+        ? String(ex.imagen_url).trim()
+        : ex?.foto_url != null
+          ? String(ex.foto_url).trim() || null
+          : null;
+
     const merged = {
       titulo: titulo !== undefined ? titulo : String(ex?.titulo ?? ''),
       subtitulo: subtitulo !== undefined ? subtitulo : ex?.subtitulo != null ? String(ex.subtitulo) : '',
-      foto_url: foto_url !== undefined ? foto_url : ex?.foto_url != null ? ex.foto_url : null,
+      imagen_url: imagen_url !== undefined ? imagen_url : exImagen,
     };
     const data = await upsertHubDeporteConfigByDeporteCard({
       deporte,
       card_key,
       titulo: merged.titulo,
       subtitulo: merged.subtitulo,
-      foto_url: merged.foto_url,
+      imagen_url: merged.imagen_url,
     });
     res.json(data);
   } catch (err) {
@@ -1827,7 +1836,7 @@ app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (re
       card_key,
       titulo: String(ex?.titulo ?? ''),
       subtitulo: ex?.subtitulo != null ? String(ex.subtitulo) : '',
-      foto_url: fotoUrl,
+      imagen_url: fotoUrl,
     });
     res.json(data);
   } catch (err) {

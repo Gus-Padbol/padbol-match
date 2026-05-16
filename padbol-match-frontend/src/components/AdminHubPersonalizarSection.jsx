@@ -5,6 +5,7 @@ import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubI
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import {
   dedupeHubDeporteConfigRows,
+  hubDeporteRowImagenUrl,
   mergeHubDeporteRowIntoList,
   pickHubDeporteRow,
 } from '../utils/hubDeporteConfig';
@@ -622,7 +623,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
           const row = rowDeporteActual(cardKey);
           const previewUrl =
-            String(row?.foto_url || '').trim() ||
+            hubDeporteRowImagenUrl(row) ||
             defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey);
           const saving = savingDeporteKey === dk;
           const uploading = uploadingDeporteKey === dk;

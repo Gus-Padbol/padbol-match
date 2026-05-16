@@ -1,3 +1,9 @@
+/** URL de imagen en filas `hub_deporte_config` (columna `imagen_url`; legacy `foto_url`). */
+export function hubDeporteRowImagenUrl(row) {
+  if (row == null || typeof row !== 'object') return '';
+  return String(row.imagen_url ?? row.foto_url ?? '').trim();
+}
+
 /**
  * Una fila por par (deporte, card_key). Si hay duplicados (p. ej. migración incompleta),
  * conserva la de `updated_at` más reciente.

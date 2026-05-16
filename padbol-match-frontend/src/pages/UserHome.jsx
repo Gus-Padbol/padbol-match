@@ -25,7 +25,7 @@ import {
   writeHubDeporteFilterToSession,
 } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
-import { pickHubDeporteRow, dedupeHubDeporteConfigRows } from '../utils/hubDeporteConfig';
+import { pickHubDeporteRow, dedupeHubDeporteConfigRows, hubDeporteRowImagenUrl } from '../utils/hubDeporteConfig';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
@@ -382,7 +382,7 @@ export default function UserHome() {
     const hubDeporteOk = hubDeporteStatus === 'ok';
     return HUB_FIXED_ACTIONS.map((slot) => {
       const depRow = hubDeporteOk ? pickHubDeporteRow(depRows, deporteElegido, slot.key) : null;
-      const depFoto = depRow && String(depRow.foto_url || '').trim();
+      const depFoto = depRow && hubDeporteRowImagenUrl(depRow);
       const cmsUrl = pickHubCmsPhotoUrl(rows, slot.cmsPhotoIds);
       const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, slot.key) : '';
       const fallbackUrl = porDeporte || hubCardPhotoFallback(slot.key);
