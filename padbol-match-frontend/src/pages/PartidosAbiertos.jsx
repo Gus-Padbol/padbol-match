@@ -167,11 +167,8 @@ export default function PartidosAbiertos() {
     <div
       style={{
         minHeight: '100dvh',
-        height: '100dvh',
-        maxHeight: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
         background: 'var(--bg-page)',
         color: 'var(--text-primary)',
         paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
@@ -181,18 +178,14 @@ export default function PartidosAbiertos() {
       <AppHeader title="Buscar partido" />
       <main
         style={{
-          flex: 1,
-          minHeight: 0,
           width: '100%',
           maxWidth: 460,
           margin: '0 auto',
           paddingLeft: 14,
           paddingRight: 14,
-          paddingTop: 4,
+          paddingTop: 14,
           paddingBottom: mainBottomPad,
           boxSizing: 'border-box',
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
         }}
       >
         <HubDeporteSelect
