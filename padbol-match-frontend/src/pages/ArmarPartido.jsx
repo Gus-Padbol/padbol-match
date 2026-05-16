@@ -256,6 +256,15 @@ export default function ArmarPartido() {
   const { session, userProfile } = useAuth();
   const { reservaBannerPaso3 } = useHubJugarSponsorSlots();
 
+  const armarPaddingTopCss = useMemo(
+    () => hubContentPaddingTopCss(location.pathname, navDock),
+    [location.pathname, navDock],
+  );
+  const armarPaddingBottomCss = useMemo(
+    () => hubMainPaddingBottomCss(location.pathname, navDock),
+    [location.pathname, navDock],
+  );
+
   const [step, setStep] = useState(1);
   const [sedes, setSedes] = useState([]);
   const [loadingSedes, setLoadingSedes] = useState(true);
@@ -818,19 +827,36 @@ export default function ArmarPartido() {
     return Boolean(row && libre);
   }, [form.cancha, dispCanchas]);
 
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  }, [step]);
+
   return (
     <div
       style={{
-        minHeight: '100dvh',
         background: 'var(--bg-page)',
         color: 'var(--text-primary)',
-        paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
-        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
+        paddingBottom: armarPaddingBottomCss,
         boxSizing: 'border-box',
       }}
     >
       <AppHeader title="Armar partido" />
-      <main style={{ width: '100%', maxWidth: MAIN_MAX, margin: '0 auto', padding: '18px 14px', boxSizing: 'border-box' }}>
+      <main
+        style={{
+          width: '100%',
+          maxWidth: MAIN_MAX,
+          margin: '0 auto',
+          paddingLeft: 14,
+          paddingRight: 14,
+          paddingBottom: 18,
+          paddingTop: armarPaddingTopCss,
+          boxSizing: 'border-box',
+        }}
+      >
         {step < 4 ? <ProgressBar3 current={step} /> : null}
 
         <section style={AP.card}>
@@ -1183,8 +1209,8 @@ export default function ArmarPartido() {
           ) : null}
 
           {step === 2 ? (
-            <div style={{ paddingTop: 22 }}>
-              <h1 style={AP.title}>Canchas disponibles</h1>
+            <div style={{ paddingTop: 8, paddingBottom: 4 }}>
+              <h1 style={{ ...AP.title, scrollMarginTop: armarPaddingTopCss }}>Canchas disponibles</h1>
               <p style={AP.body}>
                 {sede?.nombre} · {form.fecha} · {String(form.hora).split(' - ')[0]} · {form.duracion} min
               </p>
