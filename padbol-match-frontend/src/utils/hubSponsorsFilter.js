@@ -4,6 +4,7 @@ import {
   sponsorVigenteEnFecha,
   normPais,
 } from './sponsorPick';
+import { sponsorRowMatchesCardFormato, sponsorRowMatchesTickerFormato } from './sponsorDisplayFormato';
 
 export function sponsorRowApproved(row) {
   if (!row) return false;
@@ -55,7 +56,14 @@ export function pickTercerTiempoSedeSponsor(rows, sedeId, ymd = sponsorDateYmdLo
 }
 
 export function hubTickerSponsors(rows, ctx, excludeId = null) {
-  const elig = hubSponsorsEligibles(rows, ctx);
+  const elig = hubSponsorsEligibles(rows, ctx).filter(sponsorRowMatchesTickerFormato);
   if (excludeId == null || excludeId === '') return elig;
   return elig.filter((r) => String(r.id) !== String(excludeId));
+}
+
+/** Primer sponsor elegible para card destacada full-bleed (formato card o ambos). */
+export function pickHubCardSponsor(rows, ctx, ymd = sponsorDateYmdLocal()) {
+  const elig = hubSponsorsEligibles(rows, ctx, ymd).filter(sponsorRowMatchesCardFormato);
+  elig.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+  return elig[0] || null;
 }

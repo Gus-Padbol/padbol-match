@@ -8,6 +8,11 @@ import {
   maxPorSedeSegunNombrePlan,
 } from '../utils/sponsorQuotaShared';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import {
+  SPONSOR_FORMATO_OPTIONS,
+  etiquetaFormatoSponsorRow,
+  normalizeSponsorFormato,
+} from '../utils/sponsorDisplayFormato';
 
 const PADBOL_RED = '#E11B22';
 const ERROR_TEXT = '#E11B22';
@@ -83,6 +88,7 @@ function emptyForm() {
     texto_boton: 'Ver oferta',
     descripcion: '',
     scope: 'global',
+    formato: 'ticker',
     sede_id: '',
     torneo_id: '',
     pais: '',
@@ -205,6 +211,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       texto_boton: String(r.texto_boton || 'Ver oferta'),
       descripcion: String(r.descripcion || ''),
       scope: String(r.scope || 'global').toLowerCase(),
+      formato: normalizeSponsorFormato(r.formato),
       sede_id: r.sede_id != null ? String(r.sede_id) : '',
       torneo_id: r.torneo_id != null ? String(r.torneo_id) : '',
       pais: String(r.pais || ''),
@@ -329,6 +336,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       texto_boton: String(form.texto_boton || '').trim() || 'Ver oferta',
       descripcion: String(form.descripcion || '').trim() || null,
       scope,
+      formato: normalizeSponsorFormato(form.formato),
       sede_id: scope === 'sede' ? sedeId : null,
       torneo_id: scope === 'torneo' ? torneoId : null,
       pais: scope === 'nacional' ? pais : null,
@@ -715,6 +723,19 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           ))}
         </select>
 
+        <label style={labelStyle}>Formato de visualización</label>
+        <select
+          style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
+          value={form.formato}
+          onChange={(e) => setForm((p) => ({ ...p, formato: e.target.value }))}
+        >
+          {SPONSOR_FORMATO_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+
         {form.scope === 'sede' ? (
           <div ref={sedeRef} style={{ marginBottom: 12 }}>
             <label style={labelStyle}>Sede</label>
@@ -899,7 +920,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
         <table
           style={{
             width: '100%',
-            minWidth: 880,
+            minWidth: 980,
             borderCollapse: 'collapse',
             background: 'var(--bg-card)',
             borderRadius: 10,
@@ -912,6 +933,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Marca</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Deportes</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Scope</th>
+              <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Formato</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Estado</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Activo</th>
               <th style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }} />
@@ -920,13 +942,13 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={7} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={7} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
                   No hay sponsors. Creá uno con el formulario de arriba.
                 </td>
               </tr>
@@ -951,6 +973,9 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                     {r.sede_id != null ? ` · sede ${r.sede_id}` : ''}
                     {r.torneo_id != null ? ` · torneo ${r.torneo_id}` : ''}
                     {r.pais ? ` · ${r.pais}` : ''}
+                  </td>
+                  <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                    {etiquetaFormatoSponsorRow(r)}
                   </td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, fontSize: 13 }}>
                     {aprobado ? (

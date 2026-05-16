@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import SponsorTicker from './SponsorTicker';
+import { sponsorRowMatchesTickerFormato } from '../utils/sponsorDisplayFormato';
 
 /**
  * Normaliza filas de `sponsors` (logo_url / logoUrl / imagen_url) al formato de {@link SponsorTicker}.
@@ -7,6 +8,7 @@ import SponsorTicker from './SponsorTicker';
 function normalizeSponsorTickerItems(sponsors) {
   const raw = Array.isArray(sponsors) ? sponsors : [];
   return raw
+    .filter(sponsorRowMatchesTickerFormato)
     .map((row) => {
       const nombre = String(row?.nombre ?? '').trim();
       const imagen_url = String(row?.imagen_url ?? row?.logo_url ?? row?.logoUrl ?? '').trim();

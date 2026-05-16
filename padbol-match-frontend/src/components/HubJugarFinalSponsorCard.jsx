@@ -1,16 +1,34 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { pickHubCardSponsor } from '../utils/hubSponsorsFilter';
+import { sponsorRowMatchesCardFormato, sponsorRowToCardSlot } from '../utils/sponsorDisplayFormato';
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 
 /**
- * Card publicitaria final del hub /jugar (clave hub_jugar_card_ad).
- * Misma altura visual que las cards de acción (140px vía .jugar-card-media).
+ * Card publicitaria full-bleed del hub /jugar.
+ * Prioriza sponsors con formato `card` o `ambos`; si no hay, usa slot de sponsor_config.
+ * @param {{ slot?: object|null, sponsor?: object|null, sponsors?: unknown[], sedeId?: number|null, pais?: string|null }} props
  */
-export default function HubJugarFinalSponsorCard({ slot }) {
-  const img = String(slot?.imagen_url || '').trim();
-  const url = String(slot?.url_destino || '').trim();
-  const titulo = String(slot?.texto_corto || '').trim();
+export default function HubJugarFinalSponsorCard({ slot, sponsor = null, sponsors = null, sedeId = null, pais = null }) {
+  const effectiveSlot = useMemo(() => {
+    if (sponsor && sponsorRowMatchesCardFormato(sponsor)) {
+      return sponsorRowToCardSlot(sponsor) || slot;
+    }
+    const rows = Array.isArray(sponsors) ? sponsors : [];
+    if (rows.length > 0) {
+      const picked =
+        rows.find((r) => sponsor && String(r?.id) === String(sponsor?.id) && sponsorRowMatchesCardFormato(r)) ||
+        pickHubCardSponsor(rows, { sedeId, pais });
+      const fromRows = sponsorRowToCardSlot(picked);
+      if (fromRows) return fromRows;
+    }
+    return slot;
+  }, [slot, sponsor, sponsors, sedeId, pais]);
+
+  const img = String(effectiveSlot?.imagen_url || '').trim();
+  const url = String(effectiveSlot?.url_destino || '').trim();
+  const titulo = String(effectiveSlot?.texto_corto || '').trim();
 
   const isEmpty = !img && !titulo && !url;
   if (isEmpty) {

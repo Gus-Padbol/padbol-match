@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { hubTickerSponsors, hubSponsorsEligibles, pickTercerTiempoSedeSponsor } from '../utils/hubSponsorsFilter';
+import { hubTickerSponsors, pickHubCardSponsor, pickTercerTiempoSedeSponsor } from '../utils/hubSponsorsFilter';
 import { fetchPublicSponsorsList, normalizeSponsorDeporteQueryParam } from '../utils/sponsorDeportePublic';
 
 /**
@@ -49,8 +49,13 @@ export function useHubSponsors(ctx) {
     const exId = tercerTiempo?.id ?? null;
     const withExclude = hubTickerSponsors(rows, { sedeId: sedeKey, pais: paisKey }, exId);
     if (withExclude.length > 0) return withExclude;
-    return hubSponsorsEligibles(rows, { sedeId: sedeKey, pais: paisKey });
+    return hubTickerSponsors(rows, { sedeId: sedeKey, pais: paisKey });
   }, [rows, sedeKey, paisKey, tercerTiempo?.id]);
+
+  const cardSponsor = useMemo(
+    () => pickHubCardSponsor(rows, { sedeId: sedeKey, pais: paisKey }),
+    [rows, sedeKey, paisKey],
+  );
 
   return useMemo(
     () => ({
@@ -59,7 +64,8 @@ export function useHubSponsors(ctx) {
       reload: load,
       tercerTiempoSponsor: tercerTiempo,
       tickerSponsors: tickerList,
+      cardSponsor,
     }),
-    [loading, error, load, tercerTiempo, tickerList],
+    [loading, error, load, tercerTiempo, tickerList, cardSponsor],
   );
 }

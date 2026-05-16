@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { sponsorItemMatchesTickerFormato } from '../utils/sponsorDisplayFormato';
 import './SponsorTicker.css';
 
 const TICKER_RED = '#e53935';
@@ -134,7 +135,10 @@ function TickerRow({ items, dupKey }) {
  */
 export default function SponsorTicker({ items, deporte = null }) {
   const displayItems = useMemo(() => {
-    if (items && items.length > 0) return items;
+    if (items && items.length > 0) {
+      const filtered = items.filter(sponsorItemMatchesTickerFormato);
+      if (filtered.length > 0) return filtered;
+    }
     return Array.from({ length: 5 }, () => ({
       nombre: 'Tu marca aquí',
       imagen_url: '',

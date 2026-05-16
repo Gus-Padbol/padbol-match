@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { hubSponsorsEligibles } from '../utils/hubSponsorsFilter';
+import { hubTickerSponsors } from '../utils/hubSponsorsFilter';
 import { fetchPublicSponsorsList, normalizeSponsorDeporteQueryParam } from '../utils/sponsorDeportePublic';
 
 /**
@@ -24,7 +24,7 @@ export function useSedeTickerSponsors(sedeId, options = {}) {
     setLoading(true);
     try {
       const rows = await fetchPublicSponsorsList({ deporte: deporteKey });
-      setSponsors(hubSponsorsEligibles(rows, { sedeId: sid, pais: '' }));
+      setSponsors(hubTickerSponsors(rows, { sedeId: sid, pais: '' }));
     } catch {
       setSponsors([]);
     } finally {

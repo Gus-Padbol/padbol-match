@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
 import HubJugarSponsorsTicker from '../components/HubJugarSponsorsTicker';
+import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import HubJugarFinalSponsorCard from '../components/HubJugarFinalSponsorCard';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
@@ -94,7 +95,7 @@ export default function Jugar() {
     const d = String(deporteElegido || '').trim().toLowerCase();
     return d && DEPORTES_CANCHA_SEDE_KEYS.includes(d) ? d : null;
   }, [deporteElegido]);
-  const { tercerTiempoSponsor } = useHubSponsors({
+  const { tercerTiempoSponsor, cardSponsor, tickerSponsors: hubTickerSponsors } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: paisParaSponsors,
     deporte: deporteTickerJugar,
@@ -163,7 +164,11 @@ export default function Jugar() {
         />
 
         <div style={{ width: '100%', marginTop: 12, marginBottom: 10 }}>
-          <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} />
+          {hubTickerSponsors?.length > 0 ? (
+            <HubSponsorsTicker sponsors={hubTickerSponsors} deporte={deporteTickerJugar} />
+          ) : (
+            <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} />
+          )}
         </div>
 
         <div style={{ display: 'grid', gap: 10 }}>
@@ -209,7 +214,12 @@ export default function Jugar() {
         </div>
 
         <div style={{ width: '100%', marginTop: 10 }}>
-          <HubJugarFinalSponsorCard slot={getSlot(HUB_JUGAR_SLOT.CARD_AD)} />
+          <HubJugarFinalSponsorCard
+            slot={getSlot(HUB_JUGAR_SLOT.CARD_AD)}
+            sponsor={cardSponsor}
+            sedeId={hubSedeNum}
+            pais={paisParaSponsors}
+          />
         </div>
 
         {hubPromoRow &&
