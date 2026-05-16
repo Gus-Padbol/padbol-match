@@ -2,8 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { supabase } from '../supabaseClient';
 import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores } from '../utils/clasesAdminApi';
+import { compressImageFile } from '../utils/compressImage';
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+/** Tamaño máximo del archivo original (fotos de celular se comprimen antes de subir). */
+const MAX_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024;
+/** Tamaño máximo del blob ya comprimido que se sube a storage. */
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ACCENT = 'var(--accent)';
 const COLOR_SUCCESS = 'var(--pm-color-success, #22c55e)';
 const COLOR_ERROR = 'var(--pm-color-error, #dc2626)';
@@ -59,12 +63,6 @@ function nombreProfesor(p) {
   );
 }
 
-function extFromFile(file) {
-  const n = String(file?.name || '');
-  const m = n.match(/\.([a-zA-Z0-9]+)$/);
-  return m ? m[1].toLowerCase().slice(0, 5) : 'jpg';
-}
-
 export default function AdminProfesoresClubSection({ accessToken, sedeId, isSuperAdmin = false }) {
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,18 +116,21 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       setFotoUploadError(true);
       return;
     }
-    if (file.size > MAX_IMAGE_BYTES) {
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) {
       setFotoUploadError(true);
       return;
     }
     setFotoUploading(true);
     setFotoUploadError(false);
-    const ext = extFromFile(file);
-    const path = `profesores/${sedeId}/${Date.now()}.${ext}`;
+    const path = `profesores/${sedeId}/${Date.now()}.jpg`;
     try {
-      const { error: upErr } = await supabase.storage.from('sedes').upload(path, file, {
+      const compressed = await compressImageFile(file, { maxDimension: 800, quality: 0.85 });
+      if (compressed.size > MAX_IMAGE_BYTES) {
+        throw new Error('La imagen comprimida supera 5MB');
+      }
+      const { error: upErr } = await supabase.storage.from('sedes').upload(path, compressed, {
         upsert: false,
-        contentType: file.type || 'image/jpeg',
+        contentType: 'image/jpeg',
         cacheControl: '3600',
       });
       if (upErr) throw upErr;
