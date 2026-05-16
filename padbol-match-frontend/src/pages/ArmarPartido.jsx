@@ -11,6 +11,8 @@ import { duracionesReservaDisponibles, precioReservaTurno, RESERVA_DURACIONES_MI
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { useHubJugarSponsorSlots } from '../hooks/useHubJugarSponsorSlots';
+import ReservaPaso3SponsorBanner from '../components/ReservaPaso3SponsorBanner';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -241,6 +243,7 @@ export default function ArmarPartido() {
   const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
   const { session, userProfile } = useAuth();
+  const { reservaBannerPaso3 } = useHubJugarSponsorSlots();
 
   const [step, setStep] = useState(1);
   const [sedes, setSedes] = useState([]);
@@ -1355,6 +1358,8 @@ export default function ArmarPartido() {
                   )}
                 </div>
               )}
+
+              <ReservaPaso3SponsorBanner banner={reservaBannerPaso3} />
 
               <div
                 style={{

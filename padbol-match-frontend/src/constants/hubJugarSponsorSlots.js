@@ -28,3 +28,43 @@ export function normalizeHubJugarSlot(raw) {
     texto_corto: String(raw.texto_corto || '').trim(),
   };
 }
+
+/** Un ítem del ticker hub_jugar_ticker (sponsor_config). */
+export function normalizeHubJugarTickerItem(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const nombre = String(raw.nombre || raw.name || '').trim();
+  if (!nombre) return null;
+  return {
+    nombre,
+    imagen_url: String(raw.imagen_url || raw.logo_url || '').trim(),
+    url_destino: String(raw.url_destino || '').trim(),
+  };
+}
+
+export function normalizeHubJugarTickerList(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(normalizeHubJugarTickerItem).filter(Boolean);
+}
+
+/** Banner paso 3 reserva (sponsor_config.hub_reserva_banner_paso3). */
+export function normalizeReservaBannerPaso3(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { imagen_url: '', titulo: '', descripcion: '', url_destino: '' };
+  }
+  return {
+    imagen_url: String(raw.imagen_url || '').trim(),
+    titulo: String(raw.titulo || '').trim(),
+    descripcion: String(raw.descripcion || '').trim(),
+    url_destino: String(raw.url_destino || '').trim(),
+  };
+}
+
+export function isReservaBannerPaso3Active(banner) {
+  const b = banner && typeof banner === 'object' ? banner : {};
+  return Boolean(
+    String(b.imagen_url || '').trim() ||
+      String(b.titulo || '').trim() ||
+      String(b.descripcion || '').trim() ||
+      String(b.url_destino || '').trim(),
+  );
+}

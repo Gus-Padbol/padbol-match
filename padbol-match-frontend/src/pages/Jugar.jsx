@@ -4,6 +4,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
+import HubJugarSponsorsTicker from '../components/HubJugarSponsorsTicker';
 import { HubJugarSlotRect, HubJugarSlotOverlayCorner, HubJugarSlotStrip } from '../components/HubJugarSponsorSurfaces';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
@@ -60,7 +61,7 @@ export default function Jugar() {
 
   const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
 
-  const { getSlot } = useHubJugarSponsorSlots();
+  const { getSlot, tickerItems } = useHubJugarSponsorSlots();
 
   useEffect(() => {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
@@ -159,7 +160,11 @@ export default function Jugar() {
           }}
         />
 
-        <div style={{ width: '100%', marginTop: 12, marginBottom: 12 }}>
+        <div style={{ width: '100%', marginTop: 12, marginBottom: 10 }}>
+          <HubJugarSponsorsTicker items={tickerItems} />
+        </div>
+
+        <div style={{ width: '100%', marginTop: 0, marginBottom: 12 }}>
           <HubJugarSlotRect slot={getSlot(HUB_JUGAR_SLOT.BANNER_TOP)} height={50} borderRadius={10} />
         </div>
 
