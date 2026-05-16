@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ImageCropModal from './ImageCropModal';
 import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
@@ -97,6 +98,34 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   sportSelRef.current = sportSel;
   /** Tras el primer paint, solo refrescamos filas cuando el deporte del selector cambia de verdad. */
   const lastRefreshSportSelRef = useRef(null);
+
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [cropUploadBusy, setCropUploadBusy] = useState(false);
+  const pendingUploadRef = useRef(null);
+
+  const HUB_CARD_CROP_ASPECT = 16 / 9;
+
+  const cerrarCropModal = useCallback(() => {
+    pendingUploadRef.current = null;
+    setCropModalOpen(false);
+    setCropImageSrc((prev) => {
+      if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }, []);
+
+  const abrirCropDesdeArchivo = useCallback((file, pending) => {
+    if (!file || !pending) return;
+    if (!String(file.type || '').startsWith('image/')) return false;
+    pendingUploadRef.current = pending;
+    setCropImageSrc((prev) => {
+      if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setCropModalOpen(true);
+    return true;
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -278,16 +307,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     fileRefDeporte.current?.click();
   };
 
-  const onFileChange = async (e) => {
-    const id = uploadTargetIdRef.current;
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    uploadTargetIdRef.current = null;
-    if (!id || !file) return;
-    if (!accessToken) {
-      setMsg('Iniciá sesión de nuevo para subir imágenes.');
-      return;
-    }
+  const subirFotoHubConfig = async (id, file) => {
     setUploadingId(id);
     setMsg('');
     try {
@@ -303,34 +323,14 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
       setMsg('Foto actualizada.');
       window.setTimeout(() => setMsg(''), 2500);
-    } catch (err) {
-      setMsg(err?.message || String(err));
     } finally {
       setUploadingId(null);
     }
   };
 
-  const onFileChangeDeporte = async (e) => {
-    const target = uploadDeporteTargetRef.current;
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    uploadDeporteTargetRef.current = null;
-    if (!accessToken) {
-      setDeporteMsg('Iniciá sesión de nuevo para subir imágenes.');
-      return;
-    }
-    if (!target) {
-      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
-      return;
-    }
-    const dep = String(target.deporte || '').trim().toLowerCase();
-    const ck = String(target.cardKey || '').trim();
-    if (!dep || !ck) {
-      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
-      return;
-    }
-    if (!file) return;
-    setUploadingDeporteKey(draftKeyDeporte(dep, ck));
+  const subirFotoHubDeporte = async (dep, ck, file) => {
+    const dk = draftKeyDeporte(dep, ck);
+    setUploadingDeporteKey(dk);
     setDeporteMsg('');
     try {
       const fd = new FormData();
@@ -354,10 +354,95 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       await refreshDeporteRowsSilently();
       setDeporteMsg('Foto actualizada.');
       window.setTimeout(() => setDeporteMsg(''), 2500);
-    } catch (err) {
-      setDeporteMsg(err?.message || String(err));
     } finally {
       setUploadingDeporteKey(null);
+    }
+  };
+
+  const subirFotoHubInicio = async (id, file) => {
+    setUploadingInicioId(id);
+    setInicioMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('foto', file);
+      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(id)}/foto`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
+      setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
+      setInicioMsg('Foto actualizada.');
+      window.setTimeout(() => setInicioMsg(''), 2500);
+    } finally {
+      setUploadingInicioId(null);
+    }
+  };
+
+  const handleCropConfirm = useCallback(
+    async (file) => {
+      const pending = pendingUploadRef.current;
+      if (!pending || !accessToken) return;
+      setCropUploadBusy(true);
+      try {
+        if (pending.kind === 'legacy') {
+          await subirFotoHubConfig(pending.id, file);
+        } else if (pending.kind === 'inicio') {
+          await subirFotoHubInicio(pending.id, file);
+        } else if (pending.kind === 'deporte') {
+          await subirFotoHubDeporte(pending.deporte, pending.cardKey, file);
+        }
+        cerrarCropModal();
+      } catch (err) {
+        const text = err?.message || String(err);
+        if (pending.kind === 'legacy') setMsg(text);
+        else if (pending.kind === 'inicio') setInicioMsg(text);
+        else setDeporteMsg(text);
+      } finally {
+        setCropUploadBusy(false);
+      }
+    },
+    [accessToken, apiBaseUrl, cerrarCropModal, refreshDeporteRowsSilently],
+  );
+
+  const onFileChange = (e) => {
+    const id = uploadTargetIdRef.current;
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    uploadTargetIdRef.current = null;
+    if (!id || !file) return;
+    if (!accessToken) {
+      setMsg('Iniciá sesión de nuevo para subir imágenes.');
+      return;
+    }
+    if (!abrirCropDesdeArchivo(file, { kind: 'legacy', id })) {
+      setMsg('Elegí un archivo de imagen.');
+    }
+  };
+
+  const onFileChangeDeporte = (e) => {
+    const target = uploadDeporteTargetRef.current;
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    uploadDeporteTargetRef.current = null;
+    if (!accessToken) {
+      setDeporteMsg('Iniciá sesión de nuevo para subir imágenes.');
+      return;
+    }
+    if (!target) {
+      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
+      return;
+    }
+    const dep = String(target.deporte || '').trim().toLowerCase();
+    const ck = String(target.cardKey || '').trim();
+    if (!dep || !ck) {
+      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
+      return;
+    }
+    if (!file) return;
+    if (!abrirCropDesdeArchivo(file, { kind: 'deporte', deporte: dep, cardKey: ck })) {
+      setDeporteMsg('Elegí un archivo de imagen.');
     }
   };
 
@@ -396,7 +481,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     fileRefInicio.current?.click();
   };
 
-  const onFileChangeInicio = async (e) => {
+  const onFileChangeInicio = (e) => {
     const id = uploadInicioTargetIdRef.current;
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -406,25 +491,8 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       setInicioMsg('Iniciá sesión de nuevo para subir imágenes.');
       return;
     }
-    setUploadingInicioId(id);
-    setInicioMsg('');
-    try {
-      const fd = new FormData();
-      fd.append('foto', file);
-      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(id)}/foto`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: fd,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
-      setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
-      setInicioMsg('Foto actualizada.');
-      window.setTimeout(() => setInicioMsg(''), 2500);
-    } catch (err) {
-      setInicioMsg(err?.message || String(err));
-    } finally {
-      setUploadingInicioId(null);
+    if (!abrirCropDesdeArchivo(file, { kind: 'inicio', id })) {
+      setInicioMsg('Elegí un archivo de imagen.');
     }
   };
 
@@ -823,6 +891,21 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           </div>
         );
       })}
+
+      <ImageCropModal
+        open={cropModalOpen}
+        imageSrc={cropImageSrc}
+        onClose={cerrarCropModal}
+        onConfirm={handleCropConfirm}
+        aspect={HUB_CARD_CROP_ASPECT}
+        cropShape="rect"
+        title="Recortar foto del hub"
+        description="Ajustá el encuadre en formato horizontal 16:9, ideal para las cards del hub. Mové la imagen y usá el zoom."
+        confirmLabel="Confirmar y subir"
+        confirmColor="#E11B22"
+        busy={cropUploadBusy}
+        zoomInputId="admin-hub-crop-zoom"
+      />
     </div>
   );
 }
