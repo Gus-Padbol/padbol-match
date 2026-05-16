@@ -5,13 +5,14 @@ import BottomNav from '../components/BottomNav';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
 import HubJugarSponsorsTicker from '../components/HubJugarSponsorsTicker';
-import { HubJugarSlotRect, HubJugarSlotOverlayCorner, HubJugarSlotStrip } from '../components/HubJugarSponsorSurfaces';
+import HubJugarFinalSponsorCard from '../components/HubJugarFinalSponsorCard';
+import { HubJugarSlotStrip } from '../components/HubJugarSponsorSurfaces';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
-import { HUB_JUGAR_SLOT, hubJugarOverlayKeyForHubKey } from '../constants/hubJugarSponsorSlots';
+import { HUB_JUGAR_SLOT } from '../constants/hubJugarSponsorSlots';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte, HUB_CARD_UNSPLASH_GENERIC } from '../constants/hubFotosPorDeporte';
@@ -164,76 +165,50 @@ export default function Jugar() {
           <HubJugarSponsorsTicker items={tickerItems} />
         </div>
 
-        <div style={{ width: '100%', marginTop: 0, marginBottom: 12 }}>
-          <HubJugarSlotRect slot={getSlot(HUB_JUGAR_SLOT.BANNER_TOP)} height={50} borderRadius={10} />
+        <div style={{ display: 'grid', gap: 10 }}>
+          {opciones.map((op) => (
+            <button
+              key={op.hubKey}
+              type="button"
+              onClick={() => navigate(`${op.path}${q}`)}
+              style={{
+                textAlign: 'left',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                background: 'var(--bg-card)',
+                padding: 0,
+                overflow: 'hidden',
+                boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
+                cursor: 'pointer',
+                display: 'block',
+                position: 'relative',
+              }}
+            >
+              <div
+                className="jugar-card-media"
+                style={{
+                  backgroundImage: `url(${op.image})`,
+                }}
+              >
+                <div
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: CARD_OVERLAY,
+                  }}
+                />
+                <div className="jugar-card-copy">
+                  <strong className="jugar-card-title">{op.title}</strong>
+                  <span className="jugar-card-body">{op.body}</span>
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
 
-        <div style={{ display: 'grid', gap: 10 }}>
-          {opciones.map((op, idx) => {
-            const overlayKey = hubJugarOverlayKeyForHubKey(op.hubKey);
-            const overlaySlot = overlayKey ? getSlot(overlayKey) : null;
-            return (
-              <React.Fragment key={op.hubKey}>
-                <button
-                  type="button"
-                  onClick={() => navigate(`${op.path}${q}`)}
-                  style={{
-                    textAlign: 'left',
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    background: 'var(--bg-card)',
-                    padding: 0,
-                    overflow: 'hidden',
-                    boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
-                    cursor: 'pointer',
-                    display: 'block',
-                    position: 'relative',
-                  }}
-                >
-                  <div
-                    className="jugar-card-media"
-                    style={{
-                      backgroundImage: `url(${op.image})`,
-                    }}
-                  >
-                    <div
-                      aria-hidden
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: CARD_OVERLAY,
-                      }}
-                    />
-                    {overlayKey ? (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          zIndex: 3,
-                        }}
-                      >
-                        <HubJugarSlotOverlayCorner slot={overlaySlot} />
-                      </div>
-                    ) : null}
-                    <div className="jugar-card-copy">
-                      <strong className="jugar-card-title">{op.title}</strong>
-                      <span className="jugar-card-body">{op.body}</span>
-                    </div>
-                  </div>
-                </button>
-                {idx === 1 ? (
-                  <div style={{ width: '100%' }}>
-                    <HubJugarSlotRect
-                      slot={getSlot(HUB_JUGAR_SLOT.CARD_AD)}
-                      height={140}
-                      borderRadius={12}
-                    />
-                  </div>
-                ) : null}
-              </React.Fragment>
-            );
-          })}
+        <div style={{ width: '100%', marginTop: 10 }}>
+          <HubJugarFinalSponsorCard slot={getSlot(HUB_JUGAR_SLOT.CARD_AD)} />
         </div>
 
         {hubPromoRow &&
