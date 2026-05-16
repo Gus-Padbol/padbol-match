@@ -38,7 +38,8 @@ const btnPrimary = {
   background: ACCENT,
   boxSizing: 'border-box',
   fontFamily: 'inherit',
-  boxShadow: '0 4px 14px rgba(225, 27, 34, 0.28)',
+  boxShadow: '0 4px 0 #6b0a0a, 0 6px 24px rgba(220, 30, 30, 0.5)',
+  borderTop: '1px solid rgba(255, 80, 80, 0.3)',
 };
 
 const btnSecondary = {
@@ -57,7 +58,7 @@ const btnSecondary = {
   color: ACCENT,
   background: 'transparent',
   border: `2px solid ${ACCENT}`,
-  boxShadow: 'none',
+  boxShadow: '0 4px 0 #6b0a0a, 0 6px 16px rgba(180, 20, 20, 0.2)',
 };
 
 const btnCuenta = {
@@ -76,7 +77,7 @@ const btnCuenta = {
   background: 'var(--bg-input)',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
-  boxShadow: 'none',
+  boxShadow: '0 4px 0 #0a0d18, 0 6px 12px rgba(0, 0, 0, 0.35)',
 };
 
 function HowCard({ lead, emoji, title, description }) {
