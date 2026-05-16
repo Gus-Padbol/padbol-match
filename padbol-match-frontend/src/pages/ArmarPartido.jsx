@@ -1290,9 +1290,46 @@ export default function ArmarPartido() {
             <>
               <h1 style={AP.title}>Confirmar y pagar</h1>
 
+              <div
+                style={{
+                  background: 'var(--bg-page)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 14,
+                  padding: 14,
+                  marginBottom: 16,
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <div>
+                  <strong>Sede:</strong> {sede?.nombre}
+                </div>
+                <div>
+                  <strong>Cancha:</strong> {sedeNombreCancha(form.cancha)}
+                </div>
+                <div>
+                  <strong>Fecha:</strong> {form.fecha}
+                </div>
+                <div>
+                  <strong>Hora:</strong> {String(form.hora).split(' - ')[0]}
+                </div>
+                <div>
+                  <strong>Duración:</strong> {form.duracion} minutos
+                </div>
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
+                <div>
+                  <strong>Precio del turno:</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.35 }}>
+                  Cargo por servicio Padbol Match (3%): {sede?.moneda || 'ARS'}{' '}
+                  {cargoPlataforma.toLocaleString('es-AR')}
+                </div>
+              </div>
+
               {(sedeExtrasLoading || sedeExtrasDisponibles.length > 0) && (
                 <div style={{ marginBottom: 16 }}>
-                  <h2 style={{ ...AP.title, fontSize: 17, marginBottom: 8 }}>Agregá algo para el tercer tiempo</h2>
+                  <h2 style={{ ...AP.title, fontSize: 17, marginBottom: 8 }}>¿Qué querés para el tercer tiempo?</h2>
                   <p style={{ ...AP.body, fontSize: 13, marginBottom: 12 }}>
                     Opcional: sumá productos o servicios del club. El total se actualiza abajo.
                   </p>
@@ -1460,8 +1497,6 @@ export default function ArmarPartido() {
                 </div>
               )}
 
-              <ReservaPaso3SponsorBanner banner={reservaBannerPaso3} />
-
               <div
                 style={{
                   background: 'var(--bg-page)',
@@ -1474,36 +1509,13 @@ export default function ArmarPartido() {
                   color: 'var(--text-primary)',
                 }}
               >
-                <div>
-                  <strong>Sede:</strong> {sede?.nombre}
-                </div>
-                <div>
-                  <strong>Cancha:</strong> {sedeNombreCancha(form.cancha)}
-                </div>
-                <div>
-                  <strong>Fecha:</strong> {form.fecha}
-                </div>
-                <div>
-                  <strong>Hora:</strong> {String(form.hora).split(' - ')[0]}
-                </div>
-                <div>
-                  <strong>Duración:</strong> {form.duracion} minutos
-                </div>
-                <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
-                <div>
-                  <strong>Precio del turno:</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
-                </div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.35 }}>
-                  Cargo por servicio Padbol Match (3%): {sede?.moneda || 'ARS'}{' '}
-                  {cargoPlataforma.toLocaleString('es-AR')}
-                </div>
                 {precioExtrasSubtotal > 0 ? (
-                  <div style={{ marginTop: 8 }}>
+                  <div style={{ marginBottom: 8 }}>
                     <strong>Extras (tercer tiempo):</strong> {sede?.moneda || 'ARS'}{' '}
                     {precioExtrasSubtotal.toLocaleString('es-AR')}
                   </div>
                 ) : null}
-                <div style={{ marginTop: 8, fontWeight: 900, fontSize: 16 }}>
+                <div style={{ fontWeight: 900, fontSize: 16 }}>
                   Total a pagar: {sede?.moneda || 'ARS'} {precioTotal.toLocaleString('es-AR')}
                 </div>
               </div>
@@ -1548,6 +1560,8 @@ export default function ArmarPartido() {
               >
                 {paying ? 'Preparando pago…' : 'Ir a pagar'}
               </button>
+
+              <ReservaPaso3SponsorBanner banner={reservaBannerPaso3} />
             </>
           ) : null}
 
