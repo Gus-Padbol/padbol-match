@@ -400,6 +400,59 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
+  /** GET /api/admin/profesores?sede_id= — lista admin (incluye pendientes) */
+  app.get('/api/admin/profesores', async (req, res) => {
+    try {
+      await assertAdminClubOrSuper(req);
+      const sedeId = Number(req.query.sede_id);
+      if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id requerido' });
+      await assertUsuarioPuedeAdministrarSede(req, sedeId);
+
+      const { data, error } = await supabase
+        .from('profesores')
+        .select('id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo, created_at, updated_at')
+        .eq('sede_id', sedeId)
+        .order('nombre', { ascending: true });
+      if (error) throw error;
+      res.json(data || []);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/admin/profesores:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** GET /api/admin/profesores-pendientes — super admin */
+  app.get('/api/admin/profesores-pendientes', async (req, res) => {
+    try {
+      await assertSuperAdminReq(req);
+      const { data, error } = await supabase
+        .from('profesores')
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo, created_at, sedes(id, nombre)',
+        )
+        .eq('aprobado', false)
+        .eq('activo', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const rows = (data || []).map((p) => {
+        const sede = p.sedes;
+        const { sedes: _s, ...rest } = p;
+        return {
+          ...rest,
+          sede_nombre: sede?.nombre ?? null,
+        };
+      });
+      res.json(rows);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/admin/profesores-pendientes:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
   /** POST /api/admin/profesores */
   app.post('/api/admin/profesores', async (req, res) => {
     try {
@@ -471,6 +524,81 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
+  /** GET /api/admin/clases?sede_id= */
+  app.get('/api/admin/clases', async (req, res) => {
+    try {
+      await assertAdminClubOrSuper(req);
+      const sedeId = Number(req.query.sede_id);
+      if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id requerido' });
+      await assertUsuarioPuedeAdministrarSede(req, sedeId);
+
+      const { data, error } = await supabase
+        .from('clases')
+        .select(
+          'id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, created_at, profesores(id, nombre, apellido, aprobado)',
+        )
+        .eq('sede_id', sedeId)
+        .order('titulo', { ascending: true });
+      if (error) throw error;
+
+      const out = await Promise.all(
+        (data || []).map(async (c) => {
+          const horarios = await fetchHorariosClase(c.id);
+          const prof = c.profesores;
+          const nombreProf =
+            [String(prof?.nombre || '').trim(), String(prof?.apellido || '').trim()].filter(Boolean).join(' ').trim() ||
+            prof?.nombre ||
+            '—';
+          const { profesores, ...rest } = c;
+          return { ...rest, profesor_nombre: nombreProf, horarios };
+        }),
+      );
+      res.json(out);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/admin/clases:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** PATCH /api/admin/clases/:id — activo */
+  app.patch('/api/admin/clases/:id', async (req, res) => {
+    try {
+      await assertAdminClubOrSuper(req);
+      const claseId = Number(req.params.id);
+      if (!Number.isFinite(claseId)) return res.status(400).json({ error: 'ID inválido' });
+
+      const { data: existing, error: exErr } = await supabase
+        .from('clases')
+        .select('id, sede_id')
+        .eq('id', claseId)
+        .maybeSingle();
+      if (exErr) throw exErr;
+      if (!existing) return res.status(404).json({ error: 'Clase no encontrada' });
+      await assertUsuarioPuedeAdministrarSede(req, existing.sede_id);
+
+      const patch = {};
+      if (typeof req.body?.activo === 'boolean') patch.activo = req.body.activo;
+      if (!Object.keys(patch).length) return res.status(400).json({ error: 'Nada que actualizar' });
+      patch.updated_at = new Date().toISOString();
+
+      const { data, error } = await supabaseAdmin
+        .from('clases')
+        .update(patch)
+        .eq('id', claseId)
+        .select()
+        .single();
+      if (error) throw error;
+      res.json(data);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ PATCH /api/admin/clases/:id:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
   /** POST /api/admin/clases */
   app.post('/api/admin/clases', async (req, res) => {
     try {
@@ -530,7 +658,7 @@ export function registerModuloClasesRoutes(app, deps) {
             cupo_maximo: Number.isFinite(cupo) && cupo > 0 ? cupo : 4,
             duracion_minutos: Number.isFinite(duracion) && duracion > 0 ? duracion : 60,
             precio: Number.isFinite(precio) && precio >= 0 ? precio : 0,
-            activo: true,
+            activo: typeof b.activo === 'boolean' ? b.activo : true,
           },
         ])
         .select()
