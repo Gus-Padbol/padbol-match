@@ -5,6 +5,40 @@ import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores } from '
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ACCENT = 'var(--accent)';
+const COLOR_SUCCESS = 'var(--pm-color-success, #22c55e)';
+const COLOR_ERROR = 'var(--pm-color-error, #dc2626)';
+
+const FORM_BOX_STYLE = {
+  border: '1px solid var(--border)',
+  borderRadius: 14,
+  padding: '22px 20px',
+  marginBottom: 20,
+  background: 'var(--bg-page)',
+};
+
+const LABEL_STYLE = {
+  display: 'block',
+  fontSize: 14,
+  fontWeight: 600,
+  marginBottom: 8,
+  color: 'var(--text-primary)',
+};
+
+const FIELD_STYLE = {
+  width: '100%',
+  marginBottom: 16,
+  boxSizing: 'border-box',
+  minHeight: 44,
+  fontSize: 16,
+  padding: '10px 14px',
+};
+
+const TEXTAREA_STYLE = {
+  ...FIELD_STYLE,
+  minHeight: 96,
+  resize: 'vertical',
+  lineHeight: 1.45,
+};
 
 function labelDeporte(key) {
   const k = String(key || '').trim().toLowerCase();
@@ -39,6 +73,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
   const [saving, setSaving] = useState(false);
   const [approvingId, setApprovingId] = useState(null);
   const [fotoUploading, setFotoUploading] = useState(false);
+  const [fotoUploadError, setFotoUploadError] = useState(false);
   const fileRef = useRef(null);
   const [form, setForm] = useState({
     nombre: '',
@@ -80,15 +115,15 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
 
   const subirFoto = async (file) => {
     if (!file || !String(file.type || '').startsWith('image/')) {
-      setMsg('Elegí un archivo de imagen.');
+      setFotoUploadError(true);
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setMsg('La imagen supera los 2MB.');
+      setFotoUploadError(true);
       return;
     }
     setFotoUploading(true);
-    setMsg('');
+    setFotoUploadError(false);
     const ext = extFromFile(file);
     const path = `profesores/${sedeId}/${Date.now()}.${ext}`;
     try {
@@ -104,8 +139,10 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       const url = String(publicUrl || '').trim();
       if (!url) throw new Error('No se obtuvo URL');
       setForm((f) => ({ ...f, foto_url: url }));
-    } catch (e) {
-      setMsg(e?.message || 'No se pudo subir la foto');
+      setFotoUploadError(false);
+    } catch {
+      setFotoUploadError(true);
+      setForm((f) => ({ ...f, foto_url: '' }));
     } finally {
       setFotoUploading(false);
     }
@@ -134,10 +171,14 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       setMsg('Elegí al menos un deporte.');
       return;
     }
+    const certNum = String(form.certificado_fipa_numero || '').trim();
+    if (ensenaPadbol && !certNum) {
+      setMsg('El número de certificado FIPA es obligatorio si enseñás Padbol.');
+      return;
+    }
     setSaving(true);
     setMsg('');
     try {
-      const certNum = String(form.certificado_fipa_numero || '').trim();
       await crearProfesorAdmin({
         sedeId,
         accessToken,
@@ -147,10 +188,11 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
           foto_url: String(form.foto_url || '').trim() || null,
           bio: String(form.bio || '').trim() || null,
           deportes: form.deportes,
-          certificado_fipa: ensenaPadbol && certNum.length > 0,
+          certificado_fipa: ensenaPadbol,
         },
       });
       setForm({ nombre: '', apellido: '', foto_url: '', bio: '', deportes: [], certificado_fipa_numero: '' });
+      setFotoUploadError(false);
       setShowForm(false);
       await load();
     } catch (e) {
@@ -182,97 +224,124 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       </div>
       {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p> : null}
       {showForm ? (
-        <div
-          style={{
-            border: '1px solid var(--border)',
-            borderRadius: 12,
-            padding: 14,
-            marginBottom: 16,
-            background: 'var(--bg-page)',
-          }}
-        >
-          <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+        <div style={FORM_BOX_STYLE}>
+          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
             Nombre
           </label>
           <input
             className="admin-mi-sede-theme-input"
             value={form.nombre}
             onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-            style={{ width: '100%', marginBottom: 10, boxSizing: 'border-box' }}
+            style={FIELD_STYLE}
           />
-          <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
             Apellido
           </label>
           <input
             className="admin-mi-sede-theme-input"
             value={form.apellido}
             onChange={(e) => setForm((f) => ({ ...f, apellido: e.target.value }))}
-            style={{ width: '100%', marginBottom: 10, boxSizing: 'border-box' }}
+            style={FIELD_STYLE}
           />
-          <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
             Foto
           </label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 10 }}>
-            {form.foto_url ? (
-              <img src={form.foto_url} alt="" style={{ width: 72, height: 72, borderRadius: 10, objectFit: 'cover' }} />
-            ) : null}
-            <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void subirFoto(e.target.files?.[0])} />
-            <button
-              type="button"
-              className="admin-mi-sede-theme-input"
-              disabled={fotoUploading}
-              onClick={() => fileRef.current?.click()}
-              style={{ cursor: 'pointer' }}
-            >
-              {fotoUploading ? 'Subiendo…' : form.foto_url ? 'Cambiar foto' : 'Subir foto'}
-            </button>
-          </div>
-          <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void subirFoto(e.target.files?.[0])} />
+          <button
+            type="button"
+            className="admin-mi-sede-theme-input"
+            disabled={fotoUploading}
+            onClick={() => fileRef.current?.click()}
+            style={{
+              ...FIELD_STYLE,
+              marginBottom: 10,
+              cursor: fotoUploading ? 'wait' : 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            {form.foto_url && !fotoUploading ? 'Cambiar foto' : 'Subir foto'}
+          </button>
+          {fotoUploading ? (
+            <p style={{ margin: '0 0 14px', fontSize: 16, color: 'var(--text-secondary)' }}>Subiendo...</p>
+          ) : null}
+          {fotoUploadError && !fotoUploading ? (
+            <p style={{ margin: '0 0 14px', fontSize: 16, color: COLOR_ERROR, fontWeight: 600 }}>
+              Error al subir, intentá de nuevo
+            </p>
+          ) : null}
+          {form.foto_url && !fotoUploading && !fotoUploadError ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <img
+                src={form.foto_url}
+                alt=""
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                  border: '2px solid var(--border)',
+                }}
+              />
+              <span style={{ fontSize: 16, fontWeight: 700, color: COLOR_SUCCESS }}>Foto cargada ✓</span>
+            </div>
+          ) : null}
+          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
             Bio
           </label>
           <textarea
             className="admin-mi-sede-theme-input"
-            rows={3}
+            rows={4}
             value={form.bio}
             onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-            style={{ width: '100%', marginBottom: 10, boxSizing: 'border-box', resize: 'vertical' }}
+            style={TEXTAREA_STYLE}
           />
-          <p className="admin-mi-sede-field-label" style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px' }}>
+          <p className="admin-mi-sede-field-label" style={{ ...LABEL_STYLE, marginBottom: 10 }}>
             Deportes que enseña
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
             {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
               <label
                 key={d.key}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  fontSize: 13,
-                  padding: '6px 10px',
-                  borderRadius: 8,
+                  gap: 8,
+                  fontSize: 16,
+                  padding: '10px 14px',
+                  minHeight: 44,
+                  borderRadius: 10,
                   border: '1px solid var(--border)',
                   background: form.deportes.includes(d.key) ? 'rgba(229,57,53,0.08)' : 'var(--bg-card)',
                   cursor: 'pointer',
+                  boxSizing: 'border-box',
                 }}
               >
-                <input type="checkbox" checked={form.deportes.includes(d.key)} onChange={() => toggleDeporte(d.key)} />
+                <input
+                  type="checkbox"
+                  checked={form.deportes.includes(d.key)}
+                  onChange={() => toggleDeporte(d.key)}
+                  style={{ width: 18, height: 18 }}
+                />
                 {d.label}
               </label>
             ))}
           </div>
           {ensenaPadbol ? (
             <>
-              <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-                Nº certificado FIPA (opcional)
+              <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
+                Número de certificado FIPA *
               </label>
               <input
                 className="admin-mi-sede-theme-input"
                 value={form.certificado_fipa_numero}
                 onChange={(e) => setForm((f) => ({ ...f, certificado_fipa_numero: e.target.value }))}
-                style={{ width: '100%', marginBottom: 12, boxSizing: 'border-box' }}
+                style={FIELD_STYLE}
+                required
+                aria-required="true"
               />
             </>
+          ) : null}
           ) : null}
           <button
             type="button"
@@ -280,12 +349,15 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             onClick={() => void guardar()}
             style={{
               border: 'none',
-              borderRadius: 10,
-              padding: '10px 16px',
+              borderRadius: 12,
+              padding: '14px 20px',
+              minHeight: 48,
+              fontSize: 16,
               background: ACCENT,
               color: '#fff',
               fontWeight: 800,
               cursor: saving ? 'wait' : 'pointer',
+              marginTop: 4,
             }}
           >
             {saving ? 'Guardando…' : 'Guardar profesor'}
