@@ -2803,6 +2803,69 @@ async function fetchSedePreciosResolucionRow(supabaseClient, sedeId) {
   return data;
 }
 
+const MAX_CANTIDAD_EXTRA_CHECKOUT = 10;
+
+/**
+ * Valida extras contra `sede_extras` (activo + aprobado_super) y devuelve líneas + suma en moneda de sede (solo monto).
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabaseClient
+ * @param {number} sedeId
+ * @param {unknown} extrasRaw — array { id, cantidad? } desde el cliente
+ */
+async function resolveExtrasLinesParaSede(supabaseClient, sedeId, extrasRaw) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0) {
+    const e = new Error('sede_id inválido para extras');
+    e.status = 400;
+    throw e;
+  }
+  const arr = Array.isArray(extrasRaw) ? extrasRaw : [];
+  if (arr.length === 0) return { lines: [], sum: 0 };
+  const qtyById = new Map();
+  for (const item of arr) {
+    const id = parseInt(String(item?.id), 10);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    const qtyRaw = Number(item?.cantidad);
+    const add = Math.min(MAX_CANTIDAD_EXTRA_CHECKOUT, Math.max(0, Math.floor(Number.isFinite(qtyRaw) ? qtyRaw : 0)));
+    if (add <= 0) continue;
+    const prev = qtyById.get(id) || 0;
+    qtyById.set(id, Math.min(MAX_CANTIDAD_EXTRA_CHECKOUT, prev + add));
+  }
+  const ids = [...qtyById.keys()];
+  if (ids.length === 0) return { lines: [], sum: 0 };
+  const { data: rows, error } = await supabaseClient
+    .from('sede_extras')
+    .select('id,nombre,precio,activo,aprobado_super')
+    .eq('sede_id', sid)
+    .in('id', ids);
+  if (error) throw error;
+  const byId = new Map((rows || []).map((r) => [Number(r.id), r]));
+  let sum = 0;
+  const lines = [];
+  for (const [id, qty] of qtyById) {
+    if (qty <= 0) continue;
+    const row = byId.get(id);
+    if (!row || !row.activo || !row.aprobado_super) {
+      const e = new Error('Uno de los extras no está disponible o no está aprobado');
+      e.status = 400;
+      throw e;
+    }
+    const pu = Math.round(Number(row.precio));
+    if (!Number.isFinite(pu) || pu < 0) {
+      const e = new Error('Precio de extra inválido');
+      e.status = 400;
+      throw e;
+    }
+    sum += pu * qty;
+    lines.push({
+      id,
+      nombre: String(row.nombre || '').trim() || 'Extra',
+      cantidad: qty,
+      precio_unitario: pu,
+    });
+  }
+  return { lines, sum };
+}
+
 /** Slots libres por id de sede (misma lógica que ReservaForm y tool consultar_disponibilidad). Query: fecha=YYYY-MM-DD, duracion en minutos (debe estar en la oferta de la sede), deporte opcional. */
 app.get('/api/sedes/:id/disponibilidad-slots', async (req, res) => {
   try {
@@ -3059,6 +3122,199 @@ app.delete('/api/sedes/:id/duraciones/:rowId', async (req, res) => {
     const { error } = await supabase.from('sedes_duraciones').delete().eq('id', rowId);
     if (error) throw error;
     res.json({ ok: true });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+/** Extras públicos (checkout): activos y aprobados por super admin. */
+app.get('/api/sedes/:id/extras', async (req, res) => {
+  try {
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
+    const { data, error } = await supabase
+      .from('sede_extras')
+      .select('id,nombre,descripcion,precio,precio_moneda,imagen_url')
+      .eq('sede_id', sid)
+      .eq('activo', true)
+      .eq('aprobado_super', true)
+      .order('nombre', { ascending: true });
+    if (error) throw error;
+    const extras = (data || []).map((row) => ({
+      ...row,
+      precio: row.precio != null ? Math.round(Number(row.precio)) : 0,
+    }));
+    res.json({ extras });
+  } catch (e) {
+    console.error('❌ GET /api/sedes/:id/extras:', e?.message || e);
+    res.status(500).json({ error: e.message || String(e) });
+  }
+});
+
+/** Listado completo de extras de la sede (admin club / super). */
+app.get('/api/sedes/:id/extras-admin', async (req, res) => {
+  try {
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const { data, error } = await supabase
+      .from('sede_extras')
+      .select('*')
+      .eq('sede_id', sid)
+      .order('nombre', { ascending: true });
+    if (error) throw error;
+    res.json({ extras: data || [] });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+/** Crear extra (club o super); queda pendiente de aprobación super si no es super. */
+app.post('/api/sedes/:id/extras', async (req, res) => {
+  try {
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const b = req.body || {};
+    const nombre = String(b.nombre ?? '').trim();
+    if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+    const pr = Number(String(b.precio ?? '').replace(/\./g, '').replace(',', '.'));
+    if (!Number.isFinite(pr) || pr < 0) return res.status(400).json({ error: 'precio inválido' });
+    const descripcion = b.descripcion != null ? String(b.descripcion).trim().slice(0, 2000) : null;
+    const precio_moneda = String(b.precio_moneda || 'ARS')
+      .trim()
+      .toUpperCase()
+      .slice(0, 8) || 'ARS';
+    const imagen_url = b.imagen_url != null ? String(b.imagen_url).trim().slice(0, 2000) || null : null;
+    const activo = b.activo === undefined ? true : Boolean(b.activo);
+    const emailNorm = String((await authUserFromBearer(req))?.email || '')
+      .trim()
+      .toLowerCase();
+    const rowRole = await fetchUserRoleRow(emailNorm);
+    const rol = rowRole?.role || null;
+    const aprobado_super = isSuperAdminApi(emailNorm, rol) && Boolean(b.aprobado_super);
+    const { data, error } = await supabase
+      .from('sede_extras')
+      .insert([
+        {
+          sede_id: sid,
+          nombre: nombre.slice(0, 200),
+          descripcion,
+          precio: Math.round(pr),
+          precio_moneda,
+          imagen_url,
+          activo,
+          aprobado_super,
+        },
+      ])
+      .select('*')
+      .single();
+    if (error) throw error;
+    res.status(201).json({ extra: data });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+/** Actualizar extra. `aprobado_super` solo lo puede cambiar super_admin. */
+app.patch('/api/sedes/:id/extras/:extraId', async (req, res) => {
+  try {
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    const extraId = parseInt(String(req.params.extraId || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0 || !Number.isFinite(extraId) || extraId <= 0) {
+      return res.status(400).json({ error: 'Parámetros inválidos' });
+    }
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'Se requiere sesión' });
+    const emailNorm = String(user.email).trim().toLowerCase();
+    const rowRole = await fetchUserRoleRow(emailNorm);
+    const rol = rowRole?.role || null;
+    const superOk = isSuperAdminApi(emailNorm, rol);
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const { data: existing, error: exErr } = await supabase
+      .from('sede_extras')
+      .select('*')
+      .eq('id', extraId)
+      .maybeSingle();
+    if (exErr) throw exErr;
+    if (!existing || Number(existing.sede_id) !== sid) {
+      return res.status(404).json({ error: 'Extra no encontrado en esta sede' });
+    }
+    const b = req.body || {};
+    const patch = {};
+    if (Object.prototype.hasOwnProperty.call(b, 'nombre')) {
+      const n = String(b.nombre ?? '').trim();
+      if (!n) return res.status(400).json({ error: 'El nombre no puede quedar vacío' });
+      patch.nombre = n.slice(0, 200);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'descripcion')) {
+      patch.descripcion = b.descripcion != null ? String(b.descripcion).trim().slice(0, 2000) || null : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'precio')) {
+      const pr = Number(String(b.precio ?? '').replace(/\./g, '').replace(',', '.'));
+      if (!Number.isFinite(pr) || pr < 0) return res.status(400).json({ error: 'precio inválido' });
+      patch.precio = Math.round(pr);
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'precio_moneda')) {
+      patch.precio_moneda = String(b.precio_moneda || 'ARS')
+        .trim()
+        .toUpperCase()
+        .slice(0, 8) || 'ARS';
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'imagen_url')) {
+      patch.imagen_url = b.imagen_url != null ? String(b.imagen_url).trim().slice(0, 2000) || null : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(b, 'activo')) patch.activo = Boolean(b.activo);
+    if (Object.prototype.hasOwnProperty.call(b, 'aprobado_super')) {
+      if (!superOk) return res.status(403).json({ error: 'Solo super admin puede aprobar extras' });
+      patch.aprobado_super = Boolean(b.aprobado_super);
+    }
+    if (!Object.keys(patch).length) return res.status(400).json({ error: 'Nada que actualizar' });
+    const { data, error } = await supabase.from('sede_extras').update(patch).eq('id', extraId).select('*').single();
+    if (error) throw error;
+    res.json({ extra: data });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+/** Extras pendientes de aprobación (todas las sedes). Solo super_admin. */
+app.get('/api/admin/sede-extras-pendientes', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.email) return res.status(401).json({ error: 'Se requiere sesión' });
+    const emailNorm = String(user.email).trim().toLowerCase();
+    const rowRole = await fetchUserRoleRow(emailNorm);
+    const rol = rowRole?.role || null;
+    if (!isSuperAdminApi(emailNorm, rol)) {
+      return res.status(403).json({ error: 'Solo super admin' });
+    }
+    const { data: extras, error: e1 } = await supabase
+      .from('sede_extras')
+      .select('id,sede_id,nombre,descripcion,precio,precio_moneda,imagen_url,activo,aprobado_super,created_at')
+      .eq('activo', true)
+      .eq('aprobado_super', false)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (e1) throw e1;
+    const list = extras || [];
+    const sedeIds = [...new Set(list.map((x) => Number(x.sede_id)).filter((n) => Number.isFinite(n) && n > 0))];
+    let sedeMap = new Map();
+    if (sedeIds.length) {
+      const { data: sedesRows, error: e2 } = await supabase.from('sedes').select('id,nombre,ciudad,pais').in('id', sedeIds);
+      if (e2) throw e2;
+      sedeMap = new Map((sedesRows || []).map((s) => [Number(s.id), s]));
+    }
+    const items = list.map((row) => ({
+      ...row,
+      precio: row.precio != null ? Math.round(Number(row.precio)) : 0,
+      sede: sedeMap.get(Number(row.sede_id)) || null,
+    }));
+    res.json({ items });
   } catch (e) {
     const st = e.status || 500;
     res.status(st).json({ error: e.message || String(e) });
@@ -9408,14 +9664,26 @@ app.post('/api/crear-preferencia', async (req, res) => {
       const rd = reservaData;
       const sidR = Number(rd.sede_id != null && rd.sede_id !== '' ? rd.sede_id : Number.isFinite(sidNum) && sidNum > 0 ? sidNum : effectiveSedeId);
       const durR = parseInt(String(rd.duracion ?? ''), 10);
+      let extrasSum = 0;
+      try {
+        const ex = await resolveExtrasLinesParaSede(supabase, sidR, rd.extras ?? b.extras);
+        extrasSum = ex.sum;
+        if (ex.lines.length) rd.extras = ex.lines;
+        else delete rd.extras;
+      } catch (e) {
+        if (e.status) return res.status(e.status).json({ error: e.message || String(e) });
+        throw e;
+      }
       if (Number.isFinite(sidR) && sidR > 0 && Number.isFinite(durR) && durR > 0) {
         const baseDb = await precioBaseReservaSedeDuracion(supabase, sidR, durR);
         if (baseDb != null) {
-          const totalSrv = baseDb + Math.round(baseDb * 0.03);
+          const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
           if (Number.isFinite(totalSrv) && totalSrv >= 0) {
             unitPrice = totalSrv;
             rd.precio = totalSrv;
           }
+        } else if (extrasSum > 0) {
+          return res.status(400).json({ error: 'No se pudo calcular el precio del turno para incluir extras' });
         }
       }
     }

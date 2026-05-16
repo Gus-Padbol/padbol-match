@@ -79,6 +79,8 @@ import AdminClubOnboardingTour, { readOnboardingDone } from '../components/Admin
 import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSection';
 import AdminSponsorsSection from '../components/AdminSponsorsSection';
 import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
+import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
+import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
@@ -4414,6 +4416,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       { id: 'canchas', label: 'Canchas' },
       { id: 'horarios', label: 'Horarios' },
     ];
+    if (esAdminClub || isSuperAdmin) items.push({ id: 'extras', label: 'Extras del tercer tiempo' });
     if (esAdminClub || isSuperAdmin) items.push({ id: 'pagos', label: 'Configuración de pagos' });
     items.push({ id: 'contrato', label: 'Imágenes' });
     return items;
@@ -7279,6 +7282,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       {activeTab === 'sedes' && (esAdminNacional || isSuperAdmin) && (
         <div className="section">
           <h2>{isSuperAdmin ? 'Sedes registradas' : 'Sedes en tu país'}</h2>
+          {isSuperAdmin && session?.access_token ? (
+            <AdminSedeExtrasPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
+          ) : null}
           {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).length === 0 ? (
             <p style={{ color: 'var(--text-secondary)' }}>
               {isSuperAdmin
@@ -11584,6 +11590,24 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
             </div>
           </div>
+
+          {/* ── Extras tercer tiempo (opcional en checkout armar partido) ── */}
+          {(esAdminClub || isSuperAdmin) && sedeId && session?.access_token ? (
+            <div id="admin-mi-sede-extras" style={{ marginBottom: '32px' }}>
+              <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
+                🍕 Extras del tercer tiempo
+              </h3>
+              <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '560px' }}>
+                <AdminSedeExtrasSection
+                  apiBaseUrl={apiBaseUrl}
+                  accessToken={session.access_token}
+                  sedeId={Number(sedeId)}
+                  monedaSede={String(miSede?.moneda || 'ARS').trim().toUpperCase().slice(0, 8) || 'ARS'}
+                  isSuperAdmin={isSuperAdmin}
+                />
+              </div>
+            </div>
+          ) : null}
 
           {/* ── 3. Configuración de pagos (MP / Stripe por sede) ── */}
           {(esAdminClub || isSuperAdmin) && (

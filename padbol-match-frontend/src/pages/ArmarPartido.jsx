@@ -259,6 +259,10 @@ export default function ArmarPartido() {
 
   const [publicarPartido, setPublicarPartido] = useState(false);
 
+  const [sedeExtrasDisponibles, setSedeExtrasDisponibles] = useState([]);
+  const [sedeExtrasLoading, setSedeExtrasLoading] = useState(false);
+  const [extrasCantidad, setExtrasCantidad] = useState({});
+
   const sedeBlurTimerRef = useRef(null);
   const [sedeBusqueda, setSedeBusqueda] = useState('');
   const [sedeDropdownOpen, setSedeDropdownOpen] = useState(false);
@@ -482,6 +486,43 @@ export default function ArmarPartido() {
     };
   }, [step, sede?.id, form.fecha, form.hora, form.duracion, form.deporte]);
 
+  useEffect(() => {
+    if (step !== 3 || !sede?.id) {
+      setSedeExtrasDisponibles([]);
+      setSedeExtrasLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSedeExtrasLoading(true);
+    fetch(`${API_BASE}/api/sedes/${encodeURIComponent(sede.id)}/extras`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        const list = Array.isArray(d.extras) ? d.extras : [];
+        setSedeExtrasDisponibles(list);
+        setExtrasCantidad((prev) => {
+          const next = {};
+          for (const ex of list) {
+            const id = Number(ex.id);
+            if (!Number.isFinite(id)) continue;
+            const prevC = parseInt(String(prev[id]), 10);
+            const safe = Number.isFinite(prevC) ? Math.min(10, Math.max(0, prevC)) : 0;
+            next[id] = safe;
+          }
+          return next;
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setSedeExtrasDisponibles([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSedeExtrasLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [step, sede?.id]);
+
   const puedeVerCanchasPaso1 = useMemo(
     () =>
       Boolean(sede && String(form.fecha || '').trim() && String(form.hora || '').trim()),
@@ -498,7 +539,22 @@ export default function ArmarPartido() {
   }, [sede, form.hora, form.fecha, form.duracion, form.precioTurnoBase]);
 
   const cargoPlataforma = useMemo(() => Math.round(precioBase * 0.03), [precioBase]);
-  const precioTotal = useMemo(() => precioBase + cargoPlataforma, [precioBase, cargoPlataforma]);
+
+  const precioExtrasSubtotal = useMemo(() => {
+    let s = 0;
+    for (const ex of sedeExtrasDisponibles) {
+      const id = Number(ex.id);
+      const n = Math.min(10, Math.max(0, parseInt(String(extrasCantidad[id] ?? 0), 10) || 0));
+      const p = Math.round(Number(ex.precio));
+      if (Number.isFinite(id) && Number.isFinite(p) && p >= 0 && n > 0) s += p * n;
+    }
+    return s;
+  }, [sedeExtrasDisponibles, extrasCantidad]);
+
+  const precioTotal = useMemo(
+    () => precioBase + cargoPlataforma + precioExtrasSubtotal,
+    [precioBase, cargoPlataforma, precioExtrasSubtotal],
+  );
 
   const sedesParaArmar = useMemo(() => {
     const hasAny = sedes.some((s) => Array.isArray(s.canchas_por_deporte) && s.canchas_por_deporte.length > 0);
@@ -652,6 +708,19 @@ export default function ArmarPartido() {
     const token = authData?.session?.access_token || session.access_token;
     const nombre = getDisplayName(userProfile, session) || session.user.email;
     const shareToken = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 9)}`;
+    const extrasPayload = sedeExtrasDisponibles
+      .map((ex) => {
+        const id = Number(ex.id);
+        const c = Math.min(10, Math.max(0, parseInt(String(extrasCantidad[id] ?? 0), 10) || 0));
+        if (c <= 0) return null;
+        return {
+          id,
+          nombre: String(ex.nombre || '').trim(),
+          cantidad: c,
+          precio_unitario: Math.round(Number(ex.precio)),
+        };
+      })
+      .filter(Boolean);
     const reservaData = {
       tipo: 'partido_abierto',
       publicar_partido: Boolean(publicarPartido),
@@ -676,6 +745,7 @@ export default function ArmarPartido() {
       capitan_nombre: nombre,
       capitan_foto_url: userProfile?.foto_url || userProfile?.avatar_url || session.user.user_metadata?.avatar_url || '',
       user_id: session.user.id,
+      ...(extrasPayload.length ? { extras: extrasPayload } : {}),
     };
     try {
       const res = await fetch(`${API_BASE}/api/crear-preferencia`, {
@@ -687,6 +757,7 @@ export default function ArmarPartido() {
           moneda: sedeActual.moneda || 'ARS',
           sedeNombre: sedeActual.nombre,
           sedeId: sedeActual.id,
+          extras: extrasPayload.length ? extrasPayload : undefined,
           reservaData,
         }),
       });
@@ -1165,6 +1236,116 @@ export default function ArmarPartido() {
           {step === 3 ? (
             <>
               <h1 style={AP.title}>Confirmar y pagar</h1>
+
+              {(sedeExtrasLoading || sedeExtrasDisponibles.length > 0) && (
+                <div style={{ marginBottom: 16 }}>
+                  <h2 style={{ ...AP.title, fontSize: 17, marginBottom: 8 }}>Agregá algo para el tercer tiempo</h2>
+                  <p style={{ ...AP.body, fontSize: 13, marginBottom: 12 }}>
+                    Opcional: sumá productos o servicios del club. El total se actualiza abajo.
+                  </p>
+                  {sedeExtrasLoading ? (
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Cargando opciones…</p>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      {sedeExtrasDisponibles.map((ex) => {
+                        const id = Number(ex.id);
+                        const qty = Math.min(10, Math.max(0, parseInt(String(extrasCantidad[id] ?? 0), 10) || 0));
+                        const mon = ex.precio_moneda || sede?.moneda || 'ARS';
+                        const unit = Math.round(Number(ex.precio));
+                        return (
+                          <div
+                            key={ex.id}
+                            style={{
+                              border: '1px solid var(--border)',
+                              borderRadius: 14,
+                              padding: 14,
+                              background: 'var(--bg-page)',
+                              maxWidth: 390,
+                            }}
+                          >
+                            {ex.imagen_url ? (
+                              <img
+                                src={ex.imagen_url}
+                                alt=""
+                                style={{
+                                  width: '100%',
+                                  maxHeight: 140,
+                                  objectFit: 'cover',
+                                  borderRadius: 10,
+                                  marginBottom: 10,
+                                }}
+                              />
+                            ) : null}
+                            <div style={{ fontWeight: 900, fontSize: 16 }}>{ex.nombre}</div>
+                            {ex.descripcion ? (
+                              <p style={{ margin: '6px 0 10px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                                {ex.descripcion}
+                              </p>
+                            ) : null}
+                            <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>
+                              {mon} {unit.toLocaleString('es-AR')} c/u
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <button
+                                type="button"
+                                aria-label="Quitar una unidad"
+                                disabled={qty <= 0}
+                                onClick={() =>
+                                  setExtrasCantidad((prev) => ({
+                                    ...prev,
+                                    [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
+                                  }))
+                                }
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 10,
+                                  border: '1px solid var(--border)',
+                                  background: qty <= 0 ? 'var(--bg-card)' : 'var(--bg-card)',
+                                  fontSize: 20,
+                                  fontWeight: 900,
+                                  cursor: qty <= 0 ? 'not-allowed' : 'pointer',
+                                  color: 'var(--text-primary)',
+                                }}
+                              >
+                                −
+                              </button>
+                              <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 900, fontSize: 17 }}>
+                                {qty}
+                              </span>
+                              <button
+                                type="button"
+                                aria-label="Agregar una unidad"
+                                disabled={qty >= 10}
+                                onClick={() =>
+                                  setExtrasCantidad((prev) => ({
+                                    ...prev,
+                                    [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
+                                  }))
+                                }
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 10,
+                                  border: '1px solid var(--border)',
+                                  background: 'var(--bg-card)',
+                                  fontSize: 20,
+                                  fontWeight: 900,
+                                  cursor: qty >= 10 ? 'not-allowed' : 'pointer',
+                                  color: 'var(--text-primary)',
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div
                 style={{
                   background: 'var(--bg-page)',
@@ -1200,6 +1381,12 @@ export default function ArmarPartido() {
                   Cargo por servicio Padbol Match (3%): {sede?.moneda || 'ARS'}{' '}
                   {cargoPlataforma.toLocaleString('es-AR')}
                 </div>
+                {precioExtrasSubtotal > 0 ? (
+                  <div style={{ marginTop: 8 }}>
+                    <strong>Extras (tercer tiempo):</strong> {sede?.moneda || 'ARS'}{' '}
+                    {precioExtrasSubtotal.toLocaleString('es-AR')}
+                  </div>
+                ) : null}
                 <div style={{ marginTop: 8, fontWeight: 900, fontSize: 16 }}>
                   Total a pagar: {sede?.moneda || 'ARS'} {precioTotal.toLocaleString('es-AR')}
                 </div>
