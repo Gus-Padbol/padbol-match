@@ -22,6 +22,17 @@ const API_BASE = (
 
 const ACCENT = '#e53935';
 
+function formatoPrecioExtraCadaUnidad(unitMain, monedaCode) {
+  const m = String(monedaCode || 'ARS').toUpperCase();
+  const u = Math.round(Number(unitMain));
+  if (!Number.isFinite(u)) return `— c/u`;
+  try {
+    return `${new Intl.NumberFormat('es-AR', { style: 'currency', currency: m, maximumFractionDigits: 0 }).format(u)} c/u`;
+  } catch {
+    return `${monedaCode} ${u.toLocaleString('es-AR')} c/u`;
+  }
+}
+
 /** Normaliza `duraciones` del GET disponibilidad-slots (variantes de payload y precio numérico/string). */
 function normalizarDuracionesDisponibilidadSlotsPayload(d) {
   if (!d || typeof d !== 'object') return [];
@@ -1259,97 +1270,158 @@ export default function ArmarPartido() {
                   {sedeExtrasLoading ? (
                     <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Cargando opciones…</p>
                   ) : (
-                    <div style={{ display: 'grid', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 390 }}>
                       {sedeExtrasDisponibles.map((ex) => {
                         const id = Number(ex.id);
                         const qty = Math.min(10, Math.max(0, parseInt(String(extrasCantidad[id] ?? 0), 10) || 0));
                         const mon = ex.precio_moneda || sede?.moneda || 'ARS';
                         const unit = Math.round(Number(ex.precio));
+                        const imgUrl = String(ex.imagen_url || '').trim();
+                        const btnRound = {
+                          width: 26,
+                          height: 26,
+                          padding: 0,
+                          borderRadius: '50%',
+                          border: '0.5px solid var(--border)',
+                          background: 'var(--bg-input)',
+                          fontSize: 15,
+                          fontWeight: 600,
+                          lineHeight: 1,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxSizing: 'border-box',
+                          fontFamily: 'inherit',
+                          color: 'var(--text-primary)',
+                        };
                         return (
                           <div
                             key={ex.id}
                             style={{
-                              border: '1px solid var(--border)',
+                              display: 'flex',
                               borderRadius: 14,
-                              padding: 14,
-                              background: 'var(--bg-page)',
+                              overflow: 'hidden',
+                              border: '0.5px solid var(--border)',
+                              background: 'var(--bg-card)',
+                              minHeight: 100,
+                              marginBottom: 10,
                               maxWidth: 390,
+                              boxSizing: 'border-box',
                             }}
                           >
-                            {ex.imagen_url ? (
-                              <img
-                                src={ex.imagen_url}
-                                alt=""
-                                style={{
-                                  width: '100%',
-                                  maxHeight: 140,
-                                  objectFit: 'cover',
-                                  borderRadius: 10,
-                                  marginBottom: 10,
-                                }}
-                              />
-                            ) : null}
-                            <div style={{ fontWeight: 900, fontSize: 16 }}>{ex.nombre}</div>
-                            {ex.descripcion ? (
-                              <p style={{ margin: '6px 0 10px', fontSize: 13, color: 'var(--text-secondary)' }}>
-                                {ex.descripcion}
-                              </p>
-                            ) : null}
-                            <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>
-                              {mon} {unit.toLocaleString('es-AR')} c/u
+                            <div
+                              style={{
+                                width: 100,
+                                flexShrink: 0,
+                                background: 'var(--bg-input)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                alignSelf: 'stretch',
+                                minHeight: 100,
+                              }}
+                            >
+                              {imgUrl ? (
+                                <img
+                                  src={imgUrl}
+                                  alt=""
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: 36, opacity: 0.5, lineHeight: 1 }} aria-hidden>
+                                  📦
+                                </span>
+                              )}
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <button
-                                type="button"
-                                aria-label="Quitar una unidad"
-                                disabled={qty <= 0}
-                                onClick={() =>
-                                  setExtrasCantidad((prev) => ({
-                                    ...prev,
-                                    [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
-                                  }))
-                                }
+                            <div
+                              style={{
+                                flex: 1,
+                                padding: '12px 14px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                minWidth: 0,
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.25 }}>
+                                  {ex.nombre}
+                                </div>
+                                {ex.descripcion ? (
+                                  <div
+                                    style={{
+                                      fontSize: 11,
+                                      color: 'var(--text-secondary)',
+                                      marginTop: 2,
+                                      lineHeight: 1.35,
+                                    }}
+                                  >
+                                    {ex.descripcion}
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div
                                 style={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 10,
-                                  border: '1px solid var(--border)',
-                                  background: qty <= 0 ? 'var(--bg-card)' : 'var(--bg-card)',
-                                  fontSize: 20,
-                                  fontWeight: 900,
-                                  cursor: qty <= 0 ? 'not-allowed' : 'pointer',
-                                  color: 'var(--text-primary)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  marginTop: 10,
+                                  gap: 8,
                                 }}
                               >
-                                −
-                              </button>
-                              <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 900, fontSize: 17 }}>
-                                {qty}
-                              </span>
-                              <button
-                                type="button"
-                                aria-label="Agregar una unidad"
-                                disabled={qty >= 10}
-                                onClick={() =>
-                                  setExtrasCantidad((prev) => ({
-                                    ...prev,
-                                    [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
-                                  }))
-                                }
-                                style={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 10,
-                                  border: '1px solid var(--border)',
-                                  background: 'var(--bg-card)',
-                                  fontSize: 20,
-                                  fontWeight: 900,
-                                  cursor: qty >= 10 ? 'not-allowed' : 'pointer',
-                                  color: 'var(--text-primary)',
-                                }}
-                              >
-                                +
-                              </button>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)', flexShrink: 1, minWidth: 0 }}>
+                                  {formatoPrecioExtraCadaUnidad(unit, mon)}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                  <button
+                                    type="button"
+                                    aria-label="Quitar una unidad"
+                                    disabled={qty <= 0}
+                                    onClick={() =>
+                                      setExtrasCantidad((prev) => ({
+                                        ...prev,
+                                        [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
+                                      }))
+                                    }
+                                    style={{
+                                      ...btnRound,
+                                      cursor: qty <= 0 ? 'not-allowed' : 'pointer',
+                                      opacity: qty <= 0 ? 0.45 : 1,
+                                    }}
+                                  >
+                                    −
+                                  </button>
+                                  <span
+                                    style={{
+                                      minWidth: 20,
+                                      textAlign: 'center',
+                                      fontSize: 15,
+                                      fontWeight: 600,
+                                      color: 'var(--text-primary)',
+                                    }}
+                                  >
+                                    {qty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    aria-label="Agregar una unidad"
+                                    disabled={qty >= 10}
+                                    onClick={() =>
+                                      setExtrasCantidad((prev) => ({
+                                        ...prev,
+                                        [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
+                                      }))
+                                    }
+                                    style={{
+                                      ...btnRound,
+                                      cursor: qty >= 10 ? 'not-allowed' : 'pointer',
+                                      opacity: qty >= 10 ? 0.45 : 1,
+                                    }}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );

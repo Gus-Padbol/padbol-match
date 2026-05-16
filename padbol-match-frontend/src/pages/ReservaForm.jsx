@@ -79,26 +79,6 @@ function buildReservaExtrasPayload(sedeExtrasDisponibles, cantidadMap) {
     .filter(Boolean);
 }
 
-/** Placeholder tipo Tabler `ti-package` para extras sin `imagen_url`. */
-function TablerPackageExtraPlaceholder({ size = 28, color = 'var(--text-secondary)' }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-      <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" />
-    </svg>
-  );
-}
-
 /** Texto visible en el selector de país; el `value` sigue siendo el string exacto de la sede. */
 function etiquetaPaisReservaSelector(paisRaw) {
   const p = String(paisRaw || '').trim();
@@ -2371,59 +2351,78 @@ export default function ReservaForm() {
               <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                 Opcional: sumá productos o servicios del club.
               </p>
-              <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 390, width: '100%' }}>
                 {reservaExtrasDisponibles.map((ex) => {
                   const id = Number(ex.id);
                   const qty = Math.min(10, Math.max(0, parseInt(String(reservaExtrasCantidad[id] ?? 0), 10) || 0));
                   const mon = ex.precio_moneda || sedeSeleccionada?.moneda || 'ARS';
                   const unit = Math.round(Number(ex.precio));
                   const imgUrl = String(ex.imagen_url || '').trim();
-                  const btnQty = {
-                    height: 28,
-                    minWidth: 28,
-                    padding: '0 8px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-page)',
-                    fontSize: 16,
-                    fontWeight: 800,
+                  const btnRound = {
+                    width: 26,
+                    height: 26,
+                    padding: 0,
+                    borderRadius: '50%',
+                    border: '0.5px solid var(--border)',
+                    background: 'var(--bg-input)',
+                    fontSize: 15,
+                    fontWeight: 600,
                     lineHeight: 1,
-                    cursor: 'pointer',
-                    color: 'var(--text-primary)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                    color: 'var(--text-primary)',
                   };
                   return (
                     <div
                       key={ex.id}
                       style={{
-                        border: '1px solid var(--border)',
-                        borderRadius: 10,
-                        padding: '10px 12px',
+                        display: 'flex',
+                        borderRadius: 14,
+                        overflow: 'hidden',
+                        border: '0.5px solid var(--border)',
                         background: 'var(--bg-card)',
+                        minHeight: 100,
+                        marginBottom: 10,
                         maxWidth: 390,
                         width: '100%',
                         boxSizing: 'border-box',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 6,
                       }}
                     >
                       <div
                         style={{
+                          width: 100,
+                          flexShrink: 0,
+                          background: 'var(--bg-input)',
                           display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'stretch',
-                          justifyContent: 'space-between',
-                          gap: 10,
-                          minHeight: 0,
-                          flex: '1 1 auto',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          alignSelf: 'stretch',
+                          minHeight: 100,
                         }}
                       >
-                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 2 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.25 }}>
+                        {imgUrl ? (
+                          <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        ) : (
+                          <span style={{ fontSize: 36, opacity: 0.5, lineHeight: 1 }} aria-hidden>
+                            📦
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          flex: 1,
+                          padding: '12px 14px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          minWidth: 0,
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.25 }}>
                             {ex.nombre}
                           </div>
                           {ex.descripcion ? (
@@ -2431,80 +2430,76 @@ export default function ReservaForm() {
                               style={{
                                 fontSize: 11,
                                 color: 'var(--text-secondary)',
-                                lineHeight: 1.25,
-                                maxHeight: 28,
-                                overflow: 'hidden',
+                                marginTop: 2,
+                                lineHeight: 1.35,
                               }}
                             >
                               {ex.descripcion}
                             </div>
                           ) : null}
-                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>
-                            {formatMoneyMain(unit, mon)} c/u
-                          </div>
                         </div>
                         <div
                           style={{
-                            width: 64,
-                            height: 64,
-                            flexShrink: 0,
-                            borderRadius: 8,
-                            overflow: 'hidden',
-                            background: 'var(--bg-page)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            border: '1px solid var(--border)',
-                            boxSizing: 'border-box',
+                            justifyContent: 'space-between',
+                            marginTop: 10,
+                            gap: 8,
                           }}
                         >
-                          {imgUrl ? (
-                            <img src={imgUrl} alt="" style={{ width: 64, height: 64, objectFit: 'cover', display: 'block' }} />
-                          ) : (
-                            <TablerPackageExtraPlaceholder size={30} />
-                          )}
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)', flexShrink: 1, minWidth: 0 }}>
+                            {formatMoneyMain(unit, mon)} c/u
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              aria-label="Quitar una unidad"
+                              disabled={qty <= 0}
+                              onClick={() =>
+                                setReservaExtrasCantidad((prev) => ({
+                                  ...prev,
+                                  [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
+                                }))
+                              }
+                              style={{
+                                ...btnRound,
+                                cursor: qty <= 0 ? 'not-allowed' : 'pointer',
+                                opacity: qty <= 0 ? 0.45 : 1,
+                              }}
+                            >
+                              −
+                            </button>
+                            <span
+                              style={{
+                                minWidth: 20,
+                                textAlign: 'center',
+                                fontSize: 15,
+                                fontWeight: 600,
+                                color: 'var(--text-primary)',
+                              }}
+                            >
+                              {qty}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label="Agregar una unidad"
+                              disabled={qty >= 10}
+                              onClick={() =>
+                                setReservaExtrasCantidad((prev) => ({
+                                  ...prev,
+                                  [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
+                                }))
+                              }
+                              style={{
+                                ...btnRound,
+                                cursor: qty >= 10 ? 'not-allowed' : 'pointer',
+                                opacity: qty >= 10 ? 0.45 : 1,
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start', height: 28 }}>
-                        <button
-                          type="button"
-                          aria-label="Quitar una unidad"
-                          disabled={qty <= 0}
-                          onClick={() =>
-                            setReservaExtrasCantidad((prev) => ({
-                              ...prev,
-                              [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
-                            }))
-                          }
-                          style={{
-                            ...btnQty,
-                            cursor: qty <= 0 ? 'not-allowed' : 'pointer',
-                            opacity: qty <= 0 ? 0.45 : 1,
-                          }}
-                        >
-                          −
-                        </button>
-                        <span style={{ minWidth: 22, textAlign: 'center', fontWeight: 800, fontSize: 14, color: 'var(--text-primary)' }}>
-                          {qty}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label="Agregar una unidad"
-                          disabled={qty >= 10}
-                          onClick={() =>
-                            setReservaExtrasCantidad((prev) => ({
-                              ...prev,
-                              [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
-                            }))
-                          }
-                          style={{
-                            ...btnQty,
-                            cursor: qty >= 10 ? 'not-allowed' : 'pointer',
-                            opacity: qty >= 10 ? 0.45 : 1,
-                          }}
-                        >
-                          +
-                        </button>
                       </div>
                     </div>
                   );
