@@ -100,6 +100,8 @@ export default function AppHeader({
    * Panel /admin: chip compacto a la izquierda, logout a la derecha; sin ← Inicio ni menú ⋮.
    */
   adminPanelMinimalHeader = false,
+  /** Resumen de reserva (pago): solo ← Volver, título y columna derecha vacía; sin chip, tema ni búsqueda. */
+  reservaCheckoutMinimal = false,
   /** Si se define (px), en desktop sustituye el max-width por defecto del cuerpo (~900px). */
   contentMaxWidth = null,
 }) {
@@ -311,6 +313,7 @@ export default function AppHeader({
 
   /** Chip identidad en la barra grid: nunca en hub inicio con `hubDirectLogin` (chip solo en /admin vía layout minimal o en rutas admin/torneo fuera del hub raíz). Incluye shell jugador (Ranking, Reservar, Torneos, Mi perfil). */
   const jugadorChipEnHeaderGrid =
+    !reservaCheckoutMinimal &&
     Boolean(session?.user) &&
     !adminTorneoEquipoDesdePanel &&
     !adminPanelMinimalHeader &&
@@ -1094,6 +1097,26 @@ export default function AppHeader({
       >
         {headerTitleDisplay ? (
           !shouldHideHubCenterTitle ? (
+            reservaCheckoutMinimal ? (
+              <span
+                style={{
+                  color: titleColor || (hubLightBar ? 'var(--text-primary)' : '#fff'),
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  margin: 0,
+                  textAlign: 'center',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
+                  display: 'block',
+                  width: '100%',
+                  maxWidth: '100%',
+                }}
+              >
+                {headerTitleDisplay}
+              </span>
+            ) : (
             <button
               type="button"
               onClick={() => {
@@ -1123,6 +1146,7 @@ export default function AppHeader({
             >
               {headerTitleDisplay}
             </button>
+            )
           ) : (
             <span
               aria-hidden
@@ -1167,7 +1191,17 @@ export default function AppHeader({
             marginLeft: 0,
           }}
         >
-            {jugadorChipEnHeaderGrid ? (
+            {reservaCheckoutMinimal ? (
+              <span
+                aria-hidden
+                style={{
+                  width: LOGOUT_BTN_SIZE,
+                  height: LOGOUT_BTN_SIZE,
+                  flexShrink: 0,
+                }}
+              />
+            ) : null}
+            {!reservaCheckoutMinimal && jugadorChipEnHeaderGrid ? (
               <div
                 style={{
                   display: 'inline-flex',
@@ -1262,12 +1296,12 @@ export default function AppHeader({
                 </button>
               </div>
             ) : null}
-            {showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
-            {jugadorHubShellPath && hubLightBar ? (
+            {!reservaCheckoutMinimal && showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
+            {!reservaCheckoutMinimal && jugadorHubShellPath && hubLightBar ? (
               <HubThemeSettingsButton compact={compactHubChip} />
             ) : null}
-            {searchUiBlock}
-            {hubDirectLogin && !session?.user && !authLoading ? (
+            {!reservaCheckoutMinimal ? searchUiBlock : null}
+            {!reservaCheckoutMinimal && hubDirectLogin && !session?.user && !authLoading ? (
               <button
                 type="button"
                 onClick={() => navigate('/auth')}
@@ -1288,7 +1322,7 @@ export default function AppHeader({
               >
                 Ingresar
               </button>
-            ) : hubDirectLogin && !session?.user && authLoading ? (
+            ) : !reservaCheckoutMinimal && hubDirectLogin && !session?.user && authLoading ? (
               <span
                 style={{
                   fontSize: 12,

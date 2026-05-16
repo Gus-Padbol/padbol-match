@@ -79,6 +79,26 @@ function buildReservaExtrasPayload(sedeExtrasDisponibles, cantidadMap) {
     .filter(Boolean);
 }
 
+/** Placeholder tipo Tabler `ti-package` para extras sin `imagen_url`. */
+function TablerPackageExtraPlaceholder({ size = 28, color = 'var(--text-secondary)' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+      <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" />
+    </svg>
+  );
+}
+
 /** Texto visible en el selector de país; el `value` sigue siendo el string exacto de la sede. */
 function etiquetaPaisReservaSelector(paisRaw) {
   const p = String(paisRaw || '').trim();
@@ -2174,7 +2194,7 @@ export default function ReservaForm() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Reservar" onBack={handleReservaBack} />
+        <AppHeader title="Reservar" onBack={handleReservaBack} reservaCheckoutMinimal />
         <div
           style={{
             ...hubInstagramColumnWrapStyle,
@@ -2247,9 +2267,6 @@ export default function ReservaForm() {
                     <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
                     {formatMoneyMain(stripeMinorToMain(cargoServicioMinor, moneda), moneda)}
                   </p>
-                  <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
-                    <strong>Total:</strong> {formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)}
-                  </p>
                 </div>
               ) : (
                 <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
@@ -2265,28 +2282,19 @@ export default function ReservaForm() {
                         <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
                         {formatMoneyMain(reservaCargoPlataforma, moneda)}
                       </p>
-                      <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
-                        <strong>Total:</strong> {formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
-                      </p>
                     </>
-                  ) : (
-                    <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
-                      {formatMoneyMain(precioTurnoResumen, moneda)}
-                      {metodoPagoEfectivo ? (
-                        <span
-                          style={{
-                            display: 'block',
-                            marginTop: '8px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: 'var(--text-secondary)',
-                          }}
-                        >
-                          Sin cargo del 3% de Padbol Match (cobro en sede).
-                        </span>
-                      ) : null}
+                  ) : metodoPagoEfectivo ? (
+                    <p
+                      style={{
+                        margin: '8px 0 0',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      Sin cargo del 3% de Padbol Match (cobro en sede).
                     </p>
-                  )}
+                  ) : null}
                 </div>
               )
             ) : null}
@@ -2347,126 +2355,114 @@ export default function ReservaForm() {
             </div>
           ) : null}
 
-          <p
-            style={{
-              margin: '0 0 16px',
-              fontSize: 11,
-              color: 'var(--text-secondary)',
-              lineHeight: 1.35,
-            }}
-          >
-            Cancelación gratis con +24hs de anticipación · Sin devolución con menos de 24hs
-          </p>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-              marginBottom: '18px',
-            }}
-          >
-            <button
-              type="button"
-              onClick={irAModificarReservaDesdeResumen}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                border: '2px solid #E11B22',
-                background: 'transparent',
-                color: '#E11B22',
-                fontWeight: 800,
-                fontSize: '15px',
-                cursor: 'pointer',
-                boxShadow: '0 0 0 1px rgba(225, 27, 34, 0.15)',
-              }}
-            >
-              Modificar reserva
-            </button>
-            <button
-              type="button"
-              onClick={() => setCancelReservaDesdeResumenOpen(true)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-card)',
-                color: 'var(--text-secondary)',
-                fontWeight: 700,
-                fontSize: '14px',
-                cursor: 'pointer',
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-
-          {error && <div className="error-message">{error}</div>}
-
-          {metodoPagoStripe && !stripeCuentaOk ? (
-            <div className="error-message" role="alert" style={{ marginBottom: '12px' }}>
-              Esta sede aún no terminó de conectar Stripe. Elige otra sede o contacta al club.
-            </div>
-          ) : null}
-
           {!reservaExtrasLoading && reservaExtrasDisponibles.length > 0 ? (
-            <div style={{ marginBottom: 20, maxWidth: 390 }}>
+            <div style={{ marginBottom: 16, maxWidth: 390, width: '100%' }}>
               <h2
                 style={{
                   fontSize: 16,
                   fontWeight: 800,
-                  margin: '0 0 10px',
+                  margin: '0 0 12px',
                   color: 'var(--text-primary)',
+                  lineHeight: 1.3,
                 }}
               >
-                Mejorá tu experiencia
+                ¿Qué querés para el tercer tiempo? 🍕
               </h2>
-              <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                Opcional: sumá productos o servicios del club. El total se actualiza abajo.
-              </p>
-              <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 10 }}>
                 {reservaExtrasDisponibles.map((ex) => {
                   const id = Number(ex.id);
                   const qty = Math.min(10, Math.max(0, parseInt(String(reservaExtrasCantidad[id] ?? 0), 10) || 0));
                   const mon = ex.precio_moneda || sedeSeleccionada?.moneda || 'ARS';
                   const unit = Math.round(Number(ex.precio));
+                  const imgUrl = String(ex.imagen_url || '').trim();
+                  const btnQty = {
+                    height: 28,
+                    minWidth: 28,
+                    padding: '0 8px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-page)',
+                    fontSize: 16,
+                    fontWeight: 800,
+                    lineHeight: 1,
+                    cursor: 'pointer',
+                    color: 'var(--text-primary)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxSizing: 'border-box',
+                  };
                   return (
                     <div
                       key={ex.id}
                       style={{
                         border: '1px solid var(--border)',
-                        borderRadius: 14,
-                        padding: 14,
-                        background: 'var(--bg-page)',
+                        borderRadius: 10,
+                        padding: '10px 12px',
+                        background: 'var(--bg-card)',
                         maxWidth: 390,
+                        width: '100%',
                         boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
                       }}
                     >
-                      {ex.imagen_url ? (
-                        <img
-                          src={ex.imagen_url}
-                          alt=""
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'stretch',
+                          justifyContent: 'space-between',
+                          gap: 10,
+                          minHeight: 0,
+                          flex: '1 1 auto',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 2 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.25 }}>
+                            {ex.nombre}
+                          </div>
+                          {ex.descripcion ? (
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: 'var(--text-secondary)',
+                                lineHeight: 1.25,
+                                maxHeight: 28,
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {ex.descripcion}
+                            </div>
+                          ) : null}
+                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>
+                            {formatMoneyMain(unit, mon)} c/u
+                          </div>
+                        </div>
+                        <div
                           style={{
-                            width: '100%',
-                            maxHeight: 140,
-                            objectFit: 'cover',
-                            borderRadius: 10,
-                            marginBottom: 10,
+                            width: 64,
+                            height: 64,
+                            flexShrink: 0,
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                            background: 'var(--bg-page)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid var(--border)',
+                            boxSizing: 'border-box',
                           }}
-                        />
-                      ) : null}
-                      <div style={{ fontWeight: 900, fontSize: 16 }}>{ex.nombre}</div>
-                      {ex.descripcion ? (
-                        <p style={{ margin: '6px 0 10px', fontSize: 13, color: 'var(--text-secondary)' }}>
-                          {ex.descripcion}
-                        </p>
-                      ) : null}
-                      <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>
-                        {mon} {unit.toLocaleString('es-AR')} c/u
+                        >
+                          {imgUrl ? (
+                            <img src={imgUrl} alt="" style={{ width: 64, height: 64, objectFit: 'cover', display: 'block' }} />
+                          ) : (
+                            <TablerPackageExtraPlaceholder size={30} />
+                          )}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start', height: 28 }}>
                         <button
                           type="button"
                           aria-label="Quitar una unidad"
@@ -2478,20 +2474,16 @@ export default function ReservaForm() {
                             }))
                           }
                           style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 10,
-                            border: '1px solid var(--border)',
-                            background: 'var(--bg-card)',
-                            fontSize: 20,
-                            fontWeight: 900,
+                            ...btnQty,
                             cursor: qty <= 0 ? 'not-allowed' : 'pointer',
-                            color: 'var(--text-primary)',
+                            opacity: qty <= 0 ? 0.45 : 1,
                           }}
                         >
                           −
                         </button>
-                        <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 900, fontSize: 17 }}>{qty}</span>
+                        <span style={{ minWidth: 22, textAlign: 'center', fontWeight: 800, fontSize: 14, color: 'var(--text-primary)' }}>
+                          {qty}
+                        </span>
                         <button
                           type="button"
                           aria-label="Agregar una unidad"
@@ -2503,15 +2495,9 @@ export default function ReservaForm() {
                             }))
                           }
                           style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 10,
-                            border: '1px solid var(--border)',
-                            background: 'var(--bg-card)',
-                            fontSize: 20,
-                            fontWeight: 900,
+                            ...btnQty,
                             cursor: qty >= 10 ? 'not-allowed' : 'pointer',
-                            color: 'var(--text-primary)',
+                            opacity: qty >= 10 ? 0.45 : 1,
                           }}
                         >
                           +
@@ -2521,23 +2507,33 @@ export default function ReservaForm() {
                   );
                 })}
               </div>
-              {reservaExtrasSubtotal > 0 ? (
-                <p
-                  style={{
-                    margin: '14px 0 0',
-                    fontSize: 16,
-                    fontWeight: 800,
-                    color: 'var(--accent)',
-                  }}
-                >
-                  Total:{' '}
-                  {metodoPagoStripe
-                    ? formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)
-                    : formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
-                </p>
-              ) : null}
             </div>
           ) : null}
+
+          {precioTurnoResumen > 0 ? (
+            <p
+              style={{
+                margin: '0 0 16px',
+                fontSize: 18,
+                fontWeight: 800,
+                color: 'var(--accent)',
+                lineHeight: 1.3,
+              }}
+            >
+              <strong>Total:</strong>{' '}
+              {metodoPagoStripe
+                ? formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)
+                : formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
+            </p>
+          ) : null}
+
+          {metodoPagoStripe && !stripeCuentaOk ? (
+            <div className="error-message" role="alert" style={{ marginBottom: '12px' }}>
+              Esta sede aún no terminó de conectar Stripe. Elige otra sede o contacta al club.
+            </div>
+          ) : null}
+
+          {error && <div className="error-message">{error}</div>}
 
           {metodoPagoStripe ? (
             <ReservaStripeSection
@@ -2591,6 +2587,68 @@ export default function ReservaForm() {
               {mpLoading ? 'Procesando...' : metodoPagoEfectivo ? 'Confirmar reserva (pago en sede)' : 'Pagar con Mercado Pago'}
             </button>
           )}
+
+          <p
+            style={{
+              margin: '0 0 14px',
+              fontSize: 11,
+              color: 'var(--text-secondary)',
+              lineHeight: 1.35,
+              textAlign: 'center',
+            }}
+          >
+            Cancelación gratis con +24hs de anticipación · Sin devolución con menos de 24hs
+          </p>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '10px 18px',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: '4px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={irAModificarReservaDesdeResumen}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                fontFamily: 'inherit',
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'var(--text-secondary)',
+                textDecoration: 'underline',
+                textUnderlineOffset: 2,
+                cursor: 'pointer',
+              }}
+            >
+              Modificar reserva
+            </button>
+            <button
+              type="button"
+              onClick={() => setCancelReservaDesdeResumenOpen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                fontFamily: 'inherit',
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'var(--text-secondary)',
+                textDecoration: 'underline',
+                textUnderlineOffset: 2,
+                cursor: 'pointer',
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
         </div>
         {reservaStripeExitoOpen ? (
