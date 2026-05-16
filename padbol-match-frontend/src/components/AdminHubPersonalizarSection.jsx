@@ -3,7 +3,11 @@ import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
-import { dedupeHubDeporteConfigRows, pickHubDeporteRow } from '../utils/hubDeporteConfig';
+import {
+  dedupeHubDeporteConfigRows,
+  mergeHubDeporteRowIntoList,
+  pickHubDeporteRow,
+} from '../utils/hubDeporteConfig';
 
 const cardWrap = {
   marginBottom: '20px',
@@ -248,13 +252,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Error al guardar');
       const normalized = normalizeHubDeporteRowPayload(data, dep, cardKey);
-      setDeporteRows((prev) => {
-        const others = prev.filter(
-          (r) =>
-            String(r.deporte || '').toLowerCase() !== dep || String(r.card_key || '').trim() !== cardKey
-        );
-        return dedupeHubDeporteConfigRows([...others, normalized]);
-      });
+      setDeporteRows((prev) => mergeHubDeporteRowIntoList(prev, normalized));
       setDeporteMsg('Guardado correctamente.');
       window.setTimeout(() => setDeporteMsg(''), 2500);
     } catch (e) {
@@ -269,11 +267,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     fileRef.current?.click();
   };
 
-  const clickCambiarFotoDeporte = (cardKey) => {
-    uploadDeporteTargetRef.current = {
-      deporte: String(sportSelRef.current || '').trim().toLowerCase(),
-      cardKey,
-    };
+  const clickCambiarFotoDeporte = (cardKey, deporteOverride) => {
+    const dep = String(deporteOverride ?? sportSel ?? '').trim().toLowerCase();
+    if (!dep) {
+      setDeporteMsg('Elegí un deporte en el selector.');
+      return;
+    }
+    uploadDeporteTargetRef.current = { deporte: dep, cardKey: String(cardKey || '').trim() };
     fileRefDeporte.current?.click();
   };
 
@@ -318,31 +318,23 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       setDeporteMsg('Iniciá sesión de nuevo para subir imágenes.');
       return;
     }
-    if (!target?.deporte || !target?.cardKey) {
+    if (!target) {
+      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
+      return;
+    }
+    const dep = String(target.deporte || '').trim().toLowerCase();
+    const ck = String(target.cardKey || '').trim();
+    if (!dep || !ck) {
       setDeporteMsg('Elegí de nuevo «Cambiar foto».');
       return;
     }
     if (!file) return;
-    setUploadingDeporteKey(draftKeyDeporte(target.deporte, target.cardKey));
+    setUploadingDeporteKey(draftKeyDeporte(dep, ck));
     setDeporteMsg('');
     try {
       const fd = new FormData();
-      /* Campos de texto primero: algunos stacks multipart no rellenan req.body si el archivo va antes. */
-      fd.append('deporte', target.deporte);
-      fd.append('card_key', target.cardKey);
       fd.append('foto', file);
-      const qs = new URLSearchParams({
-        deporte: target.deporte,
-        card_key: target.cardKey,
-      });
-      // eslint-disable-next-line no-console
-      console.log('[AdminHubPersonalizar] hub-deporte-config/foto upload', {
-        deporte: target.deporte,
-        card_key: target.cardKey,
-        formDataDeporte: fd.get('deporte'),
-        formDataCardKey: fd.get('card_key'),
-        queryString: qs.toString(),
-      });
+      const qs = new URLSearchParams({ deporte: dep, card_key: ck });
       const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config/foto?${qs}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -350,16 +342,15 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
-      const normalized = normalizeHubDeporteRowPayload(data, target.deporte, target.cardKey);
-      setDeporteRows((prev) => {
-        const dep = String(target.deporte || '').trim().toLowerCase();
-        const ck = String(target.cardKey || '').trim();
-        const others = prev.filter(
-          (r) =>
-            String(r.deporte || '').toLowerCase() !== dep || String(r.card_key || '').trim() !== ck
-        );
-        return dedupeHubDeporteConfigRows([...others, normalized]);
-      });
+      const normalized = normalizeHubDeporteRowPayload(data, dep, ck);
+      if (
+        String(data?.deporte || '').trim().toLowerCase() !== dep ||
+        String(data?.card_key || '').trim() !== ck
+      ) {
+        throw new Error('El servidor guardó la foto en otro deporte/card. Revisá la migración UNIQUE (deporte, card_key).');
+      }
+      setDeporteRows((prev) => mergeHubDeporteRowIntoList(prev, normalized));
+      await refreshDeporteRowsSilently();
       setDeporteMsg('Foto actualizada.');
       window.setTimeout(() => setDeporteMsg(''), 2500);
     } catch (err) {
@@ -657,7 +648,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                   <button
                     type="button"
                     disabled={uploading || !accessToken}
-                    onClick={() => clickCambiarFotoDeporte(cardKey)}
+                    onClick={() => clickCambiarFotoDeporte(cardKey, sportSel)}
                     style={{
                       padding: '8px 14px',
                       borderRadius: '8px',

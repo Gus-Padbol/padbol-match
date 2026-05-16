@@ -35,6 +35,23 @@ export function dedupeHubDeporteConfigRows(rows) {
  * @param {string} cardKey
  * @returns {Record<string, unknown>|null}
  */
+/**
+ * Reemplaza o agrega una fila en el array local (solo par deporte+card_key).
+ * @param {unknown[]} prev
+ * @param {Record<string, unknown>} row
+ */
+export function mergeHubDeporteRowIntoList(prev, row) {
+  if (!row || typeof row !== 'object') return dedupeHubDeporteConfigRows(prev);
+  const dep = String(row.deporte || '').trim().toLowerCase();
+  const ck = String(row.card_key || '').trim();
+  if (!dep || !ck) return dedupeHubDeporteConfigRows(prev);
+  const list = Array.isArray(prev) ? prev : [];
+  const others = list.filter(
+    (r) => String(r?.deporte || '').trim().toLowerCase() !== dep || String(r?.card_key || '').trim() !== ck,
+  );
+  return dedupeHubDeporteConfigRows([...others, row]);
+}
+
 export function pickHubDeporteRow(rows, deporteKey, cardKey) {
   if (!deporteKey || !Array.isArray(rows)) return null;
   const d = String(deporteKey).trim().toLowerCase();

@@ -1787,8 +1787,9 @@ app.post('/api/hub-deporte-config/foto', uploadHubFoto.single('foto'), async (re
       card_key: cardKeyQuery,
       queryKeys: req.query && typeof req.query === 'object' ? Object.keys(req.query) : [],
     });
-    const deporteField = deporteBody ?? deporteQuery;
-    const cardKeyField = cardKeyBody ?? cardKeyQuery;
+    /* Query string primero: con multipart, req.body puede venir vacío o con valores erróneos. */
+    const deporteField = deporteQuery ?? deporteBody;
+    const cardKeyField = cardKeyQuery ?? cardKeyBody;
     const chk = assertHubDeporteParams(deporteField, cardKeyField);
     if (!chk.ok) {
       console.warn('POST /api/hub-deporte-config/foto: body/query inválido o incompleto (¿orden multipart?)', {
