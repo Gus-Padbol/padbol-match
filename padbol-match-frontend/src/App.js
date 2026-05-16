@@ -29,6 +29,8 @@ import Competir from './pages/Competir';
 import PartidosAbiertos from './pages/PartidosAbiertos';
 import NotificacionesPage from './pages/NotificacionesPage';
 import ArmarPartido from './pages/ArmarPartido';
+import ClasesPage from './pages/ClasesPage';
+import ClaseDetallePage from './pages/ClaseDetallePage';
 import useUserRole from './hooks/useUserRole';
 import EquipoVista from './pages/EquipoVista';
 import UserHome from './pages/UserHome';
@@ -325,6 +327,8 @@ function AppRoutes() {
         <Route path="/jugar" element={<Jugar />} />
         <Route path="/jugar/buscar" element={<PartidosAbiertos />} />
         <Route path="/jugar/armar" element={<ArmarPartido />} />
+        <Route path="/clases" element={<ClasesPage />} />
+        <Route path="/clases/:id" element={<ClaseDetallePage />} />
         <Route path="/competir" element={<Competir />} />
         <Route path="/partidos-abiertos" element={<PartidosAbiertos />} />
         <Route path="/notificaciones" element={<NotificacionesPage />} />

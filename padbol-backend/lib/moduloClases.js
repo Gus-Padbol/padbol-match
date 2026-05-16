@@ -194,7 +194,9 @@ export function registerModuloClasesRoutes(app, deps) {
       if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
 
       const horarios = await fetchHorariosClase(claseId);
+      const cupoMax = Math.max(1, parseInt(String(clase.cupo_maximo), 10) || 1);
       let inscriptos = null;
+      let cuposPorHorario = null;
       if (fecha) {
         const { data: ins, error: insErr } = await supabase
           .from('inscripciones_clases')
@@ -206,12 +208,31 @@ export function registerModuloClasesRoutes(app, deps) {
           ESTADOS_INSCRIPCION_CUENTAN_CUPO.has(String(r.estado || '').toLowerCase()),
         );
         inscriptos = activas.length;
+        const byHora = {};
+        for (const r of activas) {
+          const h = normalizeHoraClase(r.hora_inicio);
+          if (h) byHora[h] = (byHora[h] || 0) + 1;
+        }
+        const dia = diaSemanaFromFechaYmd(fecha);
+        cuposPorHorario = (horarios || [])
+          .filter((h) => Number(h.dia_semana) === dia)
+          .map((h) => {
+            const hi = normalizeHoraClase(h.hora_inicio);
+            const ins = byHora[hi] || 0;
+            return {
+              hora_inicio: hi,
+              hora_fin: normalizeHoraClase(h.hora_fin),
+              inscriptos: ins,
+              cupos_restantes: Math.max(0, cupoMax - ins),
+            };
+          });
       }
 
       const { profesores, ...rest } = clase;
       res.json({
         ...mapClaseListItem({ ...rest, profesores }, horarios),
         inscriptos,
+        cupos_por_horario: cuposPorHorario,
         fecha_consultada: fecha,
       });
     } catch (err) {

@@ -21,6 +21,7 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import { useHubJugarSponsorSlots } from '../hooks/useHubJugarSponsorSlots';
 import useUserRole from '../hooks/useUserRole';
+import { fetchProfesores } from '../utils/clasesApi';
 import { useHubPromoSedeActiva } from '../hooks/useHubPromoSedeActiva';
 import './Jugar.css';
 
@@ -37,6 +38,16 @@ const JUGAR_OPCIONES_BASE = [
     path: '/partidos-abiertos',
     hubKey: 'buscar_partido',
   },
+];
+
+const TOMAR_CLASE_OPCION = {
+  title: 'Tomar una clase',
+  body: 'Entrená con un profesor de tu sede.',
+  path: '/clases',
+  hubKey: 'tomar_clase',
+};
+
+const JUGAR_OPCIONES_TAIL = [
   {
     title: 'Armar partido',
     body: 'Quiero crear un partido y sumar jugadores.',
@@ -60,6 +71,7 @@ export default function Jugar() {
   const { session, userProfile } = useAuth();
 
   const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterPersisted());
+  const [hayProfesores, setHayProfesores] = useState(false);
 
   const { getSlot, tickerItems } = useHubJugarSponsorSlots();
 
@@ -69,20 +81,6 @@ export default function Jugar() {
     setDeporteElegido(d);
     writeHubDeporteFilterToSession(d);
   }, [searchParams]);
-
-  const opciones = useMemo(
-    () =>
-      JUGAR_OPCIONES_BASE.map((op) => {
-        const cardKey = String(op.hubKey || '').trim();
-        const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, cardKey) : '';
-        const desdeDeporte = porDeporte && String(porDeporte).trim() ? String(porDeporte).trim() : '';
-        const desdeFallback = hubCardPhotoFallback(cardKey);
-        const fb = desdeFallback && String(desdeFallback).trim() ? String(desdeFallback).trim() : '';
-        const image = desdeDeporte || fb || HUB_CARD_UNSPLASH_GENERIC.reservar || '';
-        return { ...op, image };
-      }),
-    [deporteElegido],
-  );
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -103,6 +101,41 @@ export default function Jugar() {
   });
 
   const hubSedeNum = hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null;
+
+  useEffect(() => {
+    if (hubSedeNum == null) {
+      setHayProfesores(false);
+      return undefined;
+    }
+    const ac = new AbortController();
+    fetchProfesores({ sedeId: hubSedeNum, signal: ac.signal })
+      .then((list) => setHayProfesores(Array.isArray(list) && list.length > 0))
+      .catch(() => setHayProfesores(false));
+    return () => ac.abort();
+  }, [hubSedeNum]);
+
+  const jugarOpcionesLista = useMemo(() => {
+    const items = [...JUGAR_OPCIONES_BASE];
+    if (hayProfesores) items.push(TOMAR_CLASE_OPCION);
+    items.push(...JUGAR_OPCIONES_TAIL);
+    return items;
+  }, [hayProfesores]);
+
+  const opciones = useMemo(
+    () =>
+      jugarOpcionesLista.map((op) => {
+        const cardKey = String(op.hubKey || '').trim();
+        const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, cardKey) : '';
+        const desdeDeporte = porDeporte && String(porDeporte).trim() ? String(porDeporte).trim() : '';
+        const desdeFallback = hubCardPhotoFallback(cardKey);
+        const fb = desdeFallback && String(desdeFallback).trim() ? String(desdeFallback).trim() : '';
+        const generic = HUB_CARD_UNSPLASH_GENERIC[cardKey] || HUB_CARD_UNSPLASH_GENERIC.reservar || '';
+        const image = desdeDeporte || fb || generic;
+        return { ...op, image };
+      }),
+    [deporteElegido, jugarOpcionesLista],
+  );
+
   const { row: hubPromoRow } = useHubPromoSedeActiva(hubSedeNum);
 
   const openPromoDestino = useCallback(() => {

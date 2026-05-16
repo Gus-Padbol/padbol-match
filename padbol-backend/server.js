@@ -13966,8 +13966,6 @@ registerModuloClasesRoutes(app, {
   adminListScopeFromRequest,
   assertUsuarioPuedeAdministrarSede,
   assertSuperAdminReq,
-  isSuperAdminApi,
-  fetchUserRoleRow,
   canchasConNumeroReserva,
   assertReservaSinSolapeBackend,
 });

@@ -3,13 +3,14 @@
  * Podés sustituir por rutas locales en `public/assets/fotos/` si preferís.
  *
  * Si falta una entrada, {@link hubCardPhotoFallback} usa {@link HUB_CARD_UNSPLASH_GENERIC}.
- * Claves de card: reservar | buscar_partido | torneos | armar_partido.
+ * Claves de card: reservar | buscar_partido | tomar_clase | torneos | armar_partido.
  */
 
 /** Fallback genérico (comportamiento histórico del hub cuando no hay CMS ni deporte). */
 export const HUB_CARD_UNSPLASH_GENERIC = {
   reservar: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80',
   buscar_partido: 'https://images.unsplash.com/photo-1614632537197-38a17061c2bd?w=800&q=80',
+  tomar_clase: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80',
   torneos: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80',
   armar_partido: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=800&q=80',
 };
