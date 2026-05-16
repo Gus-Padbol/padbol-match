@@ -160,6 +160,7 @@ export default function LandingPage() {
             maxWidth: '100%',
             objectFit: 'contain',
             marginBottom: 20,
+            filter: 'drop-shadow(0 0 18px rgba(255, 255, 255, 0.12))',
           }}
         />
       </header>
