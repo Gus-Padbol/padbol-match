@@ -2174,7 +2174,14 @@ app.get('/api/sedes/:id', async (req, res) => {
     } catch (e) {
       console.warn('GET /api/sedes/:id estadisticas_publicas:', e?.message || e);
     }
-    res.json({ ...out, estadisticas_publicas });
+    let duraciones_oferta = [];
+    try {
+      const sedePrecios = await fetchSedePreciosResolucionRow(supabase, id);
+      duraciones_oferta = await resolveDuracionesOfertaPublico(supabase, id, sedePrecios || sede);
+    } catch (e) {
+      console.warn('GET /api/sedes/:id duraciones_oferta:', e?.message || e);
+    }
+    res.json({ ...out, estadisticas_publicas, duraciones_oferta });
   } catch (err) {
     console.error('❌ Error GET /api/sedes/:id:', err.message);
     res.status(500).json({ error: err.message });
@@ -9684,6 +9691,39 @@ app.post('/api/crear-preferencia', async (req, res) => {
           }
         } else if (extrasSum > 0) {
           return res.status(400).json({ error: 'No se pudo calcular el precio del turno para incluir extras' });
+        }
+      }
+    } else if (reservaData && typeof reservaData === 'object' && tipoEff !== 'torneo_inscripcion' && tipoEff !== 'partido_abierto') {
+      const rd = reservaData;
+      const sidR = Number(
+        rd.sede_id != null && rd.sede_id !== '' ? rd.sede_id : Number.isFinite(sidNum) && sidNum > 0 ? sidNum : 0,
+      );
+      const durR = parseInt(String(rd.duracion ?? ''), 10);
+      const extrasRaw = rd.extras ?? b.extras;
+      const hasExtras =
+        Array.isArray(extrasRaw) && extrasRaw.some((x) => x && Number(parseInt(String(x.cantidad), 10) || 0) > 0);
+      if (hasExtras && Number.isFinite(sidR) && sidR > 0) {
+        let extrasSum = 0;
+        try {
+          const ex = await resolveExtrasLinesParaSede(supabase, sidR, extrasRaw);
+          extrasSum = ex.sum;
+          if (ex.lines.length) rd.extras = ex.lines;
+          else delete rd.extras;
+        } catch (e) {
+          if (e.status) return res.status(e.status).json({ error: e.message || String(e) });
+          throw e;
+        }
+        if (Number.isFinite(durR) && durR > 0) {
+          const baseDb = await precioBaseReservaSedeDuracion(supabase, sidR, durR);
+          if (baseDb != null) {
+            const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
+            if (Number.isFinite(totalSrv) && totalSrv >= 0) {
+              unitPrice = totalSrv;
+              rd.precio = totalSrv;
+            }
+          } else if (extrasSum > 0) {
+            return res.status(400).json({ error: 'No se pudo calcular el precio del turno para incluir extras' });
+          }
         }
       }
     }

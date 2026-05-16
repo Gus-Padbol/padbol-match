@@ -19,8 +19,25 @@ export function parsePrecioDuracionField(raw) {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-/** Precio numérico de la sede para una duración (sin franjas horarias). */
-export function precioSedeParaDuracionMin(sede, duracionMin) {
+/**
+ * Precio desde `duraciones_oferta` (GET /api/sedes/:id) o alias `duraciones`: filas tipo sedes_duraciones.
+ */
+export function precioDesdeDuracionesOfertaSede(sede, duracionMin) {
+  const arr =
+    (Array.isArray(sede?.duraciones_oferta) && sede.duraciones_oferta.length
+      ? sede.duraciones_oferta
+      : null) ||
+    (Array.isArray(sede?.duraciones) && sede.duraciones.length ? sede.duraciones : null);
+  if (!arr) return null;
+  const d = parseInt(String(duracionMin), 10);
+  if (!Number.isFinite(d)) return null;
+  const hit = arr.find((r) => Number(r?.duracion_minutos) === d);
+  if (!hit || hit.precio == null) return null;
+  return parsePrecioDuracionField(hit.precio);
+}
+
+/** Columnas legacy en `sedes` (precio_60min / 90 / 120, precio_turno, precio_por_reserva). */
+function precioSedeLegacyColumns(sede, duracionMin) {
   const d = parseInt(String(duracionMin), 10);
   const col = PRECIO_COL[d];
   if (!col) return null;
@@ -33,6 +50,11 @@ export function precioSedeParaDuracionMin(sede, duracionMin) {
     if (ppr != null) return ppr;
   }
   return null;
+}
+
+/** Precio numérico de la sede para una duración (sin franjas): sedes_duraciones vía API primero, luego columnas sede. */
+export function precioSedeParaDuracionMin(sede, duracionMin) {
+  return precioDesdeDuracionesOfertaSede(sede, duracionMin) ?? precioSedeLegacyColumns(sede, duracionMin);
 }
 
 /** Duraciones que tienen precio cargado (ofrecidas en reservas). */
@@ -55,12 +77,16 @@ export function duracionesReservaDisponibles(sede) {
 export function precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjasFn, precioBaseTabla = null) {
   const tienePrecioTablaExplicito =
     precioBaseTabla != null && Number.isFinite(Number(precioBaseTabla)) && Number(precioBaseTabla) >= 0;
+  const fijoDuraciones = !tienePrecioTablaExplicito ? precioDesdeDuracionesOfertaSede(sede, duracionMin) : null;
   const baseDuracion = tienePrecioTablaExplicito
     ? Number(precioBaseTabla)
-    : precioSedeParaDuracionMin(sede, duracionMin);
+    : fijoDuraciones != null
+      ? fijoDuraciones
+      : precioSedeLegacyColumns(sede, duracionMin);
   const base = baseDuracion != null ? baseDuracion : 0;
   if (!hora || !sede) return base;
   if (tienePrecioTablaExplicito) return base;
+  if (fijoDuraciones != null) return base;
   if (typeof precioDesdeFranjasFn === 'function') {
     const desdeFranjas = precioDesdeFranjasFn(sede, hora, fecha);
     if (desdeFranjas != null) return desdeFranjas;

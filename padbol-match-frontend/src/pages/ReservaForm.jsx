@@ -61,6 +61,24 @@ function getPrecio(sede, hora, fecha, duracionMin) {
   return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas);
 }
 
+/** Igual que ArmarPartido paso 3: líneas para `extras` en crear-preferencia / reservaData. */
+function buildReservaExtrasPayload(sedeExtrasDisponibles, cantidadMap) {
+  if (!Array.isArray(sedeExtrasDisponibles)) return [];
+  return sedeExtrasDisponibles
+    .map((ex) => {
+      const id = Number(ex.id);
+      const c = Math.min(10, Math.max(0, parseInt(String(cantidadMap[id] ?? 0), 10) || 0));
+      if (c <= 0) return null;
+      return {
+        id,
+        nombre: String(ex.nombre || '').trim(),
+        cantidad: c,
+        precio_unitario: Math.round(Number(ex.precio)),
+      };
+    })
+    .filter(Boolean);
+}
+
 /** Texto visible en el selector de país; el `value` sigue siendo el string exacto de la sede. */
 function etiquetaPaisReservaSelector(paisRaw) {
   const p = String(paisRaw || '').trim();
@@ -756,6 +774,80 @@ export default function ReservaForm() {
   );
 
   const duracionSeleccionadaMin = duracionReservaSeleccionada(formData, sedeSeleccionada);
+
+  const [reservaExtrasDisponibles, setReservaExtrasDisponibles] = useState([]);
+  const [reservaExtrasLoading, setReservaExtrasLoading] = useState(false);
+  const [reservaExtrasCantidad, setReservaExtrasCantidad] = useState({});
+
+  useEffect(() => {
+    if (pantalla !== 4 || !sedeSeleccionada?.id) {
+      if (pantalla !== 4) {
+        setReservaExtrasDisponibles([]);
+        setReservaExtrasLoading(false);
+      }
+      return;
+    }
+    let cancelled = false;
+    setReservaExtrasLoading(true);
+    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(sedeSeleccionada.id))}/extras`))
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        const list = Array.isArray(d.extras) ? d.extras : [];
+        setReservaExtrasDisponibles(list);
+        setReservaExtrasCantidad((prev) => {
+          const next = {};
+          for (const ex of list) {
+            const id = Number(ex.id);
+            if (!Number.isFinite(id)) continue;
+            const prevC = parseInt(String(prev[id]), 10);
+            next[id] = Number.isFinite(prevC) ? Math.min(10, Math.max(0, prevC)) : 0;
+          }
+          return next;
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setReservaExtrasDisponibles([]);
+      })
+      .finally(() => {
+        if (!cancelled) setReservaExtrasLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pantalla, sedeSeleccionada?.id]);
+
+  const reservaExtrasSubtotal = useMemo(() => {
+    let s = 0;
+    for (const ex of reservaExtrasDisponibles) {
+      const id = Number(ex.id);
+      const n = Math.min(10, Math.max(0, parseInt(String(reservaExtrasCantidad[id] ?? 0), 10) || 0));
+      const p = Math.round(Number(ex.precio));
+      if (Number.isFinite(id) && Number.isFinite(p) && p >= 0 && n > 0) s += p * n;
+    }
+    return s;
+  }, [reservaExtrasDisponibles, reservaExtrasCantidad]);
+
+  const precioReservaTurnoBase = useMemo(() => {
+    if (!sedeSeleccionada) return 0;
+    const p = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
+    return Number.isFinite(Number(p)) ? Number(p) : 0;
+  }, [sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin]);
+
+  const reservaCargoPlataforma = useMemo(
+    () => Math.round(precioReservaTurnoBase * 0.03),
+    [precioReservaTurnoBase],
+  );
+
+  const reservaTotalPagarConCargoYExtras = useMemo(
+    () => precioReservaTurnoBase + reservaCargoPlataforma + reservaExtrasSubtotal,
+    [precioReservaTurnoBase, reservaCargoPlataforma, reservaExtrasSubtotal],
+  );
+
+  const reservaExtrasPayload = useMemo(
+    () => buildReservaExtrasPayload(reservaExtrasDisponibles, reservaExtrasCantidad),
+    [reservaExtrasDisponibles, reservaExtrasCantidad],
+  );
 
   useEffect(() => {
     if (!sedeSeleccionada || duracionesOfrecidas.length === 0) return;
@@ -1575,9 +1667,15 @@ export default function ReservaForm() {
     setMpLoading(true);
     setError('');
 
-    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
     const creditoAplicado = 0;
-    const precioFinal = Math.max(0, precio - creditoAplicado);
+    const extrasPayload = reservaExtrasPayload;
+    const precioTurno = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
+    const precioTurnoNum = Number.isFinite(Number(precioTurno)) ? Number(precioTurno) : 0;
+    const precioConCargoYExtras =
+      extrasPayload.length > 0
+        ? precioTurnoNum + Math.round(precioTurnoNum * 0.03) + reservaExtrasSubtotal
+        : precioTurnoNum;
+    const precioFinal = Math.max(0, precioConCargoYExtras - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
       sede_id: sedeSeleccionada.id,
@@ -1589,11 +1687,12 @@ export default function ReservaForm() {
       email: ccEff.email,
       whatsapp: whatsappCompleto,
       nivel: 'Principiante',
-      precio,
+      precio: precioFinal,
       moneda: sedeSeleccionada.moneda || 'ARS',
       creditUsed: creditoAplicado,
       duracion: duracionReservaMin,
       estado: 'confirmada',
+      ...(extrasPayload.length ? { extras: extrasPayload } : {}),
     };
 
     try {
@@ -1606,6 +1705,7 @@ export default function ReservaForm() {
           moneda: sedeSeleccionada.moneda || 'ARS',
           sedeNombre: sedeSeleccionada.nombre,
           sedeId: sedeSeleccionada.id,
+          extras: extrasPayload.length ? extrasPayload : undefined,
           reservaData,
         }),
       });
@@ -2031,16 +2131,19 @@ export default function ReservaForm() {
 
   // PANTALLA 4: Resumen + pago
   if (pantalla === 4) {
-    const precio = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const creditoAplicado = 0;
-    const precioFinal = Math.max(0, precio - creditoAplicado);
+    const precioTurnoResumen = precioReservaTurnoBase;
+    const totalMercadoPagoSinStripe =
+      reservaExtrasPayload.length > 0 ? reservaTotalPagarConCargoYExtras : precioTurnoResumen;
+    const stripeMontoMainConExtras = Math.max(0, precioTurnoResumen + reservaExtrasSubtotal - creditoAplicado);
     const metodoPagoStripe = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'stripe';
     const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
     const stripeCuentaOk = String(sedeSeleccionada?.stripe_account_id || '').trim().startsWith('acct_');
-    const montoBaseMinor = amountMainToStripeMinor(precioFinal, moneda);
+    const montoBaseMinor = amountMainToStripeMinor(stripeMontoMainConExtras, moneda);
     const cargoServicioMinor = Math.round(montoBaseMinor * 0.03);
     const totalMinor = montoBaseMinor + cargoServicioMinor;
+    const precioPayloadStripe = Number(stripeMinorToMain(totalMinor, moneda));
     const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
     const muestraInputWhatsappResumen = !perfilTelefonoValido({
       whatsapp: waPerfilResumen,
@@ -2080,7 +2183,7 @@ export default function ReservaForm() {
           }}
         >
         <div className="reserva-card">
-          <h1 style={{ margin: 0, marginBottom: '20px' }}>⚽ Resumen de reserva</h1>
+          <h1 style={{ margin: 0, marginBottom: '20px' }}>Resumen de reserva</h1>
 
           <div
             className="reserva-resumen-datos"
@@ -2102,16 +2205,16 @@ export default function ReservaForm() {
               </span>
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>📅 Fecha:</strong> {formData.fecha || '—'}
+              <strong>Fecha:</strong> {formData.fecha || '—'}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>🕐 Hora:</strong> {formData.hora || '—'}
+              <strong>Hora:</strong> {formData.hora || '—'}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>⏱️ Duración:</strong> {duracionReservaMinP4} min
+              <strong>Duración:</strong> {duracionReservaMinP4} min
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>🏟️ Cancha:</strong>{' '}
+              <strong>Cancha:</strong>{' '}
               {(() => {
                 const id = formData.cancha != null && String(formData.cancha).trim() !== '' ? String(formData.cancha) : '';
                 if (!id) return '—';
@@ -2124,18 +2227,22 @@ export default function ReservaForm() {
               })()}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>👤 Jugador:</strong> {currentCliente?.nombre || '—'}
+              <strong>Jugador:</strong> {currentCliente?.nombre || '—'}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>📧 Email:</strong> {currentCliente?.email || '—'}
+              <strong>Email:</strong> {currentCliente?.email || '—'}
             </p>
-            {precio ? (
+            {precioTurnoResumen > 0 ? (
               metodoPagoStripe ? (
                 <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
                   <p style={{ margin: '0 0 4px' }}>
-                    <strong>Reserva:</strong>{' '}
-                    {formatMoneyMain(stripeMinorToMain(montoBaseMinor, moneda), moneda)}
+                    <strong>Turno:</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
                   </p>
+                  {reservaExtrasSubtotal > 0 ? (
+                    <p style={{ margin: '0 0 4px' }}>
+                      <strong>Extras:</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
+                    </p>
+                  ) : null}
                   <p style={{ margin: '0 0 4px' }}>
                     <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
                     {formatMoneyMain(stripeMinorToMain(cargoServicioMinor, moneda), moneda)}
@@ -2145,21 +2252,49 @@ export default function ReservaForm() {
                   </p>
                 </div>
               ) : (
-                <p style={{ margin: '12px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
-                  💰 {Number(precio).toLocaleString('es-AR')} {moneda}
-                  {metodoPagoEfectivo ? (
-                    <span style={{ display: 'block', marginTop: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                      Sin cargo del 3% de Padbol Match (cobro en sede).
-                    </span>
-                  ) : null}
-                </p>
+                <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
+                  <p style={{ margin: '0 0 4px' }}>
+                    <strong>Turno:</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
+                  </p>
+                  {reservaExtrasSubtotal > 0 ? (
+                    <>
+                      <p style={{ margin: '0 0 4px' }}>
+                        <strong>Extras:</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
+                      </p>
+                      <p style={{ margin: '0 0 4px' }}>
+                        <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
+                        {formatMoneyMain(reservaCargoPlataforma, moneda)}
+                      </p>
+                      <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
+                        <strong>Total:</strong> {formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
+                      </p>
+                    </>
+                  ) : (
+                    <p style={{ margin: '8px 0 0', fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>
+                      {formatMoneyMain(precioTurnoResumen, moneda)}
+                      {metodoPagoEfectivo ? (
+                        <span
+                          style={{
+                            display: 'block',
+                            marginTop: '8px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          Sin cargo del 3% de Padbol Match (cobro en sede).
+                        </span>
+                      ) : null}
+                    </p>
+                  )}
+                </div>
               )
             ) : null}
           </div>
 
           {muestraInputWhatsappResumen && (
             <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label>💬 WhatsApp para confirmación *</label>
+              <label>WhatsApp para confirmación *</label>
               <div className="phone-field">
                 <select
                   value={formData.codigoPais}
@@ -2212,22 +2347,16 @@ export default function ReservaForm() {
             </div>
           ) : null}
 
-          <div
+          <p
             style={{
               margin: '0 0 16px',
-              padding: '12px 14px',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: '8px',
-              fontSize: '13px',
-              color: 'var(--text-primary)',
-              lineHeight: 1.6,
+              fontSize: 11,
+              color: 'var(--text-secondary)',
+              lineHeight: 1.35,
             }}
           >
-            <strong>📋 Política de cancelación</strong><br />
-            ✅ Más de 24hs de anticipación: crédito total<br />
-            ❌ Menos de 24hs de anticipación: sin devolución
-          </div>
+            Cancelación gratis con +24hs de anticipación · Sin devolución con menos de 24hs
+          </p>
 
           <div
             style={{
@@ -2282,6 +2411,134 @@ export default function ReservaForm() {
             </div>
           ) : null}
 
+          {!reservaExtrasLoading && reservaExtrasDisponibles.length > 0 ? (
+            <div style={{ marginBottom: 20, maxWidth: 390 }}>
+              <h2
+                style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  margin: '0 0 10px',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                Mejorá tu experiencia
+              </h2>
+              <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                Opcional: sumá productos o servicios del club. El total se actualiza abajo.
+              </p>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {reservaExtrasDisponibles.map((ex) => {
+                  const id = Number(ex.id);
+                  const qty = Math.min(10, Math.max(0, parseInt(String(reservaExtrasCantidad[id] ?? 0), 10) || 0));
+                  const mon = ex.precio_moneda || sedeSeleccionada?.moneda || 'ARS';
+                  const unit = Math.round(Number(ex.precio));
+                  return (
+                    <div
+                      key={ex.id}
+                      style={{
+                        border: '1px solid var(--border)',
+                        borderRadius: 14,
+                        padding: 14,
+                        background: 'var(--bg-page)',
+                        maxWidth: 390,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {ex.imagen_url ? (
+                        <img
+                          src={ex.imagen_url}
+                          alt=""
+                          style={{
+                            width: '100%',
+                            maxHeight: 140,
+                            objectFit: 'cover',
+                            borderRadius: 10,
+                            marginBottom: 10,
+                          }}
+                        />
+                      ) : null}
+                      <div style={{ fontWeight: 900, fontSize: 16 }}>{ex.nombre}</div>
+                      {ex.descripcion ? (
+                        <p style={{ margin: '6px 0 10px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                          {ex.descripcion}
+                        </p>
+                      ) : null}
+                      <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>
+                        {mon} {unit.toLocaleString('es-AR')} c/u
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <button
+                          type="button"
+                          aria-label="Quitar una unidad"
+                          disabled={qty <= 0}
+                          onClick={() =>
+                            setReservaExtrasCantidad((prev) => ({
+                              ...prev,
+                              [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
+                            }))
+                          }
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            border: '1px solid var(--border)',
+                            background: 'var(--bg-card)',
+                            fontSize: 20,
+                            fontWeight: 900,
+                            cursor: qty <= 0 ? 'not-allowed' : 'pointer',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          −
+                        </button>
+                        <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 900, fontSize: 17 }}>{qty}</span>
+                        <button
+                          type="button"
+                          aria-label="Agregar una unidad"
+                          disabled={qty >= 10}
+                          onClick={() =>
+                            setReservaExtrasCantidad((prev) => ({
+                              ...prev,
+                              [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
+                            }))
+                          }
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            border: '1px solid var(--border)',
+                            background: 'var(--bg-card)',
+                            fontSize: 20,
+                            fontWeight: 900,
+                            cursor: qty >= 10 ? 'not-allowed' : 'pointer',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {reservaExtrasSubtotal > 0 ? (
+                <p
+                  style={{
+                    margin: '14px 0 0',
+                    fontSize: 16,
+                    fontWeight: 800,
+                    color: 'var(--accent)',
+                  }}
+                >
+                  Total:{' '}
+                  {metodoPagoStripe
+                    ? formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)
+                    : formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {metodoPagoStripe ? (
             <ReservaStripeSection
               sedeId={sedeSeleccionada.id}
@@ -2297,8 +2554,9 @@ export default function ReservaForm() {
                 email: currentCliente?.email,
                 whatsapp: telefonoStripe.whatsappCompleto,
                 nivel: 'Principiante',
-                precio: precioFinal,
+                precio: precioPayloadStripe,
                 duracion: duracionReservaMinP4,
+                ...(reservaExtrasPayload.length ? { extras: reservaExtrasPayload } : {}),
               }}
               disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk}
               onPaid={() => {
