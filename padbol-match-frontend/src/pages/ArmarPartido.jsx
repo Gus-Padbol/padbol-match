@@ -655,6 +655,7 @@ export default function ArmarPartido() {
       setMsg('Elegí un horario disponible.');
       return;
     }
+    setForm((f) => ({ ...f, cancha: '' }));
     setStep(2);
   };
 
@@ -792,10 +793,12 @@ export default function ArmarPartido() {
   };
 
   const canchaLibreSeleccionada = useMemo(() => {
-    const n = parseInt(String(form.cancha), 10);
-    if (!Number.isFinite(n)) return false;
+    const n = Number(form.cancha);
+    if (!Number.isFinite(n) || n <= 0) return false;
     const row = dispCanchas.find((c) => Number(c.numero) === n);
-    return Boolean(row?.disponible);
+    const disp = row?.disponible;
+    const libre = disp === true || disp === 1 || disp === 'true';
+    return Boolean(row && libre);
   }, [form.cancha, dispCanchas]);
 
   return (
@@ -1163,7 +1166,7 @@ export default function ArmarPartido() {
           ) : null}
 
           {step === 2 ? (
-            <>
+            <div style={{ paddingTop: 22 }}>
               <h1 style={AP.title}>Canchas disponibles</h1>
               <p style={AP.body}>
                 {sede?.nombre} · {form.fecha} · {String(form.hora).split(' - ')[0]} · {form.duracion} min
@@ -1175,14 +1178,19 @@ export default function ArmarPartido() {
               ) : (
                 <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
                   {dispCanchas.map((c) => {
-                    const sel = Number(form.cancha) === Number(c.numero);
-                    const ok = c.disponible;
+                    const num = Number(c.numero);
+                    const sel = Number(form.cancha) === num;
+                    const disp = c.disponible;
+                    const ok = disp === true || disp === 1 || disp === 'true';
                     return (
                       <button
-                        key={c.numero}
+                        key={String(c.numero)}
                         type="button"
                         disabled={!ok}
-                        onClick={() => ok && setForm((f) => ({ ...f, cancha: c.numero }))}
+                        onClick={() => {
+                          if (!ok) return;
+                          setForm((f) => ({ ...f, cancha: Number.isFinite(num) ? num : '' }));
+                        }}
                         style={{
                           textAlign: 'left',
                           padding: 14,
@@ -1228,9 +1236,11 @@ export default function ArmarPartido() {
                   cursor: canchaLibreSeleccionada ? 'pointer' : 'not-allowed',
                 }}
               >
-                Reservar {form.cancha ? sedeNombreCancha(form.cancha) : 'cancha'}
+                {canchaLibreSeleccionada && Number.isFinite(Number(form.cancha))
+                  ? `Reservar Cancha ${Number(form.cancha)}`
+                  : 'Reservar cancha'}
               </button>
-            </>
+            </div>
           ) : null}
 
           {step === 3 ? (
