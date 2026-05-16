@@ -43,21 +43,29 @@ html {
   padding-top: calc(8px + env(safe-area-inset-top, 0px));
 }
 
-/**
- * Desktop (≥769px, alineado con breakpoints tipo panel admin): el contenido de la barra
- * comparte max-width con el cuerpo (~900px), centrado. En viewport estrecho no se aplica max-width.
- */
+/** Contenido del header: misma columna centrada que `.pm-app-shell-column` (~900px). */
 .app-header-inner {
   width: 100%;
+  max-width: var(--pm-header-inner-max, var(--content-max-width, var(--pm-app-body-max-width)));
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
-@media (min-width: 769px) {
-  .app-header-inner--max-body {
-    max-width: var(--pm-header-inner-max, var(--pm-app-body-max-width));
-    margin-left: auto;
-    margin-right: auto;
-  }
+.app-header-inner--max-body {
+  min-width: 0;
+}
+
+/** FAB del chatbot: borde derecho de la columna de contenido, no del viewport en desktop. */
+.chatbot-fab-anchor {
+  position: fixed;
+  right: calc(
+    max(0px, (100vw - var(--pm-app-body-max-width, 900px)) / 2) + max(16px, env(safe-area-inset-right, 0px))
+  );
+  z-index: 10050;
+  pointer-events: none;
 }
 
 :root {
@@ -70,6 +78,7 @@ html {
 
   /** Misma anchura que la columna central del hub (`HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX`). */
   --pm-app-body-max-width: 900px;
+  --content-max-width: var(--pm-app-body-max-width);
   --bg-input: #ffffff;
   --input-bg: var(--bg-input);
   --pm-radius-card: 12px;

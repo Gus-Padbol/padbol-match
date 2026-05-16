@@ -390,10 +390,6 @@ export default function AppHeader({
       </button>
     ) : null;
 
-  const padL = 'calc(8px + env(safe-area-inset-left, 0px))';
-  /** Mín. 16px al borde derecho (toggle ☀️/🌙 en ~390px) + safe area; todas las pantallas con esta shell. */
-  const padR = 'calc(16px + env(safe-area-inset-right, 0px))';
-
   useEffect(() => {
     if (!showHeaderSearch) {
       setSearchOpen(false);
@@ -912,8 +908,6 @@ export default function AppHeader({
           minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
           background: 'var(--nav-bg)',
           paddingBottom: '8px',
-          paddingLeft: padL,
-          paddingRight: padR,
           borderBottom: '1px solid var(--nav-border)',
         }}
       >
@@ -957,8 +951,6 @@ export default function AppHeader({
         minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
         background: hubLightBar ? 'var(--nav-bg)' : '#0f172a',
         paddingBottom: '8px',
-        paddingLeft: padL,
-        paddingRight: padR,
         borderBottom: hubLightBar ? '1px solid var(--nav-border)' : '1px solid rgba(255,255,255,0.08)',
       }}
     >

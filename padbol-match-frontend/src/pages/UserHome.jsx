@@ -340,8 +340,6 @@ export default function UserHome() {
     .charAt(0)
     .toUpperCase();
 
-  const padL = 'calc(12px + env(safe-area-inset-left, 0px))';
-  const padR = 'calc(16px + env(safe-area-inset-right, 0px))';
 
   const paisParaSponsors = String(hubPaisUsuario || userProfile?.pais || '').trim();
   const deporteTickerUserHome = useMemo(() => {
@@ -456,21 +454,14 @@ export default function UserHome() {
           minHeight: `${HUB_APP_HEADER_HEIGHT_PX}px`,
           background: 'var(--nav-bg)',
           paddingBottom: '8px',
-          paddingLeft: padL,
-          paddingRight: padR,
           borderBottom: '1px solid var(--nav-border)',
           paddingTop: 'calc(8px + env(safe-area-inset-top, 0px))',
           boxSizing: 'border-box',
         }}
       >
         <div
+          className="app-header-inner app-header-inner--max-body"
           style={{
-            maxWidth: hubBottomNavMaxWidthPx,
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            width: '100%',
-            minWidth: 0,
-            boxSizing: 'border-box',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

@@ -374,7 +374,7 @@ h3 {
  */
 .pm-app-shell-column {
   width: 100%;
-  max-width: 900px;
+  max-width: var(--pm-app-body-max-width, 900px);
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;

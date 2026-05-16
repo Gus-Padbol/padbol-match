@@ -1269,12 +1269,9 @@ export default function ChatbotIA() {
   return (
     <>
       <div
+        className="chatbot-fab-anchor"
         style={{
-          position: 'fixed',
-          right: 'max(12px, env(safe-area-inset-right, 0px))',
           bottom: fabBottom,
-          zIndex: 10050,
-          pointerEvents: 'none',
         }}
       >
         <button
