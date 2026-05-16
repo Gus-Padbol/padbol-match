@@ -572,14 +572,19 @@ export default function ArmarPartido() {
     return s;
   }, [sedeExtrasDisponibles, extrasCantidad]);
 
-  const cargoPlataforma = useMemo(
-    () => Math.round((precioBase + precioExtrasSubtotal) * 0.03),
+  const precioSubtotal = useMemo(
+    () => precioBase + precioExtrasSubtotal,
     [precioBase, precioExtrasSubtotal],
   );
 
+  const cargoPlataforma = useMemo(
+    () => Math.round(precioSubtotal * 0.03),
+    [precioSubtotal],
+  );
+
   const precioTotal = useMemo(
-    () => precioBase + precioExtrasSubtotal + cargoPlataforma,
-    [precioBase, precioExtrasSubtotal, cargoPlataforma],
+    () => precioSubtotal + cargoPlataforma,
+    [precioSubtotal, cargoPlataforma],
   );
 
   const sedesParaArmar = useMemo(() => {
@@ -1321,10 +1326,6 @@ export default function ArmarPartido() {
                 <div>
                   <strong>Precio del turno:</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
                 </div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.35 }}>
-                  Cargo por servicio Padbol Match (3%): {sede?.moneda || 'ARS'}{' '}
-                  {cargoPlataforma.toLocaleString('es-AR')}
-                </div>
               </div>
 
               {(sedeExtrasLoading || sedeExtrasDisponibles.length > 0) && (
@@ -1509,13 +1510,14 @@ export default function ArmarPartido() {
                   color: 'var(--text-primary)',
                 }}
               >
-                {precioExtrasSubtotal > 0 ? (
-                  <div style={{ marginBottom: 8 }}>
-                    <strong>Extras (tercer tiempo):</strong> {sede?.moneda || 'ARS'}{' '}
-                    {precioExtrasSubtotal.toLocaleString('es-AR')}
-                  </div>
-                ) : null}
-                <div style={{ fontWeight: 900, fontSize: 16 }}>
+                <div>
+                  <strong>Subtotal:</strong> {sede?.moneda || 'ARS'} {precioSubtotal.toLocaleString('es-AR')}
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>
+                  <strong>Cargo de servicio (3%):</strong> {sede?.moneda || 'ARS'}{' '}
+                  {cargoPlataforma.toLocaleString('es-AR')}
+                </div>
+                <div style={{ marginTop: 10, fontWeight: 900, fontSize: 18, lineHeight: 1.3 }}>
                   Total a pagar: {sede?.moneda || 'ARS'} {precioTotal.toLocaleString('es-AR')}
                 </div>
               </div>
