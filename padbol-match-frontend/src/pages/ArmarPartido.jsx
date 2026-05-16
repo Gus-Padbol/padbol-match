@@ -552,8 +552,6 @@ export default function ArmarPartido() {
     return Number(precioReservaTurno(sede, form.hora, form.fecha, Number(form.duracion), precioDesdeFranjas, baseTabla) ?? 0);
   }, [sede, form.hora, form.fecha, form.duracion, form.precioTurnoBase]);
 
-  const cargoPlataforma = useMemo(() => Math.round(precioBase * 0.03), [precioBase]);
-
   const precioExtrasSubtotal = useMemo(() => {
     let s = 0;
     for (const ex of sedeExtrasDisponibles) {
@@ -565,9 +563,14 @@ export default function ArmarPartido() {
     return s;
   }, [sedeExtrasDisponibles, extrasCantidad]);
 
+  const cargoPlataforma = useMemo(
+    () => Math.round((precioBase + precioExtrasSubtotal) * 0.03),
+    [precioBase, precioExtrasSubtotal],
+  );
+
   const precioTotal = useMemo(
-    () => precioBase + cargoPlataforma + precioExtrasSubtotal,
-    [precioBase, cargoPlataforma, precioExtrasSubtotal],
+    () => precioBase + precioExtrasSubtotal + cargoPlataforma,
+    [precioBase, precioExtrasSubtotal, cargoPlataforma],
   );
 
   const sedesParaArmar = useMemo(() => {

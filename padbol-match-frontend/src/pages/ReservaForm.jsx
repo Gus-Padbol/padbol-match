@@ -835,13 +835,13 @@ export default function ReservaForm() {
   }, [sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin]);
 
   const reservaCargoPlataforma = useMemo(
-    () => Math.round(precioReservaTurnoBase * 0.03),
-    [precioReservaTurnoBase],
+    () => Math.round((precioReservaTurnoBase + reservaExtrasSubtotal) * 0.03),
+    [precioReservaTurnoBase, reservaExtrasSubtotal],
   );
 
   const reservaTotalPagarConCargoYExtras = useMemo(
-    () => precioReservaTurnoBase + reservaCargoPlataforma + reservaExtrasSubtotal,
-    [precioReservaTurnoBase, reservaCargoPlataforma, reservaExtrasSubtotal],
+    () => precioReservaTurnoBase + reservaExtrasSubtotal + reservaCargoPlataforma,
+    [precioReservaTurnoBase, reservaExtrasSubtotal, reservaCargoPlataforma],
   );
 
   const reservaExtrasPayload = useMemo(
@@ -1671,11 +1671,10 @@ export default function ReservaForm() {
     const extrasPayload = reservaExtrasPayload;
     const precioTurno = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
     const precioTurnoNum = Number.isFinite(Number(precioTurno)) ? Number(precioTurno) : 0;
-    const precioConCargoYExtras =
-      extrasPayload.length > 0
-        ? precioTurnoNum + Math.round(precioTurnoNum * 0.03) + reservaExtrasSubtotal
-        : precioTurnoNum;
-    const precioFinal = Math.max(0, precioConCargoYExtras - creditoAplicado);
+    const precioFinal = Math.max(
+      0,
+      (extrasPayload.length > 0 ? reservaTotalPagarConCargoYExtras : precioTurnoNum) - creditoAplicado,
+    );
     const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
       sede_id: sedeSeleccionada.id,
