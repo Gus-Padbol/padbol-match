@@ -19,11 +19,14 @@ import { useHubSponsors } from '../hooks/useHubSponsors';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
+import {
+  readHubDeporteFilterPersisted,
+  resolveHubDeporteElegido,
+  writeHubDeporteFilterToSession,
+} from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { pickHubDeporteRow, dedupeHubDeporteConfigRows } from '../utils/hubDeporteConfig';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
-import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 
@@ -152,8 +155,11 @@ export default function UserHome() {
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
-  const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
-  const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
+  const { session, loading: authLoading, userProfile, profileLoading, refreshSession } = useAuth();
+  const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterPersisted());
+  const [deporteHydrationDone, setDeporteHydrationDone] = useState(() =>
+    Boolean(readHubDeporteFilterPersisted()),
+  );
   const [hubCmsStatus, setHubCmsStatus] = useState('loading');
   const [hubCmsRows, setHubCmsRows] = useState([]);
   const [hubDeporteStatus, setHubDeporteStatus] = useState('loading');
@@ -222,6 +228,27 @@ export default function UserHome() {
       /* ignore */
     }
   }, [session?.user]);
+
+  useEffect(() => {
+    setDeporteHydrationDone(Boolean(readHubDeporteFilterPersisted()));
+  }, [session?.user?.id]);
+
+  /** Tras login: aplicar deporte guardado (sesión, perfil o localStorage) sin mostrar la grilla de bienvenida en cada ingreso. */
+  useEffect(() => {
+    if (authLoading) return;
+    if (session?.user && profileLoading) return;
+
+    const resolved = resolveHubDeporteElegido({
+      current: deporteElegido,
+      userProfile: session?.user ? userProfile : null,
+    });
+
+    if (resolved && resolved !== deporteElegido) {
+      setDeporteElegido(resolved);
+      writeHubDeporteFilterToSession(resolved);
+    }
+    setDeporteHydrationDone(true);
+  }, [authLoading, profileLoading, session?.user, userProfile, deporteElegido]);
 
   useEffect(() => {
     let cancelled = false;
@@ -328,19 +355,12 @@ export default function UserHome() {
     enabled: true,
   });
 
-  /** Grilla: sin deporte ya elegido en el hub; y (sin preferidos en perfil o sin filtro en sessionStorage). */
+  /** Grilla de 4 deportes solo si, tras hidratar, aún no hay deporte resuelto. */
   const showBienvenidaCuatroDeportes = useMemo(() => {
+    if (!deporteHydrationDone) return false;
     const dep = String(deporteElegido || '').trim().toLowerCase();
-    const eligioDeporte = Boolean(dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep));
-    if (eligioDeporte) return false;
-    const hubFiltroSession = readHubDeporteFilterFromSession();
-    const tienePrefs =
-      Boolean(session?.user) &&
-      Boolean(userProfile) &&
-      hasDeportesPreferidosCargados(userProfile?.deportes_preferidos);
-    if (!tienePrefs) return true;
-    return !hubFiltroSession;
-  }, [session?.user, userProfile, deporteElegido]);
+    return !(dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep));
+  }, [deporteElegido, deporteHydrationDone]);
 
   const inicioTiles = useMemo(() => {
     const rows = Array.isArray(hubInicioRows) ? hubInicioRows : [];

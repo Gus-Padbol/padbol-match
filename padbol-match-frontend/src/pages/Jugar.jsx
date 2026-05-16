@@ -14,7 +14,7 @@ import {
 } from '../constants/hubLayout';
 import { HUB_JUGAR_SLOT } from '../constants/hubJugarSponsorSlots';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
-import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
+import { readHubDeporteFilterPersisted, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte, HUB_CARD_UNSPLASH_GENERIC } from '../constants/hubFotosPorDeporte';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
@@ -59,7 +59,7 @@ export default function Jugar() {
   const [searchParams] = useSearchParams();
   const { session, userProfile } = useAuth();
 
-  const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
+  const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterPersisted());
 
   const { getSlot, tickerItems } = useHubJugarSponsorSlots();
 

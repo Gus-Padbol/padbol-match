@@ -8,7 +8,7 @@ import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
-import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
+import { readHubDeporteFilterPersisted, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
@@ -55,7 +55,7 @@ export default function PartidosAbiertos() {
       hubDeporteHydratedRef.current = true;
       return;
     }
-    const fromSession = readHubDeporteFilterFromSession();
+    const fromSession = readHubDeporteFilterPersisted();
     if (fromSession) {
       const next = new URLSearchParams(searchParams);
       next.set('deporte', fromSession);
