@@ -15,6 +15,29 @@ import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
+/** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
+function TablerMicrophoneIcon({ size = 22 }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <path d="M12 19v3" />
+      <path d="M8 22h8" />
+    </svg>
+  );
+}
+
 const MAX_USER_MESSAGES = 6;
 /** Por encima de este número de turnos se agrupa por franja (si aplica más de una franja con datos). */
 const DISPO_SLOTS_FRANJA_THRESHOLD = 8;
@@ -234,7 +257,7 @@ function chatUiStrings(loc) {
       waEscalada: 'Contact the club on WhatsApp',
       waClub: 'Message your usual club',
       fabOpen: 'Open Padbol Match assistant',
-      titulo: 'Padbol Match Assistant',
+      titulo: 'Padbol Match IA',
       cargando: 'Loading…',
       escuchando: 'Listening…',
       sinVoz: 'No voice detected. Try again.',
@@ -286,7 +309,7 @@ function chatUiStrings(loc) {
       waEscalada: 'Falar com o clube no WhatsApp',
       waClub: 'Escrever ao clube habitual',
       fabOpen: 'Abrir assistente Padbol Match',
-      titulo: 'Assistente Padbol Match',
+      titulo: 'Padbol Match IA',
       cargando: 'Carregando…',
       escuchando: 'Ouvindo…',
       sinVoz: 'Nenhuma voz detectada. Tente de novo.',
@@ -337,7 +360,7 @@ function chatUiStrings(loc) {
     waEscalada: 'Contactar al club por WhatsApp',
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Padbol Match',
-    titulo: 'Asistente Padbol Match',
+    titulo: 'Padbol Match IA',
     cargando: 'Cargando…',
     escuchando: 'Escuchando…',
     sinVoz: 'No se detectó voz. Intenta de nuevo.',
@@ -407,9 +430,9 @@ function getChatbotModalTheme(isDark) {
       franjaBorderInactive: '#4b5563',
       franjaCount: '#9ca3af',
       franjaText: '#ffffff',
-      slotBg: '#4338ca',
-      slotColor: '#e0e7ff',
-      slotBorder: '#6366f1',
+      slotBg: 'rgba(229, 57, 53, 0.125)',
+      slotColor: '#e53935',
+      slotBorder: '#e53935',
       loadingColor: '#9ca3af',
       errorColor: '#fca5a5',
       footerTopBorder: '#374151',
@@ -466,9 +489,9 @@ function getChatbotModalTheme(isDark) {
     franjaBorderInactive: '#cbd5e1',
     franjaCount: '#64748b',
     franjaText: '#0f172a',
-    slotBg: '#e0e7ff',
-    slotColor: '#312e81',
-    slotBorder: '#c7d2fe',
+    slotBg: 'rgba(229, 57, 53, 0.125)',
+    slotColor: '#e53935',
+    slotBorder: '#e53935',
     loadingColor: '#64748b',
     errorColor: '#b91c1c',
     footerTopBorder: '#e2e8f0',
@@ -1224,31 +1247,23 @@ export default function ChatbotIA() {
           borderRadius: '50%',
           border: 'none',
           cursor: 'pointer',
-          background: 'linear-gradient(135deg,#E11B22,#b91c1c)',
+          background: '#e53935',
           color: '#fff',
           boxShadow: '0 10px 28px rgba(15,23,42,0.35)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 1,
           padding: 0,
         }}
       >
-        <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden>
-          ✨
-        </span>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 800,
-            color: '#fff',
-            lineHeight: 1,
-            letterSpacing: '0.04em',
-          }}
-        >
-          IA
-        </span>
+        <img
+          src="/logo-padbol-match.png"
+          alt=""
+          width={34}
+          height={34}
+          style={{ display: 'block', width: 34, height: 34, objectFit: 'contain' }}
+          aria-hidden
+        />
       </button>
 
       {open ? (
@@ -1343,11 +1358,56 @@ export default function ChatbotIA() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: 8,
+                gap: 10,
                 background: c.headerBg,
               }}
             >
-              <div style={{ fontWeight: 800, fontSize: 16, color: c.titleColor }}>{ui.titulo}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                <div
+                  aria-hidden
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: '#e53935',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: 12,
+                    letterSpacing: '-0.02em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  PM
+                </div>
+                <span
+                  style={{
+                    fontWeight: 500,
+                    fontSize: 16,
+                    color: c.titleColor,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Padbol Match IA
+                </span>
+                <span
+                  aria-hidden
+                  title="En línea"
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: '#4caf50',
+                    flexShrink: 0,
+                    marginLeft: 2,
+                  }}
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -1362,6 +1422,7 @@ export default function ChatbotIA() {
                   cursor: 'pointer',
                   color: c.closeColor,
                   padding: 4,
+                  flexShrink: 0,
                 }}
                 aria-label={ui.cerrar}
               >
@@ -1571,7 +1632,7 @@ export default function ChatbotIA() {
                                   fontWeight: 700,
                                   fontSize: 12,
                                   textDecoration: 'none',
-                                  border: `1px solid ${c.slotBorder}`,
+                                  border: `0.5px solid ${c.slotBorder}`,
                                   whiteSpace: 'nowrap',
                                 }}
                               >
@@ -1855,8 +1916,8 @@ export default function ChatbotIA() {
                       width: '100%',
                       minWidth: 0,
                       boxSizing: 'border-box',
-                      padding: '10px 12px',
-                      borderRadius: 10,
+                      padding: '10px 16px',
+                      borderRadius: 99,
                       border: `1px solid ${c.inputBorder}`,
                       fontSize: 16,
                       lineHeight: 1.25,
@@ -1911,7 +1972,7 @@ export default function ChatbotIA() {
                       touchAction: 'manipulation',
                     }}
                   >
-                    🎤
+                    <TablerMicrophoneIcon size={22} />
                   </button>
                 ) : null}
                 {voicePhase !== 'listening' ? (
