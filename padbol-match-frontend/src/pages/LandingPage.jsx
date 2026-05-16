@@ -2,19 +2,12 @@ import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
+import './LandingPage.css';
 
 const ACCENT = '#E11B22';
 const COL_MAX = 390;
 
 const shell = {
-  minHeight: '100dvh',
-  width: '100%',
-  maxWidth: '100%',
-  margin: 0,
-  marginTop: 0,
-  boxSizing: 'border-box',
-  background: 'var(--bg-page)',
-  color: 'var(--text-primary)',
   paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
   paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
 };
@@ -74,13 +67,13 @@ const btnCuenta = {
   width: '100%',
   padding: '15px 18px',
   borderRadius: 12,
-  border: '1px solid #475569',
+  border: '1px solid var(--border)',
   fontWeight: 700,
   fontSize: 16,
   cursor: 'pointer',
   textDecoration: 'none',
-  color: '#fff',
-  background: '#334155',
+  color: 'var(--text-primary)',
+  background: 'var(--bg-input)',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
   boxShadow: 'none',
@@ -129,6 +122,19 @@ function HowCard({ lead, emoji, title, description }) {
 
 export default function LandingPage() {
   const location = useLocation();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('landing-page-active');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const prevThemeColor = meta?.getAttribute('content') ?? null;
+    if (meta) meta.setAttribute('content', '#0F172A');
+    return () => {
+      root.classList.remove('landing-page-active');
+      if (meta && prevThemeColor != null) meta.setAttribute('content', prevThemeColor);
+    };
+  }, []);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     try {
@@ -142,7 +148,7 @@ export default function LandingPage() {
   }, [location.pathname, location.key]);
 
   return (
-    <div style={shell}>
+    <div className="landing-page" style={shell}>
       <header style={{ ...column, textAlign: 'center', paddingBottom: 0 }}>
         <img
           src="/logo-padbol-match.png"

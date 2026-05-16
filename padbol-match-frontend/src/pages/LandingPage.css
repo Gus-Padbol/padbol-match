@@ -1,0 +1,29 @@
+/* Landing siempre con paleta oscura (legible en claro/oscuro global). */
+html.landing-page-active {
+  color-scheme: dark;
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #334155;
+  --border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --pm-color-bg: var(--bg-page);
+  --pm-color-text: var(--text-primary);
+  --pm-color-text-muted: var(--text-secondary);
+}
+
+html.landing-page-active body,
+html.landing-page-active #root {
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.landing-page {
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
