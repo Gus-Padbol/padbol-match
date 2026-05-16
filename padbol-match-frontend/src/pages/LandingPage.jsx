@@ -245,13 +245,18 @@ export default function LandingPage() {
             />
             <HowCard
               emoji="📅"
-              title="Reserva tu cancha"
-              description="Elige fecha, horario y cancha disponible. Paga online o según las opciones del club."
+              title="Elige tu turno"
+              description="Elegí fecha, horario y cancha disponible online."
+            />
+            <HowCard
+              emoji="💳"
+              title="Paga online"
+              description="Pagá online o según las opciones del club."
             />
             <HowCard
               emoji="⚽"
               title="Juega"
-              description="Recibe la confirmación y a disfrutar del partido en la red de Padbol."
+              description="Recibí la confirmación y a disfrutar del partido."
             />
           </div>
         </section>
