@@ -1209,7 +1209,7 @@ export default function ArmarPartido() {
           ) : null}
 
           {step === 2 ? (
-            <div style={{ paddingTop: 8, paddingBottom: 4 }}>
+            <div style={{ paddingTop: 32, paddingBottom: 4 }}>
               <h1 style={{ ...AP.title, scrollMarginTop: armarPaddingTopCss }}>Canchas disponibles</h1>
               <p style={AP.body}>
                 {sede?.nombre} · {form.fecha} · {String(form.hora).split(' - ')[0]} · {form.duracion} min
