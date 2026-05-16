@@ -12,6 +12,9 @@ import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 import { useSponsor } from '../hooks/useSponsor';
 import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
+import { useHubJugarSponsorSlots } from '../hooks/useHubJugarSponsorSlots';
+import { HUB_JUGAR_SLOT } from '../constants/hubJugarSponsorSlots';
+import { HubJugarSlotRect } from '../components/HubJugarSponsorSurfaces';
 import SponsorBannerReserva from '../components/SponsorBannerReserva';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
@@ -59,6 +62,8 @@ export default function PagoExitoso() {
   const { sponsor: sponsorReserva } = useSponsor(reservaSedeId, null, {
     enabled: sponsorReservaEnabled,
   });
+
+  const { getSlot: getHubJugarSlot } = useHubJugarSponsorSlots();
 
   useEffect(() => {
     if (savedRef.current) return;
@@ -272,6 +277,9 @@ export default function PagoExitoso() {
             <p style={{ color: '#374151', fontSize: '15px', lineHeight: 1.6, marginBottom: '20px' }}>
               Tu reserva fue confirmada: el partido ya está publicado para que otros se sumen.
             </p>
+            <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
+              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} height={80} borderRadius={10} />
+            </div>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(`Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`)}`}
               target="_blank"
@@ -330,6 +338,9 @@ export default function PagoExitoso() {
             >
               El pago se registró y tu equipo quedó confirmado en el torneo.
             </p>
+            <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
+              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} height={80} borderRadius={10} />
+            </div>
             {paymentId && (
               <p style={{ margin: '0 0 20px', fontSize: '12px', color: '#6b7280' }}>
                 <strong>Pago #:</strong> {paymentId}
@@ -379,6 +390,9 @@ export default function PagoExitoso() {
             >
               Tu reserva está confirmada. Recibirás la confirmación por WhatsApp.
             </p>
+            <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
+              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} height={80} borderRadius={10} />
+            </div>
 
             {reserva && (
               <div

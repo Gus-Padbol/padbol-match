@@ -4,17 +4,20 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
+import { HubJugarSlotRect, HubJugarSlotOverlayCorner, HubJugarSlotStrip } from '../components/HubJugarSponsorSurfaces';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
+import { HUB_JUGAR_SLOT, hubJugarOverlayKeyForHubKey } from '../constants/hubJugarSponsorSlots';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterFromSession, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte, HUB_CARD_UNSPLASH_GENERIC } from '../constants/hubFotosPorDeporte';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
+import { useHubJugarSponsorSlots } from '../hooks/useHubJugarSponsorSlots';
 import useUserRole from '../hooks/useUserRole';
 import { useHubPromoSedeActiva } from '../hooks/useHubPromoSedeActiva';
 import './Jugar.css';
@@ -41,6 +44,7 @@ const JUGAR_OPCIONES_BASE = [
 ];
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
+const HUB_JUGAR_STRIP_H_PX = 40;
 
 function deporteQuery(deporteElegido) {
   const dep = String(deporteElegido || '').trim().toLowerCase();
@@ -55,6 +59,8 @@ export default function Jugar() {
   const { session, userProfile } = useAuth();
 
   const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterFromSession());
+
+  const { getSlot } = useHubJugarSponsorSlots();
 
   useEffect(() => {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
@@ -74,7 +80,7 @@ export default function Jugar() {
         const image = desdeDeporte || fb || HUB_CARD_UNSPLASH_GENERIC.reservar || '';
         return { ...op, image };
       }),
-    [deporteElegido]
+    [deporteElegido],
   );
 
   const currentCliente = useMemo(() => {
@@ -105,10 +111,12 @@ export default function Jugar() {
 
   const q = deporteQuery(deporteElegido);
 
-  const mainBottomPad =
-    navDock === 'bottom'
-      ? `calc(20px + ${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
-      : `calc(20px + env(safe-area-inset-bottom, 0px))`;
+  const dockBottom = navDock === 'bottom';
+  const mainBottomPad = dockBottom
+    ? `calc(20px + ${HUB_JUGAR_STRIP_H_PX}px + ${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
+    : `calc(20px + env(safe-area-inset-bottom, 0px))`;
+
+  const stripBottom = `calc(${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`;
 
   return (
     <div
@@ -150,45 +158,77 @@ export default function Jugar() {
             writeHubDeporteFilterToSession(v);
           }}
         />
+
+        <div style={{ width: '100%', marginTop: 12, marginBottom: 12 }}>
+          <HubJugarSlotRect slot={getSlot(HUB_JUGAR_SLOT.BANNER_TOP)} height={50} borderRadius={10} />
+        </div>
+
         <div style={{ display: 'grid', gap: 10 }}>
-          {opciones.map((op) => (
-            <button
-              key={op.title}
-              type="button"
-              onClick={() => navigate(`${op.path}${q}`)}
-              style={{
-                textAlign: 'left',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                background: 'var(--bg-card)',
-                padding: 0,
-                overflow: 'hidden',
-                boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
-                cursor: 'pointer',
-                display: 'block',
-              }}
-            >
-              <div
-                className="jugar-card-media"
-                style={{
-                  backgroundImage: `url(${op.image})`,
-                }}
-              >
-                <div
-                  aria-hidden
+          {opciones.map((op, idx) => {
+            const overlayKey = hubJugarOverlayKeyForHubKey(op.hubKey);
+            const overlaySlot = overlayKey ? getSlot(overlayKey) : null;
+            return (
+              <React.Fragment key={op.hubKey}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`${op.path}${q}`)}
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: CARD_OVERLAY,
+                    textAlign: 'left',
+                    border: '1px solid var(--border)',
+                    borderRadius: 12,
+                    background: 'var(--bg-card)',
+                    padding: 0,
+                    overflow: 'hidden',
+                    boxShadow: 'var(--pm-shadow-card, 0 2px 8px rgba(0,0,0,0.08))',
+                    cursor: 'pointer',
+                    display: 'block',
+                    position: 'relative',
                   }}
-                />
-                <div className="jugar-card-copy">
-                  <strong className="jugar-card-title">{op.title}</strong>
-                  <span className="jugar-card-body">{op.body}</span>
-                </div>
-              </div>
-            </button>
-          ))}
+                >
+                  <div
+                    className="jugar-card-media"
+                    style={{
+                      backgroundImage: `url(${op.image})`,
+                    }}
+                  >
+                    <div
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: CARD_OVERLAY,
+                      }}
+                    />
+                    {overlayKey ? (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          zIndex: 3,
+                        }}
+                      >
+                        <HubJugarSlotOverlayCorner slot={overlaySlot} />
+                      </div>
+                    ) : null}
+                    <div className="jugar-card-copy">
+                      <strong className="jugar-card-title">{op.title}</strong>
+                      <span className="jugar-card-body">{op.body}</span>
+                    </div>
+                  </div>
+                </button>
+                {idx === 1 ? (
+                  <div style={{ width: '100%' }}>
+                    <HubJugarSlotRect
+                      slot={getSlot(HUB_JUGAR_SLOT.CARD_AD)}
+                      height={140}
+                      borderRadius={12}
+                    />
+                  </div>
+                ) : null}
+              </React.Fragment>
+            );
+          })}
         </div>
 
         {hubPromoRow &&
@@ -261,6 +301,40 @@ export default function Jugar() {
 
         <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
       </main>
+
+      {dockBottom ? (
+        <div
+          style={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: stripBottom,
+            height: HUB_JUGAR_STRIP_H_PX,
+            zIndex: 1000,
+            maxWidth: 460,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            paddingLeft: 14,
+            paddingRight: 14,
+            boxSizing: 'border-box',
+            pointerEvents: 'auto',
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              borderRadius: '10px 10px 0 0',
+              overflow: 'hidden',
+              border: '1px solid var(--border)',
+              borderBottom: 'none',
+              background: 'var(--bg-card)',
+            }}
+          >
+            <HubJugarSlotStrip slot={getSlot(HUB_JUGAR_SLOT.STRIP)} />
+          </div>
+        </div>
+      ) : null}
+
       <BottomNav />
     </div>
   );
