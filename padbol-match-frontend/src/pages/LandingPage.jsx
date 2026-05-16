@@ -57,8 +57,8 @@ const btnSecondary = {
   fontFamily: 'inherit',
   color: ACCENT,
   background: 'transparent',
-  border: `2px solid ${ACCENT}`,
-  boxShadow: '0 4px 0 #6b0a0a, 0 6px 16px rgba(180, 20, 20, 0.2)',
+  border: '2px solid #e02020',
+  boxShadow: '0 6px 0 #6b0a0a, 0 8px 20px rgba(180, 20, 20, 0.35)',
 };
 
 const btnCuenta = {
