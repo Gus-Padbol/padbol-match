@@ -7,6 +7,7 @@ import {
   matchPlanForTotal,
   maxPorSedeSegunNombrePlan,
 } from '../utils/sponsorQuotaShared';
+import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 
 const PADBOL_RED = '#E11B22';
 const ERROR_TEXT = '#E11B22';
@@ -64,6 +65,15 @@ function normalizeScopeVal(raw) {
   return String(raw || '').trim().toLowerCase();
 }
 
+function etiquetaDeportesSponsorRow(r) {
+  const arr = r?.deportes;
+  if (!Array.isArray(arr) || arr.length === 0) return 'Todos';
+  const labels = arr
+    .map((k) => DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === String(k || '').trim().toLowerCase())?.label)
+    .filter(Boolean);
+  return labels.length ? labels.join(', ') : 'Todos';
+}
+
 function emptyForm() {
   return {
     id: null,
@@ -79,6 +89,7 @@ function emptyForm() {
     activo: true,
     fecha_desde: '',
     fecha_hasta: '',
+    deportes_keys: [],
   };
 }
 
@@ -200,6 +211,12 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       activo: r.activo !== false,
       fecha_desde: r.fecha_desde ? String(r.fecha_desde).slice(0, 10) : '',
       fecha_hasta: r.fecha_hasta ? String(r.fecha_hasta).slice(0, 10) : '',
+      deportes_keys: (() => {
+        const arr = r.deportes;
+        if (!Array.isArray(arr) || arr.length === 0) return [];
+        const allowed = new Set(DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => o.key));
+        return [...new Set(arr.map((x) => String(x || '').trim().toLowerCase()).filter((k) => allowed.has(k)))];
+      })(),
     });
     setMsg('');
     setFieldErrors({});
@@ -295,6 +312,16 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       return;
     }
 
+    const depKeys = Array.isArray(form.deportes_keys)
+      ? [
+          ...new Set(
+            form.deportes_keys
+              .map((x) => String(x || '').trim().toLowerCase())
+              .filter((k) => DEPORTES_CANCHA_SEDE_OPTIONS.some((o) => o.key === k)),
+          ),
+        ]
+      : [];
+
     const payload = {
       nombre,
       logo_url: String(form.logo_url || '').trim() || null,
@@ -308,6 +335,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       activo: Boolean(form.activo),
       fecha_desde: form.fecha_desde ? String(form.fecha_desde).slice(0, 10) : null,
       fecha_hasta: form.fecha_hasta ? String(form.fecha_hasta).slice(0, 10) : null,
+      deportes: depKeys.length ? depKeys : null,
     };
 
     const isNew = form.id == null || form.id === '';
@@ -628,6 +656,42 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           maxLength={500}
         />
 
+        <label style={labelStyle}>Deportes (opcional)</label>
+        <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+          Sin ninguno marcado = visible en todos los deportes. Con uno o más = solo cuando el usuario elige ese
+          deporte en el hub, rankings o torneos (coherente con GET /api/sponsors).
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+          {DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => (
+            <label
+              key={o.key}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={Array.isArray(form.deportes_keys) && form.deportes_keys.includes(o.key)}
+                onChange={() => {
+                  setForm((p) => {
+                    const cur = new Set(Array.isArray(p.deportes_keys) ? p.deportes_keys : []);
+                    if (cur.has(o.key)) cur.delete(o.key);
+                    else cur.add(o.key);
+                    return { ...p, deportes_keys: [...cur] };
+                  });
+                }}
+              />
+              {o.label}
+            </label>
+          ))}
+        </div>
+
         <label style={labelStyle}>Scope</label>
         <select
           style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
@@ -846,6 +910,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           <thead>
             <tr style={{ background: PADBOL_RED, color: '#fff' }}>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Marca</th>
+              <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Deportes</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Scope</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Estado</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Activo</th>
@@ -855,13 +920,13 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={6} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={6} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
                   No hay sponsors. Creá uno con el formulario de arriba.
                 </td>
               </tr>
@@ -877,6 +942,9 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                       ) : null}
                       {r.nombre}
                     </div>
+                  </td>
+                  <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                    {etiquetaDeportesSponsorRow(r)}
                   </td>
                   <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
                     {String(r.scope || '')}

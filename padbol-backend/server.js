@@ -1420,6 +1420,69 @@ app.get('/api/plan-pricing', async (req, res) => {
   }
 });
 
+const SPONSOR_DEPORTE_SLUGS_API = new Set([
+  'padbol',
+  'padel',
+  'pickleball',
+  'squash',
+  'tenis',
+  'futbol_5',
+  'futbol_7',
+]);
+
+function normalizeSponsorDeporteQueryParamApi(raw) {
+  if (raw == null || raw === '') return null;
+  const s = String(raw).trim().toLowerCase();
+  if (!s || !SPONSOR_DEPORTE_SLUGS_API.has(s)) return null;
+  return s;
+}
+
+function sponsorDbRowVigentePublicApi(row) {
+  if (!row || row.activo === false) return false;
+  const ap = row.aprobado;
+  if (ap !== true && ap !== 'true' && ap !== 1) return false;
+  const ymd = DateTime.now().setZone(TZ_TORNEO_CALENDARIO).toFormat('yyyy-LL-dd');
+  const desde =
+    row.fecha_desde != null && String(row.fecha_desde).trim() !== '' ? String(row.fecha_desde).slice(0, 10) : null;
+  const hasta =
+    row.fecha_hasta != null && String(row.fecha_hasta).trim() !== '' ? String(row.fecha_hasta).slice(0, 10) : null;
+  if (desde && ymd < desde) return false;
+  if (hasta && ymd > hasta) return false;
+  return true;
+}
+
+function sponsorRowMatchesDeporteApi(row, deporteNorm) {
+  const arr = row?.deportes;
+  const isGlobal = arr == null || (Array.isArray(arr) && arr.length === 0);
+  if (deporteNorm == null || deporteNorm === '') {
+    return isGlobal;
+  }
+  if (isGlobal) return true;
+  if (!Array.isArray(arr)) return false;
+  const needle = String(deporteNorm).trim().toLowerCase();
+  return arr.some((x) => String(x || '').trim().toLowerCase() === needle);
+}
+
+/**
+ * GET /api/sponsors — público: activos, aprobados y en ventana de fechas.
+ * Sin `?deporte` → solo filas con deportes global (NULL o array vacío).
+ * Con `?deporte=padbol` (slug permitido) → globales + filas cuyo `deportes` contiene ese slug.
+ */
+app.get('/api/sponsors', async (req, res) => {
+  try {
+    const deporteQ = normalizeSponsorDeporteQueryParamApi(req.query?.deporte);
+    const { data, error } = await supabase.from('sponsors').select('*');
+    if (error) throw error;
+    const rows = (Array.isArray(data) ? data : []).filter(sponsorDbRowVigentePublicApi);
+    const filtered = rows.filter((r) => sponsorRowMatchesDeporteApi(r, deporteQ));
+    res.json({ sponsors: filtered });
+  } catch (err) {
+    const msg = String(err.message || err);
+    console.error('❌ GET /api/sponsors:', msg);
+    res.status(500).json({ error: msg });
+  }
+});
+
 /** GET /api/hub-config — filas hub_config ordenadas por `orden` (público, sin JWT). */
 app.get('/api/hub-config', async (req, res) => {
   try {

@@ -317,9 +317,14 @@ export default function UserHome() {
   const padR = 'calc(16px + env(safe-area-inset-right, 0px))';
 
   const paisParaSponsors = String(hubPaisUsuario || userProfile?.pais || '').trim();
+  const deporteTickerUserHome = useMemo(() => {
+    const d = String(deporteElegido || '').trim().toLowerCase();
+    return d && DEPORTES_CANCHA_SEDE_KEYS.includes(d) ? d : null;
+  }, [deporteElegido]);
   const { tercerTiempoSponsor } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: paisParaSponsors,
+    deporte: deporteTickerUserHome,
     enabled: true,
   });
 

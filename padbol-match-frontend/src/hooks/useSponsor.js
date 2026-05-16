@@ -2,15 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { pickSponsorForContext, sponsorDateYmdLocal } from '../utils/sponsorPick';
 import { sponsorRowApproved } from '../utils/hubSponsorsFilter';
+import { fetchPublicSponsorsList, normalizeSponsorDeporteQueryParam } from '../utils/sponsorDeportePublic';
 
 /**
  * Sponsor vigente más específico para la vista (torneo > sede > nacional > global).
  * @param {number|null|undefined} sedeId
  * @param {number|null|undefined} torneoId
- * @param {{ pais?: string|null, enabled?: boolean }} [options]
+ * @param {{ pais?: string|null, deporte?: string|null, enabled?: boolean }} [options]
  */
 export function useSponsor(sedeId, torneoId, options = {}) {
   const paisOpt = options.pais != null ? String(options.pais).trim() : '';
+  const deporteKey = normalizeSponsorDeporteQueryParam(options.deporte);
   const enabled = options.enabled !== false;
   const [sponsor, setSponsor] = useState(null);
   const [loading, setLoading] = useState(Boolean(enabled));
@@ -40,12 +42,7 @@ export function useSponsor(sedeId, torneoId, options = {}) {
         paisEff = sedeRow?.pais != null ? String(sedeRow.pais).trim() : '';
       }
 
-      const { data: rows, error: qErr } = await supabase
-        .from('sponsors')
-        .select('*')
-        .eq('activo', true)
-        .eq('aprobado', true);
-      if (qErr) throw qErr;
+      const rows = await fetchPublicSponsorsList({ deporte: deporteKey });
 
       const ymd = sponsorDateYmdLocal();
       const activeRows = (Array.isArray(rows) ? rows : []).filter((r) => {
@@ -70,7 +67,7 @@ export function useSponsor(sedeId, torneoId, options = {}) {
     } finally {
       setLoading(false);
     }
-  }, [enabled, sedeKey, torneoKey, paisOpt]);
+  }, [enabled, sedeKey, torneoKey, paisOpt, deporteKey]);
 
   useEffect(() => {
     void load();

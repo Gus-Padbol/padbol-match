@@ -90,9 +90,14 @@ export default function Jugar() {
   }, [session?.user?.email]);
   const { sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
   const paisParaSponsors = String(hubPaisUsuario || userProfile?.pais || '').trim();
+  const deporteTickerJugar = useMemo(() => {
+    const d = String(deporteElegido || '').trim().toLowerCase();
+    return d && DEPORTES_CANCHA_SEDE_KEYS.includes(d) ? d : null;
+  }, [deporteElegido]);
   const { tercerTiempoSponsor } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: paisParaSponsors,
+    deporte: deporteTickerJugar,
     enabled: true,
   });
 
@@ -158,7 +163,7 @@ export default function Jugar() {
         />
 
         <div style={{ width: '100%', marginTop: 12, marginBottom: 10 }}>
-          <HubJugarSponsorsTicker items={tickerItems} />
+          <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} />
         </div>
 
         <div style={{ display: 'grid', gap: 10 }}>

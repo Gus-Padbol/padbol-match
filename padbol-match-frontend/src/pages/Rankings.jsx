@@ -491,12 +491,6 @@ export default function Rankings() {
     return { email: em };
   }, [session?.user?.email]);
   const { sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
-  const { tickerSponsors } = useHubSponsors({
-    sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
-    pais: String(hubPaisUsuario || '').trim(),
-    enabled: true,
-  });
-
   const [searchParams, setSearchParams] = useSearchParams();
   const narrow = useMediaNarrow(520);
   const [activeTab, setActiveTab] = useState('local');
@@ -509,6 +503,14 @@ export default function Rankings() {
     const d = normalizeTorneoDeporte(raw);
     setRankingDeporte((prev) => (prev === d ? prev : d));
   }, [searchParams]);
+
+  const { tickerSponsors } = useHubSponsors({
+    sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
+    pais: String(hubPaisUsuario || '').trim(),
+    deporte: rankingDeporte,
+    enabled: true,
+  });
+
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('');
@@ -959,7 +961,7 @@ export default function Rankings() {
         </div>
 
         <div style={{ marginBottom: '14px' }}>
-          <HubSponsorsTicker sponsors={tickerSponsors} />
+          <HubSponsorsTicker sponsors={tickerSponsors} deporte={rankingDeporte} />
         </div>
 
         {/* Table card */}

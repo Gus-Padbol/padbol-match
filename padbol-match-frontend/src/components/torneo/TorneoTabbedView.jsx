@@ -357,6 +357,8 @@ export default function TorneoTabbedView({
   shareTorneoMeta = null,
   /** Sponsor vigente (torneo/sede/país/global) — ticker horizontal bajo el título. */
   presentadoPorSponsor = null,
+  /** Deporte del torneo (slug) para metadata del ticker / coherencia con GET /api/sponsors. */
+  presentadoPorDeporte = null,
 }) {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
@@ -2091,6 +2093,7 @@ export default function TorneoTabbedView({
         (presentadoPorSponsor.nombre || presentadoPorSponsor.logo_url) ? (
           <div style={{ marginTop: 12, width: '100%', maxWidth: '100%' }}>
             <SponsorTicker
+              deporte={presentadoPorDeporte}
               items={[
                 {
                   nombre: String(presentadoPorSponsor.nombre || '').trim(),

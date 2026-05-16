@@ -22,7 +22,7 @@ import {
   torneosJugadosTotalDesdeEstadisticas,
   sliceEstadisticasJugadorTorneo,
 } from './utils/jugadorEstadisticasPorDeporte';
-import { etiquetaDeporteTorneo } from './utils/torneoDeporteFormato';
+import { etiquetaDeporteTorneo, normalizeTorneoDeporte } from './utils/torneoDeporteFormato';
 import DeportesPreferidosLecturaChips from './components/DeportesPreferidosLecturaChips';
 import { hasDeportesPreferidosCargados } from './constants/deportesPreferidos';
 import { IconGeroUbicacion } from './components/icons/GeroIcons';
@@ -89,9 +89,15 @@ export default function PerfilPublico() {
     return Number.isFinite(n) ? n : null;
   }, [perfil?.sede_id]);
 
+  const deporteTickerPerfil = useMemo(() => {
+    if (estadisticasDeporteTab == null || String(estadisticasDeporteTab).trim() === '') return null;
+    return normalizeTorneoDeporte(estadisticasDeporteTab);
+  }, [estadisticasDeporteTab]);
+
   const { tickerSponsors } = useHubSponsors({
     sedeId: hubSedePerfil,
     pais: String(perfil?.pais || '').trim(),
+    deporte: deporteTickerPerfil,
     enabled: Boolean(perfil),
   });
 
@@ -1194,7 +1200,7 @@ export default function PerfilPublico() {
         ) : null}
 
         <div style={{ marginTop: '24px', marginBottom: '4px', width: '100%', maxWidth: '100%' }}>
-          <HubSponsorsTicker sponsors={tickerSponsors} />
+          <HubSponsorsTicker sponsors={tickerSponsors} deporte={deporteTickerPerfil} />
         </div>
       </div>
 

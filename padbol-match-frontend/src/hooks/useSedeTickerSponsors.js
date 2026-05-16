@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../supabaseClient';
 import { hubSponsorsEligibles } from '../utils/hubSponsorsFilter';
+import { fetchPublicSponsorsList, normalizeSponsorDeporteQueryParam } from '../utils/sponsorDeportePublic';
 
 /**
  * Sponsors para banda en contexto de una sede: alcance global + sede de esa sede (sin torneo ni nacional).
  * @param {number|null|undefined} sedeId
- * @param {{ enabled?: boolean }} [options]
+ * @param {{ enabled?: boolean, deporte?: string|null }} [options]
  */
 export function useSedeTickerSponsors(sedeId, options = {}) {
   const enabled = options.enabled !== false;
   const sid = sedeId != null && Number.isFinite(Number(sedeId)) ? Number(sedeId) : null;
+  const deporteKey = normalizeSponsorDeporteQueryParam(options.deporte);
 
   const [sponsors, setSponsors] = useState([]);
   const [loading, setLoading] = useState(Boolean(enabled && sid));
@@ -22,20 +23,14 @@ export function useSedeTickerSponsors(sedeId, options = {}) {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('sponsors')
-        .select('*')
-        .eq('activo', true)
-        .eq('aprobado', true);
-      if (error) throw error;
-      const rows = Array.isArray(data) ? data : [];
+      const rows = await fetchPublicSponsorsList({ deporte: deporteKey });
       setSponsors(hubSponsorsEligibles(rows, { sedeId: sid, pais: '' }));
     } catch {
       setSponsors([]);
     } finally {
       setLoading(false);
     }
-  }, [enabled, sid]);
+  }, [enabled, sid, deporteKey]);
 
   useEffect(() => {
     void load();

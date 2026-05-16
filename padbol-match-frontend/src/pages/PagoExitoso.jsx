@@ -18,6 +18,7 @@ import { HubJugarSlotRect } from '../components/HubJugarSponsorSurfaces';
 import SponsorBannerReserva from '../components/SponsorBannerReserva';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
+import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -49,6 +50,12 @@ export default function PagoExitoso() {
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [reserva]);
 
+  const deporteReservaPago = useMemo(() => {
+    const raw = reserva?.deporte ?? reserva?.deporte_cancha;
+    if (raw == null || String(raw).trim() === '') return null;
+    return normalizeTorneoDeporte(raw);
+  }, [reserva]);
+
   const sponsorReservaEnabled =
     !saving && !saveError && pagoKind === 'reserva' && Boolean(reserva);
 
@@ -57,10 +64,12 @@ export default function PagoExitoso() {
 
   const { sponsors: sedeTickerPago } = useSedeTickerSponsors(reservaSedeId, {
     enabled: sedeTickerPagoEnabled,
+    deporte: deporteReservaPago,
   });
 
   const { sponsor: sponsorReserva } = useSponsor(reservaSedeId, null, {
     enabled: sponsorReservaEnabled,
+    deporte: deporteReservaPago,
   });
 
   const { getSlot: getHubJugarSlot } = useHubJugarSponsorSlots();
@@ -454,7 +463,7 @@ export default function PagoExitoso() {
 
             <SponsorBannerReserva sponsor={sponsorReserva} />
 
-            <HubSponsorsTicker sponsors={sedeTickerPago} />
+            <HubSponsorsTicker sponsors={sedeTickerPago} deporte={deporteReservaPago} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button

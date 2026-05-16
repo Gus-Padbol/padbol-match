@@ -130,8 +130,9 @@ function TickerRow({ items, dupKey }) {
 /**
  * Ticker horizontal de sponsors (mismo componente que en el hub /jugar).
  * @param {{ nombre: string, imagen_url?: string, url_destino?: string }[]} items
+ * @param {string|null} [deporte] Slug canónico del contexto (p. ej. selector hub); se refleja en `data-pm-deporte` para trazabilidad con GET /api/sponsors.
  */
-export default function SponsorTicker({ items }) {
+export default function SponsorTicker({ items, deporte = null }) {
   const displayItems = useMemo(() => {
     if (items && items.length > 0) return items;
     return Array.from({ length: 5 }, () => ({
@@ -143,7 +144,12 @@ export default function SponsorTicker({ items }) {
   }, [items]);
 
   return (
-    <div className="hub-jugar-ticker-wrap" role="region" aria-label="Sponsors">
+    <div
+      className="hub-jugar-ticker-wrap"
+      role="region"
+      aria-label="Sponsors"
+      data-pm-deporte={deporte != null && String(deporte).trim() !== '' ? String(deporte).trim().toLowerCase() : undefined}
+    >
       <div className="hub-jugar-ticker-marquee">
         <div className="hub-jugar-ticker-track">
           <TickerRow dupKey={0} items={displayItems} />

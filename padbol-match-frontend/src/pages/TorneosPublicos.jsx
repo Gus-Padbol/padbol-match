@@ -122,13 +122,27 @@ export default function TorneosPublicos() {
     return { email: em };
   }, [session?.user?.email]);
   const { sedeId: hubSedeId, pais: hubPaisUsuario } = useUserRole(currentCliente);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const nearMode = searchParams.get('context') === 'near';
+
+  /** Deriva del query `?deporte=` (hub y enlaces compartibles). */
+  const filtroDeporteTorneo = useMemo(() => {
+    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
+    if (!d || d === 'todos') return 'todos';
+    return FILTROS_DEPORTE_TORNEO_PUBLICO.some((x) => x.id === d) ? d : 'todos';
+  }, [searchParams]);
+
+  const deporteTickerTorneos = useMemo(() => {
+    if (filtroDeporteTorneo === 'todos') return null;
+    return normalizeTorneoDeporte(filtroDeporteTorneo);
+  }, [filtroDeporteTorneo]);
+
   const { tickerSponsors } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: String(hubPaisUsuario || '').trim(),
+    deporte: deporteTickerTorneos,
     enabled: true,
   });
-  const [searchParams, setSearchParams] = useSearchParams();
-  const nearMode = searchParams.get('context') === 'near';
 
   const sedeFiltroId = useMemo(() => {
     const r = searchParams.get('sedeId');
@@ -163,13 +177,6 @@ export default function TorneosPublicos() {
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
   const torneoSearchInputRef = useRef(null);
   const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('todos');
-  /** Deriva del query `?deporte=` (hub y enlaces compartibles). */
-  const filtroDeporteTorneo = useMemo(() => {
-    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
-    if (!d || d === 'todos') return 'todos';
-    return FILTROS_DEPORTE_TORNEO_PUBLICO.some((x) => x.id === d) ? d : 'todos';
-  }, [searchParams]);
-
   const setDeporteFiltroEnUrl = useCallback(
     (id) => {
       setSearchParams(
@@ -953,7 +960,7 @@ export default function TorneosPublicos() {
         ) : null}
 
         <div style={{ marginBottom: '14px' }}>
-          <HubSponsorsTicker sponsors={tickerSponsors} />
+          <HubSponsorsTicker sponsors={tickerSponsors} deporte={deporteTickerTorneos} />
         </div>
 
         {listaTorneos}

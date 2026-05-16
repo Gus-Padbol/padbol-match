@@ -20,6 +20,7 @@ import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 import { estadoTorneoNormalizado } from '../utils/torneoEstadoFiltroPills';
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
+import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
 import {
   TORNEO_RESERVA_LUGAR_BTN,
   TORNEO_RESERVA_LUGAR_CONFIRM_POST,
@@ -112,9 +113,15 @@ export default function TorneoVista() {
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [torneo?.sede_id]);
 
+  const deporteParaSponsorTorneo = useMemo(
+    () => (torneo?.deporte != null ? normalizeTorneoDeporte(torneo.deporte) : null),
+    [torneo?.deporte],
+  );
+
   const sponsorTorneoEnabled = !loading && Boolean(torneo);
   const { sponsor: sponsorPresentadoRaw } = useSponsor(sedeIdParaSponsor, torneoIdNum, {
     enabled: sponsorTorneoEnabled,
+    deporte: deporteParaSponsorTorneo,
   });
 
   const presentadoPorSponsor = useMemo(() => {
@@ -1250,6 +1257,7 @@ export default function TorneoVista() {
           showTorneoLogo
           shareTorneoMeta={torneo && torneoShareUrl ? torneoShareMeta : null}
           presentadoPorSponsor={presentadoPorSponsor}
+          presentadoPorDeporte={deporteParaSponsorTorneo}
           apiBaseUrl={apiBaseUrlTorneo}
           puedeExportarJugadoresExcel={puedeExportarJugadoresExcelVista}
           adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}

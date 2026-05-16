@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../supabaseClient';
 import { hubTickerSponsors, hubSponsorsEligibles, pickTercerTiempoSedeSponsor } from '../utils/hubSponsorsFilter';
+import { fetchPublicSponsorsList, normalizeSponsorDeporteQueryParam } from '../utils/sponsorDeportePublic';
 
 /**
  * Sponsors del hub: card 3er tiempo (sede) + lista para banda rotativa.
- * @param {{ sedeId?: number|null, pais?: string|null, enabled?: boolean }} ctx
+ * @param {{ sedeId?: number|null, pais?: string|null, deporte?: string|null, enabled?: boolean }} ctx
  */
 export function useHubSponsors(ctx) {
   const enabled = ctx.enabled !== false;
   const sedeKey = ctx.sedeId != null && Number.isFinite(Number(ctx.sedeId)) ? Number(ctx.sedeId) : null;
   const paisKey = ctx.pais != null ? String(ctx.pais).trim() : '';
+  const deporteKey = normalizeSponsorDeporteQueryParam(ctx.deporte);
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(Boolean(enabled));
@@ -25,12 +26,7 @@ export function useHubSponsors(ctx) {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: qErr } = await supabase
-        .from('sponsors')
-        .select('*')
-        .eq('activo', true)
-        .eq('aprobado', true);
-      if (qErr) throw qErr;
+      const data = await fetchPublicSponsorsList({ deporte: deporteKey });
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e?.message || String(e));
@@ -38,7 +34,7 @@ export function useHubSponsors(ctx) {
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [enabled, deporteKey]);
 
   useEffect(() => {
     void load();
