@@ -61,6 +61,13 @@ html {
 }
 
 :root {
+  /**
+   * Chrome fijo superior (AppHeader): alinear con `HUB_APP_HEADER_HEIGHT_PX` y `APP_HEADER_OUTER_PADDING_PX`
+   * en `src/constants/hubLayout.js`. `hubContentPaddingTopCss` suma nav+slack encima de `--pm-app-header-stack-height`.
+   */
+  --pm-app-header-inner-min-height: 70px;
+  --pm-app-header-stack-height: calc(16px + var(--pm-app-header-inner-min-height) + env(safe-area-inset-top, 0px));
+
   /** Misma anchura que la columna central del hub (`HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX`). */
   --pm-app-body-max-width: 900px;
   --bg-input: #ffffff;

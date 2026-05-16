@@ -11,12 +11,10 @@ import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import {
-  APP_HEADER_OUTER_PADDING_PX,
-  HUB_FIXED_CHROME_SLACK_PX,
   hubContentPaddingTopCss,
-  hubContentPaddingTopPx,
   hubInstagramColumnWrapStyle,
   hubMainPaddingBottomCss,
+  hubScrollChromeTopExtraPx,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
@@ -131,7 +129,7 @@ const SEDE_HERO_FRASE_DEFAULT =
 
 /**
  * Margen extra bajo AppHeader + BottomNav + chrome del header (ref. hubLayout) + safe-area.
- * Incluye {@link APP_HEADER_OUTER_PADDING_PX} como en {@link hubContentPaddingTopCss} para que el hero no quede bajo la barra fija.
+ * Incluye el mismo stack que {@link hubContentPaddingTopCss} más buffer de hero (`SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX`).
  */
 const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 52;
 
@@ -1611,10 +1609,10 @@ export default function SedePublica() {
   const { sponsors: sedeTickerSponsors } = useSedeTickerSponsors(sedeIdNumTicker, {
     enabled: Boolean(sedeIdNumTicker),
   });
-  /** Hueco bajo AppHeader + BottomNav fijos + safe-area + buffer (hero y resto del scroll). */
+  /** Hueco bajo AppHeader + BottomNav fijos + buffer (hero y resto del scroll). Safe-area en `--pm-app-header-stack-height`. */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
-      `calc(${hubContentPaddingTopPx(location.pathname, navDock) + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px) + ${SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
+      `calc(var(--pm-app-header-stack-height) + ${hubScrollChromeTopExtraPx(location.pathname, navDock) + SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
     [location.pathname, navDock]
   );
   const [sede, setSede] = useState(null);

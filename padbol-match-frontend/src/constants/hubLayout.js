@@ -3,7 +3,8 @@
  *
  * Hasta 768px de ancho la barra Perfil / Jugar / Competir / Notificaciones va fija abajo; en desktop
  * permanece bajo el header. El padding de las pantallas usa {@link hubContentPaddingTopCss} /
- * `navDock` desde `HubNavLayoutProvider`.
+ * `navDock` desde `HubNavLayoutProvider`. El offset bajo el header fijo usa la variable CSS
+ * `--pm-app-header-stack-height` (ver `index.css`) alineada con `HUB_APP_HEADER_HEIGHT_PX` aquí.
  *
  * ANTES DE COMMIT si tocás este archivo: verificar en la app que sigan bien
  * — /reservar pantalla 1 (logo Padbol Match visible bajo el header),
@@ -17,7 +18,8 @@
  * Altura mínima de la fila interna del header (título / saludo); el shell suma paddings en
  * `.app-header-shell` (index.css) + `paddingBottom` en AppHeader.jsx.
  */
-export const HUB_APP_HEADER_HEIGHT_PX = 64;
+/** Min-height de la fila interior del header; debe coincidir con `--pm-app-header-inner-min-height` en `index.css`. */
+export const HUB_APP_HEADER_HEIGHT_PX = 70;
 /** Padding vertical del AppHeader (8px arriba + 8px abajo, alineado con AppHeader.jsx). */
 export const APP_HEADER_OUTER_PADDING_PX = 16;
 /**
@@ -138,18 +140,29 @@ export function hubContentPaddingTopPx(pathname, navDock = 'top') {
 }
 
 /**
- * Altura ocupada por el AppHeader fijo (minHeight + paddings + safe-area en iOS).
+ * Píxeles adicionales bajo `--pm-app-header-stack-height`: fila hub superior (si aplica) + slack.
+ * La safe-area del notch va dentro de `--pm-app-header-stack-height` (no duplicar aquí).
  */
-export function appHeaderStackHeightCss() {
-  return `calc(${HUB_APP_HEADER_HEIGHT_PX + APP_HEADER_OUTER_PADDING_PX}px + env(safe-area-inset-top, 0px))`;
+export function hubScrollChromeTopExtraPx(pathname, navDock = 'top') {
+  const dockBottom = navDock === 'bottom';
+  const navVisible = !isHubNavBarHiddenPathname(pathname);
+  const includeTopNavRow = navVisible && !dockBottom;
+  return (includeTopNavRow ? HUB_NAV_HEIGHT_PX : 0) + HUB_FIXED_CHROME_SLACK_PX;
 }
 
 /**
- * Offset bajo header fijo (+ barra hub si aplica) + chrome del header + safe-area.
+ * Altura ocupada por el AppHeader fijo (padding shell + fila interior + safe-area en iOS).
+ * Definición canónica: variable CSS `--pm-app-header-stack-height` en `index.css`.
+ */
+export function appHeaderStackHeightCss() {
+  return 'var(--pm-app-header-stack-height)';
+}
+
+/**
+ * Offset del contenido scrolleable bajo el header fijo (+ fila hub superior si aplica + slack).
  */
 export function hubContentPaddingTopCss(pathname, navDock = 'top') {
-  const basePx = hubContentPaddingTopPx(pathname, navDock);
-  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX}px + env(safe-area-inset-top, 0px))`;
+  return `calc(var(--pm-app-header-stack-height) + ${hubScrollChromeTopExtraPx(pathname, navDock)}px)`;
 }
 
 /**
@@ -195,8 +208,7 @@ export const HUB_ACCESO_LOGIN_EXTRA_TOP_PX = 36;
 
 /** Igual que {@link hubContentPaddingTopCss} más {@link HUB_ACCESO_LOGIN_EXTRA_TOP_PX} (login / acceso). */
 export function hubAccesoContentPaddingTopCss(pathname, navDock = 'top') {
-  const basePx = hubContentPaddingTopPx(pathname, navDock);
-  return `calc(${basePx + APP_HEADER_OUTER_PADDING_PX + HUB_FIXED_CHROME_SLACK_PX + HUB_ACCESO_LOGIN_EXTRA_TOP_PX}px + env(safe-area-inset-top, 0px))`;
+  return `calc(var(--pm-app-header-stack-height) + ${hubScrollChromeTopExtraPx(pathname, navDock) + HUB_ACCESO_LOGIN_EXTRA_TOP_PX}px)`;
 }
 
 /**
@@ -227,24 +239,14 @@ export function hubUserHomeChromeSpacerHeightCss(pathname, opts, navDock = 'top'
     : navDock === 'bottom'
       ? HUB_USERHOME_CHROME_EXTRA_GREETING_BOTTOM_DOCK_PX
       : HUB_USERHOME_CHROME_EXTRA_FOR_GREETING_PX;
-  const basePx =
-    hubContentPaddingTopPx(pathname, navDock) +
-    APP_HEADER_OUTER_PADDING_PX +
-    HUB_FIXED_CHROME_SLACK_PX +
-    extra;
-  return `calc(${basePx}px + env(safe-area-inset-top, 0px))`;
+  return `calc(var(--pm-app-header-stack-height) + ${hubScrollChromeTopExtraPx(pathname, navDock) + extra}px)`;
 }
 
 /**
  * Como {@link hubContentPaddingTopCss} más {@link HUB_LOGO_CLEARANCE_TOP_PX} para logos/hero que no queden bajo la barra fija.
  */
 export function hubContentPaddingTopWithLogoClearanceCss(pathname, navDock = 'top') {
-  const basePx =
-    hubContentPaddingTopPx(pathname, navDock) +
-    APP_HEADER_OUTER_PADDING_PX +
-    HUB_LOGO_CLEARANCE_TOP_PX +
-    HUB_FIXED_CHROME_SLACK_PX;
-  return `calc(${basePx}px + env(safe-area-inset-top, 0px))`;
+  return `calc(var(--pm-app-header-stack-height) + ${hubScrollChromeTopExtraPx(pathname, navDock) + HUB_LOGO_CLEARANCE_TOP_PX}px)`;
 }
 
 /**
