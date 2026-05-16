@@ -190,7 +190,7 @@ export default function LandingPage() {
               color: 'var(--text-secondary)',
             }}
           >
-            La plataforma que lleva el Padbol al mundo, y abre sus puertas al Pádel, Pickleball, Fútbol y más.
+            La plataforma que lleva el Padbol al mundo, abre sus puertas al Pádel, Pickleball, Fútbol y más.
           </p>
         </section>
 
