@@ -22,13 +22,6 @@ const labelStyle = {
   color: 'var(--text-secondary)',
   marginBottom: '6px',
 };
-function tituloPantallaInicioCard(depKey, cardIndex) {
-  const k = String(depKey || '').trim().toLowerCase();
-  const hit = DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === k);
-  if (hit?.label) return hit.label;
-  return `Card ${cardIndex + 1}`;
-}
-
 const inputStyle = {
   width: '100%',
   boxSizing: 'border-box',
@@ -500,7 +493,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           return (
             <div key={slotId} className="admin-hub-editor-card" style={cardWrap}>
               <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>
-                {tituloPantallaInicioCard(depSel, idx)}
+                Card {idx + 1}
               </div>
               <label style={{ ...labelStyle, color: 'var(--text-secondary)' }} htmlFor={`hub-inicio-deporte-${slotId}`}>
                 Deporte
