@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { supabase } from '../supabaseClient';
-import { crearProfesorAdmin, fetchAdminProfesores } from '../utils/clasesAdminApi';
+import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores } from '../utils/clasesAdminApi';
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ACCENT = 'var(--accent)';
@@ -31,12 +31,13 @@ function extFromFile(file) {
   return m ? m[1].toLowerCase().slice(0, 5) : 'jpg';
 }
 
-export default function AdminProfesoresClubSection({ accessToken, sedeId }) {
+export default function AdminProfesoresClubSection({ accessToken, sedeId, isSuperAdmin = false }) {
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [approvingId, setApprovingId] = useState(null);
   const [fotoUploading, setFotoUploading] = useState(false);
   const fileRef = useRef(null);
   const [form, setForm] = useState({
@@ -107,6 +108,19 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId }) {
       setMsg(e?.message || 'No se pudo subir la foto');
     } finally {
       setFotoUploading(false);
+    }
+  };
+
+  const aprobar = async (profId) => {
+    setApprovingId(profId);
+    setMsg('');
+    try {
+      await aprobarProfesorAdmin({ profesorId: profId, accessToken });
+      await load();
+    } catch (e) {
+      setMsg(e?.message || 'Error');
+    } finally {
+      setApprovingId(null);
     }
   };
 
@@ -276,9 +290,15 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId }) {
           >
             {saving ? 'Guardando…' : 'Guardar profesor'}
           </button>
-          <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-            Quedará con badge «Pendiente aprobación» hasta que super admin apruebe.
-          </p>
+          {!isSuperAdmin ? (
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+              Quedará con badge «Pendiente aprobación» hasta que super admin apruebe.
+            </p>
+          ) : (
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+              Como super admin podés aprobarlo desde la lista cuando quieras.
+            </p>
+          )}
         </div>
       ) : null}
       {loading ? (
@@ -292,11 +312,13 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId }) {
               key={p.id}
               style={{
                 display: 'flex',
+                flexWrap: 'wrap',
                 gap: 12,
                 padding: 12,
                 borderRadius: 12,
                 border: '1px solid var(--border)',
                 background: 'var(--bg-card)',
+                alignItems: 'center',
               }}
             >
               <div
@@ -324,12 +346,31 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId }) {
                 {p.certificado_fipa ? (
                   <div style={{ fontSize: 12, marginTop: 4, fontWeight: 700, color: ACCENT }}>Cert. FIPA</div>
                 ) : null}
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                   {p.aprobado ? (
                     <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#dcfce7', color: '#166534' }}>Aprobado</span>
                   ) : (
                     <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#fef9c3', color: '#854d0e' }}>Pendiente aprobación</span>
                   )}
+                  {isSuperAdmin && !p.aprobado ? (
+                    <button
+                      type="button"
+                      disabled={approvingId === p.id}
+                      onClick={() => void aprobar(p.id)}
+                      style={{
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '6px 12px',
+                        background: ACCENT,
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: 12,
+                        cursor: approvingId === p.id ? 'wait' : 'pointer',
+                      }}
+                    >
+                      {approvingId === p.id ? '…' : 'Aprobar'}
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </li>

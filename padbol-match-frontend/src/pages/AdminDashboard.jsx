@@ -7548,8 +7548,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div
                     style={{
                       width: '100%',
-                      maxWidth: '560px',
-                      maxHeight: 'min(90dvh, 880px)',
+                      maxWidth: 'min(96vw, 720px)',
+                      maxHeight: 'min(92dvh, 920px)',
                       overflowY: 'auto',
                       WebkitOverflowScrolling: 'touch',
                       background: 'var(--bg-card)',
@@ -7609,6 +7609,33 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         sedeId={Number(sedeSuperAdminDetalleModal.id)}
                         moneda={String(sedeSuperAdminDetalleModal.moneda || 'ARS')}
                       />
+                    ) : null}
+                    {session?.access_token ? (
+                      <div
+                        style={{
+                          marginTop: 24,
+                          paddingTop: 20,
+                          borderTop: '1px solid var(--border)',
+                        }}
+                      >
+                        <h4
+                          style={{
+                            margin: '0 0 12px',
+                            fontSize: 16,
+                            fontWeight: 800,
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          🎓 Clases y profesores
+                        </h4>
+                        <AdminModuloClasesSection
+                          apiBaseUrl={apiBaseUrl}
+                          accessToken={session.access_token}
+                          sedeId={Number(sedeSuperAdminDetalleModal.id)}
+                          monedaSede={String(sedeSuperAdminDetalleModal.moneda || 'ARS').trim().toUpperCase().slice(0, 8) || 'ARS'}
+                          isSuperAdmin
+                        />
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -11610,6 +11637,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   sedeId={Number(sedeId)}
                   canchas={canchas}
                   monedaSede={String(miSede?.moneda || 'ARS').trim().toUpperCase().slice(0, 8) || 'ARS'}
+                  isSuperAdmin={isSuperAdmin}
                 />
               </div>
             </div>
