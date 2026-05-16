@@ -122,6 +122,8 @@ export default function TorneoVista() {
     return {
       nombre: String(sponsorPresentadoRaw.nombre).trim(),
       logo_url: sponsorPresentadoRaw.logo_url ? String(sponsorPresentadoRaw.logo_url).trim() : '',
+      url_destino:
+        sponsorPresentadoRaw.url_destino != null ? String(sponsorPresentadoRaw.url_destino).trim() : '',
     };
   }, [sponsorPresentadoRaw]);
 

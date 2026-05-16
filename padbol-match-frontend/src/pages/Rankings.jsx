@@ -959,18 +959,6 @@ export default function Rankings() {
         </div>
 
         <div style={{ marginBottom: '14px' }}>
-          <div
-            style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              color: 'var(--text-secondary)',
-              marginBottom: '8px',
-              textAlign: 'center',
-              letterSpacing: '0.02em',
-            }}
-          >
-            Rankings presentados por
-          </div>
           <HubSponsorsTicker sponsors={tickerSponsors} />
         </div>
 
