@@ -1,23 +1,49 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import './LandingPage.css';
 
-const BG = '#FFFFFF';
-const TEXT = '#0F172A';
-const MUTED = '#64748B';
 const ACCENT = '#E11B22';
-const BORDER = '#E2E8F0';
-const MAIL = 'mailto:info@padbol.com';
+
+const btnPrimary = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%',
+  padding: '15px 18px',
+  borderRadius: 12,
+  border: 'none',
+  fontWeight: 800,
+  fontSize: 16,
+  cursor: 'pointer',
+  textDecoration: 'none',
+  color: '#fff',
+  background: ACCENT,
+  boxSizing: 'border-box',
+  fontFamily: 'inherit',
+  boxShadow: 'none',
+};
+
+const WHATSAPP_URL = 'https://wa.me/17864588533';
 
 export default function ContactoSumarClub() {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('landing-page-active');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const prevThemeColor = meta?.getAttribute('content') ?? null;
+    if (meta) meta.setAttribute('content', '#0F172A');
+    return () => {
+      root.classList.remove('landing-page-active');
+      if (meta && prevThemeColor != null) meta.setAttribute('content', prevThemeColor);
+    };
+  }, []);
+
   return (
     <div
+      className="landing-page"
       style={{
-        minHeight: '100dvh',
-        background: BG,
-        color: TEXT,
         paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
         paddingBottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
-        boxSizing: 'border-box',
       }}
     >
       <div
@@ -42,65 +68,64 @@ export default function ContactoSumarClub() {
         >
           ← Inicio
         </Link>
-        <h1 style={{ margin: '0 0 16px', fontSize: 24, fontWeight: 900, lineHeight: 1.2 }}>Sumar mi club</h1>
-        <p style={{ margin: '0 0 16px', fontSize: 15, lineHeight: 1.55, color: MUTED, fontWeight: 500 }}>
-          Si representás a un club y querés formar parte de Padbol Match, escribinos. Te respondemos con los pasos para
-          alta y configuración en la plataforma.
-        </p>
-        <a
-          href={MAIL}
+        <h1
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            padding: '15px 18px',
-            borderRadius: 12,
-            border: 'none',
-            fontWeight: 800,
-            fontSize: 16,
-            cursor: 'pointer',
-            textDecoration: 'none',
-            color: '#fff',
-            background: ACCENT,
-            boxSizing: 'border-box',
-            fontFamily: 'inherit',
-            boxShadow: '0 4px 14px rgba(225, 27, 34, 0.28)',
-            marginBottom: 20,
+            margin: '0 0 16px',
+            fontSize: 24,
+            fontWeight: 900,
+            lineHeight: 1.2,
+            color: 'var(--text-primary)',
           }}
         >
-          Escribir a info@padbol.com
-        </a>
+          Sumar mi club
+        </h1>
+        <p
+          style={{
+            margin: '0 0 24px',
+            fontSize: 15,
+            lineHeight: 1.55,
+            color: 'var(--text-secondary)',
+            fontWeight: 500,
+          }}
+        >
+          Completá el formulario y nos ponemos en contacto para darte de alta en la plataforma.
+        </p>
+        <Link to="/unirse" style={{ ...btnPrimary, marginBottom: 14 }}>
+          Completar formulario de alta
+        </Link>
+        <p
+          style={{
+            margin: '0 0 40px',
+            fontSize: 13,
+            lineHeight: 1.5,
+            color: 'var(--text-secondary)',
+            textAlign: 'center',
+            fontWeight: 500,
+          }}
+        >
+          ¿Tenés dudas?{' '}
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: ACCENT, fontWeight: 700, textDecoration: 'none' }}
+          >
+            Escribinos por WhatsApp
+          </a>
+        </p>
         <div
           style={{
-            padding: 18,
-            border: `1px solid ${BORDER}`,
-            borderRadius: 12,
-            background: BG,
+            marginTop: 40,
+            paddingTop: 16,
+            borderTop: '1px solid var(--border)',
+            fontSize: 13,
           }}
         >
-          <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700, color: TEXT }}>Solicitud online</p>
-          <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.5, color: MUTED }}>
-            También podés dejar los datos del club en nuestro formulario de alta.
-          </p>
-          <Link
-            to="/unirse"
-            style={{
-              fontSize: 15,
-              fontWeight: 800,
-              color: ACCENT,
-              textDecoration: 'none',
-            }}
-          >
-            Ir a solicitud de club →
-          </Link>
-        </div>
-        <div style={{ marginTop: 40, paddingTop: 16, borderTop: `1px solid ${BORDER}`, fontSize: 13 }}>
-          <Link to="/terminos" style={{ color: MUTED, fontWeight: 600, textDecoration: 'none' }}>
+          <Link to="/terminos" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
             Términos
           </Link>
-          <span style={{ color: BORDER, margin: '0 8px' }}>|</span>
-          <Link to="/privacidad" style={{ color: MUTED, fontWeight: 600, textDecoration: 'none' }}>
+          <span style={{ color: 'var(--border)', margin: '0 8px' }}>|</span>
+          <Link to="/privacidad" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
             Privacidad
           </Link>
         </div>
