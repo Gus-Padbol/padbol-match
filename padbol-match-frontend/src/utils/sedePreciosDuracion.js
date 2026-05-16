@@ -42,7 +42,10 @@ export function duracionesReservaDisponibles(sede) {
 }
 
 /**
- * Precio del turno: franjas horarias (si aplican) > base por duración > legacy mañana/tarde.
+ * Precio del turno para checkout/resumen.
+ * Si `precioBaseTabla` viene informado (p. ej. sedes_duraciones / disponibilidad-slots), ese monto
+ * es autoritativo: no se pisa con franjas horarias ni con legacy mañana/tarde.
+ * Si no: franjas (si aplican) > precio por duración en columnas de sede > legacy mañana/tarde.
  * @param {object} sede
  * @param {string} hora HH:MM
  * @param {string} fecha YYYY-MM-DD
@@ -50,12 +53,14 @@ export function duracionesReservaDisponibles(sede) {
  * @param {function} precioDesdeFranjasFn inyectado para evitar ciclo con franjasHorarias
  */
 export function precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjasFn, precioBaseTabla = null) {
-  const baseDuracion =
-    precioBaseTabla != null && Number.isFinite(Number(precioBaseTabla)) && Number(precioBaseTabla) >= 0
-      ? Number(precioBaseTabla)
-      : precioSedeParaDuracionMin(sede, duracionMin);
+  const tienePrecioTablaExplicito =
+    precioBaseTabla != null && Number.isFinite(Number(precioBaseTabla)) && Number(precioBaseTabla) >= 0;
+  const baseDuracion = tienePrecioTablaExplicito
+    ? Number(precioBaseTabla)
+    : precioSedeParaDuracionMin(sede, duracionMin);
   const base = baseDuracion != null ? baseDuracion : 0;
   if (!hora || !sede) return base;
+  if (tienePrecioTablaExplicito) return base;
   if (typeof precioDesdeFranjasFn === 'function') {
     const desdeFranjas = precioDesdeFranjasFn(sede, hora, fecha);
     if (desdeFranjas != null) return desdeFranjas;

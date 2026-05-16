@@ -382,6 +382,7 @@ export default function ArmarPartido() {
       }
       const p = match.precio != null && Number.isFinite(Number(match.precio)) ? Number(match.precio) : null;
       if (p != null && Number(f.precioTurnoBase) !== p) return { ...f, precioTurnoBase: p };
+      if (p == null && f.precioTurnoBase != null) return { ...f, precioTurnoBase: null };
       return f;
     });
   }, [sede, duracionesOfrecidas]);
