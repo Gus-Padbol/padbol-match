@@ -1,10 +1,48 @@
 /** sessionStorage: reserva armar-partido pendiente de login (paso 2 → login → paso 3). */
 export const RESERVA_PENDIENTE_KEY = 'reserva_pendiente';
 
+const PM_RESTORE_LOG = '[PM ArmarPartido restore]';
+
+/** Normaliza y valida el payload guardado antes de restaurar el paso 3. */
+export function parseReservaPendienteArmarPayload(data) {
+  if (!data || typeof data !== 'object') return null;
+  const sedeId = String(data.sede_id ?? '').trim();
+  const canchaId = Number(data.cancha_id);
+  const fecha = String(data.fecha ?? '').trim();
+  const horaInicio = String(data.hora_inicio ?? data.hora ?? '')
+    .trim()
+    .split(' - ')[0]
+    .trim();
+  const duracion = Number(data.duracion_minutos ?? data.duracion);
+  if (!sedeId || !Number.isFinite(canchaId) || canchaId < 1 || !fecha || !horaInicio) {
+    return null;
+  }
+  return {
+    sedeId,
+    canchaId,
+    fecha,
+    horaInicio,
+    duracion: Number.isFinite(duracion) && duracion > 0 ? duracion : 90,
+  };
+}
+
 export function saveReservaPendienteArmar(payload) {
   try {
     if (typeof window === 'undefined') return;
-    sessionStorage.setItem(RESERVA_PENDIENTE_KEY, JSON.stringify(payload));
+    const parsed = parseReservaPendienteArmarPayload(payload);
+    if (!parsed) {
+      console.warn(`${PM_RESTORE_LOG} save omitido (payload inválido)`, payload);
+      return;
+    }
+    const toStore = {
+      sede_id: parsed.sedeId,
+      cancha_id: parsed.canchaId,
+      fecha: parsed.fecha,
+      hora_inicio: parsed.horaInicio,
+      duracion_minutos: parsed.duracion,
+    };
+    sessionStorage.setItem(RESERVA_PENDIENTE_KEY, JSON.stringify(toStore));
+    console.log(`${PM_RESTORE_LOG} guardado`, toStore);
   } catch {
     /* ignore */
   }

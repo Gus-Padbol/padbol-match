@@ -27,7 +27,9 @@ export default function AuthOAuthCallback() {
       if (cancelled || navigatedRef.current) return;
       if (s?.user) {
         navigatedRef.current = true;
-        navigate(resolvePostLoginNavigatePath(window.location.search), { replace: true });
+        const dest = resolvePostLoginNavigatePath(window.location.search);
+        console.log('[PM ArmarPartido restore] OAuth callback →', dest);
+        navigate(dest, { replace: true });
         return;
       }
       window.setTimeout(async () => {
@@ -35,7 +37,9 @@ export default function AuthOAuthCallback() {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
           navigatedRef.current = true;
-          navigate(resolvePostLoginNavigatePath(window.location.search), { replace: true });
+          const dest = resolvePostLoginNavigatePath(window.location.search);
+          console.log('[PM ArmarPartido restore] OAuth callback (retry) →', dest);
+          navigate(dest, { replace: true });
           return;
         }
         navigatedRef.current = true;

@@ -13,6 +13,7 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   clearReservaPendienteArmar,
+  parseReservaPendienteArmarPayload,
   readReservaPendienteArmar,
   saveReservaPendienteArmar,
 } from '../utils/armarPartidoReservaPendiente';
@@ -255,7 +256,7 @@ export default function ArmarPartido() {
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
-  const { session, userProfile } = useAuth();
+  const { session, userProfile, loading: authLoading } = useAuth();
 
   const armarPaddingTopCss = useMemo(
     () => hubContentPaddingTopCss(location.pathname, navDock),
@@ -288,7 +289,6 @@ export default function ArmarPartido() {
   const [extrasCantidad, setExtrasCantidad] = useState({});
 
   const sedeBlurTimerRef = useRef(null);
-  const reservaPendienteRestauradaRef = useRef(false);
   const [sedeBusqueda, setSedeBusqueda] = useState('');
   const [sedeDropdownOpen, setSedeDropdownOpen] = useState(false);
   const [userGeo, setUserGeo] = useState(null);
@@ -359,38 +359,58 @@ export default function ArmarPartido() {
     }));
   }, [searchParams]);
 
-  /** Tras login: restaurar reserva pendiente y abrir paso 3 (resumen). */
-  useEffect(() => {
-    if (!session?.user || reservaPendienteRestauradaRef.current || loadingSedes) return;
+  /** Tras login: restaurar reserva pendiente y abrir paso 3 (resumen). Espera auth; no borra storage hasta paso 3 (Strict Mode). */
+  const tryRestoreReservaPendiente = useCallback(() => {
+    if (authLoading) {
+      console.log('[PM ArmarPartido restore] esperando auth…');
+      return;
+    }
+    if (!session?.user) return;
 
-    const data = readReservaPendienteArmar();
-    if (!data) return;
+    const raw = readReservaPendienteArmar();
+    if (!raw) return;
 
-    const sedeId = String(data.sede_id ?? '').trim();
-    const canchaId = Number(data.cancha_id);
-    const fecha = String(data.fecha ?? '').trim();
-    const horaInicio = String(data.hora_inicio ?? '').trim();
-    const duracion = Number(data.duracion_minutos);
-    if (!sedeId || !Number.isFinite(canchaId) || !fecha || !horaInicio) {
+    const parsed = parseReservaPendienteArmarPayload(raw);
+    if (!parsed) {
+      console.warn('[PM ArmarPartido restore] payload inválido, limpiando', raw);
       clearReservaPendienteArmar();
       return;
     }
 
-    reservaPendienteRestauradaRef.current = true;
-    const sedeRow = findSedeById(sedes, sedeId);
+    console.log('[PM ArmarPartido restore] aplicando', parsed);
+    const sedeRow = findSedeById(sedes, parsed.sedeId);
     if (sedeRow) setSedeBusqueda(String(sedeRow.nombre || '').trim());
     setForm((f) => ({
       ...f,
-      sedeId,
-      cancha: canchaId,
-      fecha,
-      hora: horaInicio,
-      duracion: Number.isFinite(duracion) && duracion > 0 ? duracion : f.duracion,
+      sedeId: parsed.sedeId,
+      cancha: parsed.canchaId,
+      fecha: parsed.fecha,
+      hora: parsed.horaInicio,
+      duracion: parsed.duracion,
     }));
-    clearReservaPendienteArmar();
     setStep(3);
     setMsg('');
-  }, [session?.user, sedes, loadingSedes]);
+  }, [authLoading, session?.user, sedes]);
+
+  useEffect(() => {
+    tryRestoreReservaPendiente();
+  }, [tryRestoreReservaPendiente]);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event !== 'SIGNED_IN' || !nextSession?.user) return;
+      console.log('[PM ArmarPartido restore] onAuthStateChange SIGNED_IN');
+      tryRestoreReservaPendiente();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [tryRestoreReservaPendiente]);
+
+  useEffect(() => {
+    if (step !== 3 || authLoading || !session?.user) return;
+    if (!readReservaPendienteArmar()) return;
+    console.log('[PM ArmarPartido restore] consumiendo sessionStorage (paso 3)');
+    clearReservaPendienteArmar();
+  }, [step, authLoading, session?.user]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/sedes`)
@@ -765,6 +785,7 @@ export default function ArmarPartido() {
         hora_inicio: horaInicio,
         duracion_minutos: Number(form.duracion),
       });
+      console.log('[PM ArmarPartido restore] sin sesión → /login?redirect=/armar-partido');
       navigate('/login?redirect=/armar-partido');
       return;
     }

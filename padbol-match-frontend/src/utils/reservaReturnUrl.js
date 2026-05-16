@@ -117,13 +117,19 @@ export function safeReservaPathFromLoginRedirect(loginSearch) {
  * Destino tras login: prioriza sessionStorage v2 / localStorage de reserva; si no hay datos, usa `?redirect=` solo si es `/reservar…`.
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
-  if (peekReservaPendienteArmar()) return '/armar-partido';
+  if (peekReservaPendienteArmar()) {
+    console.log('[PM ArmarPartido restore] post-login → /armar-partido (reserva_pendiente)');
+    return '/armar-partido';
+  }
   const fromStored = getPostLoginReservaPath();
   if (fromStored.startsWith('/reservar')) return fromStored;
   const fromRedirect = safeReservaPathFromLoginRedirect(loginSearch);
   if (fromRedirect) return fromRedirect;
   const fromArmar = safeArmarPartidoPathFromLoginRedirect(loginSearch);
-  if (fromArmar) return fromArmar;
+  if (fromArmar) {
+    console.log('[PM ArmarPartido restore] post-login →', fromArmar, '(redirect query)');
+    return fromArmar;
+  }
   return fromStored;
 }
 
