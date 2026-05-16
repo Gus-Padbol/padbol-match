@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 
 /**
  * Destino de `redirectTo` tras Google / Facebook OAuth (PKCE).
@@ -26,7 +27,7 @@ export default function AuthOAuthCallback() {
       if (cancelled || navigatedRef.current) return;
       if (s?.user) {
         navigatedRef.current = true;
-        navigate('/hub', { replace: true });
+        navigate(resolvePostLoginNavigatePath(window.location.search), { replace: true });
         return;
       }
       window.setTimeout(async () => {
@@ -34,7 +35,7 @@ export default function AuthOAuthCallback() {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
           navigatedRef.current = true;
-          navigate('/hub', { replace: true });
+          navigate(resolvePostLoginNavigatePath(window.location.search), { replace: true });
           return;
         }
         navigatedRef.current = true;

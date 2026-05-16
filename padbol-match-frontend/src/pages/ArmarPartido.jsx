@@ -11,6 +11,11 @@ import { duracionesReservaDisponibles, precioReservaTurno, RESERVA_DURACIONES_MI
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import {
+  clearReservaPendienteArmar,
+  readReservaPendienteArmar,
+  saveReservaPendienteArmar,
+} from '../utils/armarPartidoReservaPendiente';
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -283,6 +288,7 @@ export default function ArmarPartido() {
   const [extrasCantidad, setExtrasCantidad] = useState({});
 
   const sedeBlurTimerRef = useRef(null);
+  const reservaPendienteRestauradaRef = useRef(false);
   const [sedeBusqueda, setSedeBusqueda] = useState('');
   const [sedeDropdownOpen, setSedeDropdownOpen] = useState(false);
   const [userGeo, setUserGeo] = useState(null);
@@ -352,6 +358,39 @@ export default function ArmarPartido() {
       jugadoresConfirmados: 1,
     }));
   }, [searchParams]);
+
+  /** Tras login: restaurar reserva pendiente y abrir paso 3 (resumen). */
+  useEffect(() => {
+    if (!session?.user || reservaPendienteRestauradaRef.current || loadingSedes) return;
+
+    const data = readReservaPendienteArmar();
+    if (!data) return;
+
+    const sedeId = String(data.sede_id ?? '').trim();
+    const canchaId = Number(data.cancha_id);
+    const fecha = String(data.fecha ?? '').trim();
+    const horaInicio = String(data.hora_inicio ?? '').trim();
+    const duracion = Number(data.duracion_minutos);
+    if (!sedeId || !Number.isFinite(canchaId) || !fecha || !horaInicio) {
+      clearReservaPendienteArmar();
+      return;
+    }
+
+    reservaPendienteRestauradaRef.current = true;
+    const sedeRow = findSedeById(sedes, sedeId);
+    if (sedeRow) setSedeBusqueda(String(sedeRow.nombre || '').trim());
+    setForm((f) => ({
+      ...f,
+      sedeId,
+      cancha: canchaId,
+      fecha,
+      hora: horaInicio,
+      duracion: Number.isFinite(duracion) && duracion > 0 ? duracion : f.duracion,
+    }));
+    clearReservaPendienteArmar();
+    setStep(3);
+    setMsg('');
+  }, [session?.user, sedes, loadingSedes]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/sedes`)
@@ -717,12 +756,25 @@ export default function ArmarPartido() {
       setMsg('Elegí una cancha libre.');
       return;
     }
+    if (!session?.user) {
+      const horaInicio = String(form.hora || '').split(' - ')[0].trim();
+      saveReservaPendienteArmar({
+        sede_id: form.sedeId,
+        cancha_id: num,
+        fecha: form.fecha,
+        hora_inicio: horaInicio,
+        duracion_minutos: Number(form.duracion),
+      });
+      navigate('/login?redirect=/armar-partido');
+      return;
+    }
+    clearReservaPendienteArmar();
     setStep(3);
   };
 
   const pagarYPublicar = async () => {
     if (!session?.user) {
-      navigate('/login?redirect=/armar-partido');
+      setMsg('Tenés que iniciar sesión para pagar. Volvé al paso anterior y reservá la cancha de nuevo.');
       return;
     }
     const sedeActual = findSedeById(sedes, form.sedeId);
@@ -791,10 +843,12 @@ export default function ArmarPartido() {
       });
       const data = await res.json();
       if (res.ok && data.init_point) {
+        clearReservaPendienteArmar();
         window.location.href = data.init_point;
         return;
       }
       if (res.ok && (data.manual_payment || data.efectivo_payment)) {
+        clearReservaPendienteArmar();
         setPublicado(data.partido || null);
         setStep(4);
         return;
@@ -1303,6 +1357,12 @@ export default function ArmarPartido() {
                   color: 'var(--text-primary)',
                 }}
               >
+                {session?.user ? (
+                  <div style={{ marginBottom: 10 }}>
+                    <strong>Reserva a nombre de:</strong>{' '}
+                    {getDisplayName(userProfile, session) || session.user.email}
+                  </div>
+                ) : null}
                 <div>
                   <strong>Sede:</strong> {sede?.nombre}
                 </div>

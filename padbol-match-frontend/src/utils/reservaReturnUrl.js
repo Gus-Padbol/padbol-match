@@ -1,3 +1,8 @@
+import {
+  peekReservaPendienteArmar,
+  safeArmarPartidoPathFromLoginRedirect,
+} from './armarPartidoReservaPendiente';
+
 /** Mensaje mostrado en /login o /auth cuando la reserva exige cuenta antes del resumen. */
 const RESERVA_LOGIN_GATE_MSG_KEY = 'padbol_reserva_login_gate_msg';
 const RESERVA_LOGIN_GATE_TEXT =
@@ -112,10 +117,13 @@ export function safeReservaPathFromLoginRedirect(loginSearch) {
  * Destino tras login: prioriza sessionStorage v2 / localStorage de reserva; si no hay datos, usa `?redirect=` solo si es `/reservar…`.
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
+  if (peekReservaPendienteArmar()) return '/armar-partido';
   const fromStored = getPostLoginReservaPath();
   if (fromStored.startsWith('/reservar')) return fromStored;
   const fromRedirect = safeReservaPathFromLoginRedirect(loginSearch);
   if (fromRedirect) return fromRedirect;
+  const fromArmar = safeArmarPartidoPathFromLoginRedirect(loginSearch);
+  if (fromArmar) return fromArmar;
   return fromStored;
 }
 
