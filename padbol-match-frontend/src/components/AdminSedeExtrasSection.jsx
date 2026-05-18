@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import ConfirmModal from './ConfirmModal';
 
 /**
  * Mi Sede — extras del tercer tiempo (admin club: CRUD sin aprobación; super puede aprobar en fila).
@@ -9,8 +10,10 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
   const [msg, setMsg] = useState('');
   const [savingId, setSavingId] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState({ nombre: '', descripcion: '', precio: '', imagen_url: '' });
+  const [draft, setDraft] = useState({ nombre: '', descripcion: '', precio: '', imagen_url: '', stock: '' });
   const [edits, setEdits] = useState({});
+  const [editRow, setEditRow] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = useCallback(async () => {
     if (!sedeId || !accessToken) {
@@ -33,6 +36,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         nextEdits[row.id] = {
           precio: row.precio != null ? String(Math.round(Number(row.precio))) : '',
           activo: !!row.activo,
+          stock: row.stock != null ? String(row.stock) : '',
         };
       }
       setEdits(nextEdits);
@@ -47,6 +51,13 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
   useEffect(() => {
     void load();
   }, [load]);
+
+  const stockPayload = (raw) => {
+    const s = String(raw ?? '').trim();
+    if (!s) return null;
+    const n = parseInt(s, 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
 
   const crear = async () => {
     const nombre = String(draft.nombre || '').trim();
@@ -67,11 +78,12 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
           precio_moneda: monedaSede,
           imagen_url: String(draft.imagen_url || '').trim() || null,
           activo: true,
+          stock: stockPayload(draft.stock),
         }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || 'No se pudo crear');
-      setDraft({ nombre: '', descripcion: '', precio: '', imagen_url: '' });
+      setDraft({ nombre: '', descripcion: '', precio: '', imagen_url: '', stock: '' });
       await load();
     } catch (e) {
       setMsg(e.message || 'Error');
@@ -94,6 +106,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
           body: JSON.stringify({
             precio: ed.precio,
             activo: ed.activo,
+            stock: stockPayload(ed.stock),
           }),
         },
       );
@@ -129,8 +142,57 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
     }
   };
 
+  const guardarEdicionModal = async () => {
+    if (!editRow?.id) return;
+    setSavingId(editRow.id);
+    setMsg('');
+    try {
+      const res = await fetch(
+        `${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/extras/${encodeURIComponent(editRow.id)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({
+            nombre: String(editRow.nombre || '').trim(),
+            descripcion: String(editRow.descripcion || '').trim() || null,
+            precio: editRow.precio,
+            stock: stockPayload(editRow.stock),
+          }),
+        },
+      );
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || 'No se pudo guardar');
+      setEditRow(null);
+      await load();
+    } catch (e) {
+      setMsg(e.message || 'Error');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const eliminarExtra = async () => {
+    const rowId = deleteTarget?.id;
+    if (!rowId) return;
+    setSavingId(rowId);
+    setMsg('');
+    try {
+      const res = await fetch(
+        `${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/extras/${encodeURIComponent(rowId)}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || 'No se pudo eliminar');
+      setDeleteTarget(null);
+      await load();
+    } catch (e) {
+      setMsg(e.message || 'Error');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const rechazar = async (rowId) => {
-    if (!window.confirm('¿Marcar este extra como rechazado? Quedará desactivado.')) return;
     setSavingId(rowId);
     setMsg('');
     try {
@@ -160,7 +222,9 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
     padding: 14,
     marginBottom: 12,
     background: 'var(--bg-card)',
-    maxWidth: 390,
+    maxWidth: '100%',
+    minWidth: 0,
+    boxSizing: 'border-box',
   };
 
   return (
@@ -215,6 +279,18 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                     />
                     Activo
                   </label>
+                  <label style={{ fontSize: 13, fontWeight: 600 }}>
+                    Stock
+                    <input
+                      type="number"
+                      min={0}
+                      className="admin-mi-sede-theme-input"
+                      style={{ marginLeft: 8, width: 88 }}
+                      placeholder="∞"
+                      value={ed.stock ?? ''}
+                      onChange={(e) => setEdits((prev) => ({ ...prev, [row.id]: { ...ed, stock: e.target.value } }))}
+                    />
+                  </label>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   <button
@@ -233,6 +309,48 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                     }}
                   >
                     Guardar cambios
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingId === row.id}
+                    onClick={() =>
+                      setEditRow({
+                        id: row.id,
+                        nombre: row.nombre,
+                        descripcion: row.descripcion || '',
+                        precio: ed.precio,
+                        stock: ed.stock ?? '',
+                      })
+                    }
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-page)',
+                      color: 'var(--text-primary)',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: savingId === row.id ? 'wait' : 'pointer',
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingId === row.id}
+                    onClick={() => setDeleteTarget({ id: row.id, nombre: row.nombre })}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: 8,
+                      border: '1px solid var(--pm-color-error, #f87171)',
+                      background: 'transparent',
+                      color: 'var(--pm-color-error, #f87171)',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: savingId === row.id ? 'wait' : 'pointer',
+                    }}
+                  >
+                    Eliminar
                   </button>
                   {isSuperAdmin && pendiente ? (
                     <>
@@ -302,6 +420,16 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               onChange={(e) => setDraft((d) => ({ ...d, precio: e.target.value }))}
               inputMode="decimal"
             />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Stock disponible (opcional, vacío = ilimitado)</label>
+            <input
+              className="admin-mi-sede-theme-input"
+              style={{ width: '100%', maxWidth: 200, marginBottom: 10 }}
+              value={draft.stock}
+              onChange={(e) => setDraft((d) => ({ ...d, stock: e.target.value }))}
+              inputMode="numeric"
+              min={0}
+              placeholder="Ilimitado"
+            />
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>URL de imagen (opcional)</label>
             <input
               className="admin-mi-sede-theme-input"
@@ -317,7 +445,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                 padding: '10px 18px',
                 borderRadius: 8,
                 border: 'none',
-                background: creating ? '#9ca3af' : '#0f172a',
+                background: creating ? '#9ca3af' : 'var(--accent)',
                 color: '#fff',
                 fontWeight: 700,
                 fontSize: 14,
@@ -329,6 +457,87 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
           </div>
         </>
       )}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="¿Eliminar este producto?"
+        message="Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        dismissLabel="Cancelar"
+        confirmDanger
+        busy={Boolean(savingId)}
+        onDismiss={() => setDeleteTarget(null)}
+        onConfirm={() => void eliminarExtra()}
+      />
+
+      {editRow ? (
+        <div
+          role="presentation"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100001,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+          onClick={() => !savingId && setEditRow(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 400,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 14,
+              padding: 18,
+            }}
+          >
+            <h3 style={{ margin: '0 0 12px', color: 'var(--text-primary)', fontSize: 16 }}>Editar producto</h3>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Nombre</label>
+            <input
+              className="admin-mi-sede-theme-input"
+              style={{ width: '100%', marginBottom: 10 }}
+              value={editRow.nombre}
+              onChange={(e) => setEditRow((r) => ({ ...r, nombre: e.target.value }))}
+            />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Descripción</label>
+            <textarea
+              className="admin-mi-sede-theme-input"
+              style={{ width: '100%', minHeight: 56, marginBottom: 10 }}
+              value={editRow.descripcion}
+              onChange={(e) => setEditRow((r) => ({ ...r, descripcion: e.target.value }))}
+            />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Precio ({monedaSede})</label>
+            <input
+              className="admin-mi-sede-theme-input"
+              style={{ width: '100%', marginBottom: 10 }}
+              value={editRow.precio}
+              onChange={(e) => setEditRow((r) => ({ ...r, precio: e.target.value }))}
+            />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Stock (vacío = ilimitado)</label>
+            <input
+              className="admin-mi-sede-theme-input"
+              style={{ width: '100%', marginBottom: 14 }}
+              value={editRow.stock}
+              onChange={(e) => setEditRow((r) => ({ ...r, stock: e.target.value }))}
+              inputMode="numeric"
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setEditRow(null)} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                Cancelar
+              </button>
+              <button type="button" disabled={savingId === editRow.id} onClick={() => void guardarEdicionModal()} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#E11B22', color: '#fff', fontWeight: 700 }}>
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

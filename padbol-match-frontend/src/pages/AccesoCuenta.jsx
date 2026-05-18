@@ -32,6 +32,7 @@ import {
   whatsappDigitsValido,
   buildFullWhatsDigits,
 } from '../utils/authIdentidad';
+import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -384,6 +385,16 @@ export default function AccesoCuenta() {
       return;
     }
     const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
+    try {
+      const { disponible } = await fetchWhatsappDisponibleRegistro(waE164);
+      if (!disponible) {
+        setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+        return;
+      }
+    } catch (e) {
+      setErrorMsg(e.message || 'No se pudo validar el teléfono');
+      return;
+    }
     const paisPrincipal = String(regPaisJugador || '').trim();
     const paisTorneoExtra = String(regPaisTorneoExtra || '').trim();
     const paisGuardadoRegistro = paisPrincipal || paisTorneoExtra;
@@ -415,7 +426,12 @@ export default function AccesoCuenta() {
         },
       });
       if (error) {
-        setErrorMsg(mensajeErrorAuthSupabase(error.message));
+        const em = String(error.message || '');
+        if (/duplicate|unique|already registered|23505/i.test(em)) {
+          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+        } else {
+          setErrorMsg(mensajeErrorAuthSupabase(error.message));
+        }
         return;
       }
       if (data?.session?.user) {

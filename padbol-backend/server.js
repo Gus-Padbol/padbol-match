@@ -1558,6 +1558,30 @@ app.get('/api/registro/email-perfil-libre', async (req, res) => {
   }
 });
 
+
+/**
+ * GET /api/registro/whatsapp-disponible?whatsapp=+549...
+ * Público (registro) o con JWT (excluye el user_id de la sesión).
+ */
+app.get('/api/registro/whatsapp-disponible', async (req, res) => {
+  try {
+    const whatsapp = String(req.query.whatsapp || '').trim();
+    if (!whatsapp) return res.status(400).json({ error: 'whatsapp requerido' });
+    let excludeUserId = null;
+    try {
+      const user = await authUserFromBearer(req);
+      if (user?.id) excludeUserId = user.id;
+    } catch {
+      /* registro sin sesión */
+    }
+    const disponible = await whatsappDisponibleEnJugadoresPerfil(supabase, whatsapp, excludeUserId);
+    res.json({ disponible });
+  } catch (err) {
+    console.error('❌ GET /api/registro/whatsapp-disponible:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** PATCH /api/hub-config/:id — super_admin o editor_contenido: titulo, subtitulo, foto_url, fotos_urls. */
 app.patch('/api/hub-config/:id', async (req, res) => {
   try {
@@ -2903,6 +2927,80 @@ const MAX_CANTIDAD_EXTRA_CHECKOUT = 10;
  * @param {number} sedeId
  * @param {unknown} extrasRaw — array { id, cantidad? } desde el cliente
  */
+
+function mensajeErrorJugadoresPerfilDuplicado(err) {
+  if (!err) return null;
+  if (String(err.code || '') === '23505') {
+    const c = String(err.constraint || err.message || '').toLowerCase();
+    if (c.includes('whatsapp')) {
+      return 'Este número de teléfono ya está registrado en otra cuenta';
+    }
+    if (c.includes('email')) return 'Este email ya está registrado en otra cuenta';
+  }
+  const msg = String(err.message || '');
+  if (msg.includes('formato_equipo') || String(err.code || '') === 'PGRST204') {
+    return 'La columna formato_equipo no está en el esquema de Supabase. Ejecutá supabase/migrations/20260518120000_torneos_formato_equipo_reload.sql (o NOTIFY pgrst, \'reload schema\';).';
+  }
+  return null;
+}
+
+async function whatsappDisponibleEnJugadoresPerfil(supabaseClient, whatsappRaw, excludeUserId = null) {
+  const wa = String(whatsappRaw || '').trim();
+  if (!wa) return true;
+  let q = supabaseClient.from('jugadores_perfil').select('id').eq('whatsapp', wa).limit(1);
+  if (excludeUserId) q = q.neq('user_id', excludeUserId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return !(Array.isArray(data) && data.length > 0);
+}
+
+async function notifySedeAdminsExtraAgotado(sedeIdNum, nombreExtra) {
+  try {
+    const sid = Number(sedeIdNum);
+    if (!Number.isFinite(sid) || sid <= 0) return;
+    const adminEmail = await fetchAdminClubEmailForSede(sid);
+    if (!adminEmail) return;
+    const { data: perfil } = await supabase
+      .from('jugadores_perfil')
+      .select('whatsapp')
+      .eq('email', adminEmail)
+      .maybeSingle();
+    const { data: sedeRow } = await supabase.from('sedes').select('nombre').eq('id', sid).maybeSingle();
+    const sedeNom = String(sedeRow?.nombre || 'tu sede').trim();
+    const nom = String(nombreExtra || 'producto').trim();
+    const body = `Padbol Match: "${nom}" quedó sin stock en ${sedeNom}. Revisá los extras del tercer tiempo en Mi Sede.`;
+    await enviarTwilioWhatsappAJugadorConNumeroPerfil(perfil?.whatsapp, body, 'Stock extra agotado admin sede');
+  } catch (e) {
+    console.warn('⚠️ notifySedeAdminsExtraAgotado:', e?.message || e);
+  }
+}
+
+async function aplicarDescuentoStockExtrasConfirmados(supabaseClient, sedeId, lines) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0 || !Array.isArray(lines) || !lines.length) return;
+  for (const line of lines) {
+    const id = parseInt(String(line?.id), 10);
+    const qty = parseInt(String(line?.cantidad), 10);
+    if (!Number.isFinite(id) || id <= 0 || !Number.isFinite(qty) || qty <= 0) continue;
+    const { data: row, error: rErr } = await supabaseClient
+      .from('sede_extras')
+      .select('id, stock, nombre, activo')
+      .eq('id', id)
+      .eq('sede_id', sid)
+      .maybeSingle();
+    if (rErr || !row || row.stock == null) continue;
+    const prev = parseInt(String(row.stock), 10);
+    if (!Number.isFinite(prev)) continue;
+    const next = Math.max(0, prev - qty);
+    const { error: upErr } = await supabaseClient
+      .from('sede_extras')
+      .update({ stock: next, activo: next > 0 ? Boolean(row.activo) : false })
+      .eq('id', id);
+    if (upErr) console.warn('⚠️ stock extra:', upErr.message);
+    else if (next === 0 && prev > 0) void notifySedeAdminsExtraAgotado(sid, row.nombre);
+  }
+}
+
 async function resolveExtrasLinesParaSede(supabaseClient, sedeId, extrasRaw) {
   const sid = parseInt(String(sedeId), 10);
   if (!Number.isFinite(sid) || sid <= 0) {
@@ -2926,7 +3024,7 @@ async function resolveExtrasLinesParaSede(supabaseClient, sedeId, extrasRaw) {
   if (ids.length === 0) return { lines: [], sum: 0 };
   const { data: rows, error } = await supabaseClient
     .from('sede_extras')
-    .select('id,nombre,precio,activo,aprobado_super')
+    .select('id,nombre,precio,activo,aprobado_super,stock')
     .eq('sede_id', sid)
     .in('id', ids);
   if (error) throw error;
@@ -2940,6 +3038,14 @@ async function resolveExtrasLinesParaSede(supabaseClient, sedeId, extrasRaw) {
       const e = new Error('Uno de los extras no está disponible o no está aprobado');
       e.status = 400;
       throw e;
+    }
+    if (row.stock != null) {
+      const stockDisp = parseInt(String(row.stock), 10);
+      if (Number.isFinite(stockDisp) && stockDisp < qty) {
+        const e = new Error(`Stock insuficiente para "${String(row.nombre || 'extra').trim()}"`);
+        e.status = 400;
+        throw e;
+      }
     }
     const pu = Math.round(Number(row.precio));
     if (!Number.isFinite(pu) || pu < 0) {
@@ -3135,6 +3241,14 @@ app.patch('/api/sedes/:id/duraciones/:rowId', async (req, res) => {
       patch.precio = Math.round(p);
     }
     if (Object.prototype.hasOwnProperty.call(b, 'activo')) patch.activo = Boolean(b.activo);
+    if (Object.prototype.hasOwnProperty.call(b, 'stock')) {
+      if (b.stock === '' || b.stock == null) patch.stock = null;
+      else {
+        const st = parseInt(String(b.stock), 10);
+        if (!Number.isFinite(st) || st < 0) return res.status(400).json({ error: 'stock inválido' });
+        patch.stock = st;
+      }
+    }
     if (!Object.keys(patch).length) return res.status(400).json({ error: 'Nada que actualizar' });
     const { data, error } = await supabase.from('sedes_duraciones').update(patch).eq('id', rowId).select('*').single();
     if (error) throw error;
@@ -3167,6 +3281,12 @@ app.post('/api/sedes/:id/duraciones', async (req, res) => {
     }
     if (!Number.isFinite(pr) || pr < 0) return res.status(400).json({ error: 'precio inválido' });
     const activo = b.activo === undefined ? true : Boolean(b.activo);
+    let stockVal = null;
+    if (Object.prototype.hasOwnProperty.call(b, 'stock') && b.stock !== '' && b.stock != null) {
+      const st = parseInt(String(b.stock), 10);
+      if (!Number.isFinite(st) || st < 0) return res.status(400).json({ error: 'stock inválido' });
+      stockVal = st;
+    }
     const { data, error } = await supabase
       .from('sedes_duraciones')
       .insert([{ sede_id: sid, duracion_minutos: dm, precio: Math.round(pr), activo }])
@@ -3227,16 +3347,22 @@ app.get('/api/sedes/:id/extras', async (req, res) => {
     if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
     const { data, error } = await supabase
       .from('sede_extras')
-      .select('id,nombre,descripcion,precio,precio_moneda,imagen_url')
+      .select('id,nombre,descripcion,precio,precio_moneda,imagen_url,stock')
       .eq('sede_id', sid)
       .eq('activo', true)
       .eq('aprobado_super', true)
       .order('nombre', { ascending: true });
     if (error) throw error;
-    const extras = (data || []).map((row) => ({
-      ...row,
-      precio: row.precio != null ? Math.round(Number(row.precio)) : 0,
-    }));
+    const extras = (data || [])
+      .filter((row) => {
+        if (row.stock == null) return true;
+        const s = parseInt(String(row.stock), 10);
+        return Number.isFinite(s) && s > 0;
+      })
+      .map((row) => ({
+        ...row,
+        precio: row.precio != null ? Math.round(Number(row.precio)) : 0,
+      }));
     res.json({ extras });
   } catch (e) {
     console.error('❌ GET /api/sedes/:id/extras:', e?.message || e);
@@ -3299,6 +3425,7 @@ app.post('/api/sedes/:id/extras', async (req, res) => {
           imagen_url,
           activo,
           aprobado_super,
+          stock: stockVal,
         },
       ])
       .select('*')
@@ -3368,6 +3495,34 @@ app.patch('/api/sedes/:id/extras/:extraId', async (req, res) => {
     const { data, error } = await supabase.from('sede_extras').update(patch).eq('id', extraId).select('*').single();
     if (error) throw error;
     res.json({ extra: data });
+  } catch (e) {
+    const st = e.status || 500;
+    res.status(st).json({ error: e.message || String(e) });
+  }
+});
+
+
+/** Eliminar extra de sede (admin club / super). */
+app.delete('/api/sedes/:id/extras/:extraId', async (req, res) => {
+  try {
+    const sid = parseInt(String(req.params.id || '').trim(), 10);
+    const extraId = parseInt(String(req.params.extraId || '').trim(), 10);
+    if (!Number.isFinite(sid) || sid <= 0 || !Number.isFinite(extraId) || extraId <= 0) {
+      return res.status(400).json({ error: 'Parámetros inválidos' });
+    }
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const { data: existing, error: exErr } = await supabase
+      .from('sede_extras')
+      .select('id, sede_id')
+      .eq('id', extraId)
+      .maybeSingle();
+    if (exErr) throw exErr;
+    if (!existing || Number(existing.sede_id) !== sid) {
+      return res.status(404).json({ error: 'Extra no encontrado en esta sede' });
+    }
+    const { error } = await supabase.from('sede_extras').delete().eq('id', extraId);
+    if (error) throw error;
+    res.json({ ok: true });
   } catch (e) {
     const st = e.status || 500;
     res.status(st).json({ error: e.message || String(e) });
@@ -3548,6 +3703,16 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
         fecha,
         hora,
       });
+      const extrasBody = req.body?.extras;
+      const sidReserva = parseInt(String(req.body?.sede_id || ''), 10);
+      if (Array.isArray(extrasBody) && extrasBody.length && Number.isFinite(sidReserva) && sidReserva > 0) {
+        try {
+          const ex = await resolveExtrasLinesParaSede(supabase, sidReserva, extrasBody);
+          if (ex.lines.length) void aplicarDescuentoStockExtrasConfirmados(supabase, sidReserva, ex.lines);
+        } catch (exErr) {
+          console.warn('⚠️ stock extras POST reservas:', exErr?.message || exErr);
+        }
+      }
     }
 
     const createdReserva = Array.isArray(data) ? data[0] : data;
@@ -4995,7 +5160,8 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
     );
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const friendly = mensajeErrorJugadoresPerfilDuplicado(err);
+    res.status(friendly && friendly.includes('formato_equipo') ? 503 : 500).json({ error: friendly || err.message });
   }
 });
 
@@ -9181,6 +9347,12 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     fecha,
     hora,
   });
+  if (Array.isArray(payload.extras) && payload.extras.length) {
+    const sidFromPayload = parseInt(String(payload.sede_id || ''), 10);
+    if (Number.isFinite(sidFromPayload) && sidFromPayload > 0) {
+      void aplicarDescuentoStockExtrasConfirmados(supabase, sidFromPayload, payload.extras);
+    }
+  }
   return { ok: true, data };
 }
 

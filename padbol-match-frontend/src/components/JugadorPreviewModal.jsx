@@ -32,7 +32,7 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
         position: 'fixed',
         inset: 0,
         zIndex: 10040,
-        background: 'rgba(15,23,42,0.55)',
+        background: 'rgba(0, 0, 0, 0.6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

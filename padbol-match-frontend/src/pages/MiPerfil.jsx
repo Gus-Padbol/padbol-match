@@ -10,6 +10,8 @@ import SedeBusquedaInput from '../components/SedeBusquedaInput';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
+import ConfirmModal from '../components/ConfirmModal';
+import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import {
   hubContentPaddingTopCss,
@@ -1358,6 +1360,17 @@ export default function MiPerfil() {
         return;
       }
 
+      try {
+        const { disponible } = await fetchWhatsappDisponibleRegistro(wa);
+        if (!disponible) {
+          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+          return;
+        }
+      } catch (e) {
+        setErrorMsg(e.message || 'No se pudo validar el teléfono');
+        return;
+      }
+
       const { data: authData, error: authErr } = await handleAuthOnce({
         kind: 'signUp',
         email: emailAuth,
@@ -1373,7 +1386,12 @@ export default function MiPerfil() {
       });
       if (authErr) {
         console.log('ERROR SIGNUP:', authErr);
-        setErrorMsg(mensajeErrorAuthSupabase(authErr.message));
+        const em = String(authErr.message || '');
+        if (/duplicate|unique|already registered|23505/i.test(em)) {
+          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+        } else {
+          setErrorMsg(mensajeErrorAuthSupabase(authErr.message));
+        }
         return;
       }
       const user = authData?.user;
@@ -1434,7 +1452,12 @@ export default function MiPerfil() {
       );
 
       if (jpErr) {
-        setErrorMsg(mensajeErrorDbSupabase(jpErr.message));
+        const em = String(jpErr.message || '');
+        if (/duplicate|unique|23505/i.test(em) && /whatsapp/i.test(em)) {
+          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+        } else {
+          setErrorMsg(mensajeErrorDbSupabase(jpErr.message));
+        }
         return;
       }
 
@@ -4496,82 +4519,20 @@ export default function MiPerfil() {
         </div>
       ) : null}
 
-      {modalConfirmarCerrarSesion ? (
-        <div
-          role="presentation"
-          onClick={() => setModalConfirmarCerrarSesion(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 12000,
-            background: 'rgba(15, 23, 42, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))',
-            boxSizing: 'border-box',
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="cerrar-sesion-titulo"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: 340,
-              background: 'var(--bg-card)',
-              borderRadius: 14,
-              padding: '20px 18px 16px',
-              boxShadow: '0 20px 50px rgba(15,23,42,0.25)',
-              boxSizing: 'border-box',
-            }}
-          >
-            <p id="cerrar-sesion-titulo" style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 600, color: '#0f172a', lineHeight: 1.4 }}>
-              ¿Quieres cerrar sesión?
-            </p>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setModalConfirmarCerrarSesion(false)}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 10,
-                  border: '1px solid #cbd5e1',
-                  background: 'var(--bg-card)',
-                  color: '#0f172a',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  setModalConfirmarCerrarSesion(false);
-                  signOutAndClear();
-                  navigate('/');
-                }}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: 10,
-                  border: 'none',
-                  background: 'var(--accent)',
-                  color: '#fff',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                Sí
-              </button>
-            </div>
-          </div>
-        </div>
+      <ConfirmModal
+        open={modalConfirmarCerrarSesion}
+        title="¿Quieres cerrar sesión?"
+        confirmLabel="Sí"
+        dismissLabel="Cancelar"
+        onDismiss={() => setModalConfirmarCerrarSesion(false)}
+        onConfirm={() => {
+          setModalConfirmarCerrarSesion(false);
+          signOutAndClear();
+          navigate('/');
+        }}
+        titleId="cerrar-sesion-titulo"
+      />
+
       ) : null}
 
       <BottomNav />

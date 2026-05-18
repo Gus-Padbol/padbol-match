@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import {
   HUB_APP_HEADER_HEIGHT_PX,
-  hubBottomNavMaxWidthPx,
   hubHubScrollPaddingBottomCss,
   hubInstagramColumnWrapStyle,
   hubUserHomeChromeSpacerHeightCss,

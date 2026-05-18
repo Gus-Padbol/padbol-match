@@ -72,7 +72,7 @@ function rowLine(label, value) {
       >
         {label}
       </div>
-      <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>{v}</div>
+      <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>{v}</div>
     </div>
   );
 }
@@ -245,7 +245,7 @@ export default function ModalJugador({ open, onClose, hint }) {
         position: 'fixed',
         inset: 0,
         zIndex: 10040,
-        background: 'rgba(15,23,42,0.55)',
+        background: 'rgba(0, 0, 0, 0.6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -282,8 +282,8 @@ export default function ModalJugador({ open, onClose, hint }) {
             height: '36px',
             borderRadius: '10px',
             border: 'none',
-            background: '#f1f5f9',
-            color: '#475569',
+            background: 'var(--bg-input)',
+            color: 'var(--text-secondary)',
             fontSize: '20px',
             lineHeight: 1,
             cursor: 'pointer',
@@ -343,7 +343,7 @@ export default function ModalJugador({ open, onClose, hint }) {
                   margin: '14px 0 0',
                   fontSize: '1.15rem',
                   fontWeight: 900,
-                  color: '#0f172a',
+                  color: 'var(--text-primary)',
                   lineHeight: 1.3,
                 }}
               >
@@ -373,12 +373,12 @@ export default function ModalJugador({ open, onClose, hint }) {
               >
                 <span>
                   Torneos jugados:{' '}
-                  <strong style={{ color: '#0f172a' }}>{statsMini.torneos_jugados ?? 0}</strong>
+                  <strong style={{ color: 'var(--text-primary)' }}>{statsMini.torneos_jugados ?? 0}</strong>
                 </span>
                 <span style={{ margin: '0 8px', color: '#cbd5e1' }}>|</span>
                 <span>
                   Win rate:{' '}
-                  <strong style={{ color: '#0f172a' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>
                     {Number(statsMini.partidos_jugados) > 0 ? `${statsMini.win_rate_pct ?? 0}%` : '—'}
                   </strong>
                 </span>
@@ -401,7 +401,7 @@ export default function ModalJugador({ open, onClose, hint }) {
                 style={{
                   fontSize: '15px',
                   fontWeight: 700,
-                  color: '#0f172a',
+                  color: 'var(--text-primary)',
                   marginTop: '4px',
                   display: 'flex',
                   alignItems: 'center',

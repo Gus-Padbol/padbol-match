@@ -346,10 +346,24 @@ export default function ArmarPartido() {
     };
   }, []);
 
+  const deporteDesdeContexto = useMemo(() => {
+    const fromUrl = String(searchParams.get('deporte') || '').trim().toLowerCase();
+    if (fromUrl && DEPORTES.some((x) => x.id === fromUrl)) return fromUrl;
+    const fromState = String(location.state?.deporte || '').trim().toLowerCase();
+    if (fromState && DEPORTES.some((x) => x.id === fromState)) return fromState;
+    return '';
+  }, [searchParams, location.state]);
+
+  const mostrarSelectorDeporte = !deporteDesdeContexto;
+
+  const deporteLabelFijo = useMemo(() => {
+    const item = DEPORTES.find((x) => x.id === form.deporte);
+    return item?.label || form.deporte;
+  }, [form.deporte]);
+
   useEffect(() => {
-    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
-    if (!d) return;
-    const item = DEPORTES.find((x) => x.id === d);
+    if (!deporteDesdeContexto) return;
+    const item = DEPORTES.find((x) => x.id === deporteDesdeContexto);
     if (!item) return;
     setForm((f) => ({
       ...f,
@@ -357,7 +371,7 @@ export default function ArmarPartido() {
       jugadoresRequeridos: item.id === 'pickleball' ? f.jugadoresRequeridos : item.jugadores,
       jugadoresConfirmados: 1,
     }));
-  }, [searchParams]);
+  }, [deporteDesdeContexto]);
 
   /** Tras login: restaurar reserva pendiente y abrir paso 3 (resumen). Espera auth; no borra storage hasta paso 3 (Strict Mode). */
   const tryRestoreReservaPendiente = useCallback(() => {
@@ -940,24 +954,49 @@ export default function ArmarPartido() {
 
           {step === 1 ? (
             <div style={{ paddingTop: 22 }}>
-              <h1 style={AP.title}>{sede ? 'Fecha y hora' : 'Deporte y sede'}</h1>
-              <p style={AP.body}>Elegí deporte y sede, después el día y el turno.</p>
+              <h1 style={AP.title}>{sede ? 'Fecha y hora' : mostrarSelectorDeporte ? 'Deporte y sede' : 'Sede y turno'}</h1>
+              <p style={AP.body}>
+                {mostrarSelectorDeporte
+                  ? 'Elegí deporte y sede, después el día y el turno.'
+                  : 'Elegí sede, día y turno para tu partido.'}
+              </p>
 
-              <label style={{ ...AP.label, marginTop: 14 }} htmlFor="armar-deporte-select">
-                Deporte
-              </label>
-              <select
-                id="armar-deporte-select"
-                value={form.deporte}
-                onChange={(e) => setDeporte(e.target.value)}
-                style={{ ...AP.field, marginTop: 8 }}
-              >
-                {DEPORTES.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.label} · {d.jugadores} jugadores
-                  </option>
-                ))}
-              </select>
+              {mostrarSelectorDeporte ? (
+                <>
+                  <label style={{ ...AP.label, marginTop: 14 }} htmlFor="armar-deporte-select">
+                    Deporte
+                  </label>
+                  <select
+                    id="armar-deporte-select"
+                    value={form.deporte}
+                    onChange={(e) => setDeporte(e.target.value)}
+                    style={{ ...AP.field, marginTop: 8 }}
+                  >
+                    {DEPORTES.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.label} · {d.jugadores} jugadores
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <div style={{ marginTop: 14, marginBottom: 4 }}>
+                  <span style={{ ...AP.label, display: 'block', marginBottom: 8 }}>Deporte</span>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      padding: '6px 12px',
+                      borderRadius: 999,
+                      background: 'rgba(225, 27, 34, 0.12)',
+                      color: 'var(--accent)',
+                      fontWeight: 700,
+                      fontSize: 13,
+                    }}
+                  >
+                    {deporteLabelFijo}
+                  </span>
+                </div>
+              )}
               {form.deporte === 'pickleball' ? (
                 <label style={{ ...AP.label, marginTop: 12 }}>
                   Modalidad pickleball
@@ -1443,6 +1482,7 @@ export default function ArmarPartido() {
                             key={ex.id}
                             style={{
                               display: 'flex',
+                              minWidth: 0,
                               borderRadius: 14,
                               overflow: 'hidden',
                               border: '0.5px solid var(--border)',
@@ -1488,7 +1528,7 @@ export default function ArmarPartido() {
                               }}
                             >
                               <div>
-                                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.25 }}>
+                                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
                                   {ex.nombre}
                                 </div>
                                 {ex.descripcion ? (
@@ -1513,7 +1553,15 @@ export default function ArmarPartido() {
                                   gap: 8,
                                 }}
                               >
-                                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)', flexShrink: 1, minWidth: 0 }}>
+                                <div
+                                  style={{
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                    color: 'var(--accent)',
+                                    flexShrink: 0,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
                                   {formatoPrecioExtraCadaUnidad(unit, mon)}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>

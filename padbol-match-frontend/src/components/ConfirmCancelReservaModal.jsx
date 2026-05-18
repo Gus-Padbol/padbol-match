@@ -38,7 +38,7 @@ export default function ConfirmCancelReservaModal({
         padding:
           'max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px))',
         boxSizing: 'border-box',
-        background: 'rgba(15, 23, 42, 0.55)',
+        background: 'rgba(0, 0, 0, 0.6)',
       }}
       role="presentation"
       onClick={busy ? undefined : onDismiss}
@@ -60,12 +60,12 @@ export default function ConfirmCancelReservaModal({
       >
         <h2
           id="confirm-cancel-reserva-title"
-          style={{ margin: '0 0 10px', fontSize: '18px', fontWeight: 800, color: '#0f172a', lineHeight: 1.3 }}
+          style={{ margin: '0 0 10px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.3 }}
         >
           {title}
         </h2>
         {message ? (
-          <p style={{ margin: '0 0 18px', fontSize: '14px', color: '#475569', lineHeight: 1.5 }}>{message}</p>
+          <p style={{ margin: '0 0 18px', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{message}</p>
         ) : null}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
@@ -94,9 +94,9 @@ export default function ConfirmCancelReservaModal({
               width: '100%',
               padding: '13px 16px',
               borderRadius: '12px',
-              border: '1px solid #cbd5e1',
-              background: '#f1f5f9',
-              color: '#475569',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-card)',
+              color: 'var(--text-primary)',
               fontWeight: 700,
               fontSize: '15px',
               cursor: busy ? 'not-allowed' : 'pointer',
