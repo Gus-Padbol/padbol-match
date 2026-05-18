@@ -18,10 +18,10 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
 
   const row = (label, value) => (
     <div style={{ marginBottom: '12px' }}>
-      <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
         {label}
       </div>
-      <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>{value}</div>
+      <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>{value}</div>
     </div>
   );
 
@@ -48,6 +48,7 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
         style={{
           background: 'var(--bg-card)',
           borderRadius: '16px',
+          border: '1px solid var(--border)',
           maxWidth: '380px',
           width: '100%',
           boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
@@ -67,7 +68,7 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
                 borderRadius: '50%',
                 objectFit: 'cover',
                 objectPosition: 'top center',
-                border: '3px solid #e2e8f0',
+                border: '3px solid var(--border)',
               }}
             />
           ) : (
@@ -90,11 +91,11 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
               {(data.nombreCompleto || '?').charAt(0).toUpperCase()}
             </div>
           )}
-          <h2 id="jugador-preview-titulo" style={{ margin: '14px 0 0', fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.3 }}>
+          <h2 id="jugador-preview-titulo" style={{ margin: '14px 0 0', fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.3 }}>
             {data.nombreCompleto}
           </h2>
           {data.aliasLabel && data.aliasLabel !== '—' ? (
-            <p style={{ margin: '6px 0 0', fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>{data.aliasLabel}</p>
+            <p style={{ margin: '6px 0 0', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>{data.aliasLabel}</p>
           ) : null}
         </div>
 

@@ -7,5 +7,6 @@
 ## SQL en Supabase (ejecutar en SQL Editor si no usás migraciones automáticas)
 
 - `supabase/migrations/20260518120000_torneos_formato_equipo_reload.sql` — BUG-05
-- `supabase/migrations/20260518120100_jugadores_perfil_whatsapp_unique.sql` — BUG-02 (revisar duplicados antes)
+- `supabase/scripts/manual_cleanup_jugadores_perfil_whatsapp.sql` — BUG-02 limpieza prod (huérfanos + duplicados; **antes** del índice)
+- `supabase/migrations/20260518120100_jugadores_perfil_whatsapp_unique.sql` — BUG-02 índice único en `whatsapp`
 - `supabase/migrations/20260518120200_sede_extras_stock.sql` — MEJ-04
