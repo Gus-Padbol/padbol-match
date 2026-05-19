@@ -3,13 +3,14 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import es from './locales/es.json';
 import en from './locales/en.json';
+import { PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
 const STORAGE_KEY = 'padbol_lang';
 
 function readInitialLng() {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'es' || v === 'en') return v;
+    if (PADBOL_LANGUAGE_CODES.includes(v)) return v;
   } catch {
     /* ignore */
   }
@@ -26,7 +27,7 @@ i18n
     },
     lng: readInitialLng(),
     fallbackLng: 'en',
-    supportedLngs: ['es', 'en'],
+    supportedLngs: [...PADBOL_LANGUAGE_CODES],
     interpolation: { escapeValue: false },
     returnNull: false,
     returnEmptyString: false,

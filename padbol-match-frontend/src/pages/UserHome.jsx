@@ -27,6 +27,7 @@ import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFo
 import { pickHubDeporteRow, dedupeHubDeporteConfigRows, hubDeporteRowImagenUrl } from '../utils/hubDeporteConfig';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import './UserHome.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
@@ -582,6 +583,7 @@ export default function UserHome() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <LanguageSwitcher variant="header" />
             <HubThemeSettingsButton compact />
             {showAdminShortcut ? (
               <button

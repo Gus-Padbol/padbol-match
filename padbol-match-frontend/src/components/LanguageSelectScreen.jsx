@@ -2,14 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { useAuth } from '../context/AuthContext';
+import { PADBOL_LANGUAGES } from '../constants/padbolLanguages';
 import { setPadbolLanguage } from '../utils/padbolLang';
 import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import './LanguageSelectScreen.css';
-
-const OPTIONS = [
-  { code: 'es', flags: '🇦🇷 🇪🇸', label: 'Español' },
-  { code: 'en', flags: '🇺🇸 🇬🇧', label: 'English' },
-];
 
 /**
  * Primera apertura: el usuario debe elegir idioma antes del resto de la app.
@@ -45,7 +41,7 @@ export default function LanguageSelectScreen({ onComplete }) {
         />
 
         <div className="language-select-screen__actions">
-          {OPTIONS.map((opt) => (
+          {PADBOL_LANGUAGES.map((opt) => (
             <button
               key={opt.code}
               type="button"

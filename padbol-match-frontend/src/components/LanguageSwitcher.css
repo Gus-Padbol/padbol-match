@@ -128,19 +128,15 @@
   background: #1e293b;
 }
 
-/* Mi perfil: menú alineado al ancho del bloque */
+/* Mi perfil: trigger compacto (44px); menú anclado a la derecha */
 .lang-switcher--profile {
-  max-width: none;
-  width: 100%;
-}
-
-.lang-switcher--profile .lang-switcher__trigger {
+  max-width: 44px;
+  width: auto;
   margin-left: auto;
 }
 
 .lang-switcher--profile .lang-switcher__menu {
-  left: 0;
+  left: auto;
   right: 0;
-  min-width: 0;
-  width: 100%;
+  min-width: 196px;
 }

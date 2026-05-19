@@ -30,7 +30,7 @@ html.landing-page-active #root {
   color: var(--text-primary);
 }
 
-/* ES | EN: alineado a la columna central (mismo max-width + padding que el contenido). */
+/* Selector de idioma (globo): alineado a la columna central (mismo max-width + padding que el contenido). */
 .landing-page__lang-shell {
   position: fixed;
   top: max(10px, env(safe-area-inset-top, 0px));

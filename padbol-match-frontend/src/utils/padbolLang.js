@@ -1,16 +1,20 @@
 import i18n, { STORAGE_KEY } from '../i18n';
+import { isPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
 export { STORAGE_KEY };
 
 export function normalizePadbolLang(code) {
-  return String(code || '').toLowerCase().startsWith('en') ? 'en' : 'es';
+  const s = String(code || '').trim().toLowerCase();
+  if (isPadbolLanguageCode(s)) return s;
+  if (s.startsWith('en')) return 'en';
+  return PADBOL_LANGUAGE_CODES[0] || 'es';
 }
 
 /** true si el usuario ya eligió idioma (guardado en localStorage). */
 export function hasPadbolLangChosen() {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    return v === 'es' || v === 'en';
+    return isPadbolLanguageCode(v);
   } catch {
     return false;
   }
@@ -19,7 +23,7 @@ export function hasPadbolLangChosen() {
 export function getPadbolLangStored() {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'es' || v === 'en') return v;
+    if (isPadbolLanguageCode(v)) return v;
   } catch {
     /* ignore */
   }

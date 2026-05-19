@@ -868,7 +868,7 @@ export default function AppHeader({
             flexShrink: 0,
           }}
         >
-          {session?.user ? <LanguageSwitcher variant="header" /> : null}
+          {!reservaCheckoutMinimal ? <LanguageSwitcher variant="header" /> : null}
           {session?.user ? <HubThemeSettingsButton compact barOnDark={theme === 'dark'} /> : null}
           {showLogoutAdminHeader && session?.user ? (
             <button
@@ -1293,7 +1293,10 @@ export default function AppHeader({
             ) : null}
             {!reservaCheckoutMinimal && showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}
             {!reservaCheckoutMinimal && jugadorHubShellPath && hubLightBar ? (
-              <HubThemeSettingsButton compact={compactHubChip} />
+              <>
+                <LanguageSwitcher variant="header" />
+                <HubThemeSettingsButton compact={compactHubChip} />
+              </>
             ) : null}
             {!reservaCheckoutMinimal ? searchUiBlock : null}
             {!reservaCheckoutMinimal && hubDirectLogin && !session?.user && !authLoading ? (

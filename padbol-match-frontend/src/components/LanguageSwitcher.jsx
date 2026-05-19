@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { PADBOL_LANGUAGES } from '../constants/padbolLanguages';
 import './LanguageSwitcher.css';
 
@@ -54,6 +55,7 @@ function ChevronDownIcon({ size = 12 }) {
 export default function LanguageSwitcher({ variant = 'header', compact = false, className = '' }) {
   const { t } = useTranslation();
   const { language: lang, setLanguage } = usePadbolI18n();
+  usePadbolLangVersion();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const listId = useId();
