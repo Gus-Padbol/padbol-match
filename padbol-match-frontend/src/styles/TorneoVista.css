@@ -5,7 +5,7 @@
   padding-left: 20px;
   padding-right: 20px;
   padding-bottom: 20px;
-  background: linear-gradient(135deg, #E11B22 0%, #b91c1c 100%);
+  background: var(--bg-page);
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -15,7 +15,7 @@
   margin: 0 0 16px;
   padding: 18px 20px;
   border-radius: 16px;
-  background: var(--bg-card)fff;
+  background: var(--bg-card);
   border: 2px solid #E11B22;
   box-shadow: 0 10px 32px rgba(79, 70, 229, 0.22);
   box-sizing: border-box;
@@ -145,7 +145,7 @@
 }
 
 .btn-atras {
-  background: var(--bg-card)fff;
+  background: var(--bg-card);
   color: #E11B22;
   border: none;
   padding: 10px 20px;
@@ -163,7 +163,7 @@
 }
 
 .torneo-header {
-  background: var(--bg-card)fff;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 30px;
   margin-bottom: 30px;
@@ -193,7 +193,7 @@
 }
 
 .btn-agregar-jugadores {
-  background: linear-gradient(135deg, #E11B22 0%, #b91c1c 100%);
+  background: var(--accent);
   color: #ffffff;
   border: none;
   padding: 10px 20px;
@@ -385,7 +385,7 @@
 
 .tabla-posiciones-box,
 .partidos-box {
-  background: var(--bg-card)fff;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 25px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -493,8 +493,8 @@
 }
 
 .partido-item {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border: 2px solid #ddd;
+  background: var(--bg-card);
+  border: 2px solid var(--border, #e2e8f0);
   border-radius: 12px;
   padding: 15px;
   cursor: pointer;
@@ -505,21 +505,10 @@
 }
 
 .partido-item:hover {
-  background: linear-gradient(135deg, #E11B22 0%, #b91c1c 100%);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-}
-
-.partido-item:hover .partido-content {
-  color: #ffffff;
-}
-
-.partido-item:hover .jugadores-nombres {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.partido-item:hover .estado {
-  color: #ffffff;
+  background: color-mix(in srgb, var(--bg-card) 92%, var(--accent) 8%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: var(--accent);
 }
 
 .partido-content {
@@ -579,7 +568,7 @@
 }
 
 .modal-content {
-  background: var(--bg-card)fff;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 30px;
   max-width: 400px;
@@ -711,7 +700,7 @@
 }
 
 .btn-guardar {
-  background: linear-gradient(135deg, #E11B22 0%, #b91c1c 100%);
+  background: var(--accent);
   color: #ffffff;
 }
 
@@ -731,7 +720,7 @@
 
 .loading,
 .error {
-  background: var(--bg-card)fff;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 40px;
   text-align: center;
@@ -960,7 +949,7 @@ button.podium-player-avatar-wrap {
   color: #fff;
   font-size: 12px;
   font-weight: 800;
-  background: linear-gradient(135deg, #E11B22, #c41219);
+  background: var(--bg-card);
 }
 
 .podium-players {
@@ -1231,7 +1220,7 @@ button.podium-player-avatar-wrap {
   margin: 0 0 16px;
   padding: 16px 18px;
   border-radius: 16px;
-  background: var(--bg-card)fff;
+  background: var(--bg-card);
   border: 2px solid #a855f7;
   box-shadow: 0 8px 28px rgba(168, 85, 247, 0.18);
   box-sizing: border-box;
@@ -1509,7 +1498,7 @@ button.podium-player-avatar-wrap {
   font-size: 17px;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #b91c1c 0%, #c41219 100%);
+  background: var(--bg-card);
   box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

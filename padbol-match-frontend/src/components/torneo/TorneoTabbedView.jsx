@@ -38,6 +38,16 @@ import {
 import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresExcel';
 import { IconGeroUbicacion } from '../icons/GeroIcons';
 import SponsorTicker from '../SponsorTicker';
+import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
+import { usePadbolLangVersion } from '../../hooks/usePadbolLang';
+import {
+  buildTablaPosiciones,
+  contarSetsGanadosPartido,
+  formatMarcadorPartidoDetalle,
+  parseResultadoPartido,
+} from '../../utils/torneoPartidoResultado';
+
+export { buildTablaPosiciones } from '../../utils/torneoPartidoResultado';
 
 const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
 
@@ -112,19 +122,6 @@ function initialFromText(value) {
   return '?';
 }
 
-/** Games a/b from "6-4", "6 4", "6  0". */
-function parseSetGames(setStr) {
-  const parts = String(setStr || '')
-    .trim()
-    .split(/[\s-]+/)
-    .filter(Boolean);
-  if (parts.length < 2) return null;
-  const a = Number(parts[0]);
-  const b = Number(parts[1]);
-  if (Number.isNaN(a) || Number.isNaN(b)) return null;
-  return { a, b };
-}
-
 /** Normaliza entrada de set a formato "n-m" (espacio → guion). */
 function normalizeSetInput(raw) {
   const t = String(raw || '').trim();
@@ -178,103 +175,9 @@ function esUsuarioCapitanDeEquipo(equipo, session) {
   return false;
 }
 
-function calcularStats(equiposList, partidosList) {
-  const stats = {};
-  equiposList.forEach((eq) => {
-    stats[eq.id] = { jj: 0, g: 0, p: 0, pts: 0, sg: 0, sp: 0, gg: 0, gp: 0 };
-  });
-  partidosList.forEach((partido) => {
-    if (partido.estado !== 'finalizado' || !partido.resultado) return;
-    const res = typeof partido.resultado === 'string' ? JSON.parse(partido.resultado) : partido.resultado;
-    const sets = [res.set1, res.set2, res.set3].filter(Boolean);
-    let sgA = 0;
-    let sgB = 0;
-    let ggA = 0;
-    let ggB = 0;
-    sets.forEach((set) => {
-      const parsed = parseSetGames(set);
-      if (!parsed) return;
-      const { a, b } = parsed;
-      ggA += a;
-      ggB += b;
-      if (a > b) sgA += 1;
-      else sgB += 1;
-    });
-    const eqA = stats[partido.equipo_a_id];
-    const eqB = stats[partido.equipo_b_id];
-    if (!eqA || !eqB) return;
-    eqA.jj += 1;
-    eqB.jj += 1;
-    eqA.sg += sgA;
-    eqA.sp += sgB;
-    eqA.gg += ggA;
-    eqA.gp += ggB;
-    eqB.sg += sgB;
-    eqB.sp += sgA;
-    eqB.gg += ggB;
-    eqB.gp += ggA;
-    if (sgA > sgB) {
-      eqA.g += 1;
-      eqB.p += 1;
-      eqA.pts += 3;
-    } else {
-      eqB.g += 1;
-      eqA.p += 1;
-      eqB.pts += 3;
-    }
-  });
-  return stats;
-}
-
-export function buildTablaPosiciones(equiposList, partidosList) {
-  const stats = calcularStats(equiposList, partidosList);
-  return equiposList
-    .map((eq) => ({
-      id: eq.id,
-      nombre: eq.nombre,
-      jugadores: safeJugadores(eq),
-      puntos_ranking: eq.puntos_ranking || 0,
-      jj: stats[eq.id].jj,
-      g: stats[eq.id].g,
-      p: stats[eq.id].p,
-      pts: stats[eq.id].pts,
-      sg: stats[eq.id].sg,
-      sp: stats[eq.id].sp,
-      gg: stats[eq.id].gg,
-      gp: stats[eq.id].gp,
-      djuegos: (stats[eq.id].gg - stats[eq.id].gp) || 0,
-      dif: (stats[eq.id].sg - stats[eq.id].sp) || 0,
-    }))
-    .sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      if (b.sg - b.sp !== a.sg - a.sp) return b.sg - b.sp - (a.sg - a.sp);
-      if (b.gg - b.gp !== a.gg - a.gp) return b.gg - b.gp - (a.gg - a.gp);
-      return 0;
-    });
-}
-
-function parseResultadoSets(partido) {
-  if (!partido?.resultado) return [];
-  const res = typeof partido.resultado === 'string' ? JSON.parse(partido.resultado) : partido.resultado;
-  return [res.set1, res.set2, res.set3].filter((s) => s && String(s).trim());
-}
-
-function contarSetsGanados(partido) {
-  const sets = parseResultadoSets(partido);
-  let a = 0;
-  let b = 0;
-  sets.forEach((set) => {
-    const parsed = parseSetGames(set);
-    if (!parsed) return;
-    const { a: x, b: y } = parsed;
-    if (x > y) a += 1;
-    else if (y > x) b += 1;
-  });
-  return { sgA: a, sgB: b };
-}
-
 function equipoPorId(equipos, id) {
-  return equipos.find((e) => e.id === id);
+  const key = String(id);
+  return equipos.find((e) => String(e.id) === key);
 }
 
 function defaultTabId(estado) {
@@ -360,6 +263,8 @@ export default function TorneoTabbedView({
   /** Deporte del torneo (slug) para metadata del ticker / coherencia con GET /api/sponsors. */
   presentadoPorDeporte = null,
 }) {
+  const { t } = useTranslation();
+  usePadbolLangVersion();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
   const resultadosConfettiPlayedRef = useRef(false);
@@ -368,6 +273,7 @@ export default function TorneoTabbedView({
   const [jugadorPreview, setJugadorPreview] = useState(null);
   const [jugadorQrData, setJugadorQrData] = useState(null);
   const [showModalResultado, setShowModalResultado] = useState(false);
+  const [showModalDetallePartido, setShowModalDetallePartido] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
   /** Flujo voz: idle | listening | processing | confirm */
@@ -398,7 +304,7 @@ export default function TorneoTabbedView({
       try {
         if (!p) return false;
         if (String(p.estado || '').toLowerCase() === 'finalizado') return true;
-        return parseResultadoSets(p).length > 0;
+        return parseResultadoPartido(p).length > 0;
       } catch {
         return false;
       }
@@ -410,7 +316,40 @@ export default function TorneoTabbedView({
     estadoLower !== 'activo' &&
     !esFinalizado &&
     !hayAlMenosUnResultadoEnPartidos;
-  const estadoBadge = useMemo(() => badgeTorneoEstadoPublico(torneo?.estado), [torneo?.estado]);
+  const estadoBadge = useMemo(() => {
+    const b = badgeTorneoEstadoPublico(torneo?.estado);
+    if (!b) return null;
+    const k = String(torneo?.estado || '').toLowerCase().trim();
+    const label = t(`torneos.vista.estado.${k}`, { defaultValue: b.label });
+    return { ...b, label };
+  }, [torneo?.estado, t]);
+
+  const labelCategoriaTorneo = useCallback(
+    (raw) => {
+      const v = String(raw || '').trim();
+      if (!v) return t('torneos.vista.categoriaNivel.Libre');
+      return t(`torneos.vista.categoriaNivel.${v}`, { defaultValue: formatCategoriaTorneo(v) });
+    },
+    [t],
+  );
+
+  const labelGeneroTorneo = useCallback(
+    (raw) => {
+      const v = String(raw || '').trim().toLowerCase();
+      if (!v) return '—';
+      return t(`torneos.vista.genero.${v}`, { defaultValue: formatGeneroCompetenciaTorneo(raw) });
+    },
+    [t],
+  );
+
+  const labelCategoriaEdadTorneo = useCallback(
+    (raw) => {
+      const v = String(raw || '').trim().toLowerCase();
+      if (!v) return '—';
+      return t(`torneos.vista.categoriaEdad.${v}`, { defaultValue: formatCategoriaEdadTorneo(raw) });
+    },
+    [t],
+  );
 
   const abrirPreviewJugador = useCallback(
     (p) => {
@@ -708,25 +647,32 @@ export default function TorneoTabbedView({
     ]
   );
 
+  const abrirDetallePartido = useCallback((partido) => {
+    if (!partido) return;
+    const tieneResultado = parseResultadoPartido(partido).length > 0;
+    const finalizado = String(partido.estado || '').toLowerCase() === 'finalizado';
+    if (finalizado || tieneResultado) {
+      setSelectedPartido(partido);
+      setShowModalDetallePartido(true);
+      return;
+    }
+    if (!isAdmin || !puedeCargarResultados) return;
+    setSelectedPartido(partido);
+    setResultado({ set1: '', set2: '', set3: '' });
+    setVoiceError(null);
+    setVoicePending(null);
+    setVoiceListening(false);
+    setVoicePhase('idle');
+    setVoiceInterimText('');
+    setVoiceSaving(false);
+    setShowModalResultado(true);
+  }, [isAdmin, puedeCargarResultados]);
+
   const abrirModalResultado = useCallback(
     (partido) => {
-      if (!isAdmin) return;
-      if (partido.estado === 'finalizado') return;
-      if (!puedeCargarResultados) {
-        alert('Inicia el torneo para comenzar a cargar resultados.');
-        return;
-      }
-      setSelectedPartido(partido);
-      setResultado({ set1: '', set2: '', set3: '' });
-      setVoiceError(null);
-      setVoicePending(null);
-      setVoiceListening(false);
-      setVoicePhase('idle');
-      setVoiceInterimText('');
-      setVoiceSaving(false);
-      setShowModalResultado(true);
+      abrirDetallePartido(partido);
     },
-    [isAdmin, puedeCargarResultados]
+    [abrirDetallePartido],
   );
 
   const startVoiceResultado = useCallback(() => {
@@ -862,7 +808,7 @@ export default function TorneoTabbedView({
     async (normOverride = null) => {
       if (!selectedPartido) return;
       if (!puedeCargarResultados) {
-        alert('Inicia el torneo para comenzar a cargar resultados.');
+        alert(t('torneos.vista.iniciarParaResultados'));
         return;
       }
       const norm = normOverride
@@ -993,15 +939,15 @@ export default function TorneoTabbedView({
   }, [activeTab, esFinalizado]);
 
   const tabs = useMemo(() => {
-    const t = [
-      { id: 'equipos', label: 'EQUIPOS' },
-      { id: 'grupos', label: 'GRUPOS' },
-      { id: 'fixture', label: 'FIXTURE' },
+    const list = [
+      { id: 'equipos', label: t('torneos.vista.tabEquipos') },
+      { id: 'grupos', label: t('torneos.vista.tabGrupos') },
+      { id: 'fixture', label: t('torneos.vista.tabFixture') },
     ];
-    if (muestraTabLlave) t.push({ id: 'llave', label: 'LLAVE' });
-    if (esFinalizado) t.push({ id: 'resultados', label: 'RESULTADOS' });
-    return t;
-  }, [muestraTabLlave, esFinalizado]);
+    if (muestraTabLlave) list.push({ id: 'llave', label: t('torneos.vista.tabLlave') });
+    if (esFinalizado) list.push({ id: 'resultados', label: t('torneos.vista.tabResultados') });
+    return list;
+  }, [muestraTabLlave, esFinalizado, t]);
 
   useEffect(() => {
     const validIds = tabs.map((x) => x.id);
@@ -1064,7 +1010,7 @@ export default function TorneoTabbedView({
           todos el día del torneo!
         </div>
       ) : equipos.length === 0 ? (
-        <p style={{ color: '#64748b', margin: 0 }}>No hay equipos inscriptos.</p>
+        <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{t('torneos.vista.sinEquipos')}</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {equipos.map((equipo) => {
@@ -1126,7 +1072,7 @@ export default function TorneoTabbedView({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {jugadores.length === 0 ? (
-                    <span style={{ fontSize: '13px', color: '#94a3b8' }}>Sin jugadores</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('torneos.vista.sinJugadores')}</span>
                   ) : (
                     jugadores.map((p, idx) => {
                       const nombreMain = nombreListadoTorneoRanking(p);
@@ -1230,15 +1176,30 @@ export default function TorneoTabbedView({
   );
 
   const renderGrupoTable = (grupoLabel, tablaRows, onNombreClick) => {
-    const statHeaders = ['PJ', 'PG', 'PP', 'SF', 'SC', 'GF', 'GC', 'PTS'];
+    const statHeaders = [
+      t('torneos.vista.statPj'),
+      t('torneos.vista.statPg'),
+      t('torneos.vista.statPp'),
+      t('torneos.vista.statSf'),
+      t('torneos.vista.statSc'),
+      t('torneos.vista.statGf'),
+      t('torneos.vista.statGc'),
+      t('torneos.vista.statPts'),
+    ];
+    const grupoTitulo =
+      grupoLabel === 'General'
+        ? t('torneos.vista.grupoGeneral')
+        : t('torneos.vista.grupo', { label: grupoLabel });
     return (
       <div style={{ marginBottom: '22px' }}>
-        <div style={{ fontWeight: 900, fontSize: '15px', color: '#0f172a', marginBottom: '8px' }}>Grupo {grupoLabel}</div>
+        <div style={{ fontWeight: 900, fontSize: '15px', color: 'var(--text-primary)', marginBottom: '8px' }}>
+          {grupoTitulo}
+        </div>
         <div className="tabla-grupos-scroll-outer">
           <table className="tabla-grupos-stats">
             <thead>
-              <tr style={{ color: '#475569' }}>
-                <th className="tabla-grupos-col-equipo tabla-grupos-th-equipo">EQUIPO</th>
+              <tr style={{ color: 'var(--text-secondary)' }}>
+                <th className="tabla-grupos-col-equipo tabla-grupos-th-equipo">{t('torneos.vista.colEquipo')}</th>
                 {statHeaders.map((h) => (
                   <th key={h} className="tabla-grupos-col-stat">
                     {h}
@@ -1250,7 +1211,7 @@ export default function TorneoTabbedView({
               {tablaRows.map((row, idx) => {
                 const nombreCorto = trunc12(nombreEquipoMostrado({ ...row, nombre: row.nombre }));
                 const clasifica = idx < 2;
-                const bgFila = clasifica ? 'rgba(34, 197, 94, 0.12)' : '#ffffff';
+                const bgFila = clasifica ? 'rgba(34, 197, 94, 0.12)' : 'var(--bg-card)';
                 return (
                   <tr
                     key={row.id}
@@ -1270,7 +1231,7 @@ export default function TorneoTabbedView({
                           border: 'none',
                           background: 'transparent',
                           cursor: 'pointer',
-                          color: '#0f172a',
+                          color: 'var(--text-primary)',
                           fontWeight: 700,
                           padding: 0,
                           textAlign: 'left',
@@ -1306,7 +1267,7 @@ export default function TorneoTabbedView({
                     <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
                       {row.gp}
                     </td>
-                    <td className="tabla-grupos-col-stat" style={{ fontWeight: 900, color: '#b91c1c', background: bgFila }}>
+                    <td className="tabla-grupos-col-stat" style={{ fontWeight: 900, color: 'var(--accent, #e11b22)', background: bgFila }}>
                       {row.pts}
                     </td>
                   </tr>
@@ -1342,7 +1303,7 @@ export default function TorneoTabbedView({
                     boxShadow: '0 6px 20px rgba(79,70,229,0.35)',
                   }}
                 >
-                  Realizar sorteo
+                  {t('torneos.vista.realizarSorteo')}
                 </button>
               </div>
             ) : null}
@@ -1359,7 +1320,7 @@ export default function TorneoTabbedView({
                 border: '1px solid #e2e8f0',
               }}
             >
-              Los grupos se definirán después del sorteo oficial.
+              {t('torneos.vista.gruposTrasSorteo')}
             </div>
           </div>
         );
@@ -1388,60 +1349,58 @@ export default function TorneoTabbedView({
     const eqB = equipoPorId(equipos, partido.equipo_b_id);
     const na = nombreEquipoMostrado(eqA || {});
     const nb = nombreEquipoMostrado(eqB || {});
-    const pendiente = partido.estado !== 'finalizado';
+    const tieneResultado = parseResultadoPartido(partido).length > 0;
+    const pendiente = !tieneResultado && String(partido.estado || '').toLowerCase() !== 'finalizado';
+    const clickable = tieneResultado || puedeCargarResultados;
+    const marcadorDetalle = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : '';
     const fh = partido.fecha_hora
       ? new Date(partido.fecha_hora).toLocaleString('es-AR', {
           dateStyle: 'short',
           timeStyle: 'short',
         })
       : '—';
-    if (pendiente) {
-      return (
-        <div
-          key={partido.id}
-          className="partido-item"
-          style={{ cursor: puedeCargarResultados ? 'pointer' : 'default' }}
-          onClick={puedeCargarResultados ? () => abrirModalResultado(partido) : undefined}
-          role={puedeCargarResultados ? 'button' : undefined}
-        >
-          <div className="partido-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-            <span style={{ fontWeight: 700, color: '#0f172a' }}>
-              {na} <span className="vs">vs</span> {nb}
-            </span>
-            <span style={{ fontSize: '13px', color: '#64748b' }}>— {fh}</span>
-          </div>
-          <span className={`estado ${partido.estado}`}>⏳ Pendiente</span>
-        </div>
-      );
-    }
-    const sets = parseResultadoSets(partido);
-    const textoSets = sets.join(', ');
-    const { sgA, sgB } = contarSetsGanados(partido);
+    const { sgA, sgB } = tieneResultado ? contarSetsGanadosPartido(partido) : { sgA: 0, sgB: 0 };
     const ganaA = sgA > sgB;
+
     return (
       <div
         key={partido.id}
         className="partido-item"
-        style={{ cursor: puedeCargarResultados ? 'pointer' : 'default' }}
-        onClick={puedeCargarResultados ? () => abrirModalResultado(partido) : undefined}
+        style={{ cursor: clickable ? 'pointer' : 'default' }}
+        onClick={clickable ? () => abrirDetallePartido(partido) : undefined}
+        role={clickable ? 'button' : undefined}
       >
         <div className="partido-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px', flex: 1 }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', width: '100%' }}>
-            <span className="equipo-a" style={{ fontWeight: ganaA ? 900 : 600, color: ganaA ? '#15803d' : '#334155' }}>
-              {na}
-              {ganaA ? ' ✓' : ''}
-            </span>
-            <span className="vs">vs</span>
-            <span className="equipo-b" style={{ fontWeight: !ganaA ? 900 : 600, color: !ganaA ? '#15803d' : '#334155' }}>
-              {nb}
-              {!ganaA ? ' ✓' : ''}
-            </span>
-          </div>
-          <span style={{ fontSize: '13px', color: '#64748b' }}>
-            {textoSets} · {fh}
-          </span>
+          {pendiente ? (
+            <>
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                {na} <span className="vs">{t('torneos.vista.vs')}</span> {nb}
+              </span>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>— {fh}</span>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', width: '100%' }}>
+                <span className="equipo-a" style={{ fontWeight: ganaA ? 900 : 600, color: ganaA ? '#15803d' : 'var(--text-primary)' }}>
+                  {na}
+                  {ganaA ? ' ✓' : ''}
+                </span>
+                <span className="vs">{t('torneos.vista.vs')}</span>
+                <span className="equipo-b" style={{ fontWeight: !ganaA ? 900 : 600, color: !ganaA ? '#15803d' : 'var(--text-primary)' }}>
+                  {nb}
+                  {!ganaA ? ' ✓' : ''}
+                </span>
+              </div>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                {marcadorDetalle}
+              </span>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{fh}</span>
+            </>
+          )}
         </div>
-        <span className={`estado ${partido.estado}`}>✅</span>
+        <span className={`estado ${pendiente ? 'pendiente' : 'finalizado'}`}>
+          {pendiente ? `⏳ ${t('torneos.vista.pendiente')}` : `✅ ${t('torneos.vista.finalizado')}`}
+        </span>
       </div>
     );
   };
@@ -1462,20 +1421,22 @@ export default function TorneoTabbedView({
             lineHeight: 1.45,
           }}
         >
-          Inicia el torneo para comenzar a cargar resultados.
+          {t('torneos.vista.iniciarParaResultados')}
         </p>
       ) : null}
       {partidosOrdenados.length === 0 ? (
-        <p className="sin-partidos">Sin partidos</p>
+        <p className="sin-partidos">{t('torneos.vista.sinPartidos')}</p>
       ) : (
         <div className="lista-partidos">{partidosOrdenados.map(renderFixtureLine)}</div>
       )}
     </div>
   );
 
+  const tbdLabel = t('torneos.vista.sinDefinir');
+
   const nombreLlaveSlot = (partido, lado) => {
     const id = lado === 'a' ? partido.equipo_a_id : partido.equipo_b_id;
-    if (id == null || id === '') return 'Por definir';
+    if (id == null || id === '') return tbdLabel;
     const eq = equipoPorId(equipos, id);
     return nombreEquipoMostrado(eq || {});
   };
@@ -1483,33 +1444,34 @@ export default function TorneoTabbedView({
   const renderBracketMatchCard = (partido) => {
     const na = nombreLlaveSlot(partido, 'a');
     const nb = nombreLlaveSlot(partido, 'b');
-    const fin = partido.estado === 'finalizado';
-    const { sgA, sgB } = fin ? contarSetsGanados(partido) : { sgA: 0, sgB: 0 };
+    const tieneResultado = parseResultadoPartido(partido).length > 0;
+    const fin = tieneResultado || String(partido.estado || '').toLowerCase() === 'finalizado';
+    const { sgA, sgB } = fin ? contarSetsGanadosPartido(partido) : { sgA: 0, sgB: 0 };
     const ganaA = fin && sgA > sgB;
     const ganaB = fin && sgB > sgA;
-    const setsList = fin ? parseResultadoSets(partido) : [];
-    const setsTxt = setsList.length > 0 ? setsList.join(', ') : null;
+    const marcadorTxt = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : null;
     const fh = partido.fecha_hora
       ? new Date(partido.fecha_hora).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
       : null;
-    const click = puedeCargarResultados ? () => abrirModalResultado(partido) : undefined;
+    const clickable = tieneResultado || puedeCargarResultados;
+    const click = clickable ? () => abrirDetallePartido(partido) : undefined;
     return (
       <div
         key={partido.id}
-        className={`torneo-bracket-card${puedeCargarResultados ? ' torneo-bracket-card--clickable' : ''}`}
+        className={`torneo-bracket-card${clickable ? ' torneo-bracket-card--clickable' : ''}`}
         onClick={click}
         role={click ? 'button' : undefined}
       >
-        <div className={`torneo-bracket-team${ganaA ? ' torneo-bracket-team--winner' : ''}${na === 'Por definir' ? ' torneo-bracket-team--tbd' : ''}`}>
+        <div className={`torneo-bracket-team${ganaA ? ' torneo-bracket-team--winner' : ''}${na === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
           <span className="torneo-bracket-team-name">{na}</span>
           {ganaA ? <span className="torneo-bracket-winner-mark">✓</span> : null}
         </div>
-        <div className="torneo-bracket-vs">vs</div>
-        <div className={`torneo-bracket-team${ganaB ? ' torneo-bracket-team--winner' : ''}${nb === 'Por definir' ? ' torneo-bracket-team--tbd' : ''}`}>
+        <div className="torneo-bracket-vs">{t('torneos.vista.vs')}</div>
+        <div className={`torneo-bracket-team${ganaB ? ' torneo-bracket-team--winner' : ''}${nb === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
           <span className="torneo-bracket-team-name">{nb}</span>
           {ganaB ? <span className="torneo-bracket-winner-mark">✓</span> : null}
         </div>
-        {fin && setsTxt ? <div className="torneo-bracket-score">{setsTxt}</div> : null}
+        {marcadorTxt ? <div className="torneo-bracket-score">{marcadorTxt}</div> : null}
         {!fin && fh ? <div className="torneo-bracket-meta">{fh}</div> : null}
       </div>
     );
@@ -1694,7 +1656,7 @@ export default function TorneoTabbedView({
         })}
       </div>
       <div className="clasificacion-final-box">
-        <h3 className="clasificacion-final-titulo">Clasificación final</h3>
+        <h3 className="clasificacion-final-titulo">{t('torneos.vista.clasificacionFinal')}</h3>
         <div className="clasificacion-final-lista">
           {clasificacionFinalFilasCompletas.map((f) => {
             const vacio = Boolean(f.vacio);
@@ -1703,7 +1665,7 @@ export default function TorneoTabbedView({
             const ptsTxt =
               vacio || f.puntos == null || f.puntos === '' || Number.isNaN(Number(f.puntos))
                 ? '—'
-                : `${Number(f.puntos)} pts`;
+                : `${Number(f.puntos)} ${t('torneos.vista.pts')}`;
             return (
               <div key={f.posicion} className="clasificacion-final-fila">
                 <span className="clasificacion-final-pos">{f.posicion}</span>
@@ -2108,9 +2070,9 @@ export default function TorneoTabbedView({
           🎾 {resumenDeporteFormatoTorneo(torneo)}
         </p>
         <p>
-          {formatNivelTorneo(torneo?.nivel_torneo)} • {formatCategoriaTorneo(torneo?.categoria)} •{' '}
-          {formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}
-          {formatCategoriaEdadTorneo(torneo?.categoria_edad)} • {formatTipoTorneo(torneo?.tipo_torneo)} •{' '}
+          {formatNivelTorneo(torneo?.nivel_torneo)} • {labelCategoriaTorneo(torneo?.categoria)} •{' '}
+          {labelGeneroTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}
+          {labelCategoriaEdadTorneo(torneo?.categoria_edad)} • {formatTipoTorneo(torneo?.tipo_torneo)} •{' '}
           {formatFecha(torneo?.fecha_inicio)} a {formatFecha(torneo?.fecha_fin)}
         </p>
       </div>
@@ -2155,7 +2117,7 @@ export default function TorneoTabbedView({
           position: 'sticky',
           top: stickyTop,
           zIndex: 20,
-          background: 'rgba(255,255,255,0.96)',
+          background: 'color-mix(in srgb, var(--bg-card) 96%, transparent)',
           backdropFilter: 'blur(8px)',
           borderRadius: '12px',
           border: '1px solid #e2e8f0',
@@ -2171,8 +2133,8 @@ export default function TorneoTabbedView({
               onClick={() => setActiveTab(tab.id)}
               style={{
                 ...TAB_BTN,
-                color: activeTab === tab.id ? '#b91c1c' : '#64748b',
-                borderBottomColor: activeTab === tab.id ? '#E11B22' : 'transparent',
+                color: activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)',
+                borderBottomColor: activeTab === tab.id ? 'var(--accent)' : 'transparent',
               }}
             >
               {tab.label}
@@ -2301,6 +2263,49 @@ export default function TorneoTabbedView({
         </div>
       ) : null}
 
+      {showModalDetallePartido && selectedPartido ? (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setShowModalDetallePartido(false);
+            setSelectedPartido(null);
+          }}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>{t('torneos.vista.detallePartido')}</h3>
+            {(() => {
+              const mA = equipoPorId(equipos, selectedPartido.equipo_a_id);
+              const mB = equipoPorId(equipos, selectedPartido.equipo_b_id);
+              const na = nombreEquipoMostrado(mA || {});
+              const nb = nombreEquipoMostrado(mB || {});
+              const marcador = formatMarcadorPartidoDetalle(selectedPartido, na, nb);
+              return (
+                <>
+                  <p style={{ margin: '0 0 12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {na} {t('torneos.vista.vs')} {nb}
+                  </p>
+                  <p style={{ margin: '0 0 20px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.45 }}>
+                    {marcador || '—'}
+                  </p>
+                </>
+              );
+            })()}
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-cancelar"
+                onClick={() => {
+                  setShowModalDetallePartido(false);
+                  setSelectedPartido(null);
+                }}
+              >
+                {t('torneos.vista.cerrar')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {showModalResultado && selectedPartido ? (
         <div
           className="modal-overlay modal-overlay--cargar-resultado-mobile"
@@ -2319,7 +2324,7 @@ export default function TorneoTabbedView({
           }}
         >
           <div className="modal-content modal-content--cargar-resultado" onClick={(e) => e.stopPropagation()}>
-            <h3>Cargar resultado</h3>
+            <h3>{t('torneos.vista.cargarResultado')}</h3>
             {(() => {
               const mA = equipoPorId(equipos, selectedPartido.equipo_a_id);
               const mB = equipoPorId(equipos, selectedPartido.equipo_b_id);
