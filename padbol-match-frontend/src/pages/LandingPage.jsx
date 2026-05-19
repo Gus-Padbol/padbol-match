@@ -175,7 +175,7 @@ export default function LandingPage() {
           <Link to="/hub" className="landing-page__cta landing-page__cta--secondary">
             {t('landing.enterPlay')}
           </Link>
-          <Link to="/auth?modo=registro" className="landing-page__cta landing-page__cta--account">
+          <Link to="/registro" className="landing-page__cta landing-page__cta--account">
             {t('landing.createAccount')}
           </Link>
         </section>

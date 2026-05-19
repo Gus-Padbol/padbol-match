@@ -37,7 +37,6 @@ import UserHome from './pages/UserHome';
 import LandingPage from './pages/LandingPage';
 import SobrePadbolMatch from './pages/SobrePadbolMatch';
 import ContactoSumarClub from './pages/ContactoSumarClub';
-import Login from './pages/Login';
 import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
@@ -75,7 +74,7 @@ function RegistroToMiPerfilRedirect() {
   return <Navigate to={buildMiPerfilRegistroUrl(r)} replace />;
 }
 
-/** `/auth` con callback (hash/query de proveedor), `?modo=registro` / `?login=1`, o `?redirect=` interno. Sin eso (salvo URL vacía), redirige a `/`. */
+/** `/auth` o `/login` con callback OAuth, `?modo=registro`, `?login=1` o `?redirect=` interno. URL vacía → no es acceso explícito. */
 function authLocationShowsLoginScreen(search, hash) {
   const h = hash || '';
   if (h.length > 1) return true;
@@ -106,14 +105,17 @@ function authRouteIsBare(search, hash) {
   return q.length === 0 && h.length <= 1;
 }
 
-function AuthRoute() {
+/** Solo mostrar login/registro cuando la URL indica intención explícita (no en `/auth` o `/login` vacíos). */
+function AuthEntryRoute() {
   const { search, hash } = useLocation();
-  if (authRouteIsBare(search, hash)) {
-    return <AccesoCuenta />;
-  }
-  if (!authLocationShowsLoginScreen(search, hash)) {
+  if (authRouteIsBare(search, hash) || !authLocationShowsLoginScreen(search, hash)) {
     return <Navigate to="/" replace />;
   }
+  return <AccesoCuenta />;
+}
+
+/** `/acceso`: entrada explícita a ingresar (siempre formulario). */
+function AccesoRoute() {
   return <AccesoCuenta />;
 }
 
@@ -163,7 +165,7 @@ function RootHomeRoute() {
 }
 
 /**
- * Rutas desconocidas: evita quedarse sin match útil. Con sesión → hub; sin sesión → login.
+ * Rutas desconocidas: evita quedarse sin match útil. Con sesión → hub; sin sesión → landing (/).
  * Mientras `loading` de auth, spinner compacto (no pantalla vacía sobre el gradiente de body).
  */
 function WildcardFallback() {
@@ -194,7 +196,7 @@ function WildcardFallback() {
     return <Navigate to="/hub" replace />;
   }
 
-  return <Navigate to="/login" replace />;
+  return <Navigate to="/" replace />;
 }
 
 function AdminDashboardGate() {
@@ -319,8 +321,9 @@ function AppRoutes() {
         <Route path="/inicio" element={<UserHome />} />
         <Route path="/home" element={<UserHome />} />
 
-        <Route path="/auth" element={<AuthRoute />} />
+        <Route path="/auth" element={<AuthEntryRoute />} />
         <Route path="/auth/callback" element={<AuthOAuthCallback />} />
+        <Route path="/acceso" element={<AccesoRoute />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
 
         <Route path="/reserva" element={<Navigate to="/reservar" replace />} />
@@ -354,7 +357,7 @@ function AppRoutes() {
         <Route path="/mi-perfil" element={<MiPerfil />} />
         <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<AuthEntryRoute />} />
         <Route path="/sobre" element={<SobrePadbolMatch />} />
         <Route path="/contacto" element={<ContactoSumarClub />} />
         <Route path="/terminos" element={<TerminosCondiciones />} />

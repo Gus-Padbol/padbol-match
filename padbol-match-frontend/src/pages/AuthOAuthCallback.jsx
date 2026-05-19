@@ -43,7 +43,7 @@ export default function AuthOAuthCallback() {
           return;
         }
         navigatedRef.current = true;
-        navigate('/login', { replace: true });
+        navigate('/', { replace: true });
       }, 400);
     };
 

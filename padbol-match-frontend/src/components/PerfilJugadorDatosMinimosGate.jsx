@@ -17,6 +17,9 @@ function gateSkipsPerfilMinimo(pathOnly) {
   if (pathOnly === '/completar-perfil') return true;
   if (pathOnly === '/torneo/crear') return true;
   if (pathOnly === '/login' || pathOnly === '/auth' || pathOnly.startsWith('/auth/')) return true;
+  if (pathOnly === '/acceso' || pathOnly.startsWith('/acceso/')) return true;
+  if (pathOnly === '/registro' || pathOnly.startsWith('/registro/')) return true;
+  if (pathOnly === '/') return true;
   if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
   if (pathOnly === '/terminos' || pathOnly.startsWith('/terminos/')) return true;
   if (pathOnly === '/privacidad' || pathOnly.startsWith('/privacidad/')) return true;
@@ -90,7 +93,7 @@ export default function PerfilJugadorDatosMinimosGate({ children }) {
         } catch {
           /* ignore */
         }
-        navigate('/login', { replace: true });
+        navigate('/', { replace: true });
       })();
     }, PERFIL_GATE_TIMEOUT_MS);
     return () => window.clearTimeout(id);
