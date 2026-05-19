@@ -1601,7 +1601,8 @@ app.get('/api/registro/whatsapp-disponible', async (req, res) => {
     res.json({ disponible });
   } catch (err) {
     console.error('❌ GET /api/registro/whatsapp-disponible:', err.message);
-    res.status(500).json({ error: err.message });
+    const friendly = mensajeErrorJugadoresPerfilDuplicado(err);
+    res.status(500).json({ error: friendly || 'No se pudo validar el teléfono. Intenta de nuevo.' });
   }
 });
 
@@ -2953,12 +2954,16 @@ const MAX_CANTIDAD_EXTRA_CHECKOUT = 10;
 
 function mensajeErrorJugadoresPerfilDuplicado(err) {
   if (!err) return null;
-  if (String(err.code || '') === '23505') {
-    const c = String(err.constraint || err.message || '').toLowerCase();
-    if (c.includes('whatsapp')) {
+  const blob = [err.message, err.details, err.hint, err.constraint].filter(Boolean).join(' ').toLowerCase();
+  const code = String(err.code || '');
+  const isDup =
+    code === '23505' || /duplicate|unique constraint|unique violation|already exists/i.test(blob);
+  if (isDup) {
+    if (/whatsapp|jugadores_perfil_whatsapp/i.test(blob)) {
       return 'Este número de teléfono ya está registrado en otra cuenta';
     }
-    if (c.includes('email')) return 'Este email ya está registrado en otra cuenta';
+    if (/email/i.test(blob)) return 'Este email ya está registrado en otra cuenta';
+    return 'Ese dato ya está en uso. Verifica WhatsApp o email.';
   }
   const msg = String(err.message || '');
   if (msg.includes('formato_equipo') || String(err.code || '') === 'PGRST204') {

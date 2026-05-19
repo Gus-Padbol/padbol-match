@@ -1,3 +1,29 @@
+/** Texto combinado de un error PostgREST / Supabase JS (message, details, constraint…). */
+function textoErrorPostgrest(err) {
+  if (!err || typeof err !== 'object') return String(err || '');
+  return [err.message, err.details, err.hint, err.constraint].filter(Boolean).join(' ');
+}
+
+/**
+ * Duplicado en `jugadores_perfil` (23505): WhatsApp, email u otro unique.
+ * @returns {string|null} Mensaje amigable o null si no aplica.
+ */
+export function mensajeErrorJugadoresPerfilDuplicado(err) {
+  if (!err) return null;
+  const blob = textoErrorPostgrest(err).toLowerCase();
+  const code = String(err.code || '');
+  const isDup =
+    code === '23505' || /duplicate|unique constraint|unique violation|already exists/i.test(blob);
+  if (!isDup) return null;
+  if (/whatsapp|jugadores_perfil_whatsapp/i.test(blob)) {
+    return 'Este número de teléfono ya está registrado en otra cuenta';
+  }
+  if (/email/i.test(blob)) {
+    return 'Este email ya está registrado en otra cuenta';
+  }
+  return 'Ese dato ya está en uso. Verifica WhatsApp o email.';
+}
+
 /** Mensajes en español para errores de Supabase Auth / PostgREST (evitar inglés crudo al usuario). */
 export function mensajeErrorAuthSupabase(raw) {
   const s = String(raw || '').trim();
@@ -37,8 +63,14 @@ export function mensajeErrorAuthSupabase(raw) {
   return s.length > 280 ? `${s.slice(0, 280)}…` : s;
 }
 
-export function mensajeErrorDbSupabase(raw) {
-  const s = String(raw || '').trim();
+export function mensajeErrorDbSupabase(rawOrErr) {
+  const err =
+    rawOrErr && typeof rawOrErr === 'object' && ('code' in rawOrErr || 'details' in rawOrErr || 'message' in rawOrErr)
+      ? rawOrErr
+      : { message: rawOrErr };
+  const dup = mensajeErrorJugadoresPerfilDuplicado(err);
+  if (dup) return dup;
+  const s = String(err.message || rawOrErr || '').trim();
   const m = s.toLowerCase();
   if (!s) return 'Error al guardar. Prueba de nuevo.';
   if (m.includes('duplicate') || m.includes('unique')) {

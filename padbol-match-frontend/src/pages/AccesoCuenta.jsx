@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useLocation, useNavigationType, Link } from 'react-router-dom';
 import './AccesoCuenta.css';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
-import { mensajeErrorAuthSupabase } from '../utils/authErrorsEs';
+import { mensajeErrorAuthSupabase, mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 import AppHeader from '../components/AppHeader';
 import {
@@ -428,12 +428,10 @@ export default function AccesoCuenta() {
         },
       });
       if (error) {
-        const em = String(error.message || '');
-        if (/duplicate|unique|already registered|23505/i.test(em)) {
-          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
-        } else {
-          setErrorMsg(mensajeErrorAuthSupabase(error.message));
-        }
+        setErrorMsg(
+          mensajeErrorJugadoresPerfilDuplicado(error) ||
+            mensajeErrorAuthSupabase(error.message)
+        );
         return;
       }
       if (data?.session?.user) {

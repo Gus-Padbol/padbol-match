@@ -48,7 +48,11 @@ import {
   whatsappNacionalValido,
   splitStoredWhatsapp,
 } from '../utils/authIdentidad';
-import { mensajeErrorAuthSupabase, mensajeErrorDbSupabase } from '../utils/authErrorsEs';
+import {
+  mensajeErrorAuthSupabase,
+  mensajeErrorDbSupabase,
+  mensajeErrorJugadoresPerfilDuplicado,
+} from '../utils/authErrorsEs';
 import { normalizeTorneoPostPerfilPath } from '../utils/torneoPostPerfilNavigation';
 import { getOrCreateUsuarioBasico } from '../utils/usuarioBasico';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
@@ -1105,7 +1109,7 @@ export default function MiPerfil() {
           .update({ foto_url: fotoUrlGuardada })
           .eq('email', owner);
         if (upDbErr) {
-          setErrorMsg(mensajeErrorDbSupabase(upDbErr.message));
+          setErrorMsg(mensajeErrorDbSupabase(upDbErr));
           return;
         }
         rowAfter = { ...perfil, foto_url: fotoUrlGuardada };
@@ -1130,7 +1134,7 @@ export default function MiPerfil() {
           .select()
           .maybeSingle();
         if (insErr) {
-          setErrorMsg(mensajeErrorDbSupabase(insErr.message));
+          setErrorMsg(mensajeErrorDbSupabase(insErr));
           return;
         }
         if (inserted) {
@@ -1209,7 +1213,7 @@ export default function MiPerfil() {
           .update({ foto_url: fotoVal })
           .eq('email', owner);
         if (upDbErr) {
-          setErrorMsg(mensajeErrorDbSupabase(upDbErr.message));
+          setErrorMsg(mensajeErrorDbSupabase(upDbErr));
           return;
         }
 
@@ -1389,12 +1393,10 @@ export default function MiPerfil() {
       });
       if (authErr) {
         console.log('ERROR SIGNUP:', authErr);
-        const em = String(authErr.message || '');
-        if (/duplicate|unique|already registered|23505/i.test(em)) {
-          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
-        } else {
-          setErrorMsg(mensajeErrorAuthSupabase(authErr.message));
-        }
+        setErrorMsg(
+          mensajeErrorJugadoresPerfilDuplicado(authErr) ||
+            mensajeErrorAuthSupabase(authErr.message)
+        );
         return;
       }
       const user = authData?.user;
@@ -1416,7 +1418,7 @@ export default function MiPerfil() {
         .upsert({ email: owner, nombre: nombreCli, whatsapp: wa }, { onConflict: 'email' });
       if (cliErr) {
         console.error(cliErr);
-        setErrorMsg(mensajeErrorDbSupabase(cliErr.message));
+        setErrorMsg(mensajeErrorDbSupabase(cliErr));
         return;
       }
 
@@ -1455,12 +1457,7 @@ export default function MiPerfil() {
       );
 
       if (jpErr) {
-        const em = String(jpErr.message || '');
-        if (/duplicate|unique|23505/i.test(em) && /whatsapp/i.test(em)) {
-          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
-        } else {
-          setErrorMsg(mensajeErrorDbSupabase(jpErr.message));
-        }
+        setErrorMsg(mensajeErrorJugadoresPerfilDuplicado(jpErr) || mensajeErrorDbSupabase(jpErr));
         return;
       }
 
@@ -1490,7 +1487,11 @@ export default function MiPerfil() {
       }
     } catch (err) {
       console.log('ERROR SIGNUP:', err);
-      setErrorMsg(String(err?.message || 'Error al registrar la cuenta.'));
+      setErrorMsg(
+        mensajeErrorJugadoresPerfilDuplicado(err) ||
+          mensajeErrorDbSupabase(err) ||
+          'Error al registrar la cuenta.'
+      );
     } finally {
       perfilSubmitLockRef.current = false;
       setIsSubmitting(false);
@@ -1646,7 +1647,7 @@ export default function MiPerfil() {
 
       if (error) {
         console.error('ERROR COMPLETO UPSERT:', JSON.stringify(error));
-        setErrorMsg(mensajeErrorDbSupabase(error.message));
+        setErrorMsg(mensajeErrorDbSupabase(error));
         return;
       }
 

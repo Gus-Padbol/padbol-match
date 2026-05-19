@@ -24,6 +24,8 @@ import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
+import { mensajeErrorDbSupabase, mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
+import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -146,6 +148,104 @@ export default function CompletarPerfilOAuth() {
     navigate(dest, { replace: true });
   }, [location.state, navigate]);
 
+  const guardarPerfilYContinuar = useCallback(
+    async (deportesSel) => {
+      if (!session?.user?.id) return;
+      if (!validarPasoDatos()) return;
+      const gen = String(genero || '').trim().toLowerCase();
+      const waLoc = digitsOnly(waLocal);
+      const waE164 = formatWhatsAppE164(waCodigo, waLoc);
+      const token = session?.access_token;
+      if (!token) {
+        setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
+        return;
+      }
+      try {
+        const { disponible } = await fetchWhatsappDisponibleRegistro(waE164, token);
+        if (!disponible) {
+          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+          return;
+        }
+      } catch (e) {
+        setErrorMsg(e.message || 'No se pudo validar el teléfono');
+        return;
+      }
+
+      const email = String(session.user.email || '').trim();
+      const meta = session.user.user_metadata || {};
+      const full = String(meta.full_name || meta.name || '').trim();
+      const parts = full.split(/\s+/).filter(Boolean);
+      const emailLocal = email.includes('@') ? email.split('@')[0] : '';
+      const nombreIns =
+        (parts[0] ? capitalizar(parts[0]) : '') ||
+        capitalizar(String(meta.nombre || '').trim()) ||
+        (emailLocal ? capitalizar(emailLocal) : '') ||
+        'Jugador';
+      const apellidoIns =
+        parts.length > 1
+          ? parts.slice(1).join(' ')
+          : String(meta.apellido || '').trim() || null;
+
+      setBusy(true);
+      try {
+        const depNorm = normalizeDeportesPreferidosArray(deportesSel);
+        if (userProfile?.id) {
+          const { error } = await supabase
+            .from('jugadores_perfil')
+            .update({
+              genero: gen,
+              whatsapp: waE164,
+              deportes_preferidos: depNorm,
+              ...(full && !String(userProfile.nombre || '').trim() ? { nombre: nombreIns, apellido: apellidoIns } : {}),
+            })
+            .eq('id', userProfile.id);
+          if (error) throw error;
+        } else {
+          const insertRow = {
+            user_id: session.user.id,
+            email: email || null,
+            nombre: nombreIns,
+            apellido: apellidoIns,
+            genero: gen,
+            whatsapp: waE164,
+            alias: null,
+            notificaciones_whatsapp: false,
+            deportes_preferidos: depNorm,
+          };
+          const { error } = await supabase.from('jugadores_perfil').insert(insertRow).select().single();
+          if (error) throw error;
+        }
+        try {
+          window.dispatchEvent(new CustomEvent(PERFIL_CHANGE_EVENT));
+        } catch {
+          /* ignore */
+        }
+        await refreshSession();
+        irAlHubPrincipal();
+      } catch (err) {
+        setErrorMsg(
+          mensajeErrorJugadoresPerfilDuplicado(err) ||
+            mensajeErrorDbSupabase(err) ||
+            'No se pudo guardar el perfil.'
+        );
+      } finally {
+        setBusy(false);
+      }
+    },
+    [
+      session,
+      session?.access_token,
+      userProfile,
+      genero,
+      waCodigo,
+      waLocal,
+      waLocalConfirm,
+      validarPasoDatos,
+      refreshSession,
+      irAlHubPrincipal,
+    ]
+  );
+
   const handleGuardar = useCallback(
     async (e) => {
       e.preventDefault();
@@ -182,81 +282,20 @@ export default function CompletarPerfilOAuth() {
         }
         return;
       }
-      if (!validarPasoDatos()) return;
-      const gen = String(genero || '').trim().toLowerCase();
-      const waLoc = digitsOnly(waLocal);
-      const waE164 = formatWhatsAppE164(waCodigo, waLoc);
-      const email = String(session.user.email || '').trim();
-      const meta = session.user.user_metadata || {};
-      const full = String(meta.full_name || meta.name || '').trim();
-      const parts = full.split(/\s+/).filter(Boolean);
-      const emailLocal = email.includes('@') ? email.split('@')[0] : '';
-      const nombreIns =
-        (parts[0] ? capitalizar(parts[0]) : '') ||
-        capitalizar(String(meta.nombre || '').trim()) ||
-        (emailLocal ? capitalizar(emailLocal) : '') ||
-        'Jugador';
-      const apellidoIns =
-        parts.length > 1
-          ? parts.slice(1).join(' ')
-          : String(meta.apellido || '').trim() || null;
-
-      setBusy(true);
-      try {
-        const depNorm = normalizeDeportesPreferidosArray(deportesPreferidos);
-        if (userProfile?.id) {
-          const { error } = await supabase
-            .from('jugadores_perfil')
-            .update({
-              genero: gen,
-              whatsapp: waE164,
-              deportes_preferidos: depNorm,
-              ...(full && !String(userProfile.nombre || '').trim() ? { nombre: nombreIns, apellido: apellidoIns } : {}),
-            })
-            .eq('id', userProfile.id);
-          if (error) throw error;
-        } else {
-          const insertRow = {
-            user_id: session.user.id,
-            email: email || null,
-            nombre: nombreIns,
-            apellido: apellidoIns,
-            genero: gen,
-            whatsapp: waE164,
-            alias: null,
-            notificaciones_whatsapp: false,
-            deportes_preferidos: depNorm,
-          };
-          const { error } = await supabase.from('jugadores_perfil').insert(insertRow).select().single();
-          if (error) throw error;
-        }
-        try {
-          window.dispatchEvent(new CustomEvent(PERFIL_CHANGE_EVENT));
-        } catch {
-          /* ignore */
-        }
-        await refreshSession();
-        irAlHubPrincipal();
-      } catch (err) {
-        setErrorMsg(err?.message || 'No se pudo guardar el perfil.');
-      } finally {
-        setBusy(false);
-      }
+      await guardarPerfilYContinuar(deportesPreferidos);
     },
-    [
-      session,
-      session?.access_token,
-      userProfile,
-      paso,
-      genero,
-      waCodigo,
-      waLocal,
-      waLocalConfirm,
-      deportesPreferidos,
-      validarPasoDatos,
-      refreshSession,
-      irAlHubPrincipal,
-    ]
+    [session, session?.access_token, paso, deportesPreferidos, validarPasoDatos, guardarPerfilYContinuar]
+  );
+
+  const handleOmitirDeportes = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setErrorMsg('');
+      setEmailConflicto(false);
+      if (paso !== 1) return;
+      await guardarPerfilYContinuar([]);
+    },
+    [paso, guardarPerfilYContinuar]
   );
 
   if (!loading && !profileLoading && session?.user && perfilJugadorDatosMinimosCompletos(userProfile)) {
@@ -542,18 +581,20 @@ export default function CompletarPerfilOAuth() {
           >
             {busy ? 'Guardando…' : paso === 0 ? 'Continuar' : 'Guardar y continuar'}
           </button>
-          <button
-            type="button"
-            onClick={irAlHubPrincipal}
-            disabled={busy || loading || profileLoading}
-            style={{
-              ...btnOmitirStyle,
-              cursor: busy || loading || profileLoading ? 'not-allowed' : 'pointer',
-              opacity: busy || loading || profileLoading ? 0.5 : 1,
-            }}
-          >
-            Omitir
-          </button>
+          {paso === 1 ? (
+            <button
+              type="button"
+              onClick={handleOmitirDeportes}
+              disabled={busy || loading || profileLoading}
+              style={{
+                ...btnOmitirStyle,
+                cursor: busy || loading || profileLoading ? 'not-allowed' : 'pointer',
+                opacity: busy || loading || profileLoading ? 0.5 : 1,
+              }}
+            >
+              Omitir
+            </button>
+          ) : null}
         </form>
       </div>
     </div>
