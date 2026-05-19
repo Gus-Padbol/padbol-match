@@ -45,6 +45,9 @@ import {
   contarSetsGanadosPartido,
   formatMarcadorPartidoDetalle,
   parseResultadoPartido,
+  partidosDelGrupo,
+  resultadoConGanador,
+  equipoIdKey,
 } from '../../utils/torneoPartidoResultado';
 
 export { buildTablaPosiciones } from '../../utils/torneoPartidoResultado';
@@ -407,12 +410,15 @@ export default function TorneoTabbedView({
   const equipoGrupoMap = useMemo(() => {
     const m = {};
     equipos.forEach((eq) => {
-      if (eq.grupo) m[eq.id] = eq.grupo;
+      if (eq.grupo) m[equipoIdKey(eq.id)] = eq.grupo;
     });
     partidos.forEach((p) => {
       if (p.grupo) {
-        if (p.equipo_a_id && !m[p.equipo_a_id]) m[p.equipo_a_id] = p.grupo;
-        if (p.equipo_b_id && !m[p.equipo_b_id]) m[p.equipo_b_id] = p.grupo;
+        const g = p.grupo;
+        const ka = equipoIdKey(p.equipo_a_id);
+        const kb = equipoIdKey(p.equipo_b_id);
+        if (ka && !m[ka]) m[ka] = g;
+        if (kb && !m[kb]) m[kb] = g;
       }
     });
     return m;
@@ -827,6 +833,8 @@ export default function TorneoTabbedView({
         alert('Mínimo 2 sets requeridos');
         return;
       }
+      const resultadoPayload = resultadoConGanador(selectedPartido, norm);
+      const resultadoJson = JSON.stringify(resultadoPayload);
       try {
         const base = String(apiBaseUrl || '').replace(/\/+$/, '');
         const res = await fetch(`${base}/api/partidos/${selectedPartido.id}`, {
@@ -834,16 +842,18 @@ export default function TorneoTabbedView({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             estado: 'finalizado',
-            resultado: JSON.stringify(norm),
+            resultado: resultadoJson,
           }),
         });
         if (res.ok) {
           setPartidos((prev) =>
             prev.map((p) =>
-              p.id === selectedPartido.id ? { ...p, estado: 'finalizado', resultado: JSON.stringify(norm) } : p
+              p.id === selectedPartido.id
+                ? { ...p, estado: 'finalizado', resultado: resultadoJson }
+                : p
             )
           );
-          setResultado(norm);
+          setResultado(resultadoPayload);
           setShowModalResultado(false);
           setSelectedPartido(null);
           setVoicePending(null);
@@ -1328,8 +1338,8 @@ export default function TorneoTabbedView({
       return (
         <div style={{ padding: '8px 0' }}>
           {grupos.map((grupo) => {
-            const grupoEquipos = equipos.filter((eq) => equipoGrupoMap[eq.id] === grupo);
-            const grupoPartidos = partidos.filter((p) => p.grupo === grupo);
+            const grupoEquipos = equipos.filter((eq) => equipoGrupoMap[equipoIdKey(eq.id)] === grupo);
+            const grupoPartidos = partidosDelGrupo(partidos, grupoEquipos, grupo);
             const tablaGrupo = buildTablaPosiciones(grupoEquipos, grupoPartidos);
             return <div key={grupo}>{renderGrupoTable(grupo, tablaGrupo, openEq)}</div>;
           })}
