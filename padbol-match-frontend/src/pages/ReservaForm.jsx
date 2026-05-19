@@ -1646,7 +1646,7 @@ export default function ReservaForm() {
       setError(
         clienteTieneTelefonoGuardado(ccParaTelefono || ccEff)
           ? t('reservas.invalidPhoneProfile')
-          : `Ingresa un número de WhatsApp válido (al menos ${MIN_DIGITOS_TELEFONO} dígitos).`
+          : t('reservas.invalidWhatsappDigits', { min: MIN_DIGITOS_TELEFONO })
       );
       return;
     }

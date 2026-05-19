@@ -215,11 +215,11 @@ function mostrarCampoPaisSegunTorneo(torneoRow) {
 
 function mensajeValidarPaisTorneo(torneoRow, paisForm) {
   if (!torneoRow) {
-    return String(paisForm || '').trim() ? null : 'Selecciona tu país.';
+    return String(paisForm || '').trim() ? null : t('perfil.selectCountry');
   }
   const n = normalizeNivelTorneoScope(torneoRow.nivel_torneo);
   if (n === 'internacional' && !String(paisForm || '').trim()) {
-    return 'Selecciona tu país.';
+    return t('perfil.selectCountry');
   }
   return null;
 }
@@ -1194,7 +1194,7 @@ export default function MiPerfil() {
       const owner = sessionOwnerEmail;
       const userId = session?.user?.id ?? null;
       if (!owner || !userId) {
-        setErrorMsg('Inicia sesión para cambiar la foto.');
+        setErrorMsg(t('perfil.loginToChangePhoto'));
         return;
       }
       if (!perfil) {
@@ -1276,7 +1276,7 @@ export default function MiPerfil() {
       }
       const genReg = String(formData.genero || '').trim();
       if (!genReg || !['masculino', 'femenino', 'otro', 'open'].includes(genReg)) {
-        fe.genero = 'Selecciona género (Masculino, Femenino, Otro u Open).';
+        fe.genero = t('perfil.selectGender');
       }
       if (!String(formData.lateralidad || '').trim()) {
         fe.lateralidad = 'Selecciona lateralidad.';
@@ -1287,7 +1287,7 @@ export default function MiPerfil() {
       if (!emRaw) {
         fe.email = 'Completa tu email';
       } else if (!emailValidoVisible(emRaw)) {
-        fe.email = 'Ingresa un email válido';
+        fe.email = t('perfil.invalidEmail');
       }
 
       const local = waNumeroLocal.trim();
@@ -1295,31 +1295,31 @@ export default function MiPerfil() {
       if (!digitsOnly(local)) {
         fe.whatsapp = 'Completa tu WhatsApp';
       } else if (!whatsappNacionalValido(local)) {
-        fe.whatsapp = 'Ingresa un WhatsApp válido (mínimo 10 dígitos sin código de país).';
+        fe.whatsapp = t('perfil.invalidWhatsapp');
       } else if (digitsOnly(local) !== digitsOnly(localConf)) {
-        fe.whatsappConfirma = 'Repite el mismo número en la confirmación de WhatsApp.';
+        fe.whatsappConfirma = t('perfil.whatsappConfirmMismatch');
       }
       const waDigits = buildFullWhatsDigits(waCodigoPais, local);
       if (!fe.whatsapp && !whatsappDigitsValido(waDigits)) {
-        fe.whatsapp = 'Completa un WhatsApp válido.';
+        fe.whatsapp = t('perfil.completeWhatsapp');
       }
       const wa = formatWhatsAppE164(waCodigoPais, local);
 
       if (!String(formData.nivel || '').trim()) {
-        fe.categoria = 'Selecciona tu categoría.';
+        fe.categoria = t('perfil.selectCategory');
       }
 
       if (!passRegistroTorneo && !passRegistroTorneo2) {
-        fe.password = 'Completa la contraseña.';
-        fe.password2 = 'Confirma la contraseña.';
+        fe.password = t('perfil.completePassword');
+        fe.password2 = t('perfil.confirmPassword');
       } else if (!passRegistroTorneo) {
-        fe.password = 'Completa la contraseña.';
+        fe.password = t('perfil.completePassword');
       } else if (!passRegistroTorneo2) {
-        fe.password2 = 'Confirma la contraseña.';
+        fe.password2 = t('perfil.confirmPassword');
       } else if (passRegistroTorneo.length < 6) {
-        fe.password = 'La contraseña debe tener al menos 6 caracteres.';
+        fe.password = t('perfil.passwordMin6');
       } else if (passRegistroTorneo !== passRegistroTorneo2) {
-        fe.password2 = 'Las contraseñas no coinciden.';
+        fe.password2 = t('perfil.passwordMismatch');
       }
 
       const errPaisInv = mensajeValidarPaisTorneo(torneoPerfil, formData.pais);
@@ -1328,7 +1328,7 @@ export default function MiPerfil() {
       }
 
       if (!aceptoTerminosPrivacidadRegistro) {
-        fe.acepto_terminos = 'Debes aceptar los Términos y Condiciones y la Política de Privacidad.';
+        fe.acepto_terminos = t('perfil.acceptTermsRequired');
       }
 
       if (Object.keys(fe).length > 0) {
@@ -1346,7 +1346,7 @@ export default function MiPerfil() {
       const aliasReg = String(formData.alias || '').trim();
       if (aliasReg && (aliasDuplicado || aliasVerificando)) {
         setErrorMsg(
-          aliasVerificando ? 'Espera un momento mientras verificamos el alias.' : 'Este alias ya está en uso, elige otro.'
+          aliasVerificando ? t('perfil.aliasChecking') : t('perfil.aliasTaken')
         );
         return;
       }
@@ -1358,24 +1358,24 @@ export default function MiPerfil() {
           .ilike('alias', lit)
           .limit(1);
         if (!dupRegErr && Array.isArray(dupReg) && dupReg.length > 0) {
-          setErrorMsg('Este alias ya está en uso, elige otro.');
+          setErrorMsg(t('perfil.aliasTaken'));
           return;
         }
       }
 
       if (session?.user?.email) {
-        setErrorMsg('Ya tienes una sesión activa. No hace falta registrarte de nuevo.');
+        setErrorMsg(t('perfil.sessionActive'));
         return;
       }
 
       try {
         const { disponible } = await fetchWhatsappDisponibleRegistro(wa);
         if (!disponible) {
-          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+          setErrorMsg(t('perfil.phoneRegistered'));
           return;
         }
       } catch (e) {
-        setErrorMsg(e.message || 'No se pudo validar el teléfono');
+        setErrorMsg(e.message || t('perfil.phoneValidationFailed'));
         return;
       }
 
@@ -1407,7 +1407,7 @@ export default function MiPerfil() {
       if (!owner) {
         console.log('ERROR SIGNUP: respuesta sin user.email', authData);
         setErrorMsg(
-          'No se recibió el email del usuario tras el registro. Revisa la consola o prueba «Iniciar sesión».'
+          t('perfil.noEmailAfterSignup')
         );
         return;
       }
@@ -1483,7 +1483,7 @@ export default function MiPerfil() {
         const target = normalizeTorneoPostPerfilPath(redirectAfterAuth, torneoIdValido ? torneoIdPerfil : '');
         navigate(target && target !== '/home' && target !== '/' ? target : '/', { replace: true });
       } else {
-        setErrorMsg('Faltan datos obligatorios en la ficha (nombre, WhatsApp, categoría o país).');
+        setErrorMsg(t('perfil.missingRequiredFields'));
       }
     } catch (err) {
       console.log('ERROR SIGNUP:', err);
@@ -1509,7 +1509,7 @@ export default function MiPerfil() {
     try {
       const owner = sessionOwnerEmail;
       if (!owner) {
-        setErrorMsg('No hay sesión activa.');
+        setErrorMsg(t('perfil.noActiveSession'));
         return;
       }
       const errPais = mensajeValidarPaisTorneo(torneoPerfil, formData.pais);
@@ -1524,9 +1524,9 @@ export default function MiPerfil() {
       if (!nombreTrim) fe.nombre = 'Completa tu nombre.';
       if (!apellidoTrim) fe.apellido = 'Completa tu apellido.';
       if (!genTrim || !['masculino', 'femenino', 'otro', 'open'].includes(genTrim)) {
-        fe.genero = 'Selecciona género (Masculino, Femenino, Otro u Open).';
+        fe.genero = t('perfil.selectGender');
       }
-      if (!String(formData.nivel || '').trim()) fe.nivel = 'Selecciona tu categoría.';
+      if (!String(formData.nivel || '').trim()) fe.nivel = t('perfil.selectCategory');
       if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Selecciona lateralidad.';
       if (Object.keys(fe).length) {
         setFichaFieldErrors(fe);
@@ -1535,7 +1535,7 @@ export default function MiPerfil() {
 
       const aliasPerfilExistente = String(perfil?.alias || '').trim();
       if (!aliasPerfilExistente && String(formData.alias || '').trim() && aliasDuplicado) {
-        setErrorMsg('Este alias ya está en uso, elige otro.');
+        setErrorMsg(t('perfil.aliasTaken'));
         return;
       }
       if (!aliasPerfilExistente && String(formData.alias || '').trim() && aliasVerificando) {
@@ -1548,12 +1548,12 @@ export default function MiPerfil() {
         return;
       }
       if (!whatsappNacionalValido(local)) {
-        setErrorMsg('Completa tu WhatsApp (al menos 10 dígitos en el número, sin el código de país).');
+        setErrorMsg(t('perfil.completeWhatsappDigits'));
         return;
       }
       const waBuilt = buildFullWhatsDigits(waCodigoPais, local);
       if (!whatsappDigitsValido(waBuilt)) {
-        setErrorMsg('Completa un WhatsApp válido.');
+        setErrorMsg(t('perfil.completeWhatsapp'));
         return;
       }
       const waFinal = formatWhatsAppE164(waCodigoPais, local);
@@ -1589,7 +1589,7 @@ export default function MiPerfil() {
 
       const userId = session?.user?.id ?? null;
       if (!userId) {
-        setErrorMsg('No se pudo obtener el usuario de la sesión.');
+        setErrorMsg(t('perfil.sessionUserMissing'));
         return;
       }
 
@@ -1602,7 +1602,7 @@ export default function MiPerfil() {
           .neq('user_id', String(userId))
           .limit(1);
         if (!dupErr && Array.isArray(dupRows) && dupRows.length > 0) {
-          setErrorMsg('Este alias ya está en uso, elige otro.');
+          setErrorMsg(t('perfil.aliasTaken'));
           return;
         }
       }
@@ -1716,9 +1716,9 @@ export default function MiPerfil() {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Error al cancelar');
       if (data.credito) {
-        alert(`✅ Reserva cancelada. Se acreditaron $${Number(data.credito.monto).toLocaleString('es-AR')} en tu cuenta (válido 30 días).`);
+        alert(t('perfil.cancelCreditAlert', { amount: Number(data.credito.monto).toLocaleString('es-AR') }));
       } else {
-        alert('✅ Reserva cancelada. La cancelación fue realizada con menos de 24hs de anticipación — no genera crédito.');
+        alert(t('perfil.cancelNoCreditAlert'));
       }
       await fetchReservas();
     } catch (err) {
@@ -1782,7 +1782,7 @@ export default function MiPerfil() {
                 boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
               }}
             >
-              <h3 style={{ marginTop: 0, marginBottom: '12px', color: 'var(--text-primary)' }}>Mi perfil</h3>
+              <h3 style={{ marginTop: 0, marginBottom: '12px', color: 'var(--text-primary)' }}>{t('perfil.guestTitle')}</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
                 Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión.
               </p>
@@ -1883,10 +1883,10 @@ export default function MiPerfil() {
               boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
             }}
           >
-            <h3 style={{ marginTop: 0, marginBottom: '16px', color: 'var(--text-primary)' }}>Crear tu cuenta</h3>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', color: 'var(--text-primary)' }}>{t('perfil.createAccountTitle')}</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '18px', lineHeight: 1.45 }}>
               Completa tus datos con un email real: se crea tu usuario en Padbol Match y se guarda tu ficha de jugador.
-              {torneoIdValido ? ' Después vuelves al torneo.' : ''}
+              {torneoIdValido ? t('perfil.afterSignupReturnTorneo') : ''}
             </p>
             <form onSubmit={handleRegistroCuenta}>
               {registroPasoDeportes === 0 ? (
@@ -1916,7 +1916,7 @@ export default function MiPerfil() {
                   setApellidoRegistroTorneo(e.target.value);
                   setRegistroFieldErrors((p) => ({ ...p, apellido: '' }));
                 }}
-                placeholder="Ej: Pérez"
+                placeholder={t("perfil.placeholderLastName")}
                 style={{ ...guestInputStyle, marginBottom: regErr('apellido') ? '6px' : '14px', border: regBorder('apellido') }}
                 autoComplete="family-name"
               />
@@ -1953,7 +1953,7 @@ export default function MiPerfil() {
                 autoComplete="off"
               />
               {aliasSugerenciasCargando ? (
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '10px' }}>{t('perfil.searchingAlias')}</p>
               ) : null}
               {aliasSuggestions.length > 0 ? (
                 <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px' }}>
@@ -2147,7 +2147,7 @@ export default function MiPerfil() {
                   setPassRegistroTorneo(e.target.value);
                   setRegistroFieldErrors((p) => ({ ...p, password: '', password2: '' }));
                 }}
-                placeholder="Mínimo 6 caracteres"
+                placeholder={t("perfil.placeholderPasswordMin")}
                 style={{ ...guestInputStyle, marginBottom: regErr('password') ? '6px' : '14px', border: regBorder('password') }}
                 autoComplete="new-password"
               />
@@ -2163,7 +2163,7 @@ export default function MiPerfil() {
                   setPassRegistroTorneo2(e.target.value);
                   setRegistroFieldErrors((p) => ({ ...p, password2: '', password: '' }));
                 }}
-                placeholder="Repite la contraseña"
+                placeholder={t("perfil.placeholderRepeatPassword")}
                 style={{ ...guestInputStyle, marginBottom: regErr('password2') ? '6px' : '14px', border: regBorder('password2') }}
                 autoComplete="new-password"
               />
@@ -2230,7 +2230,7 @@ export default function MiPerfil() {
                     style={{ ...guestInputStyle, marginBottom: regErr('pais') ? '6px' : '14px', border: regBorder('pais') }}
                     required={paisHtmlRequired}
                   >
-                    <option value="">— Seleccionar país —</option>
+                    <option value="">{t("perfil.selectCountryOption")}</option>
                     <optgroup label="Principales">
                       {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                         <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
@@ -2238,7 +2238,7 @@ export default function MiPerfil() {
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="Otros países">
+                    <optgroup label={t("perfil.otherCountries")}>
                       {PAISES_TELEFONO_OTROS.map((p) => (
                         <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
                           {p.bandera} {p.nombre}
@@ -2270,7 +2270,7 @@ export default function MiPerfil() {
                   onSelectNombre={(nombre) =>
                     setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
                   }
-                  placeholder="Busca tu sede (mín. 2 letras)…"
+                  placeholder={t("perfil.searchVenuePlaceholder")}
                   debounceMs={320}
                   minChars={2}
                   inputStyle={guestInputStyle}
@@ -2297,7 +2297,7 @@ export default function MiPerfil() {
                 style={{ ...guestInputStyle, marginBottom: '14px' }}
               />
 
-              <label style={{ ...guestLabelStyle, marginBottom: '8px' }}>¿Eres federado?</label>
+              <label style={{ ...guestLabelStyle, marginBottom: '8px' }}>{t('perfil.federatedQuestion')}</label>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
                 <button
                   type="button"
@@ -2736,7 +2736,7 @@ export default function MiPerfil() {
         )}
         {perfil && !editando ? (
           <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-            {perfilCompaneroDisplay?.kind === 'ultimo' ? 'Último compañero' : 'Compañero habitual'}:{' '}
+            {perfilCompaneroDisplay?.kind === 'ultimo' ? t('perfil.lastPartner') : t('perfil.usualPartner')}:{' '}
             {perfilCompaneroDisplay?.row && String(perfilCompaneroDisplay.row.alias || '').trim() ? (
               <button
                 type="button"
@@ -2793,7 +2793,7 @@ export default function MiPerfil() {
               {perfil.nivel}
               {esCategoriaPendienteValidacion(perfil) && (
                 <span
-                  title="Pendiente de validación por administrador"
+                  title={t("perfil.pendingAdminValidation")}
                   style={{
                     fontSize: '11px',
                     background: 'rgba(255, 255, 255, 0.92)',
@@ -2831,7 +2831,7 @@ export default function MiPerfil() {
 
         {!perfil && !editando ? (
           <div style={{ textAlign: 'center', padding: '10px 0' }}>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>Aún no tienes ficha de jugador creada.</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>{t('perfil.noProfileYet')}</p>
             <button
               onClick={() => setEditando(true)}
               style={{ padding: '12px 24px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -2842,14 +2842,14 @@ export default function MiPerfil() {
 
         ) : !editando ? (
           <>
-            <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Datos del jugador</h4>
+            <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>{t('perfil.playerData')}</h4>
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
               <Row
                 label="Nombre y apellido"
                 value={nombreCompletoJugadorPerfil(perfil)?.trim() || '—'}
               />
               <Row
-                label="Género"
+                label={t("auth.gender")}
                 value={
                   perfil.genero === 'masculino'
                     ? 'Masculino'
@@ -2864,7 +2864,7 @@ export default function MiPerfil() {
               />
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row
-                label="¿Cómo quieres que te llamemos?"
+                label={t("perfil.displayName")}
                 value={
                   String(perfil?.apodo || '').trim() ||
                   String(perfil?.nombre_saludo || '').trim() ||
@@ -2884,12 +2884,12 @@ export default function MiPerfil() {
                 }
               />
               <Row label="Email cuenta" value={cuentaDeSesion?.email || '—'} />
-              <Row label="Categoría" value={
+              <Row label={t("perfil.categoryLabel")} value={
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: categoriaColor }}>{perfil.nivel}</span>
                   {esCategoriaPendienteValidacion(perfil) && (
                     <span
-                      title="Pendiente de validación"
+                      title={t("perfil.pendingValidation")}
                       style={{
                         fontSize: '11px',
                         background: 'var(--bg-page)',
@@ -2907,8 +2907,8 @@ export default function MiPerfil() {
               } />
               <Row label="Lateralidad" value={perfil.lateralidad} />
               <Row
-                label="Busco compañero"
-                value={perfil.busca_companero ? 'Sí · visible en tu sede' : 'No'}
+                label={t("perfil.lookingForPartner")}
+                value={perfil.busca_companero ? t('perfil.lookingForPartnerYes') : 'No'}
               />
               {fechaNacimientoDesdeDb(perfil.fecha_nacimiento) && (
                 <Row
@@ -2917,10 +2917,10 @@ export default function MiPerfil() {
                 />
               )}
               <div>
-                <strong>Federado:</strong> {perfil.es_federado ? 'Sí' : 'No'}
+                <strong>{t("perfil.federated")}</strong> {perfil.es_federado ? t('perfil.yes') : t('perfil.no')}
               </div>
               <div>
-                <strong>N° Federado:</strong> {perfil.numero_fipa}
+                <strong>{t("perfil.federatedNumber")}</strong> {perfil.numero_fipa}
               </div>
             </div>
             <button
@@ -2933,9 +2933,9 @@ export default function MiPerfil() {
 
         ) : (
           <form id="mi-perfil-ficha-form" onSubmit={handleGuardar}>
-            <h4 style={{ margin: '0 0 16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Editar datos</h4>
+            <h4 style={{ margin: '0 0 16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>{t('perfil.editData')}</h4>
 
-            <label style={labelStyle}>Nombre {reqAst}</label>
+            <label style={labelStyle}>{t("perfil.firstName")} {reqAst}</label>
             <input
               type="text"
               name="nombre"
@@ -2947,13 +2947,13 @@ export default function MiPerfil() {
               required
             />
             {fichErrP('nombre')}
-            <label style={labelStyle}>Apellido {reqAst}</label>
+            <label style={labelStyle}>{t("perfil.lastName")} {reqAst}</label>
             <input
               type="text"
               name="apellido"
               value={formData.apellido}
               onChange={handleChange}
-              placeholder="Ej: Pérez"
+              placeholder={t("perfil.placeholderLastName")}
               style={{ ...inputStyle, marginBottom: fichErr('apellido') ? '6px' : '14px', border: fichBorder('apellido') }}
               autoComplete="family-name"
             />
@@ -2987,7 +2987,7 @@ export default function MiPerfil() {
             {!String(perfil?.alias || '').trim() ? (
               <>
             {aliasSugerenciasCargando ? (
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '10px' }}>Buscando alias…</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '10px' }}>{t('perfil.searchingAlias')}</p>
             ) : null}
             {aliasSuggestions.length > 0 ? (
               <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px' }}>
@@ -3185,7 +3185,7 @@ export default function MiPerfil() {
               Elige país (bandera + código) y el número local (mín. 10 dígitos). Se guarda en formato internacional.
             </p>
 
-            <label style={labelStyle}>Lateralidad {reqAst}</label>
+            <label style={labelStyle}>{t("perfil.lateralidad")} {reqAst}</label>
             <select
               name="lateralidad"
               value={formData.lateralidad}
@@ -3229,7 +3229,7 @@ export default function MiPerfil() {
                   style={{ ...inputStyle, marginBottom: '14px' }}
                   required={paisHtmlRequired}
                 >
-                  <option value="">— Seleccionar país —</option>
+                  <option value="">{t("perfil.selectCountryOption")}</option>
                   <optgroup label="Principales">
                     {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                       <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
@@ -3237,7 +3237,7 @@ export default function MiPerfil() {
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label="Otros países">
+                  <optgroup label={t("perfil.otherCountries")}>
                     {PAISES_TELEFONO_OTROS.map((p) => (
                       <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
                         {p.bandera} {p.nombre}
@@ -3268,7 +3268,7 @@ export default function MiPerfil() {
                 onSelectNombre={(nombre) =>
                   setFormData((prev) => ({ ...prev, ciudad: String(nombre || '').trim() }))
                 }
-                placeholder="Busca tu sede (mín. 2 letras)…"
+                placeholder={t("perfil.searchVenuePlaceholder")}
                 debounceMs={320}
                 minChars={2}
                 inputStyle={inputStyle}
@@ -3276,7 +3276,7 @@ export default function MiPerfil() {
               />
             </div>
 
-            <label style={labelStyle}>Compañero habitual</label>
+            <label style={labelStyle}>{t("perfil.partnerHabitual")}</label>
             {companeroSeleccionado ? (
               <div
                 style={{
@@ -3382,7 +3382,7 @@ export default function MiPerfil() {
                     }}
                   >
                     {companeroCargando && companeroOpciones.length === 0 ? (
-                      <li style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>Buscando…</li>
+                      <li style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>{t('perfil.searching')}</li>
                     ) : null}
                     {companeroOpciones.map((op) => {
                       const nom = nombreCompletoCompaneroOp(op);
@@ -3471,7 +3471,7 @@ export default function MiPerfil() {
             <label style={labelStyle}>N° FIPA (número de federación)</label>
             <input type="text" name="numero_fipa" placeholder="Ej: 12345" value={formData.numero_fipa} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
-            <label style={{ ...labelStyle, marginBottom: '8px' }}>¿Eres federado?</label>
+            <label style={{ ...labelStyle, marginBottom: '8px' }}>{t('perfil.federatedQuestion')}</label>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
               <button type="button" onClick={() => setFormData(prev => ({ ...prev, es_federado: true }))}
                 style={{ flex: 1, padding: '10px', border: '2px solid', borderColor: formData.es_federado ? '#388e3c' : 'var(--border)', background: formData.es_federado ? '#e8f5e9' : 'var(--bg-card)', color: formData.es_federado ? '#388e3c' : 'var(--text-secondary)', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
@@ -3715,7 +3715,7 @@ export default function MiPerfil() {
             value: estadisticasMiPerfilLoading ? '…' : `${Number(rowStats?.torneos_jugados) || 0}`,
             sub:
               !aliasStats
-                ? 'Define tu alias público'
+                ? t('perfil.definePublicAlias')
                 : Number(rowStats?.torneos_ganados) > 0
                   ? `${rowStats.torneos_ganados} ganado${Number(rowStats.torneos_ganados) === 1 ? '' : 's'}`
                   : 'Torneos finalizados',
@@ -3780,14 +3780,14 @@ export default function MiPerfil() {
           },
           {
             k: 'deporte',
-            label: depsList.length > 1 ? 'Deporte' : 'Deporte más jugado',
+            label: depsList.length > 1 ? t('perfil.sportTab') : t('perfil.mainSport'),
             value:
               estadisticasMiPerfilLoading || !aliasStats ? '—' : rowStats?.deporte_mas_jugado || '—',
-            sub: depsList.length > 1 ? 'Pestaña activa' : 'Por torneos jugados',
+            sub: depsList.length > 1 ? t('perfil.activeTab') : t('perfil.byTournamentsPlayed'),
           },
           {
             k: 'sedeRes',
-            label: 'Sede más frecuentada',
+            label: t('perfil.mostFrequentVenue'),
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
@@ -3804,7 +3804,7 @@ export default function MiPerfil() {
         ];
         return (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
-            <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>📊 Estadísticas</h4>
+            <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>{t('perfil.statsTitle')}</h4>
             {mostrarTabsDeporteStats ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
                 {depsList.map((d) => {
@@ -3927,7 +3927,7 @@ export default function MiPerfil() {
       {/* Credit balance */}
       {creditTotal > 0 && (
         <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 14px', color: '#15803d', borderBottom: '1px solid #bbf7d0', paddingBottom: '8px' }}>💰 Créditos disponibles</h4>
+          <h4 style={{ margin: '0 0 14px', color: '#15803d', borderBottom: '1px solid #bbf7d0', paddingBottom: '8px' }}>{t('perfil.creditsTitle')}</h4>
           <div style={{ fontSize: '28px', fontWeight: 900, color: '#16a34a', marginBottom: creditItems.length ? '14px' : 0 }}>
             ${creditTotal.toLocaleString('es-AR')} <span style={{ fontSize: '14px', fontWeight: 600, color: '#4ade80' }}>ARS</span>
           </div>
@@ -4055,7 +4055,7 @@ export default function MiPerfil() {
         </button>
         {!misReservasColapsado && reservasProximasOrdenadas.length === 0 ? (
           <div style={{ textAlign: 'center', margin: '12px 0 8px' }}>
-            <p style={{ color: 'var(--text-secondary)', margin: '0 0 12px', fontSize: '14px', fontWeight: 600 }}>No tienes reservas próximas</p>
+            <p style={{ color: 'var(--text-secondary)', margin: '0 0 12px', fontSize: '14px', fontWeight: 600 }}>{t('perfil.noUpcomingBookings')}</p>
             <button
               type="button"
               onClick={() => navigate('/reservar')}
@@ -4156,9 +4156,9 @@ export default function MiPerfil() {
 
       <ConfirmCancelReservaModal
         open={!!reservaCancelModal}
-        title="¿Cancelar la reserva?"
-        message="Si faltan más de 24 horas de anticipación recibirás un crédito en tu cuenta."
-        confirmLabel="Sí, cancelar reserva"
+        title={t("perfil.cancelBookingTitle")}
+        message={t("perfil.cancelBookingBody")}
+        confirmLabel={t("perfil.cancelBookingConfirm")}
         dismissLabel="No, mantener la reserva"
         onDismiss={() => setReservaCancelModal(null)}
         onConfirm={() => {

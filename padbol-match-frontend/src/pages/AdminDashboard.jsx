@@ -92,6 +92,7 @@ import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import i18n from '../i18n';
 
 const STRIPE_PUBLISHABLE_ADMIN =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -108,14 +109,14 @@ function etiquetaSuscripcionEstado(raw) {
   if (v === 'aviso') return 'Aviso (mora)';
   if (v === 'segundo_aviso') return 'Segundo aviso';
   if (v === 'suspendido') return 'Suspendida (mora)';
-  return 'Sin suscripción';
+  return i18n.t('admin.notif.noSubscription');
 }
 
 const TIPO_INTERES_APROBAR_SOLICITUD_LIC = ['Club Afiliado', 'Padbol Point Franquicia', 'Master Nacional'];
 
 function etiquetaTipoInteresSolicitudLicencia(v) {
   const s = String(v || '').trim();
-  if (!s || s === 'pendiente_definicion') return 'Pendiente definición';
+  if (!s || s === 'pendiente_definicion') return i18n.t('admin.notif.pendingDefinition');
   return s;
 }
 
@@ -184,7 +185,7 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
         return;
       }
       if (paymentIntent?.status !== 'succeeded') {
-        setMsg('El pago no se completó.');
+        setMsg(t('admin.notif.paymentNotCompleted'));
         return;
       }
       onSuccess();
@@ -240,13 +241,13 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
 
 const MAX_FOTOS_SEDE = 20;
 const DIAS_SEMANA_FRANJA = [
-  { id: 'lun', label: 'Lun' },
-  { id: 'mar', label: 'Mar' },
-  { id: 'mie', label: 'Mié' },
-  { id: 'jue', label: 'Jue' },
-  { id: 'vie', label: 'Vie' },
-  { id: 'sab', label: 'Sáb' },
-  { id: 'dom', label: 'Dom' },
+  { id: 'lun' },
+  { id: 'mar' },
+  { id: 'mie' },
+  { id: 'jue' },
+  { id: 'vie' },
+  { id: 'sab' },
+  { id: 'dom' },
 ];
 const DIAS_SEMANA_DEFAULT_FRANJA = DIAS_SEMANA_FRANJA.map((d) => d.id);
 const ADMIN_NOTIFICACIONES_READ_LS_KEY = 'admin_notificaciones_leidas_v1';
@@ -792,6 +793,7 @@ function addToFinanzasAncla(anclaISO, periodo, delta) {
 }
 
 function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
+  const { t } = useTranslation();
   if (periodo === 'rango' || periodo === 'hoy') return null;
   if (!['semana', 'mes', 'anio'].includes(periodo)) return null;
   const label = labelNavegacionFinanzas(periodo, anclaISO);
@@ -819,7 +821,7 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
         flexWrap: 'wrap',
       }}
     >
-      <button type="button" aria-label="Período anterior" onClick={() => onShift(-1)} style={btn}>
+      <button type="button" aria-label={t('admin.notif.periodPrevAria')} onClick={() => onShift(-1)} style={btn}>
         {'<'}
       </button>
       <span
@@ -833,7 +835,7 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
       >
         {label}
       </span>
-      <button type="button" aria-label="Período siguiente" onClick={() => onShift(1)} style={btn}>
+      <button type="button" aria-label={t('admin.notif.periodNextAria')} onClick={() => onShift(1)} style={btn}>
         {'>'}
       </button>
     </div>
@@ -1076,8 +1078,6 @@ function comisionPadbolTresPorcientoPorMoneda(ingresosPorMoneda) {
   return out;
 }
 
-const SIN_INGRESOS_PERIODO_MSG = 'Sin ingresos en el período';
-
 function monetarioObjTodoCero(obj) {
   return ['ARS', 'USD', 'EUR'].every((k) => (Number(obj?.[k]) || 0) === 0);
 }
@@ -1092,7 +1092,7 @@ function fmtIngresosSuperAdmin(obj) {
   const parts = ordered
     .filter((m) => (Number(obj?.[m]) || 0) > 0)
     .map((m) => `${m} ${(Number(obj?.[m]) || 0).toLocaleString('es-AR')}`);
-  return parts.length ? parts.join(' · ') : SIN_INGRESOS_PERIODO_MSG;
+  return parts.length ? parts.join(' · ') : i18n.t('admin.notif.noRevenuePeriod');
 }
 
 function ingresoTotalOrdenRanking(ingresosObj) {
@@ -1203,15 +1203,25 @@ function canchasConNumeroReservaAdminDash(rows) {
   });
 }
 
-const CANCHA_DEPORTE_ADMIN_OPTIONS = [
-  { value: 'padbol', label: 'Padbol' },
-  { value: 'padel', label: 'Pádel' },
-  { value: 'tenis', label: 'Tenis' },
-  { value: 'pickleball', label: 'Pickleball' },
-  { value: 'squash', label: 'Squash' },
-  { value: 'futbol_5', label: 'Fútbol 5' },
-  { value: 'futbol_7', label: 'Fútbol 7' },
+const CANCHA_DEPORTE_ADMIN_VALUES = [
+  'padbol',
+  'padel',
+  'tenis',
+  'pickleball',
+  'squash',
+  'futbol_5',
+  'futbol_7',
 ];
+
+function getCanchaDeporteAdminOptions(tr) {
+  return CANCHA_DEPORTE_ADMIN_VALUES.map((value) => ({
+    value,
+    label:
+      value === 'padbol'
+        ? 'Padbol'
+        : tr(`torneos.deporte.${value}`, { defaultValue: value.replace(/_/g, ' ') }),
+  }));
+}
 
 function parseHorarioHoraEnteraAdminDash(raw, defaultH) {
   const s = String(raw || '').trim();
@@ -1414,6 +1424,7 @@ function sedeMatchesSuperAdminBusqueda(s, queryRaw) {
 
 /** Duraciones sedes_duraciones — edición super admin (alta/baja) en modal detalle sede. */
 function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda }) {
+  const { t } = useTranslation();
   const sid = Number(sedeId);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1486,7 +1497,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
                 type="button"
                 disabled={guardandoId === row.id}
                 onClick={() => {
-                  if (!window.confirm(`¿Eliminar la duración de ${row.duracion_minutos} min de esta sede?`)) return;
+                  if (!window.confirm(t('admin.notif.deleteDurationConfirm', { minutes: row.duracion_minutos }))) return;
                   void (async () => {
                     setGuardandoId(row.id);
                     setMsg('');
@@ -1530,7 +1541,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
               gap: '8px',
             }}
           >
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Agregar duración</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{t('admin.notif.addDuration')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               <input
                 type="number"
@@ -1625,6 +1636,7 @@ function SedeSuperDetallePanel({
   guardarSuscripcionEstadoSuper,
   activarSuscripcionStripeSede,
 }) {
+  const { t } = useTranslation();
   return (
     <div style={{ display: 'grid', gap: '14px' }}>
       <div style={{ display: 'grid', gap: '6px' }}>
@@ -1655,7 +1667,7 @@ function SedeSuperDetallePanel({
         </div>
       </div>
       <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'grid', gap: '8px' }}>
-        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>Suscripción Padbol Match (Stripe)</div>
+        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{t('admin.notif.stripeSubscription')}</div>
         <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
           <strong>Estado:</strong> {etiquetaSuscripcionEstado(s.suscripcion_estado)}
           <br />
@@ -1682,7 +1694,7 @@ function SedeSuperDetallePanel({
               const v = e.target.value;
               const prev = String(s.suscripcion_estado || '').trim().toLowerCase();
               if (v === prev) return;
-              if (!window.confirm(`¿Guardar estado de suscripción como "${v}"?`)) {
+              if (!window.confirm(t('admin.notif.saveSubscriptionConfirm', { status: v }))) {
                 e.target.value = SUSCRIPCION_SELECTOR_SUPER_VALUES.has(prev) ? prev : SUSCRIPCION_SELECTOR_SUPER_SEDE[0].value;
                 return;
               }
@@ -1832,6 +1844,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
   const filtrosEstadoTorneoPillsAdmin = useMemo(() => getFiltrosEstadoTorneoPills(t), [t, i18n.language]);
+  const canchaDeporteAdminOptions = useMemo(() => getCanchaDeporteAdminOptions(t), [t, i18n.language]);
   const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
   const [sedesMap, setSedesMap] = useState({});
   const [contratosBySedeId, setContratosBySedeId] = useState({});
@@ -2088,7 +2101,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j?.error || res.statusText);
-        setMensajeExito('Solicitud rechazada');
+        setMensajeExito(t('admin.notif.requestRejected'));
         setTimeout(() => setMensajeExito(''), 3000);
         void refreshSnapPendientesOnly();
         refetchSolicitudesTabLists();
@@ -2214,7 +2227,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (magicLink) {
         setInviteMagicLinkModal({ email, magic_link: magicLink, contexto: 'editor_contenido' });
       }
-      setMensajeExito(`✅ Editor de contenido asignado a ${email}`);
+      setMensajeExito(t('admin.notif.editorAssigned', { email }));
       setEditorContenidoEmail('');
       setEditorContenidoNombre('');
       setEditorContenidoFormAbierto(false);
@@ -2315,9 +2328,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         setInviteMagicLinkModal({ email, magic_link: magicLink, invite_url: j.invite_url || null, contexto: 'invitacion_admin' });
       }
       if (j.email_sent === false) {
-        setMensajeExito('Invitación creada (no se pudo enviar el email; configura RESEND o reenvía desde la lista).');
+        setMensajeExito(t('admin.notif.inviteCreatedNoEmail'));
       } else {
-        setMensajeExito('✉️ Invitación enviada');
+        setMensajeExito(t('admin.notif.inviteSent'));
       }
       setTimeout(() => setMensajeExito(''), 4000);
       void cargarInvitacionesAdmin();
@@ -2351,7 +2364,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         if (j.email_sent === false) {
           alert(t('admin.alerts.emailSendFailed'));
         } else {
-          setMensajeExito('✉️ Invitación reenviada');
+          setMensajeExito(t('admin.notif.inviteResent'));
           setTimeout(() => setMensajeExito(''), 3500);
         }
         void cargarInvitacionesAdmin();
@@ -2364,7 +2377,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const revocarRolAdmin = useCallback(async (email) => {
     if (!isSuperAdmin) return;
-    if (!window.confirm(`¿Revocar rol de ${email}?`)) return;
+    if (!window.confirm(t('admin.notif.revokeRoleConfirm', { email }))) return;
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
@@ -2375,7 +2388,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || res.statusText);
-      setMensajeExito('Rol revocado');
+      setMensajeExito(t('admin.notif.roleRevoked'));
       setTimeout(() => setMensajeExito(''), 3500);
       void cargarRolesAdmin();
       void fetchData();
@@ -2386,7 +2399,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const aprobarSedePendiente = useCallback(
     async (id) => {
-      if (!window.confirm('¿Aprobar esta sede? Se creará en el sistema y el rol admin_club para el licenciatario.')) return;
+      if (!window.confirm(t('admin.notif.approveVenueConfirm'))) return;
       try {
         const { data: sess } = await supabase.auth.getSession();
         const token = sess?.session?.access_token;
@@ -2397,7 +2410,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || res.statusText);
-        setMensajeExito('✅ Sede aprobada');
+        setMensajeExito(t('admin.notif.venueApproved'));
         void fetchData();
         void refreshSnapPendientesOnly();
         refetchSolicitudesTabLists();
@@ -2430,7 +2443,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || res.statusText);
-        setMensajeExito('Solicitud rechazada.');
+        setMensajeExito(t('admin.notif.requestRejectedDot'));
         void refreshSnapPendientesOnly();
         refetchSolicitudesTabLists();
         setTimeout(() => setMensajeExito(''), 4000);
@@ -3110,7 +3123,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (prox) {
         proximaTexto = `${horarioReservaAdmin(prox)} · ${String(prox.nombre || '').trim() || String(prox.email || '').trim() || 'Reserva'}`;
       } else if (ocupados > 0) {
-        proximaTexto = 'Sin próximas reservas hoy';
+        proximaTexto = t('admin.notif.noUpcomingToday');
       }
 
       return {
@@ -3196,9 +3209,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       items.push({
         id: `solicitudes-pendientes-${count}`,
         tone: 'danger',
-        title: count === 1 ? '1 solicitud pendiente' : `${count} solicitudes pendientes`,
-        body: 'Alta nacional o interés web pendiente de revisión.',
-        actionLabel: 'Ir a Solicitudes',
+        title:
+          count === 1
+            ? t('admin.notif.pendingRequestsTitleOne')
+            : t('admin.notif.pendingRequestsTitleMany', { count }),
+        body: t('admin.notif.pendingRequestsBody'),
+        actionLabel: t('admin.notif.goToRequests'),
         onClick: () => {
           setSolicitudesFiltroEstado('pendiente');
           irATab('solicitudes');
@@ -3209,9 +3225,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       items.push({
         id: `torneo-proximo-${a.torneoId}-${a.count}`,
         tone: 'warning',
-        title: 'Torneo próximo',
-        body: `${a.count} equipo${a.count === 1 ? '' : 's'} sin inscripción confirmada en «${a.nombre}».`,
-        actionLabel: 'Ver torneo',
+        title: t('admin.notif.tournamentSoonTitle'),
+        body: t('admin.notif.tournamentSoonBody', { count: a.count, name: a.nombre }),
+        actionLabel: t('admin.notif.viewTournament'),
         onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
       });
     });
@@ -3219,9 +3235,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       items.push({
         id: `torneo-menos2-${a.torneoId}-${a.confirmados}`,
         tone: 'warning',
-        title: 'Inscripción abierta',
-        body: `«${a.nombre}» tiene solo ${a.confirmados} equipo${a.confirmados === 1 ? '' : 's'} confirmado${a.confirmados === 1 ? '' : 's'}.`,
-        actionLabel: 'Ver torneo',
+        title: t('admin.notif.registrationOpenTitle'),
+        body: t('admin.notif.registrationOpenBody', { name: a.nombre, confirmed: a.confirmados }),
+        actionLabel: t('admin.notif.viewTournament'),
         onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
       });
     });
@@ -3229,9 +3245,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       items.push({
         id: `torneo-sin-sorteo-${a.torneoId}`,
         tone: 'danger',
-        title: 'Arranca pronto',
-        body: `«${a.nombre}» (${formatFecha(a.fecha_inicio)}) no tiene partidos generados y empieza en menos de 48 horas.`,
-        actionLabel: 'Ver torneo',
+        title: t('admin.notif.startsSoonTitle'),
+        body: t('admin.notif.startsSoonBody', { name: a.nombre, date: formatFecha(a.fecha_inicio) }),
+        actionLabel: t('admin.notif.viewTournament'),
         onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
       });
     });
@@ -3239,9 +3255,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       items.push({
         id: `equipos-pago-pendiente-${p.equiposPendientePagoCount}`,
         tone: 'warning',
-        title: 'Inscripciones pendientes',
-        body: `Hay ${p.equiposPendientePagoCount} equipo${p.equiposPendientePagoCount === 1 ? '' : 's'} con inscripción pendiente de pago.`,
-        actionLabel: 'Ir a Torneos',
+        title: t('admin.notif.pendingRegistrationsTitle'),
+        body: t('admin.notif.pendingRegistrationsBody', { count: p.equiposPendientePagoCount }),
+        actionLabel: t('admin.notif.goToTournaments'),
         onClick: () => irATab('torneos'),
       });
     }
@@ -3249,9 +3265,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       items.push({
         id: `cierre-inscripcion-${a.torneoId}-${a.count}`,
         tone: 'warning',
-        title: 'Cierre de inscripción',
-        body: `${a.count} equipo${a.count === 1 ? '' : 's'} sin confirmar en «${a.nombre}».`,
-        actionLabel: 'Ver torneo',
+        title: t('admin.notif.registrationClosingTitle'),
+        body: t('admin.notif.registrationClosingBody', { count: a.count, name: a.nombre }),
+        actionLabel: t('admin.notif.viewTournament'),
         onClick: () => navigate(`/torneo/${a.torneoId}`, { state: { fromAdmin: true } }),
       });
     });
@@ -3260,8 +3276,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         items.push({
           id: `contrato-vencer-${a.sedeId}-${a.fecha_vencimiento}`,
           tone: 'warning',
-          title: 'Contrato por vencer',
-          body: `${a.sedeNombre} vence el ${formatFecha(a.fecha_vencimiento)} (${a.days} día${a.days === 1 ? '' : 's'}).`,
+          title: t('admin.notif.contractExpiringTitle'),
+          body: t('admin.notif.contractExpiringBody', {
+            venue: a.sedeNombre,
+            date: formatFecha(a.fecha_vencimiento),
+            days: a.days,
+          }),
         });
       });
       alertasSuscripcionBilling.forEach((a) => {
@@ -3269,17 +3289,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           items.push({
             id: `suscripcion-vencida-${a.sedeId}`,
             tone: 'danger',
-            title: 'Suscripción vencida',
-            body: `${a.sedeNombre} requiere revisión de pago en Stripe o reactivación.`,
-            actionLabel: 'Ir a Sedes',
+            title: t('admin.notif.subscriptionExpiredTitle'),
+            body: t('admin.notif.subscriptionExpiredBody', { venue: a.sedeNombre }),
+            actionLabel: t('admin.notif.goToVenues'),
             onClick: () => irATab('sedes'),
           });
         } else {
           items.push({
             id: `suscripcion-proxima-${a.sedeId}-${a.fecha}`,
             tone: 'info',
-            title: 'Suscripción por cobrar',
-            body: `${a.sedeNombre} tiene próximo cobro ${formatProximoCobroAdmin(a.fecha)}.`,
+            title: t('admin.notif.subscriptionDueTitle'),
+            body: t('admin.notif.subscriptionDueBody', {
+              venue: a.sedeNombre,
+              date: formatProximoCobroAdmin(a.fecha),
+            }),
           });
         }
       });
@@ -3295,6 +3318,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     snapPendienteSedes,
     snapPendienteLic,
     setSolicitudesFiltroEstado,
+    t,
   ]);
 
   const notificacionesNoLeidas = useMemo(() => {
@@ -3455,7 +3479,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   const eliminarTorneo = async (torneoId, torneoNombre) => {
-    if (!window.confirm(`¿Eliminar el torneo "${torneoNombre}"? Esta acción no se puede deshacer.`)) return;
+    if (!window.confirm(t('admin.notif.deleteTournamentConfirm', { name: torneoNombre }))) return;
     try {
       const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, { method: 'DELETE' });
       if (res.ok) {
@@ -5403,7 +5427,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       nombre: c.nombre || '',
       estado: c.estado === 'inactiva' ? 'inactiva' : 'activa',
       descripcion: c.descripcion || '',
-      deporte: c.deporte && CANCHA_DEPORTE_ADMIN_OPTIONS.some((o) => o.value === c.deporte) ? c.deporte : 'padbol',
+      deporte: c.deporte && CANCHA_DEPORTE_ADMIN_VALUES.includes(c.deporte) ? c.deporte : 'padbol',
     });
     setCanchaModalMsg('');
     setCanchaModalOpen(true);
@@ -6532,7 +6556,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     if (m === 'USD') return `US$ ${n.toLocaleString('en-US')} USD`;
                     return `€ ${n.toLocaleString('de-DE')} EUR`;
                   })
-                  .join(' · ') || SIN_INGRESOS_PERIODO_MSG;
+                  .join(' · ') || i18n.t('admin.notif.noRevenuePeriod');
               const pf = cifrasFinanzasResumen.porFuente;
               const resVac = monetarioObjTodoCero(pf.reservas);
               const insVac = monetarioObjTodoCero(pf.inscripciones);
@@ -10752,7 +10776,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     boxSizing: 'border-box',
                   }}
                 >
-                  {CANCHA_DEPORTE_ADMIN_OPTIONS.map((o) => (
+                  {canchaDeporteAdminOptions.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
@@ -11505,7 +11529,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                   );
                                 }}
                               />
-                              {dia.label}
+                              {t(`admin.weekdays.${dia.id}`)}
                             </label>
                           );
                         })}
@@ -12018,7 +12042,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <td style={{ padding: '10px 10px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 700 }}>{c.orden ?? '—'}</td>
                         <td style={{ padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)' }}>{c.nombre}</td>
                         <td style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                          {CANCHA_DEPORTE_ADMIN_OPTIONS.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                          {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
                         </td>
                         <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '180px' }}>
                           {c.descripcion ? (
@@ -12095,7 +12119,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <div className="admin-mi-sede-cancha-card__row">
                           <span className="admin-mi-sede-cancha-card__label">Deporte</span>
                           <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
-                            {CANCHA_DEPORTE_ADMIN_OPTIONS.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
                           </span>
                         </div>
                         <div className="admin-mi-sede-cancha-card__row" style={{ alignItems: 'flex-start' }}>

@@ -170,8 +170,8 @@ function deporteSlugDisplayLabel(slug, loc) {
       tenis: 'Tennis',
       pickleball: 'Pickleball',
       squash: 'Squash',
-      futbol_5: 'Football 5',
-      futbol_7: 'Football 7',
+      futbol_5: '5v5 Soccer',
+      futbol_7: '7v7 Soccer',
     },
     pt: {
       padbol: 'Padbol',
@@ -261,8 +261,70 @@ function navigatorLanguageToChatCode(nav) {
   return 'es';
 }
 
-function chatUiStrings(loc) {
+function chatUiStringsFromI18n(tr, loc) {
   const l = normalizeUiLocale(loc);
+  const welcomeAssistant = (firstName) => {
+    const n = String(firstName || '').trim();
+    const lead = n ? tr('chatbot.welcomeLeadNamed', { name: n }) : tr('chatbot.welcomeLead');
+    return tr('chatbot.welcomeAssistant', { lead });
+  };
+  return {
+    escribiendo: tr('chatbot.escribiendo'),
+    procesando: tr('chatbot.procesando'),
+    enviar: tr('chatbot.enviar'),
+    placeholder: tr('chatbot.placeholder'),
+    waEscalada: tr('chatbot.waEscalada'),
+    waClub: tr('chatbot.waClub'),
+    fabOpen: tr('chatbot.fabOpen'),
+    fabCollapsed: tr('chatbot.fabCollapsed'),
+    fabLine1: tr('chatbot.fabLine1'),
+    fabLine2: tr('chatbot.fabLine2'),
+    titulo: tr('chatbot.titulo'),
+    cargando: tr('chatbot.cargando'),
+    escuchando: tr('chatbot.escuchando'),
+    sinVoz: tr('chatbot.sinVoz'),
+    noReconocer: tr('chatbot.noReconocer'),
+    limiteSesion: tr('chatbot.limiteSesion'),
+    verSedePrimario: (nombre) =>
+      nombre ? tr('chatbot.verSedePrimarioNamed', { name: nombre }) : tr('chatbot.verSedePrimario'),
+    limiteCtaJugar: tr('chatbot.limiteCtaJugar'),
+    limiteCtaVerSede: tr('chatbot.limiteCtaVerSede'),
+    nuevaConsultaSesion: tr('chatbot.nuevaConsultaSesion'),
+    cerrar: tr('chatbot.cerrar'),
+    micRecordingAria: tr('chatbot.micRecordingAria'),
+    micProcessingAria: tr('chatbot.micProcessingAria'),
+    micDictateAria: tr('chatbot.micDictateAria'),
+    reservaLink: tr('chatbot.reservaLink'),
+    reservaLinkTitle: tr('chatbot.reservaLinkTitle'),
+    leerVozAlta: tr('chatbot.leerVozAlta'),
+    escucharUltimaIos: tr('chatbot.escucharUltimaIos'),
+    hintIosSafari: tr('chatbot.hintIosSafari'),
+    ttsDetener: tr('chatbot.ttsDetener'),
+    errMicDenied: tr('chatbot.errMicDenied'),
+    errVoiceStart: tr('chatbot.errVoiceStart'),
+    slotsDisponiblesTitulo: tr('chatbot.slotsDisponiblesTitulo'),
+    deportesElegirTitulo: tr('chatbot.deportesElegirTitulo'),
+    deporteElegirLabel: (slug) =>
+      tr(`torneos.deporte.${slug}`, { defaultValue: deporteSlugDisplayLabel(slug, l) }),
+    franjaManana: tr('chatbot.franjaManana'),
+    franjaTarde: tr('chatbot.franjaTarde'),
+    franjaNoche: tr('chatbot.franjaNoche'),
+    welcomeAssistant,
+    welcomeDeportesHint: tr('chatbot.welcomeDeportesHint'),
+    quickSuggestions: [
+      { label: tr('chatbot.quickTodaySlots') },
+      { label: tr('chatbot.quickFindGame'), to: '/jugar/buscar' },
+      { label: tr('chatbot.torneosSugerencia'), to: '/competir' },
+      { label: tr('chatbot.quickBookCourt') },
+    ],
+  };
+}
+
+function chatUiStrings(loc, tr) {
+  const l = normalizeUiLocale(loc);
+  if (tr && (l === 'es' || l === 'en')) {
+    return chatUiStringsFromI18n(tr, loc);
+  }
   if (l === 'en') {
     return {
       escribiendo: 'Writing…',
@@ -656,25 +718,7 @@ export default function ChatbotIA() {
 
   const padbolLang = usePadbolLang();
   usePadbolLangVersion();
-  const ui = useMemo(() => {
-    const base = chatUiStrings(padbolLang);
-    return {
-      ...base,
-      fabCollapsed: t('chatbot.fabCollapsed'),
-      fabLine1: t('chatbot.fabLine1'),
-      fabLine2: t('chatbot.fabLine2'),
-      fabOpen: t('chatbot.fabOpen'),
-      titulo: t('chatbot.titulo'),
-      cerrar: t('chatbot.cerrar'),
-      escribiendo: t('chatbot.escribiendo'),
-      procesando: t('chatbot.procesando'),
-      enviar: t('chatbot.enviar'),
-      placeholder: t('chatbot.placeholder'),
-      quickSuggestions: (base.quickSuggestions || []).map((s) =>
-        s.to === '/competir' ? { ...s, label: t('chatbot.torneosSugerencia') } : s
-      ),
-    };
-  }, [padbolLang, t]);
+  const ui = useMemo(() => chatUiStrings(padbolLang, t), [padbolLang, t]);
 
   const chatWelcomeFirstName = useMemo(() => {
     const ns = userProfile?.nombre_saludo != null ? String(userProfile.nombre_saludo).trim() : '';
@@ -1553,7 +1597,7 @@ export default function ChatbotIA() {
                 </span>
                 <span
                   aria-hidden
-                  title="En línea"
+                  title={t('chatbot.online')}
                   style={{
                     width: 6,
                     height: 6,
