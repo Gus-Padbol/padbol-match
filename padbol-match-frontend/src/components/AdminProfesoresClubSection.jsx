@@ -3,6 +3,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { supabase } from '../supabaseClient';
 import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores } from '../utils/clasesAdminApi';
 import { compressImageFile } from '../utils/compressImage';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /** Tamaño máximo del archivo original (fotos de celular se comprimen antes de subir). */
 const MAX_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024;
@@ -64,6 +65,7 @@ function nombreProfesor(p) {
 }
 
 export default function AdminProfesoresClubSection({ accessToken, sedeId, isSuperAdmin = false }) {
+  const { t } = useTranslation();
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');

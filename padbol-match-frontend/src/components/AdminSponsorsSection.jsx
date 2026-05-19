@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
@@ -55,13 +55,6 @@ function scrollToEl(ref, block = 'center') {
   });
 }
 
-const SCOPE_OPTIONS = [
-  { value: 'global', label: t('admin.sponsors.scopeGlobal') },
-  { value: 'sede', label: t('admin.sponsors.scopeVenue') },
-  { value: 'torneo', label: t('admin.sponsors.scopeTournament') },
-  { value: 'nacional', label: t('admin.sponsors.scopeCountry') },
-];
-
 const PAIS_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].map((p) => ({
   value: p.nombre,
   label: `${p.bandera} ${p.nombre}`,
@@ -69,35 +62,6 @@ const PAIS_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].
 
 function normalizeScopeVal(raw) {
   return String(raw || '').trim().toLowerCase();
-}
-
-function etiquetaDeportesSponsorRow(r) {
-  const arr = r?.deportes;
-  if (!Array.isArray(arr) || arr.length === 0) return t('admin.sponsors.allSports');
-  const labels = arr
-    .map((k) => DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === String(k || '').trim().toLowerCase())?.label)
-    .filter(Boolean);
-  return labels.length ? labels.join(', ') : t('admin.sponsors.allSports');
-}
-
-function emptyForm() {
-  return {
-    id: null,
-    nombre: '',
-    logo_url: '',
-    url_destino: '',
-    texto_boton: t('admin.sponsors.seeOffer'),
-    descripcion: '',
-    scope: 'global',
-    formato: 'ticker',
-    sede_id: '',
-    torneo_id: '',
-    pais: '',
-    activo: true,
-    fecha_desde: '',
-    fecha_hasta: '',
-    deportes_keys: [],
-  };
 }
 
 const labelStyle = { display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 };
@@ -121,6 +85,46 @@ export default function AdminSponsorsSection({
   const allowCupos = canManageCupos ?? isSuperAdmin;
   const autoApprove = canAutoApprove ?? isSuperAdmin;
   const { t } = useTranslation();
+  const SCOPE_OPTIONS = useMemo(
+    () => [
+      { value: 'global', label: t('admin.sponsors.scopeGlobal') },
+      { value: 'sede', label: t('admin.sponsors.scopeVenue') },
+      { value: 'torneo', label: t('admin.sponsors.scopeTournament') },
+      { value: 'nacional', label: t('admin.sponsors.scopeCountry') },
+    ],
+    [t],
+  );
+  const emptyForm = useCallback(
+    () => ({
+      id: null,
+      nombre: '',
+      logo_url: '',
+      url_destino: '',
+      texto_boton: t('admin.sponsors.seeOffer'),
+      descripcion: '',
+      scope: 'global',
+      formato: 'ticker',
+      sede_id: '',
+      torneo_id: '',
+      pais: '',
+      activo: true,
+      fecha_desde: '',
+      fecha_hasta: '',
+      deportes_keys: [],
+    }),
+    [t],
+  );
+  const etiquetaDeportesSponsorRow = useCallback(
+    (r) => {
+      const arr = r?.deportes;
+      if (!Array.isArray(arr) || arr.length === 0) return t('admin.sponsors.allSports');
+      const labels = arr
+        .map((k) => DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === String(k || '').trim().toLowerCase())?.label)
+        .filter(Boolean);
+      return labels.length ? labels.join(', ') : t('admin.sponsors.allSports');
+    },
+    [t],
+  );
   const { session } = useAuth();
   const [rows, setRows] = useState([]);
   const [sedesOpts, setSedesOpts] = useState([]);
@@ -129,7 +133,7 @@ export default function AdminSponsorsSection({
   const [msg, setMsg] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => emptyForm());
   /** Errores de validación por campo (clave → mensaje). */
   const [fieldErrors, setFieldErrors] = useState({});
   const [cupos, setCupos] = useState(() => ({ ...DEFAULT_SPONSOR_CUPOS }));
@@ -486,10 +490,13 @@ export default function AdminSponsorsSection({
     await loadSponsors();
   };
 
-  const torneoLabel = useCallback((t) => {
-    const sid = t.sede_id != null ? ` · sede ${t.sede_id}` : '';
-    return `${String(t.nombre || t('admin.formularios.tournament')).slice(0, 80)} (id ${t.id})${sid}`;
-  }, []);
+  const torneoLabel = useCallback(
+    (torneoRow) => {
+      const sid = torneoRow.sede_id != null ? ` · sede ${torneoRow.sede_id}` : '';
+      return `${String(torneoRow.nombre || t('admin.formularios.tournament')).slice(0, 80)} (id ${torneoRow.id})${sid}`;
+    },
+    [t],
+  );
 
   const fieldHintStyle = {
     margin: '6px 0 0',

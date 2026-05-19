@@ -102,17 +102,21 @@ const stripePromiseAdmin = STRIPE_PUBLISHABLE_ADMIN ? loadStripe(STRIPE_PUBLISHA
 
 function etiquetaSuscripcionEstado(raw) {
   const v = String(raw || 'sin_suscripcion').toLowerCase();
-  if (v === 'activa') return t('admin.sedes.subscriptionActive');
-  if (v === 'vencida') return t('admin.sedes.subscriptionExpired');
-  if (v === 'pendiente_pago') return t('admin.sedes.paymentPending');
-  if (v === 'cancelada' || v === 'cancelado') return t('admin.sedes.subscriptionCancelled');
-  if (v === 'aviso') return t('admin.sedes.noticeOverdue');
-  if (v === 'segundo_aviso') return t('admin.sedes.secondNotice');
-  if (v === 'suspendido') return t('admin.sedes.suspendedOverdue');
+  if (v === 'activa') return i18n.t('admin.sedes.subscriptionActive');
+  if (v === 'vencida') return i18n.t('admin.sedes.subscriptionExpired');
+  if (v === 'pendiente_pago') return i18n.t('admin.sedes.paymentPending');
+  if (v === 'cancelada' || v === 'cancelado') return i18n.t('admin.sedes.subscriptionCancelled');
+  if (v === 'aviso') return i18n.t('admin.sedes.noticeOverdue');
+  if (v === 'segundo_aviso') return i18n.t('admin.sedes.secondNotice');
+  if (v === 'suspendido') return i18n.t('admin.sedes.suspendedOverdue');
   return i18n.t('admin.notif.noSubscription');
 }
 
-const TIPO_INTERES_APROBAR_SOLICITUD_LIC = [t('admin.sedes.affiliateClub'), t('admin.sedes.padbolPointFranchise'), t('admin.sedes.masterNational')];
+const TIPO_INTERES_APROBAR_SOLICITUD_LIC = [
+  i18n.t('admin.sedes.affiliateClub'),
+  i18n.t('admin.sedes.padbolPointFranchise'),
+  i18n.t('admin.sedes.masterNational'),
+];
 
 function etiquetaTipoInteresSolicitudLicencia(v) {
   const s = String(v || '').trim();
@@ -122,11 +126,11 @@ function etiquetaTipoInteresSolicitudLicencia(v) {
 
 /** Selector manual super_admin en detalle de sede (mora + operativo). */
 const SUSCRIPCION_SELECTOR_SUPER_SEDE = [
-  { value: 'activa', label: t('admin.sedes.subscriptionActive') },
-  { value: 'aviso', label: t('admin.sedes.noticeOverdue') },
-  { value: 'segundo_aviso', label: t('admin.sedes.secondNotice') },
+  { value: 'activa', label: i18n.t('admin.sedes.subscriptionActive') },
+  { value: 'aviso', label: i18n.t('admin.sedes.noticeOverdue') },
+  { value: 'segundo_aviso', label: i18n.t('admin.sedes.secondNotice') },
   { value: 'suspendido', label: 'Suspendida' },
-  { value: 'cancelado', label: t('admin.sedes.subscriptionCancelled') },
+  { value: 'cancelado', label: i18n.t('admin.sedes.subscriptionCancelled') },
 ];
 
 const SUSCRIPCION_SELECTOR_SUPER_VALUES = new Set(SUSCRIPCION_SELECTOR_SUPER_SEDE.map((o) => o.value));
@@ -157,6 +161,7 @@ function formatProximoCobroAdmin(iso) {
 }
 
 function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
   const [busy, setBusy] = useState(false);
@@ -424,7 +429,7 @@ const ADMIN_TABS_ALLOWED = new Set([
   'config',
   'planes',
   'roles',
-  t('admin.metricas.venuesCount'),
+  'sedes',
   'jugadores',
   'solicitudes',
   'personalizar_hub',
@@ -877,7 +882,7 @@ function etiquetaQuienReservaHistorial(changedBy) {
   const s = String(changedBy || 'sistema').trim();
   if (s === 'sistema') return 'Sistema';
   if (s.startsWith('admin:')) return 'Admin';
-  if (s.startsWith(t('admin.reservas.playerLabel'))) return t('admin.reservas.player');
+  if (s.startsWith(i18n.t('admin.reservas.playerLabel'))) return i18n.t('admin.reservas.player');
   return s;
 }
 
@@ -905,6 +910,7 @@ function horarioReservaAdmin(r) {
 
 // Returns a JSX status badge for a reserva
 function EstadoBadge({ reserva }) {
+  const { t } = useTranslation();
   const est = String(reserva.estado || '').toLowerCase();
   if (est === 'pendiente_pago_manual') {
     return <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap', fontWeight: 700 }}>{t('admin.reservas.badgeManualPaymentPending')}</span>;
@@ -926,7 +932,7 @@ function EstadoBadge({ reserva }) {
 
 /** Pills filtro listado reservas (pestaña Reservas). */
 const FILTROS_RESERVA_ADMIN_PILLS = [
-  { id: 'todas', label: t('admin.reservas.all') },
+  { id: 'todas', label: i18n.t('admin.reservas.all') },
   { id: 'confirmadas', label: 'Confirmadas' },
   { id: 'pendientes', label: 'Pendientes' },
   { id: 'canceladas', label: 'Canceladas' },
@@ -1409,7 +1415,7 @@ function sedeLicenciaChip(s) {
     );
   }
   return (
-    <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>{t('admin.sedes.noLicense')}</span>
+    <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>{i18n.t('admin.sedes.noLicense')}</span>
   );
 }
 
@@ -1784,10 +1790,10 @@ function SedeSuperDetallePanel({
 function labelInvitacionAdminTipo(inv) {
   const role = String(inv?.invited_role || 'admin_club').toLowerCase();
   const alc = String(inv?.invited_alcance || '').toLowerCase();
-  if (role === 'admin_nacional' && alc === 'pais') return t('admin.formularios.nationalAdminRole');
-  if (role === 'admin_nacional' && (alc === 'provincia' || alc === 'ciudad')) return t('admin.sedes.adminCityRegion');
+  if (role === 'admin_nacional' && alc === 'pais') return i18n.t('admin.formularios.nationalAdminRole');
+  if (role === 'admin_nacional' && (alc === 'provincia' || alc === 'ciudad')) return i18n.t('admin.sedes.adminCityRegion');
   if (role === 'empleado') return '👤 Empleado';
-  return t('admin.sedes.adminClub');
+  return i18n.t('admin.sedes.adminClub');
 }
 
 function inviteAdminTipoToRol(tipo) {
