@@ -4501,9 +4501,19 @@ export default function MiPerfil() {
 
       {session?.user ? (
         <div style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '8px 16px 4px', boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 }}>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('perfil.language')}</span>
-            <LanguageSwitcher />
+          <div style={{ marginBottom: 14 }}>
+            <span
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+                marginBottom: 10,
+              }}
+            >
+              {t('perfil.language')}
+            </span>
+            <LanguageSwitcher variant="profile" />
           </div>
           <button
             type="button"

@@ -23,8 +23,9 @@ i18n
       useSuspense: false,
     },
     detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
+      /** Solo `padbol_lang` explícito (pantalla inicial o selector); no autoguardar idioma del navegador. */
+      order: ['localStorage'],
+      caches: [],
       lookupLocalStorage: STORAGE_KEY,
     },
   });

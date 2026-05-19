@@ -865,7 +865,7 @@ export default function AppHeader({
             flexShrink: 0,
           }}
         >
-          {session?.user ? <LanguageSwitcher compact /> : null}
+          {session?.user ? <LanguageSwitcher variant="header" /> : null}
           {session?.user ? <HubThemeSettingsButton compact barOnDark={theme === 'dark'} /> : null}
           {showLogoutAdminHeader && session?.user ? (
             <button

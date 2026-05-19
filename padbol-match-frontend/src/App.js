@@ -42,6 +42,7 @@ import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+import AppLanguageGate from './components/AppLanguageGate';
 import ChatbotIA from './components/ChatbotIA';
 import LegalFooterBar from './components/LegalFooterBar';
 import CookieConsentBanner from './components/CookieConsentBanner';
@@ -433,9 +434,11 @@ function App() {
     <Router>
       <HubNavLayoutProvider>
         <GlobalErrorBoundary>
-          <div className="pm-app-shell-column">
-            <AppShell />
-          </div>
+          <AppLanguageGate>
+            <div className="pm-app-shell-column">
+              <AppShell />
+            </div>
+          </AppLanguageGate>
         </GlobalErrorBoundary>
       </HubNavLayoutProvider>
     </Router>
