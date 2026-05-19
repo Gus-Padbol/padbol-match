@@ -217,6 +217,70 @@
     "inscripcion_confirmada": "Inscripción confirmada",
     "pendiente_pago": "Pendiente de pago",
     "pagar_inscripcion": "Pagar inscripción",
+    "filtroEstado": {
+      "todos": "Todos",
+      "inscripcion_abierta": "Inscripción abierta",
+      "proximo": "Próximo",
+      "en_curso": "En curso",
+      "finalizado": "Finalizado",
+      "cancelado": "Cancelado"
+    },
+    "filtroDeporte": {
+      "todos": "Todos"
+    },
+    "tipo": {
+      "round_robin": "Round Robin",
+      "grupos_knockout": "Grupos + Knockout",
+      "eliminacion": "Eliminación directa",
+      "knockout": "Eliminación directa",
+      "eliminatoria": "Eliminación directa"
+    },
+    "listado": {
+      "titleAvailable": "Torneos disponibles",
+      "titleNear": "Torneos cerca de ti",
+      "titleSede": "Torneos · {{sede}}",
+      "subtitleDefault": "Elige un torneo para ver sus detalles, inscribirte y formar o unirte a un equipo.",
+      "subtitleSedeOnly": "Solo se listan torneos de esta sede.",
+      "subtitleNear": "Priorizamos torneos de la sede más cercana a tu ubicación o de tu última sede.",
+      "geoDetecting": "Detectando ubicación… Si no es posible, usaremos tu última sede guardada o mostraremos todos.",
+      "geoNear": "Según tu ubicación: {{place}}",
+      "geoNearShort": "Según tu ubicación",
+      "lastVenue": "Tu última sede",
+      "changeVenue": "Cambiar ciudad / sede",
+      "seeAllTorneos": "Ver todos los torneos",
+      "deporteLabel": "Deporte",
+      "deporteAria": "Deporte del torneo",
+      "estadoLabel": "Estado del torneo",
+      "estadoAria": "Estado del torneo",
+      "searchPlaceholder": "Buscar torneo, club, ciudad o país...",
+      "searchAria": "Buscar torneos",
+      "clearSearch": "Limpiar búsqueda",
+      "empty": "No hay torneos disponibles.",
+      "emptySede": "No hay torneos en esta sede por ahora.",
+      "emptyDeporte": "No hay torneos de este deporte con los filtros actuales.",
+      "seeAllDeportes": "Ver todos los deportes",
+      "emptyEstado": "No hay torneos con el estado seleccionado.",
+      "seeAllEstados": "Ver todos los estados",
+      "emptySearch": "No encontramos torneos con ese criterio",
+      "clubDefault": "Club / sede",
+      "venueNotFound": "Sede no encontrada",
+      "sinNombre": "Sin nombre",
+      "tipoTorneo": "Tipo de torneo: {{tipo}}",
+      "edad": "Edad: {{edad}}",
+      "cupos": "{{count}} cupos disponibles",
+      "verTorneo": "Ver torneo",
+      "geoFailed": "No pudimos situarte ni leer una sede guardada. Mostrando todos los torneos.",
+      "lastVenueLine": "Última sede: {{tail}}"
+    },
+    "deporte": {
+      "padbol": "Padbol",
+      "padel": "Pádel",
+      "pickleball": "Pickleball",
+      "squash": "Squash",
+      "tenis": "Tenis",
+      "futbol_5": "Fútbol 5",
+      "futbol_7": "Fútbol 7"
+    },
     "vista": {
       "tabEquipos": "EQUIPOS",
       "tabGrupos": "GRUPOS",
@@ -423,7 +487,19 @@
       "loginToSave": "Inicia sesión para guardar.",
       "selectCategory": "Selecciona la categoría del torneo",
       "saveError": "Error al guardar:",
-      "updateError": "Error al actualizar"
+      "updateError": "Error al actualizar",
+      "rejectRequest": "No se pudo rechazar la solicitud",
+      "saveInterestType": "No se pudo guardar el tipo de interés",
+      "createInvite": "No se pudo crear la invitación",
+      "resendInvite": "No se pudo reenviar",
+      "revokeRole": "No se pudo revocar el rol",
+      "loadTeams": "No se pudieron cargar los equipos",
+      "deleteTournament": "Error al eliminar:",
+      "genericError": "Error:"
+    },
+    "torneosSection": {
+      "createdTitle": "Torneos creados",
+      "filterEstado": "Estado del torneo"
     }
   },
   "pago": {
@@ -472,7 +548,21 @@
     "card": {
       "reservarSub": "Ya tengo equipo, quiero una cancha.",
       "torneosSub": "Torneos y rankings."
-    }
+    },
+    "pwaPromo": "Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido."
+  },
+  "chatbot": {
+    "fabCollapsed": "¿Consultas?",
+    "fabLine1": "¿Tenés dudas?",
+    "fabLine2": "Hablá con Padbol Match",
+    "fabOpen": "Abrir asistente Padbol Match",
+    "escribiendo": "Escribiendo…",
+    "procesando": "Procesando…",
+    "enviar": "Enviar",
+    "placeholder": "Ej: quiero jugar mañana a las 19hs",
+    "titulo": "Padbol Match IA",
+    "cerrar": "Cerrar",
+    "torneosSugerencia": "Torneos disponibles 🏆"
   },
   "pwa": {
     "installApp": "Instalar app",

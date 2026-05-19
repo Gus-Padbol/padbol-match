@@ -927,7 +927,7 @@ export default function UserHome() {
                   }}
                 >
                   <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 400, lineHeight: 1.4, color: 'var(--text-secondary)' }}>
-                    Instala Padbol Match en tu teléfono para abrirla como app y entrar más rápido.
+                    {t('hub.pwaPromo')}
                   </p>
                   <PwaInstallButtonWithModal buttonStyle={hubPwaInstallButtonStyle} />
                 </div>

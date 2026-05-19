@@ -656,7 +656,25 @@ export default function ChatbotIA() {
 
   const padbolLang = usePadbolLang();
   usePadbolLangVersion();
-  const ui = useMemo(() => chatUiStrings(padbolLang), [padbolLang]);
+  const ui = useMemo(() => {
+    const base = chatUiStrings(padbolLang);
+    return {
+      ...base,
+      fabCollapsed: t('chatbot.fabCollapsed'),
+      fabLine1: t('chatbot.fabLine1'),
+      fabLine2: t('chatbot.fabLine2'),
+      fabOpen: t('chatbot.fabOpen'),
+      titulo: t('chatbot.titulo'),
+      cerrar: t('chatbot.cerrar'),
+      escribiendo: t('chatbot.escribiendo'),
+      procesando: t('chatbot.procesando'),
+      enviar: t('chatbot.enviar'),
+      placeholder: t('chatbot.placeholder'),
+      quickSuggestions: (base.quickSuggestions || []).map((s) =>
+        s.to === '/competir' ? { ...s, label: t('chatbot.torneosSugerencia') } : s
+      ),
+    };
+  }, [padbolLang, t]);
 
   const chatWelcomeFirstName = useMemo(() => {
     const ns = userProfile?.nombre_saludo != null ? String(userProfile.nombre_saludo).trim() : '';

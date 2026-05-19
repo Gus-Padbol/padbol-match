@@ -54,21 +54,35 @@ export function normalizeTorneoFiltroEstadoPill(filtro) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-export const FILTROS_ESTADO_TORNEO_PILLS = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'inscripcion_abierta', label: 'Inscripción abierta' },
-  { id: 'proximo', label: 'Próximo' },
-  { id: 'en_curso', label: 'En curso' },
-  { id: 'finalizado', label: 'Finalizado' },
-  { id: 'cancelado', label: 'Cancelado' },
+export const FILTRO_ESTADO_TORNEO_PILL_IDS = [
+  'todos',
+  'inscripcion_abierta',
+  'proximo',
+  'en_curso',
+  'finalizado',
+  'cancelado',
 ];
 
+/** @param {(key: string, opts?: object) => string} t */
+export function getFiltrosEstadoTorneoPills(t) {
+  return FILTRO_ESTADO_TORNEO_PILL_IDS.map((id) => ({
+    id,
+    label: t(`torneos.filtroEstado.${id}`),
+  }));
+}
+
+/** @deprecated Usar `getFiltrosEstadoTorneoPills(t)` — etiquetas en i18n. */
+export const FILTROS_ESTADO_TORNEO_PILLS = FILTRO_ESTADO_TORNEO_PILL_IDS.map((id) => ({
+  id,
+  label: id,
+}));
+
 /** Id normalizado de la primera pill = «sin filtrar por estado» (convención: siempre la de «Todos»). */
-const TORNEO_FILTRO_PILL_ID_TODOS = normalizeTorneoFiltroEstadoPill(FILTROS_ESTADO_TORNEO_PILLS[0]?.id ?? 'todos');
+const TORNEO_FILTRO_PILL_ID_TODOS = normalizeTorneoFiltroEstadoPill(FILTRO_ESTADO_TORNEO_PILL_IDS[0] ?? 'todos');
 
 /** Ids de pills que filtran por un estado de torneo concreto (todas menos la primera). */
 const TORNEO_FILTRO_ESTADO_IDS_CON_ESTADO = new Set(
-  FILTROS_ESTADO_TORNEO_PILLS.slice(1).map((p) => normalizeTorneoFiltroEstadoPill(p.id)).filter(Boolean)
+  FILTRO_ESTADO_TORNEO_PILL_IDS.slice(1).map((id) => normalizeTorneoFiltroEstadoPill(id)).filter(Boolean)
 );
 
 /**

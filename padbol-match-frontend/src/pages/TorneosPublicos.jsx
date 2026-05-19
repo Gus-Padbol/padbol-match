@@ -23,7 +23,7 @@ import {
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
-  FILTROS_ESTADO_TORNEO_PILLS,
+  getFiltrosEstadoTorneoPills,
   torneoPasaFiltroEstadoVista,
   esEstadoFinalizadoTorneo,
 } from '../utils/torneoEstadoFiltroPills';
@@ -31,7 +31,7 @@ import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioA
 import { getDistanceKm } from '../utils/sedeCardUi';
 import { IconGeroFiltros, IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { usePadbolLangVersion } from '../hooks/usePadbolLang';
+import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
@@ -43,11 +43,6 @@ import {
 function formatoEquipoLineaTorneoPublico(t) {
   return etiquetaFormatoEquipoResuelto(t);
 }
-
-const FILTROS_DEPORTE_TORNEO_PUBLICO = [
-  { id: 'todos', label: 'Todos' },
-  ...TORNEO_DEPORTE_OPTIONS.map((o) => ({ id: o.value, label: o.label })),
-];
 
 function closestSedeId(userPos, sedesList) {
   let bestId = null;
@@ -63,11 +58,13 @@ function closestSedeId(userPos, sedesList) {
   return bestId;
 }
 
-function formatFecha(str) {
+function formatFecha(str, lang) {
   if (!str) return '—';
   const [y, m, d] = str.split('-');
-  const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  return `${parseInt(d, 10)} ${meses[parseInt(m, 10) - 1]} ${y}`;
+  const date = new Date(Number(y), Number(m) - 1, Number(d));
+  if (Number.isNaN(date.getTime())) return str;
+  const locale = String(lang || 'es').toLowerCase().startsWith('en') ? 'en-US' : 'es-AR';
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function Row({ icon, label }) {
@@ -102,7 +99,21 @@ function normalizeSearchText(s) {
 
 export default function TorneosPublicos() {
   const { t } = useTranslation();
+  const padbolLang = usePadbolLang();
   usePadbolLangVersion();
+
+  const filtrosDeporteTorneoPublico = useMemo(
+    () => [
+      { id: 'todos', label: t('torneos.filtroDeporte.todos') },
+      ...TORNEO_DEPORTE_OPTIONS.map((o) => ({
+        id: o.value,
+        label: t(`torneos.deporte.${o.value}`, { defaultValue: o.label }),
+      })),
+    ],
+    [t]
+  );
+
+  const filtrosEstadoTorneoPills = useMemo(() => getFiltrosEstadoTorneoPills(t), [t]);
 
   const badgeEstadoTorneoListado = useCallback(
     (torneo) => {
@@ -139,7 +150,7 @@ export default function TorneosPublicos() {
   const filtroDeporteTorneo = useMemo(() => {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
     if (!d || d === 'todos') return 'todos';
-    return FILTROS_DEPORTE_TORNEO_PUBLICO.some((x) => x.id === d) ? d : 'todos';
+    return filtrosDeporteTorneoPublico.some((x) => x.id === d) ? d : 'todos';
   }, [searchParams]);
 
   const deporteTickerTorneos = useMemo(() => {
@@ -306,8 +317,7 @@ export default function TorneosPublicos() {
     if (geoStatus === 'idle' || geoStatus === 'pending') {
       return {
         focusSedeId: null,
-        contextLine:
-          'Detectando ubicación… Si no es posible, usaremos tu última sede guardada o mostraremos todos.',
+        contextLine: t('torneos.listado.geoDetecting'),
         filterActive: false,
       };
     }
@@ -321,8 +331,10 @@ export default function TorneosPublicos() {
         sid = closest;
         const s = sedesMap[String(closest)];
         line = s
-          ? `Según tu ubicación: ${[s.nombre, s.ciudad].filter(Boolean).join(' · ')}`
-          : 'Según tu ubicación';
+          ? t('torneos.listado.geoNear', {
+              place: [s.nombre, s.ciudad].filter(Boolean).join(' · '),
+            })
+          : t('torneos.listado.geoNearShort');
       }
     }
 
@@ -335,21 +347,21 @@ export default function TorneosPublicos() {
           const nombre =
             localStorage.getItem('ultima_sede_nombre')?.trim() ||
             sedesMap[String(n)]?.nombre ||
-            'Tu última sede';
+            t('torneos.listado.lastVenue');
           const s = sedesMap[String(n)];
           const lugar = s ? [s.ciudad, s.pais].filter(Boolean).join(', ') : '';
           const tail = lugar ? `${nombre} (${lugar})` : nombre;
-          line = `Última sede: ${tail}`;
+          line = t('torneos.listado.lastVenueLine', { tail });
         }
       }
     }
 
     if (!sid) {
-      line = 'No pudimos situarte ni leer una sede guardada. Mostrando todos los torneos.';
+      line = t('torneos.listado.geoFailed');
     }
 
     return { focusSedeId: sid, contextLine: line, filterActive: Boolean(sid) };
-  }, [nearMode, geoStatus, userPos, sedesList, sedesMap]);
+  }, [nearMode, geoStatus, userPos, sedesList, sedesMap, t]);
 
   const displayedTorneos = useMemo(() => {
     if (sedeFiltroId != null) {
@@ -390,7 +402,7 @@ export default function TorneosPublicos() {
 
   const listaTorneos = useMemo(() => {
     if (loading) {
-      return <p style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>Cargando...</p>;
+      return <p style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>{t('general.loadingEllipsis')}</p>;
     }
     if (torneos.length === 0) {
       return (
@@ -404,7 +416,7 @@ export default function TorneosPublicos() {
             boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
           }}
         >
-          No hay torneos disponibles.
+          {t('torneos.listado.empty')}
         </div>
       );
     }
@@ -421,8 +433,8 @@ export default function TorneosPublicos() {
           }}
         >
           {(nearMode && filterActive) || sedeFiltroId != null
-            ? 'No hay torneos en esta sede por ahora.'
-            : 'No hay torneos disponibles.'}
+            ? t('torneos.listado.emptySede')
+            : t('torneos.listado.empty')}
           {(nearMode && filterActive) || sedeFiltroId != null ? (
             <div style={{ marginTop: '12px' }}>
               <button
@@ -438,7 +450,7 @@ export default function TorneosPublicos() {
                   cursor: 'pointer',
                 }}
               >
-                Ver todos los torneos
+                {t('torneos.listado.seeAllTorneos')}
               </button>
             </div>
           ) : null}
@@ -457,7 +469,7 @@ export default function TorneosPublicos() {
             boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
           }}
         >
-          No hay torneos de este deporte con los filtros actuales.
+          {t('torneos.listado.emptyDeporte')}
           <div style={{ marginTop: '12px' }}>
             <button
               type="button"
@@ -472,7 +484,7 @@ export default function TorneosPublicos() {
                 cursor: 'pointer',
               }}
             >
-              Ver todos los deportes
+              {t('torneos.listado.seeAllDeportes')}
             </button>
           </div>
         </div>
@@ -490,7 +502,7 @@ export default function TorneosPublicos() {
             boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
           }}
         >
-          No hay torneos con el estado seleccionado.
+          {t('torneos.listado.emptyEstado')}
           <div style={{ marginTop: '12px' }}>
             <button
               type="button"
@@ -505,7 +517,7 @@ export default function TorneosPublicos() {
                 cursor: 'pointer',
               }}
             >
-              Ver todos los estados
+              {t('torneos.listado.seeAllEstados')}
             </button>
           </div>
         </div>
@@ -523,7 +535,7 @@ export default function TorneosPublicos() {
             boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
           }}
         >
-          No encontramos torneos con ese criterio
+          {t('torneos.listado.emptySearch')}
         </div>
       );
     }
@@ -535,13 +547,13 @@ export default function TorneosPublicos() {
           gap: '14px',
         }}
       >
-        {torneosOrdenados.map((t) => {
-          const sede = sedesMap[String(t.sede_id)];
-          const badge = badgeEstadoTorneoListado(t);
+        {torneosOrdenados.map((torneo) => {
+          const sede = sedesMap[String(torneo.sede_id)];
+          const badge = badgeEstadoTorneoListado(torneo);
 
           return (
             <div
-              key={t.id}
+              key={torneo.id}
               style={{
                 background: 'var(--bg-card)',
                 borderRadius: '16px',
@@ -568,11 +580,11 @@ export default function TorneosPublicos() {
                       letterSpacing: '0.03em',
                     }}
                   >
-                    {sede?.nombre || 'Club / sede'}
+                    {sede?.nombre || t('torneos.listado.clubDefault')}
                   </div>
 
-                  <h3 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>{t.nombre || 'Sin nombre'}</h3>
-                  {normalizeTorneoDeporte(t.deporte) !== TORNEO_DEPORTE_PADBOL ? (
+                  <h3 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.2 }}>{torneo.nombre || t('torneos.listado.sinNombre')}</h3>
+                  {normalizeTorneoDeporte(torneo.deporte) !== TORNEO_DEPORTE_PADBOL ? (
                     <div style={{ marginTop: '8px' }}>
                       <span
                         style={{
@@ -586,7 +598,7 @@ export default function TorneosPublicos() {
                           border: '1px solid var(--border)',
                         }}
                       >
-                        {etiquetaDeporteTorneo(t.deporte)}
+                        {etiquetaDeporteTorneo(torneo.deporte)}
                       </span>
                     </div>
                   ) : null}
@@ -615,7 +627,7 @@ export default function TorneosPublicos() {
                   lineHeight: 1.5,
                 }}
               >
-                <Row icon={<IconGeroUbicacion size={14} />} label={sede?.nombre || 'Sede no encontrada'} />
+                <Row icon={<IconGeroUbicacion size={14} />} label={sede?.nombre || t('torneos.listado.venueNotFound')} />
                 <Row
                   icon="🗺️"
                   label={
@@ -625,27 +637,54 @@ export default function TorneosPublicos() {
                     </>
                   }
                 />
-                <Row icon="📅" label={formatFecha(t.fecha_inicio)} />
-                <Row icon="🎾" label={formatoEquipoLineaTorneoPublico(t)} />
-                <Row icon="🏆" label={formatTipoTorneo(t.tipo_torneo)} />
-                <Row icon="⭐" label={formatNivelTorneo(t.nivel_torneo)} />
-                <Row icon="⚧" label={`Tipo de torneo: ${formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(t))}`} />
-                <Row icon="🎂" label={`Edad: ${formatCategoriaEdadTorneo(t.categoria_edad)}`} />
+                <Row icon="📅" label={formatFecha(torneo.fecha_inicio, padbolLang)} />
+                <Row icon="🎾" label={formatoEquipoLineaTorneoPublico(torneo)} />
+                <Row
+                  icon="🏆"
+                  label={t('torneos.listado.tipoTorneo', {
+                    tipo: t(`torneos.tipo.${String(torneo.tipo_torneo || '').toLowerCase()}`, {
+                      defaultValue: formatTipoTorneo(torneo.tipo_torneo),
+                    }),
+                  })}
+                />
+                <Row icon="⭐" label={formatNivelTorneo(torneo.nivel_torneo)} />
+                <Row
+                  icon="⚧"
+                  label={t('torneos.listado.tipoTorneo', {
+                    tipo: t(
+                      `torneos.vista.genero.${String(torneoTipoCompetenciaDb(torneo) || '').toLowerCase()}`,
+                      { defaultValue: formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo)) }
+                    ),
+                  })}
+                />
+                <Row
+                  icon="🎂"
+                  label={t('torneos.listado.edad', {
+                    edad: t(`torneos.vista.categoriaEdad.${String(torneo.categoria_edad || '').toLowerCase()}`, {
+                      defaultValue: formatCategoriaEdadTorneo(torneo.categoria_edad),
+                    }),
+                  })}
+                />
                 {(() => {
                   const max =
-                    t.cupos_maximos != null && String(t.cupos_maximos).trim() !== ''
-                      ? Number(t.cupos_maximos)
+                    torneo.cupos_maximos != null && String(torneo.cupos_maximos).trim() !== ''
+                      ? Number(torneo.cupos_maximos)
                       : NaN;
                   if (!Number.isFinite(max) || max <= 0) return null;
-                  const conf = equiposConfirmadosPorTorneoId[t.id] ?? 0;
+                  const conf = equiposConfirmadosPorTorneoId[torneo.id] ?? 0;
                   const disp = Math.max(0, max - conf);
-                  return <Row icon="🎫" label={`${disp} cupos disponibles`} />;
+                  return (
+                    <Row
+                      icon="🎫"
+                      label={t('torneos.listado.cupos', { count: disp })}
+                    />
+                  );
                 })()}
               </div>
 
               <button
                 type="button"
-                onClick={() => navigate(`/torneo/${t.id}`)}
+                onClick={() => navigate(`/torneo/${torneo.id}`)}
                 style={{
                   marginTop: '12px',
                   width: '100%',
@@ -658,7 +697,7 @@ export default function TorneosPublicos() {
                   cursor: 'pointer',
                 }}
               >
-                Ver torneo
+                {t('torneos.listado.verTorneo')}
               </button>
             </div>
           );
@@ -680,6 +719,10 @@ export default function TorneosPublicos() {
     sedesMap,
     navigate,
     equiposConfirmadosPorTorneoId,
+    t,
+    padbolLang,
+    badgeEstadoTorneoListado,
+    setDeporteFiltroEnUrl,
   ]);
 
   return (
@@ -714,14 +757,18 @@ export default function TorneosPublicos() {
           }}
         >
           <div style={{ fontSize: '22px', fontWeight: 800, marginBottom: '4px', color: 'var(--text-primary)' }}>
-            {sedeFiltroNombre ? `Torneos · ${sedeFiltroNombre}` : nearMode ? 'Torneos cerca de ti' : 'Torneos disponibles'}
+            {sedeFiltroNombre
+              ? t('torneos.listado.titleSede', { sede: sedeFiltroNombre })
+              : nearMode
+                ? t('torneos.listado.titleNear')
+                : t('torneos.listado.titleAvailable')}
           </div>
           <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: nearMode || sedeFiltroId != null ? '10px' : 0, lineHeight: 1.45 }}>
             {sedeFiltroId != null
-              ? 'Solo se listan torneos de esta sede.'
+              ? t('torneos.listado.subtitleSedeOnly')
               : nearMode
-                ? 'Priorizamos torneos de la sede más cercana a tu ubicación o de tu última sede.'
-                : 'Elige un torneo para ver sus detalles, inscribirte y formar o unirte a un equipo.'}
+                ? t('torneos.listado.subtitleNear')
+                : t('torneos.listado.subtitleDefault')}
           </div>
           {nearMode && contextLine ? (
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>{contextLine}</div>
@@ -747,7 +794,7 @@ export default function TorneosPublicos() {
                 maxWidth: '320px',
               }}
             >
-              Cambiar ciudad / sede
+              {t('torneos.listado.changeVenue')}
             </button>
           ) : null}
           {sedeFiltroId != null && !nearMode ? (
@@ -771,7 +818,7 @@ export default function TorneosPublicos() {
                 maxWidth: '320px',
               }}
             >
-              Ver todos los torneos
+              {t('torneos.listado.seeAllTorneos')}
             </button>
           ) : null}
         </div>
@@ -788,11 +835,11 @@ export default function TorneosPublicos() {
                   letterSpacing: '0.02em',
                 }}
               >
-                Deporte
+                {t('torneos.listado.deporteLabel')}
               </div>
               <div
                 role="group"
-                aria-label="Deporte del torneo"
+                aria-label={t('torneos.listado.deporteAria')}
                 style={{
                   display: 'flex',
                   flexDirection: 'row',
@@ -804,7 +851,7 @@ export default function TorneosPublicos() {
                   paddingBottom: '4px',
                 }}
               >
-                {FILTROS_DEPORTE_TORNEO_PUBLICO.map(({ id, label }) => {
+                {filtrosDeporteTorneoPublico.map(({ id, label }) => {
                   const active = filtroDeporteTorneo === id;
                   return (
                     <button
@@ -843,11 +890,11 @@ export default function TorneosPublicos() {
                   letterSpacing: '0.02em',
                 }}
               >
-                Estado del torneo
+                {t('torneos.listado.estadoLabel')}
               </div>
               <div
                 role="group"
-                aria-label="Estado del torneo"
+                aria-label={t('torneos.listado.estadoAria')}
                 style={{
                   display: 'flex',
                   flexDirection: 'row',
@@ -859,7 +906,7 @@ export default function TorneosPublicos() {
                   paddingBottom: '4px',
                 }}
               >
-                {FILTROS_ESTADO_TORNEO_PILLS.map(({ id, label }) => {
+                {filtrosEstadoTorneoPills.map(({ id, label }) => {
                   const active = filtroEstadoTorneo === id;
                   return (
                     <button
@@ -919,8 +966,8 @@ export default function TorneosPublicos() {
                 autoComplete="off"
                 value={torneoSearchQuery}
                 onChange={(e) => setTorneoSearchQuery(e.target.value)}
-                placeholder="Buscar torneo, club, ciudad o país..."
-                aria-label="Buscar torneos"
+                placeholder={t('torneos.listado.searchPlaceholder')}
+                aria-label={t('torneos.listado.searchAria')}
                 style={{
                   width: '100%',
                   boxSizing: 'border-box',
@@ -941,7 +988,7 @@ export default function TorneosPublicos() {
                     setTorneoSearchQuery('');
                     torneoSearchInputRef.current?.focus();
                   }}
-                  aria-label="Limpiar búsqueda"
+                  aria-label={t('torneos.listado.clearSearch')}
                   style={{
                     position: 'absolute',
                     right: '6px',

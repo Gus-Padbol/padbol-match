@@ -37,7 +37,7 @@ import {
 } from '../utils/sponsorQuotaShared';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
-  FILTROS_ESTADO_TORNEO_PILLS,
+  getFiltrosEstadoTorneoPills,
   esEstadoCanceladoTorneo,
   esEstadoFinalizadoTorneo,
   esFiltroTorneoEstadoTodos,
@@ -1831,6 +1831,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [torneos, setTorneos] = useState([]);
   const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
+  const filtrosEstadoTorneoPillsAdmin = useMemo(() => getFiltrosEstadoTorneoPills(t), [t, i18n.language]);
   const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
   const [sedesMap, setSedesMap] = useState({});
   const [contratosBySedeId, setContratosBySedeId] = useState({});
@@ -2092,7 +2093,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         void refreshSnapPendientesOnly();
         refetchSolicitudesTabLists();
       } catch (e) {
-        alert(e?.message || 'No se pudo rechazar la solicitud');
+        alert(e?.message || t('admin.alerts.rejectRequest'));
       }
     },
     [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
@@ -2123,7 +2124,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setLicApruebaTipoModal(null);
       navigate('/admin/nueva-sede', { state: { prefillSolicitud: j } });
     } catch (e) {
-      alert(e?.message || 'No se pudo guardar el tipo de interés');
+      alert(e?.message || t('admin.alerts.saveInterestType'));
     } finally {
       setLicApruebaTipoSaving(false);
     }
@@ -2321,7 +2322,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setTimeout(() => setMensajeExito(''), 4000);
       void cargarInvitacionesAdmin();
     } catch (e) {
-      alert(e?.message || 'No se pudo crear la invitación');
+      alert(e?.message || t('admin.alerts.createInvite'));
     } finally {
       setInviteClubSaving(false);
     }
@@ -2355,7 +2356,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         }
         void cargarInvitacionesAdmin();
       } catch (e) {
-        alert(e?.message || 'No se pudo reenviar');
+        alert(e?.message || t('admin.alerts.resendInvite'));
       }
     },
     [apiBaseUrl, cargarInvitacionesAdmin, isSuperAdmin],
@@ -2379,7 +2380,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       void cargarRolesAdmin();
       void fetchData();
     } catch (e) {
-      alert(e?.message || 'No se pudo revocar el rol');
+      alert(e?.message || t('admin.alerts.revokeRole'));
     }
   }, [apiBaseUrl, isSuperAdmin, cargarRolesAdmin]);
 
@@ -3461,10 +3462,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         setTorneos(prev => prev.filter(t => t.id !== torneoId));
       } else {
         const data = await res.json().catch(() => ({}));
-        alert('Error al eliminar: ' + (data.error || res.statusText));
+        alert(t('admin.alerts.deleteTournament') + ' ' + (data.error || res.statusText));
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(t('admin.alerts.genericError') + ' ' + err.message);
     }
   };
 
@@ -3484,7 +3485,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         equipos: Array.isArray(equipos) ? equipos : [],
       });
     } catch (e) {
-      alert(e?.message || 'No se pudieron cargar los equipos');
+      alert(e?.message || t('admin.alerts.loadTeams'));
     }
   }, [apiBaseUrl]);
 
@@ -3945,7 +3946,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         alert('Error al guardar: ' + (data.error || res.statusText));
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(t('admin.alerts.genericError') + ' ' + err.message);
     } finally {
       setSavingTorneo(false);
     }
@@ -4250,7 +4251,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         alert(t('admin.alerts.updateError'));
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(t('admin.alerts.genericError') + ' ' + err.message);
     }
   };
 
@@ -4275,7 +4276,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         alert(j.error || 'No se pudo confirmar el pago');
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(t('admin.alerts.genericError') + ' ' + err.message);
     }
   };
 
@@ -4357,7 +4358,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         alert('Error al cancelar');
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(t('admin.alerts.genericError') + ' ' + err.message);
     }
   };
 
@@ -6742,11 +6743,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <>
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
-            Estado del torneo
+            {t('admin.torneosSection.filterEstado')}
           </div>
           <div
             role="group"
-            aria-label="Estado del torneo"
+            aria-label={t('admin.torneosSection.filterEstado')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -6758,7 +6759,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               paddingBottom: '2px',
             }}
           >
-            {FILTROS_ESTADO_TORNEO_PILLS.map(({ id, label }) => {
+            {filtrosEstadoTorneoPillsAdmin.map(({ id, label }) => {
               const active = filtroEstadoTorneoAdmin === id;
               return (
                 <button
@@ -6776,7 +6777,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0 }}>📋 Torneos Creados</h2>
+          <h2 style={{ margin: 0 }}>📋 {t('admin.torneosSection.createdTitle')}</h2>
           {!esEmpleado ? (
             <button
               onClick={() => setCrearTorneoEmbedOpen(true)}

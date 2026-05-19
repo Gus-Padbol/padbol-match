@@ -217,6 +217,70 @@
     "inscripcion_confirmada": "Registration confirmed",
     "pendiente_pago": "Payment pending",
     "pagar_inscripcion": "Pay registration",
+    "filtroEstado": {
+      "todos": "All",
+      "inscripcion_abierta": "Registration open",
+      "proximo": "Upcoming",
+      "en_curso": "In progress",
+      "finalizado": "Finished",
+      "cancelado": "Cancelled"
+    },
+    "filtroDeporte": {
+      "todos": "All"
+    },
+    "tipo": {
+      "round_robin": "Round Robin",
+      "grupos_knockout": "Groups + Knockout",
+      "eliminacion": "Single elimination",
+      "knockout": "Single elimination",
+      "eliminatoria": "Single elimination"
+    },
+    "listado": {
+      "titleAvailable": "Available tournaments",
+      "titleNear": "Tournaments near you",
+      "titleSede": "Tournaments · {{sede}}",
+      "subtitleDefault": "Choose a tournament to see details, register and join or create a team.",
+      "subtitleSedeOnly": "Only tournaments at this venue are listed.",
+      "subtitleNear": "We prioritize tournaments at the nearest venue to you or your last venue.",
+      "geoDetecting": "Detecting location… If unavailable, we'll use your last saved venue or show all.",
+      "geoNear": "Based on your location: {{place}}",
+      "geoNearShort": "Based on your location",
+      "lastVenue": "Your last venue",
+      "changeVenue": "Change city / venue",
+      "seeAllTorneos": "See all tournaments",
+      "deporteLabel": "Sport",
+      "deporteAria": "Tournament sport",
+      "estadoLabel": "Tournament status",
+      "estadoAria": "Tournament status",
+      "searchPlaceholder": "Search tournament, club, city or country...",
+      "searchAria": "Search tournaments",
+      "clearSearch": "Clear search",
+      "empty": "No tournaments available.",
+      "emptySede": "No tournaments at this venue for now.",
+      "emptyDeporte": "No tournaments for this sport with the current filters.",
+      "seeAllDeportes": "See all sports",
+      "emptyEstado": "No tournaments with the selected status.",
+      "seeAllEstados": "See all statuses",
+      "emptySearch": "No tournaments match your search",
+      "clubDefault": "Club / venue",
+      "venueNotFound": "Venue not found",
+      "sinNombre": "Unnamed",
+      "tipoTorneo": "Tournament type: {{tipo}}",
+      "edad": "Age: {{edad}}",
+      "cupos": "{{count}} spots available",
+      "verTorneo": "View tournament",
+      "geoFailed": "We couldn't locate you or read a saved venue. Showing all tournaments.",
+      "lastVenueLine": "Last venue: {{tail}}"
+    },
+    "deporte": {
+      "padbol": "Padbol",
+      "padel": "Padel",
+      "pickleball": "Pickleball",
+      "squash": "Squash",
+      "tenis": "Tennis",
+      "futbol_5": "5-a-side football",
+      "futbol_7": "7-a-side football"
+    },
     "vista": {
       "tabEquipos": "TEAMS",
       "tabGrupos": "GROUPS",
@@ -423,7 +487,19 @@
       "loginToSave": "Sign in to save.",
       "selectCategory": "Select tournament category",
       "saveError": "Error saving:",
-      "updateError": "Error updating"
+      "updateError": "Error updating",
+      "rejectRequest": "Could not reject the request",
+      "saveInterestType": "Could not save interest type",
+      "createInvite": "Could not create invitation",
+      "resendInvite": "Could not resend",
+      "revokeRole": "Could not revoke role",
+      "loadTeams": "Could not load teams",
+      "deleteTournament": "Error deleting:",
+      "genericError": "Error:"
+    },
+    "torneosSection": {
+      "createdTitle": "Created tournaments",
+      "filterEstado": "Tournament status"
     }
   },
   "pago": {
@@ -472,7 +548,21 @@
     "card": {
       "reservarSub": "I have a team and need a court.",
       "torneosSub": "Tournaments and rankings."
-    }
+    },
+    "pwaPromo": "Install Padbol Match on your phone to open it like an app and get in faster."
+  },
+  "chatbot": {
+    "fabCollapsed": "Questions?",
+    "fabLine1": "Questions?",
+    "fabLine2": "Chat with Padbol Match",
+    "fabOpen": "Open Padbol Match assistant",
+    "escribiendo": "Writing…",
+    "procesando": "Processing…",
+    "enviar": "Send",
+    "placeholder": "E.g. I want to play tomorrow at 7pm",
+    "titulo": "Padbol Match AI",
+    "cerrar": "Close",
+    "torneosSugerencia": "Available tournaments 🏆"
   },
   "pwa": {
     "installApp": "Install app",
