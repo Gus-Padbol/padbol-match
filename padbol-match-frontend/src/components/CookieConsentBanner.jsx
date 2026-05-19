@@ -89,54 +89,28 @@ export default function CookieConsentBanner() {
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, fontWeight: 600, color: 'var(--text-primary)' }}>
         Usamos cookies para mejorar tu experiencia.
       </p>
-      <div
+      <button
+        type="button"
+        onClick={() => persist(COOKIES_CONSENT_ACCEPTED)}
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 8,
-          justifyContent: 'flex-end',
+          width: '100%',
+          maxWidth: 320,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          padding: '12px 16px',
+          borderRadius: 10,
+          border: 'none',
+          background: 'linear-gradient(135deg, #e11b22 0%, #b91c1c 100%)',
+          color: '#fff',
+          fontWeight: 800,
+          fontSize: 14,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
         }}
       >
-        <button
-          type="button"
-          onClick={() => persist(COOKIES_CONSENT_ESSENTIAL)}
-          style={{
-            padding: '10px 14px',
-            borderRadius: 10,
-            border: '1px solid var(--border)',
-            background: 'var(--pm-color-muted-bg)',
-            color: 'var(--text-primary)',
-            fontWeight: 700,
-            fontSize: 14,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            flex: '1 1 140px',
-            minWidth: 0,
-          }}
-        >
-          Solo esenciales
-        </button>
-        <button
-          type="button"
-          onClick={() => persist(COOKIES_CONSENT_ACCEPTED)}
-          style={{
-            padding: '10px 16px',
-            borderRadius: 10,
-            border: 'none',
-            background: 'linear-gradient(135deg, #e11b22 0%, #b91c1c 100%)',
-            color: '#fff',
-            fontWeight: 800,
-            fontSize: 14,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            flex: '1 1 140px',
-            minWidth: 0,
-            boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
-          }}
-        >
-          Aceptar
-        </button>
-      </div>
+        Aceptar
+      </button>
     </div>
   );
 }

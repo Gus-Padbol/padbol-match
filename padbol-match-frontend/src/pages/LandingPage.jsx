@@ -25,7 +25,7 @@ const column = {
   boxSizing: 'border-box',
 };
 
-const btnPrimary = {
+const btnPrimaryFooter = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -39,44 +39,6 @@ const btnPrimary = {
   textDecoration: 'none',
   color: '#fff',
   background: ACCENT,
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-  boxShadow: 'none',
-};
-
-const btnSecondary = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  padding: '15px 18px',
-  borderRadius: 12,
-  fontWeight: 800,
-  fontSize: 16,
-  cursor: 'pointer',
-  textDecoration: 'none',
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-  color: ACCENT,
-  background: 'transparent',
-  border: '2px solid #e02020',
-  boxShadow: 'none',
-};
-
-const btnCuenta = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  padding: '15px 18px',
-  borderRadius: 12,
-  border: '1px solid var(--border)',
-  fontWeight: 700,
-  fontSize: 16,
-  cursor: 'pointer',
-  textDecoration: 'none',
-  color: 'var(--text-primary)',
-  background: 'var(--bg-input)',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
   boxShadow: 'none',
@@ -156,12 +118,6 @@ export default function LandingPage() {
     <div className="landing-page" style={shell}>
       <div
         className="landing-page__lang-bar"
-        style={{
-          position: 'fixed',
-          top: 'max(10px, env(safe-area-inset-top, 0px))',
-          right: 'max(14px, env(safe-area-inset-right, 0px))',
-          zIndex: 20,
-        }}
       >
         <LanguageSwitcher variant="landing" />
       </div>
@@ -210,14 +166,14 @@ export default function LandingPage() {
           </p>
         </section>
 
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-          <Link to="/reservar" style={btnPrimary}>
+        <section className="landing-page__cta-group">
+          <Link to="/reservar" className="landing-page__cta landing-page__cta--primary">
             {t('landing.bookSlot')}
           </Link>
-          <Link to="/hub" style={btnSecondary}>
+          <Link to="/hub" className="landing-page__cta landing-page__cta--secondary">
             {t('landing.enterPlay')}
           </Link>
-          <Link to="/auth?modo=registro" style={btnCuenta}>
+          <Link to="/auth?modo=registro" className="landing-page__cta landing-page__cta--account">
             {t('landing.createAccount')}
           </Link>
         </section>
@@ -286,7 +242,7 @@ export default function LandingPage() {
             gap: 16,
           }}
         >
-          <Link to="/contacto" style={{ ...btnPrimary, maxWidth: '100%' }}>
+          <Link to="/contacto" style={{ ...btnPrimaryFooter, maxWidth: '100%' }}>
             {t('landing.addClub')}
           </Link>
           <Link

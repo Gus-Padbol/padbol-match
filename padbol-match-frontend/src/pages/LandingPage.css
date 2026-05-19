@@ -10,6 +10,7 @@ html.landing-page-active {
   --pm-color-bg: var(--bg-page);
   --pm-color-text: var(--text-primary);
   --pm-color-text-muted: var(--text-secondary);
+  --pm-color-muted-bg: #334155;
 }
 
 html.landing-page-active body,
@@ -26,4 +27,77 @@ html.landing-page-active #root {
   box-sizing: border-box;
   background: var(--bg-page);
   color: var(--text-primary);
+}
+
+/* ES | EN: siempre visible arriba a la derecha (por encima del banner de cookies). */
+.landing-page__lang-bar {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  right: max(14px, env(safe-area-inset-right, 0px));
+  z-index: 10100;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(248, 250, 252, 0.22);
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.landing-page__cta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.landing-page__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 15px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  box-shadow: none;
+}
+
+@media (min-width: 768px) {
+  .landing-page__cta-group {
+    align-items: center;
+  }
+
+  .landing-page__cta {
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.landing-page__cta--primary {
+  border: none;
+  color: #fff;
+  background: #e11b22;
+}
+
+.landing-page__cta--secondary {
+  color: #e11b22;
+  background: transparent;
+  border: 2px solid #e02020;
+}
+
+.landing-page__cta--account {
+  border: 1px solid var(--border);
+  font-weight: 700;
+  color: var(--text-primary);
+  background: var(--bg-input);
 }

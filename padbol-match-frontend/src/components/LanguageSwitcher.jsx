@@ -20,8 +20,8 @@ export default function LanguageSwitcher({ variant = 'buttons', compact = false,
 
   const headerColors =
     resolvedVariant === 'landing'
-      ? { base: 'rgba(248, 250, 252, 0.65)', active: '#f8fafc' }
-      : { base: 'var(--text-secondary, #94a3b8)', active: 'var(--text-primary, #f8fafc)' };
+      ? { base: '#f8fafc', active: '#f8fafc', inactive: 'rgba(248, 250, 252, 0.72)' }
+      : { base: 'var(--text-secondary, #94a3b8)', active: 'var(--text-primary, #f8fafc)', inactive: null };
 
   if (resolvedVariant === 'header' || resolvedVariant === 'landing') {
     return (
@@ -62,8 +62,10 @@ export default function LanguageSwitcher({ variant = 'buttons', compact = false,
                   font: 'inherit',
                   fontSize: 'inherit',
                   fontWeight: active ? 800 : 600,
-                  color: active ? headerColors.active : 'inherit',
-                  opacity: active ? 1 : 0.75,
+                  color: active
+                    ? headerColors.active
+                    : headerColors.inactive || 'inherit',
+                  opacity: active ? 1 : resolvedVariant === 'landing' ? 0.72 : 0.75,
                   textDecoration: active ? 'underline' : 'none',
                   textUnderlineOffset: 2,
                 }}
