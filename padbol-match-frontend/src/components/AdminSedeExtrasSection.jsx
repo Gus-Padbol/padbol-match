@@ -64,7 +64,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
   const crear = async () => {
     const nombre = String(draft.nombre || '').trim();
     if (!nombre) {
-      setMsg('Completá el nombre del extra.');
+      setMsg(t('admin.formularios.completeExtraName'));
       return;
     }
     setCreating(true);
@@ -113,7 +113,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         },
       );
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo guardar');
+      if (!res.ok) throw new Error(j.error || t('admin.metricas.saveFailed'));
       await load();
     } catch (e) {
       setMsg(e.message || 'Error');
@@ -163,7 +163,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         },
       );
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo guardar');
+      if (!res.ok) throw new Error(j.error || t('admin.metricas.saveFailed'));
       setEditRow(null);
       await load();
     } catch (e) {
@@ -253,7 +253,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                 ) : null}
                 <div style={{ fontSize: 12, marginBottom: 10 }}>
                   {pendiente ? (
-                    <span style={{ color: '#ca8a04', fontWeight: 700 }}>Pendiente de aprobación</span>
+                    <span style={{ color: '#ca8a04', fontWeight: 700 }}>{t('admin.sedes.pendingApproval')}</span>
                   ) : (
                     <span style={{ color: '#16a34a', fontWeight: 700 }}>Aprobado</span>
                   )}
@@ -399,7 +399,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
 
           <div style={{ ...card, marginTop: 18 }}>
             <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>Nuevo extra</div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Nombre</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.formularios.name')}</label>
             <input
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', maxWidth: 360, marginBottom: 10 }}
@@ -407,7 +407,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               onChange={(e) => setDraft((d) => ({ ...d, nombre: e.target.value }))}
               maxLength={200}
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Descripción (opcional)</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.descriptionOptional')}</label>
             <textarea
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', maxWidth: 360, minHeight: 64, marginBottom: 10 }}
@@ -422,7 +422,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               onChange={(e) => setDraft((d) => ({ ...d, precio: e.target.value }))}
               inputMode="decimal"
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Stock disponible (opcional, vacío = ilimitado)</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.stockOptional')}</label>
             <input
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', maxWidth: 200, marginBottom: 10 }}
@@ -461,9 +461,9 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
       )}
       <ConfirmModal
         open={Boolean(deleteTarget)}
-        title="¿Eliminar este producto?"
-        message="Esta acción no se puede deshacer."
-        confirmLabel="Eliminar"
+        title={t('admin.confirmaciones.deleteProduct')}
+        message={t('admin.confirmaciones.cannotUndo')}
+        confirmLabel={t('admin.sedes.delete')}
         dismissLabel={t('general.cancel')}
         confirmDanger
         busy={Boolean(savingId)}
@@ -500,14 +500,14 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
             }}
           >
             <h3 style={{ margin: '0 0 12px', color: 'var(--text-primary)', fontSize: 16 }}>Editar producto</h3>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Nombre</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.formularios.name')}</label>
             <input
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', marginBottom: 10 }}
               value={editRow.nombre}
               onChange={(e) => setEditRow((r) => ({ ...r, nombre: e.target.value }))}
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Descripción</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.description')}</label>
             <textarea
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', minHeight: 56, marginBottom: 10 }}
@@ -521,7 +521,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               value={editRow.precio}
               onChange={(e) => setEditRow((r) => ({ ...r, precio: e.target.value }))}
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Stock (vacío = ilimitado)</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.stockEmptyUnlimited')}</label>
             <input
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', marginBottom: 14 }}

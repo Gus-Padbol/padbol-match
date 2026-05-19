@@ -1,3 +1,4 @@
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import React, { useCallback, useEffect, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { aprobarProfesorAdmin, fetchAdminProfesoresPendientes } from '../utils/clasesAdminApi';
@@ -22,6 +23,7 @@ function nombreProfesor(p) {
 }
 
 export default function AdminProfesoresPendientesSuper({ accessToken }) {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
@@ -132,7 +134,7 @@ export default function AdminProfesoresPendientesSuper({ accessToken }) {
                   opacity: busyId === row.id ? 0.7 : 1,
                 }}
               >
-                {busyId === row.id ? '…' : 'Aprobar'}
+                {busyId === row.id ? '…' : t('admin.sedes.approve')}
               </button>
             </li>
           ))}

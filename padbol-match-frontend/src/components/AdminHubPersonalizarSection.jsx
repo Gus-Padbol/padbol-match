@@ -136,7 +136,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     try {
       const res = await fetch(`${apiBaseUrl}/api/hub-config`);
       const data = await res.json().catch(() => []);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo cargar el hub');
+      if (!res.ok) throw new Error(data?.error || t('admin.hub.hubLoadFailed'));
       const list = Array.isArray(data) ? data : [];
       setRows(list);
       const ini = {};
@@ -171,7 +171,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     try {
       const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config`);
       const data = await res.json().catch(() => []);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo cargar hub por deporte');
+      if (!res.ok) throw new Error(data?.error || t('admin.hub.hubSportLoadFailed'));
       const list = dedupeHubDeporteConfigRows(Array.isArray(data) ? data : []);
       setDeporteRows(list);
       const next = {};
@@ -236,7 +236,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
 
   const guardarCard = async (id) => {
     if (!accessToken) {
-      setMsg('Iniciá sesión de nuevo.');
+      setMsg(t('admin.formularios.loginAgain'));
       return;
     }
     const d = drafts[id];
@@ -250,7 +250,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         body: JSON.stringify({ titulo: d.titulo, subtitulo: d.subtitulo }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Error al guardar');
+      if (!res.ok) throw new Error(data?.error || t('admin.metricas.saveError'));
       setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
       setMsg('Guardado correctamente.');
       window.setTimeout(() => setMsg(''), 2500);
@@ -263,7 +263,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
 
   const guardarDeporteCard = async (cardKey) => {
     if (!accessToken) {
-      setDeporteMsg('Iniciá sesión de nuevo.');
+      setDeporteMsg(t('admin.formularios.loginAgain'));
       return;
     }
     const dep = String(sportSelRef.current || '').trim().toLowerCase();
@@ -283,7 +283,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Error al guardar');
+      if (!res.ok) throw new Error(data?.error || t('admin.metricas.saveError'));
       const normalized = normalizeHubDeporteRowPayload(data, dep, cardKey);
       setDeporteRows((prev) => mergeHubDeporteRowIntoList(prev, normalized));
       setDeporteMsg('Guardado correctamente.');
@@ -303,7 +303,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   const clickCambiarFotoDeporte = (cardKey, deporteOverride) => {
     const dep = String(deporteOverride ?? sportSel ?? '').trim().toLowerCase();
     if (!dep) {
-      setDeporteMsg('Elegí un deporte en el selector.');
+      setDeporteMsg(t('admin.formularios.chooseSportInSelector'));
       return;
     }
     uploadDeporteTargetRef.current = { deporte: dep, cardKey: String(cardKey || '').trim() };
@@ -351,7 +351,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         String(data?.deporte || '').trim().toLowerCase() !== dep ||
         String(data?.card_key || '').trim() !== ck
       ) {
-        throw new Error('El servidor guardó la foto en otro deporte/card. Revisá la migración UNIQUE (deporte, card_key).');
+        throw new Error(t('admin.hub.wrongSportCardSaved'));
       }
       setDeporteRows((prev) => mergeHubDeporteRowIntoList(prev, normalized));
       await refreshDeporteRowsSilently();
@@ -416,11 +416,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     uploadTargetIdRef.current = null;
     if (!id || !file) return;
     if (!accessToken) {
-      setMsg('Iniciá sesión de nuevo para subir imágenes.');
+      setMsg(t('admin.formularios.loginAgainUpload'));
       return;
     }
     if (!abrirCropDesdeArchivo(file, { kind: 'legacy', id })) {
-      setMsg('Elegí un archivo de imagen.');
+      setMsg(t('admin.formularios.chooseImageFile'));
     }
   };
 
@@ -430,33 +430,33 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     e.target.value = '';
     uploadDeporteTargetRef.current = null;
     if (!accessToken) {
-      setDeporteMsg('Iniciá sesión de nuevo para subir imágenes.');
+      setDeporteMsg(t('admin.formularios.loginAgainUpload'));
       return;
     }
     if (!target) {
-      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
+      setDeporteMsg(t('admin.formularios.chooseChangePhotoAgain'));
       return;
     }
     const dep = String(target.deporte || '').trim().toLowerCase();
     const ck = String(target.cardKey || '').trim();
     if (!dep || !ck) {
-      setDeporteMsg('Elegí de nuevo «Cambiar foto».');
+      setDeporteMsg(t('admin.formularios.chooseChangePhotoAgain'));
       return;
     }
     if (!file) return;
     if (!abrirCropDesdeArchivo(file, { kind: 'deporte', deporte: dep, cardKey: ck })) {
-      setDeporteMsg('Elegí un archivo de imagen.');
+      setDeporteMsg(t('admin.formularios.chooseImageFile'));
     }
   };
 
   const guardarInicioDeporte = async (slotId) => {
     if (!accessToken) {
-      setInicioMsg('Iniciá sesión de nuevo.');
+      setInicioMsg(t('admin.formularios.loginAgain'));
       return;
     }
     const dep = String(inicioDeporteById[slotId] || '').trim().toLowerCase();
     if (!dep) {
-      setInicioMsg('Elegí un deporte.');
+      setInicioMsg(t('admin.formularios.chooseSport'));
       return;
     }
     setSavingInicioId(slotId);
@@ -468,7 +468,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         body: JSON.stringify({ titulo: dep, subtitulo: '' }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Error al guardar');
+      if (!res.ok) throw new Error(data?.error || t('admin.metricas.saveError'));
       setRows((prev) => prev.map((r) => (String(r.id) === String(slotId) ? { ...r, ...data } : r)));
       setInicioMsg('Guardado correctamente.');
       window.setTimeout(() => setInicioMsg(''), 2500);
@@ -491,11 +491,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     uploadInicioTargetIdRef.current = null;
     if (!id || !file) return;
     if (!accessToken) {
-      setInicioMsg('Iniciá sesión de nuevo para subir imágenes.');
+      setInicioMsg(t('admin.formularios.loginAgainUpload'));
       return;
     }
     if (!abrirCropDesdeArchivo(file, { kind: 'inicio', id })) {
-      setInicioMsg('Elegí un archivo de imagen.');
+      setInicioMsg(t('admin.formularios.chooseImageFile'));
     }
   };
 
@@ -504,7 +504,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   if (loading) {
     return (
       <div className="section" style={{ color: 'var(--text-primary)' }}>
-        <p style={{ margin: 0 }}>Cargando configuración del hub…</p>
+        <p style={{ margin: 0 }}>{t('admin.hub.loadingHubConfig')}</p>
       </div>
     );
   }
@@ -634,7 +634,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                   cursor: saving || !accessToken ? 'not-allowed' : 'pointer',
                 }}
               >
-                {saving ? 'Guardando…' : 'Guardar deporte'}
+                {saving ? t('admin.metricas.saving') : t('admin.hub.saveSport')}
               </button>
             </div>
           );
@@ -687,7 +687,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       </select>
 
       {deporteLoading ? (
-        <p style={{ color: 'var(--text-secondary)' }}>Cargando configuración por deporte…</p>
+        <p style={{ color: 'var(--text-secondary)' }}>{t('admin.hub.loadingSportConfig')}</p>
       ) : (
         hubDeporteCards.map(({ key: cardKey, label }) => {
           const dk = draftKeyDeporte(sportSel, cardKey);
@@ -736,7 +736,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                   </button>
                 </div>
               </div>
-              <label style={labelStyle}>Título (opcional; si vacío, usa el texto por defecto del hub)</label>
+              <label style={labelStyle}>{t('admin.hub.titleOptionalHint')}</label>
               <input
                 type="text"
                 style={inputStyle}
@@ -749,12 +749,12 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                   }))
                 }
               />
-              <label style={labelStyle}>Subtítulo</label>
+              <label style={labelStyle}>{t('admin.hub.subtitle')}</label>
               <input
                 type="text"
                 style={inputStyle}
                 value={draft.subtitulo}
-                placeholder="Opcional"
+                placeholder={t('admin.hub.optional')}
                 onChange={(e) =>
                   setDeporteDrafts((p) => ({
                     ...p,
@@ -777,7 +777,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                   cursor: saving || !accessToken ? 'not-allowed' : 'pointer',
                 }}
               >
-                {saving ? 'Guardando…' : 'Guardar texto'}
+                {saving ? t('admin.metricas.saving') : t('admin.hub.saveText')}
               </button>
             </div>
           );
@@ -849,7 +849,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                   {uploadingId === id ? 'Subiendo…' : 'Cambiar foto'}
                 </button>
                 {!accessToken ? (
-                  <p style={{ fontSize: '12px', color: '#b91c1c', marginTop: '8px' }}>Sesión requerida para subir archivos.</p>
+                  <p style={{ fontSize: '12px', color: '#b91c1c', marginTop: '8px' }}>{t('admin.hub.sessionRequiredUpload')}</p>
                 ) : null}
               </div>
             </div>
@@ -865,12 +865,12 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
               onChange={(e) => setDrafts((p) => ({ ...p, [id]: { ...draft, titulo: e.target.value } }))}
             />
 
-            <label style={labelStyle}>Subtítulo</label>
+            <label style={labelStyle}>{t('admin.hub.subtitle')}</label>
             <input
               type="text"
               style={inputStyle}
               value={draft.subtitulo}
-              placeholder={fb.subtitulo || 'Opcional'}
+              placeholder={fb.subtitulo || t('admin.hub.optional')}
               onChange={(e) => setDrafts((p) => ({ ...p, [id]: { ...draft, subtitulo: e.target.value } }))}
             />
 
@@ -889,7 +889,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                 cursor: savingId === id || !accessToken ? 'not-allowed' : 'pointer',
               }}
             >
-              {savingId === id ? 'Guardando…' : t('general.save')}
+              {savingId === id ? t('admin.metricas.saving') : t('general.save')}
             </button>
           </div>
         );
@@ -902,9 +902,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         onConfirm={handleCropConfirm}
         aspect={HUB_CARD_CROP_ASPECT}
         cropShape="rect"
-        title="Recortar foto del hub"
-        description="Ajustá el encuadre en formato horizontal 16:9, ideal para las cards del hub. Mové la imagen y usá el zoom."
-        confirmLabel="Confirmar y subir"
+        title={t('admin.hub.cropHubPhoto')}
+        description={t('admin.hub.cropHubHint')}
+        confirmLabel={t('admin.hub.confirmAndUpload')}
         confirmColor="#E11B22"
         busy={cropUploadBusy}
         zoomInputId="admin-hub-crop-zoom"

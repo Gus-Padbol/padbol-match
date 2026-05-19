@@ -1,33 +1,39 @@
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import './AdminHubPromoSedeSection.css';
 
-const emptyForm = () => ({
-  activo: false,
-  imagen_url: '',
-  titulo: '',
-  subtitulo: '',
-  texto_boton: 'Ver más',
-  url_destino: '',
-});
-
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-
-const TEXT_FIELDS = [
-  { k: 'titulo', label: 'Título', ph: 'Ej: Pro shop del club' },
-  { k: 'subtitulo', label: 'Subtítulo', ph: 'Opcional' },
-  { k: 'texto_boton', label: 'Texto del botón', ph: 'Ver más' },
-  { k: 'url_destino', label: 'URL al hacer clic', ph: 'https://… o /ruta' },
-];
 
 /**
  * Edición de la promo «Del club» en Jugar (tab Mi Sede, admin_club / super_admin).
  * @param {{ sedeId: number }} props
  */
 export default function AdminHubPromoSedeSection({ sedeId }) {
+  const { t } = useTranslation();
+  const emptyForm = useCallback(
+    () => ({
+      activo: false,
+      imagen_url: '',
+      titulo: '',
+      subtitulo: '',
+      texto_boton: t('admin.hub.seeMore'),
+      url_destino: '',
+    }),
+    [t],
+  );
+  const textFields = useMemo(
+    () => [
+      { k: 'titulo', label: t('admin.hub.title'), ph: t('admin.hub.titlePlaceholder') },
+      { k: 'subtitulo', label: t('admin.hub.subtitle'), ph: t('admin.hub.optional') },
+      { k: 'texto_boton', label: t('admin.hub.buttonText'), ph: t('admin.hub.seeMore') },
+      { k: 'url_destino', label: t('admin.hub.clickUrl'), ph: t('admin.hub.urlPlaceholder') },
+    ],
+    [t],
+  );
   const sid = sedeId != null && Number.isFinite(Number(sedeId)) ? Number(sedeId) : null;
   const [rowId, setRowId] = useState(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => emptyForm());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -53,7 +59,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
     }
     if (!data) {
       setRowId(null);
-      setForm({ ...emptyForm(), texto_boton: 'Ver más' });
+      setForm({ ...emptyForm(), texto_boton: t('admin.hub.seeMore') });
       return;
     }
     setRowId(data.id || null);
@@ -62,10 +68,10 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
       imagen_url: String(data.imagen_url || '').trim(),
       titulo: String(data.titulo || '').trim(),
       subtitulo: String(data.subtitulo || '').trim(),
-      texto_boton: String(data.texto_boton || '').trim() || 'Ver más',
+      texto_boton: String(data.texto_boton || '').trim() || t('admin.hub.seeMore'),
       url_destino: String(data.url_destino || '').trim(),
     });
-  }, [sid]);
+  }, [sid, emptyForm, t]);
 
   useEffect(() => {
     void load();
@@ -97,11 +103,11 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
     e.target.value = '';
     if (!file || sid == null) return;
     if (!String(file.type || '').startsWith('image/')) {
-      setMsg('⚠️ Elegí un archivo de imagen');
+      setMsg(t('admin.hub.chooseImageWarn'));
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setMsg('⚠️ La imagen supera los 2MB');
+      setMsg(t('admin.hub.imageOver2mb'));
       return;
     }
     setImagenUploading(true);
@@ -119,9 +125,9 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
         data: { publicUrl },
       } = supabase.storage.from('sedes').getPublicUrl(path);
       const url = String(publicUrl || '').trim();
-      if (!url) throw new Error('No se obtuvo URL pública');
+      if (!url) throw new Error(t('admin.hub.noPublicUrl'));
       patch({ imagen_url: url });
-      setMsg('✅ Imagen subida');
+      setMsg(t('admin.hub.imageUploaded', { defaultValue: '✅ Imagen subida' }));
       window.setTimeout(() => setMsg(''), 3000);
     } catch (err) {
       setMsg(`⚠️ ${err?.message || String(err)}`);
@@ -132,7 +138,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
 
   const guardar = async () => {
     if (!canSave || sid == null) {
-      setMsg('⚠️ Completá al menos título y URL de destino.');
+      setMsg(`⚠️ ${t('admin.formularios.completePromoTitleUrl')}`);
       return;
     }
     setSaving(true);
@@ -143,7 +149,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
       imagen_url: String(form.imagen_url || '').trim() || null,
       titulo: String(form.titulo || '').trim(),
       subtitulo: String(form.subtitulo || '').trim() || null,
-      texto_boton: String(form.texto_boton || '').trim() || 'Ver más',
+      texto_boton: String(form.texto_boton || '').trim() || t('admin.hub.seeMore'),
       url_destino: String(form.url_destino || '').trim(),
       updated_at: new Date().toISOString(),
     };
@@ -156,7 +162,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
         if (iErr) throw iErr;
         if (ins?.id) setRowId(ins.id);
       }
-      setMsg('✅ Promo guardada');
+      setMsg(t('admin.hub.promoSaved', { defaultValue: '✅ Promo guardada' }));
       window.setTimeout(() => setMsg(''), 3500);
     } catch (err) {
       setMsg(`⚠️ ${err?.message || String(err)}`);
@@ -169,14 +175,11 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
 
   return (
     <div className="admin-hub-promo-sede">
-      <h3 className="admin-hub-promo-sede__title">Promo en «Jugar» (hub)</h3>
+      <h3 className="admin-hub-promo-sede__title">{t('admin.hub.promoJugarTitle')}</h3>
       <div className="admin-hub-promo-sede__panel">
-        <p className="admin-hub-promo-sede__intro">
-          Card promocional bajo las tres acciones (Reservar / Buscar / Armar) en la pantalla <strong>Jugar</strong>. Solo se
-          muestra a jugadores de tu sede si está <strong>activa</strong> y con datos mínimos.
-        </p>
+        <p className="admin-hub-promo-sede__intro">{t('admin.hub.promoJugarIntro')}</p>
         {loading ? (
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Cargando…</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{t('general.loading')}</p>
         ) : (
           <>
             <label className="admin-hub-promo-sede__check-row">
@@ -202,7 +205,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
                 className="admin-hub-promo-sede__file"
                 accept="image/*"
                 capture="environment"
-                aria-label="Subir imagen desde el dispositivo"
+                aria-label={t('admin.hub.uploadFromDevice')}
                 onChange={(ev) => void onImagenFileChange(ev)}
               />
               <button
@@ -220,7 +223,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
                 <div className="admin-hub-promo-sede__preview">
                   <img
                     src={form.imagen_url}
-                    alt="Vista previa de la imagen de la promo"
+                    alt={t('admin.hub.promoPreviewAria')}
                     onError={(ev) => {
                       ev.currentTarget.style.display = 'none';
                     }}
@@ -229,7 +232,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
               ) : null}
             </div>
 
-            {TEXT_FIELDS.map(({ k, label, ph }) => (
+            {textFields.map(({ k, label, ph }) => (
               <div key={k} className="admin-hub-promo-sede__field">
                 <label className="admin-hub-promo-sede__label" htmlFor={`hub-promo-${k}`}>
                   {label}
@@ -251,7 +254,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
               disabled={saving || !canSave}
               onClick={() => void guardar()}
             >
-              {saving ? 'Guardando…' : 'Guardar promo'}
+              {saving ? t('admin.metricas.saving') : t('admin.hub.savePromo')}
             </button>
             {msg ? (
               <p

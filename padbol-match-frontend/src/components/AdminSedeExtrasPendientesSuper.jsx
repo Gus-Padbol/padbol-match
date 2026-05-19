@@ -1,9 +1,11 @@
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import React, { useCallback, useEffect, useState } from 'react';
 
 /**
  * Super admin — extras pendientes de todas las sedes (aprobar / rechazar).
  */
 export default function AdminSedeExtrasPendientesSuper({ apiBaseUrl, accessToken }) {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
@@ -71,7 +73,7 @@ export default function AdminSedeExtrasPendientesSuper({ apiBaseUrl, accessToken
         maxWidth: '100%',
       }}
     >
-      <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800 }}>Extras pendientes de aprobación</h3>
+      <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800 }}>{t('admin.sedes.extrasPendingApproval')}</h3>
       <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
         Los clubes cargan opciones para el tercer tiempo; acá las aprobás o las rechazás. Solo los aprobados se
         muestran al jugador al pagar.
@@ -127,7 +129,7 @@ export default function AdminSedeExtrasPendientesSuper({ apiBaseUrl, accessToken
                     type="button"
                     disabled={busyId === row.id}
                     onClick={() => {
-                      if (!window.confirm('¿Rechazar este extra? Quedará desactivado.')) return;
+                      if (!window.confirm(t('admin.confirmaciones.rejectExtra'))) return;
                       void patchExtra(row.sede_id, row.id, { activo: false });
                     }}
                     style={{

@@ -126,7 +126,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
     try {
       const compressed = await compressImageFile(file, { maxDimension: 800, quality: 0.85 });
       if (compressed.size > MAX_IMAGE_BYTES) {
-        throw new Error('La imagen comprimida supera 5MB');
+        throw new Error(t('admin.sedes.compressedOver5mb'));
       }
       const { error: upErr } = await supabase.storage.from('sedes').upload(path, compressed, {
         upsert: false,
@@ -138,7 +138,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
         data: { publicUrl },
       } = supabase.storage.from('sedes').getPublicUrl(path);
       const url = String(publicUrl || '').trim();
-      if (!url) throw new Error('No se obtuvo URL');
+      if (!url) throw new Error(t('admin.sedes.noUrl'));
       setForm((f) => ({ ...f, foto_url: url }));
       setFotoUploadError(false);
     } catch {
@@ -165,16 +165,16 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
   const guardar = async () => {
     const nombre = String(form.nombre || '').trim();
     if (!nombre) {
-      setMsg('Completá el nombre.');
+      setMsg(t('admin.formularios.completeName'));
       return;
     }
     if (!form.deportes.length) {
-      setMsg('Elegí al menos un deporte.');
+      setMsg(t('admin.formularios.chooseAtLeastOneSport'));
       return;
     }
     const certNum = String(form.certificado_fipa_numero || '').trim();
     if (ensenaPadbol && !certNum) {
-      setMsg('El número de certificado FIPA es obligatorio si enseñás Padbol.');
+      setMsg(t('admin.formularios.fipaRequiredPadbol'));
       return;
     }
     setSaving(true);
@@ -361,7 +361,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
               marginTop: 4,
             }}
           >
-            {saving ? 'Guardando…' : 'Guardar profesor'}
+            {saving ? t('admin.metricas.saving') : t('admin.sedes.saveCoach')}
           </button>
           {!isSuperAdmin ? (
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -423,7 +423,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                   {p.aprobado ? (
                     <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#dcfce7', color: '#166534' }}>Aprobado</span>
                   ) : (
-                    <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#fef9c3', color: '#854d0e' }}>Pendiente aprobación</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#fef9c3', color: '#854d0e' }}>{t('admin.sedes.pendingApprovalShort')}</span>
                   )}
                   {isSuperAdmin && !p.aprobado ? (
                     <button
@@ -441,7 +441,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                         cursor: approvingId === p.id ? 'wait' : 'pointer',
                       }}
                     >
-                      {approvingId === p.id ? '…' : 'Aprobar'}
+                      {approvingId === p.id ? '…' : t('admin.sedes.approve')}
                     </button>
                   ) : null}
                 </div>

@@ -56,10 +56,10 @@ function scrollToEl(ref, block = 'center') {
 }
 
 const SCOPE_OPTIONS = [
-  { value: 'global', label: 'Global' },
-  { value: 'sede', label: 'Por sede' },
-  { value: 'torneo', label: 'Por torneo' },
-  { value: 'nacional', label: 'Por país' },
+  { value: 'global', label: t('admin.sponsors.scopeGlobal') },
+  { value: 'sede', label: t('admin.sponsors.scopeVenue') },
+  { value: 'torneo', label: t('admin.sponsors.scopeTournament') },
+  { value: 'nacional', label: t('admin.sponsors.scopeCountry') },
 ];
 
 const PAIS_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS].map((p) => ({
@@ -73,11 +73,11 @@ function normalizeScopeVal(raw) {
 
 function etiquetaDeportesSponsorRow(r) {
   const arr = r?.deportes;
-  if (!Array.isArray(arr) || arr.length === 0) return 'Todos';
+  if (!Array.isArray(arr) || arr.length === 0) return t('admin.sponsors.allSports');
   const labels = arr
     .map((k) => DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === String(k || '').trim().toLowerCase())?.label)
     .filter(Boolean);
-  return labels.length ? labels.join(', ') : 'Todos';
+  return labels.length ? labels.join(', ') : t('admin.sponsors.allSports');
 }
 
 function emptyForm() {
@@ -86,7 +86,7 @@ function emptyForm() {
     nombre: '',
     logo_url: '',
     url_destino: '',
-    texto_boton: 'Ver oferta',
+    texto_boton: t('admin.sponsors.seeOffer'),
     descripcion: '',
     scope: 'global',
     formato: 'ticker',
@@ -210,7 +210,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       nombre: String(r.nombre || ''),
       logo_url: String(r.logo_url || ''),
       url_destino: String(r.url_destino || ''),
-      texto_boton: String(r.texto_boton || 'Ver oferta'),
+      texto_boton: String(r.texto_boton || t('admin.sponsors.seeOffer')),
       descripcion: String(r.descripcion || ''),
       scope: String(r.scope || 'global').toLowerCase(),
       formato: normalizeSponsorFormato(r.formato),
@@ -243,12 +243,12 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
     e.target.value = '';
     if (!file) return;
     if (!String(file.type || '').startsWith('image/')) {
-      setMsg('Elige una imagen (JPEG, PNG, WebP o GIF).');
+      setMsg(t('admin.formularios.chooseImageFormats'));
       scrollToEl(formCardRef);
       return;
     }
     if (file.size > 4 * 1024 * 1024) {
-      setMsg('Máximo 4MB para el logo.');
+      setMsg(t('admin.formularios.logoMax4mb'));
       scrollToEl(formCardRef);
       return;
     }
@@ -271,12 +271,12 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       const { data } = supabase.storage.from('sponsors').getPublicUrl(filePath);
       const publicUrl = data?.publicUrl != null ? String(data.publicUrl).trim() : '';
       if (!publicUrl) {
-        setMsg('No se pudo obtener la URL pública del logo. Revisá que el bucket sponsors sea público.');
+        setMsg(t('admin.sponsors.logoPublicUrlFailed'));
         scrollToEl(formCardRef);
         return;
       }
       setForm((p) => ({ ...p, logo_url: publicUrl }));
-      setMsg('Logo subido');
+      setMsg(t('admin.sponsors.logoUploaded'));
       setTimeout(() => setMsg(''), 2500);
     } finally {
       setUploading(false);
@@ -288,14 +288,14 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
     setFieldErrors({});
 
     if (!session?.user?.id) {
-      setFieldErrors({ _session: 'Iniciá sesión como super admin para guardar.' });
+      setFieldErrors({ _session: t('admin.formularios.loginSuperAdminSave') });
       scrollToEl(guardarRowRef);
       return;
     }
 
     const nombre = String(form.nombre || '').trim();
     if (!nombre) {
-      setFieldErrors({ nombre: 'Indicá el nombre de la marca.' });
+      setFieldErrors({ nombre: t('admin.formularios.brandNameRequired') });
       scrollToEl(nombreRef);
       return;
     }
@@ -306,17 +306,17 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
     const pais = scope === 'nacional' ? String(form.pais || '').trim() : null;
 
     if (scope === 'sede' && (!sedeId || sedeId <= 0)) {
-      setFieldErrors({ sede_id: 'Elegí una sede.' });
+      setFieldErrors({ sede_id: t('admin.formularios.chooseVenue') });
       scrollToEl(sedeRef);
       return;
     }
     if (scope === 'torneo' && (!torneoId || torneoId <= 0)) {
-      setFieldErrors({ torneo_id: 'Elegí un torneo.' });
+      setFieldErrors({ torneo_id: t('admin.formularios.chooseTournament') });
       scrollToEl(torneoRef);
       return;
     }
     if (scope === 'nacional' && !pais) {
-      setFieldErrors({ pais: 'Elegí un país.' });
+      setFieldErrors({ pais: t('admin.formularios.chooseCountry') });
       scrollToEl(paisRef);
       return;
     }
@@ -335,7 +335,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       nombre,
       logo_url: String(form.logo_url || '').trim() || null,
       url_destino: String(form.url_destino || '').trim() || null,
-      texto_boton: String(form.texto_boton || '').trim() || 'Ver oferta',
+      texto_boton: String(form.texto_boton || '').trim() || t('admin.sponsors.seeOffer'),
       descripcion: String(form.descripcion || '').trim() || null,
       scope,
       formato: normalizeSponsorFormato(form.formato),
@@ -356,7 +356,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
         ).length;
         const maxG = Math.max(0, parseInt(String(cupos.max_global), 10) || 0);
         if (activosGlobales >= maxG) {
-          setMsg('Límite de sponsors alcanzado para este plan');
+          setMsg(t('admin.sponsors.quotaLimitReached'));
           scrollToEl(formCardRef);
           return;
         }
@@ -374,7 +374,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
             r.activo !== false,
         ).length;
         if (activosEnSede >= maxSede) {
-          setMsg('Límite de sponsors alcanzado para este plan');
+          setMsg(t('admin.sponsors.quotaLimitReached'));
           scrollToEl(formCardRef);
           return;
         }
@@ -410,7 +410,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
   };
 
   const desactivar = async (id) => {
-    if (!window.confirm('¿Desactivar este sponsor? Dejará de mostrarse en la app.')) return;
+    if (!window.confirm(t('admin.confirmaciones.deactivateSponsor'))) return;
     const { error } = await supabase.from('sponsors').update({ activo: false }).eq('id', id);
     if (error) {
       setMsg(error.message);
@@ -454,7 +454,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
       };
       const { error } = await supabase.from('sponsor_config').update(payload).eq('id', 1);
       if (error) throw error;
-      setCuposMsg('✅ Configuración de cupos guardada');
+      setCuposMsg(t('admin.sponsors.quotaConfigSaved'));
       setTimeout(() => setCuposMsg(''), 4000);
       await loadSponsorCupos();
     } catch (err) {
@@ -478,7 +478,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
   const torneoLabel = useCallback((t) => {
     const sid = t.sede_id != null ? ` · sede ${t.sede_id}` : '';
-    return `${String(t.nombre || 'Torneo').slice(0, 80)} (id ${t.id})${sid}`;
+    return `${String(t.nombre || t('admin.formularios.tournament')).slice(0, 80)} (id ${t.id})${sid}`;
   }, []);
 
   const fieldHintStyle = {
@@ -511,7 +511,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         }}
       >
-        <h3 style={{ margin: '0 0 12px', fontSize: 16, color: 'var(--text-primary)' }}>Configuración de cupos</h3>
+        <h3 style={{ margin: '0 0 12px', fontSize: 16, color: 'var(--text-primary)' }}>{t('admin.sponsors.quotaConfigTitle')}</h3>
         <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
           Límites de patrocinadores (fila única <code style={{ fontSize: 12 }}>sponsor_config.id = 1</code>). La aplicación
           puede usar estos valores para validar altas futuras.
@@ -537,11 +537,11 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           }}
         >
           {[
-            { key: 'max_global', label: 'Sponsors globales máximo' },
+            { key: 'max_global', label: t('admin.sponsors.maxGlobal') },
             { key: 'max_por_sede_starter', label: 'Sponsors por sede — Starter' },
             { key: 'max_por_sede_pro', label: 'Sponsors por sede — Pro' },
             { key: 'max_por_sede_elite', label: 'Sponsors por sede — Elite' },
-            { key: 'max_por_nacion', label: 'Sponsors por nación máximo' },
+            { key: 'max_por_nacion', label: t('admin.sponsors.maxPerNation') },
           ].map(({ key, label }) => (
             <div key={key}>
               <label style={labelStyle}>{label}</label>
@@ -570,7 +570,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
             cursor: cuposSaving ? 'not-allowed' : 'pointer',
           }}
         >
-          {cuposSaving ? 'Guardando…' : 'Guardar configuración de cupos'}
+          {cuposSaving ? t('admin.metricas.saving') : t('admin.sponsors.saveQuotaConfig')}
         </button>
       </div>
 
@@ -631,7 +631,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
           value={form.logo_url}
           onChange={(e) => setForm((p) => ({ ...p, logo_url: e.target.value }))}
-          placeholder="URL pública del logo (o sube archivo arriba)"
+          placeholder={t('admin.sponsors.logoUrlPlaceholder')}
         />
 
         <label style={labelStyle}>URL destino (opcional)</label>
@@ -642,12 +642,12 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           placeholder="https://…"
         />
 
-        <label style={labelStyle}>Texto del botón</label>
+        <label style={labelStyle}>{t('admin.hub.buttonText')}</label>
         <input
           style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
           value={form.texto_boton}
           onChange={(e) => setForm((p) => ({ ...p, texto_boton: e.target.value }))}
-          placeholder="Ver oferta"
+          placeholder={t('admin.sponsors.seeOffer')}
         />
 
         <label style={labelStyle}>Descripción corta (opcional, p. ej. hub 3er tiempo)</label>
@@ -662,7 +662,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           }}
           value={form.descripcion}
           onChange={(e) => setForm((p) => ({ ...p, descripcion: e.target.value }))}
-          placeholder="Una o dos líneas sobre la marca u oferta"
+          placeholder={t('admin.sponsors.brandDescPlaceholder')}
           maxLength={500}
         />
 
@@ -773,7 +773,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
 
         {form.scope === 'torneo' ? (
           <div ref={torneoRef} style={{ marginBottom: 12 }}>
-            <label style={labelStyle}>Torneo</label>
+            <label style={labelStyle}>{t('admin.formularios.tournament')}</label>
             <select
               style={{
                 ...inputStyle,
@@ -894,7 +894,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                 cursor: saving || uploading ? 'not-allowed' : 'pointer',
               }}
             >
-              {saving ? 'Guardando…' : t('general.save')}
+              {saving ? t('admin.metricas.saving') : t('general.save')}
             </button>
             {form.id != null && form.id !== '' ? (
               <button

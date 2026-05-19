@@ -92,11 +92,11 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
     const profesorId = Number(form.profesor_id);
     const deporte = String(form.deporte || '').trim().toLowerCase();
     if (!titulo || !Number.isFinite(profesorId) || !deporte) {
-      setMsg('Completá título, profesor y deporte.');
+      setMsg(t('admin.formularios.completeClassFields'));
       return;
     }
     if (!form.horarios.length) {
-      setMsg('Agregá al menos un horario.');
+      setMsg(t('admin.formularios.addAtLeastOneSchedule'));
       return;
     }
     setSaving(true);
@@ -182,9 +182,9 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p> : null}
       {showForm ? (
         <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 16, background: 'var(--bg-page)' }}>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Título</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.hub.title')}</label>
           <input className="admin-mi-sede-theme-input" value={form.titulo} onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))} style={inputStyle} />
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Descripción</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.description')}</label>
           <textarea className="admin-mi-sede-theme-input" rows={2} value={form.descripcion} onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))} style={{ ...inputStyle, resize: 'vertical' }} />
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Profesor (aprobado)</label>
           <select className="admin-mi-sede-theme-input" value={form.profesor_id} onChange={(e) => setForm((f) => ({ ...f, profesor_id: e.target.value }))} style={inputStyle}>
@@ -212,18 +212,18 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
               <option key={d.key} value={d.key}>{d.label}</option>
             ))}
           </select>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Tipo</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.franjas.type')}</label>
           <select className="admin-mi-sede-theme-input" value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))} style={inputStyle}>
             <option value="grupal">Grupal</option>
             <option value="individual">Individual</option>
           </select>
           {form.tipo === 'grupal' ? (
             <>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Cupo máximo</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.formularios.maxCapacity')}</label>
               <input type="number" min={2} className="admin-mi-sede-theme-input" value={form.cupo_maximo} onChange={(e) => setForm((f) => ({ ...f, cupo_maximo: e.target.value }))} style={inputStyle} />
             </>
           ) : null}
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Duración (min)</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.formularios.durationMin')}</label>
           <input type="number" min={15} className="admin-mi-sede-theme-input" value={form.duracion_minutos} onChange={(e) => setForm((f) => ({ ...f, duracion_minutos: e.target.value }))} style={inputStyle} />
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Precio ({mon})</label>
           <input type="number" min={0} className="admin-mi-sede-theme-input" value={form.precio} onChange={(e) => setForm((f) => ({ ...f, precio: e.target.value }))} style={inputStyle} />
@@ -248,7 +248,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
             Clase activa
           </label>
           <button type="button" disabled={saving || profsAprobados.length === 0} onClick={() => void guardar()} style={{ border: 'none', borderRadius: 10, padding: '10px 16px', background: ACCENT, color: '#fff', fontWeight: 800, cursor: saving ? 'wait' : 'pointer' }}>
-            {saving ? 'Guardando…' : 'Guardar clase'}
+            {saving ? t('admin.metricas.saving') : t('admin.formularios.saveClass')}
           </button>
         </div>
       ) : null}
@@ -268,7 +268,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, alignItems: 'center' }}>
                   <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: c.activo ? '#dcfce7' : '#f1f5f9', color: c.activo ? '#166534' : '#64748b' }}>
-                    {c.activo ? 'Activa' : 'Inactiva'}
+                    {c.activo ? t('admin.sedes.subscriptionActive') : 'Inactiva'}
                   </span>
                   <button type="button" disabled={togglingId === c.id} onClick={() => void toggleActivo(c)} style={{ fontSize: 12, fontWeight: 700, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                     {togglingId === c.id ? '…' : c.activo ? 'Desactivar' : 'Activar'}

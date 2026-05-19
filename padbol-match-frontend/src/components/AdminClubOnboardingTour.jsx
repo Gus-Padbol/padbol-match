@@ -200,7 +200,7 @@ export default function AdminClubOnboardingTour({ open, onClose, applyTab, tabsS
         </h2>
         <p className="admin-club-onboarding-body">{step.body}</p>
         <div className="admin-club-onboarding-meta">
-          Paso {stepIndex + 1} de {steps.length}
+          {t('admin.formularios.stepOf', { current: stepIndex + 1, total: steps.length })}
         </div>
         <div className="admin-club-onboarding-actions">
           <button type="button" className="admin-club-onboarding-btn admin-club-onboarding-btn--ghost" onClick={skip}>
@@ -211,7 +211,7 @@ export default function AdminClubOnboardingTour({ open, onClose, applyTab, tabsS
               Anterior
             </button>
             <button type="button" className="admin-club-onboarding-btn admin-club-onboarding-btn--primary" onClick={goNext}>
-              {isLast ? 'Finalizar' : 'Siguiente'}
+              {isLast ? t('admin.formularios.finish') : t('admin.formularios.next')}
             </button>
           </div>
         </div>

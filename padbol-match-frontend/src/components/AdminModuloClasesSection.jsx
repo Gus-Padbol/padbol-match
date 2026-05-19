@@ -37,7 +37,7 @@ export default function AdminModuloClasesSection({
     })
       .then(async (r) => {
         const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j?.error || 'No se pudieron cargar canchas');
+        if (!r.ok) throw new Error(j?.error || t('admin.sedes.courtsLoadFailed'));
         return Array.isArray(j?.canchas) ? j.canchas : [];
       })
       .then(setCanchasLocal)
@@ -46,7 +46,7 @@ export default function AdminModuloClasesSection({
   }, [apiBaseUrl, accessToken, sid, canchas]);
 
   if (!accessToken || !Number.isFinite(sid)) {
-    return <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Seleccioná una sede válida.</p>;
+    return <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.formularios.selectValidVenue')}</p>;
   }
 
   return (
