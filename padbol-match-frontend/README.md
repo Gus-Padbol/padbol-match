@@ -2,6 +2,19 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Supabase
+
+Padbol Match usa el **custom domain** de Supabase para Auth y API del cliente:
+
+| Entorno | Variable | Valor |
+|---------|----------|--------|
+| Frontend (CRA) | `REACT_APP_SUPABASE_URL` | `https://auth.padbolmatch.com` |
+| Backend (Node) | `SUPABASE_URL` | `https://auth.padbolmatch.com` |
+
+El dominio `*.supabase.co` del proyecto (`vpldffhsxhgnmitiikof`) quedó reemplazado por `auth.padbolmatch.com`. Actualizá las variables en Vercel, Render y en tu `.env` local. Plantilla: [`.env.example`](.env.example).
+
+En **Supabase Dashboard** → Authentication → URL configuration, las redirect URLs deben seguir apuntando a `padbolmatch.com` (p. ej. `/auth/callback`); el Site URL / API base del cliente es `https://auth.padbolmatch.com`.
+
 ## Available Scripts
 
 In the project directory, you can run:

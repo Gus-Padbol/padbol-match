@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://vpldffhsxhgnmitiikof.supabase.co';
+const supabaseUrl = String(
+  process.env.REACT_APP_SUPABASE_URL || 'https://auth.padbolmatch.com',
+).replace(/\/$/, '');
 const supabaseAnonKey = 'sb_publishable_dY0TIrAnqgzg5yJ_XoZx-g_4aNMfHKY';
 
 /**

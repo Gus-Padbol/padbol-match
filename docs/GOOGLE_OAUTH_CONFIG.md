@@ -19,10 +19,12 @@ El texto que aparece al iniciar sesión con Google («Sign in with …» / panta
 
 ## Supabase (recordatorio)
 
+API y Auth del proyecto usan el custom domain **`https://auth.padbolmatch.com`** (`SUPABASE_URL` / `REACT_APP_SUPABASE_URL` en despliegue).
+
 En **Supabase Dashboard** → **Authentication** → **Providers** → **Google**:
 
 - Client ID y Client Secret deben coincidir con el mismo proyecto de Google Cloud.
-- En **Redirect URLs** debe estar la URL de callback de Supabase y la del frontend (`https://TU_DOMINIO/auth/callback`).
+- En **Redirect URLs** debe estar la URL de callback del frontend (`https://padbolmatch.com/auth/callback` y variantes de staging).
 
 ## Verificación
 
