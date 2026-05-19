@@ -586,7 +586,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
               </select>
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
                 <div style={{ flex: '0 0 140px' }}>
-                  <span style={labelStyle}>Vista previa</span>
+                  <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
                   <div
                     style={{
                       width: '140px',
@@ -703,7 +703,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
               <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>{label}</div>
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
                 <div style={{ flex: '0 0 140px' }}>
-                  <span style={labelStyle}>Vista previa</span>
+                  <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
                   <div
                     style={{
                       width: '140px',
@@ -802,7 +802,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(ev) => void onFileChange(ev)} />
 
       {!legacyHubRows.length ? (
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '14px' }}>No hay cards globales configuradas.</p>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '14px' }}>{t('admin.hub.noGlobalCards')}</p>
       ) : null}
 
       {legacyHubRows.map((row) => {
@@ -817,7 +817,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
             </div>
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
               <div style={{ flex: '0 0 140px' }}>
-                <span style={labelStyle}>Vista previa</span>
+                <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
                 <div
                   style={{
                     width: '140px',

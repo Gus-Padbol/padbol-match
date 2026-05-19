@@ -1409,7 +1409,7 @@ function sedeLicenciaChip(s) {
     );
   }
   return (
-    <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>Sin licencia</span>
+    <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>{t('admin.sedes.noLicense')}</span>
   );
 }
 
@@ -1470,7 +1470,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
 
   return (
     <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '14px', marginTop: '4px' }}>
-      <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>Duraciones y precios (tabla)</div>
+      <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>{t('admin.sedes.durationsPricesTable')}</div>
       <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
         Solo super admin puede agregar o quitar duraciones. Los clubes editan precio y activo desde su panel.
       </p>
@@ -1478,7 +1478,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
         <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 700, color: '#b91c1c' }}>{msg}</p>
       ) : null}
       {loading ? (
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando…</p>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
       ) : (
         <div style={{ display: 'grid', gap: '10px' }}>
           {rows.map((row) => (
@@ -1554,7 +1554,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
                 inputMode="numeric"
                 min={15}
                 max={480}
-                placeholder="Minutos"
+                placeholder={t('admin.formularios.minutesPh')}
                 value={nueva.duracion_minutos}
                 onChange={(e) => setNueva((p) => ({ ...p, duracion_minutos: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
                 style={{ width: '100px', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
@@ -1688,7 +1688,7 @@ function SedeSuperDetallePanel({
             gap: '8px',
           }}
         >
-          <label style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)' }}>Cambiar estado (super admin)</label>
+          <label style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)' }}>{t('admin.sedes.changeSubscriptionStatus')}</label>
           <select
             value={(() => {
               const cur = String(s.suscripcion_estado || '').trim().toLowerCase();
@@ -4202,7 +4202,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const onNuevaSedeCreada = (j) => {
     setSedesMap((prev) => ({ ...prev, [j.id]: j }));
-    setMensajeExito(`✅ Sede "${String(j.nombre || '').trim() || 'nueva sede'}" creada`);
+    setMensajeExito(
+      t('admin.notif.venueCreated', {
+        name: String(j.nombre || '').trim() || t('admin.sedes.newVenueFallback'),
+      }),
+    );
     setTimeout(() => setMensajeExito(''), 4000);
     void fetchData();
   };
@@ -4303,7 +4307,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       });
       if (response.ok) {
         invalidateReservaHistorialCache(reservaId);
-        setMensajeExito('✅ Cobro presencial / pago confirmado');
+        setMensajeExito(t('admin.reservas.inPersonPaymentConfirmed'));
         setTimeout(() => {
           fetchData();
           setMensajeExito('');
@@ -4455,7 +4459,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const miSedeNavItems = useMemo(() => {
     const items = [
       { id: 'info', label: t('admin.sedes.clubInfo') },
-      { id: 'canchas', label: 'Canchas' },
+      { id: 'canchas', label: t('admin.formularios.courtsCol') },
       { id: 'horarios', label: 'Horarios' },
     ];
     if (esAdminClub || isSuperAdmin) items.push({ id: 'extras', label: t('admin.sedes.halftimeExtras') });
@@ -4747,7 +4751,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarMiSede = async () => {
     if (!sedeId || !session?.access_token) {
-      setMiSedeMsg('⚠️ Inicia sesión de nuevo.');
+      setMiSedeMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setMiSedeMsg(''), 4000);
       return;
     }
@@ -4823,7 +4827,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarPreciosDuracion = async () => {
     if (!sedeId || !session?.access_token) {
-      setMiSedePreciosMsg('⚠️ Inicia sesión de nuevo.');
+      setMiSedePreciosMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setMiSedePreciosMsg(''), 4000);
       return;
     }
@@ -4897,7 +4901,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         const jr = await refetch.json().catch(() => ({}));
         if (refetch.ok && Array.isArray(jr.duraciones)) setMiSedeDuraciones(jr.duraciones);
       }
-      setMiSedeDuracionesMsg('✅ Guardado');
+      setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
     } catch (e) {
       setMiSedeDuracionesMsg(e?.message || String(e));
@@ -4910,7 +4914,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const guardarSedeCamposPagosParcial = useCallback(
     async (partial) => {
       if (!sedeId || !session?.access_token) {
-        setMiSedeMsg('⚠️ Inicia sesión de nuevo.');
+        setMiSedeMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
         setTimeout(() => setMiSedeMsg(''), 4000);
         return false;
       }
@@ -4933,7 +4937,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
           setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
         }
-        setMiSedeMsg('✅ Pagos actualizados');
+        setMiSedeMsg(t('admin.sedes.paymentsUpdated'));
         setTimeout(() => setMiSedeMsg(''), 3000);
         return true;
       } catch (e) {
@@ -5203,7 +5207,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       return;
     }
     if (!String(file.type || '').startsWith('image/')) {
-      setLogoMsg('⚠️ Elige una imagen');
+      setLogoMsg(t('admin.formularios.chooseImageWarnShort'));
       return;
     }
     setLogoMsg('');
@@ -5240,7 +5244,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     setLogoUrl(`${publicUrl}?t=${Date.now()}`);
     setLogoUploading(false);
-    setLogoMsg('✅ Logo actualizado');
+    setLogoMsg(t('admin.sedes.logoUpdated'));
     setTimeout(() => setLogoMsg(''), 3000);
   };
 
@@ -5255,7 +5259,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       cerrarModalLogoCrop();
       await subirLogoBlob(blob);
     } catch (e) {
-      setLogoMsg(`⚠️ ${e?.message || 'Error al recortar'}`);
+      setLogoMsg(`⚠️ ${e?.message || t('admin.sedes.cropError')}`);
     } finally {
       setLogoUploading(false);
     }
@@ -5286,7 +5290,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     const espacio = MAX_FOTOS_SEDE - fotosUrls.length;
     if (espacio <= 0) {
-      setFotosMsg(`⚠️ Máximo ${MAX_FOTOS_SEDE} fotos permitidas`);
+      setFotosMsg(t('admin.sedes.maxPhotosAllowed', { max: MAX_FOTOS_SEDE }));
       if (uploadingPrimed) {
         setFotosUploading(false);
         setFotosUploadLabel('');
@@ -5295,13 +5299,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     const toProcess = picked.slice(0, espacio);
     if (picked.length > espacio) {
-      setFotosMsg(`Solo puedes agregar ${espacio} ${espacio === 1 ? 'foto más' : 'fotos más'}.`);
+      setFotosMsg(
+        t('admin.sedes.photosRemaining', {
+          count: espacio,
+          unit: espacio === 1 ? t('admin.sedes.photosRemainingOne') : t('admin.sedes.photosRemainingMany'),
+        }),
+      );
     } else {
       setFotosMsg('');
     }
     if (!uploadingPrimed) {
       setFotosUploading(true);
-      setFotosUploadLabel('Subiendo...');
+      setFotosUploadLabel(t('admin.sedes.uploadingPhotos'));
     }
     const n = toProcess.length;
     let completed = 0;
@@ -5311,9 +5320,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const uploadOne = async (file, index) => {
       const name = file.name || `foto-${index}`;
       if (file.size > 2 * 1024 * 1024) {
-        failures.push(`${name}: supera 2MB`);
+        failures.push(t('admin.sedes.fileOver2mbName', { name }));
         completed += 1;
-        setFotosUploadLabel(`Subiendo ${completed} de ${n} fotos...`);
+        setFotosUploadLabel(t('admin.sedes.uploadingPhotosProgress', { done: completed, total: n }));
         return;
       }
       const safeName = name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -5330,7 +5339,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         urlsOk.push({ index, url: publicUrl });
       }
       completed += 1;
-      setFotosUploadLabel(`Subiendo ${completed} de ${n} fotos...`);
+      setFotosUploadLabel(t('admin.sedes.uploadingPhotosProgress', { done: completed, total: n }));
     };
 
     await Promise.all(toProcess.map((f, i) => uploadOne(f, i)));
@@ -5343,11 +5352,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setFotosUploading(false);
     setFotosUploadLabel('');
     if (failures.length && urlsOk.length) {
-      setFotosMsg(`⚠️ Algunas no se subieron: ${failures.join(' · ')}`);
+      setFotosMsg(t('admin.sedes.photosPartialUploadFail', { details: failures.join(' · ') }));
     } else if (failures.length) {
-      setFotosMsg(`⚠️ ${failures.join(' · ')}`);
+      setFotosMsg(t('admin.sedes.photosUploadFail', { details: failures.join(' · ') }));
     } else if (urlsOk.length) {
-      setFotosMsg(`✅ ${urlsOk.length === 1 ? '1 foto agregada' : `${urlsOk.length} fotos agregadas`}`);
+      setFotosMsg(
+        urlsOk.length === 1
+          ? t('admin.sedes.onePhotoAdded')
+          : t('admin.sedes.nPhotosAdded', { count: urlsOk.length }),
+      );
     }
     if (failures.length || urlsOk.length) {
       setTimeout(() => setFotosMsg(''), 5000);
@@ -5366,7 +5379,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     });
     if (invalida) {
       setFranjasSaving(false);
-      setFranjasMsg('⚠️ Completa horarios y al menos un día o fecha por franja');
+      setFranjasMsg(t('admin.franjas.completeSlotFields'));
       setTimeout(() => setFranjasMsg(''), 4000);
       return;
     }
@@ -5375,7 +5388,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (error) {
       setFranjasMsg(`⚠️ ${error.message}`);
     } else {
-      setFranjasMsg('✅ Franjas guardadas');
+      setFranjasMsg(t('admin.franjas.slotsSaved'));
       setFranjasHorarias(normalizeFranjasHorarias(payload));
       setMiSede((prev) => (prev ? { ...prev, franjas_horarias: payload } : prev));
     }
@@ -6483,7 +6496,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       {row.disponibles == null ? '—' : row.disponibles}
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '6px', fontWeight: 600 }}>
-                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Próxima reserva:</span> {row.proximaTexto}
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.reservas.nextBookingLabel')}</span> {row.proximaTexto}
                     </div>
                   </li>
                 ))}
@@ -6512,7 +6525,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               { id: 'hoy', label: 'Hoy' },
               { id: 'semana', label: 'Semana' },
               { id: 'mes', label: 'Mes' },
-              { id: 'anio', label: 'Año' },
+              { id: 'anio', label: t('admin.formularios.yearLabel') },
               { id: 'rango', label: 'Rango' },
             ].map((opt) => (
               <button
@@ -6951,11 +6964,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           />
                         </div>
                         <div>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Nivel</label>
-                          <input style={inp} value={editTorneoForm.nivel_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, nivel_torneo: e.target.value }))} placeholder="Ej: Intermedio" />
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.levelCol')}</label>
+                          <input style={inp} value={editTorneoForm.nivel_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, nivel_torneo: e.target.value }))} placeholder={t('admin.formularios.levelExamplePh')} />
                         </div>
                         <div>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Deporte</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.metricas.sportLabel')}</label>
                           <select
                             style={inp}
                             value={editTorneoForm.deporte || TORNEO_DEPORTE_PADBOL}
@@ -6993,29 +7006,29 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             </select>
                           ) : editTorneoForm.deporte === TORNEO_DEPORTE_FUTBOL5 ? (
                             <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_EQUIPO_5} disabled>
-                              <option value={TORNEO_FORMATO_EQUIPO_5}>Equipos de 5</option>
+                              <option value={TORNEO_FORMATO_EQUIPO_5}>{t('admin.metricas.teamFormat5')}</option>
                             </select>
                           ) : editTorneoForm.deporte === TORNEO_DEPORTE_FUTBOL7 ? (
                             <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_EQUIPO_7} disabled>
-                              <option value={TORNEO_FORMATO_EQUIPO_7}>Equipos de 7</option>
+                              <option value={TORNEO_FORMATO_EQUIPO_7}>{t('admin.metricas.teamFormat7')}</option>
                             </select>
                           ) : (
                             <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_DOBLES} disabled>
-                              <option value={TORNEO_FORMATO_DOBLES}>Dobles (2v2)</option>
+                              <option value={TORNEO_FORMATO_DOBLES}>{t('admin.metricas.doublesFormat')}</option>
                             </select>
                           )}
                         </div>
                         <div>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Formato</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.metricas.formatLabel')}</label>
                           <select style={inp} value={editTorneoForm.tipo_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, tipo_torneo: e.target.value }))}>
                             <option value="">— Seleccionar —</option>
-                            <option value="round_robin">Round Robin</option>
-                            <option value="knockout">Knockout</option>
-                            <option value="grupos_knockout">Grupos + Knockout</option>
+                            <option value="round_robin">{t('admin.metricas.formatRoundRobin')}</option>
+                            <option value="knockout">{t('admin.metricas.formatKnockout')}</option>
+                            <option value="grupos_knockout">{t('admin.metricas.formatGroupsKnockout')}</option>
                           </select>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Tipo de torneo (M / F / Mixto)</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.metricas.tournamentTypeLabel')}</label>
                           <select
                             style={inp}
                             value={editTorneoForm.tipo_competencia || TORNEO_GENERO_COMPETENCIA_DEFAULT}
@@ -7027,7 +7040,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           </select>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Categoría de edad</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.ageCategoryLabel')}</label>
                           <select
                             style={inp}
                             value={editTorneoForm.categoria_edad || TORNEO_CATEGORIA_EDAD_DEFAULT}
@@ -7039,7 +7052,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           </select>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Categoría *</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.categoryRequiredLabel')}</label>
                           <select
                             style={inp}
                             value={editTorneoForm.categoria || CATEGORIA_TORNEO_DEFAULT}
@@ -7055,7 +7068,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>
-                            {isSuperAdmin ? 'Estado (manual)' : 'Estado'}
+                            {isSuperAdmin ? 'Estado (manual)' : t('admin.metricas.statusCol')}
                           </label>
                           {(() => {
                             const opts = opcionesSelectEstadoTorneoAdmin(torneo.estado, isSuperAdmin);
@@ -7099,15 +7112,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           })()}
                         </div>
                         <div>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Fecha inicio</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.metricas.startDateLabel')}</label>
                           <input type="date" style={inp} value={editTorneoForm.fecha_inicio} onChange={e => setEditTorneoForm(p => ({ ...p, fecha_inicio: e.target.value }))} />
                         </div>
                         <div>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Fecha fin</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.metricas.endDateLabel')}</label>
                           <input type="date" style={inp} value={editTorneoForm.fecha_fin} onChange={e => setEditTorneoForm(p => ({ ...p, fecha_fin: e.target.value }))} />
                         </div>
                         <div>
-                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Cupos máx. equipos</label>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.maxTeamsSlotsLabel')}</label>
                           <input
                             type="number"
                             style={inp}
@@ -7143,7 +7156,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               style={inp}
                               min="0"
                               step="1"
-                              placeholder="Vacío = gratis"
+                              placeholder={t('admin.formularios.emptyFreePh')}
                               value={editTorneoForm.inscripcion_monto ?? ''}
                               onChange={(e) => setEditTorneoForm((p) => ({ ...p, inscripcion_monto: e.target.value }))}
                             />
@@ -7200,7 +7213,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             style={{ ...inp, minHeight: 70, resize: 'vertical' }}
                             value={editTorneoForm.premios_descripcion ?? ''}
                             onChange={(e) => setEditTorneoForm((p) => ({ ...p, premios_descripcion: e.target.value }))}
-                            placeholder="Ej: 1er lugar $50.000, 2do lugar $20.000"
+                            placeholder={t('admin.formularios.prizesExamplePh')}
                           />
                         </div>
                       </div>
@@ -7391,7 +7404,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               {isSuperAdmin ? (
                 <div className="sedes-admin-filters-toolbar">
                   <label className="sedes-admin-filter-field">
-                    <span className="sedes-admin-filter-label">País</span>
+                    <span className="sedes-admin-filter-label">{t('admin.formularios.countryLabel')}</span>
                     <select
                       value={sedeMobileFiltroPais}
                       onChange={(e) => {
@@ -7410,7 +7423,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </select>
                   </label>
                   <label className="sedes-admin-filter-field">
-                    <span className="sedes-admin-filter-label">Ciudad</span>
+                    <span className="sedes-admin-filter-label">{t('admin.formularios.cityLabel')}</span>
                     <select
                       value={sedeMobileFiltroCiudad}
                       onChange={(e) => setSedeMobileFiltroCiudad(e.target.value)}
@@ -7426,12 +7439,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </select>
                   </label>
                   <label className="sedes-admin-filter-field sedes-admin-filter-field--search">
-                    <span className="sedes-admin-filter-label">Buscar</span>
+                    <span className="sedes-admin-filter-label">{t('admin.metricas.searchLabel')}</span>
                     <input
                       type="search"
                       value={sedesSuperAdminBusquedaTexto}
                       onChange={(e) => setSedesSuperAdminBusquedaTexto(e.target.value)}
-                      placeholder="Nombre o nº de licencia"
+                      placeholder={t('admin.sedes.searchLicensePh')}
                       className="sedes-admin-filter-select"
                       autoComplete="off"
                       enterKeyHint="search"
@@ -7507,10 +7520,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <thead>
                     <tr>
                       <th>Sede</th>
-                      <th>Ciudad</th>
-                      {isSuperAdmin ? <th>País</th> : null}
-                      {isSuperAdmin ? <th>Contacto</th> : null}
-                      <th>Licencia</th>
+                      <th>{t('admin.formularios.cityLabel')}</th>
+                      {isSuperAdmin ? <th>{t('admin.formularios.countryLabel')}</th> : null}
+                      {isSuperAdmin ? <th>{t('admin.metricas.contactCol')}</th> : null}
+                      <th>{t('admin.metricas.licenseCol')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -7736,21 +7749,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       {activeTab === 'jugadores' && esAdminNacional && (
         <div className="section">
-          <h2>Jugadores federados en tu país</h2>
+          <h2>{t('admin.formularios.federatedPlayersTitle')}</h2>
           {nacionalJugadoresLoading ? (
-            <p style={{ color: 'var(--text-secondary)' }}>Cargando…</p>
+            <p style={{ color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
           ) : jugadoresFederadosPais.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)' }}>No hay jugadores marcados como federados en tu país.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>{t('admin.formularios.noFederatedPlayers')}</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table className="reservas-table">
                 <thead>
                   <tr>
                     <th>{t('admin.reservas.player')}</th>
-                    <th>Email</th>
-                    <th>Categoría</th>
-                    <th>País (ficha)</th>
-                    <th style={{ whiteSpace: 'nowrap' }}>Perfil</th>
+                    <th>{t('admin.formularios.emailLabel')}</th>
+                    <th>{t('admin.formularios.categoryCol')}</th>
+                    <th>{t('admin.formularios.countryProfileCol')}</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>{t('admin.metricas.profileCol')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -7786,11 +7799,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       )}
 
       {activeTab === 'validaciones' && <div className="section">
-        <h2>⏳ Jugadores Pendientes de Validación</h2>
+        <h2>{t('admin.formularios.pendingValidationTitle')}</h2>
         {pendientesLoading ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Cargando...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('admin.metricas.loading')}</p>
         ) : pendientes.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>No hay jugadores pendientes de validación.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('admin.formularios.noPendingValidation')}</p>
         ) : (
           <>
             <div style={{ marginBottom: '14px', maxWidth: '420px' }}>
@@ -7816,7 +7829,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               />
             </div>
             {pendientesFiltradosValidaciones.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)' }}>Ningún jugador coincide con la búsqueda.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>{t('admin.formularios.noPlayerSearchMatch')}</p>
             ) : (
               <div style={{ display: 'grid', gap: '12px' }}>
             {pendientesFiltradosValidaciones.map(jugador => {
@@ -8145,8 +8158,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         onChange={(e) => setReservaManualForm((p) => ({ ...p, estado: e.target.value }))}
                         style={manualInput}
                       >
-                        <option value="confirmada">Confirmada</option>
-                        <option value="reservada">Reservada</option>
+                        <option value="confirmada">{t('admin.metricas.statusConfirmed')}</option>
+                        <option value="reservada">{t('admin.metricas.statusReserved')}</option>
                       </select>
                     </label>
                   </div>
@@ -8440,7 +8453,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           background: 'var(--bg-card)',
                         }}
                       >
-                        <option value="">Todos los países</option>
+                        <option value="">{t('admin.sedes.allCountries')}</option>
                         {paisesOpts.map((p) => (
                           <option key={p} value={p}>
                             {etiquetaPaisFiltroMobile(p)}
@@ -8454,7 +8467,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         type="text"
                         value={rankingFiltroCiudad}
                         onChange={(e) => setRankingFiltroCiudad(e.target.value)}
-                        placeholder="Filtrar por ciudad"
+                        placeholder={t('admin.sedes.filterByCityPh')}
                         style={{
                           padding: '10px',
                           borderRadius: '8px',
@@ -8471,7 +8484,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         type="text"
                         value={rankingFiltroNombreClub}
                         onChange={(e) => setRankingFiltroNombreClub(e.target.value)}
-                        placeholder="Buscar sede"
+                        placeholder={t('admin.sedes.searchVenuePh')}
                         style={{
                           padding: '10px',
                           borderRadius: '8px',
@@ -8485,7 +8498,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
 
                   {sedesRanking.length === 0 ? (
-                    <p style={{ color: 'var(--text-secondary)', padding: '10px 0', margin: 0 }}>Sin datos para estos filtros.</p>
+                    <p style={{ color: 'var(--text-secondary)', padding: '10px 0', margin: 0 }}>{t('admin.metricas.noDataFilters')}</p>
                   ) : (
                     <div
                       style={{
@@ -8635,7 +8648,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       maxWidth: '400px',
                     }}
                   >
-                    <option value="">Todos los países</option>
+                    <option value="">{t('admin.sedes.allCountries')}</option>
                     {paisesOpts.map((p) => (
                       <option key={p} value={p}>
                         {etiquetaPaisFiltroMobile(p)}
@@ -8945,7 +8958,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 {mostrarResumenClubNacional ? periodoNavClubReservas : null}
                 {tarjetasClubReservas}
                 {reservaManualPanel}
-                <p style={{ color: 'var(--text-secondary)', padding: '10px 0' }}>Sin reservas en este período</p>
+                <p style={{ color: 'var(--text-secondary)', padding: '10px 0' }}>{t('admin.reservas.noBookingsInPeriod')}</p>
               </>
             );
           }
@@ -8989,13 +9002,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     >
                       <div style={{ display: 'grid', gap: '4px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                         <div>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Fecha</span> · {formatFecha(r.fecha) || '—'}
+                          <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metricas.dateCol')}</span> · {formatFecha(r.fecha) || '—'}
                         </div>
                         <div>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Horario</span> · {horarioReservaAdmin(r)}
+                          <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metricas.timeCol')}</span> · {horarioReservaAdmin(r)}
                         </div>
                         <div>
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Cancha</span> · {r.cancha ?? '—'}
+                          <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metricas.courtCol')}</span> · {r.cancha ?? '—'}
                         </div>
                         {esAdminNacional ? (
                           <div>
@@ -9024,14 +9037,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   >
                     <thead>
                       <tr>
-                        <th style={{ padding: '10px 8px' }}>Fecha</th>
-                        <th style={{ padding: '10px 8px' }}>Horario</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>Cancha</th>
+                        <th style={{ padding: '10px 8px' }}>{t('admin.metricas.dateCol')}</th>
+                        <th style={{ padding: '10px 8px' }}>{t('admin.metricas.timeCol')}</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>{t('admin.metricas.courtCol')}</th>
                         {esAdminNacional ? <th style={{ padding: '10px 8px' }}>Sede</th> : null}
                         <th style={{ padding: '10px 8px' }}>{t('admin.reservas.player')}</th>
-                        <th style={{ padding: '10px 8px' }}>Estado</th>
-                        <th style={{ padding: '10px 8px' }}>Monto</th>
-                        <th style={{ padding: '10px 8px' }}>Acciones</th>
+                        <th style={{ padding: '10px 8px' }}>{t('admin.metricas.statusCol')}</th>
+                        <th style={{ padding: '10px 8px' }}>{t('admin.metricas.amountCol')}</th>
+                        <th style={{ padding: '10px 8px' }}>{t('admin.metricas.actionsCol')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -9050,7 +9063,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 />
                                 <input
                                   type="number"
-                                  placeholder="min"
+                                  placeholder={t('admin.formularios.minAbbrPh')}
                                   value={editFormData.duracion || ''}
                                   onChange={(e) => setEditFormData({ ...editFormData, duracion: e.target.value })}
                                   style={{ padding: '4px', width: '46px' }}
@@ -9088,7 +9101,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 value={editFormData.email || ''}
                                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                                 style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box', fontSize: '11px' }}
-                                placeholder="Email"
+                                placeholder={t('admin.formularios.emailLabel')}
                               />
                               {(() => {
                                 const w = adminReservaJugadorWhatsappWaMeUrl(String(editFormData.jugador_whatsapp_perfil || '').trim());
@@ -9188,11 +9201,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                       Ocultar historial
                                     </button>
                                     {h.loading ? (
-                                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando…</div>
+                                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</div>
                                     ) : h.error ? (
                                       <div style={{ fontSize: '13px', color: '#b91c1c' }}>{h.error}</div>
                                     ) : !h.rows?.length ? (
-                                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Sin cambios de estado registrados.</div>
+                                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('admin.metricas.noStateChanges')}</div>
                                     ) : (
                                       <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
                                         {h.rows.map((row) => (
@@ -9248,7 +9261,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ) : null}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
-        <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>⚙️ Configuración de Puntos</h2>
+        <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>{t('admin.metricas.pointsConfigTitle')}</h2>
         {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
         <div style={{ marginBottom: '4px' }}>
           <h3 style={{ color: 'var(--text-primary)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
@@ -9258,8 +9271,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--accent)', color: '#fff' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600, color: '#fff' }}>Nivel</th>
-                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '130px', color: '#fff' }}>Pts totales torneo</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600, color: '#fff' }}>{t('admin.formularios.levelCol')}</th>
+                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '130px', color: '#fff' }}>{t('admin.formularios.totalTournamentPtsCol')}</th>
                 <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '90px', color: '#fff' }}></th>
               </tr>
             </thead>
@@ -9296,12 +9309,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <input type="number" min="0" value={configNiveles[key] ?? 0}
                           onChange={e => setConfigNiveles(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
                           style={{ width: '80px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', textAlign: 'center', fontWeight: 'bold', color: 'var(--text-primary)' }} />
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>pts totales</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.metricas.totalPtsShort')}</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
                           style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
-                        <button onClick={() => { if (window.confirm(`¿Eliminar el nivel "${configNivelesLabels[key]}"? Se ocultará de los torneos nuevos.`)) setConfigNivelesHidden(prev => new Set([...prev, key])); }}
+                        <button onClick={() => { if (window.confirm(t('admin.confirmaciones.deleteLevel', { name: configNivelesLabels[key] }))) setConfigNivelesHidden(prev => new Set([...prev, key])); }}
                           style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
                       </td>
                     </>
@@ -9343,7 +9356,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       <td className="admin-config-puntos-nivel" style={{ padding: '10px 16px', fontSize: '14px' }}>{tipo.nombre || tipo.id}</td>
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{tipo.puntos}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>pts totales</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.metricas.totalPtsShort')}</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
@@ -9359,13 +9372,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               {/* Add row */}
               <tr style={{ background: '#f9f7ff', borderTop: '2px dashed #e9d5ff' }}>
                 <td style={{ padding: '8px 12px' }}>
-                  <input type="text" placeholder="Ej: FIPA Qualifier" value={nuevoTipo.nombre}
+                  <input type="text" placeholder={t('admin.formularios.tournamentTypeExamplePh')} value={nuevoTipo.nombre}
                     onChange={e => setNuevoTipo(p => ({ ...p, nombre: e.target.value }))}
                     onKeyDown={e => { if (e.key === 'Enter' && nuevoTipo.nombre.trim()) { setConfigTiposCustom(prev => [...prev, { id: Date.now().toString(), nombre: nuevoTipo.nombre.trim(), puntos: nuevoTipo.puntos || 0 }]); setNuevoTipo({ nombre: '', puntos: 0 }); } }}
                     style={{ width: '100%', padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', background: 'var(--bg-input)', boxSizing: 'border-box' }} />
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                  <input type="number" placeholder="Pts" min="0" value={nuevoTipo.puntos || ''}
+                  <input type="number" placeholder={t('admin.formularios.pointsAbbrPh')} min="0" value={nuevoTipo.puntos || ''}
                     onChange={e => setNuevoTipo(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
                     style={{ width: '72px', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', textAlign: 'center', background: 'var(--bg-input)' }} />
                 </td>
@@ -9412,9 +9425,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '520px', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'var(--accent)', color: '#fff' }}>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#fff' }}>Posición</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#fff' }}>{t('admin.formularios.positionCol')}</th>
                     <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px', color: '#fff' }}>% del total</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap', color: '#fff' }}>Puntos</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap', color: '#fff' }}>{t('admin.metricas.pointsCol')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -9451,10 +9464,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 border: `1.5px solid ${pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c'}`,
               }}>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
-                  Total: {pctSum}%
+                  {t('admin.metricas.totalPct', { pct: pctSum })}
                 </span>
                 <span style={{ fontSize: '12px', color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
-                  {pctDiff === 0 ? '✓ Distribución completa' : pctDiff > 0 ? `⚠ Excede por ${pctDiff}%` : `Faltan ${-pctDiff}%`}
+                  {pctDiff === 0
+                    ? t('admin.metricas.distributionComplete')
+                    : pctDiff > 0
+                      ? t('admin.metricas.exceedsBy', { pct: pctDiff })
+                      : t('admin.metricas.missingBy', { pct: -pctDiff })}
                 </span>
               </div>
             </div>
@@ -9479,7 +9496,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               opacity: configSaving ? 0.8 : 1,
             }}
           >
-            {configSaving ? '⏳ Guardando...' : '💾 Guardar configuración'}
+            {configSaving ? t('admin.metricas.savingEllipsis') : t('admin.metricas.saveConfigBtn')}
           </button>
           {configMsg && (
             <span style={{ fontSize: '14px', fontWeight: '600', color: configMsg.startsWith('✅') ? '#86efac' : '#fde68a' }}>
@@ -9499,11 +9516,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           }}
         >
           <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
-            <strong>Datos de la sede:</strong> si tienes la pestaña <strong>«Mi Sede»</strong>, usa el botón{' '}
-            <strong>«Editar sede»</strong> para nombre, ubicación, contacto, precios y método de pago. Los cambios
-            se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección{' '}
-            <strong>«Mis Canchas»</strong> permite dar de alta canchas, activarlas o desactivarlas; las inactivas no
-            se ofrecen en el flujo de reservas público.
+            {t('admin.sedes.venueDataConfigHint')}
           </p>
         </div>
 
@@ -9513,7 +9526,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       {activeTab === 'planes' && puedeVerConfig && (
         <div className="section">
-          <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>💳 Planes y Precios</h2>
+          <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>{t('admin.metricas.plansPricingTitle')}</h2>
           <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
             Precio mensual en USD según la cantidad de canchas del club. Solo super admin puede editar.
           </p>
@@ -9533,8 +9546,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <thead>
                 <tr style={{ background: '#E11B22', color: '#fff' }}>
                   <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>{t('admin.formularios.name')}</th>
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>Canchas</th>
-                  <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600 }}>Precio USD/mes</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>{t('admin.formularios.courtsCol')}</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600 }}>{t('admin.metricas.priceUsdMonthCol')}</th>
                   <th style={{ padding: '10px 16px', width: '96px' }} />
                 </tr>
               </thead>
@@ -9712,12 +9725,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <thead>
                   <tr style={{ background: '#E11B22', color: '#fff' }}>
                     <th style={{ padding: '8px' }}>{t('admin.franjas.type')}</th>
-                    <th style={{ padding: '8px' }}>Email</th>
-                    <th style={{ padding: '8px' }}>Club (sugerido)</th>
-                    <th style={{ padding: '8px' }}>País</th>
-                    <th style={{ padding: '8px' }}>Estado</th>
-                    <th style={{ padding: '8px' }}>Vence</th>
-                    <th style={{ padding: '8px' }}>Acción</th>
+                    <th style={{ padding: '8px' }}>{t('admin.formularios.emailLabel')}</th>
+                    <th style={{ padding: '8px' }}>{t('admin.metricas.suggestedClubCol')}</th>
+                    <th style={{ padding: '8px' }}>{t('admin.formularios.countryLabel')}</th>
+                    <th style={{ padding: '8px' }}>{t('admin.metricas.statusCol')}</th>
+                    <th style={{ padding: '8px' }}>{t('admin.metricas.expiresCol')}</th>
+                    <th style={{ padding: '8px' }}>{t('admin.formularios.actionCol')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -9810,7 +9823,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   type="search"
                   value={busquedaRolesAdmin}
                   onChange={(e) => setBusquedaRolesAdmin(e.target.value)}
-                  placeholder="Nombre o email"
+                  placeholder={t('admin.formularios.nameOrEmailPh')}
                   autoComplete="off"
                   style={{
                     width: '100%',
@@ -9839,16 +9852,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <tr style={{ background: '#E11B22', color: '#fff' }}>
                       <th style={{ padding: '8px', textAlign: 'left', width: '34%' }}>{t('admin.formularios.name')}</th>
                       <th style={{ padding: '8px', textAlign: 'left' }}>Rol</th>
-                      <th style={{ padding: '8px', textAlign: 'right', width: '22%', whiteSpace: 'nowrap' }}>Acción</th>
+                      <th style={{ padding: '8px', textAlign: 'right', width: '22%', whiteSpace: 'nowrap' }}>{t('admin.formularios.actionCol')}</th>
                     </tr>
                   ) : (
                     <tr style={{ background: '#E11B22', color: '#fff' }}>
                       <th style={{ padding: '8px' }}>{t('admin.formularios.name')}</th>
-                      <th style={{ padding: '8px' }}>Email</th>
+                      <th style={{ padding: '8px' }}>{t('admin.formularios.emailLabel')}</th>
                       <th style={{ padding: '8px' }}>Rol</th>
-                      <th style={{ padding: '8px' }}>Alcance</th>
-                      <th style={{ padding: '8px' }}>Asignación</th>
-                      <th style={{ padding: '8px' }}>Acción</th>
+                      <th style={{ padding: '8px' }}>{t('admin.metricas.scopeCol')}</th>
+                      <th style={{ padding: '8px' }}>{t('admin.formularios.assignmentCol')}</th>
+                      <th style={{ padding: '8px' }}>{t('admin.formularios.actionCol')}</th>
                     </tr>
                   )}
                 </thead>
@@ -9956,7 +9969,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.nombre || '—'}</td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>{row.email}</td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
-                            {row.role === 'editor_contenido' ? 'Editor de contenido' : row.role || '—'}
+                            {row.role === 'editor_contenido' ? t('admin.formularios.contentEditorTitle') : row.role || '—'}
                           </td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.alcance || '—'}</td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>
@@ -10091,7 +10104,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         type="email"
                         value={editorContenidoEmail}
                         onChange={(e) => setEditorContenidoEmail(e.target.value)}
-                        placeholder="correo@ejemplo.com"
+                        placeholder={t('admin.formularios.emailExamplePh')}
                         autoComplete="off"
                         style={{
                           width: '100%',
@@ -10112,7 +10125,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         type="text"
                         value={editorContenidoNombre}
                         onChange={(e) => setEditorContenidoNombre(e.target.value)}
-                        placeholder="Nombre visible"
+                        placeholder={t('admin.formularios.displayNamePh')}
                         autoComplete="off"
                         style={{
                           width: '100%',
@@ -10139,7 +10152,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         cursor: editorContenidoSaving ? 'not-allowed' : 'pointer',
                       }}
                     >
-                      {editorContenidoSaving ? t('admin.metricas.saving') : 'Asignar editor'}
+                      {editorContenidoSaving ? t('admin.metricas.saving') : t('admin.formularios.assignEditor')}
                     </button>
                     <button
                       type="button"
@@ -10189,7 +10202,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           >
             {[
               { id: 'todos', label: t('admin.sponsors.allSports') },
-              { id: 'pendiente', label: 'Pendiente' },
+              { id: 'pendiente', label: t('admin.sponsors.pendingStatus') },
               { id: 'aprobada', label: 'Aprobada' },
               { id: 'rechazada', label: 'Rechazada' },
             ].map((opt) => (
@@ -10204,16 +10217,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             ))}
           </div>
           {sedesPendientesLoading || solicitudesLicenciaLoading ? (
-            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>Cargando…</p>
+            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>{t('admin.common.loadingEllipsis')}</p>
           ) : solicitudesUnificadas.length === 0 ? (
-            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>No hay solicitudes con este filtro.</p>
+            <p style={{ color: '#e2e8f0', textAlign: 'center' }}>{t('admin.metricas.noRequestsFilter')}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {solicitudesUnificadas.map((row) => {
                 const pendiente = row.estado === 'pendiente';
                 const wa = waDigitsForUrl(row.whatsapp);
                 const estadoLabel =
-                  row.estado === 'aprobada' ? 'Aprobada' : row.estado === 'rechazada' ? 'Rechazada' : 'Pendiente';
+                  row.estado === 'aprobada' ? 'Aprobada' : row.estado === 'rechazada' ? 'Rechazada' : t('admin.sponsors.pendingStatus');
                 const estadoChipBg =
                   row.estado === 'aprobada' ? '#dcfce7' : row.estado === 'rechazada' ? '#fee2e2' : '#fef9c3';
                 const estadoChipColor =
@@ -10263,7 +10276,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <strong>País:</strong> {row.pais} · <strong>Ciudad:</strong> {row.ciudad}
                       </div>
                       <div>
-                        <strong>Responsable:</strong> {row.responsableNombre}
+                        <strong>{t('admin.common.responsible')}</strong> {row.responsableNombre}
                       </div>
                       <div>
                         <strong>Email:</strong>{' '}
@@ -10280,7 +10293,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </div>
                       {row.kind === 'licencia_web' ? (
                         <div>
-                          <strong>Tipo interés:</strong> {etiquetaTipoInteresSolicitudLicencia(row.tipoInteres)} ·{' '}
+                          <strong>{t('admin.common.interestType')}</strong> {etiquetaTipoInteresSolicitudLicencia(row.tipoInteres)} ·{' '}
                           <strong>Canchas:</strong>{' '}
                           {row.cantidadCanchas ?? '—'}
                         </div>
@@ -10311,7 +10324,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             cursor: 'pointer',
                           }}
                         >
-                          {solicitudDetalleExpandidoKey === row.idKey ? 'Ocultar detalle' : 'Más datos (alta nacional)'}
+                          {solicitudDetalleExpandidoKey === row.idKey ? t('admin.sedes.hideDetail') : t('admin.sedes.moreNationalSignup')}
                         </button>
                         {solicitudDetalleExpandidoKey === row.idKey ? (
                           <div
@@ -10342,7 +10355,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               {sp.tipo_licencia || '—'}
                             </div>
                             <div>
-                              <strong>Licenciatario país:</strong> {sp.licenciatario_pais || '—'}
+                              <strong>{t('admin.common.licenseeCountry')}</strong> {sp.licenciatario_pais || '—'}
                             </div>
                             <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                               Enviada por {sp.created_by || '—'}
@@ -10425,7 +10438,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           💬 Contactar
                         </a>
                       ) : (
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Sin número para WhatsApp</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('admin.reservas.noWhatsappNumber')}</span>
                       )}
                     </div>
                   </div>
@@ -10473,7 +10486,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         {miSedeLoading ? (
           <p style={{ color: 'var(--text-secondary)' }}>Cargando datos de la sede...</p>
         ) : !miSede ? (
-          <p style={{ color: 'var(--pm-color-error, #f87171)' }}>No se encontró información de la sede.</p>
+          <p style={{ color: 'var(--pm-color-error, #f87171)' }}>{t('admin.sedes.venueInfoNotFound')}</p>
         ) : (<>
           {editarSedeModalOpen ? (
             <div
@@ -10514,9 +10527,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 {[
                   { label: 'Nombre del club', k: 'nombre' },
                   { label: t('admin.sedes.address'), k: 'direccion' },
-                  { label: 'Ciudad', k: 'ciudad' },
+                  { label: t('admin.formularios.cityLabel'), k: 'ciudad' },
                   { label: 'Provincia / Estado', k: 'provincia' },
-                  { label: 'País', k: 'pais' },
+                  { label: t('admin.formularios.countryLabel'), k: 'pais' },
                   { label: 'Horario apertura', k: 'horario_apertura', ph: 'Ej: 08:00' },
                   { label: 'Horario cierre', k: 'horario_cierre', ph: 'Ej: 23:00' },
                   {
@@ -10567,7 +10580,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <option value="UYU">UYU</option>
                   </select>
                 </div>
-                <p style={{ margin: '0 0 8px', fontSize: '12px', color: 'var(--text-secondary)' }}>Precios por duración ({editarSedeDraft.moneda || 'ARS'})</p>
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  {t('admin.sedes.pricesByDurationCurrency', { currency: editarSedeDraft.moneda || 'ARS' })}
+                </p>
                 {[
                   { field: 'precio_60min', label: '60 min' },
                   { field: 'precio_90min', label: '90 min' },
@@ -10594,7 +10609,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 ))}
                 <div style={{ marginBottom: '12px' }}>
-                  <label>Descripción del club</label>
+                  <label>{t('admin.sedes.clubDescriptionLabel')}</label>
                   <textarea
                     rows={4}
                     maxLength={300}
@@ -10632,7 +10647,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   />
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <label>Método de pago</label>
+                  <label>{t('admin.sedes.paymentMethodLabel')}</label>
                   <select
                     value={editarSedeDraft.metodo_pago || 'mercadopago'}
                     onChange={(e) => setEditarSedeDraft((p) => ({ ...p, metodo_pago: e.target.value }))}
@@ -10674,7 +10689,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       type="text"
                       value={editarSedeDraft.stripe_account_id || ''}
                       onChange={(e) => setEditarSedeDraft((p) => ({ ...p, stripe_account_id: e.target.value }))}
-                      placeholder="acct_…"
+                      placeholder={t('admin.sedes.stripeAccountEllipsisPh')}
                       style={{
                         width: '100%',
                         padding: '8px 10px',
@@ -10791,7 +10806,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   type="text"
                   value={canchaModalDraft.nombre}
                   onChange={(e) => setCanchaModalDraft((p) => ({ ...p, nombre: e.target.value }))}
-                  placeholder='Ej: Cancha 1'
+                  placeholder={t('admin.sedes.courtNameExamplePh')}
                   style={{
                     width: '100%',
                     padding: '9px 11px',
@@ -10850,7 +10865,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   rows={3}
                   value={canchaModalDraft.descripcion}
                   onChange={(e) => setCanchaModalDraft((p) => ({ ...p, descripcion: e.target.value }))}
-                  placeholder="Notas internas o para el equipo…"
+                  placeholder={t('admin.reservas.internalNotesPh')}
                   style={{
                     width: '100%',
                     padding: '9px 11px',
@@ -10954,7 +10969,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 Mis sponsors disponibles
               </h3>
               {miSedeSponsorSlots.loading ? (
-                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>Cargando cupos de sponsors…</p>
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>{t('admin.sponsors.loadingSponsorQuotas')}</p>
               ) : miSedeSponsorSlots.error ? (
                 <p style={{ margin: 0, fontSize: '14px', color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 }}>
                   {miSedeSponsorSlots.error}
@@ -10988,11 +11003,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 /* Editable for super_admin */
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>Número de licencia</label>
+                    <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>{t('admin.sedes.licenseNumberLabel')}</label>
                     <input
                       type="text"
                       value={licenciaForm.numero_licencia}
-                      placeholder="Ej: FIPA-ARG-001"
+                      placeholder={t('admin.sedes.fipaLicensePh')}
                       onChange={e => setLicenciaForm(p => ({ ...p, numero_licencia: e.target.value }))}
                       className="admin-mi-sede-theme-input"
                       style={{ flex: 1, padding: '7px 10px', borderRadius: '6px', fontSize: '14px', fontFamily: 'monospace', boxSizing: 'border-box' }}
@@ -11009,7 +11024,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                    <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>Estado</label>
+                    <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>{t('admin.metricas.statusCol')}</label>
                     <select
                       value={licenciaForm.licencia_activa ? 'activa' : 'suspendida'}
                       onChange={e => setLicenciaForm(p => ({ ...p, licencia_activa: e.target.value === 'activa' }))}
@@ -11023,7 +11038,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <button onClick={guardarLicencia} disabled={licenciaSaving}
                       style={{ padding: '10px 24px', background: licenciaSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: licenciaSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
-                      {licenciaSaving ? '⏳ Guardando...' : '💾 Guardar licencia'}
+                      {licenciaSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar licencia'}
                     </button>
                     {licenciaMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: licenciaMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{licenciaMsg}</span>}
                   </div>
@@ -11032,7 +11047,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 /* Read-only for admin_club / admin_nacional */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <span className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Número de licencia</span>
+                    <span className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.sedes.licenseNumberLabel')}</span>
                     <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'monospace', letterSpacing: '0.5px' }}>
                       {licenciaForm.numero_licencia || <span style={{ color: 'var(--text-secondary)', fontFamily: 'inherit', fontWeight: 400 }}>—</span>}
                     </span>
@@ -11046,7 +11061,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <span className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Estado</span>
+                    <span className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.metricas.statusCol')}</span>
                     <span style={{
                       padding: '4px 14px', borderRadius: '12px', fontSize: '13px', fontWeight: 700,
                       background: licenciaForm.licencia_activa ? '#dcfce7' : '#fee2e2',
@@ -11149,20 +11164,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           {/* ── 1. Info General ── */}
           <div style={{ marginBottom: '32px' }}>
-            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>Información General</h3>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.generalInfoTitle')}</h3>
             <div className="admin-mi-sede-theme-panel">
               {[
                 { label: 'Nombre del club',        field: 'nombre' },
                 { label: t('admin.sedes.address'),              field: 'direccion' },
-                { label: 'Ciudad',                 field: 'ciudad' },
+                { label: t('admin.formularios.cityLabel'),                 field: 'ciudad' },
                 { label: 'Provincia / Estado',     field: 'provincia' },
-                { label: 'País',                   field: 'pais' },
+                { label: t('admin.formularios.countryLabel'),                   field: 'pais' },
                 { label: 'WhatsApp del club',       field: 'telefono', placeholder: 'Ej: 2213032019', hint: 'Sin 0 adelante, sin 15' },
                 { label: 'Email de contacto',      field: 'email_contacto' },
                 { label: 'Horario apertura',       field: 'horario_apertura', placeholder: 'Ej: 08:00' },
                 { label: 'Horario cierre',         field: 'horario_cierre',   placeholder: 'Ej: 23:00' },
                 { label: t('admin.sedes.latitude'),                field: 'latitud',          placeholder: 'Ej: -34.6037' },
-                { label: t('admin.sedes.longitude'),               field: 'longitud',         placeholder: t('admin.formularios.coordPlaceholder'), hint: 'Puedes obtener las coordenadas desde Google Maps (clic derecho → "¿Qué hay aquí?")' },
+                { label: t('admin.sedes.longitude'),               field: 'longitud',         placeholder: t('admin.formularios.coordPlaceholder'), hint: t('admin.sedes.coordsGoogleMapsHint') },
               ].map(({ label, field, placeholder, hint }) => (
                 <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                   <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>{label}</label>
@@ -11180,7 +11195,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
               ))}
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>Descripción del club</label>
+                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>{t('admin.sedes.clubDescriptionLabel')}</label>
                 <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <textarea
                     rows={6}
@@ -11247,7 +11262,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     min={1800}
                     max={2100}
                     step={1}
-                    placeholder="Ej: 2015"
+                    placeholder={t('admin.sedes.yearFoundedPh')}
                     value={miSedeForm.anio_fundacion || ''}
                     onChange={(e) =>
                       setMiSedeForm((p) => ({ ...p, anio_fundacion: e.target.value.replace(/[^\d]/g, '').slice(0, 4) }))
@@ -11276,9 +11291,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', flex: 1, minWidth: 0 }}
                 >
                   <option value="ARS">ARS — Peso argentino</option>
-                  <option value="USD">USD — Dólar estadounidense</option>
+                  <option value="USD">{t('admin.sedes.currencyUsd')}</option>
                   <option value="EUR">EUR — Euro</option>
-                  <option value="BRL">BRL — Real brasileño</option>
+                  <option value="BRL">{t('admin.sedes.currencyBrl')}</option>
                   <option value="CLP">CLP — Peso chileno</option>
                   <option value="UYU">UYU — Peso uruguayo</option>
                 </select>
@@ -11286,7 +11301,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={guardarMiSede} disabled={miSedeSaving}
                   style={{ padding: '10px 24px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
-                  {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar cambios'}
+                  {miSedeSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar cambios'}
                 </button>
                 {miSedeMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: miSedeMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedeMsg}</span>}
               </div>
@@ -11303,7 +11318,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </p>
               {[
                 { field: 'precio_60min', label: '60 min' },
-                { field: 'precio_90min', label: '90 min (turno estándar)' },
+                { field: 'precio_90min', label: t('admin.sedes.price90minLabel') },
                 { field: 'precio_120min', label: '120 min' },
               ].map(({ field, label }) => (
                 <div
@@ -11322,7 +11337,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
                         setMiSedeForm((p) => ({ ...p, [field]: digits }));
                       }}
-                      placeholder="Vacío = no ofrecer"
+                      placeholder={t('admin.sedes.emptyNotOfferedPh')}
                       style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
                     />
                   </div>
@@ -11335,7 +11350,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   disabled={miSedePreciosSaving}
                   style={{ padding: '8px 20px', background: miSedePreciosSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedePreciosSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}
                 >
-                  {miSedePreciosSaving ? '⏳ Guardando...' : '💾 Guardar precios'}
+                  {miSedePreciosSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar precios'}
                 </button>
                 {miSedePreciosMsg ? (
                   <span style={{ fontSize: '13px', fontWeight: 600, color: miSedePreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedePreciosMsg}</span>
@@ -11513,7 +11528,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', color: 'var(--text-primary)' }}
                   />
                   <div style={{ display: 'grid', gap: '8px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>Aplicación</label>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.applicationLabel')}</label>
                     <select
                       value={fj.tipo || 'semanal'}
                       onChange={(e) => {
@@ -11638,7 +11653,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
                           setFranjasHorarias((rows) => rows.map((r) => (r.id === fj.id ? { ...r, precio: digits } : r)));
                         }}
-                        placeholder="Ej: 8000"
+                        placeholder={t('admin.formularios.priceExamplePh')}
                         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right' }}
                       />
                     </div>
@@ -11703,7 +11718,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     fontSize: '13px',
                   }}
                 >
-                  {franjasSaving ? '⏳ Guardando...' : '💾 Guardar franjas'}
+                  {franjasSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar franjas'}
                 </button>
                 {franjasMsg ? (
                   <span style={{ fontSize: '13px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{franjasMsg}</span>
@@ -11753,7 +11768,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {/* ── 3. Configuración de pagos (MP / Stripe por sede) ── */}
           {(esAdminClub || isSuperAdmin) && (
             <div id="admin-mi-sede-pagos" style={{ marginBottom: '32px' }}>
-              <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>💳 Configuración de pagos</h3>
+              <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.paymentConfigTitle')}</h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '520px' }}>
                 <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
                   Cada sede cobra con su propia cuenta. Mercado Pago usa el Access Token de tu aplicación MP; Stripe usa el
@@ -11808,7 +11823,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       className="admin-mi-sede-theme-input"
                       autoComplete="off"
                       value={miSedeForm.mp_access_token || ''}
-                      placeholder={Boolean(String(miSede?.mp_access_token || '').trim()) ? 'Token actual guardado — ingresa uno nuevo para reemplazar' : 'APP_USR-...'}
+                      placeholder={Boolean(String(miSede?.mp_access_token || '').trim()) ? t('admin.sedes.mpTokenReplacePh') : t('admin.sedes.mpTokenPh')}
                       onChange={(e) => setMiSedeForm((p) => ({ ...p, mp_access_token: e.target.value }))}
                       style={{
                         width: '100%',
@@ -11898,7 +11913,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <input
                       className="admin-mi-sede-theme-input"
                       value={miSedeForm.stripe_account_id || ''}
-                      placeholder="acct_..."
+                      placeholder={t('admin.sedes.stripeAccountPh')}
                       onChange={(e) => setMiSedeForm((p) => ({ ...p, stripe_account_id: e.target.value }))}
                       style={{
                         width: '100%',
@@ -11959,7 +11974,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </button>
                     </div>
                     <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                      Puedes pegar manualmente el <code style={{ fontSize: '11px' }}>acct_…</code> o usar el onboarding; al volver, comprueba que el ID quedó guardado.
+                      Puedes pegar manualmente el <code style={{ fontSize: '11px' }}>{t('admin.sedes.stripeAccountEllipsisPh')}</code> o usar el onboarding; al volver, comprueba que el ID quedó guardado.
                     </p>
                   </div>
                 ) : null}
@@ -12033,7 +12048,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     fontSize: '13px',
                   }}
                 >
-                  {pagosParcialSaving ? '⏳ Guardando...' : '💾 Guardar método e instrucciones'}
+                  {pagosParcialSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.savePaymentMethodBtn')}
                 </button>
               </div>
             </div>
@@ -12068,7 +12083,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               ))}
               <button onClick={guardarMiSede} disabled={miSedeSaving}
                 style={{ marginTop: '8px', padding: '8px 20px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                {miSedeSaving ? '⏳ Guardando...' : '💾 Guardar redes'}
+                {miSedeSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar redes'}
               </button>
             </div>
           </div>
@@ -12091,9 +12106,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <tr style={{ background: 'var(--accent)' }}>
                       <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)', width: '48px' }}>#</th>
                       <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)' }}>{t('admin.formularios.name')}</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>Deporte</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>{t('admin.metricas.sportLabel')}</th>
                       <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>Nota</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)', width: '100px' }}>Estado</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)', width: '100px' }}>{t('admin.metricas.statusCol')}</th>
                       <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}></th>
                     </tr>
                   </thead>
@@ -12158,7 +12173,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               fontWeight: 600,
                             }}
                           >
-                            {c.estado === 'activa' ? 'Desactivar' : 'Activar'}
+                            {c.estado === 'activa' ? t('admin.sponsors.deactivateBtn') : 'Activar'}
                           </button>
                         </td>
                       </tr>
@@ -12178,7 +12193,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{c.nombre}</span>
                         </div>
                         <div className="admin-mi-sede-cancha-card__row">
-                          <span className="admin-mi-sede-cancha-card__label">Deporte</span>
+                          <span className="admin-mi-sede-cancha-card__label">{t('admin.metricas.sportLabel')}</span>
                           <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
                             {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
                           </span>
@@ -12194,7 +12209,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           </span>
                         </div>
                         <div className="admin-mi-sede-cancha-card__row">
-                          <span className="admin-mi-sede-cancha-card__label">Estado</span>
+                          <span className="admin-mi-sede-cancha-card__label">{t('admin.metricas.statusCol')}</span>
                           <span
                             style={{
                               padding: '3px 10px',
@@ -12243,7 +12258,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               fontWeight: 700,
                             }}
                           >
-                            {c.estado === 'activa' ? 'Desactivar' : 'Activar'}
+                            {c.estado === 'activa' ? t('admin.sponsors.deactivateBtn') : 'Activar'}
                           </button>
                         </div>
                       </div>
@@ -12329,8 +12344,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   />
                 </label>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>JPG, PNG o WEBP · máx. 2MB</span>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>💡 Recomendado: PNG transparente, mín. 300×300 px</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('admin.sedes.photoFormatHint')}</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{t('admin.common.recommendedPhotoHint')}</span>
                 <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', width: '100%', maxWidth: '320px' }}>
                   <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     Fondo del logo en la página pública de la sede
@@ -12428,7 +12443,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               Marca hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). Guarda con el botón inferior.
             </p>
             {fotosUrls.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>No hay fotos cargadas aún.</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>{t('admin.sedes.noPhotosYet')}</p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 {fotosUrls.map((url, i) => {
@@ -12525,7 +12540,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     fontSize: '13px',
                   }}
                 >
-                  {fotosDestacadasSaving ? '⏳ Guardando...' : '💾 Guardar destacadas'}
+                  {fotosDestacadasSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar destacadas'}
                 </button>
                 {fotosDestacadasMsg ? (
                   <span style={{ fontSize: '13px', fontWeight: 600, color: fotosDestacadasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>
@@ -12576,7 +12591,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800 }}>Tipo de interés</h3>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800 }}>{t('admin.sedes.interestTypeTitle')}</h3>
             <p style={{ margin: '0 0 16px', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               El club no eligió el modelo en el formulario público. Asigna el tipo antes de crear la sede.
             </p>
@@ -12692,7 +12707,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   >
                     <strong>{t('admin.sedes.adminClub')}</strong>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>Gestiona una sede específica</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>{t('admin.sedes.manageOneVenue')}</div>
                   </button>
                   <button
                     type="button"
@@ -12713,7 +12728,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   >
                     <strong>🌍 Admin Nacional</strong>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>Gestiona un país completo</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>{t('admin.sedes.manageFullCountry')}</div>
                   </button>
                   <button
                     type="button"
@@ -12734,7 +12749,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     }}
                   >
                     <strong>{t('admin.sedes.adminCityRegion')}</strong>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>Gestiona una zona específica</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>{t('admin.sedes.manageRegion')}</div>
                   </button>
                 </div>
                 <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
@@ -12791,7 +12806,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       autoComplete="email"
                       value={inviteClubForm.email}
                       onChange={(e) => setInviteClubForm((p) => ({ ...p, email: e.target.value }))}
-                      placeholder="admin@ejemplo.com"
+                      placeholder={t('admin.formularios.adminEmailPh')}
                       style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                     />
                   </label>
@@ -12802,7 +12817,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         type="text"
                         value={inviteClubForm.nombre_club}
                         onChange={(e) => setInviteClubForm((p) => ({ ...p, nombre_club: e.target.value }))}
-                        placeholder="Ej: Club Padbol Norte"
+                        placeholder={t('admin.sedes.clubNameExamplePh')}
                         style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                       />
                     </label>
@@ -12814,7 +12829,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       onChange={(e) => setInviteClubForm((p) => ({ ...p, pais: e.target.value }))}
                       style={{ padding: '10px 12px', fontSize: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                     >
-                      <option value="">Seleccionar país</option>
+                      <option value="">{t('admin.sedes.selectCountry')}</option>
                       {PAISES_SEDE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
@@ -12908,8 +12923,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
       <ConfirmCancelReservaModal
         open={cancelReservaModalId != null}
-        title="¿Cancelar esta reserva?"
-        dismissLabel="Volver al panel"
+        title={t('admin.reservas.cancelBookingTitle')}
+        dismissLabel={t('admin.reservas.dismissToPanel')}
         onDismiss={() => setCancelReservaModalId(null)}
         onConfirm={() => {
           const id = cancelReservaModalId;
@@ -13138,7 +13153,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </p>
             {inviteMagicLinkModal.invite_url ? (
               <p style={{ margin: '0 0 10px', fontSize: '12px', lineHeight: 1.4 }}>
-                <span style={{ fontWeight: 700 }}>Invitación sede (48 h):</span>{' '}
+                <span style={{ fontWeight: 700 }}>{t('admin.sedes.venueInvite48h')}</span>{' '}
                 <a href={inviteMagicLinkModal.invite_url} style={{ wordBreak: 'break-all', color: '#4f46e5' }}>
                   {inviteMagicLinkModal.invite_url}
                 </a>
@@ -13167,7 +13182,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(inviteMagicLinkModal.magic_link);
-                    setMensajeExito('Magic link copiado');
+                    setMensajeExito(t('admin.formularios.magicLinkCopied'));
                     setTimeout(() => setMensajeExito(''), 2500);
                   } catch {
                     alert('No se pudo copiar al portapapeles');

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   crearClaseAdmin,
@@ -7,14 +8,14 @@ import {
   patchClaseActivoAdmin,
 } from '../utils/clasesAdminApi';
 
-const DIAS = [
-  { v: 0, label: 'Dom' },
-  { v: 1, label: 'Lun' },
-  { v: 2, label: 'Mar' },
-  { v: 3, label: 'Mié' },
-  { v: 4, label: 'Jue' },
-  { v: 5, label: 'Vie' },
-  { v: 6, label: 'Sáb' },
+const DIAS_KEYS = [
+  { v: 0, key: 'dom' },
+  { v: 1, key: 'lun' },
+  { v: 2, key: 'mar' },
+  { v: 3, key: 'mie' },
+  { v: 4, key: 'jue' },
+  { v: 5, key: 'vie' },
+  { v: 6, key: 'sab' },
 ];
 const ACCENT = 'var(--accent)';
 
@@ -28,6 +29,11 @@ function emptyHorario() {
 }
 
 export default function AdminClasesClubSection({ accessToken, sedeId, canchas = [], monedaSede = 'ARS' }) {
+  const { t } = useTranslation();
+  const DIAS = useMemo(
+    () => DIAS_KEYS.map(({ v, key }) => ({ v, label: t(`admin.weekdays.${key}`) })),
+    [t],
+  );
   const [clases, setClases] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -198,14 +204,14 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
           {profsAprobados.length === 0 ? (
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: -6, marginBottom: 10 }}>No hay profesores aprobados.</p>
           ) : null}
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Cancha</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.metricas.courtCol')}</label>
           <select className="admin-mi-sede-theme-input" value={form.cancha_id} onChange={(e) => setForm((f) => ({ ...f, cancha_id: e.target.value }))} style={inputStyle}>
             <option value="">Sin cancha</option>
             {canchas.map((c) => (
               <option key={c.id} value={c.id}>{c.nombre || `Cancha ${c.id}`}</option>
             ))}
           </select>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Deporte</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.metricas.sportLabel')}</label>
           <select className="admin-mi-sede-theme-input" value={form.deporte} onChange={(e) => setForm((f) => ({ ...f, deporte: e.target.value }))} style={inputStyle}>
             <option value="">Elegir…</option>
             {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
@@ -253,7 +259,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
         </div>
       ) : null}
       {loading ? (
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Cargando…</p>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
       ) : clases.length === 0 ? (
         <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No hay clases creadas.</p>
       ) : (
@@ -271,7 +277,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                     {c.activo ? t('admin.sedes.subscriptionActive') : 'Inactiva'}
                   </span>
                   <button type="button" disabled={togglingId === c.id} onClick={() => void toggleActivo(c)} style={{ fontSize: 12, fontWeight: 700, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    {togglingId === c.id ? '…' : c.activo ? 'Desactivar' : 'Activar'}
+                    {togglingId === c.id ? '…' : c.activo ? t('admin.sponsors.deactivateBtn') : 'Activar'}
                   </button>
                 </div>
               </li>

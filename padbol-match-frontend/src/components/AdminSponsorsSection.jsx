@@ -271,7 +271,7 @@ export default function AdminSponsorsSection({
         cacheControl: '3600',
       });
       if (upErr) {
-        setMsg(`Subida: ${upErr.message}`);
+        setMsg(t('admin.sponsors.uploadError', { message: upErr.message }));
         scrollToEl(formCardRef);
         return;
       }
@@ -396,7 +396,7 @@ export default function AdminSponsorsSection({
         const { error } = await supabase.from('sponsors').update(payload).eq('id', form.id);
         if (error) throw error;
         setFieldErrors({});
-        setMsg('Sponsor actualizado');
+        setMsg(t('admin.sponsors.sponsorUpdated'));
       } else {
         const insert = {
           ...payload,
@@ -405,7 +405,7 @@ export default function AdminSponsorsSection({
         };
         const { error } = await supabase.from('sponsors').insert([insert]);
         if (error) throw error;
-        setMsg('Sponsor creado');
+        setMsg(t('admin.sponsors.sponsorCreated'));
         resetForm();
       }
       await loadSponsors();
@@ -425,15 +425,17 @@ export default function AdminSponsorsSection({
       scrollToEl(formCardRef);
       return;
     }
-    setMsg('Desactivado');
+    setMsg(t('admin.sponsors.deactivated'));
     if (form.id === id) resetForm();
     await loadSponsors();
   };
 
   const eliminar = async (r) => {
-    const nombre = String(r?.nombre || '').trim() || 'sin nombre';
+    const nombre = String(r?.nombre || '').trim() || t('admin.sponsors.sponsorNoName');
     if (
-      !window.confirm(`¿Eliminar el sponsor ${nombre}? Esta acción no se puede deshacer.`)
+      !window.confirm(
+        t('admin.confirmaciones.deleteSponsor', { name: nombre }),
+      )
     ) {
       return;
     }
@@ -444,7 +446,7 @@ export default function AdminSponsorsSection({
       return;
     }
     if (String(form.id) === String(r.id)) resetForm();
-    setMsg('Sponsor eliminado');
+    setMsg(t('admin.sponsors.sponsorDeleted'));
     await loadSponsors();
   };
 
@@ -480,7 +482,7 @@ export default function AdminSponsorsSection({
       scrollToEl(formCardRef);
       return;
     }
-    setMsg('Sponsor aprobado');
+    setMsg(t('admin.sponsors.sponsorApproved'));
     await loadSponsors();
   };
 
@@ -505,7 +507,7 @@ export default function AdminSponsorsSection({
 
   return (
     <div style={{ marginTop: 28, marginBottom: 32, maxWidth: 900 }}>
-      <h2 style={{ margin: '0 0 12px', paddingBottom: 8, color: 'rgba(255,255,255,0.95)' }}>🤝 Sponsors</h2>
+      <h2 style={{ margin: '0 0 12px', paddingBottom: 8, color: 'rgba(255,255,255,0.95)' }}>{t('admin.sponsors.sectionTitle')}</h2>
       <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.45 }}>
         Patrocinios por alcance: torneo tiene prioridad sobre sede, país y global.
       </p>
@@ -601,11 +603,11 @@ export default function AdminSponsorsSection({
         }}
       >
         <h3 style={{ margin: '0 0 14px', fontSize: 16, color: 'var(--text-primary)' }}>
-          {form.id != null && form.id !== '' ? 'Editar sponsor' : 'Nuevo sponsor'}
+          {form.id != null && form.id !== '' ? t('admin.sponsors.editSponsorTitle') : t('admin.sponsors.newSponsorTitle')}
         </h3>
 
         <div ref={nombreRef} style={{ marginBottom: 12 }}>
-          <label style={labelStyle}>Nombre de la marca *</label>
+          <label style={labelStyle}>{t('admin.sponsors.brandNameLabel')}</label>
           <input
             style={{
               ...inputStyle,
@@ -619,7 +621,7 @@ export default function AdminSponsorsSection({
               clearField('_session');
               setForm((p) => ({ ...p, nombre: e.target.value }));
             }}
-            placeholder="Ej: Marca deportiva"
+            placeholder={t('admin.sponsors.brandNamePh')}
             aria-invalid={Boolean(fieldErrors.nombre)}
             aria-describedby={fieldErrors.nombre ? 'sponsor-err-nombre' : undefined}
           />
@@ -816,7 +818,7 @@ export default function AdminSponsorsSection({
 
         {form.scope === 'nacional' ? (
           <div ref={paisRef} style={{ marginBottom: 12 }}>
-            <label style={labelStyle}>País</label>
+            <label style={labelStyle}>{t('admin.formularios.countryLabel')}</label>
             <select
               style={{
                 ...inputStyle,
@@ -945,8 +947,8 @@ export default function AdminSponsorsSection({
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Marca</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Deportes</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Scope</th>
-              <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Formato</th>
-              <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Estado</th>
+              <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>{t('admin.metricas.formatLabel')}</th>
+              <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>{t('admin.metricas.statusCol')}</th>
               <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: 13 }}>Activo</th>
               <th style={{ padding: '10px 12px', textAlign: 'right', fontSize: 13 }} />
             </tr>
@@ -991,9 +993,9 @@ export default function AdminSponsorsSection({
                   </td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, fontSize: 13 }}>
                     {aprobado ? (
-                      <span style={{ color: '#15803d' }}>Aprobado</span>
+                      <span style={{ color: '#15803d' }}>{t('admin.sponsors.approvedStatus')}</span>
                     ) : (
-                      <span style={{ color: '#ca8a04' }}>Pendiente</span>
+                      <span style={{ color: '#ca8a04' }}>{t('admin.sponsors.pendingStatus')}</span>
                     )}
                   </td>
                   <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: r.activo ? '#15803d' : '#b91c1c' }}>

@@ -80,7 +80,7 @@ export default function AdminSedeExtrasPendientesSuper({ apiBaseUrl, accessToken
       </p>
       {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 8 }}>{msg}</p> : null}
       {loading ? (
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Cargando…</p>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
       ) : items.length === 0 ? (
         <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>No hay extras pendientes.</p>
       ) : (

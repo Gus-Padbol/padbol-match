@@ -375,7 +375,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
         </div>
       ) : null}
       {loading ? (
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Cargando…</p>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
       ) : lista.length === 0 ? (
         <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No hay profesores cargados.</p>
       ) : (
@@ -421,7 +421,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                 ) : null}
                 <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                   {p.aprobado ? (
-                    <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#dcfce7', color: '#166534' }}>Aprobado</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#dcfce7', color: '#166534' }}>{t('admin.sponsors.approvedStatus')}</span>
                   ) : (
                     <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: '#fef9c3', color: '#854d0e' }}>{t('admin.sedes.pendingApprovalShort')}</span>
                   )}

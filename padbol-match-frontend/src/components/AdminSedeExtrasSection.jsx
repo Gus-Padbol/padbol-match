@@ -239,7 +239,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p>
       ) : null}
       {loading ? (
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Cargando…</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{t('admin.common.loadingEllipsis')}</p>
       ) : (
         <>
           {extras.map((row) => {
@@ -255,10 +255,10 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                   {pendiente ? (
                     <span style={{ color: '#ca8a04', fontWeight: 700 }}>{t('admin.sedes.pendingApproval')}</span>
                   ) : (
-                    <span style={{ color: '#16a34a', fontWeight: 700 }}>Aprobado</span>
+                    <span style={{ color: '#16a34a', fontWeight: 700 }}>{t('admin.sponsors.approvedStatus')}</span>
                   )}
                   {!row.activo ? (
-                    <span style={{ marginLeft: 8, color: 'var(--text-secondary)', fontWeight: 600 }}>Desactivado</span>
+                    <span style={{ marginLeft: 8, color: 'var(--text-secondary)', fontWeight: 600 }}>{t('admin.sponsors.deactivated')}</span>
                   ) : null}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 10 }}>
