@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminClasesClubSection from './AdminClasesClubSection';
 import AdminProfesoresClubSection from './AdminProfesoresClubSection';
-
-const SUB_TABS = [
-  { id: 'profesores', label: 'Profesores' },
-  { id: 'clases', label: 'Clases' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function AdminModuloClasesSection({
   apiBaseUrl,
@@ -15,6 +11,11 @@ export default function AdminModuloClasesSection({
   monedaSede = 'ARS',
   isSuperAdmin = false,
 }) {
+  const { t } = useTranslation();
+  const subTabs = [
+    { id: 'profesores', label: t('clases.profesores') },
+    { id: 'clases', label: t('clases.titulo') },
+  ];
   const [sub, setSub] = useState('profesores');
   const [canchasLocal, setCanchasLocal] = useState(() => (Array.isArray(canchas) ? canchas : []));
   const sid = Number(sedeId);
@@ -51,13 +52,13 @@ export default function AdminModuloClasesSection({
   return (
     <div style={{ maxWidth: 640, width: '100%' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-        {SUB_TABS.map((t) => {
-          const active = sub === t.id;
+        {subTabs.map((tab) => {
+          const active = sub === tab.id;
           return (
             <button
-              key={t.id}
+              key={tab.id}
               type="button"
-              onClick={() => setSub(t.id)}
+              onClick={() => setSub(tab.id)}
               style={{
                 border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
                 borderRadius: 999,
@@ -70,7 +71,7 @@ export default function AdminModuloClasesSection({
                 fontFamily: 'inherit',
               }}
             >
-              {t.label}
+              {tab.label}
             </button>
           );
         })}

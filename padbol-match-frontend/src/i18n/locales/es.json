@@ -1,0 +1,198 @@
+{
+  "general": {
+    "language": "Idioma",
+    "loading": "Cargando…",
+    "loadingEllipsis": "Cargando...",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "search": "Buscar",
+    "back": "Volver",
+    "continue": "Continuar",
+    "accept": "Aceptar",
+    "optional": "Opcional",
+    "error": "Ocurrió un error",
+    "success": "¡Listo!",
+    "yes": "Sí",
+    "no": "No",
+    "share": "Compartir",
+    "whatsapp": "WhatsApp",
+    "email": "Correo electrónico",
+    "country": "País",
+    "city": "Ciudad",
+    "cookiesBanner": "Usamos cookies para mejorar tu experiencia.",
+    "cookiesEssentialOnly": "Solo esenciales",
+    "cookiesAccept": "Aceptar",
+    "goHome": "Ir al inicio",
+    "goLogin": "Ir a acceso",
+    "somethingWentWrong": "Algo salió mal",
+    "noNotifications": "Sin notificaciones por ahora.",
+    "seeMore": "Ver más",
+    "seeAll": "Ver todas"
+  },
+  "auth": {
+    "access": "Acceso",
+    "login": "Iniciar sesión",
+    "loginTitle": "Iniciar sesión",
+    "register": "Registrarse",
+    "registerTitle": "Crear cuenta",
+    "password": "Contraseña",
+    "repeatPassword": "Repetir contraseña",
+    "google": "Continuar con Google",
+    "facebook": "Continuar con Facebook",
+    "cerrar_sesion": "Cerrar sesión",
+    "logoutConfirm": "¿Quieres cerrar sesión?",
+    "enterEmail": "Ingresa tu correo electrónico.",
+    "enterPassword": "Ingresa tu contraseña.",
+    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres.",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "creatingAccount": "Creando cuenta…",
+    "completeProfile": "Completar perfil",
+    "goToLogin": "Ir a iniciar sesión"
+  },
+  "nav": {
+    "mainAria": "Navegación principal",
+    "perfil": "Perfil",
+    "jugar": "Jugar",
+    "competir": "Competir",
+    "notificaciones": "Notificaciones",
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar jugadores, torneos o sedes…",
+    "logout": "Cerrar sesión",
+    "backToHub": "Volver",
+    "myProfile": "Mi perfil",
+    "adminPanel": "Panel admin",
+    "admin": {
+      "resumen": "Resumen",
+      "torneos": "Torneos",
+      "reservas": "Reservas",
+      "validaciones": "Validaciones",
+      "mi_sede": "Mi sede",
+      "solicitudes": "Solicitudes",
+      "config": "Configuración"
+    }
+  },
+  "reservas": {
+    "titulo": "Reservar cancha",
+    "header": "Reservar",
+    "heroTitle": "Reserva tu cancha",
+    "heroSubtitle": "Elige tu sede y horario favorito",
+    "seleccionar_fecha": "Seleccionar fecha",
+    "seleccionar_hora": "Seleccionar hora",
+    "confirmar": "Confirmar reserva",
+    "cancelar": "Cancelar reserva",
+    "pagar": "Pagar",
+    "pagar_mp": "Pagar con Mercado Pago",
+    "pago_sede": "Confirmar reserva (pago en sede)",
+    "procesando": "Procesando…",
+    "total": "Total:",
+    "sedes": "Sedes"
+  },
+  "torneos": {
+    "titulo": "Torneos",
+    "crear": "Crear torneo",
+    "inscribirse": "Inscribirse",
+    "formato": "Formato",
+    "categoria": "Categoría",
+    "detalle": "Torneo",
+    "empty": "No hay torneos disponibles.",
+    "inscripcion_confirmada": "Inscripción confirmada",
+    "pendiente_pago": "Pendiente de pago",
+    "pagar_inscripcion": "Pagar inscripción"
+  },
+  "competir": {
+    "titulo": "Competir",
+    "howTitle": "¿Cómo quieres competir?",
+    "howSubtitle": "Torneos oficiales o consulta el ranking de jugadores.",
+    "torneosCard": "Torneos",
+    "torneosCardBody": "Inscríbete, arma un equipo y sigue el calendario.",
+    "rankingsCard": "Rankings",
+    "rankingsCardBody": "Puntos, posiciones y estadísticas."
+  },
+  "jugar": {
+    "titulo": "¡Vamos a jugar!",
+    "reservar": "Reservar cancha",
+    "reservarBody": "Ya tengo equipo completo, quiero una cancha.",
+    "buscar": "Buscar partido",
+    "buscarBody": "Quiero unirme a un partido que ya existe.",
+    "clase": "Tomar una clase",
+    "claseBody": "Entrena con un profesor de tu sede.",
+    "armar": "Armar partido",
+    "armarBody": "Quiero crear un partido y sumar jugadores."
+  },
+  "clases": {
+    "titulo": "Clases",
+    "pageTitle": "Tomar una clase",
+    "pageSubtitle": "Elige un profesor y reserva tu horario.",
+    "detalle": "Detalle de clase",
+    "profesores": "Profesores",
+    "loading": "Cargando clase…",
+    "noProfesores": "No hay profesores disponibles en tu sede."
+  },
+  "perfil": {
+    "titulo": "Mi perfil",
+    "editar": "Editar perfil",
+    "nivel": "Nivel de juego",
+    "pais": "País",
+    "language": "Idioma de la aplicación",
+    "editar_datos": "Editar datos",
+    "notificaciones": "Notificaciones",
+    "guardarPerfil": "Guardar perfil"
+  },
+  "admin": {
+    "mi_sede": "Mi sede",
+    "canchas": "Canchas",
+    "reservas": "Reservas",
+    "ingresos": "Ingresos",
+    "productos": "Productos",
+    "loading": "Cargando…",
+    "nueva_sede": "Nueva sede",
+    "guardar": "Guardar",
+    "onboarding": {
+      "welcomeTitle": "Bienvenido",
+      "welcomeBody": "Bienvenido a tu panel de administración. Te guiamos en los primeros pasos.",
+      "miSedeBody": "Aquí configuras los datos de tu club, canchas y horarios.",
+      "reservasBody": "Aquí ves y gestionas todas las reservas de tus canchas.",
+      "torneosBody": "Aquí creas y administras torneos para tu comunidad.",
+      "pagosTitle": "Configuración de pagos",
+      "pagosBody": "Conecta tu cuenta de Mercado Pago o Stripe para recibir pagos.",
+      "doneBody": "¡Tu panel está listo! Cualquier duda, contacta a soporte."
+    }
+  },
+  "pago": {
+    "titulo": "Pago",
+    "confirmando": "Confirmando pago...",
+    "exitoso": "Pago exitoso",
+    "fallido": "El pago no se completó",
+    "reintentar": "Intentar de nuevo"
+  },
+  "legal": {
+    "terminos": "Términos y Condiciones",
+    "privacidad": "Política de Privacidad"
+  },
+  "ranking": {
+    "titulo": "Ranking"
+  },
+  "equipos": {
+    "titulo": "Equipo",
+    "gestion": "Gestión del torneo",
+    "inscripcion": "Inscripción"
+  },
+  "notificaciones": {
+    "tipo": {
+      "partido": "Partido",
+      "torneo": "Torneo",
+      "reserva": "Reserva",
+      "aviso": "Aviso"
+    }
+  },
+  "hub": {
+    "card": {
+      "reservarSub": "Ya tengo equipo, quiero una cancha.",
+      "torneosSub": "Torneos y rankings."
+    }
+  }
+}

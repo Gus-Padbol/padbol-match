@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE_MODAL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -82,6 +83,7 @@ function rowLine(label, value) {
  * Cierra con clic fuera, botón X o Escape.
  */
 export default function ModalJugador({ open, onClose, hint }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [resolved, setResolved] = useState(null);
   const [sedeNombre, setSedeNombre] = useState('');
@@ -273,7 +275,7 @@ export default function ModalJugador({ open, onClose, hint }) {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Cerrar"
+          aria-label={t('general.close')}
           style={{
             position: 'absolute',
             top: '12px',

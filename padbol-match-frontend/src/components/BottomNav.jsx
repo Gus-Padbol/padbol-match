@@ -11,6 +11,7 @@ import {
 } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
+import { useTranslation } from 'react-i18next';
 
 const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
 
@@ -24,6 +25,7 @@ function readCachedRol() {
 }
 
 const BottomNav = () => {
+  const { t } = useTranslation();
   const { navDock } = useHubNavLayout();
   const dockBottom = navDock === 'bottom';
   const navigate = useNavigate();
@@ -69,7 +71,7 @@ const BottomNav = () => {
 
   const adminDashboardItems = rolEffective === 'empleado' ? [
     {
-      label: 'Reservas',
+      label: t('nav.admin.reservas'),
       icon: '⚽',
       path: '/admin?tab=reservas',
       match: (p) => {
@@ -78,7 +80,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Torneos',
+      label: t('torneos.titulo'),
       icon: '🏆',
       path: '/admin?tab=torneos',
       match: (p) => {
@@ -88,7 +90,7 @@ const BottomNav = () => {
     },
   ] : [
     {
-      label: 'Resumen',
+      label: t('nav.admin.resumen'),
       icon: '📊',
       path: '/admin?tab=resumen',
       match: (p) => {
@@ -97,7 +99,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Torneos',
+      label: t('torneos.titulo'),
       icon: '🏆',
       path: '/admin?tab=torneos',
       match: (p) => {
@@ -106,7 +108,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Reservas',
+      label: t('nav.admin.reservas'),
       icon: '⚽',
       path: '/admin?tab=reservas',
       match: (p) => {
@@ -115,7 +117,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Validaciones',
+      label: t('nav.admin.validaciones'),
       icon: '⏳',
       path: '/admin?tab=validaciones',
       match: (p) => {
@@ -124,7 +126,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Mi Sede',
+      label: t('nav.admin.mi_sede'),
       icon: '🏟️',
       path: '/admin?tab=mi_sede',
       match: (p) => {
@@ -135,7 +137,7 @@ const BottomNav = () => {
     ...(superAdminBottomNav
       ? [
           {
-            label: 'Solicitudes',
+            label: t('nav.admin.solicitudes'),
             icon: '📝',
             path: '/admin?tab=solicitudes',
             match: (p) => {
@@ -144,7 +146,7 @@ const BottomNav = () => {
             },
           },
           {
-            label: 'Config',
+            label: t('nav.admin.config'),
             icon: '⚙️',
             path: '/admin?tab=config',
             match: (p) => {
@@ -158,7 +160,7 @@ const BottomNav = () => {
 
   const adminTorneoItems = rolEffective === 'empleado' ? [
     {
-      label: 'Reservas',
+      label: t('nav.admin.reservas'),
       icon: '⚽',
       path: '/admin?tab=reservas',
       match: (p) => {
@@ -167,7 +169,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Torneos',
+      label: t('torneos.titulo'),
       icon: '🏆',
       path: '/admin?tab=torneos',
       match: (p) => {
@@ -177,7 +179,7 @@ const BottomNav = () => {
     },
   ] : [
     {
-      label: 'Resumen',
+      label: t('nav.admin.resumen'),
       icon: '📊',
       path: '/admin?tab=resumen',
       match: (p) => {
@@ -186,7 +188,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Torneos',
+      label: t('torneos.titulo'),
       icon: '🏆',
       path: '/admin?tab=torneos',
       match: (p) => {
@@ -195,7 +197,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Reservas',
+      label: t('nav.admin.reservas'),
       icon: '⚽',
       path: '/admin?tab=reservas',
       match: (p) => {
@@ -204,7 +206,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Validaciones',
+      label: t('nav.admin.validaciones'),
       icon: '⏳',
       path: '/admin?tab=validaciones',
       match: (p) => {
@@ -213,7 +215,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Mi Sede',
+      label: t('nav.admin.mi_sede'),
       icon: '🏟️',
       path: '/admin?tab=mi_sede',
       match: (p) => {
@@ -225,7 +227,7 @@ const BottomNav = () => {
 
   const jugadorHubTabs = [
     {
-      label: 'Perfil',
+      label: t('nav.perfil'),
       iconKind: 'perfil',
       path: '/mi-perfil',
       match: (p) => {
@@ -234,7 +236,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Jugar',
+      label: t('nav.jugar'),
       iconKind: 'jugar',
       path: '/jugar',
       match: (p) => {
@@ -248,7 +250,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Competir',
+      label: t('nav.competir'),
       iconKind: 'competir',
       path: '/competir',
       match: (p) => {
@@ -261,7 +263,7 @@ const BottomNav = () => {
       },
     },
     {
-      label: 'Notificaciones',
+      label: t('nav.notificaciones'),
       iconKind: 'campana',
       path: '/notificaciones',
       match: (p) => {

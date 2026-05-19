@@ -1,0 +1,197 @@
+{
+  "general": {
+    "language": "Language",
+    "loading": "Loading…",
+    "loadingEllipsis": "Loading...",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "back": "Back",
+    "continue": "Continue",
+    "accept": "Accept",
+    "optional": "Optional",
+    "error": "Something went wrong",
+    "success": "Done!",
+    "yes": "Yes",
+    "no": "No",
+    "share": "Share",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "country": "Country",
+    "city": "City",
+    "cookiesBanner": "We use cookies to improve your experience.",
+    "cookiesEssentialOnly": "Essential only",
+    "cookiesAccept": "Accept",
+    "goHome": "Go to home",
+    "goLogin": "Go to sign in",
+    "somethingWentWrong": "Something went wrong",
+    "noNotifications": "No notifications yet.",
+    "seeMore": "See more",
+    "seeAll": "See all"
+  },
+  "auth": {
+    "access": "Sign in",
+    "login": "Sign in",
+    "loginTitle": "Sign in",
+    "register": "Sign up",
+    "registerTitle": "Create account",
+    "password": "Password",
+    "repeatPassword": "Repeat password",
+    "google": "Continue with Google",
+    "facebook": "Continue with Facebook",
+    "cerrar_sesion": "Sign out",
+    "logoutConfirm": "Do you want to sign out?",
+    "enterEmail": "Enter your email.",
+    "enterPassword": "Enter your password.",
+    "passwordMinLength": "Password must be at least 6 characters.",
+    "passwordMismatch": "Passwords do not match.",
+    "creatingAccount": "Creating account…",
+    "completeProfile": "Complete profile",
+    "goToLogin": "Go to sign in"
+  },
+  "nav": {
+    "mainAria": "Main navigation",
+    "perfil": "Profile",
+    "jugar": "Play",
+    "competir": "Compete",
+    "notificaciones": "Notifications",
+    "search": "Search",
+    "searchPlaceholder": "Search players, tournaments or venues…",
+    "logout": "Sign out",
+    "backToHub": "Back",
+    "myProfile": "My profile",
+    "adminPanel": "Admin panel",
+    "admin": {
+      "resumen": "Overview",
+      "torneos": "Tournaments",
+      "reservas": "Bookings",
+      "validaciones": "Validations",
+      "mi_sede": "My venue",
+      "solicitudes": "Requests",
+      "config": "Settings"
+    }
+  },
+  "reservas": {
+    "titulo": "Book a court",
+    "header": "Book",
+    "heroTitle": "Book your court",
+    "heroSubtitle": "Choose your venue and time slot",
+    "seleccionar_fecha": "Select date",
+    "seleccionar_hora": "Select time",
+    "confirmar": "Confirm booking",
+    "cancelar": "Cancel booking",
+    "pagar": "Pay",
+    "pagar_mp": "Pay with Mercado Pago",
+    "pago_sede": "Confirm booking (pay at venue)",
+    "procesando": "Processing…",
+    "total": "Total:",
+    "sedes": "Venues"
+  },
+  "torneos": {
+    "titulo": "Tournaments",
+    "crear": "Create tournament",
+    "inscribirse": "Register",
+    "formato": "Format",
+    "categoria": "Category",
+    "detalle": "Tournament",
+    "empty": "No tournaments available.",
+    "inscripcion_confirmada": "Registration confirmed",
+    "pendiente_pago": "Payment pending",
+    "pagar_inscripcion": "Pay registration"
+  },
+  "competir": {
+    "titulo": "Compete",
+    "howTitle": "How do you want to compete?",
+    "howSubtitle": "Official tournaments or check the player rankings.",
+    "torneosCard": "Tournaments",
+    "torneosCardBody": "Register, build a team and follow the schedule.",
+    "rankingsCard": "Rankings",
+    "rankingsCardBody": "Points, standings and stats."
+  },
+  "jugar": {
+    "titulo": "Let's play!",
+    "reservar": "Book a court",
+    "reservarBody": "I have a full team and need a court.",
+    "buscar": "Find a match",
+    "buscarBody": "I want to join an existing match.",
+    "clase": "Take a class",
+    "claseBody": "Train with a coach at your venue.",
+    "armar": "Create a match",
+    "armarBody": "I want to create a match and find players."
+  },
+  "clases": {
+    "titulo": "Classes",
+    "pageTitle": "Take a class",
+    "pageSubtitle": "Choose a coach and book your time slot.",
+    "detalle": "Class details",
+    "profesores": "Coaches",
+    "loading": "Loading class…",
+    "noProfesores": "No coaches available at your venue."
+  },
+  "perfil": {
+    "titulo": "My profile",
+    "editar": "Edit profile",
+    "nivel": "Skill level",
+    "pais": "Country",
+    "language": "App language",
+    "editar_datos": "Edit details",
+    "notificaciones": "Notifications"
+  },
+  "admin": {
+    "mi_sede": "My venue",
+    "canchas": "Courts",
+    "reservas": "Bookings",
+    "ingresos": "Revenue",
+    "productos": "Products",
+    "loading": "Loading…",
+    "nueva_sede": "New venue",
+    "guardar": "Save",
+    "onboarding": {
+      "welcomeTitle": "Welcome",
+      "welcomeBody": "Welcome to your admin panel. We'll guide you through the first steps.",
+      "miSedeBody": "Configure your club details, courts and schedules here.",
+      "reservasBody": "View and manage all court bookings here.",
+      "torneosBody": "Create and manage tournaments for your community here.",
+      "pagosTitle": "Payment settings",
+      "pagosBody": "Connect your Mercado Pago or Stripe account to receive payments.",
+      "doneBody": "Your panel is ready! Contact support if you have any questions."
+    }
+  },
+  "pago": {
+    "titulo": "Payment",
+    "confirmando": "Confirming payment...",
+    "exitoso": "Payment successful",
+    "fallido": "Payment was not completed",
+    "reintentar": "Try again"
+  },
+  "legal": {
+    "terminos": "Terms and Conditions",
+    "privacidad": "Privacy Policy"
+  },
+  "ranking": {
+    "titulo": "Ranking"
+  },
+  "equipos": {
+    "titulo": "Team",
+    "gestion": "Tournament management",
+    "inscripcion": "Registration"
+  },
+  "notificaciones": {
+    "tipo": {
+      "partido": "Match",
+      "torneo": "Tournament",
+      "reserva": "Booking",
+      "aviso": "Notice"
+    }
+  },
+  "hub": {
+    "card": {
+      "reservarSub": "I have a team and need a court.",
+      "torneosSub": "Tournaments and rankings."
+    }
+  }
+}

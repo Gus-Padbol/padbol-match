@@ -19,6 +19,7 @@ import SponsorBannerReserva from '../components/SponsorBannerReserva';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -27,6 +28,7 @@ const API_BASE = (
 );
 
 export default function PagoExitoso() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -199,7 +201,7 @@ export default function PagoExitoso() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Pago" />
+      <AppHeader title={t('pago.titulo')} />
       <div
         style={{
           background: 'var(--bg-card)',

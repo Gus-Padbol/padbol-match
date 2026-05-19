@@ -20,6 +20,7 @@ import { useHubSponsors } from '../hooks/useHubSponsors';
 import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
 import { TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
 import { torneoTipoCompetenciaDb } from '../utils/torneoFormatters';
+import { useTranslation } from 'react-i18next';
 import {
   TORNEO_DEPORTE_PADBOL,
   TORNEO_DEPORTE_OPTIONS,
@@ -482,6 +483,7 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
 }
 
 export default function Rankings() {
+  const { t } = useTranslation();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const { session } = useAuth();
@@ -800,7 +802,7 @@ export default function Rankings() {
   const tdStyle = { padding: narrow ? '8px 6px' : '11px 14px', verticalAlign: 'middle' };
 
   const showPaisCol = activeTab === 'internacional';
-  /** En mobile el encabezado "Torneos" se cortaba; el conteo es secundario frente a puntos. */
+  /** En mobile el encabezado {t('torneos.titulo')} se cortaba; el conteo es secundario frente a puntos. */
   const showTorneosCol = !narrow;
 
   const posStyle = (pos) => {
@@ -814,7 +816,7 @@ export default function Rankings() {
 
   return (
     <div style={containerStyle}>
-      <AppHeader title="Ranking" />
+      <AppHeader title={t('ranking.titulo')} />
       <div style={innerStyle}>
         {/* Deporte del ranking (encima de Local / Nacional / FIPA) */}
         <div style={{ marginBottom: '12px' }}>

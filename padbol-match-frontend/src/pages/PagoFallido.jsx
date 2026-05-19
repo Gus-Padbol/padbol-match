@@ -19,6 +19,7 @@ import {
   clearReservaReturnLocalStorage,
 } from '../utils/reservaReturnUrl';
 import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -36,6 +37,7 @@ function reservarUrlFromPending(pending) {
 }
 
 export default function PagoFallido() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -96,7 +98,7 @@ export default function PagoFallido() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Pago" />
+      <AppHeader title={t('pago.titulo')} />
       <div
         style={{
           flex: 1,

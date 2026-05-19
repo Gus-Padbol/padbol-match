@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { useTranslation } from 'react-i18next';
 
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim(), codigo: p.codigo }))
@@ -22,6 +23,7 @@ const inputBase = {
 };
 
 function normalizeText(v) {
+  const { t } = useTranslation();
   return String(v || '')
     .replace(/^[\p{Emoji_Presentation}\s]+/u, '')
     .trim()
@@ -430,7 +432,7 @@ export default function NuevaSedeSuperBottomSheet({
           type="button"
           onClick={() => !saving && onClose?.()}
           disabled={saving}
-          aria-label="Cerrar"
+          aria-label={t('general.close')}
           style={{
             flexShrink: 0,
             width: 44,

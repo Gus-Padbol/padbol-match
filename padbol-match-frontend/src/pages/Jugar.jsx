@@ -24,37 +24,7 @@ import useUserRole from '../hooks/useUserRole';
 import { fetchProfesores } from '../utils/clasesApi';
 import { useHubPromoSedeActiva } from '../hooks/useHubPromoSedeActiva';
 import './Jugar.css';
-
-const JUGAR_OPCIONES_BASE = [
-  {
-    title: 'Reservar cancha',
-    body: 'Ya tengo equipo completo, quiero una cancha.',
-    path: '/reservar',
-    hubKey: 'reservar',
-  },
-  {
-    title: 'Buscar partido',
-    body: 'Quiero unirme a un partido que ya existe.',
-    path: '/partidos-abiertos',
-    hubKey: 'buscar_partido',
-  },
-];
-
-const TOMAR_CLASE_OPCION = {
-  title: 'Tomar una clase',
-  body: 'Entrená con un profesor de tu sede.',
-  path: '/clases',
-  hubKey: 'tomar_clase',
-};
-
-const JUGAR_OPCIONES_TAIL = [
-  {
-    title: 'Armar partido',
-    body: 'Quiero crear un partido y sumar jugadores.',
-    path: '/jugar/armar',
-    hubKey: 'armar_partido',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 
@@ -64,6 +34,7 @@ function deporteQuery(deporteElegido) {
 }
 
 export default function Jugar() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -115,11 +86,37 @@ export default function Jugar() {
   }, [hubSedeNum]);
 
   const jugarOpcionesLista = useMemo(() => {
-    const items = [...JUGAR_OPCIONES_BASE];
-    if (hayProfesores) items.push(TOMAR_CLASE_OPCION);
-    items.push(...JUGAR_OPCIONES_TAIL);
+    const base = [
+      {
+        title: t('jugar.reservar'),
+        body: t('jugar.reservarBody'),
+        path: '/reservar',
+        hubKey: 'reservar',
+      },
+      {
+        title: t('jugar.buscar'),
+        body: t('jugar.buscarBody'),
+        path: '/partidos-abiertos',
+        hubKey: 'buscar_partido',
+      },
+    ];
+    const items = [...base];
+    if (hayProfesores) {
+      items.push({
+        title: t('jugar.clase'),
+        body: t('jugar.claseBody'),
+        path: '/clases',
+        hubKey: 'tomar_clase',
+      });
+    }
+    items.push({
+      title: t('jugar.armar'),
+      body: t('jugar.armarBody'),
+      path: '/jugar/armar',
+      hubKey: 'armar_partido',
+    });
     return items;
-  }, [hayProfesores]);
+  }, [hayProfesores, t]);
 
   const opciones = useMemo(
     () =>
@@ -169,7 +166,7 @@ export default function Jugar() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="¡Vamos a jugar!" />
+      <AppHeader title={t('jugar.titulo')} />
       <main
         style={{
           flex: 1,

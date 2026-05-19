@@ -11,6 +11,7 @@ import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import ConfirmModal from '../components/ConfirmModal';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import {
@@ -60,6 +61,7 @@ import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import DeportesPreferidosLecturaChips from '../components/DeportesPreferidosLecturaChips';
+import { useTranslation } from 'react-i18next';
 import {
   normalizeDeportesPreferidosArray,
   hasDeportesPreferidosCargados,
@@ -266,6 +268,7 @@ function puedeMostrarComprobanteMp(r) {
 }
 
 export default function MiPerfil() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -1737,7 +1740,7 @@ export default function MiPerfil() {
   if (authLoading) {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-        <AppHeader title="Mi Perfil" />
+        <AppHeader title={t('perfil.titulo')} />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           Verificando sesión...
         </div>
@@ -1751,7 +1754,7 @@ export default function MiPerfil() {
       const goAuth = () => navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return (
         <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-          <AppHeader title="Mi Perfil" />
+          <AppHeader title={t('perfil.titulo')} />
           <div style={MI_PERFIL_CONTENT_WRAP}>
             {avisoPerfilTorneoMsg ? (
               <div
@@ -1852,7 +1855,7 @@ export default function MiPerfil() {
     };
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-        <AppHeader title="Mi Perfil" />
+        <AppHeader title={t('perfil.titulo')} />
         <div style={MI_PERFIL_CONTENT_WRAP}>
           {avisoPerfilTorneoMsg ? (
             <div
@@ -2417,7 +2420,7 @@ export default function MiPerfil() {
                   opacity: isSubmitting ? 0.65 : 1,
                 }}
               >
-                {isSubmitting ? 'Guardando...' : registroPasoDeportes === 0 ? 'Continuar' : torneoIdValido ? 'Guardar y volver al torneo' : 'Crear cuenta'}
+                {isSubmitting ? 'Guardando...' : registroPasoDeportes === 0 ? 'Continuar' : torneoIdValido ? 'Guardar y volver al torneo' : t('auth.registerTitle')}
               </button>
             </form>
           </div>
@@ -2430,7 +2433,7 @@ export default function MiPerfil() {
   if (loading) {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-        <AppHeader title="Mi Perfil" />
+        <AppHeader title={t('perfil.titulo')} />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           Cargando perfil...
         </div>
@@ -2480,7 +2483,7 @@ export default function MiPerfil() {
   return (
     <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
 
-      <AppHeader title="Mi Perfil" />
+      <AppHeader title={t('perfil.titulo')} />
 
     <div style={MI_PERFIL_CONTENT_WRAP}>
       {perfilFaltaCamposEsenciales && !ocultarUiJugadorPorAdmin ? (
@@ -2594,7 +2597,7 @@ export default function MiPerfil() {
         >
           <img
             src={fotoPreview || perfil?.foto_url || cuentaDeSesion?.foto || '/default-avatar.svg'}
-            alt="Perfil"
+            alt={t('nav.perfil')}
             style={{
               width: '100%',
               height: '100%',
@@ -4137,7 +4140,7 @@ export default function MiPerfil() {
                         disabled={cancelando === r.id}
                         style={{ fontSize: '11px', padding: '6px 10px', border: '1px solid #fca5a5', borderRadius: '6px', background: 'var(--bg-card)', color: '#dc2626', cursor: 'pointer', fontWeight: 600, opacity: cancelando === r.id ? 0.6 : 1 }}
                       >
-                        {cancelando === r.id ? 'Cancelando...' : 'Cancelar'}
+                        {cancelando === r.id ? 'Cancelando...' : t('general.cancel')}
                       </button>
                     ) : null}
                   </div>
@@ -4497,6 +4500,10 @@ export default function MiPerfil() {
 
       {session?.user ? (
         <div style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '8px 16px 4px', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('perfil.language')}</span>
+            <LanguageSwitcher />
+          </div>
           <button
             type="button"
             onClick={() => setModalConfirmarCerrarSesion(true)}
@@ -4514,16 +4521,16 @@ export default function MiPerfil() {
               textAlign: 'center',
             }}
           >
-            Cerrar sesión
+            {t('auth.cerrar_sesion')}
           </button>
         </div>
       ) : null}
 
       <ConfirmModal
         open={modalConfirmarCerrarSesion}
-        title="¿Quieres cerrar sesión?"
-        confirmLabel="Sí"
-        dismissLabel="Cancelar"
+        title={t('auth.logoutConfirm')}
+        confirmLabel={t('general.yes')}
+        dismissLabel={t('general.cancel')}
         onDismiss={() => setModalConfirmarCerrarSesion(false)}
         onConfirm={() => {
           setModalConfirmarCerrarSesion(false);

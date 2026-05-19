@@ -6,6 +6,7 @@ import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/h
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -13,18 +14,21 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
-const TIPO_ETIQUETA = {
-  partido_solicitud: 'Partido',
-  partido_solicitud_aceptada: 'Partido',
-  partido_solicitud_rechazada: 'Partido',
-  torneo_inscripcion_confirmada: 'Torneo',
-  resultado_partido: 'Torneo',
-  ranking_actualizado: 'Ranking',
-  reserva_confirmada: 'Reserva',
-  recordatorio_reserva: 'Reserva',
-  invitacion_torneo_dupla: 'Torneo',
-  general: 'Aviso',
-};
+function tipoEtiqueta(t, tipo) {
+  const map = {
+    partido_solicitud: t('notificaciones.tipo.partido'),
+    partido_solicitud_aceptada: t('notificaciones.tipo.partido'),
+    partido_solicitud_rechazada: t('notificaciones.tipo.partido'),
+    torneo_inscripcion_confirmada: t('notificaciones.tipo.torneo'),
+    resultado_partido: t('notificaciones.tipo.torneo'),
+    ranking_actualizado: t('ranking.titulo'),
+    reserva_confirmada: t('notificaciones.tipo.reserva'),
+    recordatorio_reserva: t('notificaciones.tipo.reserva'),
+    invitacion_torneo_dupla: t('notificaciones.tipo.torneo'),
+    general: t('notificaciones.tipo.aviso'),
+  };
+  return map[tipo] || t('notificaciones.tipo.aviso');
+}
 
 function fechaNotifLabel(value) {
   const d = new Date(value);
@@ -33,6 +37,7 @@ function fechaNotifLabel(value) {
 }
 
 export default function NotificacionesPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -127,7 +132,7 @@ export default function NotificacionesPage() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Notificaciones" />
+      <AppHeader title={t('nav.notificaciones')} />
       <main style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '16px 16px 24px', boxSizing: 'border-box' }}>
         {!session?.user ? (
           <section
@@ -231,7 +236,7 @@ export default function NotificacionesPage() {
                         marginBottom: 8,
                       }}
                     >
-                      {TIPO_ETIQUETA[n.tipo] || 'Aviso'}
+                      {tipoEtiqueta(t, n.tipo)}
                     </span>
                     <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 15, fontWeight: 700 }}>
                       {n.titulo}

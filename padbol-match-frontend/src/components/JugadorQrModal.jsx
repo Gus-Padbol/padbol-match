@@ -1,6 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { canUseNavigatorShare } from './ShareLinkButton';
+import { useTranslation } from 'react-i18next';
 
 function normalizedAlias(rawAlias) {
   return String(rawAlias || '').trim().replace(/^@+/, '');
@@ -60,6 +61,7 @@ export default function JugadorQrModal({
   categoria = '',
   sede = '',
 }) {
+  const { t } = useTranslation();
   const canvasRef = useRef(null);
   const aliasNorm = normalizedAlias(alias);
 
@@ -157,7 +159,7 @@ export default function JugadorQrModal({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Cerrar"
+          aria-label={t('general.close')}
           style={{
             position: 'absolute',
             top: '10px',

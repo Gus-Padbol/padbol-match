@@ -14,6 +14,7 @@ import {
 import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
+import { useTranslation } from 'react-i18next';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
 function TablerMicrophoneIcon({ size = 22 }) {
@@ -600,6 +601,7 @@ function QuickSuggestionBar({ items, disabled, onPick, isDark }) {
 }
 
 export default function ChatbotIA() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { navDock } = useHubNavLayout();

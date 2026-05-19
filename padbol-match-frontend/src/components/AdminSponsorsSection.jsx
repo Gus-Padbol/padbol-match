@@ -8,6 +8,7 @@ import {
   maxPorSedeSegunNombrePlan,
 } from '../utils/sponsorQuotaShared';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { useTranslation } from 'react-i18next';
 import {
   SPONSOR_FORMATO_OPTIONS,
   etiquetaFormatoSponsorRow,
@@ -111,6 +112,7 @@ const inputStyle = {
 };
 
 export default function AdminSponsorsSection({ isSuperAdmin = false }) {
+  const { t } = useTranslation();
   const { session } = useAuth();
   const [rows, setRows] = useState([]);
   const [sedesOpts, setSedesOpts] = useState([]);
@@ -892,7 +894,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                 cursor: saving || uploading ? 'not-allowed' : 'pointer',
               }}
             >
-              {saving ? 'Guardando…' : 'Guardar'}
+              {saving ? 'Guardando…' : t('general.save')}
             </button>
             {form.id != null && form.id !== '' ? (
               <button

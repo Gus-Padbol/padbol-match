@@ -15,7 +15,9 @@ import {
 } from '../constants/hubLayout';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import HubThemeSettingsButton from './HubThemeSettingsButton';
+import LanguageSwitcher from './LanguageSwitcher';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -141,6 +143,7 @@ export default function AppHeader({
   const rolEffectiveHeader = useMemo(() => {
     const cached = readCachedRolHeader();
     const fromJwt = (() => {
+  const { t } = useTranslation();
       const r = String(
         session?.user?.app_metadata?.role ?? session?.user?.user_metadata?.role ?? ''
       )
@@ -681,15 +684,15 @@ export default function AppHeader({
                     }
                   )}
                   {renderSearchResultsSection(
-                    'Torneos',
+                    t('torneos.titulo'),
                     searchResults.torneos,
-                    (t, i) => (
+                    (torneoRow, i) => (
                       <button
-                        key={`t-${i}-${t.id}`}
+                        key={`t-${i}-${torneoRow.id}`}
                         type="button"
                         onClick={() => {
                           closeSearchPanel();
-                          navigate(`/torneo/${t.id}`);
+                          navigate(`/torneo/${torneoRow.id}`);
                         }}
                         style={{
                           width: '100%',
@@ -704,7 +707,7 @@ export default function AppHeader({
                         }}
                       >
                         <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
-                          {t.nombre} · {t.sede_nombre || 'Sin sede'} · {String(t.fecha_inicio || '').slice(0, 10)} · {t.estado || '—'}
+                          {torneoRow.nombre} · {torneoRow.sede_nombre || 'Sin sede'} · {String(torneoRow.fecha_inicio || '').slice(0, 10)} · {torneoRow.estado || '—'}
                         </span>
                       </button>
                     ),
@@ -758,8 +761,8 @@ export default function AppHeader({
           setSearchOpen((v) => !v);
           if (searchOpen) setSearchTerm('');
         }}
-        aria-label="Buscar"
-        title="Buscar"
+        aria-label={t('general.search')}
+        title={t('general.search')}
         style={{
           width: LOGOUT_BTN_SIZE,
           height: LOGOUT_BTN_SIZE,
@@ -866,6 +869,7 @@ export default function AppHeader({
             flexShrink: 0,
           }}
         >
+          {session?.user ? <LanguageSwitcher compact /> : null}
           {session?.user ? <HubThemeSettingsButton compact barOnDark={theme === 'dark'} /> : null}
           {showLogoutAdminHeader && session?.user ? (
             <button
@@ -874,8 +878,8 @@ export default function AppHeader({
                 signOutAndClear();
                 navigate('/');
               }}
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
+              aria-label={t('auth.cerrar_sesion')}
+              title={t('auth.cerrar_sesion')}
               style={{
                 width: LOGOUT_BTN_SIZE,
                 height: LOGOUT_BTN_SIZE,

@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 /** Modal compacto: foto, nombre, @alias, categoría, sede, puntos; opción ir a perfil público. */
 export default function JugadorPreviewModal({ open, onClose, data }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -102,7 +104,7 @@ export default function JugadorPreviewModal({ open, onClose, data }) {
         {row('Categoría', data.categoria)}
         {row('Sede', data.sede)}
         {data.puntosTotal != null && Number.isFinite(data.puntosTotal) ? row('Puntos', String(data.puntosTotal)) : null}
-        {data.torneosCount != null && Number.isFinite(data.torneosCount) ? row('Torneos', String(data.torneosCount)) : null}
+        {data.torneosCount != null && Number.isFinite(data.torneosCount) ? row(t('torneos.titulo'), String(data.torneosCount)) : null}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
           {data.aliasSlug ? (

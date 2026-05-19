@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -9,19 +10,21 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
-/** Etiqueta corta según `tipo` guardado por el backend (ver `notificaciones_jugadores.sql`). */
-const TIPO_ETIQUETA = {
-  partido_solicitud: 'Partido',
-  partido_solicitud_aceptada: 'Partido',
-  partido_solicitud_rechazada: 'Partido',
-  torneo_inscripcion_confirmada: 'Torneo',
-  resultado_partido: 'Torneo',
-  ranking_actualizado: 'Ranking',
-  reserva_confirmada: 'Reserva',
-  recordatorio_reserva: 'Reserva',
-  invitacion_torneo_dupla: 'Torneo',
-  general: 'Aviso',
-};
+function tipoEtiquetaNotif(t, tipo) {
+  const map = {
+    partido_solicitud: t('notificaciones.tipo.partido'),
+    partido_solicitud_aceptada: t('notificaciones.tipo.partido'),
+    partido_solicitud_rechazada: t('notificaciones.tipo.partido'),
+    torneo_inscripcion_confirmada: t('notificaciones.tipo.torneo'),
+    resultado_partido: t('notificaciones.tipo.torneo'),
+    ranking_actualizado: t('ranking.titulo'),
+    reserva_confirmada: t('notificaciones.tipo.reserva'),
+    recordatorio_reserva: t('notificaciones.tipo.reserva'),
+    invitacion_torneo_dupla: t('notificaciones.tipo.torneo'),
+    general: t('notificaciones.tipo.aviso'),
+  };
+  return map[tipo] || t('notificaciones.tipo.aviso');
+}
 
 function fechaNotifLabel(value) {
   const d = new Date(value);
@@ -30,6 +33,7 @@ function fechaNotifLabel(value) {
 }
 
 export default function JugadorNotificationsBell({ compact = false, headerLight = false }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
@@ -148,7 +152,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
         type="button"
         onClick={handleToggle}
         aria-label={`Notificaciones: ${unreadCount} no leídas`}
-        title="Notificaciones"
+        title={t('nav.notificaciones')}
         style={{
           position: 'relative',
           width: compact ? 30 : 34,
@@ -195,7 +199,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
       {open ? (
         <div
           role="dialog"
-          aria-label="Notificaciones"
+          aria-label={t('nav.notificaciones')}
           style={{
             position: 'absolute',
             top: 'calc(100% + 9px)',
@@ -257,7 +261,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
                       marginBottom: 6,
                     }}
                   >
-                    {TIPO_ETIQUETA[n.tipo] || 'Aviso'}
+                    {tipoEtiquetaNotif(t, n.tipo)}
                   </span>
                   <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 13 }}>{n.titulo}</strong>
                   <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.4, marginTop: 4 }}>

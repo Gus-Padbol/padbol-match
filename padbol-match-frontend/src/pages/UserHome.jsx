@@ -28,6 +28,7 @@ import { pickHubDeporteRow, dedupeHubDeporteConfigRows, hubDeporteRowImagenUrl }
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Hub principal (cards + deporte + PWA…).
@@ -37,38 +38,6 @@ import './UserHome.css';
  */
 
 const HUB_COLUMN_MAX = 390;
-
-/** Cuatro acciones fijas del hub (orden fijo). `cmsPhotoIds`: ids en hub-config para foto opcional. */
-const HUB_FIXED_ACTIONS = [
-  {
-    key: 'reservar',
-    titulo: 'Reservar cancha',
-    subtitulo: 'Ya tengo equipo, quiero una cancha.',
-    to: '/reservar',
-    cmsPhotoIds: ['reservar'],
-  },
-  {
-    key: 'buscar_partido',
-    titulo: 'Buscar partido',
-    subtitulo: 'Quiero unirme a un partido que ya existe.',
-    to: '/jugar/buscar',
-    cmsPhotoIds: ['buscar_partido', 'partidos'],
-  },
-  {
-    key: 'torneos',
-    titulo: 'Torneos',
-    subtitulo: 'Torneos y rankings.',
-    to: '/competir',
-    cmsPhotoIds: ['torneos'],
-  },
-  {
-    key: 'armar_partido',
-    titulo: 'Armar partido',
-    subtitulo: 'Quiero crear un partido y sumar jugadores.',
-    to: '/jugar/armar',
-    cmsPhotoIds: ['armar_partido', 'jugar', 'armar-partido'],
-  },
-];
 
 const HUB_CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 const HUB_CARD_FALLBACK_BG = '#2d2d2d';
@@ -151,6 +120,7 @@ const hubPwaInstallButtonStyle = {
 };
 
 export default function UserHome() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -372,12 +342,46 @@ export default function UserHome() {
     });
   }, [hubInicioRows]);
 
+  const hubFixedActions = useMemo(
+    () => [
+      {
+        key: 'reservar',
+        titulo: t('jugar.reservar'),
+        subtitulo: t('hub.card.reservarSub'),
+        to: '/reservar',
+        cmsPhotoIds: ['reservar'],
+      },
+      {
+        key: 'buscar_partido',
+        titulo: t('jugar.buscar'),
+        subtitulo: t('jugar.buscarBody'),
+        to: '/jugar/buscar',
+        cmsPhotoIds: ['buscar_partido', 'partidos'],
+      },
+      {
+        key: 'torneos',
+        titulo: t('competir.torneosCard'),
+        subtitulo: t('hub.card.torneosSub'),
+        to: '/competir',
+        cmsPhotoIds: ['torneos'],
+      },
+      {
+        key: 'armar_partido',
+        titulo: t('jugar.armar'),
+        subtitulo: t('jugar.armarBody'),
+        to: '/jugar/armar',
+        cmsPhotoIds: ['armar_partido', 'jugar', 'armar-partido'],
+      },
+    ],
+    [t],
+  );
+
   const bigCards = useMemo(() => {
     const q = deporteQuery(deporteElegido);
     const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
     const depRows = Array.isArray(hubDeporteRows) ? hubDeporteRows : [];
     const hubDeporteOk = hubDeporteStatus === 'ok';
-    return HUB_FIXED_ACTIONS.map((slot) => {
+    return hubFixedActions.map((slot) => {
       const depRow = hubDeporteOk ? pickHubDeporteRow(depRows, deporteElegido, slot.key) : null;
       const depFoto = depRow && hubDeporteRowImagenUrl(depRow);
       const cmsUrl = pickHubCmsPhotoUrl(rows, slot.cmsPhotoIds);
@@ -396,7 +400,7 @@ export default function UserHome() {
         onClick: () => navigate(`${slot.to}${q}`),
       };
     });
-  }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido]);
+  }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido, hubFixedActions]);
 
   const scrollPaddingBottom = hubHubScrollPaddingBottomCss(navDock);
   const userHomeChromeSpacerH = useMemo(

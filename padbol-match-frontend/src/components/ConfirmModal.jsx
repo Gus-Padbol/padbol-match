@@ -1,17 +1,22 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function ConfirmModal({
   open,
   title,
   message,
-  confirmLabel = 'Confirmar',
-  dismissLabel = 'Cancelar',
+  confirmLabel,
+  dismissLabel,
   onConfirm,
   onDismiss,
   busy = false,
   confirmDanger = false,
   titleId = 'confirm-modal-title',
 }) {
+  const { t } = useTranslation();
+  const confirmText = confirmLabel ?? t('general.confirm');
+  const dismissText = dismissLabel ?? t('general.cancel');
+
   useEffect(() => {
     if (!open) return undefined;
     const prev = document.body.style.overflow;
@@ -92,7 +97,7 @@ export default function ConfirmModal({
               fontFamily: 'inherit',
             }}
           >
-            {dismissLabel}
+            {dismissText}
           </button>
           <button
             type="button"
@@ -111,7 +116,7 @@ export default function ConfirmModal({
               opacity: busy ? 0.7 : 1,
             }}
           >
-            {confirmLabel}
+            {confirmText}
           </button>
         </Wrapper>
       </Wrapper>

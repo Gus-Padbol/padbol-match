@@ -30,6 +30,7 @@ import {
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import { getDistanceKm } from '../utils/sedeCardUi';
 import { IconGeroFiltros, IconGeroUbicacion } from '../components/icons/GeroIcons';
+import { useTranslation } from 'react-i18next';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
@@ -112,6 +113,7 @@ function badgeEstadoTorneoListado(t) {
 }
 
 export default function TorneosPublicos() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -682,7 +684,7 @@ export default function TorneosPublicos() {
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
     >
-      <AppHeader title="Torneos" onBack={handleTorneosAppBack} />
+      <AppHeader title={t('torneos.titulo')} onBack={handleTorneosAppBack} />
 
       <div
         style={{

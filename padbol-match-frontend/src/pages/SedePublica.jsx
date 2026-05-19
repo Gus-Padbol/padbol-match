@@ -26,6 +26,7 @@ import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { getDisplayName } from '../utils/displayName';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
+import { useTranslation } from 'react-i18next';
 import {
   esInscripcionAbiertaTorneo,
   esProximoTorneo,
@@ -1370,7 +1371,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                   fontSize: '20px',
                   lineHeight: 1,
                 }}
-                aria-label="Cerrar"
+                aria-label={t('general.close')}
               >
                 ×
               </button>
@@ -1474,7 +1475,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                   lineHeight: 1,
                   flexShrink: 0,
                 }}
-                aria-label="Cerrar"
+                aria-label={t('general.close')}
               >
                 ×
               </button>
@@ -1582,6 +1583,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
 
 /** Perfil público de sede: ruta `/sede/:sedeId` en App.js → solo este componente (no hay SedeVista / SedePerfil). */
 export default function SedePublica() {
+  const { t } = useTranslation();
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();

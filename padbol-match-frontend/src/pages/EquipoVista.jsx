@@ -55,6 +55,7 @@ import {
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
+import { useTranslation } from 'react-i18next';
 
 const API_BACKEND_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -279,6 +280,7 @@ function getRequests(eq) {
 }
 
 export default function EquipoVista() {
+  const { t } = useTranslation();
   const { id, equipoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -2486,7 +2488,7 @@ export default function EquipoVista() {
                     opacity: savingEliminarJugador ? 0.7 : 1,
                   }}
                 >
-                  {savingEliminarJugador ? 'Eliminando…' : 'Confirmar'}
+                  {savingEliminarJugador ? 'Eliminando…' : t('general.confirm')}
                 </button>
               </div>
             </div>

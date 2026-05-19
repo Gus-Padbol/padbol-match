@@ -4,6 +4,7 @@ import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
+import { useTranslation } from 'react-i18next';
 import {
   dedupeHubDeporteConfigRows,
   hubDeporteRowImagenUrl,
@@ -40,14 +41,6 @@ const inputStyle = {
   marginBottom: '10px',
 };
 
-/** Cards del hub alineadas con {@link HUB_FIXED_ACTIONS} en UserHome.jsx */
-const HUB_DEPORTE_CARDS = [
-  { key: 'reservar', label: 'Reservar cancha' },
-  { key: 'buscar_partido', label: 'Buscar partido' },
-  { key: 'torneos', label: 'Torneos' },
-  { key: 'armar_partido', label: 'Armar partido' },
-];
-
 function draftKeyDeporte(deporte, cardKey) {
   return `${String(deporte || '').trim().toLowerCase()}|${String(cardKey || '').trim()}`;
 }
@@ -70,6 +63,16 @@ function hubEditorNoticeStyle(text) {
 }
 
 export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken }) {
+  const { t } = useTranslation();
+  const hubDeporteCards = useMemo(
+    () => [
+      { key: 'reservar', label: t('jugar.reservar') },
+      { key: 'buscar_partido', label: t('jugar.buscar') },
+      { key: 'torneos', label: t('torneos.titulo') },
+      { key: 'armar_partido', label: t('jugar.armar') },
+    ],
+    [t],
+  );
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
@@ -686,7 +689,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       {deporteLoading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Cargando configuración por deporte…</p>
       ) : (
-        HUB_DEPORTE_CARDS.map(({ key: cardKey, label }) => {
+        hubDeporteCards.map(({ key: cardKey, label }) => {
           const dk = draftKeyDeporte(sportSel, cardKey);
           const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
           const row = rowDeporteActual(cardKey);
@@ -886,7 +889,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
                 cursor: savingId === id || !accessToken ? 'not-allowed' : 'pointer',
               }}
             >
-              {savingId === id ? 'Guardando…' : 'Guardar'}
+              {savingId === id ? 'Guardando…' : t('general.save')}
             </button>
           </div>
         );

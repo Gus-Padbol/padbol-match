@@ -49,6 +49,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -558,6 +559,7 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
 }
 
 export default function ReservaForm() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -1785,7 +1787,7 @@ export default function ReservaForm() {
           overflowX: 'hidden',
         }}
       >
-        <AppHeader title="Reservar" onBack={handleReservaBack} />
+        <AppHeader title={t('reservas.header')} onBack={handleReservaBack} />
         <div
           style={{
             ...hubInstagramColumnWrapStyle,
@@ -1925,7 +1927,7 @@ export default function ReservaForm() {
         boxSizing: 'border-box',
         minHeight: '100dvh',
       }}>
-        <AppHeader title="Reservar" onBack={handleReservaBack} />
+        <AppHeader title={t('reservas.header')} onBack={handleReservaBack} />
         <div
           style={{
             ...hubInstagramColumnWrapStyle,
@@ -2174,7 +2176,7 @@ export default function ReservaForm() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Reservar" onBack={handleReservaBack} reservaCheckoutMinimal />
+        <AppHeader title={t('reservas.header')} onBack={handleReservaBack} reservaCheckoutMinimal />
         <div
           style={{
             ...hubInstagramColumnWrapStyle,

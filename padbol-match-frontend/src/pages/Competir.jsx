@@ -4,23 +4,10 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
-
-const opciones = [
-  {
-    title: 'Torneos',
-    body: 'Inscríbete, arma un equipo y sigue el fixture.',
-    icon: '🏆',
-    path: '/torneos',
-  },
-  {
-    title: 'Rankings',
-    body: 'Puntos, posiciones y estadísticas.',
-    icon: '📊',
-    path: '/rankings',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function Competir() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -29,6 +16,24 @@ export default function Competir() {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
     return d ? `?deporte=${encodeURIComponent(d)}` : '';
   }, [searchParams]);
+
+  const opciones = useMemo(
+    () => [
+      {
+        title: t('competir.torneosCard'),
+        body: t('competir.torneosCardBody'),
+        icon: '🏆',
+        path: '/torneos',
+      },
+      {
+        title: t('competir.rankingsCard'),
+        body: t('competir.rankingsCardBody'),
+        icon: '📊',
+        path: '/rankings',
+      },
+    ],
+    [t],
+  );
 
   return (
     <div
@@ -40,18 +45,18 @@ export default function Competir() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Competir" />
+      <AppHeader title={t('nav.competir')} />
       <main style={{ width: '100%', maxWidth: 460, margin: '0 auto', padding: '20px 16px', boxSizing: 'border-box' }}>
         <h1 style={{ color: 'var(--text-primary)', margin: '0 0 8px', fontSize: 26, lineHeight: 1.1, fontWeight: 700 }}>
-          ¿Cómo quieres competir?
+          {t('competir.howTitle')}
         </h1>
         <p style={{ color: 'var(--text-secondary)', margin: '0 0 20px', fontSize: 15, lineHeight: 1.5, fontWeight: 400 }}>
-          Torneos oficiales o consulta el ranking de jugadores.
+          {t('competir.howSubtitle')}
         </p>
         <div style={{ display: 'grid', gap: 14 }}>
           {opciones.map((op) => (
             <button
-              key={op.title}
+              key={op.path}
               type="button"
               onClick={() => navigate(`${op.path}${deporteQ}`)}
               style={{

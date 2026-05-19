@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ConfirmModal from './ConfirmModal';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Mi Sede — extras del tercer tiempo (admin club: CRUD sin aprobación; super puede aprobar en fila).
  */
 export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId, monedaSede = 'ARS', isSuperAdmin }) {
+  const { t } = useTranslation();
   const [extras, setExtras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
@@ -462,7 +464,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         title="¿Eliminar este producto?"
         message="Esta acción no se puede deshacer."
         confirmLabel="Eliminar"
-        dismissLabel="Cancelar"
+        dismissLabel={t('general.cancel')}
         confirmDanger
         busy={Boolean(savingId)}
         onDismiss={() => setDeleteTarget(null)}

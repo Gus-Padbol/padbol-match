@@ -91,6 +91,7 @@ import { preciosDuracionToApiPatch, parsePrecioDuracionField } from '../utils/se
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useTranslation } from 'react-i18next';
 
 const STRIPE_PUBLISHABLE_ADMIN =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -1778,6 +1779,7 @@ function inviteAdminTipoToRol(tipo) {
 }
 
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
+  const { t } = useTranslation();
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
   const location = useLocation();
@@ -2836,7 +2838,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               ticket_promedio: Math.round(Number(dashboardFinanciero.ticketPromedio) || 0),
             },
           ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenRows), 'Resumen');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenRows), t('nav.admin.resumen'));
 
       const reservasRows = dashboardFinanciero.reservasDetalle.map((r) => ({
         fecha: String(r?.fecha || '').slice(0, 10),
@@ -2847,7 +2849,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         moneda: r?.moneda_calc || 'ARS',
         estado: r?.estado || '',
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reservasRows), 'Reservas');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reservasRows), t('nav.admin.reservas'));
 
       const torneosRows = dashboardFinanciero.torneosDetalle.map((t) => ({
         nombre: t.nombre,
@@ -2857,7 +2859,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         moneda: t.moneda || 'ARS',
         estado: t.estado || '',
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(torneosRows), 'Torneos');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(torneosRows), t('torneos.titulo'));
 
       const nombre = `financiero_${periodoNombre}_${String(finanzasAnclaISO || '').slice(0, 10) || 'reporte'}.xlsx`;
       XLSX.writeFile(wb, nombre);
@@ -5664,8 +5666,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ]
     : esAdminNacional
     ? [
-        { id: 'resumen', label: 'Resumen' },
-        { id: 'torneos', label: 'Torneos' },
+        { id: 'resumen', label: t('nav.admin.resumen') },
+        { id: 'torneos', label: t('torneos.titulo') },
         { id: 'sedes', label: 'Sedes' },
         { id: 'jugadores', label: 'Jugadores' },
       ]
@@ -5813,7 +5815,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             {notificacionesOpen ? (
               <div
                 role="dialog"
-                aria-label="Notificaciones"
+                aria-label={t('nav.notificaciones')}
                 style={{
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
@@ -7941,7 +7943,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   cursor: 'pointer',
                 }}
               >
-                {reservaManualOpen ? 'Cerrar' : 'Nueva reserva manual'}
+                {reservaManualOpen ? t('general.close') : 'Nueva reserva manual'}
               </button>
 
               {reservaManualOpen ? (
@@ -8419,7 +8421,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               Ciudad
                             </th>
                             <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
-                              {sortHeaderBtn('reservas', 'Reservas')}
+                              {sortHeaderBtn('reservas', t('nav.admin.reservas'))}
                             </th>
                             <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
                               {sortHeaderBtn('ingresos', 'Ingresos')}
@@ -9526,7 +9528,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                   cursor: planPricingSavingId === p.id ? 'not-allowed' : 'pointer',
                                 }}
                               >
-                                {planPricingSavingId === p.id ? '…' : 'Guardar'}
+                                {planPricingSavingId === p.id ? '…' : t('general.save')}
                               </button>
                               <button
                                 type="button"
@@ -10807,7 +10809,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       cursor: canchaApiBusy ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {canchaApiBusy ? 'Guardando…' : 'Guardar'}
+                    {canchaApiBusy ? 'Guardando…' : t('general.save')}
                   </button>
                 </div>
               </div>
@@ -11365,7 +11367,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               cursor: miSedeDuracionGuardandoId === row.id ? 'not-allowed' : 'pointer',
                             }}
                           >
-                            {miSedeDuracionGuardandoId === row.id ? 'Guardando…' : 'Guardar'}
+                            {miSedeDuracionGuardandoId === row.id ? 'Guardando…' : t('general.save')}
                           </button>
                         </div>
                       </div>

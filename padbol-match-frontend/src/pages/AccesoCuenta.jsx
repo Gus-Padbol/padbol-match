@@ -33,6 +33,7 @@ import {
   buildFullWhatsDigits,
 } from '../utils/authIdentidad';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
+import { useTranslation } from 'react-i18next';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -139,6 +140,7 @@ function accesoRegFieldStyle(mb = '14px') {
 }
 
 export default function AccesoCuenta() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const navigationType = useNavigationType();
@@ -515,7 +517,7 @@ export default function AccesoCuenta() {
             textAlign: 'center',
           }}
         >
-          {modo === 'login' ? 'Iniciar Sesión' : 'Crear cuenta'}
+          {modo === 'login' ? 'Iniciar Sesión' : t('auth.registerTitle')}
         </h2>
 
         <div style={{ marginBottom: '18px' }}>
@@ -1172,7 +1174,7 @@ export default function AccesoCuenta() {
                 opacity: busy ? 0.7 : 1,
               }}
             >
-              {busy ? 'Creando cuenta…' : 'Crear cuenta'}
+              {busy ? 'Creando cuenta…' : t('auth.registerTitle')}
             </button>
           </form>
         )}

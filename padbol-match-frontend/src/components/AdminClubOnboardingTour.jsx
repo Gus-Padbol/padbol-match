@@ -1,53 +1,56 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import './AdminClubOnboardingTour.css';
+import { useTranslation } from 'react-i18next';
 
 /** Coincide con lo pedido: no volver a mostrar el tour si ya se completó o saltó. */
 export const ADMIN_CLUB_ONBOARDING_LS_KEY = 'onboarding_completado';
 
-const STEPS = [
-  {
-    id: 'welcome',
-    tab: null,
-    scrollToId: null,
-    title: 'Bienvenido',
-    body: 'Bienvenido a tu panel de administración. Te guiamos en los primeros pasos.',
-  },
-  {
-    id: 'mi_sede',
-    tab: 'mi_sede',
-    scrollToId: null,
-    title: 'Mi Sede',
-    body: 'Aquí configuras los datos de tu club, canchas y horarios.',
-  },
-  {
-    id: 'reservas',
-    tab: 'reservas',
-    scrollToId: null,
-    title: 'Reservas',
-    body: 'Aquí ves y gestionas todas las reservas de tus canchas.',
-  },
-  {
-    id: 'torneos',
-    tab: 'torneos',
-    scrollToId: null,
-    title: 'Torneos',
-    body: 'Aquí creas y administras torneos para tu comunidad.',
-  },
-  {
-    id: 'pagos',
-    tab: 'mi_sede',
-    scrollToId: 'admin-mi-sede-pagos',
-    title: 'Configuración de pagos',
-    body: 'Conecta tu cuenta de Mercado Pago o Stripe para recibir pagos.',
-  },
-  {
-    id: 'listo',
-    tab: null,
-    scrollToId: null,
-    title: '¡Listo!',
-    body: '¡Tu panel está listo! Cualquier duda, contacta a soporte.',
-  },
-];
+function buildOnboardingSteps(t) {
+  return [
+    {
+      id: 'welcome',
+      tab: null,
+      scrollToId: null,
+      title: t('admin.onboarding.welcomeTitle'),
+      body: t('admin.onboarding.welcomeBody'),
+    },
+    {
+      id: 'mi_sede',
+      tab: 'mi_sede',
+      scrollToId: null,
+      title: t('nav.admin.mi_sede'),
+      body: t('admin.onboarding.miSedeBody'),
+    },
+    {
+      id: 'reservas',
+      tab: 'reservas',
+      scrollToId: null,
+      title: t('nav.admin.reservas'),
+      body: t('admin.onboarding.reservasBody'),
+    },
+    {
+      id: 'torneos',
+      tab: 'torneos',
+      scrollToId: null,
+      title: t('torneos.titulo'),
+      body: t('admin.onboarding.torneosBody'),
+    },
+    {
+      id: 'pagos',
+      tab: 'mi_sede',
+      scrollToId: 'admin-mi-sede-pagos',
+      title: t('admin.onboarding.pagosTitle'),
+      body: t('admin.onboarding.pagosBody'),
+    },
+    {
+      id: 'listo',
+      tab: null,
+      scrollToId: null,
+      title: t('general.success'),
+      body: t('admin.onboarding.doneBody'),
+    },
+  ];
+}
 
 export function readOnboardingDone() {
   try {
@@ -75,10 +78,12 @@ export function markAdminClubOnboardingCompletado() {
  * @param {boolean} p.puedeVerMiSede — si no puede ver Mi Sede, se omiten pasos que la requieren.
  */
 export default function AdminClubOnboardingTour({ open, onClose, applyTab, tabsStripRef, puedeVerMiSede }) {
+  const { t } = useTranslation();
   const steps = useMemo(() => {
-    if (puedeVerMiSede) return STEPS;
-    return STEPS.filter((s) => s.tab !== 'mi_sede' && s.scrollToId !== 'admin-mi-sede-pagos');
-  }, [puedeVerMiSede]);
+    const all = buildOnboardingSteps(t);
+    if (puedeVerMiSede) return all;
+    return all.filter((s) => s.tab !== 'mi_sede' && s.scrollToId !== 'admin-mi-sede-pagos');
+  }, [puedeVerMiSede, t]);
 
   const [stepIndex, setStepIndex] = useState(0);
   const [spotlight, setSpotlight] = useState(null);
