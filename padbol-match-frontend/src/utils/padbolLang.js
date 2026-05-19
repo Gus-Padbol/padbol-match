@@ -7,7 +7,13 @@ export function normalizePadbolLang(code) {
   const s = String(code || '').trim().toLowerCase();
   if (isPadbolLanguageCode(s)) return s;
   if (s.startsWith('en')) return 'en';
-  return PADBOL_LANGUAGE_CODES[0] || 'es';
+  if (s.startsWith('es')) return 'es';
+  if (s.startsWith('it')) return 'it';
+  if (s.startsWith('ro')) return 'ro';
+  if (s.startsWith('de')) return 'de';
+  if (s.startsWith('fr')) return 'fr';
+  if (s.startsWith('pt')) return 'pt';
+  return PADBOL_LANGUAGE_CODES[0] || 'en';
 }
 
 /** true si el usuario ya eligió idioma (guardado en localStorage). */

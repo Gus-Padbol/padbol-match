@@ -2,6 +2,11 @@ import { useCallback } from 'react';
 import { useTranslation as useTranslationBase } from 'react-i18next';
 import es from './locales/es.json';
 import en from './locales/en.json';
+import it from './locales/it.json';
+import ro from './locales/ro.json';
+import de from './locales/de.json';
+import fr from './locales/fr.json';
+import pt from './locales/pt.json';
 import { normalizePadbolLang } from '../utils/padbolLang';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
 
@@ -21,9 +26,25 @@ function flattenLocale(obj, prefix = '') {
 /** Textos de respaldo por idioma (si falta clave o i18n aún no resolvió). */
 export const ES_FALLBACKS = flattenLocale(es);
 export const EN_FALLBACKS = flattenLocale(en);
+export const IT_FALLBACKS = flattenLocale(it);
+export const RO_FALLBACKS = flattenLocale(ro);
+export const DE_FALLBACKS = flattenLocale(de);
+export const FR_FALLBACKS = flattenLocale(fr);
+export const PT_FALLBACKS = flattenLocale(pt);
+
+const FALLBACKS_BY_LANG = {
+  es: ES_FALLBACKS,
+  en: EN_FALLBACKS,
+  it: IT_FALLBACKS,
+  ro: RO_FALLBACKS,
+  de: DE_FALLBACKS,
+  fr: FR_FALLBACKS,
+  pt: PT_FALLBACKS,
+};
 
 export function getLocaleFallbacks(lang) {
-  return normalizePadbolLang(lang) === 'en' ? EN_FALLBACKS : ES_FALLBACKS;
+  const code = normalizePadbolLang(lang);
+  return FALLBACKS_BY_LANG[code] || EN_FALLBACKS;
 }
 
 /**

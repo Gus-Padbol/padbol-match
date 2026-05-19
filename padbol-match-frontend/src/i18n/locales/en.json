@@ -580,11 +580,16 @@
       "revokeRole": "Could not revoke role",
       "loadTeams": "Could not load teams",
       "deleteTournament": "Error deleting:",
-      "genericError": "Error:"
+      "genericError": "Error:",
+      "createError": "Error creating",
+      "statusChangeFailed": "Could not change status"
     },
     "torneosSection": {
       "createdTitle": "Created tournaments",
-      "filterEstado": "Tournament status"
+      "filterEstado": "Tournament status",
+      "manualGroupDrawTitle": "Manual group draw",
+      "editTournament": "Edit tournament",
+      "deleteTournament": "Delete tournament"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 pending request",
@@ -655,7 +660,8 @@
       "deleteProduct": "Delete this product?",
       "cannotUndo": "This action cannot be undone.",
       "approveVenue": "Approve venue",
-      "reject": "Reject"
+      "reject": "Reject",
+      "rejectReasonPrompt": "Rejection reason (required):"
     },
     "formularios": {
       "completeExtraName": "Enter the extra name.",
@@ -759,7 +765,13 @@
       "editBtn": "Edit",
       "deleteBtn": "Delete",
       "categoriaDeEdad": "Age category",
-      "cuposMaxEquipos": "Max team slots"
+      "cuposMaxEquipos": "Max team slots",
+      "nameRequired": "Name is required.",
+      "magicLinkAccess": "Access magic link",
+      "inviteNewAdminTitle": "✉️ Invite new admin",
+      "nationalAdminRole": "🌍 National admin",
+      "saveOk": "✅ Save",
+      "saveDisk": "💾 Save"
     },
     "sponsors": {
       "quotaConfigTitle": "Quota settings",
@@ -957,7 +969,46 @@
       "durationsPricesTable": "Durations and prices (table)",
       "changeSubscriptionStatus": "Change status (super admin)",
       "venueDataConfigHint": "Venue data: if you have the «My Venue» tab, use «Edit venue» for name, location, contact, prices and payment method. Changes are saved via API and appear on the public profile. In the same tab, «My Courts» lets you add courts and activate or deactivate them; inactive courts are not offered in public booking.",
-      "pricesByDurationCurrency": "Prices by duration ({{currency}})"
+      "pricesByDurationCurrency": "Prices by duration ({{currency}})",
+      "carouselMaxFour": "You already have 4 photos in the carousel. Remove one to add another.",
+      "noVenuesNationalScope": "No venues match your national scope.",
+      "clubNameLabel": "Club name",
+      "clubWhatsappLabel": "Club WhatsApp",
+      "contactEmailLabel": "Contact email",
+      "addCourt": "Add court",
+      "editCourt": "Edit court",
+      "heroBorderColorLabel": "Border / trim color",
+      "yourClub": "Your club",
+      "phoneExamplePh": "E.g. 2213032019",
+      "phoneNoLeadingZero": "No leading 0 or 15",
+      "notConfiguredWarn": "Not configured ⚠️",
+      "clubLogoLabel": "Club logo",
+      "logoBackgroundColor": "Logo background color",
+      "safariOnePhotoHint": "Recommended on iPhone Safari: one photo at a time",
+      "removeFromCarousel": "Remove from carousel",
+      "featureInCarousel": "Feature in carousel",
+      "deletePhoto": "Delete photo",
+      "inviteRegionRoleHint": "Only assigns role with province or city scope (does not create a venue).",
+      "cropClubLogo": "Crop club logo",
+      "confirmCrop": "Confirm crop",
+      "requestsTitle": "📝 Requests",
+      "clubStoryLabel": "Story / About the club",
+      "paymentMercadoPago": "Mercado Pago",
+      "paymentCashVenue": "Cash at venue",
+      "manualPaymentInstructions": "Manual payment instructions",
+      "padbolLicenseTitle": "🔐 PADBOL license",
+      "licenseGrantDate": "Grant date",
+      "licenseSuspended": "❌ Suspended",
+      "heroColorsTitle": "Hero colors",
+      "currencyArs": "ARS — Argentine peso",
+      "currencyClp": "CLP — Chilean peso",
+      "currencyUyu": "UYU — Uruguayan peso",
+      "socialNetworksTitle": "📱 Social networks",
+      "myCourtsTitle": "⚽ My courts",
+      "cropLogoShort": "Crop logo",
+      "uploadingOneOfOne": "Uploading 1 of 1...",
+      "uploadingNPhotos": "Uploading {{count}} photos...",
+      "myVenueSectionsAria": "My Venue sections"
     },
     "reservasLabel": "Bookings",
     "reservas": {
@@ -981,7 +1032,23 @@
       "noWhatsappNumber": "No WhatsApp number",
       "inPersonPaymentConfirmed": "✅ In-person payment confirmed",
       "cancelBookingTitle": "Cancel this booking?",
-      "dismissToPanel": "Back to panel"
+      "dismissToPanel": "Back to panel",
+      "bookingStatusLabel": "Booking status",
+      "selectVenue": "Select venue",
+      "noActiveCourts": "No active courts",
+      "selectCourt": "Select court",
+      "chooseCourtAndDate": "Choose court and date",
+      "noSlotsAvailable": "No time slots available",
+      "selectTimeSlot": "Select time slot",
+      "createBookingBtn": "Create booking",
+      "noVenue": "No venue",
+      "badgeManualPaymentPending": "🟡 Manual payment pending",
+      "badgeVenuePaymentPending": "💵 Venue payment pending",
+      "badgeCompleted": "✅ Completed",
+      "badgeConfirmed": "🟢 Confirmed",
+      "courtNumberPrefix": "Court ",
+      "optionManualPaymentPending": "Manual payment pending",
+      "optionManualPaymentPendingEmoji": "🟡 Manual payment pending"
     },
     "metricas": {
       "processing": "Processing…",
@@ -1046,14 +1113,29 @@
       "statusReserved": "Reserved",
       "countryScopePrefix": " · Country: {{country}}",
       "cargando": "Loading...",
-      "totalLabel": "Total:"
+      "totalLabel": "Total:",
+      "uploadingEllipsis": "Uploading…",
+      "financialTitle": "💰 Financial",
+      "pointsDistributionByPosition": "Points distribution by position",
+      "savingDots": "Saving...",
+      "oneVenue": "1 venue",
+      "venuesCount": "venues",
+      "noPlansSqlPrefix": "No plans. Run the SQL",
+      "noPlansSqlSuffix": " in Supabase."
     },
     "common": {
       "loadingEllipsis": "Loading…",
       "responsible": "Responsible",
       "interestType": "Interest type",
       "licenseeCountry": "Licensee country",
-      "recommendedPhotoHint": "💡 Recommended: transparent PNG, min. 300×300 px"
+      "recommendedPhotoHint": "💡 Recommended: transparent PNG, min. 300×300 px",
+      "countryColon": "Country:",
+      "addressColon": "Address:",
+      "cityColon": "City:",
+      "responsibleColon": "Responsible:",
+      "emailColon": "Email:",
+      "interestTypeColon": "Interest type:",
+      "licenseeCountryColon": "Licensee country:"
     },
     "franjas": {
       "weekdays": "Days of the week",
@@ -1070,7 +1152,13 @@
       "slotNamePh": "E.g. Morning, Afternoon, Evening",
       "applicationLabel": "Application",
       "completeSlotFields": "⚠️ Complete times and at least one day or date per slot",
-      "slotsSaved": "✅ Time slots saved"
+      "slotsSaved": "✅ Time slots saved",
+      "deleteSlot": "Delete slot",
+      "slotsAndPricesTitle": "Time slots and prices"
+    },
+    "roles": {
+      "invitePendingSignup": "Invited — pending signup",
+      "editorScopeLabel": "Player hub (cards)"
     }
   },
   "pago": {

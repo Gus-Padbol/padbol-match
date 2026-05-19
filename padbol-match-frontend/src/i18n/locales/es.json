@@ -580,11 +580,16 @@
       "revokeRole": "No se pudo revocar el rol",
       "loadTeams": "No se pudieron cargar los equipos",
       "deleteTournament": "Error al eliminar:",
-      "genericError": "Error:"
+      "genericError": "Error:",
+      "createError": "Error al crear",
+      "statusChangeFailed": "No se pudo cambiar el estado"
     },
     "torneosSection": {
       "createdTitle": "Torneos creados",
-      "filterEstado": "Estado del torneo"
+      "filterEstado": "Estado del torneo",
+      "manualGroupDrawTitle": "Sorteo manual de grupos",
+      "editTournament": "Editar torneo",
+      "deleteTournament": "Eliminar torneo"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 solicitud pendiente",
@@ -655,7 +660,8 @@
       "deleteProduct": "¿Eliminar este producto?",
       "cannotUndo": "Esta acción no se puede deshacer.",
       "approveVenue": "Aprobar sede",
-      "reject": "Rechazar"
+      "reject": "Rechazar",
+      "rejectReasonPrompt": "Motivo del rechazo (obligatorio):"
     },
     "formularios": {
       "completeExtraName": "Completá el nombre del extra.",
@@ -759,7 +765,13 @@
       "editBtn": "Editar",
       "deleteBtn": "Eliminar",
       "categoriaDeEdad": "Categoría de edad",
-      "cuposMaxEquipos": "Cupos máx. equipos"
+      "cuposMaxEquipos": "Cupos máx. equipos",
+      "nameRequired": "El nombre es obligatorio.",
+      "magicLinkAccess": "Magic link de acceso",
+      "inviteNewAdminTitle": "✉️ Invitar nuevo admin",
+      "nationalAdminRole": "🌍 Admin Nacional",
+      "saveOk": "✅ Guardar",
+      "saveDisk": "💾 Guardar"
     },
     "sponsors": {
       "quotaConfigTitle": "Configuración de cupos",
@@ -957,7 +969,46 @@
       "durationsPricesTable": "Duraciones y precios (tabla)",
       "changeSubscriptionStatus": "Cambiar estado (super admin)",
       "venueDataConfigHint": "Datos de la sede: si tienes la pestaña «Mi Sede», usa el botón «Editar sede» para nombre, ubicación, contacto, precios y método de pago. Los cambios se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección «Mis Canchas» permite dar de alta canchas, activarlas o desactivarlas; las inactivas no se ofrecen en el flujo de reservas público.",
-      "pricesByDurationCurrency": "Precios por duración ({{currency}})"
+      "pricesByDurationCurrency": "Precios por duración ({{currency}})",
+      "carouselMaxFour": "Ya tienes 4 fotos en el carrusel. Quita una para agregar otra",
+      "noVenuesNationalScope": "No hay sedes que coincidan con tu alcance nacional.",
+      "clubNameLabel": "Nombre del club",
+      "clubWhatsappLabel": "WhatsApp del club",
+      "contactEmailLabel": "Email de contacto",
+      "addCourt": "Agregar cancha",
+      "editCourt": "Editar cancha",
+      "heroBorderColorLabel": "Color del borde / filete",
+      "yourClub": "Tu club",
+      "phoneExamplePh": "Ej: 2213032019",
+      "phoneNoLeadingZero": "Sin 0 adelante, sin 15",
+      "notConfiguredWarn": "Sin configurar ⚠️",
+      "clubLogoLabel": "Logo del club",
+      "logoBackgroundColor": "Color de fondo del logo",
+      "safariOnePhotoHint": "Recomendado en Safari iPhone: una foto por vez",
+      "removeFromCarousel": "Quitar del carrusel",
+      "featureInCarousel": "Destacar en carrusel",
+      "deletePhoto": "Eliminar foto",
+      "inviteRegionRoleHint": "Solo se asigna el rol con alcance provincia o ciudad (no crea sede).",
+      "cropClubLogo": "Recortar logo del club",
+      "confirmCrop": "Confirmar recorte",
+      "requestsTitle": "📝 Solicitudes",
+      "clubStoryLabel": "Historia / Sobre el club",
+      "paymentMercadoPago": "Mercado Pago",
+      "paymentCashVenue": "Efectivo en sede",
+      "manualPaymentInstructions": "Instrucciones de pago manual",
+      "padbolLicenseTitle": "🔐 Licencia PADBOL",
+      "licenseGrantDate": "Fecha de otorgamiento",
+      "licenseSuspended": "❌ Suspendida",
+      "heroColorsTitle": "Colores del hero",
+      "currencyArs": "ARS — Peso argentino",
+      "currencyClp": "CLP — Peso chileno",
+      "currencyUyu": "UYU — Peso uruguayo",
+      "socialNetworksTitle": "📱 Redes Sociales",
+      "myCourtsTitle": "⚽ Mis Canchas",
+      "cropLogoShort": "Recortar logo",
+      "uploadingOneOfOne": "Subiendo 1 de 1...",
+      "uploadingNPhotos": "Subiendo {{count}} fotos...",
+      "myVenueSectionsAria": "Secciones Mi Sede"
     },
     "reservasLabel": "Reservas",
     "reservas": {
@@ -981,7 +1032,23 @@
       "noWhatsappNumber": "Sin número para WhatsApp",
       "inPersonPaymentConfirmed": "✅ Cobro presencial / pago confirmado",
       "cancelBookingTitle": "¿Cancelar esta reserva?",
-      "dismissToPanel": "Volver al panel"
+      "dismissToPanel": "Volver al panel",
+      "bookingStatusLabel": "Estado de la reserva",
+      "selectVenue": "Selecciona sede",
+      "noActiveCourts": "Sin canchas activas",
+      "selectCourt": "Selecciona cancha",
+      "chooseCourtAndDate": "Elige cancha y fecha",
+      "noSlotsAvailable": "Sin horarios disponibles",
+      "selectTimeSlot": "Selecciona horario",
+      "createBookingBtn": "Crear reserva",
+      "noVenue": "Sin sede",
+      "badgeManualPaymentPending": "🟡 Pago manual pendiente",
+      "badgeVenuePaymentPending": "💵 Cobro en sede pendiente",
+      "badgeCompleted": "✅ Completada",
+      "badgeConfirmed": "🟢 Confirmada",
+      "courtNumberPrefix": "Cancha ",
+      "optionManualPaymentPending": "Pendiente pago manual",
+      "optionManualPaymentPendingEmoji": "Pendiente pago manual"
     },
     "metricas": {
       "processing": "Procesando…",
@@ -1012,7 +1079,7 @@
       "exceedsBy": "⚠ Excede por {{pct}}%",
       "missingBy": "Faltan {{pct}}%",
       "totalPct": "Total: {{pct}}%",
-      "noPlansSqlHint": "No hay planes. Ejecuta el SQL",
+      "noPlansSqlHint": "No hay planes. Ejecuta el SQL plan_pricing.sql en Supabase.",
       "noRequestsFilter": "No hay solicitudes con este filtro.",
       "noDataFilters": "Sin datos para estos filtros.",
       "noStateChanges": "Sin cambios de estado registrados.",
@@ -1046,14 +1113,29 @@
       "statusReserved": "Reservada",
       "countryScopePrefix": " · País: {{country}}",
       "cargando": "Cargando...",
-      "totalLabel": "Total:"
+      "totalLabel": "Total:",
+      "uploadingEllipsis": "Subiendo…",
+      "financialTitle": "💰 Financiero",
+      "pointsDistributionByPosition": "Distribución de puntos por posición",
+      "savingDots": "Guardando...",
+      "oneVenue": "1 sede",
+      "venuesCount": "sedes",
+      "noPlansSqlPrefix": "No hay planes. Ejecuta el SQL",
+      "noPlansSqlSuffix": " en Supabase."
     },
     "common": {
       "loadingEllipsis": "Cargando…",
       "responsible": "Responsable:",
       "interestType": "Tipo interés:",
       "licenseeCountry": "Licenciatario país:",
-      "recommendedPhotoHint": "💡 Recomendado: PNG transparente, mín. 300×300 px"
+      "recommendedPhotoHint": "💡 Recomendado: PNG transparente, mín. 300×300 px",
+      "countryColon": "País:",
+      "addressColon": "Dirección:",
+      "cityColon": "Ciudad:",
+      "responsibleColon": "Responsable:",
+      "emailColon": "Email:",
+      "interestTypeColon": "Tipo interés:",
+      "licenseeCountryColon": "Licenciatario país:"
     },
     "franjas": {
       "weekdays": "Días de la semana",
@@ -1070,7 +1152,13 @@
       "slotNamePh": "Ej: Mañana, Tarde, Noche",
       "applicationLabel": "Aplicación",
       "completeSlotFields": "⚠️ Completa horarios y al menos un día o fecha por franja",
-      "slotsSaved": "✅ Franjas guardadas"
+      "slotsSaved": "✅ Franjas guardadas",
+      "deleteSlot": "Eliminar franja",
+      "slotsAndPricesTitle": "Franjas horarias y precios"
+    },
+    "roles": {
+      "invitePendingSignup": "Invitado - pendiente de alta",
+      "editorScopeLabel": "Hub del jugador (cards)"
     }
   },
   "pago": {

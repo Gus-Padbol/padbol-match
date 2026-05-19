@@ -11,8 +11,11 @@
 export const PADBOL_LANGUAGES = [
   { code: 'es', flags: '🇦🇷 🇪🇸', label: 'Español' },
   { code: 'en', flags: '🇺🇸', label: 'English' },
-  // { code: 'it', flags: '🇮🇹', label: 'Italiano' },
-  // { code: 'ro', flags: '🇷🇴', label: 'Română' },
+  { code: 'it', flags: '🇮🇹', label: 'Italiano' },
+  { code: 'ro', flags: '🇷🇴', label: 'Română' },
+  { code: 'de', flags: '🇩🇪', label: 'Deutsch' },
+  { code: 'fr', flags: '🇫🇷', label: 'Français' },
+  { code: 'pt', flags: '🇧🇷', label: 'Português' },
 ];
 
 export const PADBOL_LANGUAGE_CODES = PADBOL_LANGUAGES.map((l) => l.code);
