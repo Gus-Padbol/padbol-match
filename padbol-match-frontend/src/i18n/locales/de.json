@@ -162,6 +162,9 @@
     "labelSlot": "Schicht:",
     "labelExtras": "Extras:",
     "serviceFee": "Servicegebühr für Padbol Match (3 %):",
+    "subtotal": "Zwischensumme:",
+    "cargoServicio": "Servicegebühr (3 %):",
+    "totalPagar": "Gesamtbetrag:",
     "noServiceFeeVenue": "Keine 3 % Padbol-Match-Gebühr (Abholung am Veranstaltungsort).",
     "whatsappConfirm": "WhatsApp zur Bestätigung *",
     "fullNumber": "Vollständige Nummer:",
@@ -1428,6 +1431,8 @@
     "publishedTitle": "Spiel veröffentlicht",
     "registeredTitle": "Reservierung registriert",
     "publishedBody": "Deine Reservierung ist bestätigt und das Spiel ist für andere sichtbar.",
-    "registeredBody": "Reservierung registriert. Wir melden uns gemäß Anlagen-Einstellungen."
+    "registeredBody": "Reservierung registriert. Wir melden uns gemäß Anlagen-Einstellungen.",
+    "publicarPartido": "Dieses Spiel in «Spiel suchen» veröffentlichen?",
+    "publicarPartidoDesc": "Wenn aktiviert, können andere Spieler um Beitritt bitten. Sonst bleibt nur deine bestätigte Reservierung."
   }
 }

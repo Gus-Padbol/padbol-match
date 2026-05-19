@@ -162,6 +162,9 @@
     "labelSlot": "Mudança:",
     "labelExtras": "Extras:",
     "serviceFee": "Taxa de serviço do Padbol Match (3%):",
+    "subtotal": "Subtotal:",
+    "cargoServicio": "Taxa de serviço (3%):",
+    "totalPagar": "Total a pagar:",
     "noServiceFeeVenue": "Não há cobrança de 3% do Padbol Match (cobrança no local).",
     "whatsappConfirm": "WhatsApp para confirmação *",
     "fullNumber": "Número completo:",
@@ -1428,6 +1431,8 @@
     "publishedTitle": "Partida publicada",
     "registeredTitle": "Reserva registrada",
     "publishedBody": "Sua reserva está confirmada e a partida está visível para outros.",
-    "registeredBody": "Reserva registrada. Entraremos em contato conforme a configuração da sede."
+    "registeredBody": "Reserva registrada. Entraremos em contato conforme a configuração da sede.",
+    "publicarPartido": "Publicar esta partida em «Buscar partida»?",
+    "publicarPartidoDesc": "Se ativar, outros jogadores poderão pedir para entrar. Se não, fica só a sua reserva confirmada."
   }
 }

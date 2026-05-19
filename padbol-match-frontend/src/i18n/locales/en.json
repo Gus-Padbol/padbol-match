@@ -162,6 +162,9 @@
     "labelSlot": "Slot:",
     "labelExtras": "Extras:",
     "serviceFee": "Padbol Match service fee (3%):",
+    "subtotal": "Subtotal:",
+    "cargoServicio": "Service fee (3%):",
+    "totalPagar": "Total to pay:",
     "noServiceFeeVenue": "No Padbol Match 3% fee (pay at venue).",
     "whatsappConfirm": "WhatsApp for confirmation *",
     "fullNumber": "Full number:",
@@ -1428,6 +1431,8 @@
     "publishedTitle": "Match published",
     "registeredTitle": "Booking registered",
     "publishedBody": "Your booking is confirmed and the match is visible for others to join.",
-    "registeredBody": "Your booking was registered. We will contact you per the venue settings."
+    "registeredBody": "Your booking was registered. We will contact you per the venue settings.",
+    "publicarPartido": "Publish this match in «Find a match»?",
+    "publicarPartidoDesc": "If you enable it, other players can request to join. If not, only your confirmed booking remains."
   }
 }

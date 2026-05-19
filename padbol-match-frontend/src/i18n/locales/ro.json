@@ -162,6 +162,9 @@
     "labelSlot": "Schimbare:",
     "labelExtras": "Suplimente:",
     "serviceFee": "Taxa de serviciu Padbol Match (3%):",
+    "subtotal": "Subtotal:",
+    "cargoServicio": "Taxă de serviciu (3%):",
+    "totalPagar": "Total de plată:",
     "noServiceFeeVenue": "Fără taxă de 3% Padbol Match (colectare la locul de desfășurare).",
     "whatsappConfirm": "WhatsApp pentru confirmare*",
     "fullNumber": "Număr complet:",
@@ -1428,6 +1431,8 @@
     "publishedTitle": "Meci publicat",
     "registeredTitle": "Rezervare înregistrată",
     "publishedBody": "Rezervarea este confirmată și meciul este vizibil pentru alții.",
-    "registeredBody": "Rezervarea a fost înregistrată. Te vom contacta conform setărilor sediului."
+    "registeredBody": "Rezervarea a fost înregistrată. Te vom contacta conform setărilor sediului.",
+    "publicarPartido": "Publicați acest meci în «Caută meci»?",
+    "publicarPartidoDesc": "Dacă îl activați, alți jucători pot cere să se alăture. Altfel rămâne doar rezervarea confirmată."
   }
 }

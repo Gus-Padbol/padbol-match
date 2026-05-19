@@ -2129,6 +2129,16 @@ export default function ReservaForm() {
     const montoBaseMinor = amountMainToStripeMinor(stripeMontoMainConExtras, moneda);
     const cargoServicioMinor = Math.round(montoBaseMinor * 0.03);
     const totalMinor = montoBaseMinor + cargoServicioMinor;
+    const reservaSubtotalP4 = Math.max(0, precioTurnoResumen + reservaExtrasSubtotal - creditoAplicado);
+    const reservaMuestraDesgloseP4 = metodoPagoStripe || reservaExtrasSubtotal > 0;
+    const reservaCargoP4 = metodoPagoStripe
+      ? stripeMinorToMain(cargoServicioMinor, moneda)
+      : reservaCargoPlataforma;
+    const reservaTotalP4 = metodoPagoStripe
+      ? stripeMinorToMain(totalMinor, moneda)
+      : reservaExtrasSubtotal > 0
+        ? reservaTotalPagarConCargoYExtras
+        : precioTurnoResumen;
     const precioPayloadStripe = Number(stripeMinorToMain(totalMinor, moneda));
     const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
     const muestraInputWhatsappResumen = !perfilTelefonoValido({
@@ -2230,8 +2240,13 @@ export default function ReservaForm() {
                     </p>
                   ) : null}
                   <p style={{ margin: '0 0 4px' }}>
-                    <strong>{t('reservas.serviceFee')}</strong>{' '}
-                    {formatMoneyMain(stripeMinorToMain(cargoServicioMinor, moneda), moneda)}
+                    <strong>{t('reservas.subtotal')}</strong> {formatMoneyMain(reservaSubtotalP4, moneda)}
+                  </p>
+                  <p style={{ margin: '0 0 4px' }}>
+                    <strong>{t('reservas.cargoServicio')}</strong> {formatMoneyMain(reservaCargoP4, moneda)}
+                  </p>
+                  <p style={{ margin: '8px 0 0', fontWeight: 800, fontSize: 16, lineHeight: 1.3 }}>
+                    <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalP4, moneda)}
                   </p>
                 </div>
               ) : (
@@ -2245,8 +2260,13 @@ export default function ReservaForm() {
                         <strong>{t('reservas.labelExtras')}</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
                       </p>
                       <p style={{ margin: '0 0 4px' }}>
-                        <strong>{t('reservas.serviceFee')}</strong>{' '}
-                        {formatMoneyMain(reservaCargoPlataforma, moneda)}
+                        <strong>{t('reservas.subtotal')}</strong> {formatMoneyMain(reservaSubtotalP4, moneda)}
+                      </p>
+                      <p style={{ margin: '0 0 4px' }}>
+                        <strong>{t('reservas.cargoServicio')}</strong> {formatMoneyMain(reservaCargoP4, moneda)}
+                      </p>
+                      <p style={{ margin: '8px 0 0', fontWeight: 800, fontSize: 16, lineHeight: 1.3 }}>
+                        <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalP4, moneda)}
                       </p>
                     </>
                   ) : metodoPagoEfectivo ? (
@@ -2369,7 +2389,7 @@ export default function ReservaForm() {
             </div>
           ) : null}
 
-          {precioTurnoResumen > 0 ? (
+          {precioTurnoResumen > 0 && !reservaMuestraDesgloseP4 ? (
             <p
               style={{
                 margin: '0 0 16px',
@@ -2379,10 +2399,7 @@ export default function ReservaForm() {
                 lineHeight: 1.3,
               }}
             >
-              <strong>{t('reservas.total')}</strong>{' '}
-              {metodoPagoStripe
-                ? formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)
-                : formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
+              <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
             </p>
           ) : null}
 

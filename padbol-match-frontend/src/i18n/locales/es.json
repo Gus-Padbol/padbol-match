@@ -162,6 +162,9 @@
     "labelSlot": "Turno:",
     "labelExtras": "Extras:",
     "serviceFee": "Cargo de servicio Padbol Match (3%):",
+    "subtotal": "Subtotal:",
+    "cargoServicio": "Cargo de servicio (3%):",
+    "totalPagar": "Total a pagar:",
     "noServiceFeeVenue": "Sin cargo del 3% de Padbol Match (cobro en sede).",
     "whatsappConfirm": "WhatsApp para confirmación *",
     "fullNumber": "Número completo:",
@@ -253,7 +256,9 @@
     "publishedTitle": "Partido publicado",
     "registeredTitle": "Reserva registrada",
     "publishedBody": "Tu reserva está confirmada y el partido ya está visible para que otros se sumen.",
-    "registeredBody": "Tu reserva quedó registrada. Te vamos a contactar según la configuración de la sede."
+    "registeredBody": "Tu reserva quedó registrada. Te vamos a contactar según la configuración de la sede.",
+    "publicarPartido": "¿Publicar este partido en «Buscar partido»?",
+    "publicarPartidoDesc": "Si lo activás, otros jugadores van a poder pedir unirse. Si no, solo queda tu reserva confirmada."
   },
   "torneos": {
     "titulo": "Torneos",

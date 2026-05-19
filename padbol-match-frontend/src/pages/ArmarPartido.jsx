@@ -1503,14 +1503,16 @@ export default function ArmarPartido() {
                 }}
               >
                 <div>
-                  <strong>Subtotal:</strong> {sede?.moneda || 'ARS'} {precioSubtotal.toLocaleString('es-AR')}
+                  <strong>{t('reservas.subtotal')}</strong> {sede?.moneda || 'ARS'}{' '}
+                  {precioSubtotal.toLocaleString('es-AR')}
                 </div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>
-                  <strong>Cargo de servicio (3%):</strong> {sede?.moneda || 'ARS'}{' '}
+                  <strong>{t('reservas.cargoServicio')}</strong> {sede?.moneda || 'ARS'}{' '}
                   {cargoPlataforma.toLocaleString('es-AR')}
                 </div>
                 <div style={{ marginTop: 10, fontWeight: 900, fontSize: 18, lineHeight: 1.3 }}>
-                  Total a pagar: {sede?.moneda || 'ARS'} {precioTotal.toLocaleString('es-AR')}
+                  <strong>{t('reservas.totalPagar')}</strong> {sede?.moneda || 'ARS'}{' '}
+                  {precioTotal.toLocaleString('es-AR')}
                 </div>
               </div>
 
@@ -1530,12 +1532,9 @@ export default function ArmarPartido() {
                   checked={publicarPartido}
                   onChange={(e) => setPublicarPartido(e.target.checked)}
                 />
-                ¿Publicar este partido en «Buscar partido»?
+                {t('armarPartido.publicarPartido')}
               </label>
-              <p style={{ ...AP.body, fontSize: 13, marginTop: -8 }}>
-                Si lo activás, otros jugadores van a poder pedir unirse. Si no, solo queda tu reserva
-                confirmada.
-              </p>
+              <p style={{ ...AP.body, fontSize: 13, marginTop: -8 }}>{t('armarPartido.publicarPartidoDesc')}</p>
 
               <button
                 type="button"
