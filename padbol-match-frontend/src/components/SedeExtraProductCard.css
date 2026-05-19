@@ -1,0 +1,176 @@
+/* Card de producto — tercer tiempo (extras sede) */
+
+.sede-extra-product-card {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  border-radius: 14px;
+  border: 0.5px solid var(--border);
+  background: var(--bg-card);
+  margin-bottom: 10px;
+  max-width: 390px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px 10px 10px;
+}
+
+.sede-extra-product-card__image-wrap {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sede-extra-product-card__image-wrap img {
+  width: 100%;
+  height: 100%;
+  max-width: 60px;
+  max-height: 60px;
+  object-fit: cover;
+  display: block;
+}
+
+.sede-extra-product-card__placeholder {
+  font-size: 28px;
+  opacity: 0.5;
+  line-height: 1;
+}
+
+.sede-extra-product-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 60px;
+}
+
+.sede-extra-product-card__info {
+  min-width: 0;
+}
+
+.sede-extra-product-card__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sede-extra-product-card__desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.sede-extra-product-card__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.sede-extra-product-card__price {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.sede-extra-product-card__qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sede-extra-product-card__qty-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  border: 0.5px solid var(--border);
+  background: var(--bg-input);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.sede-extra-product-card__qty-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.sede-extra-product-card__qty-value {
+  min-width: 20px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Desktop: imagen alta a la izquierda, contenido con padding interno */
+@media (min-width: 768px) {
+  .sede-extra-product-card {
+    padding: 0;
+    overflow: hidden;
+    align-items: stretch;
+    min-height: 100px;
+    gap: 0;
+  }
+
+  .sede-extra-product-card__image-wrap {
+    width: 130px;
+    height: auto;
+    min-height: 100px;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    align-self: stretch;
+  }
+
+  .sede-extra-product-card__image-wrap img {
+    max-width: none;
+    max-height: none;
+  }
+
+  .sede-extra-product-card__body {
+    padding: 12px 14px;
+    min-height: 100px;
+    gap: 0;
+  }
+
+  .sede-extra-product-card__footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .sede-extra-product-card__price {
+    flex-shrink: 0;
+  }
+}
