@@ -29,6 +29,7 @@ import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubI
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { intentarNavegarHubConPerfilJugadorMinimo } from '../utils/perfilJugadorMinimo';
 
 /**
@@ -122,6 +123,7 @@ const hubPwaInstallButtonStyle = {
 
 export default function UserHome() {
   const { t } = useTranslation();
+  usePadbolLangVersion();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -491,7 +493,7 @@ export default function UserHome() {
                   textAlign: 'left',
                   fontFamily: 'inherit',
                 }}
-                aria-label="Ir a mi perfil"
+                aria-label={t('hub.goToProfile')}
               >
                 {hubFotoUrl ? (
                   <img
@@ -537,9 +539,9 @@ export default function UserHome() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {nombreTitulo ? `¡Hola, ${nombreTitulo}!` : '¡Hola!'}
+                    {nombreTitulo ? t('hub.helloName', { name: nombreTitulo }) : t('hub.helloShort')}
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400, marginTop: 2 }}>Bienvenido de nuevo.</div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400, marginTop: 2 }}>{t('hub.welcomeBack')}</div>
                 </div>
               </button>
             ) : (
@@ -572,7 +574,7 @@ export default function UserHome() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    Hola
+                    {t('hub.hello')}
                   </div>
                 </div>
               </>
@@ -593,7 +595,7 @@ export default function UserHome() {
                         : '/admin'
                   )
                 }
-                aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
+                aria-label={isOnAdmin ? t('hub.backToApp') : t('hub.goToAdmin')}
                 title={isOnAdmin ? 'App' : 'Admin'}
                 style={{
                   height: 36,
@@ -628,7 +630,7 @@ export default function UserHome() {
                   fontFamily: 'inherit',
                 }}
               >
-                Ingresar
+                {t('auth.signIn')}
               </button>
             ) : null}
           </div>
@@ -693,7 +695,7 @@ export default function UserHome() {
                   flexShrink: 0,
                 }}
               >
-                Selecciona un deporte para ver el hub completo.
+                {t('hub.selectSportForHub')}
               </p>
               <div
                 style={{
@@ -806,7 +808,7 @@ export default function UserHome() {
                 flexShrink: 0,
               }}
             >
-              Puedes explorar sin registrarte
+              {t('hub.exploreWithoutSignup')}
             </p>
           ) : null}
 

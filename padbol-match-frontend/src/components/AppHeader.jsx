@@ -18,6 +18,7 @@ import HubThemeSettingsButton from './HubThemeSettingsButton';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useTheme } from '../context/ThemeContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -108,6 +109,7 @@ export default function AppHeader({
   contentMaxWidth = null,
 }) {
   const { t } = useTranslation();
+  usePadbolLangVersion();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme } = useTheme();
@@ -321,14 +323,15 @@ export default function AppHeader({
       jugadorHubShellPath);
 
   const displayBackLabel = useMemo(() => {
+    const back = `← ${t('general.back')}`;
     if (backLabel) return backLabel;
-    if (!showBack) return '← Volver';
-    if (typeof onBack === 'function') return '← Volver';
+    if (!showBack) return back;
+    if (typeof onBack === 'function') return back;
     if (adminFlowSurface) {
-      return pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? '← Inicio' : '← Admin';
+      return pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? `← ${t('general.goHome')}` : '← Admin';
     }
-    return '← Volver';
-  }, [backLabel, showBack, onBack, adminFlowSurface, pathOnly]);
+    return back;
+  }, [backLabel, showBack, onBack, adminFlowSurface, pathOnly, t]);
 
   const handleBack = () => {
     if (typeof onBack === 'function') {
@@ -366,8 +369,8 @@ export default function AppHeader({
             navigate('/admin');
           }
         }}
-        aria-label={isOnAdmin ? 'Volver a la app' : 'Ir a Admin'}
-        title={isOnAdmin ? 'Volver a la app' : 'Admin'}
+        aria-label={isOnAdmin ? t('hub.backToApp') : t('hub.goToAdmin')}
+        title={isOnAdmin ? t('hub.backToApp') : 'Admin'}
         style={{
           height: LOGOUT_BTN_SIZE,
           padding: '0 10px',
@@ -790,8 +793,8 @@ export default function AppHeader({
               navigate('/');
               scheduleHubEntryScrollReset();
             }}
-            aria-label="Volver al hub como jugador"
-            title="Volver al hub"
+            aria-label={t('hub.backToHub')}
+            title={t('hub.backToHub')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -980,7 +983,7 @@ export default function AppHeader({
             <button
               type="button"
               onClick={handleBack}
-              aria-label={pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? 'Volver al inicio' : 'Volver al panel de administración'}
+              aria-label={pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? t('hub.backToStart') : t('hub.backToAdminPanel')}
               title={pathOnly === '/admin' || pathOnly.startsWith('/admin/') ? 'Inicio' : 'Panel admin'}
               style={{
                 display: 'inline-flex',
@@ -1059,7 +1062,7 @@ export default function AppHeader({
                   : btnVolver),
                 flexShrink: 0,
               }}
-              aria-label="Volver atrás"
+              aria-label={t('hub.backAria')}
             >
               {displayBackLabel}
             </button>
@@ -1212,7 +1215,7 @@ export default function AppHeader({
                       ? 'Ir al panel de administración'
                       : hubChipNavPath === '/admin'
                         ? 'Ir al panel de administración'
-                        : 'Ir a mi perfil'
+                        : t('hub.goToProfile')
                   }
                   title={
                     adminFlowSurface ? 'Panel admin' : hubChipNavPath === '/admin' ? 'Panel admin' : 'Mi perfil'
@@ -1312,7 +1315,7 @@ export default function AppHeader({
                   boxShadow: 'none',
                 }}
               >
-                Ingresar
+                {t('auth.signIn')}
               </button>
             ) : !reservaCheckoutMinimal && hubDirectLogin && !session?.user && authLoading ? (
               <span

@@ -454,10 +454,39 @@
     }
   },
   "hub": {
+    "hello": "Hola",
+    "helloName": "¡Hola, {{name}}!",
+    "helloShort": "¡Hola!",
+    "welcomeBack": "Bienvenido de nuevo.",
+    "chooseSport": "Elegir deporte",
+    "allSports": "Todos los deportes",
+    "exploreWithoutSignup": "Puedes explorar sin registrarte",
+    "selectSportForHub": "Selecciona un deporte para ver el hub completo.",
+    "goToProfile": "Ir a mi perfil",
+    "backToApp": "Volver a la app",
+    "goToAdmin": "Ir a Admin",
+    "backToHub": "Volver al hub",
+    "backAria": "Volver atrás",
+    "backToStart": "Volver al inicio",
+    "backToAdminPanel": "Volver al panel de administración",
     "card": {
       "reservarSub": "Ya tengo equipo, quiero una cancha.",
       "torneosSub": "Torneos y rankings."
     }
+  },
+  "pwa": {
+    "installApp": "Instalar app",
+    "installTitle": "Instalar Padbol Match",
+    "installTitleIos": "Instala Padbol Match",
+    "installBody": "Instala la app en tu teléfono para abrirla como una aplicación y acceder más rápido.",
+    "installAndroidLead": "En Android (Chrome o navegador compatible) puedes usar el instalador del sistema:",
+    "installWithSystem": "Instalar con el sistema",
+    "installing": "Instalando…",
+    "installManualAndroid": "Si prefieres hacerlo a mano: menú ⋮ del navegador → Instalar aplicación o Añadir a la pantalla principal.",
+    "installIosBody": "Toca el botón Compartir ↑ en Safari y luego «Agregar a inicio».",
+    "installDesktopLead": "En Chrome o Edge (escritorio o Android), abre el menú ⋮ y elige Instalar Padbol Match… o Instalar aplicación.",
+    "installDesktopHint": "Si no ves la opción, puede que el navegador aún no ofrezca instalación en este dispositivo; prueba con Chrome actualizado o vuelve más tarde.",
+    "close": "Cerrar"
   },
   "paises": {
     "argentina": "Argentina",

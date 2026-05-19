@@ -18,3 +18,11 @@ export function badgeTorneoEstadoPublico(estadoRaw) {
   if (!k) return null;
   return TORNEO_ESTADO_PUBLICO_STYLE[k] || null;
 }
+
+/** Etiqueta traducida para badge público (usa `torneos.vista.estado.*`). */
+export function labelTorneoEstadoPublico(estadoRaw, t) {
+  const b = badgeTorneoEstadoPublico(estadoRaw);
+  if (!b || typeof t !== 'function') return b?.label || null;
+  const k = String(estadoRaw || '').toLowerCase().trim();
+  return t(`torneos.vista.estado.${k}`, { defaultValue: b.label });
+}

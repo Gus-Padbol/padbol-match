@@ -454,10 +454,39 @@
     }
   },
   "hub": {
+    "hello": "Hello",
+    "helloName": "Hello, {{name}}!",
+    "helloShort": "Hello!",
+    "welcomeBack": "Welcome back.",
+    "chooseSport": "Choose a sport",
+    "allSports": "All sports",
+    "exploreWithoutSignup": "You can explore without signing up",
+    "selectSportForHub": "Choose a sport to see the full hub.",
+    "goToProfile": "Go to my profile",
+    "backToApp": "Back to the app",
+    "goToAdmin": "Go to Admin",
+    "backToHub": "Back to hub",
+    "backAria": "Go back",
+    "backToStart": "Back to home",
+    "backToAdminPanel": "Back to admin panel",
     "card": {
       "reservarSub": "I have a team and need a court.",
       "torneosSub": "Tournaments and rankings."
     }
+  },
+  "pwa": {
+    "installApp": "Install app",
+    "installTitle": "Install Padbol Match",
+    "installTitleIos": "Install Padbol Match",
+    "installBody": "Install the app on your phone to open it like a native app and get faster access.",
+    "installAndroidLead": "On Android (Chrome or a compatible browser) you can use the system installer:",
+    "installWithSystem": "Install with system",
+    "installing": "Installing…",
+    "installManualAndroid": "To install manually: browser ⋮ menu → Install app or Add to home screen.",
+    "installIosBody": "Tap Share ↑ in Safari, then Add to Home Screen.",
+    "installDesktopLead": "On Chrome or Edge (desktop or Android), open the ⋮ menu and choose Install Padbol Match… or Install app.",
+    "installDesktopHint": "If you do not see the option, your browser may not support install on this device yet; try an updated Chrome or check again later.",
+    "close": "Close"
   },
   "paises": {
     "argentina": "Argentina",

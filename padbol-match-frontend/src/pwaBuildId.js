@@ -1,2 +1,2 @@
 /* Auto-generado por scripts/emit-pwa-build-id.js (prebuild/prestart) — no editar a mano */
-export const PWA_BUILD_ID = "pwa-1779212447318";
+export const PWA_BUILD_ID = "pwa-1779212703065";

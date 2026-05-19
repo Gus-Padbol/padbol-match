@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { isLikelyIos, isPwaStandalone } from '../utils/isPwaStandalone';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 
 const btnStyle = {
   display: 'inline-flex',
@@ -18,6 +20,8 @@ const btnStyle = {
 };
 
 export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp } = {}) {
+  const { t } = useTranslation();
+  usePadbolLangVersion();
   const [open, setOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [ios] = useState(() => isLikelyIos());
@@ -56,7 +60,7 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
   return (
     <>
       <button type="button" style={mergedBtn} onClick={() => setOpen(true)}>
-        📱 Instalar app
+        📱 {t('pwa.installApp')}
       </button>
       {open ? (
         <div
@@ -95,15 +99,15 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
           >
             {deferredPrompt ? (
               <>
-                <h2 id="pwa-install-title" style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a' }}>
-                  Instalar Padbol Match
+                <h2 id="pwa-install-title" style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
+                  {t('pwa.installTitle')}
                 </h2>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                  Instala la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                  {t('pwa.installBody')}
                 </p>
                 <div>
-                <p style={{ margin: '0 0 14px', fontSize: '14px', color: '#334155', lineHeight: 1.55 }}>
-                  En <strong>Android</strong> (Chrome o navegador compatible) puedes usar el instalador del sistema:
+                <p style={{ margin: '0 0 14px', fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.55 }}>
+                  {t('pwa.installAndroidLead')}
                 </p>
                 <button
                   type="button"
@@ -114,7 +118,7 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                     padding: '14px 16px',
                     borderRadius: '12px',
                     border: 'none',
-                    background: installing ? '#94a3b8' : '#E11B22',
+                    background: installing ? '#94a3b8' : 'var(--accent)',
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: '15px',
@@ -122,38 +126,36 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                     marginBottom: '12px',
                   }}
                 >
-                  {installing ? 'Instalando…' : 'Instalar con el sistema'}
+                  {installing ? t('pwa.installing') : t('pwa.installWithSystem')}
                 </button>
-                <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-                  Si prefieres hacerlo a mano: menú <strong>⋮</strong> del navegador → <strong>Instalar aplicación</strong> o{' '}
-                  <strong>Añadir a la pantalla principal</strong>.
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                  {t('pwa.installManualAndroid')}
                 </p>
                 </div>
               </>
             ) : ios ? (
               <>
-                <h2 id="pwa-install-title" style={{ margin: '0 0 12px', fontSize: '18px', color: '#0f172a' }}>
-                  Instala Padbol Match
+                <h2 id="pwa-install-title" style={{ margin: '0 0 12px', fontSize: '18px', color: 'var(--text-primary)' }}>
+                  {t('pwa.installTitleIos')}
                 </h2>
-                <p style={{ margin: 0, fontSize: '15px', color: '#334155', lineHeight: 1.5 }}>
-                  {`Toca el botón Compartir ↑ en Safari y luego «Agregar a inicio».`}
+                <p style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                  {t('pwa.installIosBody')}
                 </p>
               </>
             ) : (
               <>
-                <h2 id="pwa-install-title" style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a' }}>
-                  Instalar Padbol Match
+                <h2 id="pwa-install-title" style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
+                  {t('pwa.installTitle')}
                 </h2>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                  Instala la app en tu teléfono para abrirla como una aplicación y acceder más rápido.
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                  {t('pwa.installBody')}
                 </p>
                 <div>
-                <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#334155', lineHeight: 1.55 }}>
-                  En <strong>Chrome</strong> o <strong>Edge</strong> (escritorio o Android), abre el menú <strong>⋮</strong> y elige{' '}
-                  <strong>Instalar Padbol Match…</strong> o <strong>Instalar aplicación</strong>.
+                <p style={{ margin: '0 0 12px', fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.55 }}>
+                  {t('pwa.installDesktopLead')}
                 </p>
-                <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>
-                  Si no ves la opción, puede que el navegador aún no ofrezca instalación en este dispositivo; prueba con Chrome actualizado o vuelve más tarde.
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                  {t('pwa.installDesktopHint')}
                 </p>
                 </div>
               </>
@@ -166,15 +168,16 @@ export default function PwaInstallButtonWithModal({ buttonStyle: buttonStyleProp
                 style={{
                   padding: '10px 16px',
                   borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-page)',
+                  color: 'var(--text-primary)',
                   fontWeight: 700,
                   fontSize: '14px',
                   cursor: 'pointer',
-                  color: '#334155',
+                  fontFamily: 'inherit',
                 }}
               >
-                Cerrar
+                {t('pwa.close')}
               </button>
             </div>
           </div>

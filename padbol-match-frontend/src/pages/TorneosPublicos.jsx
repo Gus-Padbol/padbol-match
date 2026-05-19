@@ -31,6 +31,7 @@ import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioA
 import { getDistanceKm } from '../utils/sedeCardUi';
 import { IconGeroFiltros, IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
@@ -99,21 +100,28 @@ function normalizeSearchText(s) {
     .toLowerCase();
 }
 
-function badgeEstadoTorneoListado(t) {
-  if (torneoFechaInicioEsPasadaCalendario(t?.fecha_inicio) || esEstadoFinalizadoTorneo(t?.estado)) {
-    return { label: 'Finalizado', bg: '#dc2626', color: '#fff' };
-  }
-  const b = badgeTorneoEstadoPublico(t.estado);
-  if (b) return b;
-  return {
-    label: t.estado ? String(t.estado) : 'Sin estado',
-    bg: '#94a3b8',
-    color: '#fff',
-  };
-}
-
 export default function TorneosPublicos() {
   const { t } = useTranslation();
+  usePadbolLangVersion();
+
+  const badgeEstadoTorneoListado = useCallback(
+    (torneo) => {
+      if (torneoFechaInicioEsPasadaCalendario(torneo?.fecha_inicio) || esEstadoFinalizadoTorneo(torneo?.estado)) {
+        return { label: t('torneos.vista.estado.finalizado'), bg: '#dc2626', color: '#fff' };
+      }
+      const b = badgeTorneoEstadoPublico(torneo.estado);
+      if (b) {
+        const k = String(torneo.estado || '').toLowerCase().trim();
+        return { ...b, label: t(`torneos.vista.estado.${k}`, { defaultValue: b.label }) };
+      }
+      return {
+        label: torneo.estado ? String(torneo.estado) : t('torneos.vista.sinDefinir'),
+        bg: '#94a3b8',
+        color: '#fff',
+      };
+    },
+    [t],
+  );
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();

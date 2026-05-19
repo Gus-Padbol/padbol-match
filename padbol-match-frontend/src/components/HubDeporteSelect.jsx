@@ -1,11 +1,15 @@
 import React from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 
 /**
  * Selector «Elegir deporte» del hub (UserHome, Jugar, etc.).
  * La persistencia en sessionStorage la maneja el padre si hace falta.
  */
 export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-select', compact = false }) {
+  const { t } = useTranslation();
+  usePadbolLangVersion();
   const labelGap = compact ? 4 : 10;
   const blockGap = compact ? 4 : 10;
   return (
@@ -19,7 +23,7 @@ export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-se
           marginBottom: labelGap,
         }}
       >
-        Elegir deporte
+        {t('hub.chooseSport')}
       </span>
       <div style={{ position: 'relative', marginBottom: blockGap }}>
         <select
@@ -43,7 +47,7 @@ export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-se
             cursor: 'pointer',
           }}
         >
-          <option value="">Todos los deportes</option>
+          <option value="">{t('hub.allSports')}</option>
           {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
             <option key={d.key} value={d.key}>
               {d.label}
