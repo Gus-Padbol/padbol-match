@@ -15,6 +15,7 @@ import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
 function TablerMicrophoneIcon({ size = 22 }) {
@@ -271,7 +272,8 @@ function chatUiStrings(loc) {
       waEscalada: 'Contact the club on WhatsApp',
       waClub: 'Message your usual club',
       fabOpen: 'Open Padbol Match assistant',
-      fabLine1: 'Any questions?',
+      fabCollapsed: 'Questions?',
+      fabLine1: 'Questions?',
       fabLine2: 'Chat with Padbol Match',
       titulo: 'Padbol Match IA',
       cargando: 'Loading…',
@@ -325,6 +327,7 @@ function chatUiStrings(loc) {
       waEscalada: 'Falar com o clube no WhatsApp',
       waClub: 'Escrever ao clube habitual',
       fabOpen: 'Abrir assistente Padbol Match',
+      fabCollapsed: 'Dúvidas?',
       fabLine1: 'Tem dúvidas?',
       fabLine2: 'Fale com o Padbol Match',
       titulo: 'Padbol Match IA',
@@ -378,6 +381,7 @@ function chatUiStrings(loc) {
     waEscalada: 'Contactar al club por WhatsApp',
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Padbol Match',
+    fabCollapsed: '¿Consultas?',
     fabLine1: '¿Tenés dudas?',
     fabLine2: 'Hablá con Padbol Match',
     titulo: 'Padbol Match IA',
@@ -650,11 +654,9 @@ export default function ChatbotIA() {
     return /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }, []);
 
-  const deviceLocale = useMemo(
-    () => (typeof navigator !== 'undefined' ? navigator.language || 'es' : 'es'),
-    [],
-  );
-  const ui = useMemo(() => chatUiStrings(deviceLocale), [deviceLocale]);
+  const padbolLang = usePadbolLang();
+  usePadbolLangVersion();
+  const ui = useMemo(() => chatUiStrings(padbolLang), [padbolLang]);
 
   const chatWelcomeFirstName = useMemo(() => {
     const ns = userProfile?.nombre_saludo != null ? String(userProfile.nombre_saludo).trim() : '';
@@ -1355,7 +1357,7 @@ export default function ChatbotIA() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                ¿Consultas?
+                {ui.fabCollapsed}
               </span>
             </>
           ) : (

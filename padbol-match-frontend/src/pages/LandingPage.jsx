@@ -8,7 +8,7 @@ import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import './LandingPage.css';
 
 const ACCENT = '#E11B22';
-const COL_MAX = 390;
+const COL_MAX = 480;
 
 const shell = {
   paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
@@ -20,8 +20,8 @@ const column = {
   maxWidth: COL_MAX,
   marginLeft: 'auto',
   marginRight: 'auto',
-  paddingLeft: 'max(20px, env(safe-area-inset-left, 0px))',
-  paddingRight: 'max(20px, env(safe-area-inset-right, 0px))',
+  paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
+  paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
   boxSizing: 'border-box',
 };
 
@@ -116,10 +116,12 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page" style={shell}>
-      <div
-        className="landing-page__lang-bar"
-      >
-        <LanguageSwitcher variant="landing" />
+      <div className="landing-page__lang-shell">
+        <div className="landing-page__lang-inner">
+          <div className="landing-page__lang-bar">
+            <LanguageSwitcher variant="landing" />
+          </div>
+        </div>
       </div>
       <header style={{ ...column, textAlign: 'center', paddingBottom: 0 }}>
         <img
