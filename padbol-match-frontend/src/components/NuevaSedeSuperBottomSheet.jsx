@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
@@ -128,6 +129,7 @@ export default function NuevaSedeSuperBottomSheet({
   /** { email, pais, nombre_club } desde GET /api/invitacion/:token */
   invitePrefill = null,
 }) {
+  const { t } = useTranslation();
   const [st, setSt] = useState(initialState);
   const [planPricing, setPlanPricing] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
