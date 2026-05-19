@@ -30,13 +30,14 @@ import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import { authLoginRedirectPath, authUrlWithRedirect } from '../utils/authLoginRedirect';
 import { getDisplayName, nombreRealDesdePerfilOauth } from '../utils/displayName';
 import {
-  ciudadPaisConBandera,
   getDistanceKm,
   horarioDisponibleTexto,
   precioBaseTurnoDesdeSede,
   precioDesdeCard,
   primeraFotoSede,
 } from '../utils/sedeCardUi';
+import { formatPaisReservaLabel, formatSedeCiudadPaisLinea } from '../utils/paisI18n';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
 import {
   duracionesReservaDisponibles,
@@ -81,30 +82,6 @@ function buildReservaExtrasPayload(sedeExtrasDisponibles, cantidadMap) {
       };
     })
     .filter(Boolean);
-}
-
-/** Texto visible en el selector de país; el `value` sigue siendo el string exacto de la sede. */
-function etiquetaPaisReservaSelector(paisRaw) {
-  const p = String(paisRaw || '').trim();
-  if (!p) return '';
-  const sinEmojiInicial = p.replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
-  const baseNombre = sinEmojiInicial || p;
-  const lc = baseNombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const compact = lc.replace(/\s+/g, '');
-  if (lc === 'argentina' || lc.startsWith('argentina ')) return /^🇦🇷/.test(p) ? p : `🇦🇷 ${baseNombre}`;
-  if (lc === 'españa' || lc === 'espana' || lc.startsWith('españa ') || lc.startsWith('espana ')) {
-    return /^🇪🇸/.test(p) ? p : `🇪🇸 ${baseNombre}`;
-  }
-  if (
-    compact.includes('estadosunidos') ||
-    lc.includes('estados unidos') ||
-    lc === 'usa' ||
-    compact === 'eeuu' ||
-    lc.startsWith('ee. uu')
-  ) {
-    return /^🇺🇸/.test(p) ? p : `🇺🇸 ${baseNombre}`;
-  }
-  return p;
 }
 
 function primerTelefonoCliente(c) {
@@ -564,6 +541,8 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
 
 export default function ReservaForm() {
   const { t } = useTranslation();
+  usePadbolLangVersion();
+  const etiquetaPaisReserva = useCallback((paisRaw) => formatPaisReservaLabel(paisRaw, t), [t]);
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -1822,7 +1801,7 @@ export default function ReservaForm() {
             </span>
             {paisesOrdenados.length === 1 ? (
               <div className="reserva-sede-pais-pill-static">
-                {etiquetaPaisReservaSelector(filtros.pais || paisesOrdenados[0])}
+                {etiquetaPaisReserva(filtros.pais || paisesOrdenados[0])}
               </div>
             ) : (
               <select
@@ -1839,7 +1818,7 @@ export default function ReservaForm() {
                 <option value="">{t('reservas.chooseCountryOption')}</option>
                 {paisesOrdenados.map((p) => (
                   <option key={p} value={p}>
-                    {etiquetaPaisReservaSelector(p)}
+                    {etiquetaPaisReserva(p)}
                   </option>
                 ))}
               </select>
@@ -1854,7 +1833,7 @@ export default function ReservaForm() {
                 <ul className="reserva-sede-cards-list">
                   {sedesFiltradasPorPais.map((sede, idx) => {
                     const foto = primeraFotoSede(sede);
-                    const { flag, linea } = ciudadPaisConBandera(sede);
+                    const { flag, linea } = formatSedeCiudadPaisLinea(sede, t);
                     const precio = precioDesdeCard(sede);
                     const moneda = String(sede.moneda || 'ARS').trim() || 'ARS';
                     const esMasCercana =
@@ -1960,7 +1939,7 @@ export default function ReservaForm() {
           {sedeSeleccionada && (
           <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
             {(() => {
-              const { flag, linea } = ciudadPaisConBandera(sedeSeleccionada);
+              const { flag, linea } = formatSedeCiudadPaisLinea(sedeSeleccionada, t);
               return (
                 <>
                   {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
