@@ -123,6 +123,11 @@ function readModoDesdeSearch(search) {
 
 /** Lateralidad extendida (registro opt-in torneos). */
 const LATERALIDAD_TORNEO_OPCIONES = ['Diestro', 'Zurdo', 'Ambidiestro'];
+const LATERALIDAD_TORNEO_LABEL_KEY = {
+  Diestro: 'auth.handednessRight',
+  Zurdo: 'auth.handednessLeft',
+  Ambidiestro: 'auth.handednessAmbi',
+};
 
 /** `select` / inputs del formulario de registro (tema). */
 function accesoRegFieldStyle(mb = '14px') {
@@ -224,9 +229,9 @@ export default function AccesoCuenta() {
     });
     if (error) {
       console.error('Error Google OAuth:', error.message);
-      setErrorMsg('No se pudo iniciar sesión con Google. Intenta de nuevo.');
+      setErrorMsg(t('auth.googleLoginFailed'));
     }
-  }, []);
+  }, [t]);
 
   const handleFacebookLogin = useCallback(async () => {
     setErrorMsg('');
@@ -239,9 +244,9 @@ export default function AccesoCuenta() {
     });
     if (error) {
       console.error('Error Facebook OAuth:', error.message);
-      setErrorMsg('No se pudo iniciar sesión con Facebook. Intenta de nuevo.');
+      setErrorMsg(t('auth.facebookLoginFailed'));
     }
-  }, []);
+  }, [t]);
 
   const afterLogin = useCallback(
     async (sessionArg) => {
@@ -284,7 +289,7 @@ export default function AccesoCuenta() {
 
   useEffect(() => {
     setErrorMsg('');
-    setInfoMsg(peekReservaLoginGateMessage() || '');
+    setInfoMsg(peekReservaLoginGateMessage() ? t('auth.reservaLoginGate') : '');
     setShowLoginPassword(false);
     setShowRegPassword(false);
     setShowRegPassword2(false);
@@ -296,20 +301,20 @@ export default function AccesoCuenta() {
     setRegWaLocal('');
     setRegWaLocalConfirm('');
     setAceptoTerminosPrivacidad(false);
-  }, [modo]);
+  }, [modo, t]);
 
   const handleIngresar = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    setInfoMsg(peekReservaLoginGateMessage() || '');
+    setInfoMsg(peekReservaLoginGateMessage() ? t('auth.reservaLoginGate') : '');
     if (busy) return;
     const em = email.trim().toLowerCase();
     if (!em) {
-      setErrorMsg('Ingresa tu email.');
+      setErrorMsg(t('auth.enterEmail'));
       return;
     }
     if (!password) {
-      setErrorMsg('Ingresa tu contraseña.');
+      setErrorMsg(t('auth.enterPassword'));
       return;
     }
     setBusy(true);
@@ -325,7 +330,7 @@ export default function AccesoCuenta() {
       }
       const ue = data?.user?.email?.trim();
       if (!ue) {
-        setErrorMsg('No se pudo iniciar sesión.');
+        setErrorMsg(t('auth.loginFailed'));
         return;
       }
       await afterLogin(data?.session ?? null);
@@ -337,64 +342,64 @@ export default function AccesoCuenta() {
   const handleRegistrar = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    setInfoMsg(peekReservaLoginGateMessage() || '');
+    setInfoMsg(peekReservaLoginGateMessage() ? t('auth.reservaLoginGate') : '');
     if (busy) return;
     const em = email.trim().toLowerCase();
     if (!em) {
-      setErrorMsg('Ingresa tu email.');
+      setErrorMsg(t('auth.enterEmail'));
       return;
     }
     if (!password || password.length < 6) {
-      setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
+      setErrorMsg(t('auth.passwordMinLength'));
       return;
     }
     if (password !== password2) {
-      setErrorMsg('Las contraseñas no coinciden.');
+      setErrorMsg(t('auth.passwordMismatch'));
       return;
     }
     const nom = String(regNombre || '').trim();
     const ap = String(regApellido || '').trim();
     const gen = String(regGenero || '').trim();
     if (!nom) {
-      setErrorMsg('Completa tu nombre.');
+      setErrorMsg(t('auth.completeFirstName'));
       return;
     }
     if (!ap) {
-      setErrorMsg('Completa tu apellido.');
+      setErrorMsg(t('auth.completeLastName'));
       return;
     }
     if (gen !== 'masculino' && gen !== 'femenino') {
-      setErrorMsg('Selecciona género (Masculino o Femenino).');
+      setErrorMsg(t('auth.selectGender'));
       return;
     }
     const waLoc = digitsOnly(regWaLocal);
     const waLoc2 = digitsOnly(regWaLocalConfirm);
     if (waLoc !== waLoc2) {
-      setErrorMsg('Los números no coinciden.');
+      setErrorMsg(t('auth.phoneMismatch'));
       return;
     }
     if (!whatsappNacionalValido(waLoc)) {
-      setErrorMsg('Número de WhatsApp inválido.');
+      setErrorMsg(t('auth.invalidWhatsapp'));
       return;
     }
     const waDigitsFull = buildFullWhatsDigits(regWaCodigoPais, waLoc);
     if (!whatsappDigitsValido(waDigitsFull)) {
-      setErrorMsg('Número de WhatsApp inválido.');
+      setErrorMsg(t('auth.invalidWhatsapp'));
       return;
     }
     if (!aceptoTerminosPrivacidad) {
-      setErrorMsg('Debes aceptar los Términos y Condiciones y la Política de Privacidad.');
+      setErrorMsg(t('auth.acceptTerms'));
       return;
     }
     const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
     try {
       const { disponible } = await fetchWhatsappDisponibleRegistro(waE164);
       if (!disponible) {
-        setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+        setErrorMsg(t('auth.phoneAlreadyRegistered'));
         return;
       }
     } catch (e) {
-      setErrorMsg(e.message || 'No se pudo validar el teléfono');
+      setErrorMsg(e.message || t('auth.phoneValidationFailed'));
       return;
     }
     const paisPrincipal = String(regPaisJugador || '').trim();
@@ -439,11 +444,11 @@ export default function AccesoCuenta() {
         return;
       }
       if (data?.user) {
-        setInfoMsg('Si tu cuenta requiere confirmación, revisa tu correo. Luego puedes volver a ingresar.');
+        setInfoMsg(t('auth.checkEmailConfirm'));
         setModo('login');
         return;
       }
-      setErrorMsg('No se pudo crear la cuenta. Intenta de nuevo.');
+      setErrorMsg(t('auth.signupFailed'));
     } finally {
       setBusy(false);
     }
@@ -472,7 +477,7 @@ export default function AccesoCuenta() {
       }}
     >
       <AppHeader
-        title="Acceso"
+        title={t('auth.access')}
         showBack={muestreBotonVolverAcceso}
         onBack={handleAccesoBack}
         contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}
@@ -515,7 +520,7 @@ export default function AccesoCuenta() {
             textAlign: 'center',
           }}
         >
-          {modo === 'login' ? 'Iniciar Sesión' : t('auth.registerTitle')}
+          {modo === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
         </h2>
 
         <div style={{ marginBottom: '18px' }}>
@@ -543,7 +548,7 @@ export default function AccesoCuenta() {
             }}
           >
             <GoogleMarkIcon />
-            Continuar con Google
+            {t('auth.google')}
           </button>
           <button
             type="button"
@@ -572,7 +577,7 @@ export default function AccesoCuenta() {
             <span style={{ color: '#fff', display: 'inline-flex' }}>
               <FacebookMarkIcon />
             </span>
-            Continuar con Facebook
+            {t('auth.facebook')}
           </button>
           <div
             style={{
@@ -586,7 +591,7 @@ export default function AccesoCuenta() {
           >
             <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
             <span style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, letterSpacing: '0.02em' }}>
-              — o —
+              {t('auth.orDivider')}
             </span>
             <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
           </div>
@@ -603,7 +608,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Email
+              {t('general.email')}
             </label>
             <input
               className="acceso-cuenta-input"
@@ -632,7 +637,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Contraseña
+              {t('auth.password')}
             </label>
             <div style={{ position: 'relative', marginBottom: '18px' }}>
               <input
@@ -654,7 +659,7 @@ export default function AccesoCuenta() {
               <button
                 type="button"
                 onClick={() => setShowLoginPassword((v) => !v)}
-                aria-label={showLoginPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                aria-label={showLoginPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 style={{
                   position: 'absolute',
                   right: '4px',
@@ -688,7 +693,7 @@ export default function AccesoCuenta() {
                 opacity: busy ? 0.7 : 1,
               }}
             >
-              {busy ? 'Ingresando…' : 'Ingresar'}
+              {busy ? t('auth.signingIn') : t('auth.signIn')}
             </button>
             <button
               type="button"
@@ -707,7 +712,7 @@ export default function AccesoCuenta() {
                 textAlign: 'center',
               }}
             >
-              ¿No tienes cuenta? Regístrate
+              {t('auth.noAccount')}
             </button>
           </form>
         ) : (
@@ -724,7 +729,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Nombre <span style={{ color: '#fecaca' }}>*</span>
+              {t('auth.firstName')} <span style={{ color: '#fecaca' }}>*</span>
             </label>
             <input
               className="acceso-cuenta-input"
@@ -732,7 +737,7 @@ export default function AccesoCuenta() {
               onChange={(e) => setRegNombre(e.target.value)}
               type="text"
               autoComplete="given-name"
-              placeholder="Ej: Juan"
+              placeholder={t('auth.placeholderFirstName')}
               style={{
                 width: '100%',
                 padding: '14px',
@@ -753,7 +758,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Apellido <span style={{ color: '#fecaca' }}>*</span>
+              {t('auth.lastName')} <span style={{ color: '#fecaca' }}>*</span>
             </label>
             <input
               className="acceso-cuenta-input"
@@ -761,7 +766,7 @@ export default function AccesoCuenta() {
               onChange={(e) => setRegApellido(e.target.value)}
               type="text"
               autoComplete="family-name"
-              placeholder="Ej: Pérez"
+              placeholder={t('auth.placeholderLastName')}
               style={{
                 width: '100%',
                 padding: '14px',
@@ -782,7 +787,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Género <span style={{ color: '#fecaca' }}>*</span>
+              {t('auth.gender')} <span style={{ color: '#fecaca' }}>*</span>
             </label>
             <select
               className="acceso-cuenta-input"
@@ -799,9 +804,9 @@ export default function AccesoCuenta() {
                 background: 'var(--bg-card)',
               }}
             >
-              <option value="">— Elegir —</option>
-              <option value="masculino">Masculino</option>
-              <option value="femenino">Femenino</option>
+              <option value="">{t('auth.choose')}</option>
+              <option value="masculino">{t('auth.male')}</option>
+              <option value="femenino">{t('auth.female')}</option>
             </select>
             <label
               style={{
@@ -812,8 +817,8 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              País{' '}
-              <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+              {t('general.country')}{' '}
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>({t('auth.optional')})</span>
             </label>
             <select
               className="acceso-cuenta-input"
@@ -822,7 +827,7 @@ export default function AccesoCuenta() {
               aria-label="País del jugador"
               style={accesoRegFieldStyle('14px')}
             >
-              <option value="">— Elegir país —</option>
+              <option value="">{t('auth.chooseCountry')}</option>
               {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                 <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
                   {p.bandera} {p.nombre}
@@ -850,8 +855,8 @@ export default function AccesoCuenta() {
                 style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0, cursor: busy ? 'default' : 'pointer' }}
               />
               <span>
-                Quiero recibir novedades de torneos y promociones por WhatsApp{' '}
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                {t('auth.whatsappPromo')}{' '}
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>({t('auth.optional')})</span>
               </span>
             </label>
             <label
@@ -863,7 +868,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Email
+              {t('general.email')}
             </label>
             <input
               className="acceso-cuenta-input"
@@ -887,7 +892,7 @@ export default function AccesoCuenta() {
               <TelefonoPaisCodigoRow
                 sectionHeading={
                   <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.92)' }}>
-                    WhatsApp <span style={{ color: '#fecaca' }}>*</span>
+                    {t('general.whatsapp')} <span style={{ color: '#fecaca' }}>*</span>
                   </span>
                 }
                 labelStyle={{ color: 'rgba(255,255,255,0.92)' }}
@@ -936,7 +941,7 @@ export default function AccesoCuenta() {
                 disabled={busy}
                 style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0, cursor: busy ? 'default' : 'pointer' }}
               />
-              <span>¿Querés participar en torneos?</span>
+              <span>{t('auth.joinTournaments')}</span>
             </label>
             <div
               className={`acceso-cuenta-torneo-reveal${regParticiparTorneos ? ' acceso-cuenta-torneo-reveal--open' : ''}`}
@@ -952,8 +957,8 @@ export default function AccesoCuenta() {
                     marginBottom: '6px',
                   }}
                 >
-                  Lateralidad{' '}
-                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                  {t('auth.handedness')}{' '}
+                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>({t('auth.optional')})</span>
                 </label>
                 <select
                   className="acceso-cuenta-input"
@@ -962,10 +967,10 @@ export default function AccesoCuenta() {
                   style={accesoRegFieldStyle('10px')}
                   aria-label="Lateralidad para torneos"
                 >
-                  <option value="">— Elegir —</option>
+                  <option value="">{t('auth.choose')}</option>
                   {LATERALIDAD_TORNEO_OPCIONES.map((lat) => (
                     <option key={lat} value={lat}>
-                      {lat}
+                      {t(LATERALIDAD_TORNEO_LABEL_KEY[lat] || lat)}
                     </option>
                   ))}
                 </select>
@@ -978,8 +983,8 @@ export default function AccesoCuenta() {
                     marginBottom: '6px',
                   }}
                 >
-                  Nivel / categoría{' '}
-                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                  {t('auth.levelCategory')}{' '}
+                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>({t('auth.optional')})</span>
                 </label>
                 <select
                   className="acceso-cuenta-input"
@@ -988,7 +993,7 @@ export default function AccesoCuenta() {
                   style={accesoRegFieldStyle('10px')}
                   aria-label="Nivel o categoría para torneos"
                 >
-                  <option value="">— Elegir —</option>
+                  <option value="">{t('auth.choose')}</option>
                   {categoriasTorneoRegistro.map((c) => (
                     <option key={c} value={c}>
                       {c}
@@ -1016,7 +1021,7 @@ export default function AccesoCuenta() {
                       aria-label="País para torneos"
                       style={accesoRegFieldStyle('14px')}
                     >
-                      <option value="">— Elegir país —</option>
+                      <option value="">{t('auth.chooseCountry')}</option>
                       {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                         <option key={`torneo-${p.nombre}`} value={`${p.bandera} ${p.nombre}`}>
                           {p.bandera} {p.nombre}
@@ -1036,7 +1041,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Contraseña
+              {t('auth.password')}
             </label>
             <div style={{ position: 'relative', marginBottom: '14px' }}>
               <input
@@ -1058,7 +1063,7 @@ export default function AccesoCuenta() {
               <button
                 type="button"
                 onClick={() => setShowRegPassword((v) => !v)}
-                aria-label={showRegPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                aria-label={showRegPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 style={{
                   position: 'absolute',
                   right: '4px',
@@ -1085,7 +1090,7 @@ export default function AccesoCuenta() {
                 marginBottom: '6px',
               }}
             >
-              Repetir contraseña
+              {t('auth.repeatPassword')}
             </label>
             <div style={{ position: 'relative', marginBottom: '18px' }}>
               <input
@@ -1107,7 +1112,7 @@ export default function AccesoCuenta() {
               <button
                 type="button"
                 onClick={() => setShowRegPassword2((v) => !v)}
-                aria-label={showRegPassword2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                aria-label={showRegPassword2 ? t('auth.hidePassword') : t('auth.showPassword')}
                 style={{
                   position: 'absolute',
                   right: '4px',
@@ -1145,13 +1150,13 @@ export default function AccesoCuenta() {
                 style={{ marginTop: '4px', width: 18, height: 18, flexShrink: 0 }}
               />
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
-                Acepto los{' '}
+                {t('auth.acceptTermsPrefix')}{' '}
                 <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontWeight: 800 }}>
-                  Términos y Condiciones
+                  {t('legal.terminos')}
                 </Link>{' '}
-                y la{' '}
+                {t('auth.andThe')}{' '}
                 <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontWeight: 800 }}>
-                  Política de Privacidad
+                  {t('legal.privacidad')}
                 </Link>{' '}
                 <span style={{ color: '#fecaca' }}>*</span>
               </span>
@@ -1202,7 +1207,7 @@ export default function AccesoCuenta() {
               cursor: busy ? 'default' : 'pointer',
             }}
           >
-            Ya tengo cuenta
+            {t('auth.hasAccount')}
           </button>
         ) : null}
 

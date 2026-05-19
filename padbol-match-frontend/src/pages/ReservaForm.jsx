@@ -333,6 +333,7 @@ const STRIPE_PUBLISHABLE_KEY =
 const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null;
 
 function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
   const [paying, setPaying] = useState(false);
@@ -345,7 +346,7 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
     try {
       const { error: submitErr } = await elements.submit();
       if (submitErr) {
-        setMsg(submitErr.message || 'Revisa los datos de la tarjeta');
+        setMsg(submitErr.message || t('reservas.checkCard'));
         return;
       }
       const { error: payErr, paymentIntent } = await stripe.confirmPayment({
@@ -357,17 +358,17 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
         redirect: 'if_required',
       });
       if (payErr) {
-        setMsg(payErr.message || 'No se pudo procesar el pago');
+        setMsg(payErr.message || t('reservas.paymentFailed'));
         return;
       }
       if (paymentIntent?.status !== 'succeeded') {
-        setMsg('El pago no se completó.');
+        setMsg(t('reservas.paymentIncomplete'));
         return;
       }
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
       if (!token) {
-        setMsg('Sesión expirada. Inicia sesión de nuevo.');
+        setMsg(t('reservas.sessionExpired'));
         return;
       }
       const res = await fetch(apiUrl('/api/stripe/confirmar-pago'), {
@@ -377,7 +378,7 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
       });
       const j = await res.json();
       if (!res.ok) {
-        setMsg(j.error || 'El pago se acreditó pero no se pudo registrar la reserva. Contacta a la sede.');
+        setMsg(j.error || t('reservas.paidNotRegistered'));
         return;
       }
       onPaid(j);
@@ -414,7 +415,7 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
           boxShadow: '0 3px 12px rgba(99,91,255,0.35)',
         }}
       >
-        {paying ? 'Procesando…' : 'Pagar ahora'}
+        {paying ? t('reservas.procesando') : t('reservas.payNow')}
       </button>
     </div>
   );
@@ -429,6 +430,7 @@ function ReservaStripeSection({
   disabledPrepare,
   onPaid,
 }) {
+  const { t, i18n } = useTranslation();
   const [clientSecret, setClientSecret] = useState(null);
   const [prepErr, setPrepErr] = useState('');
   const [preparing, setPreparing] = useState(false);
@@ -438,7 +440,7 @@ function ReservaStripeSection({
     const { data: sess } = await supabase.auth.getSession();
     const token = sess?.session?.access_token;
     if (!token) {
-      setPrepErr('Inicia sesión para pagar.');
+      setPrepErr(t('reservas.loginToPay'));
       return;
     }
     setPreparing(true);
@@ -456,20 +458,20 @@ function ReservaStripeSection({
         }),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j.error || 'No se pudo iniciar el pago');
-      if (!j.client_secret) throw new Error('Respuesta inválida del servidor');
+      if (!res.ok) throw new Error(j.error || t('reservas.paymentStartFailed'));
+      if (!j.client_secret) throw new Error(t('reservas.invalidServerResponse'));
       setClientSecret(j.client_secret);
     } catch (e) {
       setPrepErr(e.message || String(e));
     } finally {
       setPreparing(false);
     }
-  }, [sedeId, montoBaseMinor, moneda, descripcion, payload]);
+  }, [sedeId, montoBaseMinor, moneda, descripcion, payload, t]);
 
   if (!stripePromise) {
     return (
       <div className="error-message" role="alert">
-        Falta configurar <code>REACT_APP_STRIPE_PUBLISHABLE_KEY</code> para pagos con tarjeta.
+        {t('reservas.stripeKeyMissing')}
       </div>
     );
   }
@@ -499,7 +501,7 @@ function ReservaStripeSection({
             boxShadow: '0 3px 12px rgba(99,91,255,0.35)',
           }}
         >
-          {preparing ? 'Preparando…' : 'Continuar al pago con tarjeta'}
+          {preparing ? t('reservas.preparing') : t('reservas.continueCardPay')}
         </button>
       </div>
     );
@@ -508,7 +510,7 @@ function ReservaStripeSection({
   return (
     <Elements
       stripe={stripePromise}
-      options={{ clientSecret, locale: 'es' }}
+      options={{ clientSecret, locale: i18n.language?.startsWith('en') ? 'en' : 'es' }}
     >
       <ReservaStripePayInner
         clientSecret={clientSecret}
@@ -996,7 +998,7 @@ export default function ReservaForm() {
         if (cancelled) return;
         if (!res.ok) {
           setSedes([]);
-          setSedesLoadError('No se pudieron cargar las sedes.');
+          setSedesLoadError(t('reservas.loadVenuesError'));
           return;
         }
         try {
@@ -1005,13 +1007,13 @@ export default function ReservaForm() {
           setSedes(arr);
         } catch {
           setSedes([]);
-          setSedesLoadError('Respuesta inválida al cargar sedes.');
+          setSedesLoadError(t('reservas.invalidVenuesResponse'));
         }
       })
       .catch(() => {
         if (!cancelled) {
           setSedes([]);
-          setSedesLoadError('Error de red al cargar sedes.');
+          setSedesLoadError(t('reservas.networkVenuesError'));
         }
       });
     return () => {
@@ -1584,7 +1586,7 @@ export default function ReservaForm() {
         }))
       );
     } catch {
-      setError('Error al buscar canchas disponibles');
+      setError(t('reservas.searchCourtsError'));
     }
   }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
 
@@ -1664,7 +1666,7 @@ export default function ReservaForm() {
     if (!ok) {
       setError(
         clienteTieneTelefonoGuardado(ccParaTelefono || ccEff)
-          ? 'El teléfono del perfil no es válido. Completa un número de contacto válido.'
+          ? t('reservas.invalidPhoneProfile')
           : `Ingresa un número de WhatsApp válido (al menos ${MIN_DIGITOS_TELEFONO} dígitos).`
       );
       return;
@@ -1728,14 +1730,14 @@ export default function ReservaForm() {
         });
         redirectMercadoPagoCheckout(data.init_point);
       } else if (res.ok && data.efectivo_payment) {
-        alert('Esta sede acepta pago presencial. Presenta tu reserva al llegar al club.');
+        alert(t('reservas.payAtVenueAlert'));
         setPantalla(1);
         setFormData({ fecha: '', hora: '', cancha: '', duracion: '90', nombre: '', email: '', numeroTel: '' });
         setWhatsapp('');
         setMpLoading(false);
       } else if (res.ok && data.manual_payment) {
         const msgManual = [
-          'Reserva creada con estado pendiente de pago manual.',
+          t('reservas.pendingManualPay'),
           data.instructions ? `Instrucciones: ${data.instructions}` : null,
         ]
           .filter(Boolean)
@@ -1746,14 +1748,14 @@ export default function ReservaForm() {
         setWhatsapp('');
         setMpLoading(false);
       } else if (res.ok && data.stripe_checkout_pending) {
-        setError(data.message || 'Stripe Connect está en implementación para esta sede.');
+        setError(data.message || t('reservas.stripeImplementing'));
         setMpLoading(false);
       } else {
-        setError(data.error || 'No se pudo iniciar el pago');
+        setError(data.error || t('reservas.paymentStartFailed'));
         setMpLoading(false);
       }
     } catch (err) {
-      setError('Error al conectar con Mercado Pago: ' + err.message);
+      setError(`${t('reservas.mpConnectError')} ${err.message}`);
       setMpLoading(false);
     }
   };
@@ -1801,8 +1803,8 @@ export default function ReservaForm() {
         <div className="reserva-sede-inner">
           <img src="/logo-padbol-match.png" alt="Padbol Match" className="reserva-sede-logo" />
           <header className="reserva-sede-hero">
-            <h1 className="reserva-sede-hero-title">Reserva tu cancha</h1>
-            <p className="reserva-sede-hero-sub">Elige tu sede y horario favorito</p>
+            <h1 className="reserva-sede-hero-title">{t('reservas.heroTitle')}</h1>
+            <p className="reserva-sede-hero-sub">{t('reservas.heroSubtitle')}</p>
           </header>
 
           {sedesLoadError ? (
@@ -1812,7 +1814,7 @@ export default function ReservaForm() {
           ) : null}
 
           <label className="reserva-sede-pais-question" htmlFor="reserva-pais-select">
-            ¿Dónde quieres jugar?
+            {t('reservas.wherePlay')}
           </label>
           <div className="reserva-sede-pais-pill-shell">
             <span className="reserva-sede-pais-pill-icon" aria-hidden>
@@ -1826,7 +1828,7 @@ export default function ReservaForm() {
               <select
                 id="reserva-pais-select"
                 className="reserva-sede-pais-pill-select"
-                aria-label="¿Dónde quieres jugar?"
+                aria-label={t('reservas.wherePlay')}
                 value={filtros.pais || ''}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -1834,7 +1836,7 @@ export default function ReservaForm() {
                   else selectPais(v);
                 }}
               >
-                <option value="">Elige un país…</option>
+                <option value="">{t('reservas.chooseCountryOption')}</option>
                 {paisesOrdenados.map((p) => (
                   <option key={p} value={p}>
                     {etiquetaPaisReservaSelector(p)}
@@ -1847,7 +1849,7 @@ export default function ReservaForm() {
           {filtros.pais ? (
             <div key={reservaCardsWave} className="reserva-sede-cards-root">
               {sedesFiltradasPorPais.length === 0 ? (
-                <p className="reserva-sede-empty-pais">Próximamente en tu país 🌎</p>
+                <p className="reserva-sede-empty-pais">{t('reservas.comingSoonCountry')}</p>
               ) : (
                 <ul className="reserva-sede-cards-list">
                   {sedesFiltradasPorPais.map((sede, idx) => {
@@ -1875,9 +1877,9 @@ export default function ReservaForm() {
                           )}
                         </div>
                         <div className="reserva-sede-card-body">
-                          <h2 className="reserva-sede-card-name">{String(sede.nombre || 'Sede').trim()}</h2>
+                          <h2 className="reserva-sede-card-name">{String(sede.nombre || t('reservas.venueDefault')).trim()}</h2>
                           {esMasCercana ? (
-                            <p className="reserva-sede-card-nearby">Sede más cercana a ti</p>
+                            <p className="reserva-sede-card-nearby">{t('reservas.nearestVenue')}</p>
                           ) : null}
                           <p className="reserva-sede-card-loc">
                             {flag ? <span className="reserva-sede-card-flag">{flag}</span> : null}
@@ -1885,18 +1887,18 @@ export default function ReservaForm() {
                           </p>
                           <p className="reserva-sede-card-hours">{horarioDisponibleTexto(sede)}</p>
                           <p className="reserva-sede-card-price">
-                            Desde{' '}
+                            {t('reservas.priceFrom')}{' '}
                             <strong>
                               {Number(precio || 0).toLocaleString('es-AR')} {moneda}
                             </strong>{' '}
-                            / turno
+                            {t('reservas.perSlot')}
                           </p>
                           <button
                             type="button"
                             className="reserva-sede-card-btn"
                             onClick={() => abrirPerfilPublicoSedeDesdeCard(sede)}
                           >
-                            Reservar
+                            {t('reservas.book')}
                           </button>
                         </div>
                       </li>
@@ -1940,7 +1942,7 @@ export default function ReservaForm() {
         >
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: mostrarEtiquetaSedeMasCercanaGeo ? '8px' : '20px' }}>
-            📅 {sedeSeleccionada?.nombre || 'Cargando sede…'}
+            📅 {sedeSeleccionada?.nombre || t('reservas.loadingVenue')}
           </h1>
           {mostrarEtiquetaSedeMasCercanaGeo && sedeSeleccionada ? (
             <p
@@ -1951,7 +1953,7 @@ export default function ReservaForm() {
               <span style={{ display: 'inline-flex', flexShrink: 0, color: 'inherit' }}>
                 <IconGeroUbicacion size={16} />
               </span>
-              Sede más cercana a ti
+              {t('reservas.nearestVenue')}
             </p>
           ) : null}
 
@@ -1972,7 +1974,7 @@ export default function ReservaForm() {
 
           <form>
             <div className="form-group">
-              <label style={{ display: 'block', marginBottom: '10px' }}>Elige el día</label>
+              <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.chooseDay')}</label>
               <ReservaCalendarioMes
                 selectedIso={formData.fecha}
                 minIso={ymdHoyParaReservaSede(sedeSeleccionada)}
@@ -1984,10 +1986,10 @@ export default function ReservaForm() {
             </div>
 
             <div className="form-group">
-              <label style={{ display: 'block', marginBottom: '10px' }}>Duración</label>
+              <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
               {duracionesOfrecidas.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Esta sede no tiene precios cargados para ninguna duración. Contactá al club.
+                  {t('reservas.noPricing')}
                 </p>
               ) : (
                 <>
@@ -2030,7 +2032,7 @@ export default function ReservaForm() {
                   </div>
                   {duracionesOfrecidas.length === 1 ? (
                     <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-                      Única duración disponible para esta sede.
+                      {t('reservas.onlyDuration')}
                     </p>
                   ) : null}
                 </>
@@ -2039,7 +2041,7 @@ export default function ReservaForm() {
 
             {horariosDisponibles.length > 0 && (
               <div className="form-group reserva-horario-bloque">
-                <label style={{ display: 'block', marginBottom: '10px' }}>Horarios disponibles</label>
+                <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.availableTimes')}</label>
                 <div className="reserva-horarios-wrap">
                   {horariosDisponibles.map((h) => {
                     const active = formData.hora === h.hora;
@@ -2052,7 +2054,7 @@ export default function ReservaForm() {
                       >
                         <span className="reserva-horario-linea">{h.horario}</span>
                         <span className="reserva-horario-meta">
-                          {h.libres} libre{h.libres === 1 ? '' : 's'}
+                          {h.libres} {h.libres === 1 ? t('reservas.slotFree') : t('reservas.slotsFree')}
                         </span>
                       </button>
                     );
@@ -2067,7 +2069,7 @@ export default function ReservaForm() {
               loading === false &&
               String(filtros.sede_id) === horariosUltimaConsulta.sedeId &&
               formData.fecha === horariosUltimaConsulta.fecha && (
-              <div className="error-message">No hay horarios disponibles para esta fecha</div>
+              <div className="error-message">{t('reservas.noSlotsDate')}</div>
             )}
 
             {/* Price badge — shown as soon as a time is selected */}
@@ -2081,8 +2083,8 @@ export default function ReservaForm() {
                     nombreFranjaActiva(sedeSeleccionada, formData.hora, formData.fecha) ||
                     (sedeSeleccionada?.precio_manana && sedeSeleccionada?.precio_tarde
                       ? parseInt(formData.hora.split(':')[0], 10) < 16
-                        ? '🌅 Tarifa mañana'
-                        : '🌆 Tarifa tarde/noche'
+                        ? t('reservas.morningRate')
+                        : t('reservas.eveningRate')
                       : '');
                   if (!subEtiqueta) return null;
                   return (
@@ -2098,7 +2100,7 @@ export default function ReservaForm() {
                 className="reserva-canchas-bloque"
                 style={{ scrollMarginTop: reservaPaddingTopCss }}
               >
-                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px' }}>Elige tu cancha:</label>
+                <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px' }}>{t('reservas.chooseCourt')}</label>
                 <div className="reserva-canchas-botones">
                   {canchasDisponibles.map(c => (
                     <button
@@ -2118,7 +2120,7 @@ export default function ReservaForm() {
                       }}
                       className={`reserva-cancha-elegir-btn ${c.libre ? 'reserva-cancha-elegir-btn--libre' : 'reserva-cancha-elegir-btn--ocupada'}`}
                     >
-                      {c.label || `Cancha ${c.num}`} {c.libre ? '✅ Disponible' : '🔴 Reservada'}
+                      {c.label || `${t('reservas.court')} ${c.num}`} {c.libre ? `✅ ${t('reservas.available')}` : `🔴 ${t('reservas.booked')}`}
                     </button>
                   ))}
                 </div>
@@ -2188,7 +2190,7 @@ export default function ReservaForm() {
           }}
         >
         <div className="reserva-card">
-          <h1 style={{ margin: 0, marginBottom: '20px' }}>Resumen de reserva</h1>
+          <h1 style={{ margin: 0, marginBottom: '20px' }}>{t('reservas.summaryTitle')}</h1>
 
           <div
             className="reserva-resumen-datos"
@@ -2206,20 +2208,20 @@ export default function ReservaForm() {
                 <IconGeroUbicacion size={16} />
               </span>
               <span>
-                <strong>Sede:</strong> {sedeSeleccionada?.nombre || '—'}
+                <strong>{t('reservas.labelVenue')}</strong> {sedeSeleccionada?.nombre || '—'}
               </span>
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>Fecha:</strong> {formData.fecha || '—'}
+              <strong>{t('reservas.labelDate')}</strong> {formData.fecha || '—'}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>Hora:</strong> {formData.hora || '—'}
+              <strong>{t('reservas.labelTime')}</strong> {formData.hora || '—'}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>Duración:</strong> {duracionReservaMinP4} min
+              <strong>{t('reservas.labelDuration')}</strong> {duracionReservaMinP4} min
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>Cancha:</strong>{' '}
+              <strong>{t('reservas.labelCourt')}</strong>{' '}
               {(() => {
                 const id = formData.cancha != null && String(formData.cancha).trim() !== '' ? String(formData.cancha) : '';
                 if (!id) return '—';
@@ -2228,43 +2230,43 @@ export default function ReservaForm() {
                   : null;
                 const rawLabel = match && (match.label || match.nombre || match.descripcion);
                 if (rawLabel) return String(rawLabel).trim();
-                return `Cancha ${id}`;
+                return `${t('reservas.court')} ${id}`;
               })()}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>Jugador:</strong> {currentCliente?.nombre || '—'}
+              <strong>{t('reservas.labelPlayer')}</strong> {currentCliente?.nombre || '—'}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>Email:</strong> {currentCliente?.email || '—'}
+              <strong>{t('reservas.labelEmail')}</strong> {currentCliente?.email || '—'}
             </p>
             {precioTurnoResumen > 0 ? (
               metodoPagoStripe ? (
                 <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
                   <p style={{ margin: '0 0 4px' }}>
-                    <strong>Turno:</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
+                    <strong>{t('reservas.labelSlot')}</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
                   </p>
                   {reservaExtrasSubtotal > 0 ? (
                     <p style={{ margin: '0 0 4px' }}>
-                      <strong>Extras:</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
+                      <strong>{t('reservas.labelExtras')}</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
                     </p>
                   ) : null}
                   <p style={{ margin: '0 0 4px' }}>
-                    <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
+                    <strong>{t('reservas.serviceFee')}</strong>{' '}
                     {formatMoneyMain(stripeMinorToMain(cargoServicioMinor, moneda), moneda)}
                   </p>
                 </div>
               ) : (
                 <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
                   <p style={{ margin: '0 0 4px' }}>
-                    <strong>Turno:</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
+                    <strong>{t('reservas.labelSlot')}</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
                   </p>
                   {reservaExtrasSubtotal > 0 ? (
                     <>
                       <p style={{ margin: '0 0 4px' }}>
-                        <strong>Extras:</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
+                        <strong>{t('reservas.labelExtras')}</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
                       </p>
                       <p style={{ margin: '0 0 4px' }}>
-                        <strong>Cargo de servicio Padbol Match (3%):</strong>{' '}
+                        <strong>{t('reservas.serviceFee')}</strong>{' '}
                         {formatMoneyMain(reservaCargoPlataforma, moneda)}
                       </p>
                     </>
@@ -2277,7 +2279,7 @@ export default function ReservaForm() {
                         color: 'var(--text-secondary)',
                       }}
                     >
-                      Sin cargo del 3% de Padbol Match (cobro en sede).
+                      {t('reservas.noServiceFeeVenue')}
                     </p>
                   ) : null}
                 </div>
@@ -2287,18 +2289,18 @@ export default function ReservaForm() {
 
           {muestraInputWhatsappResumen && (
             <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label>WhatsApp para confirmación *</label>
+              <label>{t('reservas.whatsappConfirm')}</label>
               <div className="phone-field">
                 <select
                   value={formData.codigoPais}
                   onChange={(e) => setFormData((prev) => ({ ...prev, codigoPais: e.target.value }))}
                 >
-                  <optgroup label="Principales">
+                  <optgroup label={t('reservas.phoneCountriesMain')}>
                     {PAISES_TELEFONO_PRINCIPALES.map(p => (
                       <option key={p.nombre} value={p.codigo}>{p.bandera} {p.codigo}</option>
                     ))}
                   </optgroup>
-                  <optgroup label="Otros">
+                  <optgroup label={t('reservas.phoneCountriesOther')}>
                     {PAISES_TELEFONO_OTROS.map(p => (
                       <option key={p.nombre} value={p.codigo}>{p.bandera} {p.codigo} {p.nombre}</option>
                     ))}
@@ -2314,7 +2316,7 @@ export default function ReservaForm() {
               </div>
               {whatsapp ? (
                 <small className="phone-preview">
-                  Número completo: {formData.codigoPais}{whatsapp.replace(/[\s\-().]/g, '')}
+                  {t('reservas.fullNumber')} {formData.codigoPais}{whatsapp.replace(/[\s\-().]/g, '')}
                 </small>
               ) : null}
             </div>
@@ -2333,10 +2335,9 @@ export default function ReservaForm() {
                 lineHeight: 1.6,
               }}
             >
-              <strong>Pago en la sede</strong>
+              <strong>{t('reservas.payAtVenueTitle')}</strong>
               <br />
-              Esta sede acepta pago presencial. No te redirigimos a Mercado Pago ni a tarjeta: al confirmar, la reserva
-              queda pendiente hasta que abones en el club.
+              {t('reservas.payAtVenueBody')}
             </div>
           ) : null}
 
@@ -2351,10 +2352,10 @@ export default function ReservaForm() {
                   lineHeight: 1.3,
                 }}
               >
-                ¿Qué querés para el tercer tiempo? 🍕
+                {t('reservas.extrasTitle')}
               </h2>
               <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                Opcional: sumá productos o servicios del club.
+                {t('reservas.extrasSubtitle')}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 390, width: '100%' }}>
                 {reservaExtrasDisponibles.map((ex) => {
@@ -2399,7 +2400,7 @@ export default function ReservaForm() {
                 lineHeight: 1.3,
               }}
             >
-              <strong>Total:</strong>{' '}
+              <strong>{t('reservas.total')}</strong>{' '}
               {metodoPagoStripe
                 ? formatMoneyMain(stripeMinorToMain(totalMinor, moneda), moneda)
                 : formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
@@ -2408,7 +2409,7 @@ export default function ReservaForm() {
 
           {metodoPagoStripe && !stripeCuentaOk ? (
             <div className="error-message" role="alert" style={{ marginBottom: '12px' }}>
-              Esta sede aún no terminó de conectar Stripe. Elige otra sede o contacta al club.
+              {t('reservas.stripeNotConnected')}
             </div>
           ) : null}
 
@@ -2463,7 +2464,7 @@ export default function ReservaForm() {
                 marginBottom: '12px',
               }}
             >
-              {mpLoading ? 'Procesando...' : metodoPagoEfectivo ? 'Confirmar reserva (pago en sede)' : 'Pagar con Mercado Pago'}
+              {mpLoading ? t('reservas.procesando') : metodoPagoEfectivo ? t('reservas.pago_sede') : t('reservas.pagar_mp')}
             </button>
           )}
 
@@ -2476,7 +2477,7 @@ export default function ReservaForm() {
               textAlign: 'center',
             }}
           >
-            Cancelación gratis con +24hs de anticipación · Sin devolución con menos de 24hs
+            {t('reservas.cancelPolicy')}
           </p>
 
           <div
@@ -2506,7 +2507,7 @@ export default function ReservaForm() {
                 cursor: 'pointer',
               }}
             >
-              Modificar reserva
+              {t('reservas.modifyBooking')}
             </button>
             <button
               type="button"
@@ -2525,7 +2526,7 @@ export default function ReservaForm() {
                 cursor: 'pointer',
               }}
             >
-              Cancelar
+              {t('general.cancel')}
             </button>
           </div>
         </div>
@@ -2567,10 +2568,10 @@ export default function ReservaForm() {
             >
               <SuccessPaymentHeroCheck />
               <h2 id="reserva-stripe-exito-title" style={{ margin: '0 0 10px', fontSize: '1.35rem', fontWeight: 800 }}>
-                ¡Reserva confirmada!
+                {t('reservas.confirmedTitle')}
               </h2>
               <p style={{ margin: '0 0 20px', fontSize: '14px', lineHeight: 1.55, color: 'var(--text-secondary)' }}>
-                Te enviamos los detalles por WhatsApp.
+                {t('reservas.confirmedWhatsapp')}
               </p>
               <button
                 type="button"
@@ -2587,17 +2588,17 @@ export default function ReservaForm() {
                   cursor: 'pointer',
                 }}
               >
-                Entendido
+                {t('reservas.understood')}
               </button>
             </div>
           </div>
         ) : null}
         <ConfirmCancelReservaModal
           open={cancelReservaDesdeResumenOpen}
-          title="¿Cancelar la reserva y salir?"
-          message="Vas a salir del flujo y se liberará el turno si estaba reservado."
-          confirmLabel="Sí, cancelar reserva"
-          dismissLabel="Volver al resumen"
+          title={t('reservas.cancelModalTitle')}
+          message={t('reservas.cancelModalMessage')}
+          confirmLabel={t('reservas.cancelModalConfirm')}
+          dismissLabel={t('reservas.cancelModalDismiss')}
           onDismiss={() => setCancelReservaDesdeResumenOpen(false)}
           onConfirm={() => {
             setCancelReservaDesdeResumenOpen(false);

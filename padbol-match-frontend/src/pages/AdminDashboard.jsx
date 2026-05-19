@@ -1779,7 +1779,7 @@ function inviteAdminTipoToRol(tipo) {
 }
 
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
   const location = useLocation();
@@ -1820,11 +1820,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const puedeCrearTorneosOficiales = isSuperAdmin || (!esAdminClub);
 
   const ROLE_BADGE = {
-    super_admin:    '👑 Super Admin',
-    admin_nacional: '🌎 Admin Nacional',
-    admin_club:     '🏠 Admin Club',
-    empleado:       '👤 Empleado',
-    editor_contenido: '📝 Editor Hub',
+    super_admin:    `👑 ${t('admin.role.super')}`,
+    admin_nacional: `🌎 ${t('admin.role.national')}`,
+    admin_club:     `🏠 ${t('admin.role.club')}`,
+    empleado:       `👤 ${t('admin.role.employee')}`,
+    editor_contenido: `📝 ${t('admin.role.editor')}`,
   };
 
   const [reservas, setReservas] = useState([]);
@@ -2178,7 +2178,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (!isSuperAdmin) return;
     const email = String(editorContenidoEmail || '').trim().toLowerCase();
     if (!email) {
-      alert('Email obligatorio');
+      alert(t('admin.alerts.emailRequired'));
       return;
     }
     setEditorContenidoSaving(true);
@@ -2260,17 +2260,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const pais = String(inviteClubForm.pais || '').trim();
     const tipo = inviteAdminTipo || 'club';
     if (!email) {
-      alert('Email obligatorio');
+      alert(t('admin.alerts.emailRequired'));
       return;
     }
     if (!pais) {
-      alert('País obligatorio');
+      alert(t('admin.alerts.countryRequired'));
       return;
     }
     if (tipo === 'ciudad_region') {
       const prov = String(inviteClubForm.provincia || '').trim();
       if (!prov) {
-        alert('Provincia / estado obligatorio');
+        alert(t('admin.alerts.provinceRequired'));
         return;
       }
     }
@@ -2348,7 +2348,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j?.error || res.statusText);
         if (j.email_sent === false) {
-          alert('No se pudo enviar el email (revisa RESEND).');
+          alert(t('admin.alerts.emailSendFailed'));
         } else {
           setMensajeExito('✉️ Invitación reenviada');
           setTimeout(() => setMensajeExito(''), 3500);
@@ -2415,7 +2415,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (motivo == null) return;
       const m = String(motivo).trim();
       if (!m) {
-        alert('El motivo es obligatorio.');
+        alert(t('admin.alerts.rejectReasonRequired'));
         return;
       }
       try {
@@ -2865,7 +2865,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       XLSX.writeFile(wb, nombre);
     } catch (e) {
       console.error('[AdminDashboard] exportarFinanzasExcel:', e);
-      alert('No se pudo generar el Excel.');
+      alert(t('admin.alerts.excelFailed'));
     }
   }, [superAdminPeriodo, isSuperAdmin, cifrasFinanzasResumen, dashboardFinanciero, finanzasAnclaISO]);
 
@@ -3320,7 +3320,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 Reservas ({p.reservasHoy})
               </div>
               {p.reservasHoyOrdenadas.length === 0 ? (
-                <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)' }}>No hay reservas para hoy.</p>
+                <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)' }}>{t('admin.metrics.noBookingsToday')}</p>
               ) : (
                 <ul
                   style={{
@@ -3363,7 +3363,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 Canchas ahora (hora Argentina)
               </div>
               {p.ocupacionSedes.length === 0 ? (
-                <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)' }}>Sin sedes en tu alcance.</p>
+                <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)' }}>{t('admin.metrics.noVenuesScope')}</p>
               ) : isSuperAdmin ? (
                 <p className="admin-resumen-hoy-canchas-copy" style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.4 }}>
                   {p.canchasOcupacionGlobal.ocupadas === 1
@@ -3773,7 +3773,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const guardarPrecioPlanPricing = useCallback(
     async (id, precioStr) => {
       if (!session?.access_token) {
-        alert('Inicia sesión para guardar.');
+        alert(t('admin.alerts.loginToSave'));
         return;
       }
       setPlanPricingSavingId(id);
@@ -3904,7 +3904,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const guardarTorneo = async (torneoId) => {
     if (!String(editTorneoForm.categoria || '').trim()) {
-      alert('Selecciona la categoría del torneo');
+      alert(t('admin.alerts.selectCategory'));
       return;
     }
     const origRow = torneos.find((t) => t.id === torneoId);
@@ -4247,7 +4247,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           setMensajeExito('');
         }, 1500);
       } else {
-        alert('Error al actualizar');
+        alert(t('admin.alerts.updateError'));
       }
     } catch (err) {
       alert('Error: ' + err.message);
@@ -5650,7 +5650,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }
 
   const fechaActualLarga = (() => {
-    const s = new Date().toLocaleDateString('es-AR', {
+    const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+    const s = new Date().toLocaleDateString(dateLocale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -5661,30 +5662,30 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   const TABS = esEmpleado
     ? [
-        { id: 'reservas', label: '⚽ Reservas' },
-        { id: 'torneos', label: '🏆 Torneos' },
+        { id: 'reservas', label: t('admin.tabs.reservas') },
+        { id: 'torneos', label: t('admin.tabs.torneos') },
       ]
     : esAdminNacional
     ? [
         { id: 'resumen', label: t('nav.admin.resumen') },
         { id: 'torneos', label: t('torneos.titulo') },
-        { id: 'sedes', label: 'Sedes' },
-        { id: 'jugadores', label: 'Jugadores' },
+        { id: 'sedes', label: t('admin.tabs.sedes') },
+        { id: 'jugadores', label: t('admin.tabs.jugadores') },
       ]
     : [
-        { id: 'resumen', label: '📊 Resumen' },
-        ...(isSuperAdmin ? [{ id: 'sedes', label: '🏟️ Sedes' }] : []),
-        ...(isSuperAdmin ? [{ id: 'solicitudes', label: '📝 Solicitudes' }] : []),
-        ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: '🎨 Personalizar Hub' }] : []),
-        { id: 'torneos', label: '🏆 Torneos' },
-        { id: 'reservas', label: '⚽ Reservas' },
-        { id: 'validaciones', label: '⏳ Validaciones', badge: pendientes.length },
-        ...(puedeVerMiSede ? [{ id: 'mi_sede', label: '🏟️ Mi Sede' }] : []),
+        { id: 'resumen', label: t('admin.tabs.resumen') },
+        ...(isSuperAdmin ? [{ id: 'sedes', label: t('admin.tabs.sedes') }] : []),
+        ...(isSuperAdmin ? [{ id: 'solicitudes', label: t('admin.tabs.solicitudes') }] : []),
+        ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
+        { id: 'torneos', label: t('admin.tabs.torneos') },
+        { id: 'reservas', label: t('admin.tabs.reservas') },
+        { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
+        ...(puedeVerMiSede ? [{ id: 'mi_sede', label: t('admin.tabs.miSede') }] : []),
         ...(puedeVerConfig
           ? [
-              { id: 'config', label: '⚙️ Config' },
-              { id: 'planes', label: '💳 Planes' },
-              { id: 'roles', label: '👥 Roles' },
+              { id: 'config', label: t('admin.tabs.config') },
+              { id: 'planes', label: t('admin.tabs.planes') },
+              { id: 'roles', label: t('admin.tabs.roles') },
             ]
           : []),
       ];
@@ -5695,13 +5696,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       : null;
   const tituloPanelAdmin = (() => {
     if (isSuperAdmin) {
-      return '🌐 Panel Super Admin';
+      return t('admin.panel.superTitle');
     }
     if (esAdminClub && sedeClubHeader?.nombre) {
-      return `Panel Admin · ${sedeClubHeader.nombre}`;
+      return t('admin.panel.clubTitle', { name: sedeClubHeader.nombre });
     }
     if (esAdminNacional) {
-      return 'Panel Admin Nacional';
+      return t('admin.panel.nationalTitle');
     }
     const badge = ROLE_BADGE[rol] || 'Admin';
     return `Panel ${badge.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '')}`;
@@ -5772,7 +5773,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             <button
               type="button"
               className="admin-super-header__bell"
-              aria-label={`Notificaciones: ${notificacionesNoLeidas} no leídas`}
+              aria-label={t('admin.notifications.aria', { count: notificacionesNoLeidas })}
               onClick={() => setNotificacionesOpen((v) => !v)}
               style={{
                 position: 'relative',
@@ -5834,7 +5835,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 }}
               >
                 <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                  <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>Notificaciones</strong>
+                  <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{t('admin.notifications.title')}</strong>
                   {adminNotificaciones.length > 0 ? (
                     <button
                       type="button"
@@ -5846,7 +5847,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   ) : null}
                 </div>
                 {adminNotificaciones.length === 0 ? (
-                  <p style={{ margin: 0, padding: '14px', color: 'var(--text-secondary)', fontSize: '13px' }}>Sin notificaciones prioritarias.</p>
+                  <p style={{ margin: 0, padding: '14px', color: 'var(--text-secondary)', fontSize: '13px' }}>{t('admin.notifications.empty')}</p>
                 ) : (
                   <div style={{ display: 'grid', gap: '8px', padding: '10px' }}>
                     {adminNotificaciones.map((n) => {
@@ -5870,7 +5871,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                             <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{n.title}</strong>
-                            {!leida ? <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 900 }}>Nuevo</span> : null}
+                            {!leida ? <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 900 }}>{t('admin.notifications.new')}</span> : null}
                           </div>
                           <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.4, color: 'var(--text-secondary)' }}>{n.body}</p>
                           {n.actionLabel ? (
@@ -6221,19 +6222,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <>
             <div className="dashboard-grid">
               <div className="card reservas">
-                <h2>Total sedes</h2>
+                <h2>{t('admin.metrics.totalVenues')}</h2>
                 <p className="count">{sedesNacionalLista.length}</p>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>Clubes dentro de tu alcance</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>{t('admin.metrics.venuesScope')}</p>
               </div>
               <div className="card torneos">
-                <h2>Total jugadores</h2>
+                <h2>{t('admin.metrics.totalPlayers')}</h2>
                 <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>Fichas en tu alcance</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>{t('admin.metrics.playersScope')}</p>
               </div>
               <div className="card torneos">
-                <h2>Torneos activos</h2>
+                <h2>{t('admin.metrics.activeTournaments')}</h2>
                 <p className="count">{torneosActivosNacionalCount}</p>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>Excluye finalizados y cancelados</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>{t('admin.metrics.activeTournamentsHint')}</p>
               </div>
             </div>
             {resumenOperativoSecciones}
@@ -6254,19 +6255,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               Analytics globales
             </h2>
             {!analyticsGlobales ? (
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600 }}>Cargando métricas…</p>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600 }}>{t('admin.metrics.loadingMetrics')}</p>
             ) : (
               <>
                 <div className="dashboard-grid" style={{ marginBottom: '18px' }}>
                   <div className="card reservas" style={{ padding: '22px 18px' }}>
-                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Jugadores registrados</h2>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>{t('admin.metrics.registeredPlayers')}</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.jugadores_registrados_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Perfiles en la plataforma</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>{t('admin.metrics.onPlatform')}</p>
                   </div>
                   <div className="card torneos" style={{ padding: '22px 18px' }}>
-                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Jugadores nuevos (este mes)</h2>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>{t('admin.metrics.newPlayersMonth')}</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.jugadores_nuevos_este_mes) || 0).toLocaleString('es-AR')}
                     </p>
@@ -6275,28 +6276,28 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </p>
                   </div>
                   <div className="card ingresos" style={{ padding: '22px 18px' }}>
-                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Sedes activas</h2>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>{t('admin.metrics.activeVenues')}</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.sedes_activas_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Licencia activa con número asignado</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>{t('admin.metrics.activeVenuesHint')}</p>
                   </div>
                   <div className="card torneos" style={{ padding: '22px 18px' }}>
-                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Torneos finalizados</h2>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>{t('admin.metrics.finishedTournaments')}</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.torneos_finalizados_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Estado finalizado (histórico)</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>{t('admin.metrics.finishedHint')}</p>
                   </div>
                   <div className="card reservas" style={{ padding: '22px 18px' }}>
-                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Reservas (últimos 30 días)</h2>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>{t('admin.metrics.bookings30d')}</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.reservas_ultimo_mes_total) || 0).toLocaleString('es-AR')}
                     </p>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>Por fecha de creación del registro</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>{t('admin.metrics.bookings30dHint')}</p>
                   </div>
                   <div className="card ingresos" style={{ padding: '22px 18px' }}>
-                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Deporte más popular</h2>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>{t('admin.metrics.topSport')}</h2>
                     <p className="count" style={{ fontSize: '1.65rem', lineHeight: 1.25, wordBreak: 'break-word' }}>
                       {String(analyticsGlobales.deporte_mas_popular?.label || '—')}
                     </p>
@@ -6340,7 +6341,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       })}
                     </ol>
                   ) : (
-                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px' }}>Sin datos de país en sedes.</p>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px' }}>{t('admin.metrics.noCountryData')}</p>
                   )}
                 </div>
               </>
@@ -6360,7 +6361,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               color: 'var(--text-primary)',
             }}
           >
-            <h2 style={{ marginTop: 0, marginBottom: '6px', color: 'var(--text-primary)', fontSize: '18px' }}>Mis canchas hoy</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '6px', color: 'var(--text-primary)', fontSize: '18px' }}>{t('admin.metrics.courtsToday')}</h2>
             <p style={{ margin: '0 0 14px', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600 }}>
               {misCanchasHoyAdminClub.nombreSede} · {misCanchasHoyAdminClub.fechaLabel}
             </p>
@@ -6369,7 +6370,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 Sin canchas activas cargadas. Configuralas en «Mi sede».
               </p>
             ) : misCanchasHoyAdminClub.totalReservasHoySede === 0 ? (
-              <p style={{ margin: '0 0 12px', color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 700 }}>Sin reservas hoy</p>
+              <p style={{ margin: '0 0 12px', color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 700 }}>{t('admin.metrics.noBookingsTodayShort')}</p>
             ) : null}
             {!misCanchasHoyAdminClub.sinCanchasActivas ? (
               <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -6488,7 +6489,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         </div>
         <div className="dashboard-grid">
         <div className="card ingresos" style={cifrasFinanzasResumen.tipo === 'sede' ? { gridColumn: '1 / -1' } : undefined}>
-          <h2>Ingresos del período</h2>
+          <h2>{t('admin.metrics.periodRevenue')}</h2>
           {cifrasFinanzasResumen.tipo === 'sede' ? (
             <div className="ingresos-por-moneda">
               <div className="ingreso-fila" style={{ textAlign: 'left' }}>
@@ -6595,11 +6596,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           )}
         </div>
         <div className="card reservas">
-          <h2>Reservas en período</h2>
+          <h2>{t('admin.metrics.periodBookings')}</h2>
           <p className="count">{cifrasFinanzasResumen.reservasEnPeriodo}</p>
         </div>
         <div className="card torneos">
-          <h2>Total Torneos</h2>
+          <h2>{t('admin.metrics.totalTournaments')}</h2>
           <p className="count">{torneos.length}</p>
         </div>
       </div>
@@ -6649,7 +6650,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 : { background: 'var(--bg-card)', borderRadius: '10px', padding: '10px' }
             }
           >
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>Transacciones</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metrics.transactions')}</div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
               {dashboardFinanciero.totalTransacciones}
             </div>
@@ -6661,7 +6662,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 : { background: 'var(--bg-card)', borderRadius: '10px', padding: '10px' }
             }
           >
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>Ticket promedio</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metrics.avgTicket')}</div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
               {isSuperAdmin
                 ? Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })
@@ -6786,9 +6787,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           ) : null}
         </div>
         {torneos.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Sin torneos</p>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('admin.metrics.noTournaments')}</p>
         ) : torneosFiltradosAdminEstado.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>No hay torneos con este estado.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('admin.metrics.noTournamentsState')}</p>
         ) : (
           <div style={{ display: 'grid', gap: '10px' }}>
             {torneosFiltradosAdminEstado.map(torneo => {
