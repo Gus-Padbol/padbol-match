@@ -55,13 +55,6 @@ html.landing-page-active #root {
 
 .landing-page__lang-bar {
   pointer-events: auto;
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(248, 250, 252, 0.22);
-  background: rgba(15, 23, 42, 0.88);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .landing-page__cta-group {

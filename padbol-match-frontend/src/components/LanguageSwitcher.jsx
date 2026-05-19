@@ -1,179 +1,143 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
+import { PADBOL_LANGUAGES } from '../constants/padbolLanguages';
+import './LanguageSwitcher.css';
+
+function TablerWorldIcon({ size = 18 }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+      <path d="M3.6 9h16.8" />
+      <path d="M3.6 15h16.8" />
+      <path d="M11.5 3a17 17 0 0 0 0 18" />
+      <path d="M12.5 3a17 17 0 0 1 0 18" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ size = 12 }) {
+  return (
+    <svg
+      className="lang-switcher__chevron"
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
 
 /**
- * @param {'header' | 'profile' | 'buttons' | 'landing'} variant
+ * Selector de idioma compacto (globo + menú). Escalar agregando entradas en {@link PADBOL_LANGUAGES}.
+ * @param {'header' | 'profile' | 'landing' | 'buttons'} variant
  */
-export default function LanguageSwitcher({ variant = 'buttons', compact = false, className = '' }) {
+export default function LanguageSwitcher({ variant = 'header', compact = false, className = '' }) {
   const { t } = useTranslation();
   const { language: lang, setLanguage } = usePadbolI18n();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const listId = useId();
+
   const resolvedVariant =
-    variant === 'buttons' && compact ? 'header' : variant === 'buttons' ? 'buttons' : variant;
+    variant === 'buttons' && compact ? 'header' : variant === 'buttons' ? 'header' : variant;
 
   const setLang = useCallback(
     async (code) => {
       await setLanguage(code);
+      setOpen(false);
     },
     [setLanguage],
   );
 
-  const headerColors =
-    resolvedVariant === 'landing'
-      ? { base: '#f8fafc', active: '#f8fafc', inactive: 'rgba(248, 250, 252, 0.72)' }
-      : { base: 'var(--text-secondary, #94a3b8)', active: 'var(--text-primary, #f8fafc)', inactive: null };
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
 
-  if (resolvedVariant === 'header' || resolvedVariant === 'landing') {
-    return (
-      <div
-        className={className}
-        role="group"
-        aria-label={t('general.language')}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          fontSize: resolvedVariant === 'landing' ? 13 : 11,
-          fontWeight: 700,
-          lineHeight: 1,
-          letterSpacing: '0.02em',
-          color: headerColors.base,
-          userSelect: 'none',
-        }}
-      >
-        {(['es', 'en']).map((code, idx) => {
-          const active = lang === code;
-          return (
-            <React.Fragment key={code}>
-              {idx > 0 ? (
-                <span aria-hidden style={{ margin: '0 4px', opacity: 0.45, fontWeight: 500 }}>
-                  |
-                </span>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => void setLang(code)}
-                aria-pressed={active}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  padding: resolvedVariant === 'landing' ? '4px 5px' : '2px 3px',
-                  margin: 0,
-                  cursor: 'pointer',
-                  font: 'inherit',
-                  fontSize: 'inherit',
-                  fontWeight: active ? 800 : 600,
-                  color: active
-                    ? headerColors.active
-                    : headerColors.inactive || 'inherit',
-                  opacity: active ? 1 : resolvedVariant === 'landing' ? 0.72 : 0.75,
-                  textDecoration: active ? 'underline' : 'none',
-                  textUnderlineOffset: 2,
-                }}
-              >
-                {code.toUpperCase()}
-              </button>
-            </React.Fragment>
-          );
-        })}
-      </div>
-    );
-  }
-
-  if (resolvedVariant === 'profile') {
-    const profileOptions = [
-      { code: 'es', flags: '🇦🇷 🇪🇸', label: 'Español' },
-      { code: 'en', flags: '🇺🇸 🇬🇧', label: 'English' },
-    ];
-    return (
-      <div
-        className={className}
-        role="group"
-        aria-label={t('general.language')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-          width: '100%',
-        }}
-      >
-        {profileOptions.map((opt) => {
-          const active = lang === opt.code;
-          return (
-            <button
-              key={opt.code}
-              type="button"
-              onClick={() => void setLang(opt.code)}
-              aria-pressed={active}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '14px 16px',
-                borderRadius: 12,
-                border: `2px solid ${active ? 'var(--accent, #e11b22)' : 'var(--border, rgba(255,255,255,0.12))'}`,
-                background: active ? 'rgba(225, 27, 34, 0.12)' : 'var(--bg-card, rgba(30,41,59,0.5))',
-                color: 'var(--text-primary)',
-                fontSize: 16,
-                fontWeight: 700,
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-                textAlign: 'left',
-                boxSizing: 'border-box',
-              }}
-            >
-              <span style={{ fontSize: 22, lineHeight: 1 }} aria-hidden>
-                {opt.flags}
-              </span>
-              <span>{opt.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  const btnBase = {
-    border: '1px solid var(--border, rgba(255,255,255,0.25))',
-    borderRadius: 6,
-    padding: '4px 8px',
-    fontSize: 11,
-    fontWeight: 700,
-    cursor: 'pointer',
-    lineHeight: 1.2,
-    minWidth: 32,
-  };
+  const shellClass = [
+    'lang-switcher',
+    resolvedVariant === 'landing' ? 'lang-switcher--landing' : '',
+    resolvedVariant === 'profile' ? 'lang-switcher--profile' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <div
-      className={className}
-      role="group"
-      aria-label={t('general.language')}
-      style={{
-        display: 'inline-flex',
-        gap: 4,
-        alignItems: 'center',
-      }}
-    >
-      {(['es', 'en']).map((code) => {
-        const active = lang === code;
-        return (
-          <button
-            key={code}
-            type="button"
-            onClick={() => void setLang(code)}
-            aria-pressed={active}
-            style={{
-              ...btnBase,
-              background: active ? 'var(--accent, #e11b22)' : 'transparent',
-              color: active ? '#fff' : 'var(--text-secondary, #94a3b8)',
-              opacity: active ? 1 : 0.85,
-            }}
-          >
-            {code.toUpperCase()}
-          </button>
-        );
-      })}
+    <div className={shellClass} ref={rootRef}>
+      <button
+        type="button"
+        className="lang-switcher__trigger"
+        aria-label={t('general.language')}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <TablerWorldIcon size={resolvedVariant === 'landing' ? 17 : 16} />
+        <ChevronDownIcon size={11} />
+      </button>
+      {open ? (
+        <ul id={listId} className="lang-switcher__menu" role="listbox" aria-label={t('general.language')}>
+          {PADBOL_LANGUAGES.map((opt) => {
+            const active = lang === opt.code;
+            return (
+              <li key={opt.code} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  className={`lang-switcher__option${active ? ' lang-switcher__option--active' : ''}`}
+                  onClick={() => void setLang(opt.code)}
+                >
+                  <span className="lang-switcher__flags" aria-hidden>
+                    {opt.flags}
+                  </span>
+                  <span className="lang-switcher__label">{opt.label}</span>
+                  {active ? (
+                    <span className="lang-switcher__check" aria-hidden>
+                      ✓
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
     </div>
   );
 }
