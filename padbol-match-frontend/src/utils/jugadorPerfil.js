@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient';
 import { whatsappDigitsValido } from './authIdentidad';
+import { upsertJugadorPerfilPorSesion } from './upsertJugadorPerfil';
 
 export const JUGADOR_PERFIL_LS_KEY = 'jugadorPerfil';
 
@@ -131,16 +132,7 @@ export async function ensureJugadorPerfilRowForEmail(email) {
   if (!whatsappPerfilValido(jp)) {
     return { error: new Error('Completa un WhatsApp válido en tu perfil.') };
   }
-  const { data: yaExiste, error: selErr } = await supabase
-    .from('jugadores_perfil')
-    .select('email')
-    .eq('email', em)
-    .maybeSingle();
-  if (selErr) return { error: selErr };
-  if (yaExiste?.email) return { error: null };
-
   const row = {
-    email: em,
     nombre: full,
     whatsapp: wa,
     nivel: String(jp?.categoria || jp?.nivel || 'Principiante').trim() || 'Principiante',
@@ -148,7 +140,16 @@ export async function ensureJugadorPerfilRowForEmail(email) {
     pendiente_validacion: true,
     es_federado: false,
   };
-  const { error } = await supabase.from('jugadores_perfil').insert([row]);
+  const { data: sessionData } = await supabase.auth.getSession();
+  const uid = sessionData?.session?.user?.id ?? null;
+  if (uid) {
+    const { error } = await upsertJugadorPerfilPorSesion({ userId: uid, email: em, row });
+    return { error };
+  }
+  const { error } = await supabase.from('jugadores_perfil').upsert(
+    { email: em, ...row },
+    { onConflict: 'email' }
+  );
   return { error };
 }
 

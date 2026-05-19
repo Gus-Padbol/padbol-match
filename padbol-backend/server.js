@@ -1606,6 +1606,41 @@ app.get('/api/registro/whatsapp-disponible', async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/registro/completar-perfil — JWT: upsert jugadores_perfil (OAuth / onboarding).
+ * Body: { genero?, whatsapp?, deportes_preferidos?, nombre?, apellido? }
+ */
+app.patch('/api/registro/completar-perfil', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Se requiere sesión' });
+    const email = String(user.email || '').trim().toLowerCase();
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const patch = {};
+    if (b.genero != null) patch.genero = String(b.genero).trim().toLowerCase();
+    if (b.whatsapp != null) patch.whatsapp = String(b.whatsapp).trim();
+    if (Array.isArray(b.deportes_preferidos)) patch.deportes_preferidos = b.deportes_preferidos;
+    if (b.nombre != null) patch.nombre = String(b.nombre).trim();
+    if (b.apellido != null) patch.apellido = String(b.apellido).trim() || null;
+    if (patch.whatsapp) {
+      const ok = await whatsappDisponibleEnJugadoresPerfil(supabase, patch.whatsapp, user.id);
+      if (!ok) {
+        return res.status(409).json({ error: 'Este número de teléfono ya está registrado en otra cuenta' });
+      }
+    }
+    const data = await upsertJugadoresPerfilPorUserId(supabase, {
+      userId: user.id,
+      email,
+      patch,
+    });
+    res.json({ ok: true, perfil: data });
+  } catch (err) {
+    console.error('❌ PATCH /api/registro/completar-perfil:', err.message);
+    const friendly = mensajeErrorJugadoresPerfilDuplicado(err);
+    res.status(friendly ? 409 : 500).json({ error: friendly || err.message || 'No se pudo guardar el perfil.' });
+  }
+});
+
 /** PATCH /api/hub-config/:id — super_admin o editor_contenido: titulo, subtitulo, foto_url, fotos_urls. */
 app.patch('/api/hub-config/:id', async (req, res) => {
   try {
@@ -2980,6 +3015,68 @@ async function whatsappDisponibleEnJugadoresPerfil(supabaseClient, whatsappRaw, 
   const { data, error } = await q;
   if (error) throw error;
   return !(Array.isArray(data) && data.length > 0);
+}
+
+/**
+ * INSERT … ON CONFLICT (user_id) o UPDATE por fila existente (email legacy).
+ * Usar service_role / cliente con permisos; evita INSERT duplicado en OAuth.
+ */
+async function upsertJugadoresPerfilPorUserId(supabaseClient, { userId, email, patch }) {
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('user_id requerido');
+  const em = String(email || '').trim().toLowerCase() || null;
+  const row = { ...patch, user_id: uid };
+  if (em) row.email = em;
+
+  let existing = null;
+  const byUid = await supabaseClient
+    .from('jugadores_perfil')
+    .select('id, nombre, apellido')
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (byUid.error) throw byUid.error;
+  existing = byUid.data;
+  if (!existing?.id && em) {
+    const byEm = await supabaseClient
+      .from('jugadores_perfil')
+      .select('id, nombre, apellido')
+      .eq('email', em)
+      .maybeSingle();
+    if (byEm.error) throw byEm.error;
+    existing = byEm.data;
+  }
+
+  if (existing?.id) {
+    const updatePayload = { ...row };
+    const nombreActual = String(existing.nombre || '').trim();
+    if (nombreActual && row.nombre && nombreActual !== 'Jugador') delete updatePayload.nombre;
+    const { data, error } = await supabaseClient
+      .from('jugadores_perfil')
+      .update(updatePayload)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  let ins = await supabaseClient
+    .from('jugadores_perfil')
+    .upsert(row, { onConflict: 'user_id' })
+    .select()
+    .single();
+  if (ins.error && em) {
+    const m = String(ins.error.message || '').toLowerCase();
+    if (m.includes('duplicate') || String(ins.error.code || '') === '23505') {
+      ins = await supabaseClient
+        .from('jugadores_perfil')
+        .upsert(row, { onConflict: 'email' })
+        .select()
+        .single();
+    }
+  }
+  if (ins.error) throw ins.error;
+  return ins.data;
 }
 
 async function notifySedeAdminsExtraAgotado(sedeIdNum, nombreExtra) {

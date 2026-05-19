@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { supabase } from '../supabaseClient';
 import { refreshJugadorPerfilFromSupabase, clearJugadorPerfilLocalStorage } from '../utils/jugadorPerfil';
 import { authSessionUsaOAuthProveedorSocial } from '../utils/perfilJugadorMinimo';
+import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
 
 const AuthContext = createContext(null);
 
@@ -139,11 +140,11 @@ async function refreshUserProfile(session, setUserProfile) {
     insertRow.email = email;
   }
 
-  const { data: nuevo, error: insErr } = await supabase
-    .from('jugadores_perfil')
-    .insert(insertRow)
-    .select()
-    .single();
+  const { data: nuevo, error: insErr } = await upsertJugadorPerfilPorSesion({
+    userId,
+    email,
+    row: insertRow,
+  });
 
   if (nuevo && !insErr) {
     const perfilDB = nuevo;

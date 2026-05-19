@@ -13,6 +13,7 @@ import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import ConfirmModal from '../components/ConfirmModal';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
+import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import {
   hubContentPaddingTopCss,
@@ -1445,16 +1446,15 @@ export default function MiPerfil() {
         deportes_preferidos: normalizeDeportesPreferidosArray(registroDeportesSel),
       };
 
-      const { error: jpErr } = await supabase.from('jugadores_perfil').upsert(
-        {
-          user_id: user?.id ?? null,
-          email: owner,
+      const { error: jpErr } = await upsertJugadorPerfilPorSesion({
+        userId: user?.id,
+        email: owner,
+        row: {
           nombre: nom,
           apellido: apellReg,
           ...payload,
         },
-        { onConflict: 'email' }
-      );
+      });
 
       if (jpErr) {
         setErrorMsg(mensajeErrorJugadoresPerfilDuplicado(jpErr) || mensajeErrorDbSupabase(jpErr));

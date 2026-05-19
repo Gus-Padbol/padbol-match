@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
 import AppHeader from '../components/AppHeader';
 import {
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
@@ -26,6 +25,7 @@ import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
 import { mensajeErrorDbSupabase, mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
+import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -189,32 +189,24 @@ export default function CompletarPerfilOAuth() {
       setBusy(true);
       try {
         const depNorm = normalizeDeportesPreferidosArray(deportesSel);
-        if (userProfile?.id) {
-          const { error } = await supabase
-            .from('jugadores_perfil')
-            .update({
-              genero: gen,
-              whatsapp: waE164,
-              deportes_preferidos: depNorm,
-              ...(full && !String(userProfile.nombre || '').trim() ? { nombre: nombreIns, apellido: apellidoIns } : {}),
-            })
-            .eq('id', userProfile.id);
-          if (error) throw error;
-        } else {
-          const insertRow = {
-            user_id: session.user.id,
-            email: email || null,
-            nombre: nombreIns,
+        const nombreGuardar =
+          userProfile && String(userProfile.nombre || '').trim()
+            ? userProfile.nombre
+            : nombreIns;
+        const { error } = await upsertJugadorPerfilPorSesion({
+          userId: session.user.id,
+          email,
+          row: {
+            nombre: nombreGuardar,
             apellido: apellidoIns,
             genero: gen,
             whatsapp: waE164,
-            alias: null,
-            notificaciones_whatsapp: false,
+            alias: userProfile?.alias ?? null,
+            notificaciones_whatsapp: userProfile?.notificaciones_whatsapp ?? false,
             deportes_preferidos: depNorm,
-          };
-          const { error } = await supabase.from('jugadores_perfil').insert(insertRow).select().single();
-          if (error) throw error;
-        }
+          },
+        });
+        if (error) throw error;
         try {
           window.dispatchEvent(new CustomEvent(PERFIL_CHANGE_EVENT));
         } catch {
