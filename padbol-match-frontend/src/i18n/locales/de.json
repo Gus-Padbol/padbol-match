@@ -347,7 +347,11 @@
         "6ta": "6",
         "Femenino": "Weiblich",
         "Mixto": "Gemischt"
-      }
+      },
+      "statSw": "SW",
+      "statSl": "SL",
+      "statGw": "GW",
+      "statGl": "GL"
     }
   },
   "competir": {
@@ -469,7 +473,17 @@
     "partnerHabitual": "Regelmäßiger Begleiter",
     "federatedQuestion": "Bist du föderiert?",
     "guestLoginCta": "Anmelden oder registrieren",
-    "exploreWithoutLogin": "Um Ihren Eintrag anzuzeigen und zu bearbeiten, benötigen Sie ein Konto. Sie können den Rest der App erkunden, ohne sich anzumelden."
+    "exploreWithoutLogin": "Um Ihren Eintrag anzuzeigen und zu bearbeiten, benötigen Sie ein Konto. Sie können den Rest der App erkunden, ohne sich anzumelden.",
+    "fullName": "Vor- und Nachname",
+    "emailAccount": "Konto-E-Mail",
+    "undefined": "Nicht festgelegt",
+    "federatedBadge": "Lizenziert",
+    "genero": {
+      "masculino": "Männlich",
+      "femenino": "Weiblich",
+      "otro": "Andere",
+      "open": "Open"
+    }
   },
   "admin": {
     "mi_sede": "mein Hauptquartier",
@@ -585,11 +599,12 @@
       "statusChangeFailed": "Der Status konnte nicht geändert werden"
     },
     "torneosSection": {
-      "createdTitle": "Turniere erstellt",
+      "createdTitle": "Turniere",
       "filterEstado": "Turnierstatus",
       "manualGroupDrawTitle": "Manuelle Gruppenauslosung",
       "editTournament": "Turnier bearbeiten",
-      "deleteTournament": "Turnier löschen"
+      "deleteTournament": "Turnier löschen",
+      "filterDeporte": "Sport"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 ausstehende Anfrage",
@@ -771,7 +786,12 @@
       "inviteNewAdminTitle": "✉️ Neuen Administrator einladen",
       "nationalAdminRole": "🌍 Nationale Verwaltung",
       "saveOk": "✅ Speichern",
-      "saveDisk": "💾 Speichern"
+      "saveDisk": "💾 Speichern",
+      "validationApprove": "✅ Genehmigen",
+      "validationChangeCategory": "✏️ Kategorie ändern",
+      "validationViewProfile": "Profil ansehen",
+      "validationSearchLabel": "Suche nach Name, Nachname oder E-Mail",
+      "validationGenderLabel": "Geschlecht"
     },
     "sponsors": {
       "quotaConfigTitle": "Kontingentkonfiguration",
@@ -1186,7 +1206,9 @@
       "torneo": "Turnier",
       "reserva": "Buchung",
       "aviso": "Warnung"
-    }
+    },
+    "titulo": "Deine Benachrichtigungen",
+    "vacio": "Derzeit keine Benachrichtigungen."
   },
   "hub": {
     "hello": "Hallo",

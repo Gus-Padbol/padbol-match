@@ -1855,7 +1855,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [torneos, setTorneos] = useState([]);
   const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
+  const [filtroDeporteTorneoAdmin, setFiltroDeporteTorneoAdmin] = useState('todos');
   const filtrosEstadoTorneoPillsAdmin = useMemo(() => getFiltrosEstadoTorneoPills(t), [t, i18n.language]);
+  const filtrosDeporteTorneoPillsAdmin = useMemo(
+    () => [
+      { id: 'todos', label: t('admin.sponsors.allSports') },
+      ...TORNEO_DEPORTE_OPTIONS.map((o) => ({ id: o.value, label: o.label })),
+    ],
+    [t, i18n.language]
+  );
   const canchaDeporteAdminOptions = useMemo(() => getCanchaDeporteAdminOptions(t), [t, i18n.language]);
   const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
   const [sedesMap, setSedesMap] = useState({});
@@ -3532,9 +3540,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   const torneosFiltradosAdminEstado = useMemo(() => {
-    if (esFiltroTorneoEstadoTodos(filtroEstadoTorneoAdmin)) return torneos;
-    return torneos.filter((t) => torneoPasaFiltroEstadoVista(t, filtroEstadoTorneoAdmin));
-  }, [torneos, filtroEstadoTorneoAdmin]);
+    let list = torneos;
+    if (!esFiltroTorneoEstadoTodos(filtroEstadoTorneoAdmin)) {
+      list = list.filter((tr) => torneoPasaFiltroEstadoVista(tr, filtroEstadoTorneoAdmin));
+    }
+    const dep = String(filtroDeporteTorneoAdmin || '').trim().toLowerCase();
+    if (dep && dep !== 'todos') {
+      list = list.filter((tr) => normalizeTorneoDeporte(tr.deporte) === dep);
+    }
+    return list;
+  }, [torneos, filtroEstadoTorneoAdmin, filtroDeporteTorneoAdmin]);
 
   const torneosActivosNacionalCount = useMemo(
     () => torneos.filter((t) => torneoConsideradoActivoPanelNacional(t)).length,
@@ -6881,6 +6896,40 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             })}
           </div>
         </div>
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+            {t('admin.torneosSection.filterDeporte')}
+          </div>
+          <div
+            role="group"
+            aria-label={t('admin.torneosSection.filterDeporte')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              whiteSpace: 'nowrap',
+              paddingBottom: '2px',
+            }}
+          >
+            {filtrosDeporteTorneoPillsAdmin.map(({ id, label }) => {
+              const active = filtroDeporteTorneoAdmin === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFiltroDeporteTorneoAdmin(id)}
+                  style={adminFilterPillButtonStyle(active)}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0 }}>📋 {t('admin.torneosSection.createdTitle')}</h2>
@@ -7816,7 +7865,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <>
             <div style={{ marginBottom: '14px', maxWidth: '420px' }}>
               <label htmlFor="admin-busqueda-validaciones" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
-                Buscar por nombre, apellido o email
+                {t('admin.formularios.validationSearchLabel')}
               </label>
               <input
                 id="admin-busqueda-validaciones"
@@ -7855,7 +7904,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{nombreMostrar || jugador.nombre || '—'}</strong>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '2px' }}>{jugador.email}</div>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '2px' }}>
-                      Género: {String(jugador.genero || '').trim() || '—'}
+                      {t('admin.formularios.validationGenderLabel')}: {String(jugador.genero || '').trim() || '—'}
                     </div>
                     <div style={{ marginTop: '5px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {flag && <span style={{ fontSize: '18px' }}>{flag}</span>}
@@ -7872,18 +7921,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         href={perfilPathVal}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="admin-validacion-ver-perfil"
                         style={{
                           padding: '7px 12px',
-                          background: '#f1f5f9',
+                          background: 'var(--bg-input)',
                           color: 'var(--text-primary)',
-                          border: '1px solid #cbd5e1',
+                          border: '1px solid var(--border)',
                           borderRadius: '5px',
                           fontWeight: 700,
                           fontSize: '13px',
                           textDecoration: 'none',
                         }}
                       >
-                        Ver perfil
+                        {t('admin.formularios.validationViewProfile')}
                       </a>
                     ) : null}
                     <button
@@ -7891,14 +7941,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       onClick={() => aprobarJugador(jugador.email)}
                       style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
-                      ✅ Aprobar
+                      {t('admin.formularios.validationApprove')}
                     </button>
                     <button
                       disabled={vs.saving}
                       onClick={() => toggleCambiarCategoria(jugador.email, jugador.nivel)}
                       style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
-                      ✏️ Cambiar categoría
+                      {t('admin.formularios.validationChangeCategory')}
                     </button>
 
                     {vs.open && (

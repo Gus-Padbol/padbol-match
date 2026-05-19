@@ -134,6 +134,14 @@ function etiquetaCompaneroNombreYAlias(op) {
   return al ? `${nombre} (${formatAliasConArroba(al)})` : nombre;
 }
 
+function etiquetaGeneroPerfil(t, genero) {
+  const g = String(genero || '').trim().toLowerCase();
+  if (!g) return '—';
+  const key = `perfil.genero.${g}`;
+  const translated = t(key);
+  return translated !== key ? translated : '—';
+}
+
 function escapeIlikeLiteral(value) {
   return String(value || '')
     .replace(/\\/g, '\\\\')
@@ -1923,7 +1931,7 @@ export default function MiPerfil() {
               {regErrP('apellido')}
 
               <label style={guestLabelStyle}>
-                Género {reqAst}
+                {t('auth.gender')} {reqAst}
               </label>
               <select
                 name="genero"
@@ -1935,10 +1943,10 @@ export default function MiPerfil() {
                 style={{ ...guestInputStyle, marginBottom: regErr('genero') ? '6px' : '14px', border: regBorder('genero') }}
               >
                 <option value="">— Elegir —</option>
-                <option value="masculino">Masculino</option>
-                <option value="femenino">Femenino</option>
-                <option value="otro">Otro</option>
-                <option value="open">Open</option>
+                <option value="masculino">{t('perfil.genero.masculino')}</option>
+                <option value="femenino">{t('perfil.genero.femenino')}</option>
+                <option value="otro">{t('perfil.genero.otro')}</option>
+                <option value="open">{t('perfil.genero.open')}</option>
               </select>
               {regErrP('genero')}
 
@@ -2012,7 +2020,7 @@ export default function MiPerfil() {
               />
               {regErrP('email')}
 
-              <label style={guestLabelStyle}>Alias</label>
+              <label style={guestLabelStyle}>{t('perfil.alias')}</label>
               <input
                 type="text"
                 name="alias"
@@ -2037,7 +2045,7 @@ export default function MiPerfil() {
                 </p>
               ) : null}
 
-              <label style={guestLabelStyle}>Instagram</label>
+              <label style={guestLabelStyle}>{t('perfil.instagram')}</label>
               <div
                 style={{
                   display: 'flex',
@@ -2170,7 +2178,7 @@ export default function MiPerfil() {
               {regErrP('password2')}
 
               <label style={guestLabelStyle}>
-                Lateralidad {reqAst}
+                {t('perfil.lateralidad')} {reqAst}
               </label>
               <select
                 name="lateralidad"
@@ -2261,7 +2269,7 @@ export default function MiPerfil() {
                 autoComplete="address-level2"
               />
 
-              <label style={guestLabelStyle}>Club habitual</label>
+              <label style={guestLabelStyle}>{t('perfil.usualClub')}</label>
               <div style={{ marginBottom: '14px' }}>
                 <SedeBusquedaInput
                   mode="nombre"
@@ -2278,7 +2286,7 @@ export default function MiPerfil() {
                 />
               </div>
 
-              <label style={guestLabelStyle}>Fecha de nacimiento</label>
+              <label style={guestLabelStyle}>{t('perfil.birthDate')}</label>
               <input
                 type="date"
                 name="fecha_nacimiento"
@@ -2731,7 +2739,7 @@ export default function MiPerfil() {
         ) : null}
         {perfil?.ciudad && (
           <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-            Club habitual: {perfil.ciudad}
+            {t('perfil.usualClub')}: {perfil.ciudad}
           </p>
         )}
         {perfil && !editando ? (
@@ -2779,10 +2787,10 @@ export default function MiPerfil() {
               >
                 {nombreCompletoJugadorPerfil(perfilCompaneroDisplay.row) ||
                   perfilCompaneroDisplay.row.nombre ||
-                  'Sin definir'}
+                  t('perfil.undefined')}
               </button>
             ) : (
-              'Sin definir'
+              t('perfil.undefined')
             )}
           </p>
         ) : null}
@@ -2810,7 +2818,7 @@ export default function MiPerfil() {
             </span>
           )}
           {perfil?.lateralidad && <Badge text={perfil.lateralidad} color="#555" />}
-          {perfil?.es_federado && <Badge text="Federado" color="#388e3c" />}
+          {perfil?.es_federado && <Badge text={t('perfil.federatedBadge')} color="#388e3c" />}
           {perfil?.numero_fipa && <Badge text={`FIPA ${perfil.numero_fipa}`} color="#7b1fa2" />}
         </div>
 
@@ -2845,22 +2853,12 @@ export default function MiPerfil() {
             <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>{t('perfil.playerData')}</h4>
             <div style={{ display: 'grid', gap: '2px', marginBottom: '18px' }}>
               <Row
-                label="Nombre y apellido"
+                label={t('perfil.fullName')}
                 value={nombreCompletoJugadorPerfil(perfil)?.trim() || '—'}
               />
               <Row
-                label={t("auth.gender")}
-                value={
-                  perfil.genero === 'masculino'
-                    ? 'Masculino'
-                    : perfil.genero === 'femenino'
-                      ? 'Femenino'
-                      : perfil.genero === 'otro'
-                        ? 'Otro'
-                        : perfil.genero === 'open'
-                          ? 'Open'
-                          : '—'
-                }
+                label={t('auth.gender')}
+                value={etiquetaGeneroPerfil(t, perfil.genero)}
               />
               <Row label="WhatsApp" value={String(perfil?.whatsapp || cuentaDeSesion?.whatsapp || '—').trim() || '—'} />
               <Row
@@ -2872,18 +2870,18 @@ export default function MiPerfil() {
                 }
               />
               <Row
-                label="Alias"
+                label={t('perfil.alias')}
                 value={String(perfil?.alias || '').trim() ? formatAliasConArroba(String(perfil.alias).trim()) : '—'}
               />
               <Row
-                label="Instagram"
+                label={t('perfil.instagram')}
                 value={
                   perfil?.instagram_url
                     ? `@${instagramHandleFromStored(perfil.instagram_url)}`
                     : '—'
                 }
               />
-              <Row label="Email cuenta" value={cuentaDeSesion?.email || '—'} />
+              <Row label={t('perfil.emailAccount')} value={cuentaDeSesion?.email || '—'} />
               <Row label={t("perfil.categoryLabel")} value={
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: categoriaColor }}>{perfil.nivel}</span>
@@ -2905,14 +2903,14 @@ export default function MiPerfil() {
                   )}
                 </span>
               } />
-              <Row label="Lateralidad" value={perfil.lateralidad} />
+              <Row label={t('perfil.lateralidad')} value={perfil.lateralidad} />
               <Row
-                label={t("perfil.lookingForPartner")}
-                value={perfil.busca_companero ? t('perfil.lookingForPartnerYes') : 'No'}
+                label={t('perfil.lookingForPartner')}
+                value={perfil.busca_companero ? t('perfil.lookingForPartnerYes') : t('perfil.no')}
               />
               {fechaNacimientoDesdeDb(perfil.fecha_nacimiento) && (
                 <Row
-                  label="Fecha de nacimiento"
+                  label={t('perfil.birthDate')}
                   value={fechaNacimientoDisplayEsAr(perfil.fecha_nacimiento)}
                 />
               )}
@@ -2959,7 +2957,7 @@ export default function MiPerfil() {
             />
             {fichErrP('apellido')}
 
-            <label style={labelStyle}>Género {reqAst}</label>
+            <label style={labelStyle}>{t('auth.gender')} {reqAst}</label>
             <select
               name="genero"
               value={formData.genero}
@@ -2969,8 +2967,8 @@ export default function MiPerfil() {
               <option value="">— Elegir —</option>
               <option value="masculino">Masculino</option>
               <option value="femenino">Femenino</option>
-              <option value="otro">Otro</option>
-              <option value="open">Open</option>
+              <option value="otro">{t('perfil.genero.otro')}</option>
+              <option value="open">{t('perfil.genero.open')}</option>
             </select>
             {fichErrP('genero')}
 
@@ -3032,7 +3030,7 @@ export default function MiPerfil() {
               </div>
             ) : null}
 
-            <label style={labelStyle}>Alias</label>
+            <label style={labelStyle}>{t('perfil.alias')}</label>
             <input
               type="text"
               name="alias"
@@ -3080,7 +3078,7 @@ export default function MiPerfil() {
               </p>
             )}
 
-            <label style={labelStyle}>Instagram</label>
+            <label style={labelStyle}>{t('perfil.instagram')}</label>
             <div
               style={{
                 display: 'flex',
@@ -3259,7 +3257,7 @@ export default function MiPerfil() {
               autoComplete="address-level2"
             />
 
-            <label style={labelStyle}>Club habitual</label>
+            <label style={labelStyle}>{t('perfil.usualClub')}</label>
             <div style={{ marginBottom: '14px' }}>
               <SedeBusquedaInput
                 mode="nombre"
@@ -3465,7 +3463,7 @@ export default function MiPerfil() {
               Tu último compañero de torneo se actualiza automáticamente
             </p>
 
-            <label style={labelStyle}>Fecha de nacimiento</label>
+            <label style={labelStyle}>{t('perfil.birthDate')}</label>
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
             <label style={labelStyle}>N° FIPA (número de federación)</label>

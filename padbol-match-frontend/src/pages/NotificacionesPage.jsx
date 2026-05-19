@@ -168,7 +168,7 @@ export default function NotificacionesPage() {
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>Tus notificaciones</h1>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{t('notificaciones.titulo')}</h1>
               {unreadIds.length ? (
                 <button
                   type="button"
@@ -204,7 +204,7 @@ export default function NotificacionesPage() {
                   color: 'var(--text-secondary)',
                 }}
               >
-                Sin notificaciones por ahora.
+                {t('notificaciones.vacio')}
               </section>
             ) : (
               <div style={{ display: 'grid', gap: 10 }}>

@@ -9,7 +9,7 @@
 
 /** @type {PadbolLanguageOption[]} */
 export const PADBOL_LANGUAGES = [
-  { code: 'es', flags: '🇦🇷 🇪🇸', label: 'Español' },
+  { code: 'es', flags: '🇪🇸', label: 'Español' },
   { code: 'en', flags: '🇺🇸', label: 'English' },
   { code: 'it', flags: '🇮🇹', label: 'Italiano' },
   { code: 'ro', flags: '🇷🇴', label: 'Română' },

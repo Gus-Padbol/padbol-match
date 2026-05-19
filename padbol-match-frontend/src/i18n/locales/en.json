@@ -347,7 +347,11 @@
         "6ta": "6th",
         "Femenino": "Women",
         "Mixto": "Mixed"
-      }
+      },
+      "statSw": "SW",
+      "statSl": "SL",
+      "statGw": "GW",
+      "statGl": "GL"
     }
   },
   "competir": {
@@ -469,7 +473,17 @@
     "partnerHabitual": "Regular partner",
     "federatedQuestion": "Are you federated?",
     "guestLoginCta": "Sign in or register",
-    "exploreWithoutLogin": "Sign in to view and edit your profile. You can explore the rest of the app without signing in."
+    "exploreWithoutLogin": "Sign in to view and edit your profile. You can explore the rest of the app without signing in.",
+    "fullName": "Full name",
+    "emailAccount": "Account email",
+    "undefined": "Not set",
+    "federatedBadge": "Federated",
+    "genero": {
+      "masculino": "Male",
+      "femenino": "Female",
+      "otro": "Other",
+      "open": "Open"
+    }
   },
   "admin": {
     "mi_sede": "My venue",
@@ -585,11 +599,12 @@
       "statusChangeFailed": "Could not change status"
     },
     "torneosSection": {
-      "createdTitle": "Created tournaments",
+      "createdTitle": "Tournaments",
       "filterEstado": "Tournament status",
       "manualGroupDrawTitle": "Manual group draw",
       "editTournament": "Edit tournament",
-      "deleteTournament": "Delete tournament"
+      "deleteTournament": "Delete tournament",
+      "filterDeporte": "Sport"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 pending request",
@@ -771,7 +786,12 @@
       "inviteNewAdminTitle": "✉️ Invite new admin",
       "nationalAdminRole": "🌍 National admin",
       "saveOk": "✅ Save",
-      "saveDisk": "💾 Save"
+      "saveDisk": "💾 Save",
+      "validationApprove": "✅ Approve",
+      "validationChangeCategory": "✏️ Change category",
+      "validationViewProfile": "View profile",
+      "validationSearchLabel": "Search by name, surname or email",
+      "validationGenderLabel": "Gender"
     },
     "sponsors": {
       "quotaConfigTitle": "Quota settings",
@@ -1186,7 +1206,9 @@
       "torneo": "Tournament",
       "reserva": "Booking",
       "aviso": "Notice"
-    }
+    },
+    "titulo": "Your notifications",
+    "vacio": "No notifications for now."
   },
   "hub": {
     "hello": "Hello",

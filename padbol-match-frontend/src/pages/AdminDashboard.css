@@ -733,6 +733,16 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   color: var(--text-primary);
 }
 
+.admin-dashboard--super .admin-validacion-pendiente-card button[type='button'] {
+  color: #fff !important;
+}
+
+.admin-dashboard--super .admin-validacion-pendiente-card a.admin-validacion-ver-perfil {
+  color: var(--text-primary) !important;
+  background: var(--bg-input) !important;
+  border-color: var(--border) !important;
+}
+
 /* Configuración de puntos — contenedor y tabla */
 .admin-dashboard--super .admin-config-puntos-wrap {
   background: var(--bg-card);

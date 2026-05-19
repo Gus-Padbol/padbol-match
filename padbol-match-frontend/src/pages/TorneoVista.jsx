@@ -49,6 +49,7 @@ import {
   indiceCategoriaNivelBuscaDupla,
 } from '../utils/buscaDuplaMatchmaking';
 import '../styles/TorneoVista.css';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const apiBaseUrlTorneo = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -63,6 +64,7 @@ function whatsappWebHref(raw) {
 }
 
 export default function TorneoVista() {
+  const { t } = useTranslation();
   const { torneoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -94,6 +96,11 @@ export default function TorneoVista() {
   const [buscaDuplaInvEnviadas, setBuscaDuplaInvEnviadas] = useState([]);
   const [buscaDuplaLoading, setBuscaDuplaLoading] = useState(false);
   const [buscaDuplaBusy, setBuscaDuplaBusy] = useState(false);
+
+  const torneoHeaderTitle = useMemo(() => {
+    const nombre = String(torneo?.nombre || '').trim();
+    return nombre || t('admin.formularios.tournament');
+  }, [torneo?.nombre, t]);
 
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const authUserId = useMemo(
@@ -1005,7 +1012,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="loading">
           Cargando...
         </div>
@@ -1023,7 +1030,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="error">
           <p style={{ margin: 0, fontWeight: 700, fontSize: '16px', color: '#b91c1c' }}>No pudimos cargar el torneo</p>
           {error && error !== 'No pudimos cargar el torneo' ? (
@@ -1044,7 +1051,7 @@ export default function TorneoVista() {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="error">
           Torneo no encontrado
         </div>
@@ -1229,7 +1236,7 @@ export default function TorneoVista() {
       }}
     >
       <div style={torneoVistaColumnStyle}>
-        <AppHeader title="Torneo" showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <TorneoTabbedView
           key={String(torneoId)}
           torneo={torneo}

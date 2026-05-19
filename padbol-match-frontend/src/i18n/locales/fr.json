@@ -347,7 +347,11 @@
         "6ta": "6ème",
         "Femenino": "Femelle",
         "Mixto": "Mixte"
-      }
+      },
+      "statSw": "SW",
+      "statSl": "SL",
+      "statGw": "GW",
+      "statGl": "GL"
     }
   },
   "competir": {
@@ -410,7 +414,7 @@
     "lastPartner": "dernier compagnon",
     "pendingAdminValidation": "En attente de validation par l'administrateur",
     "pendingValidation": "Validation en attente",
-    "lookingForPartner": "je cherche un partenaire",
+    "lookingForPartner": "Je cherche un partenaire",
     "lookingForPartnerYes": "Oui · visible à votre siège social",
     "otherCountries": "Autres pays",
     "searchVenuePlaceholder": "Trouvez votre siège social (min. 2 lettres)...",
@@ -469,7 +473,17 @@
     "partnerHabitual": "Compagnon régulier",
     "federatedQuestion": "Etes-vous fédéré ?",
     "guestLoginCta": "Connectez-vous ou inscrivez-vous",
-    "exploreWithoutLogin": "Pour consulter et modifier votre annonce, vous avez besoin d'un compte. Vous pouvez explorer le reste de l'application sans vous connecter."
+    "exploreWithoutLogin": "Pour consulter et modifier votre annonce, vous avez besoin d'un compte. Vous pouvez explorer le reste de l'application sans vous connecter.",
+    "fullName": "Nom et prénom",
+    "emailAccount": "E-mail du compte",
+    "undefined": "Non défini",
+    "federatedBadge": "Licencié",
+    "genero": {
+      "masculino": "Homme",
+      "femenino": "Femme",
+      "otro": "Autre",
+      "open": "Open"
+    }
   },
   "admin": {
     "mi_sede": "mon quartier général",
@@ -585,11 +599,12 @@
       "statusChangeFailed": "Impossible de changer le statut"
     },
     "torneosSection": {
-      "createdTitle": "Tournois créés",
+      "createdTitle": "Tournois",
       "filterEstado": "Statut du tournoi",
       "manualGroupDrawTitle": "Tirage au sort manuel des groupes",
       "editTournament": "Modifier le tournoi",
-      "deleteTournament": "Supprimer le tournoi"
+      "deleteTournament": "Supprimer le tournoi",
+      "filterDeporte": "Sport"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 demande en attente",
@@ -771,7 +786,12 @@
       "inviteNewAdminTitle": "✉️ Inviter un nouvel administrateur",
       "nationalAdminRole": "🌍 Administrateur National",
       "saveOk": "✅ Enregistrer",
-      "saveDisk": "💾 Enregistrer"
+      "saveDisk": "💾 Enregistrer",
+      "validationApprove": "✅ Approuver",
+      "validationChangeCategory": "✏️ Changer la catégorie",
+      "validationViewProfile": "Voir le profil",
+      "validationSearchLabel": "Rechercher par nom, prénom ou e-mail",
+      "validationGenderLabel": "Genre"
     },
     "sponsors": {
       "quotaConfigTitle": "Configuration des quotas",
@@ -1186,7 +1206,9 @@
       "torneo": "Tournoi",
       "reserva": "Réservation",
       "aviso": "Avertissement"
-    }
+    },
+    "titulo": "Vos notifications",
+    "vacio": "Aucune notification pour le moment."
   },
   "hub": {
     "hello": "Bonjour",

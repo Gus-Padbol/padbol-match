@@ -124,6 +124,9 @@ export function etiquetaFormatoEquipoTorneo(formato) {
 /** Una línea para cards / cabecera pública. */
 export function resumenDeporteFormatoTorneo(torneo) {
   const d = etiquetaDeporteTorneo(torneo?.deporte);
+  if (normalizeTorneoDeporte(torneo?.deporte) === TORNEO_DEPORTE_PADBOL) {
+    return d;
+  }
   const fLabel = etiquetaFormatoEquipoResuelto(torneo);
   return `${d} · ${fLabel}`;
 }

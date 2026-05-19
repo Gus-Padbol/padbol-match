@@ -231,7 +231,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
           ) : msg ? (
             <p style={{ margin: 0, padding: 14, color: '#991b1b', fontSize: 13 }}>{msg}</p>
           ) : items.length === 0 ? (
-            <p style={{ margin: 0, padding: 14, color: 'var(--text-secondary)', fontSize: 13 }}>Sin notificaciones por ahora.</p>
+            <p style={{ margin: 0, padding: 14, color: 'var(--text-secondary)', fontSize: 13 }}>{t('notificaciones.vacio')}</p>
           ) : (
             <div style={{ display: 'grid', gap: 8, padding: 10 }}>
               {items.map((n) => (

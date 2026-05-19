@@ -1190,10 +1190,10 @@ export default function TorneoTabbedView({
       t('torneos.vista.statPj'),
       t('torneos.vista.statPg'),
       t('torneos.vista.statPp'),
-      t('torneos.vista.statSf'),
-      t('torneos.vista.statSc'),
-      t('torneos.vista.statGf'),
-      t('torneos.vista.statGc'),
+      t('torneos.vista.statSw'),
+      t('torneos.vista.statSl'),
+      t('torneos.vista.statGw'),
+      t('torneos.vista.statGl'),
       t('torneos.vista.statPts'),
     ];
     const grupoTitulo =
@@ -1218,7 +1218,7 @@ export default function TorneoTabbedView({
               </tr>
             </thead>
             <tbody>
-              {tablaRows.map((row, idx) => {
+              {tablaRows.filter((row) => (Number(row.jj) || 0) > 0).map((row, idx) => {
                 const nombreCorto = trunc12(nombreEquipoMostrado({ ...row, nombre: row.nombre }));
                 const clasifica = idx < 2;
                 const bgFila = clasifica ? 'rgba(34, 197, 94, 0.12)' : 'var(--bg-card)';

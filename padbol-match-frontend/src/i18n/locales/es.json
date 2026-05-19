@@ -296,6 +296,10 @@
       "statSc": "SC",
       "statGf": "GF",
       "statGc": "GC",
+      "statSw": "SW",
+      "statSl": "SL",
+      "statGw": "GW",
+      "statGl": "GL",
       "statPts": "PTS",
       "grupo": "Grupo {{label}}",
       "grupoGeneral": "General",
@@ -403,6 +407,7 @@
     "fipaNumberLong": "N° FIPA (número de federación)",
     "isFederated": "¿Eres federado?",
     "federated": "Federado:",
+    "federatedBadge": "Federado",
     "federatedNumber": "N° Federado:",
     "searchingAlias": "Buscando alias…",
     "searching": "Buscando…",
@@ -467,6 +472,15 @@
     "lastName": "Apellido",
     "lateralidad": "Lateralidad",
     "partnerHabitual": "Compañero habitual",
+    "fullName": "Nombre y apellido",
+    "emailAccount": "Email cuenta",
+    "undefined": "Sin definir",
+    "genero": {
+      "masculino": "Masculino",
+      "femenino": "Femenino",
+      "otro": "Otro",
+      "open": "Open"
+    },
     "federatedQuestion": "¿Eres federado?",
     "guestLoginCta": "Iniciar sesión o registrarte",
     "exploreWithoutLogin": "Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión."
@@ -585,8 +599,9 @@
       "statusChangeFailed": "No se pudo cambiar el estado"
     },
     "torneosSection": {
-      "createdTitle": "Torneos creados",
+      "createdTitle": "Torneos",
       "filterEstado": "Estado del torneo",
+      "filterDeporte": "Deporte",
       "manualGroupDrawTitle": "Sorteo manual de grupos",
       "editTournament": "Editar torneo",
       "deleteTournament": "Eliminar torneo"
@@ -771,7 +786,12 @@
       "inviteNewAdminTitle": "✉️ Invitar nuevo admin",
       "nationalAdminRole": "🌍 Admin Nacional",
       "saveOk": "✅ Guardar",
-      "saveDisk": "💾 Guardar"
+      "saveDisk": "💾 Guardar",
+      "validationApprove": "✅ Aprobar",
+      "validationChangeCategory": "✏️ Cambiar categoría",
+      "validationViewProfile": "Ver perfil",
+      "validationSearchLabel": "Buscar por nombre, apellido o email",
+      "validationGenderLabel": "Género"
     },
     "sponsors": {
       "quotaConfigTitle": "Configuración de cupos",
@@ -1181,6 +1201,8 @@
     "inscripcion": "Inscripción"
   },
   "notificaciones": {
+    "titulo": "Tus notificaciones",
+    "vacio": "Sin notificaciones por ahora.",
     "tipo": {
       "partido": "Partido",
       "torneo": "Torneo",

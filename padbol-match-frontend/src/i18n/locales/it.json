@@ -347,7 +347,11 @@
         "6ta": "6°",
         "Femenino": "Femmina",
         "Mixto": "Misto"
-      }
+      },
+      "statSw": "SW",
+      "statSl": "SL",
+      "statGw": "GW",
+      "statGl": "GL"
     }
   },
   "competir": {
@@ -469,7 +473,17 @@
     "partnerHabitual": "Compagno abituale",
     "federatedQuestion": "Sei federato?",
     "guestLoginCta": "Accedi o registrati",
-    "exploreWithoutLogin": "Per visualizzare e modificare la tua inserzione hai bisogno di un account. Puoi esplorare il resto dell'app senza effettuare l'accesso."
+    "exploreWithoutLogin": "Per visualizzare e modificare la tua inserzione hai bisogno di un account. Puoi esplorare il resto dell'app senza effettuare l'accesso.",
+    "fullName": "Nome e cognome",
+    "emailAccount": "Email account",
+    "undefined": "Non definito",
+    "federatedBadge": "Federato",
+    "genero": {
+      "masculino": "Maschile",
+      "femenino": "Femminile",
+      "otro": "Altro",
+      "open": "Open"
+    }
   },
   "admin": {
     "mi_sede": "la mia sede",
@@ -585,11 +599,12 @@
       "statusChangeFailed": "Impossibile modificare lo stato"
     },
     "torneosSection": {
-      "createdTitle": "Tornei creati",
+      "createdTitle": "Tornei",
       "filterEstado": "Stato del torneo",
       "manualGroupDrawTitle": "Sorteggio manuale dei gironi",
       "editTournament": "Modifica torneo",
-      "deleteTournament": "Elimina torneo"
+      "deleteTournament": "Elimina torneo",
+      "filterDeporte": "Sport"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 richiesta in sospeso",
@@ -771,7 +786,12 @@
       "inviteNewAdminTitle": "✉️ Invita nuovo amministratore",
       "nationalAdminRole": "🌍Amministrazione Nazionale",
       "saveOk": "✅ Risparmia",
-      "saveDisk": "💾 Risparmia"
+      "saveDisk": "💾 Risparmia",
+      "validationApprove": "✅ Approva",
+      "validationChangeCategory": "✏️ Cambia categoria",
+      "validationViewProfile": "Vedi profilo",
+      "validationSearchLabel": "Cerca per nome, cognome o email",
+      "validationGenderLabel": "Genere"
     },
     "sponsors": {
       "quotaConfigTitle": "Configurazione delle quote",
@@ -1186,7 +1206,9 @@
       "torneo": "Torneo",
       "reserva": "Prenotazione",
       "aviso": "Avvertimento"
-    }
+    },
+    "titulo": "Le tue notifiche",
+    "vacio": "Nessuna notifica per ora."
   },
   "hub": {
     "hello": "Ciao",

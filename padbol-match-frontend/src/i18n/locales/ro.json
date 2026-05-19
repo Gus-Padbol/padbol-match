@@ -347,7 +347,11 @@
         "6ta": "al 6-lea",
         "Femenino": "Femeie",
         "Mixto": "Amestecat"
-      }
+      },
+      "statSw": "SW",
+      "statSl": "SL",
+      "statGw": "GW",
+      "statGl": "GL"
     }
   },
   "competir": {
@@ -469,7 +473,17 @@
     "partnerHabitual": "Însoțitor obișnuit",
     "federatedQuestion": "Esti federat?",
     "guestLoginCta": "Autentificați-vă sau înregistrați-vă",
-    "exploreWithoutLogin": "Pentru a vizualiza și edita înregistrarea dvs. aveți nevoie de un cont. Puteți explora restul aplicației fără să vă conectați."
+    "exploreWithoutLogin": "Pentru a vizualiza și edita înregistrarea dvs. aveți nevoie de un cont. Puteți explora restul aplicației fără să vă conectați.",
+    "fullName": "Nume și prenume",
+    "emailAccount": "Email cont",
+    "undefined": "Nedefinit",
+    "federatedBadge": "Federat",
+    "genero": {
+      "masculino": "Masculin",
+      "femenino": "Feminin",
+      "otro": "Altul",
+      "open": "Open"
+    }
   },
   "admin": {
     "mi_sede": "sediul meu",
@@ -585,11 +599,12 @@
       "statusChangeFailed": "Nu s-a putut schimba starea"
     },
     "torneosSection": {
-      "createdTitle": "Turnee create",
+      "createdTitle": "Turnee",
       "filterEstado": "Starea turneului",
       "manualGroupDrawTitle": "Extragere manuală a grupului",
       "editTournament": "Editează turneul",
-      "deleteTournament": "Șterge turneul"
+      "deleteTournament": "Șterge turneul",
+      "filterDeporte": "Sport"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 cerere în așteptare",
@@ -771,7 +786,12 @@
       "inviteNewAdminTitle": "✉️ Invită un nou administrator",
       "nationalAdminRole": "🌍 Administrator național",
       "saveOk": "✅ Salvați",
-      "saveDisk": "💾 Salvați"
+      "saveDisk": "💾 Salvați",
+      "validationApprove": "✅ Aprobă",
+      "validationChangeCategory": "✏️ Schimbă categoria",
+      "validationViewProfile": "Vezi profilul",
+      "validationSearchLabel": "Caută după nume, prenume sau email",
+      "validationGenderLabel": "Gen"
     },
     "sponsors": {
       "quotaConfigTitle": "Configurarea cotelor",
@@ -1186,7 +1206,9 @@
       "torneo": "turneu",
       "reserva": "Rezervare",
       "aviso": "Avertizare"
-    }
+    },
+    "titulo": "Notificările tale",
+    "vacio": "Nicio notificare deocamdată."
   },
   "hub": {
     "hello": "Buna ziua",
