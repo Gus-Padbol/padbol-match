@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { fetchMiRol } from '../utils/fetchMiRol';
 
 const STORAGE_KEY = 'user_role_data';
 
@@ -7,10 +8,9 @@ export default function useUserRole(currentCliente) {
   const email = currentCliente?.email ? String(currentCliente.email).trim() : null;
 
   const [roleData, setRoleData] = useState(null);
-  /** true mientras no hay email; con email, true hasta que termine la consulta a `user_roles` (evita rol null + loading false antes de tiempo). */
+  /** true mientras no hay email; con email, true hasta resolver rol vía API. */
   const [loading, setLoading] = useState(() => Boolean(email));
 
-  /** Antes del pintado: si ya hay email, no mostrar un frame con loading false y rol aún no resuelto. */
   useLayoutEffect(() => {
     if (!email) return;
     setLoading(true);
@@ -27,33 +27,46 @@ export default function useUserRole(currentCliente) {
 
     let cancelled = false;
 
-    supabase
-      .from('user_roles')
-      .select('role, nombre, pais, sede_id, email, torneos_oficiales_habilitados')
-      .eq('email', email)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          console.error('useUserRole fetch error:', error.message);
+    (async () => {
+      try {
+        const { data: sessWrap } = await supabase.auth.getSession();
+        const token = sessWrap?.session?.access_token;
+        if (!token) {
+          if (!cancelled) {
+            setRoleData(null);
+            localStorage.removeItem(STORAGE_KEY);
+            setLoading(false);
+          }
+          return;
         }
-        console.log('[useUserRole] query result for', email, '→', data);
+
+        const data = await fetchMiRol(token);
+        if (cancelled) return;
+
         const result = data
           ? {
-              email,
-              rol: data.role,
+              email: data.email || email,
+              rol: data.rol,
               nombre: data.nombre,
               pais: data.pais,
-              sedeId: data.sede_id,
-              torneosOficialesHabilitados: data.torneos_oficiales_habilitados ?? false,
+              sedeId: data.sedeId,
+              torneosOficialesHabilitados: data.torneosOficialesHabilitados ?? false,
             }
           : null;
-        console.log('[useUserRole] resolved roleData:', result);
+
         setRoleData(result);
         if (result) localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
         else localStorage.removeItem(STORAGE_KEY);
-        setLoading(false);
-      });
+      } catch (err) {
+        if (!cancelled) {
+          console.error('useUserRole fetch error:', err?.message || err);
+          setRoleData(null);
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -61,11 +74,11 @@ export default function useUserRole(currentCliente) {
   }, [email]);
 
   return {
-    rol:                          roleData?.rol                          ?? null,
-    nombre:                       roleData?.nombre                       ?? null,
-    pais:                         roleData?.pais                         ?? null,
-    sedeId:                       roleData?.sedeId                       ?? null,
-    torneosOficialesHabilitados:  roleData?.torneosOficialesHabilitados  ?? false,
+    rol: roleData?.rol ?? null,
+    nombre: roleData?.nombre ?? null,
+    pais: roleData?.pais ?? null,
+    sedeId: roleData?.sedeId ?? null,
+    torneosOficialesHabilitados: roleData?.torneosOficialesHabilitados ?? false,
     loading,
   };
 }

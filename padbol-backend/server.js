@@ -390,6 +390,31 @@ async function fetchUserRoleRow(email) {
   return q.data;
 }
 
+/** Rol del usuario autenticado (service role; no depende de RLS en el cliente). */
+async function fetchUserRoleRowForAuthUser(user) {
+  if (!user?.email) return null;
+  let row = await fetchUserRoleRow(user.email);
+  if (row) return row;
+  const uid = user.id ? String(user.id).trim() : '';
+  if (!uid) return null;
+  let q = await supabase
+    .from('user_roles')
+    .select(
+      'role, alcance, sede_id, nombre, pais, provincia, ciudad, email, torneos_oficiales_habilitados',
+    )
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (q.error && /colum|column/i.test(String(q.error.message || ''))) {
+    q = await supabase
+      .from('user_roles')
+      .select('role, sede_id, nombre, pais, email')
+      .eq('user_id', uid)
+      .maybeSingle();
+  }
+  if (q.error) return null;
+  return q.data;
+}
+
 function isSuperAdminApi(userEmail, role) {
   const em = String(userEmail || '').trim().toLowerCase();
   if (LEGACY_SUPER_ADMIN_EMAILS_API.includes(em)) return true;
@@ -1251,6 +1276,51 @@ async function crearNotificacionesEquipoTorneo(equipoRow, { tipo, titulo, mensaj
   const destinatarios = await getDestinatariosEquipoNotificaciones(equipoRow);
   await Promise.all(destinatarios.map((d) => crearNotificacionJugador({ ...d, tipo, titulo, mensaje, link })));
 }
+
+/** GET /api/auth/mi-rol — JWT del cliente; lectura de `user_roles` con service role (bypass RLS). */
+app.get('/api/auth/mi-rol', async (req, res) => {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+    const email = String(authUser.email).trim().toLowerCase();
+    const row = await fetchUserRoleRowForAuthUser(authUser);
+    if (!row && LEGACY_SUPER_ADMIN_EMAILS_API.includes(email)) {
+      return res.json({
+        email,
+        rol: 'super_admin',
+        nombre: null,
+        pais: null,
+        sedeId: null,
+        torneosOficialesHabilitados: true,
+        legacy: true,
+      });
+    }
+    if (!row) {
+      return res.json({
+        email,
+        rol: null,
+        nombre: null,
+        pais: null,
+        sedeId: null,
+        torneosOficialesHabilitados: false,
+      });
+    }
+    const sedeIdRaw = row.sede_id;
+    const sedeIdNum =
+      sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
+    return res.json({
+      email: String(row.email || email).trim().toLowerCase(),
+      rol: row.role ?? null,
+      nombre: row.nombre ?? null,
+      pais: row.pais ?? null,
+      sedeId: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
+      torneosOficialesHabilitados: Boolean(row.torneos_oficiales_habilitados),
+    });
+  } catch (err) {
+    console.error('❌ GET /api/auth/mi-rol:', err.message);
+    return res.status(500).json({ error: err.message || 'Error al obtener rol' });
+  }
+});
 
 app.get('/api/notificaciones', async (req, res) => {
   try {
