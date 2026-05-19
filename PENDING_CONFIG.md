@@ -4,6 +4,7 @@
 |----|------|--------|----------------|
 | BUG-01 | Google OAuth muestra URL/nombre de Supabase | Configurar OAuth consent screen en Google Cloud | [docs/GOOGLE_OAUTH_CONFIG.md](docs/GOOGLE_OAUTH_CONFIG.md) |
 | — | Supabase custom domain | `SUPABASE_URL` / `REACT_APP_SUPABASE_URL` = `https://auth.padbolmatch.com` en Render, Vercel y `.env` local | [padbol-match-frontend/README.md](padbol-match-frontend/README.md) |
+| — | RLS tablas core | Ejecutar `supabase/migrations/20260519120000_rls_policies_core_tables.sql` en SQL Editor; backend (service_role) no se afecta | — |
 
 ## SQL en Supabase (ejecutar en SQL Editor si no usás migraciones automáticas)
 
