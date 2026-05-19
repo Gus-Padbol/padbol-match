@@ -1,23 +1,27 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLang } from '../hooks/usePadbolLang';
 import { setPadbolLanguage } from '../utils/padbolLang';
 
 /**
- * @param {'header' | 'profile' | 'buttons'} variant
- *   - header: "ES | EN" compacto
- *   - profile: fila con banderas y nombres
- *   - buttons: dos botones ES/EN (legacy)
+ * @param {'header' | 'profile' | 'buttons' | 'landing'} variant
  */
 export default function LanguageSwitcher({ variant = 'buttons', compact = false, className = '' }) {
-  const { i18n, t } = useTranslation();
-  const lang = i18n.language?.startsWith('en') ? 'en' : 'es';
-  const resolvedVariant = variant === 'buttons' && compact ? 'header' : variant === 'buttons' ? 'buttons' : variant;
+  const { t } = useTranslation();
+  const lang = usePadbolLang();
+  const resolvedVariant =
+    variant === 'buttons' && compact ? 'header' : variant === 'buttons' ? 'buttons' : variant;
 
-  const setLang = (code) => {
-    setPadbolLanguage(code);
-  };
+  const setLang = useCallback(async (code) => {
+    await setPadbolLanguage(code);
+  }, []);
 
-  if (resolvedVariant === 'header') {
+  const headerColors =
+    resolvedVariant === 'landing'
+      ? { base: 'rgba(248, 250, 252, 0.65)', active: '#f8fafc' }
+      : { base: 'var(--text-secondary, #94a3b8)', active: 'var(--text-primary, #f8fafc)' };
+
+  if (resolvedVariant === 'header' || resolvedVariant === 'landing') {
     return (
       <div
         className={className}
@@ -26,11 +30,11 @@ export default function LanguageSwitcher({ variant = 'buttons', compact = false,
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          fontSize: 11,
+          fontSize: resolvedVariant === 'landing' ? 13 : 11,
           fontWeight: 700,
           lineHeight: 1,
           letterSpacing: '0.02em',
-          color: 'var(--text-secondary, #94a3b8)',
+          color: headerColors.base,
           userSelect: 'none',
         }}
       >
@@ -39,25 +43,25 @@ export default function LanguageSwitcher({ variant = 'buttons', compact = false,
           return (
             <React.Fragment key={code}>
               {idx > 0 ? (
-                <span aria-hidden style={{ margin: '0 3px', opacity: 0.45, fontWeight: 500 }}>
+                <span aria-hidden style={{ margin: '0 4px', opacity: 0.45, fontWeight: 500 }}>
                   |
                 </span>
               ) : null}
               <button
                 type="button"
-                onClick={() => setLang(code)}
+                onClick={() => void setLang(code)}
                 aria-pressed={active}
                 style={{
                   border: 'none',
                   background: 'transparent',
-                  padding: '2px 3px',
+                  padding: resolvedVariant === 'landing' ? '4px 5px' : '2px 3px',
                   margin: 0,
                   cursor: 'pointer',
                   font: 'inherit',
                   fontSize: 'inherit',
                   fontWeight: active ? 800 : 600,
-                  color: active ? 'var(--text-primary, #f8fafc)' : 'inherit',
-                  opacity: active ? 1 : 0.72,
+                  color: active ? headerColors.active : 'inherit',
+                  opacity: active ? 1 : 0.75,
                   textDecoration: active ? 'underline' : 'none',
                   textUnderlineOffset: 2,
                 }}
@@ -94,7 +98,7 @@ export default function LanguageSwitcher({ variant = 'buttons', compact = false,
             <button
               key={opt.code}
               type="button"
-              onClick={() => setLang(opt.code)}
+              onClick={() => void setLang(opt.code)}
               aria-pressed={active}
               style={{
                 width: '100%',
@@ -153,7 +157,7 @@ export default function LanguageSwitcher({ variant = 'buttons', compact = false,
           <button
             key={code}
             type="button"
-            onClick={() => setLang(code)}
+            onClick={() => void setLang(code)}
             aria-pressed={active}
             style={{
               ...btnBase,

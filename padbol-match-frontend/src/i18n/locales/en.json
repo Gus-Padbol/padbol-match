@@ -391,5 +391,27 @@
       "reservarSub": "I have a team and need a court.",
       "torneosSub": "Tournaments and rankings."
     }
+  },
+  "landing": {
+    "heroLine1": "Born with Padbol.",
+    "heroLine2": "Now for every sport.",
+    "heroSub": "The platform that brought Padbol to the world opens its doors to padel, pickleball, soccer and more.",
+    "bookSlot": "Book a court",
+    "enterPlay": "Jump in and play",
+    "createAccount": "Create an account",
+    "guestNote": "You can explore the app without signing up. We'll only ask you to sign in when confirming a booking, registering for a tournament or purchasing.",
+    "howTitle": "How it works",
+    "step1Title": "Find your venue",
+    "step1Desc": "Search clubs and pick the best fit by location and schedule.",
+    "step2Title": "Pick your slot",
+    "step2Desc": "Choose date, time and an available court online.",
+    "step3Title": "Pay online",
+    "step3Desc": "Pay online or according to the club's options.",
+    "step4Title": "Play",
+    "step4Desc": "Get your confirmation and enjoy the match.",
+    "addClub": "I want to add my club",
+    "whatIs": "What is Padbol Match?",
+    "terms": "Terms",
+    "privacy": "Privacy"
   }
 }

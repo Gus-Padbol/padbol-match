@@ -6,6 +6,16 @@ import en from './locales/en.json';
 
 const STORAGE_KEY = 'padbol_lang';
 
+function readInitialLng() {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    if (v === 'es' || v === 'en') return v;
+  } catch {
+    /* ignore */
+  }
+  return 'en';
+}
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -14,13 +24,16 @@ i18n
       es: { translation: es },
       en: { translation: en },
     },
-    fallbackLng: 'es',
+    lng: readInitialLng(),
+    fallbackLng: 'en',
     supportedLngs: ['es', 'en'],
     interpolation: { escapeValue: false },
     returnNull: false,
     returnEmptyString: false,
     react: {
       useSuspense: false,
+      bindI18n: 'languageChanged loaded',
+      bindI18nStore: 'added removed',
     },
     detection: {
       /** Solo `padbol_lang` explícito (pantalla inicial o selector); no autoguardar idioma del navegador. */

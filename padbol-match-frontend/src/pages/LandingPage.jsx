@@ -2,6 +2,9 @@ import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLang } from '../hooks/usePadbolLang';
 import './LandingPage.css';
 
 const ACCENT = '#E11B22';
@@ -122,6 +125,8 @@ function HowCard({ lead, emoji, title, description }) {
 
 export default function LandingPage() {
   const location = useLocation();
+  const { t } = useTranslation();
+  usePadbolLang();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -149,6 +154,17 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page" style={shell}>
+      <div
+        className="landing-page__lang-bar"
+        style={{
+          position: 'fixed',
+          top: 'max(10px, env(safe-area-inset-top, 0px))',
+          right: 'max(14px, env(safe-area-inset-right, 0px))',
+          zIndex: 20,
+        }}
+      >
+        <LanguageSwitcher variant="landing" />
+      </div>
       <header style={{ ...column, textAlign: 'center', paddingBottom: 0 }}>
         <img
           src="/logo-padbol-match.png"
@@ -177,9 +193,9 @@ export default function LandingPage() {
               letterSpacing: '-0.02em',
             }}
           >
-            Nació con Padbol.
+            {t('landing.heroLine1')}
             <br />
-            Hoy es para todos los deportes.
+            {t('landing.heroLine2')}
           </h1>
           <p
             style={{
@@ -190,19 +206,19 @@ export default function LandingPage() {
               color: 'var(--text-secondary)',
             }}
           >
-            La plataforma que lleva el Padbol al mundo, abre sus puertas al Pádel, Pickleball, Fútbol y más.
+            {t('landing.heroSub')}
           </p>
         </section>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
           <Link to="/reservar" style={btnPrimary}>
-            Reservar un turno
+            {t('landing.bookSlot')}
           </Link>
           <Link to="/hub" style={btnSecondary}>
-            Entrá y empezá a jugar
+            {t('landing.enterPlay')}
           </Link>
           <Link to="/auth?modo=registro" style={btnCuenta}>
-            Crear una cuenta
+            {t('landing.createAccount')}
           </Link>
         </section>
 
@@ -221,8 +237,7 @@ export default function LandingPage() {
             boxSizing: 'border-box',
           }}
         >
-          Podés explorar la app sin registrarte. Te pediremos iniciar sesión solo al confirmar una reserva, al
-          inscribirte o al comprar.
+          {t('landing.guestNote')}
         </p>
 
         <section style={{ marginBottom: 44 }}>
@@ -235,28 +250,28 @@ export default function LandingPage() {
               color: 'var(--text-primary)',
             }}
           >
-            ¿Cómo funciona?
+            {t('landing.howTitle')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <HowCard
               lead={<IconGeroUbicacion size={26} style={{ color: ACCENT }} />}
-              title="Encuentra tu sede"
-              description="Busca clubes y elige el que mejor te quede por ubicación y horarios."
+              title={t('landing.step1Title')}
+              description={t('landing.step1Desc')}
             />
             <HowCard
               emoji="📅"
-              title="Elige tu turno"
-              description="Elegí fecha, horario y cancha disponible online."
+              title={t('landing.step2Title')}
+              description={t('landing.step2Desc')}
             />
             <HowCard
               emoji="💳"
-              title="Paga online"
-              description="Pagá online o según las opciones del club."
+              title={t('landing.step3Title')}
+              description={t('landing.step3Desc')}
             />
             <HowCard
               emoji="⚽"
-              title="Juega"
-              description="Recibí la confirmación y a disfrutar del partido."
+              title={t('landing.step4Title')}
+              description={t('landing.step4Desc')}
             />
           </div>
         </section>
@@ -272,7 +287,7 @@ export default function LandingPage() {
           }}
         >
           <Link to="/contacto" style={{ ...btnPrimary, maxWidth: '100%' }}>
-            Quiero sumar mi club
+            {t('landing.addClub')}
           </Link>
           <Link
             to="/sobre"
@@ -287,7 +302,7 @@ export default function LandingPage() {
               fontFamily: 'inherit',
             }}
           >
-            ¿Qué es Padbol Match?
+            {t('landing.whatIs')}
           </Link>
           <div
             style={{
@@ -299,11 +314,11 @@ export default function LandingPage() {
             }}
           >
             <Link to="/terminos" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
-              Términos
+              {t('landing.terms')}
             </Link>
             <span style={{ color: 'var(--border)', margin: '0 8px' }}>|</span>
             <Link to="/privacidad" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
-              Privacidad
+              {t('landing.privacy')}
             </Link>
           </div>
         </footer>

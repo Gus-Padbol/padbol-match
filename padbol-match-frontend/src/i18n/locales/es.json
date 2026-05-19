@@ -391,5 +391,27 @@
       "reservarSub": "Ya tengo equipo, quiero una cancha.",
       "torneosSub": "Torneos y rankings."
     }
+  },
+  "landing": {
+    "heroLine1": "Nació con Padbol.",
+    "heroLine2": "Hoy es para todos los deportes.",
+    "heroSub": "La plataforma que lleva el Padbol al mundo, abre sus puertas al Pádel, Pickleball, Fútbol y más.",
+    "bookSlot": "Reservar un turno",
+    "enterPlay": "Entrá y empezá a jugar",
+    "createAccount": "Crear una cuenta",
+    "guestNote": "Podés explorar la app sin registrarte. Te pediremos iniciar sesión solo al confirmar una reserva, al inscribirte o al comprar.",
+    "howTitle": "¿Cómo funciona?",
+    "step1Title": "Encuentra tu sede",
+    "step1Desc": "Busca clubes y elige el que mejor te quede por ubicación y horarios.",
+    "step2Title": "Elige tu turno",
+    "step2Desc": "Elegí fecha, horario y cancha disponible online.",
+    "step3Title": "Paga online",
+    "step3Desc": "Pagá online o según las opciones del club.",
+    "step4Title": "Juega",
+    "step4Desc": "Recibí la confirmación y a disfrutar del partido.",
+    "addClub": "Quiero sumar mi club",
+    "whatIs": "¿Qué es Padbol Match?",
+    "terms": "Términos",
+    "privacy": "Privacidad"
   }
 }

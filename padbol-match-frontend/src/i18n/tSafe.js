@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation as useTranslationBase } from 'react-i18next';
 import es from './locales/es.json';
+import en from './locales/en.json';
+import { normalizePadbolLang } from '../utils/padbolLang';
 
 function flattenLocale(obj, prefix = '') {
   const out = {};
@@ -15,30 +17,36 @@ function flattenLocale(obj, prefix = '') {
   return out;
 }
 
-/** Textos en español para claves faltantes o cuando i18n aún no resolvió. */
+/** Textos de respaldo por idioma (si falta clave o i18n aún no resolvió). */
 export const ES_FALLBACKS = flattenLocale(es);
+export const EN_FALLBACKS = flattenLocale(en);
+
+export function getLocaleFallbacks(lang) {
+  return normalizePadbolLang(lang) === 'en' ? EN_FALLBACKS : ES_FALLBACKS;
+}
 
 /**
  * Normaliza el valor devuelto por i18next (nunca devolver objetos a React).
  */
-export function resolveTranslation(key, translated, explicitFallback) {
+export function resolveTranslation(key, translated, explicitFallback, lang = 'es') {
   const k = String(key || '');
+  const fallbacks = getLocaleFallbacks(lang);
   if (translated != null && typeof translated === 'object') {
-    return explicitFallback || ES_FALLBACKS[k] || k;
+    return explicitFallback || fallbacks[k] || k;
   }
   const s = translated != null ? String(translated) : '';
   if (s && s !== k) return s;
   if (explicitFallback) return explicitFallback;
-  if (ES_FALLBACKS[k]) return ES_FALLBACKS[k];
+  if (fallbacks[k]) return fallbacks[k];
   return k;
 }
 
 /**
- * Hook seguro: fallback a español (es.json) si falta la clave o i18n devuelve la key cruda.
- * Uso: t('nav.jugar') o t('nav.jugar', 'Jugar') o t('key', { defaultValue: '…' }).
+ * Hook seguro: fallback al locale activo si falta la clave o i18n devuelve la key cruda.
  */
 export function useSafeTranslation(ns) {
   const { t: tBase, i18n, ready } = useTranslationBase(ns);
+  const currentLang = normalizePadbolLang(i18n.language || i18n.resolvedLanguage);
 
   const t = useCallback(
     (key, defaultOrOpts, maybeOpts) => {
@@ -52,21 +60,22 @@ export function useSafeTranslation(ns) {
         opts = defaultOrOpts;
         explicitFallback = opts.defaultValue != null ? String(opts.defaultValue) : undefined;
       }
-      const defaultValue = explicitFallback || ES_FALLBACKS[k] || k;
+      const fallbacks = getLocaleFallbacks(currentLang);
+      const defaultValue = explicitFallback || fallbacks[k] || k;
       let raw;
       try {
-        raw = tBase(k, { ...opts, defaultValue });
+        raw = tBase(k, { ...opts, defaultValue, lng: currentLang });
       } catch (err) {
         console.error('[i18n] t() falló para clave:', k, err);
-        return resolveTranslation(k, null, explicitFallback);
+        return resolveTranslation(k, null, explicitFallback, currentLang);
       }
       if (!ready && explicitFallback) return explicitFallback;
-      return resolveTranslation(k, raw, explicitFallback);
+      return resolveTranslation(k, raw, explicitFallback, currentLang);
     },
-    [tBase, ready],
+    [tBase, ready, currentLang],
   );
 
-  return { t, i18n, ready };
+  return { t, i18n, ready, language: currentLang };
 }
 
 /** Alias para migración gradual desde react-i18next. */

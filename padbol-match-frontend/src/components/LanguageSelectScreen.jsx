@@ -18,8 +18,8 @@ export default function LanguageSelectScreen({ onComplete }) {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
 
-  const handlePick = (code) => {
-    setPadbolLanguage(code);
+  const handlePick = async (code) => {
+    await setPadbolLanguage(code);
     onComplete?.();
     if (!loading && session?.user) {
       navigate('/hub', { replace: true });
@@ -50,7 +50,7 @@ export default function LanguageSelectScreen({ onComplete }) {
               key={opt.code}
               type="button"
               className="language-select-screen__btn"
-              onClick={() => handlePick(opt.code)}
+              onClick={() => void handlePick(opt.code)}
               aria-label={opt.label}
             >
               <span className="language-select-screen__flags" aria-hidden>

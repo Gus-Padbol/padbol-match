@@ -1,20 +1,14 @@
-import React, { useCallback, useState } from 'react';
-import { hasPadbolLangChosen } from '../utils/padbolLang';
-import LanguageSelectScreen from './LanguageSelectScreen';
+import React, { useEffect } from 'react';
+import { bootstrapPadbolLanguage } from '../utils/padbolLang';
 
 /**
- * Bloquea el resto de la app hasta que exista `padbol_lang` en localStorage.
+ * Inicializa idioma al arrancar: `padbol_lang` guardado o inglés por defecto (landing internacional).
+ * No bloquea la app; la elección explícita se hace en landing / header / perfil.
  */
 export default function AppLanguageGate({ children }) {
-  const [langChosen, setLangChosen] = useState(() => hasPadbolLangChosen());
-
-  const handleLanguageChosen = useCallback(() => {
-    setLangChosen(true);
+  useEffect(() => {
+    bootstrapPadbolLanguage();
   }, []);
-
-  if (!langChosen) {
-    return <LanguageSelectScreen onComplete={handleLanguageChosen} />;
-  }
 
   return children;
 }
