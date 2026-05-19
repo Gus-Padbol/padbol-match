@@ -2744,7 +2744,7 @@ export default function MiPerfil() {
         )}
         {perfil && !editando ? (
           <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-            {perfilCompaneroDisplay?.kind === 'ultimo' ? t('perfil.lastPartner') : t('perfil.usualPartner')}:{' '}
+            {perfilCompaneroDisplay?.kind === 'ultimo' ? t('perfil.lastPartner') : t('perfil.regularPartner')}:{' '}
             {perfilCompaneroDisplay?.row && String(perfilCompaneroDisplay.row.alias || '').trim() ? (
               <button
                 type="button"

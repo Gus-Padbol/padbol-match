@@ -20,6 +20,9 @@ import {
 import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
 import { usePerfilJugadorMinimoEnRuta } from '../hooks/usePerfilJugadorMinimoEnRuta';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { formatSedeCiudadPaisLinea } from '../utils/paisI18n';
+import { labelDiaReservaCorta } from '../utils/reservaDiaLabels';
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -92,17 +95,6 @@ function nextNDaysFrom(todayStr, count) {
   return Array.from({ length: len }, (_, i) => addDaysISO(todayStr, i));
 }
 
-function labelDiaCorta(iso, index) {
-  if (index === 0) return 'Hoy';
-  if (index === 1) return 'Mañana';
-  const d = new Date(`${iso}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  const w = d.toLocaleDateString('es', { weekday: 'short' });
-  const day = d.getDate();
-  const mo = d.toLocaleDateString('es', { month: 'short' });
-  return `${w} ${day} ${mo}`;
-}
-
 function shareUrl() {
   const text = `Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -146,9 +138,9 @@ function sedeCoincideBusqueda(sede, queryNorm) {
   return blob.includes(queryNorm);
 }
 
-function deportesOfrecidosResumen(sede) {
+function deportesOfrecidosResumen(sede, t) {
   const rows = sede.canchas_por_deporte;
-  if (!Array.isArray(rows) || !rows.length) return 'Consultá en la sede';
+  if (!Array.isArray(rows) || !rows.length) return t('reservas.askVenueSports');
   const keys = [
     ...new Set(
       rows
@@ -255,6 +247,7 @@ const AP = {
 };
 
 export default function ArmarPartido() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -938,7 +931,7 @@ export default function ArmarPartido() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Armar partido" />
+      <AppHeader title={t('armarPartido.header')} />
       <main
         style={{
           width: '100%',
@@ -958,17 +951,23 @@ export default function ArmarPartido() {
 
           {step === 1 ? (
             <div style={{ paddingTop: 22 }}>
-              <h1 style={AP.title}>{sede ? 'Fecha y hora' : mostrarSelectorDeporte ? 'Deporte y sede' : 'Sede y turno'}</h1>
+              <h1 style={AP.title}>
+                {sede
+                  ? t('armarPartido.titleDateAndTime')
+                  : mostrarSelectorDeporte
+                    ? t('armarPartido.titleSportAndVenue')
+                    : t('armarPartido.titleVenueAndSlot')}
+              </h1>
               <p style={AP.body}>
                 {mostrarSelectorDeporte
-                  ? 'Elegí deporte y sede, después el día y el turno.'
-                  : 'Elegí sede, día y turno para tu partido.'}
+                  ? t('armarPartido.subtitleSportVenueDaySlot')
+                  : t('armarPartido.subtitleVenueDaySlot')}
               </p>
 
               {mostrarSelectorDeporte ? (
                 <>
                   <label style={{ ...AP.label, marginTop: 14 }} htmlFor="armar-deporte-select">
-                    Deporte
+                    {t('reservas.sportLabel')}
                   </label>
                   <select
                     id="armar-deporte-select"
@@ -978,14 +977,14 @@ export default function ArmarPartido() {
                   >
                     {DEPORTES.map((d) => (
                       <option key={d.id} value={d.id}>
-                        {d.label} · {d.jugadores} jugadores
+                        {d.label} · {d.jugadores} {t('armarPartido.playersSuffix')}
                       </option>
                     ))}
                   </select>
                 </>
               ) : (
                 <div style={{ marginTop: 14, marginBottom: 4 }}>
-                  <span style={{ ...AP.label, display: 'block', marginBottom: 8 }}>Deporte</span>
+                  <span style={{ ...AP.label, display: 'block', marginBottom: 8 }}>{t('reservas.sportLabel')}</span>
                   <span
                     style={{
                       display: 'inline-block',
@@ -1003,7 +1002,7 @@ export default function ArmarPartido() {
               )}
               {form.deporte === 'pickleball' ? (
                 <label style={{ ...AP.label, marginTop: 12 }}>
-                  Modalidad pickleball
+                  {t('armarPartido.pickleballMode')}
                   <select
                     value={form.jugadoresRequeridos}
                     onChange={(e) =>
@@ -1015,21 +1014,21 @@ export default function ArmarPartido() {
                     }
                     style={{ ...AP.field, marginTop: 8 }}
                   >
-                    <option value={2}>Singles (2)</option>
-                    <option value={4}>Dobles (4)</option>
+                    <option value={2}>{t('armarPartido.singlesPickle')}</option>
+                    <option value={4}>{t('armarPartido.doublesPickle')}</option>
                   </select>
                 </label>
               ) : null}
 
               <label style={{ ...AP.label, marginTop: 14 }} htmlFor="armar-sede-busqueda">
-                Sede
+                {t('reservas.venueLabel')}
               </label>
               <p style={AP.sub}>
                 {sedeBusquedaNorm.length >= 2
-                  ? 'Resultados según tu búsqueda.'
+                  ? t('reservas.searchResultsHint')
                   : geoStatus === 'granted'
-                    ? 'Mostrando las 5 sedes más cercanas.'
-                    : 'Mostrando 5 sedes. Activá la ubicación para ver las más cercanas.'}
+                    ? t('reservas.nearestFiveVenues')
+                    : t('reservas.fiveVenuesEnableGeo')}
               </p>
               <div style={{ position: 'relative', marginTop: 8 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
@@ -1039,7 +1038,7 @@ export default function ArmarPartido() {
                     role="combobox"
                     aria-expanded={sedeDropdownOpen}
                     autoComplete="off"
-                    placeholder="Buscar sede o ciudad…"
+                    placeholder={t('reservas.searchVenuePlaceholder')}
                     value={sedeBusqueda}
                     onChange={onSedeInputChange}
                     onFocus={() => {
@@ -1056,7 +1055,7 @@ export default function ArmarPartido() {
                   {sedeBusqueda.trim() || form.sedeId ? (
                     <button
                       type="button"
-                      aria-label="Limpiar sede"
+                      aria-label={t('reservas.clearVenue')}
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={limpiarSedeSeleccion}
                       style={{
@@ -1094,15 +1093,15 @@ export default function ArmarPartido() {
                     }}
                   >
                     {loadingSedes ? (
-                      <div style={{ padding: 14, fontSize: 14 }}>Cargando sedes…</div>
+                      <div style={{ padding: 14, fontSize: 14 }}>{t('reservas.loadingVenuesList')}</div>
                     ) : sedesListaMostrada.length === 0 ? (
                       <div style={{ padding: 14, fontSize: 14, color: 'var(--text-secondary)' }}>
-                        No hay sedes disponibles.
+                        {t('reservas.noVenuesAvailable')}
                       </div>
                     ) : (
                       sedesListaMostrada.map((s, idx) => {
-                        const loc = [s.ciudad, s.pais].filter(Boolean).join(' · ');
-                        const depLine = deportesOfrecidosResumen(s);
+                        const { linea: loc } = formatSedeCiudadPaisLinea(s, t);
+                        const depLine = deportesOfrecidosResumen(s, t);
                         return (
                           <button
                             key={s.id}
@@ -1147,7 +1146,7 @@ export default function ArmarPartido() {
                 <>
                   {duracionesOfrecidas.length > 1 ? (
                     <>
-                      <label style={{ ...AP.label, marginTop: 16 }}>Duración</label>
+                      <label style={{ ...AP.label, marginTop: 16 }}>{t('reservas.duration')}</label>
                       <div
                         style={{
                           display: 'flex',
@@ -1217,12 +1216,14 @@ export default function ArmarPartido() {
                           only?.precio != null && Number.isFinite(Number(only.precio))
                             ? `${mon} ${Number(only.precio).toLocaleString('es-AR')}`
                             : null;
-                        return pr ? `Duración: ${dm} minutos · precio base ${pr}` : `Duración: ${dm} minutos`;
+                        return pr
+                          ? t('reservas.durationWithPrice', { min: dm, price: pr })
+                          : t('reservas.durationOnly', { min: dm });
                       })()}
                     </p>
                   )}
 
-                  <label style={{ ...AP.label, marginTop: 16 }}>Día</label>
+                  <label style={{ ...AP.label, marginTop: 16 }}>{t('reservas.dayLabel')}</label>
                   <div
                     style={{
                       display: 'flex',
@@ -1254,19 +1255,17 @@ export default function ArmarPartido() {
                             textAlign: 'center',
                           }}
                         >
-                          {labelDiaCorta(iso, idx)}
+                          {labelDiaReservaCorta(iso, idx, t, i18n.language)}
                         </button>
                       );
                     })}
                   </div>
 
-                  <label style={{ ...AP.label, marginTop: 16 }}>Horarios disponibles</label>
+                  <label style={{ ...AP.label, marginTop: 16 }}>{t('reservas.availableTimes')}</label>
                   {slotsLoading ? (
-                    <p style={{ ...AP.sub, marginTop: 8 }}>Cargando horarios…</p>
+                    <p style={{ ...AP.sub, marginTop: 8 }}>{t('reservas.loadingSlots')}</p>
                   ) : slotsApi.length === 0 ? (
-                    <p style={{ ...AP.sub, marginTop: 8 }}>
-                      No hay turnos libres para esta fecha y duración. Probá otro día o duración.
-                    </p>
+                    <p style={{ ...AP.sub, marginTop: 8 }}>{t('reservas.noSlotsTryOther')}</p>
                   ) : (
                     <div
                       style={{
@@ -1320,7 +1319,7 @@ export default function ArmarPartido() {
                       opacity: puedeVerCanchasPaso1 ? 1 : 0.9,
                     }}
                   >
-                    Ver canchas →
+                    {t('reservas.viewCourts')}
                   </button>
                 </>
               ) : null}
@@ -1329,14 +1328,14 @@ export default function ArmarPartido() {
 
           {step === 2 ? (
             <div style={{ paddingTop: 32, paddingBottom: 4 }}>
-              <h1 style={{ ...AP.title, scrollMarginTop: armarPaddingTopCss }}>Canchas disponibles</h1>
+              <h1 style={{ ...AP.title, scrollMarginTop: armarPaddingTopCss }}>{t('reservas.courtsAvailableTitle')}</h1>
               <p style={AP.body}>
                 {sede?.nombre} · {form.fecha} · {String(form.hora).split(' - ')[0]} · {form.duracion} min
               </p>
               {dispLoading ? (
-                <p style={AP.sub}>Consultando disponibilidad…</p>
+                <p style={AP.sub}>{t('reservas.checkingAvailability')}</p>
               ) : dispCanchas.length === 0 ? (
-                <p style={AP.sub}>No hay canchas para mostrar. Volvé al paso anterior.</p>
+                <p style={AP.sub}>{t('reservas.noCourtsStepBack')}</p>
               ) : (
                 <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
                   {dispCanchas.map((c) => {
@@ -1374,7 +1373,7 @@ export default function ArmarPartido() {
                             color: ok ? '#16a34a' : '#dc2626',
                           }}
                         >
-                          {ok ? 'Libre' : 'Ocupada'}
+                          {ok ? t('reservas.courtFree') : t('reservas.courtOccupied')}
                         </span>
                       </button>
                     );
@@ -1399,15 +1398,15 @@ export default function ArmarPartido() {
                 }}
               >
                 {canchaLibreSeleccionada && Number.isFinite(Number(form.cancha))
-                  ? `Reservar Cancha ${Number(form.cancha)}`
-                  : 'Reservar cancha'}
+                  ? t('reservas.bookCourtNumber', { num: Number(form.cancha) })
+                  : t('reservas.bookCourt')}
               </button>
             </div>
           ) : null}
 
           {step === 3 ? (
             <>
-              <h1 style={AP.title}>Confirmar y pagar</h1>
+              <h1 style={AP.title}>{t('reservas.confirmAndPay')}</h1>
 
               <div
                 style={{
@@ -1423,39 +1422,39 @@ export default function ArmarPartido() {
               >
                 {session?.user ? (
                   <div style={{ marginBottom: 10 }}>
-                    <strong>Reserva a nombre de:</strong>{' '}
+                    <strong>{t('reservas.bookOnBehalf')}</strong>{' '}
                     {getDisplayName(userProfile, session) || session.user.email}
                   </div>
                 ) : null}
                 <div>
-                  <strong>Sede:</strong> {sede?.nombre}
+                  <strong>{t('reservas.labelVenue')}</strong> {sede?.nombre}
                 </div>
                 <div>
-                  <strong>Cancha:</strong> {sedeNombreCancha(form.cancha)}
+                  <strong>{t('reservas.labelCourt')}</strong> {sedeNombreCancha(form.cancha)}
                 </div>
                 <div>
-                  <strong>Fecha:</strong> {form.fecha}
+                  <strong>{t('reservas.labelDate')}</strong> {form.fecha}
                 </div>
                 <div>
-                  <strong>Hora:</strong> {String(form.hora).split(' - ')[0]}
+                  <strong>{t('reservas.labelTime')}</strong> {String(form.hora).split(' - ')[0]}
                 </div>
                 <div>
-                  <strong>Duración:</strong> {form.duracion} minutos
+                  <strong>{t('reservas.labelDuration')}</strong> {form.duracion} minutos
                 </div>
                 <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
                 <div>
-                  <strong>Precio del turno:</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
+                  <strong>{t('reservas.slotPrice')}</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
                 </div>
               </div>
 
               {(sedeExtrasLoading || sedeExtrasDisponibles.length > 0) && (
                 <div style={{ marginBottom: 16 }}>
-                  <h2 style={{ ...AP.title, fontSize: 17, marginBottom: 8 }}>¿Qué querés para el tercer tiempo?</h2>
+                  <h2 style={{ ...AP.title, fontSize: 17, marginBottom: 8 }}>{t('reservas.extrasTitle')}</h2>
                   <p style={{ ...AP.body, fontSize: 13, marginBottom: 12 }}>
-                    Opcional: sumá productos o servicios del club. El total se actualiza abajo.
+                    {t('reservas.extrasSubtitleArmar')}
                   </p>
                   {sedeExtrasLoading ? (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Cargando opciones…</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{t('reservas.loadingExtras')}</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 390 }}>
                       {sedeExtrasDisponibles.map((ex) => {
@@ -1553,18 +1552,18 @@ export default function ArmarPartido() {
                   cursor: paying ? 'not-allowed' : 'pointer',
                 }}
               >
-                {paying ? 'Preparando pago…' : 'Ir a pagar'}
+                {paying ? t('reservas.preparingPayment') : t('reservas.goToPay')}
               </button>
             </>
           ) : null}
 
           {step === 4 ? (
             <>
-              <h1 style={AP.title}>{publicado ? 'Partido publicado' : 'Reserva registrada'}</h1>
+              <h1 style={AP.title}>
+                {publicado ? t('armarPartido.publishedTitle') : t('armarPartido.registeredTitle')}
+              </h1>
               <p style={AP.body}>
-                {publicado
-                  ? 'Tu reserva está confirmada y el partido ya está visible para que otros se sumen.'
-                  : 'Tu reserva quedó registrada. Te vamos a contactar según la configuración de la sede.'}
+                {publicado ? t('armarPartido.publishedBody') : t('armarPartido.registeredBody')}
               </p>
               {publicado ? (
                 <div style={{ display: 'grid', gap: 10 }}>

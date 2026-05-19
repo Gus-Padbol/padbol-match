@@ -205,7 +205,39 @@
     "cancelModalMessage": "You will leave the flow and the slot will be released if it was held.",
     "cancelModalConfirm": "Yes, cancel booking",
     "cancelModalDismiss": "Back to summary",
-    "invalidWhatsappDigits": "Enter a valid WhatsApp number (at least {{min}} digits)."
+    "invalidWhatsappDigits": "Enter a valid WhatsApp number (at least {{min}} digits).",
+    "dayToday": "Today",
+    "dayTomorrow": "Tomorrow",
+    "dayLabel": "Day",
+    "confirmAndPay": "Confirm and pay",
+    "bookOnBehalf": "Booking for:",
+    "slotPrice": "Slot price:",
+    "sportLabel": "Sport",
+    "venueLabel": "Venue",
+    "searchVenuePlaceholder": "Search venue or city…",
+    "searchResultsHint": "Results for your search.",
+    "nearestFiveVenues": "Showing the 5 nearest venues.",
+    "fiveVenuesEnableGeo": "Showing 5 venues. Enable location to see the nearest ones.",
+    "askVenueSports": "Ask at the venue",
+    "viewCourts": "View courts →",
+    "courtsAvailableTitle": "Available courts",
+    "courtFree": "Free",
+    "courtOccupied": "Occupied",
+    "bookCourt": "Book court",
+    "bookCourtNumber": "Book Court {{num}}",
+    "loadingVenuesList": "Loading venues…",
+    "noVenuesAvailable": "No venues available.",
+    "clearVenue": "Clear venue",
+    "loadingSlots": "Loading times…",
+    "noSlotsTryOther": "No free slots for this date and duration. Try another day or duration.",
+    "checkingAvailability": "Checking availability…",
+    "noCourtsStepBack": "No courts to show. Go back to the previous step.",
+    "durationOnly": "Duration: {{min}} minutes",
+    "durationWithPrice": "Duration: {{min}} minutes · base price {{price}}",
+    "loadingExtras": "Loading options…",
+    "extrasSubtitleArmar": "Optional: add club products or services. Total updates below.",
+    "goToPay": "Go to pay",
+    "preparingPayment": "Preparing payment…"
   },
   "torneos": {
     "titulo": "Tournaments",
@@ -372,7 +404,9 @@
     "clase": "Take a class",
     "claseBody": "Train with a coach at your venue.",
     "armar": "Create a match",
-    "armarBody": "I want to create a match and find players."
+    "armarBody": "I want to create a match and find players.",
+    "publicidad": "Your brand here",
+    "publicidadShort": "Your brand"
   },
   "clases": {
     "titulo": "Classes",
@@ -483,7 +517,8 @@
       "femenino": "Female",
       "otro": "Other",
       "open": "Open"
-    }
+    },
+    "regularPartner": "Regular partner"
   },
   "admin": {
     "mi_sede": "My venue",
@@ -1358,5 +1393,21 @@
     "whatIs": "What is Padbol Match?",
     "terms": "Terms",
     "privacy": "Privacy"
+  },
+  "armarPartido": {
+    "header": "Set up a match",
+    "titleVenueAndSlot": "Venue and slot",
+    "titleSportAndVenue": "Sport and venue",
+    "titleDateAndTime": "Date and time",
+    "subtitleVenueDaySlot": "Choose venue, day and slot for your match.",
+    "subtitleSportVenueDaySlot": "Choose sport and venue, then day and slot.",
+    "pickleballMode": "Pickleball format",
+    "playersSuffix": "players",
+    "singlesPickle": "Singles (2)",
+    "doublesPickle": "Doubles (4)",
+    "publishedTitle": "Match published",
+    "registeredTitle": "Booking registered",
+    "publishedBody": "Your booking is confirmed and the match is visible for others to join.",
+    "registeredBody": "Your booking was registered. We will contact you per the venue settings."
   }
 }

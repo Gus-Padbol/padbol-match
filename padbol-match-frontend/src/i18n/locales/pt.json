@@ -205,7 +205,39 @@
     "cancelModalMessage": "Você sairá do fluxo e o turno será liberado caso tenha sido reservado.",
     "cancelModalConfirm": "Sim, cancelar reserva",
     "cancelModalDismiss": "Voltar ao resumo",
-    "invalidWhatsappDigits": "Insira um número válido do WhatsApp (pelo menos {{min}} dígitos)."
+    "invalidWhatsappDigits": "Insira um número válido do WhatsApp (pelo menos {{min}} dígitos).",
+    "dayToday": "Hoje",
+    "dayTomorrow": "Amanhã",
+    "dayLabel": "Dia",
+    "confirmAndPay": "Confirmar e pagar",
+    "bookOnBehalf": "Reserva em nome de:",
+    "slotPrice": "Preço do turno:",
+    "sportLabel": "Esporte",
+    "venueLabel": "Sede",
+    "searchVenuePlaceholder": "Buscar sede ou cidade…",
+    "searchResultsHint": "Resultados da sua busca.",
+    "nearestFiveVenues": "Mostrando as 5 sedes mais próximas.",
+    "fiveVenuesEnableGeo": "Mostrando 5 sedes. Ative a localização para ver as mais próximas.",
+    "askVenueSports": "Consulte na sede",
+    "viewCourts": "Ver quadras →",
+    "courtsAvailableTitle": "Quadras disponíveis",
+    "courtFree": "Livre",
+    "courtOccupied": "Ocupada",
+    "bookCourt": "Reservar quadra",
+    "bookCourtNumber": "Reservar quadra {{num}}",
+    "loadingVenuesList": "Carregando sedes…",
+    "noVenuesAvailable": "Nenhuma sede disponível.",
+    "clearVenue": "Limpar sede",
+    "loadingSlots": "Carregando horários…",
+    "noSlotsTryOther": "Sem turnos livres para esta data e duração. Tente outro dia ou duração.",
+    "checkingAvailability": "Consultando disponibilidade…",
+    "noCourtsStepBack": "Sem quadras para mostrar. Volte ao passo anterior.",
+    "durationOnly": "Duração: {{min}} minutos",
+    "durationWithPrice": "Duração: {{min}} minutos · preço base {{price}}",
+    "loadingExtras": "Carregando opções…",
+    "extrasSubtitleArmar": "Opcional: adicione produtos ou serviços do clube. O total é atualizado abaixo.",
+    "goToPay": "Ir para pagamento",
+    "preparingPayment": "Preparando pagamento…"
   },
   "torneos": {
     "titulo": "Torneios",
@@ -372,7 +404,9 @@
     "clase": "faça uma aula",
     "claseBody": "Treine com um professor da sua sede.",
     "armar": "Configurar partida",
-    "armarBody": "Quero criar um jogo e adicionar jogadores."
+    "armarBody": "Quero criar um jogo e adicionar jogadores.",
+    "publicidad": "Sua marca aqui",
+    "publicidadShort": "Sua marca"
   },
   "clases": {
     "titulo": "Aulas",
@@ -483,7 +517,8 @@
       "femenino": "Feminino",
       "otro": "Outro",
       "open": "Open"
-    }
+    },
+    "regularPartner": "Parceiro regular"
   },
   "admin": {
     "mi_sede": "minha sede",
@@ -1358,5 +1393,21 @@
     "whatIs": "O que é Padbol Match?",
     "terms": "Termos",
     "privacy": "Privacidade"
+  },
+  "armarPartido": {
+    "header": "Montar partida",
+    "titleVenueAndSlot": "Sede e turno",
+    "titleSportAndVenue": "Esporte e sede",
+    "titleDateAndTime": "Data e hora",
+    "subtitleVenueDaySlot": "Escolha sede, dia e turno para sua partida.",
+    "subtitleSportVenueDaySlot": "Escolha esporte e sede, depois dia e turno.",
+    "pickleballMode": "Modalidade pickleball",
+    "playersSuffix": "jogadores",
+    "singlesPickle": "Simples (2)",
+    "doublesPickle": "Duplas (4)",
+    "publishedTitle": "Partida publicada",
+    "registeredTitle": "Reserva registrada",
+    "publishedBody": "Sua reserva está confirmada e a partida está visível para outros.",
+    "registeredBody": "Reserva registrada. Entraremos em contato conforme a configuração da sede."
   }
 }

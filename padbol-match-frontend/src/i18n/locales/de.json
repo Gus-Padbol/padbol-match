@@ -205,7 +205,39 @@
     "cancelModalMessage": "Sie verlassen den Ablauf und die Schicht wird freigegeben, sofern sie reserviert war.",
     "cancelModalConfirm": "Ja, Reservierung stornieren",
     "cancelModalDismiss": "Zurück zur Zusammenfassung",
-    "invalidWhatsappDigits": "Geben Sie eine gültige WhatsApp-Nummer ein (mindestens {{min}} Ziffern)."
+    "invalidWhatsappDigits": "Geben Sie eine gültige WhatsApp-Nummer ein (mindestens {{min}} Ziffern).",
+    "dayToday": "Heute",
+    "dayTomorrow": "Morgen",
+    "dayLabel": "Tag",
+    "confirmAndPay": "Bestätigen und bezahlen",
+    "bookOnBehalf": "Reservierung auf den Namen von:",
+    "slotPrice": "Platzpreis:",
+    "sportLabel": "Sport",
+    "venueLabel": "Anlage",
+    "searchVenuePlaceholder": "Anlage oder Stadt suchen…",
+    "searchResultsHint": "Ergebnisse Ihrer Suche.",
+    "nearestFiveVenues": "Die 5 nächstgelegenen Anlagen werden angezeigt.",
+    "fiveVenuesEnableGeo": "5 Anlagen angezeigt. Standort aktivieren für die Nächsten.",
+    "askVenueSports": "In der Anlage nachfragen",
+    "viewCourts": "Plätze anzeigen →",
+    "courtsAvailableTitle": "Verfügbare Plätze",
+    "courtFree": "Frei",
+    "courtOccupied": "Belegt",
+    "bookCourt": "Platz buchen",
+    "bookCourtNumber": "Platz {{num}} buchen",
+    "loadingVenuesList": "Anlagen werden geladen…",
+    "noVenuesAvailable": "Keine Anlagen verfügbar.",
+    "clearVenue": "Anlage löschen",
+    "loadingSlots": "Zeiten werden geladen…",
+    "noSlotsTryOther": "Keine freien Zeiten für dieses Datum und diese Dauer. Anderen Tag oder Dauer wählen.",
+    "checkingAvailability": "Verfügbarkeit wird geprüft…",
+    "noCourtsStepBack": "Keine Plätze anzuzeigen. Zurück zum vorherigen Schritt.",
+    "durationOnly": "Dauer: {{min}} Minuten",
+    "durationWithPrice": "Dauer: {{min}} Minuten · Grundpreis {{price}}",
+    "loadingExtras": "Optionen werden geladen…",
+    "extrasSubtitleArmar": "Optional: Club-Produkte oder -Services hinzufügen. Gesamtsumme unten.",
+    "goToPay": "Zur Zahlung",
+    "preparingPayment": "Zahlung wird vorbereitet…"
   },
   "torneos": {
     "titulo": "Turniere",
@@ -372,7 +404,9 @@
     "clase": "Nehmen Sie an einem Kurs teil",
     "claseBody": "Trainieren Sie mit einem Lehrer aus Ihrem Hauptquartier.",
     "armar": "Spiel einrichten",
-    "armarBody": "Ich möchte ein Spiel erstellen und Spieler hinzufügen."
+    "armarBody": "Ich möchte ein Spiel erstellen und Spieler hinzufügen.",
+    "publicidad": "Ihre Marke hier",
+    "publicidadShort": "Ihre Marke"
   },
   "clases": {
     "titulo": "Klassen",
@@ -483,7 +517,8 @@
       "femenino": "Weiblich",
       "otro": "Andere",
       "open": "Open"
-    }
+    },
+    "regularPartner": "Stammpartner"
   },
   "admin": {
     "mi_sede": "mein Hauptquartier",
@@ -1358,5 +1393,21 @@
     "whatIs": "Was ist Padbol Match?",
     "terms": "Bedingungen",
     "privacy": "Privatsphäre"
+  },
+  "armarPartido": {
+    "header": "Spiel organisieren",
+    "titleVenueAndSlot": "Anlage und Zeit",
+    "titleSportAndVenue": "Sport und Anlage",
+    "titleDateAndTime": "Datum und Uhrzeit",
+    "subtitleVenueDaySlot": "Wähle Anlage, Tag und Zeit für dein Spiel.",
+    "subtitleSportVenueDaySlot": "Wähle Sport und Anlage, dann Tag und Zeit.",
+    "pickleballMode": "Pickleball-Modus",
+    "playersSuffix": "Spieler",
+    "singlesPickle": "Einzel (2)",
+    "doublesPickle": "Doppel (4)",
+    "publishedTitle": "Spiel veröffentlicht",
+    "registeredTitle": "Reservierung registriert",
+    "publishedBody": "Deine Reservierung ist bestätigt und das Spiel ist für andere sichtbar.",
+    "registeredBody": "Reservierung registriert. Wir melden uns gemäß Anlagen-Einstellungen."
   }
 }

@@ -205,7 +205,39 @@
     "cancelModalMessage": "Vei ieși din flux și schimbul va fi eliberat dacă a fost rezervat.",
     "cancelModalConfirm": "Da, anulați rezervarea",
     "cancelModalDismiss": "Reveniți la rezumat",
-    "invalidWhatsappDigits": "Introduceți un număr WhatsApp valid (cel puțin {{min}} cifre)."
+    "invalidWhatsappDigits": "Introduceți un număr WhatsApp valid (cel puțin {{min}} cifre).",
+    "dayToday": "Azi",
+    "dayTomorrow": "Mâine",
+    "dayLabel": "Zi",
+    "confirmAndPay": "Confirmă și plătește",
+    "bookOnBehalf": "Rezervare pe numele:",
+    "slotPrice": "Prețul intervalului:",
+    "sportLabel": "Sport",
+    "venueLabel": "Sediu",
+    "searchVenuePlaceholder": "Caută sediu sau oraș…",
+    "searchResultsHint": "Rezultate după căutarea ta.",
+    "nearestFiveVenues": "Se afișează cele 5 sedii cele mai apropiate.",
+    "fiveVenuesEnableGeo": "5 sedii afișate. Activează locația pentru cele mai apropiate.",
+    "askVenueSports": "Întreabă la sediu",
+    "viewCourts": "Vezi terenurile →",
+    "courtsAvailableTitle": "Terenuri disponibile",
+    "courtFree": "Liber",
+    "courtOccupied": "Ocupat",
+    "bookCourt": "Rezervă teren",
+    "bookCourtNumber": "Rezervă terenul {{num}}",
+    "loadingVenuesList": "Se încarcă sediile…",
+    "noVenuesAvailable": "Nicio sede disponibilă.",
+    "clearVenue": "Șterge sediul",
+    "loadingSlots": "Se încarcă intervalele…",
+    "noSlotsTryOther": "Nu există intervale libere pentru această dată și durată. Încearcă altă zi sau durată.",
+    "checkingAvailability": "Se verifică disponibilitatea…",
+    "noCourtsStepBack": "Niciun teren de afișat. Revino la pasul anterior.",
+    "durationOnly": "Durată: {{min}} minute",
+    "durationWithPrice": "Durată: {{min}} minute · preț de bază {{price}}",
+    "loadingExtras": "Se încarcă opțiunile…",
+    "extrasSubtitleArmar": "Opțional: adaugă produse sau servicii ale clubului. Totalul se actualizează mai jos.",
+    "goToPay": "Mergi la plată",
+    "preparingPayment": "Se pregătește plata…"
   },
   "torneos": {
     "titulo": "Turnee",
@@ -372,7 +404,9 @@
     "clase": "ia o clasă",
     "claseBody": "Antrenează-te cu un profesor de la sediul tău.",
     "armar": "Configurați potrivirea",
-    "armarBody": "Vreau să creez un joc și să adaug jucători."
+    "armarBody": "Vreau să creez un joc și să adaug jucători.",
+    "publicidad": "Marca ta aici",
+    "publicidadShort": "Marca ta"
   },
   "clases": {
     "titulo": "Clasele",
@@ -483,7 +517,8 @@
       "femenino": "Feminin",
       "otro": "Altul",
       "open": "Open"
-    }
+    },
+    "regularPartner": "Partener obișnuit"
   },
   "admin": {
     "mi_sede": "sediul meu",
@@ -1358,5 +1393,21 @@
     "whatIs": "Ce este Padbol Match?",
     "terms": "Termeni",
     "privacy": "Confidențialitate"
+  },
+  "armarPartido": {
+    "header": "Organizează meci",
+    "titleVenueAndSlot": "Sediu și interval",
+    "titleSportAndVenue": "Sport și sediu",
+    "titleDateAndTime": "Dată și oră",
+    "subtitleVenueDaySlot": "Alege sediul, ziua și intervalul pentru meciul tău.",
+    "subtitleSportVenueDaySlot": "Alege sportul și sediul, apoi ziua și intervalul.",
+    "pickleballMode": "Mod pickleball",
+    "playersSuffix": "jucători",
+    "singlesPickle": "Simplu (2)",
+    "doublesPickle": "Dublu (4)",
+    "publishedTitle": "Meci publicat",
+    "registeredTitle": "Rezervare înregistrată",
+    "publishedBody": "Rezervarea este confirmată și meciul este vizibil pentru alții.",
+    "registeredBody": "Rezervarea a fost înregistrată. Te vom contacta conform setărilor sediului."
   }
 }

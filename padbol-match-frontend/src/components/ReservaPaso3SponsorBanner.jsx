@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { Link } from 'react-router-dom';
 import { isReservaBannerPaso3Active } from '../constants/hubJugarSponsorSlots';
 
@@ -6,6 +7,7 @@ import { isReservaBannerPaso3Active } from '../constants/hubJugarSponsorSlots';
  * @param {{ imagen_url?: string, titulo?: string, descripcion?: string, url_destino?: string }} banner
  */
 export default function ReservaPaso3SponsorBanner({ banner }) {
+  const { t } = useTranslation();
   const b = banner && typeof banner === 'object' ? banner : {};
   const active = isReservaBannerPaso3Active(b);
 
@@ -35,7 +37,7 @@ export default function ReservaPaso3SponsorBanner({ banner }) {
           padding: '0 12px',
         }}
       >
-        <div style={{ fontSize: 11, fontWeight: 800, color: '#e53935' }}>Tu marca aquí</div>
+        <div style={{ fontSize: 11, fontWeight: 800, color: '#e53935' }}>{t('jugar.publicidad')}</div>
         <div style={{ fontSize: 10, color: '#555', marginTop: 2 }}>Espacio publicitario disponible</div>
       </div>
     );

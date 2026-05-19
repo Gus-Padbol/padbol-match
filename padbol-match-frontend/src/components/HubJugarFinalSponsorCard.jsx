@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { Link } from 'react-router-dom';
 import { pickHubCardSponsor } from '../utils/hubSponsorsFilter';
 import { sponsorRowMatchesCardFormato, sponsorRowToCardSlot } from '../utils/sponsorDisplayFormato';
@@ -45,7 +46,7 @@ export default function HubJugarFinalSponsorCard({ slot, sponsor = null, sponsor
           boxSizing: 'border-box',
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#e53935' }}>Tu marca aquí</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#e53935' }}>{t('jugar.publicidad')}</span>
       </div>
     );
   }

@@ -205,7 +205,39 @@
     "cancelModalMessage": "Vous quitterez le flux et l'équipe sera libérée si elle était réservée.",
     "cancelModalConfirm": "Oui, annuler la réservation",
     "cancelModalDismiss": "Retour au résumé",
-    "invalidWhatsappDigits": "Entrez un numéro WhatsApp valide (au moins {{min}} chiffres)."
+    "invalidWhatsappDigits": "Entrez un numéro WhatsApp valide (au moins {{min}} chiffres).",
+    "dayToday": "Aujourd'hui",
+    "dayTomorrow": "Demain",
+    "dayLabel": "Jour",
+    "confirmAndPay": "Confirmer et payer",
+    "bookOnBehalf": "Réservation au nom de :",
+    "slotPrice": "Prix du créneau :",
+    "sportLabel": "Sport",
+    "venueLabel": "Salle",
+    "searchVenuePlaceholder": "Rechercher une salle ou une ville…",
+    "searchResultsHint": "Résultats selon votre recherche.",
+    "nearestFiveVenues": "Affichage des 5 salles les plus proches.",
+    "fiveVenuesEnableGeo": "5 salles affichées. Activez la localisation pour voir les plus proches.",
+    "askVenueSports": "Renseignez-vous sur place",
+    "viewCourts": "Voir les terrains →",
+    "courtsAvailableTitle": "Terrains disponibles",
+    "courtFree": "Libre",
+    "courtOccupied": "Occupé",
+    "bookCourt": "Réserver un terrain",
+    "bookCourtNumber": "Réserver terrain {{num}}",
+    "loadingVenuesList": "Chargement des salles…",
+    "noVenuesAvailable": "Aucune salle disponible.",
+    "clearVenue": "Effacer la salle",
+    "loadingSlots": "Chargement des horaires…",
+    "noSlotsTryOther": "Aucun créneau libre pour cette date et durée. Essayez un autre jour ou une autre durée.",
+    "checkingAvailability": "Vérification des disponibilités…",
+    "noCourtsStepBack": "Aucun terrain à afficher. Revenez à l'étape précédente.",
+    "durationOnly": "Durée : {{min}} minutes",
+    "durationWithPrice": "Durée : {{min}} minutes · prix de base {{price}}",
+    "loadingExtras": "Chargement des options…",
+    "extrasSubtitleArmar": "Optionnel : ajoutez des produits ou services du club. Le total se met à jour ci-dessous.",
+    "goToPay": "Aller au paiement",
+    "preparingPayment": "Préparation du paiement…"
   },
   "torneos": {
     "titulo": "Tournois",
@@ -372,7 +404,9 @@
     "clase": "prendre un cours",
     "claseBody": "Formez-vous avec un professeur de votre siège.",
     "armar": "Organiser une correspondance",
-    "armarBody": "Je veux créer un jeu et ajouter des joueurs."
+    "armarBody": "Je veux créer un jeu et ajouter des joueurs.",
+    "publicidad": "Votre marque ici",
+    "publicidadShort": "Votre marque"
   },
   "clases": {
     "titulo": "Cours",
@@ -483,7 +517,8 @@
       "femenino": "Femme",
       "otro": "Autre",
       "open": "Open"
-    }
+    },
+    "regularPartner": "Partenaire habituel"
   },
   "admin": {
     "mi_sede": "mon quartier général",
@@ -1358,5 +1393,21 @@
     "whatIs": "Qu’est-ce que Padbol Match ?",
     "terms": "Termes",
     "privacy": "Confidentialité"
+  },
+  "armarPartido": {
+    "header": "Organiser un match",
+    "titleVenueAndSlot": "Salle et créneau",
+    "titleSportAndVenue": "Sport et salle",
+    "titleDateAndTime": "Date et heure",
+    "subtitleVenueDaySlot": "Choisissez salle, jour et créneau pour votre match.",
+    "subtitleSportVenueDaySlot": "Choisissez sport et salle, puis jour et créneau.",
+    "pickleballMode": "Format pickleball",
+    "playersSuffix": "joueurs",
+    "singlesPickle": "Simple (2)",
+    "doublesPickle": "Double (4)",
+    "publishedTitle": "Match publié",
+    "registeredTitle": "Réservation enregistrée",
+    "publishedBody": "Votre réservation est confirmée et le match est visible pour que d'autres se joignent.",
+    "registeredBody": "Votre réservation a été enregistrée. Nous vous contacterons selon la configuration de la salle."
   }
 }

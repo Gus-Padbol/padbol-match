@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const PLACEHOLDER_BORDER = '1px dashed #e53935';
 const PLACEHOLDER_BG = 'rgba(229, 57, 53, 0.05)';
@@ -8,6 +9,7 @@ const PLACEHOLDER_COLOR = '#e53935';
  * Banner o bloque rectangular: imagen + link opcional, o placeholder "Tu marca aquí".
  */
 export function HubJugarSlotRect({ slot, height, width = '100%', borderRadius = 10, objectFit = 'cover' }) {
+  const { t } = useTranslation();
   const img = String(slot?.imagen_url || '').trim();
   const url = String(slot?.url_destino || '').trim();
   const h = typeof height === 'number' ? `${height}px` : height;
@@ -63,7 +65,7 @@ export function HubJugarSlotRect({ slot, height, width = '100%', borderRadius = 
       }}
     >
       <span style={{ fontSize: 11, fontWeight: 600, color: PLACEHOLDER_COLOR, textAlign: 'center', padding: '0 10px' }}>
-        Tu marca aquí
+        {t('jugar.publicidad')}
       </span>
     </div>
   );
@@ -71,6 +73,7 @@ export function HubJugarSlotRect({ slot, height, width = '100%', borderRadius = 
 
 /** Logo 40×40 esquina; imagen o placeholder cuadrado. */
 export function HubJugarSlotOverlayCorner({ slot }) {
+  const { t } = useTranslation();
   const img = String(slot?.imagen_url || '').trim();
   const url = String(slot?.url_destino || '').trim();
   const box = (
@@ -92,7 +95,7 @@ export function HubJugarSlotOverlayCorner({ slot }) {
         <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
       ) : (
         <span style={{ fontSize: 8, fontWeight: 700, color: PLACEHOLDER_COLOR, lineHeight: 1.1, textAlign: 'center', padding: 2 }}>
-          Tu marca
+          {t('jugar.publicidadShort')}
         </span>
       )}
     </div>
@@ -109,6 +112,7 @@ export function HubJugarSlotOverlayCorner({ slot }) {
 
 /** Franja horizontal: logo + texto corto, o placeholder ancho. */
 export function HubJugarSlotStrip({ slot }) {
+  const { t } = useTranslation();
   const img = String(slot?.imagen_url || '').trim();
   const url = String(slot?.url_destino || '').trim();
   const texto = String(slot?.texto_corto || '').trim();
@@ -126,7 +130,7 @@ export function HubJugarSlotStrip({ slot }) {
           background: PLACEHOLDER_BG,
         }}
       >
-        <span style={{ fontSize: 11, fontWeight: 600, color: PLACEHOLDER_COLOR }}>Tu marca aquí</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: PLACEHOLDER_COLOR }}>{t('jugar.publicidad')}</span>
       </div>
     );
   }
