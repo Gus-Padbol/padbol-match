@@ -4541,8 +4541,6 @@ export default function MiPerfil() {
         titleId="cerrar-sesion-titulo"
       />
 
-      ) : null}
-
       <BottomNav />
     </div>
   );
