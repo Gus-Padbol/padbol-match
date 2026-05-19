@@ -2737,7 +2737,10 @@ export default function MiPerfil() {
               fontSize: '13px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 6,
+              width: '100%',
+              textAlign: 'center',
             }}
           >
             <span style={{ display: 'inline-flex', flexShrink: 0, color: 'inherit' }}>
