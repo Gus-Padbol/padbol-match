@@ -111,7 +111,15 @@ const inputStyle = {
   boxSizing: 'border-box',
 };
 
-export default function AdminSponsorsSection({ isSuperAdmin = false }) {
+export default function AdminSponsorsSection({
+  isSuperAdmin = false,
+  canDelete,
+  canManageCupos,
+  canAutoApprove,
+}) {
+  const allowDelete = canDelete ?? isSuperAdmin;
+  const allowCupos = canManageCupos ?? isSuperAdmin;
+  const autoApprove = canAutoApprove ?? isSuperAdmin;
   const { t } = useTranslation();
   const { session } = useAuth();
   const [rows, setRows] = useState([]);
@@ -195,8 +203,8 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
   useEffect(() => {
     void loadRefs();
     void loadSponsors();
-    void loadSponsorCupos();
-  }, [loadRefs, loadSponsors, loadSponsorCupos]);
+    if (allowCupos) void loadSponsorCupos();
+  }, [allowCupos, loadRefs, loadSponsors, loadSponsorCupos]);
 
   const resetForm = () => {
     setForm(emptyForm());
@@ -393,7 +401,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
         const insert = {
           ...payload,
           creado_por: session.user.id,
-          aprobado: Boolean(isSuperAdmin),
+          aprobado: Boolean(autoApprove),
         };
         const { error } = await supabase.from('sponsors').insert([insert]);
         if (error) throw error;
@@ -502,6 +510,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
         Patrocinios por alcance: torneo tiene prioridad sobre sede, país y global.
       </p>
 
+      {allowCupos ? (
       <div
         style={{
           background: 'var(--bg-card)',
@@ -573,6 +582,7 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
           {cuposSaving ? t('admin.metricas.saving') : t('admin.sponsors.saveQuotaConfig')}
         </button>
       </div>
+      ) : null}
 
       {msg ? (
         <div role={bannerIsSuccess ? 'status' : 'alert'} style={bannerIsSuccess ? successBannerStyle : errorBannerStyle}>
@@ -1026,23 +1036,25 @@ export default function AdminSponsorsSection({ isSuperAdmin = false }) {
                     >
                       Editar
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => void eliminar(r)}
-                      style={{
-                        padding: '6px 10px',
-                        marginRight: 6,
-                        borderRadius: 6,
-                        border: 'none',
-                        background: '#b91c1c',
-                        color: '#fff',
-                        fontWeight: 700,
-                        fontSize: 12,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Eliminar
-                    </button>
+                    {allowDelete ? (
+                      <button
+                        type="button"
+                        onClick={() => void eliminar(r)}
+                        style={{
+                          padding: '6px 10px',
+                          marginRight: 6,
+                          borderRadius: 6,
+                          border: 'none',
+                          background: '#b91c1c',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: 12,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Eliminar
+                      </button>
+                    ) : null}
                     {r.activo ? (
                       <button
                         type="button"

@@ -428,7 +428,10 @@ const ADMIN_TABS_ALLOWED = new Set([
   'jugadores',
   'solicitudes',
   'personalizar_hub',
+  'sponsors',
 ]);
+
+const EDITOR_CONTENIDO_TABS_ALLOWED = new Set(['personalizar_hub', 'sponsors']);
 
 const SEDES_SUPER_ADMIN_PAGE_SIZE = 10;
 
@@ -438,7 +441,10 @@ function torneoConsideradoActivoPanelNacional(t) {
 }
 
 function sanitizeAdminActiveTab(raw, rolUsuario = null) {
-  if (rolUsuario === 'editor_contenido') return 'personalizar_hub';
+  if (rolUsuario === 'editor_contenido') {
+    const t0 = String(raw || '').trim();
+    return EDITOR_CONTENIDO_TABS_ALLOWED.has(t0) ? t0 : 'personalizar_hub';
+  }
   const t0 = String(raw || '').trim();
   const t = t0 === 'sedes_pendientes' ? 'solicitudes' : t0;
   return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
@@ -3670,10 +3676,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   useEffect(() => {
     if (isSuperAdmin || esEditorContenido) return;
-    if (activeTab !== 'personalizar_hub') return;
+    if (activeTab !== 'personalizar_hub' && activeTab !== 'sponsors') return;
     setActiveTab('resumen');
     navigate('/admin?tab=resumen', { replace: true });
   }, [isSuperAdmin, esEditorContenido, activeTab, navigate]);
+
+  useEffect(() => {
+    if (!esEditorContenido) return;
+    if (EDITOR_CONTENIDO_TABS_ALLOWED.has(activeTab)) return;
+    setActiveTab('personalizar_hub');
+    navigate('/admin?tab=personalizar_hub', { replace: true });
+  }, [esEditorContenido, activeTab, navigate]);
 
   // ── Config puntos (superAdmin only) ──
   const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
@@ -5637,7 +5650,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   lineHeight: 1.45,
                 }}
               >
-                Edita títulos, subtítulos e imágenes del hub del jugador. No tienes acceso al resto del panel.
+                {t('admin.panel.editorDescription')}
               </p>
               <button
                 type="button"
@@ -5654,10 +5667,53 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   marginBottom: 16,
                 }}
               >
-                Volver al hub
+                {t('admin.panel.backToHub')}
               </button>
             </div>
           </div>
+          </div>
+          <div
+            ref={adminTabsStripRef}
+            className="admin-dashboard-tabs-strip"
+            style={{
+              marginTop: '8px',
+              marginBottom: '24px',
+              paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+              paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+              position: 'sticky',
+              top: 0,
+              zIndex: 100,
+            }}
+          >
+            {[
+              { id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') },
+              { id: 'sponsors', label: t('admin.tabs.sponsors') },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  sessionStorage.setItem('adminActiveTab', tab.id);
+                  navigate(`/admin?tab=${encodeURIComponent(tab.id)}`, { replace: true });
+                }}
+                style={{
+                  padding: '10px 18px',
+                  border: 'none',
+                  borderBottom: activeTab === tab.id ? '3px solid var(--accent)' : '3px solid transparent',
+                  background: 'none',
+                  cursor: 'pointer',
+                  fontWeight: activeTab === tab.id ? 'bold' : 'normal',
+                  color: activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)',
+                  fontSize: '14px',
+                  marginBottom: '-2px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
           <div
             className="admin-dashboard-body-surface"
@@ -5667,7 +5723,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
             }}
           >
-            <AdminHubPersonalizarSection apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
+            {activeTab === 'personalizar_hub' ? (
+              <AdminHubPersonalizarSection apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
+            ) : null}
+            {activeTab === 'sponsors' ? (
+              <AdminSponsorsSection isSuperAdmin={false} canDelete={false} canManageCupos={false} canAutoApprove />
+            ) : null}
           </div>
         </div>
       </div>

@@ -500,13 +500,16 @@
       "superTitle": "Panel Super Admin",
       "clubTitle": "Panel Admin · {{name}}",
       "nationalTitle": "Panel Admin Nacional",
-      "genericTitle": "Panel {{role}}"
+      "genericTitle": "Panel {{role}}",
+      "editorDescription": "Personalizá el hub del jugador y gestioná sponsors/publicidades de todas las sedes.",
+      "backToHub": "Volver al hub"
     },
     "tabs": {
       "resumen": "📊 Resumen",
       "sedes": "🏟️ Sedes",
       "solicitudes": "📝 Solicitudes",
       "personalizarHub": "🎨 Personalizar Hub",
+      "sponsors": "🤝 Sponsors / Publicidades",
       "torneos": "🏆 Torneos",
       "reservas": "⚽ Reservas",
       "validaciones": "⏳ Validaciones",
