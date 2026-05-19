@@ -2,7 +2,6 @@ import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
-import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 
 /** Roles de panel: no exigen género/WhatsApp de jugador para navegar (p. ej. crear torneo). */
 const ROLES_SKIP_PERFIL_JUGADOR_MINIMO = new Set(['super_admin', 'admin_club', 'admin_nacional']);
@@ -63,12 +62,11 @@ function GateBlockingSpinner() {
 }
 
 /**
- * Redirige a `/completar-perfil` si hay sesión pero falta género o WhatsApp en `jugadores_perfil`
- * (p. ej. primer login con Google o Facebook OAuth).
- * Mientras `loading` o `profileLoading`, no redirige: muestra spinner (evita hub violeta “vacío” por carrera de perfil).
+ * Mientras `loading` o `profileLoading` con sesión, muestra spinner (evita hub “vacío” por carrera de perfil).
+ * No redirige a completar perfil: eso ocurre al intentar reservar, armar partido o inscribirse a torneo.
  */
 export default function PerfilJugadorDatosMinimosGate({ children }) {
-  const { session, userProfile, profileLoading, loading, signOutAndClear } = useAuth();
+  const { session, profileLoading, loading, signOutAndClear } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const currentCliente = useMemo(() => {
@@ -82,32 +80,6 @@ export default function PerfilJugadorDatosMinimosGate({ children }) {
     gateSkipsPerfilMinimo(pathOnly) ||
     (rol != null && ROLES_SKIP_PERFIL_JUGADOR_MINIMO.has(String(rol)));
   const blockUi = Boolean(session?.user) && !skipsGate && (loading || profileLoading);
-
-  console.log('[PM Gate] render', {
-    loading,
-    profileLoading,
-    sessionUid: session?.user?.id ?? null,
-    hasSessionEmail: Boolean(session?.user?.email),
-    pathOnly,
-    skipsGate,
-    blockUi,
-    userProfile: userProfile
-      ? {
-          id: userProfile.id ?? null,
-          genero: userProfile.genero ?? null,
-          whatsappLen: String(userProfile.whatsapp || '').length,
-        }
-      : null,
-    perfilMinimoOk: perfilJugadorDatosMinimosCompletos(userProfile),
-  });
-
-  useEffect(() => {
-    if (loading || profileLoading) return;
-    if (!session?.user) return;
-    if (skipsGate) return;
-    if (perfilJugadorDatosMinimosCompletos(userProfile)) return;
-    navigate('/completar-perfil', { replace: true, state: { from: pathOnly } });
-  }, [loading, profileLoading, session?.user?.id, userProfile, pathOnly, skipsGate, navigate]);
 
   useEffect(() => {
     if (!blockUi) return undefined;

@@ -51,6 +51,7 @@ import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePerfilJugadorMinimoEnRuta } from '../hooks/usePerfilJugadorMinimoEnRuta';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -573,6 +574,7 @@ export default function ReservaForm() {
     [location.pathname, navDock]
   );
   const { session, loading: authLoading, userProfile } = useAuth();
+  usePerfilJugadorMinimoEnRuta();
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();

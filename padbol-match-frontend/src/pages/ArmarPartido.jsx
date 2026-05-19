@@ -18,6 +18,7 @@ import {
   saveReservaPendienteArmar,
 } from '../utils/armarPartidoReservaPendiente';
 import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
+import { usePerfilJugadorMinimoEnRuta } from '../hooks/usePerfilJugadorMinimoEnRuta';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -259,6 +260,7 @@ export default function ArmarPartido() {
   const { navDock } = useHubNavLayout();
   const [searchParams] = useSearchParams();
   const { session, userProfile, loading: authLoading } = useAuth();
+  usePerfilJugadorMinimoEnRuta();
 
   const armarPaddingTopCss = useMemo(
     () => hubContentPaddingTopCss(location.pathname, navDock),

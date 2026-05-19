@@ -25,6 +25,7 @@ import { fetchProfesores } from '../utils/clasesApi';
 import { useHubPromoSedeActiva } from '../hooks/useHubPromoSedeActiva';
 import './Jugar.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { intentarNavegarConPerfilJugadorMinimo } from '../utils/perfilJugadorMinimo';
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 
@@ -206,7 +207,7 @@ export default function Jugar() {
             <button
               key={op.hubKey}
               type="button"
-              onClick={() => navigate(`${op.path}${q}`)}
+              onClick={() => intentarNavegarConPerfilJugadorMinimo(navigate, userProfile, `${op.path}${q}`)}
               style={{
                 textAlign: 'left',
                 border: '1px solid var(--border)',

@@ -37,8 +37,65 @@ export function authSessionUsaProveedorFacebook(session) {
 
 /**
  * OAuth social (Google / Facebook): no crear `jugadores_perfil` vacío desde AuthContext;
- * el usuario completa WhatsApp y género en `/completar-perfil`.
+ * el usuario puede completar WhatsApp y género en `/completar-perfil` al usar una acción que lo exija.
  */
 export function authSessionUsaOAuthProveedorSocial(session) {
   return authSessionUsaProveedorGoogle(session) || authSessionUsaProveedorFacebook(session);
+}
+
+/** Rutas que exigen género + WhatsApp antes de continuar (no el hub ni navegación general). */
+export function rutaExigePerfilJugadorMinimo(pathname) {
+  const p = String(pathname || '')
+    .split('?')[0]
+    .split('#')[0]
+    .replace(/\/+$/, '') || '/';
+  if (p === '/reservar' || p.startsWith('/reservar/')) return true;
+  if (p === '/jugar/armar' || p.startsWith('/jugar/armar/')) return true;
+  return false;
+}
+
+/** Hub / jugar: claves de acción que disparan el mismo requisito al navegar. */
+const HUB_ACCIONES_PERFIL_MINIMO = new Set(['reservar', 'armar_partido']);
+
+export function hubAccionExigePerfilJugadorMinimo(actionKey) {
+  return HUB_ACCIONES_PERFIL_MINIMO.has(String(actionKey || '').trim());
+}
+
+/**
+ * Navega a `targetPath` o a completar perfil si faltan datos mínimos.
+ * @returns {boolean} true si navegó al destino; false si redirigió a completar perfil.
+ */
+export function intentarNavegarConPerfilJugadorMinimo(navigate, userProfile, targetPath) {
+  const dest = String(targetPath || '').trim();
+  if (!dest) return false;
+  const pathOnly = dest.split('?')[0].split('#')[0];
+  if (!rutaExigePerfilJugadorMinimo(pathOnly)) {
+    navigate(dest);
+    return true;
+  }
+  if (perfilJugadorDatosMinimosCompletos(userProfile)) {
+    navigate(dest);
+    return true;
+  }
+  navigate('/completar-perfil', { state: { from: pathOnly } });
+  return false;
+}
+
+/** Variante para cards del hub: valida por clave de acción y path destino. */
+export function intentarNavegarHubConPerfilJugadorMinimo(navigate, userProfile, actionKey, targetPath) {
+  const dest = String(targetPath || '').trim();
+  if (!dest) return false;
+  const pathOnly = dest.split('?')[0].split('#')[0];
+  const exige =
+    hubAccionExigePerfilJugadorMinimo(actionKey) || rutaExigePerfilJugadorMinimo(pathOnly);
+  if (!exige) {
+    navigate(dest);
+    return true;
+  }
+  if (perfilJugadorDatosMinimosCompletos(userProfile)) {
+    navigate(dest);
+    return true;
+  }
+  navigate('/completar-perfil', { state: { from: pathOnly } });
+  return false;
 }

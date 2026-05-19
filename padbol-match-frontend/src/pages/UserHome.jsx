@@ -29,6 +29,7 @@ import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubI
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { intentarNavegarHubConPerfilJugadorMinimo } from '../utils/perfilJugadorMinimo';
 
 /**
  * Hub principal (cards + deporte + PWA…).
@@ -397,10 +398,11 @@ export default function UserHome() {
         titulo: tituloHubCardConDeporte(tituloBase, deporteElegido),
         subtitulo,
         imageUrl,
-        onClick: () => navigate(`${slot.to}${q}`),
+        onClick: () =>
+          intentarNavegarHubConPerfilJugadorMinimo(navigate, userProfile, slot.key, `${slot.to}${q}`),
       };
     });
-  }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido, hubFixedActions]);
+  }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido, hubFixedActions, userProfile]);
 
   const scrollPaddingBottom = hubHubScrollPaddingBottomCss(navDock);
   const userHomeChromeSpacerH = useMemo(

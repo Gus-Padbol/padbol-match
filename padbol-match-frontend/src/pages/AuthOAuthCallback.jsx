@@ -6,8 +6,8 @@ import { resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 
 /**
  * Destino de `redirectTo` tras Google / Facebook OAuth (PKCE).
- * Intercambia el `code` de la URL al montar (vía `detectSessionInUrl` en supabaseClient) y redirige al hub;
- * {@link PerfilJugadorDatosMinimosGate} envía a `/completar-perfil` si falta WhatsApp o género.
+ * Intercambia el `code` de la URL al montar (vía `detectSessionInUrl` en supabaseClient) y redirige al hub.
+ * Completar perfil (WhatsApp, género) se pide solo al reservar, armar partido o inscribirse a torneo.
  */
 export default function AuthOAuthCallback() {
   const navigate = useNavigate();

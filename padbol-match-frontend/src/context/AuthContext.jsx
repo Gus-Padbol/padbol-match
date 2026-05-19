@@ -76,7 +76,7 @@ async function refreshUserProfile(session, setUserProfile) {
     console.log(`${PM_AUTH_LOG} refreshUserProfile user_id query done`, { hasRow: Boolean(data), hasError: Boolean(r2.error) });
   }
 
-  /** Google / Facebook OAuth: no crear fila vacía; el usuario completa WhatsApp y género en `/completar-perfil`. */
+  /** Google / Facebook OAuth: no crear fila vacía; WhatsApp y género se piden al usar acciones que lo requieran. */
   if (!data && !error && authSessionUsaOAuthProveedorSocial(session)) {
     setUserProfile(null);
     console.log(`${PM_AUTH_LOG} refreshUserProfile exit (OAuth social sin fila, perfil null)`);
