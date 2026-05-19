@@ -107,6 +107,7 @@ export default function AppHeader({
   /** Si se define (px), en desktop sustituye el max-width por defecto del cuerpo (~900px). */
   contentMaxWidth = null,
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme } = useTheme();
@@ -142,15 +143,10 @@ export default function AppHeader({
   /** Rol desde DB/caché; si aún no hay fila `user_roles` (p. ej. otro proyecto/host), usar rol en JWT de Supabase Auth. */
   const rolEffectiveHeader = useMemo(() => {
     const cached = readCachedRolHeader();
-    const fromJwt = (() => {
-  const { t } = useTranslation();
-      const r = String(
-        session?.user?.app_metadata?.role ?? session?.user?.user_metadata?.role ?? ''
-      )
-        .trim()
-        .toLowerCase();
-      return ADMIN_ROLES_CHIP.includes(r) ? r : null;
-    })();
+    const r = String(session?.user?.app_metadata?.role ?? session?.user?.user_metadata?.role ?? '')
+      .trim()
+      .toLowerCase();
+    const fromJwt = ADMIN_ROLES_CHIP.includes(r) ? r : null;
     return rol || cached || fromJwt;
   }, [rol, session?.user?.app_metadata?.role, session?.user?.user_metadata?.role]);
   const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
