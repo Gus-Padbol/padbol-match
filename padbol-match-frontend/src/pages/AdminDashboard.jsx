@@ -91,7 +91,7 @@ import { preciosDuracionToApiPatch, parsePrecioDuracionField } from '../utils/se
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const STRIPE_PUBLISHABLE_ADMIN =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY

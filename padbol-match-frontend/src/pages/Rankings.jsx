@@ -20,7 +20,7 @@ import { useHubSponsors } from '../hooks/useHubSponsors';
 import { CATEGORIAS_NIVEL_TODAS } from '../constants/jugadorCategoria';
 import { TORNEO_GENERO_COMPETENCIA_OPTIONS } from '../constants/torneoCompetencia';
 import { torneoTipoCompetenciaDb } from '../utils/torneoFormatters';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import {
   TORNEO_DEPORTE_PADBOL,
   TORNEO_DEPORTE_OPTIONS,

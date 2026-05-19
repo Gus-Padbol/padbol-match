@@ -28,7 +28,7 @@ import { pickHubDeporteRow, dedupeHubDeporteConfigRows, hubDeporteRowImagenUrl }
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
 import './UserHome.css';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /**
  * Hub principal (cards + deporte + PWA…).
@@ -704,17 +704,17 @@ export default function UserHome() {
                   flexShrink: 0,
                 }}
               >
-                {inicioTiles.map((t) => {
-                  const failId = `inicio|${t.id}|${t.foto || ''}`;
-                  const showPhoto = Boolean(t.foto) && !hubCardImageFailed[failId];
+                {inicioTiles.map((tile) => {
+                  const failId = `inicio|${tile.id}|${tile.foto || ''}`;
+                  const showPhoto = Boolean(tile.foto) && !hubCardImageFailed[failId];
                   return (
                     <button
-                      key={t.id}
+                      key={tile.id}
                       type="button"
                       className="hub-surface-card"
                       onClick={() => {
-                        setDeporteElegido(t.deporte);
-                        writeHubDeporteFilterToSession(t.deporte);
+                        setDeporteElegido(tile.deporte);
+                        writeHubDeporteFilterToSession(tile.deporte);
                       }}
                       style={{
                         position: 'relative',
@@ -732,17 +732,17 @@ export default function UserHome() {
                         backgroundColor: showPhoto ? '#1a1a1a' : HUB_CARD_FALLBACK_BG,
                       }}
                     >
-                      {showPhoto && t.foto ? (
+                      {showPhoto && tile.foto ? (
                         <div
                           className="hub-card-cover-layer"
-                          style={{ backgroundImage: `url(${t.foto})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                          style={{ backgroundImage: `url(${tile.foto})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                           aria-hidden
                         />
                       ) : null}
-                      {t.foto ? (
+                      {tile.foto ? (
                         <img
                           alt=""
-                          src={t.foto}
+                          src={tile.foto}
                           style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
                           onError={() => {
                             setHubCardImageFailed((prev) => {
@@ -776,7 +776,7 @@ export default function UserHome() {
                         }}
                       >
                         <span className="hub-surface-card__title" style={{ fontSize: 16 }}>
-                          {t.label}
+                          {tile.label}
                         </span>
                       </div>
                     </button>

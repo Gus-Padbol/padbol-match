@@ -26,7 +26,7 @@ import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { getDisplayName } from '../utils/displayName';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import {
   esInscripcionAbiertaTorneo,
   esProximoTorneo,

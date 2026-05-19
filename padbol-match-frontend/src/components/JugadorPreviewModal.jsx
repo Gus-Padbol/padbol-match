@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /** Modal compacto: foto, nombre, @alias, categoría, sede, puntos; opción ir a perfil público. */
 export default function JugadorPreviewModal({ open, onClose, data }) {

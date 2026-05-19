@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { canUseNavigatorShare } from './ShareLinkButton';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 function normalizedAlias(rawAlias) {
   return String(rawAlias || '').trim().replace(/^@+/, '');

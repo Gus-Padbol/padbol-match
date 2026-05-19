@@ -66,7 +66,7 @@ import { PRESET_PROFILE_AVATAR_URLS } from '../constants/presetProfileAvatars';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import DeportesPreferidosLecturaChips from '../components/DeportesPreferidosLecturaChips';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import {
   normalizeDeportesPreferidosArray,
   hasDeportesPreferidosCargados,

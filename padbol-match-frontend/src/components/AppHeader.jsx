@@ -17,7 +17,7 @@ import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntr
 import HubThemeSettingsButton from './HubThemeSettingsButton';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useTheme } from '../context/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',

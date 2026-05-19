@@ -6,7 +6,7 @@ import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/h
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL

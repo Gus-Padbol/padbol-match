@@ -139,7 +139,8 @@
     "pais": "Country",
     "language": "App language",
     "editar_datos": "Edit details",
-    "notificaciones": "Notifications"
+    "notificaciones": "Notifications",
+    "guardarPerfil": "Save profile"
   },
   "admin": {
     "mi_sede": "My venue",

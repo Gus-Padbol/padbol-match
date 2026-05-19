@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import useUserRole from '../hooks/useUserRole';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 export default function ClasesPage() {
   const { t } = useTranslation();

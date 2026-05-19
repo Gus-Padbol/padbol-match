@@ -19,7 +19,7 @@ import {
   clearReservaReturnLocalStorage,
 } from '../utils/reservaReturnUrl';
 import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL

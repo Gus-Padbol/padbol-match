@@ -4,7 +4,7 @@ import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import {
   dedupeHubDeporteConfigRows,
   hubDeporteRowImagenUrl,

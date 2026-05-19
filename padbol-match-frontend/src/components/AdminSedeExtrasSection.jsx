@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ConfirmModal from './ConfirmModal';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /**
  * Mi Sede — extras del tercer tiempo (admin club: CRUD sin aprobación; super puede aprobar en fila).

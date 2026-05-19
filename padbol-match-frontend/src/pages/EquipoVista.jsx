@@ -55,7 +55,7 @@ import {
 } from '../utils/equipoCreadorJugadores';
 import { invitarJugadorEquipo } from '../utils/equipoInvitarApi';
 import { esCapitanJugadorEnFila, ICONO_CAPITAN } from '../utils/equipoCapitanUi';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BACKEND_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL

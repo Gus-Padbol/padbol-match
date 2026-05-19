@@ -17,6 +17,11 @@ i18n
     fallbackLng: 'es',
     supportedLngs: ['es', 'en'],
     interpolation: { escapeValue: false },
+    returnNull: false,
+    returnEmptyString: false,
+    react: {
+      useSuspense: false,
+    },
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],

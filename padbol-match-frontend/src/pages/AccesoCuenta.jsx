@@ -33,7 +33,7 @@ import {
   buildFullWhatsDigits,
 } from '../utils/authIdentidad';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';

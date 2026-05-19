@@ -50,7 +50,7 @@ import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).

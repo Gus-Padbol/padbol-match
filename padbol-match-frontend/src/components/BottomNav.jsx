@@ -11,7 +11,7 @@ import {
 } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
 

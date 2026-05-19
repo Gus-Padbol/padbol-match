@@ -8,7 +8,7 @@ import {
   maxPorSedeSegunNombrePlan,
 } from '../utils/sponsorQuotaShared';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import {
   SPONSOR_FORMATO_OPTIONS,
   etiquetaFormatoSponsorRow,

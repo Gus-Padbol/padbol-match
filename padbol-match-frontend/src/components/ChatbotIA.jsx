@@ -14,7 +14,7 @@ import {
 import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
 import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
 function TablerMicrophoneIcon({ size = 22 }) {

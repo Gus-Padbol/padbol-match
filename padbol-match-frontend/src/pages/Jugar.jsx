@@ -24,7 +24,7 @@ import useUserRole from '../hooks/useUserRole';
 import { fetchProfesores } from '../utils/clasesApi';
 import { useHubPromoSedeActiva } from '../hooks/useHubPromoSedeActiva';
 import './Jugar.css';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
 

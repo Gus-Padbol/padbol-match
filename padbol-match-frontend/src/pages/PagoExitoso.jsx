@@ -19,7 +19,7 @@ import SponsorBannerReserva from '../components/SponsorBannerReserva';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
-import { useTranslation } from 'react-i18next';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL

@@ -1,4 +1,6 @@
 import React from 'react';
+import i18n from '../i18n';
+import { resolveTranslation } from '../i18n/tSafe';
 
 /**
  * Evita pantalla vacía (solo gradiente de `body`) si un hijo revienta en el render.
@@ -6,15 +8,21 @@ import React from 'react';
 export default class GlobalErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, info) {
-    console.error('[PM ErrorBoundary]', error, info?.componentStack);
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error('[PM ErrorBoundary] Error de render:', error);
+    console.error('[PM ErrorBoundary] Mensaje:', error?.message);
+    console.error('[PM ErrorBoundary] Stack:', error?.stack);
+    if (errorInfo?.componentStack) {
+      console.error('[PM ErrorBoundary] Component stack:', errorInfo.componentStack);
+    }
   }
 
   handleReload = () => {
@@ -38,6 +46,19 @@ export default class GlobalErrorBoundary extends React.Component {
       return this.props.children;
     }
 
+    const err = this.state.error;
+    const title = resolveTranslation(
+      'general.somethingWentWrong',
+      i18n.t('general.somethingWentWrong'),
+      'Algo salió mal',
+    );
+    const bodyDefault =
+      'La app encontró un error al mostrar esta pantalla. Puedes volver al inicio o al acceso.';
+    const goHome = resolveTranslation('general.goHome', i18n.t('general.goHome'), 'Ir al inicio');
+    const goLogin = resolveTranslation('general.goLogin', i18n.t('general.goLogin'), 'Ir a acceso');
+    const showDevDetail =
+      typeof process !== 'undefined' && process.env.NODE_ENV === 'development' && err?.message;
+
     return (
       <div
         style={{
@@ -56,10 +77,29 @@ export default class GlobalErrorBoundary extends React.Component {
           textAlign: 'center',
         }}
       >
-        <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>Algo salió mal</h1>
+        <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>{title}</h1>
         <p style={{ margin: 0, maxWidth: 360, fontSize: '15px', lineHeight: 1.5, opacity: 0.9 }}>
-          La app encontró un error al mostrar esta pantalla. Puedes volver al inicio o al acceso.
+          {bodyDefault}
         </p>
+        {showDevDetail ? (
+          <pre
+            style={{
+              margin: 0,
+              maxWidth: 'min(100%, 520px)',
+              padding: 12,
+              fontSize: 11,
+              lineHeight: 1.4,
+              textAlign: 'left',
+              overflow: 'auto',
+              background: 'rgba(0,0,0,0.35)',
+              borderRadius: 8,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {String(err.message)}
+          </pre>
+        ) : null}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
           <button
             type="button"
@@ -75,7 +115,7 @@ export default class GlobalErrorBoundary extends React.Component {
               color: '#0f172a',
             }}
           >
-            Ir al inicio
+            {goHome}
           </button>
           <button
             type="button"
@@ -91,7 +131,7 @@ export default class GlobalErrorBoundary extends React.Component {
               color: '#fff',
             }}
           >
-            Ir a acceso
+            {goLogin}
           </button>
         </div>
       </div>
