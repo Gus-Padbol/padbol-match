@@ -142,6 +142,14 @@ function etiquetaGeneroPerfil(t, genero) {
   return translated !== key ? translated : '—';
 }
 
+function etiquetaLateralidadPerfil(t, raw) {
+  const v = String(raw || '').trim();
+  if (v === 'Diestro') return t('perfil.diestro');
+  if (v === 'Zurdo') return t('perfil.zurdo');
+  if (v === 'Ambidiestro') return t('perfil.ambidiestro');
+  return v || '—';
+}
+
 function escapeIlikeLiteral(value) {
   return String(value || '')
     .replace(/\\/g, '\\\\')
@@ -2189,8 +2197,9 @@ export default function MiPerfil() {
                 }}
                 style={{ ...guestInputStyle, marginBottom: regErr('lateralidad') ? '6px' : '14px', border: regBorder('lateralidad') }}
               >
-                <option value="Diestro">Diestro</option>
-                <option value="Zurdo">Zurdo</option>
+                <option value="Diestro">{t('perfil.diestro')}</option>
+                <option value="Zurdo">{t('perfil.zurdo')}</option>
+                <option value="Ambidiestro">{t('perfil.ambidiestro')}</option>
               </select>
               {regErrP('lateralidad')}
 
@@ -2817,7 +2826,7 @@ export default function MiPerfil() {
               )}
             </span>
           )}
-          {perfil?.lateralidad && <Badge text={perfil.lateralidad} color="#555" />}
+          {perfil?.lateralidad && <Badge text={etiquetaLateralidadPerfil(t, perfil.lateralidad)} color="#555" />}
           {perfil?.es_federado && <Badge text={t('perfil.federatedBadge')} color="#388e3c" />}
           {perfil?.numero_fipa && <Badge text={`FIPA ${perfil.numero_fipa}`} color="#7b1fa2" />}
         </div>
@@ -2903,7 +2912,7 @@ export default function MiPerfil() {
                   )}
                 </span>
               } />
-              <Row label={t('perfil.lateralidad')} value={perfil.lateralidad} />
+              <Row label={t('perfil.lateralidad')} value={etiquetaLateralidadPerfil(t, perfil.lateralidad)} />
               <Row
                 label={t('perfil.lookingForPartner')}
                 value={perfil.busca_companero ? t('perfil.lookingForPartnerYes') : t('perfil.no')}
@@ -3190,8 +3199,9 @@ export default function MiPerfil() {
               onChange={handleChange}
               style={{ ...inputStyle, marginBottom: fichErr('lateralidad') ? '6px' : '14px', border: fichBorder('lateralidad') }}
             >
-              <option value="Diestro">🤜 Diestro</option>
-              <option value="Zurdo">🤛 Zurdo</option>
+              <option value="Diestro">🤜 {t('perfil.diestro')}</option>
+              <option value="Zurdo">🤛 {t('perfil.zurdo')}</option>
+              <option value="Ambidiestro">{t('perfil.ambidiestro')}</option>
             </select>
             {fichErrP('lateralidad')}
 
@@ -3709,51 +3719,51 @@ export default function MiPerfil() {
         const gridItems = [
           {
             k: 'torneos',
-            label: 'Torneos jugados',
+            label: t('perfil.torneosJugados'),
             value: estadisticasMiPerfilLoading ? '…' : `${Number(rowStats?.torneos_jugados) || 0}`,
             sub:
               !aliasStats
                 ? t('perfil.definePublicAlias')
                 : Number(rowStats?.torneos_ganados) > 0
                   ? `${rowStats.torneos_ganados} ganado${Number(rowStats.torneos_ganados) === 1 ? '' : 's'}`
-                  : 'Torneos finalizados',
+                  : t('perfil.torneosFinalizados'),
           },
           {
             k: 'partidos',
-            label: 'Partidos jugados',
+            label: t('perfil.partidosJugados'),
             value: estadisticasMiPerfilLoading ? '…' : `${Number(rowStats?.partidos_jugados) || 0}`,
             sub:
               !aliasStats
                 ? '—'
                 : Number(rowStats?.partidos_jugados) > 0
                   ? `${Number(rowStats.partidos_ganados) || 0} victorias`
-                  : 'En torneos finalizados',
+                  : t('perfil.enTorneosFinalizados'),
           },
           {
             k: 'win',
-            label: 'Win rate',
+            label: t('perfil.winRate'),
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
                 : Number(rowStats?.partidos_jugados) > 0
                   ? `${rowStats.win_rate_pct}%`
                   : '—',
-            sub: 'Victorias / jugados',
+            sub: t('perfil.victoriasJugados'),
           },
           {
             k: 'pts',
-            label: 'Puntos ranking',
+            label: t('perfil.puntosRankingLabel'),
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
                 : Number(rowStats?.puntos_ranking_total) > 0
                   ? `${rowStats.puntos_ranking_total}`
                   : '—',
-            sub: depsList.length > 1 ? 'Tabla (deporte seleccionado)' : 'Total tabla de puntos',
+            sub: depsList.length > 1 ? 'Tabla (deporte seleccionado)' : t('perfil.totalTablaPuntos'),
           },
           {
             k: 'racha',
-            label: 'Racha actual',
+            label: t('perfil.rachaActual'),
             value:
               estadisticasMiPerfilLoading || !aliasStats
                 ? '—'
@@ -3767,21 +3777,21 @@ export default function MiPerfil() {
                   ? `Partido${rowStats.racha_victorias_consecutivas === 1 ? '' : 's'} ganado${
                       rowStats.racha_victorias_consecutivas === 1 ? '' : 's'
                     } seguidos`
-                  : 'Sin racha activa',
+                  : t('perfil.sinRachaActiva'),
           },
           {
             k: 'mejor',
-            label: 'Mejor resultado',
+            label: t('perfil.mejorResultado'),
             value:
               estadisticasMiPerfilLoading || !aliasStats ? '—' : rowStats?.mejor_resultado || '—',
-            sub: depsList.length > 1 ? 'En este deporte' : 'Mejor torneo (tabla)',
+            sub: depsList.length > 1 ? 'En este deporte' : t('perfil.mejorTorneoTabla'),
           },
           {
             k: 'deporte',
             label: depsList.length > 1 ? t('perfil.sportTab') : t('perfil.mainSport'),
             value:
               estadisticasMiPerfilLoading || !aliasStats ? '—' : rowStats?.deporte_mas_jugado || '—',
-            sub: depsList.length > 1 ? t('perfil.activeTab') : t('perfil.byTournamentsPlayed'),
+            sub: depsList.length > 1 ? t('perfil.activeTab') : t('perfil.porTorneosJugados'),
           },
           {
             k: 'sedeRes',
@@ -3797,7 +3807,7 @@ export default function MiPerfil() {
                   ? `${rowStats.sede_mas_frecuentada_reservas.reservas_en_sede} reserva${
                       rowStats.sede_mas_frecuentada_reservas.reservas_en_sede === 1 ? '' : 's'
                     }`
-                  : 'Por reservas',
+                  : t('perfil.porReservas'),
           },
         ];
         return (
@@ -3862,7 +3872,7 @@ export default function MiPerfil() {
               </div>
             ) : (
               <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                Puntos ranking (por alcance):{' '}
+                {t('perfil.puntosRanking')}{' '}
                 <span style={{ color: 'var(--text-secondary)' }}>—</span>
               </p>
             )}
@@ -3906,7 +3916,7 @@ export default function MiPerfil() {
                 fontWeight: 600,
               }}
             >
-              Sede habitual (torneos):{' '}
+              {t('perfil.sedeHabitual')}{' '}
               <span style={{ color: 'var(--text-primary)' }}>
                 {estadisticasMiPerfilLoading ? '…' : rowStats?.sede_habitual?.nombre || '—'}
               </span>
@@ -4049,7 +4059,10 @@ export default function MiPerfil() {
             fontFamily: 'inherit',
           }}
         >
-          <span>📋 Mis próximas reservas ({reservasProximasOrdenadas.length}) {misReservasColapsado ? '▼' : '▲'}</span>
+          <span>
+            📋 {t('perfil.misProximasReservas', { count: reservasProximasOrdenadas.length })}{' '}
+            {misReservasColapsado ? '▼' : '▲'}
+          </span>
         </button>
         {!misReservasColapsado && reservasProximasOrdenadas.length === 0 ? (
           <div style={{ textAlign: 'center', margin: '12px 0 8px' }}>
