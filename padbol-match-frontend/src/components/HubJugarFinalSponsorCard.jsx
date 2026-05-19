@@ -12,6 +12,7 @@ const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
  * @param {{ slot?: object|null, sponsor?: object|null, sponsors?: unknown[], sedeId?: number|null, pais?: string|null }} props
  */
 export default function HubJugarFinalSponsorCard({ slot, sponsor = null, sponsors = null, sedeId = null, pais = null }) {
+  const { t } = useTranslation();
   const effectiveSlot = useMemo(() => {
     if (sponsor && sponsorRowMatchesCardFormato(sponsor)) {
       return sponsorRowToCardSlot(sponsor) || slot;
