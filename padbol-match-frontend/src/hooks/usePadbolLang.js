@@ -1,17 +1,12 @@
-import { useEffect, useState } from 'react';
-import i18n from '../i18n';
-import { normalizePadbolLang } from '../utils/padbolLang';
+import { usePadbolI18n } from '../context/PadbolI18nContext';
 
-/** Suscribe al idioma activo de i18next (re-render al cambiar ES/EN). */
+/** Idioma activo + suscripción al tick global de re-render (cambio ES/EN). */
 export function usePadbolLang() {
-  const [lang, setLang] = useState(() => normalizePadbolLang(i18n.language || i18n.resolvedLanguage));
+  const { language, version } = usePadbolI18n();
+  return language;
+}
 
-  useEffect(() => {
-    const sync = (lng) => setLang(normalizePadbolLang(lng));
-    sync(i18n.language);
-    i18n.on('languageChanged', sync);
-    return () => i18n.off('languageChanged', sync);
-  }, []);
-
-  return lang;
+/** Fuerza re-render cuando cambia el idioma (usar en hooks que memorizan traducciones). */
+export function usePadbolLangVersion() {
+  return usePadbolI18n().version;
 }

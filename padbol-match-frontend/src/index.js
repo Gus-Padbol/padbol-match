@@ -7,6 +7,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { AuthProvider } from './context/AuthContext';
+import { PadbolI18nProvider } from './context/PadbolI18nContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { registerServiceWorker } from './registerServiceWorker';
 
@@ -15,7 +16,9 @@ root.render(
   <React.StrictMode>
     <ThemeProvider>
       <AuthProvider>
-        <App />
+        <PadbolI18nProvider>
+          <App />
+        </PadbolI18nProvider>
       </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>

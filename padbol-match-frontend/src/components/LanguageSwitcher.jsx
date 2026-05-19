@@ -1,20 +1,22 @@
 import React, { useCallback } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { usePadbolLang } from '../hooks/usePadbolLang';
-import { setPadbolLanguage } from '../utils/padbolLang';
+import { usePadbolI18n } from '../context/PadbolI18nContext';
 
 /**
  * @param {'header' | 'profile' | 'buttons' | 'landing'} variant
  */
 export default function LanguageSwitcher({ variant = 'buttons', compact = false, className = '' }) {
   const { t } = useTranslation();
-  const lang = usePadbolLang();
+  const { language: lang, setLanguage } = usePadbolI18n();
   const resolvedVariant =
     variant === 'buttons' && compact ? 'header' : variant === 'buttons' ? 'buttons' : variant;
 
-  const setLang = useCallback(async (code) => {
-    await setPadbolLanguage(code);
-  }, []);
+  const setLang = useCallback(
+    async (code) => {
+      await setLanguage(code);
+    },
+    [setLanguage],
+  );
 
   const headerColors =
     resolvedVariant === 'landing'

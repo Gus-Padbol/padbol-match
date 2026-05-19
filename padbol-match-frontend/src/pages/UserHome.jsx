@@ -210,7 +210,6 @@ export default function UserHome() {
 
     const resolved = resolveHubDeporteElegido({
       current: deporteElegido,
-      userProfile: session?.user ? userProfile : null,
     });
 
     if (resolved && resolved !== deporteElegido) {

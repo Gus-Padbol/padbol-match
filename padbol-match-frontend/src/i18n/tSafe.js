@@ -3,6 +3,7 @@ import { useTranslation as useTranslationBase } from 'react-i18next';
 import es from './locales/es.json';
 import en from './locales/en.json';
 import { normalizePadbolLang } from '../utils/padbolLang';
+import { usePadbolI18n } from '../context/PadbolI18nContext';
 
 function flattenLocale(obj, prefix = '') {
   const out = {};
@@ -46,6 +47,7 @@ export function resolveTranslation(key, translated, explicitFallback, lang = 'es
  */
 export function useSafeTranslation(ns) {
   const { t: tBase, i18n, ready } = useTranslationBase(ns);
+  const { version: langVersion } = usePadbolI18n();
   const currentLang = normalizePadbolLang(i18n.language || i18n.resolvedLanguage);
 
   const t = useCallback(
@@ -72,7 +74,7 @@ export function useSafeTranslation(ns) {
       if (!ready && explicitFallback) return explicitFallback;
       return resolveTranslation(k, raw, explicitFallback, currentLang);
     },
-    [tBase, ready, currentLang],
+    [tBase, ready, currentLang, langVersion],
   );
 
   return { t, i18n, ready, language: currentLang };

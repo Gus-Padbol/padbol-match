@@ -4,7 +4,7 @@ import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { usePadbolLang } from '../hooks/usePadbolLang';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import './LandingPage.css';
 
 const ACCENT = '#E11B22';
@@ -126,7 +126,7 @@ function HowCard({ lead, emoji, title, description }) {
 export default function LandingPage() {
   const location = useLocation();
   const { t } = useTranslation();
-  usePadbolLang();
+  usePadbolLangVersion();
 
   useEffect(() => {
     const root = document.documentElement;
