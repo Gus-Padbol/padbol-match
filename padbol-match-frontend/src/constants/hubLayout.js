@@ -53,10 +53,10 @@ export const HUB_LOGO_CLEARANCE_TOP_PX = 12;
 export const HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX = 900;
 
 /**
- * `right` para botones flotantes alineados al borde derecho de la columna de contenido
- * (mismo criterio que `.chatbot-fab-anchor` en index.css).
+ * `right` para botones flotantes (mobile). En desktop usar clase `.chatbot-fab-anchor` en index.css
+ * (media query min-width 900px; PostCSS no parsea calc(max() + var())).
  */
-export const hubContentColumnFabRightCss = `calc(max(0px, (100vw - var(--pm-app-body-max-width, ${HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}px)) / 2) + max(16px, env(safe-area-inset-right, 0px)))`;
+export const hubContentColumnFabRightCss = 'max(16px, env(safe-area-inset-right, 0px))';
 
 export const hubInstagramColumnWrapStyle = {
   maxWidth: `${HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}px`,

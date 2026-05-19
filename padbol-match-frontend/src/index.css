@@ -61,11 +61,15 @@ html {
 /** FAB del chatbot: borde derecho de la columna de contenido, no del viewport en desktop. */
 .chatbot-fab-anchor {
   position: fixed;
-  right: calc(
-    max(0px, (100vw - var(--pm-app-body-max-width, 900px)) / 2) + max(16px, env(safe-area-inset-right, 0px))
-  );
+  right: max(16px, env(safe-area-inset-right, 0px));
   z-index: 10050;
   pointer-events: none;
+}
+
+@media (min-width: 900px) {
+  .chatbot-fab-anchor {
+    right: calc((100vw - 900px) / 2 + 16px + env(safe-area-inset-right, 0px));
+  }
 }
 
 :root {
