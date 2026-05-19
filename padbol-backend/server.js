@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { createClient } from '@supabase/supabase-js';
 import twilio from 'twilio';
 import dotenv from 'dotenv';
@@ -23,6 +24,11 @@ import {
 } from './lib/adminInviteMagicLink.js';
 import { DateTime } from 'luxon';
 import { registerModuloClasesRoutes } from './lib/moduloClases.js';
+import {
+  isMercadoPagoTestAccessToken,
+  mercadoPagoGlobalAccessToken,
+  resolveMercadoPagoInitPoint,
+} from './lib/mercadopagoInitPoint.js';
 
 dotenv.config();
 
@@ -76,6 +82,21 @@ app.use(
       }
     },
   })
+);
+
+// CSP en respuestas del API (Checkout Pro MP = redirección; dominios MP en whitelist por si se sirve HTML embebido).
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", 'https://sdk.mercadopago.com', 'https://*.mercadopago.com'],
+        frameSrc: ["'self'", 'https://*.mercadopago.com'],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }),
 );
 
 // Supabase (desde .env)
@@ -728,9 +749,11 @@ function partidosDesdeGruposSorteo(gruposIds, torneoId, sedeId) {
 }
 
 // Mercado Pago: cada sede usa su propio `mp_access_token` en DB (panel Mi sede).
-// `MP_ACCESS_TOKEN` en entorno solo se usa como respaldo al consultar webhooks / pagos legacy.
-if (!process.env.MP_ACCESS_TOKEN) {
-  console.warn('⚠️  MP_ACCESS_TOKEN global no definido — webhooks MP pueden no resolver pagos antiguos');
+// `MERCADOPAGO_ACCESS_TOKEN` / `MP_ACCESS_TOKEN` en Render: token APP_USR- producción (webhooks / fallback).
+if (!mercadoPagoGlobalAccessToken()) {
+  console.warn(
+    '⚠️  MERCADOPAGO_ACCESS_TOKEN (o MP_ACCESS_TOKEN) no definido — webhooks MP pueden no resolver pagos antiguos',
+  );
 }
 
 // Frontend URL for MP redirect callbacks
@@ -9200,7 +9223,7 @@ async function fetchMercadoPagoPaymentById(paymentId) {
   const id = String(paymentId || '').trim();
   if (!id) throw new Error('payment id vacío');
   const tokens = [];
-  const main = String(process.env.MP_ACCESS_TOKEN || '').trim();
+  const main = mercadoPagoGlobalAccessToken();
   if (main) tokens.push(main);
   try {
     const { data: sedes } = await supabase
@@ -9864,8 +9887,8 @@ app.post('/api/pagos/webhook', async (req, res) => {
   });
 });
 
-// POST /api/crear-preferencia — Mercado Pago Checkout Pro
-app.post('/api/crear-preferencia', async (req, res) => {
+// POST /api/crear-preferencia | /api/pagos/crear-preferencia — Mercado Pago Checkout Pro (redirect init_point)
+const postCrearPreferenciaMercadoPago = async (req, res) => {
   try {
     const b = req.body || {};
     const {
@@ -10131,13 +10154,31 @@ app.post('/api/crear-preferencia', async (req, res) => {
       },
     });
 
-    console.log(`✓ MP preferencia creada: ${response.id} | success→ ${FRONTEND_URL}/pago-exitoso | sede: ${sedeNombre || '—'}`);
-    res.json({ init_point: response.init_point, preference_id: response.id });
+    const initPoint = resolveMercadoPagoInitPoint(response, mpTokSede);
+    if (!initPoint) {
+      return res.status(502).json({
+        error: 'Mercado Pago no devolvió URL de checkout. Revisá el Access Token de la sede (producción APP_USR-).',
+      });
+    }
+    if (isMercadoPagoTestAccessToken(mpTokSede) && process.env.NODE_ENV === 'production') {
+      console.warn(
+        `⚠️ MP: token TEST en producción (sede ${effectiveSedeId ?? '—'}) — el checkout puede quedar en sandbox`,
+      );
+    }
+    if (/sandbox/i.test(initPoint) && !isMercadoPagoTestAccessToken(mpTokSede)) {
+      console.warn(`⚠️ MP: init_point sandbox con token de producción (sede ${effectiveSedeId ?? '—'})`);
+    }
+    console.log(
+      `✓ MP preferencia ${response.id} | init_point→ ${initPoint.slice(0, 48)}… | sede: ${sedeNombre || '—'}`,
+    );
+    res.json({ init_point: initPoint, preference_id: response.id });
   } catch (err) {
     console.error('❌ Error POST /api/crear-preferencia:', err.message);
     res.status(500).json({ error: err.message });
   }
-});
+};
+app.post('/api/crear-preferencia', postCrearPreferenciaMercadoPago);
+app.post('/api/pagos/crear-preferencia', postCrearPreferenciaMercadoPago);
 
 // ─── Admin: sedes pendientes / alta sede (usa auth arriba) ───────────────────
 

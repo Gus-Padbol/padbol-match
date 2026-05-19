@@ -15,6 +15,10 @@ El dominio `*.supabase.co` del proyecto (`vpldffhsxhgnmitiikof`) quedó reemplaz
 
 En **Supabase Dashboard** → Authentication → URL configuration, las redirect URLs deben seguir apuntando a `padbolmatch.com` (p. ej. `/auth/callback`); el Site URL / API base del cliente es `https://auth.padbolmatch.com`.
 
+## Mercado Pago (Checkout Pro)
+
+El pago **no** usa Brick ni SDK embebido: el backend crea la preferencia (`POST /api/crear-preferencia`) y el frontend redirige con `window.location.replace(init_point)` a la URL de Mercado Pago. En Render, `MERCADOPAGO_ACCESS_TOKEN` debe ser el token de **producción** (`APP_USR-…`); tokens `TEST-…` llevan a sandbox y pueden dejar el botón «Pagar» deshabilitado por CSP en el checkout.
+
 ## Available Scripts
 
 In the project directory, you can run:

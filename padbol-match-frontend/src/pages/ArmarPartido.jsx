@@ -17,6 +17,7 @@ import {
   readReservaPendienteArmar,
   saveReservaPendienteArmar,
 } from '../utils/armarPartidoReservaPendiente';
+import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -879,7 +880,7 @@ export default function ArmarPartido() {
       const data = await res.json();
       if (res.ok && data.init_point) {
         clearReservaPendienteArmar();
-        window.location.href = data.init_point;
+        redirectMercadoPagoCheckout(data.init_point);
         return;
       }
       if (res.ok && (data.manual_payment || data.efectivo_payment)) {

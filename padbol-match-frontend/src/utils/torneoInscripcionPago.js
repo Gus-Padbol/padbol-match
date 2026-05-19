@@ -1,3 +1,5 @@
+import { redirectMercadoPagoCheckout } from './mercadopagoCheckout';
+
 function defaultApiBackendBase() {
   if (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL) {
     return String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '');
@@ -131,7 +133,7 @@ export async function iniciarPagoInscripcionTorneo({
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.init_point) {
-      window.location.href = data.init_point;
+      redirectMercadoPagoCheckout(data.init_point);
       return { ok: true };
     }
     if (res.ok && data.efectivo_payment) {

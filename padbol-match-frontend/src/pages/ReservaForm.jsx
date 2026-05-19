@@ -48,6 +48,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
+import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -1720,7 +1721,7 @@ export default function ReservaForm() {
           sedeId: sedeSeleccionada.id,
           duracion: duracionReservaMin,
         });
-        window.location.href = data.init_point;
+        redirectMercadoPagoCheckout(data.init_point);
       } else if (res.ok && data.efectivo_payment) {
         alert('Esta sede acepta pago presencial. Presenta tu reserva al llegar al club.');
         setPantalla(1);
