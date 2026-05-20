@@ -506,6 +506,17 @@ const MAX_CANCHAS_RESERVA_UI = 2;
 
 const RESERVA_CANCHA_DEPORTES = new Set(['padbol', 'padel', 'tenis', 'pickleball', 'squash', 'futbol_5', 'futbol_7']);
 
+const RESERVA_FUTBOL_VARIANT_KEYS = ['futbol_5', 'futbol_7'];
+
+/** Chips de deporte en pantalla 1 (Fútbol 5/7 agrupados en un solo control). */
+const RESERVA_DEPORTE_PICKER_OPTIONS = DEPORTES_CANCHA_SEDE_OPTIONS.filter(
+  (o) => !RESERVA_FUTBOL_VARIANT_KEYS.includes(o.key)
+);
+
+function reservaEsVarianteFutbol(deporteKey) {
+  return RESERVA_FUTBOL_VARIANT_KEYS.includes(String(deporteKey || '').trim().toLowerCase());
+}
+
 function normalizeReservaDeporteUrl(raw) {
   const s = String(raw ?? '').trim().toLowerCase();
   if (!s || !RESERVA_CANCHA_DEPORTES.has(s)) return null;
@@ -643,6 +654,8 @@ export default function ReservaForm() {
   /** Deportes con al menos una sede activa en `filtros.pais` (GET /api/sedes?deporte=). */
   const [deportesDisponiblesEnPais, setDeportesDisponiblesEnPais] = useState(() => new Set());
   const [deportesZonaLoading, setDeportesZonaLoading] = useState(false);
+  const [reservaFutbolMenuAbierto, setReservaFutbolMenuAbierto] = useState(false);
+  const reservaFutbolMenuRef = useRef(null);
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
@@ -920,6 +933,20 @@ export default function ReservaForm() {
       cancelled = true;
     };
   }, [filtros.pais, pantalla]);
+
+  useEffect(() => {
+    setReservaFutbolMenuAbierto(false);
+  }, [filtros.pais]);
+
+  useEffect(() => {
+    if (!reservaFutbolMenuAbierto) return undefined;
+    const onPointerDown = (e) => {
+      const root = reservaFutbolMenuRef.current;
+      if (root && !root.contains(e.target)) setReservaFutbolMenuAbierto(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [reservaFutbolMenuAbierto]);
 
   /** Si el deporte en URL no existe en el país, quitarlo de la query. */
   useEffect(() => {
@@ -2035,11 +2062,14 @@ export default function ReservaForm() {
                 <button
                   type="button"
                   className={`reserva-sede-deporte-chip-btn${!reservaDeporteUrl ? ' reserva-sede-deporte-chip-btn--activo' : ''}`}
-                  onClick={() => syncReservaDeporteEnUrl(null)}
+                  onClick={() => {
+                    setReservaFutbolMenuAbierto(false);
+                    syncReservaDeporteEnUrl(null);
+                  }}
                 >
                   {t('reservas.allSports')}
                 </button>
-                {DEPORTES_CANCHA_SEDE_OPTIONS.map((opt) => {
+                {RESERVA_DEPORTE_PICKER_OPTIONS.map((opt) => {
                   const disponible = deportesDisponiblesEnPais.has(opt.key);
                   const activo = reservaDeporteUrl === opt.key;
                   return (
@@ -2056,6 +2086,7 @@ export default function ReservaForm() {
                       }
                       onClick={() => {
                         if (deportesZonaLoading || !disponible) return;
+                        setReservaFutbolMenuAbierto(false);
                         syncReservaDeporteEnUrl(opt.key);
                       }}
                     >
@@ -2073,6 +2104,76 @@ export default function ReservaForm() {
                     </button>
                   );
                 })}
+                {(() => {
+                  const futbolVariantesDisponibles = RESERVA_FUTBOL_VARIANT_KEYS.filter((k) =>
+                    deportesDisponiblesEnPais.has(k)
+                  );
+                  const futbolDisponible =
+                    deportesZonaLoading || futbolVariantesDisponibles.length > 0;
+                  const futbolActivo = reservaEsVarianteFutbol(reservaDeporteUrl);
+                  return (
+                    <div
+                      ref={reservaFutbolMenuRef}
+                      className="reserva-sede-deporte-chip-futbol-wrap"
+                    >
+                      <button
+                        type="button"
+                        disabled={!deportesZonaLoading && !futbolDisponible}
+                        className={`reserva-sede-deporte-chip-btn reserva-sede-deporte-chip-btn--futbol${futbolActivo ? ' reserva-sede-deporte-chip-btn--activo' : ''}${!deportesZonaLoading && !futbolDisponible ? ' reserva-sede-deporte-chip-btn--off' : ''}`}
+                        aria-pressed={futbolActivo}
+                        aria-expanded={reservaFutbolMenuAbierto}
+                        aria-haspopup="menu"
+                        title={
+                          !deportesZonaLoading && !futbolDisponible
+                            ? t('reservas.sportNotInZone')
+                            : undefined
+                        }
+                        onClick={() => {
+                          if (deportesZonaLoading || !futbolDisponible) return;
+                          setReservaFutbolMenuAbierto((open) => !open);
+                        }}
+                      >
+                        <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
+                          ⚽
+                        </span>
+                        <span className="reserva-sede-deporte-chip-btn-label">
+                          {t('reservas.sportFutbolGroup')}
+                        </span>
+                        {!deportesZonaLoading && !futbolDisponible ? (
+                          <span className="reserva-sede-deporte-chip-btn-off">
+                            {t('reservas.sportNotInZone')}
+                          </span>
+                        ) : null}
+                      </button>
+                      {reservaFutbolMenuAbierto && futbolVariantesDisponibles.length > 0 ? (
+                        <div
+                          className="reserva-sede-deporte-chip-futbol-menu"
+                          role="menu"
+                          aria-label={t('reservas.sportFutbolGroup')}
+                        >
+                          {futbolVariantesDisponibles.map((variantKey) => {
+                            const variantActivo = reservaDeporteUrl === variantKey;
+                            return (
+                              <button
+                                key={variantKey}
+                                type="button"
+                                role="menuitemradio"
+                                aria-checked={variantActivo}
+                                className={`reserva-sede-deporte-chip-futbol-option${variantActivo ? ' reserva-sede-deporte-chip-futbol-option--activo' : ''}`}
+                                onClick={() => {
+                                  setReservaFutbolMenuAbierto(false);
+                                  syncReservaDeporteEnUrl(variantKey);
+                                }}
+                              >
+                                {etiquetaDeporteReserva(t, variantKey)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           ) : null}
