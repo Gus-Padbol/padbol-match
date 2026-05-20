@@ -1302,7 +1302,7 @@ export default function AppHeader({
             {!reservaCheckoutMinimal && hubDirectLogin && !session?.user && !authLoading ? (
               <button
                 type="button"
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/acceso')}
                 style={{
                   padding: '5px 10px',
                   borderRadius: '8px',

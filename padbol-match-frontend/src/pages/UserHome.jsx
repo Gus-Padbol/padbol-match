@@ -619,7 +619,7 @@ export default function UserHome() {
             ) : !session?.user ? (
               <button
                 type="button"
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/acceso')}
                 style={{
                   padding: '10px 14px',
                   borderRadius: 8,
