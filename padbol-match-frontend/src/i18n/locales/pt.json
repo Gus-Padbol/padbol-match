@@ -232,6 +232,7 @@
     "noVenuesAvailable": "Nenhuma sede disponível.",
     "noVenuesForSport": "Não há sedes disponíveis para este desporto na sua zona",
     "reservandoPara": "Reserva para: {{deporte}}",
+    "verSede": "Ver sede",
     "clearVenue": "Limpar sede",
     "loadingSlots": "Carregando horários…",
     "noSlotsTryOther": "Sem turnos livres para esta data e duração. Tente outro dia ou duração.",

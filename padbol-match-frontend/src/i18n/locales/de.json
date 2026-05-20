@@ -232,6 +232,7 @@
     "noVenuesAvailable": "Keine Anlagen verfügbar.",
     "noVenuesForSport": "Keine Anlagen für diese Sportart in Ihrer Region verfügbar",
     "reservandoPara": "Reservierung für: {{deporte}}",
+    "verSede": "Anlage ansehen",
     "clearVenue": "Anlage löschen",
     "loadingSlots": "Zeiten werden geladen…",
     "noSlotsTryOther": "Keine freien Zeiten für dieses Datum und diese Dauer. Anderen Tag oder Dauer wählen.",

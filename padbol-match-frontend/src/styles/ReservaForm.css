@@ -888,10 +888,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 800;
 }
 
-.reserva-sede-seleccion .reserva-sede-card-btn {
+.reserva-sede-seleccion .reserva-sede-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 10px;
-  width: 100%;
-  max-width: 220px;
+  align-items: stretch;
+}
+
+.reserva-sede-seleccion .reserva-sede-card-btn {
+  flex: 1 1 120px;
+  min-width: 0;
+  max-width: none;
+  margin-top: 0;
   padding: 10px 16px;
   border: none;
   border-radius: 10px;
@@ -905,10 +914,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+.reserva-sede-seleccion .reserva-sede-card-btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  font-weight: 700;
+}
+
 @media (hover: hover) {
   .reserva-sede-seleccion .reserva-sede-card-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(225, 27, 34, 0.42);
+  }
+
+  .reserva-sede-seleccion .reserva-sede-card-btn-secondary:hover {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    background: var(--bg-page);
   }
 }
 

@@ -1381,21 +1381,49 @@ export default function ReservaForm() {
     }
   }, [sedes]);
 
-  const abrirPerfilPublicoSedeDesdeCard = useCallback(
+  const applyGeoIntentReservaSedeCard = useCallback(
     (sede) => {
       const esMasCercanaPorGeo =
         geoReserva.status === 'granted' &&
         sedeReservaMasCercanaId != null &&
         Number(sede.id) === Number(sedeReservaMasCercanaId) &&
         String(filtros.pais || '').trim() === String(sede.pais || '').trim();
-      if (esMasCercanaPorGeo) {
-        writeReservaGeoMasCercanaIntent(sede.id, sede.pais);
-      } else {
-        clearReservaGeoMasCercanaIntent();
-      }
-      navigate(`/sede/${encodeURIComponent(String(sede.id))}`);
+      if (esMasCercanaPorGeo) writeReservaGeoMasCercanaIntent(sede.id, sede.pais);
+      else clearReservaGeoMasCercanaIntent();
     },
-    [navigate, geoReserva.status, sedeReservaMasCercanaId, filtros.pais]
+    [geoReserva.status, sedeReservaMasCercanaId, filtros.pais],
+  );
+
+  const abrirPerfilPublicoSedeDesdeCard = useCallback(
+    (sede) => {
+      applyGeoIntentReservaSedeCard(sede);
+      navigate(`/sede/${encodeURIComponent(String(sede.id))}`, {
+        state: { sedeBackPath: '/reservar' },
+      });
+    },
+    [navigate, applyGeoIntentReservaSedeCard],
+  );
+
+  const iniciarReservaDesdeSedeCard = useCallback(
+    (sede) => {
+      applyGeoIntentReservaSedeCard(sede);
+      const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
+      setCiudades(ciudadesDelPais);
+      setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
+      setFormData((prev) => ({
+        ...prev,
+        fecha: ymdHoyParaReservaSede(sede),
+        hora: '',
+        cancha: '',
+      }));
+      reservaOmitirAutoCanchaUnicaRef.current = false;
+      setPantalla(2);
+      setError('');
+      const params = { sedeId: String(sede.id) };
+      if (reservaDeporteUrl) params.deporte = reservaDeporteUrl;
+      navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` });
+    },
+    [navigate, sedes, reservaDeporteUrl, applyGeoIntentReservaSedeCard],
   );
 
   const prevPaisCardsRef = useRef(null);
@@ -1953,13 +1981,23 @@ export default function ReservaForm() {
                             </strong>{' '}
                             {t('reservas.perSlot')}
                           </p>
-                          <button
-                            type="button"
-                            className="reserva-sede-card-btn"
-                            onClick={() => abrirPerfilPublicoSedeDesdeCard(sede)}
-                          >
-                            {t('reservas.book')}
-                          </button>
+                          <div className="reserva-sede-card-actions">
+                            <button
+                              type="button"
+                              className="reserva-sede-card-btn"
+                              onClick={() => iniciarReservaDesdeSedeCard(sede)}
+                            >
+                              {t('reservas.book')}
+                            </button>
+                            <button
+                              type="button"
+                              className="reserva-sede-card-btn reserva-sede-card-btn-secondary"
+                              onClick={() => abrirPerfilPublicoSedeDesdeCard(sede)}
+                              aria-label={t('reservas.verSede')}
+                            >
+                              <span aria-hidden>👁</span> {t('reservas.verSede')}
+                            </button>
+                          </div>
                         </div>
                       </li>
                     );

@@ -232,6 +232,7 @@
     "noVenuesAvailable": "No venues available.",
     "noVenuesForSport": "No venues available for this sport in your area",
     "reservandoPara": "Booking for: {{deporte}}",
+    "verSede": "View venue",
     "clearVenue": "Clear venue",
     "loadingSlots": "Loading times…",
     "noSlotsTryOther": "No free slots for this date and duration. Try another day or duration.",

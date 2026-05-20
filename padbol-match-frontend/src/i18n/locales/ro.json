@@ -232,6 +232,7 @@
     "noVenuesAvailable": "Nicio sede disponibilă.",
     "noVenuesForSport": "Nu există sedii disponibile pentru acest sport în zona ta",
     "reservandoPara": "Rezervare pentru: {{deporte}}",
+    "verSede": "Vezi sediul",
     "clearVenue": "Șterge sediul",
     "loadingSlots": "Se încarcă intervalele…",
     "noSlotsTryOther": "Nu există intervale libere pentru această dată și durată. Încearcă altă zi sau durată.",

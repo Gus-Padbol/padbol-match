@@ -669,6 +669,118 @@ function SedeSocialChips({ sede }) {
 }
 
 /** Contacto: iconos + texto, mismo lenguaje visual que el bloque «Sobre el club». */
+function etiquetaDeportePublicoSede(t, key) {
+  const k = String(key || '').trim().toLowerCase();
+  if (!k) return '';
+  const i18nKey = `torneos.deporte.${k}`;
+  const translated = t(i18nKey);
+  return translated !== i18nKey ? translated : k;
+}
+
+function SedeInstalacionesBloque({ sede, duracionesOferta, t }) {
+  const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
+  const deps = Array.isArray(sede?.deportes_disponibles) ? sede.deportes_disponibles : [];
+  const duraciones = Array.isArray(duracionesOferta) ? duracionesOferta : [];
+  const moneda = String(sede?.moneda || 'ARS').trim() || 'ARS';
+  const precioTurno = Number(sede?.precio_turno);
+  const tienePrecioBase = Number.isFinite(precioTurno) && precioTurno > 0;
+
+  if (!canchas.length && !deps.length && !duraciones.length && !tienePrecioBase) return null;
+
+  const cardStyle = {
+    marginTop: '6px',
+    marginBottom: '18px',
+    padding: '16px 14px',
+    borderRadius: SEDE_DS.cardRadius,
+    background: SEDE_DS.cardBg,
+    border: `1px solid ${SEDE_DS.cardBorder}`,
+    boxSizing: 'border-box',
+  };
+
+  return (
+    <div style={cardStyle}>
+      <h2 style={{ margin: '0 0 10px', fontSize: '17px', fontWeight: 800, color: SEDE_DS.title }}>
+        {t('reservas.courtsAvailableTitle')}
+      </h2>
+      {deps.length > 0 ? (
+        <p style={{ margin: '0 0 10px', fontSize: '14px', lineHeight: 1.45, color: SEDE_DS.subtitle }}>
+          {deps.map((d) => etiquetaDeportePublicoSede(t, d)).join(' · ')}
+        </p>
+      ) : null}
+      {canchas.length > 0 ? (
+        <ul
+          style={{
+            listStyle: 'none',
+            margin: '0 0 12px',
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}
+        >
+          {canchas.map((c) => {
+            const dep = c.deporte || c.tipo;
+            const depLabel = dep ? etiquetaDeportePublicoSede(t, dep) : '';
+            return (
+              <li
+                key={`${c.numero}-${c.nombre}`}
+                style={{ fontSize: '14px', color: SEDE_DS.title, lineHeight: 1.4 }}
+              >
+                <strong>{String(c.nombre || `Cancha ${c.numero}`).trim()}</strong>
+                {depLabel ? (
+                  <span style={{ color: SEDE_DS.subtitle, fontWeight: 600 }}> · {depLabel}</span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {(duraciones.length > 0 || tienePrecioBase) && (
+        <>
+          <h3
+            style={{
+              margin: '0 0 8px',
+              fontSize: '14px',
+              fontWeight: 800,
+              color: SEDE_DS.title,
+              letterSpacing: '0.02em',
+            }}
+          >
+            {t('reservas.duration')}
+          </h3>
+          {duraciones.length > 0 ? (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {duraciones.map((d) => {
+                const min = Number(d?.duracion_minutos);
+                const precio = d?.precio != null ? Number(d.precio) : NaN;
+                const precioTxt =
+                  Number.isFinite(precio) && precio > 0
+                    ? `${moneda} ${precio.toLocaleString('es-AR')}`
+                    : '—';
+                return (
+                  <li key={min} style={{ fontSize: '14px', color: SEDE_DS.subtitle, lineHeight: 1.4 }}>
+                    <strong style={{ color: SEDE_DS.title }}>{min} min</strong>
+                    {' — '}
+                    {precioTxt}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p style={{ margin: 0, fontSize: '14px', color: SEDE_DS.subtitle }}>
+              {t('reservas.priceFrom')}{' '}
+              <strong style={{ color: SEDE_DS.title }}>
+                {precioTurno.toLocaleString('es-AR')} {moneda}
+              </strong>{' '}
+              {t('reservas.perSlot')}
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function CompactContactCard({ sede, horario, hasAddress }) {
   const waNumber = sede.telefono
     ? (() => {
@@ -1627,6 +1739,7 @@ export default function SedePublica() {
   const [proximosTorneos, setProximosTorneos] = useState([]);
   const [proximosTorneosLoading, setProximosTorneosLoading] = useState(false);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
+  const [duracionesOferta, setDuracionesOferta] = useState([]);
 
   useEffect(() => {
     if (!sedeShareCopied) return undefined;
@@ -1737,15 +1850,17 @@ export default function SedePublica() {
         const j = await r.json().catch(() => ({}));
         if (cancelled) return;
         if (r.ok) {
-          const { estadisticas_publicas: stats, ...rest } = j;
+          const { estadisticas_publicas: stats, duraciones_oferta: durOferta, ...rest } = j;
           if (!rest || rest.id == null) {
             setError(`Sede con id ${sedeId} no encontrada.`);
             setSede(null);
             setEstadisticasPublicas(null);
+            setDuracionesOferta([]);
           } else {
             setError('');
             setSede(rest);
             setEstadisticasPublicas(stats ?? null);
+            setDuracionesOferta(Array.isArray(durOferta) ? durOferta : []);
           }
           return;
         }
@@ -1762,6 +1877,7 @@ export default function SedePublica() {
           setError('');
           setSede(data);
           setEstadisticasPublicas(null);
+          setDuracionesOferta([]);
         }
       } catch (err) {
         if (!cancelled) setError('Error inesperado: ' + (err?.message || String(err)));
@@ -2188,10 +2304,10 @@ export default function SedePublica() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate(`/reservar?sedeId=${sedeId}`)}
+                onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
                 style={{ ...SEDE_BTN_RESERVAR_CANCHA_STYLE, ...SEDE_CTA_NARROW_CENTERED }}
               >
-                ⚽ Reservar cancha
+                ⚽ {t('reservas.book')}
               </button>
             </div>
 
@@ -2522,6 +2638,8 @@ export default function SedePublica() {
                 navigate={navigate}
                 isSuperAdmin={isSuperAdmin}
               />
+
+              <SedeInstalacionesBloque sede={sede} duracionesOferta={duracionesOferta} t={t} />
 
               <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
 

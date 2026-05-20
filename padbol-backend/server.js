@@ -2415,6 +2415,13 @@ app.get('/api/sedes/:id', async (req, res) => {
     } catch (e) {
       console.warn('GET /api/sedes/:id canchas_activas:', e?.message || e);
     }
+    try {
+      const depMap = await fetchDeportesPorSedeIdsDesdeCanchas(supabase, [id]);
+      const enrichedList = enrichSedesListConDeportesDisponibles([out], depMap);
+      out = enrichedList[0] || out;
+    } catch (e) {
+      console.warn('GET /api/sedes/:id deportes_disponibles:', e?.message || e);
+    }
     let estadisticas_publicas = null;
     try {
       estadisticas_publicas = await computeEstadisticasPublicasSede(id, sede.nombre);

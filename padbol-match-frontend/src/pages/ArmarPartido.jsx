@@ -1144,6 +1144,31 @@ export default function ArmarPartido() {
                   </div>
                 ) : null}
               </div>
+              {sede ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/sede/${encodeURIComponent(String(sede.id))}`, {
+                      state: { sedeBackPath: '/armar-partido' },
+                    })
+                  }
+                  style={{
+                    marginTop: 10,
+                    width: '100%',
+                    maxWidth: MAIN_MAX,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span aria-hidden>👁</span> {t('reservas.verSede')}
+                </button>
+              ) : null}
 
               {sede ? (
                 <>

@@ -120,7 +120,7 @@ export function isSedeProfilePathname(pathname) {
 }
 
 /** Rutas permitidas en `location.state.sedeBackPath` al salir del perfil público de sede. */
-const SEDE_PUBLIC_BACK_PATH_ALLOWLIST = new Set(['/hub', '/sedes']);
+const SEDE_PUBLIC_BACK_PATH_ALLOWLIST = new Set(['/hub', '/sedes', '/reservar', '/armar-partido']);
 
 /**
  * Destino fijo para «Volver» en `/sede` y `/sede/:id` (evita `history.back()` y loops con calendario u otras pantallas).

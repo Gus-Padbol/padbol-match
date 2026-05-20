@@ -232,6 +232,7 @@
     "noVenuesAvailable": "Aucune salle disponible.",
     "noVenuesForSport": "Aucune salle disponible pour ce sport dans votre zone",
     "reservandoPara": "Réservation pour : {{deporte}}",
+    "verSede": "Voir la salle",
     "clearVenue": "Effacer la salle",
     "loadingSlots": "Chargement des horaires…",
     "noSlotsTryOther": "Aucun créneau libre pour cette date et durée. Essayez un autre jour ou une autre durée.",
