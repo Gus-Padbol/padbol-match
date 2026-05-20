@@ -1199,9 +1199,11 @@ export default function PerfilPublico() {
           </div>
         ) : null}
 
-        <div style={{ marginTop: '24px', marginBottom: '4px', width: '100%', maxWidth: '100%' }}>
-          <HubSponsorsTicker sponsors={tickerSponsors} deporte={deporteTickerPerfil} />
-        </div>
+        {tickerSponsors?.length > 0 ? (
+          <div style={{ marginTop: '24px', marginBottom: '4px', width: '100%', maxWidth: '100%' }}>
+            <HubSponsorsTicker sponsors={tickerSponsors} deporte={deporteTickerPerfil} />
+          </div>
+        ) : null}
       </div>
 
       <JugadorPreviewModal

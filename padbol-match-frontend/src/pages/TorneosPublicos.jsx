@@ -1016,9 +1016,11 @@ export default function TorneosPublicos() {
           </div>
         ) : null}
 
-        <div style={{ marginBottom: '14px' }}>
-          <HubSponsorsTicker sponsors={tickerSponsors} deporte={deporteTickerTorneos} />
-        </div>
+        {tickerSponsors?.length > 0 ? (
+          <div style={{ marginBottom: '14px' }}>
+            <HubSponsorsTicker sponsors={tickerSponsors} deporte={deporteTickerTorneos} />
+          </div>
+        ) : null}
 
         {listaTorneos}
       </div>

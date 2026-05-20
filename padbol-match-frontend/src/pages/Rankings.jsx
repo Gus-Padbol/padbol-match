@@ -962,9 +962,11 @@ export default function Rankings() {
           )}
         </div>
 
-        <div style={{ marginBottom: '14px' }}>
-          <HubSponsorsTicker sponsors={tickerSponsors} deporte={rankingDeporte} />
-        </div>
+        {tickerSponsors?.length > 0 ? (
+          <div style={{ marginBottom: '14px' }}>
+            <HubSponsorsTicker sponsors={tickerSponsors} deporte={rankingDeporte} />
+          </div>
+        ) : null}
 
         {/* Table card */}
         <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)', border: '1px solid var(--border)' }}>

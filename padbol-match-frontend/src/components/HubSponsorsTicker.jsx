@@ -13,7 +13,8 @@ function normalizeSponsorTickerItems(sponsors) {
       const nombre = String(row?.nombre ?? '').trim();
       const imagen_url = String(row?.imagen_url ?? row?.logo_url ?? row?.logoUrl ?? '').trim();
       const url_destino = String(row?.url_destino ?? '').trim();
-      return { nombre, imagen_url, url_destino };
+      const tagline = String(row?.descripcion ?? row?.texto_boton ?? row?.tagline ?? '').trim();
+      return { nombre, imagen_url, url_destino, descripcion: tagline, tagline };
     })
     .filter((it) => it.nombre || it.imagen_url);
 }
@@ -23,5 +24,6 @@ function normalizeSponsorTickerItems(sponsors) {
  */
 export default function HubSponsorsTicker({ sponsors, deporte = null }) {
   const items = useMemo(() => normalizeSponsorTickerItems(sponsors), [sponsors]);
+  if (items.length === 0) return null;
   return <SponsorTicker items={items} deporte={deporte} />;
 }

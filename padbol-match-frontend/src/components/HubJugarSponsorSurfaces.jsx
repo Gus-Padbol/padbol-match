@@ -1,81 +1,41 @@
 import React from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import SponsorPromoCard from './SponsorPromoCard';
+import { sponsorPromoHasContent } from '../utils/sponsorDisplayFormato';
 
-const PLACEHOLDER_BORDER = '1px dashed #e53935';
-const PLACEHOLDER_BG = 'rgba(229, 57, 53, 0.05)';
-const PLACEHOLDER_COLOR = '#e53935';
+function slotToSponsor(slot) {
+  if (!slot || typeof slot !== 'object') return null;
+  return {
+    nombre: String(slot.texto_corto || '').trim(),
+    logo_url: String(slot.imagen_url || slot.logo_url || '').trim(),
+    url_destino: String(slot.url_destino || '').trim(),
+  };
+}
 
 /**
- * Banner o bloque rectangular: imagen + link opcional, o placeholder "Tu marca aquí".
+ * Banner rectangular de slot hub (confirmación, etc.). Sin contenido → no renderiza.
  */
-export function HubJugarSlotRect({ slot, height, width = '100%', borderRadius = 10, objectFit = 'cover' }) {
-  const { t } = useTranslation();
-  const img = String(slot?.imagen_url || '').trim();
-  const url = String(slot?.url_destino || '').trim();
-  const h = typeof height === 'number' ? `${height}px` : height;
+export function HubJugarSlotRect({ slot, width = '100%', borderRadius = 12, style }) {
+  const sponsor = slotToSponsor(slot);
+  if (!sponsorPromoHasContent(sponsor)) return null;
   const w = typeof width === 'number' ? `${width}px` : width;
-
-  if (img) {
-    const inner = (
-      <img
-        src={img}
-        alt=""
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit,
-          display: 'block',
-        }}
-      />
-    );
-    return (
-      <div
-        style={{
-          width: w,
-          height: h,
-          borderRadius,
-          overflow: 'hidden',
-          boxSizing: 'border-box',
-          background: '#0f172a',
-        }}
-      >
-        {url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
-            {inner}
-          </a>
-        ) : (
-          inner
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div
+    <SponsorPromoCard
+      sponsor={sponsor}
       style={{
         width: w,
-        height: h,
-        borderRadius,
-        boxSizing: 'border-box',
-        border: PLACEHOLDER_BORDER,
-        background: PLACEHOLDER_BG,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        borderRadius: typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius,
+        ...style,
       }}
-    >
-      <span style={{ fontSize: 11, fontWeight: 600, color: PLACEHOLDER_COLOR, textAlign: 'center', padding: '0 10px' }}>
-        {t('jugar.publicidad')}
-      </span>
-    </div>
+    />
   );
 }
 
-/** Logo 40×40 esquina; imagen o placeholder cuadrado. */
+/** Esquina overlay: solo si hay imagen (logo compacto en cards de acción). */
 export function HubJugarSlotOverlayCorner({ slot }) {
-  const { t } = useTranslation();
   const img = String(slot?.imagen_url || '').trim();
   const url = String(slot?.url_destino || '').trim();
+  if (!img) return null;
+
   const box = (
     <div
       style={{
@@ -83,24 +43,18 @@ export function HubJugarSlotOverlayCorner({ slot }) {
         height: 40,
         borderRadius: 10,
         overflow: 'hidden',
-        border: img ? '1px solid rgba(255,255,255,0.35)' : PLACEHOLDER_BORDER,
-        background: img ? '#fff' : PLACEHOLDER_BG,
+        border: '1px solid var(--border, rgba(255,255,255,0.35))',
+        background: '#fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         boxSizing: 'border-box',
       }}
     >
-      {img ? (
-        <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-      ) : (
-        <span style={{ fontSize: 8, fontWeight: 700, color: PLACEHOLDER_COLOR, lineHeight: 1.1, textAlign: 'center', padding: 2 }}>
-          {t('jugar.publicidadShort')}
-        </span>
-      )}
+      <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
     </div>
   );
-  if (url && img) {
+  if (url) {
     return (
       <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none' }}>
         {box}
@@ -110,77 +64,9 @@ export function HubJugarSlotOverlayCorner({ slot }) {
   return box;
 }
 
-/** Franja horizontal: logo + texto corto, o placeholder ancho. */
+/** Franja horizontal bajo cards de jugar. */
 export function HubJugarSlotStrip({ slot }) {
-  const { t } = useTranslation();
-  const img = String(slot?.imagen_url || '').trim();
-  const url = String(slot?.url_destino || '').trim();
-  const texto = String(slot?.texto_corto || '').trim();
-
-  if (!img && !texto) {
-    return (
-      <div
-        style={{
-          height: '100%',
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderTop: PLACEHOLDER_BORDER,
-          background: PLACEHOLDER_BG,
-        }}
-      >
-        <span style={{ fontSize: 11, fontWeight: 600, color: PLACEHOLDER_COLOR }}>{t('jugar.publicidad')}</span>
-      </div>
-    );
-  }
-
-  const inner = (
-    <div
-      style={{
-        height: '100%',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 10,
-        padding: '0 14px',
-        boxSizing: 'border-box',
-        background: 'rgba(15,23,42,0.04)',
-      }}
-    >
-      {img ? (
-        <img src={img} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} />
-      ) : null}
-      {texto ? (
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            minWidth: 0,
-          }}
-        >
-          {texto}
-        </span>
-      ) : null}
-    </div>
-  );
-
-  if (url) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ display: 'block', height: '100%', width: '100%', textDecoration: 'none', color: 'inherit' }}
-      >
-        {inner}
-      </a>
-    );
-  }
-  return inner;
+  const sponsor = slotToSponsor(slot);
+  if (!sponsorPromoHasContent(sponsor)) return null;
+  return <SponsorPromoCard sponsor={sponsor} />;
 }

@@ -2299,9 +2299,11 @@ export default function SedePublica() {
                 alignItems: 'center',
               }}
             >
-              <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-                <HubSponsorsTicker sponsors={sedeTickerSponsors} />
-              </div>
+              {sedeTickerSponsors?.length > 0 ? (
+                <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+                  <HubSponsorsTicker sponsors={sedeTickerSponsors} />
+                </div>
+              ) : null}
               <button
                 type="button"
                 onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}

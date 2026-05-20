@@ -194,13 +194,15 @@ export default function Jugar() {
           }}
         />
 
-        <div style={{ width: '100%', marginTop: 12, marginBottom: 10 }}>
-          {hubTickerSponsors?.length > 0 ? (
-            <HubSponsorsTicker sponsors={hubTickerSponsors} deporte={deporteTickerJugar} />
-          ) : (
-            <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} />
-          )}
-        </div>
+        {hubTickerSponsors?.length > 0 || tickerItems?.length > 0 ? (
+          <div style={{ width: '100%', marginTop: 12, marginBottom: 10 }}>
+            {hubTickerSponsors?.length > 0 ? (
+              <HubSponsorsTicker sponsors={hubTickerSponsors} deporte={deporteTickerJugar} />
+            ) : (
+              <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} />
+            )}
+          </div>
+        ) : null}
 
         <div style={{ display: 'grid', gap: 10 }}>
           {opciones.map((op) => (

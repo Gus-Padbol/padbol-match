@@ -289,7 +289,7 @@ export default function PagoExitoso() {
               Tu reserva fue confirmada: el partido ya está publicado para que otros se sumen.
             </p>
             <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
-              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} height={80} borderRadius={10} />
+              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
             </div>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(`Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`)}`}
@@ -350,7 +350,7 @@ export default function PagoExitoso() {
               El pago se registró y tu equipo quedó confirmado en el torneo.
             </p>
             <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
-              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} height={80} borderRadius={10} />
+              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
             </div>
             {paymentId && (
               <p style={{ margin: '0 0 20px', fontSize: '12px', color: '#6b7280' }}>
@@ -402,7 +402,7 @@ export default function PagoExitoso() {
               Tu reserva está confirmada. Recibirás la confirmación por WhatsApp.
             </p>
             <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
-              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} height={80} borderRadius={10} />
+              <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
             </div>
 
             {reserva && (

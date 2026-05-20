@@ -35,6 +35,35 @@ export function etiquetaFormatoSponsorRow(row) {
   return hit?.label ?? 'Ticker horizontal';
 }
 
+/**
+ * Formato unificado para {@link SponsorPromoCard}.
+ * @param {unknown} raw
+ * @returns {{ nombre: string, logo_url: string, tagline: string, url_destino: string }|null}
+ */
+export function normalizeSponsorPromo(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const nombre = String(
+    raw.nombre ?? raw.name ?? raw.titulo ?? raw.texto_corto ?? ''
+  ).trim();
+  const logo_url = String(raw.logo_url ?? raw.imagen_url ?? raw.logoUrl ?? '').trim();
+  const tagline = String(
+    raw.tagline ?? raw.descripcion ?? raw.texto_boton ?? ''
+  ).trim();
+  const url_destino = String(raw.url_destino ?? '').trim();
+  if (!nombre && !logo_url) return null;
+  return {
+    nombre: nombre || 'Sponsor',
+    logo_url,
+    tagline,
+    url_destino,
+  };
+}
+
+/** @param {unknown} raw */
+export function sponsorPromoHasContent(raw) {
+  return normalizeSponsorPromo(raw) != null;
+}
+
 /** @param {unknown} item fila o ítem ya normalizado para ticker */
 export function sponsorItemMatchesTickerFormato(item) {
   if (item == null || item.formato === undefined || item.formato === null || item.formato === '') {
