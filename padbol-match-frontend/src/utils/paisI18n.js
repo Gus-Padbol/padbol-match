@@ -196,6 +196,54 @@ export function formatPaisReservaLabel(paisRaw, t) {
  * @param {{ ciudad?: string, pais?: string }} sede
  * @param {(key: string, opts?: object) => string} t
  */
+/**
+ * Empareja un nombre de país de geo/IP con un valor `sede.pais` del catálogo.
+ * @param {string} geoHint Nombre devuelto por ipwho u otro proveedor
+ * @param {string[]} paisesCatalogo Países presentes en sedes activas
+ * @returns {string|null}
+ */
+export function matchPaisReservaEnCatalogo(geoHint, paisesCatalogo) {
+  const hint = normalizePaisText(geoHint);
+  if (!hint || !Array.isArray(paisesCatalogo) || paisesCatalogo.length === 0) return null;
+  const hintSlug = paisRawToSlug(geoHint) || paisRawToSlug(hint);
+
+  for (const p of paisesCatalogo) {
+    const raw = String(p || '').trim();
+    if (!raw) continue;
+    const pNorm = normalizePaisText(raw);
+    if (pNorm === hint) return raw;
+    const pSlug = paisRawToSlug(raw);
+    if (hintSlug && pSlug && hintSlug === pSlug) return raw;
+    if (pNorm.includes(hint) || hint.includes(pNorm)) return raw;
+  }
+  return null;
+}
+
+/**
+ * País de la sede activa más cercana a las coordenadas del usuario.
+ * @param {{ lat: number, lon: number }} pos
+ * @param {Array<{ pais?: string, latitud?: number, longitud?: number }>} sedesList
+ * @param {(lat1: number, lon1: number, lat2: number, lon2: number) => number|null} distanceKm
+ * @returns {string|null}
+ */
+export function inferPaisReservaDesdeCoordenadas(pos, sedesList, distanceKm) {
+  if (!pos || !Array.isArray(sedesList) || typeof distanceKm !== 'function') return null;
+  const { lat, lon } = pos;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+  let bestPais = null;
+  let bestKm = Infinity;
+  for (const s of sedesList) {
+    const pais = String(s?.pais || '').trim();
+    if (!pais) continue;
+    const d = distanceKm(lat, lon, s.latitud, s.longitud);
+    if (!Number.isFinite(d) || d >= bestKm) continue;
+    bestKm = d;
+    bestPais = pais;
+  }
+  return bestPais;
+}
+
 export function formatSedeCiudadPaisLinea(sede, t) {
   const ciudad = String(sede?.ciudad || '').trim();
   const raw = String(sede?.pais || '').trim();

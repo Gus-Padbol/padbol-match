@@ -36,7 +36,12 @@ import {
   precioDesdeCard,
   primeraFotoSede,
 } from '../utils/sedeCardUi';
-import { formatPaisReservaLabel, formatSedeCiudadPaisLinea } from '../utils/paisI18n';
+import {
+  formatPaisReservaLabel,
+  formatSedeCiudadPaisLinea,
+  inferPaisReservaDesdeCoordenadas,
+  matchPaisReservaEnCatalogo,
+} from '../utils/paisI18n';
 import { fetchCoordsFromIp } from '../utils/userApproxLocation';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
@@ -649,7 +654,10 @@ export default function ReservaForm() {
   );
 
   const [sedes, setSedes] = useState([]);
+  /** Catálogo sin filtro de deporte: países disponibles y detección automática por geo/IP. */
+  const [sedesCatalogo, setSedesCatalogo] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
+  const reservaPaisAutoSuprimidoRef = useRef(false);
   const [ciudades, setCiudades] = useState([]);
   /** Deportes con al menos una sede activa en `filtros.pais` (GET /api/sedes?deporte=). */
   const [deportesDisponiblesEnPais, setDeportesDisponiblesEnPais] = useState(() => new Set());
@@ -689,32 +697,41 @@ export default function ReservaForm() {
     return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
   }, [sedes, filtros.sede_id]);
 
-  /** GPS o IP aproximada en pantalla 1 (orden por cercanía y badge «más cercana»). */
-  const [geoReserva, setGeoReserva] = useState({ status: 'idle', pos: null, source: null });
+  /** GPS o IP aproximada en pantalla 1 (país automático, orden por cercanía y badge «más cercana»). */
+  const [geoReserva, setGeoReserva] = useState({
+    status: 'idle',
+    pos: null,
+    source: null,
+    countryHint: '',
+  });
 
   useEffect(() => {
     if (pantalla !== 1) {
-      setGeoReserva({ status: 'idle', pos: null, source: null });
+      setGeoReserva({ status: 'idle', pos: null, source: null, countryHint: '' });
       return undefined;
     }
 
     let cancelled = false;
-    setGeoReserva({ status: 'pending', pos: null, source: null });
+    setGeoReserva({ status: 'pending', pos: null, source: null, countryHint: '' });
 
-    const applyPos = (lat, lon, source) => {
+    const applyPos = (lat, lon, source, countryHint = '') => {
       if (cancelled) return;
       setGeoReserva({
         status: 'granted',
         pos: { lat, lon },
         source,
+        countryHint: String(countryHint || '').trim(),
       });
     };
 
     const tryIpFallback = async () => {
       const ip = await fetchCoordsFromIp();
       if (cancelled) return;
-      if (ip) applyPos(ip.lat, ip.lon, 'ip');
-      else setGeoReserva({ status: 'denied', pos: null, source: null });
+      if (ip) {
+        applyPos(ip.lat, ip.lon, 'ip', ip.country || ip.countryCode || '');
+      } else {
+        setGeoReserva({ status: 'denied', pos: null, source: null, countryHint: '' });
+      }
     };
 
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
@@ -842,8 +859,9 @@ export default function ReservaForm() {
   }, [pantalla, sedeSeleccionada]);
 
   const paisesOrdenados = useMemo(
-    () => [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort(),
-    [sedes]
+    () =>
+      [...new Set(sedesCatalogo.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort(),
+    [sedesCatalogo]
   );
 
   const syncReservaDeporteEnUrl = useCallback(
@@ -884,6 +902,7 @@ export default function ReservaForm() {
 
   /** Vuelve al selector de país sin borrar el deporte elegido en la URL. */
   const abrirSelectorPaisReserva = useCallback(() => {
+    reservaPaisAutoSuprimidoRef.current = true;
     clearReservaGeoMasCercanaIntent();
     setFiltros((prev) => ({ ...prev, pais: '', ciudad: '', sede_id: '' }));
     setCiudades([]);
@@ -1219,6 +1238,31 @@ export default function ReservaForm() {
       setError('');
     }
   }, [canchasDisponibles, pantalla, formData, authLoading]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(apiUrl('/api/sedes'))
+      .then(async (res) => {
+        const text = await res.text();
+        if (cancelled) return;
+        if (!res.ok) {
+          setSedesCatalogo([]);
+          return;
+        }
+        try {
+          const parsed = JSON.parse(text);
+          setSedesCatalogo(Array.isArray(parsed) ? parsed : []);
+        } catch {
+          setSedesCatalogo([]);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSedesCatalogo([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1584,18 +1628,45 @@ export default function ReservaForm() {
     }
   }, [filtros.pais]);
 
-  /** Si solo hay un país en datos, pre-seleccionarlo en pantalla 1.
-   * No llamar a {@link selectPais} cuando ya hay `sede_id` (p. ej. `?sedeId=` en URL / estado inicial):
-   * `selectPais` hace `setFiltros({ ..., sede_id: '' })` y en el mismo ciculo que el bootstrap de URL
-   * borraba la sede → sin sede → horarios/canchas vacíos y sensación de “vuelta atrás” en bucle. */
+  /** Si solo hay un país en el catálogo, pre-seleccionarlo en pantalla 1. */
   useEffect(() => {
-    if (sedes.length === 0 || paisesOrdenados.length !== 1) return;
+    if (pantalla !== 1 || reservaPaisAutoSuprimidoRef.current) return;
+    if (sedesCatalogo.length === 0 || paisesOrdenados.length !== 1) return;
     const only = paisesOrdenados[0];
     if (filtros.sede_id !== '' && filtros.sede_id != null) return;
     if (String(filtros.pais || '').trim() !== only) selectPais(only);
-  }, [sedes, paisesOrdenados, filtros.pais, filtros.sede_id, selectPais]);
+  }, [pantalla, sedesCatalogo, paisesOrdenados, filtros.pais, filtros.sede_id, selectPais]);
+
+  /** Varios países: elegir el del usuario por nombre (IP) o sede más cercana (GPS/IP). */
+  useEffect(() => {
+    if (pantalla !== 1 || reservaPaisAutoSuprimidoRef.current) return;
+    if (filtros.sede_id !== '' && filtros.sede_id != null) return;
+    if (String(filtros.pais || '').trim()) return;
+    if (geoReserva.status !== 'granted') return;
+    if (sedesCatalogo.length === 0 || paisesOrdenados.length <= 1) return;
+
+    let pais =
+      geoReserva.countryHint &&
+      matchPaisReservaEnCatalogo(geoReserva.countryHint, paisesOrdenados);
+    if (!pais && geoReserva.pos) {
+      pais = inferPaisReservaDesdeCoordenadas(geoReserva.pos, sedesCatalogo, getDistanceKm);
+    }
+    if (!pais) return;
+    if (String(filtros.pais || '').trim() !== pais) selectPais(pais);
+  }, [
+    pantalla,
+    sedesCatalogo,
+    paisesOrdenados,
+    filtros.pais,
+    filtros.sede_id,
+    geoReserva.status,
+    geoReserva.pos,
+    geoReserva.countryHint,
+    selectPais,
+  ]);
 
   const clearPais = useCallback(() => {
+    reservaPaisAutoSuprimidoRef.current = true;
     clearReservaGeoMasCercanaIntent();
     setFiltros({ pais: '', ciudad: '', sede_id: '' });
     setCiudades([]);
@@ -2030,6 +2101,7 @@ export default function ReservaForm() {
                 value={filtros.pais || ''}
                 onChange={(e) => {
                   const v = e.target.value;
+                  reservaPaisAutoSuprimidoRef.current = true;
                   if (!v) clearPais();
                   else selectPais(v);
                 }}

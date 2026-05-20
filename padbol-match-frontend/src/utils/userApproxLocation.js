@@ -1,6 +1,6 @@
 /**
- * Coordenadas aproximadas del usuario vía IP (fallback si el navegador niega GPS).
- * @returns {Promise<{ lat: number, lon: number, source: 'ip' } | null>}
+ * Coordenadas y país aproximados del usuario vía IP (fallback si el navegador niega GPS).
+ * @returns {Promise<{ lat: number, lon: number, source: 'ip', country: string, countryCode: string } | null>}
  */
 export async function fetchCoordsFromIp() {
   if (typeof fetch === 'undefined') return null;
@@ -26,7 +26,13 @@ export async function fetchCoordsFromIp() {
     const lat = Number(j?.latitude);
     const lon = Number(j?.longitude);
     if (j?.success !== false && Number.isFinite(lat) && Number.isFinite(lon)) {
-      return { lat, lon, source: 'ip' };
+      return {
+        lat,
+        lon,
+        source: 'ip',
+        country: String(j?.country || '').trim(),
+        countryCode: String(j?.country_code || '').trim(),
+      };
     }
   } catch {
     /* ignore */
