@@ -3,7 +3,7 @@ import {
   safeArmarPartidoPathFromLoginRedirect,
 } from './armarPartidoReservaPendiente';
 
-/** Mensaje mostrado en /login o /auth cuando la reserva exige cuenta antes del resumen. */
+/** Mensaje mostrado en /acceso cuando la reserva exige cuenta al confirmar el pago. */
 const RESERVA_LOGIN_GATE_MSG_KEY = 'padbol_reserva_login_gate_msg';
 const RESERVA_LOGIN_GATE_TEXT =
   'Para continuar con tu reserva, ingresá o creá una cuenta. Es rápido.';

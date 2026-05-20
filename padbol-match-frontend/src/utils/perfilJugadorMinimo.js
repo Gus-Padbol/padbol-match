@@ -43,19 +43,18 @@ export function authSessionUsaOAuthProveedorSocial(session) {
   return authSessionUsaProveedorGoogle(session) || authSessionUsaProveedorFacebook(session);
 }
 
-/** Rutas que exigen género + WhatsApp antes de continuar (no el hub ni navegación general). */
+/** Rutas que exigen género + WhatsApp antes de continuar (no el hub ni /reservar: el pago valida en ReservaForm). */
 export function rutaExigePerfilJugadorMinimo(pathname) {
   const p = String(pathname || '')
     .split('?')[0]
     .split('#')[0]
     .replace(/\/+$/, '') || '/';
-  if (p === '/reservar' || p.startsWith('/reservar/')) return true;
   if (p === '/jugar/armar' || p.startsWith('/jugar/armar/')) return true;
   return false;
 }
 
-/** Hub / jugar: claves de acción que disparan el mismo requisito al navegar. */
-const HUB_ACCIONES_PERFIL_MINIMO = new Set(['reservar', 'armar_partido']);
+/** Hub / jugar: claves de acción con el mismo requisito al navegar (sin reservar: explorar sin login). */
+const HUB_ACCIONES_PERFIL_MINIMO = new Set(['armar_partido']);
 
 export function hubAccionExigePerfilJugadorMinimo(actionKey) {
   return HUB_ACCIONES_PERFIL_MINIMO.has(String(actionKey || '').trim());

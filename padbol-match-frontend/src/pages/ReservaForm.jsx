@@ -52,7 +52,7 @@ import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
 import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { usePerfilJugadorMinimoEnRuta } from '../hooks/usePerfilJugadorMinimoEnRuta';
+import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 
 /**
@@ -407,7 +407,7 @@ function ReservaStripeSection({
   payload,
   disabledPrepare,
   onPaid,
-  onGuestRequiresLogin,
+  onRequireAuthForPay,
 }) {
   const { t, i18n } = useTranslation();
   const [clientSecret, setClientSecret] = useState(null);
@@ -416,13 +416,10 @@ function ReservaStripeSection({
 
   const prepare = useCallback(async () => {
     setPrepErr('');
+    if (onRequireAuthForPay && !onRequireAuthForPay()) return;
     const { data: sess } = await supabase.auth.getSession();
     const token = sess?.session?.access_token;
     if (!token) {
-      if (onGuestRequiresLogin) {
-        onGuestRequiresLogin();
-        return;
-      }
       setPrepErr(t('reservas.loginToPay'));
       return;
     }
@@ -449,7 +446,7 @@ function ReservaStripeSection({
     } finally {
       setPreparing(false);
     }
-  }, [sedeId, montoBaseMinor, moneda, descripcion, payload, t, onGuestRequiresLogin]);
+  }, [sedeId, montoBaseMinor, moneda, descripcion, payload, t, onRequireAuthForPay]);
 
   if (!stripePromise) {
     return (
@@ -611,7 +608,6 @@ export default function ReservaForm() {
     [location.pathname, navDock]
   );
   const { session, loading: authLoading, userProfile } = useAuth();
-  usePerfilJugadorMinimoEnRuta();
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -990,6 +986,40 @@ export default function ReservaForm() {
     },
     [filtros, location, navigate]
   );
+
+  /** Invitado → /acceso; sesión sin WhatsApp/género → completar perfil. Solo al tocar pagar. */
+  const gateReservaAntesDePagar = useCallback(() => {
+    if (authLoading) return false;
+    const snap = {
+      ...formData,
+      numeroTel: whatsapp || formData.numeroTel,
+    };
+    if (!session?.user) {
+      redirectGuestAntesResumen(snap);
+      return false;
+    }
+    if (!perfilJugadorDatosMinimosCompletos(userProfile)) {
+      saveReservaFormSessionState({ pantalla: 4, filtros, formData: snap });
+      saveReservaReturnUrl({
+        sedeId: filtros.sede_id,
+        fecha: snap.fecha,
+        hora: snap.hora,
+        cancha: snap.cancha,
+      });
+      navigate('/completar-perfil', { replace: true, state: { from: '/reservar' } });
+      return false;
+    }
+    return true;
+  }, [
+    authLoading,
+    formData,
+    whatsapp,
+    session?.user,
+    userProfile,
+    filtros,
+    redirectGuestAntesResumen,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (pantalla !== 4) return;
@@ -1633,14 +1663,7 @@ export default function ReservaForm() {
   };
 
   const handlePagarConMP = async () => {
-    if (authLoading) return;
-    if (!session?.user) {
-      redirectGuestAntesResumen({
-        ...formData,
-        numeroTel: whatsapp || formData.numeroTel,
-      });
-      return;
-    }
+    if (!gateReservaAntesDePagar()) return;
     const sesEm = session.user.email;
     const meta = session.user.user_metadata || {};
     const waPerfil = String(userProfile?.whatsapp || '').trim();
@@ -2466,12 +2489,7 @@ export default function ReservaForm() {
               moneda={moneda}
               montoBaseMinor={montoBaseMinor}
               descripcion={`Reserva cancha ${formData.cancha} — ${sedeSeleccionada.nombre}`}
-              onGuestRequiresLogin={() =>
-                redirectGuestAntesResumen({
-                  ...formData,
-                  numeroTel: whatsapp || formData.numeroTel,
-                })
-              }
+              onRequireAuthForPay={gateReservaAntesDePagar}
               payload={{
                 sede: sedeSeleccionada.nombre,
                 fecha: formData.fecha,

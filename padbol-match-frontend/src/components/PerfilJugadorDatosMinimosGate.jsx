@@ -20,6 +20,7 @@ function gateSkipsPerfilMinimo(pathOnly) {
   if (pathOnly === '/acceso' || pathOnly.startsWith('/acceso/')) return true;
   if (pathOnly === '/registro' || pathOnly.startsWith('/registro/')) return true;
   if (pathOnly === '/') return true;
+  if (pathOnly === '/reservar' || pathOnly.startsWith('/reservar/')) return true;
   if (pathOnly === '/admin' || pathOnly.startsWith('/admin/')) return true;
   if (pathOnly === '/terminos' || pathOnly.startsWith('/terminos/')) return true;
   if (pathOnly === '/privacidad' || pathOnly.startsWith('/privacidad/')) return true;
@@ -66,7 +67,7 @@ function GateBlockingSpinner() {
 
 /**
  * Mientras `loading` o `profileLoading` con sesión, muestra spinner (evita hub “vacío” por carrera de perfil).
- * No redirige a completar perfil: eso ocurre al intentar reservar, armar partido o inscribirse a torneo.
+ * No redirige a completar perfil al navegar: reserva y armar partido validan al confirmar la acción.
  */
 export default function PerfilJugadorDatosMinimosGate({ children }) {
   const { session, profileLoading, loading, signOutAndClear } = useAuth();
