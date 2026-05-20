@@ -53,6 +53,7 @@ import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePerfilJugadorMinimoEnRuta } from '../hooks/usePerfilJugadorMinimoEnRuta';
+import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -510,6 +511,44 @@ function normalizeReservaDeporteUrl(raw) {
 
 function reservaSedeApiQuery(deporteCanon) {
   return deporteCanon ? `?deporte=${encodeURIComponent(deporteCanon)}` : '';
+}
+
+const RESERVA_DEPORTE_EMOJI = {
+  padbol: '🏓',
+  padel: '🎾',
+  pickleball: '🏓',
+  squash: '🎾',
+  tenis: '🎾',
+  futbol_5: '⚽',
+  futbol_7: '⚽',
+};
+
+function emojiDeporteReserva(key) {
+  return RESERVA_DEPORTE_EMOJI[String(key || '').trim().toLowerCase()] || '⚽';
+}
+
+function etiquetaDeporteReserva(t, key) {
+  const k = String(key || '').trim().toLowerCase();
+  if (!k) return '';
+  const i18nKey = `torneos.deporte.${k}`;
+  const tr = t(i18nKey);
+  if (tr && tr !== i18nKey) return tr;
+  return DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === k)?.label || k;
+}
+
+function deportesActivosSedeKeys(sede) {
+  const rows = sede?.canchas_por_deporte;
+  if (!Array.isArray(rows) || !rows.length) return [];
+  const keys = [
+    ...new Set(
+      rows
+        .filter((r) => r.activo !== false && Number(r.cantidad) > 0)
+        .map((r) => String(r.deporte || '').trim().toLowerCase())
+        .filter((k) => RESERVA_CANCHA_DEPORTES.has(k)),
+    ),
+  ];
+  const order = DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => o.key);
+  return keys.sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
 /** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
@@ -1825,6 +1864,15 @@ export default function ReservaForm() {
             )}
           </div>
 
+          {reservaDeporteUrl ? (
+            <p className="reserva-sede-deporte-activo" role="status">
+              <span className="reserva-sede-deporte-activo-emoji" aria-hidden>
+                {emojiDeporteReserva(reservaDeporteUrl)}
+              </span>
+              {t('reservas.reservandoPara', { deporte: etiquetaDeporteReserva(t, reservaDeporteUrl) })}
+            </p>
+          ) : null}
+
           {filtros.pais ? (
             <div key={reservaCardsWave} className="reserva-sede-cards-root">
               {sedesFiltradasPorPais.length === 0 ? (
@@ -1844,6 +1892,7 @@ export default function ReservaForm() {
                       geoReserva.status === 'granted' &&
                       sedeReservaMasCercanaId != null &&
                       Number(sede.id) === Number(sedeReservaMasCercanaId);
+                    const depKeysCard = deportesActivosSedeKeys(sede);
                     return (
                       <li
                         key={sede.id}
@@ -1861,6 +1910,22 @@ export default function ReservaForm() {
                         </div>
                         <div className="reserva-sede-card-body">
                           <h2 className="reserva-sede-card-name">{String(sede.nombre || t('reservas.venueDefault')).trim()}</h2>
+                          {depKeysCard.length > 0 ? (
+                            <p className="reserva-sede-card-deportes" aria-label={t('reservas.sportLabel')}>
+                              {depKeysCard.map((depKey, depIdx) => (
+                                <React.Fragment key={depKey}>
+                                  {depIdx > 0 ? (
+                                    <span className="reserva-sede-card-deporte-sep" aria-hidden>
+                                      {' · '}
+                                    </span>
+                                  ) : null}
+                                  <span className="reserva-sede-card-deporte-chip">
+                                    {etiquetaDeporteReserva(t, depKey)}
+                                  </span>
+                                </React.Fragment>
+                              ))}
+                            </p>
+                          ) : null}
                           {esMasCercana ? (
                             <p className="reserva-sede-card-nearby">{t('reservas.nearestVenue')}</p>
                           ) : null}

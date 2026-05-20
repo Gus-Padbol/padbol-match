@@ -231,6 +231,7 @@
     "loadingVenuesList": "Cargando sedes…",
     "noVenuesAvailable": "No hay sedes disponibles.",
     "noVenuesForSport": "No hay sedes disponibles para este deporte en tu zona",
+    "reservandoPara": "Reservando para: {{deporte}}",
     "clearVenue": "Limpiar sede",
     "loadingSlots": "Cargando horarios…",
     "noSlotsTryOther": "No hay turnos libres para esta fecha y duración. Probá otro día o duración.",
