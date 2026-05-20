@@ -322,7 +322,7 @@ function chatUiStringsFromI18n(tr, loc) {
 
 function chatUiStrings(loc, tr) {
   const l = normalizeUiLocale(loc);
-  if (tr && (l === 'es' || l === 'en')) {
+  if (tr) {
     return chatUiStringsFromI18n(tr, loc);
   }
   if (l === 'en') {
@@ -333,11 +333,11 @@ function chatUiStrings(loc, tr) {
       placeholder: 'E.g. I want to play tomorrow at 7pm',
       waEscalada: 'Contact the club on WhatsApp',
       waClub: 'Message your usual club',
-      fabOpen: 'Open Padbol Match assistant',
+      fabOpen: 'Open Chivi assistant',
       fabCollapsed: 'Questions?',
       fabLine1: 'Questions?',
-      fabLine2: 'Chat with Padbol Match',
-      titulo: 'Padbol Match IA',
+      fabLine2: 'Chat with Chivi',
+      titulo: 'Chivi',
       cargando: 'Loading…',
       escuchando: 'Listening…',
       sinVoz: 'No voice detected. Try again.',
@@ -368,7 +368,7 @@ function chatUiStrings(loc, tr) {
       welcomeAssistant: (firstName) => {
         const n = String(firstName || '').trim();
         const lead = n ? `Hi ${n} 👋` : 'Hi 👋';
-        return `${lead} I'm your assistant. I can help you book a court, find a game nearby, or check tournaments. What do you need?`;
+        return `${lead} I'm Chivi, your Padbol Match assistant. I can help you book a court, find a game nearby, or check tournaments. What do you need?`;
       },
       welcomeDeportesHint:
         'By the way, if you tell me which sports you play I can help you better 🎯',
@@ -388,11 +388,11 @@ function chatUiStrings(loc, tr) {
       placeholder: 'Ex.: quero jogar amanhã às 19h',
       waEscalada: 'Falar com o clube no WhatsApp',
       waClub: 'Escrever ao clube habitual',
-      fabOpen: 'Abrir assistente Padbol Match',
+      fabOpen: 'Abrir assistente Chivi',
       fabCollapsed: 'Dúvidas?',
       fabLine1: 'Tem dúvidas?',
-      fabLine2: 'Fale com o Padbol Match',
-      titulo: 'Padbol Match IA',
+      fabLine2: 'Fale com a Chivi',
+      titulo: 'Chivi',
       cargando: 'Carregando…',
       escuchando: 'Ouvindo…',
       sinVoz: 'Nenhuma voz detectada. Tente de novo.',
@@ -423,7 +423,7 @@ function chatUiStrings(loc, tr) {
       welcomeAssistant: (firstName) => {
         const n = String(firstName || '').trim();
         const lead = n ? `Olá ${n} 👋` : 'Olá 👋';
-        return `${lead} Sou seu assistente. Posso ajudar a reservar quadra, buscar partida perto ou consultar torneios. O que você precisa?`;
+        return `${lead} Sou a Chivi, sua assistente Padbol Match. Posso ajudar a reservar quadra, buscar partida perto ou consultar torneios. O que você precisa?`;
       },
       welcomeDeportesHint:
         'Ah, e se você me disser quais esportes pratica posso ajudar melhor 🎯',
@@ -442,11 +442,11 @@ function chatUiStrings(loc, tr) {
     placeholder: 'Ej: quiero jugar mañana a las 19hs',
     waEscalada: 'Contactar al club por WhatsApp',
     waClub: 'Escribir al club habitual',
-    fabOpen: 'Abrir asistente Padbol Match',
+    fabOpen: 'Abrir asistente Chivi',
     fabCollapsed: '¿Consultas?',
     fabLine1: '¿Tenés dudas?',
-    fabLine2: 'Hablá con Padbol Match',
-    titulo: 'Padbol Match IA',
+    fabLine2: 'Hablá con Chivi',
+    titulo: 'Chivi',
     cargando: 'Cargando…',
     escuchando: 'Escuchando…',
     sinVoz: 'No se detectó voz. Intenta de nuevo.',
@@ -477,7 +477,7 @@ function chatUiStrings(loc, tr) {
     welcomeAssistant: (firstName) => {
       const n = String(firstName || '').trim();
       const lead = n ? `Hola ${n} 👋` : 'Hola 👋';
-      return `${lead} Soy tu asistente. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitas?`;
+      return `${lead} Soy Chivi, tu asistente de Padbol Match. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitas?`;
     },
     welcomeDeportesHint:
       'Por cierto, si me cuentas qué deportes practicas te puedo ayudar mejor 🎯',
@@ -1602,7 +1602,7 @@ export default function ChatbotIA() {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  Padbol Match IA
+                  {ui.titulo}
                 </span>
                 <span
                   aria-hidden
