@@ -37,6 +37,7 @@ import {
   primeraFotoSede,
 } from '../utils/sedeCardUi';
 import { formatPaisReservaLabel, formatSedeCiudadPaisLinea } from '../utils/paisI18n';
+import { fetchCoordsFromIp } from '../utils/userApproxLocation';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
 import {
@@ -675,28 +676,49 @@ export default function ReservaForm() {
     return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
   }, [sedes, filtros.sede_id]);
 
-  /** Geolocalización solo en pantalla de elección de sede (p. ej. etiqueta “más cercana”). */
-  const [geoReserva, setGeoReserva] = useState({ status: 'idle', pos: null });
+  /** GPS o IP aproximada en pantalla 1 (orden por cercanía y badge «más cercana»). */
+  const [geoReserva, setGeoReserva] = useState({ status: 'idle', pos: null, source: null });
 
   useEffect(() => {
     if (pantalla !== 1) {
-      setGeoReserva({ status: 'idle', pos: null });
-      return;
+      setGeoReserva({ status: 'idle', pos: null, source: null });
+      return undefined;
     }
-    setGeoReserva({ status: 'pending', pos: null });
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setGeoReserva({ status: 'denied', pos: null });
-      return;
+
+    let cancelled = false;
+    setGeoReserva({ status: 'pending', pos: null, source: null });
+
+    const applyPos = (lat, lon, source) => {
+      if (cancelled) return;
+      setGeoReserva({
+        status: 'granted',
+        pos: { lat, lon },
+        source,
+      });
+    };
+
+    const tryIpFallback = async () => {
+      const ip = await fetchCoordsFromIp();
+      if (cancelled) return;
+      if (ip) applyPos(ip.lat, ip.lon, 'ip');
+      else setGeoReserva({ status: 'denied', pos: null, source: null });
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => applyPos(pos.coords.latitude, pos.coords.longitude, 'gps'),
+        () => {
+          void tryIpFallback();
+        },
+        { timeout: 8000, maximumAge: 600000 }
+      );
+    } else {
+      void tryIpFallback();
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        setGeoReserva({
-          status: 'granted',
-          pos: { lat: pos.coords.latitude, lon: pos.coords.longitude },
-        }),
-      () => setGeoReserva({ status: 'denied', pos: null }),
-      { timeout: 8000, maximumAge: 600000 }
-    );
+
+    return () => {
+      cancelled = true;
+    };
   }, [pantalla]);
 
   /** Refrescar la sede desde la API al reservar/pagar para usar precio_turno y tarifas actualizados en Supabase. */
@@ -742,12 +764,39 @@ export default function ReservaForm() {
     return sedes.filter((sede) => String(sede.pais || '').trim() === String(filtros.pais).trim());
   }, [sedes, filtros.pais]);
 
+  const reservaVariasCiudadesEnPais = useMemo(() => {
+    if (sedesFiltradasPorPais.length < 2) return false;
+    const ciudades = new Set(
+      sedesFiltradasPorPais.map((s) => String(s.ciudad || '').trim()).filter(Boolean)
+    );
+    return ciudades.size > 1;
+  }, [sedesFiltradasPorPais]);
+
+  /** Con varias ciudades en el país, ordenar por distancia (GPS o IP). */
+  const sedesFiltradasPorPaisOrdenadas = useMemo(() => {
+    if (!reservaVariasCiudadesEnPais) return sedesFiltradasPorPais;
+    if (geoReserva.status !== 'granted' || !geoReserva.pos) return sedesFiltradasPorPais;
+    const { lat, lon } = geoReserva.pos;
+    return [...sedesFiltradasPorPais].sort((a, b) => {
+      const da = getDistanceKm(lat, lon, a.latitud, a.longitud);
+      const db = getDistanceKm(lat, lon, b.latitud, b.longitud);
+      const aOk = Number.isFinite(da);
+      const bOk = Number.isFinite(db);
+      if (!aOk && !bOk) return 0;
+      if (!aOk) return 1;
+      if (!bOk) return -1;
+      return da - db;
+    });
+  }, [sedesFiltradasPorPais, reservaVariasCiudadesEnPais, geoReserva]);
+
   const sedeReservaMasCercanaId = useMemo(() => {
-    if (geoReserva.status !== 'granted' || !geoReserva.pos || sedesFiltradasPorPais.length === 0) return null;
+    if (geoReserva.status !== 'granted' || !geoReserva.pos || sedesFiltradasPorPaisOrdenadas.length === 0) {
+      return null;
+    }
     const { lat, lon } = geoReserva.pos;
     let bestId = null;
     let bestKm = Infinity;
-    for (const s of sedesFiltradasPorPais) {
+    for (const s of sedesFiltradasPorPaisOrdenadas) {
       const d = getDistanceKm(lat, lon, s.latitud, s.longitud);
       if (Number.isFinite(d) && d < bestKm) {
         bestKm = d;
@@ -755,7 +804,7 @@ export default function ReservaForm() {
       }
     }
     return bestId;
-  }, [geoReserva, sedesFiltradasPorPais]);
+  }, [geoReserva, sedesFiltradasPorPaisOrdenadas]);
 
   useEffect(() => {
     if (pantalla !== 2 || !sedeSeleccionada) {
@@ -2061,7 +2110,7 @@ export default function ReservaForm() {
                 </p>
               ) : (
                 <ul className="reserva-sede-cards-list">
-                  {sedesFiltradasPorPais.map((sede, idx) => {
+                  {sedesFiltradasPorPaisOrdenadas.map((sede, idx) => {
                     const foto = primeraFotoSede(sede);
                     const { flag, linea } = formatSedeCiudadPaisLinea(sede, t);
                     const precio = precioDesdeCard(sede);
