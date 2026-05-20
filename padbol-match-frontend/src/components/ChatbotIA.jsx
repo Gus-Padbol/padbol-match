@@ -1188,7 +1188,16 @@ export default function ChatbotIA() {
     setVoiceInterim('');
     primeSpeechSynthesisFromUserGesture();
 
-    const rec = new Ctor();
+    let rec;
+    try {
+      rec = new Ctor();
+    } catch (err) {
+      if (!/kernel.*already registered|tensorflow|tfjs/i.test(String(err?.message || err))) {
+        console.warn('[Padbol] Chatbot IA: SpeechRecognition no disponible.', err);
+      }
+      setVoicePhase('idle');
+      return;
+    }
     rec.continuous = true;
     rec.interimResults = true;
     rec.lang = speechRecLang;

@@ -42,7 +42,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 import AppLanguageGate from './components/AppLanguageGate';
-import ChatbotIA from './components/ChatbotIA';
+import ChatbotIASafe from './components/ChatbotIASafe';
 import LegalFooterBar from './components/LegalFooterBar';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import PwaUpdateBanner from './components/PwaUpdateBanner';
@@ -425,7 +425,7 @@ function AppShell() {
         <AppRoutes />
       </div>
       <LegalFooterBar />
-      <ChatbotIA />
+      <ChatbotIASafe />
       <CookieConsentBanner />
       <PwaUpdateBanner />
     </>
