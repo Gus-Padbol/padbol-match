@@ -628,7 +628,7 @@ export default function ReservaForm() {
     const wa = String(currentCliente.whatsapp || waMeta).trim();
     return { ...currentCliente, whatsapp: wa, telefono: wa };
   }, [currentCliente, session?.user?.user_metadata?.whatsapp]);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const initialSedeId = searchParams.get('sedeId');
   const reservaDeporteUrl = useMemo(
@@ -639,6 +639,9 @@ export default function ReservaForm() {
   const [sedes, setSedes] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
   const [ciudades, setCiudades] = useState([]);
+  /** Deportes con al menos una sede activa en `filtros.pais` (GET /api/sedes?deporte=). */
+  const [deportesDisponiblesEnPais, setDeportesDisponiblesEnPais] = useState(() => new Set());
+  const [deportesZonaLoading, setDeportesZonaLoading] = useState(false);
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
@@ -780,6 +783,108 @@ export default function ReservaForm() {
     () => [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort(),
     [sedes]
   );
+
+  const syncReservaDeporteEnUrl = useCallback(
+    (deporteKey) => {
+      setFiltros((prev) => ({ ...prev, sede_id: '' }));
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (deporteKey && RESERVA_CANCHA_DEPORTES.has(deporteKey)) {
+            next.set('deporte', deporteKey);
+          } else {
+            next.delete('deporte');
+          }
+          next.delete('sedeId');
+          next.delete('fecha');
+          next.delete('hora');
+          next.delete('canchaId');
+          next.delete('cancha');
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  const enfocarSelectorPaisReserva = useCallback(() => {
+    const el = document.getElementById('reserva-pais-select');
+    if (el && typeof el.focus === 'function') {
+      el.focus();
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  /** Vuelve al selector de país sin borrar el deporte elegido en la URL. */
+  const abrirSelectorPaisReserva = useCallback(() => {
+    clearReservaGeoMasCercanaIntent();
+    setFiltros((prev) => ({ ...prev, pais: '', ciudad: '', sede_id: '' }));
+    setCiudades([]);
+    enfocarSelectorPaisReserva();
+  }, [enfocarSelectorPaisReserva]);
+
+  /** Disponibilidad por deporte en el país elegido (API ?deporte=, filtro client-side por país). */
+  useEffect(() => {
+    const pais = String(filtros.pais || '').trim();
+    if (!pais || pantalla !== 1) {
+      setDeportesDisponiblesEnPais(new Set());
+      setDeportesZonaLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setDeportesZonaLoading(true);
+
+    Promise.all(
+      DEPORTES_CANCHA_SEDE_OPTIONS.map(async (opt) => {
+        try {
+          const res = await fetch(apiUrl(`/api/sedes${reservaSedeApiQuery(opt.key)}`));
+          const text = await res.text();
+          if (!res.ok) return { key: opt.key, available: false };
+          const parsed = JSON.parse(text);
+          const arr = Array.isArray(parsed) ? parsed : [];
+          const enPais = arr.some(
+            (s) => String(s?.pais || '').trim() === pais
+          );
+          return { key: opt.key, available: enPais };
+        } catch {
+          return { key: opt.key, available: false };
+        }
+      })
+    )
+      .then((rows) => {
+        if (cancelled) return;
+        setDeportesDisponiblesEnPais(
+          new Set(rows.filter((r) => r.available).map((r) => r.key))
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setDeportesZonaLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filtros.pais, pantalla]);
+
+  /** Si el deporte en URL no existe en el país, quitarlo de la query. */
+  useEffect(() => {
+    if (deportesZonaLoading || !filtros.pais || !reservaDeporteUrl) return;
+    if (!deportesDisponiblesEnPais.has(reservaDeporteUrl)) {
+      syncReservaDeporteEnUrl(null);
+    }
+  }, [
+    deportesZonaLoading,
+    filtros.pais,
+    reservaDeporteUrl,
+    deportesDisponiblesEnPais,
+    syncReservaDeporteEnUrl,
+  ]);
 
   // Pre-fill phone from profile (whatsapp o teléfono) — split código país + local
   useEffect(() => {
@@ -1418,7 +1523,8 @@ export default function ReservaForm() {
     clearReservaGeoMasCercanaIntent();
     setFiltros({ pais: '', ciudad: '', sede_id: '' });
     setCiudades([]);
-  }, []);
+    syncReservaDeporteEnUrl(null);
+  }, [syncReservaDeporteEnUrl]);
 
   const buscarHorariosDisponibles = useCallback(async (fecha) => {
     if (!fecha || !sedeSeleccionada) return;
@@ -1862,6 +1968,66 @@ export default function ReservaForm() {
             )}
           </div>
 
+          {filtros.pais ? (
+            <div className="reserva-sede-deportes-picker">
+              <p className="reserva-sede-deportes-picker-label" id="reserva-deportes-picker-label">
+                {t('reservas.sportLabel')}
+              </p>
+              {deportesZonaLoading ? (
+                <p className="reserva-sede-deportes-picker-hint" role="status">
+                  {t('reservas.checkingSportsInZone')}
+                </p>
+              ) : null}
+              <div
+                className="reserva-sede-deportes-chips"
+                role="group"
+                aria-labelledby="reserva-deportes-picker-label"
+              >
+                <button
+                  type="button"
+                  className={`reserva-sede-deporte-chip-btn${!reservaDeporteUrl ? ' reserva-sede-deporte-chip-btn--activo' : ''}`}
+                  onClick={() => syncReservaDeporteEnUrl(null)}
+                >
+                  {t('reservas.allSports')}
+                </button>
+                {DEPORTES_CANCHA_SEDE_OPTIONS.map((opt) => {
+                  const disponible = deportesDisponiblesEnPais.has(opt.key);
+                  const activo = reservaDeporteUrl === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      disabled={!deportesZonaLoading && !disponible}
+                      className={`reserva-sede-deporte-chip-btn${activo ? ' reserva-sede-deporte-chip-btn--activo' : ''}${!deportesZonaLoading && !disponible ? ' reserva-sede-deporte-chip-btn--off' : ''}`}
+                      aria-pressed={activo}
+                      title={
+                        !deportesZonaLoading && !disponible
+                          ? t('reservas.sportNotInZone')
+                          : undefined
+                      }
+                      onClick={() => {
+                        if (deportesZonaLoading || !disponible) return;
+                        syncReservaDeporteEnUrl(opt.key);
+                      }}
+                    >
+                      <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
+                        {emojiDeporteReserva(opt.key)}
+                      </span>
+                      <span className="reserva-sede-deporte-chip-btn-label">
+                        {etiquetaDeporteReserva(t, opt.key)}
+                      </span>
+                      {!deportesZonaLoading && !disponible ? (
+                        <span className="reserva-sede-deporte-chip-btn-off">
+                          {t('reservas.sportNotInZone')}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
           {reservaDeporteUrl ? (
             <p className="reserva-sede-deporte-activo" role="status">
               <span className="reserva-sede-deporte-activo-emoji" aria-hidden>
@@ -1873,11 +2039,25 @@ export default function ReservaForm() {
 
           {filtros.pais ? (
             <div key={reservaCardsWave} className="reserva-sede-cards-root">
-              {sedesFiltradasPorPais.length === 0 ? (
+              {reservaDeporteUrl && sedesFiltradasPorPais.length === 0 && !sedesLoadError ? (
+                <div className="reserva-sede-empty-deporte-pais" role="status">
+                  <p className="reserva-sede-empty-deporte-pais-text">
+                    {t('reservas.noCourtsSportInCountry', {
+                      deporte: etiquetaDeporteReserva(t, reservaDeporteUrl),
+                      pais: etiquetaPaisReserva(filtros.pais),
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    className="reserva-sede-empty-deporte-pais-btn"
+                    onClick={abrirSelectorPaisReserva}
+                  >
+                    {t('reservas.changeCountry')}
+                  </button>
+                </div>
+              ) : sedesFiltradasPorPais.length === 0 ? (
                 <p className="reserva-sede-empty-pais">
-                  {reservaDeporteUrl
-                    ? t('reservas.noVenuesForSport')
-                    : t('reservas.comingSoonCountry')}
+                  {t('reservas.comingSoonCountry')}
                 </p>
               ) : (
                 <ul className="reserva-sede-cards-list">

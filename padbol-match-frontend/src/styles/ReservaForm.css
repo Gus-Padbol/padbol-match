@@ -797,6 +797,113 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 4px;
 }
 
+.reserva-sede-seleccion .reserva-sede-deportes-picker {
+  margin-top: 18px;
+}
+
+.reserva-sede-seleccion .reserva-sede-deportes-picker-label {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.reserva-sede-seleccion .reserva-sede-deportes-picker-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reserva-sede-seleccion .reserva-sede-deportes-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1.25;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn-label {
+  white-space: nowrap;
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn-off {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.2;
+  max-width: 9rem;
+  white-space: normal;
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn--activo {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-card));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn--off {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.reserva-sede-seleccion .reserva-sede-empty-deporte-pais {
+  margin: 12px 0 0;
+  padding: 16px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  text-align: center;
+}
+
+.reserva-sede-seleccion .reserva-sede-empty-deporte-pais-text {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.reserva-sede-seleccion .reserva-sede-empty-deporte-pais-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .reserva-sede-seleccion .reserva-sede-deporte-activo {
   display: flex;
   align-items: center;
