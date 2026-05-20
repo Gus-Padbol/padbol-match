@@ -180,23 +180,7 @@ export default function LandingPage() {
           </Link>
         </section>
 
-        <p
-          style={{
-            margin: '0 0 40px',
-            padding: '14px 16px',
-            borderRadius: 12,
-            border: '1px solid var(--border)',
-            background: 'var(--bg-card)',
-            fontSize: 14,
-            fontWeight: 500,
-            lineHeight: 1.5,
-            color: 'var(--text-secondary)',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-          }}
-        >
-          {t('landing.guestNote')}
-        </p>
+        <p className="landing-page__guest-note">{t('landing.guestNote')}</p>
 
         <section style={{ marginBottom: 44 }}>
           <h2

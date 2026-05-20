@@ -114,3 +114,16 @@ html.landing-page-active #root {
   color: var(--text-primary);
   background: var(--bg-input);
 }
+
+.landing-page__guest-note {
+  margin: 8px 0 40px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  text-align: center;
+  box-sizing: border-box;
+}
