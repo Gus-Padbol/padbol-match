@@ -810,7 +810,7 @@ export default function UserHome() {
                 flexShrink: 0,
               }}
             >
-              {t('hub.exploreWithoutSignup')}
+              {t('landing.guestNote')}
             </p>
           ) : null}
 
