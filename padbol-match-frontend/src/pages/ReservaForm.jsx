@@ -537,12 +537,24 @@ function etiquetaDeporteReserva(t, key) {
 }
 
 function deportesActivosSedeKeys(sede) {
+  const fromApi = sede?.deportes_disponibles;
+  if (Array.isArray(fromApi) && fromApi.length > 0) {
+    const order = DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => o.key);
+    return fromApi
+      .map((k) => String(k || '').trim().toLowerCase())
+      .filter((k) => RESERVA_CANCHA_DEPORTES.has(k))
+      .sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  }
   const rows = sede?.canchas_por_deporte;
   if (!Array.isArray(rows) || !rows.length) return [];
   const keys = [
     ...new Set(
       rows
-        .filter((r) => r.activo !== false && Number(r.cantidad) > 0)
+        .filter((r) => {
+          if (r?.activo === false || r?.activo === 'false' || r?.activo === 0) return false;
+          const n = Number(r?.cantidad);
+          return Number.isFinite(n) ? n > 0 : true;
+        })
         .map((r) => String(r.deporte || '').trim().toLowerCase())
         .filter((k) => RESERVA_CANCHA_DEPORTES.has(k)),
     ),

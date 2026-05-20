@@ -1442,6 +1442,10 @@ app.get('/api/sedes', async (req, res) => {
       list = filterSedesPorDeporteReserva(list, keys, sedeIdsConCanchas);
     }
 
+    const sedeIdsList = list.map((s) => Number(s?.id)).filter((id) => Number.isFinite(id) && id > 0);
+    const deportesPorSedeMap = await fetchDeportesPorSedeIdsDesdeCanchas(supabase, sedeIdsList);
+    list = enrichSedesListConDeportesDisponibles(list, deportesPorSedeMap);
+
     res.json(list);
   } catch (err) {
     console.error('❌ Error GET /api/sedes:', err.message);
@@ -4930,6 +4934,61 @@ function sedeOfreceDeporteEnCatalogo(sede, keys) {
       r.deporte != null && String(r.deporte).trim() !== '' ? r.deporte : 'padbol',
     );
     return keys.includes(d);
+  });
+}
+
+const DEPORTE_ORDEN_LISTADO_SEDES = ['padbol', 'padel', 'pickleball', 'squash', 'tenis', 'futbol_5', 'futbol_7'];
+
+function isCanchaPorDeporteRowActiva(r) {
+  if (r?.activo === false || r?.activo === 'false' || r?.activo === 0) return false;
+  const n = Number(r?.cantidad);
+  return Number.isFinite(n) ? n > 0 : true;
+}
+
+/** Map sede_id → Set(deporte slug) desde tabla canchas (estado activa). */
+async function fetchDeportesPorSedeIdsDesdeCanchas(supabaseClient, sedeIds) {
+  const map = new Map();
+  const ids = [...new Set(sedeIds.map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0))];
+  if (!ids.length) return map;
+  const { data, error } = await supabaseClient.from('canchas').select('sede_id, deporte, estado').in('sede_id', ids);
+  if (error) {
+    console.error('fetchDeportesPorSedeIdsDesdeCanchas:', error.message);
+    return map;
+  }
+  for (const row of data || []) {
+    if (normalizeEstadoCancha(row?.estado) !== 'activa') continue;
+    const sid = Number(row.sede_id);
+    const d = normalizeTorneoDeporteForDb(
+      row.deporte != null && String(row.deporte).trim() !== '' ? row.deporte : 'padbol',
+    );
+    if (!TORNEO_DEPORTE_VALID.has(d)) continue;
+    if (!map.has(sid)) map.set(sid, new Set());
+    map.get(sid).add(d);
+  }
+  return map;
+}
+
+function deportesDisponiblesListadoSede(sede, deportesDesdeCanchasSet) {
+  const set = new Set(deportesDesdeCanchasSet || []);
+  const rows = sede?.canchas_por_deporte;
+  if (Array.isArray(rows)) {
+    for (const r of rows) {
+      if (!isCanchaPorDeporteRowActiva(r)) continue;
+      const d = normalizeTorneoDeporteForDb(
+        r.deporte != null && String(r.deporte).trim() !== '' ? r.deporte : 'padbol',
+      );
+      if (TORNEO_DEPORTE_VALID.has(d)) set.add(d);
+    }
+  }
+  return DEPORTE_ORDEN_LISTADO_SEDES.filter((k) => set.has(k));
+}
+
+function enrichSedesListConDeportesDisponibles(sedes, deportesPorSedeIdMap) {
+  return (sedes || []).map((sede) => {
+    const sid = Number(sede?.id);
+    const fromCanchas = deportesPorSedeIdMap instanceof Map ? deportesPorSedeIdMap.get(sid) : null;
+    const deportes_disponibles = deportesDisponiblesListadoSede(sede, fromCanchas);
+    return { ...sede, deportes_disponibles };
   });
 }
 
