@@ -230,6 +230,7 @@
     "bookCourtNumber": "Réserver terrain {{num}}",
     "loadingVenuesList": "Chargement des salles…",
     "noVenuesAvailable": "Aucune salle disponible.",
+    "noVenuesForSport": "Aucune salle disponible pour ce sport dans votre zone",
     "clearVenue": "Effacer la salle",
     "loadingSlots": "Chargement des horaires…",
     "noSlotsTryOther": "Aucun créneau libre pour cette date et durée. Essayez un autre jour ou une autre durée.",

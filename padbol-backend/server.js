@@ -1424,20 +1424,25 @@ app.post('/api/notify/sede-cambio-critico', async (req, res) => {
 // GET sedes
 app.get('/api/sedes', async (req, res) => {
   try {
-    console.log('📡 GET /api/sedes - Conectando a Supabase...');
+    const deporteCanon = parseDeporteCanchaQueryParamExpress(req.query?.deporte);
+    console.log('📡 GET /api/sedes', deporteCanon ? { deporte: deporteCanon } : {});
     const { data, error } = await supabase
       .from('sedes')
       .select('*, canchas_por_deporte(deporte, cantidad, activo)');
-    
-    console.log('📊 Respuesta Supabase:', { data, error });
-    
+
     if (error) {
       console.error('❌ Error Supabase:', error);
       throw error;
     }
-    
-    console.log('SEDES RESPONSE:', data);
-    res.json(data || []);
+
+    let list = Array.isArray(data) ? data : [];
+    if (deporteCanon) {
+      const keys = chatIaDeporteDbKeysForFilter(deporteCanon);
+      const sedeIdsConCanchas = await fetchSedeIdsConCanchasActivasDeporte(supabase, keys);
+      list = filterSedesPorDeporteReserva(list, keys, sedeIdsConCanchas);
+    }
+
+    res.json(list);
   } catch (err) {
     console.error('❌ Error GET /api/sedes:', err.message);
     res.status(500).json({ error: err.message });
@@ -4892,6 +4897,53 @@ function filterCanchasRowsByDeporteCanon(rows, deporteCanon) {
   return rows.filter((r) => {
     const d = normalizeTorneoDeporteForDb(r.deporte != null && String(r.deporte).trim() !== '' ? r.deporte : 'padbol');
     return keys.includes(d);
+  });
+}
+
+/** sede_id con al menos una cancha activa cuyo deporte coincide (columna canchas.deporte). */
+async function fetchSedeIdsConCanchasActivasDeporte(supabaseClient, keys) {
+  if (!Array.isArray(keys) || !keys.length) return new Set();
+  const { data, error } = await supabaseClient
+    .from('canchas')
+    .select('sede_id')
+    .in('deporte', keys)
+    .eq('estado', 'activa');
+  if (error) {
+    console.error('fetchSedeIdsConCanchasActivasDeporte:', error.message);
+    return new Set();
+  }
+  const out = new Set();
+  for (const row of data || []) {
+    const sid = Number(row?.sede_id);
+    if (Number.isFinite(sid) && sid > 0) out.add(sid);
+  }
+  return out;
+}
+
+function sedeOfreceDeporteEnCatalogo(sede, keys) {
+  const rows = sede?.canchas_por_deporte;
+  if (!Array.isArray(rows) || !rows.length) return false;
+  return rows.some((r) => {
+    if (r?.activo === false) return false;
+    if (!(Number(r.cantidad) > 0)) return false;
+    const d = normalizeTorneoDeporteForDb(
+      r.deporte != null && String(r.deporte).trim() !== '' ? r.deporte : 'padbol',
+    );
+    return keys.includes(d);
+  });
+}
+
+/** GET /api/sedes?deporte= — sedes con canchas activas del deporte o catálogo canchas_por_deporte. */
+function filterSedesPorDeporteReserva(sedes, keys, sedeIdsConCanchas) {
+  const list = Array.isArray(sedes) ? sedes : [];
+  if (!Array.isArray(keys) || !keys.length) return list;
+  const ids = sedeIdsConCanchas instanceof Set ? sedeIdsConCanchas : new Set();
+  const hasCatalog = list.some((s) => Array.isArray(s.canchas_por_deporte) && s.canchas_por_deporte.length > 0);
+  return list.filter((sede) => {
+    const sid = Number(sede?.id);
+    if (ids.has(sid)) return true;
+    if (hasCatalog) return sedeOfreceDeporteEnCatalogo(sede, keys);
+    return false;
   });
 }
 

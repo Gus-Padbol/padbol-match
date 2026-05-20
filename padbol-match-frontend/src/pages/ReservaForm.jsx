@@ -971,7 +971,7 @@ export default function ReservaForm() {
   useEffect(() => {
     let cancelled = false;
     setSedesLoadError('');
-    fetch(apiUrl('/api/sedes'))
+    fetch(apiUrl(`/api/sedes${reservaSedeApiQuery(reservaDeporteUrl)}`))
       .then(async (res) => {
         const text = await res.text();
         if (cancelled) return;
@@ -998,7 +998,7 @@ export default function ReservaForm() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reservaDeporteUrl, t]);
 
   // Completar país/ciudad cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
   useEffect(() => {
@@ -1828,7 +1828,11 @@ export default function ReservaForm() {
           {filtros.pais ? (
             <div key={reservaCardsWave} className="reserva-sede-cards-root">
               {sedesFiltradasPorPais.length === 0 ? (
-                <p className="reserva-sede-empty-pais">{t('reservas.comingSoonCountry')}</p>
+                <p className="reserva-sede-empty-pais">
+                  {reservaDeporteUrl
+                    ? t('reservas.noVenuesForSport')
+                    : t('reservas.comingSoonCountry')}
+                </p>
               ) : (
                 <ul className="reserva-sede-cards-list">
                   {sedesFiltradasPorPais.map((sede, idx) => {

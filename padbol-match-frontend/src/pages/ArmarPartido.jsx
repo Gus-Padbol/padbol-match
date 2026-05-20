@@ -424,12 +424,15 @@ export default function ArmarPartido() {
   }, [step, authLoading, session?.user]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/sedes`)
+    const dep = String(form.deporte || '').trim().toLowerCase();
+    const q = dep ? `?deporte=${encodeURIComponent(dep)}` : '';
+    setLoadingSedes(true);
+    fetch(`${API_BASE}/api/sedes${q}`)
       .then((r) => r.json())
       .then((d) => setSedes(Array.isArray(d) ? d : []))
       .catch((err) => setMsg(err.message || 'No se pudieron cargar sedes'))
       .finally(() => setLoadingSedes(false));
-  }, []);
+  }, [form.deporte]);
 
   const sede = useMemo(() => findSedeById(sedes, form.sedeId), [sedes, form.sedeId]);
 
@@ -1096,7 +1099,7 @@ export default function ArmarPartido() {
                       <div style={{ padding: 14, fontSize: 14 }}>{t('reservas.loadingVenuesList')}</div>
                     ) : sedesListaMostrada.length === 0 ? (
                       <div style={{ padding: 14, fontSize: 14, color: 'var(--text-secondary)' }}>
-                        {t('reservas.noVenuesAvailable')}
+                        {form.deporte ? t('reservas.noVenuesForSport') : t('reservas.noVenuesAvailable')}
                       </div>
                     ) : (
                       sedesListaMostrada.map((s, idx) => {
