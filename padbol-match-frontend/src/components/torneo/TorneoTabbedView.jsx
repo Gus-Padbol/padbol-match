@@ -36,7 +36,7 @@ import {
 } from '../../utils/speechResultadoPartido';
 import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresExcel';
 import { IconGeroUbicacion } from '../icons/GeroIcons';
-import SponsorPromoCard from '../SponsorPromoCard';
+import SponsorBannerFade from '../SponsorBannerFade';
 import SponsorTicker from '../SponsorTicker';
 import PartidoDetalleModal from './PartidoDetalleModal';
 import TorneoGruposTable from './TorneoGruposTable';
@@ -337,18 +337,6 @@ export default function TorneoTabbedView({
     const label = t(`torneos.vista.estado.${k}`, { defaultValue: b.label });
     return { ...b, label };
   }, [torneo?.estado, t, esFinalizado]);
-
-  const sponsorPromoCardData = useMemo(() => {
-    if (!presentadoPorSponsor) return null;
-    const nombre = String(presentadoPorSponsor.nombre || '').trim();
-    const logo = String(presentadoPorSponsor.logo_url || '').trim();
-    if (!nombre && !logo) return null;
-    return {
-      nombre,
-      logo_url: logo,
-      url_destino: String(presentadoPorSponsor.url_destino || '').trim(),
-    };
-  }, [presentadoPorSponsor]);
 
   const labelCategoriaTorneo = useCallback(
     (raw) => {
@@ -1685,11 +1673,7 @@ export default function TorneoTabbedView({
           })}
         </div>
       </div>
-      {sponsorPromoCardData ? (
-        <div className="torneo-sponsor-promo-wrap">
-          <SponsorPromoCard sponsor={sponsorPromoCardData} compact className="torneo-sponsor-promo-card" />
-        </div>
-      ) : null}
+      <SponsorBannerFade sedeId={torneo?.sede_id} torneoId={torneo?.id} />
     </div>
   );
 
