@@ -926,6 +926,12 @@
       "promoSaved": "✅Promo enregistrée",
       "promoJugarIntro": "Carte promotionnelle sous les trois actions (Réserver / Rechercher / Armer) sur l'écran de jeu. Il n'est montré aux joueurs de votre quartier général que s'il est actif et avec un minimum de données.",
       "promoJugarTitle": "Promo dans « Play » (hub)",
+      "jugarScreenTitle": "Écran « Jouer »",
+      "jugarScreenIntro": "Images des cartes Réserver, Chercher un match et Créer un match. Choisissez le sport et téléversez une photo 16:9 par carte.",
+      "sportForCards": "Sport des cartes",
+      "changePhoto": "Changer la photo",
+      "hubTorneosCardTitle": "Carte Tournois (accueil hub)",
+      "hubTorneosCardIntro": "Image de la carte Tournois sur le hub principal, par sport.",
       "previewLabel": "Aperçu",
       "noGlobalCards": "Aucune carte globale n'est configurée."
     },

@@ -926,6 +926,12 @@
       "promoSaved": "✅ Promoție salvată",
       "promoJugarIntro": "Card promoțional sub cele trei acțiuni (Rezervare / Căutare / Arm) de pe ecranul Play. Este afișat jucătorilor de la sediul dvs. numai dacă este activ și cu date minime.",
       "promoJugarTitle": "Promoție în „Play” (hub)",
+      "jugarScreenTitle": "Ecran «Joacă»",
+      "jugarScreenIntro": "Imagini pentru cardurile Rezervă teren, Caută meci și Creează meci. Alege sportul și încarcă o poză 16:9 per card.",
+      "sportForCards": "Sportul cardurilor",
+      "changePhoto": "Schimbă fotografia",
+      "hubTorneosCardTitle": "Card Turnee (hub start)",
+      "hubTorneosCardIntro": "Imagine card Turnee pe hub-ul principal, per sport.",
       "previewLabel": "Previzualizare",
       "noGlobalCards": "Nu există carduri globale configurate."
     },

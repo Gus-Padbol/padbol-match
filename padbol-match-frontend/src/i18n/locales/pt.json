@@ -926,6 +926,12 @@
       "promoSaved": "✅ Promoção salva",
       "promoJugarIntro": "Carta promocional nas três ações (Reservar/Buscar/Armar) na tela de Jogo. Ele só é mostrado aos jogadores da sua sede se estiver ativo e com dados mínimos.",
       "promoJugarTitle": "Promoção em “Play” (hub)",
+      "jugarScreenTitle": "Tela «Jogar»",
+      "jugarScreenIntro": "Imagens das cards Reservar quadra, Buscar partida e Montar partida. Escolha o esporte e envie foto 16:9 por card.",
+      "sportForCards": "Esporte das cards",
+      "changePhoto": "Alterar foto",
+      "hubTorneosCardTitle": "Card Torneios (hub início)",
+      "hubTorneosCardIntro": "Imagem da card Torneios no hub principal, por esporte.",
       "previewLabel": "Visualização",
       "noGlobalCards": "Não há placas globais configuradas."
     },

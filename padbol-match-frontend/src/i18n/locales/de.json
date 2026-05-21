@@ -926,6 +926,12 @@
       "promoSaved": "✅ Promo gespeichert",
       "promoJugarIntro": "Werbekarte unter den drei Aktionen (Reservieren / Suchen / Scharfschalten) auf dem Wiedergabebildschirm. Es wird Spielern aus Ihrem Hauptquartier nur angezeigt, wenn es aktiv ist und über minimale Daten verfügt.",
       "promoJugarTitle": "Promo in „Play“ (Hub)",
+      "jugarScreenTitle": "Bildschirm „Spielen“",
+      "jugarScreenIntro": "Hintergrundbilder für Platz buchen, Spiel suchen und Spiel erstellen. Sport wählen und 16:9-Foto pro Karte hochladen.",
+      "sportForCards": "Sport der Karten",
+      "changePhoto": "Foto ändern",
+      "hubTorneosCardTitle": "Turnier-Karte (Hub-Start)",
+      "hubTorneosCardIntro": "Turnier-Kartenbild im Haupt-Hub, pro Sport.",
       "previewLabel": "Vorschau",
       "noGlobalCards": "Es sind keine globalen Karten konfiguriert."
     },

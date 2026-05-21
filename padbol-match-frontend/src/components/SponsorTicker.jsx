@@ -7,7 +7,7 @@ import { SponsorPromoList } from './SponsorPromoCard';
  * @param {{ nombre: string, imagen_url?: string, url_destino?: string, descripcion?: string }[]} items
  * @param {string|null} [deporte]
  */
-export default function SponsorTicker({ items, deporte = null }) {
+export default function SponsorTicker({ items, deporte = null, compact = false }) {
   const displayItems = useMemo(() => {
     if (!items || items.length === 0) return [];
     return items
@@ -21,5 +21,5 @@ export default function SponsorTicker({ items, deporte = null }) {
       .filter((it) => it.nombre || it.logo_url);
   }, [items]);
 
-  return <SponsorPromoList items={displayItems} deporte={deporte} />;
+  return <SponsorPromoList items={displayItems} deporte={deporte} compact={compact} />;
 }

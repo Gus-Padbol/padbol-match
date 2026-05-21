@@ -955,6 +955,12 @@
       "promoSaved": "✅ Promo guardada",
       "promoJugarIntro": "Card promocional bajo las tres acciones (Reservar / Buscar / Armar) en la pantalla Jugar. Solo se muestra a jugadores de tu sede si está activa y con datos mínimos.",
       "promoJugarTitle": "Promo en «Jugar» (hub)",
+      "jugarScreenTitle": "Pantalla «Jugar» (¡Vamos a jugar!)",
+      "jugarScreenIntro": "Imágenes de fondo de las cards Reservar cancha, Buscar partido y Armar partido. Elegí el deporte y subí una foto por card (formato 16:9).",
+      "sportForCards": "Deporte de las cards",
+      "changePhoto": "Cambiar foto",
+      "hubTorneosCardTitle": "Card Torneos (pantalla inicio)",
+      "hubTorneosCardIntro": "Imagen de la card Torneos en el hub principal, por deporte.",
       "previewLabel": "Vista previa",
       "noGlobalCards": "No hay cards globales configuradas."
     },

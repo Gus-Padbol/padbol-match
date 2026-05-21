@@ -17,7 +17,7 @@ function sponsorInitials(nombre) {
  * Tarjeta unificada de sponsor/publicidad en toda la app.
  * @param {{ sponsor?: unknown, className?: string, style?: object }} props
  */
-export default function SponsorPromoCard({ sponsor, className = '', style }) {
+export default function SponsorPromoCard({ sponsor, className = '', style, compact = false }) {
   const { t } = useTranslation();
   const data = normalizeSponsorPromo(sponsor);
   if (!data) return null;
@@ -43,7 +43,9 @@ export default function SponsorPromoCard({ sponsor, className = '', style }) {
     </>
   );
 
-  const classNames = ['sponsor-promo-card', className].filter(Boolean).join(' ');
+  const classNames = ['sponsor-promo-card', compact ? 'sponsor-promo-card--compact' : '', className]
+    .filter(Boolean)
+    .join(' ');
 
   if (url) {
     if (isHttp) {
@@ -78,7 +80,7 @@ export default function SponsorPromoCard({ sponsor, className = '', style }) {
  * Lista de sponsors (ticker sustituido por cards desplazables si hay varios).
  * @param {{ items?: unknown[], deporte?: string|null, className?: string }} props
  */
-export function SponsorPromoList({ items, deporte = null, className = '' }) {
+export function SponsorPromoList({ items, deporte = null, className = '', compact = false }) {
   const list = (Array.isArray(items) ? items : [])
     .map((row) => normalizeSponsorPromo(row))
     .filter(Boolean);
@@ -99,7 +101,7 @@ export function SponsorPromoList({ items, deporte = null, className = '' }) {
       }
     >
       {list.map((data, i) => (
-        <SponsorPromoCard key={`${data.nombre}-${i}`} sponsor={data} />
+        <SponsorPromoCard key={`${data.nombre}-${i}`} sponsor={data} compact={compact} />
       ))}
     </div>
   );

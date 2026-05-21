@@ -931,6 +931,12 @@
       "promoSaved": "✅ Promo saved",
       "promoJugarIntro": "Promotional card below the three actions (Book / Find / Create match) on the Play screen. Only shown to players at your venue when active with minimum data.",
       "promoJugarTitle": "Promo on «Play» (hub)",
+      "jugarScreenTitle": "«Play» screen (Let's play!)",
+      "jugarScreenIntro": "Background images for Book court, Find match, and Create match cards. Pick a sport and upload a 16:9 photo per card.",
+      "sportForCards": "Sport for cards",
+      "changePhoto": "Change photo",
+      "hubTorneosCardTitle": "Tournaments card (home hub)",
+      "hubTorneosCardIntro": "Tournaments card image on the main hub, per sport.",
       "previewLabel": "Preview",
       "noGlobalCards": "No global cards configured."
     },

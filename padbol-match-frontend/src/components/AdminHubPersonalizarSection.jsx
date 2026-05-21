@@ -4,6 +4,7 @@ import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
+import { HUB_JUGAR_ACTION_CARD_KEYS } from '../constants/hubJugarActionCards';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import {
   dedupeHubDeporteConfigRows,
@@ -64,13 +65,22 @@ function hubEditorNoticeStyle(text) {
 
 export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken }) {
   const { t } = useTranslation();
-  const hubDeporteCards = useMemo(
-    () => [
-      { key: 'reservar', label: t('jugar.reservar') },
-      { key: 'buscar_partido', label: t('jugar.buscar') },
-      { key: 'torneos', label: t('torneos.titulo') },
-      { key: 'armar_partido', label: t('jugar.armar') },
-    ],
+  const hubJugarActionCards = useMemo(
+    () =>
+      HUB_JUGAR_ACTION_CARD_KEYS.map((key) => ({
+        key,
+        label:
+          key === 'reservar'
+            ? t('jugar.reservar')
+            : key === 'buscar_partido'
+              ? t('jugar.buscar')
+              : t('jugar.armar'),
+      })),
+    [t],
+  );
+
+  const hubOtrasDeporteCards = useMemo(
+    () => [{ key: 'torneos', label: t('torneos.titulo') }],
     [t],
   );
   const [rows, setRows] = useState([]);
@@ -501,6 +511,110 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
 
   const rowDeporteActual = (cardKey) => pickHubDeporteRow(deporteRows, sportSel, cardKey);
 
+  const renderDeporteCardEditor = (cardKey, label) => {
+    const dk = draftKeyDeporte(sportSel, cardKey);
+    const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
+    const row = rowDeporteActual(cardKey);
+    const previewUrl =
+      hubDeporteRowImagenUrl(row) ||
+      defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey);
+    const saving = savingDeporteKey === dk;
+    const uploading = uploadingDeporteKey === dk;
+    return (
+      <div key={dk} className="admin-hub-editor-card" style={cardWrap}>
+        <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>
+          {label}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: '14px',
+            flexWrap: 'wrap',
+            marginBottom: '12px',
+            alignItems: 'flex-start',
+          }}
+        >
+          <div style={{ flex: '0 0 140px' }}>
+            <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
+            <div
+              style={{
+                width: '140px',
+                height: '88px',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: '1px solid var(--border)',
+                background: '#64748b center/cover no-repeat',
+                backgroundImage: `url(${previewUrl})`,
+              }}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '200px' }}>
+            <button
+              type="button"
+              disabled={uploading || !accessToken}
+              onClick={() => clickCambiarFotoDeporte(cardKey, sportSel)}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                background: uploading ? '#94a3b8' : '#E11B22',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: uploading || !accessToken ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {uploading ? 'Subiendo…' : t('admin.hub.changePhoto')}
+            </button>
+          </div>
+        </div>
+        <label style={labelStyle}>{t('admin.hub.titleOptionalHint')}</label>
+        <input
+          type="text"
+          style={inputStyle}
+          value={draft.titulo}
+          placeholder={label}
+          onChange={(e) =>
+            setDeporteDrafts((p) => ({
+              ...p,
+              [dk]: { ...draft, titulo: e.target.value },
+            }))
+          }
+        />
+        <label style={labelStyle}>{t('admin.hub.subtitle')}</label>
+        <input
+          type="text"
+          style={inputStyle}
+          value={draft.subtitulo}
+          placeholder={t('admin.hub.optional')}
+          onChange={(e) =>
+            setDeporteDrafts((p) => ({
+              ...p,
+              [dk]: { ...draft, subtitulo: e.target.value },
+            }))
+          }
+        />
+        <button
+          type="button"
+          disabled={saving || !accessToken}
+          onClick={() => void guardarDeporteCard(cardKey)}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '8px',
+            border: 'none',
+            background: saving ? '#94a3b8' : '#E11B22',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '14px',
+            cursor: saving || !accessToken ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {saving ? t('admin.metricas.saving') : t('admin.hub.saveText')}
+        </button>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="section" style={{ color: 'var(--text-primary)' }}>
@@ -649,8 +763,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
           color: 'var(--text-primary)',
         }}
       >
-        Fotos y textos por deporte
+        {t('admin.hub.jugarScreenTitle')}
       </h3>
+      <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+        {t('admin.hub.jugarScreenIntro')}
+      </p>
       {deporteMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(deporteMsg) }}>
           {deporteMsg}
@@ -665,7 +782,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       />
 
       <label style={{ ...labelStyle, color: 'var(--text-secondary)' }} htmlFor="hub-admin-deporte-select">
-        Deporte
+        {t('admin.hub.sportForCards')}
       </label>
       <select
         id="hub-admin-deporte-select"
@@ -689,100 +806,23 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       {deporteLoading ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.hub.loadingSportConfig')}</p>
       ) : (
-        hubDeporteCards.map(({ key: cardKey, label }) => {
-          const dk = draftKeyDeporte(sportSel, cardKey);
-          const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
-          const row = rowDeporteActual(cardKey);
-          const previewUrl =
-            hubDeporteRowImagenUrl(row) ||
-            defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey);
-          const saving = savingDeporteKey === dk;
-          const uploading = uploadingDeporteKey === dk;
-          return (
-            <div key={dk} className="admin-hub-editor-card" style={cardWrap}>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>{label}</div>
-              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
-                <div style={{ flex: '0 0 140px' }}>
-                  <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-                  <div
-                    style={{
-                      width: '140px',
-                      height: '88px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '1px solid var(--border)',
-                      background: '#64748b center/cover no-repeat',
-                      backgroundImage: `url(${previewUrl})`,
-                    }}
-                  />
-                </div>
-                <div style={{ flex: '1', minWidth: '200px' }}>
-                  <button
-                    type="button"
-                    disabled={uploading || !accessToken}
-                    onClick={() => clickCambiarFotoDeporte(cardKey, sportSel)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: uploading ? '#94a3b8' : '#E11B22',
-                      color: '#fff',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      cursor: uploading || !accessToken ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    {uploading ? 'Subiendo…' : 'Cambiar foto'}
-                  </button>
-                </div>
-              </div>
-              <label style={labelStyle}>{t('admin.hub.titleOptionalHint')}</label>
-              <input
-                type="text"
-                style={inputStyle}
-                value={draft.titulo}
-                placeholder={label}
-                onChange={(e) =>
-                  setDeporteDrafts((p) => ({
-                    ...p,
-                    [dk]: { ...draft, titulo: e.target.value },
-                  }))
-                }
-              />
-              <label style={labelStyle}>{t('admin.hub.subtitle')}</label>
-              <input
-                type="text"
-                style={inputStyle}
-                value={draft.subtitulo}
-                placeholder={t('admin.hub.optional')}
-                onChange={(e) =>
-                  setDeporteDrafts((p) => ({
-                    ...p,
-                    [dk]: { ...draft, subtitulo: e.target.value },
-                  }))
-                }
-              />
-              <button
-                type="button"
-                disabled={saving || !accessToken}
-                onClick={() => void guardarDeporteCard(cardKey)}
-                style={{
-                  padding: '10px 18px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: saving ? '#94a3b8' : '#E11B22',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  cursor: saving || !accessToken ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {saving ? t('admin.metricas.saving') : t('admin.hub.saveText')}
-              </button>
-            </div>
-          );
-        })
+        hubJugarActionCards.map(({ key: cardKey, label }) => renderDeporteCardEditor(cardKey, label))
       )}
+
+      <h3
+        style={{
+          margin: '28px 0 10px',
+          fontSize: '16px',
+          fontWeight: 800,
+          color: 'var(--text-primary)',
+        }}
+      >
+        {t('admin.hub.hubTorneosCardTitle')}
+      </h3>
+      <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+        {t('admin.hub.hubTorneosCardIntro')}
+      </p>
+      {deporteLoading ? null : hubOtrasDeporteCards.map(({ key: cardKey, label }) => renderDeporteCardEditor(cardKey, label))}
 
       <h3
         style={{

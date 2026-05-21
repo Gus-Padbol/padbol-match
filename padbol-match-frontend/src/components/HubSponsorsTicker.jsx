@@ -22,8 +22,8 @@ function normalizeSponsorTickerItems(sponsors) {
 /**
  * @param {{ sponsors?: unknown[], deporte?: string|null }} props
  */
-export default function HubSponsorsTicker({ sponsors, deporte = null }) {
+export default function HubSponsorsTicker({ sponsors, deporte = null, compact = false }) {
   const items = useMemo(() => normalizeSponsorTickerItems(sponsors), [sponsors]);
   if (items.length === 0) return null;
-  return <SponsorTicker items={items} deporte={deporte} />;
+  return <SponsorTicker items={items} deporte={deporte} compact={compact} />;
 }

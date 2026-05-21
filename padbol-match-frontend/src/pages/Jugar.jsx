@@ -16,6 +16,7 @@ import { HUB_JUGAR_SLOT } from '../constants/hubJugarSponsorSlots';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
 import { readHubDeporteFilterPersisted, writeHubDeporteFilterToSession } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte, HUB_CARD_UNSPLASH_GENERIC } from '../constants/hubFotosPorDeporte';
+import { dedupeHubDeporteConfigRows, hubDeporteRowImagenUrl, pickHubDeporteRow } from '../utils/hubDeporteConfig';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useHubSponsors } from '../hooks/useHubSponsors';
@@ -44,6 +45,39 @@ export default function Jugar() {
 
   const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterPersisted());
   const [hayProfesores, setHayProfesores] = useState(false);
+  const [hubDeporteRows, setHubDeporteRows] = useState([]);
+  const [hubDeporteStatus, setHubDeporteStatus] = useState('idle');
+
+  const HUB_API_BASE =
+    typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+      ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+      : 'https://padbol-backend.onrender.com';
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${HUB_API_BASE}/api/hub-deporte-config`);
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (!res.ok || !Array.isArray(data)) {
+          setHubDeporteStatus('error');
+          setHubDeporteRows([]);
+          return;
+        }
+        setHubDeporteRows(dedupeHubDeporteConfigRows(data));
+        setHubDeporteStatus('ok');
+      } catch {
+        if (!cancelled) {
+          setHubDeporteStatus('error');
+          setHubDeporteRows([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [HUB_API_BASE]);
 
   const { getSlot, tickerItems } = useHubJugarSponsorSlots();
 
@@ -123,15 +157,30 @@ export default function Jugar() {
     () =>
       jugarOpcionesLista.map((op) => {
         const cardKey = String(op.hubKey || '').trim();
+        const depRow =
+          hubDeporteStatus === 'ok' && deporteElegido
+            ? pickHubDeporteRow(hubDeporteRows, deporteElegido, cardKey)
+            : null;
+        const cmsFoto = depRow ? hubDeporteRowImagenUrl(depRow) : '';
         const porDeporte = deporteElegido ? hubCardPhotoPorDeporte(deporteElegido, cardKey) : '';
         const desdeDeporte = porDeporte && String(porDeporte).trim() ? String(porDeporte).trim() : '';
         const desdeFallback = hubCardPhotoFallback(cardKey);
         const fb = desdeFallback && String(desdeFallback).trim() ? String(desdeFallback).trim() : '';
         const generic = HUB_CARD_UNSPLASH_GENERIC[cardKey] || HUB_CARD_UNSPLASH_GENERIC.reservar || '';
-        const image = desdeDeporte || fb || generic;
-        return { ...op, image };
+        const image = cmsFoto || desdeDeporte || fb || generic;
+        const tituloCms = depRow && String(depRow.titulo || '').trim() ? String(depRow.titulo).trim() : '';
+        const bodyCms =
+          depRow && depRow.subtitulo != null && String(depRow.subtitulo).trim()
+            ? String(depRow.subtitulo).trim()
+            : '';
+        return {
+          ...op,
+          image,
+          title: tituloCms || op.title,
+          body: bodyCms || op.body,
+        };
       }),
-    [deporteElegido, jugarOpcionesLista],
+    [deporteElegido, jugarOpcionesLista, hubDeporteStatus, hubDeporteRows],
   );
 
   const { row: hubPromoRow } = useHubPromoSedeActiva(hubSedeNum);
@@ -197,9 +246,9 @@ export default function Jugar() {
         {hubTickerSponsors?.length > 0 || tickerItems?.length > 0 ? (
           <div style={{ width: '100%', marginTop: 12, marginBottom: 10 }}>
             {hubTickerSponsors?.length > 0 ? (
-              <HubSponsorsTicker sponsors={hubTickerSponsors} deporte={deporteTickerJugar} />
+              <HubSponsorsTicker sponsors={hubTickerSponsors} deporte={deporteTickerJugar} compact />
             ) : (
-              <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} />
+              <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} compact />
             )}
           </div>
         ) : null}

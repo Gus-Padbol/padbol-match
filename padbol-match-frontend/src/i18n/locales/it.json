@@ -926,6 +926,12 @@
       "promoSaved": "✅ Promo salvata",
       "promoJugarIntro": "Carta promozionale sotto le tre azioni (Riserva/Cerca/Arma) nella schermata di riproduzione. Viene mostrato ai giocatori del tuo quartier generale solo se è attivo e con dati minimi.",
       "promoJugarTitle": "Promo in \"Gioca\" (hub)",
+      "jugarScreenTitle": "Schermata «Gioca»",
+      "jugarScreenIntro": "Immagini delle card Prenota campo, Cerca partita e Crea partita. Scegli lo sport e carica una foto 16:9 per card.",
+      "sportForCards": "Sport delle card",
+      "changePhoto": "Cambia foto",
+      "hubTorneosCardTitle": "Card Tornei (hub inizio)",
+      "hubTorneosCardIntro": "Immagine card Tornei nell'hub principale, per sport.",
       "previewLabel": "Anteprima",
       "noGlobalCards": "Non ci sono carte globali configurate."
     },
