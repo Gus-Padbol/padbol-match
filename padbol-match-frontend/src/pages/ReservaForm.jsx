@@ -156,8 +156,21 @@ function horaDesdeMinutosReserva(totalMin) {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 
+/** sedes_duraciones (duraciones_oferta) si viene en la sede; si no, columnas legacy precio_60/90/120. */
+function duracionesReservaDesdeSede(sede) {
+  const oferta = Array.isArray(sede?.duraciones_oferta) ? sede.duraciones_oferta : [];
+  if (oferta.length > 0) {
+    const mins = oferta
+      .map((r) => parseInt(String(r?.duracion_minutos), 10))
+      .filter((m) => RESERVA_DURACIONES_MIN.includes(m));
+    const uniq = [...new Set(mins)].sort((a, b) => a - b);
+    if (uniq.length) return uniq;
+  }
+  return duracionesReservaDisponibles(sede);
+}
+
 function duracionReservaSeleccionada(formData, sede) {
-  const disponibles = duracionesReservaDisponibles(sede);
+  const disponibles = duracionesReservaDesdeSede(sede);
   const d = parseInt(String(formData?.duracion || ''), 10);
   if (disponibles.length > 0 && disponibles.includes(d)) return d;
   if (disponibles.length > 0) return disponibles[0];
@@ -1028,7 +1041,7 @@ export default function ReservaForm() {
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
   const duracionesOfrecidas = useMemo(
-    () => duracionesReservaDisponibles(sedeSeleccionada),
+    () => duracionesReservaDesdeSede(sedeSeleccionada),
     [sedeSeleccionada]
   );
 
