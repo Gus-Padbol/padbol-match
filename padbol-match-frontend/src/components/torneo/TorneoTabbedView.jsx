@@ -37,6 +37,7 @@ import {
 import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresExcel';
 import { IconGeroUbicacion } from '../icons/GeroIcons';
 import SponsorPromoCard from '../SponsorPromoCard';
+import SponsorTicker from '../SponsorTicker';
 import PartidoDetalleModal from './PartidoDetalleModal';
 import TorneoGruposTable from './TorneoGruposTable';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
@@ -1285,12 +1286,7 @@ export default function TorneoTabbedView({
             return (
               <div key={grupo}>
                 {renderGrupoTable(grupo, tablaGrupo, openEq, grupoEquipos)}
-                <SponsorPromoCard
-                  sponsors={presentadoPorSponsor}
-                  contexto="torneo"
-                  sedeId={torneo?.sede_id}
-                  torneoId={torneo?.id}
-                />
+                <SponsorTicker sedeId={torneo?.sede_id} />
               </div>
             );
           })}
@@ -1301,12 +1297,7 @@ export default function TorneoTabbedView({
     return (
       <div style={{ padding: '8px 0' }}>
         {renderGrupoTable('General', tabla, openEq)}
-        <SponsorPromoCard
-          sponsors={presentadoPorSponsor}
-          contexto="torneo"
-          sedeId={torneo?.sede_id}
-          torneoId={torneo?.id}
-        />
+        <SponsorTicker sedeId={torneo?.sede_id} />
       </div>
     );
   };
