@@ -15,11 +15,20 @@ function sponsorInitials(nombre) {
 
 /**
  * Tarjeta unificada de sponsor/publicidad en toda la app.
- * @param {{ sponsor?: unknown, className?: string, style?: object }} props
+ * @param {{ sponsor?: unknown, sponsors?: unknown, contexto?: string, sedeId?: number|null, torneoId?: number|null, className?: string, style?: object, compact?: boolean }} props
  */
-export default function SponsorPromoCard({ sponsor, className = '', style, compact = false }) {
+export default function SponsorPromoCard({
+  sponsor,
+  sponsors,
+  contexto = null,
+  sedeId = null,
+  torneoId = null,
+  className = '',
+  style,
+  compact = false,
+}) {
   const { t } = useTranslation();
-  const data = normalizeSponsorPromo(sponsor);
+  const data = normalizeSponsorPromo(sponsor ?? sponsors);
   if (!data) return null;
 
   const { nombre, logo_url, tagline, url_destino } = data;
@@ -70,7 +79,15 @@ export default function SponsorPromoCard({ sponsor, className = '', style, compa
   }
 
   return (
-    <div className={classNames} style={style} role="group" aria-label={nombre}>
+    <div
+      className={classNames}
+      style={style}
+      role="group"
+      aria-label={nombre}
+      data-sponsor-contexto={contexto != null && String(contexto).trim() !== '' ? String(contexto) : undefined}
+      data-sponsor-sede-id={sedeId != null ? String(sedeId) : undefined}
+      data-sponsor-torneo-id={torneoId != null ? String(torneoId) : undefined}
+    >
       {inner}
     </div>
   );
