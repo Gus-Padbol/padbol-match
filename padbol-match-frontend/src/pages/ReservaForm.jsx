@@ -48,7 +48,6 @@ import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from
 import {
   duracionesReservaDisponibles,
   precioReservaTurno,
-  precioSedeParaDuracionMin,
   RESERVA_DURACIONES_MIN,
 } from '../utils/sedePreciosDuracion';
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
@@ -71,8 +70,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
  */
 
 function getPrecio(sede, hora, fecha, duracionMin) {
-  const baseDuracion = precioSedeParaDuracionMin(sede, duracionMin);
-  return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas, baseDuracion);
+  return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas);
 }
 
 /** Igual que ArmarPartido paso 3: líneas para `extras` en crear-preferencia / reservaData. */
@@ -158,15 +156,12 @@ function horaDesdeMinutosReserva(totalMin) {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 
-function duracionReservaSeleccionada(formData, sede, disponiblesOverride) {
-  const disponibles =
-    Array.isArray(disponiblesOverride) && disponiblesOverride.length
-      ? disponiblesOverride
-      : duracionesReservaDisponibles(sede);
+function duracionReservaSeleccionada(formData, sede) {
+  const disponibles = duracionesReservaDisponibles(sede);
   const d = parseInt(String(formData?.duracion || ''), 10);
-  if (disponibles.length > 0 && Number.isFinite(d) && disponibles.includes(d)) return d;
-  if (Number.isFinite(d) && RESERVA_DURACIONES_MIN.includes(d)) return d;
-  return 90;
+  if (disponibles.length > 0 && disponibles.includes(d)) return d;
+  if (disponibles.length > 0) return disponibles[0];
+  return RESERVA_DURACIONES_MIN.includes(d) ? d : 90;
 }
 
 function reservaBloqueaDisponibilidad(reserva) {
@@ -606,16 +601,6 @@ function deportesActivosSedeKeys(sede) {
   return keys.sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
-/** Slots genéricos por cantidad_canchas cuando no hay filas en canchas_activas (sede ya filtrada por deporte en listado). */
-function slotsReservaFallbackCantidadCanchas(sedeData) {
-  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
-  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
-  return Array.from({ length: n }, (_, i) => ({
-    numero: i + 1,
-    nombre: `Cancha ${i + 1}`,
-  }));
-}
-
 /** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
 function slotsReservaDesdeSede(sedeData, deporteCanon) {
   const active = sedeData?.canchas_activas;
@@ -627,29 +612,20 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
         return d === deporteCanon;
       });
     }
-    if (sorted.length > 0) {
-      return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
-        numero: Number(x.numero),
-        nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
-      }));
-    }
+    return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
+      numero: Number(x.numero),
+      nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
+    }));
   }
-  if (deporteCanon && RESERVA_CANCHA_DEPORTES.has(deporteCanon)) {
-    const ofrece =
-      (Array.isArray(sedeData?.deportes_disponibles) &&
-        sedeData.deportes_disponibles.includes(deporteCanon)) ||
-      (Array.isArray(sedeData?.canchas_por_deporte) &&
-        sedeData.canchas_por_deporte.some((r) => {
-          if (r?.activo === false || r?.activo === 'false' || r?.activo === 0) return false;
-          const n = Number(r?.cantidad);
-          if (Number.isFinite(n) && n <= 0) return false;
-          const d = String(r.deporte || 'padbol').trim().toLowerCase();
-          return d === deporteCanon;
-        }));
-    if (ofrece) return slotsReservaFallbackCantidadCanchas(sedeData);
+  if (deporteCanon) {
     return [];
   }
-  return slotsReservaFallbackCantidadCanchas(sedeData);
+  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
+  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
+  return Array.from({ length: n }, (_, i) => ({
+    numero: i + 1,
+    nombre: `Cancha ${i + 1}`,
+  }));
 }
 
 export default function ReservaForm() {
@@ -697,9 +673,6 @@ export default function ReservaForm() {
   }, [searchParams]);
 
   const [sedes, setSedes] = useState([]);
-  /** GET /api/sedes/:id — evita «Cargando sede…» cuando ?sedeId= abre pantalla 2 antes del listado. */
-  const [sedeReservaDetalle, setSedeReservaDetalle] = useState(null);
-  const [sedeReservaDetalleLoading, setSedeReservaDetalleLoading] = useState(false);
   /** Catálogo sin filtro de deporte: países disponibles y detección automática por geo/IP. */
   const [sedesCatalogo, setSedesCatalogo] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
@@ -710,8 +683,6 @@ export default function ReservaForm() {
   const [deportesZonaLoading, setDeportesZonaLoading] = useState(false);
   const [reservaFutbolMenuAbierto, setReservaFutbolMenuAbierto] = useState(false);
   const reservaFutbolMenuRef = useRef(null);
-  /** Evita limpiar duración/horario en la primera carga de la sede (?sedeId= desde card). */
-  const prevSedeReservaIdRef = useRef(null);
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
@@ -729,14 +700,6 @@ export default function ReservaForm() {
     };
   });
 
-  /** Id de sede activo: filtros o ?sedeId= (el detalle GET /api/sedes/:id no debe depender solo del listado). */
-  const reservaSedeIdActivo = useMemo(() => {
-    const fromFiltro = Number(filtros.sede_id);
-    if (Number.isFinite(fromFiltro) && fromFiltro > 0) return fromFiltro;
-    const fromUrl = parseInt(String(initialSedeId || '').trim(), 10);
-    return Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : null;
-  }, [filtros.sede_id, initialSedeId]);
-
   /** Al cambiar de paso o volver atrás, el scroll del documento puede dejar el bloque bajo el header fijo. */
   useLayoutEffect(() => {
     const base = String(location.pathname || '').split('?')[0].split('#')[0];
@@ -747,14 +710,11 @@ export default function ReservaForm() {
   }, [pantalla, location.pathname]);
 
   const sedeSeleccionada = useMemo(() => {
-    const sid = reservaSedeIdActivo;
-    if (sid == null) return null;
-    const fromList = Array.isArray(sedes) ? sedes.find((s) => Number(s.id) === sid) : null;
-    const det =
-      sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null;
-    if (fromList && det) return { ...fromList, ...det };
-    return det || fromList || null;
-  }, [sedes, reservaSedeIdActivo, sedeReservaDetalle]);
+    if (!Array.isArray(sedes) || sedes.length === 0 || filtros.sede_id === '' || filtros.sede_id == null) {
+      return null;
+    }
+    return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
+  }, [sedes, filtros.sede_id]);
 
   /** GPS o IP aproximada en pantalla 1 (país automático, orden por cercanía y badge «más cercana»). */
   const [geoReserva, setGeoReserva] = useState({
@@ -810,38 +770,26 @@ export default function ReservaForm() {
     };
   }, [pantalla]);
 
-  /** Cargar sede por id (duraciones_oferta, canchas_activas) aunque el listado aún no llegó. */
+  /** Refrescar la sede desde la API al reservar/pagar para usar precio_turno y tarifas actualizados en Supabase. */
   useEffect(() => {
-    const rawId = reservaSedeIdActivo != null ? String(reservaSedeIdActivo) : null;
-    if (rawId === '' || rawId == null) {
-      setSedeReservaDetalle(null);
-      setSedeReservaDetalleLoading(false);
-      return;
-    }
+    const rawId = filtros.sede_id;
+    if (rawId === '' || rawId == null) return;
+    if (pantalla !== 2 && pantalla !== 4) return;
     let cancelled = false;
-    setSedeReservaDetalleLoading(true);
     fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}${reservaSedeApiQuery(reservaDeporteUrl)}`))
       .then(async (res) => {
         const text = await res.text();
         if (cancelled) return;
-        if (!res.ok) {
-          setSedeReservaDetalle(null);
-          return;
-        }
+        if (!res.ok) return;
         let sedeFresh;
         try {
           sedeFresh = JSON.parse(text);
         } catch {
-          setSedeReservaDetalle(null);
           return;
         }
-        if (!sedeFresh || typeof sedeFresh !== 'object') {
-          setSedeReservaDetalle(null);
-          return;
-        }
-        setSedeReservaDetalle(sedeFresh);
+        if (!sedeFresh || typeof sedeFresh !== 'object') return;
         setSedes((prev) => {
-          if (!Array.isArray(prev)) return [sedeFresh];
+          if (!Array.isArray(prev)) return prev;
           const nid = Number(rawId);
           const idx = prev.findIndex((s) => Number(s.id) === nid);
           if (idx >= 0) {
@@ -852,16 +800,11 @@ export default function ReservaForm() {
           return [...prev, sedeFresh];
         });
       })
-      .catch(() => {
-        if (!cancelled) setSedeReservaDetalle(null);
-      })
-      .finally(() => {
-        if (!cancelled) setSedeReservaDetalleLoading(false);
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [reservaSedeIdActivo, reservaDeporteUrl]);
+  }, [filtros.sede_id, pantalla, reservaDeporteUrl]);
 
   const [mostrarEtiquetaSedeMasCercanaGeo, setMostrarEtiquetaSedeMasCercanaGeo] = useState(false);
 
@@ -941,26 +884,21 @@ export default function ReservaForm() {
   );
 
   const syncReservaDeporteEnUrl = useCallback(
-    (deporteKey, opts = {}) => {
-      const preserveSedeDeepLink = Boolean(opts.preserveSedeDeepLink);
+    (deporteKey) => {
       const canon =
         deporteKey && RESERVA_CANCHA_DEPORTES.has(deporteKey)
           ? deporteKey
           : RESERVA_DEPORTE_DEFAULT;
-      if (!preserveSedeDeepLink) {
-        setFiltros((prev) => ({ ...prev, sede_id: '' }));
-      }
+      setFiltros((prev) => ({ ...prev, sede_id: '' }));
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
           next.set('deporte', canon);
-          if (!preserveSedeDeepLink) {
-            next.delete('sedeId');
-            next.delete('fecha');
-            next.delete('hora');
-            next.delete('canchaId');
-            next.delete('cancha');
-          }
+          next.delete('sedeId');
+          next.delete('fecha');
+          next.delete('hora');
+          next.delete('canchaId');
+          next.delete('cancha');
           return next;
         },
         { replace: true }
@@ -969,11 +907,10 @@ export default function ReservaForm() {
     [setSearchParams]
   );
 
-  /** Sin `?deporte=` en la URL → Padbol por defecto (no borrar ?sedeId= de deep link). */
+  /** Sin `?deporte=` en la URL → Padbol por defecto. */
   useEffect(() => {
     if (normalizeReservaDeporteUrl(searchParams.get('deporte'))) return;
-    const hasSedeDeepLink = Boolean(String(searchParams.get('sedeId') || '').trim());
-    syncReservaDeporteEnUrl(RESERVA_DEPORTE_DEFAULT, { preserveSedeDeepLink: hasSedeDeepLink });
+    syncReservaDeporteEnUrl(RESERVA_DEPORTE_DEFAULT);
   }, [searchParams, syncReservaDeporteEnUrl]);
 
   const enfocarSelectorPaisReserva = useCallback(() => {
@@ -1090,40 +1027,12 @@ export default function ReservaForm() {
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
-  const sedeParaDuracionesReserva = useMemo(() => {
-    const sid = reservaSedeIdActivo;
-    if (sid == null) return null;
-    const det =
-      sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null;
-    const base = sedeSeleccionada;
-    if (det && base) return { ...base, ...det };
-    return det || base || null;
-  }, [reservaSedeIdActivo, sedeSeleccionada, sedeReservaDetalle]);
-
   const duracionesOfrecidas = useMemo(
-    () => duracionesReservaDisponibles(sedeParaDuracionesReserva),
-    [sedeParaDuracionesReserva]
+    () => duracionesReservaDisponibles(sedeSeleccionada),
+    [sedeSeleccionada]
   );
 
-  const nombreSedePantalla2 = useMemo(() => {
-    if (sedeSeleccionada?.nombre) return sedeSeleccionada.nombre;
-    const sid = reservaSedeIdActivo;
-    if (sid == null) return '';
-    const det =
-      sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null;
-    if (det?.nombre) return det.nombre;
-    const hit =
-      sedes.find((s) => Number(s.id) === sid) ||
-      sedesCatalogo.find((s) => Number(s.id) === sid) ||
-      null;
-    return hit?.nombre || '';
-  }, [sedeSeleccionada, reservaSedeIdActivo, sedes, sedesCatalogo, sedeReservaDetalle]);
-
-  const duracionSeleccionadaMin = duracionReservaSeleccionada(
-    formData,
-    sedeParaDuracionesReserva,
-    duracionesOfrecidas,
-  );
+  const duracionSeleccionadaMin = duracionReservaSeleccionada(formData, sedeSeleccionada);
 
   const [reservaExtrasDisponibles, setReservaExtrasDisponibles] = useState([]);
   const [reservaExtrasLoading, setReservaExtrasLoading] = useState(false);
@@ -1179,10 +1088,10 @@ export default function ReservaForm() {
   }, [reservaExtrasDisponibles, reservaExtrasCantidad]);
 
   const precioReservaTurnoBase = useMemo(() => {
-    if (!sedeParaDuracionesReserva) return 0;
-    const p = getPrecio(sedeParaDuracionesReserva, formData.hora, formData.fecha, duracionSeleccionadaMin);
+    if (!sedeSeleccionada) return 0;
+    const p = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
     return Number.isFinite(Number(p)) ? Number(p) : 0;
-  }, [sedeParaDuracionesReserva, formData.hora, formData.fecha, duracionSeleccionadaMin]);
+  }, [sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin]);
 
   const reservaCargoPlataforma = useMemo(
     () => Math.round((precioReservaTurnoBase + reservaExtrasSubtotal) * 0.03),
@@ -1199,28 +1108,20 @@ export default function ReservaForm() {
     [reservaExtrasDisponibles, reservaExtrasCantidad],
   );
 
-  /** Al cambiar de sede (otra id), limpiar duración/horario; no en la primera resolución de ?sedeId=. */
   useEffect(() => {
-    const sid = sedeSeleccionada?.id;
-    if (sid == null || sid === '') return;
-    const prev = prevSedeReservaIdRef.current;
-    prevSedeReservaIdRef.current = sid;
-    if (prev == null || Number(prev) === Number(sid)) return;
-    setFormData((prevFd) => ({ ...prevFd, duracion: '', hora: '', cancha: '' }));
+    if (!sedeSeleccionada || duracionesOfrecidas.length === 0) return;
+    const cur = parseInt(String(formData.duracion || ''), 10);
+    if (duracionesOfrecidas.includes(cur)) return;
+    setFormData((prev) => ({
+      ...prev,
+      duracion: String(duracionesOfrecidas[0]),
+      hora: '',
+      cancha: '',
+    }));
     setHorariosDisponibles([]);
     setCanchasDisponibles([]);
     setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
-  }, [sedeSeleccionada?.id]);
-
-  /** Deep link ?sedeId=: preseleccionar duración cuando llegan duraciones_oferta (card → reservar). */
-  useEffect(() => {
-    if (pantalla !== 2 || !initialSedeId || !formData.fecha) return;
-    if (duracionesOfrecidas.length === 0) return;
-    const d = parseInt(String(formData.duracion || ''), 10);
-    if (Number.isFinite(d) && duracionesOfrecidas.includes(d)) return;
-    const prefer = duracionesOfrecidas.includes(90) ? 90 : duracionesOfrecidas[0];
-    setFormData((prev) => ({ ...prev, duracion: String(prefer) }));
-  }, [pantalla, initialSedeId, formData.fecha, duracionesOfrecidas, formData.duracion]);
+  }, [sedeSeleccionada, duracionesOfrecidas, formData.duracion]);
 
   const irAModificarReservaDesdeResumen = useCallback(() => {
     setPantalla(2);
@@ -1291,16 +1192,14 @@ export default function ReservaForm() {
   const reservaOmitirAutoCanchaUnicaRef = useRef(false);
 
   const redirectGuestAntesResumen = useCallback(
-    (formDataWithCancha, filtrosOverride) => {
-      const filtrosSnap =
-        filtrosOverride && typeof filtrosOverride === 'object' ? filtrosOverride : filtros;
+    (formDataWithCancha) => {
       saveReservaFormSessionState({
         pantalla: 4,
-        filtros: filtrosSnap,
+        filtros,
         formData: formDataWithCancha,
       });
       saveReservaReturnUrl({
-        sedeId: filtrosSnap.sede_id,
+        sedeId: filtros.sede_id,
         fecha: formDataWithCancha.fecha,
         hora: formDataWithCancha.hora,
         cancha: formDataWithCancha.cancha,
@@ -1311,54 +1210,6 @@ export default function ReservaForm() {
     },
     [filtros, location, navigate]
   );
-
-  /** Pantalla 4 solo con sesión; invitado → /acceso con estado guardado. */
-  const avanzarAResumenReserva = useCallback(
-    (patch = {}) => {
-      if (authLoading) return false;
-      const snap = {
-        ...formData,
-        ...patch,
-        numeroTel: whatsapp || formData.numeroTel,
-      };
-      if (patch.cancha != null && String(patch.cancha).trim() !== '') {
-        snap.cancha = String(patch.cancha);
-      }
-      if (!session?.user) {
-        redirectGuestAntesResumen(snap);
-        return false;
-      }
-      if (Object.keys(patch).length > 0) {
-        setFormData((prev) => ({
-          ...prev,
-          ...patch,
-          ...(patch.cancha != null && String(patch.cancha).trim() !== ''
-            ? { cancha: String(patch.cancha) }
-            : {}),
-        }));
-      }
-      setPantalla(4);
-      setError('');
-      return true;
-    },
-    [authLoading, formData, whatsapp, session?.user, redirectGuestAntesResumen],
-  );
-
-  /** Invitado en resumen → /acceso; sesión incompleta → completar perfil; también al pagar. */
-  useEffect(() => {
-    if (pantalla !== 4 || authLoading || session?.user) return;
-    redirectGuestAntesResumen({
-      ...formData,
-      numeroTel: whatsapp || formData.numeroTel,
-    });
-  }, [
-    pantalla,
-    authLoading,
-    session?.user,
-    formData,
-    whatsapp,
-    redirectGuestAntesResumen,
-  ]);
 
   /** Invitado → /acceso; sesión sin WhatsApp/género → completar perfil. Solo al tocar pagar. */
   const gateReservaAntesDePagar = useCallback(() => {
@@ -1406,9 +1257,11 @@ export default function ReservaForm() {
     if (authLoading) return;
     const libres = canchasDisponibles.filter((c) => c.libre);
     if (libres.length === 1) {
-      avanzarAResumenReserva({ cancha: String(libres[0].num) });
+      setFormData((prev) => ({ ...prev, cancha: String(libres[0].num) }));
+      setPantalla(4);
+      setError('');
     }
-  }, [canchasDisponibles, pantalla, formData, authLoading, avanzarAResumenReserva]);
+  }, [canchasDisponibles, pantalla, formData, authLoading]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1469,6 +1322,8 @@ export default function ReservaForm() {
 
   // Completar país/ciudad cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
   useEffect(() => {
+    if (sedes.length === 0) return;
+
     const sedeIdFromUrl =
       initialSedeId && String(initialSedeId).trim() ? String(initialSedeId).trim() : null;
     if (!sedeIdFromUrl) {
@@ -1480,17 +1335,8 @@ export default function ReservaForm() {
     const id = parseInt(String(sedeIdFromUrl), 10);
     if (Number.isNaN(id)) return;
 
-    const listoCatalogo = sedesCatalogo.length > 0 || sedes.length > 0;
-    const listoDetalle = sedeReservaDetalle && Number(sedeReservaDetalle.id) === id;
-    if (!listoDetalle && sedeReservaDetalleLoading) return;
-    if (!listoDetalle && !listoCatalogo) return;
-
-    const sede =
-      sedes.find((s) => Number(s.id) === id) ||
-      sedesCatalogo.find((s) => Number(s.id) === id) ||
-      (sedeReservaDetalle && Number(sedeReservaDetalle.id) === id ? sedeReservaDetalle : null);
+    const sede = sedes.find((s) => Number(s.id) === id);
     if (!sede) {
-      if (sedeReservaDetalleLoading) return;
       reservaUrlBootstrapKeyRef.current = '';
       reservaOmitirAutoCanchaUnicaRef.current = false;
       clearReservaGeoMasCercanaIntent();
@@ -1509,8 +1355,7 @@ export default function ReservaForm() {
     const canchaQ = (sp.get('canchaId') || sp.get('cancha') || '').trim();
     const depPreserve = normalizeReservaDeporteUrl(sp.get('deporte'));
 
-    const fuenteCiudades = sedes.length > 0 ? sedes : sedesCatalogo;
-    const ciudadesDelPais = [...new Set(fuenteCiudades.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
+    const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
     setCiudades(ciudadesDelPais);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
 
@@ -1522,6 +1367,10 @@ export default function ReservaForm() {
         hora: horaQ,
         cancha: canchaQ,
       }));
+      if (authLoading) {
+        return;
+      }
+      setPantalla(4);
       const next = createSearchParams({
         sedeId: String(id),
         fecha: fechaQ,
@@ -1530,8 +1379,6 @@ export default function ReservaForm() {
       });
       if (depPreserve) next.set('deporte', depPreserve);
       navigate({ pathname: '/reservar', search: `?${next.toString()}` }, { replace: true });
-      if (authLoading) return;
-      avanzarAResumenReserva({ fecha: fechaQ, hora: horaQ, cancha: canchaQ });
       setError('');
     } else {
       reservaOmitirAutoCanchaUnicaRef.current = Boolean(fechaQ && horaQ);
@@ -1549,28 +1396,7 @@ export default function ReservaForm() {
       }
     }
     reservaUrlBootstrapKeyRef.current = urlBootstrapKey;
-  }, [
-    sedes,
-    sedesCatalogo,
-    sedeReservaDetalle,
-    sedeReservaDetalleLoading,
-    filtros.sede_id,
-    initialSedeId,
-    location.search,
-    navigate,
-    authLoading,
-    session?.user?.id,
-    avanzarAResumenReserva,
-  ]);
-
-  /** Mantener sede_id de la URL aunque el listado filtrado por deporte aún no incluya la sede. */
-  useEffect(() => {
-    if (!initialSedeId) return;
-    const id = parseInt(String(initialSedeId), 10);
-    if (Number.isNaN(id)) return;
-    if (filtros.sede_id === id) return;
-    setFiltros((prev) => ({ ...prev, sede_id: id }));
-  }, [initialSedeId, filtros.sede_id]);
+  }, [sedes, initialSedeId, location.search, navigate, authLoading, session?.user?.id]);
 
   // Tras login: restaurar estado guardado en sessionStorage (v2 o legacy) antes de redirigir a login.
   useEffect(() => {
@@ -1654,20 +1480,6 @@ export default function ReservaForm() {
       if (full) {
         clearKey();
         mergeFiltrosForm(filt, fd, sedeObj);
-        if (!session?.user) {
-          redirectGuestAntesResumen(
-            {
-              ...fd,
-              fecha,
-              hora,
-              cancha,
-              codigoPais: fd.codigoPais ?? '+54',
-              numeroTel: fd.numeroTel ?? '',
-            },
-            { pais: sedeObj.pais, ciudad: sedeObj.ciudad, sede_id: Number(sedeObj.id) },
-          );
-          return;
-        }
         setPantalla(4);
         navigate(
           {
@@ -1724,19 +1536,6 @@ export default function ReservaForm() {
     if (fecha && hora && cancha) {
       clearKey();
       mergeFiltrosForm(filt, fdLegacy, sedeObj);
-      if (!session?.user) {
-        redirectGuestAntesResumen(
-          {
-            fecha,
-            hora,
-            cancha,
-            codigoPais: '+54',
-            numeroTel: '',
-          },
-          { pais: sedeObj.pais, ciudad: sedeObj.ciudad, sede_id: Number(sedeObj.id) },
-        );
-        return;
-      }
       setPantalla(4);
       navigate(
         {
@@ -1761,7 +1560,7 @@ export default function ReservaForm() {
     if (fecha) params.fecha = fecha;
     navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` }, { replace: true });
     setError('');
-  }, [sedes.length, sedes, authLoading, navigate, session?.user, redirectGuestAntesResumen]);
+  }, [sedes.length, sedes, authLoading, navigate, session?.user]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
@@ -2016,35 +1815,18 @@ export default function ReservaForm() {
     }
   }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
 
-  const duracionElegidaParaHorarios = useMemo(() => {
-    const d = parseInt(String(formData.duracion || ''), 10);
-    return (
-      duracionesOfrecidas.length > 0 &&
-      Number.isFinite(d) &&
-      duracionesOfrecidas.includes(d)
-    );
-  }, [formData.duracion, duracionesOfrecidas]);
-
-  // Horarios solo tras elegir fecha y duración (los slots dependen de la duración).
+  // Auto-load time slots when date is selected (pantalla 2)
   useEffect(() => {
-    if (pantalla !== 2 || !formData.fecha || !sedeSeleccionada || !duracionElegidaParaHorarios) return;
+    if (pantalla !== 2 || !formData.fecha || !sedeSeleccionada) return;
     buscarHorariosDisponibles(formData.fecha);
-  }, [
-    pantalla,
-    formData.fecha,
-    sedeSeleccionada,
-    duracionElegidaParaHorarios,
-    duracionSeleccionadaMin,
-    buscarHorariosDisponibles,
-  ]);
+  }, [pantalla, formData.fecha, sedeSeleccionada, buscarHorariosDisponibles]);
 
   const handleSelectFecha = useCallback((fecha) => {
-    setLoading(false);
+    setLoading(true);
     setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
     setFormData((prev) => ({
       ...prev,
       fecha,
-      duracion: '',
       hora: '',
       cancha: '',
     }));
@@ -2609,7 +2391,7 @@ export default function ReservaForm() {
 
   // PANTALLA 2: fecha → horarios → canchas en una sola vista con scroll (revelación progresiva)
   if (pantalla === 2) {
-    const hoyIso = ymdHoyParaReservaSede(sedeParaDuracionesReserva || sedeSeleccionada);
+    const hoyIso = ymdHoyParaReservaSede(sedeSeleccionada);
     return (
       <div className="reserva-container" style={{
         background: 'var(--bg-page)',
@@ -2632,7 +2414,7 @@ export default function ReservaForm() {
         >
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: mostrarEtiquetaSedeMasCercanaGeo ? '8px' : '20px' }}>
-            📅 {nombreSedePantalla2 || t('reservas.loadingVenue')}
+            📅 {sedeSeleccionada?.nombre || t('reservas.loadingVenue')}
           </h1>
           {mostrarEtiquetaSedeMasCercanaGeo && sedeSeleccionada ? (
             <p
@@ -2647,46 +2429,43 @@ export default function ReservaForm() {
             </p>
           ) : null}
 
-          {(sedeSeleccionada || sedeParaDuracionesReserva) && (() => {
-            const sedeLinea = sedeSeleccionada || sedeParaDuracionesReserva;
-            const { flag, linea } = formatSedeCiudadPaisLinea(sedeLinea, t);
-            return (
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
-                {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
-                {linea}
-                {textoLineaTarifasReserva(sedeLinea)}
-              </p>
-            );
-          })()}
+          {sedeSeleccionada && (
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
+            {(() => {
+              const { flag, linea } = formatSedeCiudadPaisLinea(sedeSeleccionada, t);
+              return (
+                <>
+                  {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
+                  {linea}
+                </>
+              );
+            })()}
+            {textoLineaTarifasReserva(sedeSeleccionada)}
+          </p>
+          )}
 
           <form>
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.chooseDay')}</label>
               <ReservaCalendarioMes
                 selectedIso={formData.fecha}
-                minIso={ymdHoyParaReservaSede(sedeParaDuracionesReserva || sedeSeleccionada)}
+                minIso={ymdHoyParaReservaSede(sedeSeleccionada)}
                 maxIso={fechaMaxReservaISO()}
                 todayIso={hoyIso}
                 onSelectDay={handleSelectFecha}
-                disabled={!sedeParaDuracionesReserva && !sedeSeleccionada && reservaSedeIdActivo == null}
+                disabled={!sedeSeleccionada}
               />
             </div>
 
-            {formData.fecha && (sedeParaDuracionesReserva || reservaSedeIdActivo != null) ? (
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
-              {sedeReservaDetalleLoading && duracionesOfrecidas.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
-                  {t('reservas.loadingPricing')}
-                </p>
-              ) : duracionesOfrecidas.length === 0 ? (
+              {duracionesOfrecidas.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
                   {t('reservas.noPricing')}
                 </p>
               ) : (
                 <>
                   <div
-                    className="reserva-duracion-grid"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: `repeat(${Math.min(duracionesOfrecidas.length, 3)}, 1fr)`,
@@ -2694,8 +2473,8 @@ export default function ReservaForm() {
                     }}
                   >
                     {duracionesOfrecidas.map((duracion) => {
-                      const active = duracionSeleccionadaMin === duracion && duracionElegidaParaHorarios;
-                      const precioDur = precioSedeParaDuracionMin(sedeParaDuracionesReserva, duracion) ?? 0;
+                      const active = duracionSeleccionadaMin === duracion;
+                      const precioDur = getPrecio(sedeSeleccionada, '', formData.fecha, duracion);
                       return (
                         <button
                           key={duracion}
@@ -2728,17 +2507,11 @@ export default function ReservaForm() {
                       {t('reservas.onlyDuration')}
                     </p>
                   ) : null}
-                  {!duracionElegidaParaHorarios ? (
-                    <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-                      {t('reservas.pickDurationBeforeSlots')}
-                    </p>
-                  ) : null}
                 </>
               )}
             </div>
-            ) : null}
 
-            {duracionElegidaParaHorarios && horariosDisponibles.length > 0 && (
+            {horariosDisponibles.length > 0 && (
               <div className="form-group reserva-horario-bloque">
                 <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.availableTimes')}</label>
                 <div className="reserva-horarios-wrap">
@@ -2762,8 +2535,7 @@ export default function ReservaForm() {
               </div>
             )}
 
-            {duracionElegidaParaHorarios &&
-              formData.fecha &&
+            {formData.fecha &&
               sedeSeleccionada &&
               horariosDisponibles.length === 0 &&
               loading === false &&
@@ -2776,7 +2548,7 @@ export default function ReservaForm() {
             {formData.hora && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  💰 {Number(getPrecio(sedeParaDuracionesReserva, formData.hora, formData.fecha, duracionSeleccionadaMin)).toLocaleString('es-AR')} {sedeParaDuracionesReserva?.moneda || sedeSeleccionada?.moneda || 'ARS'}
+                  💰 {Number(getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
                 {(() => {
                   const subEtiqueta =
@@ -2808,7 +2580,10 @@ export default function ReservaForm() {
                       type="button"
                       disabled={!c.libre}
                       onClick={() => {
-                        avanzarAResumenReserva({ cancha: String(c.num) });
+                        if (authLoading) return;
+                        setFormData({ ...formData, cancha: String(c.num) });
+                        setPantalla(4);
+                        setError('');
                       }}
                       className={`reserva-cancha-elegir-btn ${c.libre ? 'reserva-cancha-elegir-btn--libre' : 'reserva-cancha-elegir-btn--ocupada'}`}
                     >
@@ -2828,28 +2603,8 @@ export default function ReservaForm() {
     );
   }
 
-  // PANTALLA 4: Resumen + pago (solo usuarios logueados; invitado redirige en avanzarAResumenReserva / useEffect)
+  // PANTALLA 4: Resumen + pago
   if (pantalla === 4) {
-    if (authLoading || !session?.user) {
-      return (
-        <div
-          className="reserva-container"
-          style={{
-            background: 'var(--bg-page)',
-            color: 'var(--text-primary)',
-            paddingTop: reservaPaddingTopCss,
-            paddingBottom: reservaPaddingBottomCss,
-            minHeight: '100dvh',
-          }}
-        >
-          <AppHeader title={t('reservas.header')} onBack={handleReservaBack} reservaCheckoutMinimal />
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: 24 }}>
-            {t('reservas.loadingVenue')}
-          </p>
-        </div>
-      );
-    }
-
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const creditoAplicado = 0;
     const precioTurnoResumen = precioReservaTurnoBase;
@@ -2874,12 +2629,10 @@ export default function ReservaForm() {
         : precioTurnoResumen;
     const precioPayloadStripe = Number(stripeMinorToMain(totalMinor, moneda));
     const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
-    const muestraInputWhatsappResumen =
-      Boolean(session?.user) &&
-      !perfilTelefonoValido({
-        whatsapp: waPerfilResumen,
-        telefono: waPerfilResumen,
-      });
+    const muestraInputWhatsappResumen = !perfilTelefonoValido({
+      whatsapp: waPerfilResumen,
+      telefono: waPerfilResumen,
+    });
     const formParaTelStripe = muestraInputWhatsappResumen ? { ...formData, numeroTel: whatsapp } : formData;
     const telefonoStripe = telefonoPagoResuelto(
       clienteReservaTelefonoEfectivo || { email: '', nombre: '', whatsapp: '' },
