@@ -15,6 +15,7 @@ import {
   hubContentPaddingTopCss,
 } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -23,6 +24,7 @@ const API_BASE = (
 );
 
 export default function PartidosAbiertos() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -175,7 +177,7 @@ export default function PartidosAbiertos() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Buscar partido" />
+      <AppHeader title={t('jugar.buscar')} />
       <main
         style={{
           width: '100%',
@@ -342,10 +344,12 @@ export default function PartidosAbiertos() {
             }}
           >
             <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 18, fontWeight: 700 }}>
-              No hay partidos disponibles. ¡Inicia uno!
+              {t('partidosAbiertos.emptyTitle')}
             </h2>
             <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400 }}>
-              {deporteFiltro ? 'Prueba con otro deporte o sin filtro.' : 'Publica el primero y completa jugadores en minutos.'}
+              {deporteFiltro
+                ? t('partidosAbiertos.emptyFilterHint')
+                : t('partidosAbiertos.emptyNoFilterHint')}
             </p>
             <button
               type="button"
@@ -361,7 +365,7 @@ export default function PartidosAbiertos() {
                 cursor: 'pointer',
               }}
             >
-              Armar partido
+              {t('partidosAbiertos.armarPartido')}
             </button>
           </section>
         ) : (

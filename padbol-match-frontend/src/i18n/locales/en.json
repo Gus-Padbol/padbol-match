@@ -1444,5 +1444,11 @@
     "registeredBody": "Your booking was registered. We will contact you per the venue settings.",
     "publicarPartido": "Publish this match in «Find a match»?",
     "publicarPartidoDesc": "If you enable it, other players can request to join. If not, only your confirmed booking remains."
+  },
+  "partidosAbiertos": {
+    "emptyTitle": "No open matches available. Start one!",
+    "emptyFilterHint": "Try another sport or clear the filter.",
+    "emptyNoFilterHint": "Post the first match and fill players in minutes.",
+    "armarPartido": "Create a match"
   }
 }

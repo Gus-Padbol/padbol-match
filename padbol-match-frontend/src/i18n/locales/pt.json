@@ -1439,5 +1439,11 @@
     "registeredBody": "Reserva registrada. Entraremos em contato conforme a configuração da sede.",
     "publicarPartido": "Publicar esta partida em «Buscar partida»?",
     "publicarPartidoDesc": "Se ativar, outros jogadores poderão pedir para entrar. Se não, fica só a sua reserva confirmada."
+  },
+  "partidosAbiertos": {
+    "emptyTitle": "Não há partidas disponíveis. Inicie uma!",
+    "emptyFilterHint": "Tente outro desporto ou sem filtro.",
+    "emptyNoFilterHint": "Publique a primeira e complete jogadores em minutos.",
+    "armarPartido": "Montar partida"
   }
 }

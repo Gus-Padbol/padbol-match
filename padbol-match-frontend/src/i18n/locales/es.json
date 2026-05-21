@@ -270,6 +270,12 @@
     "publicarPartido": "¿Publicar este partido en «Buscar partido»?",
     "publicarPartidoDesc": "Si lo activás, otros jugadores van a poder pedir unirse. Si no, solo queda tu reserva confirmada."
   },
+  "partidosAbiertos": {
+    "emptyTitle": "No hay partidos disponibles. ¡Inicia uno!",
+    "emptyFilterHint": "Prueba con otro deporte o sin filtro.",
+    "emptyNoFilterHint": "Publica el primero y completa jugadores en minutos.",
+    "armarPartido": "Armar partido"
+  },
   "torneos": {
     "titulo": "Torneos",
     "crear": "Crear torneo",

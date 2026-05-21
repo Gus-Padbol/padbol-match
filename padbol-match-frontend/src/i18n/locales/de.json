@@ -1439,5 +1439,11 @@
     "registeredBody": "Reservierung registriert. Wir melden uns gemäß Anlagen-Einstellungen.",
     "publicarPartido": "Dieses Spiel in «Spiel suchen» veröffentlichen?",
     "publicarPartidoDesc": "Wenn aktiviert, können andere Spieler um Beitritt bitten. Sonst bleibt nur deine bestätigte Reservierung."
+  },
+  "partidosAbiertos": {
+    "emptyTitle": "Keine offenen Spiele verfügbar. Starte eines!",
+    "emptyFilterHint": "Probiere eine andere Sportart oder ohne Filter.",
+    "emptyNoFilterHint": "Veröffentliche das erste Spiel und fülle die Spieler in wenigen Minuten.",
+    "armarPartido": "Spiel erstellen"
   }
 }

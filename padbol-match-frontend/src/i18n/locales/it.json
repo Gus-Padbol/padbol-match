@@ -1439,5 +1439,11 @@
     "registeredBody": "Prenotazione registrata. Ti contatteremo secondo la configurazione della sede.",
     "publicarPartido": "Pubblicare questa partita in «Cerca partita»?",
     "publicarPartidoDesc": "Se lo attivi, altri giocatori potranno chiedere di unirsi. Altrimenti resta solo la tua prenotazione confermata."
+  },
+  "partidosAbiertos": {
+    "emptyTitle": "Nessuna partita disponibile. Iniziane una!",
+    "emptyFilterHint": "Prova un altro sport o senza filtro.",
+    "emptyNoFilterHint": "Pubblica la prima e completa i giocatori in pochi minuti.",
+    "armarPartido": "Organizza partita"
   }
 }

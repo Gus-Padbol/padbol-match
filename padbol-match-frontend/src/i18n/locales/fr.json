@@ -1439,5 +1439,11 @@
     "registeredBody": "Votre réservation a été enregistrée. Nous vous contacterons selon la configuration de la salle.",
     "publicarPartido": "Publier ce match dans « Trouver un match » ?",
     "publicarPartidoDesc": "Si vous l'activez, d'autres joueurs pourront demander à rejoindre. Sinon, seule votre réservation confirmée reste."
+  },
+  "partidosAbiertos": {
+    "emptyTitle": "Aucun match disponible. Lancez-en un !",
+    "emptyFilterHint": "Essayez un autre sport ou sans filtre.",
+    "emptyNoFilterHint": "Publiez le premier et complétez les joueurs en quelques minutes.",
+    "armarPartido": "Organiser un match"
   }
 }

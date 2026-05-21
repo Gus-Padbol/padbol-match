@@ -1439,5 +1439,11 @@
     "registeredBody": "Rezervarea a fost înregistrată. Te vom contacta conform setărilor sediului.",
     "publicarPartido": "Publicați acest meci în «Caută meci»?",
     "publicarPartidoDesc": "Dacă îl activați, alți jucători pot cere să se alăture. Altfel rămâne doar rezervarea confirmată."
+  },
+  "partidosAbiertos": {
+    "emptyTitle": "Nu există meciuri disponibile. Începe unul!",
+    "emptyFilterHint": "Încearcă alt sport sau fără filtru.",
+    "emptyNoFilterHint": "Publică primul și completează jucătorii în câteva minute.",
+    "armarPartido": "Organizează meci"
   }
 }
