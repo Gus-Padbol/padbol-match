@@ -258,6 +258,10 @@ export function buildTablaPosiciones(equiposList, partidosList) {
     .map((eq) => {
       const k = equipoIdKey(eq.id);
       const s = stats[k] || { jj: 0, g: 0, p: 0, pts: 0, sg: 0, sp: 0, gg: 0, gp: 0 };
+      const gf = s.gg;
+      const gc = s.gp;
+      /** Deporte por sets (SW/SL): sin diferencial de goles en tabla. */
+      const dg = 0;
       return {
         id: eq.id,
         nombre: eq.nombre,
@@ -271,6 +275,9 @@ export function buildTablaPosiciones(equiposList, partidosList) {
         sp: s.sp,
         gg: s.gg,
         gp: s.gp,
+        gf,
+        gc,
+        dg,
         djuegos: (s.gg - s.gp) || 0,
         dif: (s.sg - s.sp) || 0,
       };

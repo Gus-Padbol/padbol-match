@@ -1285,6 +1285,9 @@ export default function TorneoTabbedView({
             return (
               <div key={grupo}>
                 {renderGrupoTable(grupo, tablaGrupo, openEq, grupoEquipos)}
+                <div className="torneo-grupos-ad-banner">
+                  <span className="torneo-grupos-ad-banner__label">PUBLICIDAD</span>
+                </div>
               </div>
             );
           })}
@@ -1295,6 +1298,9 @@ export default function TorneoTabbedView({
     return (
       <div style={{ padding: '8px 0' }}>
         {renderGrupoTable('General', tabla, openEq)}
+        <div className="torneo-grupos-ad-banner">
+          <span className="torneo-grupos-ad-banner__label">PUBLICIDAD</span>
+        </div>
       </div>
     );
   };

@@ -4,6 +4,8 @@ import { fotoCapitanEquipo } from '../../utils/equipoOpenJoin';
 import { formaRecienteEquipoGrupo } from '../../utils/torneoGruposFormaReciente';
 import { equipoIdKey } from '../../utils/torneoPartidoResultado';
 
+const FORMA_SLOTS = 6;
+
 function initialFromText(value) {
   const s = String(value || '').trim();
   for (let i = 0; i < s.length; i += 1) {
@@ -26,8 +28,14 @@ function fotoEquipoTabla(eq) {
   return String(fotoCapitanEquipo(eq) || '').trim();
 }
 
+function formatDg(row) {
+  const dg = Number(row.dg) || 0;
+  if (dg > 0) return `+${dg}`;
+  return `${dg}`;
+}
+
 /**
- * Tabla de posiciones estilo Copa Libertadores (grupos / general).
+ * Tabla de posiciones por grupo (PE, PP, DG, GF, GC, últimos 6).
  */
 export default function TorneoGruposTable({
   grupoLabel,
@@ -86,25 +94,22 @@ export default function TorneoGruposTable({
                 {t('torneos.vista.colEquipo')}
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                {t('torneos.vista.statPj')}
+                PE
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                {t('torneos.vista.statPg')}
+                PP
+              </th>
+              <th className="torneo-grupos-th torneo-grupos-th--dg" scope="col">
+                DG
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                {t('torneos.vista.statPp')}
+                GF
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                {t('torneos.vista.statSw')}
-              </th>
-              <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                {t('torneos.vista.statSl')}
-              </th>
-              <th className="torneo-grupos-th torneo-grupos-th--pts" scope="col">
-                {t('torneos.vista.statPts')}
+                GC
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--forma" scope="col">
-                {t('torneos.vista.statForma', { defaultValue: 'Forma' })}
+                ÚLTIMOS 6
               </th>
             </tr>
           </thead>
@@ -116,7 +121,28 @@ export default function TorneoGruposTable({
               const nombre = resolveNombre(row);
               const foto = fotoEquipoTabla(eqFull);
               const initial = initialFromText(nombre);
-              const forma = formaRecienteEquipoGrupo(row.id, partidos, grupoEquipos, grupoLabel, 5);
+              const forma = formaRecienteEquipoGrupo(row.id, partidos, grupoEquipos, grupoLabel, FORMA_SLOTS);
+              const formaConSlots = [
+                ...forma,
+                ...Array(Math.max(0, FORMA_SLOTS - forma.length)).fill(null),
+              ].slice(0, FORMA_SLOTS);
+
+              const badgeClass =
+                pos === 1
+                  ? 'torneo-grupos-pos-badge torneo-grupos-pos-badge--1'
+                  : pos === 2
+                    ? 'torneo-grupos-pos-badge torneo-grupos-pos-badge--2'
+                    : pos === 3
+                      ? 'torneo-grupos-pos-badge torneo-grupos-pos-badge--3'
+                      : 'torneo-grupos-pos-badge torneo-grupos-pos-badge--fuera';
+
+              const dgNum = Number(row.dg) || 0;
+              const dgClass =
+                dgNum > 0
+                  ? 'torneo-grupos-td torneo-grupos-td--num torneo-grupos-td--dg-pos'
+                  : dgNum < 0
+                    ? 'torneo-grupos-td torneo-grupos-td--num torneo-grupos-td--dg-neg'
+                    : 'torneo-grupos-td torneo-grupos-td--num torneo-grupos-td--dg-zero';
 
               return (
                 <tr
@@ -126,11 +152,7 @@ export default function TorneoGruposTable({
                   }
                 >
                   <td className="torneo-grupos-td torneo-grupos-td--pos">
-                    <span
-                      className={`torneo-grupos-pos-badge${clasifica ? ' torneo-grupos-pos-badge--clasifica' : ' torneo-grupos-pos-badge--fuera'}`}
-                    >
-                      {pos}
-                    </span>
+                    <span className={badgeClass}>{pos}</span>
                   </td>
                   <td className="torneo-grupos-td torneo-grupos-td--equipo">
                     <button
@@ -152,25 +174,37 @@ export default function TorneoGruposTable({
                       <span className="torneo-grupos-equipo-nombre">{nombre}</span>
                     </button>
                   </td>
-                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.jj}</td>
                   <td className="torneo-grupos-td torneo-grupos-td--num">{row.g}</td>
                   <td className="torneo-grupos-td torneo-grupos-td--num">{row.p}</td>
-                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.sg}</td>
-                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.sp}</td>
-                  <td className="torneo-grupos-td torneo-grupos-td--pts">{row.pts}</td>
+                  <td className={dgClass}>{formatDg(row)}</td>
+                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.gf ?? 0}</td>
+                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.gc ?? 0}</td>
                   <td className="torneo-grupos-td torneo-grupos-td--forma">
-                    <div className="torneo-grupos-forma" aria-label={t('torneos.vista.statForma', { defaultValue: 'Forma' })}>
-                      {forma.length === 0 ? (
-                        <span className="torneo-grupos-forma--vacio">—</span>
-                      ) : (
-                        forma.map((chip, i) => (
+                    <div
+                      className="torneo-grupos-forma"
+                      aria-label={t('torneos.vista.statForma', { defaultValue: 'Últimos 6' })}
+                    >
+                      {formaConSlots.map((chip, i) =>
+                        chip === null ? (
                           <span
                             key={`${row.id}-f-${i}`}
-                            className={`torneo-grupos-forma-chip${chip === 'G' ? ' torneo-grupos-forma-chip--g' : ' torneo-grupos-forma-chip--p'}`}
+                            className="torneo-grupos-forma-chip torneo-grupos-forma-chip--empty"
+                            aria-hidden
+                          />
+                        ) : (
+                          <span
+                            key={`${row.id}-f-${i}`}
+                            className={`torneo-grupos-forma-chip${
+                              chip === 'G'
+                                ? ' torneo-grupos-forma-chip--g'
+                                : chip === 'E'
+                                  ? ' torneo-grupos-forma-chip--e'
+                                  : ' torneo-grupos-forma-chip--p'
+                            }`}
                           >
                             {chip}
                           </span>
-                        ))
+                        ),
                       )}
                     </div>
                   </td>

@@ -4,6 +4,7 @@ import {
   parseResultadoPartido,
   partidosDelGrupo,
   resolveGanadorEquipoId,
+  validarMarcadorSetsPartido,
 } from './torneoPartidoResultado';
 
 function partidoTieneMarcador(partido) {
@@ -11,14 +12,14 @@ function partidoTieneMarcador(partido) {
 }
 
 /**
- * Últimos resultados del equipo en el grupo: 'G' | 'P' (más reciente al final).
+ * Últimos resultados del equipo en el grupo: 'G' | 'P' | 'E' (más reciente primero).
  * @param {number|string} equipoId
  * @param {object[]} partidosList
  * @param {object[]} grupoEquipos
  * @param {string|number|null} grupoLabel
  * @param {number} max
  */
-export function formaRecienteEquipoGrupo(equipoId, partidosList, grupoEquipos, grupoLabel, max = 5) {
+export function formaRecienteEquipoGrupo(equipoId, partidosList, grupoEquipos, grupoLabel, max = 6) {
   const eid = equipoIdKey(equipoId);
   if (!eid) return [];
 
@@ -38,10 +39,15 @@ export function formaRecienteEquipoGrupo(equipoId, partidosList, grupoEquipos, g
     const idB = equipoIdKey(p.equipo_b_id);
     if (idA !== eid && idB !== eid) continue;
     const ganador = resolveGanadorEquipoId(p);
-    if (!ganador) continue;
+    if (!ganador) {
+      const { empate } = validarMarcadorSetsPartido(p);
+      if (empate) chips.push('E');
+      if (chips.length >= max) break;
+      continue;
+    }
     chips.push(ganador === eid ? 'G' : 'P');
     if (chips.length >= max) break;
   }
 
-  return chips.reverse();
+  return chips;
 }

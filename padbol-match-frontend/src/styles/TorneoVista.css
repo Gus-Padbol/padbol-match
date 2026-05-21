@@ -398,289 +398,222 @@
   cursor: not-allowed;
 }
 
-/* Tabla de posiciones grupos — estilo Copa Libertadores */
+/* ── Grupos table wrapper ── */
 .torneo-grupos-block {
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
-
 .torneo-grupos-block__title {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-primary);
+  margin: 0 0 10px 0;
+  padding: 0 4px;
 }
-
 .torneo-grupos-block__empty {
   margin: 0;
   padding: 14px 12px;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--border, #e2e8f0);
   background: var(--bg-card);
   color: var(--text-secondary);
   font-size: 13px;
   text-align: center;
 }
-
 .torneo-grupos-table-wrap {
-  border-radius: 12px;
-  border: 1px solid var(--border, #e2e8f0);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  border-radius: 10px;
   background: var(--bg-card);
-  overflow: hidden;
 }
-
 .torneo-grupos-table {
   width: 100%;
-  table-layout: fixed;
+  min-width: 520px;
   border-collapse: collapse;
-  font-size: 10px;
-  background: var(--bg-card);
+  table-layout: auto;
 }
 
+/* ── Header ── */
 .torneo-grupos-th {
-  padding: 6px 2px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+  padding: 10px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--text-primary);
-  opacity: 0.72;
+  color: #6b7280;
   text-align: center;
-  border-bottom: 1px solid var(--border, #e2e8f0);
-  background: color-mix(in srgb, var(--bg-card) 88%, var(--text-primary) 4%);
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-
-.torneo-grupos-th--pos {
-  width: 26px;
-}
-
 .torneo-grupos-th--equipo {
-  width: auto;
   text-align: left;
-  padding-left: 6px;
+  min-width: 160px;
+  padding-left: 12px;
 }
-
-.torneo-grupos-th--num {
-  width: 7.5%;
-}
-
-.torneo-grupos-th--pts {
-  width: 9%;
-  color: var(--accent, #e11b22);
-  opacity: 1;
-}
-
-.torneo-grupos-th--forma {
-  width: 14%;
-  padding-right: 4px;
-}
-
-.torneo-grupos-row {
-  border-top: 1px solid var(--border, #e2e8f0);
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.torneo-grupos-row--clasifica {
-  background: color-mix(in srgb, var(--bg-card) 82%, #22c55e 18%);
-}
-
-.torneo-grupos-td {
-  padding: 7px 2px;
-  vertical-align: middle;
+.torneo-grupos-th--pos {
+  width: 36px;
+  padding-left: 10px;
   text-align: center;
 }
-
-.torneo-grupos-td--pos {
-  padding-left: 4px;
-  padding-right: 0;
+.torneo-grupos-th--num {
+  width: 40px;
+}
+.torneo-grupos-th--dg {
+  width: 44px;
+}
+.torneo-grupos-th--forma {
+  min-width: 200px;
+  text-align: left;
+  padding-left: 8px;
 }
 
+/* ── Rows ── */
+.torneo-grupos-row {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s;
+}
+.torneo-grupos-row:last-child {
+  border-bottom: none;
+}
+.torneo-grupos-row--clasifica {
+  background: rgba(34,197,94,0.07);
+}
+
+/* ── Cells ── */
+.torneo-grupos-td {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
 .torneo-grupos-td--equipo {
   text-align: left;
-  padding-left: 4px;
-  padding-right: 2px;
-  overflow: hidden;
+  padding-left: 12px;
 }
-
-.torneo-grupos-td--num,
-.torneo-grupos-td--pts {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+.torneo-grupos-td--pos {
+  padding-left: 10px;
+  text-align: center;
 }
+.torneo-grupos-td--dg-pos { color: #22c55e; font-weight: 600; }
+.torneo-grupos-td--dg-neg { color: #ef4444; font-weight: 600; }
+.torneo-grupos-td--dg-zero { color: #6b7280; }
 
-.torneo-grupos-td--pts {
-  color: var(--accent, #e11b22);
-  font-size: 11px;
-  font-weight: 900;
-}
-
+/* ── Position badge ── */
 .torneo-grupos-pos-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 4px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.torneo-grupos-pos-badge--clasifica {
-  background: #16a34a;
+  font-size: 13px;
+  font-weight: 700;
   color: #fff;
-  box-shadow: 0 1px 4px rgba(22, 163, 74, 0.35);
 }
-
+.torneo-grupos-pos-badge--1,
+.torneo-grupos-pos-badge--2 {
+  background: #22c55e;
+}
+.torneo-grupos-pos-badge--3 {
+  background: #eab308;
+}
 .torneo-grupos-pos-badge--fuera {
-  background: #dc2626;
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.3);
+  background: transparent;
+  color: #6b7280;
 }
 
+/* ── Avatar ── */
 .torneo-grupos-equipo-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  width: 100%;
-  min-width: 0;
+  gap: 8px;
+  background: none;
   border: none;
-  background: transparent;
-  padding: 0;
   cursor: pointer;
-  color: inherit;
-  text-align: left;
+  padding: 0;
+  max-width: 200px;
 }
-
 .torneo-grupos-equipo-avatar {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border, #e2e8f0);
+  flex-shrink: 0;
 }
-
 .torneo-grupos-equipo-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
-
 .torneo-grupos-equipo-initial {
-  font-size: 10px;
-  font-weight: 900;
-  color: #fff;
-  line-height: 1;
-}
-
-.torneo-grupos-equipo-nombre {
   font-size: 11px;
-  font-weight: 800;
-  line-height: 1.2;
+  font-weight: 700;
+  color: #fff;
+}
+.torneo-grupos-equipo-nombre {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
+  max-width: 150px;
 }
 
+/* ── Forma chips ── */
 .torneo-grupos-forma {
   display: flex;
+  gap: 4px;
   align-items: center;
-  justify-content: flex-end;
-  gap: 2px;
-  flex-wrap: nowrap;
-  padding-right: 2px;
+  padding: 2px 0;
 }
-
-.torneo-grupos-forma--vacio {
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 10px;
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
 .torneo-grupos-forma-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  font-size: 8px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-.torneo-grupos-forma-chip--g {
-  background: #16a34a;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
   color: #fff;
+  flex-shrink: 0;
+}
+.torneo-grupos-forma-chip--g { background: #22c55e; }
+.torneo-grupos-forma-chip--p { background: #ef4444; }
+.torneo-grupos-forma-chip--e { background: #6b7280; }
+.torneo-grupos-forma-chip--empty {
+  background: #2a2a2a;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
-.torneo-grupos-forma-chip--p {
-  background: #dc2626;
-  color: #fff;
+/* ── Ad banner ── */
+.torneo-grupos-ad-banner {
+  width: 100%;
+  height: 72px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(255,255,255,0.12);
 }
-
-@media (max-width: 420px) {
-  .torneo-grupos-forma-chip:nth-child(n + 4) {
-    display: none;
-  }
-
-  .torneo-grupos-equipo-avatar {
-    width: 22px;
-    height: 22px;
-  }
-
-  .torneo-grupos-equipo-nombre {
-    font-size: 10px;
-  }
-
-  .torneo-grupos-th--forma {
-    width: 12%;
-  }
-}
-
-@media (min-width: 421px) {
-  .torneo-grupos-table {
-    font-size: 11px;
-  }
-
-  .torneo-grupos-th {
-    font-size: 10px;
-    padding: 8px 4px;
-  }
-
-  .torneo-grupos-td--num,
-  .torneo-grupos-td--pts {
-    font-size: 11px;
-  }
-
-  .torneo-grupos-equipo-avatar {
-    width: 28px;
-    height: 28px;
-  }
-
-  .torneo-grupos-equipo-nombre {
-    font-size: 12px;
-  }
-
-  .torneo-grupos-forma-chip {
-    width: 16px;
-    height: 16px;
-    font-size: 9px;
-  }
+.torneo-grupos-ad-banner__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #4b5563;
+  text-transform: uppercase;
 }
 
 .grupos-container {

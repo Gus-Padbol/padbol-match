@@ -36,6 +36,9 @@ describe('buildTablaPosiciones', () => {
     expect(a.sp).toBe(0);
     expect(a.gg).toBe(12);
     expect(a.gp).toBe(7);
+    expect(a.gf).toBe(12);
+    expect(a.gc).toBe(7);
+    expect(a.dg).toBe(0);
     expect(b.jj).toBe(1);
     expect(b.g).toBe(0);
     expect(b.p).toBe(1);
