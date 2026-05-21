@@ -1,6 +1,5 @@
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { padbolLogoImgStyle } from '../../constants/padbolLogoStyle';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
 import {
   formatNivelTorneo,
@@ -37,7 +36,7 @@ import {
 } from '../../utils/speechResultadoPartido';
 import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresExcel';
 import { IconGeroUbicacion } from '../icons/GeroIcons';
-import SponsorTicker from '../SponsorTicker';
+import SponsorPromoCard from '../SponsorPromoCard';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import { usePadbolLangVersion } from '../../hooks/usePadbolLang';
 import {
@@ -239,8 +238,12 @@ export default function TorneoTabbedView({
   adminTorneoBar = null,
   /** Inscripción jugador (p. ej. «Reservar mi lugar» en planificación): debajo de la barra admin y antes de pestañas. */
   bannerAntesTabs = null,
+  /** Texto de estado encima de pestañas (p. ej. «✅ Torneo finalizado»), sin card. */
+  estadoLineaArribaTabs = null,
+  /** Abre la pestaña Resultados al cargar (torneo finalizado o fecha pasada). */
+  abrirTabResultadosInicial = false,
   stickyTop = '110px',
-  showTorneoLogo = true,
+  showTorneoLogo = false,
   /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
   jugadorNombreTorneoCtx = null,
   apiBaseUrl = 'https://padbol-backend.onrender.com',
@@ -269,7 +272,9 @@ export default function TorneoTabbedView({
   const { t } = useTranslation();
   usePadbolLangVersion();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(() => defaultTabId(torneo?.estado));
+  const [activeTab, setActiveTab] = useState(() =>
+    abrirTabResultadosInicial ? 'resultados' : defaultTabId(torneo?.estado),
+  );
   const resultadosConfettiPlayedRef = useRef(false);
   const [sorteoModalOpen, setSorteoModalOpen] = useState(false);
   const [modalEquipo, setModalEquipo] = useState(null);
@@ -320,12 +325,25 @@ export default function TorneoTabbedView({
     !esFinalizado &&
     !hayAlMenosUnResultadoEnPartidos;
   const estadoBadge = useMemo(() => {
+    if (esFinalizado) return null;
     const b = badgeTorneoEstadoPublico(torneo?.estado);
     if (!b) return null;
     const k = String(torneo?.estado || '').toLowerCase().trim();
     const label = t(`torneos.vista.estado.${k}`, { defaultValue: b.label });
     return { ...b, label };
-  }, [torneo?.estado, t]);
+  }, [torneo?.estado, t, esFinalizado]);
+
+  const sponsorPromoCardData = useMemo(() => {
+    if (!presentadoPorSponsor) return null;
+    const nombre = String(presentadoPorSponsor.nombre || '').trim();
+    const logo = String(presentadoPorSponsor.logo_url || '').trim();
+    if (!nombre && !logo) return null;
+    return {
+      nombre,
+      logo_url: logo,
+      url_destino: String(presentadoPorSponsor.url_destino || '').trim(),
+    };
+  }, [presentadoPorSponsor]);
 
   const labelCategoriaTorneo = useCallback(
     (raw) => {
@@ -466,8 +484,8 @@ export default function TorneoTabbedView({
   const hayLlaveConPartidos = partidosLlave.length > 0;
 
   useEffect(() => {
-    setActiveTab(defaultTabId(torneo?.estado));
-  }, [torneo?.estado, torneo?.id]);
+    setActiveTab(abrirTabResultadosInicial ? 'resultados' : defaultTabId(torneo?.estado));
+  }, [torneo?.estado, torneo?.id, abrirTabResultadosInicial]);
 
   const sedeTorneo = sedesMap[String(torneo?.sede_id)];
   const navOpts = navigateState != null ? { state: navigateState } : undefined;
@@ -963,9 +981,9 @@ export default function TorneoTabbedView({
     const validIds = tabs.map((x) => x.id);
     if (!validIds.length) return;
     if (!validIds.includes(activeTab)) {
-      setActiveTab(defaultTabId(torneo?.estado));
+      setActiveTab(abrirTabResultadosInicial ? 'resultados' : defaultTabId(torneo?.estado));
     }
-  }, [tabs, activeTab, torneo?.estado, torneo?.id]);
+  }, [tabs, activeTab, torneo?.estado, torneo?.id, abrirTabResultadosInicial]);
 
   const horasRevelarEquiposMsg = useMemo(
     () => String(horasRevelarEquiposTorneo(torneo)),
@@ -1665,6 +1683,11 @@ export default function TorneoTabbedView({
           );
         })}
       </div>
+      {sponsorPromoCardData ? (
+        <div style={{ marginBottom: '20px', width: '100%' }}>
+          <SponsorPromoCard sponsor={sponsorPromoCardData} />
+        </div>
+      ) : null}
       <div className="clasificacion-final-box">
         <h3 className="clasificacion-final-titulo">{t('torneos.vista.clasificacionFinal')}</h3>
         <div className="clasificacion-final-lista">
@@ -1946,23 +1969,11 @@ export default function TorneoTabbedView({
           </div>
         </div>
       ) : null}
-      {showTorneoLogo ? (
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          style={{
-            ...padbolLogoImgStyle,
-            marginTop: 0,
-            marginBottom: '8px',
-          }}
-        />
-      ) : null}
-
       <div
         className="torneo-header"
         style={{
           position: 'relative',
-          marginTop: showTorneoLogo ? 0 : '8px',
+          marginTop: '8px',
           marginBottom: '12px',
           padding: '20px',
           paddingRight: shareTorneoMeta?.url ? '52px' : '20px',
@@ -2061,21 +2072,6 @@ export default function TorneoTabbedView({
             </span>
           </p>
         ) : null}
-        {presentadoPorSponsor &&
-        (presentadoPorSponsor.nombre || presentadoPorSponsor.logo_url) ? (
-          <div style={{ marginTop: 12, width: '100%', maxWidth: '100%' }}>
-            <SponsorTicker
-              deporte={presentadoPorDeporte}
-              items={[
-                {
-                  nombre: String(presentadoPorSponsor.nombre || '').trim(),
-                  imagen_url: String(presentadoPorSponsor.logo_url || '').trim(),
-                  url_destino: String(presentadoPorSponsor.url_destino || '').trim(),
-                },
-              ]}
-            />
-          </div>
-        ) : null}
         <p style={{ margin: '6px 0 4px', fontWeight: 700, color: '#475569', fontSize: 'clamp(0.85rem, 2.8vw, 0.95rem)' }}>
           🎾 {resumenDeporteFormatoTorneo(torneo)}
         </p>
@@ -2117,6 +2113,12 @@ export default function TorneoTabbedView({
             📥 Exportar jugadores
           </button>
         </div>
+      ) : null}
+
+      {estadoLineaArribaTabs ? (
+        <p className="torneo-estado-linea-arriba-tabs" role="status">
+          {estadoLineaArribaTabs}
+        </p>
       ) : null}
 
       <div data-torneo-banner-slot={TORNEO_BANNER_ANTES_TABS_DATA_SLOT}>{bannerAntesTabs}</div>

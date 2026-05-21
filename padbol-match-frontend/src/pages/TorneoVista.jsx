@@ -685,13 +685,7 @@ export default function TorneoVista() {
   const bannerInscripcionJugador = useMemo(() => {
     if (!torneo) return null;
     if (torneoPasadoCalendario && !modoAdminExplicitoEnVista) {
-      return (
-        <div className="torneo-inscripcion-jugador-banner">
-          <p className="torneo-inscripcion-jugador-banner__texto" role="status">
-            Torneo finalizado
-          </p>
-        </div>
-      );
+      return null;
     }
     if (!mostrarBannerJugadorTorneo) return null;
 
@@ -1261,7 +1255,13 @@ export default function TorneoVista() {
             </>
           }
           stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock)}
-          showTorneoLogo
+          showTorneoLogo={false}
+          estadoLineaArribaTabs={
+            !modoAdminExplicitoEnVista && (torneoPasadoCalendario || estadoTorneoLower === 'finalizado')
+              ? '✅ Torneo finalizado'
+              : null
+          }
+          abrirTabResultadosInicial={torneoPasadoCalendario || estadoTorneoLower === 'finalizado'}
           shareTorneoMeta={torneo && torneoShareUrl ? torneoShareMeta : null}
           presentadoPorSponsor={presentadoPorSponsor}
           presentadoPorDeporte={deporteParaSponsorTorneo}

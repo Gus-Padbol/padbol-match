@@ -10,6 +10,19 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Estado del torneo (finalizado, etc.): texto simple encima de las pestañas */
+.torneo-estado-linea-arriba-tabs {
+  margin: 0 0 10px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.45;
+  background: none;
+  border: none;
+}
+
 /* Inscripción jugador: debajo del encabezado del torneo, antes de las pestañas */
 .torneo-inscripcion-jugador-banner {
   margin: 0 0 16px;
