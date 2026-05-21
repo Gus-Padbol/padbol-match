@@ -1286,7 +1286,9 @@ export default function TorneoTabbedView({
             return (
               <div key={grupo}>
                 {renderGrupoTable(grupo, tablaGrupo, openEq, grupoEquipos)}
-                <SponsorTicker sedeId={torneo?.sede_id} />
+                <div style={{ margin: '12px 0' }}>
+                  <SponsorTicker sedeId={torneo?.sede_id} />
+                </div>
               </div>
             );
           })}
@@ -1297,7 +1299,9 @@ export default function TorneoTabbedView({
     return (
       <div style={{ padding: '8px 0' }}>
         {renderGrupoTable('General', tabla, openEq)}
-        <SponsorTicker sedeId={torneo?.sede_id} />
+        <div style={{ margin: '12px 0' }}>
+          <SponsorTicker sedeId={torneo?.sede_id} />
+        </div>
       </div>
     );
   };

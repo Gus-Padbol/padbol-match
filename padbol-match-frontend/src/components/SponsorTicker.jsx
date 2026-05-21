@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import { sponsorItemMatchesTickerFormato } from '../utils/sponsorDisplayFormato';
 import { SponsorPromoList } from './SponsorPromoCard';
+import './SponsorTicker.css';
 
 /**
  * Lista de sponsors (antes ticker marquee). Sin sponsors asignados no ocupa espacio.
@@ -39,5 +40,11 @@ export default function SponsorTicker({ items, sedeId = null, deporte = null, co
       .filter((it) => it.nombre || it.logo_url);
   }, [sourceItems]);
 
-  return <SponsorPromoList items={displayItems} deporte={deporte} compact={compact} />;
+  if (!displayItems.length) return null;
+
+  return (
+    <div className="sponsor-ticker">
+      <SponsorPromoList items={displayItems} deporte={deporte} compact />
+    </div>
+  );
 }
