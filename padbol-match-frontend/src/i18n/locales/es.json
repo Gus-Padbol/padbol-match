@@ -143,6 +143,7 @@
     "chooseDay": "Elige el día",
     "duration": "Duración",
     "noPricing": "Esta sede no tiene precios cargados para ninguna duración. Contactá al club.",
+    "loadingPricing": "Cargando precios del turno…",
     "onlyDuration": "Única duración disponible para esta sede.",
     "pickDurationBeforeSlots": "Elegí la duración del turno para ver los horarios disponibles.",
     "availableTimes": "Horarios disponibles",

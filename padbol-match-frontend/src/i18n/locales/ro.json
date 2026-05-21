@@ -143,6 +143,7 @@
     "chooseDay": "Alege ziua",
     "duration": "Durată",
     "noPricing": "Această locație nu are prețuri percepute pentru nicio durată. Contactați clubul.",
+    "loadingPricing": "Se încarcă prețurile rezervării…",
     "onlyDuration": "Numai durata disponibilă pentru această locație.",
     "pickDurationBeforeSlots": "Alege durata rezervării pentru a vedea intervalele disponibile.",
     "availableTimes": "Orari disponibile",

@@ -22,3 +22,5 @@ VALUES
   (1, 90, 30000),
   (1, 120, 40000)
 ON CONFLICT (sede_id, duracion_minutos) DO NOTHING;
+
+-- Políticas RLS (lectura pública de filas activas): ver sedes_duraciones_rls.sql

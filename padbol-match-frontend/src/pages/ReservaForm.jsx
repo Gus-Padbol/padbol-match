@@ -692,6 +692,9 @@ export default function ReservaForm() {
   }, [searchParams]);
 
   const [sedes, setSedes] = useState([]);
+  /** GET /api/sedes/:id — evita «Cargando sede…» cuando ?sedeId= abre pantalla 2 antes del listado. */
+  const [sedeReservaDetalle, setSedeReservaDetalle] = useState(null);
+  const [sedeReservaDetalleLoading, setSedeReservaDetalleLoading] = useState(false);
   /** Catálogo sin filtro de deporte: países disponibles y detección automática por geo/IP. */
   const [sedesCatalogo, setSedesCatalogo] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
@@ -729,11 +732,14 @@ export default function ReservaForm() {
   }, [pantalla, location.pathname]);
 
   const sedeSeleccionada = useMemo(() => {
-    if (!Array.isArray(sedes) || sedes.length === 0 || filtros.sede_id === '' || filtros.sede_id == null) {
-      return null;
-    }
-    return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
-  }, [sedes, filtros.sede_id]);
+    const sid = Number(filtros.sede_id);
+    if (!Number.isFinite(sid) || sid <= 0) return null;
+    const fromList = Array.isArray(sedes) ? sedes.find((s) => Number(s.id) === sid) : null;
+    const det =
+      sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null;
+    if (fromList && det) return { ...fromList, ...det };
+    return det || fromList || null;
+  }, [sedes, filtros.sede_id, sedeReservaDetalle]);
 
   /** GPS o IP aproximada en pantalla 1 (país automático, orden por cercanía y badge «más cercana»). */
   const [geoReserva, setGeoReserva] = useState({
@@ -789,25 +795,38 @@ export default function ReservaForm() {
     };
   }, [pantalla]);
 
-  /** Refrescar sede (duraciones_oferta, canchas_activas, precios) al elegir club o entrar a fecha/horario/pago. */
+  /** Cargar sede por id (duraciones_oferta, canchas_activas) aunque el listado aún no llegó. */
   useEffect(() => {
     const rawId = filtros.sede_id;
-    if (rawId === '' || rawId == null) return;
+    if (rawId === '' || rawId == null) {
+      setSedeReservaDetalle(null);
+      setSedeReservaDetalleLoading(false);
+      return;
+    }
     let cancelled = false;
+    setSedeReservaDetalleLoading(true);
     fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}${reservaSedeApiQuery(reservaDeporteUrl)}`))
       .then(async (res) => {
         const text = await res.text();
         if (cancelled) return;
-        if (!res.ok) return;
+        if (!res.ok) {
+          setSedeReservaDetalle(null);
+          return;
+        }
         let sedeFresh;
         try {
           sedeFresh = JSON.parse(text);
         } catch {
+          setSedeReservaDetalle(null);
           return;
         }
-        if (!sedeFresh || typeof sedeFresh !== 'object') return;
+        if (!sedeFresh || typeof sedeFresh !== 'object') {
+          setSedeReservaDetalle(null);
+          return;
+        }
+        setSedeReservaDetalle(sedeFresh);
         setSedes((prev) => {
-          if (!Array.isArray(prev)) return prev;
+          if (!Array.isArray(prev)) return [sedeFresh];
           const nid = Number(rawId);
           const idx = prev.findIndex((s) => Number(s.id) === nid);
           if (idx >= 0) {
@@ -818,11 +837,16 @@ export default function ReservaForm() {
           return [...prev, sedeFresh];
         });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setSedeReservaDetalle(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSedeReservaDetalleLoading(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [filtros.sede_id, pantalla, reservaDeporteUrl]);
+  }, [filtros.sede_id, reservaDeporteUrl]);
 
   const [mostrarEtiquetaSedeMasCercanaGeo, setMostrarEtiquetaSedeMasCercanaGeo] = useState(false);
 
@@ -2489,7 +2513,11 @@ export default function ReservaForm() {
             {formData.fecha ? (
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
-              {duracionesOfrecidas.length === 0 ? (
+              {sedeReservaDetalleLoading && duracionesOfrecidas.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
+                  {t('reservas.loadingPricing')}
+                </p>
+              ) : duracionesOfrecidas.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
                   {t('reservas.noPricing')}
                 </p>

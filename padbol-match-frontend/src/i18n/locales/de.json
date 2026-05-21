@@ -143,6 +143,7 @@
     "chooseDay": "Wählen Sie den Tag",
     "duration": "Dauer",
     "noPricing": "Für diesen Veranstaltungsort werden keine Preise für die Dauer erhoben. Kontaktieren Sie den Verein.",
+    "loadingPricing": "Buchungspreise werden geladen…",
     "onlyDuration": "Für diesen Standort ist nur die Dauer verfügbar.",
     "pickDurationBeforeSlots": "Wähle die Buchungsdauer, um verfügbare Zeiten zu sehen.",
     "availableTimes": "Verfügbare Zeiten",

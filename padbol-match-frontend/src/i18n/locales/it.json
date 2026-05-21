@@ -143,6 +143,7 @@
     "chooseDay": "Scegli il giorno",
     "duration": "Durata",
     "noPricing": "Questa sede non prevede prezzi addebitati per alcuna durata. Contatta il circolo.",
+    "loadingPricing": "Caricamento prezzi del turno…",
     "onlyDuration": "Solo durata disponibile per questa località.",
     "pickDurationBeforeSlots": "Scegli la durata del turno per vedere gli orari disponibili.",
     "availableTimes": "Orari disponibili",

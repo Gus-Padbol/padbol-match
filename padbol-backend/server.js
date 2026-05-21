@@ -2444,6 +2444,9 @@ app.get('/api/sedes/:id', async (req, res) => {
     try {
       const sedePrecios = await fetchSedePreciosResolucionRow(supabase, id);
       duraciones_oferta = await resolveDuracionesOfertaPublico(supabase, id, sedePrecios || sede);
+      if (id === 1) {
+        console.log('GET /api/sedes/:id sede_id=1 duraciones_oferta respuesta:', duraciones_oferta);
+      }
     } catch (e) {
       console.warn('GET /api/sedes/:id duraciones_oferta:', e?.message || e);
     }
@@ -2988,15 +2991,25 @@ function parsePrecioMonedaBackend(raw) {
 async function fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas = false } = {}) {
   const sid = parseInt(String(sedeId), 10);
   if (!Number.isFinite(sid) || sid <= 0) return [];
-  let q = supabaseClient
+  const db = supabaseAdmin || supabaseClient;
+  let q = db
     .from('sedes_duraciones')
     .select('id,sede_id,duracion_minutos,precio,activo')
     .eq('sede_id', sid)
     .order('duracion_minutos', { ascending: true });
   if (soloActivas) q = q.eq('activo', true);
   const { data, error } = await q;
+  if (sid === 1) {
+    console.log('[sedes_duraciones] fetchSedesDuracionesFromDb sede_id=1', {
+      soloActivas,
+      usingServiceRole: Boolean(supabaseAdmin),
+      error: error ? { message: error.message, code: error.code, details: error.details } : null,
+      rowCount: Array.isArray(data) ? data.length : 0,
+      rows: data,
+    });
+  }
   if (error) {
-    console.warn('[sedes_duraciones] lectura:', error.message || String(error));
+    console.warn('[sedes_duraciones] lectura:', error.message || String(error), { sede_id: sid, code: error.code });
     return [];
   }
   return Array.isArray(data) ? data : [];
@@ -3065,14 +3078,25 @@ function legacyDuracionesOfertaDesdeSedeRow(sedePreciosRow) {
 
 /** Oferta pública: filas activas en sedes_duraciones; si no hay filas, columnas legacy en sedes. */
 async function resolveDuracionesOfertaPublico(supabaseClient, sedeId, sedePreciosRow) {
+  const sid = parseInt(String(sedeId), 10);
   const rows = await fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas: true });
+  let out;
   if (rows.length) {
-    return rows.map((r) => ({
+    out = rows.map((r) => ({
       duracion_minutos: Number(r.duracion_minutos),
       precio: Math.round(Number(r.precio)),
     }));
+  } else {
+    out = legacyDuracionesOfertaDesdeSedeRow(sedePreciosRow);
   }
-  return legacyDuracionesOfertaDesdeSedeRow(sedePreciosRow);
+  if (sid === 1) {
+    console.log('[sedes_duraciones] resolveDuracionesOfertaPublico sede_id=1', {
+      dbRowCount: rows.length,
+      legacyFallback: rows.length === 0,
+      duraciones_oferta: out,
+    });
+  }
+  return out;
 }
 
 function pickDuracionPermitida(allowedMins, durRaw) {

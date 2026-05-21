@@ -143,6 +143,7 @@
     "chooseDay": "Choose day",
     "duration": "Duration",
     "noPricing": "This venue has no prices loaded for any duration. Contact the club.",
+    "loadingPricing": "Loading booking prices…",
     "onlyDuration": "Only duration available at this venue.",
     "pickDurationBeforeSlots": "Choose the booking duration to see available time slots.",
     "availableTimes": "Available times",
