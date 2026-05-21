@@ -23,6 +23,13 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
+const PARTIDOS_ABIERTOS_DEPORTE_DEFAULT = 'padbol';
+
+function canonDeportePartidosAbiertos(raw) {
+  const d = String(raw || '').trim().toLowerCase();
+  return DEPORTES_CANCHA_SEDE_KEYS.includes(d) ? d : PARTIDOS_ABIERTOS_DEPORTE_DEFAULT;
+}
+
 export default function PartidosAbiertos() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -39,14 +46,14 @@ export default function PartidosAbiertos() {
   const [joinSuccess, setJoinSuccess] = useState(false);
   const hubDeporteHydratedRef = useRef(false);
 
-  const deporteFiltro = String(searchParams.get('deporte') || '').trim().toLowerCase();
+  const deporteFiltro = canonDeportePartidosAbiertos(searchParams.get('deporte'));
 
   const setDeporteFiltro = (key) => {
+    const canon = canonDeportePartidosAbiertos(key);
     const next = new URLSearchParams(searchParams);
-    if (key) next.set('deporte', key);
-    else next.delete('deporte');
+    next.set('deporte', canon);
     setSearchParams(next, { replace: true });
-    writeHubDeporteFilterToSession(key);
+    writeHubDeporteFilterToSession(canon);
   };
 
   useEffect(() => {
@@ -58,13 +65,19 @@ export default function PartidosAbiertos() {
       return;
     }
     const fromSession = readHubDeporteFilterPersisted();
-    if (fromSession) {
-      const next = new URLSearchParams(searchParams);
-      next.set('deporte', fromSession);
-      setSearchParams(next, { replace: true });
-    }
+    const canon = canonDeportePartidosAbiertos(fromSession);
+    const next = new URLSearchParams(searchParams);
+    next.set('deporte', canon);
+    setSearchParams(next, { replace: true });
+    writeHubDeporteFilterToSession(canon);
     hubDeporteHydratedRef.current = true;
   }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
+    if (DEPORTES_CANCHA_SEDE_KEYS.includes(d)) return;
+    setDeporteFiltro(PARTIDOS_ABIERTOS_DEPORTE_DEFAULT);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargar = useCallback(() => {
     setLoading(true);
@@ -105,10 +118,10 @@ export default function PartidosAbiertos() {
     cargarSolicitudes();
   }, [cargarSolicitudes]);
 
-  const partidosFiltrados = useMemo(() => {
-    if (!deporteFiltro) return partidos;
-    return partidos.filter((p) => String(p?.deporte || '').toLowerCase() === deporteFiltro);
-  }, [partidos, deporteFiltro]);
+  const partidosFiltrados = useMemo(
+    () => partidos.filter((p) => String(p?.deporte || '').toLowerCase() === deporteFiltro),
+    [partidos, deporteFiltro]
+  );
 
   const pedirUnirse = async (partido) => {
     if (!session?.user) {
@@ -192,6 +205,7 @@ export default function PartidosAbiertos() {
       >
         <HubDeporteSelect
           compact
+          allowAllSports={false}
           id="partidos-abiertos-deporte"
           value={deporteFiltro}
           onChange={setDeporteFiltro}

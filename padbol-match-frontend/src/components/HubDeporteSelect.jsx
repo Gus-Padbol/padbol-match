@@ -7,7 +7,14 @@ import { usePadbolLangVersion } from '../hooks/usePadbolLang';
  * Selector «Elegir deporte» del hub (UserHome, Jugar, etc.).
  * La persistencia en sessionStorage la maneja el padre si hace falta.
  */
-export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-select', compact = false }) {
+export default function HubDeporteSelect({
+  value,
+  onChange,
+  id = 'hub-deporte-select',
+  compact = false,
+  /** Si false, no se muestra «Todos los deportes» y el padre debe fijar un deporte por defecto. */
+  allowAllSports = true,
+}) {
   const { t } = useTranslation();
   usePadbolLangVersion();
   const labelGap = compact ? 4 : 10;
@@ -47,7 +54,7 @@ export default function HubDeporteSelect({ value, onChange, id = 'hub-deporte-se
             cursor: 'pointer',
           }}
         >
-          <option value="">{t('hub.allSports')}</option>
+          {allowAllSports ? <option value="">{t('hub.allSports')}</option> : null}
           {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
             <option key={d.key} value={d.key}>
               {d.label}
