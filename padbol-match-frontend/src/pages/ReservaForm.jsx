@@ -729,6 +729,14 @@ export default function ReservaForm() {
     };
   });
 
+  /** Id de sede activo: filtros o ?sedeId= (el detalle GET /api/sedes/:id no debe depender solo del listado). */
+  const reservaSedeIdActivo = useMemo(() => {
+    const fromFiltro = Number(filtros.sede_id);
+    if (Number.isFinite(fromFiltro) && fromFiltro > 0) return fromFiltro;
+    const fromUrl = parseInt(String(initialSedeId || '').trim(), 10);
+    return Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : null;
+  }, [filtros.sede_id, initialSedeId]);
+
   /** Al cambiar de paso o volver atrás, el scroll del documento puede dejar el bloque bajo el header fijo. */
   useLayoutEffect(() => {
     const base = String(location.pathname || '').split('?')[0].split('#')[0];
@@ -739,14 +747,14 @@ export default function ReservaForm() {
   }, [pantalla, location.pathname]);
 
   const sedeSeleccionada = useMemo(() => {
-    const sid = Number(filtros.sede_id);
-    if (!Number.isFinite(sid) || sid <= 0) return null;
+    const sid = reservaSedeIdActivo;
+    if (sid == null) return null;
     const fromList = Array.isArray(sedes) ? sedes.find((s) => Number(s.id) === sid) : null;
     const det =
       sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null;
     if (fromList && det) return { ...fromList, ...det };
     return det || fromList || null;
-  }, [sedes, filtros.sede_id, sedeReservaDetalle]);
+  }, [sedes, reservaSedeIdActivo, sedeReservaDetalle]);
 
   /** GPS o IP aproximada en pantalla 1 (país automático, orden por cercanía y badge «más cercana»). */
   const [geoReserva, setGeoReserva] = useState({
@@ -804,12 +812,7 @@ export default function ReservaForm() {
 
   /** Cargar sede por id (duraciones_oferta, canchas_activas) aunque el listado aún no llegó. */
   useEffect(() => {
-    const rawId =
-      filtros.sede_id !== '' && filtros.sede_id != null
-        ? filtros.sede_id
-        : initialSedeId && String(initialSedeId).trim()
-          ? String(initialSedeId).trim()
-          : null;
+    const rawId = reservaSedeIdActivo != null ? String(reservaSedeIdActivo) : null;
     if (rawId === '' || rawId == null) {
       setSedeReservaDetalle(null);
       setSedeReservaDetalleLoading(false);
@@ -858,7 +861,7 @@ export default function ReservaForm() {
     return () => {
       cancelled = true;
     };
-  }, [filtros.sede_id, initialSedeId, reservaDeporteUrl]);
+  }, [reservaSedeIdActivo, reservaDeporteUrl]);
 
   const [mostrarEtiquetaSedeMasCercanaGeo, setMostrarEtiquetaSedeMasCercanaGeo] = useState(false);
 
@@ -1088,15 +1091,14 @@ export default function ReservaForm() {
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
   const sedeParaDuracionesReserva = useMemo(() => {
-    const sid = Number(filtros.sede_id);
-    if (!Number.isFinite(sid) || sid <= 0) return sedeSeleccionada;
-    if (sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid) {
-      return sedeSeleccionada
-        ? { ...sedeSeleccionada, ...sedeReservaDetalle }
-        : sedeReservaDetalle;
-    }
-    return sedeSeleccionada;
-  }, [sedeSeleccionada, sedeReservaDetalle, filtros.sede_id]);
+    const sid = reservaSedeIdActivo;
+    if (sid == null) return null;
+    const det =
+      sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null;
+    const base = sedeSeleccionada;
+    if (det && base) return { ...base, ...det };
+    return det || base || null;
+  }, [reservaSedeIdActivo, sedeSeleccionada, sedeReservaDetalle]);
 
   const duracionesOfrecidas = useMemo(
     () => duracionesReservaDisponibles(sedeParaDuracionesReserva),
@@ -1105,14 +1107,17 @@ export default function ReservaForm() {
 
   const nombreSedePantalla2 = useMemo(() => {
     if (sedeSeleccionada?.nombre) return sedeSeleccionada.nombre;
-    const sid = Number(filtros.sede_id);
-    if (!Number.isFinite(sid) || sid <= 0) return '';
+    const sid = reservaSedeIdActivo;
+    if (sid == null) return '';
+    const det =
+      sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null;
+    if (det?.nombre) return det.nombre;
     const hit =
       sedes.find((s) => Number(s.id) === sid) ||
       sedesCatalogo.find((s) => Number(s.id) === sid) ||
-      (sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null);
+      null;
     return hit?.nombre || '';
-  }, [sedeSeleccionada, filtros.sede_id, sedes, sedesCatalogo, sedeReservaDetalle]);
+  }, [sedeSeleccionada, reservaSedeIdActivo, sedes, sedesCatalogo, sedeReservaDetalle]);
 
   const duracionSeleccionadaMin = duracionReservaSeleccionada(
     formData,
@@ -1477,8 +1482,8 @@ export default function ReservaForm() {
 
     const listoCatalogo = sedesCatalogo.length > 0 || sedes.length > 0;
     const listoDetalle = sedeReservaDetalle && Number(sedeReservaDetalle.id) === id;
-    if (!listoCatalogo && !listoDetalle && sedeReservaDetalleLoading) return;
-    if (!listoCatalogo && !listoDetalle) return;
+    if (!listoDetalle && sedeReservaDetalleLoading) return;
+    if (!listoDetalle && !listoCatalogo) return;
 
     const sede =
       sedes.find((s) => Number(s.id) === id) ||
@@ -2663,11 +2668,11 @@ export default function ReservaForm() {
                 maxIso={fechaMaxReservaISO()}
                 todayIso={hoyIso}
                 onSelectDay={handleSelectFecha}
-                disabled={!sedeParaDuracionesReserva && !sedeSeleccionada && !filtros.sede_id}
+                disabled={!sedeParaDuracionesReserva && !sedeSeleccionada && reservaSedeIdActivo == null}
               />
             </div>
 
-            {formData.fecha && (sedeParaDuracionesReserva || filtros.sede_id) ? (
+            {formData.fecha && (sedeParaDuracionesReserva || reservaSedeIdActivo != null) ? (
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
               {sedeReservaDetalleLoading && duracionesOfrecidas.length === 0 ? (
