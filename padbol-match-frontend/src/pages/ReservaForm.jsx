@@ -321,7 +321,7 @@ const STRIPE_PUBLISHABLE_KEY =
 
 const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null;
 
-function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
+function ReservaStripePayInner({ clientSecret, onPaid, onFatal, onRequireAuthForPay }) {
   const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
@@ -330,6 +330,7 @@ function ReservaStripePayInner({ clientSecret, onPaid, onFatal }) {
 
   const handlePay = async () => {
     if (!stripe || !elements) return;
+    if (onRequireAuthForPay && !onRequireAuthForPay()) return;
     setMsg('');
     setPaying(true);
     try {
@@ -506,6 +507,7 @@ function ReservaStripeSection({
       <ReservaStripePayInner
         clientSecret={clientSecret}
         onPaid={onPaid}
+        onRequireAuthForPay={onRequireAuthForPay}
       />
     </Elements>
   );
@@ -800,7 +802,12 @@ export default function ReservaForm() {
 
   /** Cargar sede por id (duraciones_oferta, canchas_activas) aunque el listado aún no llegó. */
   useEffect(() => {
-    const rawId = filtros.sede_id;
+    const rawId =
+      filtros.sede_id !== '' && filtros.sede_id != null
+        ? filtros.sede_id
+        : initialSedeId && String(initialSedeId).trim()
+          ? String(initialSedeId).trim()
+          : null;
     if (rawId === '' || rawId == null) {
       setSedeReservaDetalle(null);
       setSedeReservaDetalleLoading(false);
@@ -849,7 +856,7 @@ export default function ReservaForm() {
     return () => {
       cancelled = true;
     };
-  }, [filtros.sede_id, reservaDeporteUrl]);
+  }, [filtros.sede_id, initialSedeId, reservaDeporteUrl]);
 
   const [mostrarEtiquetaSedeMasCercanaGeo, setMostrarEtiquetaSedeMasCercanaGeo] = useState(false);
 
@@ -1179,14 +1186,28 @@ export default function ReservaForm() {
     [reservaExtrasDisponibles, reservaExtrasCantidad],
   );
 
-  /** Al cambiar de sede, limpiar duración para que el usuario la elija antes de ver horarios. */
+  /** Al cambiar de sede (otra id), limpiar duración/horario; no en la primera resolución de ?sedeId=. */
   useEffect(() => {
-    if (!sedeSeleccionada?.id) return;
-    setFormData((prev) => ({ ...prev, duracion: '', hora: '', cancha: '' }));
+    const sid = sedeSeleccionada?.id;
+    if (sid == null || sid === '') return;
+    const prev = prevSedeReservaIdRef.current;
+    prevSedeReservaIdRef.current = sid;
+    if (prev == null || Number(prev) === Number(sid)) return;
+    setFormData((prevFd) => ({ ...prevFd, duracion: '', hora: '', cancha: '' }));
     setHorariosDisponibles([]);
     setCanchasDisponibles([]);
     setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
   }, [sedeSeleccionada?.id]);
+
+  /** Deep link ?sedeId=: preseleccionar duración cuando llegan duraciones_oferta (card → reservar). */
+  useEffect(() => {
+    if (pantalla !== 2 || !initialSedeId || !formData.fecha) return;
+    if (duracionesOfrecidas.length === 0) return;
+    const d = parseInt(String(formData.duracion || ''), 10);
+    if (Number.isFinite(d) && duracionesOfrecidas.includes(d)) return;
+    const prefer = duracionesOfrecidas.includes(90) ? 90 : duracionesOfrecidas[0];
+    setFormData((prev) => ({ ...prev, duracion: String(prefer) }));
+  }, [pantalla, initialSedeId, formData.fecha, duracionesOfrecidas, formData.duracion]);
 
   const irAModificarReservaDesdeResumen = useCallback(() => {
     setPantalla(2);
@@ -1255,6 +1276,8 @@ export default function ReservaForm() {
    * el usuario debe tocar "Elige tu cancha" igual que en el flujo manual.
    */
   const reservaOmitirAutoCanchaUnicaRef = useRef(false);
+  /** Evita limpiar duración/horario en la primera carga de la sede (?sedeId= desde card). */
+  const prevSedeReservaIdRef = useRef(null);
 
   const redirectGuestAntesResumen = useCallback(
     (formDataWithCancha) => {
@@ -1278,7 +1301,6 @@ export default function ReservaForm() {
 
   /** Invitado → /acceso; sesión sin WhatsApp/género → completar perfil. Solo al tocar pagar. */
   const gateReservaAntesDePagar = useCallback(() => {
-    if (authLoading) return false;
     const snap = {
       ...formData,
       numeroTel: whatsapp || formData.numeroTel,
@@ -1287,6 +1309,7 @@ export default function ReservaForm() {
       redirectGuestAntesResumen(snap);
       return false;
     }
+    if (authLoading) return false;
     if (!perfilJugadorDatosMinimosCompletos(userProfile)) {
       saveReservaFormSessionState({ pantalla: 4, filtros, formData: snap });
       saveReservaReturnUrl({
@@ -2501,7 +2524,7 @@ export default function ReservaForm() {
 
   // PANTALLA 2: fecha → horarios → canchas en una sola vista con scroll (revelación progresiva)
   if (pantalla === 2) {
-    const hoyIso = ymdHoyParaReservaSede(sedeSeleccionada);
+    const hoyIso = ymdHoyParaReservaSede(sedeParaDuracionesReserva || sedeSeleccionada);
     return (
       <div className="reserva-container" style={{
         background: 'var(--bg-page)',
@@ -2539,10 +2562,11 @@ export default function ReservaForm() {
             </p>
           ) : null}
 
-          {sedeSeleccionada && (
+          {(sedeSeleccionada || sedeParaDuracionesReserva) && (
           <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
             {(() => {
-              const { flag, linea } = formatSedeCiudadPaisLinea(sedeSeleccionada, t);
+              const sedeLinea = sedeSeleccionada || sedeParaDuracionesReserva;
+              const { flag, linea } = formatSedeCiudadPaisLinea(sedeLinea, t);
               return (
                 <>
                   {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
@@ -2550,7 +2574,7 @@ export default function ReservaForm() {
                 </>
               );
             })()}
-            {textoLineaTarifasReserva(sedeSeleccionada)}
+            {textoLineaTarifasReserva(sedeLinea)}
           </p>
           )}
 
@@ -2559,15 +2583,15 @@ export default function ReservaForm() {
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.chooseDay')}</label>
               <ReservaCalendarioMes
                 selectedIso={formData.fecha}
-                minIso={ymdHoyParaReservaSede(sedeSeleccionada)}
+                minIso={ymdHoyParaReservaSede(sedeParaDuracionesReserva || sedeSeleccionada)}
                 maxIso={fechaMaxReservaISO()}
                 todayIso={hoyIso}
                 onSelectDay={handleSelectFecha}
-                disabled={!sedeSeleccionada}
+                disabled={!sedeParaDuracionesReserva && !sedeSeleccionada && !filtros.sede_id}
               />
             </div>
 
-            {formData.fecha ? (
+            {formData.fecha && (sedeParaDuracionesReserva || filtros.sede_id) ? (
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
               {sedeReservaDetalleLoading && duracionesOfrecidas.length === 0 ? (
