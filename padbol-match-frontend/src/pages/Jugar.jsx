@@ -4,8 +4,6 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
 import HubDeporteSelect from '../components/HubDeporteSelect';
-import HubJugarSponsorsTicker from '../components/HubJugarSponsorsTicker';
-import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import HubJugarFinalSponsorCard from '../components/HubJugarFinalSponsorCard';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
@@ -79,7 +77,7 @@ export default function Jugar() {
     };
   }, [HUB_API_BASE]);
 
-  const { getSlot, tickerItems } = useHubJugarSponsorSlots();
+  const { getSlot } = useHubJugarSponsorSlots();
 
   useEffect(() => {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
@@ -99,7 +97,7 @@ export default function Jugar() {
     const d = String(deporteElegido || '').trim().toLowerCase();
     return d && DEPORTES_CANCHA_SEDE_KEYS.includes(d) ? d : null;
   }, [deporteElegido]);
-  const { tercerTiempoSponsor, cardSponsor, tickerSponsors: hubTickerSponsors } = useHubSponsors({
+  const { tercerTiempoSponsor, cardSponsor } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: paisParaSponsors,
     deporte: deporteTickerJugar,
@@ -242,16 +240,6 @@ export default function Jugar() {
             writeHubDeporteFilterToSession(v);
           }}
         />
-
-        {hubTickerSponsors?.length > 0 || tickerItems?.length > 0 ? (
-          <div style={{ width: '100%', marginTop: 12, marginBottom: 10 }}>
-            {hubTickerSponsors?.length > 0 ? (
-              <HubSponsorsTicker sponsors={hubTickerSponsors} deporte={deporteTickerJugar} compact />
-            ) : (
-              <HubJugarSponsorsTicker items={tickerItems} deporte={deporteTickerJugar} compact />
-            )}
-          </div>
-        ) : null}
 
         <div style={{ display: 'grid', gap: 10 }}>
           {opciones.map((op) => (
