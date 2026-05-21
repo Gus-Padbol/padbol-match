@@ -7,6 +7,7 @@ import ro from './locales/ro.json';
 import de from './locales/de.json';
 import fr from './locales/fr.json';
 import pt from './locales/pt.json';
+import ar from './locales/ar.json';
 import { normalizePadbolLang } from '../utils/padbolLang';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
 
@@ -31,6 +32,7 @@ export const RO_FALLBACKS = flattenLocale(ro);
 export const DE_FALLBACKS = flattenLocale(de);
 export const FR_FALLBACKS = flattenLocale(fr);
 export const PT_FALLBACKS = flattenLocale(pt);
+export const AR_FALLBACKS = flattenLocale(ar);
 
 const FALLBACKS_BY_LANG = {
   es: ES_FALLBACKS,
@@ -40,6 +42,7 @@ const FALLBACKS_BY_LANG = {
   de: DE_FALLBACKS,
   fr: FR_FALLBACKS,
   pt: PT_FALLBACKS,
+  ar: AR_FALLBACKS,
 };
 
 export function getLocaleFallbacks(lang) {

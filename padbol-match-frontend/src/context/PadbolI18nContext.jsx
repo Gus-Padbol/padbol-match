@@ -1,6 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import i18n from '../i18n';
-import { normalizePadbolLang, setPadbolLanguage as persistPadbolLanguage } from '../utils/padbolLang';
+import {
+  applyPadbolDocumentDirection,
+  normalizePadbolLang,
+  setPadbolLanguage as persistPadbolLanguage,
+} from '../utils/padbolLang';
 
 const PadbolI18nContext = createContext({
   language: 'en',
@@ -23,6 +27,7 @@ export function PadbolI18nProvider({ children }) {
       try {
         if (typeof document !== 'undefined') {
           document.documentElement.lang = next;
+          applyPadbolDocumentDirection(next);
         }
       } catch {
         /* ignore */

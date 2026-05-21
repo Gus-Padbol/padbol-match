@@ -208,6 +208,11 @@ textarea:focus-visible {
   padding-top: 16px;
 }
 
+body.lang-ar {
+  font-family: 'Cairo', 'Segoe UI', sans-serif;
+  direction: rtl;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

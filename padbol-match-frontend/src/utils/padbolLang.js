@@ -13,7 +13,17 @@ export function normalizePadbolLang(code) {
   if (s.startsWith('de')) return 'de';
   if (s.startsWith('fr')) return 'fr';
   if (s.startsWith('pt')) return 'pt';
+  if (s.startsWith('ar')) return 'ar';
   return PADBOL_LANGUAGE_CODES[0] || 'en';
+}
+
+/** Aplica dirección RTL/LTR y clase de idioma en `<html>` / `<body>`. */
+export function applyPadbolDocumentDirection(lang) {
+  if (typeof document === 'undefined') return;
+  const code = normalizePadbolLang(lang);
+  const isAr = code === 'ar';
+  document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+  document.body.classList.toggle('lang-ar', isAr);
 }
 
 /** true si el usuario ya eligió idioma (guardado en localStorage). */
@@ -52,6 +62,7 @@ export async function setPadbolLanguage(code) {
     /* ignore */
   }
   await i18n.changeLanguage(lang);
+  applyPadbolDocumentDirection(lang);
   return lang;
 }
 
@@ -60,8 +71,10 @@ export function bootstrapPadbolLanguage() {
   const stored = getPadbolLangStored();
   if (stored) {
     void i18n.changeLanguage(stored);
+    applyPadbolDocumentDirection(stored);
     return stored;
   }
   void i18n.changeLanguage('en');
+  applyPadbolDocumentDirection('en');
   return 'en';
 }

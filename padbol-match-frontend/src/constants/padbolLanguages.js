@@ -16,6 +16,7 @@ export const PADBOL_LANGUAGES = [
   { code: 'de', flags: '🇩🇪', label: 'Deutsch' },
   { code: 'fr', flags: '🇫🇷', label: 'Français' },
   { code: 'pt', flags: '🇧🇷', label: 'Português' },
+  { code: 'ar', flags: '🇸🇦', label: 'العربية' },
 ];
 
 export const PADBOL_LANGUAGE_CODES = PADBOL_LANGUAGES.map((l) => l.code);
