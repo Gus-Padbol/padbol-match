@@ -23,6 +23,57 @@
   border: none;
 }
 
+/* Sponsor en Resultados: debajo de la clasificación (puesto 10), formato bajo */
+.torneo-sponsor-promo-wrap {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card.torneo-sponsor-promo-card {
+  max-height: 56px;
+  min-height: 0;
+  padding: 5px 10px;
+  padding-top: 17px;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card__badge {
+  top: 4px;
+  right: 8px;
+  font-size: 9px;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card__logo-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card__logo-fallback {
+  font-size: 13px;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card__copy {
+  gap: 2px;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card__name,
+.torneo-sponsor-promo-wrap .sponsor-promo-card__tagline {
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card__name {
+  font-weight: 800;
+}
+
+.torneo-sponsor-promo-wrap .sponsor-promo-card__tagline {
+  font-weight: 500;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
 /* Inscripción jugador: debajo del encabezado del torneo, antes de las pestañas */
 .torneo-inscripcion-jugador-banner {
   margin: 0 0 16px;

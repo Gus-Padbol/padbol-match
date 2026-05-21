@@ -1683,11 +1683,6 @@ export default function TorneoTabbedView({
           );
         })}
       </div>
-      {sponsorPromoCardData ? (
-        <div style={{ marginBottom: '20px', width: '100%' }}>
-          <SponsorPromoCard sponsor={sponsorPromoCardData} />
-        </div>
-      ) : null}
       <div className="clasificacion-final-box">
         <h3 className="clasificacion-final-titulo">{t('torneos.vista.clasificacionFinal')}</h3>
         <div className="clasificacion-final-lista">
@@ -1725,6 +1720,11 @@ export default function TorneoTabbedView({
           })}
         </div>
       </div>
+      {sponsorPromoCardData ? (
+        <div className="torneo-sponsor-promo-wrap">
+          <SponsorPromoCard sponsor={sponsorPromoCardData} compact className="torneo-sponsor-promo-card" />
+        </div>
+      ) : null}
     </div>
   );
 
