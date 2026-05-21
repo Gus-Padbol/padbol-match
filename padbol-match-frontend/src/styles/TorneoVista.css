@@ -444,17 +444,29 @@
 }
 .torneo-grupos-th--pos {
   left: 0;
-  background: var(--bg-card);
 }
 .torneo-grupos-th--equipo {
   left: 36px;
+}
+.torneo-grupos-th--pos,
+.torneo-grupos-th--equipo {
   background: var(--bg-card);
 }
+
 .torneo-grupos-td--sticky {
-  background: inherit;
+  background: var(--bg-card);
 }
+
 .torneo-grupos-row--clasifica .torneo-grupos-td--sticky {
   background: color-mix(in srgb, var(--bg-card) 92%, #22c55e 8%);
+}
+
+.torneo-grupos-row:nth-child(odd) .torneo-grupos-td--sticky {
+  background: var(--bg-card);
+}
+
+.torneo-grupos-row:nth-child(even) .torneo-grupos-td--sticky {
+  background: var(--bg-card);
 }
 
 /* ── Header ── */
