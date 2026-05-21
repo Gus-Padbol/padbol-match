@@ -957,7 +957,11 @@
       "hubTorneosCardTitle": "Card Turnee (hub start)",
       "hubTorneosCardIntro": "Imagine card Turnee pe hub-ul principal, per sport.",
       "previewLabel": "Previzualizare",
-      "noGlobalCards": "Nu există carduri globale configurate."
+      "noGlobalCards": "Nu există carduri globale configurate.",
+      "chiviAvatarTitle": "Avatar Chivi (chatbot)",
+      "chiviAvatarHint": "Imaginea butonului «Întrebări?». Gol = /chivi.png implicit.",
+      "chiviUpload": "Încarcă imagine",
+      "chiviUrlLabel": "URL imagine (chivi_imagen_url)"
     },
     "sedes": {
       "extrasPendingApproval": "Suplimente în așteptarea aprobării",
@@ -1378,7 +1382,8 @@
     "quickTodaySlots": "Vezi orare astăzi ⚽",
     "quickFindGame": "Găsiți o potrivire în apropiere 🔍",
     "quickBookCourt": "Rezervă instanță 📅",
-    "online": "Online"
+    "online": "Online",
+    "boton": "Întrebări?"
   },
   "pwa": {
     "installApp": "Instalați aplicația",

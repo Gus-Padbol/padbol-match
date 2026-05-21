@@ -986,7 +986,11 @@
       "hubTorneosCardTitle": "بطولات البطاقة (الشاشة الرئيسية)",
       "hubTorneosCardIntro": "صورة لبطاقة البطولات في المحور الرئيسي حسب الرياضة.",
       "previewLabel": "معاينة",
-      "noGlobalCards": "لا توجد بطاقات عمومية تم تكوينها."
+      "noGlobalCards": "لا توجد بطاقات عمومية تم تكوينها.",
+      "chiviAvatarTitle": "صورة تشيفي (روبوت الدردشة)",
+      "chiviAvatarHint": "صورة زر «استفسارات؟». فارغ = /chivi.png الافتراضي.",
+      "chiviUpload": "رفع صورة",
+      "chiviUrlLabel": "رابط الصورة (chivi_imagen_url)"
     },
     "sedes": {
       "extrasPendingApproval": "الإضافات في انتظار الموافقة",
@@ -1407,7 +1411,8 @@
     "quickTodaySlots": "انظر الجداول اليوم ⚽",
     "quickFindGame": "ابحث عن تطابق قريب 🔍",
     "quickBookCourt": "المحكمة الاحتياطية 📅",
-    "online": "متصل"
+    "online": "متصل",
+    "boton": "استفسارات؟"
   },
   "pwa": {
     "installApp": "تثبيت التطبيق",

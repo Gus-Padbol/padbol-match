@@ -12,6 +12,7 @@ import {
   mergeHubDeporteRowIntoList,
   pickHubDeporteRow,
 } from '../utils/hubDeporteConfig';
+import { CHIVI_AVATAR_DEFAULT_SRC, HUB_CHIVI_CONFIG_ID } from '../constants/hubChiviConfig';
 
 const cardWrap = {
   marginBottom: '20px',
@@ -63,7 +64,7 @@ function hubEditorNoticeStyle(text) {
   return { color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 };
 }
 
-export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken }) {
+export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, isSuperAdmin = false }) {
   const { t } = useTranslation();
   const hubJugarActionCards = useMemo(
     () =>
@@ -107,6 +108,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   const [uploadingInicioId, setUploadingInicioId] = useState(null);
   const fileRefInicio = useRef(null);
   const uploadInicioTargetIdRef = useRef(null);
+  const [chiviImagenUrl, setChiviImagenUrl] = useState('');
+  const [savingChivi, setSavingChivi] = useState(false);
+  const [uploadingChivi, setUploadingChivi] = useState(false);
+  const fileRefChivi = useRef(null);
   const sportSelRef = useRef(sportSel);
   sportSelRef.current = sportSel;
   /** Tras el primer paint, solo refrescamos filas cuando el deporte del selector cambia de verdad. */
@@ -155,6 +160,8 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
         ini[hubId] = deporteHubInicioDesdeRow(row, idx);
       });
       setInicioDeporteById(ini);
+      const chiviRow = list.find((x) => String(x.id) === HUB_CHIVI_CONFIG_ID);
+      setChiviImagenUrl(String(chiviRow?.chivi_imagen_url || chiviRow?.foto_url || '').trim());
       const d = {};
       for (const r of list) {
         const id = String(r.id || '').trim();
@@ -204,7 +211,12 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
   }, [apiBaseUrl]);
 
   const legacyHubRows = useMemo(
-    () => rows.filter((r) => !HUB_INICIO_CARD_IDS.includes(String(r.id || ''))),
+    () =>
+      rows.filter(
+        (r) =>
+          !HUB_INICIO_CARD_IDS.includes(String(r.id || '')) &&
+          String(r.id || '') !== HUB_CHIVI_CONFIG_ID,
+      ),
     [rows],
   );
 
@@ -243,6 +255,72 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
     if (accessToken) h.Authorization = `Bearer ${accessToken}`;
     return h;
   }, [accessToken]);
+
+  const guardarChiviAvatar = async () => {
+    if (!accessToken) {
+      setMsg(t('admin.formularios.loginAgain'));
+      return;
+    }
+    setSavingChivi(true);
+    setMsg('');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(HUB_CHIVI_CONFIG_ID)}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ chivi_imagen_url: chiviImagenUrl }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t('admin.metricas.saveError'));
+      setRows((prev) => {
+        const has = prev.some((r) => String(r.id) === HUB_CHIVI_CONFIG_ID);
+        if (has) {
+          return prev.map((r) => (String(r.id) === HUB_CHIVI_CONFIG_ID ? { ...r, ...data } : r));
+        }
+        return [...prev, data];
+      });
+      setChiviImagenUrl(String(data?.chivi_imagen_url || data?.foto_url || chiviImagenUrl || '').trim());
+      setMsg('Guardado correctamente.');
+      window.setTimeout(() => setMsg(''), 2500);
+    } catch (e) {
+      setMsg(e?.message || String(e));
+    } finally {
+      setSavingChivi(false);
+    }
+  };
+
+  const subirChiviFoto = async (file) => {
+    setUploadingChivi(true);
+    setMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('foto', file);
+      const res = await fetch(
+        `${apiBaseUrl}/api/hub-config/${encodeURIComponent(HUB_CHIVI_CONFIG_ID)}/foto`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: fd,
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t('admin.hub.uploadFailed'));
+      const url = String(data?.chivi_imagen_url || data?.foto_url || '').trim();
+      setChiviImagenUrl(url);
+      setRows((prev) => {
+        const has = prev.some((r) => String(r.id) === HUB_CHIVI_CONFIG_ID);
+        if (has) {
+          return prev.map((r) => (String(r.id) === HUB_CHIVI_CONFIG_ID ? { ...r, ...data } : r));
+        }
+        return [...prev, data];
+      });
+      setMsg('Foto actualizada.');
+      window.setTimeout(() => setMsg(''), 2500);
+    } catch (e) {
+      setMsg(e?.message || String(e));
+    } finally {
+      setUploadingChivi(false);
+    }
+  };
 
   const guardarCard = async (id) => {
     if (!accessToken) {
@@ -628,6 +706,80 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken })
       <h2 style={{ marginBottom: '16px', paddingBottom: '8px', color: 'var(--text-primary)' }}>
         Personalizar Hub
       </h2>
+
+      {isSuperAdmin ? (
+        <div className="admin-hub-editor-card" style={{ ...cardWrap, marginBottom: '22px' }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
+            {t('admin.hub.chiviAvatarTitle')}
+          </h3>
+          <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+            {t('admin.hub.chiviAvatarHint')}
+          </p>
+          <input
+            ref={fileRefChivi}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={(ev) => {
+              const file = ev.target.files?.[0];
+              ev.target.value = '';
+              if (file) void subirChiviFoto(file);
+            }}
+          />
+          <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: '12px' }}>
+            <img
+              src={chiviImagenUrl || CHIVI_AVATAR_DEFAULT_SRC}
+              alt="Chivi"
+              style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: '50%', border: '1px solid var(--border)' }}
+            />
+            <div style={{ flex: '1', minWidth: '200px' }}>
+              <button
+                type="button"
+                disabled={uploadingChivi || !accessToken}
+                onClick={() => fileRefChivi.current?.click()}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: uploadingChivi ? '#94a3b8' : '#E11B22',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: uploadingChivi || !accessToken ? 'not-allowed' : 'pointer',
+                  marginBottom: '8px',
+                }}
+              >
+                {uploadingChivi ? 'Subiendo…' : t('admin.hub.chiviUpload')}
+              </button>
+              <label style={labelStyle}>{t('admin.hub.chiviUrlLabel')}</label>
+              <input
+                type="url"
+                style={inputStyle}
+                value={chiviImagenUrl}
+                placeholder={CHIVI_AVATAR_DEFAULT_SRC}
+                onChange={(e) => setChiviImagenUrl(e.target.value)}
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={savingChivi || !accessToken}
+            onClick={() => void guardarChiviAvatar()}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '8px',
+              border: 'none',
+              background: savingChivi ? '#94a3b8' : '#E11B22',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: savingChivi || !accessToken ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {savingChivi ? t('admin.metricas.saving') : t('general.save')}
+          </button>
+        </div>
+      ) : null}
 
       <h3
         style={{

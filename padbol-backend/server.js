@@ -1776,6 +1776,10 @@ app.patch('/api/hub-config/:id', async (req, res) => {
         ? body.fotos_urls.map((x) => String(x || '').trim()).filter(Boolean)
         : [];
     }
+    if (Object.prototype.hasOwnProperty.call(body, 'chivi_imagen_url')) {
+      const u = String(body.chivi_imagen_url ?? '').trim();
+      patch.chivi_imagen_url = u || null;
+    }
     const keys = Object.keys(patch).filter((k) => k !== 'updated_at');
     if (!keys.length) return res.status(400).json({ error: 'Nada que actualizar' });
     const { data, error } = await supabase.from('hub_config').update(patch).eq('id', id).select('*').maybeSingle();
@@ -1816,9 +1820,11 @@ app.post('/api/hub-config/:id/foto', uploadHubFoto.single('foto'), async (req, r
     const fotoUrl = pub?.data?.publicUrl || null;
     if (!fotoUrl) return res.status(500).json({ error: 'No se pudo obtener URL pública' });
 
+    const updatePayload = { foto_url: fotoUrl, updated_at: new Date().toISOString() };
+    if (id === 'hub_chivi') updatePayload.chivi_imagen_url = fotoUrl;
     const { data: row, error: upErr } = await supabase
       .from('hub_config')
-      .update({ foto_url: fotoUrl, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', id)
       .select('*')
       .maybeSingle();

@@ -957,7 +957,11 @@
       "hubTorneosCardTitle": "Card Tornei (hub inizio)",
       "hubTorneosCardIntro": "Immagine card Tornei nell'hub principale, per sport.",
       "previewLabel": "Anteprima",
-      "noGlobalCards": "Non ci sono carte globali configurate."
+      "noGlobalCards": "Non ci sono carte globali configurate.",
+      "chiviAvatarTitle": "Avatar Chivi (chatbot)",
+      "chiviAvatarHint": "Immagine del pulsante «Domande?». Vuoto = /chivi.png predefinito.",
+      "chiviUpload": "Carica immagine",
+      "chiviUrlLabel": "URL immagine (chivi_imagen_url)"
     },
     "sedes": {
       "extrasPendingApproval": "Extra in attesa di approvazione",
@@ -1378,7 +1382,8 @@
     "quickTodaySlots": "Vedi gli orari oggi ⚽",
     "quickFindGame": "Trova una corrispondenza nelle vicinanze 🔍",
     "quickBookCourt": "Campo di riserva 📅",
-    "online": "In linea"
+    "online": "In linea",
+    "boton": "Domande?"
   },
   "pwa": {
     "installApp": "Installa l'app",

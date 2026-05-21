@@ -16,6 +16,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
+import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
+import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
 function TablerMicrophoneIcon({ size = 22 }) {
@@ -276,7 +278,7 @@ function chatUiStringsFromI18n(tr, loc) {
     waEscalada: tr('chatbot.waEscalada'),
     waClub: tr('chatbot.waClub'),
     fabOpen: tr('chatbot.fabOpen'),
-    fabCollapsed: tr('chatbot.fabCollapsed'),
+    fabCollapsed: tr('chatbot.boton', { defaultValue: '¿Consultas?' }),
     fabLine1: tr('chatbot.fabLine1'),
     fabLine2: tr('chatbot.fabLine2'),
     titulo: tr('chatbot.titulo'),
@@ -666,8 +668,19 @@ function QuickSuggestionBar({ items, disabled, onPick, isDark }) {
   );
 }
 
+function ChiviFabAvatar({ src, size = 44 }) {
+  return (
+    <img
+      src={String(src || CHIVI_AVATAR_DEFAULT_SRC).trim() || CHIVI_AVATAR_DEFAULT_SRC}
+      alt="Chivi"
+      style={{ width: size, height: size, objectFit: 'cover', borderRadius: '50%' }}
+    />
+  );
+}
+
 export default function ChatbotIA() {
   const { t } = useTranslation();
+  const { avatarUrl: chiviAvatarUrl } = useHubChiviAvatar();
   const location = useLocation();
   const navigate = useNavigate();
   const { navDock } = useHubNavLayout();
@@ -1408,13 +1421,7 @@ export default function ChatbotIA() {
                   flexShrink: 0,
                 }}
               >
-                <img
-                  src="/logo-padbol-match.png"
-                  alt=""
-                  width={32}
-                  height={32}
-                  style={{ display: 'block', width: 32, height: 32, objectFit: 'contain' }}
-                />
+                <ChiviFabAvatar src={chiviAvatarUrl} size={44} />
               </span>
               <span
                 style={{
@@ -1446,14 +1453,7 @@ export default function ChatbotIA() {
                   justifyContent: 'center',
                 }}
               >
-                <img
-                  src="/logo-padbol-match.png"
-                  alt=""
-                  width={26}
-                  height={26}
-                  style={{ display: 'block', width: 26, height: 26, objectFit: 'contain' }}
-                  aria-hidden
-                />
+                <ChiviFabAvatar src={chiviAvatarUrl} size={44} />
               </span>
               <span
                 style={{

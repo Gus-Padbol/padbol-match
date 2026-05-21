@@ -5778,7 +5778,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             }}
           >
             {activeTab === 'personalizar_hub' ? (
-              <AdminHubPersonalizarSection apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
+              <AdminHubPersonalizarSection
+                apiBaseUrl={apiBaseUrl}
+                accessToken={session?.access_token}
+                isSuperAdmin={isSuperAdmin}
+              />
             ) : null}
             {activeTab === 'sponsors' ? (
               <AdminSponsorsSection isSuperAdmin={false} canDelete={false} canManageCupos={false} canAutoApprove />
@@ -9335,7 +9339,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       </>}
 
       {activeTab === 'personalizar_hub' && (isSuperAdmin || esEditorContenido) ? (
-        <AdminHubPersonalizarSection apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
+        <AdminHubPersonalizarSection
+          apiBaseUrl={apiBaseUrl}
+          accessToken={session?.access_token}
+          isSuperAdmin={isSuperAdmin}
+        />
       ) : null}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
