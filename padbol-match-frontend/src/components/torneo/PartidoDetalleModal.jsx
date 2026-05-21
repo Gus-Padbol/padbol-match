@@ -9,6 +9,11 @@ import {
 } from '../../utils/torneoPartidoResultado';
 import './PartidoDetalleModal.css';
 
+/** Torneo de prueba: mock de sets cuando el JSONB viene vacío (solo visualización). */
+const TORNEO_ID_MOCK_RESULTADO = 21;
+const MOCK_SETS_LINEA = '6-4 / 4-6 / 7-5';
+const MOCK_GANADOR_NOMBRE = 'Los Cóndores';
+
 function equipoPorId(equiposList, id) {
   const key = equipoIdKey(id);
   if (!key) return null;
@@ -25,6 +30,7 @@ export default function PartidoDetalleModal({
   equipos = [],
   nombreEquipo,
   onCargarResultado,
+  torneoId = null,
 }) {
   const { t } = useTranslation();
 
@@ -69,6 +75,28 @@ export default function PartidoDetalleModal({
     return formatSetsLineaNeutral(partido) || setsLista.join(' / ');
   }, [partido, tieneSets, setsLista]);
 
+  const usarMockResultado = useMemo(() => {
+    const tid = Number(torneoId ?? partido?.torneo_id);
+    return (
+      Number.isFinite(tid) &&
+      tid === TORNEO_ID_MOCK_RESULTADO &&
+      estadoUi === 'finalizado' &&
+      !tieneSets
+    );
+  }, [torneoId, partido?.torneo_id, estadoUi, tieneSets]);
+
+  const mockGanaA = useMemo(() => {
+    if (!usarMockResultado) return false;
+    const n = String(na || '').trim();
+    return n === MOCK_GANADOR_NOMBRE || n.includes('Cóndores');
+  }, [usarMockResultado, na]);
+
+  const mockGanaB = useMemo(() => {
+    if (!usarMockResultado || mockGanaA) return false;
+    const n = String(nb || '').trim();
+    return n === MOCK_GANADOR_NOMBRE || n.includes('Cóndores');
+  }, [usarMockResultado, mockGanaA, nb]);
+
   const fechaTexto = useMemo(() => {
     if (!partido?.fecha_hora) return '';
     const d = new Date(partido.fecha_hora);
@@ -99,8 +127,10 @@ export default function PartidoDetalleModal({
 
   if (!open || !partido) return null;
 
-  const ganaA = tieneSets && sgA > sgB;
-  const ganaB = tieneSets && sgB > sgA;
+  const ganaA = usarMockResultado ? mockGanaA : tieneSets && sgA > sgB;
+  const ganaB = usarMockResultado ? mockGanaB : tieneSets && sgB > sgA;
+  const setsDisplayA = usarMockResultado ? (mockGanaA ? 2 : 1) : tieneSets ? sgA : null;
+  const setsDisplayB = usarMockResultado ? (mockGanaB ? 2 : 1) : tieneSets ? sgB : null;
   const showCargar = typeof onCargarResultado === 'function' && estadoUi === 'pendiente';
 
   return (
@@ -125,19 +155,30 @@ export default function PartidoDetalleModal({
           <div className="pdm-equipos">
             <div className={`pdm-equipo${ganaA ? ' pdm-equipo--winner' : ''}`}>
               <span className="pdm-equipo-nombre">{na}</span>
-              {tieneSets ? <span className="pdm-equipo-sets">{sgA}</span> : null}
+              {setsDisplayA != null ? <span className="pdm-equipo-sets">{setsDisplayA}</span> : null}
             </div>
             <span className="pdm-vs">{t('torneos.partidoDetalle.vs')}</span>
             <div className={`pdm-equipo${ganaB ? ' pdm-equipo--winner' : ''}`}>
               <span className="pdm-equipo-nombre">{nb}</span>
-              {tieneSets ? <span className="pdm-equipo-sets">{sgB}</span> : null}
+              {setsDisplayB != null ? <span className="pdm-equipo-sets">{setsDisplayB}</span> : null}
             </div>
           </div>
 
           <div className={`pdm-estado pdm-estado--${estadoUi}`}>{estadoLabel}</div>
 
-          {estadoUi === 'finalizado' && !tieneSets ? (
+          {estadoUi === 'finalizado' && !tieneSets && !usarMockResultado ? (
             <p className="pdm-placeholder">{t('torneos.partidoDetalle.sinMarcadorSets', { defaultValue: 'Sin detalle de sets cargado.' })}</p>
+          ) : null}
+
+          {usarMockResultado ? (
+            <>
+              <h3 className="pdm-section-title">{t('torneos.partidoDetalle.resultadoFinal')}</h3>
+              <p className="pdm-resultado-final">
+                {t('torneos.partidoDetalle.ganador', { defaultValue: 'Ganador' })}: <strong>{MOCK_GANADOR_NOMBRE}</strong>
+              </p>
+              <h3 className="pdm-section-title">{t('torneos.partidoDetalle.detalleSets')}</h3>
+              <p className="pdm-sets-linea">{MOCK_SETS_LINEA}</p>
+            </>
           ) : null}
 
           {estadoUi === 'pendiente' && !tieneSets ? (

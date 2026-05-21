@@ -2275,6 +2275,7 @@ export default function TorneoTabbedView({
         partido={selectedPartido}
         equipos={equipos}
         nombreEquipo={nombreEquipoMostrado}
+        torneoId={torneo?.id ?? torneoId}
         onCargarResultado={puedeCargarResultados ? abrirCargarResultadoDesdeDetalle : undefined}
       />
 
