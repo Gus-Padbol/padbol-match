@@ -2031,3 +2031,35 @@ button.podium-player-avatar-wrap {
     width: 28px;
   }
 }
+
+/* Pestañas torneo (Equipos / Grupos / Fixture / Resultados) */
+.torneo-tabs {
+  min-width: 0;
+}
+
+.torneo-tabbed-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  min-width: 0;
+  gap: 2px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+body.lang-ar .torneo-tabs,
+body.lang-ar .torneo-tabbed-nav,
+body.lang-ar [class*='torneo-tab'] {
+  direction: rtl;
+  font-size: 13px;
+  gap: 4px;
+}
+
+body.lang-ar .torneo-tab-btn,
+body.lang-ar [class*='tab-btn'],
+body.lang-ar [class*='torneo-tab-item'] {
+  font-size: 12px;
+  padding: 8px 10px;
+  white-space: nowrap;
+  flex: 1;
+  text-align: center;
+}

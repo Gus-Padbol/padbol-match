@@ -2056,7 +2056,7 @@ export default function TorneoTabbedView({
       <div data-torneo-banner-slot={TORNEO_BANNER_ANTES_TABS_DATA_SLOT}>{bannerAntesTabs}</div>
 
       <div
-        className="torneo-tabs-sticky"
+        className="torneo-tabs-sticky torneo-tabs"
         style={{
           position: 'sticky',
           top: stickyTop,
@@ -2067,13 +2067,15 @@ export default function TorneoTabbedView({
           border: '1px solid #e2e8f0',
           marginBottom: '14px',
           boxShadow: '0 4px 18px rgba(0,0,0,0.06)',
+          minWidth: 0,
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', padding: '4px 6px', borderBottom: '1px solid #e2e8f0' }}>
+        <div className="torneo-tabbed-nav">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
+              className="torneo-tab-btn"
               onClick={() => setActiveTab(tab.id)}
               style={{
                 ...TAB_BTN,
