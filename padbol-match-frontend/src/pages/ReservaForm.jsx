@@ -728,6 +728,7 @@ export default function ReservaForm() {
     }
     return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
   }, [sedes, filtros.sede_id]);
+  console.log('[DEBUG duraciones]', sedeSeleccionada?.id, sedeSeleccionada?.duraciones_oferta);
 
   /** GPS o IP aproximada en pantalla 1 (país automático, orden por cercanía y badge «más cercana»). */
   const [geoReserva, setGeoReserva] = useState({
@@ -1040,10 +1041,13 @@ export default function ReservaForm() {
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
-  const duracionesOfrecidas = useMemo(
-    () => duracionesReservaDesdeSede(sedeSeleccionada),
-    [sedeSeleccionada]
-  );
+  const duracionesOfrecidas = useMemo(() => {
+    console.log(
+      '[DEBUG duracionesReservaDesdeSede]',
+      JSON.stringify(duracionesReservaDesdeSede(sedeSeleccionada)),
+    );
+    return duracionesReservaDesdeSede(sedeSeleccionada);
+  }, [sedeSeleccionada]);
 
   const duracionSeleccionadaMin = duracionReservaSeleccionada(formData, sedeSeleccionada);
 
