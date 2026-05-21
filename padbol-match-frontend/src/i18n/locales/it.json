@@ -394,6 +394,24 @@
       "statSl": "SL",
       "statGw": "GW",
       "statGl": "GL"
+    },
+    "partidoDetalle": {
+      "titulo": "Dettaglio partita",
+      "partidoPendiente": "Partita in attesa",
+      "fechaProgramada": "Data programmata",
+      "resultadoFinal": "Risultato finale (set)",
+      "detalleSets": "Dettaglio set per set",
+      "fechaHora": "Data e ora",
+      "estadoPendiente": "In attesa",
+      "estadoEnJuego": "In corso",
+      "estadoFinalizado": "Terminata",
+      "sinFecha": "Nessuna data programmata",
+      "cerrar": "Chiudi",
+      "cargarResultado": "Inserisci risultato",
+      "vs": "vs",
+      "equipoA": "Squadra A",
+      "equipoB": "Squadra B",
+      "ronda": "Turno {{n}}"
     }
   },
   "competir": {

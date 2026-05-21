@@ -37,6 +37,7 @@ import {
 import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresExcel';
 import { IconGeroUbicacion } from '../icons/GeroIcons';
 import SponsorPromoCard from '../SponsorPromoCard';
+import PartidoDetalleModal from './PartidoDetalleModal';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import { usePadbolLangVersion } from '../../hooks/usePadbolLang';
 import {
@@ -673,30 +674,31 @@ export default function TorneoTabbedView({
 
   const abrirDetallePartido = useCallback((partido) => {
     if (!partido) return;
-    const tieneResultado = parseResultadoPartido(partido).length > 0;
-    const finalizado = String(partido.estado || '').toLowerCase() === 'finalizado';
-    if (finalizado || tieneResultado) {
-      setSelectedPartido(partido);
-      setShowModalDetallePartido(true);
-      return;
-    }
-    if (!isAdmin || !puedeCargarResultados) return;
     setSelectedPartido(partido);
-    setResultado({ set1: '', set2: '', set3: '' });
-    setVoiceError(null);
-    setVoicePending(null);
-    setVoiceListening(false);
-    setVoicePhase('idle');
-    setVoiceInterimText('');
-    setVoiceSaving(false);
-    setShowModalResultado(true);
-  }, [isAdmin, puedeCargarResultados]);
+    setShowModalDetallePartido(true);
+  }, []);
+
+  const abrirCargarResultadoDesdeDetalle = useCallback(
+    (partido) => {
+      if (!partido || !isAdmin || !puedeCargarResultados) return;
+      setSelectedPartido(partido);
+      setResultado({ set1: '', set2: '', set3: '' });
+      setVoiceError(null);
+      setVoicePending(null);
+      setVoiceListening(false);
+      setVoicePhase('idle');
+      setVoiceInterimText('');
+      setVoiceSaving(false);
+      setShowModalResultado(true);
+    },
+    [isAdmin, puedeCargarResultados],
+  );
 
   const abrirModalResultado = useCallback(
     (partido) => {
-      abrirDetallePartido(partido);
+      abrirCargarResultadoDesdeDetalle(partido);
     },
-    [abrirDetallePartido],
+    [abrirCargarResultadoDesdeDetalle],
   );
 
   const startVoiceResultado = useCallback(() => {
@@ -1243,9 +1245,11 @@ export default function TorneoTabbedView({
                 return (
                   <tr
                     key={row.id}
+                    className={clasifica ? 'tabla-grupos-fila--clasifica' : undefined}
                     style={{
                       borderTop: '1px solid #f1f5f9',
                       background: bgFila,
+                      color: 'var(--text-primary)',
                     }}
                   >
                     <td
@@ -1295,7 +1299,10 @@ export default function TorneoTabbedView({
                     <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
                       {row.gp}
                     </td>
-                    <td className="tabla-grupos-col-stat" style={{ fontWeight: 900, color: 'var(--accent, #e11b22)', background: bgFila }}>
+                    <td
+                      className="tabla-grupos-col-stat tabla-grupos-col-pts"
+                      style={{ fontWeight: 900, background: bgFila }}
+                    >
                       {row.pts}
                     </td>
                   </tr>
@@ -1379,7 +1386,7 @@ export default function TorneoTabbedView({
     const nb = nombreEquipoMostrado(eqB || {});
     const tieneResultado = parseResultadoPartido(partido).length > 0;
     const pendiente = !tieneResultado && String(partido.estado || '').toLowerCase() !== 'finalizado';
-    const clickable = tieneResultado || puedeCargarResultados;
+    const clickable = true;
     const marcadorDetalle = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : '';
     const fh = partido.fecha_hora
       ? new Date(partido.fecha_hora).toLocaleString('es-AR', {
@@ -1481,14 +1488,13 @@ export default function TorneoTabbedView({
     const fh = partido.fecha_hora
       ? new Date(partido.fecha_hora).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
       : null;
-    const clickable = tieneResultado || puedeCargarResultados;
-    const click = clickable ? () => abrirDetallePartido(partido) : undefined;
+    const click = () => abrirDetallePartido(partido);
     return (
       <div
         key={partido.id}
-        className={`torneo-bracket-card${clickable ? ' torneo-bracket-card--clickable' : ''}`}
+        className="torneo-bracket-card torneo-bracket-card--clickable"
         onClick={click}
-        role={click ? 'button' : undefined}
+        role="button"
       >
         <div className={`torneo-bracket-team${ganaA ? ' torneo-bracket-team--winner' : ''}${na === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
           <span className="torneo-bracket-team-name">{na}</span>
@@ -2275,48 +2281,17 @@ export default function TorneoTabbedView({
         </div>
       ) : null}
 
-      {showModalDetallePartido && selectedPartido ? (
-        <div
-          className="modal-overlay"
-          onClick={() => {
-            setShowModalDetallePartido(false);
-            setSelectedPartido(null);
-          }}
-        >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>{t('torneos.vista.detallePartido')}</h3>
-            {(() => {
-              const mA = equipoPorId(equipos, selectedPartido.equipo_a_id);
-              const mB = equipoPorId(equipos, selectedPartido.equipo_b_id);
-              const na = nombreEquipoMostrado(mA || {});
-              const nb = nombreEquipoMostrado(mB || {});
-              const marcador = formatMarcadorPartidoDetalle(selectedPartido, na, nb);
-              return (
-                <>
-                  <p style={{ margin: '0 0 12px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {na} {t('torneos.vista.vs')} {nb}
-                  </p>
-                  <p style={{ margin: '0 0 20px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.45 }}>
-                    {marcador || '—'}
-                  </p>
-                </>
-              );
-            })()}
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn-cancelar"
-                onClick={() => {
-                  setShowModalDetallePartido(false);
-                  setSelectedPartido(null);
-                }}
-              >
-                {t('torneos.vista.cerrar')}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <PartidoDetalleModal
+        open={showModalDetallePartido && Boolean(selectedPartido)}
+        onClose={() => {
+          setShowModalDetallePartido(false);
+          setSelectedPartido(null);
+        }}
+        partido={selectedPartido}
+        equipos={equipos}
+        nombreEquipo={nombreEquipoMostrado}
+        onCargarResultado={puedeCargarResultados ? abrirCargarResultadoDesdeDetalle : undefined}
+      />
 
       {showModalResultado && selectedPartido ? (
         <div

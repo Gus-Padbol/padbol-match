@@ -394,6 +394,24 @@
       "statSl": "SL",
       "statGw": "GW",
       "statGl": "GL"
+    },
+    "partidoDetalle": {
+      "titulo": "Spieldetails",
+      "partidoPendiente": "Spiel ausstehend",
+      "fechaProgramada": "Geplantes Datum",
+      "resultadoFinal": "Endergebnis (Sätze)",
+      "detalleSets": "Satz für Satz",
+      "fechaHora": "Datum und Uhrzeit",
+      "estadoPendiente": "Ausstehend",
+      "estadoEnJuego": "Läuft",
+      "estadoFinalizado": "Beendet",
+      "sinFecha": "Kein geplantes Datum",
+      "cerrar": "Schließen",
+      "cargarResultado": "Ergebnis eintragen",
+      "vs": "vs",
+      "equipoA": "Team A",
+      "equipoB": "Team B",
+      "ronda": "Runde {{n}}"
     }
   },
   "competir": {

@@ -63,6 +63,36 @@ export function partidoEstaFinalizado(partido) {
   return String(partido?.estado || '').trim().toLowerCase() === 'finalizado';
 }
 
+/** Partido con marcador cargado (JSONB), aunque el estado no sea aún `finalizado`. */
+export function partidoTieneResultadoCargado(partido) {
+  if (parseResultadoPartido(partido).length > 0) return true;
+  const res = parseResultadoObject(partido);
+  if (!res) return false;
+  const gid = res.ganador_id ?? res.ganadorId;
+  return gid != null && String(gid).trim() !== '';
+}
+
+/** UI: `pendiente` | `en_juego` | `finalizado` (resultado JSONB o estado DB). */
+export function resolvePartidoEstadoUi(partido) {
+  const e = String(partido?.estado || '').trim().toLowerCase();
+  if (e === 'finalizado' || partidoTieneResultadoCargado(partido)) return 'finalizado';
+  if (['en_juego', 'en_curso', 'activo', 'en juego'].includes(e)) return 'en_juego';
+  return 'pendiente';
+}
+
+/** Sets en línea neutra: «6-4 / 3-6 / 7-5». */
+export function formatSetsLineaNeutral(partido) {
+  const sets = parseResultadoPartido(partido);
+  return sets
+    .map((set) => {
+      const parsed = parseSetGames(set);
+      if (!parsed) return null;
+      return `${parsed.a}-${parsed.b}`;
+    })
+    .filter(Boolean)
+    .join(' / ');
+}
+
 /** Ganador del partido: `resultado.ganador_id` o sets ganados (equipo A/B). */
 export function resolveGanadorEquipoId(partido) {
   const res = parseResultadoObject(partido);

@@ -394,6 +394,24 @@
       "statSl": "SL",
       "statGw": "GW",
       "statGl": "GL"
+    },
+    "partidoDetalle": {
+      "titulo": "Détail du match",
+      "partidoPendiente": "Match en attente",
+      "fechaProgramada": "Date prévue",
+      "resultadoFinal": "Score final (sets)",
+      "detalleSets": "Détail set par set",
+      "fechaHora": "Date et heure",
+      "estadoPendiente": "En attente",
+      "estadoEnJuego": "En cours",
+      "estadoFinalizado": "Terminé",
+      "sinFecha": "Aucune date prévue",
+      "cerrar": "Fermer",
+      "cargarResultado": "Saisir le résultat",
+      "vs": "vs",
+      "equipoA": "Équipe A",
+      "equipoB": "Équipe B",
+      "ronda": "Tour {{n}}"
     }
   },
   "competir": {

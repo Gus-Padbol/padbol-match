@@ -399,6 +399,24 @@
       "statSl": "SL",
       "statGw": "GW",
       "statGl": "GL"
+    },
+    "partidoDetalle": {
+      "titulo": "Match details",
+      "partidoPendiente": "Match pending",
+      "fechaProgramada": "Scheduled date",
+      "resultadoFinal": "Final score (sets)",
+      "detalleSets": "Set-by-set",
+      "fechaHora": "Date and time",
+      "estadoPendiente": "Pending",
+      "estadoEnJuego": "In play",
+      "estadoFinalizado": "Finished",
+      "sinFecha": "No scheduled date",
+      "cerrar": "Close",
+      "cargarResultado": "Enter result",
+      "vs": "vs",
+      "equipoA": "Team A",
+      "equipoB": "Team B",
+      "ronda": "Round {{n}}"
     }
   },
   "competir": {

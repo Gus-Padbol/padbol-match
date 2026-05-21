@@ -1,0 +1,264 @@
+.pdm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+    max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+}
+
+.pdm-dialog {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: min(440px, 100%);
+  width: 100%;
+  max-height: min(90vh, 680px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pdm-header {
+  flex-shrink: 0;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pdm-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.pdm-close {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pdm-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pdm-equipos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pdm-equipo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+}
+
+.pdm-equipo--winner {
+  border-color: color-mix(in srgb, #15803d 50%, var(--border));
+  background: color-mix(in srgb, #15803d 10%, var(--bg-input));
+}
+
+.pdm-equipo-nombre {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdm-equipo-sets {
+  flex-shrink: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.pdm-vs {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pdm-estado {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pdm-estado--pendiente {
+  background: color-mix(in srgb, #f59e0b 18%, var(--bg-input));
+  color: #b45309;
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, var(--border));
+}
+
+.pdm-estado--en_juego {
+  background: color-mix(in srgb, #3b82f6 18%, var(--bg-input));
+  color: #1d4ed8;
+  border: 1px solid color-mix(in srgb, #3b82f6 35%, var(--border));
+}
+
+.pdm-estado--finalizado {
+  background: color-mix(in srgb, #15803d 18%, var(--bg-input));
+  color: #15803d;
+  border: 1px solid color-mix(in srgb, #15803d 35%, var(--border));
+}
+
+.pdm-pendiente-block {
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  border: 1px dashed var(--border);
+  text-align: center;
+}
+
+.pdm-pendiente-msg {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.pdm-pendiente-fecha {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.pdm-meta-lbl {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.pdm-section-title {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.pdm-resultado-final {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.pdm-resultado-sep {
+  margin: 0 6px;
+  color: var(--text-secondary);
+}
+
+.pdm-sets-linea {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  font-size: 1.15rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.pdm-fecha-valor {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pdm-meta-extra {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.pdm-placeholder {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.pdm-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+}
+
+.pdm-btn-cargar {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.pdm-btn-cerrar {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent, #e11b22);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+}

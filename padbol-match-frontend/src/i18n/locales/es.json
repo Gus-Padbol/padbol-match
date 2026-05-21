@@ -423,6 +423,24 @@
         "Femenino": "Femenino",
         "Mixto": "Mixto"
       }
+    },
+    "partidoDetalle": {
+      "titulo": "Detalle del partido",
+      "partidoPendiente": "Partido pendiente",
+      "fechaProgramada": "Fecha programada",
+      "resultadoFinal": "Resultado final (sets)",
+      "detalleSets": "Detalle set a set",
+      "fechaHora": "Fecha y hora",
+      "estadoPendiente": "Pendiente",
+      "estadoEnJuego": "En juego",
+      "estadoFinalizado": "Finalizado",
+      "sinFecha": "Sin fecha programada",
+      "cerrar": "Cerrar",
+      "cargarResultado": "Cargar resultado",
+      "vs": "vs",
+      "equipoA": "Equipo A",
+      "equipoB": "Equipo B",
+      "ronda": "Ronda {{n}}"
     }
   },
   "competir": {

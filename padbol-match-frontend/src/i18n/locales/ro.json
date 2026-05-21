@@ -394,6 +394,24 @@
       "statSl": "SL",
       "statGw": "GW",
       "statGl": "GL"
+    },
+    "partidoDetalle": {
+      "titulo": "Detalii meci",
+      "partidoPendiente": "Meci în așteptare",
+      "fechaProgramada": "Data programată",
+      "resultadoFinal": "Scor final (seturi)",
+      "detalleSets": "Detaliu set cu set",
+      "fechaHora": "Data și ora",
+      "estadoPendiente": "În așteptare",
+      "estadoEnJuego": "În desfășurare",
+      "estadoFinalizado": "Finalizat",
+      "sinFecha": "Fără dată programată",
+      "cerrar": "Închide",
+      "cargarResultado": "Introdu rezultatul",
+      "vs": "vs",
+      "equipoA": "Echipa A",
+      "equipoB": "Echipa B",
+      "ronda": "Runda {{n}}"
     }
   },
   "competir": {
