@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import {
-  contarSetsGanadosPartido,
   equipoIdKey,
   formatSetsLineaNeutral,
   parseResultadoPartido,
   resolvePartidoEstadoUi,
+  validarMarcadorSetsPartido,
 } from '../../utils/torneoPartidoResultado';
 import './PartidoDetalleModal.css';
 
@@ -13,6 +13,32 @@ import './PartidoDetalleModal.css';
 const TORNEO_ID_MOCK_RESULTADO = 21;
 const MOCK_SETS_LINEA = '6-4 / 4-6 / 7-5';
 const MOCK_GANADOR_NOMBRE = 'Los Cóndores';
+
+function nombreEquipoEsCondores(nombre) {
+  const s = String(nombre || '').trim();
+  return s === MOCK_GANADOR_NOMBRE || /c[oó]ndores/i.test(s);
+}
+
+function nombreEquipoEsPumas(nombre) {
+  return /pumas/i.test(String(nombre || '').trim());
+}
+
+/** Sets ganados mock: Cóndores 2, Pumas 1 (6-4 / 4-6 / 7-5). */
+function mockSetsGanadosEquipoA(na, nb) {
+  if (nombreEquipoEsCondores(na)) return 2;
+  if (nombreEquipoEsPumas(na)) return 1;
+  if (nombreEquipoEsCondores(nb)) return 1;
+  if (nombreEquipoEsPumas(nb)) return 2;
+  return 2;
+}
+
+function mockSetsGanadosEquipoB(na, nb) {
+  if (nombreEquipoEsCondores(nb)) return 2;
+  if (nombreEquipoEsPumas(nb)) return 1;
+  if (nombreEquipoEsCondores(na)) return 1;
+  if (nombreEquipoEsPumas(na)) return 2;
+  return 1;
+}
 
 function equipoPorId(equiposList, id) {
   const key = equipoIdKey(id);
@@ -65,8 +91,8 @@ export default function PartidoDetalleModal({
 
   const tieneSets = setsLista.length > 0;
 
-  const { sgA, sgB } = useMemo(
-    () => (partido && tieneSets ? contarSetsGanadosPartido(partido) : { sgA: 0, sgB: 0 }),
+  const marcadorValidacion = useMemo(
+    () => (partido && tieneSets ? validarMarcadorSetsPartido(partido) : { valido: false, empate: false, sgA: 0, sgB: 0 }),
     [partido, tieneSets],
   );
 
@@ -85,17 +111,14 @@ export default function PartidoDetalleModal({
     );
   }, [torneoId, partido?.torneo_id, estadoUi, tieneSets]);
 
-  const mockGanaA = useMemo(() => {
-    if (!usarMockResultado) return false;
-    const n = String(na || '').trim();
-    return n === MOCK_GANADOR_NOMBRE || n.includes('Cóndores');
-  }, [usarMockResultado, na]);
-
-  const mockGanaB = useMemo(() => {
-    if (!usarMockResultado || mockGanaA) return false;
-    const n = String(nb || '').trim();
-    return n === MOCK_GANADOR_NOMBRE || n.includes('Cóndores');
-  }, [usarMockResultado, mockGanaA, nb]);
+  const mockSgA = useMemo(
+    () => (usarMockResultado ? mockSetsGanadosEquipoA(na, nb) : 0),
+    [usarMockResultado, na, nb],
+  );
+  const mockSgB = useMemo(
+    () => (usarMockResultado ? mockSetsGanadosEquipoB(na, nb) : 0),
+    [usarMockResultado, na, nb],
+  );
 
   const fechaTexto = useMemo(() => {
     if (!partido?.fecha_hora) return '';
@@ -127,11 +150,17 @@ export default function PartidoDetalleModal({
 
   if (!open || !partido) return null;
 
-  const ganaA = usarMockResultado ? mockGanaA : tieneSets && sgA > sgB;
-  const ganaB = usarMockResultado ? mockGanaB : tieneSets && sgB > sgA;
-  const setsDisplayA = usarMockResultado ? (mockGanaA ? 2 : 1) : tieneSets ? sgA : null;
-  const setsDisplayB = usarMockResultado ? (mockGanaB ? 2 : 1) : tieneSets ? sgB : null;
+  const sgA = usarMockResultado ? mockSgA : marcadorValidacion.sgA;
+  const sgB = usarMockResultado ? mockSgB : marcadorValidacion.sgB;
+  const marcadorValido = usarMockResultado || marcadorValidacion.valido;
+  const ganaA = marcadorValido && sgA > sgB;
+  const ganaB = marcadorValido && sgB > sgA;
+  const setsDisplayA = marcadorValido ? sgA : null;
+  const setsDisplayB = marcadorValido ? sgB : null;
   const showCargar = typeof onCargarResultado === 'function' && estadoUi === 'pendiente';
+  const resultadoInvalidoMsg = t('torneos.partidoDetalle.resultadoInvalido', {
+    defaultValue: 'Resultado inválido',
+  });
 
   return (
     <div className="pdm-overlay" role="presentation" onClick={() => onClose?.()}>
@@ -174,7 +203,9 @@ export default function PartidoDetalleModal({
             <>
               <h3 className="pdm-section-title">{t('torneos.partidoDetalle.resultadoFinal')}</h3>
               <p className="pdm-resultado-final">
-                {t('torneos.partidoDetalle.ganador', { defaultValue: 'Ganador' })}: <strong>{MOCK_GANADOR_NOMBRE}</strong>
+                {na} <strong>{mockSgA}</strong>
+                <span className="pdm-resultado-sep">–</span>
+                <strong>{mockSgB}</strong> {nb}
               </p>
               <h3 className="pdm-section-title">{t('torneos.partidoDetalle.detalleSets')}</h3>
               <p className="pdm-sets-linea">{MOCK_SETS_LINEA}</p>
@@ -195,7 +226,7 @@ export default function PartidoDetalleModal({
             </div>
           ) : null}
 
-          {tieneSets ? (
+          {tieneSets && marcadorValidacion.valido ? (
             <>
               <h3 className="pdm-section-title">{t('torneos.partidoDetalle.resultadoFinal')}</h3>
               <p className="pdm-resultado-final">
@@ -206,6 +237,12 @@ export default function PartidoDetalleModal({
               <h3 className="pdm-section-title">{t('torneos.partidoDetalle.detalleSets')}</h3>
               <p className="pdm-sets-linea">{setsLinea || '—'}</p>
             </>
+          ) : null}
+
+          {tieneSets && !marcadorValidacion.valido ? (
+            <p className="pdm-resultado-invalido" role="alert">
+              {resultadoInvalidoMsg}
+            </p>
           ) : null}
 
           <h3 className="pdm-section-title">{t('torneos.partidoDetalle.fechaHora')}</h3>

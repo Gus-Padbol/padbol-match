@@ -1828,6 +1828,10 @@ button.podium-player-avatar-wrap {
   border-top: 1px solid #f1f5f9;
   color: #475569;
   font-weight: 700;
+}
+
+.torneo-bracket-score--invalid {
+  color: #b45309;
   font-size: 12px;
 }
 

@@ -297,13 +297,41 @@ export function contarSetsGanadosPartido(partido) {
 }
 
 /**
- * Marcador legible: «Los Cóndores 6-3 / 6-4 Los Pumas».
+ * Valida marcador: sin empate por set ni empate en sets ganados (Padbol exige ganador claro).
+ * @returns {{ valido: boolean, empate: boolean, sgA: number, sgB: number }}
+ */
+export function validarMarcadorSetsPartido(partido) {
+  const sets = parseResultadoPartido(partido);
+  if (!sets.length) {
+    return { valido: false, empate: false, sgA: 0, sgB: 0 };
+  }
+  for (const set of sets) {
+    const parsed = parseSetGames(set);
+    if (!parsed) {
+      return { valido: false, empate: false, sgA: 0, sgB: 0 };
+    }
+    if (parsed.a === parsed.b) {
+      return { valido: false, empate: true, sgA: 0, sgB: 0 };
+    }
+  }
+  const { sgA, sgB } = contarSetsGanadosPartido(partido);
+  if (sgA === sgB) {
+    return { valido: false, empate: true, sgA, sgB };
+  }
+  return { valido: true, empate: false, sgA, sgB };
+}
+
+/**
+ * Marcador legible: «Los Cóndores 6-3 / 6-4 Los Pumas». Vacío si el marcador es inválido o empate.
  */
 export function formatMarcadorPartidoDetalle(partido, nombreA, nombreB) {
   const na = String(nombreA || 'Equipo A').trim();
   const nb = String(nombreB || 'Equipo B').trim();
   const sets = parseResultadoPartido(partido);
   if (!sets.length) return '';
+
+  const validacion = validarMarcadorSetsPartido(partido);
+  if (!validacion.valido) return '';
 
   const trozos = sets
     .map((set) => {

@@ -197,6 +197,18 @@
   color: var(--text-secondary);
 }
 
+.pdm-resultado-invalido {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, #fef3c7 55%, var(--bg-card));
+  border: 1px solid #fcd34d;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  color: #b45309;
+}
+
 .pdm-sets-linea {
   margin: 0 0 16px;
   padding: 12px 14px;

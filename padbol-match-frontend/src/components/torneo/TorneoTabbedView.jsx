@@ -42,13 +42,15 @@ import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import { usePadbolLangVersion } from '../../hooks/usePadbolLang';
 import {
   buildTablaPosiciones,
-  contarSetsGanadosPartido,
   formatMarcadorPartidoDetalle,
   parseResultadoPartido,
+  parseSetGames,
   partidosDelGrupo,
   resultadoConGanador,
+  validarMarcadorSetsPartido,
   equipoIdKey,
 } from '../../utils/torneoPartidoResultado';
+import { validarMejorDeTres } from '../../utils/speechResultadoPartido';
 
 export { buildTablaPosiciones } from '../../utils/torneoPartidoResultado';
 
@@ -853,6 +855,16 @@ export default function TorneoTabbedView({
         alert('Mínimo 2 sets requeridos');
         return;
       }
+      const setsParsed = sets.map((s) => parseSetGames(s));
+      if (setsParsed.some((p) => !p)) {
+        alert('Formato de set inválido (ej.: 6-4). No puede haber empate en un set.');
+        return;
+      }
+      const validacionSets = validarMejorDeTres(setsParsed);
+      if (!validacionSets.ok) {
+        alert(validacionSets.error);
+        return;
+      }
       const resultadoPayload = resultadoConGanador(selectedPartido, norm);
       const resultadoJson = JSON.stringify(resultadoPayload);
       try {
@@ -1396,8 +1408,13 @@ export default function TorneoTabbedView({
           timeStyle: 'short',
         })
       : '—';
-    const { sgA, sgB } = tieneResultado ? contarSetsGanadosPartido(partido) : { sgA: 0, sgB: 0 };
-    const ganaA = sgA > sgB;
+    const marcadorVal = tieneResultado ? validarMarcadorSetsPartido(partido) : null;
+    const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
+    const ganaA = marcadorVal?.valido && marcadorVal.sgA > marcadorVal.sgB;
+    const ganaB = marcadorVal?.valido && marcadorVal.sgB > marcadorVal.sgA;
+    const marcadorMostrar = marcadorInvalido
+      ? t('torneos.partidoDetalle.resultadoInvalido', { defaultValue: 'Resultado inválido' })
+      : marcadorDetalle;
 
     return (
       <div
@@ -1418,18 +1435,37 @@ export default function TorneoTabbedView({
           ) : (
             <>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', width: '100%' }}>
-                <span className="equipo-a" style={{ fontWeight: ganaA ? 900 : 600, color: ganaA ? '#15803d' : 'var(--text-primary)' }}>
+                <span
+                  className="equipo-a"
+                  style={{
+                    fontWeight: ganaA ? 900 : 600,
+                    color: ganaA ? '#15803d' : 'var(--text-primary)',
+                  }}
+                >
                   {na}
                   {ganaA ? ' ✓' : ''}
                 </span>
                 <span className="vs">{t('torneos.vista.vs')}</span>
-                <span className="equipo-b" style={{ fontWeight: !ganaA ? 900 : 600, color: !ganaA ? '#15803d' : 'var(--text-primary)' }}>
+                <span
+                  className="equipo-b"
+                  style={{
+                    fontWeight: ganaB ? 900 : 600,
+                    color: ganaB ? '#15803d' : 'var(--text-primary)',
+                  }}
+                >
                   {nb}
-                  {!ganaA ? ' ✓' : ''}
+                  {ganaB ? ' ✓' : ''}
                 </span>
               </div>
-              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                {marcadorDetalle}
+              <span
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: marcadorInvalido ? '#b45309' : 'var(--text-primary)',
+                  lineHeight: 1.4,
+                }}
+              >
+                {marcadorMostrar}
               </span>
               <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{fh}</span>
             </>
@@ -1483,10 +1519,14 @@ export default function TorneoTabbedView({
     const nb = nombreLlaveSlot(partido, 'b');
     const tieneResultado = parseResultadoPartido(partido).length > 0;
     const fin = tieneResultado || String(partido.estado || '').toLowerCase() === 'finalizado';
-    const { sgA, sgB } = fin ? contarSetsGanadosPartido(partido) : { sgA: 0, sgB: 0 };
-    const ganaA = fin && sgA > sgB;
-    const ganaB = fin && sgB > sgA;
+    const marcadorVal = fin && tieneResultado ? validarMarcadorSetsPartido(partido) : null;
+    const ganaA = Boolean(marcadorVal?.valido && marcadorVal.sgA > marcadorVal.sgB);
+    const ganaB = Boolean(marcadorVal?.valido && marcadorVal.sgB > marcadorVal.sgA);
     const marcadorTxt = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : null;
+    const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
+    const marcadorMostrar = marcadorInvalido
+      ? t('torneos.partidoDetalle.resultadoInvalido', { defaultValue: 'Resultado inválido' })
+      : marcadorTxt;
     const fh = partido.fecha_hora
       ? new Date(partido.fecha_hora).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
       : null;
@@ -1507,7 +1547,11 @@ export default function TorneoTabbedView({
           <span className="torneo-bracket-team-name">{nb}</span>
           {ganaB ? <span className="torneo-bracket-winner-mark">✓</span> : null}
         </div>
-        {marcadorTxt ? <div className="torneo-bracket-score">{marcadorTxt}</div> : null}
+        {marcadorMostrar ? (
+          <div className={`torneo-bracket-score${marcadorInvalido ? ' torneo-bracket-score--invalid' : ''}`}>
+            {marcadorMostrar}
+          </div>
+        ) : null}
         {!fin && fh ? <div className="torneo-bracket-meta">{fh}</div> : null}
       </div>
     );

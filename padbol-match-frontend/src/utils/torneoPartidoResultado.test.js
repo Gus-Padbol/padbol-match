@@ -5,6 +5,8 @@ import {
   resolveGanadorEquipoId,
   partidosDelGrupo,
   formatSetsLineaNeutral,
+  validarMarcadorSetsPartido,
+  formatMarcadorPartidoDetalle,
 } from './torneoPartidoResultado';
 
 describe('buildTablaPosiciones', () => {
@@ -130,5 +132,32 @@ describe('parseResultadoPartido', () => {
       },
     });
     expect(sets).toEqual(['6-4', '3-6', '7-5']);
+  });
+});
+
+describe('validarMarcadorSetsPartido', () => {
+  it('rechaza empate en sets ganados (1-1)', () => {
+    const partido = {
+      resultado: { set1: '6-4', set2: '4-6' },
+    };
+    expect(validarMarcadorSetsPartido(partido)).toEqual({
+      valido: false,
+      empate: true,
+      sgA: 1,
+      sgB: 1,
+    });
+    expect(formatMarcadorPartidoDetalle(partido, 'A', 'B')).toBe('');
+  });
+
+  it('acepta ganador claro 2-1', () => {
+    const partido = {
+      resultado: { set1: '6-4', set2: '4-6', set3: '7-5' },
+    };
+    expect(validarMarcadorSetsPartido(partido)).toMatchObject({
+      valido: true,
+      empate: false,
+      sgA: 2,
+      sgB: 1,
+    });
   });
 });
