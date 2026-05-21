@@ -247,7 +247,11 @@
     "loadingExtras": "Se încarcă opțiunile…",
     "extrasSubtitleArmar": "Opțional: adaugă produse sau servicii ale clubului. Totalul se actualizează mai jos.",
     "goToPay": "Mergi la plată",
-    "preparingPayment": "Se pregătește plata…"
+    "preparingPayment": "Se pregătește plata…",
+    "minutos": "min",
+    "canchasLibres": "liber",
+    "calendarPrevMonth": "Luna anterioară",
+    "calendarNextMonth": "Luna următoare"
   },
   "torneos": {
     "titulo": "Turnee",

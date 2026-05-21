@@ -252,7 +252,11 @@
     "loadingExtras": "Cargando opciones…",
     "extrasSubtitleArmar": "Opcional: sumá productos o servicios del club. El total se actualiza abajo.",
     "goToPay": "Ir a pagar",
-    "preparingPayment": "Preparando pago…"
+    "preparingPayment": "Preparando pago…",
+    "minutos": "min",
+    "canchasLibres": "libre",
+    "calendarPrevMonth": "Mes anterior",
+    "calendarNextMonth": "Mes siguiente"
   },
   "armarPartido": {
     "header": "Armar partido",

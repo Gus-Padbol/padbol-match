@@ -2638,7 +2638,9 @@ export default function ReservaForm() {
                             gap: 4,
                           }}
                         >
-                          <span>⏱ {duracion} min</span>
+                          <span>
+                            ⏱ {duracion} {t('reservas.minutos', { defaultValue: 'min' })}
+                          </span>
                           <span style={{ fontSize: 11, fontWeight: 700, opacity: active ? 0.95 : 0.85 }}>
                             ${Number(precioDur).toLocaleString('es-AR')}
                           </span>
@@ -2670,7 +2672,10 @@ export default function ReservaForm() {
                       >
                         <span className="reserva-horario-linea">{h.horario}</span>
                         <span className="reserva-horario-meta">
-                          {h.libres} {h.libres === 1 ? t('reservas.slotFree') : t('reservas.slotsFree')}
+                          {h.libres}{' '}
+                          {h.libres === 1
+                            ? t('reservas.canchasLibres', { defaultValue: 'libre' })
+                            : t('reservas.slotsFree', { defaultValue: 'libres' })}
                         </span>
                       </button>
                     );
@@ -2858,7 +2863,8 @@ export default function ReservaForm() {
               <strong>{t('reservas.labelTime')}</strong> {formData.hora || '—'}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
-              <strong>{t('reservas.labelDuration')}</strong> {duracionReservaMinP4} min
+              <strong>{t('reservas.labelDuration')}</strong> {duracionReservaMinP4}{' '}
+              {t('reservas.minutos', { defaultValue: 'min' })}
             </p>
             <p style={{ margin: '0 0 8px', color: 'var(--text-primary)' }}>
               <strong>{t('reservas.labelCourt')}</strong>{' '}

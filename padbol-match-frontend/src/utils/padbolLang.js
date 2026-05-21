@@ -17,6 +17,37 @@ export function normalizePadbolLang(code) {
   return PADBOL_LANGUAGE_CODES[0] || 'en';
 }
 
+/** Locale BCP 47 para `Intl` / `toLocaleDateString` según idioma Padbol. */
+export function padbolLangToIntlLocale(lang) {
+  const code = normalizePadbolLang(lang);
+  const map = {
+    es: 'es-AR',
+    en: 'en-US',
+    ar: 'ar',
+    de: 'de-DE',
+    fr: 'fr-FR',
+    it: 'it-IT',
+    ro: 'ro-RO',
+    pt: 'pt-BR',
+  };
+  return map[code] || code;
+}
+
+/** Etiquetas cortas Lun–Dom (calendario reserva). */
+export function reservaWeekdayShortLabels(lang) {
+  const locale = padbolLangToIntlLocale(lang);
+  const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+  return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2024, 0, 1 + i, 12)));
+}
+
+/** Título mes + año del calendario de reserva. */
+export function reservaMonthYearLabel(year, monthIndex, lang) {
+  const locale = padbolLangToIntlLocale(lang);
+  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
+    new Date(year, monthIndex, 15, 12),
+  );
+}
+
 /** Aplica dirección RTL/LTR y clase de idioma en `<html>` / `<body>`. */
 export function applyPadbolDocumentDirection(lang) {
   if (typeof document === 'undefined') return;

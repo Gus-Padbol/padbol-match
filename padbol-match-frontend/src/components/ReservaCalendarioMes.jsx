@@ -1,11 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { usePadbolLangVersion } from '../hooks/usePadbolLang';
+import { reservaMonthYearLabel, reservaWeekdayShortLabels } from '../utils/padbolLang';
 import styles from './ReservaCalendarioMes.module.css';
-
-const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
 
 function parseIsoLocal(iso) {
   const [y, m, d] = String(iso || '').split('-').map((x) => parseInt(x, 10));
@@ -48,6 +45,9 @@ function dayButtonClass(c) {
  * @param {{ selectedIso: string; minIso: string; maxIso: string; todayIso: string; onSelectDay: (iso: string) => void; disabled?: boolean }} props
  */
 export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, todayIso, onSelectDay, disabled }) {
+  const { t, language } = useTranslation();
+  usePadbolLangVersion();
+
   const minD = useMemo(() => startOfDay(parseIsoLocal(minIso) || new Date()), [minIso]);
   const maxD = useMemo(() => startOfDay(parseIsoLocal(maxIso) || new Date()), [maxIso]);
   const hoyStr = todayIso || minIso;
@@ -57,6 +57,8 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
 
   const [viewY, setViewY] = useState(() => minD.getFullYear());
   const [viewM, setViewM] = useState(() => minD.getMonth());
+
+  const diasSemana = useMemo(() => reservaWeekdayShortLabels(language), [language]);
 
   useEffect(() => {
     const sel = parseIsoLocal(effectiveSelectedIso);
@@ -103,14 +105,14 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
     return list;
   }, [viewY, viewM, minD, maxD, effectiveSelectedIso, disabled, hoyStr]);
 
-  const title = `${MESES[viewM]} ${viewY}`;
+  const title = useMemo(() => reservaMonthYearLabel(viewY, viewM, language), [viewY, viewM, language]);
 
   return (
     <div className={styles.wrap}>
       <div className={styles.navRow}>
         <button
           type="button"
-          aria-label="Mes anterior"
+          aria-label={t('reservas.calendarPrevMonth', { defaultValue: 'Mes anterior' })}
           disabled={prevDisabled}
           onClick={() => {
             if (prevDisabled) return;
@@ -131,7 +133,7 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
         </div>
         <button
           type="button"
-          aria-label="Mes siguiente"
+          aria-label={t('reservas.calendarNextMonth', { defaultValue: 'Mes siguiente' })}
           disabled={nextDisabled}
           onClick={() => {
             if (nextDisabled) return;
@@ -149,8 +151,8 @@ export default function ReservaCalendarioMes({ selectedIso, minIso, maxIso, toda
         </button>
       </div>
       <div className={styles.weekHeader}>
-        {DIAS_SEMANA.map((d) => (
-          <div key={d} className={styles.weekHeaderCell}>
+        {diasSemana.map((d, i) => (
+          <div key={`wd-${i}`} className={styles.weekHeaderCell}>
             {d}
           </div>
         ))}

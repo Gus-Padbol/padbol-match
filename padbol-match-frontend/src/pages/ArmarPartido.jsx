@@ -1190,7 +1190,8 @@ export default function ArmarPartido() {
                             opt.precio != null && Number.isFinite(Number(opt.precio))
                               ? `${mon} ${Number(opt.precio).toLocaleString('es-AR')}`
                               : null;
-                          const label = labelPrecio ? `${d} min — ${labelPrecio}` : `${d} min`;
+                          const minLabel = t('reservas.minutos', { defaultValue: 'min' });
+                          const label = labelPrecio ? `${d} ${minLabel} — ${labelPrecio}` : `${d} ${minLabel}`;
                           return (
                             <button
                               key={d}
@@ -1358,7 +1359,8 @@ export default function ArmarPartido() {
             <div style={{ paddingTop: 32, paddingBottom: 4 }}>
               <h1 style={{ ...AP.title, scrollMarginTop: armarPaddingTopCss }}>{t('reservas.courtsAvailableTitle')}</h1>
               <p style={AP.body}>
-                {sede?.nombre} · {form.fecha} · {String(form.hora).split(' - ')[0]} · {form.duracion} min
+                {sede?.nombre} · {form.fecha} · {String(form.hora).split(' - ')[0]} · {form.duracion}{' '}
+                {t('reservas.minutos', { defaultValue: 'min' })}
               </p>
               {dispLoading ? (
                 <p style={AP.sub}>{t('reservas.checkingAvailability')}</p>

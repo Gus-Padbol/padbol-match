@@ -252,7 +252,11 @@
     "loadingExtras": "جارٍ تحميل الخيارات…",
     "extrasSubtitleArmar": "اختياري: أضف منتجات أو خدمات النادي. يتم تحديث الإجمالي أدناه.",
     "goToPay": "اذهب للدفع",
-    "preparingPayment": "جارٍ تحضير الدفع…"
+    "preparingPayment": "جارٍ تحضير الدفع…",
+    "minutos": "د",
+    "canchasLibres": "حر",
+    "calendarPrevMonth": "الشهر السابق",
+    "calendarNextMonth": "الشهر التالي"
   },
   "armarPartido": {
     "header": "إعداد المباراة",

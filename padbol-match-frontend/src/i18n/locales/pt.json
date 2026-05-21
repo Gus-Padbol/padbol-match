@@ -247,7 +247,11 @@
     "loadingExtras": "Carregando opções…",
     "extrasSubtitleArmar": "Opcional: adicione produtos ou serviços do clube. O total é atualizado abaixo.",
     "goToPay": "Ir para pagamento",
-    "preparingPayment": "Preparando pagamento…"
+    "preparingPayment": "Preparando pagamento…",
+    "minutos": "min",
+    "canchasLibres": "livre",
+    "calendarPrevMonth": "Mês anterior",
+    "calendarNextMonth": "Próximo mês"
   },
   "torneos": {
     "titulo": "Torneios",

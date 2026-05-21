@@ -247,7 +247,11 @@
     "loadingExtras": "Optionen werden geladen…",
     "extrasSubtitleArmar": "Optional: Club-Produkte oder -Services hinzufügen. Gesamtsumme unten.",
     "goToPay": "Zur Zahlung",
-    "preparingPayment": "Zahlung wird vorbereitet…"
+    "preparingPayment": "Zahlung wird vorbereitet…",
+    "minutos": "Min.",
+    "canchasLibres": "frei",
+    "calendarPrevMonth": "Vorheriger Monat",
+    "calendarNextMonth": "Nächster Monat"
   },
   "torneos": {
     "titulo": "Turniere",
