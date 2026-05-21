@@ -2604,6 +2604,17 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (error) throw error;
     if (!updated) return res.status(404).json({ error: 'Sede no encontrada' });
 
+    const touchedDuracionPrecios = ['precio_60min', 'precio_90min', 'precio_120min', 'precio_turno'].some((k) =>
+      hop(k),
+    );
+    if (touchedDuracionPrecios) {
+      try {
+        await syncSedesDuracionesPreciosFromSedeColumns(supabase, id, updated);
+      } catch (syncErr) {
+        console.warn('PATCH /api/sedes/:id sync sedes_duraciones:', syncErr?.message || syncErr);
+      }
+    }
+
     res.json({ sede: updated });
   } catch (err) {
     const st = err.status || 500;
@@ -2977,6 +2988,53 @@ async function fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas 
     return [];
   }
   return Array.isArray(data) ? data : [];
+}
+
+/** Sincroniza filas 60/90/120 en sedes_duraciones desde columnas precio_* de sedes (panel admin club). */
+async function syncSedesDuracionesPreciosFromSedeColumns(supabaseClient, sedeId, sedeRow) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0 || !sedeRow || typeof sedeRow !== 'object') return;
+  const pairs = [
+    [60, parsePrecioMonedaBackend(sedeRow.precio_60min)],
+    [
+      90,
+      parsePrecioMonedaBackend(sedeRow.precio_90min) ??
+        parsePrecioMonedaBackend(sedeRow.precio_turno) ??
+        parsePrecioMonedaBackend(sedeRow.precio_por_reserva),
+    ],
+    [120, parsePrecioMonedaBackend(sedeRow.precio_120min)],
+  ];
+  for (const [dm, pr] of pairs) {
+    const { data: existing, error: exErr } = await supabaseClient
+      .from('sedes_duraciones')
+      .select('id')
+      .eq('sede_id', sid)
+      .eq('duracion_minutos', dm)
+      .maybeSingle();
+    if (exErr) {
+      console.warn('[sedes_duraciones] sync lookup:', exErr.message || String(exErr));
+      continue;
+    }
+    if (pr == null) {
+      if (existing?.id) {
+        await supabaseClient.from('sedes_duraciones').update({ activo: false }).eq('id', existing.id);
+      }
+      continue;
+    }
+    if (existing?.id) {
+      await supabaseClient
+        .from('sedes_duraciones')
+        .update({ precio: pr, activo: true })
+        .eq('id', existing.id);
+    } else {
+      const { error: insErr } = await supabaseClient
+        .from('sedes_duraciones')
+        .insert([{ sede_id: sid, duracion_minutos: dm, precio: pr, activo: true }]);
+      if (insErr) {
+        console.warn('[sedes_duraciones] sync insert:', insErr.message || String(insErr));
+      }
+    }
+  }
 }
 
 function legacyDuracionesOfertaDesdeSedeRow(sedePreciosRow) {

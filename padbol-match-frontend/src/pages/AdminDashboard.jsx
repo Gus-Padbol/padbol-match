@@ -4480,8 +4480,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const miSedeNavItems = useMemo(() => {
     const items = [
       { id: 'info', label: t('admin.sedes.clubInfo') },
+      { id: 'precios', label: t('admin.sedes.pricesByDuration') },
       { id: 'canchas', label: t('admin.formularios.courtsCol') },
-      { id: 'horarios', label: 'Horarios' },
+      { id: 'horarios', label: t('admin.franjas.slotsAndPricesTitle') },
     ];
     if (esAdminClub || isSuperAdmin) items.push({ id: 'extras', label: t('admin.sedes.halftimeExtras') });
     if (esAdminClub || isSuperAdmin) items.push({ id: 'clases', label: 'Clases y profesores' });
@@ -4882,6 +4883,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setMiSede(updated);
       setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+      if (session?.access_token) {
+        fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+          .then((r) => r.json())
+          .then((j) => {
+            const rows = Array.isArray(j.duraciones) ? j.duraciones : [];
+            setMiSedeDuraciones(rows);
+            const drafts = {};
+            for (const r of rows) {
+              drafts[r.id] = {
+                precio: r.precio != null ? String(r.precio) : '',
+                activo: !!r.activo,
+              };
+            }
+            setMiSedeDuracionDrafts(drafts);
+          })
+          .catch(() => {});
+      }
     }
   };
 
@@ -11367,12 +11387,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
           </div>
 
-          {/* ── 2. Precios ── */}
-          <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
-            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>Precios</h3>
+          {/* ── Precios por duración (60 / 90 / 120 min) ── */}
+          <div id="admin-mi-sede-precios" style={{ marginBottom: '32px' }}>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
+              {t('admin.sedes.pricesByDuration')}
+            </h3>
             <div className="admin-mi-sede-theme-panel">
               <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Precio base por duración de turno ({miSedeForm.moneda || 'ARS'}). Solo se ofrecen en reservas las duraciones con precio cargado.
+                {t('admin.sedes.pricesByDurationCurrency', { currency: miSedeForm.moneda || 'ARS' })}
               </p>
               {[
                 { field: 'precio_60min', label: '60 min' },
@@ -11401,28 +11423,30 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </div>
                 </div>
               ))}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={guardarPreciosDuracion}
                   disabled={miSedePreciosSaving}
                   style={{ padding: '8px 20px', background: miSedePreciosSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedePreciosSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}
                 >
-                  {miSedePreciosSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar precios'}
+                  {miSedePreciosSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.savePricesButton')}
                 </button>
                 {miSedePreciosMsg ? (
                   <span style={{ fontSize: '13px', fontWeight: 600, color: miSedePreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedePreciosMsg}</span>
                 ) : null}
               </div>
-              <p style={{ margin: '0 0 18px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Las franjas horarias pueden sobrescribir estos precios según la hora de inicio del turno.
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                {t('admin.sedes.pricesDurationHint')}
               </p>
 
-              <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 800 }}>
-                Duraciones y precios
+              {isSuperAdmin ? (
+                <>
+              <h4 className="admin-mi-sede-block-title" style={{ margin: '24px 0 10px', fontSize: '15px', fontWeight: 800 }}>
+                {t('admin.sedes.durationsTableTitle')}
               </h4>
               <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Editá el precio y si cada duración está activa para reservas públicas. Agregar o quitar duraciones solo lo hace el equipo Padbol Match (super admin).
+                {t('admin.sedes.durationsTableHint')}
               </p>
               {miSedeDuracionesMsg ? (
                 <p
@@ -11535,7 +11559,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   })}
                 </div>
               )}
+                </>
+              ) : null}
+            </div>
+          </div>
 
+          <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
+              {t('admin.franjas.slotsAndPricesTitle')}
+            </h3>
+            <div className="admin-mi-sede-theme-panel">
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{t('admin.franjas.slotsAndPricesTitle')}</p>
               <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 Define franjas semanales por día o fechas especiales (feriados/eventos). El precio se elige según la hora de inicio del turno (formato 24 h).
