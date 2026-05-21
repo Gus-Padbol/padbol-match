@@ -158,8 +158,11 @@ function horaDesdeMinutosReserva(totalMin) {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 
-function duracionReservaSeleccionada(formData, sede) {
-  const disponibles = duracionesReservaDisponibles(sede);
+function duracionReservaSeleccionada(formData, sede, disponiblesOverride) {
+  const disponibles =
+    Array.isArray(disponiblesOverride) && disponiblesOverride.length
+      ? disponiblesOverride
+      : duracionesReservaDisponibles(sede);
   const d = parseInt(String(formData?.duracion || ''), 10);
   if (disponibles.length > 0 && Number.isFinite(d) && disponibles.includes(d)) return d;
   if (Number.isFinite(d) && RESERVA_DURACIONES_MIN.includes(d)) return d;
@@ -1069,12 +1072,38 @@ export default function ReservaForm() {
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
+  const sedeParaDuracionesReserva = useMemo(() => {
+    const sid = Number(filtros.sede_id);
+    if (!Number.isFinite(sid) || sid <= 0) return sedeSeleccionada;
+    if (sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid) {
+      return sedeSeleccionada
+        ? { ...sedeSeleccionada, ...sedeReservaDetalle }
+        : sedeReservaDetalle;
+    }
+    return sedeSeleccionada;
+  }, [sedeSeleccionada, sedeReservaDetalle, filtros.sede_id]);
+
   const duracionesOfrecidas = useMemo(
-    () => duracionesReservaDisponibles(sedeSeleccionada),
-    [sedeSeleccionada]
+    () => duracionesReservaDisponibles(sedeParaDuracionesReserva),
+    [sedeParaDuracionesReserva]
   );
 
-  const duracionSeleccionadaMin = duracionReservaSeleccionada(formData, sedeSeleccionada);
+  const nombreSedePantalla2 = useMemo(() => {
+    if (sedeSeleccionada?.nombre) return sedeSeleccionada.nombre;
+    const sid = Number(filtros.sede_id);
+    if (!Number.isFinite(sid) || sid <= 0) return '';
+    const hit =
+      sedes.find((s) => Number(s.id) === sid) ||
+      sedesCatalogo.find((s) => Number(s.id) === sid) ||
+      (sedeReservaDetalle && Number(sedeReservaDetalle.id) === sid ? sedeReservaDetalle : null);
+    return hit?.nombre || '';
+  }, [sedeSeleccionada, filtros.sede_id, sedes, sedesCatalogo, sedeReservaDetalle]);
+
+  const duracionSeleccionadaMin = duracionReservaSeleccionada(
+    formData,
+    sedeParaDuracionesReserva,
+    duracionesOfrecidas,
+  );
 
   const [reservaExtrasDisponibles, setReservaExtrasDisponibles] = useState([]);
   const [reservaExtrasLoading, setReservaExtrasLoading] = useState(false);
@@ -1130,10 +1159,10 @@ export default function ReservaForm() {
   }, [reservaExtrasDisponibles, reservaExtrasCantidad]);
 
   const precioReservaTurnoBase = useMemo(() => {
-    if (!sedeSeleccionada) return 0;
-    const p = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
+    if (!sedeParaDuracionesReserva) return 0;
+    const p = getPrecio(sedeParaDuracionesReserva, formData.hora, formData.fecha, duracionSeleccionadaMin);
     return Number.isFinite(Number(p)) ? Number(p) : 0;
-  }, [sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin]);
+  }, [sedeParaDuracionesReserva, formData.hora, formData.fecha, duracionSeleccionadaMin]);
 
   const reservaCargoPlataforma = useMemo(
     () => Math.round((precioReservaTurnoBase + reservaExtrasSubtotal) * 0.03),
@@ -1358,8 +1387,6 @@ export default function ReservaForm() {
 
   // Completar país/ciudad cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
   useEffect(() => {
-    if (sedes.length === 0) return;
-
     const sedeIdFromUrl =
       initialSedeId && String(initialSedeId).trim() ? String(initialSedeId).trim() : null;
     if (!sedeIdFromUrl) {
@@ -1371,8 +1398,17 @@ export default function ReservaForm() {
     const id = parseInt(String(sedeIdFromUrl), 10);
     if (Number.isNaN(id)) return;
 
-    const sede = sedes.find((s) => Number(s.id) === id);
+    const listoCatalogo = sedesCatalogo.length > 0 || sedes.length > 0;
+    const listoDetalle = sedeReservaDetalle && Number(sedeReservaDetalle.id) === id;
+    if (!listoCatalogo && !listoDetalle && sedeReservaDetalleLoading) return;
+    if (!listoCatalogo && !listoDetalle) return;
+
+    const sede =
+      sedes.find((s) => Number(s.id) === id) ||
+      sedesCatalogo.find((s) => Number(s.id) === id) ||
+      (sedeReservaDetalle && Number(sedeReservaDetalle.id) === id ? sedeReservaDetalle : null);
     if (!sede) {
+      if (sedeReservaDetalleLoading) return;
       reservaUrlBootstrapKeyRef.current = '';
       reservaOmitirAutoCanchaUnicaRef.current = false;
       clearReservaGeoMasCercanaIntent();
@@ -1391,7 +1427,8 @@ export default function ReservaForm() {
     const canchaQ = (sp.get('canchaId') || sp.get('cancha') || '').trim();
     const depPreserve = normalizeReservaDeporteUrl(sp.get('deporte'));
 
-    const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
+    const fuenteCiudades = sedes.length > 0 ? sedes : sedesCatalogo;
+    const ciudadesDelPais = [...new Set(fuenteCiudades.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
     setCiudades(ciudadesDelPais);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
 
@@ -1432,7 +1469,27 @@ export default function ReservaForm() {
       }
     }
     reservaUrlBootstrapKeyRef.current = urlBootstrapKey;
-  }, [sedes, initialSedeId, location.search, navigate, authLoading, session?.user?.id]);
+  }, [
+    sedes,
+    sedesCatalogo,
+    sedeReservaDetalle,
+    sedeReservaDetalleLoading,
+    filtros.sede_id,
+    initialSedeId,
+    location.search,
+    navigate,
+    authLoading,
+    session?.user?.id,
+  ]);
+
+  /** Mantener sede_id de la URL aunque el listado filtrado por deporte aún no incluya la sede. */
+  useEffect(() => {
+    if (!initialSedeId) return;
+    const id = parseInt(String(initialSedeId), 10);
+    if (Number.isNaN(id)) return;
+    if (filtros.sede_id === id) return;
+    setFiltros((prev) => ({ ...prev, sede_id: id }));
+  }, [initialSedeId, filtros.sede_id]);
 
   // Tras login: restaurar estado guardado en sessionStorage (v2 o legacy) antes de redirigir a login.
   useEffect(() => {
@@ -2467,7 +2524,7 @@ export default function ReservaForm() {
         >
         <div className="reserva-card">
           <h1 style={{ margin: 0, marginBottom: mostrarEtiquetaSedeMasCercanaGeo ? '8px' : '20px' }}>
-            📅 {sedeSeleccionada?.nombre || t('reservas.loadingVenue')}
+            📅 {nombreSedePantalla2 || t('reservas.loadingVenue')}
           </h1>
           {mostrarEtiquetaSedeMasCercanaGeo && sedeSeleccionada ? (
             <p
@@ -2533,7 +2590,7 @@ export default function ReservaForm() {
                   >
                     {duracionesOfrecidas.map((duracion) => {
                       const active = duracionSeleccionadaMin === duracion && duracionElegidaParaHorarios;
-                      const precioDur = precioSedeParaDuracionMin(sedeSeleccionada, duracion) ?? 0;
+                      const precioDur = precioSedeParaDuracionMin(sedeParaDuracionesReserva, duracion) ?? 0;
                       return (
                         <button
                           key={duracion}
@@ -2614,7 +2671,7 @@ export default function ReservaForm() {
             {formData.hora && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  💰 {Number(getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
+                  💰 {Number(getPrecio(sedeParaDuracionesReserva, formData.hora, formData.fecha, duracionSeleccionadaMin)).toLocaleString('es-AR')} {sedeParaDuracionesReserva?.moneda || sedeSeleccionada?.moneda || 'ARS'}
                 </span>
                 {(() => {
                   const subEtiqueta =

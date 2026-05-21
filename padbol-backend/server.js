@@ -2443,6 +2443,12 @@ app.get('/api/sedes/:id', async (req, res) => {
     let duraciones_oferta = [];
     try {
       const sedePrecios = await fetchSedePreciosResolucionRow(supabase, id);
+      if (id === 1) {
+        console.log('GET /api/sedes/:id sede_id=1 inicio duraciones', {
+          deporteQuery: req.query?.deporte ?? null,
+          usingServiceRole: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+        });
+      }
       duraciones_oferta = await resolveDuracionesOfertaPublico(supabase, id, sedePrecios || sede);
       if (id === 1) {
         console.log('GET /api/sedes/:id sede_id=1 duraciones_oferta respuesta:', duraciones_oferta);
@@ -2988,10 +2994,15 @@ function parsePrecioMonedaBackend(raw) {
   return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
 }
 
+/** Cliente para leer sedes_duraciones (service role evita RLS mal configurado en producción). */
+function supabaseClientParaSedesDuraciones(supabaseClient) {
+  return supabaseAdmin || supabaseClient;
+}
+
 async function fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas = false } = {}) {
   const sid = parseInt(String(sedeId), 10);
   if (!Number.isFinite(sid) || sid <= 0) return [];
-  const db = supabaseAdmin || supabaseClient;
+  const db = supabaseClientParaSedesDuraciones(supabaseClient);
   let q = db
     .from('sedes_duraciones')
     .select('id,sede_id,duracion_minutos,precio,activo')
@@ -5098,14 +5109,19 @@ async function fetchSedesDuracionesActivasMapPorSedeIds(supabaseClient, sedeIds)
   const map = new Map();
   const ids = [...new Set(sedeIds.map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0))];
   if (!ids.length) return map;
-  const { data, error } = await supabaseClient
+  const db = supabaseClientParaSedesDuraciones(supabaseClient);
+  const { data, error } = await db
     .from('sedes_duraciones')
     .select('sede_id,duracion_minutos,precio')
     .in('sede_id', ids)
     .eq('activo', true)
     .order('duracion_minutos', { ascending: true });
   if (error) {
-    console.warn('[sedes_duraciones] batch listado:', error.message || String(error));
+    console.warn('[sedes_duraciones] batch listado:', error.message || String(error), {
+      code: error.code,
+      ids,
+      usingServiceRole: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+    });
     return map;
   }
   for (const row of data || []) {
@@ -5115,6 +5131,13 @@ async function fetchSedesDuracionesActivasMapPorSedeIds(supabaseClient, sedeIds)
     map.get(sid).push({
       duracion_minutos: Number(row.duracion_minutos),
       precio: Math.round(Number(row.precio)),
+    });
+  }
+  if (ids.includes(1)) {
+    console.log('[sedes_duraciones] batch listado sede_id=1', {
+      rowCount: map.get(1)?.length ?? 0,
+      rows: map.get(1) ?? [],
+      usingServiceRole: Boolean(SUPABASE_SERVICE_ROLE_KEY),
     });
   }
   return map;
