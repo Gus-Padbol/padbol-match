@@ -1448,8 +1448,33 @@ app.get('/api/sedes', async (req, res) => {
     try {
       const durMap = await fetchSedesDuracionesActivasMapPorSedeIds(supabase, sedeIdsList);
       list = enrichSedesListConDuracionesOferta(list, durMap);
+      // Si el batch no trajo filas para alguna sede, resolver como GET /api/sedes/:id (sedes_duraciones activas).
+      list = await Promise.all(
+        list.map(async (sede) => {
+          const sid = Number(sede?.id);
+          if (!Number.isFinite(sid) || sid <= 0) return sede;
+          const cur = sede.duraciones_oferta;
+          if (Array.isArray(cur) && cur.length > 0) return sede;
+          const resolved = await resolveDuracionesOfertaPublico(supabase, sid, sede);
+          return { ...sede, duraciones_oferta: resolved };
+        }),
+      );
     } catch (e) {
       console.warn('GET /api/sedes duraciones_oferta:', e?.message || e);
+      list = await Promise.all(
+        list.map(async (sede) => {
+          const sid = Number(sede?.id);
+          if (!Number.isFinite(sid) || sid <= 0) {
+            return { ...sede, duraciones_oferta: [] };
+          }
+          try {
+            const resolved = await resolveDuracionesOfertaPublico(supabase, sid, sede);
+            return { ...sede, duraciones_oferta: resolved };
+          } catch {
+            return { ...sede, duraciones_oferta: legacyDuracionesOfertaDesdeSedeRow(sede) };
+          }
+        }),
+      );
     }
     try {
       const canchasMap = await fetchCanchasRowsMapPorSedeIds(supabase, sedeIdsList);
@@ -5152,7 +5177,7 @@ function enrichSedesListConDuracionesOferta(sedes, duracionesMap) {
       Array.isArray(fromDb) && fromDb.length
         ? fromDb
         : legacyDuracionesOfertaDesdeSedeRow(sede);
-    return { ...sede, duraciones_oferta };
+    return { ...sede, duraciones_oferta: Array.isArray(duraciones_oferta) ? duraciones_oferta : [] };
   });
 }
 
