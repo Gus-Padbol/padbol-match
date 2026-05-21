@@ -422,7 +422,9 @@
         "6ta": "6ta",
         "Femenino": "Femenino",
         "Mixto": "Mixto"
-      }
+      },
+      "colPos": "#",
+      "statForma": "Forma"
     },
     "partidoDetalle": {
       "titulo": "Detalle del partido",

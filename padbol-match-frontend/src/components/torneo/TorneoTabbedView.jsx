@@ -38,6 +38,7 @@ import { downloadTorneoJugadoresXlsx } from '../../utils/exportTorneoJugadoresEx
 import { IconGeroUbicacion } from '../icons/GeroIcons';
 import SponsorPromoCard from '../SponsorPromoCard';
 import PartidoDetalleModal from './PartidoDetalleModal';
+import TorneoGruposTable from './TorneoGruposTable';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import { usePadbolLangVersion } from '../../hooks/usePadbolLang';
 import {
@@ -1217,117 +1218,18 @@ export default function TorneoTabbedView({
     </div>
   );
 
-  const renderGrupoTable = (grupoLabel, tablaRows, onNombreClick) => {
-    const statHeaders = [
-      t('torneos.vista.statPj'),
-      t('torneos.vista.statPg'),
-      t('torneos.vista.statPp'),
-      t('torneos.vista.statSw'),
-      t('torneos.vista.statSl'),
-      t('torneos.vista.statGw'),
-      t('torneos.vista.statGl'),
-      t('torneos.vista.statPts'),
-    ];
-    const grupoTitulo =
-      grupoLabel === 'General'
-        ? t('torneos.vista.grupoGeneral')
-        : t('torneos.vista.grupo', { label: grupoLabel });
-    return (
-      <div style={{ marginBottom: '22px' }}>
-        <div style={{ fontWeight: 900, fontSize: '15px', color: 'var(--text-primary)', marginBottom: '8px' }}>
-          {grupoTitulo}
-        </div>
-        <div className="tabla-grupos-scroll-outer">
-          <table className="tabla-grupos-stats">
-            <thead>
-              <tr style={{ color: 'var(--text-secondary)' }}>
-                <th className="tabla-grupos-col-equipo tabla-grupos-th-equipo">{t('torneos.vista.colEquipo')}</th>
-                {statHeaders.map((h) => (
-                  <th key={h} className="tabla-grupos-col-stat">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {tablaRows.filter((row) => (Number(row.jj) || 0) > 0).map((row, idx) => {
-                const nombreCorto = trunc12(nombreEquipoMostrado({ ...row, nombre: row.nombre }));
-                const clasifica = idx < 2;
-                const bgFila = clasifica
-                  ? 'color-mix(in srgb, var(--bg-card) 90%, #22c55e 10%)'
-                  : 'var(--bg-card)';
-                return (
-                  <tr
-                    key={row.id}
-                    className={clasifica ? 'tabla-grupos-fila--clasifica' : undefined}
-                    style={{
-                      borderTop: '1px solid #f1f5f9',
-                      background: bgFila,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <td
-                      className={`tabla-grupos-col-equipo${clasifica ? ' tabla-grupos-col-equipo--clasifica' : ''}`}
-                      style={{ fontWeight: 700, maxWidth: 140, background: bgFila }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => onNombreClick(row)}
-                        style={{
-                          border: 'none',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          color: 'var(--text-primary)',
-                          fontWeight: 700,
-                          padding: 0,
-                          textAlign: 'left',
-                          maxWidth: 130,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'block',
-                        }}
-                        title={nombreEquipoMostrado({ ...row, nombre: row.nombre })}
-                      >
-                        {nombreCorto}
-                      </button>
-                    </td>
-                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
-                      {row.jj}
-                    </td>
-                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
-                      {row.g}
-                    </td>
-                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
-                      {row.p}
-                    </td>
-                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
-                      {row.sg}
-                    </td>
-                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
-                      {row.sp}
-                    </td>
-                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
-                      {row.gg}
-                    </td>
-                    <td className="tabla-grupos-col-stat" style={{ background: bgFila }}>
-                      {row.gp}
-                    </td>
-                    <td
-                      className="tabla-grupos-col-stat tabla-grupos-col-pts"
-                      style={{ fontWeight: 900, background: bgFila }}
-                    >
-                      {row.pts}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
+  const renderGrupoTable = (grupoLabel, tablaRows, onNombreClick, grupoEquipos = equipos) => (
+    <TorneoGruposTable
+      grupoLabel={grupoLabel}
+      tablaRows={tablaRows}
+      equipos={equipos}
+      partidos={partidos}
+      grupoEquipos={grupoEquipos}
+      clasificadosCount={2}
+      onEquipoClick={onNombreClick}
+      nombreEquipo={nombreEquipoMostrado}
+    />
+  );
 
   const renderTabGrupos = () => {
     const openEq = (row) => setModalEquipo(equipos.find((e) => e.id === row.id) || row);
@@ -1380,7 +1282,11 @@ export default function TorneoTabbedView({
             const grupoEquipos = equipos.filter((eq) => equipoGrupoMap[equipoIdKey(eq.id)] === grupo);
             const grupoPartidos = partidosDelGrupo(partidos, grupoEquipos, grupo);
             const tablaGrupo = buildTablaPosiciones(grupoEquipos, grupoPartidos);
-            return <div key={grupo}>{renderGrupoTable(grupo, tablaGrupo, openEq)}</div>;
+            return (
+              <div key={grupo}>
+                {renderGrupoTable(grupo, tablaGrupo, openEq, grupoEquipos)}
+              </div>
+            );
           })}
         </div>
       );

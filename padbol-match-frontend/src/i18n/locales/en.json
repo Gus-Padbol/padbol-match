@@ -398,7 +398,9 @@
       "statSw": "SW",
       "statSl": "SL",
       "statGw": "GW",
-      "statGl": "GL"
+      "statGl": "GL",
+      "colPos": "#",
+      "statForma": "Form"
     },
     "partidoDetalle": {
       "titulo": "Match details",

@@ -393,7 +393,9 @@
       "statSw": "SW",
       "statSl": "SL",
       "statGw": "GW",
-      "statGl": "GL"
+      "statGl": "GL",
+      "colPos": "#",
+      "statForma": "Formă"
     },
     "partidoDetalle": {
       "titulo": "Detalii meci",
