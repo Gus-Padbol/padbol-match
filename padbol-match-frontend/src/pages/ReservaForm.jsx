@@ -710,6 +710,8 @@ export default function ReservaForm() {
   const [deportesZonaLoading, setDeportesZonaLoading] = useState(false);
   const [reservaFutbolMenuAbierto, setReservaFutbolMenuAbierto] = useState(false);
   const reservaFutbolMenuRef = useRef(null);
+  /** Evita limpiar duración/horario en la primera carga de la sede (?sedeId= desde card). */
+  const prevSedeReservaIdRef = useRef(null);
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
@@ -1276,8 +1278,6 @@ export default function ReservaForm() {
    * el usuario debe tocar "Elige tu cancha" igual que en el flujo manual.
    */
   const reservaOmitirAutoCanchaUnicaRef = useRef(false);
-  /** Evita limpiar duración/horario en la primera carga de la sede (?sedeId= desde card). */
-  const prevSedeReservaIdRef = useRef(null);
 
   const redirectGuestAntesResumen = useCallback(
     (formDataWithCancha) => {
@@ -2562,21 +2562,17 @@ export default function ReservaForm() {
             </p>
           ) : null}
 
-          {(sedeSeleccionada || sedeParaDuracionesReserva) && (
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
-            {(() => {
-              const sedeLinea = sedeSeleccionada || sedeParaDuracionesReserva;
-              const { flag, linea } = formatSedeCiudadPaisLinea(sedeLinea, t);
-              return (
-                <>
-                  {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
-                  {linea}
-                </>
-              );
-            })()}
-            {textoLineaTarifasReserva(sedeLinea)}
-          </p>
-          )}
+          {(sedeSeleccionada || sedeParaDuracionesReserva) && (() => {
+            const sedeLinea = sedeSeleccionada || sedeParaDuracionesReserva;
+            const { flag, linea } = formatSedeCiudadPaisLinea(sedeLinea, t);
+            return (
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
+                {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
+                {linea}
+                {textoLineaTarifasReserva(sedeLinea)}
+              </p>
+            );
+          })()}
 
           <form>
             <div className="form-group">
