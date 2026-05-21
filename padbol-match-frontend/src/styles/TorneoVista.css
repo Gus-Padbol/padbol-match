@@ -242,9 +242,10 @@
   margin-bottom: 10px;
 }
 
-.torneo-header p {
+.torneo-header > p {
   margin: 0;
-  color: #666;
+  color: var(--text-primary);
+  opacity: 0.75;
   font-size: 14px;
 }
 
