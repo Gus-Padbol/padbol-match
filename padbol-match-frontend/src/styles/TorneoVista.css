@@ -430,9 +430,31 @@
 }
 .torneo-grupos-table {
   width: 100%;
-  min-width: 520px;
+  min-width: 680px;
   border-collapse: collapse;
   table-layout: auto;
+}
+
+/* Sticky columns */
+.torneo-grupos-th--pos,
+.torneo-grupos-th--equipo,
+.torneo-grupos-td--sticky {
+  position: sticky;
+  z-index: 2;
+}
+.torneo-grupos-th--pos {
+  left: 0;
+  background: var(--bg-card);
+}
+.torneo-grupos-th--equipo {
+  left: 36px;
+  background: var(--bg-card);
+}
+.torneo-grupos-td--sticky {
+  background: inherit;
+}
+.torneo-grupos-row--clasifica .torneo-grupos-td--sticky {
+  background: color-mix(in srgb, var(--bg-card) 92%, #22c55e 8%);
 }
 
 /* ── Header ── */
@@ -460,8 +482,10 @@
 .torneo-grupos-th--num {
   width: 40px;
 }
-.torneo-grupos-th--dg {
-  width: 44px;
+.torneo-grupos-th--pts {
+  color: var(--accent);
+  text-align: center;
+  width: 40px;
 }
 .torneo-grupos-th--forma {
   min-width: 200px;
@@ -497,9 +521,12 @@
   padding-left: 10px;
   text-align: center;
 }
-.torneo-grupos-td--dg-pos { color: #22c55e; font-weight: 600; }
-.torneo-grupos-td--dg-neg { color: #ef4444; font-weight: 600; }
-.torneo-grupos-td--dg-zero { color: #6b7280; }
+.torneo-grupos-td--pts {
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  width: 40px;
+}
 
 /* ── Position badge ── */
 .torneo-grupos-pos-badge {

@@ -28,14 +28,8 @@ function fotoEquipoTabla(eq) {
   return String(fotoCapitanEquipo(eq) || '').trim();
 }
 
-function formatDg(row) {
-  const dg = Number(row.dg) || 0;
-  if (dg > 0) return `+${dg}`;
-  return `${dg}`;
-}
-
 /**
- * Tabla de posiciones por grupo (PE, PP, DG, GF, GC, últimos 6).
+ * Tabla de posiciones por grupo (PJ, PG, PP, SG, SP, JG, JP, PTS, últimos 6).
  */
 export default function TorneoGruposTable({
   grupoLabel,
@@ -87,26 +81,43 @@ export default function TorneoGruposTable({
         <table className="torneo-grupos-table">
           <thead>
             <tr>
-              <th className="torneo-grupos-th torneo-grupos-th--pos" scope="col">
+              <th
+                className="torneo-grupos-th torneo-grupos-th--pos"
+                scope="col"
+                style={{ left: 0 }}
+              >
                 {t('torneos.vista.colPos', { defaultValue: '#' })}
               </th>
-              <th className="torneo-grupos-th torneo-grupos-th--equipo" scope="col">
+              <th
+                className="torneo-grupos-th torneo-grupos-th--equipo"
+                scope="col"
+                style={{ left: 36 }}
+              >
                 {t('torneos.vista.colEquipo')}
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                PE
+                {t('torneos.vista.statPj', { defaultValue: 'PJ' })}
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                PP
-              </th>
-              <th className="torneo-grupos-th torneo-grupos-th--dg" scope="col">
-                DG
+                {t('torneos.vista.statPg', { defaultValue: 'PG' })}
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                GF
+                {t('torneos.vista.statPp', { defaultValue: 'PP' })}
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                GC
+                {t('torneos.vista.statSw', { defaultValue: 'SG' })}
+              </th>
+              <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
+                {t('torneos.vista.statSl', { defaultValue: 'SP' })}
+              </th>
+              <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
+                JG
+              </th>
+              <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
+                JP
+              </th>
+              <th className="torneo-grupos-th torneo-grupos-th--pts" scope="col">
+                {t('torneos.vista.statPts', { defaultValue: 'PTS' })}
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--forma" scope="col">
                 ÚLTIMOS 6
@@ -136,14 +147,6 @@ export default function TorneoGruposTable({
                       ? 'torneo-grupos-pos-badge torneo-grupos-pos-badge--3'
                       : 'torneo-grupos-pos-badge torneo-grupos-pos-badge--fuera';
 
-              const dgNum = Number(row.dg) || 0;
-              const dgClass =
-                dgNum > 0
-                  ? 'torneo-grupos-td torneo-grupos-td--num torneo-grupos-td--dg-pos'
-                  : dgNum < 0
-                    ? 'torneo-grupos-td torneo-grupos-td--num torneo-grupos-td--dg-neg'
-                    : 'torneo-grupos-td torneo-grupos-td--num torneo-grupos-td--dg-zero';
-
               return (
                 <tr
                   key={row.id}
@@ -151,10 +154,16 @@ export default function TorneoGruposTable({
                     clasifica ? 'torneo-grupos-row torneo-grupos-row--clasifica' : 'torneo-grupos-row'
                   }
                 >
-                  <td className="torneo-grupos-td torneo-grupos-td--pos">
+                  <td
+                    className="torneo-grupos-td torneo-grupos-td--pos torneo-grupos-td--sticky"
+                    style={{ left: 0 }}
+                  >
                     <span className={badgeClass}>{pos}</span>
                   </td>
-                  <td className="torneo-grupos-td torneo-grupos-td--equipo">
+                  <td
+                    className="torneo-grupos-td torneo-grupos-td--equipo torneo-grupos-td--sticky"
+                    style={{ left: 36 }}
+                  >
                     <button
                       type="button"
                       className="torneo-grupos-equipo-btn"
@@ -174,11 +183,14 @@ export default function TorneoGruposTable({
                       <span className="torneo-grupos-equipo-nombre">{nombre}</span>
                     </button>
                   </td>
+                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.jj}</td>
                   <td className="torneo-grupos-td torneo-grupos-td--num">{row.g}</td>
                   <td className="torneo-grupos-td torneo-grupos-td--num">{row.p}</td>
-                  <td className={dgClass}>{formatDg(row)}</td>
-                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.gf ?? 0}</td>
-                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.gc ?? 0}</td>
+                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.sg}</td>
+                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.sp}</td>
+                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.gg}</td>
+                  <td className="torneo-grupos-td torneo-grupos-td--num">{row.gp}</td>
+                  <td className="torneo-grupos-td torneo-grupos-td--pts">{row.pts}</td>
                   <td className="torneo-grupos-td torneo-grupos-td--forma">
                     <div
                       className="torneo-grupos-forma"

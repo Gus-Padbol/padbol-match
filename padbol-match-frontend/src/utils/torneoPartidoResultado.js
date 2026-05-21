@@ -260,8 +260,7 @@ export function buildTablaPosiciones(equiposList, partidosList) {
       const s = stats[k] || { jj: 0, g: 0, p: 0, pts: 0, sg: 0, sp: 0, gg: 0, gp: 0 };
       const gf = s.gg;
       const gc = s.gp;
-      /** Deporte por sets (SW/SL): sin diferencial de goles en tabla. */
-      const dg = 0;
+      const dg = (s.sg - s.sp) || 0;
       return {
         id: eq.id,
         nombre: eq.nombre,
