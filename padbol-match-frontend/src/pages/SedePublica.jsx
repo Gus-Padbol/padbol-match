@@ -31,6 +31,7 @@ import {
   esInscripcionAbiertaTorneo,
   esProximoTorneo,
 } from '../utils/torneoEstadoFiltroPills';
+import './SedePublica.css';
 
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
@@ -192,61 +193,184 @@ function urlsCarruselSedePublica(sede) {
 const CARRUSEL_GAP_PX = 8;
 const CARRUSEL_SLIDE_BASIS = `calc((100% - ${2 * CARRUSEL_GAP_PX}px) / 3)`;
 
-/** Primeras fotos en carrusel destacado (scroll-snap, sin autoplay). Sin badges numéricos. */
-function SedeFotosCarruselDestacado({ urls, onOpenAtIndex }) {
-  const slice = urls.slice(0, Math.min(FOTOS_DESTACADAS_MAX, urls.length));
-  if (!slice.length) return null;
+function sedeFotosLista(sede) {
+  return Array.isArray(sede?.fotos_urls)
+    ? sede.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
+    : [];
+}
+
+function sedeHeroImageUrl(sede) {
+  const fotos = sedeFotosLista(sede);
+  if (fotos.length) return fotos[0];
+  const { urls } = urlsCarruselSedePublica(sede);
+  return urls[0] || null;
+}
+
+function whatsappHrefSede(sede) {
+  if (!sede?.telefono) return null;
+  const digits = String(sede.telefono).replace(/\D/g, '');
+  if (!digits) return null;
+  const n = digits.startsWith('0') ? `54${digits.slice(1)}` : digits;
+  return `https://wa.me/${n}`;
+}
+
+/** Galería horizontal: ~3 fotos visibles, flecha para ver más. */
+function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
+  const trackRef = useRef(null);
+  const [canScrollMore, setCanScrollMore] = useState(false);
+
+  const syncScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) {
+      setCanScrollMore(false);
+      return;
+    }
+    setCanScrollMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    syncScroll();
+    const el = trackRef.current;
+    if (!el) return undefined;
+    el.addEventListener('scroll', syncScroll, { passive: true });
+    window.addEventListener('resize', syncScroll);
+    return () => {
+      el.removeEventListener('scroll', syncScroll);
+      window.removeEventListener('resize', syncScroll);
+    };
+  }, [fotos.length, syncScroll]);
+
+  if (!fotos.length) return null;
+
+  const scrollNext = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const slide = el.querySelector('.sede-publica-galeria__slide');
+    const step = (slide?.offsetWidth || 110) + 8;
+    el.scrollBy({ left: step, behavior: 'smooth' });
+  };
+
   return (
-    <div style={{ marginBottom: '12px' }}>
-      <div
-        style={{
-          display: 'flex',
-          gap: `${CARRUSEL_GAP_PX}px`,
-          overflowX: 'auto',
-          scrollSnapType: 'x mandatory',
-          WebkitOverflowScrolling: 'touch',
-          paddingBottom: '6px',
-          paddingLeft: '2px',
-          paddingRight: '2px',
-          boxSizing: 'border-box',
-          width: '100%',
-          maxWidth: '100%',
-          minWidth: 0,
-        }}
-      >
-        {slice.map((url, i) => (
+    <div className="sede-publica-galeria">
+      <div ref={trackRef} className="sede-publica-galeria__track">
+        {fotos.map((url, i) => (
           <button
             key={`${url}-${i}`}
             type="button"
+            className="sede-publica-galeria__slide"
             onClick={() => onOpenAtIndex(i)}
-            style={{
-              flex: `0 0 ${CARRUSEL_SLIDE_BASIS}`,
-              maxWidth: CARRUSEL_SLIDE_BASIS,
-              scrollSnapAlign: 'start',
-              height: PHOTO_STRIP_H,
-              borderRadius: SEDE_DS.cardRadius,
-              overflow: 'hidden',
-              background: '#f0f0f0',
-              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.08)',
-              border: `1px solid ${SEDE_DS.cardBorder}`,
-              padding: 0,
-              cursor: 'pointer',
-              position: 'relative',
-            }}
+            aria-label={`Ver foto ${i + 1}`}
           >
-            <img
-              src={url}
-              alt="Instalaciones de la sede"
-              style={{
-                width: '100%',
-                height: PHOTO_STRIP_H,
-                display: 'block',
-                objectFit: 'cover',
-              }}
-            />
+            <img src={url} alt="" loading="lazy" decoding="async" />
           </button>
         ))}
       </div>
+      {fotos.length > 3 ? (
+        <button
+          type="button"
+          className="sede-publica-galeria__more"
+          onClick={scrollNext}
+          disabled={!canScrollMore}
+          aria-label="Ver más fotos"
+        >
+          ›
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function SedeInformacionClub({ sede, horario, estadisticasPublicas, t }) {
+  const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
+  const torneosTotal = Number(estadisticasPublicas?.torneos_realizados_total) || 0;
+  const ubicacion = [sede?.direccion, sede?.ciudad, sede?.pais].filter(Boolean).join(', ');
+  const waHref = whatsappHrefSede(sede);
+
+  const rows = [
+    {
+      key: 'torneos',
+      label: t('sedes.publica.infoTorneos', { defaultValue: 'Torneos realizados' }),
+      value: torneosTotal > 0 ? torneosTotal.toLocaleString('es-AR') : '—',
+    },
+    {
+      key: 'canchas',
+      label: t('sedes.publica.infoCanchas', { defaultValue: 'Canchas disponibles' }),
+      value: canchas.length > 0 ? String(canchas.length) : '—',
+    },
+    {
+      key: 'ubicacion',
+      label: t('sedes.publica.infoUbicacion', { defaultValue: 'Ubicación' }),
+      value: ubicacion || '—',
+    },
+    {
+      key: 'horario',
+      label: t('sedes.publica.infoHorario', { defaultValue: 'Horario' }),
+      value: horario ? horario : '—',
+    },
+    {
+      key: 'whatsapp',
+      label: 'WhatsApp',
+      value: waHref ? (
+        <a href={waHref} target="_blank" rel="noopener noreferrer">
+          {t('sedes.publica.whatsappCta', { defaultValue: 'Escribinos por WhatsApp' })}
+        </a>
+      ) : (
+        '—'
+      ),
+    },
+  ];
+
+  return (
+    <section className="sede-publica-section" aria-labelledby="sede-info-club-title">
+      <h2 id="sede-info-club-title" className="sede-publica-section__title">
+        {t('sedes.publica.infoClub', { defaultValue: 'Información del club' })}
+      </h2>
+      <table className="sede-publica-info-table">
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key}>
+              <th scope="row">{row.label}</th>
+              <td>{row.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
+  const openMapsHref = buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud);
+  const embedSrc = useMemo(() => {
+    const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
+    const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      return `https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
+    }
+    const parts = [direccion, ciudad, pais].filter(Boolean);
+    if (!parts.length) return null;
+    return `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&output=embed`;
+  }, [direccion, ciudad, pais, latitud, longitud]);
+
+  if (!embedSrc && !openMapsHref) return null;
+
+  return (
+    <div className="sede-publica-map">
+      {embedSrc ? (
+        <iframe title="Ubicación en Google Maps" src={embedSrc} loading="lazy" />
+      ) : null}
+      {openMapsHref ? (
+        <div className="sede-publica-map__link-wrap">
+          <a
+            className="sede-publica-map__link"
+            href={openMapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir en Google Maps
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1968,11 +2092,10 @@ export default function SedePublica() {
       {!loading && !error && sede && (() => {
         const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
         const fotos = Array.isArray(sede.fotos_urls) ? sede.fotos_urls : [];
-        const { urls: fotosCarrusel } = urlsCarruselSedePublica(sede);
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
-        const desc = sede.descripcion ? String(sede.descripcion).trim() : '';
-        const fraseHero = desc || SEDE_HERO_FRASE_DEFAULT;
+        const heroImg = sedeHeroImageUrl(sede);
+        const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
         return (
           <>
           <div
@@ -2003,85 +2126,33 @@ export default function SedePublica() {
               }}
             >
             <div
+              className="sede-publica-page__column"
               style={{
                 ...hubInstagramColumnWrapStyle,
                 overflowX: 'hidden',
                 paddingTop: sedeScrollPaddingTopCss,
-                paddingLeft: 'max(6px, env(safe-area-inset-left, 0px))',
-                paddingRight: 'max(6px, env(safe-area-inset-right, 0px))',
               }}
             >
-            <div
-              style={{
-                position: 'relative',
-                borderRadius: SEDE_DS.cardRadius,
-                marginLeft: '6px',
-                marginRight: '6px',
-                marginTop: '10px',
-                boxShadow: '0 4px 18px rgba(15, 23, 42, 0.08)',
-                overflow: 'visible',
-                border: `1px solid ${SEDE_DS.cardBorder}`,
-                background: SEDE_DS.cardBg,
-                boxSizing: 'border-box',
-              }}
-            >
+            <article className="sede-publica-page">
+            <div className="sede-publica-hero-wrap">
               <div
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: '#F8F8F8',
-                  borderRadius: SEDE_DS.cardRadius,
-                  zIndex: 0,
-                }}
-              />
-
+                className={`sede-publica-hero${heroImg ? '' : ' sede-publica-hero--placeholder'}`}
+                style={heroImg ? { backgroundImage: `url(${heroImg})` } : undefined}
+                role="img"
+                aria-label={sede.nombre || 'Sede'}
+              >
+                <div className="sede-publica-hero__overlay" aria-hidden />
+              </div>
               {typeof window !== 'undefined' && sedeId ? (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    zIndex: 3,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    gap: '4px',
-                    pointerEvents: 'none',
-                  }}
-                >
+                <>
                   <button
                     type="button"
+                    className="sede-publica-hero__share"
                     onClick={() => void handleShareSede()}
                     aria-label="Compartir sede"
                     title="Compartir sede"
-                    style={{
-                      pointerEvents: 'auto',
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '10px',
-                      border: `1px solid ${SEDE_DS.cardBorder}`,
-                      background: 'var(--bg-card)',
-                      color: SEDE_DS.title,
-                      lineHeight: 1,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0,
-                      margin: 0,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                      boxSizing: 'border-box',
-                    }}
                   >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden
-                    >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
                       <circle cx="18" cy="5" r="2.25" stroke="currentColor" strokeWidth="1.75" />
                       <circle cx="6" cy="12" r="2.25" stroke="currentColor" strokeWidth="1.75" />
                       <circle cx="18" cy="19" r="2.25" stroke="currentColor" strokeWidth="1.75" />
@@ -2094,569 +2165,104 @@ export default function SedePublica() {
                     </svg>
                   </button>
                   {sedeShareCopied ? (
-                    <span
-                      role="status"
-                      style={{
-                        pointerEvents: 'none',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        color: SEDE_DS.title,
-                        background: 'var(--bg-card)',
-                        padding: '4px 8px',
-                        borderRadius: '8px',
-                        border: `1px solid ${SEDE_DS.cardBorder}`,
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                      }}
-                    >
+                    <span className="sede-publica-hero__share-copied" role="status">
                       Copiado
                     </span>
                   ) : null}
-                </div>
+                </>
               ) : null}
 
-              <div
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  padding: '8px 10px 10px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'stretch',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'stretch',
-                    gap: '10px',
-                    width: '100%',
-                    minHeight: '96px',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 'min(32vw, 124px)',
-                      minWidth: '92px',
-                      maxWidth: '124px',
-                      aspectRatio: '1',
-                      flexShrink: 0,
-                      alignSelf: 'center',
-                      borderRadius: '12px',
-                      background: colorFondoLogoSede(sede),
-                      boxSizing: 'border-box',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                      boxShadow: `inset 0 0 0 1px ${SEDE_DS.cardBorder}`,
-                    }}
-                  >
-                    {sede.logo_url ? (
-                      <img
-                        src={sede.logo_url}
-                        alt=""
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                          objectPosition: 'center center',
-                          display: 'block',
-                          padding: '6px',
-                          boxSizing: 'border-box',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'rgba(248,250,252,0.35)',
-                          fontSize: '40px',
-                          lineHeight: 1,
-                        }}
-                        aria-hidden
-                      >
-                        ⚽
-                      </div>
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'stretch',
-                      gap: '8px',
-                      background: 'var(--bg-card)',
-                      borderRadius: SEDE_DS.cardRadius,
-                      padding: '10px 12px',
-                      boxSizing: 'border-box',
-                      border: `1px solid ${SEDE_DS.cardBorder}`,
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <h1
-                      style={{
-                        color: SEDE_DS.title,
-                        fontSize: `${heroClubNameFontSizePx(sede.nombre)}px`,
-                        fontWeight: 800,
-                        margin: 0,
-                        lineHeight: 1.2,
-                        minWidth: 0,
-                        textAlign: 'center',
-                        wordBreak: 'break-word',
-                        boxSizing: 'border-box',
-                      }}
-                      title={sede.nombre || ''}
-                    >
-                      {sede.nombre || '(sin nombre)'}
-                    </h1>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        width: '100%',
-                      }}
-                    >
-                      {licenciaActiva ? (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '5px 11px',
-                            borderRadius: '999px',
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            letterSpacing: '0.02em',
-                            background: 'linear-gradient(180deg, #fffbeb 0%, #fde68a 55%, #fcd34d 100%)',
-                            color: '#78350f',
-                            border: '1px solid rgba(180, 83, 9, 0.4)',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                          }}
-                        >
-                          ⭐ Licencia PADBOL Activa
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            padding: '5px 11px',
-                            borderRadius: '999px',
-                            fontSize: '10px',
-                            fontWeight: 600,
-                            background: 'rgba(254,226,226,0.95)',
-                            color: '#b91c1c',
-                            border: '1px solid rgba(220,38,38,0.25)',
-                          }}
-                        >
-                          No habilitado
-                        </span>
-                      )}
-                    </div>
-
-                    <p
-                      style={{
-                        margin: 0,
-                        color: SEDE_DS.subtitle,
-                        fontSize: '13px',
-                        lineHeight: 1.45,
-                        fontStyle: 'italic',
-                        textAlign: 'center',
-                        width: '100%',
-                        display: 'block',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {fraseHero}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
 
-            <div
-              style={{
-                width: '100%',
-                maxWidth: '100%',
-                boxSizing: 'border-box',
-                padding: '14px 8px 6px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                alignItems: 'center',
+            <header className="sede-publica-identity">
+              <div
+                className="sede-publica-logo"
+                style={!sede.logo_url ? { background: colorFondoLogoSede(sede) } : undefined}
+              >
+                {sede.logo_url ? (
+                  <img src={sede.logo_url} alt="" />
+                ) : (
+                  <span className="sede-publica-logo__fallback" aria-hidden>
+                    ⚽
+                  </span>
+                )}
+              </div>
+              <h1 className="sede-publica-nombre">{sede.nombre || '(sin nombre)'}</h1>
+              <div className="sede-publica-meta">
+                {direccionLinea ? (
+                  <p className="sede-publica-direccion">
+                    <span className="sede-publica-direccion__pin" aria-hidden>
+                      📍
+                    </span>
+                    <span>{direccionLinea}</span>
+                  </p>
+                ) : null}
+                {licenciaActiva ? (
+                  <span className="sede-publica-licencia">
+                    {t('sedes.publica.licenciaActiva', { defaultValue: 'Licencia Padbol activa' })}
+                  </span>
+                ) : null}
+              </div>
+            </header>
+
+            <SedeGaleriaHorizontal
+              fotos={fotos}
+              onOpenAtIndex={(i) => {
+                setFotosGalleryIndex(i);
+                setFotosGalleryOpen(true);
               }}
-            >
-              {sedeTickerSponsors?.length > 0 ? (
-                <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-                  <HubSponsorsTicker sponsors={sedeTickerSponsors} />
-                </div>
-              ) : null}
+            />
+
+            {sedeTickerSponsors?.length > 0 ? (
+              <div className="sede-publica-sponsors">
+                <HubSponsorsTicker sponsors={sedeTickerSponsors} />
+              </div>
+            ) : null}
+
+            <div className="sede-publica-ctas">
               <button
                 type="button"
+                className="sede-publica-btn sede-publica-btn--primary"
                 onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
-                style={{ ...SEDE_BTN_RESERVAR_CANCHA_STYLE, ...SEDE_CTA_NARROW_CENTERED }}
               >
-                ⚽ {t('reservas.book')}
+                {t('sedes.publica.reservarTurno', { defaultValue: 'Reservar turno' })}
+              </button>
+              <button
+                type="button"
+                className="sede-publica-btn sede-publica-btn--outline"
+                onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+              >
+                {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
               </button>
             </div>
 
-            <div style={{ width: '100%', maxWidth: '100%', margin: 0, padding: '10px 14px 0', boxSizing: 'border-box' }}>
-              <SedeFotosCarruselDestacado
-                urls={fotosCarrusel}
-                onOpenAtIndex={(i) => {
-                  const url = fotosCarrusel[i];
-                  const idxFull = url ? fotos.indexOf(url) : -1;
-                  setFotosGalleryIndex(idxFull >= 0 ? idxFull : 0);
-                  setFotosGalleryOpen(true);
-                }}
-              />
-              {fotos.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFotosGalleryIndex(0);
-                    setFotosGalleryOpen(true);
-                  }}
-                  style={{
-                    ...SEDE_CTA_NARROW_CENTERED,
-                    marginBottom: '16px',
-                    padding: '12px 14px',
-                    borderRadius: SEDE_DS.cardRadius,
-                    border: `2px solid ${SEDE_DS.brand}`,
-                    background: 'var(--bg-card)',
-                    color: SEDE_DS.brand,
-                    fontWeight: 800,
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Ver todas las fotos ({fotos.length})
-                </button>
-              ) : null}
+            <SedeInformacionClub
+              sede={sede}
+              horario={horario}
+              estadisticasPublicas={estadisticasPublicas}
+              t={t}
+            />
 
-              {sedeTieneSeccionEnNumeros(estadisticasPublicas, sede) ? (
-                <div
-                  style={{
-                    marginTop: '6px',
-                    marginBottom: '14px',
-                    padding: '16px 14px',
-                    borderRadius: SEDE_DS.cardRadius,
-                    background: SEDE_DS.cardBg,
-                    border: `1px solid ${SEDE_DS.cardBorder}`,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <h2
-                    style={{
-                      margin: '0 0 12px',
-                      fontSize: '17px',
-                      fontWeight: 800,
-                      color: SEDE_DS.title,
-                    }}
-                  >
-                    En números
-                  </h2>
-                  <ul
-                    style={{
-                      margin: 0,
-                      padding: 0,
-                      listStyle: 'none',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px',
-                    }}
-                  >
-                    {(Number(estadisticasPublicas?.torneos_realizados_total) || 0) > 0 ? (
-                      <li
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'baseline',
-                          gap: '12px',
-                          fontSize: '14px',
-                          color: SEDE_DS.subtitle,
-                          lineHeight: 1.45,
-                        }}
-                      >
-                        <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Torneos realizados en esta sede</span>
-                        <span style={{ fontWeight: 800, color: SEDE_DS.title, whiteSpace: 'nowrap' }}>
-                          {(Number(estadisticasPublicas.torneos_realizados_total) || 0).toLocaleString('es-AR')}
-                        </span>
-                      </li>
-                    ) : null}
-                    {(Number(estadisticasPublicas?.jugadores_reservaron_total) || 0) > 0 ? (
-                      <li
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'baseline',
-                          gap: '12px',
-                          fontSize: '14px',
-                          color: SEDE_DS.subtitle,
-                          lineHeight: 1.45,
-                        }}
-                      >
-                        <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Jugadores que han reservado</span>
-                        <span style={{ fontWeight: 800, color: SEDE_DS.title, whiteSpace: 'nowrap' }}>
-                          {(Number(estadisticasPublicas.jugadores_reservaron_total) || 0).toLocaleString('es-AR')}
-                        </span>
-                      </li>
-                    ) : null}
-                    {(() => {
-                      const d = estadisticasPublicas?.deporte_mas_jugado;
-                      const nt = Number(d?.torneos) || 0;
-                      const nc = Number(d?.canchas_cantidad) || 0;
-                      if (!d?.label || (nt <= 0 && nc <= 0)) return null;
-                      const sub =
-                        nt > 0
-                          ? `${nt.toLocaleString('es-AR')} torneo${nt === 1 ? '' : 's'}`
-                          : `${nc.toLocaleString('es-AR')} cancha${nc === 1 ? '' : 's'} (configuración)`;
-                      return (
-                        <li
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'baseline',
-                            gap: '12px',
-                            fontSize: '14px',
-                            color: SEDE_DS.subtitle,
-                            lineHeight: 1.45,
-                          }}
-                        >
-                          <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Deporte más jugado</span>
-                          <span
-                            style={{
-                              fontWeight: 800,
-                              color: SEDE_DS.title,
-                              textAlign: 'right',
-                              maxWidth: '52%',
-                            }}
-                          >
-                            {String(d.label)}
-                            <span
-                              style={{
-                                display: 'block',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: SEDE_DS.subtitle,
-                                marginTop: '2px',
-                              }}
-                            >
-                              {sub}
-                            </span>
-                          </span>
-                        </li>
-                      );
-                    })()}
-                    {parseAnioFundacionSedePublica(sede?.anio_fundacion) != null ? (
-                      <li
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'baseline',
-                          gap: '12px',
-                          fontSize: '14px',
-                          color: SEDE_DS.subtitle,
-                          lineHeight: 1.45,
-                        }}
-                      >
-                        <span style={{ fontWeight: 700, color: SEDE_DS.title }}>Año de fundación</span>
-                        <span style={{ fontWeight: 800, color: SEDE_DS.title, whiteSpace: 'nowrap' }}>
-                          {parseAnioFundacionSedePublica(sede.anio_fundacion)}
-                        </span>
-                      </li>
-                    ) : null}
-                  </ul>
-                </div>
-              ) : null}
-
-              <div
-                style={{
-                  marginTop: '6px',
-                  marginBottom: '18px',
-                  padding: '16px 14px',
-                  borderRadius: SEDE_DS.cardRadius,
-                  background: SEDE_DS.cardBg,
-                  border: `1px solid ${SEDE_DS.cardBorder}`,
-                  boxSizing: 'border-box',
-                }}
-              >
-                <h2
-                  style={{
-                    margin: '0 0 10px',
-                    fontSize: '17px',
-                    fontWeight: 800,
-                    color: SEDE_DS.title,
-                  }}
-                >
-                  Sobre el club
-                </h2>
-                <div
-                  style={{
-                    margin: 0,
-                    fontSize: '14px',
-                    lineHeight: 1.55,
-                    color: SEDE_DS.title,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {String(sede.historia || '').trim() ? (
-                    String(sede.historia).trim()
-                  ) : (
-                    <span style={{ fontStyle: 'italic', color: SEDE_DS.subtitle, opacity: 0.85 }}>
-                      El club aún no cargó una historia en el panel Mi Sede.
-                    </span>
-                  )}
-                </div>
-
-                <h3
-                  style={{
-                    margin: '18px 0 10px',
-                    fontSize: '14px',
-                    fontWeight: 800,
-                    color: SEDE_DS.title,
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  Próximos torneos
-                </h3>
-                {proximosTorneosLoading ? (
-                  <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '13px' }}>Cargando torneos…</p>
-                ) : proximosTorneos.length === 0 ? (
-                  <p
-                    style={{
-                      margin: 0,
-                      color: SEDE_DS.subtitle,
-                      fontSize: '13px',
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    No hay torneos con inscripción abierta o en estado próximo en esta sede.
-                  </p>
-                ) : (
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      margin: 0,
-                      padding: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px',
-                    }}
-                  >
-                    {proximosTorneos.map((t) => {
-                      const badge = badgeTorneoEstadoPublico(t.estado);
-                      const fi = formatFechaIsoPublicaSede(t.fecha_inicio);
-                      const estadoLabel =
-                        badge?.label ||
-                        (String(t.estado || '').trim() ? String(t.estado).trim() : '—');
-                      return (
-                        <li key={t.id}>
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/torneo/${encodeURIComponent(String(t.id))}`)}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '12px 12px',
-                              borderRadius: SEDE_DS.cardRadius,
-                              border: `1px solid ${SEDE_DS.cardBorder}`,
-                              background: 'var(--bg-card)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '6px',
-                              boxSizing: 'border-box',
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontWeight: 800,
-                                fontSize: '14px',
-                                color: SEDE_DS.title,
-                                lineHeight: 1.3,
-                              }}
-                            >
-                              {String(t.nombre || 'Torneo').trim()}
-                            </span>
-                            <span style={{ fontSize: '13px', color: SEDE_DS.subtitle }}>
-                              📅 {fi}
-                            </span>
-                            <span
-                              style={{
-                                alignSelf: 'flex-start',
-                                marginTop: '2px',
-                                padding: '3px 10px',
-                                borderRadius: '999px',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                background: badge?.bg || '#E5E7EB',
-                                color: badge?.color || '#374151',
-                              }}
-                            >
-                              {estadoLabel}
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-                {!proximosTorneosLoading ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)
-                    }
-                    style={{
-                      marginTop: '14px',
-                      width: '100%',
-                      ...SEDE_BTN_VER_TORNEOS_STYLE,
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    Ver todos los torneos
-                  </button>
-                ) : null}
-              </div>
-
+            <div className="sede-publica-resenas">
               <SedeResenasSeccion
                 sedeId={sedeId}
                 accessToken={session?.access_token ?? null}
                 navigate={navigate}
                 isSuperAdmin={isSuperAdmin}
               />
-
-              <SedeInstalacionesBloque sede={sede} duracionesOferta={duracionesOferta} t={t} />
-
-              <CompactContactCard sede={sede} horario={horario} hasAddress={hasAddress} />
-
-              <SedeSocialChips sede={sede} />
-
-              {hasAddress || (sede.latitud != null && sede.longitud != null) ? (
-                <MapThumbnail
-                  direccion={sede.direccion}
-                  ciudad={sede.ciudad}
-                  pais={sede.pais}
-                  latitud={sede.latitud}
-                  longitud={sede.longitud}
-                />
-              ) : null}
             </div>
+
+            {hasAddress || (sede.latitud != null && sede.longitud != null) ? (
+              <SedeMapaFinal
+                direccion={sede.direccion}
+                ciudad={sede.ciudad}
+                pais={sede.pais}
+                latitud={sede.latitud}
+                longitud={sede.longitud}
+              />
+            ) : null}
+            </article>
+
             </div>
             </div>
           </div>

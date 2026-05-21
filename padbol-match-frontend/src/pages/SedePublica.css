@@ -1,0 +1,414 @@
+/* Perfil público de sede — mobile-first (~390px), variables de tema */
+
+.sede-publica-page {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sede-publica-page__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.sede-publica-page__column {
+  max-width: 100%;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding-bottom: 12px;
+}
+
+/* —— Hero —— */
+.sede-publica-hero-wrap {
+  position: relative;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.sede-publica-hero {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background-color: color-mix(in srgb, var(--text-primary) 12%, var(--bg-page));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.sede-publica-hero--placeholder {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 35%, var(--bg-page)) 0%,
+    color-mix(in srgb, var(--text-primary) 18%, var(--bg-card)) 100%
+  );
+}
+
+.sede-publica-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.42) 100%);
+  pointer-events: none;
+}
+
+.sede-publica-hero__share {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(6px);
+}
+
+.sede-publica-hero__share-copied {
+  position: absolute;
+  top: 52px;
+  right: 10px;
+  z-index: 3;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* —— Identidad (logo superpuesto) —— */
+.sede-publica-identity {
+  position: relative;
+  z-index: 2;
+  margin-top: -40px;
+  padding: 0 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.sede-publica-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 3px solid var(--bg-card);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.sede-publica-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+  box-sizing: border-box;
+  display: block;
+}
+
+.sede-publica-logo__fallback {
+  font-size: 32px;
+  line-height: 1;
+  opacity: 0.35;
+}
+
+.sede-publica-nombre {
+  margin: 10px 0 0;
+  font-size: clamp(1.15rem, 5vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.sede-publica-meta {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.sede-publica-direccion {
+  margin: 0;
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  opacity: 0.8;
+  max-width: 100%;
+  text-align: center;
+}
+
+.sede-publica-direccion__pin {
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.sede-publica-licencia {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fffbeb 0%, #fde68a 50%, #fbbf24 100%);
+  color: #92400e;
+  border: 1px solid rgba(217, 119, 6, 0.45);
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.25);
+}
+
+.sede-publica-licencia--inactiva {
+  background: color-mix(in srgb, #fecaca 88%, var(--bg-card));
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.25);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 10px;
+}
+
+/* —— Galería —— */
+.sede-publica-galeria {
+  position: relative;
+  padding: 4px 16px 14px;
+  box-sizing: border-box;
+}
+
+.sede-publica-galeria__track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0 4px;
+}
+
+.sede-publica-galeria__track::-webkit-scrollbar {
+  display: none;
+}
+
+.sede-publica-galeria__slide {
+  flex: 0 0 calc((100% - 16px) / 3);
+  max-width: calc((100% - 16px) / 3);
+  scroll-snap-align: start;
+  height: 88px;
+  border: none;
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.sede-publica-galeria__slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sede-publica-galeria__more {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.sede-publica-galeria__more:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* —— CTAs —— */
+.sede-publica-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 16px;
+  box-sizing: border-box;
+}
+
+.sede-publica-btn {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: center;
+  padding: 14px 16px;
+  line-height: 1.2;
+}
+
+.sede-publica-btn--primary {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.sede-publica-btn--outline {
+  background: var(--bg-card);
+  color: var(--accent);
+  border: 2px solid var(--accent);
+}
+
+/* —— Secciones —— */
+.sede-publica-section {
+  margin: 0 16px 16px;
+  padding: 16px 14px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.sede-publica-section__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+/* Tabla información */
+.sede-publica-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.sede-publica-info-table tr {
+  border-top: 1px solid var(--border);
+}
+
+.sede-publica-info-table tr:first-child {
+  border-top: none;
+}
+
+.sede-publica-info-table th,
+.sede-publica-info-table td {
+  padding: 10px 0;
+  vertical-align: top;
+  text-align: left;
+  line-height: 1.45;
+}
+
+.sede-publica-info-table th {
+  width: 42%;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding-right: 10px;
+}
+
+.sede-publica-info-table td {
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.sede-publica-info-table a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sede-publica-info-table a:hover {
+  text-decoration: underline;
+}
+
+/* Reseñas (wrapper sobre componente existente) */
+.sede-publica-resenas .sede-publica-section__title {
+  margin-bottom: 10px;
+}
+
+/* Mapa final */
+.sede-publica-map {
+  margin: 0 16px 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+}
+
+.sede-publica-map iframe {
+  display: block;
+  width: 100%;
+  height: 220px;
+  border: 0;
+  pointer-events: auto;
+}
+
+.sede-publica-map__link-wrap {
+  padding: 10px 12px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.sede-publica-map__link {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--text-primary);
+  color: var(--bg-card);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sede-publica-sponsors {
+  padding: 0 16px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
