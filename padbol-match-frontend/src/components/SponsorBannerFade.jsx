@@ -19,9 +19,32 @@ function normalizeBannerRow(row) {
   if (!row) return null;
   const nombre = String(row.nombre ?? '').trim();
   const logo_url = String(row.logo_url ?? row.imagen_url ?? '').trim();
+  const banner_url = String(row.banner_url ?? '').trim();
   const url_destino = String(row.url_destino ?? '').trim();
-  if (!nombre && !logo_url) return null;
-  return { id: row.id, nombre: nombre || 'Sponsor', logo_url, url_destino };
+  if (!nombre && !logo_url && !banner_url) return null;
+  return { id: row.id, nombre: nombre || 'Sponsor', logo_url, banner_url, url_destino };
+}
+
+function wrapLink(url, className, ariaLabel, children) {
+  const isHttp = /^https?:\/\//i.test(String(url || '').trim());
+  if (isHttp) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        aria-label={ariaLabel}
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <div className={className} role="group" aria-label={ariaLabel}>
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -85,13 +108,30 @@ export default function SponsorBannerFade({ sedeId = null, torneoId = null }) {
   const current = sponsors[sponsors.length > 0 ? index % sponsors.length : 0];
   if (!current) return null;
 
-  const url = String(current.url_destino || '').trim();
-  const isHttp = /^https?:\/\//i.test(url);
+  const fadeKey = String(current.id ?? index);
 
-  const inner = (
+  if (current.banner_url) {
+    const imageBanner = (
+      <>
+        <span className="sponsor-banner-fade__label">Publicidad</span>
+        <div className="sponsor-banner-fade__fade-wrap" key={fadeKey}>
+          <img
+            src={current.banner_url}
+            alt=""
+            className="sponsor-banner-fade__img"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </>
+    );
+    return wrapLink(current.url_destino, 'sponsor-banner-fade', current.nombre, imageBanner);
+  }
+
+  const logoFallback = (
     <>
-      <span className="sponsor-banner-fade__label">Publicidad</span>
-      <div className="sponsor-banner-fade__inner" key={String(current.id ?? index)}>
+      <span className="sponsor-banner-fade__label sponsor-banner-fade__label--logo">Publicidad</span>
+      <div className="sponsor-banner-fade__inner sponsor-banner-fade__fade-wrap" key={fadeKey}>
         {current.logo_url ? (
           <img src={current.logo_url} alt="" className="sponsor-banner-fade__logo" loading="lazy" decoding="async" />
         ) : (
@@ -116,23 +156,10 @@ export default function SponsorBannerFade({ sedeId = null, torneoId = null }) {
     </>
   );
 
-  if (isHttp) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="sponsor-banner-fade"
-        aria-label={current.nombre}
-      >
-        {inner}
-      </a>
-    );
-  }
-
-  return (
-    <div className="sponsor-banner-fade" role="group" aria-label={current.nombre}>
-      {inner}
-    </div>
+  return wrapLink(
+    current.url_destino,
+    'sponsor-banner-fade sponsor-banner-fade--logo',
+    current.nombre,
+    logoFallback,
   );
 }

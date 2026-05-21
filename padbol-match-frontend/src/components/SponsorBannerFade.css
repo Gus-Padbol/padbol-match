@@ -1,28 +1,66 @@
 .sponsor-banner-fade {
   width: 100%;
-  height: 100px;
+  height: 120px;
   border-radius: 12px;
-  background: var(--bg-card);
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 16px;
-  cursor: pointer;
-  text-decoration: none;
-  margin: 12px 0;
   overflow: hidden;
+  position: relative;
+  margin: 12px 0;
+  cursor: pointer;
+  display: block;
+  text-decoration: none;
+}
+
+.sponsor-banner-fade__img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
 }
 
 .sponsor-banner-fade__label {
   position: absolute;
   top: 8px;
-  right: 12px;
+  right: 8px;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  color: #4b5563;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 2px 7px;
+  border-radius: 4px;
   text-transform: uppercase;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sponsor-banner-fade__fade-wrap {
+  width: 100%;
+  height: 100%;
+  animation: sponsor-fade-in 0.6s ease;
+}
+
+@keyframes sponsor-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fallback: logo + nombre (sin banner_url) */
+.sponsor-banner-fade--logo {
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+
+.sponsor-banner-fade__label--logo {
+  color: #4b5563;
+  background: transparent;
 }
 
 .sponsor-banner-fade__logo {
@@ -44,10 +82,4 @@
   align-items: center;
   gap: 16px;
   width: 100%;
-  animation: sponsor-fade-in 0.6s ease;
-}
-
-@keyframes sponsor-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }

@@ -99,6 +99,7 @@ export default function AdminSponsorsSection({
       id: null,
       nombre: '',
       logo_url: '',
+      banner_url: '',
       url_destino: '',
       texto_boton: t('admin.sponsors.seeOffer'),
       descripcion: '',
@@ -221,6 +222,7 @@ export default function AdminSponsorsSection({
       id: r.id,
       nombre: String(r.nombre || ''),
       logo_url: String(r.logo_url || ''),
+      banner_url: String(r.banner_url || ''),
       url_destino: String(r.url_destino || ''),
       texto_boton: String(r.texto_boton || t('admin.sponsors.seeOffer')),
       descripcion: String(r.descripcion || ''),
@@ -295,6 +297,51 @@ export default function AdminSponsorsSection({
     }
   };
 
+  const onBannerFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!String(file.type || '').startsWith('image/')) {
+      setMsg(t('admin.formularios.chooseImageFormats'));
+      scrollToEl(formCardRef);
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setMsg(t('admin.formularios.logoMax4mb'));
+      scrollToEl(formCardRef);
+      return;
+    }
+    setUploading(true);
+    setMsg('');
+    const safe = String(file.name || 'banner').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `banners/${Date.now()}_${safe}`;
+    try {
+      const { data: uploadData, error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+        cacheControl: '3600',
+      });
+      if (upErr) {
+        setMsg(t('admin.sponsors.uploadError', { message: upErr.message }));
+        scrollToEl(formCardRef);
+        return;
+      }
+      const filePath = uploadData?.path != null && String(uploadData.path).trim() !== '' ? String(uploadData.path).trim() : path;
+      const { data } = supabase.storage.from('sponsors').getPublicUrl(filePath);
+      const publicUrl = data?.publicUrl != null ? String(data.publicUrl).trim() : '';
+      if (!publicUrl) {
+        setMsg(t('admin.sponsors.logoPublicUrlFailed'));
+        scrollToEl(formCardRef);
+        return;
+      }
+      setForm((p) => ({ ...p, banner_url: publicUrl }));
+      setMsg(t('admin.sponsors.logoUploaded'));
+      setTimeout(() => setMsg(''), 2500);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const guardar = async () => {
     setMsg('');
     setFieldErrors({});
@@ -346,6 +393,7 @@ export default function AdminSponsorsSection({
     const payload = {
       nombre,
       logo_url: String(form.logo_url || '').trim() || null,
+      banner_url: String(form.banner_url || '').trim() || null,
       url_destino: String(form.url_destino || '').trim() || null,
       texto_boton: String(form.texto_boton || '').trim() || t('admin.sponsors.seeOffer'),
       descripcion: String(form.descripcion || '').trim() || null,
@@ -651,6 +699,32 @@ export default function AdminSponsorsSection({
           value={form.logo_url}
           onChange={(e) => setForm((p) => ({ ...p, logo_url: e.target.value }))}
           placeholder={t('admin.sponsors.logoUrlPlaceholder')}
+        />
+
+        <label style={labelStyle}>Banner publicitario (imagen full-width para torneos)</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+          <input type="file" accept="image/*" disabled={uploading || saving} onChange={(e) => void onBannerFile(e)} />
+        </div>
+        {form.banner_url ? (
+          <img
+            src={form.banner_url}
+            alt=""
+            style={{
+              width: '100%',
+              maxWidth: 420,
+              height: 80,
+              objectFit: 'cover',
+              borderRadius: 8,
+              marginBottom: 8,
+              display: 'block',
+            }}
+          />
+        ) : null}
+        <input
+          style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
+          value={form.banner_url}
+          onChange={(e) => setForm((p) => ({ ...p, banner_url: e.target.value }))}
+          placeholder="https://… (bucket sponsors/banners/)"
         />
 
         <label style={labelStyle}>URL destino (opcional)</label>
