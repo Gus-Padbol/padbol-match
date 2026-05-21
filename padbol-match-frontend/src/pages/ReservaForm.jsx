@@ -599,6 +599,16 @@ function deportesActivosSedeKeys(sede) {
   return keys.sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
+/** Slots genéricos por cantidad_canchas cuando no hay filas en canchas_activas (sede ya filtrada por deporte en listado). */
+function slotsReservaFallbackCantidadCanchas(sedeData) {
+  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
+  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
+  return Array.from({ length: n }, (_, i) => ({
+    numero: i + 1,
+    nombre: `Cancha ${i + 1}`,
+  }));
+}
+
 /** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
 function slotsReservaDesdeSede(sedeData, deporteCanon) {
   const active = sedeData?.canchas_activas;
@@ -610,20 +620,29 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
         return d === deporteCanon;
       });
     }
-    return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
-      numero: Number(x.numero),
-      nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
-    }));
+    if (sorted.length > 0) {
+      return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
+        numero: Number(x.numero),
+        nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
+      }));
+    }
   }
-  if (deporteCanon) {
+  if (deporteCanon && RESERVA_CANCHA_DEPORTES.has(deporteCanon)) {
+    const ofrece =
+      (Array.isArray(sedeData?.deportes_disponibles) &&
+        sedeData.deportes_disponibles.includes(deporteCanon)) ||
+      (Array.isArray(sedeData?.canchas_por_deporte) &&
+        sedeData.canchas_por_deporte.some((r) => {
+          if (r?.activo === false || r?.activo === 'false' || r?.activo === 0) return false;
+          const n = Number(r?.cantidad);
+          if (Number.isFinite(n) && n <= 0) return false;
+          const d = String(r.deporte || 'padbol').trim().toLowerCase();
+          return d === deporteCanon;
+        }));
+    if (ofrece) return slotsReservaFallbackCantidadCanchas(sedeData);
     return [];
   }
-  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
-  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
-  return Array.from({ length: n }, (_, i) => ({
-    numero: i + 1,
-    nombre: `Cancha ${i + 1}`,
-  }));
+  return slotsReservaFallbackCantidadCanchas(sedeData);
 }
 
 export default function ReservaForm() {
@@ -768,11 +787,10 @@ export default function ReservaForm() {
     };
   }, [pantalla]);
 
-  /** Refrescar la sede desde la API al reservar/pagar para usar precio_turno y tarifas actualizados en Supabase. */
+  /** Refrescar sede (duraciones_oferta, canchas_activas, precios) al elegir club o entrar a fecha/horario/pago. */
   useEffect(() => {
     const rawId = filtros.sede_id;
     if (rawId === '' || rawId == null) return;
-    if (pantalla !== 2 && pantalla !== 4) return;
     let cancelled = false;
     fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}${reservaSedeApiQuery(reservaDeporteUrl)}`))
       .then(async (res) => {

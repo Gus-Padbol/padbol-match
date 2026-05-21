@@ -1445,6 +1445,18 @@ app.get('/api/sedes', async (req, res) => {
     const sedeIdsList = list.map((s) => Number(s?.id)).filter((id) => Number.isFinite(id) && id > 0);
     const deportesPorSedeMap = await fetchDeportesPorSedeIdsDesdeCanchas(supabase, sedeIdsList);
     list = enrichSedesListConDeportesDisponibles(list, deportesPorSedeMap);
+    try {
+      const durMap = await fetchSedesDuracionesActivasMapPorSedeIds(supabase, sedeIdsList);
+      list = enrichSedesListConDuracionesOferta(list, durMap);
+    } catch (e) {
+      console.warn('GET /api/sedes duraciones_oferta:', e?.message || e);
+    }
+    try {
+      const canchasMap = await fetchCanchasRowsMapPorSedeIds(supabase, sedeIdsList);
+      list = enrichSedesListConCanchasActivasReserva(list, canchasMap, deporteCanon);
+    } catch (e) {
+      console.warn('GET /api/sedes canchas_activas:', e?.message || e);
+    }
 
     res.json(list);
   } catch (err) {
@@ -5054,6 +5066,81 @@ function enrichSedesListConDeportesDisponibles(sedes, deportesPorSedeIdMap) {
     const fromCanchas = deportesPorSedeIdMap instanceof Map ? deportesPorSedeIdMap.get(sid) : null;
     const deportes_disponibles = deportesDisponiblesListadoSede(sede, fromCanchas);
     return { ...sede, deportes_disponibles };
+  });
+}
+
+/** Map sede_id → filas activas en sedes_duraciones (batch). */
+async function fetchSedesDuracionesActivasMapPorSedeIds(supabaseClient, sedeIds) {
+  const map = new Map();
+  const ids = [...new Set(sedeIds.map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0))];
+  if (!ids.length) return map;
+  const { data, error } = await supabaseClient
+    .from('sedes_duraciones')
+    .select('sede_id,duracion_minutos,precio')
+    .in('sede_id', ids)
+    .eq('activo', true)
+    .order('duracion_minutos', { ascending: true });
+  if (error) {
+    console.warn('[sedes_duraciones] batch listado:', error.message || String(error));
+    return map;
+  }
+  for (const row of data || []) {
+    const sid = Number(row?.sede_id);
+    if (!Number.isFinite(sid) || sid <= 0) continue;
+    if (!map.has(sid)) map.set(sid, []);
+    map.get(sid).push({
+      duracion_minutos: Number(row.duracion_minutos),
+      precio: Math.round(Number(row.precio)),
+    });
+  }
+  return map;
+}
+
+/** Adjunta duraciones_oferta (sedes_duraciones activas o columnas legacy en sedes). */
+function enrichSedesListConDuracionesOferta(sedes, duracionesMap) {
+  return (sedes || []).map((sede) => {
+    const sid = Number(sede?.id);
+    const fromDb = duracionesMap instanceof Map ? duracionesMap.get(sid) : null;
+    const duraciones_oferta =
+      Array.isArray(fromDb) && fromDb.length
+        ? fromDb
+        : legacyDuracionesOfertaDesdeSedeRow(sede);
+    return { ...sede, duraciones_oferta };
+  });
+}
+
+/** Map sede_id → filas canchas (batch). */
+async function fetchCanchasRowsMapPorSedeIds(supabaseClient, sedeIds) {
+  const map = new Map();
+  const ids = [...new Set(sedeIds.map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0))];
+  if (!ids.length) return map;
+  const { data, error } = await supabaseClient
+    .from('canchas')
+    .select('*')
+    .in('sede_id', ids)
+    .order('id', { ascending: true });
+  if (error) {
+    console.warn('[canchas] batch listado sedes:', error.message || String(error));
+    return map;
+  }
+  for (const row of data || []) {
+    const sid = Number(row?.sede_id);
+    if (!Number.isFinite(sid) || sid <= 0) continue;
+    if (!map.has(sid)) map.set(sid, []);
+    map.get(sid).push(row);
+  }
+  return map;
+}
+
+/** Adjunta canchas_activas para reserva (opcional filtro ?deporte=). */
+function enrichSedesListConCanchasActivasReserva(sedes, canchasMap, deporteCanon) {
+  return (sedes || []).map((sede) => {
+    const sid = Number(sede?.id);
+    const rows = canchasMap instanceof Map ? canchasMap.get(sid) : null;
+    if (!Array.isArray(rows) || !rows.length) return sede;
+    const filtered = deporteCanon ? filterCanchasRowsByDeporteCanon(rows, deporteCanon) : rows;
+    if (!filtered.length) return sede;
+    return sedeResponseConCanchasActivas(sede, filtered);
   });
 }
 
