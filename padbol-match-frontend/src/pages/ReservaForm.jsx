@@ -48,6 +48,7 @@ import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from
 import {
   duracionesReservaDisponibles,
   precioReservaTurno,
+  precioSedeParaDuracionMin,
   RESERVA_DURACIONES_MIN,
 } from '../utils/sedePreciosDuracion';
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
@@ -70,7 +71,8 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
  */
 
 function getPrecio(sede, hora, fecha, duracionMin) {
-  return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas);
+  const baseDuracion = precioSedeParaDuracionMin(sede, duracionMin);
+  return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas, baseDuracion);
 }
 
 /** Igual que ArmarPartido paso 3: líneas para `extras` en crear-preferencia / reservaData. */
@@ -159,9 +161,9 @@ function horaDesdeMinutosReserva(totalMin) {
 function duracionReservaSeleccionada(formData, sede) {
   const disponibles = duracionesReservaDisponibles(sede);
   const d = parseInt(String(formData?.duracion || ''), 10);
-  if (disponibles.length > 0 && disponibles.includes(d)) return d;
-  if (disponibles.length > 0) return disponibles[0];
-  return RESERVA_DURACIONES_MIN.includes(d) ? d : 90;
+  if (disponibles.length > 0 && Number.isFinite(d) && disponibles.includes(d)) return d;
+  if (Number.isFinite(d) && RESERVA_DURACIONES_MIN.includes(d)) return d;
+  return 90;
 }
 
 function reservaBloqueaDisponibilidad(reserva) {
@@ -1124,20 +1126,14 @@ export default function ReservaForm() {
     [reservaExtrasDisponibles, reservaExtrasCantidad],
   );
 
+  /** Al cambiar de sede, limpiar duración para que el usuario la elija antes de ver horarios. */
   useEffect(() => {
-    if (!sedeSeleccionada || duracionesOfrecidas.length === 0) return;
-    const cur = parseInt(String(formData.duracion || ''), 10);
-    if (duracionesOfrecidas.includes(cur)) return;
-    setFormData((prev) => ({
-      ...prev,
-      duracion: String(duracionesOfrecidas[0]),
-      hora: '',
-      cancha: '',
-    }));
+    if (!sedeSeleccionada?.id) return;
+    setFormData((prev) => ({ ...prev, duracion: '', hora: '', cancha: '' }));
     setHorariosDisponibles([]);
     setCanchasDisponibles([]);
     setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
-  }, [sedeSeleccionada, duracionesOfrecidas, formData.duracion]);
+  }, [sedeSeleccionada?.id]);
 
   const irAModificarReservaDesdeResumen = useCallback(() => {
     setPantalla(2);
@@ -1831,18 +1827,35 @@ export default function ReservaForm() {
     }
   }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
 
-  // Auto-load time slots when date is selected (pantalla 2)
+  const duracionElegidaParaHorarios = useMemo(() => {
+    const d = parseInt(String(formData.duracion || ''), 10);
+    return (
+      duracionesOfrecidas.length > 0 &&
+      Number.isFinite(d) &&
+      duracionesOfrecidas.includes(d)
+    );
+  }, [formData.duracion, duracionesOfrecidas]);
+
+  // Horarios solo tras elegir fecha y duración (los slots dependen de la duración).
   useEffect(() => {
-    if (pantalla !== 2 || !formData.fecha || !sedeSeleccionada) return;
+    if (pantalla !== 2 || !formData.fecha || !sedeSeleccionada || !duracionElegidaParaHorarios) return;
     buscarHorariosDisponibles(formData.fecha);
-  }, [pantalla, formData.fecha, sedeSeleccionada, buscarHorariosDisponibles]);
+  }, [
+    pantalla,
+    formData.fecha,
+    sedeSeleccionada,
+    duracionElegidaParaHorarios,
+    duracionSeleccionadaMin,
+    buscarHorariosDisponibles,
+  ]);
 
   const handleSelectFecha = useCallback((fecha) => {
-    setLoading(true);
+    setLoading(false);
     setHorariosUltimaConsulta({ sedeId: '', fecha: '' });
     setFormData((prev) => ({
       ...prev,
       fecha,
+      duracion: '',
       hora: '',
       cancha: '',
     }));
@@ -2473,6 +2486,7 @@ export default function ReservaForm() {
               />
             </div>
 
+            {formData.fecha ? (
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
               {duracionesOfrecidas.length === 0 ? (
@@ -2482,6 +2496,7 @@ export default function ReservaForm() {
               ) : (
                 <>
                   <div
+                    className="reserva-duracion-grid"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: `repeat(${Math.min(duracionesOfrecidas.length, 3)}, 1fr)`,
@@ -2489,8 +2504,8 @@ export default function ReservaForm() {
                     }}
                   >
                     {duracionesOfrecidas.map((duracion) => {
-                      const active = duracionSeleccionadaMin === duracion;
-                      const precioDur = getPrecio(sedeSeleccionada, '', formData.fecha, duracion);
+                      const active = duracionSeleccionadaMin === duracion && duracionElegidaParaHorarios;
+                      const precioDur = precioSedeParaDuracionMin(sedeSeleccionada, duracion) ?? 0;
                       return (
                         <button
                           key={duracion}
@@ -2523,11 +2538,17 @@ export default function ReservaForm() {
                       {t('reservas.onlyDuration')}
                     </p>
                   ) : null}
+                  {!duracionElegidaParaHorarios ? (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+                      {t('reservas.pickDurationBeforeSlots')}
+                    </p>
+                  ) : null}
                 </>
               )}
             </div>
+            ) : null}
 
-            {horariosDisponibles.length > 0 && (
+            {duracionElegidaParaHorarios && horariosDisponibles.length > 0 && (
               <div className="form-group reserva-horario-bloque">
                 <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.availableTimes')}</label>
                 <div className="reserva-horarios-wrap">
@@ -2551,7 +2572,8 @@ export default function ReservaForm() {
               </div>
             )}
 
-            {formData.fecha &&
+            {duracionElegidaParaHorarios &&
+              formData.fecha &&
               sedeSeleccionada &&
               horariosDisponibles.length === 0 &&
               loading === false &&

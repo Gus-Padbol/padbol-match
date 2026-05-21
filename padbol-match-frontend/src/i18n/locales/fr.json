@@ -144,6 +144,7 @@
     "duration": "Durée",
     "noPricing": "Ce lieu n'a pas de prix facturés pour aucune durée. Contactez le club.",
     "onlyDuration": "Seule durée disponible pour cet emplacement.",
+    "pickDurationBeforeSlots": "Choisissez la durée du créneau pour voir les horaires disponibles.",
     "availableTimes": "Horaires disponibles",
     "slotFree": "gratuit",
     "slotsFree": "gratuit",

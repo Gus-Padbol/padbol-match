@@ -144,6 +144,7 @@
     "duration": "Durată",
     "noPricing": "Această locație nu are prețuri percepute pentru nicio durată. Contactați clubul.",
     "onlyDuration": "Numai durata disponibilă pentru această locație.",
+    "pickDurationBeforeSlots": "Alege durata rezervării pentru a vedea intervalele disponibile.",
     "availableTimes": "Orari disponibile",
     "slotFree": "gratuit",
     "slotsFree": "gratuit",

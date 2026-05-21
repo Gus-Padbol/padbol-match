@@ -144,6 +144,7 @@
     "duration": "Duração",
     "noPricing": "Este local não possui preços cobrados por qualquer período. Entre em contato com o clube.",
     "onlyDuration": "Somente duração disponível para este local.",
+    "pickDurationBeforeSlots": "Escolha a duração do turno para ver os horários disponíveis.",
     "availableTimes": "Horários disponíveis",
     "slotFree": "livre",
     "slotsFree": "livre",

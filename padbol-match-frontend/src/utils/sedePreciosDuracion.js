@@ -11,28 +11,51 @@ const PRECIO_COL = {
 export function parsePrecioDuracionField(raw) {
   if (raw === '' || raw == null) return null;
   if (typeof raw === 'number') {
-    return Number.isFinite(raw) && raw >= 0 ? raw : null;
+    return Number.isFinite(raw) && raw >= 0 ? Math.round(raw) : null;
   }
-  const digits = String(raw).replace(/\./g, '').replace(/[^\d]/g, '');
+  const s = String(raw).trim();
+  if (!s) return null;
+  const normalized = s.replace(/\s/g, '');
+  const asDecimal = Number(normalized.replace(',', '.'));
+  if (Number.isFinite(asDecimal) && asDecimal >= 0) return Math.round(asDecimal);
+  const digits = normalized.replace(/\./g, '').replace(/[^\d]/g, '');
   if (!digits) return null;
   const n = parseInt(digits, 10);
   return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+/** Filas `duraciones_oferta` / `duraciones` del GET sedes (sedes_duraciones). */
+export function duracionesOfertaFilasSede(sede) {
+  if (!sede) return [];
+  if (Array.isArray(sede.duraciones_oferta) && sede.duraciones_oferta.length) {
+    return sede.duraciones_oferta;
+  }
+  if (Array.isArray(sede.duraciones) && sede.duraciones.length) {
+    return sede.duraciones;
+  }
+  return [];
+}
+
+/** Minutos ofrecidos según filas de sedes_duraciones (aunque el precio venga como string decimal). */
+export function duracionesOfertaMinutosReserva(sede) {
+  const arr = duracionesOfertaFilasSede(sede);
+  if (!arr.length) return [];
+  const mins = arr
+    .map((r) => parseInt(String(r?.duracion_minutos), 10))
+    .filter((m) => RESERVA_DURACIONES_MIN.includes(m));
+  return [...new Set(mins)].sort((a, b) => a - b);
 }
 
 /**
  * Precio desde `duraciones_oferta` (GET /api/sedes/:id) o alias `duraciones`: filas tipo sedes_duraciones.
  */
 export function precioDesdeDuracionesOfertaSede(sede, duracionMin) {
-  const arr =
-    (Array.isArray(sede?.duraciones_oferta) && sede.duraciones_oferta.length
-      ? sede.duraciones_oferta
-      : null) ||
-    (Array.isArray(sede?.duraciones) && sede.duraciones.length ? sede.duraciones : null);
-  if (!arr) return null;
+  const arr = duracionesOfertaFilasSede(sede);
+  if (!arr.length) return null;
   const d = parseInt(String(duracionMin), 10);
   if (!Number.isFinite(d)) return null;
   const hit = arr.find((r) => Number(r?.duracion_minutos) === d);
-  if (!hit || hit.precio == null) return null;
+  if (!hit || hit.precio == null || hit.precio === '') return null;
   return parsePrecioDuracionField(hit.precio);
 }
 
@@ -60,6 +83,8 @@ export function precioSedeParaDuracionMin(sede, duracionMin) {
 /** Duraciones que tienen precio cargado (ofrecidas en reservas). */
 export function duracionesReservaDisponibles(sede) {
   if (!sede) return [];
+  const desdeOferta = duracionesOfertaMinutosReserva(sede);
+  if (desdeOferta.length) return desdeOferta;
   return RESERVA_DURACIONES_MIN.filter((min) => precioSedeParaDuracionMin(sede, min) != null);
 }
 
