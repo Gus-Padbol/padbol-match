@@ -105,10 +105,10 @@ export default function TorneoGruposTable({
                 {t('torneos.vista.statPp', { defaultValue: 'PP' })}
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                {t('torneos.vista.statSw', { defaultValue: 'SG' })}
+                SG
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
-                {t('torneos.vista.statSl', { defaultValue: 'SP' })}
+                SP
               </th>
               <th className="torneo-grupos-th torneo-grupos-th--num" scope="col">
                 JG
