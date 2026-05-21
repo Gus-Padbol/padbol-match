@@ -869,7 +869,7 @@ export default function TorneoTabbedView({
           setPartidos((prev) =>
             prev.map((p) =>
               p.id === selectedPartido.id
-                ? { ...p, estado: 'finalizado', resultado: resultadoJson }
+                ? { ...p, estado: 'finalizado', resultado: resultadoPayload }
                 : p
             )
           );
@@ -1241,7 +1241,9 @@ export default function TorneoTabbedView({
               {tablaRows.filter((row) => (Number(row.jj) || 0) > 0).map((row, idx) => {
                 const nombreCorto = trunc12(nombreEquipoMostrado({ ...row, nombre: row.nombre }));
                 const clasifica = idx < 2;
-                const bgFila = clasifica ? 'rgba(34, 197, 94, 0.12)' : 'var(--bg-card)';
+                const bgFila = clasifica
+                  ? 'color-mix(in srgb, var(--bg-card) 90%, #22c55e 10%)'
+                  : 'var(--bg-card)';
                 return (
                   <tr
                     key={row.id}
@@ -1253,7 +1255,7 @@ export default function TorneoTabbedView({
                     }}
                   >
                     <td
-                      className="tabla-grupos-col-equipo"
+                      className={`tabla-grupos-col-equipo${clasifica ? ' tabla-grupos-col-equipo--clasifica' : ''}`}
                       style={{ fontWeight: 700, maxWidth: 140, background: bgFila }}
                     >
                       <button
@@ -1976,13 +1978,12 @@ export default function TorneoTabbedView({
         </div>
       ) : null}
       <div
-        className="torneo-header"
+        className="torneo-header torneo-header--compact"
         style={{
           position: 'relative',
-          marginTop: '8px',
-          marginBottom: '12px',
-          padding: '20px',
-          paddingRight: shareTorneoMeta?.url ? '52px' : '20px',
+          marginTop: '4px',
+          marginBottom: '8px',
+          paddingRight: shareTorneoMeta?.url ? '48px' : undefined,
         }}
       >
         {shareTorneoMeta?.url ? (
@@ -2038,37 +2039,21 @@ export default function TorneoTabbedView({
             ) : null}
           </>
         ) : null}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: 'clamp(1.15rem, 4vw, 1.75rem)', margin: 0 }}>🏆 {torneo?.nombre}</h1>
-          {estadoBadge ? (
+        {estadoBadge ? (
+          <div className="torneo-header-estado-row">
             <span
+              className="torneo-header-estado-badge"
               style={{
-                display: 'inline-block',
-                padding: '6px 10px',
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 800,
-                letterSpacing: '0.03em',
                 background: estadoBadge.bg,
                 color: estadoBadge.color,
-                border: '1px solid rgba(15,23,42,0.08)',
-                whiteSpace: 'nowrap',
               }}
             >
               {estadoBadge.label}
             </span>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
         {sedeTorneo ? (
-          <p
-            style={{
-              margin: '8px 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              flexWrap: 'wrap',
-            }}
-          >
+          <p className="torneo-header-meta torneo-header-meta--sede">
             <span style={{ display: 'inline-flex', flexShrink: 0, color: 'inherit' }}>
               <IconGeroUbicacion size={16} />
             </span>
@@ -2078,10 +2063,10 @@ export default function TorneoTabbedView({
             </span>
           </p>
         ) : null}
-        <p style={{ margin: '6px 0 4px', fontWeight: 700, fontSize: 'clamp(0.85rem, 2.8vw, 0.95rem)' }}>
+        <p className="torneo-header-meta torneo-header-meta--deporte">
           🎾 {resumenDeporteFormatoTorneo(torneo)}
         </p>
-        <p>
+        <p className="torneo-header-meta torneo-header-meta--detalle">
           {formatNivelTorneo(torneo?.nivel_torneo)} • {labelCategoriaTorneo(torneo?.categoria)} •{' '}
           {labelGeneroTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}
           {labelCategoriaEdadTorneo(torneo?.categoria_edad)} • {formatTipoTorneo(torneo?.tipo_torneo)} •{' '}

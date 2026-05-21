@@ -1,8 +1,10 @@
 import {
   buildTablaPosiciones,
+  parseResultadoPartido,
   partidoEstaFinalizado,
   resolveGanadorEquipoId,
   partidosDelGrupo,
+  formatSetsLineaNeutral,
 } from './torneoPartidoResultado';
 
 describe('buildTablaPosiciones', () => {
@@ -90,5 +92,43 @@ describe('partidoEstaFinalizado', () => {
   it('detecta estado finalizado', () => {
     expect(partidoEstaFinalizado({ estado: 'finalizado' })).toBe(true);
     expect(partidoEstaFinalizado({ estado: 'pendiente' })).toBe(false);
+  });
+});
+
+describe('parseResultadoPartido', () => {
+  it('parsea sets como strings set1/set2', () => {
+    const sets = parseResultadoPartido({
+      resultado: { set1: '6-4', set2: '6-3' },
+    });
+    expect(sets).toEqual(['6-4', '6-3']);
+    expect(formatSetsLineaNeutral({ resultado: { set1: '6-4', set2: '6-3' } })).toBe('6-4 / 6-3');
+  });
+
+  it('parsea sets como arrays [games_a, games_b]', () => {
+    const sets = parseResultadoPartido({
+      estado: 'finalizado',
+      resultado: { set1: [6, 4], set2: [6, 2], ganador_id: 1 },
+    });
+    expect(sets).toEqual(['6-4', '6-2']);
+  });
+
+  it('parsea resultado JSON doblemente serializado', () => {
+    const sets = parseResultadoPartido({
+      resultado: JSON.stringify(JSON.stringify({ set1: '7-5', set2: '6-4' })),
+    });
+    expect(sets).toEqual(['7-5', '6-4']);
+  });
+
+  it('parsea res.sets con objetos games_a/games_b', () => {
+    const sets = parseResultadoPartido({
+      resultado: {
+        sets: [
+          { games_a: 6, games_b: 4 },
+          { games_a: 3, games_b: 6 },
+          { games_a: 7, games_b: 5 },
+        ],
+      },
+    });
+    expect(sets).toEqual(['6-4', '3-6', '7-5']);
   });
 });

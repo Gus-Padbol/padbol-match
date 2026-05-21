@@ -55,20 +55,19 @@ export default function PartidoDetalleModal({
     return t('torneos.partidoDetalle.estadoPendiente');
   }, [estadoUi, t]);
 
-  const tieneSets = useMemo(
-    () => (partido ? parseResultadoPartido(partido).length > 0 : false),
-    [partido],
-  );
+  const setsLista = useMemo(() => (partido ? parseResultadoPartido(partido) : []), [partido]);
+
+  const tieneSets = setsLista.length > 0;
 
   const { sgA, sgB } = useMemo(
     () => (partido && tieneSets ? contarSetsGanadosPartido(partido) : { sgA: 0, sgB: 0 }),
     [partido, tieneSets],
   );
 
-  const setsLinea = useMemo(
-    () => (partido && tieneSets ? formatSetsLineaNeutral(partido) : ''),
-    [partido, tieneSets],
-  );
+  const setsLinea = useMemo(() => {
+    if (!partido || !tieneSets) return '';
+    return formatSetsLineaNeutral(partido) || setsLista.join(' / ');
+  }, [partido, tieneSets, setsLista]);
 
   const fechaTexto = useMemo(() => {
     if (!partido?.fecha_hora) return '';
@@ -136,6 +135,10 @@ export default function PartidoDetalleModal({
           </div>
 
           <div className={`pdm-estado pdm-estado--${estadoUi}`}>{estadoLabel}</div>
+
+          {estadoUi === 'finalizado' && !tieneSets ? (
+            <p className="pdm-placeholder">{t('torneos.partidoDetalle.sinMarcadorSets', { defaultValue: 'Sin detalle de sets cargado.' })}</p>
+          ) : null}
 
           {estadoUi === 'pendiente' && !tieneSets ? (
             <div className="pdm-pendiente-block">

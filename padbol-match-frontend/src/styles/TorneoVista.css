@@ -228,11 +228,62 @@
 
 .torneo-header {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 30px;
   margin-bottom: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   text-align: center;
+}
+
+.torneo-header--compact {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.torneo-header-estado-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.torneo-header-estado-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  white-space: nowrap;
+}
+
+.torneo-header-meta {
+  margin: 0;
+  color: var(--text-primary);
+  opacity: 0.75;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.torneo-header-meta--sede {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.torneo-header-meta--deporte {
+  margin: 4px 0 2px;
+  font-weight: 700;
+  font-size: clamp(0.78rem, 2.5vw, 0.88rem);
+}
+
+.torneo-header-meta--detalle {
+  font-size: clamp(0.72rem, 2.3vw, 0.82rem);
 }
 
 .torneo-header h1 {
@@ -370,14 +421,21 @@
   z-index: 2;
   padding: 8px 6px;
   text-align: left;
+  background-color: var(--bg-card);
   box-shadow: 4px 0 10px -6px rgba(15, 23, 42, 0.25);
 }
 
-.tabla-grupos-th-equipo {
-  background: #f8fafc;
+.tabla-grupos-th-equipo,
+.tabla-grupos-stats thead .tabla-grupos-col-equipo {
+  background-color: var(--bg-card);
   z-index: 3;
   font-weight: 800;
-  color: #475569;
+  color: var(--text-primary);
+  opacity: 0.85;
+}
+
+.tabla-grupos-stats tbody .tabla-grupos-col-equipo--clasifica {
+  background-color: color-mix(in srgb, var(--bg-card) 90%, #22c55e 10%);
 }
 
 .tabla-grupos-col-stat {

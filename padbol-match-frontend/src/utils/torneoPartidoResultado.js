@@ -18,37 +18,105 @@ export function parseSetGames(setStr) {
   return { a, b };
 }
 
-function setsDesdeResultadoObj(res) {
-  if (!res || typeof res !== 'object') return [];
-  if (Array.isArray(res.sets)) {
-    return res.sets
-      .map((s) => {
-        if (typeof s === 'string') return s.trim();
-        if (s && typeof s === 'object') {
-          const a = s.a ?? s.games_a ?? s.local;
-          const b = s.b ?? s.games_b ?? s.visitante;
-          if (a != null && b != null) return `${a}-${b}`;
-        }
-        return '';
-      })
-      .filter((s) => s && parseSetGames(s));
+/** Normaliza un set del JSONB a string "n-m" (string, array [a,b], objeto games_a/b, etc.). */
+export function normalizeSetMarcadorEntry(raw) {
+  if (raw == null || raw === '') return '';
+  if (Array.isArray(raw)) {
+    if (raw.length < 2) return '';
+    const a = Number(raw[0]);
+    const b = Number(raw[1]);
+    if (Number.isFinite(a) && Number.isFinite(b)) return `${a}-${b}`;
+    return '';
   }
-  return [res.set1, res.set2, res.set3]
-    .filter((s) => s && String(s).trim())
-    .filter((s) => parseSetGames(s));
+  if (typeof raw === 'object') {
+    const a = raw.a ?? raw.games_a ?? raw.gamesA ?? raw.local ?? raw.score_a ?? raw.home;
+    const b = raw.b ?? raw.games_b ?? raw.gamesB ?? raw.visitante ?? raw.away ?? raw.score_b;
+    if (a != null && b != null) {
+      const na = Number(a);
+      const nb = Number(b);
+      if (Number.isFinite(na) && Number.isFinite(nb)) return `${na}-${nb}`;
+    }
+    return '';
+  }
+  const s = String(raw).trim();
+  if (!s) return '';
+  const parsed = parseSetGames(s);
+  if (parsed) return `${parsed.a}-${parsed.b}`;
+  return '';
 }
 
-/** Objeto `resultado` parseado (JSONB o string). */
-export function parseResultadoObject(partido) {
-  if (!partido?.resultado) return null;
-  let res = partido.resultado;
-  if (typeof res === 'string') {
+function unwrapResultadoJson(val, depth = 0) {
+  if (val == null || depth > 4) return null;
+  if (typeof val === 'string') {
+    const t = val.trim();
+    if (!t) return null;
     try {
-      res = JSON.parse(res);
+      return unwrapResultadoJson(JSON.parse(t), depth + 1);
     } catch {
       return null;
     }
   }
+  if (typeof val === 'object') return val;
+  return null;
+}
+
+function setsDesdeResultadoObj(res) {
+  if (!res || typeof res !== 'object' || Array.isArray(res)) return [];
+
+  if (Array.isArray(res.sets)) {
+    return res.sets.map((s) => normalizeSetMarcadorEntry(s)).filter((s) => s && parseSetGames(s));
+  }
+
+  const porClaves = [
+    res.set1,
+    res.set2,
+    res.set3,
+    res.set_1,
+    res.set_2,
+    res.set_3,
+    res.Set1,
+    res.Set2,
+    res.Set3,
+  ]
+    .map((s) => normalizeSetMarcadorEntry(s))
+    .filter((s) => s && parseSetGames(s));
+
+  if (porClaves.length) return porClaves;
+
+  const numericKeys = Object.keys(res)
+    .filter((k) => /^set\d+$/i.test(k))
+    .sort((a, b) => {
+      const na = Number(String(a).replace(/\D/g, ''));
+      const nb = Number(String(b).replace(/\D/g, ''));
+      return na - nb;
+    })
+    .map((k) => normalizeSetMarcadorEntry(res[k]))
+    .filter((s) => s && parseSetGames(s));
+
+  return numericKeys;
+}
+
+/** Objeto `resultado` parseado (JSONB, string JSON o sets sueltos en el partido). */
+export function parseResultadoObject(partido) {
+  if (!partido) return null;
+
+  let res = partido.resultado ?? partido.marcador ?? partido.score ?? null;
+  if (res == null && (partido.set1 != null || partido.set2 != null || partido.set3 != null)) {
+    return {
+      set1: partido.set1,
+      set2: partido.set2,
+      set3: partido.set3,
+    };
+  }
+  if (res == null) return null;
+
+  res = unwrapResultadoJson(res);
+  if (!res) return null;
+
+  if (Array.isArray(res)) {
+    return { sets: res };
+  }
+
   return res && typeof res === 'object' ? res : null;
 }
 
