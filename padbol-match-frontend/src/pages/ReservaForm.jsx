@@ -696,6 +696,8 @@ export default function ReservaForm() {
   const [deportesZonaLoading, setDeportesZonaLoading] = useState(false);
   const [reservaFutbolMenuAbierto, setReservaFutbolMenuAbierto] = useState(false);
   const reservaFutbolMenuRef = useRef(null);
+  /** Mantiene la sede activa si el listado se vacía/refetch (no perder duraciones_oferta un frame). */
+  const sedeSeleccionadaCacheRef = useRef(null);
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
@@ -723,12 +725,27 @@ export default function ReservaForm() {
   }, [pantalla, location.pathname]);
 
   const sedeSeleccionada = useMemo(() => {
-    if (!Array.isArray(sedes) || sedes.length === 0 || filtros.sede_id === '' || filtros.sede_id == null) {
+    const sidRaw = filtros.sede_id;
+    if (sidRaw === '' || sidRaw == null) {
+      sedeSeleccionadaCacheRef.current = null;
       return null;
     }
-    return sedes.find((s) => Number(s.id) === Number(filtros.sede_id)) || null;
+    const sidNum = Number(sidRaw);
+    if (Array.isArray(sedes) && sedes.length > 0) {
+      const hit = sedes.find((s) => Number(s.id) === sidNum) || null;
+      if (hit) {
+        sedeSeleccionadaCacheRef.current = hit;
+        return hit;
+      }
+    }
+    if (
+      sedeSeleccionadaCacheRef.current &&
+      Number(sedeSeleccionadaCacheRef.current.id) === sidNum
+    ) {
+      return sedeSeleccionadaCacheRef.current;
+    }
+    return null;
   }, [sedes, filtros.sede_id]);
-  console.log('[DEBUG duraciones]', sedeSeleccionada?.id, sedeSeleccionada?.duraciones_oferta);
 
   /** GPS o IP aproximada en pantalla 1 (país automático, orden por cercanía y badge «más cercana»). */
   const [geoReserva, setGeoReserva] = useState({
@@ -806,12 +823,14 @@ export default function ReservaForm() {
           if (!Array.isArray(prev)) return prev;
           const nid = Number(rawId);
           const idx = prev.findIndex((s) => Number(s.id) === nid);
+          const merged = { ...(idx >= 0 ? prev[idx] : {}), ...sedeFresh };
+          sedeSeleccionadaCacheRef.current = merged;
           if (idx >= 0) {
             const next = [...prev];
-            next[idx] = { ...next[idx], ...sedeFresh };
+            next[idx] = merged;
             return next;
           }
-          return [...prev, sedeFresh];
+          return [...prev, merged];
         });
       })
       .catch(() => {});
@@ -898,33 +917,43 @@ export default function ReservaForm() {
   );
 
   const syncReservaDeporteEnUrl = useCallback(
-    (deporteKey) => {
+    (deporteKey, opts = {}) => {
       const canon =
         deporteKey && RESERVA_CANCHA_DEPORTES.has(deporteKey)
           ? deporteKey
           : RESERVA_DEPORTE_DEFAULT;
-      setFiltros((prev) => ({ ...prev, sede_id: '' }));
+      const preserveSedeDeepLink =
+        opts.preserveSedeDeepLink ??
+        (Boolean(String(initialSedeId || '').trim()) ||
+          (pantalla >= 2 && filtros.sede_id !== '' && filtros.sede_id != null));
+      if (!preserveSedeDeepLink) {
+        sedeSeleccionadaCacheRef.current = null;
+        setFiltros((prev) => ({ ...prev, sede_id: '' }));
+      }
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
           next.set('deporte', canon);
-          next.delete('sedeId');
-          next.delete('fecha');
-          next.delete('hora');
-          next.delete('canchaId');
-          next.delete('cancha');
+          if (!preserveSedeDeepLink) {
+            next.delete('sedeId');
+            next.delete('fecha');
+            next.delete('hora');
+            next.delete('canchaId');
+            next.delete('cancha');
+          }
           return next;
         },
         { replace: true }
       );
     },
-    [setSearchParams]
+    [setSearchParams, initialSedeId, pantalla, filtros.sede_id]
   );
 
-  /** Sin `?deporte=` en la URL → Padbol por defecto. */
+  /** Sin `?deporte=` en la URL → Padbol por defecto (no borrar ?sedeId= del deep link). */
   useEffect(() => {
     if (normalizeReservaDeporteUrl(searchParams.get('deporte'))) return;
-    syncReservaDeporteEnUrl(RESERVA_DEPORTE_DEFAULT);
+    const hasSedeDeepLink = Boolean(String(searchParams.get('sedeId') || '').trim());
+    syncReservaDeporteEnUrl(RESERVA_DEPORTE_DEFAULT, { preserveSedeDeepLink: hasSedeDeepLink });
   }, [searchParams, syncReservaDeporteEnUrl]);
 
   const enfocarSelectorPaisReserva = useCallback(() => {
@@ -943,6 +972,7 @@ export default function ReservaForm() {
   const abrirSelectorPaisReserva = useCallback(() => {
     reservaPaisAutoSuprimidoRef.current = true;
     clearReservaGeoMasCercanaIntent();
+    sedeSeleccionadaCacheRef.current = null;
     setFiltros((prev) => ({ ...prev, pais: '', ciudad: '', sede_id: '' }));
     setCiudades([]);
     enfocarSelectorPaisReserva();
@@ -1006,12 +1036,15 @@ export default function ReservaForm() {
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [reservaFutbolMenuAbierto]);
 
-  /** Si el deporte en URL no existe en el país, cambiar a Padbol u otro disponible. */
+  /** Si el deporte en URL no existe en el país, cambiar a Padbol u otro disponible (solo pantalla 1 sin sede fijada). */
   useEffect(() => {
     if (deportesZonaLoading || !filtros.pais) return;
     if (deportesDisponiblesEnPais.has(reservaDeporteUrl)) return;
+    if (pantalla !== 1 && filtros.sede_id !== '' && filtros.sede_id != null) return;
     syncReservaDeporteEnUrl(reservaDeporteFallbackEnPais(deportesDisponiblesEnPais));
   }, [
+    pantalla,
+    filtros.sede_id,
     deportesZonaLoading,
     filtros.pais,
     reservaDeporteUrl,
@@ -1041,13 +1074,10 @@ export default function ReservaForm() {
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
-  const duracionesOfrecidas = useMemo(() => {
-    console.log(
-      '[DEBUG duracionesReservaDesdeSede]',
-      JSON.stringify(duracionesReservaDesdeSede(sedeSeleccionada)),
-    );
-    return duracionesReservaDesdeSede(sedeSeleccionada);
-  }, [sedeSeleccionada]);
+  const duracionesOfrecidas = useMemo(
+    () => duracionesReservaDesdeSede(sedeSeleccionada),
+    [sedeSeleccionada],
+  );
 
   const duracionSeleccionadaMin = duracionReservaSeleccionada(formData, sedeSeleccionada);
 
@@ -1320,7 +1350,22 @@ export default function ReservaForm() {
         try {
           const parsed = JSON.parse(text);
           const arr = Array.isArray(parsed) ? parsed : [];
-          setSedes(arr);
+          setSedes((prev) => {
+            const sid = Number(filtros.sede_id);
+            if (!Number.isFinite(sid) || sid <= 0) return arr;
+            const prevHit = Array.isArray(prev) ? prev.find((s) => Number(s.id) === sid) : null;
+            const newHit = arr.find((s) => Number(s.id) === sid);
+            if (!prevHit || !newHit) return arr;
+            const merged = {
+              ...prevHit,
+              ...newHit,
+              duraciones_oferta:
+                Array.isArray(newHit.duraciones_oferta) && newHit.duraciones_oferta.length
+                  ? newHit.duraciones_oferta
+                  : prevHit.duraciones_oferta,
+            };
+            return arr.map((s) => (Number(s.id) === sid ? merged : s));
+          });
         } catch {
           setSedes([]);
           setSedesLoadError(t('reservas.invalidVenuesResponse'));
@@ -1335,7 +1380,7 @@ export default function ReservaForm() {
     return () => {
       cancelled = true;
     };
-  }, [reservaDeporteUrl, t]);
+  }, [reservaDeporteUrl, t, filtros.sede_id]);
 
   // Completar país/ciudad cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
   useEffect(() => {
@@ -1354,10 +1399,14 @@ export default function ReservaForm() {
 
     const sede = sedes.find((s) => Number(s.id) === id);
     if (!sede) {
+      if (Number(filtros.sede_id) === id || sedeSeleccionadaCacheRef.current) {
+        return;
+      }
       reservaUrlBootstrapKeyRef.current = '';
       reservaOmitirAutoCanchaUnicaRef.current = false;
       clearReservaGeoMasCercanaIntent();
       setFiltros({ pais: '', ciudad: '', sede_id: '' });
+      sedeSeleccionadaCacheRef.current = null;
       setPantalla(1);
       navigate('/reservar', { replace: true });
       return;
@@ -1375,6 +1424,7 @@ export default function ReservaForm() {
     const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
     setCiudades(ciudadesDelPais);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
+    sedeSeleccionadaCacheRef.current = sede;
 
     if (fechaQ && horaQ && canchaQ) {
       reservaOmitirAutoCanchaUnicaRef.current = false;
@@ -1413,7 +1463,7 @@ export default function ReservaForm() {
       }
     }
     reservaUrlBootstrapKeyRef.current = urlBootstrapKey;
-  }, [sedes, initialSedeId, location.search, navigate, authLoading, session?.user?.id]);
+  }, [sedes, initialSedeId, location.search, navigate, authLoading, session?.user?.id, filtros.sede_id]);
 
   // Tras login: restaurar estado guardado en sessionStorage (v2 o legacy) antes de redirigir a login.
   useEffect(() => {
@@ -1600,6 +1650,7 @@ export default function ReservaForm() {
 
   const selectPais = useCallback((pais) => {
     clearReservaGeoMasCercanaIntent();
+    sedeSeleccionadaCacheRef.current = null;
     setFiltros({ pais, ciudad: '', sede_id: '' });
     if (pais) {
       const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
@@ -1634,6 +1685,7 @@ export default function ReservaForm() {
 
   const iniciarReservaDesdeSedeCard = useCallback(
     (sede) => {
+      sedeSeleccionadaCacheRef.current = sede;
       applyGeoIntentReservaSedeCard(sede);
       const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
       setCiudades(ciudadesDelPais);
@@ -1709,6 +1761,7 @@ export default function ReservaForm() {
   const clearPais = useCallback(() => {
     reservaPaisAutoSuprimidoRef.current = true;
     clearReservaGeoMasCercanaIntent();
+    sedeSeleccionadaCacheRef.current = null;
     setFiltros({ pais: '', ciudad: '', sede_id: '' });
     setCiudades([]);
     syncReservaDeporteEnUrl(RESERVA_DEPORTE_DEFAULT);
