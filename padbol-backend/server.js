@@ -316,7 +316,7 @@ async function jugadorTieneReservaConfirmadaEnSede(user, sedeIdNum) {
   if (!nombreSede) return false;
 
   if (uid) {
-    const { data: r1 } = await supabase
+    const { data: r1 } = await supabaseAdmin
       .from('reservas')
       .select('id')
       .eq('sede', nombreSede)
@@ -327,7 +327,7 @@ async function jugadorTieneReservaConfirmadaEnSede(user, sedeIdNum) {
     if (r1?.id != null) return true;
   }
   if (email) {
-    const { data: r2 } = await supabase
+    const { data: r2 } = await supabaseAdmin
       .from('reservas')
       .select('id')
       .eq('sede', nombreSede)
@@ -2404,7 +2404,7 @@ async function computeEstadisticasPublicasSede(sedeIdNum, nombreSedeRaw) {
     const pageSize = 1000;
     let from = 0;
     for (let guard = 0; guard < 250; guard += 1) {
-      const { data: rows, error: rvErr } = await supabase
+      const { data: rows, error: rvErr } = await supabaseAdmin
         .from('reservas')
         .select('user_id,email')
         .eq('sede', nombreSede)
@@ -2999,7 +2999,7 @@ app.get('/api/disponibilidad/:sede/:fecha', async (req, res) => {
   try {
     const { sede, fecha } = req.params;
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reservas')
       .select('*')
       .eq('sede', sede)
@@ -3502,7 +3502,7 @@ app.get('/api/reservas/disponibilidad', async (req, res) => {
       numsSlots = r.numeros;
     }
 
-    const { data: reservadas, error: rErr } = await supabase
+    const { data: reservadas, error: rErr } = await supabaseAdmin
       .from('reservas')
       .select('*')
       .eq('sede', nombreSede)
@@ -3945,7 +3945,7 @@ async function assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duraci
   }
   const canchaNum = parseInt(String(cancha), 10);
   const duracion = Number.isFinite(Number(duracionMin)) && Number(duracionMin) > 0 ? parseInt(String(duracionMin), 10) : 90;
-  let q = supabase
+  let q = supabaseAdmin
     .from('reservas')
     .select('id,hora,duracion,duracion_minutos,estado')
     .eq('sede', sede)
@@ -4004,7 +4004,7 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
     await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
 
     // Crear reserva
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reservas')
       .insert([{
         sede,
@@ -4058,7 +4058,7 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
 
     const createdReserva = Array.isArray(data) ? data[0] : data;
     if (createdReserva?.id != null) {
-      await insertReservaHistorialEstado(supabase, {
+      await insertReservaHistorialEstado(supabaseAdmin, {
         reserva_id: createdReserva.id,
         estado_anterior: null,
         estado_nuevo: String(estadoFinal || '').trim() || null,
@@ -4139,7 +4139,7 @@ app.post('/api/admin/reservas/manual', async (req, res) => {
     await assertReservaHorarioNoPasadoParaSede(sede, fecha, hora);
     await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reservas')
       .insert([
         {
@@ -4164,7 +4164,7 @@ app.post('/api/admin/reservas/manual', async (req, res) => {
     if (error) throw error;
 
     if (data?.id != null) {
-      await insertReservaHistorialEstado(supabase, {
+      await insertReservaHistorialEstado(supabaseAdmin, {
         reserva_id: data.id,
         estado_anterior: null,
         estado_nuevo: estado,
@@ -4292,7 +4292,7 @@ async function assertReservaAccesibleHistorial(req, reservaId) {
     e.status = 401;
     throw e;
   }
-  const { data: r, error } = await supabase.from('reservas').select('id, sede, user_id').eq('id', rid).maybeSingle();
+  const { data: r, error } = await supabaseAdmin.from('reservas').select('id, sede, user_id').eq('id', rid).maybeSingle();
   if (error) throw error;
   if (!r) {
     const e = new Error('Reserva no encontrada');
@@ -4323,7 +4323,7 @@ app.get('/api/reservas', async (req, res) => {
       : { rol: null, alcance: null, email: null, sedeId: null };
     console.log('GET /reservas:', logLine);
 
-    let query = supabase.from('reservas').select('*');
+    let query = supabaseAdmin.from('reservas').select('*');
 
     if (scope) {
       if (scope.superA || scope.alcance === 'global') {
@@ -4357,7 +4357,7 @@ app.get('/api/reservas/:id/historial', async (req, res) => {
     const id = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
     await assertReservaAccesibleHistorial(req, id);
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reservas_historial')
       .select('id, reserva_id, estado_anterior, estado_nuevo, changed_by, created_at')
       .eq('reserva_id', id)
@@ -4375,7 +4375,7 @@ app.get('/api/reservas/:id/historial', async (req, res) => {
 // GET ingresos
 app.get('/api/ingresos', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reservas')
       .select('precio')
       .eq('estado', 'confirmada');
@@ -4395,7 +4395,7 @@ app.put('/api/reservas/:id', async (req, res) => {
     const { id } = req.params;
     const { sede, fecha, hora, cancha, nombre, email, precio, duracion, estado } = req.body;
 
-    const { data: prevRow, error: prevErr } = await supabase
+    const { data: prevRow, error: prevErr } = await supabaseAdmin
       .from('reservas')
       .select('*')
       .eq('id', id)
@@ -4433,7 +4433,7 @@ app.put('/api/reservas/:id', async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reservas')
       .update(updates)
       .eq('id', id)
@@ -4465,7 +4465,7 @@ app.put('/api/reservas/:id', async (req, res) => {
           const user = await authUserFromBearer(req);
           if (user?.email) changedByHist = `jugador:${String(user.email).trim().toLowerCase()}`;
         }
-        await insertReservaHistorialEstado(supabase, {
+        await insertReservaHistorialEstado(supabaseAdmin, {
           reserva_id: id,
           estado_anterior: oldE || null,
           estado_nuevo: newE || null,
@@ -4557,12 +4557,12 @@ app.delete('/api/reservas/:id', async (req, res) => {
 
     let prevReserva = null;
     if (isAdminReservaDel) {
-      const { data: pr, error: prErr } = await supabase.from('reservas').select('*').eq('id', id).maybeSingle();
+      const { data: pr, error: prErr } = await supabaseAdmin.from('reservas').select('*').eq('id', id).maybeSingle();
       if (prErr) throw prErr;
       prevReserva = pr;
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('reservas')
       .delete()
       .eq('id', id);
@@ -4606,7 +4606,7 @@ app.post('/api/reservas/liberar-slot-pendiente', async (req, res) => {
       'pendiente_pago_mercadopago',
       'pendiente_mercadopago',
     ];
-    let q = supabase
+    let q = supabaseAdmin
       .from('reservas')
       .select('id')
       .eq('sede', sede)
@@ -4623,7 +4623,7 @@ app.post('/api/reservas/liberar-slot-pendiente', async (req, res) => {
     if (!ids.length) {
       return res.json({ ok: true, deleted: 0 });
     }
-    const { error: delErr } = await supabase.from('reservas').delete().in('id', ids);
+    const { error: delErr } = await supabaseAdmin.from('reservas').delete().in('id', ids);
     if (delErr) throw delErr;
     res.json({ ok: true, deleted: ids.length });
   } catch (err) {
@@ -7447,7 +7447,7 @@ function whatsappDigitsOnly(raw) {
 
 async function fetchWhatsappDesdeReservasPorUserOEmail(userId, email) {
   if (userId) {
-    const { data: rows } = await supabase
+    const { data: rows } = await supabaseAdmin
       .from('reservas')
       .select('whatsapp')
       .eq('user_id', userId)
@@ -7459,7 +7459,7 @@ async function fetchWhatsappDesdeReservasPorUserOEmail(userId, email) {
   }
   const em = String(email || '').trim();
   if (em) {
-    const { data: rows2 } = await supabase
+    const { data: rows2 } = await supabaseAdmin
       .from('reservas')
       .select('whatsapp')
       .ilike('email', em)
@@ -8277,7 +8277,7 @@ app.post('/api/cancelar-reserva', async (req, res) => {
     }
 
     // Fetch the reservation and verify ownership
-    const { data: reserva, error: fetchErr } = await supabase
+    const { data: reserva, error: fetchErr } = await supabaseAdmin
       .from('reservas')
       .select('*')
       .eq('id', reservaId)
@@ -8302,14 +8302,14 @@ app.post('/api/cancelar-reserva', async (req, res) => {
     const eligibleForCredit = horasHasta > 24;
 
     // Mark as cancelled
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await supabaseAdmin
       .from('reservas')
       .update({ estado: 'cancelada' })
       .eq('id', reservaId);
     if (updateErr) throw updateErr;
 
     const emJug = String(email || '').trim().toLowerCase();
-    await insertReservaHistorialEstado(supabase, {
+    await insertReservaHistorialEstado(supabaseAdmin, {
       reserva_id: reservaId,
       estado_anterior: String(reserva.estado || '').trim() || null,
       estado_nuevo: 'cancelada',
@@ -8428,7 +8428,7 @@ app.get('/api/jugador/mis-pagos', async (req, res) => {
 
     let reservasData = [];
     if (uid) {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('reservas')
         .select('id, fecha, hora, sede, precio, moneda, estado, user_id')
         .eq('user_id', uid)
@@ -8438,7 +8438,7 @@ app.get('/api/jugador/mis-pagos', async (req, res) => {
       if (error) throw error;
       reservasData = Array.isArray(data) ? data : [];
     } else {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('reservas')
         .select('id, fecha, hora, sede, precio, moneda, estado, email')
         .ilike('email', emailNorm)
@@ -8691,7 +8691,7 @@ async function deportePrincipalPorSedeIdsStats(supabaseClient, sedeIds) {
 async function sedeMasFrecuentadaDesdeReservasStats(supabaseClient, perfil) {
   const userIdStats = String(perfil.user_id || '').trim();
   if (!userIdStats) return null;
-  const { data: resvRows, error: rvErr } = await supabaseClient.from('reservas').select('sede, estado').eq('user_id', userIdStats);
+  const { data: resvRows, error: rvErr } = await supabaseAdmin.from('reservas').select('sede, estado').eq('user_id', userIdStats);
   if (rvErr) {
     console.warn('sedeMasFrecuentadaDesdeReservasStats:', rvErr.message || rvErr);
     return null;
@@ -9270,11 +9270,11 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
         ...(authUser.id ? { user_id: authUser.id } : {}),
       };
 
-      const { data, error } = await supabase.from('reservas').insert([ins]).select();
+      const { data, error } = await supabaseAdmin.from('reservas').insert([ins]).select();
       if (error) throw error;
       const createdReserva = Array.isArray(data) ? data[0] : null;
       if (createdReserva?.id != null) {
-        await insertReservaHistorialEstado(supabase, {
+        await insertReservaHistorialEstado(supabaseAdmin, {
           reserva_id: createdReserva.id,
           estado_anterior: null,
           estado_nuevo: 'confirmada',
@@ -9810,7 +9810,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     await assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duracionMin });
   } catch (e) {
     if (e.status === 409) {
-      const { data: existente } = await supabase
+      const { data: existente } = await supabaseAdmin
         .from('reservas')
         .select('*')
         .eq('sede', sede)
@@ -9823,7 +9823,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
     }
     throw e;
   }
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('reservas')
     .insert([
       {
@@ -9847,7 +9847,7 @@ async function crearReservaConfirmadaDesdePayloadMp(payload) {
   if (error) throw error;
   const createdReserva = Array.isArray(data) ? data[0] : null;
   if (createdReserva?.id != null) {
-    await insertReservaHistorialEstado(supabase, {
+    await insertReservaHistorialEstado(supabaseAdmin, {
       reserva_id: createdReserva.id,
       estado_anterior: null,
       estado_nuevo: 'confirmada',
@@ -10288,7 +10288,7 @@ async function liberarSlotReservaPendienteMp(payload) {
   const hora = String(payload.hora || '').trim();
   const cancha = parseInt(String(payload.cancha), 10);
   if (!sede || !fecha || !hora || !Number.isFinite(cancha)) return;
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('reservas')
     .delete()
     .eq('sede', sede)
@@ -10575,7 +10575,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         const st = e.status || 400;
         return res.status(st).json({ error: e.message || String(e) });
       }
-      const { data: reservaCreada, error: resErr } = await supabase.from('reservas').insert([payloadReserva]).select().single();
+      const { data: reservaCreada, error: resErr } = await supabaseAdmin.from('reservas').insert([payloadReserva]).select().single();
       if (resErr) throw resErr;
       let partidoCreado = null;
       if (String(r.tipo || '').trim().toLowerCase() === 'partido_abierto') {
@@ -10586,7 +10586,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         }
       }
       if (reservaCreada?.id != null) {
-        await insertReservaHistorialEstado(supabase, {
+        await insertReservaHistorialEstado(supabaseAdmin, {
           reserva_id: reservaCreada.id,
           estado_anterior: null,
           estado_nuevo: String(payloadReserva.estado || '').trim() || estadoPresencial,
@@ -11074,7 +11074,7 @@ app.get('/api/admin/analytics-globales', async (req, res) => {
       supabase.from('jugadores_perfil').select('*', { count: 'exact', head: true }).gte('created_at', monthStartIso),
       supabase.from('sedes').select('pais, licencia_activa, numero_licencia').limit(10000),
       supabase.from('torneos').select('*', { count: 'exact', head: true }).eq('estado', 'finalizado'),
-      supabase.from('reservas').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgoIso),
+      supabaseAdmin.from('reservas').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgoIso),
       supabase.from('torneos').select('deporte').limit(50000),
     ]);
 
@@ -12508,7 +12508,7 @@ app.post('/api/admin/sedes-pendientes/:id/rechazar', async (req, res) => {
 // ─── Cron: recordatorio ~2 horas antes de la reserva (por zona de cada sede) ─
 cron.schedule('*/5 * * * *', async () => {
   try {
-    const { data: reservas, error } = await supabase
+    const { data: reservas, error } = await supabaseAdmin
       .from('reservas')
       .select('*')
       .eq('estado', 'confirmada')
@@ -12580,7 +12580,7 @@ Recuerda llegar 10 minutos antes.
           link: '/mi-perfil?tab=reservas',
         });
 
-        await supabase.from('reservas').update({ recordatorio_enviado: true }).eq('id', r.id);
+        await supabaseAdmin.from('reservas').update({ recordatorio_enviado: true }).eq('id', r.id);
       } catch (err) {
         console.warn(`⚠️ Recordatorio reserva ${r.id} fallido:`, err.message);
       }
@@ -12759,7 +12759,7 @@ async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, durac
     duracion = [60, 90, 120].includes(dIn) ? dIn : 90;
   }
 
-  const { data: reservadas, error } = await supabaseClient
+  const { data: reservadas, error } = await supabaseAdmin
     .from('reservas')
     .select('*')
     .eq('sede', nombreSede)
@@ -14156,7 +14156,7 @@ async function buildChatIAContextPayload(supabaseClient, authUser, localeUiRaw) 
       .eq('email', em)
       .maybeSingle();
     const perfil = perfilQ.data || null;
-    const reservasQ = await supabaseClient
+    const reservasQ = await supabaseAdmin
       .from('reservas')
       .select('sede,fecha,hora,estado,cancha,precio')
       .eq('email', em)
