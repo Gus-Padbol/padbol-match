@@ -456,6 +456,14 @@
     "loading": "Loading class…",
     "noProfesores": "No instructors available at your venue."
   },
+  "campanita": {
+    "sinAlertas": "No pending alerts",
+    "marcarLeido": "Mark all as read",
+    "instructoresPendientes": "instructor(s) pending approval",
+    "sedesPendientes": "new venue(s) pending approval",
+    "pagosFallidos": "failed payment(s) in the last 7 days",
+    "cancelaciones": "cancellation(s) in the last 24 hours"
+  },
   "instructor": {
     "quieroSerInstructor": "I want to be a FIPA Instructor",
     "solicitudEnviada": "Application submitted — under review",

@@ -87,6 +87,7 @@ import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSecti
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
+import { fetchAdminCampanitaAlertas } from '../utils/adminCampanitaApi';
 import { getCroppedImgBlob } from '../utils/cropImage';
 import { preciosDuracionToApiPatch, parsePrecioDuracionField } from '../utils/sedePreciosDuracion';
 import * as XLSX from 'xlsx';
@@ -2080,6 +2081,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [reservaHistorialUi, setReservaHistorialUi] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
+  const [campanitaData, setCampanitaData] = useState(null);
+  const [campanitaLoading, setCampanitaLoading] = useState(false);
   const [notificacionesLeidas, setNotificacionesLeidas] = useState(() => {
     try {
       const raw = localStorage.getItem(ADMIN_NOTIFICACIONES_READ_LS_KEY);
@@ -2297,6 +2300,31 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   useEffect(() => {
     if (isSuperAdmin && activeTab === 'profesores') void refreshSnapProfesoresPendientes();
   }, [activeTab, isSuperAdmin, refreshSnapProfesoresPendientes]);
+
+  const refreshCampanitaAlertas = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    setCampanitaLoading(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) return;
+      const data = await fetchAdminCampanitaAlertas({ accessToken: token });
+      setCampanitaData(data);
+      setSnapPendienteProfesores(data.instructoresPendientes);
+      setSnapPendienteSedes(data.sedesPendientes);
+    } catch (e) {
+      console.warn('[AdminDashboard] campanita:', e?.message || e);
+    } finally {
+      setCampanitaLoading(false);
+    }
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return undefined;
+    void refreshCampanitaAlertas();
+    const id = window.setInterval(() => void refreshCampanitaAlertas(), 3 * 60 * 1000);
+    return () => window.clearInterval(id);
+  }, [isSuperAdmin, refreshCampanitaAlertas]);
 
   const refetchSolicitudesTabLists = useCallback(() => {
     if (!isSuperAdmin || activeTab !== 'solicitudes') return;
@@ -3546,10 +3574,64 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       sessionStorage.setItem('adminActiveTab', tabId);
       navigate(`/admin?tab=${encodeURIComponent(tabId)}`, { replace: true });
     };
-    if (isSuperAdmin && snapPendienteSedes + snapPendienteLic > 0) {
-      const count = snapPendienteSedes + snapPendienteLic;
+    const campanitaTs = campanitaData?.updatedAt ? new Date(campanitaData.updatedAt) : new Date();
+    const campanitaTimeLabel = Number.isNaN(campanitaTs.getTime())
+      ? ''
+      : campanitaTs.toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+    if (isSuperAdmin && campanitaData) {
+      const pushCampanita = (id, category, categoryLabel, count, labelKey, tabId, tone = 'danger') => {
+        if (!count || count <= 0) return;
+        items.push({
+          id,
+          category,
+          categoryLabel,
+          tone,
+          title: `${count} ${t(labelKey)}`,
+          timestamp: campanitaTimeLabel,
+          actionLabel: '→',
+          onClick: () => irATab(tabId),
+        });
+      };
+      pushCampanita(
+        `campanita-instructores-${campanitaData.instructoresPendientes}`,
+        'instructores',
+        t('admin.profesores.tab'),
+        campanitaData.instructoresPendientes,
+        'campanita.instructoresPendientes',
+        'profesores',
+      );
+      pushCampanita(
+        `campanita-sedes-${campanitaData.sedesPendientes}`,
+        'sedes',
+        t('admin.tabs.sedes'),
+        campanitaData.sedesPendientes,
+        'campanita.sedesPendientes',
+        'sedes',
+      );
+      pushCampanita(
+        `campanita-pagos-${campanitaData.pagosFallidos}`,
+        'pagos',
+        t('admin.tabs.reservas'),
+        campanitaData.pagosFallidos,
+        'campanita.pagosFallidos',
+        'reservas',
+        'warning',
+      );
+      pushCampanita(
+        `campanita-cancel-${campanitaData.cancelaciones24h}`,
+        'cancelaciones',
+        t('admin.tabs.reservas'),
+        campanitaData.cancelaciones24h,
+        'campanita.cancelaciones',
+        'reservas',
+        'info',
+      );
+    }
+    if (isSuperAdmin && snapPendienteLic > 0) {
+      const count = snapPendienteLic;
       items.push({
-        id: `solicitudes-pendientes-${count}`,
+        id: `solicitudes-licencia-${count}`,
         tone: 'danger',
         title:
           count === 1
@@ -3659,9 +3741,37 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     puedeVerFinanzas,
     snapPendienteSedes,
     snapPendienteLic,
+    campanitaData,
     setSolicitudesFiltroEstado,
     t,
   ]);
+
+  const adminNotificacionesAgrupadas = useMemo(() => {
+    const groups = new Map();
+    const otros = [];
+    for (const n of adminNotificaciones) {
+      if (n.category) {
+        const key = n.category;
+        if (!groups.has(key)) {
+          groups.set(key, { key, label: n.categoryLabel || key, items: [] });
+        }
+        groups.get(key).items.push(n);
+      } else {
+        otros.push(n);
+      }
+    }
+    const ordered = [];
+    for (const k of ['instructores', 'sedes', 'pagos', 'cancelaciones']) {
+      if (groups.has(k)) ordered.push(groups.get(k));
+    }
+    for (const [k, g] of groups) {
+      if (!['instructores', 'sedes', 'pagos', 'cancelaciones'].includes(k)) ordered.push(g);
+    }
+    if (otros.length) {
+      ordered.push({ key: 'otros', label: t('admin.notifications.title'), items: otros });
+    }
+    return ordered;
+  }, [adminNotificaciones, t]);
 
   const notificacionesNoLeidas = useMemo(() => {
     const leidas = new Set(notificacionesLeidas);
@@ -6284,137 +6394,87 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           >
             {fechaActualLarga}
           </p>
-          <div style={{ position: 'relative', marginBottom: '12px' }}>
+          <div className={`admin-campanita-wrap${campanitaLoading ? ' admin-campanita-wrap--loading' : ''}`} style={{ position: 'relative', marginBottom: '12px' }}>
             <button
               type="button"
-              className="admin-super-header__bell"
+              className="admin-super-header__bell admin-campanita-bell"
               aria-label={t('admin.notifications.aria', { count: notificacionesNoLeidas })}
+              aria-expanded={notificacionesOpen}
               onClick={() => setNotificacionesOpen((v) => !v)}
-              style={{
-                position: 'relative',
-                borderRadius: '999px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                lineHeight: 1,
-                boxShadow: '0 1px 6px rgba(15,23,42,0.08)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
             >
               <IconGeroNotificacionesNav size={28} aria-hidden />
+              {campanitaLoading ? <span className="admin-campanita-bell__loader" aria-hidden /> : null}
               {notificacionesNoLeidas > 0 ? (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '-7px',
-                    right: '-7px',
-                    minWidth: '20px',
-                    height: '20px',
-                    padding: '0 5px',
-                    borderRadius: '999px',
-                    background: 'var(--accent)',
-                    color: 'var(--bg-card)',
-                    border: '2px solid var(--border)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 900,
-                    boxSizing: 'border-box',
-                  }}
-                >
+                <span className="admin-campanita-bell__badge">
                   {notificacionesNoLeidas > 99 ? '99+' : notificacionesNoLeidas}
                 </span>
               ) : null}
             </button>
             {notificacionesOpen ? (
-              <div
-                role="dialog"
-                aria-label={t('nav.notificaciones')}
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: '50%',
-                  transform: 'translateX(50%)',
-                  width: 'min(340px, calc(100vw - 24px))',
-                  maxHeight: '420px',
-                  overflowY: 'auto',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-primary)',
-                  borderRadius: '14px',
-                  boxShadow: '0 20px 45px rgba(15,23,42,0.28)',
-                  border: '1px solid var(--border)',
-                  zIndex: 250,
-                  textAlign: 'left',
-                }}
-              >
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                  <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{t('admin.notifications.title')}</strong>
+              <div className="admin-campanita-panel" role="dialog" aria-label={t('nav.notificaciones')}>
+                <div className="admin-campanita-panel__header">
+                  <strong className="admin-campanita-panel__title">{t('admin.notifications.title')}</strong>
                   {adminNotificaciones.length > 0 ? (
                     <button
                       type="button"
+                      className="admin-campanita-panel__mark-all"
                       onClick={() => setNotificacionesLeidas(adminNotificaciones.map((n) => String(n.id)))}
-                      style={{ border: 'none', background: 'transparent', color: 'var(--accent)', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
                     >
-                      Marcar leídas
+                      {t('campanita.marcarLeido')}
                     </button>
                   ) : null}
                 </div>
                 {adminNotificaciones.length === 0 ? (
-                  <p style={{ margin: 0, padding: '14px', color: 'var(--text-secondary)', fontSize: '13px' }}>{t('admin.notifications.empty')}</p>
+                  <div className="admin-campanita-panel__empty">
+                    <span className="admin-campanita-panel__empty-icon" aria-hidden>
+                      ✓
+                    </span>
+                    <p>{t('campanita.sinAlertas')}</p>
+                  </div>
                 ) : (
-                  <div style={{ display: 'grid', gap: '8px', padding: '10px' }}>
-                    {adminNotificaciones.map((n) => {
-                      const leida = notificacionesLeidas.includes(String(n.id));
-                      const borderVar =
-                        n.tone === 'danger'
-                          ? 'var(--pm-color-error, #dc2626)'
-                          : n.tone === 'warning'
-                            ? 'var(--pm-color-warning, #f59e0b)'
-                            : 'var(--accent)';
-                      return (
-                        <div
-                          key={n.id}
-                          style={{
-                            border: `1px solid var(--border)`,
-                            borderLeft: `4px solid ${borderVar}`,
-                            borderRadius: '10px',
-                            padding: '10px',
-                            background: leida ? 'var(--bg-input)' : 'var(--pm-color-muted-bg)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                            <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{n.title}</strong>
-                            {!leida ? <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 900 }}>{t('admin.notifications.new')}</span> : null}
-                          </div>
-                          <p style={{ margin: '4px 0 0', fontSize: '12px', lineHeight: 1.4, color: 'var(--text-secondary)' }}>{n.body}</p>
-                          {n.actionLabel ? (
+                  <div className="admin-campanita-panel__body">
+                    {adminNotificacionesAgrupadas.map((group) => (
+                      <section key={group.key} className="admin-campanita-group">
+                        <h4 className="admin-campanita-group__title">{group.label}</h4>
+                        {group.items.map((n) => {
+                          const leida = notificacionesLeidas.includes(String(n.id));
+                          return (
                             <button
+                              key={n.id}
                               type="button"
+                              className={`admin-campanita-row admin-campanita-row--${n.tone || 'info'}${leida ? ' admin-campanita-row--read' : ''}`}
                               onClick={() => {
                                 marcarNotificacionLeida(n.id);
                                 setNotificacionesOpen(false);
                                 if (typeof n.onClick === 'function') n.onClick();
                               }}
-                              style={{
-                                marginTop: '8px',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '6px 10px',
-                                background: 'var(--accent)',
-                                color: 'var(--bg-card)',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                cursor: 'pointer',
-                              }}
                             >
-                              {n.actionLabel}
+                              <span className="admin-campanita-row__icon" aria-hidden>
+                                {n.category === 'instructores'
+                                  ? '🎓'
+                                  : n.category === 'sedes'
+                                    ? '🏟️'
+                                    : n.category === 'pagos'
+                                      ? '💳'
+                                      : n.category === 'cancelaciones'
+                                        ? '❌'
+                                        : '🔔'}
+                              </span>
+                              <span className="admin-campanita-row__main">
+                                <span className="admin-campanita-row__text">{n.title}</span>
+                                {n.body ? <span className="admin-campanita-row__sub">{n.body}</span> : null}
+                                {n.timestamp ? (
+                                  <span className="admin-campanita-row__time">{n.timestamp}</span>
+                                ) : null}
+                              </span>
+                              <span className="admin-campanita-row__arrow" aria-hidden>
+                                →
+                              </span>
                             </button>
-                          ) : null}
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </section>
+                    ))}
                   </div>
                 )}
               </div>

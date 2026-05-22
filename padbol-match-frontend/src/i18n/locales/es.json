@@ -480,6 +480,14 @@
     "loading": "Cargando clase…",
     "noProfesores": "No hay instructores disponibles en tu sede."
   },
+  "campanita": {
+    "sinAlertas": "No hay alertas pendientes",
+    "marcarLeido": "Marcar todo como leído",
+    "instructoresPendientes": "instructor(es) pendiente(s) de aprobación",
+    "sedesPendientes": "sede(s) nueva(s) pendiente(s) de aprobación",
+    "pagosFallidos": "pago(s) fallido(s) en los últimos 7 días",
+    "cancelaciones": "cancelación(es) en las últimas 24 horas"
+  },
   "instructor": {
     "quieroSerInstructor": "Quiero ser Instructor FIPA",
     "solicitudEnviada": "Solicitud enviada — en revisión",

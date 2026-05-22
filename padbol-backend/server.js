@@ -11247,6 +11247,133 @@ app.get('/api/admin/analytics-globales', async (req, res) => {
   }
 });
 
+/** Cuenta pagos fallidos últimos 7 días (tabla payments si existe; si no, webhook_logs). */
+async function countPagosFallidosAdmin7d() {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { count, error } = await supabaseAdmin
+    .from('payments')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['failed', 'error'])
+    .gte('created_at', since);
+  if (!error && count != null) return count;
+
+  const { data: logs, error: logErr } = await supabaseAdmin
+    .from('webhook_logs')
+    .select('event_type, payload')
+    .gte('created_at', since)
+    .in('source', ['mercadopago', 'stripe']);
+  if (logErr) {
+    console.warn('countPagosFallidosAdmin7d webhook_logs:', logErr.message);
+    return 0;
+  }
+  const failedStatuses = new Set(['rejected', 'cancelled', 'failed', 'error']);
+  let n = 0;
+  for (const row of logs || []) {
+    const et = String(row.event_type || '').toLowerCase();
+    if (et.includes('payment_failed') || et.includes('invoice.payment_failed')) {
+      n += 1;
+      continue;
+    }
+    const body = row.payload?.body ?? row.payload ?? {};
+    const status = String(
+      body?.data?.status ?? body?.status ?? body?.object?.status ?? '',
+    ).toLowerCase();
+    if (failedStatuses.has(status)) n += 1;
+  }
+  return n;
+}
+
+/** GET /api/admin/pagos-fallidos — super_admin */
+app.get('/api/admin/pagos-fallidos', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const total = await countPagosFallidosAdmin7d();
+    res.json({ total, periodo_dias: 7 });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/admin/pagos-fallidos:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/cancelaciones-recientes — super_admin (24 h) */
+app.get('/api/admin/cancelaciones-recientes', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    let { count, error } = await supabaseAdmin
+      .from('reservas')
+      .select('id', { count: 'exact', head: true })
+      .eq('estado', 'cancelada')
+      .gte('updated_at', since);
+    if (error) {
+      const fallback = await supabaseAdmin
+        .from('reservas')
+        .select('id', { count: 'exact', head: true })
+        .eq('estado', 'cancelada')
+        .gte('created_at', since);
+      count = fallback.count;
+      error = fallback.error;
+    }
+    if (error) throw error;
+    res.json({ total: count ?? 0, periodo_horas: 24 });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/admin/cancelaciones-recientes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/alertas-campanita — super_admin: conteos agregados para campanita */
+app.get('/api/admin/alertas-campanita', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const [profRes, sedesPendRes, pagosFallidos] = await Promise.all([
+      supabaseAdmin
+        .from('profesores')
+        .select('id', { count: 'exact', head: true })
+        .eq('aprobado', false)
+        .eq('activo', true),
+      supabase.from('sedes_pendientes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+      countPagosFallidosAdmin7d(),
+    ]);
+
+    let cancelRes = await supabaseAdmin
+      .from('reservas')
+      .select('id', { count: 'exact', head: true })
+      .eq('estado', 'cancelada')
+      .gte('updated_at', since24h);
+    if (cancelRes.error) {
+      cancelRes = await supabaseAdmin
+        .from('reservas')
+        .select('id', { count: 'exact', head: true })
+        .eq('estado', 'cancelada')
+        .gte('created_at', since24h);
+    }
+
+    if (profRes.error) throw profRes.error;
+    if (sedesPendRes.error) throw sedesPendRes.error;
+    if (cancelRes.error) throw cancelRes.error;
+
+    res.json({
+      instructores_pendientes: profRes.count ?? 0,
+      sedes_pendientes: sedesPendRes.count ?? 0,
+      pagos_fallidos: pagosFallidos,
+      cancelaciones_24h: cancelRes.count ?? 0,
+      updated_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/admin/alertas-campanita:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** GET /api/admin/sedes-alcance — admin autenticado: metadatos de alcance y sedes habilitadas. */
 app.get('/api/admin/sedes-alcance', async (req, res) => {
   try {
