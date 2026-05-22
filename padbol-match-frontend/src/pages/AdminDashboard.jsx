@@ -5944,33 +5944,62 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   const persistFotosDestacadas = async (nextDestacadas, { successMessage } = {}) => {
-    if (!sedeId) return false;
-    const arr = nextDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, 4);
-    setFotosDestacadasSaving(true);
-    setFotosDestacadasMsg('');
-    const { error } = await supabase
-      .from(t('admin.metricas.venuesCount'))
-      .update({ fotos_destacadas: arr })
-      .eq('id', sedeId);
-    setFotosDestacadasSaving(false);
-    if (error) {
-      setFotosDestacadasMsg(`⚠️ ${error.message}`);
+    if (!sedeId || !session?.access_token) {
+      setFotosDestacadasMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setFotosDestacadasMsg(''), 4000);
       return false;
     }
-    setFotosDestacadas(arr);
-    if (successMessage) {
-      setFotosDestacadasMsg(successMessage);
-      setTimeout(() => setFotosDestacadasMsg(''), 3000);
+    const arr = nextDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, 4);
+    setFotosDestacadasSaving(true);
+    setFotosDestacadasMsg('');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(String(sedeId))}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ fotos_destacadas: arr }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setFotosDestacadasMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
+        setTimeout(() => setFotosDestacadasMsg(''), 4000);
+        return false;
+      }
+      const saved = Array.isArray(data.sede?.fotos_destacadas)
+        ? data.sede.fotos_destacadas.map((u) => String(u || '').trim()).filter(Boolean)
+        : arr;
+      setFotosDestacadas(saved.filter((u) => fotosUrls.includes(u)).slice(0, 4));
+      setMiSede((prev) =>
+        prev
+          ? {
+              ...prev,
+              fotos_destacadas: saved,
+              updated_at: data.sede?.updated_at ?? prev.updated_at,
+            }
+          : prev,
+      );
+      if (successMessage) {
+        setFotosDestacadasMsg(successMessage);
+        setTimeout(() => setFotosDestacadasMsg(''), 3000);
+      }
+      return true;
+    } catch (e) {
+      setFotosDestacadasMsg(`⚠️ ${e?.message || String(e)}`);
+      setTimeout(() => setFotosDestacadasMsg(''), 4000);
+      return false;
+    } finally {
+      setFotosDestacadasSaving(false);
     }
-    return true;
   };
 
   const usarComoHero = async (url) => {
-    const heroActual = fotosDestacadas[0] || fotosUrls[0] || null;
-    if (url === heroActual) return;
+    const heroKey = String(url || '').trim();
+    const heroActual = fotosDestacadas[0] || null;
+    if (heroActual && heroActual === heroKey) return;
     const prev = fotosDestacadas.filter((u) => fotosUrls.includes(u));
-    const next = [url, ...prev.filter((u) => u !== url)].slice(0, 4);
+    const next = [heroKey, ...prev.filter((u) => u !== heroKey)].slice(0, 4);
     const ok = await persistFotosDestacadas(next);
     if (ok) {
       setHeroToast('Hero actualizado');

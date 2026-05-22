@@ -2818,6 +2818,16 @@ app.patch('/api/sedes/:id', async (req, res) => {
       patch.color_borde_hero = s || null;
     }
 
+    if (hop('fotos_urls')) {
+      patch.fotos_urls = Array.isArray(b.fotos_urls)
+        ? b.fotos_urls.map((x) => String(x || '').trim()).filter(Boolean)
+        : [];
+    }
+    if (hop('fotos_destacadas')) {
+      const raw = Array.isArray(b.fotos_destacadas) ? b.fotos_destacadas : [];
+      patch.fotos_destacadas = raw.map((x) => String(x || '').trim()).filter(Boolean).slice(0, 4);
+    }
+
     if (hop('suscripcion_estado')) {
       if (!scope?.superA) {
         return res.status(403).json({ error: 'Solo super_admin puede cambiar suscripcion_estado' });
@@ -2844,7 +2854,7 @@ app.patch('/api/sedes/:id', async (req, res) => {
       return res.status(400).json({ error: 'Ningún campo reconocido para actualizar' });
     }
 
-    const { data: updated, error } = await supabase.from('sedes').update(patch).eq('id', id).select('*').single();
+    const { data: updated, error } = await supabaseAdmin.from('sedes').update(patch).eq('id', id).select('*').single();
     if (error) throw error;
     if (!updated) return res.status(404).json({ error: 'Sede no encontrada' });
 
@@ -2853,7 +2863,7 @@ app.patch('/api/sedes/:id', async (req, res) => {
     );
     if (touchedDuracionPrecios) {
       try {
-        await syncSedesDuracionesPreciosFromSedeColumns(supabase, id, updated);
+        await syncSedesDuracionesPreciosFromSedeColumns(supabaseAdmin, id, updated);
       } catch (syncErr) {
         console.warn('PATCH /api/sedes/:id sync sedes_duraciones:', syncErr?.message || syncErr);
       }

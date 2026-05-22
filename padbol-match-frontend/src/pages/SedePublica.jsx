@@ -42,6 +42,20 @@ const FOTOS_DESTACADAS_MAX = 4;
 
 const toHttps = (url) => (url ? url.replace(/^http:\/\//, 'https://') : url);
 
+function sedePhotoUrlKey(url) {
+  return toHttps(String(url || '').trim());
+}
+
+/** Evita imagen en caché tras cambiar hero (misma URL en Storage). */
+function sedePhotoUrlWithCacheBust(url, bust) {
+  const u = sedePhotoUrlKey(url);
+  if (!u) return u;
+  const token =
+    bust != null && String(bust).trim() !== '' ? String(bust).trim() : String(Date.now());
+  const sep = u.includes('?') ? '&' : '?';
+  return `${u}${sep}t=${encodeURIComponent(token)}`;
+}
+
 /** Design System Gero — perfil público de sede (tema claro/oscuro vía CSS variables). */
 const SEDE_DS = {
   pageBg: 'var(--bg-page)',
@@ -184,12 +198,27 @@ function sedeFotosLista(sede) {
     : [];
 }
 
-/** Hero: primera foto en `fotos_destacadas`; si no hay, primera de la galería. */
+/** Hero: `fotos_destacadas[0]` (elegida en admin); si no hay o no está en galería, primera foto. */
 function sedeHeroImageUrl(sede) {
-  const { urls } = urlsCarruselSedePublica(sede);
-  if (urls[0]) return urls[0];
-  const fotos = sedeFotosLista(sede);
-  return fotos[0] || null;
+  const todas = sedeFotosLista(sede);
+  const keys = new Set(todas.map(sedePhotoUrlKey));
+  const dest = Array.isArray(sede?.fotos_destacadas)
+    ? sede.fotos_destacadas.map((u) => sedePhotoUrlKey(u)).filter(Boolean)
+    : [];
+  if (dest.length > 0) {
+    const heroKey = dest[0];
+    if (keys.has(heroKey)) return heroKey;
+    const loose = todas.find((u) => sedePhotoUrlKey(u) === heroKey);
+    if (loose) return sedePhotoUrlKey(loose);
+  }
+  return todas[0] || null;
+}
+
+function sedeHeroCacheBustToken(sede) {
+  const dest = Array.isArray(sede?.fotos_destacadas) ? sede.fotos_destacadas : [];
+  const heroKey = dest[0] ? sedePhotoUrlKey(dest[0]) : '';
+  const updated = sede?.updated_at ? String(sede.updated_at) : '';
+  return [heroKey, updated, dest.join('|')].filter(Boolean).join('::') || String(Date.now());
 }
 
 /** Deportes activos: precios_por_deporte (activo) + canchas activas + API deportes_disponibles. */
@@ -2153,7 +2182,10 @@ export default function SedePublica() {
         const fotos = sedeFotosLista(sede);
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
-        const heroImg = toHttps(sedeHeroImageUrl(sede));
+        const heroImgRaw = sedeHeroImageUrl(sede);
+        const heroImg = heroImgRaw
+          ? sedePhotoUrlWithCacheBust(heroImgRaw, sedeHeroCacheBustToken(sede))
+          : null;
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
         return (
