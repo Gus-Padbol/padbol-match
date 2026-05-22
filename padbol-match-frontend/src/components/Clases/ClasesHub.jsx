@@ -4,6 +4,7 @@ import HubDeporteSelect from '../HubDeporteSelect';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../constants/deportesCanchaSede';
 import { readHubDeporteFilterPersisted, writeHubDeporteFilterToSession } from '../../constants/hubDeporteSession';
 import { fetchClases, fetchProfesores } from '../../utils/clasesApi';
+import { stripProfesorPublic } from '../../utils/profesorPublic';
 
 const COL_MAX = 390;
 const ACCENT = '#E11B22';
@@ -20,8 +21,9 @@ function deportesLabel(prof) {
 }
 
 function ProfesorCard({ prof, onClick }) {
-  const foto = String(prof?.foto_url || '').trim();
-  const bio = String(prof?.bio || '').trim();
+  const p = stripProfesorPublic(prof) || {};
+  const foto = String(p.foto_url || '').trim();
+  const bio = String(p.bio || '').trim();
   const bioCorta = bio.length > 120 ? `${bio.slice(0, 117)}…` : bio;
   return (
     <button type="button" onClick={onClick} style={{
@@ -39,12 +41,12 @@ function ProfesorCard({ prof, onClick }) {
       </div>
       <div style={{ flex: 1, padding: '12px 14px', minWidth: 0, boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.25 }}>{prof.nombre}</h3>
-          {prof.certificado_fipa ? (
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.25 }}>{p.nombre}</h3>
+          {p.certificado_fipa ? (
             <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, padding: '4px 8px', borderRadius: 999, background: 'rgba(225, 27, 34, 0.12)', color: ACCENT, letterSpacing: '0.02em' }}>Cert. FIPA</span>
           ) : null}
         </div>
-        <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{deportesLabel(prof)}</p>
+        <p style={{ margin: '6px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{deportesLabel(p)}</p>
         {bioCorta ? <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{bioCorta}</p> : null}
       </div>
     </button>
@@ -144,7 +146,13 @@ export default function ClasesHub({ sedeId }) {
           ) : profesores.length === 0 ? (
             <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No hay profesores disponibles en tu sede.</p>
           ) : (
-            profesores.map((p) => <ProfesorCard key={p.id} prof={p} onClick={() => setProfesorSel(p)} />)
+            profesores.map((row) => (
+              <ProfesorCard
+                key={row.id}
+                prof={row}
+                onClick={() => setProfesorSel(stripProfesorPublic(row))}
+              />
+            ))
           )}
         </>
       )}

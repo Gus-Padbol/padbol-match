@@ -1,3 +1,5 @@
+import { stripClasePublic, stripProfesorPublic } from './profesorPublic';
+
 const API_BASE =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -17,7 +19,7 @@ export async function fetchProfesores({ sedeId, deporte, signal } = {}) {
   const res = await fetch(`${API_BASE}/api/profesores?${qs}`, { signal });
   const data = await res.json().catch(() => []);
   if (!res.ok) throw new Error(data?.error || 'No se pudieron cargar los profesores');
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? data.map((p) => stripProfesorPublic(p)).filter(Boolean) : [];
 }
 
 export async function fetchClases({ sedeId, deporte, signal } = {}) {
@@ -28,7 +30,7 @@ export async function fetchClases({ sedeId, deporte, signal } = {}) {
   const res = await fetch(`${API_BASE}/api/clases?${qs}`, { signal });
   const data = await res.json().catch(() => []);
   if (!res.ok) throw new Error(data?.error || 'No se pudieron cargar las clases');
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? data.map((c) => stripClasePublic(c)) : [];
 }
 
 export async function fetchClaseDetalle(claseId, { fecha, signal, accessToken } = {}) {
@@ -43,7 +45,7 @@ export async function fetchClaseDetalle(claseId, { fecha, signal, accessToken } 
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || 'No se pudo cargar la clase');
-  return data;
+  return stripClasePublic(data);
 }
 
 export async function inscribirClase({ claseId, fecha, horaInicio, accessToken }) {

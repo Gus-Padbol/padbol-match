@@ -5,6 +5,11 @@
 
 const ESTADOS_INSCRIPCION_CUENTAN_CUPO = new Set(['pendiente', 'confirmada', 'pagada']);
 
+/** Columnas de profesor en respuestas públicas (nunca whatsapp). */
+const PROFESOR_PUBLIC_SELECT = 'id, nombre, apellido, foto_url, bio, deportes, certificado_fipa';
+/** Join en clases: aprobado/activo solo para filtros en query, no se exponen al cliente. */
+const PROFESOR_JOIN_PUBLIC_SELECT = `${PROFESOR_PUBLIC_SELECT}, aprobado, activo`;
+
 export function registerModuloClasesRoutes(app, deps) {
   const {
     supabase,
@@ -128,10 +133,10 @@ export function registerModuloClasesRoutes(app, deps) {
 
   async function mapClaseListItem(claseRow, horarios) {
     const prof = mapProfesorPublic(claseRow.profesores);
+    const { profesores: _profesoresJoin, whatsapp: _wa, ...rest } = claseRow;
     return {
-      ...claseRow,
+      ...rest,
       profesor: prof,
-      profesores: undefined,
       horarios: horarios || [],
     };
   }
@@ -197,7 +202,7 @@ export function registerModuloClasesRoutes(app, deps) {
       let q = supabase
         .from('clases')
         .select(
-          'id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, profesores!inner(id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo)',
+          `id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, profesores!inner(${PROFESOR_JOIN_PUBLIC_SELECT})`,
         )
         .eq('sede_id', sedeId)
         .eq('activo', true)
@@ -234,7 +239,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const { data: clase, error } = await supabase
         .from('clases')
         .select(
-          'id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, horas_cancelacion, profesores!inner(id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo)',
+          `id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, horas_cancelacion, profesores!inner(${PROFESOR_JOIN_PUBLIC_SELECT})`,
         )
         .eq('id', claseId)
         .eq('activo', true)
@@ -552,7 +557,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data, error } = await supabase
         .from('profesores')
-        .select('id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo')
+        .select(`${PROFESOR_PUBLIC_SELECT}, aprobado, activo`)
         .eq('sede_id', sedeId)
         .eq('activo', true)
         .eq('aprobado', true)

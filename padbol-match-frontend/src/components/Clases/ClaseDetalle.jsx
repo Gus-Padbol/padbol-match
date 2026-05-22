@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../constants/deportesCanchaSede';
 import { cancelarInscripcionClase, fetchClaseDetalle, inscribirClase } from '../../utils/clasesApi';
+import { stripProfesorPublic } from '../../utils/profesorPublic';
 import { labelDiaCorta, nextNDaysFrom, normalizeHoraClase, todayISO } from '../../utils/clasesFechas';
 
 function msHastaInicioClase(fechaYmd, horaInicio) {
@@ -151,7 +152,7 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
 
   if (!clase) return null;
 
-  const prof = clase.profesor || {};
+  const prof = stripProfesorPublic(clase.profesor) || {};
 
   return (
     <div style={{ width: '100%', maxWidth: COL_MAX, margin: '0 auto', boxSizing: 'border-box' }}>
