@@ -2118,7 +2118,10 @@ export default function SedePublica() {
       };
 
   return (
-    <div style={rootPageStyle}>
+    <div
+      className={sedeViewReady ? 'sede-publica-root sede-publica-root--immersive' : undefined}
+      style={rootPageStyle}
+    >
       {!sedeViewReady ? (
         <AppHeader
           title=""
@@ -2171,6 +2174,7 @@ export default function SedePublica() {
         return (
           <>
           <div
+            className="sede-publica-shell"
             style={{
               flex: 1,
               minHeight: 0,
@@ -2182,8 +2186,88 @@ export default function SedePublica() {
               overflow: 'hidden',
             }}
           >
-            {/* paddingTop aquí: el scroll interno respeta el hueco bajo AppHeader + BottomNav fijos. */}
+            <div className="sede-publica-hero-shell">
+              <section
+                className={`sede-publica-hero-immersive${heroImg ? '' : ' sede-publica-hero-immersive--placeholder'}`}
+                aria-label={sede.nombre || 'Sede'}
+              >
+                <div
+                  className="sede-publica-hero-immersive__media"
+                  style={heroImg ? { backgroundImage: `url(${heroImg})` } : undefined}
+                  role="img"
+                  aria-hidden
+                />
+                <div className="sede-publica-hero-immersive__overlay" aria-hidden />
+
+                <div className="sede-publica-hero-immersive__top">
+                  <button
+                    type="button"
+                    className="sede-publica-hero-immersive__back"
+                    onClick={handleSedePublicaBack}
+                  >
+                    ← {t('general.back', { defaultValue: 'Volver' })}
+                  </button>
+                  {typeof window !== 'undefined' && sedeId ? (
+                    <div className="sede-publica-hero-immersive__top-actions">
+                      <button
+                        type="button"
+                        className="sede-publica-hero-immersive__share"
+                        onClick={() => void handleShareSede()}
+                        aria-label={t('general.share', { defaultValue: 'Compartir' })}
+                        title={t('general.share', { defaultValue: 'Compartir' })}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <circle cx="18" cy="5" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                          <circle cx="6" cy="12" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                          <circle cx="18" cy="19" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                          <path
+                            d="M15.4 6.35L8.6 10.45M8.6 13.55L15.4 17.65"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                      {sedeShareCopied ? (
+                        <span className="sede-publica-hero-immersive__share-copied" role="status">
+                          {t('general.success', { defaultValue: 'Copiado' })}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="sede-publica-hero-immersive__bottom">
+                  <div
+                    className="sede-publica-hero-immersive__logo"
+                    style={{ background: colorFondoLogoSede(sede) }}
+                  >
+                    {sede.logo_url ? (
+                      <img src={toHttps(sede.logo_url)} alt="" />
+                    ) : (
+                      <span className="sede-publica-hero-immersive__logo-fallback" aria-hidden>
+                        ⚽
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="sede-publica-hero-immersive__nombre">{sede.nombre || '(sin nombre)'}</h1>
+                  {direccionLinea ? (
+                    <p className="sede-publica-hero-immersive__direccion">
+                      <IconGeroUbicacion size={14} aria-hidden />
+                      <span>{direccionLinea}</span>
+                    </p>
+                  ) : null}
+                  {licenciaActiva ? (
+                    <span className="sede-publica-hero-immersive__licencia">
+                      {t('sedes.publica.licenciaActiva', { defaultValue: 'Licencia Padbol activa' })}
+                    </span>
+                  ) : null}
+                </div>
+              </section>
+            </div>
+
             <div
+              className="sede-publica-page__scroll"
               style={{
                 flex: 1,
                 minHeight: 0,
@@ -2194,7 +2278,6 @@ export default function SedePublica() {
                 maxWidth: '100%',
                 boxSizing: 'border-box',
                 overscrollBehaviorY: 'contain',
-                scrollPaddingTop: 0,
               }}
             >
             <div
@@ -2202,89 +2285,10 @@ export default function SedePublica() {
               style={{
                 ...hubInstagramColumnWrapStyle,
                 overflowX: 'hidden',
-                paddingTop: 0,
                 paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
               }}
             >
             <article className="sede-publica-page">
-            <section
-              className={`sede-publica-hero-immersive${heroImg ? '' : ' sede-publica-hero-immersive--placeholder'}`}
-              aria-label={sede.nombre || 'Sede'}
-            >
-              <div
-                className="sede-publica-hero-immersive__media"
-                style={heroImg ? { backgroundImage: `url(${heroImg})` } : undefined}
-                role="img"
-                aria-hidden
-              />
-              <div className="sede-publica-hero-immersive__overlay" aria-hidden />
-
-              <div className="sede-publica-hero-immersive__top">
-                <button
-                  type="button"
-                  className="sede-publica-hero-immersive__back"
-                  onClick={handleSedePublicaBack}
-                >
-                  ← {t('general.back', { defaultValue: 'Volver' })}
-                </button>
-                {typeof window !== 'undefined' && sedeId ? (
-                  <div className="sede-publica-hero-immersive__top-actions">
-                    <button
-                      type="button"
-                      className="sede-publica-hero-immersive__share"
-                      onClick={() => void handleShareSede()}
-                      aria-label={t('general.share', { defaultValue: 'Compartir' })}
-                      title={t('general.share', { defaultValue: 'Compartir' })}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                        <circle cx="18" cy="5" r="2.25" stroke="currentColor" strokeWidth="1.75" />
-                        <circle cx="6" cy="12" r="2.25" stroke="currentColor" strokeWidth="1.75" />
-                        <circle cx="18" cy="19" r="2.25" stroke="currentColor" strokeWidth="1.75" />
-                        <path
-                          d="M15.4 6.35L8.6 10.45M8.6 13.55L15.4 17.65"
-                          stroke="currentColor"
-                          strokeWidth="1.75"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </button>
-                    {sedeShareCopied ? (
-                      <span className="sede-publica-hero-immersive__share-copied" role="status">
-                        {t('general.success', { defaultValue: 'Copiado' })}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="sede-publica-hero-immersive__bottom">
-                <div
-                  className="sede-publica-hero-immersive__logo"
-                  style={{ background: colorFondoLogoSede(sede) }}
-                >
-                  {sede.logo_url ? (
-                    <img src={toHttps(sede.logo_url)} alt="" />
-                  ) : (
-                    <span className="sede-publica-hero-immersive__logo-fallback" aria-hidden>
-                      ⚽
-                    </span>
-                  )}
-                </div>
-                <h1 className="sede-publica-hero-immersive__nombre">{sede.nombre || '(sin nombre)'}</h1>
-                {direccionLinea ? (
-                  <p className="sede-publica-hero-immersive__direccion">
-                    <IconGeroUbicacion size={14} aria-hidden />
-                    <span>{direccionLinea}</span>
-                  </p>
-                ) : null}
-                {licenciaActiva ? (
-                  <span className="sede-publica-hero-immersive__licencia">
-                    {t('sedes.publica.licenciaActiva', { defaultValue: 'Licencia Padbol activa' })}
-                  </span>
-                ) : null}
-              </div>
-            </section>
-
             <SedeDeportesChips deportes={deportesChips} t={t} />
 
             <SedeGaleriaHorizontal

@@ -1,5 +1,9 @@
 /* Perfil público de sede — mobile-first (~390px), variables de tema */
 
+.sede-publica-root--immersive {
+  padding-top: 0;
+}
+
 .sede-publica-page {
   width: 100%;
   max-width: 100%;
@@ -22,6 +26,14 @@
   margin-right: auto;
   box-sizing: border-box;
   padding-bottom: 12px;
+}
+
+/* Hero fijo arriba del scroll: no queda bajo BottomNav (móvil). */
+.sede-publica-hero-shell {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* —— Hero inmersivo (foto full bleed + overlay + info superpuesta) —— */
@@ -148,8 +160,8 @@
   width: 96px;
   height: 96px;
   border-radius: 14px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,7 +174,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 8px;
+  padding: 0;
   box-sizing: border-box;
   display: block;
 }
