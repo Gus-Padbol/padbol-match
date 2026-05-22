@@ -479,7 +479,7 @@ export default function InstructorFipaSection({ accessToken, userId, prefill = {
         )}
       </div>
 
-      {isApproved ? <MiPerfilProfesorSection accessToken={accessToken} /> : null}
+      {isApproved ? <MiPerfilProfesorSection accessToken={accessToken} userId={userId} /> : null}
 
       <InstructorFipaSolicitudModal
         open={formOpen}

@@ -4851,11 +4851,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       { id: 'horarios', label: t('admin.franjas.slotsAndPricesTitle') },
     ];
     if (esAdminClub || isSuperAdmin) items.push({ id: 'extras', label: t('admin.sedes.halftimeExtras') });
-    if (esAdminClub || isSuperAdmin) items.push({ id: 'clases', label: 'Clases y profesores' });
+    if (esAdminClub || isSuperAdmin) items.push({ id: 'clases', label: t('admin.profesores.clasesYInstructores') });
     if (esAdminClub || isSuperAdmin) items.push({ id: 'pagos', label: t('admin.sedes.paymentSettings') });
     items.push({ id: 'contrato', label: t('admin.sedes.images') });
     return items;
-  }, [esAdminClub, isSuperAdmin]);
+  }, [esAdminClub, isSuperAdmin, t]);
   const scrollToMiSedeSection = useCallback((sectionId) => {
     if (typeof document === 'undefined') return;
     document.getElementById(`admin-mi-sede-${sectionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -8195,7 +8195,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             color: 'var(--text-primary)',
                           }}
                         >
-                          🎓 Clases y profesores
+                          🎓 {t('admin.profesores.clasesYInstructores')}
                         </h4>
                         <AdminModuloClasesSection
                           apiBaseUrl={apiBaseUrl}
@@ -12227,7 +12227,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {(esAdminClub || isSuperAdmin) && sedeId && session?.access_token ? (
             <div id="admin-mi-sede-clases" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
-                🎓 Clases y profesores
+                🎓 {t('admin.profesores.clasesYInstructores')}
               </h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
                 <AdminModuloClasesSection

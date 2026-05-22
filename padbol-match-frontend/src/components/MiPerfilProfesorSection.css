@@ -1,0 +1,209 @@
+.mi-perfil-profesor {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+  box-sizing: border-box;
+}
+
+.mi-perfil-profesor__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.mi-perfil-profesor__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.mi-perfil-profesor__edit-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.mi-perfil-profesor__edit-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mi-perfil-profesor__sub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.mi-perfil-profesor__msg {
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.mi-perfil-profesor__msg--error {
+  color: var(--pm-color-error, #dc2626);
+}
+
+.mi-perfil-profesor__msg--ok {
+  color: var(--pm-color-success, #16a34a);
+  font-weight: 600;
+}
+
+.mi-perfil-profesor__foto-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.mi-perfil-profesor__foto-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mi-perfil-profesor__foto-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mi-perfil-profesor__foto-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mi-perfil-profesor__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.mi-perfil-profesor__input,
+.mi-perfil-profesor__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.mi-perfil-profesor__textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.mi-perfil-profesor__char-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: right;
+  margin: -8px 0 12px;
+}
+
+.mi-perfil-profesor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mi-perfil-profesor__save {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: var(--bg-card);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mi-perfil-profesor__save:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.mi-perfil-profesor__cancel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mi-perfil-profesor__readonly {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.mi-perfil-profesor__avatar-read {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.mi-perfil-profesor__readonly-rows {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.mi-perfil-profesor__readonly-rows > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 38%) 1fr;
+  gap: 4px 10px;
+}
+
+.mi-perfil-profesor__ro-label {
+  font-weight: 700;
+  color: var(--text-secondary);
+}

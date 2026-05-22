@@ -9,6 +9,13 @@ import {
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import './AdminProfesoresSuperSection.css';
 
+const API_BASE =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
+
+const BIO_MAX = 500;
+
 function labelDeporte(key) {
   const k = String(key || '').trim().toLowerCase();
   return DEPORTES_CANCHA_SEDE_OPTIONS.find((d) => d.key === k)?.label || k;
@@ -89,15 +96,6 @@ function ProfesorAvatar({ row, sizeClass = '' }) {
   );
 }
 
-function PencilIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M12 20h9" strokeLinecap="round" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function FichaRow({ label, value, children }) {
   return (
     <div className="admin-profesores-super__ficha-row">
@@ -107,19 +105,58 @@ function FichaRow({ label, value, children }) {
   );
 }
 
+function rowToEditDraft(row) {
+  const fecha = String(row?.fecha_nacimiento || '').trim().slice(0, 10);
+  return {
+    sede_id: row?.sede_id != null ? String(row.sede_id) : '',
+    deportes: Array.isArray(row?.deportes) ? [...row.deportes] : [],
+    certificado_fipa: Boolean(row?.certificado_fipa),
+    whatsapp: String(row?.whatsapp || '').trim(),
+    bio: String(row?.bio || '').trim(),
+    fecha_nacimiento: /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : '',
+    genero: String(row?.genero || '').trim().toLowerCase(),
+  };
+}
+
 function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, onRowUpdate, t }) {
   const [row, setRow] = useState(rowProp);
-  const [editingWa, setEditingWa] = useState(false);
-  const [waDraft, setWaDraft] = useState('');
-  const [waSaving, setWaSaving] = useState(false);
-  const [waError, setWaError] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState(() => rowToEditDraft(rowProp));
+  const [sedes, setSedes] = useState([]);
+  const [sedesLoading, setSedesLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     setRow(rowProp);
-    setEditingWa(false);
-    setWaDraft(String(rowProp?.whatsapp || '').trim());
-    setWaError('');
+    setEditMode(false);
+    setDraft(rowToEditDraft(rowProp));
+    setSaveError('');
   }, [rowProp]);
+
+  useEffect(() => {
+    if (!editMode || !isSuperAdmin) return;
+    let cancelled = false;
+    setSedesLoading(true);
+    fetch(`${API_BASE}/api/sedes`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        const list = (Array.isArray(data) ? data : [])
+          .filter((s) => s && s.activo !== false)
+          .sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
+        setSedes(list);
+      })
+      .catch(() => {
+        if (!cancelled) setSedes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSedesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [editMode, isSuperAdmin]);
 
   if (!row) return null;
 
@@ -127,23 +164,53 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
   const waUrl = waDigitsForUrl(wa);
   const boolLabel = (v) => (v ? t('admin.profesores.si') : t('admin.profesores.no'));
 
-  const guardarWhatsapp = async () => {
+  const toggleDeporte = (key) => {
+    setDraft((d) => {
+      const set = new Set(d.deportes);
+      if (set.has(key)) set.delete(key);
+      else set.add(key);
+      return { ...d, deportes: [...set] };
+    });
+  };
+
+  const guardarEdicion = async () => {
     if (!accessToken) return;
-    setWaSaving(true);
-    setWaError('');
+    if (!draft.deportes.length) {
+      setSaveError(t('admin.formularios.chooseAtLeastOneSport'));
+      return;
+    }
+    if (draft.deportes.includes('padbol') && !draft.certificado_fipa) {
+      setSaveError(t('admin.formularios.fipaRequiredPadbol'));
+      return;
+    }
+    if (String(draft.bio || '').length > BIO_MAX) {
+      setSaveError(t('instructor.errorBioMax'));
+      return;
+    }
+    setSaving(true);
+    setSaveError('');
     try {
       const updated = await patchProfesorAdmin({
         profesorId: row.id,
         accessToken,
-        body: { whatsapp: String(waDraft || '').trim() || null },
+        body: {
+          sede_id: Number(draft.sede_id),
+          deportes: draft.deportes,
+          certificado_fipa: draft.certificado_fipa,
+          whatsapp: String(draft.whatsapp || '').trim() || null,
+          bio: String(draft.bio || '').trim() || null,
+          fecha_nacimiento: draft.fecha_nacimiento || null,
+          genero: draft.genero || null,
+        },
       });
       setRow(updated);
       onRowUpdate?.(updated);
-      setEditingWa(false);
+      setEditMode(false);
+      setDraft(rowToEditDraft(updated));
     } catch (e) {
-      setWaError(e?.message || 'Error');
+      setSaveError(e?.message || 'Error');
     } finally {
-      setWaSaving(false);
+      setSaving(false);
     }
   };
 
@@ -166,96 +233,175 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <h3 id="admin-profesor-ficha-title" style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
-              {t('admin.profesores.fichaTitulo')}
+              {editMode ? t('admin.profesores.editarFicha') : t('admin.profesores.fichaTitulo')}
             </h3>
             <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{nombreProfesor(row)}</p>
           </div>
         </div>
 
-        <FichaRow label={t('admin.profesores.fichaId')} value={String(row.id ?? '—')} />
-        <FichaRow label={t('admin.profesores.fichaNombre')} value={String(row.nombre || '').trim() || '—'} />
-        <FichaRow label={t('admin.profesores.fichaApellido')} value={String(row.apellido || '').trim() || '—'} />
-        <FichaRow label={t('admin.profesores.fichaFechaNac')} value={formatFechaNac(row.fecha_nacimiento)} />
-        <FichaRow label={t('admin.profesores.fichaGenero')} value={generoInstructorLabel(t, row.genero)} />
-        <FichaRow label={t('admin.profesores.colSede')} value={row.sede_nombre || (row.sede_id != null ? `ID ${row.sede_id}` : '—')} />
-        <FichaRow label={t('admin.profesores.colDeportes')} value={deportesLabel(row.deportes)} />
-        <FichaRow label={t('admin.profesores.colCertificado')} value={row.certificado_fipa ? t('admin.profesores.certificadoSi') : '—'} />
-        <FichaRow label={t('admin.profesores.fichaBio')} value={String(row.bio || '').trim() || '—'} />
-        {isSuperAdmin ? (
-          <FichaRow label={t('admin.profesores.colWhatsapp')}>
-            {editingWa ? (
-              <div className="admin-profesores-super__wa-edit-row">
-                <input
-                  type="tel"
-                  className="admin-profesores-super__wa-edit-input"
-                  value={waDraft}
-                  onChange={(e) => setWaDraft(e.target.value)}
-                  placeholder="+54 9 221 000-0000"
-                  disabled={waSaving}
-                />
+        {saveError ? <p className="admin-profesores-super__ficha-error">{saveError}</p> : null}
+
+        {editMode && isSuperAdmin ? (
+          <div className="admin-profesores-super__ficha-edit">
+            <label className="admin-profesores-super__ficha-edit-label">{t('admin.profesores.colSede')}</label>
+            <select
+              className="admin-profesores-super__ficha-edit-input"
+              value={draft.sede_id}
+              onChange={(e) => setDraft((d) => ({ ...d, sede_id: e.target.value }))}
+              disabled={sedesLoading || saving}
+            >
+              <option value="">{sedesLoading ? t('general.loading') : t('instructor.eligeSede')}</option>
+              {sedes.map((s) => (
+                <option key={s.id} value={String(s.id)}>
+                  {s.nombre || `Sede ${s.id}`}
+                </option>
+              ))}
+            </select>
+
+            <span className="admin-profesores-super__ficha-edit-label">{t('admin.profesores.colDeportes')}</span>
+            <div className="admin-profesores-super__ficha-deportes">
+              {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
                 <button
+                  key={d.key}
                   type="button"
-                  className="admin-profesores-super__btn admin-profesores-super__btn--approve"
-                  disabled={waSaving}
-                  onClick={() => void guardarWhatsapp()}
+                  className={`admin-profesores-super__ficha-deporte-chip${draft.deportes.includes(d.key) ? ' admin-profesores-super__ficha-deporte-chip--on' : ''}`}
+                  onClick={() => toggleDeporte(d.key)}
+                  disabled={saving}
                 >
-                  {waSaving ? '…' : t('admin.profesores.guardarWhatsapp')}
+                  {d.label}
                 </button>
-                <button
-                  type="button"
-                  className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
-                  disabled={waSaving}
-                  onClick={() => {
-                    setEditingWa(false);
-                    setWaDraft(wa);
-                    setWaError('');
-                  }}
-                >
-                  {t('general.cancel')}
-                </button>
-              </div>
-            ) : (
-              <div className="admin-profesores-super__wa-edit-row">
+              ))}
+            </div>
+
+            <label className="admin-profesores-super__ficha-edit-check">
+              <input
+                type="checkbox"
+                checked={draft.certificado_fipa}
+                onChange={(e) => setDraft((d) => ({ ...d, certificado_fipa: e.target.checked }))}
+                disabled={saving}
+              />
+              <span>{t('instructor.campoCertificado')}</span>
+            </label>
+
+            <label className="admin-profesores-super__ficha-edit-label">{t('admin.profesores.colWhatsapp')}</label>
+            <input
+              type="tel"
+              className="admin-profesores-super__ficha-edit-input"
+              value={draft.whatsapp}
+              onChange={(e) => setDraft((d) => ({ ...d, whatsapp: e.target.value }))}
+              disabled={saving}
+            />
+
+            <label className="admin-profesores-super__ficha-edit-label">{t('admin.profesores.fichaBio')}</label>
+            <textarea
+              className="admin-profesores-super__ficha-edit-textarea"
+              maxLength={BIO_MAX}
+              value={draft.bio}
+              onChange={(e) => setDraft((d) => ({ ...d, bio: e.target.value }))}
+              disabled={saving}
+            />
+
+            <label className="admin-profesores-super__ficha-edit-label">{t('admin.profesores.fichaFechaNac')}</label>
+            <input
+              type="date"
+              className="admin-profesores-super__ficha-edit-input"
+              value={draft.fecha_nacimiento}
+              onChange={(e) => setDraft((d) => ({ ...d, fecha_nacimiento: e.target.value }))}
+              disabled={saving}
+            />
+
+            <label className="admin-profesores-super__ficha-edit-label">{t('admin.profesores.fichaGenero')}</label>
+            <select
+              className="admin-profesores-super__ficha-edit-input"
+              value={draft.genero}
+              onChange={(e) => setDraft((d) => ({ ...d, genero: e.target.value }))}
+              disabled={saving}
+            >
+              <option value="">{t('perfil.selectGender')}</option>
+              <option value="masculino">{t('instructor.generoMasculino')}</option>
+              <option value="femenino">{t('instructor.generoFemenino')}</option>
+              <option value="no_decir">{t('instructor.generoNoDice')}</option>
+            </select>
+
+            <div className="admin-profesores-super__ficha-edit-actions">
+              <button
+                type="button"
+                className="admin-profesores-super__btn admin-profesores-super__btn--approve"
+                disabled={saving}
+                onClick={() => void guardarEdicion()}
+              >
+                {saving ? '…' : t('instructor.guardarCambios')}
+              </button>
+              <button
+                type="button"
+                className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
+                disabled={saving}
+                onClick={() => {
+                  setEditMode(false);
+                  setDraft(rowToEditDraft(row));
+                  setSaveError('');
+                }}
+              >
+                {t('instructor.cancelar')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <FichaRow label={t('admin.profesores.fichaId')} value={String(row.id ?? '—')} />
+            <FichaRow label={t('admin.profesores.fichaNombre')} value={String(row.nombre || '').trim() || '—'} />
+            <FichaRow label={t('admin.profesores.fichaApellido')} value={String(row.apellido || '').trim() || '—'} />
+            <FichaRow label={t('admin.profesores.fichaFechaNac')} value={formatFechaNac(row.fecha_nacimiento)} />
+            <FichaRow label={t('admin.profesores.fichaGenero')} value={generoInstructorLabel(t, row.genero)} />
+            <FichaRow label={t('admin.profesores.colSede')} value={row.sede_nombre || (row.sede_id != null ? `ID ${row.sede_id}` : '—')} />
+            <FichaRow label={t('admin.profesores.colDeportes')} value={deportesLabel(row.deportes)} />
+            <FichaRow label={t('admin.profesores.colCertificado')} value={row.certificado_fipa ? t('admin.profesores.certificadoSi') : '—'} />
+            <FichaRow label={t('admin.profesores.fichaBio')} value={String(row.bio || '').trim() || '—'} />
+            {isSuperAdmin ? (
+              <FichaRow label={t('admin.profesores.colWhatsapp')}>
                 {wa && waUrl ? (
                   <a href={`https://wa.me/${waUrl}`} target="_blank" rel="noopener noreferrer">
                     {wa}
                   </a>
                 ) : (
-                  <span>—</span>
+                  '—'
                 )}
-                <button
-                  type="button"
-                  className="admin-profesores-super__icon-btn"
-                  aria-label={t('admin.profesores.editarWhatsapp')}
-                  onClick={() => {
-                    setWaDraft(wa);
-                    setEditingWa(true);
-                    setWaError('');
-                  }}
-                >
-                  <PencilIcon />
-                </button>
-              </div>
-            )}
-            {waError ? <span style={{ display: 'block', marginTop: 6, color: 'var(--pm-color-error, #dc2626)', fontSize: 12 }}>{waError}</span> : null}
-          </FichaRow>
-        ) : null}
-        <FichaRow label={t('admin.profesores.fichaEmailLabel')} value={t('admin.profesores.fichaSinEmail')} />
-        <FichaRow label={t('admin.profesores.fichaTelefonoLabel')} value={t('admin.profesores.fichaSinTelefono')} />
-        <FichaRow label={t('admin.profesores.fichaAprobado')} value={boolLabel(Boolean(row.aprobado))} />
-        <FichaRow label={t('admin.profesores.fichaAprobadoPor')} value={String(row.aprobado_por || '').trim() || '—'} />
-        <FichaRow label={t('admin.profesores.fichaActivo')} value={boolLabel(row.activo !== false)} />
-        <FichaRow label={t('admin.profesores.colFechaRegistro')} value={formatFecha(row.created_at)} />
-        <FichaRow label={t('admin.profesores.fichaActualizado')} value={formatFecha(row.updated_at)} />
+              </FichaRow>
+            ) : null}
+            <FichaRow label={t('admin.profesores.fichaEmailLabel')} value={t('admin.profesores.fichaSinEmail')} />
+            <FichaRow label={t('admin.profesores.fichaTelefonoLabel')} value={t('admin.profesores.fichaSinTelefono')} />
+            <FichaRow label={t('admin.profesores.fichaAprobado')} value={boolLabel(Boolean(row.aprobado))} />
+            <FichaRow label={t('admin.profesores.fichaAprobadoPor')} value={String(row.aprobado_por || '').trim() || '—'} />
+            <FichaRow label={t('admin.profesores.fichaActivo')} value={boolLabel(row.activo !== false)} />
+            <FichaRow label={t('admin.profesores.colFechaRegistro')} value={formatFecha(row.created_at)} />
+            <FichaRow label={t('admin.profesores.fichaActualizado')} value={formatFecha(row.updated_at)} />
+          </>
+        )}
 
-        <button
-          type="button"
-          className="admin-profesores-super__btn admin-profesores-super__btn--approve"
-          style={{ width: '100%', marginTop: 14 }}
-          onClick={onClose}
-        >
-          {t('admin.profesores.fichaCerrar')}
-        </button>
+        <div className="admin-profesores-super__ficha-footer">
+          {isSuperAdmin && !editMode ? (
+            <button
+              type="button"
+              className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
+              style={{ flex: 1 }}
+              onClick={() => {
+                setDraft(rowToEditDraft(row));
+                setEditMode(true);
+                setSaveError('');
+              }}
+            >
+              {t('admin.profesores.editar')}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="admin-profesores-super__btn admin-profesores-super__btn--approve"
+            style={{ flex: 1 }}
+            onClick={onClose}
+          >
+            {t('admin.profesores.fichaCerrar')}
+          </button>
+        </div>
       </div>
     </div>
   );

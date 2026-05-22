@@ -336,3 +336,94 @@
   color: var(--text-primary);
   word-break: break-word;
 }
+
+.admin-profesores-super__ficha-error {
+  color: var(--pm-color-error, #dc2626);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.admin-profesores-super__ficha-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-profesores-super__ficha-edit-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-profesores-super__ficha-edit-input,
+.admin-profesores-super__ficha-edit-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.admin-profesores-super__ficha-edit-textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.admin-profesores-super__ficha-deportes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-profesores-super__ficha-deporte-chip {
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-profesores-super__ficha-deporte-chip--on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-input));
+  color: var(--accent);
+}
+
+.admin-profesores-super__ficha-edit-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.admin-profesores-super__ficha-edit-check input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.admin-profesores-super__ficha-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.admin-profesores-super__ficha-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}

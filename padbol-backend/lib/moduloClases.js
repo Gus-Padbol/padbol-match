@@ -750,7 +750,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data: existing, error: fetchErr } = await supabaseAdmin
         .from('profesores')
-        .select('id, sede_id')
+        .select('id, sede_id, deportes, certificado_fipa')
         .eq('id', profId)
         .maybeSingle();
       if (fetchErr) throw fetchErr;
@@ -762,14 +762,50 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const b = req.body || {};
       const patch = { updated_at: new Date().toISOString() };
+      if (b.sede_id !== undefined) {
+        const newSedeId = Number(b.sede_id);
+        if (!Number.isFinite(newSedeId)) return res.status(400).json({ error: 'sede_id inválido' });
+        if (!scope.superA) await assertUsuarioPuedeAdministrarSede(req, newSedeId);
+        patch.sede_id = newSedeId;
+      }
+      if (b.deportes !== undefined) {
+        const deportes = Array.isArray(b.deportes)
+          ? b.deportes.map((d) => String(d || '').trim().toLowerCase()).filter(Boolean)
+          : [];
+        if (!deportes.length) return res.status(400).json({ error: 'Elegí al menos un deporte' });
+        patch.deportes = deportes;
+      }
+      if (b.certificado_fipa !== undefined) {
+        patch.certificado_fipa = Boolean(b.certificado_fipa);
+      }
       if (b.whatsapp !== undefined) {
         patch.whatsapp = String(b.whatsapp || '').trim() || null;
       }
       if (b.bio !== undefined) {
-        patch.bio = String(b.bio || '').trim() || null;
+        const bio = String(b.bio || '').trim() || null;
+        if (bio && bio.length > 500) return res.status(400).json({ error: 'bio máximo 500 caracteres' });
+        patch.bio = bio;
       }
+      if (b.fecha_nacimiento !== undefined) {
+        const fechaNac = b.fecha_nacimiento ? normalizeFechaYmd(b.fecha_nacimiento) : null;
+        if (b.fecha_nacimiento && !fechaNac) return res.status(400).json({ error: 'fecha_nacimiento inválida' });
+        patch.fecha_nacimiento = fechaNac;
+      }
+      if (b.genero !== undefined) {
+        const genero = b.genero ? normalizeGeneroInstructor(b.genero) : null;
+        if (b.genero && !genero) return res.status(400).json({ error: 'genero inválido' });
+        patch.genero = genero;
+      }
+
       if (Object.keys(patch).length <= 1) {
         return res.status(400).json({ error: 'Sin campos para actualizar' });
+      }
+
+      const depCheck = patch.deportes ?? existing.deportes ?? [];
+      const certCheck =
+        patch.certificado_fipa !== undefined ? patch.certificado_fipa : Boolean(existing.certificado_fipa);
+      if (Array.isArray(depCheck) && depCheck.includes('padbol') && !certCheck) {
+        return res.status(400).json({ error: 'Certificado FIPA requerido para enseñar Padbol' });
       }
 
       const { data, error } = await supabaseAdmin
@@ -896,7 +932,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const { data, error } = await supabaseAdmin
         .from('profesores')
         .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
         )
         .eq('user_id', user.id)
         .maybeSingle();
@@ -913,17 +949,32 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
-  /** PATCH /api/profesor/mi-perfil — el profesor actualiza su WhatsApp / bio */
+  /** PATCH /api/profesor/mi-perfil — el instructor actualiza foto, bio, WhatsApp, fecha y género */
   app.patch('/api/profesor/mi-perfil', async (req, res) => {
     try {
       const user = await requireAuthUser(req);
       const b = req.body || {};
       const patch = { updated_at: new Date().toISOString() };
+      if (b.foto_url !== undefined) {
+        patch.foto_url = String(b.foto_url || '').trim() || null;
+      }
       if (b.whatsapp !== undefined) {
         patch.whatsapp = String(b.whatsapp || '').trim() || null;
       }
       if (b.bio !== undefined) {
-        patch.bio = String(b.bio || '').trim() || null;
+        const bio = String(b.bio || '').trim() || null;
+        if (bio && bio.length > 500) return res.status(400).json({ error: 'bio máximo 500 caracteres' });
+        patch.bio = bio;
+      }
+      if (b.fecha_nacimiento !== undefined) {
+        const fechaNac = b.fecha_nacimiento ? normalizeFechaYmd(b.fecha_nacimiento) : null;
+        if (b.fecha_nacimiento && !fechaNac) return res.status(400).json({ error: 'fecha_nacimiento inválida' });
+        patch.fecha_nacimiento = fechaNac;
+      }
+      if (b.genero !== undefined) {
+        const genero = b.genero ? normalizeGeneroInstructor(b.genero) : null;
+        if (b.genero && !genero) return res.status(400).json({ error: 'genero inválido' });
+        patch.genero = genero;
       }
       if (Object.keys(patch).length <= 1) {
         return res.status(400).json({ error: 'Sin campos para actualizar' });
@@ -934,7 +985,7 @@ export function registerModuloClasesRoutes(app, deps) {
         .update(patch)
         .eq('user_id', user.id)
         .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
         )
         .maybeSingle();
       if (error) throw error;

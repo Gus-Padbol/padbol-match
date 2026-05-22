@@ -249,7 +249,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
           <input className="admin-mi-sede-theme-input" value={form.titulo} onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))} style={inputStyle} />
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.description')}</label>
           <textarea className="admin-mi-sede-theme-input" rows={2} value={form.descripcion} onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))} style={{ ...inputStyle, resize: 'vertical' }} />
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Profesor (aprobado)</label>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.profesores.instructorAprobado')}</label>
           <select className="admin-mi-sede-theme-input" value={form.profesor_id} onChange={(e) => setForm((f) => ({ ...f, profesor_id: e.target.value }))} style={inputStyle}>
             <option value="">Elegir…</option>
             {profsAprobados.map((p) => (
@@ -259,7 +259,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
             ))}
           </select>
           {profsAprobados.length === 0 ? (
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: -6, marginBottom: 10 }}>No hay profesores aprobados.</p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: -6, marginBottom: 10 }}>{t('admin.profesores.sinAprobadosClase')}</p>
           ) : null}
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.metricas.courtCol')}</label>
           <select className="admin-mi-sede-theme-input" value={form.cancha_id} onChange={(e) => setForm((f) => ({ ...f, cancha_id: e.target.value }))} style={inputStyle}>

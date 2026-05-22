@@ -251,7 +251,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             cursor: 'pointer',
           }}
         >
-          {showForm ? 'Cerrar formulario' : '+ Agregar profesor'}
+          {showForm ? t('general.close') : t('admin.profesores.agregarInstructor')}
         </button>
       </div>
       {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p> : null}
@@ -276,7 +276,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             style={FIELD_STYLE}
           />
           <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
-            WhatsApp del profesor
+            {t('admin.profesores.whatsappDelInstructor')}
           </label>
           <input
             className="admin-mi-sede-theme-input"
@@ -302,7 +302,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
               type="button"
               disabled={fotoUploading}
               onClick={() => fileRef.current?.click()}
-              aria-label="Subir foto del profesor"
+              aria-label={t('admin.profesores.subirFotoInstructor')}
               style={{
                 width: 80,
                 height: 80,
@@ -330,7 +330,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                 <CameraIcon />
               )}
             </button>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Subir foto del profesor</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('admin.profesores.subirFotoInstructor')}</span>
             {fotoUploading ? (
               <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Subiendo...</p>
             ) : null}
@@ -432,7 +432,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       {loading ? (
         <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
       ) : lista.length === 0 ? (
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No hay profesores cargados.</p>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.profesores.sinInstructores')}</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 10 }}>
           {lista.map((p) => (

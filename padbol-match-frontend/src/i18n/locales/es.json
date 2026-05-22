@@ -465,7 +465,7 @@
     "buscar": "Buscar partido",
     "buscarBody": "Quiero unirme a un partido que ya existe.",
     "clase": "Tomar una clase",
-    "claseBody": "Entrena con un profesor de tu sede.",
+    "claseBody": "Entrena con un instructor de tu sede.",
     "armar": "Armar partido",
     "armarBody": "Quiero crear un partido y sumar jugadores.",
     "publicidad": "Tu marca aquí",
@@ -474,11 +474,11 @@
   "clases": {
     "titulo": "Clases",
     "pageTitle": "Tomar una clase",
-    "pageSubtitle": "Elige un profesor y reserva tu horario.",
+    "pageSubtitle": "Elige un instructor y reserva tu horario.",
     "detalle": "Detalle de clase",
-    "profesores": "Profesores",
+    "profesores": "Instructores",
     "loading": "Cargando clase…",
-    "noProfesores": "No hay profesores disponibles en tu sede."
+    "noProfesores": "No hay instructores disponibles en tu sede."
   },
   "instructor": {
     "quieroSerInstructor": "Quiero ser Instructor FIPA",
@@ -508,15 +508,18 @@
     "errorSede": "Elegí la sede donde querés dar clases.",
     "errorWhatsapp": "Ingresá un WhatsApp válido.",
     "errorBio": "Contanos tu experiencia y motivación.",
-    "errorBioMax": "El texto no puede superar 500 caracteres."
+    "errorBioMax": "El texto no puede superar 500 caracteres.",
+    "editarPerfil": "Editar mi perfil",
+    "guardarCambios": "Guardar cambios",
+    "cancelar": "Cancelar"
   },
   "profesor": {
     "miPerfil": {
-      "titulo": "Perfil de profesor",
+      "titulo": "Perfil de instructor",
       "subtitulo": "Ficha vinculada a tu cuenta ({{nombre}})",
       "whatsappLabel": "WhatsApp (contacto interno, no público en el hub)",
       "guardar": "Guardar WhatsApp",
-      "guardado": "WhatsApp actualizado."
+      "guardado": "Perfil de instructor actualizado."
     }
   },
   "perfil": {
@@ -676,13 +679,13 @@
       "backToHub": "Volver al hub"
     },
     "profesores": {
-      "tab": "Profesores",
+      "tab": "Instructores",
       "pendientes": "Pendientes de aprobación",
-      "aprobados": "Profesores aprobados",
+      "aprobados": "Instructores aprobados",
       "aprobar": "Aprobar",
       "rechazar": "Rechazar",
-      "sinPendientes": "No hay profesores pendientes de aprobación.",
-      "sinAprobados": "No hay profesores aprobados que coincidan con los filtros.",
+      "sinPendientes": "No hay instructores pendientes de aprobación.",
+      "sinAprobados": "No hay instructores aprobados que coincidan con los filtros.",
       "filtrarSede": "Filtrar por sede",
       "filtrarDeporte": "Filtrar por deporte",
       "todasLasSedes": "Todas las sedes",
@@ -690,7 +693,9 @@
       "colNombre": "Nombre",
       "colSede": "Sede",
       "verFicha": "Ver ficha",
-      "fichaTitulo": "Ficha del profesor",
+      "fichaTitulo": "Ficha del instructor",
+      "editarFicha": "Editar ficha",
+      "editar": "Editar",
       "fichaCerrar": "Cerrar",
       "fichaId": "ID",
       "fichaNombre": "Nombre",
@@ -720,15 +725,22 @@
       "estadoActivo": "Activo",
       "estadoInactivo": "Inactivo",
       "desactivar": "Desactivar",
-      "confirmarRechazar": "¿Rechazar este profesor? No aparecerá en el hub de clases.",
-      "confirmarDesactivar": "¿Desactivar este profesor aprobado?",
+      "confirmarRechazar": "¿Rechazar este instructor? No aparecerá en el hub de clases.",
+      "confirmarDesactivar": "¿Desactivar este instructor aprobado?",
       "pendientesCount": "{{count}} pendientes",
-      "mostrando": "{{shown}} de {{total}} profesores"
+      "mostrando": "{{shown}} de {{total}} instructores",
+      "clasesYInstructores": "Clases e instructores",
+      "agregarInstructor": "+ Agregar instructor",
+      "whatsappDelInstructor": "WhatsApp del instructor",
+      "subirFotoInstructor": "Subir foto del instructor",
+      "sinInstructores": "No hay instructores cargados.",
+      "instructorAprobado": "Instructor (aprobado)",
+      "sinAprobadosClase": "No hay instructores aprobados."
     },
     "tabs": {
       "resumen": "📊 Resumen",
       "sedes": "🏟️ Sedes",
-      "profesoresTab": "🎓 Profesores",
+      "profesoresTab": "🎓 Instructores",
       "solicitudes": "📝 Solicitudes",
       "personalizarHub": "🎨 Personalizar Hub",
       "sponsors": "🤝 Sponsors / Publicidades",
@@ -889,7 +901,7 @@
     "formularios": {
       "completeExtraName": "Completá el nombre del extra.",
       "completeName": "Completá el nombre.",
-      "completeClassFields": "Completá título, profesor y deporte.",
+      "completeClassFields": "Completá título, instructor y deporte.",
       "addAtLeastOneSchedule": "Agregá al menos un horario.",
       "completePromoTitleUrl": "Completá al menos título y URL de destino.",
       "brandNameRequired": "Indicá el nombre de la marca.",
@@ -1091,7 +1103,7 @@
       "stockEmptyUnlimited": "Stock (vacío = ilimitado)",
       "description": "Descripción",
       "delete": "Eliminar",
-      "saveCoach": "Guardar profesor",
+      "saveCoach": "Guardar instructor",
       "approve": "Aprobar",
       "courtsLoadFailed": "No se pudieron cargar canchas",
       "compressedOver5mb": "La imagen comprimida supera 5MB",

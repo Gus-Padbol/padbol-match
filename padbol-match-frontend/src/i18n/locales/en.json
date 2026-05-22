@@ -450,11 +450,11 @@
   "clases": {
     "titulo": "Classes",
     "pageTitle": "Take a class",
-    "pageSubtitle": "Choose a coach and book your time slot.",
+    "pageSubtitle": "Choose an instructor and book your time slot.",
     "detalle": "Class details",
-    "profesores": "Coaches",
+    "profesores": "Instructors",
     "loading": "Loading class…",
-    "noProfesores": "No coaches available at your venue."
+    "noProfesores": "No instructors available at your venue."
   },
   "instructor": {
     "quieroSerInstructor": "I want to be a FIPA Instructor",
@@ -484,15 +484,18 @@
     "errorSede": "Choose the venue where you want to teach.",
     "errorWhatsapp": "Enter a valid WhatsApp number.",
     "errorBio": "Tell us about your experience and motivation.",
-    "errorBioMax": "Text cannot exceed 500 characters."
+    "errorBioMax": "Text cannot exceed 500 characters.",
+    "editarPerfil": "Edit my profile",
+    "guardarCambios": "Save changes",
+    "cancelar": "Cancel"
   },
   "profesor": {
     "miPerfil": {
-      "titulo": "Coach profile",
+      "titulo": "Instructor profile",
       "subtitulo": "Record linked to your account ({{nombre}})",
       "whatsappLabel": "WhatsApp (internal contact, not public on the hub)",
       "guardar": "Save WhatsApp",
-      "guardado": "WhatsApp updated."
+      "guardado": "Instructor profile updated."
     }
   },
   "perfil": {
@@ -652,13 +655,13 @@
       "backToHub": "Back to hub"
     },
     "profesores": {
-      "tab": "Coaches",
+      "tab": "Instructors",
       "pendientes": "Pending approval",
-      "aprobados": "Approved coaches",
+      "aprobados": "Approved instructors",
       "aprobar": "Approve",
       "rechazar": "Reject",
-      "sinPendientes": "No coaches pending approval.",
-      "sinAprobados": "No approved coaches match the filters.",
+      "sinPendientes": "No instructors pending approval.",
+      "sinAprobados": "No approved instructors match the filters.",
       "filtrarSede": "Filter by venue",
       "filtrarDeporte": "Filter by sport",
       "todasLasSedes": "All venues",
@@ -666,7 +669,9 @@
       "colNombre": "Name",
       "colSede": "Venue",
       "verFicha": "View profile",
-      "fichaTitulo": "Coach profile",
+      "fichaTitulo": "Instructor profile",
+      "editarFicha": "Edit profile",
+      "editar": "Edit",
       "fichaCerrar": "Close",
       "fichaId": "ID",
       "fichaNombre": "First name",
@@ -696,15 +701,22 @@
       "estadoActivo": "Active",
       "estadoInactivo": "Inactive",
       "desactivar": "Deactivate",
-      "confirmarRechazar": "Reject this coach? They will not appear in the classes hub.",
-      "confirmarDesactivar": "Deactivate this approved coach?",
+      "confirmarRechazar": "Reject this instructor? They will not appear in the classes hub.",
+      "confirmarDesactivar": "Deactivate this approved instructor?",
       "pendientesCount": "{{count}} pending",
-      "mostrando": "{{shown}} of {{total}} coaches"
+      "mostrando": "{{shown}} of {{total}} instructors",
+      "clasesYInstructores": "Classes & instructors",
+      "agregarInstructor": "+ Add instructor",
+      "whatsappDelInstructor": "Instructor WhatsApp",
+      "subirFotoInstructor": "Upload instructor photo",
+      "sinInstructores": "No instructors loaded.",
+      "instructorAprobado": "Instructor (approved)",
+      "sinAprobadosClase": "No approved instructors."
     },
     "tabs": {
       "resumen": "📊 Overview",
       "sedes": "🏟️ Venues",
-      "profesoresTab": "🎓 Coaches",
+      "profesoresTab": "🎓 Instructors",
       "solicitudes": "📝 Requests",
       "personalizarHub": "🎨 Customize Hub",
       "sponsors": "🤝 Sponsors / Ads",
@@ -865,7 +877,7 @@
     "formularios": {
       "completeExtraName": "Enter the extra name.",
       "completeName": "Enter the name.",
-      "completeClassFields": "Complete title, coach and sport.",
+      "completeClassFields": "Complete title, instructor and sport.",
       "addAtLeastOneSchedule": "Add at least one time slot.",
       "completePromoTitleUrl": "Complete at least title and destination URL.",
       "brandNameRequired": "Enter the brand name.",
@@ -1067,7 +1079,7 @@
       "stockEmptyUnlimited": "Stock (empty = unlimited)",
       "description": "Description",
       "delete": "Delete",
-      "saveCoach": "Save coach",
+      "saveCoach": "Save instructor",
       "approve": "Approve",
       "courtsLoadFailed": "Could not load courts",
       "compressedOver5mb": "Compressed image exceeds 5MB",
