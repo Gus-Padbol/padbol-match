@@ -32,6 +32,16 @@ export async function fetchAdminProfesoresPendientes({ accessToken, signal } = {
   return Array.isArray(data) ? data : [];
 }
 
+export async function fetchAdminProfesoresTodos({ accessToken, signal } = {}) {
+  const res = await fetch(`${API_BASE}/api/admin/profesores-todos`, {
+    headers: authHeaders(accessToken),
+    signal,
+  });
+  const data = await res.json().catch(() => []);
+  if (!res.ok) throw new Error(data?.error || 'No se pudieron cargar los profesores');
+  return Array.isArray(data) ? data : [];
+}
+
 export async function crearProfesorAdmin({ sedeId, body, accessToken }) {
   const res = await fetch(`${API_BASE}/api/admin/profesores`, {
     method: 'POST',

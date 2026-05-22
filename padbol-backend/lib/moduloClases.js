@@ -579,7 +579,9 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data, error } = await supabase
         .from('profesores')
-        .select('id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo, created_at, updated_at')
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, bio, whatsapp, deportes, certificado_fipa, aprobado, activo, created_at, updated_at',
+        )
         .eq('sede_id', sedeId)
         .order('nombre', { ascending: true });
       if (error) throw error;
@@ -599,7 +601,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const { data, error } = await supabase
         .from('profesores')
         .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo, created_at, sedes(id, nombre)',
+          'id, sede_id, nombre, apellido, foto_url, bio, whatsapp, deportes, certificado_fipa, aprobado, activo, created_at, sedes(id, nombre)',
         )
         .eq('aprobado', false)
         .eq('activo', true)
@@ -618,6 +620,36 @@ export function registerModuloClasesRoutes(app, deps) {
       const st = err.status || 500;
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
       console.error('❌ GET /api/admin/profesores-pendientes:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** GET /api/admin/profesores-todos — super admin, aprobados en todas las sedes */
+  app.get('/api/admin/profesores-todos', async (req, res) => {
+    try {
+      await assertSuperAdminReq(req);
+      const { data, error } = await supabaseAdmin
+        .from('profesores')
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, sedes(id, nombre)',
+        )
+        .eq('aprobado', true)
+        .order('nombre', { ascending: true, foreignTable: 'sedes' })
+        .order('nombre', { ascending: true });
+      if (error) throw error;
+      const rows = (data || []).map((p) => {
+        const sede = p.sedes;
+        const { sedes: _s, ...rest } = p;
+        return {
+          ...rest,
+          sede_nombre: sede?.nombre ?? null,
+        };
+      });
+      res.json(rows);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/admin/profesores-todos:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
     }
   });
@@ -647,6 +679,7 @@ export function registerModuloClasesRoutes(app, deps) {
             apellido: String(b.apellido || '').trim() || null,
             foto_url: b.foto_url != null ? String(b.foto_url).trim() || null : null,
             bio: b.bio != null ? String(b.bio).trim() || null : null,
+            whatsapp: b.whatsapp != null ? String(b.whatsapp).trim() || null : null,
             deportes,
             certificado_fipa: Boolean(b.certificado_fipa),
             aprobado: false,

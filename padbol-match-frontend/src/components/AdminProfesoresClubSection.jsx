@@ -97,6 +97,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
   const [form, setForm] = useState({
     nombre: '',
     apellido: '',
+    whatsapp: '',
     foto_url: '',
     bio: '',
     deportes: [],
@@ -204,16 +205,25 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       await crearProfesorAdmin({
         sedeId,
         accessToken,
-        body: {
+          body: {
           nombre,
           apellido: String(form.apellido || '').trim() || null,
+          whatsapp: String(form.whatsapp || '').trim() || null,
           foto_url: String(form.foto_url || '').trim() || null,
           bio: String(form.bio || '').trim() || null,
           deportes: form.deportes,
           certificado_fipa: ensenaPadbol,
         },
       });
-      setForm({ nombre: '', apellido: '', foto_url: '', bio: '', deportes: [], certificado_fipa_numero: '' });
+      setForm({
+        nombre: '',
+        apellido: '',
+        whatsapp: '',
+        foto_url: '',
+        bio: '',
+        deportes: [],
+        certificado_fipa_numero: '',
+      });
       setFotoUploadError(false);
       setShowForm(false);
       await load();
@@ -264,6 +274,18 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             value={form.apellido}
             onChange={(e) => setForm((f) => ({ ...f, apellido: e.target.value }))}
             style={FIELD_STYLE}
+          />
+          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
+            WhatsApp del profesor
+          </label>
+          <input
+            className="admin-mi-sede-theme-input"
+            type="tel"
+            value={form.whatsapp}
+            onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value }))}
+            placeholder="+54 9 221 000-0000"
+            style={FIELD_STYLE}
+            autoComplete="tel"
           />
           <input
             ref={fileRef}

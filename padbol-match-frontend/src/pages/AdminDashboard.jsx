@@ -84,6 +84,7 @@ import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresPendientesSuper from '../components/AdminProfesoresPendientesSuper';
+import AdminProfesoresTodosSuper from '../components/AdminProfesoresTodosSuper';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
@@ -7821,6 +7822,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {isSuperAdmin && session?.access_token ? (
             <>
               <AdminProfesoresPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
+              <AdminProfesoresTodosSuper accessToken={session.access_token} />
               <AdminSedeExtrasPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
             </>
           ) : null}
