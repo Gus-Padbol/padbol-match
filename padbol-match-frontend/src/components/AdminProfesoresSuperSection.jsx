@@ -27,16 +27,127 @@ function nombreProfesor(p) {
   );
 }
 
-function formatFechaRegistro(createdAt) {
-  const raw = String(createdAt || '').trim();
+function inicialProfesor(p) {
+  const n = String(p?.nombre || p?.apellido || '').trim();
+  for (let i = 0; i < n.length; i += 1) {
+    const ch = n[i];
+    if (/[A-Za-zÀ-ÿÁÉÍÓÚÑáéíóúñ0-9]/.test(ch)) return ch.toUpperCase();
+  }
+  return '?';
+}
+
+function formatFecha(iso) {
+  const raw = String(iso || '').trim();
   if (!raw) return '—';
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function waDigitsForUrl(raw) {
   return String(raw || '').replace(/\D/g, '') || '';
+}
+
+function ProfesorAvatar({ row, sizeClass = '' }) {
+  const foto = String(row?.foto_url || '').trim();
+  const cls = ['admin-profesores-super__avatar', sizeClass].filter(Boolean).join(' ');
+  if (foto) {
+    return (
+      <div className={cls} aria-hidden>
+        <img src={foto} alt="" />
+      </div>
+    );
+  }
+  return (
+    <div className={cls} aria-hidden>
+      <span className="admin-profesores-super__avatar-initials">{inicialProfesor(row)}</span>
+    </div>
+  );
+}
+
+function FichaRow({ label, value, children }) {
+  return (
+    <div className="admin-profesores-super__ficha-row">
+      <span className="admin-profesores-super__ficha-label">{label}</span>
+      <span className="admin-profesores-super__ficha-value">{children ?? value ?? '—'}</span>
+    </div>
+  );
+}
+
+function ProfesorFichaModal({ row, isSuperAdmin, onClose, t }) {
+  if (!row) return null;
+  const wa = String(row.whatsapp || '').trim();
+  const waUrl = waDigitsForUrl(wa);
+  const boolLabel = (v) => (v ? t('admin.profesores.si') : t('admin.profesores.no'));
+
+  return (
+    <div
+      className="admin-profesores-super__ficha-overlay"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-profesor-ficha-title"
+        className="admin-profesores-super__ficha-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="admin-profesores-super__ficha-header">
+          <div className="admin-profesores-super__ficha-avatar">
+            <ProfesorAvatar row={row} />
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h3 id="admin-profesor-ficha-title" style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              {t('admin.profesores.fichaTitulo')}
+            </h3>
+            <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{nombreProfesor(row)}</p>
+          </div>
+        </div>
+
+        <FichaRow label={t('admin.profesores.fichaId')} value={String(row.id ?? '—')} />
+        <FichaRow label={t('admin.profesores.fichaNombre')} value={String(row.nombre || '').trim() || '—'} />
+        <FichaRow label={t('admin.profesores.fichaApellido')} value={String(row.apellido || '').trim() || '—'} />
+        <FichaRow label={t('admin.profesores.colSede')} value={row.sede_nombre || (row.sede_id != null ? `ID ${row.sede_id}` : '—')} />
+        <FichaRow label={t('admin.profesores.colDeportes')} value={deportesLabel(row.deportes)} />
+        <FichaRow label={t('admin.profesores.colCertificado')} value={row.certificado_fipa ? t('admin.profesores.certificadoSi') : '—'} />
+        <FichaRow label={t('admin.profesores.fichaBio')} value={String(row.bio || '').trim() || '—'} />
+        {isSuperAdmin ? (
+          <FichaRow label={t('admin.profesores.colWhatsapp')}>
+            {wa && waUrl ? (
+              <a href={`https://wa.me/${waUrl}`} target="_blank" rel="noopener noreferrer">
+                {wa}
+              </a>
+            ) : (
+              '—'
+            )}
+          </FichaRow>
+        ) : null}
+        <FichaRow label={t('admin.profesores.fichaEmailLabel')} value={t('admin.profesores.fichaSinEmail')} />
+        <FichaRow label={t('admin.profesores.fichaTelefonoLabel')} value={t('admin.profesores.fichaSinTelefono')} />
+        <FichaRow label={t('admin.profesores.fichaAprobado')} value={boolLabel(Boolean(row.aprobado))} />
+        <FichaRow label={t('admin.profesores.fichaAprobadoPor')} value={String(row.aprobado_por || '').trim() || '—'} />
+        <FichaRow label={t('admin.profesores.fichaActivo')} value={boolLabel(row.activo !== false)} />
+        <FichaRow label={t('admin.profesores.colFechaRegistro')} value={formatFecha(row.created_at)} />
+        <FichaRow label={t('admin.profesores.fichaActualizado')} value={formatFecha(row.updated_at)} />
+
+        <button
+          type="button"
+          className="admin-profesores-super__btn admin-profesores-super__btn--approve"
+          style={{ width: '100%', marginTop: 14 }}
+          onClick={onClose}
+        >
+          {t('admin.profesores.fichaCerrar')}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 const TH_STYLE = {
@@ -73,6 +184,7 @@ export default function AdminProfesoresSuperSection({
   const [busyAction, setBusyAction] = useState(null);
   const [filtroSede, setFiltroSede] = useState('');
   const [filtroDeporte, setFiltroDeporte] = useState('');
+  const [fichaRow, setFichaRow] = useState(null);
 
   const loadPendientes = useCallback(async () => {
     if (!accessToken) {
@@ -127,6 +239,15 @@ export default function AdminProfesoresSuperSection({
     if (tabActive && accessToken) void reloadAll();
   }, [tabActive, accessToken, reloadAll]);
 
+  useEffect(() => {
+    if (!fichaRow) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [fichaRow]);
+
   const sedesOpciones = useMemo(() => {
     const map = new Map();
     for (const row of aprobados) {
@@ -159,6 +280,7 @@ export default function AdminProfesoresSuperSection({
     setMsg('');
     try {
       await aprobarProfesorAdmin({ profesorId: id, accessToken });
+      setFichaRow(null);
       await reloadAll();
     } catch (e) {
       setMsg(e?.message || 'Error');
@@ -175,6 +297,7 @@ export default function AdminProfesoresSuperSection({
     setMsg('');
     try {
       await rechazarProfesorAdmin({ profesorId: id, accessToken });
+      setFichaRow(null);
       await reloadAll();
     } catch (e) {
       setMsg(e?.message || 'Error');
@@ -191,6 +314,7 @@ export default function AdminProfesoresSuperSection({
     setMsg('');
     try {
       await rechazarProfesorAdmin({ profesorId: id, accessToken });
+      setFichaRow(null);
       await reloadAll();
     } catch (e) {
       setMsg(e?.message || 'Error');
@@ -198,6 +322,11 @@ export default function AdminProfesoresSuperSection({
       setBusyId(null);
       setBusyAction(null);
     }
+  };
+
+  const abrirFicha = (row) => {
+    if (!isSuperAdmin) return;
+    setFichaRow(row);
   };
 
   if (!accessToken) return null;
@@ -230,6 +359,7 @@ export default function AdminProfesoresSuperSection({
           <div>
             {pendientes.map((row) => (
               <div key={row.id} className="admin-profesores-super__pending-card">
+                <ProfesorAvatar row={row} />
                 <div className="admin-profesores-super__pending-meta">
                   <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)' }}>{nombreProfesor(row)}</div>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
@@ -242,8 +372,18 @@ export default function AdminProfesoresSuperSection({
                     {t('admin.profesores.colCertificado')}: {certLabel(row)}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-                    {t('admin.profesores.colFechaRegistro')}: {formatFechaRegistro(row.created_at)}
+                    {t('admin.profesores.colFechaRegistro')}: {formatFecha(row.created_at)}
                   </div>
+                  {isSuperAdmin ? (
+                    <button
+                      type="button"
+                      className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
+                      style={{ marginTop: 8 }}
+                      onClick={() => abrirFicha(row)}
+                    >
+                      {t('admin.profesores.verFicha')}
+                    </button>
+                  ) : null}
                 </div>
                 <div className="admin-profesores-super__pending-actions">
                   <button
@@ -313,9 +453,10 @@ export default function AdminProfesoresSuperSection({
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>{t('admin.profesores.sinAprobados')}</p>
         ) : (
           <div className="admin-profesores-super__table-wrap">
-            <table className="reservas-table" style={{ minWidth: 720, width: '100%' }}>
+            <table className="reservas-table" style={{ minWidth: 800, width: '100%' }}>
               <thead>
                 <tr>
+                  <th style={TH_STYLE}>{t('admin.profesores.colFoto')}</th>
                   <th style={TH_STYLE}>{t('admin.profesores.colNombre')}</th>
                   <th style={TH_STYLE}>{t('admin.profesores.colSede')}</th>
                   <th style={TH_STYLE}>{t('admin.profesores.colDeportes')}</th>
@@ -332,7 +473,44 @@ export default function AdminProfesoresSuperSection({
                   const waUrl = waDigitsForUrl(wa);
                   return (
                     <tr key={row.id}>
-                      <td style={{ ...TD_STYLE, fontWeight: 700 }}>{nombreProfesor(row)}</td>
+                      <td style={TD_STYLE}>
+                        <button
+                          type="button"
+                          onClick={() => abrirFicha(row)}
+                          disabled={!isSuperAdmin}
+                          style={{
+                            padding: 0,
+                            border: 'none',
+                            background: 'none',
+                            cursor: isSuperAdmin ? 'pointer' : 'default',
+                          }}
+                          aria-label={isSuperAdmin ? t('admin.profesores.verFicha') : undefined}
+                        >
+                          <ProfesorAvatar row={row} />
+                        </button>
+                      </td>
+                      <td style={TD_STYLE}>
+                        <div className="admin-profesores-super__nombre-cell">
+                          <button
+                            type="button"
+                            onClick={() => abrirFicha(row)}
+                            disabled={!isSuperAdmin}
+                            style={{
+                              padding: 0,
+                              border: 'none',
+                              background: 'none',
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: isSuperAdmin ? 'var(--accent)' : 'var(--text-primary)',
+                              cursor: isSuperAdmin ? 'pointer' : 'default',
+                              textAlign: 'left',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            {nombreProfesor(row)}
+                          </button>
+                        </div>
+                      </td>
                       <td style={TD_STYLE}>{row.sede_nombre || `ID ${row.sede_id}`}</td>
                       <td style={TD_STYLE}>{deportesLabel(row.deportes)}</td>
                       <td style={TD_STYLE}>{certLabel(row)}</td>
@@ -359,20 +537,29 @@ export default function AdminProfesoresSuperSection({
                         </span>
                       </td>
                       <td style={TD_STYLE}>
-                        {activo ? (
-                          <button
-                            type="button"
-                            className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
-                            disabled={busyId === row.id}
-                            onClick={() => void desactivar(row.id)}
-                          >
-                            {busyId === row.id && busyAction === 'desactivar'
-                              ? '…'
-                              : t('admin.profesores.desactivar')}
-                          </button>
-                        ) : (
-                          '—'
-                        )}
+                        <div className="admin-profesores-super__acciones-cell">
+                          {isSuperAdmin ? (
+                            <button
+                              type="button"
+                              className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
+                              onClick={() => abrirFicha(row)}
+                            >
+                              {t('admin.profesores.verFicha')}
+                            </button>
+                          ) : null}
+                          {activo ? (
+                            <button
+                              type="button"
+                              className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
+                              disabled={busyId === row.id}
+                              onClick={() => void desactivar(row.id)}
+                            >
+                              {busyId === row.id && busyAction === 'desactivar'
+                                ? '…'
+                                : t('admin.profesores.desactivar')}
+                            </button>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -385,6 +572,10 @@ export default function AdminProfesoresSuperSection({
           </div>
         )}
       </section>
+
+      {isSuperAdmin && fichaRow ? (
+        <ProfesorFichaModal row={fichaRow} isSuperAdmin={isSuperAdmin} onClose={() => setFichaRow(null)} t={t} />
+      ) : null}
     </div>
   );
 }

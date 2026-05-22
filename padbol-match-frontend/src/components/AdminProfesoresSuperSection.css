@@ -161,3 +161,129 @@
   background: var(--bg-input);
   color: var(--text-secondary);
 }
+
+.admin-profesores-super__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-input);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.admin-profesores-super__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-profesores-super__avatar-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--bg-card);
+  background: var(--accent);
+}
+
+.admin-profesores-super__nombre-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-profesores-super__acciones-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-profesores-super__ficha-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  background: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.admin-profesores-super__ficha-panel {
+  width: 100%;
+  max-width: 440px;
+  max-height: min(90vh, 720px);
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.admin-profesores-super__ficha-header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.admin-profesores-super__ficha-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-profesores-super__ficha-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-profesores-super__ficha-avatar .admin-profesores-super__avatar-initials {
+  font-size: 28px;
+}
+
+.admin-profesores-super__ficha-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 38%) 1fr;
+  gap: 6px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.admin-profesores-super__ficha-row:last-child {
+  border-bottom: none;
+}
+
+.admin-profesores-super__ficha-label {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.admin-profesores-super__ficha-value {
+  color: var(--text-primary);
+  word-break: break-word;
+}

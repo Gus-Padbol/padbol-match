@@ -637,7 +637,7 @@ export function registerModuloClasesRoutes(app, deps) {
       let q = supabaseAdmin
         .from('profesores')
         .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, sedes(id, nombre)',
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, aprobado_por, activo, created_at, updated_at, sedes(id, nombre)',
         );
       if (estado === 'pendiente') {
         // Alta club: aprobado=false, activo=true (cola de aprobación super admin)
