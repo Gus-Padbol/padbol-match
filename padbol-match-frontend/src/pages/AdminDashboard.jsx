@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -4637,6 +4638,47 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   };
 
+  const mostrarQrReservaAdmin = async (r) => {
+    const rid = r?.id;
+    if (rid == null) return;
+    const est = String(r?.estado || '').trim().toLowerCase();
+    if (est !== 'confirmada' && est !== 'completada') return;
+    setReservaQrModal({ reserva: r, qr_token: null, error: null });
+    setReservaQrModalLoading(true);
+    try {
+      const headers = {};
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+      const response = await fetch(`${apiBaseUrl}/api/reservas/${encodeURIComponent(rid)}/generar-qr`, {
+        method: 'POST',
+        headers,
+      });
+      const j = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setReservaQrModal({ reserva: r, qr_token: null, error: j?.error || 'No se pudo generar el QR' });
+        return;
+      }
+      setReservaQrModal({
+        reserva: r,
+        qr_token: String(j?.qr_token || '').trim() || null,
+        error: null,
+      });
+    } catch (err) {
+      setReservaQrModal({ reserva: r, qr_token: null, error: err.message || 'Error de red' });
+    } finally {
+      setReservaQrModalLoading(false);
+    }
+  };
+
+  const descargarQrReservaAdmin = () => {
+    const canvas = reservaQrCanvasRef.current?.querySelector('canvas');
+    const token = reservaQrModal?.qr_token;
+    if (!canvas || !token) return;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `checkin-reserva-${reservaQrModal?.reserva?.id || 'qr'}.png`;
+    a.click();
+  };
+
   const resetReservaManualForm = () => {
     setReservaManualForm({
       sede_id: esAdminClub && sedeId != null && sedeId !== '' ? String(sedeId) : '',
@@ -4735,6 +4777,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [suscripcionEstadoSuperSavingId, setSuscripcionEstadoSuperSavingId] = useState(null);
   const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
   const [cancelReservaModalId, setCancelReservaModalId] = useState(null);
+  const [reservaQrModal, setReservaQrModal] = useState(null);
+  const [reservaQrModalLoading, setReservaQrModalLoading] = useState(false);
+  const reservaQrCanvasRef = useRef(null);
   const [suscripcionModal, setSuscripcionModal] = useState({
     open: false,
     clientSecret: null,
@@ -9352,6 +9397,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
           const accionesReservaRow = (r) => (
             <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {['confirmada', 'completada'].includes(String(r.estado || '').toLowerCase()) ? (
+                <button
+                  type="button"
+                  onClick={() => mostrarQrReservaAdmin(r)}
+                  style={BTN({ background: '#0f766e' })}
+                  title={t('checkin.tuQr')}
+                >
+                  QR
+                </button>
+              ) : null}
               {['pendiente_pago_manual', 'pendiente_pago_efectivo'].includes(String(r.estado || '').toLowerCase()) &&
               (esAdminClub || isSuperAdmin) ? (
                 <button type="button" onClick={() => confirmarPagoManualReserva(r.id)} style={BTN({ background: '#f59e0b' })}>
@@ -13327,6 +13382,91 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           accessToken={session?.access_token}
           onSuccess={(j) => onNuevaSedeCreada(j)}
         />
+      ) : null}
+
+      {reservaQrModal ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('checkin.tuQr')}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 19998,
+            background: 'rgba(15, 23, 42, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            boxSizing: 'border-box',
+          }}
+          onClick={() => setReservaQrModal(null)}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '360px',
+              width: '100%',
+              textAlign: 'center',
+              color: 'var(--text-primary)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800 }}>{t('checkin.tuQr')}</h3>
+            <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              {String(reservaQrModal.reserva?.nombre || '').trim() || '—'} ·{' '}
+              {formatFecha(reservaQrModal.reserva?.fecha)} · {horarioReservaAdmin(reservaQrModal.reserva)}
+            </p>
+            {reservaQrModalLoading ? (
+              <p style={{ margin: '16px 0', color: 'var(--text-secondary)' }}>{t('general.loading')}</p>
+            ) : reservaQrModal.error ? (
+              <p style={{ margin: '16px 0', color: '#b45309', fontWeight: 600 }}>{reservaQrModal.error}</p>
+            ) : reservaQrModal.qr_token ? (
+              <>
+                <div ref={reservaQrCanvasRef} style={{ display: 'inline-block', padding: '8px', background: '#fff' }}>
+                  <QRCodeCanvas value={reservaQrModal.qr_token} size={220} level="M" includeMargin />
+                </div>
+                <button
+                  type="button"
+                  onClick={descargarQrReservaAdmin}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    marginTop: '14px',
+                    padding: '10px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#0f766e',
+                    color: '#fff',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t('checkin.descargar')}
+                </button>
+              </>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setReservaQrModal(null)}
+              style={{
+                marginTop: '12px',
+                padding: '9px 18px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-primary)',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {t('general.close')}
+            </button>
+          </div>
+        </div>
       ) : null}
 
       <ConfirmCancelReservaModal

@@ -1486,5 +1486,16 @@
     "emptyFilterHint": "Probiere eine andere Sportart oder ohne Filter.",
     "emptyNoFilterHint": "Veröffentliche das erste Spiel und fülle die Spieler in wenigen Minuten.",
     "armarPartido": "Spiel erstellen"
+  },
+  "checkin": {
+    "titulo": "Padbol Match Check-in",
+    "escanear": "Zeigen Sie Ihren QR-Code zum Check-in",
+    "valido": "Check-in bestätigt!",
+    "invalido": "Ungültiger QR",
+    "yaRealizado": "Check-in bereits durchgeführt",
+    "noEsHoy": "Die Buchung ist nicht für heute",
+    "reiniciar": "Weiteren QR scannen",
+    "tuQr": "Ihr Check-in-QR-Code",
+    "descargar": "QR herunterladen"
   }
 }

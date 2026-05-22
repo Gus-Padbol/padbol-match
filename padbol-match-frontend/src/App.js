@@ -24,6 +24,7 @@ import SedesPublicas from './pages/SedesPublicas';
 import EquipoPerfil from './pages/EquipoPerfil';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
+import CheckinKiosco from './pages/CheckinKiosco';
 import Jugar from './pages/Jugar';
 import Competir from './pages/Competir';
 import PartidosAbiertos from './pages/PartidosAbiertos';
@@ -347,6 +348,7 @@ function AppRoutes() {
         <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
         <Route path="/pago-exitoso" element={<PagoExitoso />} />
         <Route path="/pago-fallido" element={<PagoFallido />} />
+        <Route path="/checkin" element={<CheckinKiosco />} />
         <Route path="/torneo/:torneoId" element={<TorneoVista />} />
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/sedes" element={<SedesPublicas />} />

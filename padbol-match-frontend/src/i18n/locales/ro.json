@@ -1486,5 +1486,16 @@
     "emptyFilterHint": "Încearcă alt sport sau fără filtru.",
     "emptyNoFilterHint": "Publică primul și completează jucătorii în câteva minute.",
     "armarPartido": "Organizează meci"
+  },
+  "checkin": {
+    "titulo": "Check-in Padbol Match",
+    "escanear": "Arată QR-ul pentru check-in",
+    "valido": "Check-in confirmat!",
+    "invalido": "QR invalid",
+    "yaRealizado": "Check-in deja efectuat",
+    "noEsHoy": "Rezervarea nu este pentru azi",
+    "reiniciar": "Scanează alt QR",
+    "tuQr": "Codul QR pentru check-in",
+    "descargar": "Descarcă QR"
   }
 }

@@ -20,6 +20,7 @@ import HubSponsorsTicker from '../components/HubSponsorsTicker';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { QRCodeCanvas } from 'qrcode.react';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -43,7 +44,11 @@ export default function PagoExitoso() {
   /** null | 'reserva' | 'torneo' | 'partido' */
   const [pagoKind, setPagoKind] = useState(null);
   const [torneoInscripcion, setTorneoInscripcion] = useState(null);
+  const [qrToken, setQrToken] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState('');
   const savedRef = useRef(false);
+  const qrCanvasWrapRef = useRef(null);
 
   const reservaSedeId = useMemo(() => {
     if (!reserva) return null;
@@ -188,6 +193,56 @@ export default function PagoExitoso() {
       .catch((err) => setSaveError('Error al guardar la reserva: ' + err.message))
       .finally(() => setSaving(false));
   }, [extRef]);
+
+  useEffect(() => {
+    const rid = reserva?.id;
+    if (!rid || pagoKind !== 'reserva' || saving || saveError) {
+      setQrToken(null);
+      setQrError('');
+      return undefined;
+    }
+    let cancelled = false;
+    setQrLoading(true);
+    setQrError('');
+    (async () => {
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess?.session?.access_token || '';
+        const res = await fetch(`${API_BASE}/api/reservas/${encodeURIComponent(rid)}/generar-qr`, {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const j = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!res.ok) {
+          setQrError(j?.error || 'No se pudo generar el QR');
+          setQrToken(null);
+          return;
+        }
+        setQrToken(String(j?.qr_token || '').trim() || null);
+      } catch (e) {
+        if (!cancelled) {
+          setQrError(e?.message || 'Error de red');
+          setQrToken(null);
+        }
+      } finally {
+        if (!cancelled) setQrLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [reserva?.id, pagoKind, saving, saveError]);
+
+  const descargarQrPago = () => {
+    const canvas = qrCanvasWrapRef.current?.querySelector('canvas');
+    if (!canvas || !qrToken) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `checkin-${qrToken.slice(0, 24)}.png`;
+    a.click();
+  };
 
   return (
     <div
@@ -462,6 +517,53 @@ export default function PagoExitoso() {
                 )}
               </div>
             )}
+
+            {(qrLoading || qrToken || qrError) && reserva?.id ? (
+              <div
+                style={{
+                  background: '#fff',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginBottom: '20px',
+                  textAlign: 'center',
+                }}
+              >
+                <p style={{ margin: '0 0 12px', fontWeight: 800, color: '#065f46', fontSize: '15px' }}>
+                  {t('checkin.tuQr')}
+                </p>
+                {qrLoading ? (
+                  <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>{t('general.loading')}</p>
+                ) : qrError ? (
+                  <p style={{ margin: 0, color: '#b45309', fontSize: '13px' }}>{qrError}</p>
+                ) : qrToken ? (
+                  <>
+                    <div ref={qrCanvasWrapRef} style={{ display: 'inline-block', padding: '8px', background: '#fff' }}>
+                      <QRCodeCanvas value={qrToken} size={200} level="M" includeMargin />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={descargarQrPago}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        marginTop: '12px',
+                        padding: '10px',
+                        background: '#065f46',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('checkin.descargar')}
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
 
             <SponsorBannerReserva sponsor={sponsorReserva} />
 

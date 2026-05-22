@@ -4357,6 +4357,136 @@ app.get('/api/reservas', async (req, res) => {
   }
 });
 
+function ymdFromReservaFechaCheckin(fechaRaw) {
+  const s = String(fechaRaw ?? '').trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return null;
+  const dt = DateTime.fromJSDate(d).setZone(TZ_TORNEO_CALENDARIO);
+  return dt.isValid ? dt.toFormat('yyyy-LL-dd') : null;
+}
+
+function deporteCheckinFromReservaRow(reserva) {
+  const d = reserva?.deporte != null && String(reserva.deporte).trim() !== '' ? String(reserva.deporte).trim() : null;
+  if (d) return d;
+  const t = reserva?.tipo != null && String(reserva.tipo).trim() !== '' ? String(reserva.tipo).trim() : null;
+  return t;
+}
+
+/** POST /api/reservas/:id/generar-qr — admin alcance o dueño (user_id). */
+app.post('/api/reservas/:id/generar-qr', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID inválido' });
+    await assertReservaAccesibleHistorial(req, id);
+    const qr_token = `QR-${id}-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
+    const { data, error } = await supabaseAdmin
+      .from('reservas')
+      .update({ qr_token })
+      .eq('id', id)
+      .select('qr_token')
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ qr_token: data?.qr_token || qr_token });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/reservas/:id/generar-qr:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/checkin/validar/:qr_token — público (kiosco). */
+app.get('/api/checkin/validar/:qr_token', async (req, res) => {
+  try {
+    const qr_token = String(req.params.qr_token || '').trim();
+    if (!qr_token) return res.status(400).json({ valido: false, motivo: 'QR no encontrado' });
+
+    const { data: r, error } = await supabaseAdmin
+      .from('reservas')
+      .select(
+        'id, nombre, fecha, hora, cancha, sede, estado, checkin_at, deporte, tipo, duracion_minutos, duracion'
+      )
+      .eq('qr_token', qr_token)
+      .maybeSingle();
+    if (error) throw error;
+    if (!r) return res.json({ valido: false, motivo: 'QR no encontrado' });
+
+    const est = String(r.estado || '').trim().toLowerCase();
+    if (est === 'cancelada') return res.json({ valido: false, motivo: 'Reserva cancelada' });
+
+    if (r.checkin_at) {
+      return res.json({
+        valido: false,
+        motivo: 'Ya se realizó el check-in',
+        checkin_at: r.checkin_at,
+      });
+    }
+
+    const fechaReserva = ymdFromReservaFechaCheckin(r.fecha);
+    const hoy = ymdTodayInTorneoTz();
+    if (!fechaReserva || !hoy || fechaReserva !== hoy) {
+      return res.json({
+        valido: false,
+        motivo: 'La reserva no es para hoy',
+        fecha: fechaReserva,
+      });
+    }
+
+    const duracionMinutos =
+      parseInt(String(r.duracion_minutos ?? r.duracion ?? ''), 10) ||
+      (Number.isFinite(Number(r.duracion)) ? Number(r.duracion) : 90);
+
+    return res.json({
+      valido: true,
+      nombre: String(r.nombre || '').trim() || null,
+      fecha: fechaReserva,
+      hora: String(r.hora || '').trim() || null,
+      cancha: r.cancha,
+      sede: String(r.sede || '').trim() || null,
+      deporte: deporteCheckinFromReservaRow(r),
+      duracion_minutos: duracionMinutos,
+    });
+  } catch (err) {
+    console.error('❌ GET /api/checkin/validar:', err.message);
+    res.status(500).json({ valido: false, motivo: err.message || 'Error del servidor' });
+  }
+});
+
+/** POST /api/checkin/confirmar/:qr_token — público (kiosco). */
+app.post('/api/checkin/confirmar/:qr_token', async (req, res) => {
+  try {
+    const qr_token = String(req.params.qr_token || '').trim();
+    if (!qr_token) return res.status(400).json({ error: 'QR no encontrado' });
+
+    const { data: prev, error: prevErr } = await supabaseAdmin
+      .from('reservas')
+      .select('id, checkin_at')
+      .eq('qr_token', qr_token)
+      .maybeSingle();
+    if (prevErr) throw prevErr;
+    if (!prev) return res.status(404).json({ error: 'QR no encontrado' });
+    if (prev.checkin_at) {
+      return res.json({ ok: true, checkin_at: prev.checkin_at, ya_existia: true });
+    }
+
+    const checkin_by = String(req.body?.operador || 'kiosco').trim() || 'kiosco';
+    const checkin_at = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('reservas')
+      .update({ checkin_at, checkin_by })
+      .eq('qr_token', qr_token)
+      .select('checkin_at')
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ ok: true, checkin_at: data?.checkin_at || checkin_at });
+  } catch (err) {
+    console.error('❌ POST /api/checkin/confirmar:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** GET historial de estados de una reserva (admin / alcance sede o dueño por user_id). */
 app.get('/api/reservas/:id/historial', async (req, res) => {
   try {

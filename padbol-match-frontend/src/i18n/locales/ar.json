@@ -1491,5 +1491,16 @@
     "whatIs": "ما هي مباراة بادبول؟",
     "terms": "شروط",
     "privacy": "خصوصية"
+  },
+  "checkin": {
+    "titulo": "تسجيل حضور Padbol Match",
+    "escanear": "اعرض رمز QR لتسجيل الحضور",
+    "valido": "تم تأكيد تسجيل الحضور!",
+    "invalido": "رمز QR غير صالح",
+    "yaRealizado": "تم تسجيل الحضور مسبقاً",
+    "noEsHoy": "الحجز ليس لليوم",
+    "reiniciar": "مسح QR آخر",
+    "tuQr": "رمز QR لتسجيل الحضور",
+    "descargar": "تنزيل QR"
   }
 }

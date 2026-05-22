@@ -1491,5 +1491,16 @@
     "whatIs": "¿Qué es Padbol Match?",
     "terms": "Términos",
     "privacy": "Privacidad"
+  },
+  "checkin": {
+    "titulo": "Check-in Padbol Match",
+    "escanear": "Mostrá tu QR para hacer check-in",
+    "valido": "¡Check-in confirmado!",
+    "invalido": "QR no válido",
+    "yaRealizado": "Ya se realizó el check-in",
+    "noEsHoy": "La reserva no es para hoy",
+    "reiniciar": "Escanear otro QR",
+    "tuQr": "Tu código QR para el check-in",
+    "descargar": "Descargar QR"
   }
 }
