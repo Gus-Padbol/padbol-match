@@ -469,7 +469,11 @@
       "deportesDisponibles": "Sports available",
       "licenciaActiva": "Active Padbol license",
       "reservarTurno": "Book a slot",
-      "verTorneos": "View tournaments"
+      "verTorneos": "View tournaments",
+      "proximoTorneo": "Next tournament",
+      "instructoresCertificados": "{{count}} certified instructor(s)",
+      "seguinosEn": "Follow us on",
+      "resenas": "★ {{rating}} ({{count}} reviews)"
     }
   },
   "campanita": {

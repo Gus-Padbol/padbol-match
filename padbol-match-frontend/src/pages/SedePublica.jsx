@@ -30,8 +30,12 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   esInscripcionAbiertaTorneo,
-  esProximoTorneo,
+  esEstadoEnCursoTorneo,
+  estadoTorneoNormalizado,
 } from '../utils/torneoEstadoFiltroPills';
+import { torneoFechaInicioYmd, ymdTodayTorneoTz } from '../utils/torneoFechaInicioArt';
+import { fetchProfesores } from '../utils/clasesApi';
+import { usePadbolI18n } from '../context/PadbolI18nContext';
 import './SedePublica.css';
 
 const PHOTO_STRIP_H = 120;
@@ -115,6 +119,194 @@ function formatFechaIsoPublicaSede(iso) {
     year: 'numeric',
   });
 }
+
+/** «15 de mayo» para fila de próximo torneo en la ficha pública. */
+function formatFechaDiaMesPublica(iso, lang) {
+  const s = String(iso || '').trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+  const [y, m, d] = s.split('-').map((n) => parseInt(n, 10));
+  if (![y, m, d].every((n) => Number.isFinite(n))) return '';
+  const locale = String(lang || 'es').toLowerCase().startsWith('en') ? 'en-US' : 'es-AR';
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
+}
+
+function esEstadoTorneoProximoInfo(estadoRaw) {
+  const e = estadoTorneoNormalizado(estadoRaw);
+  if (e === 'finalizado' || e === 'cancelado') return false;
+  return (
+    e === 'activo' ||
+    e === 'inscripcion' ||
+    esEstadoEnCursoTorneo(estadoRaw) ||
+    esInscripcionAbiertaTorneo(estadoRaw)
+  );
+}
+
+function pickProximoTorneoInfoClub(torneos) {
+  const hoy = ymdTodayTorneoTz();
+  if (!hoy || !Array.isArray(torneos)) return null;
+  const candidatos = torneos.filter((t) => {
+    if (!esEstadoTorneoProximoInfo(t?.estado)) return false;
+    const ymd = torneoFechaInicioYmd(t?.fecha_inicio);
+    return ymd && ymd >= hoy;
+  });
+  candidatos.sort((a, b) =>
+    String(a?.fecha_inicio || '').localeCompare(String(b?.fecha_inicio || ''))
+  );
+  return candidatos[0] ?? null;
+}
+
+function SedeInfoTablerIcon({ children, size = 20 }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {children}
+    </svg>
+  );
+}
+
+function IconTrophy() {
+  return (
+    <SedeInfoTablerIcon>
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+      <path d="M7 4h10l1 7a4 4 0 0 1 -4 4h-4a4 4 0 0 1 -4 -4l1 -7z" />
+      <path d="M12 11v-7" />
+      <path d="M9 4v-3h6v3" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconLayoutGrid() {
+  return (
+    <SedeInfoTablerIcon>
+      <path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+      <path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+      <path d="M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+      <path d="M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconMapPin() {
+  return (
+    <SedeInfoTablerIcon>
+      <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+      <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconClock() {
+  return (
+    <SedeInfoTablerIcon>
+      <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+      <path d="M12 7v5l3 3" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconBrandWhatsapp() {
+  return (
+    <SedeInfoTablerIcon>
+      <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9z" />
+      <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconUserCheck() {
+  return (
+    <SedeInfoTablerIcon>
+      <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+      <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
+      <path d="M15 19l2 2l4 -4" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconStar() {
+  return (
+    <SedeInfoTablerIcon>
+      <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5.388 -5.252l7.451 -1.083l3.33 -6.747l3.33 6.747l7.451 1.083l-5.388 5.252l1.179 6.873z" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconBrandInstagram() {
+  return (
+    <SedeInfoTablerIcon size={24}>
+      <path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z" />
+      <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+      <path d="M16.5 7.5v.01" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconBrandFacebook() {
+  return (
+    <SedeInfoTablerIcon size={24}>
+      <path d="M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3z" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconBrandTiktok() {
+  return (
+    <SedeInfoTablerIcon size={24}>
+      <path d="M9 12a4 4 0 1 0 4 4v-11a5 5 0 0 0 5 5" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconBrandX() {
+  return (
+    <SedeInfoTablerIcon size={24}>
+      <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
+      <path d="M4 20l6.768 -6.768m2.46 -2.46l7.272 -7.272" />
+      <path d="M20 4l-16 16" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconBrandYoutube() {
+  return (
+    <SedeInfoTablerIcon size={24}>
+      <path d="M2 8a4 4 0 0 1 4 -4h12a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-12a4 4 0 0 1 -4 -4z" />
+      <path d="M10 9l5 3l-5 3z" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+function IconWorld() {
+  return (
+    <SedeInfoTablerIcon size={24}>
+      <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+      <path d="M3.6 9h16.8" />
+      <path d="M3.6 15h16.8" />
+      <path d="M11.5 3a17 17 0 0 0 0 18" />
+      <path d="M12.5 3a17 17 0 0 1 0 18" />
+    </SedeInfoTablerIcon>
+  );
+}
+
+const SEDE_INFO_SOCIAL_META = [
+  { key: 'instagram', Icon: IconBrandInstagram, label: 'Instagram' },
+  { key: 'facebook', Icon: IconBrandFacebook, label: 'Facebook' },
+  { key: 'tiktok', Icon: IconBrandTiktok, label: 'TikTok' },
+  { key: 'twitter', Icon: IconBrandX, label: 'X' },
+  { key: 'youtube', Icon: IconBrandYoutube, label: 'YouTube' },
+  { key: 'website', Icon: IconWorld, label: 'Web' },
+];
 
 /** Tamaño del título del club en el hero según longitud del nombre. */
 function heroClubNameFontSizePx(nombreRaw) {
@@ -333,35 +525,102 @@ function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
   );
 }
 
-function SedeInformacionClub({ sede, horario, estadisticasPublicas, t }) {
+function SedeInformacionClub({
+  sede,
+  horario,
+  estadisticasPublicas,
+  proximoTorneo,
+  instructoresCount,
+  resenasResumen,
+  lang,
+  t,
+}) {
   const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
   const torneosTotal = Number(estadisticasPublicas?.torneos_realizados_total) || 0;
   const ubicacion = [sede?.direccion, sede?.ciudad, sede?.pais].filter(Boolean).join(', ');
   const waHref = toHttps(whatsappHrefSede(sede));
 
+  const proximoTorneoFecha = proximoTorneo
+    ? formatFechaDiaMesPublica(proximoTorneo.fecha_inicio, lang)
+    : '';
+  const proximoTorneoValor =
+    proximoTorneo && proximoTorneoFecha
+      ? `${String(proximoTorneo.nombre || '').trim()} · ${proximoTorneoFecha}`
+      : proximoTorneo
+        ? String(proximoTorneo.nombre || '').trim()
+        : null;
+
+  const resenasTotal = Number(resenasResumen?.total) || 0;
+  const resenasPromedio = Number(resenasResumen?.promedio);
+  const resenasValor =
+    resenasTotal > 0 && Number.isFinite(resenasPromedio)
+      ? t('sedes.publica.resenas', {
+          rating: resenasPromedio.toFixed(1),
+          count: resenasTotal,
+          defaultValue: `★ ${resenasPromedio.toFixed(1)} (${resenasTotal} reseñas)`,
+        })
+      : null;
+
+  const instructoresValor =
+    instructoresCount > 0
+      ? t('sedes.publica.instructoresCertificados', {
+          count: instructoresCount,
+          defaultValue: `${instructoresCount} instructor(es) certificado(s)`,
+        })
+      : null;
+
   const rows = [
+    proximoTorneoValor
+      ? {
+          key: 'proximo-torneo',
+          icon: <IconTrophy />,
+          label: t('sedes.publica.proximoTorneo', { defaultValue: 'Próximo torneo' }),
+          value: proximoTorneoValor,
+        }
+      : null,
+    instructoresValor
+      ? {
+          key: 'instructores',
+          icon: <IconUserCheck />,
+          label: null,
+          value: instructoresValor,
+        }
+      : null,
+    resenasValor
+      ? {
+          key: 'resenas',
+          icon: <IconStar />,
+          label: null,
+          value: resenasValor,
+        }
+      : null,
     {
       key: 'torneos',
+      icon: <IconTrophy />,
       label: t('sedes.publica.infoTorneos', { defaultValue: 'Torneos realizados' }),
       value: torneosTotal > 0 ? torneosTotal.toLocaleString('es-AR') : '—',
     },
     {
       key: 'canchas',
+      icon: <IconLayoutGrid />,
       label: t('sedes.publica.infoCanchas', { defaultValue: 'Canchas disponibles' }),
       value: canchas.length > 0 ? String(canchas.length) : '—',
     },
     {
       key: 'ubicacion',
+      icon: <IconMapPin />,
       label: t('sedes.publica.infoUbicacion', { defaultValue: 'Ubicación' }),
       value: ubicacion || '—',
     },
     {
       key: 'horario',
+      icon: <IconClock />,
       label: t('sedes.publica.infoHorario', { defaultValue: 'Horario' }),
       value: horario ? horario : '—',
     },
     {
       key: 'whatsapp',
+      icon: <IconBrandWhatsapp />,
       label: 'WhatsApp',
       value: waHref ? (
         <a href={waHref} target="_blank" rel="noopener noreferrer">
@@ -371,23 +630,67 @@ function SedeInformacionClub({ sede, horario, estadisticasPublicas, t }) {
         '—'
       ),
     },
-  ];
+  ].filter(Boolean);
+
+  const socialItems = SEDE_INFO_SOCIAL_META.filter((m) => {
+    const v = sede?.[m.key];
+    return v != null && String(v).trim() !== '';
+  });
 
   return (
-    <section className="sede-publica-section" aria-labelledby="sede-info-club-title">
-      <h2 id="sede-info-club-title" className="sede-publica-section__title">
+    <section
+      className="sede-publica-section sede-publica-info-club"
+      aria-labelledby="sede-info-club-title"
+    >
+      <h2 id="sede-info-club-title" className="sede-publica-info-club__title">
         {t('sedes.publica.infoClub', { defaultValue: 'Información del club' })}
       </h2>
-      <table className="sede-publica-info-table">
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key}>
-              <th scope="row">{row.label}</th>
-              <td>{row.value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul className="sede-publica-info-club__list">
+        {rows.map((row) => (
+          <li key={row.key} className="sede-publica-info-club__row">
+            <span className="sede-publica-info-club__icon">{row.icon}</span>
+            <div className="sede-publica-info-club__body">
+              {row.label ? (
+                <span className="sede-publica-info-club__label">{row.label}</span>
+              ) : null}
+              <span
+                className={
+                  row.label
+                    ? 'sede-publica-info-club__value'
+                    : 'sede-publica-info-club__value sede-publica-info-club__value--solo'
+                }
+              >
+                {row.value}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {socialItems.length > 0 ? (
+        <div className="sede-publica-info-club__social">
+          <p className="sede-publica-info-club__social-label">
+            {t('sedes.publica.seguinosEn', { defaultValue: 'Seguinos en' })}
+          </p>
+          <div className="sede-publica-info-club__social-icons">
+            {socialItems.map((m) => {
+              const Icon = m.Icon;
+              const href = toHttps(String(sede[m.key]).trim());
+              return (
+                <a
+                  key={m.key}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sede-publica-info-club__social-link"
+                  aria-label={m.label}
+                >
+                  <Icon />
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1877,6 +2180,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
 /** Perfil público de sede: ruta `/sede/:sedeId` en App.js → solo este componente (no hay SedeVista / SedePerfil). */
 export default function SedePublica() {
   const { t } = useTranslation();
+  const { language: padbolLang } = usePadbolI18n();
   const { sedeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1928,8 +2232,9 @@ export default function SedePublica() {
   const [error, setError] = useState('');
   const [fotosGalleryOpen, setFotosGalleryOpen] = useState(false);
   const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
-  const [proximosTorneos, setProximosTorneos] = useState([]);
-  const [proximosTorneosLoading, setProximosTorneosLoading] = useState(false);
+  const [torneosSedeLista, setTorneosSedeLista] = useState([]);
+  const [instructoresCount, setInstructoresCount] = useState(0);
+  const [resenasResumen, setResenasResumen] = useState(null);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
   const [duracionesOferta, setDuracionesOferta] = useState([]);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
@@ -1983,18 +2288,22 @@ export default function SedePublica() {
     }
   }, [sedeId, sede]);
 
+  const proximoTorneoInfo = useMemo(
+    () => pickProximoTorneoInfoClub(torneosSedeLista),
+    [torneosSedeLista]
+  );
+
   useEffect(() => {
     if (!sedeId) {
-      setProximosTorneos([]);
+      setTorneosSedeLista([]);
       return;
     }
     const id = parseInt(String(sedeId), 10);
     if (!Number.isFinite(id)) {
-      setProximosTorneos([]);
+      setTorneosSedeLista([]);
       return;
     }
     let cancelled = false;
-    setProximosTorneosLoading(true);
     supabase
       .from('torneos')
       .select('id, nombre, fecha_inicio, fecha_fin, estado')
@@ -2004,22 +2313,73 @@ export default function SedePublica() {
       .then(({ data, error: qErr }) => {
         if (cancelled) return;
         if (qErr || !Array.isArray(data)) {
-          setProximosTorneos([]);
-          setProximosTorneosLoading(false);
+          setTorneosSedeLista([]);
           return;
         }
-        const elegibles = data.filter(
-          (t) =>
-            esInscripcionAbiertaTorneo(t?.estado) || esProximoTorneo(t?.estado)
-        );
-        setProximosTorneos(elegibles.slice(0, 2));
-        setProximosTorneosLoading(false);
+        setTorneosSedeLista(data);
       })
       .catch(() => {
-        if (!cancelled) {
-          setProximosTorneos([]);
-          setProximosTorneosLoading(false);
+        if (!cancelled) setTorneosSedeLista([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sedeId]);
+
+  useEffect(() => {
+    if (!sedeId) {
+      setInstructoresCount(0);
+      return;
+    }
+    const id = parseInt(String(sedeId), 10);
+    if (!Number.isFinite(id)) {
+      setInstructoresCount(0);
+      return;
+    }
+    let cancelled = false;
+    const ac = new AbortController();
+    fetchProfesores({ sedeId: id, signal: ac.signal })
+      .then((list) => {
+        if (!cancelled) setInstructoresCount(Array.isArray(list) ? list.length : 0);
+      })
+      .catch(() => {
+        if (!cancelled) setInstructoresCount(0);
+      });
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [sedeId]);
+
+  useEffect(() => {
+    if (!sedeId) {
+      setResenasResumen(null);
+      return;
+    }
+    const id = parseInt(String(sedeId), 10);
+    if (!Number.isFinite(id)) {
+      setResenasResumen(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(apiUrlResenas(`/api/sedes/${id}/resenas?limit=1&offset=0`))
+      .then(async (r) => {
+        const j = await r.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!r.ok) {
+          setResenasResumen(null);
+          return;
         }
+        const total = Number(j?.total) || 0;
+        const promedio = j?.promedio != null ? Number(j.promedio) : null;
+        setResenasResumen(
+          total > 0 && promedio != null && Number.isFinite(promedio)
+            ? { total, promedio }
+            : null
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setResenasResumen(null);
       });
     return () => {
       cancelled = true;
@@ -2294,6 +2654,10 @@ export default function SedePublica() {
               sede={sede}
               horario={horario}
               estadisticasPublicas={estadisticasPublicas}
+              proximoTorneo={proximoTorneoInfo}
+              instructoresCount={instructoresCount}
+              resenasResumen={resenasResumen}
+              lang={padbolLang}
               t={t}
             />
 

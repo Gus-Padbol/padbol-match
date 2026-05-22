@@ -387,50 +387,129 @@
   letter-spacing: 0.02em;
 }
 
-/* Tabla información */
-.sede-publica-info-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
+/* Información del club */
+.sede-publica-info-club__title {
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid var(--accent);
+  width: fit-content;
+  max-width: 100%;
 }
 
-.sede-publica-info-table tr {
-  border-top: 1px solid var(--border);
+.sede-publica-info-club__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.sede-publica-info-table tr:first-child {
+.sede-publica-info-club__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.sede-publica-info-club__row:first-child {
   border-top: none;
+  padding-top: 0;
 }
 
-.sede-publica-info-table th,
-.sede-publica-info-table td {
-  padding: 10px 0;
-  vertical-align: top;
-  text-align: left;
-  line-height: 1.45;
+.sede-publica-info-club__icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-card));
+  color: var(--accent);
 }
 
-.sede-publica-info-table th {
-  width: 42%;
+.sede-publica-info-club__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sede-publica-info-club__label {
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-secondary);
-  padding-right: 10px;
+  line-height: 1.35;
 }
 
-.sede-publica-info-table td {
+.sede-publica-info-club__value {
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.45;
   word-break: break-word;
 }
 
-.sede-publica-info-table a {
+.sede-publica-info-club__value--solo {
+  font-size: 14px;
+}
+
+.sede-publica-info-club__value a {
   color: var(--accent);
   font-weight: 700;
   text-decoration: none;
 }
 
-.sede-publica-info-table a:hover {
+.sede-publica-info-club__value a:hover {
   text-decoration: underline;
+}
+
+.sede-publica-info-club__social {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.sede-publica-info-club__social-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.sede-publica-info-club__social-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.sede-publica-info-club__social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.sede-publica-info-club__social-link:hover {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-card));
+  transform: translateY(-1px);
+}
+
+.sede-publica-info-club__social-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Reseñas (wrapper sobre componente existente) */

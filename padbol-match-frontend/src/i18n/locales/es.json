@@ -493,7 +493,11 @@
       "deportesDisponibles": "Deportes disponibles",
       "licenciaActiva": "Licencia Padbol activa",
       "reservarTurno": "Reservar turno",
-      "verTorneos": "Ver torneos"
+      "verTorneos": "Ver torneos",
+      "proximoTorneo": "Próximo torneo",
+      "instructoresCertificados": "{{count}} instructor(es) certificado(s)",
+      "seguinosEn": "Seguinos en",
+      "resenas": "★ {{rating}} ({{count}} reseñas)"
     }
   },
   "campanita": {
