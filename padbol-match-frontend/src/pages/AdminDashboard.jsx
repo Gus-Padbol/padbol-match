@@ -83,8 +83,7 @@ import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
-import AdminProfesoresPendientesSuper from '../components/AdminProfesoresPendientesSuper';
-import AdminProfesoresTodosSuper from '../components/AdminProfesoresTodosSuper';
+import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
@@ -434,6 +433,7 @@ const ADMIN_TABS_ALLOWED = new Set([
   'sedes',
   'jugadores',
   'solicitudes',
+  'profesores',
   'personalizar_hub',
   'sponsors',
 ]);
@@ -2134,6 +2134,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   /** Conteos solo con GET pendiente (alerta Resumen; no depende del filtro de la tab Solicitudes). */
   const [snapPendienteSedes, setSnapPendienteSedes] = useState(0);
   const [snapPendienteLic, setSnapPendienteLic] = useState(0);
+  const [snapPendienteProfesores, setSnapPendienteProfesores] = useState(0);
   const [adminScopeMeta, setAdminScopeMeta] = useState(null);
   const [adminRolesRows, setAdminRolesRows] = useState([]);
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
@@ -2272,6 +2273,30 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       /* noop */
     }
   }, [apiBaseUrl, isSuperAdmin, puedeVerSedesPendientes]);
+
+  const refreshSnapProfesoresPendientes = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) return;
+      const res = await fetch(`${apiBaseUrl}/api/admin/profesores-todos?estado=pendiente`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const j = await res.json().catch(() => []);
+      setSnapPendienteProfesores(Array.isArray(j) ? j.length : 0);
+    } catch {
+      /* noop */
+    }
+  }, [apiBaseUrl, isSuperAdmin]);
+
+  useEffect(() => {
+    if (isSuperAdmin) void refreshSnapProfesoresPendientes();
+  }, [isSuperAdmin, refreshSnapProfesoresPendientes]);
+
+  useEffect(() => {
+    if (isSuperAdmin && activeTab === 'profesores') void refreshSnapProfesoresPendientes();
+  }, [activeTab, isSuperAdmin, refreshSnapProfesoresPendientes]);
 
   const refetchSolicitudesTabLists = useCallback(() => {
     if (!isSuperAdmin || activeTab !== 'solicitudes') return;
@@ -6161,6 +6186,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         { id: 'resumen', label: t('admin.tabs.resumen') },
         ...(isSuperAdmin ? [{ id: t('admin.metricas.venuesCount'), label: t('admin.tabs.sedes') }] : []),
         ...(isSuperAdmin ? [{ id: 'solicitudes', label: t('admin.tabs.solicitudes') }] : []),
+        ...(isSuperAdmin
+          ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
+          : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
@@ -6512,11 +6540,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 position: 'absolute',
                 top: '4px',
                 right: '4px',
-                background: 'var(--accent)',
+                background: tab.badgeRed ? '#dc2626' : 'var(--accent)',
                 color: 'var(--bg-card)',
                 borderRadius: '50%',
-                width: '18px',
+                minWidth: '18px',
                 height: '18px',
+                padding: '0 4px',
                 fontSize: '11px',
                 fontWeight: 'bold',
                 display: 'flex',
@@ -7816,15 +7845,20 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         )}
       </>}
 
+      {activeTab === 'profesores' && isSuperAdmin && session?.access_token ? (
+        <AdminProfesoresSuperSection
+          accessToken={session.access_token}
+          isSuperAdmin={isSuperAdmin}
+          tabActive={activeTab === 'profesores'}
+          onPendientesCountChange={setSnapPendienteProfesores}
+        />
+      ) : null}
+
       {activeTab === t('admin.metricas.venuesCount') && (esAdminNacional || isSuperAdmin) && (
         <div className="section">
           <h2>{isSuperAdmin ? t('admin.sedes.registeredVenues') : t('admin.sedes.venuesInCountry')}</h2>
           {isSuperAdmin && session?.access_token ? (
-            <>
-              <AdminProfesoresPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
-              <AdminProfesoresTodosSuper accessToken={session.access_token} />
-              <AdminSedeExtrasPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
-            </>
+            <AdminSedeExtrasPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
           ) : null}
           {(isSuperAdmin ? sedesSuperAdminLista : sedesNacionalLista).length === 0 ? (
             <p style={{ color: 'var(--text-secondary)' }}>

@@ -32,8 +32,12 @@ export async function fetchAdminProfesoresPendientes({ accessToken, signal } = {
   return Array.isArray(data) ? data : [];
 }
 
-export async function fetchAdminProfesoresTodos({ accessToken, signal } = {}) {
-  const res = await fetch(`${API_BASE}/api/admin/profesores-todos`, {
+export async function fetchAdminProfesoresTodos({ accessToken, estado = 'aprobado', signal } = {}) {
+  const qs = new URLSearchParams();
+  const est = String(estado || 'aprobado').trim().toLowerCase();
+  if (est) qs.set('estado', est);
+  const suffix = qs.toString() ? `?${qs}` : '';
+  const res = await fetch(`${API_BASE}/api/admin/profesores-todos${suffix}`, {
     headers: authHeaders(accessToken),
     signal,
   });
@@ -61,6 +65,17 @@ export async function aprobarProfesorAdmin({ profesorId, accessToken }) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || 'No se pudo aprobar');
+  return data;
+}
+
+export async function rechazarProfesorAdmin({ profesorId, accessToken }) {
+  const res = await fetch(`${API_BASE}/api/admin/profesores/${Number(profesorId)}/rechazar`, {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify({}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo rechazar');
   return data;
 }
 

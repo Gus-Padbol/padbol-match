@@ -629,16 +629,24 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
-  /** GET /api/admin/profesores-todos — super admin, aprobados en todas las sedes */
+  /** GET /api/admin/profesores-todos — super admin (?estado=pendiente|aprobado|todos) */
   app.get('/api/admin/profesores-todos', async (req, res) => {
     try {
       await assertSuperAdminReq(req);
-      const { data, error } = await supabaseAdmin
+      const estado = String(req.query.estado || 'aprobado').trim().toLowerCase();
+      let q = supabaseAdmin
         .from('profesores')
         .select(
-          'id, sede_id, nombre, apellido, foto_url, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, sedes(id, nombre)',
-        )
-        .eq('aprobado', true)
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, sedes(id, nombre)',
+        );
+      if (estado === 'pendiente') {
+        q = q.eq('aprobado', false).eq('activo', true);
+      } else if (estado === 'todos') {
+        /* sin filtro de aprobación */
+      } else {
+        q = q.eq('aprobado', true);
+      }
+      const { data, error } = await q
         .order('nombre', { ascending: true, foreignTable: 'sedes' })
         .order('nombre', { ascending: true });
       if (error) throw error;
@@ -727,6 +735,33 @@ export function registerModuloClasesRoutes(app, deps) {
       const st = err.status || 500;
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
       console.error('❌ PATCH /api/admin/profesores/:id/aprobar:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** PATCH /api/admin/profesores/:id/rechazar — super admin (desactiva solicitud o profesor) */
+  app.patch('/api/admin/profesores/:id/rechazar', async (req, res) => {
+    try {
+      await assertSuperAdminReq(req);
+      const profId = Number(req.params.id);
+      if (!Number.isFinite(profId)) return res.status(400).json({ error: 'ID inválido' });
+
+      const { data, error } = await supabaseAdmin
+        .from('profesores')
+        .update({
+          activo: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profId)
+        .select()
+        .single();
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: 'Profesor no encontrado' });
+      res.json(data);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ PATCH /api/admin/profesores/:id/rechazar:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
     }
   });
