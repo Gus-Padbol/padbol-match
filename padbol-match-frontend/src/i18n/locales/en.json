@@ -456,6 +456,14 @@
     "loading": "Loading class…",
     "noProfesores": "No instructors available at your venue."
   },
+  "precios": {
+    "porDeporte": "Prices per sport",
+    "sinPrecio": "No price configured",
+    "agregar": "Add price",
+    "precioARS": "ARS Price",
+    "precioUSD": "USD Price",
+    "guardado": "Price saved"
+  },
   "campanita": {
     "sinAlertas": "No pending alerts",
     "marcarLeido": "Mark all as read",

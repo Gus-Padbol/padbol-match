@@ -2438,6 +2438,140 @@ async function computeEstadisticasPublicasSede(sedeIdNum, nombreSedeRaw) {
   };
 }
 
+function normalizeDeportePrecioSedeInput(raw) {
+  const d = String(raw || '').trim().toLowerCase();
+  if (!DEPORTES_SEDE_VALID.has(d)) return null;
+  return d;
+}
+
+function parsePrecioDeporteBodyValue(val) {
+  if (val === null || val === undefined || val === '') return null;
+  const p = Number(String(val).replace(/\./g, '').replace(',', '.'));
+  if (!Number.isFinite(p) || p < 0) return null;
+  return p;
+}
+
+async function fetchPreciosDeporteRowsForSede(sedeId, { soloActivos = false } = {}) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0) return [];
+  let q = supabaseAdmin
+    .from('precios_por_deporte')
+    .select('id,sede_id,deporte,precio_ars,precio_usd,activo,created_at')
+    .eq('sede_id', sid)
+    .order('deporte', { ascending: true });
+  if (soloActivos) q = q.eq('activo', true);
+  const { data, error } = await q;
+  if (error) {
+    if (/precios_por_deporte|does not exist|schema cache/i.test(String(error.message || ''))) {
+      console.warn('[precios_por_deporte] tabla ausente:', error.message);
+      return [];
+    }
+    throw error;
+  }
+  return Array.isArray(data) ? data : [];
+}
+
+/** GET /api/sedes/:id/precios-deporte — público: filas activas de precios por deporte */
+app.get('/api/sedes/:id/precios-deporte', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    const { data: sede, error: sedeErr } = await supabase
+      .from('sedes')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+    if (sedeErr) throw sedeErr;
+    if (!sede) return res.status(404).json({ error: 'Sede no encontrada' });
+    const precios = await fetchPreciosDeporteRowsForSede(id, { soloActivos: true });
+    res.json({ sede_id: id, precios });
+  } catch (err) {
+    console.error('❌ GET /api/sedes/:id/precios-deporte:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/sedes/:id/precios-deporte — upsert precio por deporte (admin_club / super_admin) */
+app.post('/api/admin/sedes/:id/precios-deporte', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    const scope = await assertUsuarioPuedeAdministrarSede(req, id);
+    if (!scope.superA && scope.rol !== 'admin_club') {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+    const b = req.body;
+    if (!b || typeof b !== 'object' || Array.isArray(b)) {
+      return res.status(400).json({ error: 'Body JSON inválido' });
+    }
+    const deporte = normalizeDeportePrecioSedeInput(b.deporte);
+    if (!deporte) {
+      return res.status(400).json({ error: 'deporte inválido' });
+    }
+    const precioArs = parsePrecioDeporteBodyValue(b.precio_ars);
+    const precioUsd = parsePrecioDeporteBodyValue(b.precio_usd);
+    if (precioArs == null && precioUsd == null) {
+      return res.status(400).json({ error: 'Indica al menos precio_ars o precio_usd' });
+    }
+    const activo = b.activo === false || b.activo === 'false' ? false : true;
+    const row = {
+      sede_id: id,
+      deporte,
+      precio_ars: precioArs,
+      precio_usd: precioUsd,
+      activo,
+    };
+    const { data, error } = await supabaseAdmin
+      .from('precios_por_deporte')
+      .upsert(row, { onConflict: 'sede_id,deporte' })
+      .select('id,sede_id,deporte,precio_ars,precio_usd,activo,created_at')
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ ok: true, precio: data });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/admin/sedes/:id/precios-deporte:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** DELETE /api/admin/sedes/:id/precios-deporte/:deporte — desactiva fila (activo=false) */
+app.delete('/api/admin/sedes/:id/precios-deporte/:deporte', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    const scope = await assertUsuarioPuedeAdministrarSede(req, id);
+    if (!scope.superA && scope.rol !== 'admin_club') {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+    const deporte = normalizeDeportePrecioSedeInput(req.params.deporte);
+    if (!deporte) {
+      return res.status(400).json({ error: 'deporte inválido' });
+    }
+    const { data, error } = await supabaseAdmin
+      .from('precios_por_deporte')
+      .update({ activo: false })
+      .eq('sede_id', id)
+      .eq('deporte', deporte)
+      .select('id,sede_id,deporte,precio_ars,precio_usd,activo')
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ ok: true, precio: data || null });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ DELETE /api/admin/sedes/:id/precios-deporte/:deporte:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** Una sede con todos los campos de `sedes` (precio_turno, franjas, etc.) para reserva / detalle. */
 app.get('/api/sedes/:id', async (req, res) => {
   try {

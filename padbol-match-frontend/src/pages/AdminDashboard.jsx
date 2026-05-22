@@ -81,6 +81,7 @@ import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSecti
 import AdminSponsorsSection from '../components/AdminSponsorsSection';
 import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
+import AdminSedePreciosDeporteSection from '../components/AdminSedePreciosDeporteSection';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
@@ -4972,6 +4973,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const items = [
       { id: 'info', label: t('admin.sedes.clubInfo') },
       { id: 'precios', label: t('admin.sedes.pricesByDuration') },
+      { id: 'precios-deporte', label: t('precios.porDeporte') },
       { id: 'canchas', label: t('admin.formularios.courtsCol') },
       { id: 'horarios', label: t('admin.franjas.slotsAndPricesTitle') },
     ];
@@ -12044,6 +12046,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               ) : null}
             </div>
           </div>
+
+          {(esAdminClub || isSuperAdmin) && sedeId && session?.access_token ? (
+            <AdminSedePreciosDeporteSection
+              apiBaseUrl={apiBaseUrl}
+              accessToken={session.access_token}
+              sedeId={Number(sedeId)}
+            />
+          ) : null}
 
           <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>

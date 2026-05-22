@@ -480,6 +480,14 @@
     "loading": "Cargando clase…",
     "noProfesores": "No hay instructores disponibles en tu sede."
   },
+  "precios": {
+    "porDeporte": "Precios por deporte",
+    "sinPrecio": "Sin precio configurado",
+    "agregar": "Agregar precio",
+    "precioARS": "Precio ARS",
+    "precioUSD": "Precio USD",
+    "guardado": "Precio guardado"
+  },
   "campanita": {
     "sinAlertas": "No hay alertas pendientes",
     "marcarLeido": "Marcar todo como leído",

@@ -50,6 +50,7 @@ import {
   precioReservaTurno,
   RESERVA_DURACIONES_MIN,
 } from '../utils/sedePreciosDuracion';
+import { precioBaseReservaConDeporte } from '../utils/sedePreciosDeporte';
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -69,8 +70,12 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
  * antes del `useState` de `pantalla` (evita crash / boundary «Algo salió mal»).
  */
 
-function getPrecio(sede, hora, fecha, duracionMin) {
-  return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas);
+function getPrecio(sede, hora, fecha, duracionMin, deporteCanon, preciosDeporteRows) {
+  const baseDeporte =
+    deporteCanon && Array.isArray(preciosDeporteRows) && preciosDeporteRows.length
+      ? precioBaseReservaConDeporte(sede, duracionMin, deporteCanon, preciosDeporteRows)
+      : null;
+  return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas, baseDeporte);
 }
 
 /** Igual que ArmarPartido paso 3: líneas para `extras` en crear-preferencia / reservaData. */
@@ -1084,6 +1089,27 @@ export default function ReservaForm() {
   const [reservaExtrasDisponibles, setReservaExtrasDisponibles] = useState([]);
   const [reservaExtrasLoading, setReservaExtrasLoading] = useState(false);
   const [reservaExtrasCantidad, setReservaExtrasCantidad] = useState({});
+  const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
+
+  useEffect(() => {
+    const rawId = filtros.sede_id;
+    if (rawId === '' || rawId == null) {
+      setPreciosDeporteRows([]);
+      return undefined;
+    }
+    let cancelled = false;
+    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}/precios-deporte`))
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setPreciosDeporteRows(Array.isArray(d.precios) ? d.precios : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPreciosDeporteRows([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filtros.sede_id]);
 
   useEffect(() => {
     if (pantalla !== 4 || !sedeSeleccionada?.id) {
@@ -1136,9 +1162,23 @@ export default function ReservaForm() {
 
   const precioReservaTurnoBase = useMemo(() => {
     if (!sedeSeleccionada) return 0;
-    const p = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
+    const p = getPrecio(
+      sedeSeleccionada,
+      formData.hora,
+      formData.fecha,
+      duracionSeleccionadaMin,
+      reservaDeporteUrl,
+      preciosDeporteRows,
+    );
     return Number.isFinite(Number(p)) ? Number(p) : 0;
-  }, [sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin]);
+  }, [
+    sedeSeleccionada,
+    formData.hora,
+    formData.fecha,
+    duracionSeleccionadaMin,
+    reservaDeporteUrl,
+    preciosDeporteRows,
+  ]);
 
   const reservaCargoPlataforma = useMemo(
     () => Math.round((precioReservaTurnoBase + reservaExtrasSubtotal) * 0.03),
@@ -2114,7 +2154,14 @@ export default function ReservaForm() {
 
     const creditoAplicado = 0;
     const extrasPayload = reservaExtrasPayload;
-    const precioTurno = getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin);
+    const precioTurno = getPrecio(
+      sedeSeleccionada,
+      formData.hora,
+      formData.fecha,
+      duracionSeleccionadaMin,
+      reservaDeporteUrl,
+      preciosDeporteRows,
+    );
     const precioTurnoNum = Number.isFinite(Number(precioTurno)) ? Number(precioTurno) : 0;
     const precioFinal = Math.max(
       0,
@@ -2618,7 +2665,14 @@ export default function ReservaForm() {
                   >
                     {duracionesOfrecidas.map((duracion) => {
                       const active = duracionSeleccionadaMin === duracion;
-                      const precioDur = getPrecio(sedeSeleccionada, '', formData.fecha, duracion);
+                      const precioDur = getPrecio(
+                        sedeSeleccionada,
+                        '',
+                        formData.fecha,
+                        duracion,
+                        reservaDeporteUrl,
+                        preciosDeporteRows,
+                      );
                       return (
                         <button
                           key={duracion}
@@ -2697,7 +2751,18 @@ export default function ReservaForm() {
             {formData.hora && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  💰 {Number(getPrecio(sedeSeleccionada, formData.hora, formData.fecha, duracionSeleccionadaMin)).toLocaleString('es-AR')} {sedeSeleccionada?.moneda || 'ARS'}
+                  💰{' '}
+                  {Number(
+                    getPrecio(
+                      sedeSeleccionada,
+                      formData.hora,
+                      formData.fecha,
+                      duracionSeleccionadaMin,
+                      reservaDeporteUrl,
+                      preciosDeporteRows,
+                    ),
+                  ).toLocaleString('es-AR')}{' '}
+                  {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
                 {(() => {
                   const subEtiqueta =
