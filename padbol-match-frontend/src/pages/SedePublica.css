@@ -24,24 +24,27 @@
   padding-bottom: 12px;
 }
 
-/* —— Hero —— */
-.sede-publica-hero-wrap {
+/* —— Hero inmersivo (foto full bleed + overlay + info superpuesta) —— */
+.sede-publica-hero-immersive {
   position: relative;
   width: 100%;
-  margin-bottom: 0;
+  min-height: max(300px, 55vh);
+  height: max(300px, 55vh);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
-.sede-publica-hero {
-  position: relative;
-  width: 100%;
-  height: 200px;
+.sede-publica-hero-immersive__media {
+  position: absolute;
+  inset: 0;
   background-color: color-mix(in srgb, var(--text-primary) 12%, var(--bg-page));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-.sede-publica-hero--placeholder {
+.sede-publica-hero-immersive--placeholder .sede-publica-hero-immersive__media {
   background: linear-gradient(
     145deg,
     color-mix(in srgb, var(--accent) 35%, var(--bg-page)) 0%,
@@ -49,70 +52,104 @@
   );
 }
 
-.sede-publica-hero__overlay {
+.sede-publica-hero-immersive__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.42) 100%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.5) 45%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
   pointer-events: none;
+  z-index: 1;
 }
 
-.sede-publica-hero__share {
+.sede-publica-hero-immersive__top {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 3;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
-  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top, 0px)) 12px 10px;
+  box-sizing: border-box;
+}
+
+.sede-publica-hero-immersive__back {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  line-height: 1.2;
+}
+
+.sede-publica-hero-immersive__top-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sede-publica-hero-immersive__share {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
 }
 
-.sede-publica-hero__share-copied {
+.sede-publica-hero-immersive__share-copied {
   position: absolute;
-  top: 52px;
-  right: 10px;
-  z-index: 3;
+  top: calc(100% + 6px);
+  right: 0;
   font-size: 10px;
   font-weight: 700;
-  color: var(--text-primary);
-  background: var(--bg-card);
+  color: #fff;
+  background: rgba(15, 23, 42, 0.88);
   padding: 4px 8px;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   white-space: nowrap;
 }
 
-/* —— Identidad (logo superpuesto) —— */
-.sede-publica-identity {
-  position: relative;
+.sede-publica-hero-immersive__bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 2;
-  margin-top: -50px;
-  padding: 0 16px 12px;
+  padding: 16px 16px 18px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  gap: 6px;
   box-sizing: border-box;
 }
 
-.sede-publica-logo {
-  width: 100px;
-  height: 100px;
+.sede-publica-hero-immersive__logo {
+  width: 80px;
+  height: 80px;
   border-radius: 16px;
-  background: var(--bg-card);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 0 0 4px rgba(0, 0, 0, 0.3),
-    0 4px 16px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,7 +158,7 @@
   box-sizing: border-box;
 }
 
-.sede-publica-logo img {
+.sede-publica-hero-immersive__logo img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -130,55 +167,44 @@
   display: block;
 }
 
-.sede-publica-logo__fallback {
-  font-size: 32px;
+.sede-publica-hero-immersive__logo-fallback {
+  font-size: 28px;
   line-height: 1;
-  opacity: 0.35;
+  opacity: 0.45;
 }
 
-.sede-publica-nombre {
-  margin: 10px 0 0;
-  font-size: clamp(1.15rem, 5vw, 1.45rem);
+.sede-publica-hero-immersive__nombre {
+  margin: 4px 0 0;
+  font-size: 24px;
   font-weight: 800;
-  line-height: 1.2;
-  color: var(--text-primary);
+  line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
   word-break: break-word;
   max-width: 100%;
 }
 
-.sede-publica-meta {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 100%;
-}
-
-.sede-publica-direccion {
+.sede-publica-hero-immersive__direccion {
   margin: 0;
   display: inline-flex;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: center;
   gap: 6px;
   font-size: 13px;
   line-height: 1.4;
-  color: var(--text-primary);
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.75);
   max-width: 100%;
-  text-align: center;
 }
 
-.sede-publica-direccion__pin {
+.sede-publica-hero-immersive__direccion svg {
   flex-shrink: 0;
-  line-height: 1.2;
+  opacity: 0.9;
 }
 
-.sede-publica-licencia {
+.sede-publica-hero-immersive__licencia {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  margin-top: 4px;
   padding: 5px 12px;
   border-radius: 999px;
   font-size: 9px;
@@ -189,6 +215,58 @@
   color: #92400e;
   border: 1px solid rgba(217, 119, 6, 0.45);
   box-shadow: 0 1px 4px rgba(245, 158, 11, 0.25);
+}
+
+/* —— Deportes (chips horizontales) —— */
+.sede-publica-deportes {
+  padding: 14px 16px 4px;
+  box-sizing: border-box;
+}
+
+.sede-publica-deportes__label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.sede-publica-deportes__track {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0 4px;
+}
+
+.sede-publica-deportes__track::-webkit-scrollbar {
+  display: none;
+}
+
+.sede-publica-deportes__chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.sede-publica-deportes__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  flex-shrink: 0;
 }
 
 .sede-publica-licencia--inactiva {

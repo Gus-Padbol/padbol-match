@@ -27,6 +27,7 @@ import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { getDisplayName } from '../utils/displayName';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   esInscripcionAbiertaTorneo,
   esProximoTorneo,
@@ -199,11 +200,51 @@ function sedeFotosLista(sede) {
     : [];
 }
 
+/** Hero: primera foto destacada (★); si no hay, primera de la galería. */
 function sedeHeroImageUrl(sede) {
-  const fotos = sedeFotosLista(sede);
-  if (fotos.length) return fotos[0];
   const { urls } = urlsCarruselSedePublica(sede);
-  return urls[0] || null;
+  if (urls[0]) return urls[0];
+  const fotos = sedeFotosLista(sede);
+  return fotos[0] || null;
+}
+
+/** Deportes activos: precios_por_deporte (activo) + canchas activas + API deportes_disponibles. */
+function deportesActivosSedePublica(sede, preciosDeporteRows) {
+  const keys = new Set();
+  for (const row of preciosDeporteRows || []) {
+    if (row?.activo === false) continue;
+    const d = String(row.deporte || '').trim().toLowerCase();
+    if (d) keys.add(d);
+  }
+  for (const c of Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : []) {
+    if (String(c?.estado || 'activa').toLowerCase() === 'inactiva') continue;
+    const d = String(c.deporte || 'padbol').trim().toLowerCase();
+    if (d) keys.add(d);
+  }
+  for (const d of Array.isArray(sede?.deportes_disponibles) ? sede.deportes_disponibles : []) {
+    const k = String(d).trim().toLowerCase();
+    if (k) keys.add(k);
+  }
+  return DEPORTES_CANCHA_SEDE_OPTIONS.filter((o) => keys.has(o.key));
+}
+
+function SedeDeportesChips({ deportes, t }) {
+  if (!deportes.length) return null;
+  return (
+    <div className="sede-publica-deportes">
+      <p className="sede-publica-deportes__label">
+        {t('sedes.publica.deportesDisponibles', { defaultValue: 'Deportes disponibles' })}
+      </p>
+      <div className="sede-publica-deportes__track" role="list" aria-label={t('sedes.publica.deportesDisponibles', { defaultValue: 'Deportes disponibles' })}>
+        {deportes.map((d) => (
+          <span key={d.key} className="sede-publica-deportes__chip" role="listitem">
+            <span className="sede-publica-deportes__dot" aria-hidden />
+            {d.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function whatsappHrefSede(sede) {
@@ -1864,6 +1905,13 @@ export default function SedePublica() {
   const [proximosTorneosLoading, setProximosTorneosLoading] = useState(false);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
   const [duracionesOferta, setDuracionesOferta] = useState([]);
+  const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
+
+  const handleSedePublicaBack = useCallback(() => {
+    const dest = resolveSedePublicaBackToPath(location.state);
+    navigate(dest);
+    if (isUserHomeHubPath(dest)) scheduleHubEntryScrollReset();
+  }, [location.state, navigate]);
 
   useEffect(() => {
     if (!sedeShareCopied) return undefined;
@@ -1969,6 +2017,7 @@ export default function SedePublica() {
     setEstadisticasPublicas(null);
 
     (async () => {
+      let sedeLoaded = false;
       try {
         const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}`));
         const j = await r.json().catch(() => ({}));
@@ -1985,26 +2034,37 @@ export default function SedePublica() {
             setSede(rest);
             setEstadisticasPublicas(stats ?? null);
             setDuracionesOferta(Array.isArray(durOferta) ? durOferta : []);
+            sedeLoaded = true;
           }
-          return;
         }
       } catch {
-        /* fallback */
+        /* fallback Supabase */
+      }
+      if (!cancelled && !sedeLoaded) {
+        try {
+          const { data, error: err } = await supabase.from('sedes').select('*').eq('id', idNum).maybeSingle();
+          if (cancelled) return;
+          if (err) setError(`Error al cargar sede: ${err.message}`);
+          else if (!data) setError(`Sede con id ${sedeId} no encontrada.`);
+          else {
+            setError('');
+            setSede(data);
+            setEstadisticasPublicas(null);
+            setDuracionesOferta([]);
+          }
+        } catch (err) {
+          if (!cancelled) setError('Error inesperado: ' + (err?.message || String(err)));
+        }
       }
       if (cancelled) return;
       try {
-        const { data, error: err } = await supabase.from('sedes').select('*').eq('id', idNum).maybeSingle();
-        if (cancelled) return;
-        if (err) setError(`Error al cargar sede: ${err.message}`);
-        else if (!data) setError(`Sede con id ${sedeId} no encontrada.`);
-        else {
-          setError('');
-          setSede(data);
-          setEstadisticasPublicas(null);
-          setDuracionesOferta([]);
+        const pr = await fetch(apiUrlResenas(`/api/sedes/${idNum}/precios-deporte`));
+        const pj = await pr.json().catch(() => ({}));
+        if (!cancelled) {
+          setPreciosDeporteRows(Array.isArray(pj.precios) ? pj.precios : []);
         }
-      } catch (err) {
-        if (!cancelled) setError('Error inesperado: ' + (err?.message || String(err)));
+      } catch {
+        if (!cancelled) setPreciosDeporteRows([]);
       }
     })().finally(() => {
       if (!cancelled) setLoading(false);
@@ -2046,16 +2106,14 @@ export default function SedePublica() {
 
   return (
     <div style={rootPageStyle}>
-      <AppHeader
-        title=""
-        showBack
-        hideLogout
-        onBack={() => {
-          const dest = resolveSedePublicaBackToPath(location.state);
-          navigate(dest);
-          if (isUserHomeHubPath(dest)) scheduleHubEntryScrollReset();
-        }}
-      />
+      {!sedeViewReady ? (
+        <AppHeader
+          title=""
+          showBack
+          hideLogout
+          onBack={handleSedePublicaBack}
+        />
+      ) : null}
 
       {loading && (
         <div
@@ -2096,6 +2154,7 @@ export default function SedePublica() {
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const heroImg = sedeHeroImageUrl(sede);
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
+        const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
         return (
           <>
           <div
@@ -2122,7 +2181,7 @@ export default function SedePublica() {
                 maxWidth: '100%',
                 boxSizing: 'border-box',
                 overscrollBehaviorY: 'contain',
-                scrollPaddingTop: sedeScrollPaddingTopCss,
+                scrollPaddingTop: 0,
               }}
             >
             <div
@@ -2130,80 +2189,90 @@ export default function SedePublica() {
               style={{
                 ...hubInstagramColumnWrapStyle,
                 overflowX: 'hidden',
-                paddingTop: sedeScrollPaddingTopCss,
+                paddingTop: 0,
+                paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
               }}
             >
             <article className="sede-publica-page">
-            <div className="sede-publica-hero-wrap">
+            <section
+              className={`sede-publica-hero-immersive${heroImg ? '' : ' sede-publica-hero-immersive--placeholder'}`}
+              aria-label={sede.nombre || 'Sede'}
+            >
               <div
-                className={`sede-publica-hero${heroImg ? '' : ' sede-publica-hero--placeholder'}`}
+                className="sede-publica-hero-immersive__media"
                 style={heroImg ? { backgroundImage: `url(${heroImg})` } : undefined}
                 role="img"
-                aria-label={sede.nombre || 'Sede'}
-              >
-                <div className="sede-publica-hero__overlay" aria-hidden />
+                aria-hidden
+              />
+              <div className="sede-publica-hero-immersive__overlay" aria-hidden />
+
+              <div className="sede-publica-hero-immersive__top">
+                <button
+                  type="button"
+                  className="sede-publica-hero-immersive__back"
+                  onClick={handleSedePublicaBack}
+                >
+                  ← {t('general.back', { defaultValue: 'Volver' })}
+                </button>
+                {typeof window !== 'undefined' && sedeId ? (
+                  <div className="sede-publica-hero-immersive__top-actions">
+                    <button
+                      type="button"
+                      className="sede-publica-hero-immersive__share"
+                      onClick={() => void handleShareSede()}
+                      aria-label={t('general.share', { defaultValue: 'Compartir' })}
+                      title={t('general.share', { defaultValue: 'Compartir' })}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <circle cx="18" cy="5" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                        <circle cx="6" cy="12" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                        <circle cx="18" cy="19" r="2.25" stroke="currentColor" strokeWidth="1.75" />
+                        <path
+                          d="M15.4 6.35L8.6 10.45M8.6 13.55L15.4 17.65"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                    {sedeShareCopied ? (
+                      <span className="sede-publica-hero-immersive__share-copied" role="status">
+                        {t('general.success', { defaultValue: 'Copiado' })}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
-              {typeof window !== 'undefined' && sedeId ? (
-                <>
-                  <button
-                    type="button"
-                    className="sede-publica-hero__share"
-                    onClick={() => void handleShareSede()}
-                    aria-label="Compartir sede"
-                    title="Compartir sede"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <circle cx="18" cy="5" r="2.25" stroke="currentColor" strokeWidth="1.75" />
-                      <circle cx="6" cy="12" r="2.25" stroke="currentColor" strokeWidth="1.75" />
-                      <circle cx="18" cy="19" r="2.25" stroke="currentColor" strokeWidth="1.75" />
-                      <path
-                        d="M15.4 6.35L8.6 10.45M8.6 13.55L15.4 17.65"
-                        stroke="currentColor"
-                        strokeWidth="1.75"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                  {sedeShareCopied ? (
-                    <span className="sede-publica-hero__share-copied" role="status">
-                      Copiado
+
+              <div className="sede-publica-hero-immersive__bottom">
+                <div
+                  className="sede-publica-hero-immersive__logo"
+                  style={{ background: colorFondoLogoSede(sede) }}
+                >
+                  {sede.logo_url ? (
+                    <img src={sede.logo_url} alt="" />
+                  ) : (
+                    <span className="sede-publica-hero-immersive__logo-fallback" aria-hidden>
+                      ⚽
                     </span>
-                  ) : null}
-                </>
-              ) : null}
-
-            </div>
-
-            <header className="sede-publica-identity">
-              <div
-                className="sede-publica-logo"
-                style={{ background: colorFondoLogoSede(sede) }}
-              >
-                {sede.logo_url ? (
-                  <img src={sede.logo_url} alt="" />
-                ) : (
-                  <span className="sede-publica-logo__fallback" aria-hidden>
-                    ⚽
-                  </span>
-                )}
-              </div>
-              <h1 className="sede-publica-nombre">{sede.nombre || '(sin nombre)'}</h1>
-              <div className="sede-publica-meta">
+                  )}
+                </div>
+                <h1 className="sede-publica-hero-immersive__nombre">{sede.nombre || '(sin nombre)'}</h1>
                 {direccionLinea ? (
-                  <p className="sede-publica-direccion">
-                    <span className="sede-publica-direccion__pin" aria-hidden>
-                      📍
-                    </span>
+                  <p className="sede-publica-hero-immersive__direccion">
+                    <IconGeroUbicacion size={14} aria-hidden />
                     <span>{direccionLinea}</span>
                   </p>
                 ) : null}
                 {licenciaActiva ? (
-                  <span className="sede-publica-licencia">
+                  <span className="sede-publica-hero-immersive__licencia">
                     {t('sedes.publica.licenciaActiva', { defaultValue: 'Licencia Padbol activa' })}
                   </span>
                 ) : null}
               </div>
-            </header>
+            </section>
+
+            <SedeDeportesChips deportes={deportesChips} t={t} />
 
             <SedeGaleriaHorizontal
               fotos={fotos}

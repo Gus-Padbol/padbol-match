@@ -488,6 +488,14 @@
     "precioUSD": "Precio USD",
     "guardado": "Precio guardado"
   },
+  "sedes": {
+    "publica": {
+      "deportesDisponibles": "Deportes disponibles",
+      "licenciaActiva": "Licencia Padbol activa",
+      "reservarTurno": "Reservar turno",
+      "verTorneos": "Ver torneos"
+    }
+  },
   "campanita": {
     "sinAlertas": "No hay alertas pendientes",
     "marcarLeido": "Marcar todo como leído",

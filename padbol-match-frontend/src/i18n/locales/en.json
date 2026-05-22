@@ -464,6 +464,14 @@
     "precioUSD": "USD Price",
     "guardado": "Price saved"
   },
+  "sedes": {
+    "publica": {
+      "deportesDisponibles": "Sports available",
+      "licenciaActiva": "Active Padbol license",
+      "reservarTurno": "Book a slot",
+      "verTorneos": "View tournaments"
+    }
+  },
   "campanita": {
     "sinAlertas": "No pending alerts",
     "marcarLeido": "Mark all as read",
