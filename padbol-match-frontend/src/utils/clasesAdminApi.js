@@ -87,3 +87,31 @@ export async function patchClaseActivoAdmin({ claseId, activo, accessToken }) {
   if (!res.ok) throw new Error(data?.error || 'No se pudo actualizar');
   return data;
 }
+
+export async function fetchAdminClaseAsistencia({ claseId, fecha, accessToken, signal } = {}) {
+  const cid = Number(claseId);
+  const f = String(fecha || '').trim().slice(0, 10);
+  if (!Number.isFinite(cid) || !f) return { inscripciones: [] };
+  const qs = new URLSearchParams({ fecha: f });
+  const res = await fetch(`${API_BASE}/api/admin/clases/${cid}/asistencia?${qs}`, {
+    headers: authHeaders(accessToken),
+    signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo cargar la asistencia');
+  return data;
+}
+
+export async function patchAdminClaseAsistencia({ claseId, inscripcionId, asistio, accessToken }) {
+  const res = await fetch(
+    `${API_BASE}/api/admin/clases/${Number(claseId)}/asistencia/${Number(inscripcionId)}`,
+    {
+      method: 'PATCH',
+      headers: authHeaders(accessToken),
+      body: JSON.stringify({ asistio }),
+    },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo marcar asistencia');
+  return data;
+}

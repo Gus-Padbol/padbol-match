@@ -41,6 +41,8 @@ import {
 } from '../utils/jugadorEstadisticasPorDeporte';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
+import { fetchMisClases } from '../utils/clasesApi';
+import { normalizeHoraClase } from '../utils/clasesFechas';
 import {
   whatsappDigitsValido,
   digitsOnly,
@@ -302,6 +304,9 @@ export default function MiPerfil() {
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
   const [misReservasColapsado, setMisReservasColapsado] = useState(true);
+  const [misClasesColapsado, setMisClasesColapsado] = useState(true);
+  const [misClases, setMisClases] = useState([]);
+  const [misClasesLoading, setMisClasesLoading] = useState(false);
   const [torneosConPuntosMiPerfil, setTorneosConPuntosMiPerfil] = useState([]);
   const [mostrarTodosTorneosMiPerfil, setMostrarTodosTorneosMiPerfil] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -782,6 +787,7 @@ export default function MiPerfil() {
     }
     fetchPerfil();
     fetchReservas();
+    void fetchMisClasesPerfil();
     fetchCreditos();
   }, [sessionOwnerEmail, session?.user?.id, location.search, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -923,6 +929,24 @@ export default function MiPerfil() {
       setReservas(data || []);
     } catch {
       // fail silently
+    }
+  };
+
+  const fetchMisClasesPerfil = async () => {
+    const token = session?.access_token;
+    if (!token) {
+      setMisClases([]);
+      return;
+    }
+    setMisClasesLoading(true);
+    try {
+      const rows = await fetchMisClases({ accessToken: token });
+      setMisClases(rows);
+    } catch (e) {
+      console.warn('[MiPerfil] mis-clases', e);
+      setMisClases([]);
+    } finally {
+      setMisClasesLoading(false);
     }
   };
 
@@ -4159,6 +4183,75 @@ export default function MiPerfil() {
                       </button>
                     ) : null}
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
+        <button
+          type="button"
+          onClick={() => setMisClasesColapsado((v) => !v)}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            margin: 0,
+            padding: '10px 0 12px',
+            border: 'none',
+            borderBottom: misClasesColapsado ? 'none' : '1px solid var(--border)',
+            background: 'transparent',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            textAlign: 'left',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span>
+            🎓 Mis clases ({misClases.length}) {misClasesColapsado ? '▼' : '▲'}
+          </span>
+        </button>
+        {!misClasesColapsado && misClasesLoading ? (
+          <p style={{ color: 'var(--text-secondary)', margin: '12px 0 0', fontSize: '14px' }}>{t('general.loading')}</p>
+        ) : null}
+        {!misClasesColapsado && !misClasesLoading && misClases.length === 0 ? (
+          <p style={{ color: 'var(--text-secondary)', margin: '12px 0 0', fontSize: '14px', fontWeight: 600 }}>
+            No tenés clases inscriptas.
+          </p>
+        ) : null}
+        {!misClasesColapsado && !misClasesLoading && misClases.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+            {misClases.map((c) => {
+              const asistioLabel =
+                c.asistio === true ? '✅ Asistió' : c.asistio === false ? '❌ No asistió' : '— Pendiente';
+              const hora = normalizeHoraClase(c.hora_inicio) || c.hora_inicio || '—';
+              return (
+                <div
+                  key={c.id}
+                  style={{
+                    background: 'var(--bg-page)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    padding: '12px 14px',
+                    fontSize: '13px',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <div style={{ fontWeight: 800, fontSize: '14px' }}>{c.clase_titulo || 'Clase'}</div>
+                  <div style={{ marginTop: '4px', color: 'var(--text-secondary)' }}>
+                    {c.profesor_nombre || '—'}
+                    {c.sede_nombre ? ` · ${c.sede_nombre}` : ''}
+                  </div>
+                  <div style={{ marginTop: '4px' }}>
+                    📅 {c.fecha} · ⏰ {hora}
+                  </div>
+                  <div style={{ marginTop: '6px', fontWeight: 700 }}>{asistioLabel}</div>
                 </div>
               );
             })}

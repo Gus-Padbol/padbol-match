@@ -2,8 +2,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../constants/deportesCanchaSede';
-import { fetchClaseDetalle, inscribirClase } from '../../utils/clasesApi';
+import { cancelarInscripcionClase, fetchClaseDetalle, inscribirClase } from '../../utils/clasesApi';
 import { labelDiaCorta, nextNDaysFrom, normalizeHoraClase, todayISO } from '../../utils/clasesFechas';
+
+function msHastaInicioClase(fechaYmd, horaInicio) {
+  const hi = normalizeHoraClase(horaInicio);
+  if (!fechaYmd || !hi) return null;
+  const start = new Date(`${fechaYmd}T${hi}:00-03:00`);
+  if (Number.isNaN(start.getTime())) return null;
+  return start.getTime() - Date.now();
+}
 
 const COL_MAX = 390;
 const ACCENT = '#E11B22';
@@ -26,6 +34,7 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
   const [fecha, setFecha] = useState(() => todayISO());
   const [horaSel, setHoraSel] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
   const [okMsg, setOkMsg] = useState('');
 
   const dias = useMemo(() => nextNDaysFrom(todayISO(), 30), []);
@@ -34,7 +43,10 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
     setLoading(true);
     setErr('');
     try {
-      const data = await fetchClaseDetalle(claseId, { fecha });
+      const data = await fetchClaseDetalle(claseId, {
+        fecha,
+        accessToken: session?.access_token,
+      });
       setClase(data);
       setHoraSel('');
     } catch (e) {
@@ -43,11 +55,47 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
     } finally {
       setLoading(false);
     }
-  }, [claseId, fecha]);
+  }, [claseId, fecha, session?.access_token]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const miInscripcion = clase?.mi_inscripcion || null;
+  const horasCancel = Number(clase?.horas_cancelacion) || 24;
+  const puedeCancelarPorPolitica = useMemo(() => {
+    if (!miInscripcion) return false;
+    const ms = msHastaInicioClase(miInscripcion.fecha, miInscripcion.hora_inicio);
+    if (ms == null) return false;
+    return ms >= horasCancel * 60 * 60 * 1000;
+  }, [miInscripcion, horasCancel]);
+
+  const cancelarInscripcion = async () => {
+    if (!session?.access_token || !miInscripcion?.id) {
+      navigate('/login', { state: { from: `/clases/${claseId}` } });
+      return;
+    }
+    if (!puedeCancelarPorPolitica) {
+      setErr(`No se puede cancelar con menos de ${horasCancel} horas de anticipación`);
+      return;
+    }
+    if (!window.confirm('¿Cancelar tu inscripción a esta clase?')) return;
+    setCancelando(true);
+    setErr('');
+    setOkMsg('');
+    try {
+      await cancelarInscripcionClase({
+        inscripcionId: miInscripcion.id,
+        accessToken: session.access_token,
+      });
+      setOkMsg('Inscripción cancelada.');
+      await load();
+    } catch (e) {
+      setErr(e?.message || String(e));
+    } finally {
+      setCancelando(false);
+    }
+  };
 
   const cuposPorHorario = useMemo(() => {
     const list = Array.isArray(clase?.cupos_por_horario) ? clase.cupos_por_horario : [];
@@ -221,51 +269,99 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
         </div>
       )}
 
+      {miInscripcion ? (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 12,
+            border: '1px solid #bbf7d0',
+            background: '#f0fdf4',
+            fontSize: 14,
+            color: '#166534',
+          }}
+        >
+          <div style={{ fontWeight: 800, marginBottom: 6 }}>Ya estás inscripto</div>
+          <div>
+            Turno: {miInscripcion.fecha} · {normalizeHoraClase(miInscripcion.hora_inicio) || miInscripcion.hora_inicio}
+          </div>
+          {!puedeCancelarPorPolitica ? (
+            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#b45309', fontWeight: 600 }}>
+              No se puede cancelar con menos de {horasCancel} horas de anticipación.
+            </p>
+          ) : null}
+          <button
+            type="button"
+            disabled={cancelando || !puedeCancelarPorPolitica}
+            onClick={() => void cancelarInscripcion()}
+            style={{
+              marginTop: 12,
+              width: '100%',
+              padding: '11px 14px',
+              borderRadius: 10,
+              border: '1px solid #fca5a5',
+              background: cancelando ? '#fecaca' : '#fff',
+              color: '#b91c1c',
+              fontWeight: 800,
+              fontSize: 14,
+              cursor: cancelando || !puedeCancelarPorPolitica ? 'not-allowed' : 'pointer',
+              opacity: !puedeCancelarPorPolitica ? 0.6 : 1,
+            }}
+          >
+            {cancelando ? 'Cancelando…' : 'Cancelar inscripción'}
+          </button>
+        </div>
+      ) : null}
+
       {err ? <p style={{ color: 'var(--pm-color-error, #dc2626)', fontSize: 14, marginTop: 12 }}>{err}</p> : null}
       {okMsg ? <p style={{ color: 'var(--pm-color-success, #16a34a)', fontSize: 14, marginTop: 12, fontWeight: 600 }}>{okMsg}</p> : null}
 
-      <div
-        style={{
-          background: 'var(--bg-page)',
-          border: '1px solid var(--border)',
-          borderRadius: 14,
-          padding: 14,
-          marginTop: 16,
-          fontSize: 14,
-          lineHeight: 1.55,
-          color: 'var(--text-primary)',
-        }}
-      >
-        <div>
-          <strong>Subtotal:</strong> {mon} {precioBase.toLocaleString('es-AR')}
-        </div>
-        <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 6 }}>
-          <strong>Cargo de servicio (3%):</strong> {mon} {cargoPlataforma.toLocaleString('es-AR')}
-        </div>
-        <div style={{ marginTop: 10, fontWeight: 900, fontSize: 18 }}>
-          Total a pagar: {mon} {precioTotal.toLocaleString('es-AR')}
-        </div>
-      </div>
+      {!miInscripcion ? (
+        <>
+          <div
+            style={{
+              background: 'var(--bg-page)',
+              border: '1px solid var(--border)',
+              borderRadius: 14,
+              padding: 14,
+              marginTop: 16,
+              fontSize: 14,
+              lineHeight: 1.55,
+              color: 'var(--text-primary)',
+            }}
+          >
+            <div>
+              <strong>Subtotal:</strong> {mon} {precioBase.toLocaleString('es-AR')}
+            </div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 6 }}>
+              <strong>Cargo de servicio (3%):</strong> {mon} {cargoPlataforma.toLocaleString('es-AR')}
+            </div>
+            <div style={{ marginTop: 10, fontWeight: 900, fontSize: 18 }}>
+              Total a pagar: {mon} {precioTotal.toLocaleString('es-AR')}
+            </div>
+          </div>
 
-      <button
-        type="button"
-        disabled={submitting || !horaSelNorm || (slotSel && slotSel.cupos_restantes <= 0)}
-        onClick={() => void reservar()}
-        style={{
-          width: '100%',
-          marginTop: 16,
-          border: 'none',
-          borderRadius: 12,
-          padding: 14,
-          background: submitting ? '#94a3b8' : `linear-gradient(135deg, ${ACCENT}, #b91c1c)`,
-          color: '#fff',
-          fontWeight: 900,
-          fontSize: 16,
-          cursor: submitting ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {submitting ? 'Reservando…' : 'Reservar clase'}
-      </button>
+          <button
+            type="button"
+            disabled={submitting || !horaSelNorm || (slotSel && slotSel.cupos_restantes <= 0)}
+            onClick={() => void reservar()}
+            style={{
+              width: '100%',
+              marginTop: 16,
+              border: 'none',
+              borderRadius: 12,
+              padding: 14,
+              background: submitting ? '#94a3b8' : `linear-gradient(135deg, ${ACCENT}, #b91c1c)`,
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: 16,
+              cursor: submitting ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {submitting ? 'Reservando…' : 'Reservar clase'}
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }

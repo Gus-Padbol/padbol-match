@@ -3,10 +3,13 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   crearClaseAdmin,
+  fetchAdminClaseAsistencia,
   fetchAdminClases,
   fetchAdminProfesores,
+  patchAdminClaseAsistencia,
   patchClaseActivoAdmin,
 } from '../utils/clasesAdminApi';
+import { todayISO } from '../utils/clasesFechas';
 
 const DIAS_KEYS = [
   { v: 0, key: 'dom' },
@@ -41,6 +44,11 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [asistenciaModal, setAsistenciaModal] = useState(null);
+  const [asistenciaFecha, setAsistenciaFecha] = useState(() => todayISO());
+  const [asistenciaRows, setAsistenciaRows] = useState([]);
+  const [asistenciaLoading, setAsistenciaLoading] = useState(false);
+  const [asistenciaPatchId, setAsistenciaPatchId] = useState(null);
   const [form, setForm] = useState({
     titulo: '',
     descripcion: '',
@@ -148,6 +156,55 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       setMsg(e?.message || 'Error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const cargarAsistencia = useCallback(async () => {
+    if (!asistenciaModal?.id) return;
+    setAsistenciaLoading(true);
+    setMsg('');
+    try {
+      const data = await fetchAdminClaseAsistencia({
+        claseId: asistenciaModal.id,
+        fecha: asistenciaFecha,
+        accessToken,
+      });
+      setAsistenciaRows(Array.isArray(data?.inscripciones) ? data.inscripciones : []);
+    } catch (e) {
+      setMsg(e?.message || 'Error');
+      setAsistenciaRows([]);
+    } finally {
+      setAsistenciaLoading(false);
+    }
+  }, [asistenciaModal?.id, asistenciaFecha, accessToken]);
+
+  useEffect(() => {
+    if (!asistenciaModal) return;
+    void cargarAsistencia();
+  }, [asistenciaModal, cargarAsistencia]);
+
+  const abrirAsistencia = (claseRow) => {
+    setAsistenciaModal(claseRow);
+    setAsistenciaFecha(todayISO());
+    setAsistenciaRows([]);
+  };
+
+  const toggleAsistio = async (insRow, asistio) => {
+    if (!asistenciaModal?.id) return;
+    setAsistenciaPatchId(insRow.id);
+    setMsg('');
+    try {
+      await patchAdminClaseAsistencia({
+        claseId: asistenciaModal.id,
+        inscripcionId: insRow.id,
+        asistio,
+        accessToken,
+      });
+      await cargarAsistencia();
+    } catch (e) {
+      setMsg(e?.message || 'Error');
+    } finally {
+      setAsistenciaPatchId(null);
     }
   };
 
@@ -279,12 +336,144 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                   <button type="button" disabled={togglingId === c.id} onClick={() => void toggleActivo(c)} style={{ fontSize: 12, fontWeight: 700, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                     {togglingId === c.id ? '…' : c.activo ? t('admin.sponsors.deactivateBtn') : 'Activar'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => abrirAsistencia(c)}
+                    style={{ fontSize: 12, fontWeight: 700, color: '#0f766e', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    Ver asistencia
+                  </button>
                 </div>
               </li>
             );
           })}
         </ul>
       )}
+
+      {asistenciaModal ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 19998,
+            background: 'rgba(15, 23, 42, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+            boxSizing: 'border-box',
+          }}
+          onClick={() => setAsistenciaModal(null)}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 16,
+              padding: 20,
+              maxWidth: 480,
+              width: '100%',
+              maxHeight: '85vh',
+              overflow: 'auto',
+              color: 'var(--text-primary)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800 }}>Asistencia — {asistenciaModal.titulo}</h3>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Fecha</label>
+            <input
+              type="date"
+              className="admin-mi-sede-theme-input"
+              value={asistenciaFecha}
+              onChange={(e) => setAsistenciaFecha(e.target.value)}
+              style={{ width: '100%', marginBottom: 12, boxSizing: 'border-box' }}
+            />
+            {asistenciaLoading ? (
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
+            ) : asistenciaRows.length === 0 ? (
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Sin inscriptos para esta fecha.</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 10 }}>
+                {asistenciaRows.map((row) => {
+                  const marcado = row.asistio === true;
+                  const ausente = row.asistio === false;
+                  const pendiente = row.asistio == null;
+                  return (
+                    <li
+                      key={row.id}
+                      style={{
+                        padding: 12,
+                        borderRadius: 10,
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-page)',
+                      }}
+                    >
+                      <div style={{ fontWeight: 800, fontSize: 14 }}>{row.nombre}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                        {row.hora_inicio}
+                        {row.email ? ` · ${row.email}` : ''}
+                        {row.telefono ? ` · ${row.telefono}` : ''}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          disabled={asistenciaPatchId === row.id}
+                          onClick={() => void toggleAsistio(row, true)}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: marcado ? '2px solid #16a34a' : '1px solid var(--border)',
+                            background: marcado ? '#dcfce7' : 'var(--bg-card)',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ✅ Asistió
+                        </button>
+                        <button
+                          type="button"
+                          disabled={asistenciaPatchId === row.id}
+                          onClick={() => void toggleAsistio(row, false)}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: ausente ? '2px solid #dc2626' : '1px solid var(--border)',
+                            background: ausente ? '#fee2e2' : 'var(--bg-card)',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ❌ No asistió
+                        </button>
+                        {pendiente ? (
+                          <span style={{ fontSize: 12, color: 'var(--text-secondary)', alignSelf: 'center' }}>— Pendiente</span>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <button
+              type="button"
+              onClick={() => setAsistenciaModal(null)}
+              style={{
+                marginTop: 14,
+                padding: '9px 16px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                fontWeight: 700,
+                cursor: 'pointer',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {t('general.close')}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

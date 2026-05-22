@@ -136,6 +136,57 @@ export function registerModuloClasesRoutes(app, deps) {
     };
   }
 
+  function msHastaInicioClase(fechaYmd, horaInicio) {
+    const hi = normalizeHoraClase(horaInicio);
+    if (!fechaYmd || !hi) return null;
+    const start = new Date(`${fechaYmd}T${hi}:00-03:00`);
+    if (Number.isNaN(start.getTime())) return null;
+    return start.getTime() - Date.now();
+  }
+
+  function evalPoliticaCancelacion(claseRow, inscripcionRow) {
+    const horas = parseInt(String(claseRow?.horas_cancelacion ?? 24), 10);
+    const h = Number.isFinite(horas) && horas >= 0 ? horas : 24;
+    const ms = msHastaInicioClase(inscripcionRow?.fecha, inscripcionRow?.hora_inicio);
+    if (ms == null) {
+      return { ok: false, motivo: 'Fecha u horario inválidos', horas_cancelacion: h };
+    }
+    if (ms < h * 60 * 60 * 1000) {
+      return {
+        ok: false,
+        motivo: `No se puede cancelar con menos de ${h} horas de anticipación`,
+        horas_cancelacion: h,
+      };
+    }
+    return { ok: true, horas_cancelacion: h };
+  }
+
+  async function perfilContactoPorUserIds(userIds) {
+    const map = new Map();
+    const uids = [...new Set(userIds.filter(Boolean))];
+    if (!uids.length) return map;
+    const { data: perfiles, error: pErr } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, nombre, apellido, apodo, email, whatsapp')
+      .in('user_id', uids);
+    if (pErr) throw pErr;
+    for (const p of perfiles || []) {
+      const uid = String(p.user_id || '');
+      if (!uid) continue;
+      const nombre =
+        [p.nombre, p.apellido].filter(Boolean).join(' ').trim() ||
+        String(p.apodo || '').trim() ||
+        String(p.email || '').split('@')[0] ||
+        '—';
+      map.set(uid, {
+        nombre,
+        email: String(p.email || '').trim().toLowerCase() || null,
+        telefono: String(p.whatsapp || '').trim() || null,
+      });
+    }
+    return map;
+  }
+
   /** GET /api/clases?sede_id=&deporte= */
   app.get('/api/clases', async (req, res) => {
     try {
@@ -183,7 +234,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const { data: clase, error } = await supabase
         .from('clases')
         .select(
-          'id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, profesores!inner(id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo)',
+          'id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, horas_cancelacion, profesores!inner(id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, aprobado, activo)',
         )
         .eq('id', claseId)
         .eq('activo', true)
@@ -192,6 +243,24 @@ export function registerModuloClasesRoutes(app, deps) {
         .maybeSingle();
       if (error) throw error;
       if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
+
+      const authUser = await authUserFromBearer(req);
+      let mi_inscripcion = null;
+      if (authUser?.id && fecha) {
+        const { data: insMine, error: insMineErr } = await supabase
+          .from('inscripciones_clases')
+          .select('id, clase_id, fecha, hora_inicio, estado, reserva_id, asistio, created_at')
+          .eq('clase_id', claseId)
+          .eq('user_id', authUser.id)
+          .eq('fecha', fecha)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (insMineErr) throw insMineErr;
+        if (insMine && !['cancelada'].includes(String(insMine.estado || '').toLowerCase())) {
+          mi_inscripcion = insMine;
+        }
+      }
 
       const horarios = await fetchHorariosClase(claseId);
       const cupoMax = Math.max(1, parseInt(String(clase.cupo_maximo), 10) || 1);
@@ -234,9 +303,109 @@ export function registerModuloClasesRoutes(app, deps) {
         inscriptos,
         cupos_por_horario: cuposPorHorario,
         fecha_consultada: fecha,
+        horas_cancelacion: parseInt(String(clase.horas_cancelacion ?? 24), 10) || 24,
+        mi_inscripcion,
       });
     } catch (err) {
       console.error('❌ GET /api/clases/:id:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** GET /api/jugador/mis-clases — inscripciones del usuario autenticado */
+  app.get('/api/jugador/mis-clases', async (req, res) => {
+    try {
+      const user = await requireAuthUser(req);
+      const { data: rows, error } = await supabaseAdmin
+        .from('inscripciones_clases')
+        .select(
+          'id, clase_id, user_id, fecha, hora_inicio, estado, reserva_id, asistio, asistencia_marcada_at, created_at, clases!inner(id, titulo, deporte, sede_id, sedes(id, nombre), profesores!inner(id, nombre, apellido))',
+        )
+        .eq('user_id', user.id)
+        .neq('estado', 'cancelada')
+        .order('fecha', { ascending: false })
+        .order('hora_inicio', { ascending: true })
+        .limit(200);
+      if (error) throw error;
+
+      const list = (rows || []).map((row) => {
+        const clase = row.clases || {};
+        const prof = clase.profesores || {};
+        const sede = clase.sedes || {};
+        const profesor_nombre =
+          [prof.nombre, prof.apellido].filter(Boolean).join(' ').trim() || prof.nombre || '—';
+        const { clases: _c, ...ins } = row;
+        return {
+          ...ins,
+          clase_titulo: clase.titulo || '—',
+          clase_deporte: clase.deporte || null,
+          profesor_nombre,
+          sede_nombre: sede.nombre || null,
+          sede_id: clase.sede_id ?? null,
+          hora_inicio: normalizeHoraClase(row.hora_inicio) || row.hora_inicio,
+        };
+      });
+      res.json(list);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/jugador/mis-clases:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** DELETE /api/clases/inscripcion/:inscripcion_id — cancelar inscripción (dueño) */
+  app.delete('/api/clases/inscripcion/:inscripcion_id', async (req, res) => {
+    try {
+      const user = await requireAuthUser(req);
+      const insId = Number(req.params.inscripcion_id);
+      if (!Number.isFinite(insId)) return res.status(400).json({ error: 'ID inválido' });
+
+      const { data: ins, error: insErr } = await supabaseAdmin
+        .from('inscripciones_clases')
+        .select('id, clase_id, user_id, fecha, hora_inicio, estado, reserva_id')
+        .eq('id', insId)
+        .maybeSingle();
+      if (insErr) throw insErr;
+      if (!ins) return res.status(404).json({ error: 'Inscripción no encontrada' });
+      if (String(ins.user_id || '') !== String(user.id)) {
+        return res.status(403).json({ error: 'No podés cancelar esta inscripción' });
+      }
+      if (String(ins.estado || '').toLowerCase() === 'cancelada') {
+        return res.json({ ok: true, ya_cancelada: true });
+      }
+
+      const { data: clase, error: claseErr } = await supabase
+        .from('clases')
+        .select('id, horas_cancelacion')
+        .eq('id', ins.clase_id)
+        .maybeSingle();
+      if (claseErr) throw claseErr;
+      if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
+
+      const pol = evalPoliticaCancelacion(clase, ins);
+      if (!pol.ok) {
+        return res.status(400).json({
+          error: pol.motivo,
+          horas_cancelacion: pol.horas_cancelacion,
+        });
+      }
+
+      const { error: delErr } = await supabaseAdmin.from('inscripciones_clases').delete().eq('id', insId);
+      if (delErr) throw delErr;
+
+      if (ins.reserva_id != null) {
+        await supabaseAdmin
+          .from('reservas')
+          .update({ estado: 'cancelada' })
+          .eq('id', ins.reserva_id);
+      }
+
+      res.json({ ok: true });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ DELETE /api/clases/inscripcion/:inscripcion_id:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
     }
   });
@@ -562,6 +731,124 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
+  /** GET /api/admin/clases/:id/asistencia?fecha=YYYY-MM-DD */
+  app.get('/api/admin/clases/:id/asistencia', async (req, res) => {
+    try {
+      await assertAdminClubOrSuper(req);
+      const claseId = Number(req.params.id);
+      const fecha = normalizeFechaYmd(req.query.fecha);
+      if (!Number.isFinite(claseId)) return res.status(400).json({ error: 'ID inválido' });
+      if (!fecha) return res.status(400).json({ error: 'fecha (YYYY-MM-DD) requerida' });
+
+      const { data: clase, error: claseErr } = await supabase
+        .from('clases')
+        .select('id, sede_id, titulo')
+        .eq('id', claseId)
+        .maybeSingle();
+      if (claseErr) throw claseErr;
+      if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
+      await assertUsuarioPuedeAdministrarSede(req, clase.sede_id);
+
+      const { data: insRows, error: insErr } = await supabaseAdmin
+        .from('inscripciones_clases')
+        .select(
+          'id, clase_id, user_id, fecha, hora_inicio, estado, asistio, asistencia_marcada_at, asistencia_marcada_por, created_at',
+        )
+        .eq('clase_id', claseId)
+        .eq('fecha', fecha)
+        .order('hora_inicio', { ascending: true });
+      if (insErr) throw insErr;
+
+      const activas = (insRows || []).filter((r) => {
+        const est = String(r.estado || '').toLowerCase();
+        return ESTADOS_INSCRIPCION_CUENTAN_CUPO.has(est) || est === 'pagada';
+      });
+      const contactMap = await perfilContactoPorUserIds(activas.map((r) => r.user_id));
+
+      const inscripciones = activas.map((r) => {
+        const uid = String(r.user_id || '');
+        const c = contactMap.get(uid) || {};
+        return {
+          id: r.id,
+          user_id: r.user_id,
+          fecha: r.fecha,
+          hora_inicio: normalizeHoraClase(r.hora_inicio) || r.hora_inicio,
+          estado: r.estado,
+          nombre: c.nombre || '—',
+          email: c.email,
+          telefono: c.telefono,
+          asistio: r.asistio,
+          asistencia_marcada_at: r.asistencia_marcada_at,
+          asistencia_marcada_por: r.asistencia_marcada_por,
+        };
+      });
+
+      res.json({
+        clase_id: claseId,
+        clase_titulo: clase.titulo,
+        fecha,
+        inscripciones,
+      });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/admin/clases/:id/asistencia:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** PATCH /api/admin/clases/:id/asistencia/:inscripcion_id */
+  app.patch('/api/admin/clases/:id/asistencia/:inscripcion_id', async (req, res) => {
+    try {
+      const scope = await assertAdminClubOrSuper(req);
+      const claseId = Number(req.params.id);
+      const insId = Number(req.params.inscripcion_id);
+      if (!Number.isFinite(claseId) || !Number.isFinite(insId)) {
+        return res.status(400).json({ error: 'ID inválido' });
+      }
+      if (typeof req.body?.asistio !== 'boolean') {
+        return res.status(400).json({ error: 'asistio (boolean) requerido' });
+      }
+
+      const { data: clase, error: claseErr } = await supabase
+        .from('clases')
+        .select('id, sede_id')
+        .eq('id', claseId)
+        .maybeSingle();
+      if (claseErr) throw claseErr;
+      if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
+      await assertUsuarioPuedeAdministrarSede(req, clase.sede_id);
+
+      const { data: ins, error: insErr } = await supabaseAdmin
+        .from('inscripciones_clases')
+        .select('id, clase_id')
+        .eq('id', insId)
+        .eq('clase_id', claseId)
+        .maybeSingle();
+      if (insErr) throw insErr;
+      if (!ins) return res.status(404).json({ error: 'Inscripción no encontrada' });
+
+      const marcadoPor = String(scope.email || '').trim().toLowerCase() || 'admin';
+      const { data, error } = await supabaseAdmin
+        .from('inscripciones_clases')
+        .update({
+          asistio: req.body.asistio,
+          asistencia_marcada_at: new Date().toISOString(),
+          asistencia_marcada_por: marcadoPor,
+        })
+        .eq('id', insId)
+        .select('id, asistio, asistencia_marcada_at, asistencia_marcada_por')
+        .single();
+      if (error) throw error;
+      res.json(data);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ PATCH /api/admin/clases/:id/asistencia/:inscripcion_id:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
   /** PATCH /api/admin/clases/:id — activo */
   app.patch('/api/admin/clases/:id', async (req, res) => {
     try {
@@ -659,6 +946,10 @@ export function registerModuloClasesRoutes(app, deps) {
             duracion_minutos: Number.isFinite(duracion) && duracion > 0 ? duracion : 60,
             precio: Number.isFinite(precio) && precio >= 0 ? precio : 0,
             activo: typeof b.activo === 'boolean' ? b.activo : true,
+            horas_cancelacion:
+              b.horas_cancelacion != null && b.horas_cancelacion !== ''
+                ? Math.max(0, parseInt(String(b.horas_cancelacion), 10) || 24)
+                : 24,
           },
         ])
         .select()
