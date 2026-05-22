@@ -358,7 +358,6 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     twitter: sedeData.twitter || '',
     youtube: sedeData.youtube || '',
     website: sedeData.website || '',
-    color_fondo_logo: normalizeHexSedeAdmin(sedeData.color_fondo_logo) || '#000000',
     color_hero_primario: normalizeHexSedeAdmin(sedeData.color_hero_primario) || '#4C1D95',
     color_hero_secundario: normalizeHexSedeAdmin(sedeData.color_hero_secundario) || '#7C3AED',
     color_borde_hero: normalizeHexSedeAdmin(sedeData.color_borde_hero) || '#6D28D9',
@@ -413,7 +412,6 @@ function miSedeFormToApiPatchBody(form) {
     twitter: form.twitter || null,
     youtube: form.youtube || null,
     website: form.website || null,
-    color_fondo_logo: normalizeHexSedeAdmin(form.color_fondo_logo) || '#000000',
     color_hero_primario: normalizeHexSedeAdmin(form.color_hero_primario) || '#4C1D95',
     color_hero_secundario: normalizeHexSedeAdmin(form.color_hero_secundario) || '#7C3AED',
     color_borde_hero: normalizeHexSedeAdmin(form.color_borde_hero) || '#6D28D9',
@@ -4965,7 +4963,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [logoCropZoom, setLogoCropZoom] = useState(1);
   const [logoCropAreaListo, setLogoCropAreaListo] = useState(false);
   const logoCropPixelsRef = useRef(null);
-  const colorFondoLogoSaveTimerRef = useRef(null);
   const adminTabsStripRef = useRef(null);
   const adminMainScrollRef = useRef(null);
   const [miSedeNavActive, setMiSedeNavActive] = useState('info');
@@ -5243,26 +5240,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       .maybeSingle()
       .then(({ data }) => { if (data) setSedeStatus(data); });
   }, [sedeId, esAdminClub]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const schedulePersistColorFondoLogo = useCallback(
-    (hex) => {
-      if (!sedeId) return;
-      if (colorFondoLogoSaveTimerRef.current) window.clearTimeout(colorFondoLogoSaveTimerRef.current);
-      colorFondoLogoSaveTimerRef.current = window.setTimeout(async () => {
-        colorFondoLogoSaveTimerRef.current = null;
-        const v = normalizeHexSedeAdmin(hex) || '#000000';
-        const { error } = await supabase.from(t('admin.metricas.venuesCount')).update({ color_fondo_logo: v }).eq('id', sedeId);
-        if (!error) {
-          setMiSede((prev) => (prev ? { ...prev, color_fondo_logo: v } : prev));
-          setLogoMsg(t('admin.sedes.logoColorSaved'));
-          window.setTimeout(() => setLogoMsg(''), 2500);
-        } else {
-          setLogoMsg(`⚠️ ${error.message}`);
-        }
-      }, 400);
-    },
-    [sedeId]
-  );
 
   const guardarMiSede = async () => {
     if (!sedeId || !session?.access_token) {
@@ -12929,7 +12906,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     height: '100px',
                     borderRadius: '10px',
                     border: '1px solid var(--border)',
-                    background: normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000',
+                    background: 'rgba(0,0,0,0.6)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -12970,27 +12947,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </label>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('admin.sedes.photoFormatHint')}</span>
                 <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{t('admin.common.recommendedPhotoHint')}</span>
-                <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', width: '100%', maxWidth: '320px' }}>
-                  <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Fondo del logo en la página pública de la sede
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <input
-                      type="color"
-                      className="admin-mi-sede-logo-color-input"
-                      aria-label={t('admin.sedes.logoBackgroundColor')}
-                      value={normalizeHexSedeAdmin(miSedeForm.color_fondo_logo) || '#000000'}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setMiSedeForm((prev) => ({ ...prev, color_fondo_logo: v }));
-                        schedulePersistColorFondoLogo(v);
-                      }}
-                    />
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                      Se aplica detrás del logo en el hero. Por defecto negro (#000000).
-                    </span>
-                  </div>
-                </div>
                 {logoMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: logoMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{logoMsg}</span>}
               </div>
             </div>
@@ -13068,7 +13024,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#E11B22' }}>{fotosUploadLabel}</p>
             ) : null}
             <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-              Marca hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). Guarda con el botón inferior.
+              Marca hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). La foto marcada con 1 aparece como fondo del hero en la página pública. Guarda con el botón inferior.
             </p>
             {fotosUrls.length === 0 ? (
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>{t('admin.sedes.noPhotosYet')}</p>
@@ -13077,6 +13033,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 {fotosUrls.map((url, i) => {
                   const ord = fotosDestacadas.indexOf(url);
                   const destacada = ord >= 0;
+                  const heroFotoUrl = fotosDestacadas[0] || fotosUrls[0] || null;
+                  const isHeroFoto = Boolean(heroFotoUrl && url === heroFotoUrl);
                   return (
                     <div key={url} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', background: '#f1f5f9' }}>
                       <img
@@ -13084,25 +13042,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         alt={`Cancha ${i + 1}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
+                      {isHeroFoto ? (
+                        <span
+                          className="admin-mi-sede-photo-hero-badge"
+                          title="Esta foto es el fondo del hero en la página pública"
+                        >
+                          📸 Hero
+                        </span>
+                      ) : null}
                       {destacada ? (
                         <span
-                          style={{
-                            position: 'absolute',
-                            left: '8px',
-                            bottom: '8px',
-                            minWidth: '22px',
-                            height: '22px',
-                            padding: '0 6px',
-                            borderRadius: '8px',
-                            background: 'rgba(15,23,42,0.75)',
-                            color: '#f8fafc',
-                            fontSize: '12px',
-                            fontWeight: 800,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            pointerEvents: 'none',
-                          }}
+                          className={`admin-mi-sede-photo-order-badge${ord === 0 ? ' admin-mi-sede-photo-order-badge--first' : ''}`}
+                          title={ord === 0 ? 'Orden 1 en el carrusel (fondo del hero)' : `Orden ${ord + 1} en el carrusel`}
                         >
                           {ord + 1}
                         </span>

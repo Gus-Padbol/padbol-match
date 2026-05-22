@@ -102,24 +102,6 @@ function formatFechaIsoPublicaSede(iso) {
   });
 }
 
-function normalizeHexColor(raw) {
-  if (raw == null) return null;
-  const s = String(raw).trim();
-  if (!s) return null;
-  if (/^#[0-9A-Fa-f]{6}$/i.test(s)) return s;
-  if (/^#[0-9A-Fa-f]{3}$/i.test(s)) {
-    const r = s[1];
-    const g = s[2];
-    const b = s[3];
-    return `#${r}${r}${g}${g}${b}${b}`;
-  }
-  return null;
-}
-
-function colorFondoLogoSede(sedeRow) {
-  return normalizeHexColor(sedeRow?.color_fondo_logo) || '#000000';
-}
-
 /** Tamaño del título del club en el hero según longitud del nombre. */
 function heroClubNameFontSizePx(nombreRaw) {
   const len = String(nombreRaw ?? '').trim().length;
@@ -2241,10 +2223,7 @@ export default function SedePublica() {
                 </div>
 
                 <div className="sede-publica-hero-immersive__bottom">
-                  <div
-                    className="sede-publica-hero-immersive__logo"
-                    style={{ background: colorFondoLogoSede(sede) }}
-                  >
+                  <div className="sede-publica-hero-immersive__logo">
                     {sede.logo_url ? (
                       <img src={toHttps(sede.logo_url)} alt="" />
                     ) : (

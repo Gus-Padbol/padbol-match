@@ -1046,11 +1046,11 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: var(--bg-card);
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow:
-    0 0 0 4px rgba(0, 0, 0, 0.3),
-    0 4px 16px rgba(0, 0, 0, 0.4);
+    0 0 0 2px rgba(255, 255, 255, 0.12),
+    0 0 16px rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
 }
 
@@ -1066,6 +1066,49 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   padding: 8px;
   box-sizing: border-box;
   border-radius: 16px;
+}
+
+/* Mi Sede → Fotos: badge hero y orden carrusel */
+.admin-mi-sede-photo-hero-badge {
+  position: absolute;
+  top: 6px;
+  right: 38px;
+  z-index: 2;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(225, 27, 34, 0.45);
+}
+
+.admin-mi-sede-photo-order-badge {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.admin-mi-sede-photo-order-badge--first {
+  background: color-mix(in srgb, var(--accent) 88%, #1e1b4b);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 /* Logo crop modal: rounded-square mask (matches header logo, not circle) */
