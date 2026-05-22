@@ -68,6 +68,17 @@ export async function aprobarProfesorAdmin({ profesorId, accessToken }) {
   return data;
 }
 
+export async function patchProfesorAdmin({ profesorId, body, accessToken }) {
+  const res = await fetch(`${API_BASE}/api/admin/profesores/${Number(profesorId)}`, {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo actualizar el profesor');
+  return data;
+}
+
 export async function rechazarProfesorAdmin({ profesorId, accessToken }) {
   const res = await fetch(`${API_BASE}/api/admin/profesores/${Number(profesorId)}/rechazar`, {
     method: 'PATCH',

@@ -740,6 +740,119 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
+  /** PATCH /api/admin/profesores/:id — actualizar campos (whatsapp, bio, …) */
+  app.patch('/api/admin/profesores/:id', async (req, res) => {
+    try {
+      const scope = await assertAdminClubOrSuper(req);
+      const profId = Number(req.params.id);
+      if (!Number.isFinite(profId)) return res.status(400).json({ error: 'ID inválido' });
+
+      const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from('profesores')
+        .select('id, sede_id')
+        .eq('id', profId)
+        .maybeSingle();
+      if (fetchErr) throw fetchErr;
+      if (!existing) return res.status(404).json({ error: 'Profesor no encontrado' });
+
+      if (!scope.superA) {
+        await assertUsuarioPuedeAdministrarSede(req, existing.sede_id);
+      }
+
+      const b = req.body || {};
+      const patch = { updated_at: new Date().toISOString() };
+      if (b.whatsapp !== undefined) {
+        patch.whatsapp = String(b.whatsapp || '').trim() || null;
+      }
+      if (b.bio !== undefined) {
+        patch.bio = String(b.bio || '').trim() || null;
+      }
+      if (Object.keys(patch).length <= 1) {
+        return res.status(400).json({ error: 'Sin campos para actualizar' });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('profesores')
+        .update(patch)
+        .eq('id', profId)
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)',
+        )
+        .single();
+      if (error) throw error;
+
+      const sede = data.sedes;
+      const { sedes: _s, ...rest } = data;
+      res.json({ ...rest, sede_nombre: sede?.nombre ?? null });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ PATCH /api/admin/profesores/:id:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** GET /api/profesor/mi-perfil — profesor vinculado al usuario autenticado (user_id) */
+  app.get('/api/profesor/mi-perfil', async (req, res) => {
+    try {
+      const user = await requireAuthUser(req);
+      const { data, error } = await supabaseAdmin
+        .from('profesores')
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
+        )
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: 'No tenés ficha de profesor vinculada' });
+      const sede = data.sedes;
+      const { sedes: _s, ...rest } = data;
+      res.json({ ...rest, sede_nombre: sede?.nombre ?? null });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/profesor/mi-perfil:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** PATCH /api/profesor/mi-perfil — el profesor actualiza su WhatsApp / bio */
+  app.patch('/api/profesor/mi-perfil', async (req, res) => {
+    try {
+      const user = await requireAuthUser(req);
+      const b = req.body || {};
+      const patch = { updated_at: new Date().toISOString() };
+      if (b.whatsapp !== undefined) {
+        patch.whatsapp = String(b.whatsapp || '').trim() || null;
+      }
+      if (b.bio !== undefined) {
+        patch.bio = String(b.bio || '').trim() || null;
+      }
+      if (Object.keys(patch).length <= 1) {
+        return res.status(400).json({ error: 'Sin campos para actualizar' });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('profesores')
+        .update(patch)
+        .eq('user_id', user.id)
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
+        )
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: 'No tenés ficha de profesor vinculada' });
+      const sede = data.sedes;
+      const { sedes: _s, ...rest } = data;
+      res.json({ ...rest, sede_nombre: sede?.nombre ?? null });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ PATCH /api/profesor/mi-perfil:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
   /** PATCH /api/admin/profesores/:id/rechazar — super admin (desactiva solicitud o profesor) */
   app.patch('/api/admin/profesores/:id/rechazar', async (req, res) => {
     try {

@@ -456,6 +456,15 @@
     "loading": "Loading class…",
     "noProfesores": "No coaches available at your venue."
   },
+  "profesor": {
+    "miPerfil": {
+      "titulo": "Coach profile",
+      "subtitulo": "Record linked to your account ({{nombre}})",
+      "whatsappLabel": "WhatsApp (internal contact, not public on the hub)",
+      "guardar": "Save WhatsApp",
+      "guardado": "WhatsApp updated."
+    }
+  },
   "perfil": {
     "titulo": "My profile",
     "editar": "Edit profile",
@@ -646,6 +655,8 @@
       "colDeportes": "Sport(s)",
       "colCertificado": "Certificate",
       "colWhatsapp": "WhatsApp",
+      "editarWhatsapp": "Edit WhatsApp",
+      "guardarWhatsapp": "Save",
       "colEstado": "Status",
       "colAcciones": "Actions",
       "colFechaRegistro": "Registration date",

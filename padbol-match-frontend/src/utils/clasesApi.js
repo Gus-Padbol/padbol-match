@@ -79,6 +79,28 @@ export async function cancelarInscripcionClase({ inscripcionId, accessToken }) {
   return data;
 }
 
+export async function fetchMiPerfilProfesor({ accessToken, signal } = {}) {
+  const res = await fetch(`${API_BASE}/api/profesor/mi-perfil`, {
+    headers: authHeaders(accessToken, false),
+    signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(data?.error || 'No se pudo cargar tu ficha de profesor');
+  return data;
+}
+
+export async function patchMiPerfilProfesor({ body, accessToken }) {
+  const res = await fetch(`${API_BASE}/api/profesor/mi-perfil`, {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo guardar');
+  return data;
+}
+
 export async function fetchMisClases({ accessToken, signal } = {}) {
   const res = await fetch(`${API_BASE}/api/jugador/mis-clases`, {
     headers: authHeaders(accessToken, false),

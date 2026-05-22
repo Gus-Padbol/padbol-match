@@ -224,7 +224,7 @@
 .admin-profesores-super__ficha-panel {
   width: 100%;
   max-width: 440px;
-  max-height: min(90vh, 720px);
+  max-height: 80vh;
   overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -232,6 +232,7 @@
   padding: 18px 20px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-profesores-super__ficha-header {
@@ -242,8 +243,8 @@
 }
 
 .admin-profesores-super__ficha-avatar {
-  width: 72px;
-  height: 72px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   border: 2px solid var(--border);
   flex-shrink: 0;
@@ -252,6 +253,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .admin-profesores-super__ficha-avatar img {
@@ -260,8 +262,55 @@
   object-fit: cover;
 }
 
+.admin-profesores-super__ficha-avatar .admin-profesores-super__avatar {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 .admin-profesores-super__ficha-avatar .admin-profesores-super__avatar-initials {
-  font-size: 28px;
+  font-size: 32px;
+}
+
+.admin-profesores-super__wa-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-profesores-super__wa-edit-input {
+  flex: 1 1 160px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.admin-profesores-super__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-profesores-super__icon-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .admin-profesores-super__ficha-row {

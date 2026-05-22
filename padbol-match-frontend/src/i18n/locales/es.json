@@ -480,6 +480,15 @@
     "loading": "Cargando clase…",
     "noProfesores": "No hay profesores disponibles en tu sede."
   },
+  "profesor": {
+    "miPerfil": {
+      "titulo": "Perfil de profesor",
+      "subtitulo": "Ficha vinculada a tu cuenta ({{nombre}})",
+      "whatsappLabel": "WhatsApp (contacto interno, no público en el hub)",
+      "guardar": "Guardar WhatsApp",
+      "guardado": "WhatsApp actualizado."
+    }
+  },
   "perfil": {
     "titulo": "Mi perfil",
     "editar": "Editar perfil",
@@ -670,6 +679,8 @@
       "colDeportes": "Deporte(s)",
       "colCertificado": "Certificado",
       "colWhatsapp": "WhatsApp",
+      "editarWhatsapp": "Editar WhatsApp",
+      "guardarWhatsapp": "Guardar",
       "colEstado": "Estado",
       "colAcciones": "Acciones",
       "colFechaRegistro": "Fecha de registro",

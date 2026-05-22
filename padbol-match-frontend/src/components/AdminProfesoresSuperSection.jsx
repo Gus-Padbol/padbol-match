@@ -3,6 +3,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   aprobarProfesorAdmin,
   fetchAdminProfesoresTodos,
+  patchProfesorAdmin,
   rechazarProfesorAdmin,
 } from '../utils/clasesAdminApi';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
@@ -71,6 +72,15 @@ function ProfesorAvatar({ row, sizeClass = '' }) {
   );
 }
 
+function PencilIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M12 20h9" strokeLinecap="round" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function FichaRow({ label, value, children }) {
   return (
     <div className="admin-profesores-super__ficha-row">
@@ -80,11 +90,45 @@ function FichaRow({ label, value, children }) {
   );
 }
 
-function ProfesorFichaModal({ row, isSuperAdmin, onClose, t }) {
+function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, onRowUpdate, t }) {
+  const [row, setRow] = useState(rowProp);
+  const [editingWa, setEditingWa] = useState(false);
+  const [waDraft, setWaDraft] = useState('');
+  const [waSaving, setWaSaving] = useState(false);
+  const [waError, setWaError] = useState('');
+
+  useEffect(() => {
+    setRow(rowProp);
+    setEditingWa(false);
+    setWaDraft(String(rowProp?.whatsapp || '').trim());
+    setWaError('');
+  }, [rowProp]);
+
   if (!row) return null;
+
   const wa = String(row.whatsapp || '').trim();
   const waUrl = waDigitsForUrl(wa);
   const boolLabel = (v) => (v ? t('admin.profesores.si') : t('admin.profesores.no'));
+
+  const guardarWhatsapp = async () => {
+    if (!accessToken) return;
+    setWaSaving(true);
+    setWaError('');
+    try {
+      const updated = await patchProfesorAdmin({
+        profesorId: row.id,
+        accessToken,
+        body: { whatsapp: String(waDraft || '').trim() || null },
+      });
+      setRow(updated);
+      onRowUpdate?.(updated);
+      setEditingWa(false);
+    } catch (e) {
+      setWaError(e?.message || 'Error');
+    } finally {
+      setWaSaving(false);
+    }
+  };
 
   return (
     <div
@@ -120,13 +164,61 @@ function ProfesorFichaModal({ row, isSuperAdmin, onClose, t }) {
         <FichaRow label={t('admin.profesores.fichaBio')} value={String(row.bio || '').trim() || '—'} />
         {isSuperAdmin ? (
           <FichaRow label={t('admin.profesores.colWhatsapp')}>
-            {wa && waUrl ? (
-              <a href={`https://wa.me/${waUrl}`} target="_blank" rel="noopener noreferrer">
-                {wa}
-              </a>
+            {editingWa ? (
+              <div className="admin-profesores-super__wa-edit-row">
+                <input
+                  type="tel"
+                  className="admin-profesores-super__wa-edit-input"
+                  value={waDraft}
+                  onChange={(e) => setWaDraft(e.target.value)}
+                  placeholder="+54 9 221 000-0000"
+                  disabled={waSaving}
+                />
+                <button
+                  type="button"
+                  className="admin-profesores-super__btn admin-profesores-super__btn--approve"
+                  disabled={waSaving}
+                  onClick={() => void guardarWhatsapp()}
+                >
+                  {waSaving ? '…' : t('admin.profesores.guardarWhatsapp')}
+                </button>
+                <button
+                  type="button"
+                  className="admin-profesores-super__btn admin-profesores-super__btn--ghost"
+                  disabled={waSaving}
+                  onClick={() => {
+                    setEditingWa(false);
+                    setWaDraft(wa);
+                    setWaError('');
+                  }}
+                >
+                  {t('general.cancel')}
+                </button>
+              </div>
             ) : (
-              '—'
+              <div className="admin-profesores-super__wa-edit-row">
+                {wa && waUrl ? (
+                  <a href={`https://wa.me/${waUrl}`} target="_blank" rel="noopener noreferrer">
+                    {wa}
+                  </a>
+                ) : (
+                  <span>—</span>
+                )}
+                <button
+                  type="button"
+                  className="admin-profesores-super__icon-btn"
+                  aria-label={t('admin.profesores.editarWhatsapp')}
+                  onClick={() => {
+                    setWaDraft(wa);
+                    setEditingWa(true);
+                    setWaError('');
+                  }}
+                >
+                  <PencilIcon />
+                </button>
+              </div>
             )}
+            {waError ? <span style={{ display: 'block', marginTop: 6, color: 'var(--pm-color-error, #dc2626)', fontSize: 12 }}>{waError}</span> : null}
           </FichaRow>
         ) : null}
         <FichaRow label={t('admin.profesores.fichaEmailLabel')} value={t('admin.profesores.fichaSinEmail')} />
@@ -328,6 +420,12 @@ export default function AdminProfesoresSuperSection({
     if (!isSuperAdmin) return;
     setFichaRow(row);
   };
+
+  const handleFichaRowUpdate = useCallback((updated) => {
+    setFichaRow(updated);
+    setPendientes((list) => list.map((r) => (Number(r.id) === Number(updated.id) ? { ...r, ...updated } : r)));
+    setAprobados((list) => list.map((r) => (Number(r.id) === Number(updated.id) ? { ...r, ...updated } : r)));
+  }, []);
 
   if (!accessToken) return null;
 
@@ -574,7 +672,14 @@ export default function AdminProfesoresSuperSection({
       </section>
 
       {isSuperAdmin && fichaRow ? (
-        <ProfesorFichaModal row={fichaRow} isSuperAdmin={isSuperAdmin} onClose={() => setFichaRow(null)} t={t} />
+        <ProfesorFichaModal
+          row={fichaRow}
+          isSuperAdmin={isSuperAdmin}
+          accessToken={accessToken}
+          onClose={() => setFichaRow(null)}
+          onRowUpdate={handleFichaRowUpdate}
+          t={t}
+        />
       ) : null}
     </div>
   );
