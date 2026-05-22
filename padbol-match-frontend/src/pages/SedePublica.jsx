@@ -47,6 +47,46 @@ const FOTOS_DESTACADAS_MAX = 4;
 
 const toHttps = (url) => (url ? url.replace(/^http:\/\//, 'https://') : url);
 
+const SEDE_HTTPS_SCALAR_KEYS = [
+  'logo_url',
+  'whatsapp_url',
+  'whatsapp',
+  'instagram',
+  'facebook',
+  'tiktok',
+  'twitter',
+  'youtube',
+  'website',
+];
+
+/** Normaliza URLs http→https al cargar sede (evita mixed content en /sede/:id). */
+function normalizeSedeHttps(sede) {
+  if (!sede || typeof sede !== 'object') return sede;
+  const out = { ...sede };
+  for (const k of SEDE_HTTPS_SCALAR_KEYS) {
+    if (out[k] != null && String(out[k]).trim()) {
+      out[k] = toHttps(String(out[k]).trim());
+    }
+  }
+  if (Array.isArray(out.fotos_urls)) {
+    out.fotos_urls = out.fotos_urls
+      .map((u) => toHttps(String(u || '').trim()))
+      .filter(Boolean);
+  }
+  if (Array.isArray(out.fotos_destacadas)) {
+    out.fotos_destacadas = out.fotos_destacadas
+      .map((u) => toHttps(String(u || '').trim()))
+      .filter(Boolean);
+  }
+  return out;
+}
+
+function torneoImagenPublicaUrl(torneo) {
+  if (!torneo) return null;
+  const u = String(torneo.foto_url || torneo.imagen_url || '').trim();
+  return u ? toHttps(u) : null;
+}
+
 function sedePhotoUrlKey(url) {
   return toHttps(String(url || '').trim());
 }
@@ -225,20 +265,11 @@ function IconBrandWhatsapp() {
   );
 }
 
-function IconUserCheck() {
+function IconUser() {
   return (
     <SedeInfoTablerIcon>
       <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-      <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
-      <path d="M15 19l2 2l4 -4" />
-    </SedeInfoTablerIcon>
-  );
-}
-
-function IconStar() {
-  return (
-    <SedeInfoTablerIcon>
-      <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5.388 -5.252l7.451 -1.083l3.33 -6.747l3.33 6.747l7.451 1.083l-5.388 5.252l1.179 6.873z" />
+      <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
     </SedeInfoTablerIcon>
   );
 }
@@ -526,117 +557,51 @@ function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
   );
 }
 
-function SedeInformacionClub({
-  sede,
-  horario,
-  estadisticasPublicas,
-  proximoTorneo,
-  instructoresCount,
-  resenasResumen,
-  lang,
-  t,
-}) {
-  const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
-  const torneosTotal = Number(estadisticasPublicas?.torneos_realizados_total) || 0;
-  const ubicacion = [sede?.direccion, sede?.ciudad, sede?.pais].filter(Boolean).join(', ');
-  const waHref = toHttps(whatsappHrefSede(sede));
+function SedeInfoRow({ icon, label, value }) {
+  return (
+    <div className="sede-publica-info-club__row">
+      <div className="sede-publica-info-club__left">
+        <span className="sede-publica-info-club__icon">{icon}</span>
+        <span className="sede-publica-info-club__label">{label}</span>
+      </div>
+      <div className="sede-publica-info-club__value">{value}</div>
+    </div>
+  );
+}
 
+function SedeInformacionClub({ sede, horario, proximoTorneo, primerInstructor, lang, t }) {
+  const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
+  const canchasCount = canchas.length;
+  const ubicacion = [sede?.direccion, sede?.ciudad, sede?.pais].filter(Boolean).join(', ');
+  const waHref = whatsappHrefSede(sede);
+
+  const proximoTorneoNombre = proximoTorneo ? String(proximoTorneo.nombre || '').trim() : '';
   const proximoTorneoFecha = proximoTorneo
     ? formatFechaDiaMesPublica(proximoTorneo.fecha_inicio, lang)
     : '';
   const proximoTorneoValor =
-    proximoTorneo && proximoTorneoFecha
-      ? `${String(proximoTorneo.nombre || '').trim()} · ${proximoTorneoFecha}`
-      : proximoTorneo
-        ? String(proximoTorneo.nombre || '').trim()
-        : null;
+    proximoTorneoNombre && proximoTorneoFecha
+      ? `${proximoTorneoNombre} · ${proximoTorneoFecha}`
+      : proximoTorneoNombre || proximoTorneoFecha || null;
+  const proximoTorneoBanner = torneoImagenPublicaUrl(proximoTorneo);
 
-  const resenasTotal = Number(resenasResumen?.total) || 0;
-  const resenasPromedio = Number(resenasResumen?.promedio);
-  const resenasValor =
-    resenasTotal > 0 && Number.isFinite(resenasPromedio)
-      ? t('sedes.publica.resenas', {
-          rating: resenasPromedio.toFixed(1),
-          count: resenasTotal,
-          defaultValue: `★ ${resenasPromedio.toFixed(1)} (${resenasTotal} reseñas)`,
-        })
-      : null;
-
-  const instructoresValor =
-    instructoresCount > 0
-      ? t('sedes.publica.instructoresCertificados', {
-          count: instructoresCount,
-          defaultValue: `${instructoresCount} instructor(es) certificado(s)`,
-        })
-      : null;
-
-  const rows = [
-    proximoTorneoValor
-      ? {
-          key: 'proximo-torneo',
-          icon: <IconTrophy />,
-          label: t('sedes.publica.proximoTorneo', { defaultValue: 'Próximo torneo' }),
-          value: proximoTorneoValor,
-        }
-      : null,
-    instructoresValor
-      ? {
-          key: 'instructores',
-          icon: <IconUserCheck />,
-          label: null,
-          value: instructoresValor,
-        }
-      : null,
-    resenasValor
-      ? {
-          key: 'resenas',
-          icon: <IconStar />,
-          label: null,
-          value: resenasValor,
-        }
-      : null,
-    {
-      key: 'torneos',
-      icon: <IconTrophy />,
-      label: t('sedes.publica.infoTorneos', { defaultValue: 'Torneos realizados' }),
-      value: torneosTotal > 0 ? torneosTotal.toLocaleString('es-AR') : '—',
-    },
-    {
-      key: 'canchas',
-      icon: <IconLayoutGrid />,
-      label: t('sedes.publica.infoCanchas', { defaultValue: 'Canchas disponibles' }),
-      value: canchas.length > 0 ? String(canchas.length) : '—',
-    },
-    {
-      key: 'ubicacion',
-      icon: <IconMapPin />,
-      label: t('sedes.publica.infoUbicacion', { defaultValue: 'Ubicación' }),
-      value: ubicacion || '—',
-    },
-    {
-      key: 'horario',
-      icon: <IconClock />,
-      label: t('sedes.publica.infoHorario', { defaultValue: 'Horario' }),
-      value: horario ? horario : '—',
-    },
-    {
-      key: 'whatsapp',
-      icon: <IconBrandWhatsapp />,
-      label: 'WhatsApp',
-      value: waHref ? (
-        <a href={waHref} target="_blank" rel="noopener noreferrer">
-          {t('sedes.publica.whatsappCta', { defaultValue: 'Escribinos por WhatsApp' })}
-        </a>
-      ) : (
-        '—'
-      ),
-    },
-  ].filter(Boolean);
+  const instructorNombre = primerInstructor ? String(primerInstructor.nombre || '').trim() : '';
+  const instructorFoto = primerInstructor?.foto_url
+    ? toHttps(String(primerInstructor.foto_url).trim())
+    : null;
 
   const socialItems = SEDE_INFO_SOCIAL_META.filter((m) => {
     const v = sede?.[m.key];
     return v != null && String(v).trim() !== '';
   });
+
+  const canchasValor =
+    canchasCount > 0
+      ? t('sedes.publica.canchasDisponibles', {
+          count: canchasCount,
+          defaultValue: `${canchasCount} cancha${canchasCount === 1 ? '' : 's'} disponible${canchasCount === 1 ? '' : 's'}`,
+        })
+      : '—';
 
   return (
     <section
@@ -644,34 +609,80 @@ function SedeInformacionClub({
       aria-labelledby="sede-info-club-title"
     >
       <h2 id="sede-info-club-title" className="sede-publica-info-club__title">
-        {t('sedes.publica.infoClub', { defaultValue: 'Información del club' })}
+        {t('sedes.publica.infoTitulo', { defaultValue: 'Información' })}
       </h2>
-      <ul className="sede-publica-info-club__list">
-        {rows.map((row) => (
-          <li key={row.key} className="sede-publica-info-club__row">
-            <span className="sede-publica-info-club__icon">{row.icon}</span>
-            <div className="sede-publica-info-club__body">
-              {row.label ? (
-                <span className="sede-publica-info-club__label">{row.label}</span>
-              ) : null}
-              <span
-                className={
-                  row.label
-                    ? 'sede-publica-info-club__value'
-                    : 'sede-publica-info-club__value sede-publica-info-club__value--solo'
-                }
-              >
-                {row.value}
+      <div className="sede-publica-info-club__grid">
+        <SedeInfoRow
+          icon={<IconClock />}
+          label={t('sedes.publica.infoHorario', { defaultValue: 'Horario' })}
+          value={horario || '—'}
+        />
+        <SedeInfoRow
+          icon={<IconLayoutGrid />}
+          label={t('sedes.publica.infoCanchas', { defaultValue: 'Canchas' })}
+          value={canchasValor}
+        />
+        {proximoTorneoValor ? (
+          <div className="sede-publica-info-club__block">
+            <SedeInfoRow
+              icon={<IconTrophy />}
+              label={t('sedes.publica.proximoTorneo', { defaultValue: 'Próximo torneo' })}
+              value={proximoTorneoValor}
+            />
+            {proximoTorneoBanner ? (
+              <img
+                src={proximoTorneoBanner}
+                alt=""
+                className="sede-publica-info-club__torneo-banner"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : null}
+          </div>
+        ) : null}
+        {instructorNombre ? (
+          <SedeInfoRow
+            icon={<IconUser />}
+            label={t('sedes.publica.instructorCertificado', {
+              defaultValue: 'Instructor certificado',
+            })}
+            value={
+              <span className="sede-publica-info-club__instructor">
+                {instructorFoto ? (
+                  <img
+                    src={instructorFoto}
+                    alt=""
+                    className="sede-publica-info-club__instructor-photo"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : null}
+                <span className="sede-publica-info-club__instructor-name">{instructorNombre}</span>
               </span>
-            </div>
-          </li>
-        ))}
-      </ul>
+            }
+          />
+        ) : null}
+        <SedeInfoRow
+          icon={<IconMapPin />}
+          label={t('sedes.publica.infoDireccion', { defaultValue: 'Dirección' })}
+          value={ubicacion || '—'}
+        />
+        <SedeInfoRow
+          icon={<IconBrandWhatsapp />}
+          label="WhatsApp"
+          value={
+            waHref ? (
+              <a href={waHref} target="_blank" rel="noopener noreferrer">
+                {t('sedes.publica.whatsappCta', { defaultValue: 'Escribinos por WhatsApp' })}
+              </a>
+            ) : (
+              '—'
+            )
+          }
+        />
+      </div>
       {socialItems.length > 0 ? (
         <div className="sede-publica-info-club__social">
-          <p className="sede-publica-info-club__social-label">
-            {t('sedes.publica.seguinosEn', { defaultValue: 'Seguinos en' })}
-          </p>
           <div className="sede-publica-info-club__social-icons">
             {socialItems.map((m) => {
               const Icon = m.Icon;
@@ -2217,6 +2228,7 @@ export default function SedePublica() {
       if (next.imagen_url != null) next.imagen_url = toHttps(String(next.imagen_url).trim());
       if (next.logo_url != null) next.logo_url = toHttps(String(next.logo_url).trim());
       if (next.logoUrl != null) next.logoUrl = toHttps(String(next.logoUrl).trim());
+      if (next.url_destino != null) next.url_destino = toHttps(String(next.url_destino).trim());
       return next;
     });
   }, [sedeTickerSponsors]);
@@ -2234,8 +2246,7 @@ export default function SedePublica() {
   const [fotosGalleryOpen, setFotosGalleryOpen] = useState(false);
   const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
   const [torneosSedeLista, setTorneosSedeLista] = useState([]);
-  const [instructoresCount, setInstructoresCount] = useState(0);
-  const [resenasResumen, setResenasResumen] = useState(null);
+  const [primerInstructor, setPrimerInstructor] = useState(null);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
   const [duracionesOferta, setDuracionesOferta] = useState([]);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
@@ -2305,23 +2316,35 @@ export default function SedePublica() {
       return;
     }
     let cancelled = false;
-    supabase
-      .from('torneos')
-      .select('id, nombre, fecha_inicio, fecha_fin, estado')
-      .eq('sede_id', id)
-      .order('fecha_inicio', { ascending: true })
-      .limit(48)
-      .then(({ data, error: qErr }) => {
-        if (cancelled) return;
-        if (qErr || !Array.isArray(data)) {
-          setTorneosSedeLista([]);
-          return;
-        }
-        setTorneosSedeLista(data);
-      })
-      .catch(() => {
-        if (!cancelled) setTorneosSedeLista([]);
-      });
+    const torneoSelectBase = 'id, nombre, fecha_inicio, fecha_fin, estado';
+    const loadTorneos = async () => {
+      const q = (fields) =>
+        supabase
+          .from('torneos')
+          .select(fields)
+          .eq('sede_id', id)
+          .order('fecha_inicio', { ascending: true })
+          .limit(48);
+      let { data, error: qErr } = await q(`${torneoSelectBase}, foto_url, imagen_url`);
+      if (qErr) {
+        ({ data, error: qErr } = await q(torneoSelectBase));
+      }
+      if (cancelled) return;
+      if (qErr || !Array.isArray(data)) {
+        setTorneosSedeLista([]);
+        return;
+      }
+      setTorneosSedeLista(
+        data.map((row) => ({
+          ...row,
+          foto_url: row.foto_url ? toHttps(String(row.foto_url).trim()) : row.foto_url,
+          imagen_url: row.imagen_url ? toHttps(String(row.imagen_url).trim()) : row.imagen_url,
+        }))
+      );
+    };
+    loadTorneos().catch(() => {
+      if (!cancelled) setTorneosSedeLista([]);
+    });
     return () => {
       cancelled = true;
     };
@@ -2329,61 +2352,35 @@ export default function SedePublica() {
 
   useEffect(() => {
     if (!sedeId) {
-      setInstructoresCount(0);
+      setPrimerInstructor(null);
       return;
     }
     const id = parseInt(String(sedeId), 10);
     if (!Number.isFinite(id)) {
-      setInstructoresCount(0);
+      setPrimerInstructor(null);
       return;
     }
     let cancelled = false;
     const ac = new AbortController();
     fetchProfesores({ sedeId: id, signal: ac.signal })
       .then((list) => {
-        if (!cancelled) setInstructoresCount(Array.isArray(list) ? list.length : 0);
+        if (cancelled) return;
+        const arr = Array.isArray(list) ? list : [];
+        const first =
+          arr.find((p) => p && String(p.nombre || '').trim()) || arr[0] || null;
+        if (!first) {
+          setPrimerInstructor(null);
+          return;
+        }
+        const foto = first.foto_url ? toHttps(String(first.foto_url).trim()) : null;
+        setPrimerInstructor({ ...first, foto_url: foto });
       })
       .catch(() => {
-        if (!cancelled) setInstructoresCount(0);
+        if (!cancelled) setPrimerInstructor(null);
       });
     return () => {
       cancelled = true;
       ac.abort();
-    };
-  }, [sedeId]);
-
-  useEffect(() => {
-    if (!sedeId) {
-      setResenasResumen(null);
-      return;
-    }
-    const id = parseInt(String(sedeId), 10);
-    if (!Number.isFinite(id)) {
-      setResenasResumen(null);
-      return;
-    }
-    let cancelled = false;
-    fetch(apiUrlResenas(`/api/sedes/${id}/resenas?limit=1&offset=0`))
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}));
-        if (cancelled) return;
-        if (!r.ok) {
-          setResenasResumen(null);
-          return;
-        }
-        const total = Number(j?.total) || 0;
-        const promedio = j?.promedio != null ? Number(j.promedio) : null;
-        setResenasResumen(
-          total > 0 && promedio != null && Number.isFinite(promedio)
-            ? { total, promedio }
-            : null
-        );
-      })
-      .catch(() => {
-        if (!cancelled) setResenasResumen(null);
-      });
-    return () => {
-      cancelled = true;
     };
   }, [sedeId]);
 
@@ -2419,7 +2416,7 @@ export default function SedePublica() {
             setDuracionesOferta([]);
           } else {
             setError('');
-            setSede(rest);
+            setSede(normalizeSedeHttps(rest));
             setEstadisticasPublicas(stats ?? null);
             setDuracionesOferta(Array.isArray(durOferta) ? durOferta : []);
             sedeLoaded = true;
@@ -2436,7 +2433,7 @@ export default function SedePublica() {
           else if (!data) setError(`Sede con id ${sedeId} no encontrada.`);
           else {
             setError('');
-            setSede(data);
+            setSede(normalizeSedeHttps(data));
             setEstadisticasPublicas(null);
             setDuracionesOferta([]);
           }
@@ -2654,10 +2651,8 @@ export default function SedePublica() {
             <SedeInformacionClub
               sede={sede}
               horario={horario}
-              estadisticasPublicas={estadisticasPublicas}
               proximoTorneo={proximoTorneoInfo}
-              instructoresCount={instructoresCount}
-              resenasResumen={resenasResumen}
+              primerInstructor={primerInstructor}
               lang={padbolLang}
               t={t}
             />

@@ -147,7 +147,7 @@
     0 0 0 1px rgba(255, 255, 255, 0.2),
     0 0 40px rgba(255, 255, 255, 0.25),
     0 8px 32px rgba(0, 0, 0, 0.8);
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.6) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,6 +163,7 @@
   padding: 0;
   box-sizing: border-box;
   display: block;
+  background: transparent;
 }
 
 .sede-publica-hero-immersive__logo-fallback {
@@ -384,80 +385,81 @@
   letter-spacing: 0.02em;
 }
 
-/* Información del club */
+/* Información del club — grid compacto */
+.sede-publica-info-club {
+  padding: 12px 14px;
+}
+
 .sede-publica-info-club__title {
-  margin: 0 0 14px;
-  padding-bottom: 8px;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: 0.02em;
-  border-bottom: 2px solid var(--accent);
-  width: fit-content;
+  margin: 0 0 10px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: none;
+  width: auto;
   max-width: 100%;
 }
 
-.sede-publica-info-club__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.sede-publica-info-club__grid {
+  display: flex;
+  flex-direction: column;
 }
 
 .sede-publica-info-club__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 13px 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 32px;
+  padding: 0;
+  border-top: 0.5px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
 .sede-publica-info-club__row:first-child {
   border-top: none;
-  padding-top: 0;
+}
+
+.sede-publica-info-club__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .sede-publica-info-club__icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 18px;
+  height: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-card));
-  color: var(--accent);
-}
-
-.sede-publica-info-club__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  color: var(--text-secondary);
+  background: none;
+  border-radius: 0;
 }
 
 .sede-publica-info-club__label {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .sede-publica-info-club__value {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  line-height: 1.45;
+  line-height: 1.3;
+  text-align: right;
   word-break: break-word;
-}
-
-.sede-publica-info-club__value--solo {
-  font-size: 14px;
 }
 
 .sede-publica-info-club__value a {
   color: var(--accent);
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -465,23 +467,63 @@
   text-decoration: underline;
 }
 
-.sede-publica-info-club__social {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+.sede-publica-info-club__block {
+  border-top: 0.5px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
-.sede-publica-info-club__social-label {
-  margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
+.sede-publica-info-club__block:first-child {
+  border-top: none;
+}
+
+.sede-publica-info-club__block .sede-publica-info-club__row {
+  border-top: none;
+}
+
+.sede-publica-info-club__torneo-banner {
+  display: block;
+  width: 100%;
+  max-height: 80px;
+  margin: 0 0 8px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.sede-publica-info-club__instructor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.sede-publica-info-club__instructor-photo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-input);
+}
+
+.sede-publica-info-club__instructor-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+  text-align: right;
+  word-break: break-word;
+}
+
+.sede-publica-info-club__social {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 0.5px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
 .sede-publica-info-club__social-icons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -489,19 +531,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-card));
+  border: none;
   text-decoration: none;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .sede-publica-info-club__social-link:hover {
-  background: color-mix(in srgb, var(--accent) 16%, var(--bg-card));
-  transform: translateY(-1px);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-card));
 }
 
 .sede-publica-info-club__social-link:focus-visible {
