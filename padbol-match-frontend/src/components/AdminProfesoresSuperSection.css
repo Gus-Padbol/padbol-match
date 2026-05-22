@@ -383,6 +383,9 @@
 }
 
 .admin-profesores-super__ficha-deporte-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text-primary);

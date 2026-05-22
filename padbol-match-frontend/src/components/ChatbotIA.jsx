@@ -12,6 +12,7 @@ import {
   isSedeProfilePathname,
 } from '../constants/hubLayout';
 import { hasDeportesPreferidosCargados } from '../constants/deportesPreferidos';
+import { DeporteIcono } from '../utils/deporteIcono';
 import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
@@ -1724,6 +1725,9 @@ export default function ChatbotIA() {
                             disabled={loading || sessionEnded}
                             onClick={() => void sendMessage(slug)}
                             style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
                               padding: '6px 10px',
                               borderRadius: 8,
                               border: `1px solid ${c.chipBorder}`,
@@ -1736,6 +1740,7 @@ export default function ChatbotIA() {
                               WebkitTapHighlightColor: 'transparent',
                             }}
                           >
+                            <DeporteIcono deporte={slug} size={16} color={c.chipColor} />
                             {ui.deporteElegirLabel(slug)}
                           </button>
                         ))}

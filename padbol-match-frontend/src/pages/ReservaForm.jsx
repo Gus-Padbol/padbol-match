@@ -61,6 +61,7 @@ import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { DeporteIcono } from '../utils/deporteIcono';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -567,20 +568,6 @@ function reservaDeporteFallbackEnPais(disponibles) {
     if (disponibles.has(opt.key)) return opt.key;
   }
   return RESERVA_DEPORTE_DEFAULT;
-}
-
-const RESERVA_DEPORTE_EMOJI = {
-  padbol: '🏓',
-  padel: '🎾',
-  pickleball: '🏓',
-  squash: '🎾',
-  tenis: '🎾',
-  futbol_5: '⚽',
-  futbol_7: '⚽',
-};
-
-function emojiDeporteReserva(key) {
-  return RESERVA_DEPORTE_EMOJI[String(key || '').trim().toLowerCase()] || '⚽';
 }
 
 function etiquetaDeporteReserva(t, key) {
@@ -2368,7 +2355,7 @@ export default function ReservaForm() {
                       }}
                     >
                       <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                        {emojiDeporteReserva(opt.key)}
+                        <DeporteIcono deporte={opt.key} size={22} />
                       </span>
                       <span className="reserva-sede-deporte-chip-btn-label">
                         {etiquetaDeporteReserva(t, opt.key)}
@@ -2411,7 +2398,7 @@ export default function ReservaForm() {
                         }}
                       >
                         <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                          ⚽
+                          <DeporteIcono deporte="futbol" size={22} />
                         </span>
                         <span className="reserva-sede-deporte-chip-btn-label">
                           {t('reservas.sportFutbolGroup')}
@@ -2458,7 +2445,7 @@ export default function ReservaForm() {
           {filtros.pais ? (
             <p className="reserva-sede-deporte-activo" role="status">
               <span className="reserva-sede-deporte-activo-emoji" aria-hidden>
-                {emojiDeporteReserva(reservaDeporteUrl)}
+                <DeporteIcono deporte={reservaDeporteUrl} size={20} />
               </span>
               {t('reservas.reservandoPara', { deporte: etiquetaDeporteReserva(t, reservaDeporteUrl) })}
             </p>
@@ -2509,7 +2496,7 @@ export default function ReservaForm() {
                             <img src={foto} alt="" className="reserva-sede-card-photo" loading="lazy" />
                           ) : (
                             <div className="reserva-sede-card-photo-placeholder" aria-hidden>
-                              ⚽
+                              <DeporteIcono deporte={reservaDeporteUrl} size={40} color="var(--text-secondary)" />
                             </div>
                           )}
                         </div>
@@ -2525,6 +2512,7 @@ export default function ReservaForm() {
                                     </span>
                                   ) : null}
                                   <span className="reserva-sede-card-deporte-chip">
+                                    <DeporteIcono deporte={depKey} size={14} />
                                     {etiquetaDeporteReserva(t, depKey)}
                                   </span>
                                 </React.Fragment>

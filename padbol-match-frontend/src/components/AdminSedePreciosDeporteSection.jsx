@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { DeporteIcono } from '../utils/deporteIcono';
 import { parsePrecioDeporteInput } from '../utils/sedePreciosDeporte';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
@@ -173,7 +174,12 @@ export default function AdminSedePreciosDeporteSection({ apiBaseUrl, accessToken
 
                 return (
                   <tr key={opt.key}>
-                    <td className="admin-precios-deporte-table__deporte">{opt.label}</td>
+                    <td className="admin-precios-deporte-table__deporte">
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                        <DeporteIcono deporte={opt.key} size={20} color="var(--text-primary)" />
+                        {opt.label}
+                      </span>
+                    </td>
                     {editing ? (
                       <>
                         <td>

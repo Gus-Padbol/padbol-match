@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { DeporteIcono } from '../utils/deporteIcono';
 import { supabase } from '../supabaseClient';
 import {
   buildFullWhatsDigits,
@@ -382,6 +383,7 @@ function InstructorFipaSolicitudModal({
                   className={`instructor-fipa-deporte-chip${form.deportes.includes(d.key) ? ' instructor-fipa-deporte-chip--on' : ''}`}
                   onClick={() => toggleDeporte(d.key)}
                 >
+                  <DeporteIcono deporte={d.key} size={16} />
                   {d.label}
                 </button>
               ))}

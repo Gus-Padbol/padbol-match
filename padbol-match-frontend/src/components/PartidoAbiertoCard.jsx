@@ -1,21 +1,25 @@
 import React from 'react';
+import { DeporteIcono } from '../utils/deporteIcono';
+import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 
 export const DEPORTE_LABEL_PARTIDO_ABIERTO = {
   padbol: 'Padbol',
   padel: 'Pádel',
   tenis: 'Tenis',
   pickleball: 'Pickleball',
+  squash: 'Squash',
   futbol_5: 'Fútbol 5',
   futbol_7: 'Fútbol 7',
 };
 
 const DEPORTE_HERO = {
-  padbol: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
-  padel: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
-  tenis: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
-  pickleball: 'https://images.unsplash.com/photo-1622163642998-1ea36b1adcd3?w=800&q=80',
-  futbol_5: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
-  futbol_7: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
+  padbol: hubCardPhotoPorDeporte('padbol', 'buscar_partido') || 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
+  padel: hubCardPhotoPorDeporte('padel', 'buscar_partido') || 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
+  tenis: hubCardPhotoPorDeporte('tenis', 'buscar_partido') || 'https://images.unsplash.com/photo-1595435934249-5df7ed86e2c1?w=800&q=80',
+  pickleball: hubCardPhotoPorDeporte('pickleball', 'buscar_partido') || 'https://images.unsplash.com/photo-1622163642998-1ea36b1adcd3?w=800&q=80',
+  squash: hubCardPhotoPorDeporte('squash', 'buscar_partido') || 'https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?w=800&q=80',
+  futbol_5: hubCardPhotoPorDeporte('futbol_5', 'buscar_partido') || 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
+  futbol_7: hubCardPhotoPorDeporte('futbol_7', 'buscar_partido') || 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
 };
 
 function fechaPartidoLabel(fecha) {
@@ -111,8 +115,24 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
           </div>
         </div>
 
-        <h3 style={{ margin: '0 0 10px', fontSize: compact ? 17 : 18, lineHeight: 1.25, fontWeight: 700, color: 'var(--text-primary)' }}>
-          {DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido'} · {partido?.sede_nombre || 'Sede'}
+        <h3
+          style={{
+            margin: '0 0 10px',
+            fontSize: compact ? 17 : 18,
+            lineHeight: 1.25,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          <DeporteIcono deporte={partido?.deporte} size={20} color="var(--accent)" />
+          <span>
+            {DEPORTE_LABEL_PARTIDO_ABIERTO[partido?.deporte] || partido?.deporte || 'Partido'} ·{' '}
+            {partido?.sede_nombre || 'Sede'}
+          </span>
         </h3>
         <ul
           style={{

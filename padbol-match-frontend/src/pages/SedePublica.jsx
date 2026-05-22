@@ -28,6 +28,7 @@ import { getDisplayName } from '../utils/displayName';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { DeporteIcono } from '../utils/deporteIcono';
 import {
   esInscripcionAbiertaTorneo,
   esEstadoEnCursoTorneo,
@@ -441,7 +442,7 @@ function SedeDeportesChipsHero({ deportes, t }) {
     <div className="sede-publica-hero-immersive__deportes" role="list" aria-label={aria}>
       {deportes.map((d) => (
         <span key={d.key} className="sede-publica-hero-immersive__deporte-chip" role="listitem">
-          <span className="sede-publica-hero-immersive__deporte-dot" aria-hidden />
+          <DeporteIcono deporte={d.key} size={14} color="#fff" className="sede-publica-hero-immersive__deporte-icon" />
           {d.label}
         </span>
       ))}

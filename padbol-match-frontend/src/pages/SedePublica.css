@@ -248,12 +248,9 @@
   pointer-events: auto;
 }
 
-.sede-publica-hero-immersive__deporte-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--accent);
+.sede-publica-hero-immersive__deporte-icon {
   flex-shrink: 0;
+  color: #fff;
 }
 
 .sede-publica-licencia--inactiva {

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HubDeporteSelect from '../HubDeporteSelect';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../constants/deportesCanchaSede';
+import { DeporteIcono } from '../../utils/deporteIcono';
 import { readHubDeporteFilterPersisted, writeHubDeporteFilterToSession } from '../../constants/hubDeporteSession';
 import { fetchClases, fetchProfesores } from '../../utils/clasesApi';
 import { stripProfesorPublic } from '../../utils/profesorPublic';
@@ -62,8 +63,11 @@ function ClaseMiniCard({ clase, onClick }) {
       cursor: 'pointer', boxSizing: 'border-box', fontFamily: 'inherit', color: 'inherit',
     }}>
       <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-primary)', marginBottom: 4 }}>{clase.titulo}</div>
-      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-        {labelDeporte(clase.deporte)} · {tipo}
+      <div style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <DeporteIcono deporte={clase.deporte} size={16} />
+        <span>
+          {labelDeporte(clase.deporte)} · {tipo}
+        </span>
         {clase.precio != null ? ` · desde $${Math.round(Number(clase.precio)).toLocaleString('es-AR')}` : ''}
       </div>
     </button>

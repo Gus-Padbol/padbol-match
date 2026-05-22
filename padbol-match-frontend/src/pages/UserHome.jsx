@@ -24,6 +24,7 @@ import {
   writeHubDeporteFilterToSession,
 } from '../constants/hubDeporteSession';
 import { hubCardPhotoFallback, hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
+import { DeporteIcono } from '../utils/deporteIcono';
 import { pickHubDeporteRow, dedupeHubDeporteConfigRows, hubDeporteRowImagenUrl } from '../utils/hubDeporteConfig';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import HubThemeSettingsButton from '../components/HubThemeSettingsButton';
@@ -780,7 +781,16 @@ export default function UserHome() {
                           padding: '10px 12px',
                         }}
                       >
-                        <span className="hub-surface-card__title" style={{ fontSize: 16 }}>
+                        <span
+                          className="hub-surface-card__title"
+                          style={{
+                            fontSize: 16,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          <DeporteIcono deporte={tile.deporte} size={20} color="#fff" />
                           {tile.label}
                         </span>
                       </div>

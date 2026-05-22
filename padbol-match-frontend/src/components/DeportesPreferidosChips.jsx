@@ -1,5 +1,6 @@
 import React from 'react';
 import { DEPORTES_PREFERIDOS_OPCIONES, normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
+import { DeporteIcono } from '../utils/deporteIcono';
 
 /**
  * Chips multi-selección para `jugadores_perfil.deportes_preferidos` (claves canónicas).
@@ -23,6 +24,9 @@ export default function DeportesPreferidosChips({ value, onChange, disabled }) {
               onChange(next);
             }}
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
               padding: '8px 14px',
               borderRadius: 9999,
               border: on ? '2px solid #E11B22' : '1px solid #cbd5e1',
@@ -35,6 +39,7 @@ export default function DeportesPreferidosChips({ value, onChange, disabled }) {
               WebkitTapHighlightColor: 'transparent',
             }}
           >
+            <DeporteIcono deporte={key} size={18} color={on ? '#312e81' : '#475569'} />
             {label}
           </button>
         );

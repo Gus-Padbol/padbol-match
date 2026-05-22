@@ -10,6 +10,7 @@ import {
   torneoTipoCompetenciaDb,
 } from '../../utils/torneoFormatters';
 import { resumenDeporteFormatoTorneo } from '../../utils/torneoDeporteFormato';
+import { DeporteIcono } from '../../utils/deporteIcono';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../JugadorPreviewModal';
@@ -2004,8 +2005,9 @@ export default function TorneoTabbedView({
             </span>
           </p>
         ) : null}
-        <p className="torneo-header-meta torneo-header-meta--deporte">
-          🎾 {resumenDeporteFormatoTorneo(torneo)}
+        <p className="torneo-header-meta torneo-header-meta--deporte" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <DeporteIcono deporte={torneo?.deporte} size={18} color="var(--text-secondary)" />
+          <span>{resumenDeporteFormatoTorneo(torneo)}</span>
         </p>
         <p className="torneo-header-meta torneo-header-meta--detalle">
           {formatNivelTorneo(torneo?.nivel_torneo)} • {labelCategoriaTorneo(torneo?.categoria)} •{' '}

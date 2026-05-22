@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { DeporteIcono } from '../utils/deporteIcono';
 import {
   aprobarProfesorAdmin,
   fetchAdminProfesoresTodos,
@@ -268,6 +269,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
                   onClick={() => toggleDeporte(d.key)}
                   disabled={saving}
                 >
+                  <DeporteIcono deporte={d.key} size={16} />
                   {d.label}
                 </button>
               ))}

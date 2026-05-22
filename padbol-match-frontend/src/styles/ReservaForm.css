@@ -841,8 +841,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .reserva-sede-seleccion .reserva-sede-deporte-chip-btn-emoji {
-  font-size: 1rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
 }
 
 .reserva-sede-seleccion .reserva-sede-deporte-chip-btn-label {
@@ -994,9 +997,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .reserva-sede-seleccion .reserva-sede-card-deporte-chip {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 0;
   color: var(--text-secondary);
+  vertical-align: middle;
 }
 
 .reserva-sede-seleccion .reserva-sede-card-deporte-sep {

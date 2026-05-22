@@ -16,6 +16,7 @@ import {
 } from '../constants/hubLayout';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import { DeporteIcono } from '../utils/deporteIcono';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -12773,7 +12774,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <td style={{ padding: '10px 10px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 700 }}>{c.orden ?? '—'}</td>
                         <td style={{ padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)' }}>{c.nombre}</td>
                         <td style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                          {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                            <DeporteIcono deporte={c.deporte} size={18} color="var(--text-secondary)" />
+                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                          </span>
                         </td>
                         <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '180px' }}>
                           {c.descripcion ? (
@@ -12849,7 +12853,17 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         </div>
                         <div className="admin-mi-sede-cancha-card__row">
                           <span className="admin-mi-sede-cancha-card__label">{t('admin.metricas.sportLabel')}</span>
-                          <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
+                          <span
+                            style={{
+                              color: 'var(--text-primary)',
+                              textAlign: 'right',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              justifyContent: 'flex-end',
+                            }}
+                          >
+                            <DeporteIcono deporte={c.deporte} size={18} color="var(--text-primary)" />
                             {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
                           </span>
                         </div>

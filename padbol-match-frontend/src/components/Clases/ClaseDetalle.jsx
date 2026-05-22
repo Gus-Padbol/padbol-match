@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../constants/deportesCanchaSede';
+import { DeporteIcono } from '../../utils/deporteIcono';
 import { cancelarInscripcionClase, fetchClaseDetalle, inscribirClase } from '../../utils/clasesApi';
 import { stripProfesorPublic } from '../../utils/profesorPublic';
 import { labelDiaCorta, nextNDaysFrom, normalizeHoraClase, todayISO } from '../../utils/clasesFechas';
@@ -199,7 +200,11 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
           <strong>Profesor:</strong> {prof.nombre || '—'}
         </div>
 
-        <div><strong>Deporte:</strong> {labelDeporte(clase.deporte)}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <strong>Deporte:</strong>
+          <DeporteIcono deporte={clase.deporte} size={18} />
+          {labelDeporte(clase.deporte)}
+        </div>
         <div><strong>Tipo:</strong> {labelTipo(clase.tipo)}</div>
         <div><strong>Cupo máximo:</strong> {clase.cupo_maximo}</div>
         <div><strong>Duración:</strong> {clase.duracion_minutos} min</div>
