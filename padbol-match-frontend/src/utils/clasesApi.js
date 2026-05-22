@@ -79,6 +79,28 @@ export async function cancelarInscripcionClase({ inscripcionId, accessToken }) {
   return data;
 }
 
+export async function fetchMiSolicitudInstructor({ accessToken, signal } = {}) {
+  const res = await fetch(`${API_BASE}/api/instructor/mi-solicitud`, {
+    headers: authHeaders(accessToken, false),
+    signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(data?.error || 'No se pudo cargar tu solicitud');
+  return data;
+}
+
+export async function postSolicitudInstructor({ body, accessToken }) {
+  const res = await fetch(`${API_BASE}/api/instructor/solicitud`, {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo enviar la solicitud');
+  return data;
+}
+
 export async function fetchMiPerfilProfesor({ accessToken, signal } = {}) {
   const res = await fetch(`${API_BASE}/api/profesor/mi-perfil`, {
     headers: authHeaders(accessToken, false),

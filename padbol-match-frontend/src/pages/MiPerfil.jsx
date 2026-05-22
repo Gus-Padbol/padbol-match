@@ -42,7 +42,7 @@ import {
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
 import { fetchMisClases } from '../utils/clasesApi';
-import MiPerfilProfesorSection from '../components/MiPerfilProfesorSection';
+import InstructorFipaSection from '../components/InstructorFipaSection';
 import { normalizeHoraClase } from '../utils/clasesFechas';
 import {
   whatsappDigitsValido,
@@ -4191,7 +4191,21 @@ export default function MiPerfil() {
         ) : null}
       </div>
 
-      {session?.access_token ? <MiPerfilProfesorSection accessToken={session.access_token} /> : null}
+      {session?.access_token && session?.user?.id ? (
+        <InstructorFipaSection
+          accessToken={session.access_token}
+          userId={session.user.id}
+          prefill={{
+            nombre: formData.nombre || perfil?.nombre,
+            apellido: formData.apellido || perfil?.apellido,
+            genero: formData.genero || perfil?.genero,
+            fecha_nacimiento: formData.fecha_nacimiento || perfil?.fecha_nacimiento,
+            whatsappCodigo: waCodigoPais,
+            whatsappLocal: waNumeroLocal,
+            whatsappFull: perfil?.whatsapp || userProfile?.whatsapp,
+          }}
+        />
+      ) : null}
 
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 20px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
         <button

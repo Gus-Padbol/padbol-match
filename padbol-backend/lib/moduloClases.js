@@ -10,6 +10,11 @@ const PROFESOR_PUBLIC_SELECT = 'id, nombre, apellido, foto_url, bio, deportes, c
 /** Join en clases: aprobado/activo solo para filtros en query, no se exponen al cliente. */
 const PROFESOR_JOIN_PUBLIC_SELECT = `${PROFESOR_PUBLIC_SELECT}, aprobado, activo`;
 
+const PROFESOR_ADMIN_DETAIL_SELECT =
+  'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)';
+
+const GENERO_INSTRUCTOR_VALIDOS = new Set(['masculino', 'femenino', 'no_decir']);
+
 export function registerModuloClasesRoutes(app, deps) {
   const {
     supabase,
@@ -72,6 +77,22 @@ export function registerModuloClasesRoutes(app, deps) {
       throw e;
     }
     return user;
+  }
+
+  function normalizeGeneroInstructor(raw) {
+    const g = String(raw || '').trim().toLowerCase();
+    if (g === 'masculino' || g === 'femenino') return g;
+    if (g === 'no_decir' || g === 'prefiero_no_decir' || g === 'prefiero no decir' || g === 'otro') {
+      return 'no_decir';
+    }
+    return null;
+  }
+
+  function mapProfesorAdminRow(p) {
+    if (!p) return null;
+    const sede = p.sedes;
+    const { sedes: _s, ...rest } = p;
+    return { ...rest, sede_nombre: sede?.nombre ?? null };
   }
 
   async function assertAdminClubOrSuper(req) {
@@ -605,22 +626,12 @@ export function registerModuloClasesRoutes(app, deps) {
       await assertSuperAdminReq(req);
       const { data, error } = await supabase
         .from('profesores')
-        .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, whatsapp, deportes, certificado_fipa, aprobado, activo, created_at, sedes(id, nombre)',
-        )
+        .select(PROFESOR_ADMIN_DETAIL_SELECT)
         .eq('aprobado', false)
         .eq('activo', true)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      const rows = (data || []).map((p) => {
-        const sede = p.sedes;
-        const { sedes: _s, ...rest } = p;
-        return {
-          ...rest,
-          sede_nombre: sede?.nombre ?? null,
-        };
-      });
-      res.json(rows);
+      res.json((data || []).map(mapProfesorAdminRow).filter(Boolean));
     } catch (err) {
       const st = err.status || 500;
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
@@ -636,9 +647,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const estado = String(req.query.estado || 'todos').trim().toLowerCase();
       let q = supabaseAdmin
         .from('profesores')
-        .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, aprobado_por, activo, created_at, updated_at, sedes(id, nombre)',
-        );
+        .select(PROFESOR_ADMIN_DETAIL_SELECT);
       if (estado === 'pendiente') {
         // Alta club: aprobado=false, activo=true (cola de aprobación super admin)
         q = q.eq('aprobado', false).eq('activo', true);
@@ -650,15 +659,7 @@ export function registerModuloClasesRoutes(app, deps) {
         .order('nombre', { ascending: true, foreignTable: 'sedes' })
         .order('nombre', { ascending: true });
       if (error) throw error;
-      const rows = (data || []).map((p) => {
-        const sede = p.sedes;
-        const { sedes: _s, ...rest } = p;
-        return {
-          ...rest,
-          sede_nombre: sede?.nombre ?? null,
-        };
-      });
-      res.json(rows);
+      res.json((data || []).map(mapProfesorAdminRow).filter(Boolean));
     } catch (err) {
       const st = err.status || 500;
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
@@ -775,19 +776,115 @@ export function registerModuloClasesRoutes(app, deps) {
         .from('profesores')
         .update(patch)
         .eq('id', profId)
-        .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)',
-        )
+        .select(PROFESOR_ADMIN_DETAIL_SELECT)
         .single();
       if (error) throw error;
-
-      const sede = data.sedes;
-      const { sedes: _s, ...rest } = data;
-      res.json({ ...rest, sede_nombre: sede?.nombre ?? null });
+      res.json(mapProfesorAdminRow(data));
     } catch (err) {
       const st = err.status || 500;
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
       console.error('❌ PATCH /api/admin/profesores/:id:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** GET /api/instructor/mi-solicitud — fila profesores del usuario (solicitud / instructor) */
+  app.get('/api/instructor/mi-solicitud', async (req, res) => {
+    try {
+      const user = await requireAuthUser(req);
+      const { data, error } = await supabaseAdmin
+        .from('profesores')
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)',
+        )
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: 'Sin solicitud de instructor' });
+      res.json(mapProfesorAdminRow(data));
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET /api/instructor/mi-solicitud:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** POST /api/instructor/solicitud — jugador solicita ser instructor FIPA */
+  app.post('/api/instructor/solicitud', async (req, res) => {
+    try {
+      const user = await requireAuthUser(req);
+      const { data: existing, error: existErr } = await supabaseAdmin
+        .from('profesores')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (existErr) throw existErr;
+      if (existing) {
+        return res.status(409).json({ error: 'Ya tenés una solicitud o ficha de instructor' });
+      }
+
+      const b = req.body || {};
+      const sedeId = Number(b.sede_id);
+      if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id requerido' });
+
+      const nombre = String(b.nombre || '').trim();
+      if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
+
+      const genero = normalizeGeneroInstructor(b.genero);
+      if (!genero) return res.status(400).json({ error: 'genero inválido' });
+
+      const fechaNac = normalizeFechaYmd(b.fecha_nacimiento);
+      if (!fechaNac) return res.status(400).json({ error: 'fecha_nacimiento inválida' });
+
+      const deportes = Array.isArray(b.deportes)
+        ? b.deportes.map((d) => String(d || '').trim().toLowerCase()).filter(Boolean)
+        : [];
+      if (!deportes.length) return res.status(400).json({ error: 'Elegí al menos un deporte' });
+
+      const bio = String(b.bio || '').trim();
+      if (!bio) return res.status(400).json({ error: 'bio requerida' });
+      if (bio.length > 500) return res.status(400).json({ error: 'bio máximo 500 caracteres' });
+
+      const whatsapp = String(b.whatsapp || '').trim();
+      if (!whatsapp) return res.status(400).json({ error: 'whatsapp requerido' });
+
+      const certificadoFipa = Boolean(b.certificado_fipa);
+      if (deportes.includes('padbol') && !certificadoFipa) {
+        return res.status(400).json({ error: 'Certificado FIPA requerido para enseñar Padbol' });
+      }
+
+      const fotoUrl = b.foto_url != null ? String(b.foto_url).trim() || null : null;
+
+      const { data, error } = await supabaseAdmin
+        .from('profesores')
+        .insert([
+          {
+            user_id: user.id,
+            sede_id: sedeId,
+            nombre,
+            apellido: String(b.apellido || '').trim() || null,
+            foto_url: fotoUrl,
+            bio,
+            deportes,
+            certificado_fipa: certificadoFipa,
+            whatsapp,
+            fecha_nacimiento: fechaNac,
+            genero,
+            aprobado: false,
+            activo: true,
+          },
+        ])
+        .select(
+          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)',
+        )
+        .single();
+      if (error) throw error;
+      res.status(201).json(mapProfesorAdminRow(data));
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ POST /api/instructor/solicitud:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
     }
   });

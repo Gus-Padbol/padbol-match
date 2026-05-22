@@ -51,6 +51,23 @@ function formatFecha(iso) {
   });
 }
 
+function formatFechaNac(raw) {
+  const s = String(raw || '').trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '—';
+  const [y, mo, d] = s.split('-').map((x) => parseInt(x, 10));
+  const dt = new Date(y, mo - 1, d);
+  if (Number.isNaN(dt.getTime())) return '—';
+  return dt.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function generoInstructorLabel(t, genero) {
+  const g = String(genero || '').trim().toLowerCase();
+  if (g === 'masculino') return t('instructor.generoMasculino');
+  if (g === 'femenino') return t('instructor.generoFemenino');
+  if (g === 'no_decir') return t('instructor.generoNoDice');
+  return genero || '—';
+}
+
 function waDigitsForUrl(raw) {
   return String(raw || '').replace(/\D/g, '') || '';
 }
@@ -158,6 +175,8 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
         <FichaRow label={t('admin.profesores.fichaId')} value={String(row.id ?? '—')} />
         <FichaRow label={t('admin.profesores.fichaNombre')} value={String(row.nombre || '').trim() || '—'} />
         <FichaRow label={t('admin.profesores.fichaApellido')} value={String(row.apellido || '').trim() || '—'} />
+        <FichaRow label={t('admin.profesores.fichaFechaNac')} value={formatFechaNac(row.fecha_nacimiento)} />
+        <FichaRow label={t('admin.profesores.fichaGenero')} value={generoInstructorLabel(t, row.genero)} />
         <FichaRow label={t('admin.profesores.colSede')} value={row.sede_nombre || (row.sede_id != null ? `ID ${row.sede_id}` : '—')} />
         <FichaRow label={t('admin.profesores.colDeportes')} value={deportesLabel(row.deportes)} />
         <FichaRow label={t('admin.profesores.colCertificado')} value={row.certificado_fipa ? t('admin.profesores.certificadoSi') : '—'} />
@@ -469,6 +488,17 @@ export default function AdminProfesoresSuperSection({
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
                     {t('admin.profesores.colCertificado')}: {certLabel(row)}
                   </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+                    {t('admin.profesores.fichaFechaNac')}: {formatFechaNac(row.fecha_nacimiento)}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+                    {t('admin.profesores.fichaGenero')}: {generoInstructorLabel(t, row.genero)}
+                  </div>
+                  {String(row.bio || '').trim() ? (
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.45 }}>
+                      {t('admin.profesores.fichaBio')}: {String(row.bio).trim()}
+                    </div>
+                  ) : null}
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
                     {t('admin.profesores.colFechaRegistro')}: {formatFecha(row.created_at)}
                   </div>
