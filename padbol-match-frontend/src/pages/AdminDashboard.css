@@ -224,9 +224,8 @@
   }
 }
 
-/* Mi Sede: evitar overflow horizontal en mobile */
+/* Mi Sede: sin overflow en el form (rompe position:sticky del sidebar) */
 .admin-mi-sede-form {
-  overflow-x: hidden;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -308,9 +307,13 @@
 
 .admin-mi-sede-main {
   min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
-@media (min-width: 960px) {
+/* Desktop: sidebar fijo al scroll; móvil (<768px) sin cambios (pills) */
+@media (min-width: 768px) {
   .admin-mi-sede-layout {
     display: grid;
     grid-template-columns: 220px minmax(0, 1fr);
@@ -328,10 +331,14 @@
     gap: 8px;
     position: sticky;
     top: 0;
-    align-self: start;
-    max-height: 100vh;
+    height: 100vh;
     overflow-y: auto;
+    align-self: start;
+    flex-shrink: 0;
     padding: 12px 4px 12px 0;
+    box-sizing: border-box;
+    z-index: 4;
+    background: var(--bg-card);
   }
 
   .admin-mi-sede-form [id^='admin-mi-sede-'] {
