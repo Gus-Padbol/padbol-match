@@ -11247,15 +11247,40 @@ app.get('/api/admin/analytics-globales', async (req, res) => {
   }
 });
 
-/** Cuenta pagos fallidos últimos 7 días (tabla payments si existe; si no, webhook_logs). */
-async function countPagosFallidosAdmin7d() {
+async function sedeNombreByIdAdmin(sedeId) {
+  const sid = Number(sedeId);
+  if (!Number.isFinite(sid)) return null;
+  const { data, error } = await supabaseAdmin.from('sedes').select('nombre').eq('id', sid).maybeSingle();
+  if (error) throw error;
+  const nombre = String(data?.nombre || '').trim();
+  return nombre || null;
+}
+
+/** Cuenta pagos fallidos últimos 7 días (payments si existe; si no webhook_logs). Opcional: filtrar por sede. */
+async function countPagosFallidosAdmin7d({ sedeId = null, sedeNombre = null } = {}) {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { count, error } = await supabaseAdmin
-    .from('payments')
-    .select('id', { count: 'exact', head: true })
-    .in('status', ['failed', 'error'])
-    .gte('created_at', since);
-  if (!error && count != null) return count;
+  const sid = sedeId != null ? Number(sedeId) : null;
+  const nombreSede = sedeNombre != null ? String(sedeNombre).trim() : null;
+  const scopeBySede = Number.isFinite(sid) || Boolean(nombreSede);
+
+  if (Number.isFinite(sid)) {
+    const { count, error } = await supabaseAdmin
+      .from('payments')
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['failed', 'error'])
+      .gte('created_at', since)
+      .eq('sede_id', sid);
+    if (!error && count != null) return count;
+  }
+
+  if (!scopeBySede) {
+    const { count, error } = await supabaseAdmin
+      .from('payments')
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['failed', 'error'])
+      .gte('created_at', since);
+    if (!error && count != null) return count;
+  }
 
   const { data: logs, error: logErr } = await supabaseAdmin
     .from('webhook_logs')
@@ -11270,6 +11295,27 @@ async function countPagosFallidosAdmin7d() {
   let n = 0;
   for (const row of logs || []) {
     const et = String(row.event_type || '').toLowerCase();
+    let matchesSede = !scopeBySede;
+    if (scopeBySede) {
+      const body = row.payload?.body ?? row.payload ?? {};
+      const extRaw =
+        body?.data?.external_reference ??
+        body?.external_reference ??
+        body?.data?.metadata?.external_reference;
+      const ext = parseMercadoPagoExternalReference(extRaw);
+      const extSede = String(ext?.sede || '').trim();
+      const extSid = ext?.sede_id != null && ext.sede_id !== '' ? Number(ext.sede_id) : NaN;
+      if (nombreSede && extSede === nombreSede) matchesSede = true;
+      else if (Number.isFinite(sid) && Number.isFinite(extSid) && extSid === sid) matchesSede = true;
+      const stripeMeta = body?.data?.object?.metadata ?? body?.object?.metadata;
+      if (!matchesSede && stripeMeta) {
+        const mSid =
+          stripeMeta.sede_id != null && stripeMeta.sede_id !== '' ? Number(stripeMeta.sede_id) : NaN;
+        if (Number.isFinite(sid) && Number.isFinite(mSid) && mSid === sid) matchesSede = true;
+      }
+    }
+    if (!matchesSede) continue;
+
     if (et.includes('payment_failed') || et.includes('invoice.payment_failed')) {
       n += 1;
       continue;
@@ -11283,11 +11329,46 @@ async function countPagosFallidosAdmin7d() {
   return n;
 }
 
-/** GET /api/admin/pagos-fallidos — super_admin */
+async function countCancelacionesRecientesAdmin({ sedeNombre = null } = {}) {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  let q = supabaseAdmin
+    .from('reservas')
+    .select('id', { count: 'exact', head: true })
+    .eq('estado', 'cancelada')
+    .gte('updated_at', since);
+  if (sedeNombre) q = q.eq('sede', String(sedeNombre).trim());
+  let { count, error } = await q;
+  if (error) {
+    let q2 = supabaseAdmin
+      .from('reservas')
+      .select('id', { count: 'exact', head: true })
+      .eq('estado', 'cancelada')
+      .gte('created_at', since);
+    if (sedeNombre) q2 = q2.eq('sede', String(sedeNombre).trim());
+    const fallback = await q2;
+    count = fallback.count;
+    error = fallback.error;
+  }
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** GET /api/admin/pagos-fallidos — super_admin o admin_club (alcance sede) */
 app.get('/api/admin/pagos-fallidos', async (req, res) => {
   try {
-    await assertSuperAdminReq(req);
-    const total = await countPagosFallidosAdmin7d();
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope) return res.status(401).json({ error: 'No autorizado' });
+    let sedeId = null;
+    let sedeNombre = null;
+    if (scope.superA) {
+      /* global */
+    } else if (scope.rol === 'admin_club' && scope.sedeId != null) {
+      sedeId = scope.sedeId;
+      sedeNombre = await sedeNombreByIdAdmin(sedeId);
+    } else {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+    const total = await countPagosFallidosAdmin7d({ sedeId, sedeNombre });
     res.json({ total, periodo_dias: 7 });
   } catch (err) {
     const st = err.status || 500;
@@ -11297,27 +11378,21 @@ app.get('/api/admin/pagos-fallidos', async (req, res) => {
   }
 });
 
-/** GET /api/admin/cancelaciones-recientes — super_admin (24 h) */
+/** GET /api/admin/cancelaciones-recientes — super_admin o admin_club (24 h) */
 app.get('/api/admin/cancelaciones-recientes', async (req, res) => {
   try {
-    await assertSuperAdminReq(req);
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    let { count, error } = await supabaseAdmin
-      .from('reservas')
-      .select('id', { count: 'exact', head: true })
-      .eq('estado', 'cancelada')
-      .gte('updated_at', since);
-    if (error) {
-      const fallback = await supabaseAdmin
-        .from('reservas')
-        .select('id', { count: 'exact', head: true })
-        .eq('estado', 'cancelada')
-        .gte('created_at', since);
-      count = fallback.count;
-      error = fallback.error;
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope) return res.status(401).json({ error: 'No autorizado' });
+    let sedeNombre = null;
+    if (scope.superA) {
+      /* global */
+    } else if (scope.rol === 'admin_club' && scope.sedeId != null) {
+      sedeNombre = await sedeNombreByIdAdmin(scope.sedeId);
+    } else {
+      return res.status(403).json({ error: 'Sin permiso' });
     }
-    if (error) throw error;
-    res.json({ total: count ?? 0, periodo_horas: 24 });
+    const total = await countCancelacionesRecientesAdmin({ sedeNombre });
+    res.json({ total, periodo_horas: 24 });
   } catch (err) {
     const st = err.status || 500;
     if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
@@ -11326,46 +11401,68 @@ app.get('/api/admin/cancelaciones-recientes', async (req, res) => {
   }
 });
 
-/** GET /api/admin/alertas-campanita — super_admin: conteos agregados para campanita */
+/** GET /api/admin/alertas-campanita — super_admin (global) o admin_club (su sede) */
 app.get('/api/admin/alertas-campanita', async (req, res) => {
   try {
-    await assertSuperAdminReq(req);
-    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope) return res.status(401).json({ error: 'No autorizado' });
 
-    const [profRes, sedesPendRes, pagosFallidos] = await Promise.all([
-      supabaseAdmin
-        .from('profesores')
-        .select('id', { count: 'exact', head: true })
-        .eq('aprobado', false)
-        .eq('activo', true),
-      supabase.from('sedes_pendientes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-      countPagosFallidosAdmin7d(),
-    ]);
+    const updatedAt = new Date().toISOString();
 
-    let cancelRes = await supabaseAdmin
-      .from('reservas')
-      .select('id', { count: 'exact', head: true })
-      .eq('estado', 'cancelada')
-      .gte('updated_at', since24h);
-    if (cancelRes.error) {
-      cancelRes = await supabaseAdmin
-        .from('reservas')
-        .select('id', { count: 'exact', head: true })
-        .eq('estado', 'cancelada')
-        .gte('created_at', since24h);
+    if (scope.superA) {
+      const [profRes, sedesPendRes, pagosFallidos, cancelaciones24h] = await Promise.all([
+        supabaseAdmin
+          .from('profesores')
+          .select('id', { count: 'exact', head: true })
+          .eq('aprobado', false)
+          .eq('activo', true),
+        supabase.from('sedes_pendientes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+        countPagosFallidosAdmin7d(),
+        countCancelacionesRecientesAdmin(),
+      ]);
+      if (profRes.error) throw profRes.error;
+      if (sedesPendRes.error) throw sedesPendRes.error;
+
+      return res.json({
+        rol: 'super_admin',
+        instructores_pendientes: profRes.count ?? 0,
+        sedes_pendientes: sedesPendRes.count ?? 0,
+        pagos_fallidos: pagosFallidos,
+        cancelaciones_24h: cancelaciones24h,
+        updated_at: updatedAt,
+      });
     }
 
-    if (profRes.error) throw profRes.error;
-    if (sedesPendRes.error) throw sedesPendRes.error;
-    if (cancelRes.error) throw cancelRes.error;
+    if (scope.rol === 'admin_club') {
+      const sid = scope.sedeId;
+      if (!Number.isFinite(sid)) {
+        return res.status(403).json({ error: 'Admin club sin sede asignada' });
+      }
+      const sedeNombre = await sedeNombreByIdAdmin(sid);
+      const [profRes, pagosFallidos, cancelaciones24h] = await Promise.all([
+        supabaseAdmin
+          .from('profesores')
+          .select('id', { count: 'exact', head: true })
+          .eq('aprobado', false)
+          .eq('activo', true)
+          .eq('sede_id', sid),
+        countPagosFallidosAdmin7d({ sedeId: sid, sedeNombre }),
+        countCancelacionesRecientesAdmin({ sedeNombre }),
+      ]);
+      if (profRes.error) throw profRes.error;
 
-    res.json({
-      instructores_pendientes: profRes.count ?? 0,
-      sedes_pendientes: sedesPendRes.count ?? 0,
-      pagos_fallidos: pagosFallidos,
-      cancelaciones_24h: cancelRes.count ?? 0,
-      updated_at: new Date().toISOString(),
-    });
+      return res.json({
+        rol: 'admin_club',
+        sede_id: sid,
+        instructores_pendientes: profRes.count ?? 0,
+        sedes_pendientes: 0,
+        pagos_fallidos: pagosFallidos,
+        cancelaciones_24h: cancelaciones24h,
+        updated_at: updatedAt,
+      });
+    }
+
+    return res.status(403).json({ error: 'Sin permiso' });
   } catch (err) {
     const st = err.status || 500;
     if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });

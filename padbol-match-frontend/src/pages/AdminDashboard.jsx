@@ -2301,8 +2301,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if (isSuperAdmin && activeTab === 'profesores') void refreshSnapProfesoresPendientes();
   }, [activeTab, isSuperAdmin, refreshSnapProfesoresPendientes]);
 
+  const puedeUsarCampanita =
+    isSuperAdmin || (esAdminClub && sedeId != null && sedeId !== '');
+
   const refreshCampanitaAlertas = useCallback(async () => {
-    if (!isSuperAdmin) return;
+    if (!puedeUsarCampanita) return;
     setCampanitaLoading(true);
     try {
       const { data: sess } = await supabase.auth.getSession();
@@ -2310,21 +2313,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (!token) return;
       const data = await fetchAdminCampanitaAlertas({ accessToken: token });
       setCampanitaData(data);
-      setSnapPendienteProfesores(data.instructoresPendientes);
-      setSnapPendienteSedes(data.sedesPendientes);
+      if (isSuperAdmin) {
+        setSnapPendienteProfesores(data.instructoresPendientes);
+        setSnapPendienteSedes(data.sedesPendientes);
+      }
     } catch (e) {
       console.warn('[AdminDashboard] campanita:', e?.message || e);
     } finally {
       setCampanitaLoading(false);
     }
-  }, [isSuperAdmin]);
+  }, [puedeUsarCampanita, isSuperAdmin]);
 
   useEffect(() => {
-    if (!isSuperAdmin) return undefined;
+    if (!puedeUsarCampanita) return undefined;
     void refreshCampanitaAlertas();
     const id = window.setInterval(() => void refreshCampanitaAlertas(), 3 * 60 * 1000);
     return () => window.clearInterval(id);
-  }, [isSuperAdmin, refreshCampanitaAlertas]);
+  }, [puedeUsarCampanita, refreshCampanitaAlertas]);
 
   const refetchSolicitudesTabLists = useCallback(() => {
     if (!isSuperAdmin || activeTab !== 'solicitudes') return;
@@ -3579,8 +3584,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ? ''
       : campanitaTs.toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-    if (isSuperAdmin && campanitaData) {
-      const pushCampanita = (id, category, categoryLabel, count, labelKey, tabId, tone = 'danger') => {
+    if (puedeUsarCampanita && campanitaData) {
+      const pushCampanita = (id, category, categoryLabel, count, labelKey, onNavigate, tone = 'danger') => {
         if (!count || count <= 0) return;
         items.push({
           id,
@@ -3590,8 +3595,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           title: `${count} ${t(labelKey)}`,
           timestamp: campanitaTimeLabel,
           actionLabel: '→',
-          onClick: () => irATab(tabId),
+          onClick: onNavigate,
         });
+      };
+      const irAInstructoresClub = () => {
+        irATab('mi_sede');
+        window.setTimeout(() => {
+          document.getElementById('admin-mi-sede-clases')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 120);
       };
       pushCampanita(
         `campanita-instructores-${campanitaData.instructoresPendientes}`,
@@ -3599,23 +3610,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         t('admin.profesores.tab'),
         campanitaData.instructoresPendientes,
         'campanita.instructoresPendientes',
-        'profesores',
+        isSuperAdmin ? () => irATab('profesores') : irAInstructoresClub,
       );
-      pushCampanita(
-        `campanita-sedes-${campanitaData.sedesPendientes}`,
-        'sedes',
-        t('admin.tabs.sedes'),
-        campanitaData.sedesPendientes,
-        'campanita.sedesPendientes',
-        'sedes',
-      );
+      if (isSuperAdmin) {
+        pushCampanita(
+          `campanita-sedes-${campanitaData.sedesPendientes}`,
+          'sedes',
+          t('admin.tabs.sedes'),
+          campanitaData.sedesPendientes,
+          'campanita.sedesPendientes',
+          () => irATab('sedes'),
+        );
+      }
       pushCampanita(
         `campanita-pagos-${campanitaData.pagosFallidos}`,
         'pagos',
         t('admin.tabs.reservas'),
         campanitaData.pagosFallidos,
         'campanita.pagosFallidos',
-        'reservas',
+        () => irATab('reservas'),
         'warning',
       );
       pushCampanita(
@@ -3624,7 +3637,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         t('admin.tabs.reservas'),
         campanitaData.cancelaciones24h,
         'campanita.cancelaciones',
-        'reservas',
+        () => irATab('reservas'),
         'info',
       );
     }
@@ -3742,6 +3755,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     snapPendienteSedes,
     snapPendienteLic,
     campanitaData,
+    puedeUsarCampanita,
+    esAdminClub,
     setSolicitudesFiltroEstado,
     t,
   ]);
@@ -6394,6 +6409,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           >
             {fechaActualLarga}
           </p>
+          {puedeUsarCampanita ? (
           <div className={`admin-campanita-wrap${campanitaLoading ? ' admin-campanita-wrap--loading' : ''}`} style={{ position: 'relative', marginBottom: '12px' }}>
             <button
               type="button"
@@ -6480,6 +6496,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               </div>
             ) : null}
           </div>
+          ) : null}
           {esAdminClub && sedeStatus ? (() => {
             const { numero_licencia, licencia_activa } = sedeStatus;
             if (!numero_licencia) {

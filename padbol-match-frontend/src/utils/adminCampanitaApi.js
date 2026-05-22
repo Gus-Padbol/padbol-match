@@ -3,7 +3,7 @@ const API_BASE =
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com';
 
-/** GET /api/admin/alertas-campanita — conteos para campanita super_admin */
+/** GET /api/admin/alertas-campanita — super_admin (global) o admin_club (su sede) */
 export async function fetchAdminCampanitaAlertas({ accessToken, signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/alertas-campanita`, {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
@@ -12,6 +12,8 @@ export async function fetchAdminCampanitaAlertas({ accessToken, signal } = {}) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || 'No se pudieron cargar las alertas');
   return {
+    rol: data.rol || null,
+    sedeId: data.sede_id != null ? Number(data.sede_id) : null,
     instructoresPendientes: Number(data.instructores_pendientes) || 0,
     sedesPendientes: Number(data.sedes_pendientes) || 0,
     pagosFallidos: Number(data.pagos_fallidos) || 0,
