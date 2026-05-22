@@ -1802,6 +1802,178 @@ function inviteAdminTipoToRol(tipo) {
   return 'admin_club';
 }
 
+/** HH:00 desde hora de reserva (inicio del turno). */
+function horaFranjaReservaAdmin(horaRaw) {
+  const start = String(horaRaw || '').split(' - ')[0].trim();
+  const m = /^(\d{1,2}):(\d{2})/.exec(start);
+  if (!m) return null;
+  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+  return `${String(h).padStart(2, '0')}:00`;
+}
+
+function fechaReservaDiaOCreatedISO(r) {
+  return fechaReservaDiaISO(r?.fecha) || fechaReservaDiaISO(r?.created_at);
+}
+
+function diaCalendarioEnRangoLocal(diaISO, start, end) {
+  if (!diaISO || !/^\d{4}-\d{2}-\d{2}$/.test(diaISO)) return false;
+  const [y, m, d] = diaISO.split('-').map(Number);
+  const fecha = new Date(y, m - 1, d);
+  if (Number.isNaN(fecha.getTime())) return false;
+  return fecha >= start && fecha <= end;
+}
+
+function pctCambioSemana(actual, anterior) {
+  const a = Number(actual) || 0;
+  const p = Number(anterior) || 0;
+  if (p === 0) return a > 0 ? 100 : 0;
+  return Math.round(((a - p) / p) * 100);
+}
+
+function cancelacionBadgeClass(pct) {
+  const n = Number(pct) || 0;
+  if (n < 10) return 'admin-cancelacion-badge admin-cancelacion-badge--ok';
+  if (n <= 20) return 'admin-cancelacion-badge admin-cancelacion-badge--warn';
+  return 'admin-cancelacion-badge admin-cancelacion-badge--danger';
+}
+
+function deporteLabelAdminDash(deporteKey, tr) {
+  const k = String(deporteKey || '').trim().toLowerCase() || 'padbol';
+  if (k === 'padbol') return 'Padbol';
+  return tr(`torneos.deporte.${k}`, { defaultValue: k.replace(/_/g, ' ') });
+}
+
+function resolveDeporteKeyReservaAdmin(r, sedeIdKey, canchasDetallePorSede) {
+  const raw = r?.deporte != null && String(r.deporte).trim() !== '' ? String(r.deporte).trim().toLowerCase() : '';
+  if (raw) return raw;
+  const canchas = canchasDetallePorSede?.[String(sedeIdKey)] || [];
+  const num = parseInt(String(r?.cancha), 10);
+  if (!Number.isFinite(num)) return null;
+  const row = canchas.find((c) => Number(c.numero_reserva) === num);
+  if (row?.deporte) return String(row.deporte).trim().toLowerCase();
+  return null;
+}
+
+function AdminClubMetricasExtras({ metricas, moneda }) {
+  const { ocupacionHoraria, semanaCompare, cancelacion, deportesTop, periodoLabel } = metricas;
+  const mon = String(moneda || 'ARS').trim().toUpperCase();
+
+  return (
+    <div className="admin-club-metricas-extras">
+      <div className="admin-stat-card">
+        <h3 className="admin-stat-card__title">Ocupación por horario</h3>
+        <p className="admin-stat-card__hint">
+          Reservas confirmadas · {periodoLabel}
+        </p>
+        {ocupacionHoraria.rows.length === 0 ? (
+          <p className="admin-stat-card__empty">Sin reservas confirmadas en el período.</p>
+        ) : (
+          <div className="admin-stat-bars" role="list">
+            {ocupacionHoraria.rows.map((row) => (
+              <div className="admin-stat-bar" key={row.hora} role="listitem">
+                <span className="admin-stat-bar__label">{row.hora}</span>
+                <div className="admin-stat-bar__track" aria-hidden>
+                  <div className="admin-stat-bar__fill" style={{ width: `${row.pct}%` }} />
+                </div>
+                <span className="admin-stat-bar__meta">
+                  {row.count} ({row.pct}%)
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="admin-stat-card">
+        <h3 className="admin-stat-card__title">Semana actual vs semana anterior</h3>
+        <p className="admin-stat-card__hint">Lunes a domingo · por fecha de reserva</p>
+        <div className="admin-week-compare">
+          <div className="admin-week-compare__col">
+            <div className="admin-week-compare__kicker">Reservas</div>
+            <div className="admin-week-compare__values">
+              <span className="admin-week-compare__current">{semanaCompare.reservasActual}</span>
+              <span className="admin-week-compare__vs">vs</span>
+              <span className="admin-week-compare__prev">{semanaCompare.reservasAnterior}</span>
+            </div>
+            <SemanaCompareDelta pct={semanaCompare.reservasPct} />
+          </div>
+          <div className="admin-week-compare__col">
+            <div className="admin-week-compare__kicker">Ingresos ({mon})</div>
+            <div className="admin-week-compare__values">
+              <span className="admin-week-compare__current">
+                $ {semanaCompare.ingresosActual.toLocaleString('es-AR')}
+              </span>
+              <span className="admin-week-compare__vs">vs</span>
+              <span className="admin-week-compare__prev">
+                $ {semanaCompare.ingresosAnterior.toLocaleString('es-AR')}
+              </span>
+            </div>
+            <SemanaCompareDelta pct={semanaCompare.ingresosPct} />
+          </div>
+        </div>
+      </div>
+
+      <div className="admin-stat-card admin-stat-card--inline-metrics">
+        <h3 className="admin-stat-card__title">Tasa de cancelación</h3>
+        <p className="admin-stat-card__hint">{periodoLabel}</p>
+        <div className="admin-stat-card__metrics-row">
+          <div>
+            <div className="admin-stat-card__metric-label">Total reservas</div>
+            <div className="admin-stat-card__metric-value">{cancelacion.total}</div>
+          </div>
+          <div>
+            <div className="admin-stat-card__metric-label">Canceladas</div>
+            <div className="admin-stat-card__metric-value">{cancelacion.canceladas}</div>
+          </div>
+          <div>
+            <div className="admin-stat-card__metric-label">Tasa</div>
+            <span className={cancelacionBadgeClass(cancelacion.pct)}>{cancelacion.pct}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="admin-stat-card">
+        <h3 className="admin-stat-card__title">Deporte más reservado</h3>
+        <p className="admin-stat-card__hint">Top 3 · reservas no canceladas · {periodoLabel}</p>
+        {deportesTop.length === 0 ? (
+          <p className="admin-stat-card__empty">Sin reservas en el período.</p>
+        ) : (
+          <div className="admin-stat-bars">
+            {deportesTop.map((row) => (
+              <div className="admin-stat-bar" key={row.key}>
+                <span className="admin-stat-bar__label">{row.label}</span>
+                <div className="admin-stat-bar__track" aria-hidden>
+                  <div className="admin-stat-bar__fill" style={{ width: `${row.pct}%` }} />
+                </div>
+                <span className="admin-stat-bar__meta">
+                  {row.count} ({row.pct}%)
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SemanaCompareDelta({ pct }) {
+  const n = Number(pct) || 0;
+  if (n === 0) {
+    return <span className="admin-week-compare__delta admin-week-compare__delta--neutral">— 0%</span>;
+  }
+  const up = n > 0;
+  return (
+    <span
+      className={
+        up ? 'admin-week-compare__delta admin-week-compare__delta--up' : 'admin-week-compare__delta admin-week-compare__delta--down'
+      }
+    >
+      {up ? '↑' : '↓'} {Math.abs(n)}%
+    </span>
+  );
+}
+
 export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
   const { t, i18n } = useTranslation();
   console.log('AdminDashboard montado', { rol, sedeId });
@@ -3078,6 +3250,118 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     sedesMap,
     canchasResumenPorSede,
     partidosCountByTorneoId,
+  ]);
+
+  /** Métricas extra admin_club: ocupación horaria, semana vs semana, cancelación, deportes (solo `reservas` cargadas). */
+  const adminClubMetricasExtra = useMemo(() => {
+    if (!esAdminClub || sedeId == null || sedeId === '') return null;
+
+    const inPeriodo = (r) =>
+      fechaDentroDePeriodoFinanzas(
+        fechaReservaDiaOCreatedISO(r),
+        superAdminPeriodo,
+        superAdminFechaDesde,
+        superAdminFechaHasta,
+        finanzasAnclaISO
+      );
+
+    const reservasPeriodo = reservas.filter(inPeriodo);
+    const confirmadasPeriodo = reservasPeriodo.filter(
+      (r) => String(r?.estado || '').trim().toLowerCase() === 'confirmada'
+    );
+    const activasPeriodo = reservasPeriodo.filter(
+      (r) => String(r?.estado || '').trim().toLowerCase() !== 'cancelada'
+    );
+
+    const byHora = {};
+    confirmadasPeriodo.forEach((r) => {
+      const slot = horaFranjaReservaAdmin(r?.hora);
+      if (!slot) return;
+      byHora[slot] = (byHora[slot] || 0) + 1;
+    });
+    const totalConfirmadas = confirmadasPeriodo.length;
+    const ocupacionHoraria = {
+      rows: Object.keys(byHora)
+        .sort((a, b) => a.localeCompare(b))
+        .map((hora) => {
+          const count = byHora[hora];
+          const pct = totalConfirmadas > 0 ? Math.round((count / totalConfirmadas) * 100) : 0;
+          return { hora, count, pct };
+        }),
+    };
+
+    const hoy = new Date();
+    const semActualStart = startOfWeekMondayLocal(hoy);
+    const semActualEnd = endOfWeekSundayEndLocal(semActualStart);
+    const semAnteriorStart = new Date(semActualStart);
+    semAnteriorStart.setDate(semAnteriorStart.getDate() - 7);
+    const semAnteriorEnd = endOfWeekSundayEndLocal(semAnteriorStart);
+
+    const enSemana = (r, start, end) => diaCalendarioEnRangoLocal(fechaReservaDiaOCreatedISO(r), start, end);
+    const activasNoCancel = (r) => String(r?.estado || '').trim().toLowerCase() !== 'cancelada';
+
+    const resActual = reservas.filter((r) => enSemana(r, semActualStart, semActualEnd) && activasNoCancel(r));
+    const resAnterior = reservas.filter((r) => enSemana(r, semAnteriorStart, semAnteriorEnd) && activasNoCancel(r));
+    const ingresosActual = resActual.reduce((s, r) => s + (Number(r?.precio) || 0), 0);
+    const ingresosAnterior = resAnterior.reduce((s, r) => s + (Number(r?.precio) || 0), 0);
+
+    const canceladas = reservasPeriodo.filter(
+      (r) => String(r?.estado || '').trim().toLowerCase() === 'cancelada'
+    ).length;
+    const totalPeriodo = reservasPeriodo.length;
+    const cancelPct = totalPeriodo > 0 ? Math.round((canceladas / totalPeriodo) * 100) : 0;
+
+    const sidKey = String(sedeId);
+    const sedeNombre =
+      String(sedesMap[sidKey]?.nombre || '').trim() || 'Mi sede';
+    const depMap = {};
+    activasPeriodo.forEach((r) => {
+      const dk = resolveDeporteKeyReservaAdmin(r, sidKey, canchasDetallePorSede) || `sede:${sedeNombre}`;
+      depMap[dk] = (depMap[dk] || 0) + 1;
+    });
+    const depTotal = activasPeriodo.length;
+    const deportesTop = Object.entries(depMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([key, count]) => {
+        const label = key.startsWith('sede:')
+          ? sedeNombre
+          : deporteLabelAdminDash(key, t);
+        const pct = depTotal > 0 ? Math.round((count / depTotal) * 100) : 0;
+        return { key, label, count, pct };
+      });
+
+    const periodoLabel = labelNavegacionFinanzas(superAdminPeriodo, finanzasAnclaISO);
+
+    return {
+      periodoLabel,
+      ocupacionHoraria,
+      semanaCompare: {
+        reservasActual: resActual.length,
+        reservasAnterior: resAnterior.length,
+        reservasPct: pctCambioSemana(resActual.length, resAnterior.length),
+        ingresosActual,
+        ingresosAnterior,
+        ingresosPct: pctCambioSemana(ingresosActual, ingresosAnterior),
+      },
+      cancelacion: {
+        total: totalPeriodo,
+        canceladas,
+        pct: cancelPct,
+      },
+      deportesTop,
+    };
+  }, [
+    esAdminClub,
+    sedeId,
+    reservas,
+    superAdminPeriodo,
+    superAdminFechaDesde,
+    superAdminFechaHasta,
+    finanzasAnclaISO,
+    canchasDetallePorSede,
+    sedesMap,
+    t,
   ]);
 
   /** Vista cancha por cancha (admin_club): solo datos ya en `reservas`, `sedesMap` y `canchasDetallePorSede`. */
@@ -6495,6 +6779,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
         ) : null}
         {resumenOperativoSecciones}
+        {esAdminClub && adminClubMetricasExtra ? (
+          <AdminClubMetricasExtras
+            metricas={adminClubMetricasExtra}
+            moneda={bucketMonedaAdmin(sedesMap[String(sedeId)]?.moneda || 'ARS')}
+          />
+        ) : null}
         {esAdminClub && misCanchasHoyAdminClub ? (
           <div
             className="section"
