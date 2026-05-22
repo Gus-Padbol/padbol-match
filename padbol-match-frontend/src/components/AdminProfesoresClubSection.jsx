@@ -64,6 +64,25 @@ function nombreProfesor(p) {
   );
 }
 
+function CameraIcon() {
+  return (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--text-secondary)"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
 export default function AdminProfesoresClubSection({ accessToken, sedeId, isSuperAdmin = false }) {
   const { t } = useTranslation();
   const [lista, setLista] = useState([]);
@@ -246,49 +265,62 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             onChange={(e) => setForm((f) => ({ ...f, apellido: e.target.value }))}
             style={FIELD_STYLE}
           />
-          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
-            Foto
-          </label>
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void subirFoto(e.target.files?.[0])} />
-          <button
-            type="button"
-            className="admin-mi-sede-theme-input"
-            disabled={fotoUploading}
-            onClick={() => fileRef.current?.click()}
-            style={{
-              ...FIELD_STYLE,
-              marginBottom: 10,
-              cursor: fotoUploading ? 'wait' : 'pointer',
-              textAlign: 'left',
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              void subirFoto(e.target.files?.[0]);
+              e.target.value = '';
             }}
-          >
-            {form.foto_url && !fotoUploading ? 'Cambiar foto' : 'Subir foto'}
-          </button>
-          {fotoUploading ? (
-            <p style={{ margin: '0 0 14px', fontSize: 16, color: 'var(--text-secondary)' }}>Subiendo...</p>
-          ) : null}
-          {fotoUploadError && !fotoUploading ? (
-            <p style={{ margin: '0 0 14px', fontSize: 16, color: COLOR_ERROR, fontWeight: 600 }}>
-              Error al subir, intentá de nuevo
-            </p>
-          ) : null}
-          {form.foto_url && !fotoUploading && !fotoUploadError ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <img
-                src={form.foto_url}
-                alt=""
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  flexShrink: 0,
-                  border: '2px solid var(--border)',
-                }}
-              />
-              <span style={{ fontSize: 16, fontWeight: 700, color: COLOR_SUCCESS }}>Foto cargada ✓</span>
-            </div>
-          ) : null}
+          />
+          <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+            <button
+              type="button"
+              disabled={fotoUploading}
+              onClick={() => fileRef.current?.click()}
+              aria-label="Subir foto del profesor"
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                border: '2px dashed var(--border)',
+                cursor: fotoUploading ? 'wait' : 'pointer',
+                background: 'var(--bg-input)',
+                padding: 0,
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                opacity: fotoUploading ? 0.65 : 1,
+              }}
+            >
+              {form.foto_url && !fotoUploading ? (
+                <img
+                  src={form.foto_url}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              ) : (
+                <CameraIcon />
+              )}
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Subir foto del profesor</span>
+            {fotoUploading ? (
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Subiendo...</p>
+            ) : null}
+            {fotoUploadError && !fotoUploading ? (
+              <p style={{ margin: 0, fontSize: 13, color: COLOR_ERROR, fontWeight: 600 }}>
+                Error al subir, intentá de nuevo
+              </p>
+            ) : null}
+            {form.foto_url && !fotoUploading && !fotoUploadError ? (
+              <span style={{ fontSize: 12, fontWeight: 700, color: COLOR_SUCCESS }}>Foto cargada ✓</span>
+            ) : null}
+          </div>
           <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
             Bio
           </label>
@@ -344,7 +376,6 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                 aria-required="true"
               />
             </>
-          ) : null}
           ) : null}
           <button
             type="button"
