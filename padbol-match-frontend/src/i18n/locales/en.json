@@ -1194,6 +1194,7 @@
       "coordsGoogleMapsHint": "You can get coordinates from Google Maps (right-click → \"What's here?\")",
       "paymentsUpdated": "✅ Payments updated",
       "logoUpdated": "✅ Logo updated",
+      "logoGuardado": "✅ Logo saved",
       "cropError": "Crop error",
       "newVenueFallback": "new venue",
       "maxPhotosAllowed": "⚠️ Maximum {{max}} photos allowed",

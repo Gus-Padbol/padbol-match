@@ -2572,6 +2572,54 @@ app.delete('/api/admin/sedes/:id/precios-deporte/:deporte', async (req, res) => 
   }
 });
 
+/** PATCH /api/admin/sedes/:id — actualización parcial (admin_club / super_admin con alcance en la sede). */
+app.patch('/api/admin/sedes/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    await assertUsuarioPuedeAdministrarSede(req, id);
+
+    const b = req.body;
+    if (!b || typeof b !== 'object' || Array.isArray(b)) {
+      return res.status(400).json({ error: 'Body JSON inválido' });
+    }
+
+    const patch = {};
+    const hop = (k) => Object.prototype.hasOwnProperty.call(b, k);
+
+    if (hop('logo_url')) {
+      const u = String(b.logo_url ?? '').trim();
+      if (!u) {
+        patch.logo_url = null;
+      } else if (!/^https?:\/\//i.test(u)) {
+        return res.status(400).json({ error: 'logo_url debe ser una URL http(s) válida' });
+      } else {
+        patch.logo_url = u.slice(0, 2048);
+      }
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'Ningún campo reconocido para actualizar' });
+    }
+
+    const { data: updated, error } = await supabaseAdmin
+      .from('sedes')
+      .update(patch)
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    res.json({ ok: true, sede: updated });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ PATCH /api/admin/sedes/:id:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** Una sede con todos los campos de `sedes` (precio_turno, franjas, etc.) para reserva / detalle. */
 app.get('/api/sedes/:id', async (req, res) => {
   try {
@@ -2743,6 +2791,16 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (hop('youtube')) patch.youtube = String(b.youtube || '').trim() || null;
     if (hop('website')) patch.website = String(b.website || '').trim() || null;
 
+    if (hop('logo_url')) {
+      const u = String(b.logo_url ?? '').trim();
+      if (!u) {
+        patch.logo_url = null;
+      } else if (!/^https?:\/\//i.test(u)) {
+        return res.status(400).json({ error: 'logo_url debe ser una URL http(s) válida' });
+      } else {
+        patch.logo_url = u.slice(0, 2048);
+      }
+    }
     if (hop('color_fondo_logo')) {
       const s = String(b.color_fondo_logo || '').trim().slice(0, 16);
       patch.color_fondo_logo = s || null;

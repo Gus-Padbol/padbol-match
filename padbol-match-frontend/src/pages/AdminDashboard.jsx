@@ -5754,6 +5754,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setLogoCropOpen(true);
   };
 
+  const aplicarLogoUrlEnPanel = useCallback(
+    (publicUrl) => {
+      const base = String(publicUrl || '').trim();
+      if (!base) return;
+      const bust = `${base}${base.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      setLogoUrl(bust);
+      setMiSede((prev) => (prev ? { ...prev, logo_url: base } : prev));
+      setSedesMap((prev) => {
+        const sid = String(sedeId);
+        const row = prev[sid];
+        if (!row) return { ...prev, [sid]: { id: sedeId, logo_url: base } };
+        return { ...prev, [sid]: { ...row, logo_url: base } };
+      });
+    },
+    [sedeId],
+  );
+
   const subirLogoBlob = async (blob) => {
     if (!sedeId) return;
     setLogoUploading(true);
@@ -5770,16 +5787,35 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const {
       data: { publicUrl },
     } = supabase.storage.from('avatars').getPublicUrl(path);
-    const { error: dbErr } = await supabase.from(t('admin.metricas.venuesCount')).update({ logo_url: publicUrl }).eq('id', sedeId);
-    if (dbErr) {
-      setLogoMsg(`⚠️ ${dbErr.message}`);
+    const urlGuardar = String(publicUrl || '').trim();
+    if (!urlGuardar) {
+      setLogoMsg('⚠️ No se obtuvo URL pública del logo');
       setLogoUploading(false);
       return;
     }
-    setLogoUrl(`${publicUrl}?t=${Date.now()}`);
-    setLogoUploading(false);
-    setLogoMsg(t('admin.sedes.logoUpdated'));
-    setTimeout(() => setLogoMsg(''), 3000);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error('No autorizado');
+      const res = await fetch(`${apiBaseUrl}/api/admin/sedes/${encodeURIComponent(String(sedeId))}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ logo_url: urlGuardar }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || 'No se pudo guardar el logo');
+      const savedUrl = String(j?.sede?.logo_url || urlGuardar).trim();
+      aplicarLogoUrlEnPanel(savedUrl);
+      setLogoMsg(t('admin.sedes.logoGuardado'));
+      window.setTimeout(() => setLogoMsg(''), 3000);
+    } catch (e) {
+      setLogoMsg(`⚠️ ${e?.message || 'Error al guardar'}`);
+    } finally {
+      setLogoUploading(false);
+    }
   };
 
   const confirmarRecorteLogo = async () => {
@@ -6349,9 +6385,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       role: badge.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '').trim(),
     });
   })();
-  const logoPanelSrc =
-    (esAdminClub && sedeClubHeader?.logo_url && String(sedeClubHeader.logo_url).trim()) ||
-    '/logo-padbol-match.png';
+  const logoPanelSrc = (() => {
+    const clubLogo =
+      (logoUrl && String(logoUrl).trim()) ||
+      (miSede?.logo_url && String(miSede.logo_url).trim()) ||
+      (sedeClubHeader?.logo_url && String(sedeClubHeader.logo_url).trim()) ||
+      '';
+    if (esAdminClub && clubLogo) return clubLogo;
+    return '/logo-padbol-match.png';
+  })();
 
   return (
     <div

@@ -1218,6 +1218,7 @@
       "coordsGoogleMapsHint": "Puedes obtener las coordenadas desde Google Maps (clic derecho → \"¿Qué hay aquí?\")",
       "paymentsUpdated": "✅ Pagos actualizados",
       "logoUpdated": "✅ Logo actualizado",
+      "logoGuardado": "✅ Logo guardado",
       "cropError": "Error al recortar",
       "newVenueFallback": "nueva sede",
       "maxPhotosAllowed": "⚠️ Máximo {{max}} fotos permitidas",
