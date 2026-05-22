@@ -166,7 +166,6 @@
     0 0 40px rgba(255, 255, 255, 0.25),
     0 8px 32px rgba(0, 0, 0, 0.8);
   background: rgba(0, 0, 0, 0.6);
-  transform: translateY(-2px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,6 +208,7 @@
   font-size: 13px;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
   max-width: 100%;
 }
 
