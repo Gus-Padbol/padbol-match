@@ -230,26 +230,25 @@ function deportesActivosSedePublica(sede, preciosDeporteRows) {
   return DEPORTES_CANCHA_SEDE_OPTIONS.filter((o) => keys.has(o.key));
 }
 
-function SedeDeportesChips({ deportes, t }) {
+/** Chips de deportes sobre el hero (esquina inferior derecha). */
+function SedeDeportesChipsHero({ deportes, t }) {
   if (!deportes.length) return null;
+  const aria = t('sedes.publica.deportesDisponibles', { defaultValue: 'Deportes disponibles' });
   return (
-    <div className="sede-publica-deportes">
-      <p className="sede-publica-deportes__label">
-        {t('sedes.publica.deportesDisponibles', { defaultValue: 'Deportes disponibles' })}
-      </p>
-      <div className="sede-publica-deportes__track" role="list" aria-label={t('sedes.publica.deportesDisponibles', { defaultValue: 'Deportes disponibles' })}>
-        {deportes.map((d) => (
-          <span key={d.key} className="sede-publica-deportes__chip" role="listitem">
-            <span className="sede-publica-deportes__dot" aria-hidden />
-            {d.label}
-          </span>
-        ))}
-      </div>
+    <div className="sede-publica-hero-immersive__deportes" role="list" aria-label={aria}>
+      {deportes.map((d) => (
+        <span key={d.key} className="sede-publica-hero-immersive__deporte-chip" role="listitem">
+          <span className="sede-publica-hero-immersive__deporte-dot" aria-hidden />
+          {d.label}
+        </span>
+      ))}
     </div>
   );
 }
 
 function whatsappHrefSede(sede) {
+  const link = String(sede?.whatsapp_url ?? sede?.whatsapp ?? '').trim();
+  if (/^https?:\/\//i.test(link)) return toHttps(link);
   if (!sede?.telefono) return null;
   const digits = String(sede.telefono).replace(/\D/g, '');
   if (!digits) return null;
@@ -327,7 +326,7 @@ function SedeInformacionClub({ sede, horario, estadisticasPublicas, t }) {
   const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
   const torneosTotal = Number(estadisticasPublicas?.torneos_realizados_total) || 0;
   const ubicacion = [sede?.direccion, sede?.ciudad, sede?.pais].filter(Boolean).join(', ');
-  const waHref = whatsappHrefSede(sede);
+  const waHref = toHttps(whatsappHrefSede(sede));
 
   const rows = [
     {
@@ -383,16 +382,18 @@ function SedeInformacionClub({ sede, horario, estadisticasPublicas, t }) {
 }
 
 function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
-  const openMapsHref = buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud);
+  const openMapsHref = toHttps(buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud));
   const embedSrc = useMemo(() => {
     const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
     const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      return `https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
+      return toHttps(`https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`);
     }
     const parts = [direccion, ciudad, pais].filter(Boolean);
     if (!parts.length) return null;
-    return `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&output=embed`;
+    return toHttps(
+      `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&output=embed`
+    );
   }, [direccion, ciudad, pais, latitud, longitud]);
 
   if (!embedSrc && !openMapsHref) return null;
@@ -400,13 +401,13 @@ function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
   return (
     <div className="sede-publica-map">
       {embedSrc ? (
-        <iframe title="Ubicación en Google Maps" src={embedSrc} loading="lazy" />
+        <iframe title="Ubicación en Google Maps" src={toHttps(embedSrc)} loading="lazy" />
       ) : null}
       {openMapsHref ? (
         <div className="sede-publica-map__link-wrap">
           <a
             className="sede-publica-map__link"
-            href={openMapsHref}
+            href={toHttps(openMapsHref)}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -541,18 +542,20 @@ function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
 /** Mapa miniatura (iframe pequeño, sin interacción) + abrir en Maps. */
 function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
   const openMapsHref = useMemo(
-    () => buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud),
+    () => toHttps(buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud)),
     [direccion, ciudad, pais, latitud, longitud]
   );
   const embedSrc = useMemo(() => {
     const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
     const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      return `https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
+      return toHttps(`https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`);
     }
     const parts = [direccion, ciudad, pais].filter(Boolean);
     if (!parts.length) return null;
-    return `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&output=embed`;
+    return toHttps(
+      `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&output=embed`
+    );
   }, [direccion, ciudad, pais, latitud, longitud]);
 
   if (!embedSrc && !openMapsHref) return null;
@@ -584,11 +587,11 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
               transformOrigin: 'center center',
             }}
             loading="lazy"
-            src={embedSrc}
+            src={toHttps(embedSrc)}
           />
           {openMapsHref ? (
             <a
-              href={openMapsHref}
+              href={toHttps(openMapsHref)}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -612,7 +615,7 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
       ) : (
         openMapsHref && (
           <a
-            href={openMapsHref}
+            href={toHttps(openMapsHref)}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -782,7 +785,7 @@ function SedeSocialChips({ sede }) {
         {items.map((m) => (
           <a
             key={m.key}
-            href={String(sede[m.key]).trim()}
+            href={toHttps(String(sede[m.key]).trim())}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -1077,7 +1080,7 @@ function CompactContactCard({ sede, horario, hasAddress }) {
   );
 }
 
-const API_BASE_RESENAS = (
+const API_BASE_RESENAS = toHttps(
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
@@ -1085,7 +1088,7 @@ const API_BASE_RESENAS = (
 
 function apiUrlResenas(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE_RESENAS}${p}`;
+  return toHttps(`${API_BASE_RESENAS}${p}`);
 }
 
 const RESENA_MAX_CHARS = 200;
@@ -2263,6 +2266,8 @@ export default function SedePublica() {
                     </span>
                   ) : null}
                 </div>
+
+                <SedeDeportesChipsHero deportes={deportesChips} t={t} />
               </section>
             </div>
 
@@ -2289,8 +2294,6 @@ export default function SedePublica() {
               }}
             >
             <article className="sede-publica-page">
-            <SedeDeportesChips deportes={deportesChips} t={t} />
-
             <SedeGaleriaHorizontal
               fotos={fotos}
               onOpenAtIndex={(i) => {

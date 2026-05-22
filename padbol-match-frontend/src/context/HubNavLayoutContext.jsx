@@ -1,25 +1,13 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { HUB_NAV_DOCK_BOTTOM_BREAKPOINT_PX } from '../constants/hubLayout';
+import React, { createContext, useContext, useMemo } from 'react';
 
-const HubNavLayoutContext = createContext({ navDock: 'top' });
+const HubNavLayoutContext = createContext({ navDock: 'bottom' });
 
-const mqBottomDock =
-  typeof window !== 'undefined'
-    ? window.matchMedia(`(max-width: ${HUB_NAV_DOCK_BOTTOM_BREAKPOINT_PX}px)`)
-    : null;
-
+/**
+ * Barra Perfil / Jugar / Competir / Notificaciones siempre anclada abajo del viewport
+ * (móvil y desktop). El padding de contenido usa {@link hubMainPaddingBottomCss}.
+ */
 export function HubNavLayoutProvider({ children }) {
-  const [navDock, setNavDock] = useState(() => (mqBottomDock?.matches ? 'bottom' : 'top'));
-
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${HUB_NAV_DOCK_BOTTOM_BREAKPOINT_PX}px)`);
-    const onChange = () => setNavDock(mql.matches ? 'bottom' : 'top');
-    onChange();
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, []);
-
-  const value = useMemo(() => ({ navDock }), [navDock]);
+  const value = useMemo(() => ({ navDock: 'bottom' }), []);
   return <HubNavLayoutContext.Provider value={value}>{children}</HubNavLayoutContext.Provider>;
 }
 

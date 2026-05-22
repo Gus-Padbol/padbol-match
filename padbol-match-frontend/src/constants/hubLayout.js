@@ -1,8 +1,8 @@
 /**
  * Constantes de chrome fijo (header, BottomNav, paddings de contenido).
  *
- * Hasta 768px de ancho la barra Perfil / Jugar / Competir / Notificaciones va fija abajo; en desktop
- * permanece bajo el header. El padding de las pantallas usa {@link hubContentPaddingTopCss} /
+ * La barra Perfil / Jugar / Competir / Notificaciones va fija abajo del viewport (móvil y desktop).
+ * El padding de las pantallas usa {@link hubContentPaddingTopCss} /
  * `navDock` desde `HubNavLayoutProvider`. El offset bajo el header fijo usa la variable CSS
  * `--pm-app-header-stack-height` (ver `index.css`) alineada con `HUB_APP_HEADER_HEIGHT_PX` aquí.
  *
@@ -33,7 +33,7 @@ export const HUB_NAV_HEIGHT_PX = 54;
  */
 export const HUB_BOTTOM_NAV_CONTENT_GAP_PX = 12;
 /**
- * Bajo este ancho, la barra Perfil / Jugar / Competir / Notificaciones se fija abajo; desde desktop queda bajo el header.
+ * Referencia histórica (antes: nav abajo solo ≤768px). La barra va siempre abajo vía {@link HubNavLayoutProvider}.
  */
 export const HUB_NAV_DOCK_BOTTOM_BREAKPOINT_PX = 768;
 export const HUB_CONTENT_PADDING_TOP_PX =
@@ -136,7 +136,7 @@ export function resolveSedePublicaBackToPath(locationState) {
 
 /**
  * Padding-top en px bajo el header fijo (y la barra hub si aplica).
- * Perfil público `/sede` y `/sede/:id` siempre muestran header + BottomNav bajo el header.
+ * Perfil público `/sede` y `/sede/:id`: sin AppHeader en vista cargada; BottomNav abajo del viewport.
  */
 export function hubContentPaddingTopPx(pathname, navDock = 'top') {
   const dockBottom = navDock === 'bottom';
