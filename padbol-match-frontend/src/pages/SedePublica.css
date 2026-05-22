@@ -95,7 +95,7 @@
 .sede-publica-identity {
   position: relative;
   z-index: 2;
-  margin-top: -40px;
+  margin-top: -50px;
   padding: 0 16px 12px;
   display: flex;
   flex-direction: column;
@@ -105,12 +105,14 @@
 }
 
 .sede-publica-logo {
-  width: 80px;
-  height: 80px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 3px solid var(--bg-card);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 0 0 4px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;

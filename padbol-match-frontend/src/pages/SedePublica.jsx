@@ -2177,7 +2177,7 @@ export default function SedePublica() {
             <header className="sede-publica-identity">
               <div
                 className="sede-publica-logo"
-                style={!sede.logo_url ? { background: colorFondoLogoSede(sede) } : undefined}
+                style={{ background: colorFondoLogoSede(sede) }}
               >
                 {sede.logo_url ? (
                   <img src={sede.logo_url} alt="" />
