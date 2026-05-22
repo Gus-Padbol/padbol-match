@@ -10,15 +10,6 @@
   box-sizing: border-box;
 }
 
-.sede-publica-page__scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
-
 .sede-publica-page__column {
   max-width: 100%;
   width: 100%;
@@ -28,14 +19,6 @@
   padding-bottom: 12px;
 }
 
-/* Hero fijo arriba del scroll: no queda bajo BottomNav (móvil). */
-.sede-publica-hero-shell {
-  flex-shrink: 0;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
 /* —— Hero inmersivo (foto full bleed + overlay + info superpuesta) —— */
 .sede-publica-hero-immersive {
   position: relative;
@@ -43,7 +26,6 @@
   min-height: max(200px, 35vh);
   height: max(200px, 35vh);
   overflow: hidden;
-  flex-shrink: 0;
   box-sizing: border-box;
 }
 

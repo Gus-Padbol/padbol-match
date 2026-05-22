@@ -2106,19 +2106,13 @@ export default function SedePublica() {
 
   const rootPageStyle = sedeViewReady
     ? {
-        height: '100dvh',
-        maxHeight: '100dvh',
         minHeight: '100dvh',
         background: PADBOL_PAGE_GRADIENT,
         paddingTop: 0,
-        paddingBottom: 0,
+        paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
         boxSizing: 'border-box',
         width: '100%',
         maxWidth: '100%',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        overscrollBehaviorY: 'contain',
       }
     : {
         minHeight: '100dvh',
@@ -2128,7 +2122,6 @@ export default function SedePublica() {
         boxSizing: 'border-box',
         width: '100%',
         maxWidth: '100%',
-        overscrollBehaviorY: 'contain',
       };
 
   return (
@@ -2191,23 +2184,13 @@ export default function SedePublica() {
         return (
           <>
           <div
-            className="sede-publica-shell"
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              maxWidth: '100%',
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-            }}
+            className="sede-publica-page__column"
+            style={hubInstagramColumnWrapStyle}
           >
-            <div className="sede-publica-hero-shell">
-              <section
-                className={`sede-publica-hero-immersive${heroImg ? '' : ' sede-publica-hero-immersive--placeholder'}`}
-                aria-label={sede.nombre || 'Sede'}
-              >
+            <section
+              className={`sede-publica-hero-immersive${heroImg ? '' : ' sede-publica-hero-immersive--placeholder'}`}
+              aria-label={sede.nombre || 'Sede'}
+            >
                 <div
                   className="sede-publica-hero-immersive__media"
                   style={heroImg ? { backgroundImage: `url(${heroImg})` } : undefined}
@@ -2279,31 +2262,8 @@ export default function SedePublica() {
                 </div>
 
                 <SedeDeportesChipsHero deportes={deportesChips} t={t} />
-              </section>
-            </div>
+            </section>
 
-            <div
-              className="sede-publica-page__scroll"
-              style={{
-                flex: 1,
-                minHeight: 0,
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                WebkitOverflowScrolling: 'touch',
-                width: '100%',
-                maxWidth: '100%',
-                boxSizing: 'border-box',
-                overscrollBehaviorY: 'contain',
-              }}
-            >
-            <div
-              className="sede-publica-page__column"
-              style={{
-                ...hubInstagramColumnWrapStyle,
-                overflowX: 'hidden',
-                paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
-              }}
-            >
             <article className="sede-publica-page">
             <SedeGaleriaHorizontal
               fotos={fotos}
@@ -2362,9 +2322,6 @@ export default function SedePublica() {
               />
             ) : null}
             </article>
-
-            </div>
-            </div>
           </div>
 
           {fotosGalleryOpen ? (
