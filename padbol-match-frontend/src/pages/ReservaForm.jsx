@@ -2355,7 +2355,7 @@ export default function ReservaForm() {
                       }}
                     >
                       <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                        <DeporteIcono deporte={opt.key} size={22} />
+                        <DeporteIcono deporte={opt.key} size={20} />
                       </span>
                       <span className="reserva-sede-deporte-chip-btn-label">
                         {etiquetaDeporteReserva(t, opt.key)}
@@ -2398,7 +2398,7 @@ export default function ReservaForm() {
                         }}
                       >
                         <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                          <DeporteIcono deporte="futbol" size={22} />
+                          <DeporteIcono deporte="futbol" size={20} />
                         </span>
                         <span className="reserva-sede-deporte-chip-btn-label">
                           {t('reservas.sportFutbolGroup')}

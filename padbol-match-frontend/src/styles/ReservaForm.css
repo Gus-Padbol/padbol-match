@@ -817,27 +817,44 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .reserva-sede-seleccion .reserva-sede-deportes-chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.reserva-sede-seleccion .reserva-sede-deportes-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .reserva-sede-seleccion .reserva-sede-deporte-chip-btn {
   display: inline-flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 72px;
+  max-width: 90px;
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   font-family: inherit;
+  text-align: center;
   cursor: pointer;
-  line-height: 1.25;
+  line-height: 1.2;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  box-sizing: border-box;
 }
 
 .reserva-sede-seleccion .reserva-sede-deporte-chip-btn-emoji {
@@ -849,7 +866,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .reserva-sede-seleccion .reserva-sede-deporte-chip-btn-label {
+  width: 100%;
+  max-width: 100%;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .reserva-sede-seleccion .reserva-sede-deporte-chip-btn-off {
@@ -880,6 +901,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .reserva-sede-seleccion .reserva-sede-deporte-chip-futbol-wrap {
   position: relative;
   display: inline-flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
   flex-direction: column;
   align-items: stretch;
 }
