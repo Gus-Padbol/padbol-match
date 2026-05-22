@@ -3254,7 +3254,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   /** Métricas extra admin_club: ocupación horaria, semana vs semana, cancelación, deportes (solo `reservas` cargadas). */
   const adminClubMetricasExtra = useMemo(() => {
-    if (!esAdminClub || sedeId == null || sedeId === '') return null;
+    if (!esAdminClub && !isSuperAdmin) return null;
+    if (esAdminClub && (sedeId == null || sedeId === '')) return null;
 
     const inPeriodo = (r) =>
       fechaDentroDePeriodoFinanzas(
@@ -3311,12 +3312,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const totalPeriodo = reservasPeriodo.length;
     const cancelPct = totalPeriodo > 0 ? Math.round((canceladas / totalPeriodo) * 100) : 0;
 
-    const sidKey = String(sedeId);
-    const sedeNombre =
-      String(sedesMap[sidKey]?.nombre || '').trim() || 'Mi sede';
     const depMap = {};
     activasPeriodo.forEach((r) => {
-      const dk = resolveDeporteKeyReservaAdmin(r, sidKey, canchasDetallePorSede) || `sede:${sedeNombre}`;
+      const sidRes =
+        esAdminClub && sedeId != null && sedeId !== ''
+          ? String(sedeId)
+          : (() => {
+              const id = sedeIdDesdeNombreReserva(r?.sede, sedesMap);
+              return id != null ? String(id) : '';
+            })();
+      const sedeNombre =
+        (sidRes && String(sedesMap[sidRes]?.nombre || '').trim()) ||
+        String(r?.sede || '').trim() ||
+        'Sin sede';
+      const dk =
+        resolveDeporteKeyReservaAdmin(r, sidRes, canchasDetallePorSede) || `sede:${sedeNombre}`;
       depMap[dk] = (depMap[dk] || 0) + 1;
     });
     const depTotal = activasPeriodo.length;
@@ -3353,6 +3363,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     };
   }, [
     esAdminClub,
+    isSuperAdmin,
     sedeId,
     reservas,
     superAdminPeriodo,
@@ -6779,10 +6790,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
         ) : null}
         {resumenOperativoSecciones}
-        {esAdminClub && adminClubMetricasExtra ? (
+        {(esAdminClub || isSuperAdmin) && adminClubMetricasExtra ? (
           <AdminClubMetricasExtras
             metricas={adminClubMetricasExtra}
-            moneda={bucketMonedaAdmin(sedesMap[String(sedeId)]?.moneda || 'ARS')}
+            moneda={
+              esAdminClub && sedeId != null && sedeId !== ''
+                ? bucketMonedaAdmin(sedesMap[String(sedeId)]?.moneda || 'ARS')
+                : 'ARS'
+            }
           />
         ) : null}
         {esAdminClub && misCanchasHoyAdminClub ? (
