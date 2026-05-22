@@ -184,7 +184,7 @@ function sedeFotosLista(sede) {
     : [];
 }
 
-/** Hero: primera foto destacada (★); si no hay, primera de la galería. */
+/** Hero: primera foto en `fotos_destacadas`; si no hay, primera de la galería. */
 function sedeHeroImageUrl(sede) {
   const { urls } = urlsCarruselSedePublica(sede);
   if (urls[0]) return urls[0];

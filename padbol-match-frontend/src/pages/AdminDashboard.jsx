@@ -4994,6 +4994,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [fotosDestacadas, setFotosDestacadas] = useState([]);
   const [fotosDestacadasSaving, setFotosDestacadasSaving] = useState(false);
   const [fotosDestacadasMsg, setFotosDestacadasMsg] = useState('');
+  const [heroToast, setHeroToast] = useState('');
   /** Cupos de sponsors con scope sede (Mi Sede, lectura). */
   const [miSedeSponsorSlots, setMiSedeSponsorSlots] = useState({
     loading: false,
@@ -5942,19 +5943,43 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setTimeout(() => setFranjasMsg(''), 3000);
   };
 
-  const guardarFotosDestacadas = async () => {
-    if (!sedeId) return;
+  const persistFotosDestacadas = async (nextDestacadas, { successMessage } = {}) => {
+    if (!sedeId) return false;
+    const arr = nextDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, 4);
     setFotosDestacadasSaving(true);
     setFotosDestacadasMsg('');
-    const arr = fotosDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, 4);
-    const { error } = await supabase.from(t('admin.metricas.venuesCount')).update({ fotos_destacadas: arr }).eq('id', sedeId);
+    const { error } = await supabase
+      .from(t('admin.metricas.venuesCount'))
+      .update({ fotos_destacadas: arr })
+      .eq('id', sedeId);
     setFotosDestacadasSaving(false);
-    if (error) setFotosDestacadasMsg(`⚠️ ${error.message}`);
-    else {
-      setFotosDestacadas(arr);
-      setFotosDestacadasMsg('✅ Destacadas guardadas');
+    if (error) {
+      setFotosDestacadasMsg(`⚠️ ${error.message}`);
+      setTimeout(() => setFotosDestacadasMsg(''), 4000);
+      return false;
     }
-    setTimeout(() => setFotosDestacadasMsg(''), 3000);
+    setFotosDestacadas(arr);
+    if (successMessage) {
+      setFotosDestacadasMsg(successMessage);
+      setTimeout(() => setFotosDestacadasMsg(''), 3000);
+    }
+    return true;
+  };
+
+  const usarComoHero = async (url) => {
+    const heroActual = fotosDestacadas[0] || fotosUrls[0] || null;
+    if (url === heroActual) return;
+    const prev = fotosDestacadas.filter((u) => fotosUrls.includes(u));
+    const next = [url, ...prev.filter((u) => u !== url)].slice(0, 4);
+    const ok = await persistFotosDestacadas(next);
+    if (ok) {
+      setHeroToast('Hero actualizado');
+      window.setTimeout(() => setHeroToast(''), 2600);
+    }
+  };
+
+  const guardarFotosDestacadas = async () => {
+    await persistFotosDestacadas(fotosDestacadas, { successMessage: '✅ Destacadas guardadas' });
   };
 
   const toggleDestacadaFoto = (url) => {
@@ -13023,16 +13048,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             {fotosUploadLabel ? (
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#E11B22' }}>{fotosUploadLabel}</p>
             ) : null}
-            <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-              Marca hasta 4 fotos con ★ para el carrusel de la página pública (orden 1–4). La foto marcada con 1 aparece como fondo del hero en la página pública. Guarda con el botón inferior.
-            </p>
+            <div style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+              <p style={{ margin: '0 0 6px' }}>
+                Tocá &quot;Usar como hero&quot; en la foto que querés mostrar de fondo en tu página pública.
+              </p>
+              <p style={{ margin: 0 }}>
+                Marcá hasta 4 fotos con ⭐ para el carrusel. Guardá los cambios del carrusel con el botón inferior.
+              </p>
+            </div>
+            {heroToast ? (
+              <div className="admin-mi-sede-hero-toast" role="status">
+                {heroToast}
+              </div>
+            ) : null}
             {fotosUrls.length === 0 ? (
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>{t('admin.sedes.noPhotosYet')}</p>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 {fotosUrls.map((url, i) => {
-                  const ord = fotosDestacadas.indexOf(url);
-                  const destacada = ord >= 0;
+                  const destacada = fotosDestacadas.includes(url);
                   const heroFotoUrl = fotosDestacadas[0] || fotosUrls[0] || null;
                   const isHeroFoto = Boolean(heroFotoUrl && url === heroFotoUrl);
                   return (
@@ -13042,26 +13076,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         alt={`Cancha ${i + 1}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
-                      {isHeroFoto ? (
-                        <span
-                          className="admin-mi-sede-photo-hero-badge"
-                          title="Esta foto es el fondo del hero en la página pública"
-                        >
-                          📸 Hero
-                        </span>
-                      ) : null}
-                      {destacada ? (
-                        <span
-                          className={`admin-mi-sede-photo-order-badge${ord === 0 ? ' admin-mi-sede-photo-order-badge--first' : ''}`}
-                          title={ord === 0 ? 'Orden 1 en el carrusel (fondo del hero)' : `Orden ${ord + 1} en el carrusel`}
-                        >
-                          {ord + 1}
-                        </span>
-                      ) : null}
                       <button
                         type="button"
                         onClick={() => toggleDestacadaFoto(url)}
-                        title={destacada ? t('admin.sedes.removeFromCarousel') : t('admin.sedes.featureInCarousel')}
+                        title={
+                          destacada
+                            ? 'Quitar del carrusel público'
+                            : 'Marcar para carrusel público (máx. 4)'
+                        }
+                        aria-label={
+                          destacada
+                            ? 'Quitar del carrusel público'
+                            : 'Marcar para carrusel público (máx. 4)'
+                        }
                         style={{
                           position: 'absolute',
                           top: '6px',
@@ -13080,8 +13107,23 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           color: destacada ? '#1e1b4b' : '#fef9c3',
                         }}
                       >
-                        ★
+                        ⭐
                       </button>
+                      {isHeroFoto ? (
+                        <span className="admin-mi-sede-photo-hero-current" title="Fondo del hero en la página pública">
+                          ✓ Hero actual
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="admin-mi-sede-photo-hero-btn"
+                          onClick={() => void usarComoHero(url)}
+                          disabled={fotosDestacadasSaving}
+                          title="Usar como fondo del hero en la página pública"
+                        >
+                          Usar como hero
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => eliminarFoto(url)}
