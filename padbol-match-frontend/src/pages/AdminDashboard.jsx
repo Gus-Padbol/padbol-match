@@ -13580,13 +13580,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 Mueve y haz zoom para encuadrar el logo. Se guardará como JPG en buena calidad.
               </p>
             </div>
-            <div style={{ position: 'relative', width: '100%', height: 'min(56vh, 360px)', background: '#0f172a' }}>
+            <div
+              className="admin-logo-crop"
+              style={{ position: 'relative', width: '100%', height: 'min(56vh, 360px)', background: '#0f172a' }}
+            >
               <Cropper
                 image={logoCropSrc}
                 crop={logoCrop}
                 zoom={logoCropZoom}
                 aspect={1}
-                cropShape="round"
+                cropShape="rect"
                 showGrid={false}
                 onCropChange={setLogoCrop}
                 onZoomChange={setLogoCropZoom}

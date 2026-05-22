@@ -722,6 +722,12 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   border-radius: 16px;
 }
 
+/* Logo crop modal: rounded-square mask (matches header logo, not circle) */
+.admin-logo-crop .reactEasyCrop_CropArea,
+.admin-logo-crop .reactEasyCrop_CropAreaRound {
+  border-radius: 16px;
+}
+
 /* Jugadores pendientes de validación */
 .admin-dashboard--super .admin-validacion-pendiente-card {
   background: var(--bg-card) !important;
