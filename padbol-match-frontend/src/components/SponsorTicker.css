@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   gap: 32px;
-  animation: ticker-scroll 13s linear infinite;
+  animation: ticker-scroll 9s linear infinite;
   white-space: nowrap;
   will-change: transform;
 }

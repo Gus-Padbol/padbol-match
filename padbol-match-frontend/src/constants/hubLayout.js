@@ -294,5 +294,6 @@ export function isLegalFooterGlobalBarVisiblePathname(pathname) {
   if (p === '/privacidad' || p.startsWith('/privacidad/')) return false;
   if (p === '/sobre' || p.startsWith('/sobre/')) return false;
   if (p === '/contacto' || p.startsWith('/contacto/')) return false;
+  if (p === '/sede' || p.startsWith('/sede/')) return false;
   return true;
 }

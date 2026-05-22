@@ -28,8 +28,8 @@
 .sede-publica-hero-immersive {
   position: relative;
   width: 100%;
-  min-height: max(240px, 40vh);
-  height: max(240px, 40vh);
+  min-height: max(200px, 35vh);
+  height: max(200px, 35vh);
   overflow: hidden;
   flex-shrink: 0;
   box-sizing: border-box;
@@ -75,7 +75,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: max(10px, env(safe-area-inset-top, 0px)) 12px 10px;
+  padding: env(safe-area-inset-top, 12px) 12px 10px;
   box-sizing: border-box;
 }
 
