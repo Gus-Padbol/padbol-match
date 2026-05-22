@@ -2282,12 +2282,6 @@ export default function SedePublica() {
               }}
             />
 
-            {sedeTickerSponsors?.length > 0 ? (
-              <div className="sede-publica-sponsors">
-                <HubSponsorsTicker sponsors={sedeTickerSponsors} />
-              </div>
-            ) : null}
-
             <div className="sede-publica-ctas">
               <button
                 type="button"
@@ -2311,6 +2305,12 @@ export default function SedePublica() {
               estadisticasPublicas={estadisticasPublicas}
               t={t}
             />
+
+            {sedeTickerSponsors?.length > 0 ? (
+              <div className="sede-publica-sponsors">
+                <HubSponsorsTicker sponsors={sedeTickerSponsors} />
+              </div>
+            ) : null}
 
             <div className="sede-publica-resenas">
               <SedeResenasSeccion
