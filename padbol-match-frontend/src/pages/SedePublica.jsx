@@ -40,6 +40,8 @@ const MAP_THUMB_MAX_H = 120;
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
 const FOTOS_DESTACADAS_MAX = 4;
 
+const toHttps = (url) => (url ? url.replace(/^http:\/\//, 'https://') : url);
+
 /** Design System Gero — perfil público de sede (tema claro/oscuro vía CSS variables). */
 const SEDE_DS = {
   pageBg: 'var(--bg-page)',
@@ -180,10 +182,10 @@ function sedeTieneSeccionEnNumeros(stats, sedeRow) {
  */
 function urlsCarruselSedePublica(sede) {
   const todas = Array.isArray(sede?.fotos_urls)
-    ? sede.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
+    ? sede.fotos_urls.map((u) => toHttps(String(u || '').trim())).filter(Boolean)
     : [];
   const dest = Array.isArray(sede?.fotos_destacadas)
-    ? sede.fotos_destacadas.map((u) => String(u || '').trim()).filter(Boolean)
+    ? sede.fotos_destacadas.map((u) => toHttps(String(u || '').trim())).filter(Boolean)
     : [];
   const resolved = dest.filter((u) => todas.includes(u)).slice(0, FOTOS_DESTACADAS_MAX);
   if (resolved.length > 0) return { urls: resolved, usarOrden: true };
@@ -196,7 +198,7 @@ const CARRUSEL_SLIDE_BASIS = `calc((100% - ${2 * CARRUSEL_GAP_PX}px) / 3)`;
 
 function sedeFotosLista(sede) {
   return Array.isArray(sede?.fotos_urls)
-    ? sede.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
+    ? sede.fotos_urls.map((u) => toHttps(String(u || '').trim())).filter(Boolean)
     : [];
 }
 
@@ -302,7 +304,7 @@ function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
             onClick={() => onOpenAtIndex(i)}
             aria-label={`Ver foto ${i + 1}`}
           >
-            <img src={url} alt="" loading="lazy" decoding="async" />
+            <img src={toHttps(url)} alt="" loading="lazy" decoding="async" />
           </button>
         ))}
       </div>
@@ -436,7 +438,7 @@ function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
 
   if (!fotos.length || index < 0 || index >= fotos.length) return null;
 
-  const url = fotos[index];
+  const url = toHttps(fotos[index]);
 
   return (
     <div
@@ -1150,7 +1152,7 @@ function EstrellasInteractivas({ value, onChange, disabled }) {
 function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }) {
   const nombre = r?.autor?.nombre || 'Jugador';
   const apodo = String(r?.autor?.apodo || '').trim();
-  const foto = r?.autor?.foto_url;
+  const foto = toHttps(r?.autor?.foto_url);
   const ini = nombre ? nombre.charAt(0).toUpperCase() : '?';
   const showApodoSub = apodo && nombre && apodo.toLowerCase() !== nombre.toLowerCase();
   return (
@@ -1874,7 +1876,7 @@ export default function SedePublica() {
       email: em,
       nombre: getDisplayName(userProfile, session) || '',
       whatsapp: String(userProfile?.whatsapp || '').trim(),
-      foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
+      foto: toHttps(userProfile?.foto_url ?? userProfile?.foto ?? null),
     };
   }, [session, userProfile]);
 
@@ -1888,6 +1890,17 @@ export default function SedePublica() {
   const { sponsors: sedeTickerSponsors } = useSedeTickerSponsors(sedeIdNumTicker, {
     enabled: Boolean(sedeIdNumTicker),
   });
+  const sedeTickerSponsorsHttps = useMemo(() => {
+    const list = Array.isArray(sedeTickerSponsors) ? sedeTickerSponsors : [];
+    return list.map((row) => {
+      if (!row || typeof row !== 'object') return row;
+      const next = { ...row };
+      if (next.imagen_url != null) next.imagen_url = toHttps(String(next.imagen_url).trim());
+      if (next.logo_url != null) next.logo_url = toHttps(String(next.logo_url).trim());
+      if (next.logoUrl != null) next.logoUrl = toHttps(String(next.logoUrl).trim());
+      return next;
+    });
+  }, [sedeTickerSponsors]);
   /** Hueco bajo AppHeader + BottomNav fijos + buffer (hero y resto del scroll). Safe-area en `--pm-app-header-stack-height`. */
   const sedeScrollPaddingTopCss = useMemo(
     () =>
@@ -2149,10 +2162,10 @@ export default function SedePublica() {
 
       {!loading && !error && sede && (() => {
         const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
-        const fotos = Array.isArray(sede.fotos_urls) ? sede.fotos_urls : [];
+        const fotos = sedeFotosLista(sede);
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
-        const heroImg = sedeHeroImageUrl(sede);
+        const heroImg = toHttps(sedeHeroImageUrl(sede));
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
         return (
@@ -2250,7 +2263,7 @@ export default function SedePublica() {
                   style={{ background: colorFondoLogoSede(sede) }}
                 >
                   {sede.logo_url ? (
-                    <img src={sede.logo_url} alt="" />
+                    <img src={toHttps(sede.logo_url)} alt="" />
                   ) : (
                     <span className="sede-publica-hero-immersive__logo-fallback" aria-hidden>
                       ⚽
@@ -2306,9 +2319,9 @@ export default function SedePublica() {
               t={t}
             />
 
-            {sedeTickerSponsors?.length > 0 ? (
+            {sedeTickerSponsorsHttps?.length > 0 ? (
               <div className="sede-publica-sponsors">
-                <HubSponsorsTicker sponsors={sedeTickerSponsors} />
+                <HubSponsorsTicker sponsors={sedeTickerSponsorsHttps} />
               </div>
             ) : null}
 
