@@ -32,9 +32,9 @@ export async function fetchAdminProfesoresPendientes({ accessToken, signal } = {
   return Array.isArray(data) ? data : [];
 }
 
-export async function fetchAdminProfesoresTodos({ accessToken, estado = 'aprobado', signal } = {}) {
+export async function fetchAdminProfesoresTodos({ accessToken, estado = 'todos', signal } = {}) {
   const qs = new URLSearchParams();
-  const est = String(estado || 'aprobado').trim().toLowerCase();
+  const est = String(estado || 'todos').trim().toLowerCase();
   if (est) qs.set('estado', est);
   const suffix = qs.toString() ? `?${qs}` : '';
   const res = await fetch(`${API_BASE}/api/admin/profesores-todos${suffix}`, {

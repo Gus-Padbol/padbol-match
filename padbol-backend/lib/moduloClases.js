@@ -629,23 +629,23 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
-  /** GET /api/admin/profesores-todos — super admin (?estado=pendiente|aprobado|todos) */
+  /** GET /api/admin/profesores-todos — super admin (?estado=pendiente|aprobado|todos, default todos) */
   app.get('/api/admin/profesores-todos', async (req, res) => {
     try {
       await assertSuperAdminReq(req);
-      const estado = String(req.query.estado || 'aprobado').trim().toLowerCase();
+      const estado = String(req.query.estado || 'todos').trim().toLowerCase();
       let q = supabaseAdmin
         .from('profesores')
         .select(
           'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, aprobado, activo, created_at, sedes(id, nombre)',
         );
       if (estado === 'pendiente') {
+        // Alta club: aprobado=false, activo=true (cola de aprobación super admin)
         q = q.eq('aprobado', false).eq('activo', true);
-      } else if (estado === 'todos') {
-        /* sin filtro de aprobación */
-      } else {
-        q = q.eq('aprobado', true);
+      } else if (estado === 'aprobado') {
+        q = q.eq('aprobado', true).eq('activo', true);
       }
+      // estado === 'todos' → sin filtro
       const { data, error } = await q
         .order('nombre', { ascending: true, foreignTable: 'sedes' })
         .order('nombre', { ascending: true });
@@ -721,6 +721,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const { data, error } = await supabaseAdmin
         .from('profesores')
         .update({
+          activo: true,
           aprobado: true,
           aprobado_por: user.id ?? null,
           updated_at: new Date().toISOString(),
@@ -748,10 +749,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data, error } = await supabaseAdmin
         .from('profesores')
-        .update({
-          activo: false,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ activo: false })
         .eq('id', profId)
         .select()
         .single();
