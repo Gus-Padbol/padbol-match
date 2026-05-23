@@ -3,14 +3,6 @@ import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import { sponsorItemMatchesTickerFormato } from '../utils/sponsorDisplayFormato';
 import './SponsorTicker.css';
 
-function sponsorInitials(nombre) {
-  const parts = String(nombre || '').trim().match(/\S+/g) || [];
-  if (parts.length >= 2) {
-    return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase().slice(0, 2);
-  }
-  return String(parts[0] || '?').slice(0, 2).toUpperCase();
-}
-
 function sponsorTickerImageUrl(item) {
   return String(item.banner_url ?? item.logo_url ?? item.imagen_url ?? '').trim();
 }
@@ -23,26 +15,18 @@ function sponsorTickerLinkHref(url) {
 }
 
 function SponsorTickerItem({ item }) {
-  const nombre = String(item.nombre ?? '').trim() || 'Sponsor';
   const imageUrl = sponsorTickerImageUrl(item);
-  const hasImage = Boolean(imageUrl);
-  const url = String(item.url_destino ?? '').trim();
+  if (!imageUrl) return null;
 
-  const inner = hasImage ? (
+  const url = String(item.url_destino ?? '').trim();
+  const inner = (
     <img
       src={imageUrl}
-      alt={nombre}
+      alt=""
       className="sponsor-ticker__logo"
       loading="lazy"
       decoding="async"
     />
-  ) : (
-    <>
-      <span className="sponsor-ticker__logo sponsor-ticker__logo--placeholder" aria-hidden>
-        {sponsorInitials(nombre)}
-      </span>
-      <span className="sponsor-ticker__nombre">{nombre}</span>
-    </>
   );
 
   if (url) {
@@ -96,7 +80,7 @@ export default function SponsorTicker({ items, sedeId = null, deporte = null }) 
         imagen_url: String(it.imagen_url ?? it.logo_url ?? '').trim(),
         url_destino: String(it.url_destino ?? '').trim(),
       }))
-      .filter((it) => it.nombre || sponsorTickerImageUrl(it));
+      .filter((it) => Boolean(sponsorTickerImageUrl(it)));
   }, [sourceItems]);
 
   if (!displayItems.length) return null;
