@@ -144,10 +144,10 @@ export default function PagoFallido() {
               onClick={() => setCancelReservaModalOpen(true)}
               disabled={busy}
               style={{
-                background: '#f1f5f9',
-                color: T.colorText,
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
                 boxShadow: 'none',
-                border: `1px solid ${T.colorTextMuted}`,
+                border: '1px solid var(--border)',
               }}
             >
               Cancelar reserva
