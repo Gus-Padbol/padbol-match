@@ -589,6 +589,7 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, primerInstructor, l
   const instructorFoto = primerInstructor?.foto_url
     ? toHttps(String(primerInstructor.foto_url).trim())
     : null;
+  const instructorEsFipa = Boolean(primerInstructor?.certificado_fipa);
 
   const socialItems = SEDE_INFO_SOCIAL_META.filter((m) => {
     const v = sede?.[m.key];
@@ -657,7 +658,22 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, primerInstructor, l
                     decoding="async"
                   />
                 ) : null}
-                <span className="sede-publica-info-club__instructor-name">{instructorNombre}</span>
+                <span className="sede-publica-info-club__instructor-meta">
+                  <span className="sede-publica-info-club__instructor-name">{instructorNombre}</span>
+                  <span
+                    className={
+                      instructorEsFipa
+                        ? 'sede-publica-info-club__instructor-badge sede-publica-info-club__instructor-badge--fipa'
+                        : 'sede-publica-info-club__instructor-badge sede-publica-info-club__instructor-badge--padbol'
+                    }
+                  >
+                    {instructorEsFipa
+                      ? t('sedes.publica.instructorBadgeFipa', { defaultValue: 'Instructor FIPA' })
+                      : t('sedes.publica.instructorBadgePadbol', {
+                          defaultValue: 'Instructor Padbol',
+                        })}
+                  </span>
+                </span>
               </span>
             }
           />

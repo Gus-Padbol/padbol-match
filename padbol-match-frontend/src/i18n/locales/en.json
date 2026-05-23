@@ -476,6 +476,8 @@
       "canchasDisponibles": "{{count}} courts available",
       "proximoTorneo": "Next tournament",
       "instructorCertificado": "Certified instructor",
+      "instructorBadgeFipa": "FIPA Instructor",
+      "instructorBadgePadbol": "Padbol Instructor",
       "infoDireccion": "Address",
       "whatsappCta": "Message us on WhatsApp",
       "instructoresCertificados": "{{count}} certified instructor(s)",

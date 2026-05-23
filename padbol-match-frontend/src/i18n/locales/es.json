@@ -500,6 +500,8 @@
       "canchasDisponibles": "{{count}} canchas disponibles",
       "proximoTorneo": "Próximo torneo",
       "instructorCertificado": "Instructor certificado",
+      "instructorBadgeFipa": "Instructor FIPA",
+      "instructorBadgePadbol": "Instructor Padbol",
       "infoDireccion": "Dirección",
       "whatsappCta": "Escribinos por WhatsApp",
       "instructoresCertificados": "{{count}} instructor(es) certificado(s)",

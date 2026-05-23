@@ -24,16 +24,7 @@ function SponsorTickerItem({ item }) {
         <img src={logo_url} alt="" className="sponsor-ticker__logo" loading="lazy" decoding="async" />
       ) : (
         <span
-          className="sponsor-ticker__logo"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#64748b',
-            color: '#fff',
-            fontSize: 10,
-            fontWeight: 700,
-          }}
+          className="sponsor-ticker__logo sponsor-ticker__logo--placeholder"
           aria-hidden
         >
           {sponsorInitials(nombre)}
