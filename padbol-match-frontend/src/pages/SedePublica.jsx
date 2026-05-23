@@ -10,10 +10,6 @@ import AppHeader from '../components/AppHeader';
 import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
-import SponsorBannerSlot from '../components/SponsorBannerSlot';
-import { hubSponsorsEligibles } from '../utils/hubSponsorsFilter';
-import { fetchPublicSponsorsList } from '../utils/sponsorDeportePublic';
-import { pickBannerSponsors } from '../utils/sponsorMedia';
 import {
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
@@ -2270,7 +2266,6 @@ export default function SedePublica() {
   const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
   const [torneosSedeLista, setTorneosSedeLista] = useState([]);
   const [primerInstructor, setPrimerInstructor] = useState(null);
-  const [sedeBannerSponsors, setSedeBannerSponsors] = useState([]);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
   const [duracionesOferta, setDuracionesOferta] = useState([]);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
@@ -2373,35 +2368,6 @@ export default function SedePublica() {
       cancelled = true;
     };
   }, [sedeId]);
-
-  useEffect(() => {
-    if (!sedeIdNumTicker) {
-      setSedeBannerSponsors([]);
-      return undefined;
-    }
-    let cancelled = false;
-    const pais = String(sede?.pais || '').trim();
-    fetchPublicSponsorsList()
-      .then((rows) => {
-        if (cancelled) return;
-        try {
-          const safeRows = Array.isArray(rows)
-            ? rows.filter((r) => r && typeof r === 'object' && !Array.isArray(r))
-            : [];
-          const elig = hubSponsorsEligibles(safeRows, { sedeId: sedeIdNumTicker, pais });
-          setSedeBannerSponsors(pickBannerSponsors(elig));
-        } catch (err) {
-          console.warn('[SedePublica] sponsors banner:', err);
-          setSedeBannerSponsors([]);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setSedeBannerSponsors([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [sedeIdNumTicker, sede?.pais]);
 
   useEffect(() => {
     if (!sedeId) {
@@ -2709,10 +2675,6 @@ export default function SedePublica() {
               lang={padbolLang}
               t={t}
             />
-
-            {Array.isArray(sedeBannerSponsors) && sedeBannerSponsors.length > 0 ? (
-              <SponsorBannerSlot sponsors={sedeBannerSponsors} className="sede-publica-sponsor-banner" margin={false} />
-            ) : null}
 
             {sedeTickerSponsorsHttps?.length > 0 ? (
               <div className="sede-publica-sponsors">
