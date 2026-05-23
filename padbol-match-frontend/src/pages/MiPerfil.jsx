@@ -11,7 +11,6 @@ import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import ConfirmModal from '../components/ConfirmModal';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
@@ -4625,20 +4624,6 @@ export default function MiPerfil() {
 
       {session?.user ? (
         <div style={{ width: '100%', maxWidth: 520, margin: '0 auto', padding: '8px 16px 4px', boxSizing: 'border-box' }}>
-          <div style={{ marginBottom: 14 }}>
-            <span
-              style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                marginBottom: 10,
-              }}
-            >
-              {t('perfil.language')}
-            </span>
-            <LanguageSwitcher variant="profile" />
-          </div>
           <button
             type="button"
             onClick={() => setModalConfirmarCerrarSesion(true)}
