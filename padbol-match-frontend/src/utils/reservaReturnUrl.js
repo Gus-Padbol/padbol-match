@@ -43,6 +43,11 @@ export const RESERVA_FORM_RESTORE_KEY = 'padbol_reserva_form_restore_v1';
 
 export const RESERVA_FORM_RESTORE_VERSION = 2;
 
+/** Estado completo de reserva pendiente (extras, deporte, duración) tras login. */
+export const RESERVA_PENDIENTE_KEY = 'padbol_reserva_pendiente';
+
+export const RESERVA_PENDIENTE_VERSION = 1;
+
 /**
  * Payload versionado para restaurar el flujo tras login (sessionStorage).
  * @param {{ pantalla: number; filtros: { pais?: string; ciudad?: string; sede_id?: string|number|'' }; formData?: Record<string, unknown> }} state
@@ -67,6 +72,69 @@ export function saveReservaFormSessionState(state) {
   try {
     if (typeof window === 'undefined') return;
     sessionStorage.setItem(RESERVA_FORM_RESTORE_KEY, JSON.stringify(buildReservaSessionPayload(state)));
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Payload completo para restaurar resumen tras login (extras, deporte, duración).
+ * @param {{ pantalla?: number; filtros?: object; formData?: object; extrasCantidad?: Record<string, number>; deporte?: string }} state
+ */
+export function buildReservaPendientePayload(state) {
+  const filtros = state?.filtros && typeof state.filtros === 'object' ? state.filtros : {};
+  const formData = state?.formData && typeof state.formData === 'object' ? state.formData : {};
+  const extrasRaw =
+    state?.extrasCantidad && typeof state.extrasCantidad === 'object' ? state.extrasCantidad : {};
+  const extrasCantidad = {};
+  for (const [k, v] of Object.entries(extrasRaw)) {
+    const id = Number(k);
+    const n = parseInt(String(v), 10);
+    if (Number.isFinite(id) && Number.isFinite(n) && n > 0) {
+      extrasCantidad[id] = Math.min(10, n);
+    }
+  }
+  return {
+    v: RESERVA_PENDIENTE_VERSION,
+    pantalla: Number(state?.pantalla) || 4,
+    filtros: {
+      pais: filtros.pais != null ? String(filtros.pais) : '',
+      ciudad: filtros.ciudad != null ? String(filtros.ciudad) : '',
+      sede_id: filtros.sede_id === '' || filtros.sede_id == null ? '' : filtros.sede_id,
+    },
+    formData: { ...formData },
+    extrasCantidad,
+    deporte: state?.deporte != null ? String(state.deporte).trim() : '',
+  };
+}
+
+/** Guarda reserva pendiente (extras + deporte) y copia legacy v2 para OAuth / signup. */
+export function saveReservaPendiente(state) {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(RESERVA_PENDIENTE_KEY, JSON.stringify(buildReservaPendientePayload(state)));
+    saveReservaFormSessionState(state);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function peekReservaPendiente() {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = sessionStorage.getItem(RESERVA_PENDIENTE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearReservaPendiente() {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem(RESERVA_PENDIENTE_KEY);
   } catch {
     /* ignore */
   }
@@ -137,6 +205,15 @@ export function resolvePostLoginNavigatePath(loginSearch) {
  * Tras login/registro: URL para volver a `/reservar` (sessionStorage v2, localStorage return, o legacy session).
  */
 export function getPostLoginReservaPath() {
+  const pendiente = peekReservaPendiente();
+  if (pendiente?.v === RESERVA_PENDIENTE_VERSION) {
+    const sp = urlSearchFromRestoreData(pendiente);
+    const dep = pendiente.deporte != null ? String(pendiente.deporte).trim() : '';
+    if (dep) sp.set('deporte', dep);
+    const qs = sp.toString();
+    return `/reservar${qs ? `?${qs}` : ''}`;
+  }
+
   let parsed = null;
   try {
     const raw = sessionStorage.getItem(RESERVA_FORM_RESTORE_KEY);
@@ -248,6 +325,7 @@ export function clearReservaFlowSessionStorage() {
   try {
     if (typeof window === 'undefined') return;
     sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
+    sessionStorage.removeItem(RESERVA_PENDIENTE_KEY);
     sessionStorage.removeItem(MP_RESERVA_PENDING_KEY);
   } catch {
     /* ignore */

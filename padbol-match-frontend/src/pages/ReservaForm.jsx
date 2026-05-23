@@ -18,13 +18,16 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import {
   RESERVA_FORM_RESTORE_KEY,
   RESERVA_FORM_RESTORE_VERSION,
+  RESERVA_PENDIENTE_KEY,
+  RESERVA_PENDIENTE_VERSION,
   armReservaLoginGateMessage,
-  saveReservaFormSessionState,
+  saveReservaPendiente,
   saveReservaReturnUrl,
   saveMpReservaPendingSlot,
   clearMpReservaPendingSlot,
   clearReservaFlowSessionStorage,
   clearReservaReturnLocalStorage,
+  clearReservaPendiente,
 } from '../utils/reservaReturnUrl';
 import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import { authLoginRedirectPath } from '../utils/authLoginRedirect';
@@ -1264,13 +1267,16 @@ export default function ReservaForm() {
    * el usuario debe tocar "Elige tu cancha" igual que en el flujo manual.
    */
   const reservaOmitirAutoCanchaUnicaRef = useRef(false);
+  const reservaPendienteRestoreAttemptedRef = useRef(false);
 
   const redirectGuestAntesResumen = useCallback(
     (formDataWithCancha) => {
-      saveReservaFormSessionState({
+      saveReservaPendiente({
         pantalla: 4,
         filtros,
         formData: formDataWithCancha,
+        extrasCantidad: reservaExtrasCantidad,
+        deporte: reservaDeporteUrl,
       });
       saveReservaReturnUrl({
         sedeId: filtros.sede_id,
@@ -1282,7 +1288,7 @@ export default function ReservaForm() {
       const dest = authLoginRedirectPath(location);
       navigate(`/acceso?redirect=${encodeURIComponent(dest)}`);
     },
-    [filtros, location, navigate]
+    [filtros, location, navigate, reservaExtrasCantidad, reservaDeporteUrl]
   );
 
   /** Al elegir cancha / ir a resumen: invitados pueden ver resumen; login solo al pagar. */
@@ -1317,7 +1323,13 @@ export default function ReservaForm() {
     }
     if (authLoading) return false;
     if (!perfilJugadorDatosMinimosCompletos(userProfile)) {
-      saveReservaFormSessionState({ pantalla: 4, filtros, formData: snap });
+      saveReservaPendiente({
+        pantalla: 4,
+        filtros,
+        formData: snap,
+        extrasCantidad: reservaExtrasCantidad,
+        deporte: reservaDeporteUrl,
+      });
       saveReservaReturnUrl({
         sedeId: filtros.sede_id,
         fecha: snap.fecha,
@@ -1337,6 +1349,8 @@ export default function ReservaForm() {
     filtros,
     redirectGuestAntesResumen,
     navigate,
+    reservaExtrasCantidad,
+    reservaDeporteUrl,
   ]);
 
   useEffect(() => {
@@ -1430,6 +1444,11 @@ export default function ReservaForm() {
   // Completar país/ciudad cuando hay ?sedeId= en la URL (no usar ultima_sede para saltar la selección).
   useEffect(() => {
     if (sedes.length === 0) return;
+    try {
+      if (session?.user && sessionStorage.getItem(RESERVA_PENDIENTE_KEY)) return;
+    } catch {
+      /* ignore */
+    }
 
     const sedeIdFromUrl =
       initialSedeId && String(initialSedeId).trim() ? String(initialSedeId).trim() : null;
@@ -1515,23 +1534,31 @@ export default function ReservaForm() {
     session?.user?.id,
     filtros.sede_id,
     avanzarAResumenReserva,
+    session?.user,
   ]);
 
-  // Tras login: restaurar estado guardado en sessionStorage (v2 o legacy) antes de redirigir a login.
+  // Tras login: restaurar reserva pendiente (extras, deporte, duración) desde sessionStorage.
   useEffect(() => {
-    if (sedes.length < 1 || authLoading) return;
-    let raw;
-    try {
-      raw = sessionStorage.getItem(RESERVA_FORM_RESTORE_KEY);
-    } catch {
-      return;
-    }
-    if (!raw) return;
+    if (authLoading || !session?.user) return;
+    if (sedes.length < 1) return;
+    if (reservaPendienteRestoreAttemptedRef.current) return;
 
-    let data;
+    let data = null;
+    let storageKey = null;
     try {
-      data = JSON.parse(raw);
+      const rawPendiente = sessionStorage.getItem(RESERVA_PENDIENTE_KEY);
+      if (rawPendiente) {
+        data = JSON.parse(rawPendiente);
+        storageKey = RESERVA_PENDIENTE_KEY;
+      } else {
+        const rawLegacy = sessionStorage.getItem(RESERVA_FORM_RESTORE_KEY);
+        if (rawLegacy) {
+          data = JSON.parse(rawLegacy);
+          storageKey = RESERVA_FORM_RESTORE_KEY;
+        }
+      }
     } catch {
+      clearReservaPendiente();
       try {
         sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
       } catch (_) {
@@ -1539,8 +1566,12 @@ export default function ReservaForm() {
       }
       return;
     }
+    if (!data || !storageKey) return;
 
-    const clearKey = () => {
+    reservaPendienteRestoreAttemptedRef.current = true;
+
+    const clearKeys = () => {
+      clearReservaPendiente();
       try {
         sessionStorage.removeItem(RESERVA_FORM_RESTORE_KEY);
       } catch (_) {
@@ -1548,13 +1579,14 @@ export default function ReservaForm() {
       }
     };
 
-    const mergeFiltrosForm = (filt, fd, sedeObj) => {
+    const mergeFiltrosForm = (filt, fd, sedeObj, extrasCantidad) => {
       const pais = String(filt?.pais || sedeObj?.pais || '').trim();
       const ciudad = String(filt?.ciudad || sedeObj?.ciudad || '').trim();
       const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
       setCiudades(ciudadesDelPais);
       if (sedeObj) {
         setFiltros({ pais, ciudad, sede_id: Number(sedeObj.id) });
+        sedeSeleccionadaCacheRef.current = sedeObj;
       } else {
         setFiltros({
           pais: pais || '',
@@ -1575,11 +1607,38 @@ export default function ReservaForm() {
         codigoPais: fd.codigoPais != null ? String(fd.codigoPais) : prev.codigoPais,
         numeroTel: fd.numeroTel != null ? String(fd.numeroTel) : prev.numeroTel,
       }));
+      if (extrasCantidad && typeof extrasCantidad === 'object') {
+        setReservaExtrasCantidad(extrasCantidad);
+      }
+      const tel = fd.numeroTel != null ? String(fd.numeroTel).trim() : '';
+      if (tel) setWhatsapp(tel);
     };
 
-    if (data?.v === RESERVA_FORM_RESTORE_VERSION) {
+    const deporteRestore =
+      data?.v === RESERVA_PENDIENTE_VERSION && data.deporte != null
+        ? normalizeReservaDeporteUrl(String(data.deporte).trim())
+        : normalizeReservaDeporteUrl(searchParams.get('deporte'));
+
+    const navigateResumen = (sedeObj, fecha, hora, cancha) => {
+      const next = createSearchParams({
+        sedeId: String(sedeObj.id),
+        fecha,
+        hora,
+        canchaId: cancha,
+      });
+      if (deporteRestore) next.set('deporte', deporteRestore);
+      const qs = next.toString();
+      reservaUrlBootstrapKeyRef.current = `${String(sedeObj.id)}|?${qs}`;
+      navigate({ pathname: '/reservar', search: `?${qs}` }, { replace: true });
+    };
+
+    if (data?.v === RESERVA_PENDIENTE_VERSION || data?.v === RESERVA_FORM_RESTORE_VERSION) {
       const filt = data.filtros && typeof data.filtros === 'object' ? data.filtros : {};
       const fd = data.formData && typeof data.formData === 'object' ? data.formData : {};
+      const extrasCantidad =
+        data?.v === RESERVA_PENDIENTE_VERSION && data.extrasCantidad && typeof data.extrasCantidad === 'object'
+          ? data.extrasCantidad
+          : null;
       const sid = filt.sede_id;
       const sedeObj =
         sid !== '' && sid != null && String(sid).trim() !== ''
@@ -1587,7 +1646,7 @@ export default function ReservaForm() {
           : null;
 
       if (sid !== '' && sid != null && String(sid).trim() !== '' && !sedeObj) {
-        clearKey();
+        clearKeys();
         return;
       }
 
@@ -1595,40 +1654,31 @@ export default function ReservaForm() {
       const hora = fd.hora != null ? String(fd.hora).trim() : '';
       const cancha = fd.cancha != null ? String(fd.cancha).trim() : '';
       const full = Boolean(sedeObj && fecha && hora && cancha);
+      const irAResumen = full && Number(data.pantalla) === 4;
 
-      if (full) {
-        clearKey();
-        mergeFiltrosForm(filt, fd, sedeObj);
+      if (irAResumen) {
+        clearKeys();
+        mergeFiltrosForm(filt, fd, sedeObj, extrasCantidad);
         setPantalla(4);
-        navigate(
-          {
-            pathname: '/reservar',
-            search: `?${createSearchParams({
-              sedeId: String(sedeObj.id),
-              fecha,
-              hora,
-              canchaId: cancha,
-            }).toString()}`,
-          },
-          { replace: true }
-        );
+        navigateResumen(sedeObj, fecha, hora, cancha);
         setError('');
         return;
       }
 
       if (sedeObj) {
-        clearKey();
-        mergeFiltrosForm(filt, fd, sedeObj);
+        clearKeys();
+        mergeFiltrosForm(filt, fd, sedeObj, extrasCantidad);
         setPantalla(2);
         const params = { sedeId: String(sedeObj.id) };
         if (fecha) params.fecha = fecha;
+        if (deporteRestore) params.deporte = deporteRestore;
         navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` }, { replace: true });
         setError('');
         return;
       }
 
-      clearKey();
-      mergeFiltrosForm(filt, fd, null);
+      clearKeys();
+      mergeFiltrosForm(filt, fd, null, extrasCantidad);
       setPantalla(Number(data.pantalla) === 1 ? 1 : 2);
       navigate({ pathname: '/reservar', search: '' }, { replace: true });
       setError('');
@@ -1641,45 +1691,35 @@ export default function ReservaForm() {
     const cancha = data?.cancha != null ? String(data.cancha).trim() : '';
 
     if (sid === '' || sid == null) {
-      clearKey();
+      clearKeys();
       return;
     }
     const sedeObj = sedes.find((s) => Number(s.id) === Number(sid));
     if (!sedeObj) {
-      clearKey();
+      clearKeys();
       return;
     }
     const filt = data.filtros && typeof data.filtros === 'object' ? data.filtros : {};
     const fdLegacy = { fecha, hora, cancha };
 
     if (fecha && hora && cancha) {
-      clearKey();
-      mergeFiltrosForm(filt, fdLegacy, sedeObj);
+      clearKeys();
+      mergeFiltrosForm(filt, fdLegacy, sedeObj, null);
       setPantalla(4);
-      navigate(
-        {
-          pathname: '/reservar',
-          search: `?${createSearchParams({
-            sedeId: String(sedeObj.id),
-            fecha,
-            hora,
-            canchaId: cancha,
-          }).toString()}`,
-        },
-        { replace: true }
-      );
+      navigateResumen(sedeObj, fecha, hora, cancha);
       setError('');
       return;
     }
 
-    clearKey();
-    mergeFiltrosForm(filt, fdLegacy, sedeObj);
+    clearKeys();
+    mergeFiltrosForm(filt, fdLegacy, sedeObj, null);
     setPantalla(2);
     const params = { sedeId: String(sedeObj.id) };
     if (fecha) params.fecha = fecha;
+    if (deporteRestore) params.deporte = deporteRestore;
     navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` }, { replace: true });
     setError('');
-  }, [sedes.length, sedes, authLoading, navigate, session?.user, redirectGuestAntesResumen]);
+  }, [sedes.length, sedes, authLoading, navigate, session?.user, searchParams]);
 
   // Siempre que estemos en fecha/hora con sede, asegurar día por defecto (p. ej. flujo mobile pantalla 1 → 2).
   useEffect(() => {
