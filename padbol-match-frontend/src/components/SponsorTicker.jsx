@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import { sponsorItemMatchesTickerFormato } from '../utils/sponsorDisplayFormato';
 import './SponsorTicker.css';
@@ -12,45 +11,54 @@ function sponsorInitials(nombre) {
   return String(parts[0] || '?').slice(0, 2).toUpperCase();
 }
 
+function sponsorTickerImageUrl(item) {
+  return String(item.banner_url ?? item.logo_url ?? item.imagen_url ?? '').trim();
+}
+
+function sponsorTickerLinkHref(url) {
+  const u = String(url || '').trim();
+  if (!u) return '';
+  if (/^https?:\/\//i.test(u)) return u;
+  return u.startsWith('/') ? u : `/${u}`;
+}
+
 function SponsorTickerItem({ item }) {
   const nombre = String(item.nombre ?? '').trim() || 'Sponsor';
-  const logo_url = String(item.logo_url ?? '').trim();
+  const imageUrl = sponsorTickerImageUrl(item);
+  const hasImage = Boolean(imageUrl);
   const url = String(item.url_destino ?? '').trim();
-  const isHttp = /^https?:\/\//i.test(url);
 
-  const inner = (
+  const inner = hasImage ? (
+    <img
+      src={imageUrl}
+      alt={nombre}
+      className="sponsor-ticker__logo"
+      loading="lazy"
+      decoding="async"
+    />
+  ) : (
     <>
-      {logo_url ? (
-        <img src={logo_url} alt="" className="sponsor-ticker__logo" loading="lazy" decoding="async" />
-      ) : (
-        <span
-          className="sponsor-ticker__logo sponsor-ticker__logo--placeholder"
-          aria-hidden
-        >
-          {sponsorInitials(nombre)}
-        </span>
-      )}
+      <span className="sponsor-ticker__logo sponsor-ticker__logo--placeholder" aria-hidden>
+        {sponsorInitials(nombre)}
+      </span>
       <span className="sponsor-ticker__nombre">{nombre}</span>
     </>
   );
 
   if (url) {
-    if (isHttp) {
-      return (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="sponsor-ticker__item">
-          {inner}
-        </a>
-      );
-    }
-    const to = url.startsWith('/') ? url : `/${url}`;
     return (
-      <Link to={to} className="sponsor-ticker__item">
+      <a
+        href={sponsorTickerLinkHref(url)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="sponsor-ticker__item"
+      >
         {inner}
-      </Link>
+      </a>
     );
   }
 
-  return <span className="sponsor-ticker__item">{inner}</span>;
+  return <span className="sponsor-ticker__item sponsor-ticker__item--static">{inner}</span>;
 }
 
 /**
@@ -71,6 +79,8 @@ export default function SponsorTicker({ items, sedeId = null, deporte = null }) 
     return (Array.isArray(sedeSponsors) ? sedeSponsors : []).map((row) => ({
       nombre: String(row?.nombre ?? '').trim(),
       imagen_url: String(row?.imagen_url ?? row?.logo_url ?? row?.logoUrl ?? '').trim(),
+      logo_url: String(row?.logo_url ?? row?.logoUrl ?? row?.imagen_url ?? '').trim(),
+      banner_url: String(row?.banner_url ?? '').trim(),
       url_destino: String(row?.url_destino ?? '').trim(),
     }));
   }, [items, sedeSponsors]);
@@ -81,10 +91,12 @@ export default function SponsorTicker({ items, sedeId = null, deporte = null }) 
       .filter(sponsorItemMatchesTickerFormato)
       .map((it) => ({
         nombre: String(it.nombre ?? '').trim(),
-        logo_url: String(it.imagen_url ?? it.logo_url ?? '').trim(),
+        logo_url: String(it.logo_url ?? it.imagen_url ?? '').trim(),
+        banner_url: String(it.banner_url ?? '').trim(),
+        imagen_url: String(it.imagen_url ?? it.logo_url ?? '').trim(),
         url_destino: String(it.url_destino ?? '').trim(),
       }))
-      .filter((it) => it.nombre || it.logo_url);
+      .filter((it) => it.nombre || sponsorTickerImageUrl(it));
   }, [sourceItems]);
 
   if (!displayItems.length) return null;
