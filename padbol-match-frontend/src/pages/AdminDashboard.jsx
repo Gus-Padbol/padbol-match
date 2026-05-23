@@ -11174,13 +11174,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     hint: t('admin.formularios.phoneHint'),
                   },
                   { label: t('admin.sedes.contactEmailLabel'), k: 'email_contacto' },
-                  { label: t('admin.sedes.latitude'), k: 'latitud', ph: '-34.6037' },
-                  { label: t('admin.sedes.longitude'), k: 'longitud', ph: '-58.3816' },
-                ].map(({ label, k, ph, hint }) => (
+                  { label: t('admin.sedes.latitude'), k: 'latitud', ph: '-34.92105', inputType: 'number' },
+                  { label: t('admin.sedes.longitude'), k: 'longitud', ph: '-57.96505', inputType: 'number' },
+                ].map(({ label, k, ph, hint, inputType }) => (
                   <div key={k} style={{ marginBottom: '12px' }}>
                     <label>{label}</label>
                     <input
-                      type="text"
+                      type={inputType === 'number' ? 'number' : 'text'}
+                      step={inputType === 'number' ? 'any' : undefined}
+                      inputMode={inputType === 'number' ? 'decimal' : undefined}
                       value={editarSedeDraft[k] || ''}
                       placeholder={ph || ''}
                       onChange={(e) => setEditarSedeDraft((p) => ({ ...p, [k]: e.target.value }))}
@@ -11811,14 +11813,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 { label: t('admin.sedes.contactEmailLabel'),      field: 'email_contacto' },
                 { label: 'Horario apertura',       field: 'horario_apertura', placeholder: 'Ej: 08:00' },
                 { label: 'Horario cierre',         field: 'horario_cierre',   placeholder: 'Ej: 23:00' },
-                { label: t('admin.sedes.latitude'),                field: 'latitud',          placeholder: 'Ej: -34.6037' },
-                { label: t('admin.sedes.longitude'),               field: 'longitud',         placeholder: t('admin.formularios.coordPlaceholder'), hint: t('admin.sedes.coordsGoogleMapsHint') },
-              ].map(({ label, field, placeholder, hint }) => (
+                { label: t('admin.sedes.latitude'), field: 'latitud', placeholder: 'Ej: -34.92105', inputType: 'number' },
+                { label: t('admin.sedes.longitude'), field: 'longitud', placeholder: 'Ej: -57.96505', inputType: 'number', hint: t('admin.sedes.coordsGoogleMapsHint') },
+              ].map(({ label, field, placeholder, hint, inputType }) => (
                 <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                   <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>{label}</label>
                   <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                     <input
-                      type="text"
+                      type={inputType === 'number' ? 'number' : 'text'}
+                      step={inputType === 'number' ? 'any' : undefined}
+                      inputMode={inputType === 'number' ? 'decimal' : undefined}
                       value={miSedeForm[field] || ''}
                       placeholder={placeholder || ''}
                       onChange={e => setMiSedeForm(p => ({ ...p, [field]: e.target.value }))}

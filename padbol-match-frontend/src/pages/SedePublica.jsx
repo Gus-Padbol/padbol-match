@@ -59,6 +59,12 @@ const SEDE_HTTPS_SCALAR_KEYS = [
   'website',
 ];
 
+function parseSedeCoord(raw) {
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
 /** Normaliza URLs http→https al cargar sede (evita mixed content en /sede/:id). */
 function normalizeSedeHttps(sede) {
   if (!sede || typeof sede !== 'object') return sede;
@@ -78,6 +84,8 @@ function normalizeSedeHttps(sede) {
       .map((u) => toHttps(String(u || '').trim()))
       .filter(Boolean);
   }
+  out.latitud = parseSedeCoord(out.latitud);
+  out.longitud = parseSedeCoord(out.longitud);
   return out;
 }
 
@@ -370,10 +378,24 @@ function buildMapsSearchHref(direccion, ciudad, pais) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(', '))}`;
 }
 
+/** Embed iframe: coordenadas WGS84 si existen; si no, búsqueda por dirección. */
+function buildMapsEmbedSrc({ latitud, longitud, direccion, ciudad, pais, zoom = 16 }) {
+  const lat = parseSedeCoord(latitud);
+  const lon = parseSedeCoord(longitud);
+  if (lat != null && lon != null) {
+    return toHttps(`https://maps.google.com/maps?q=${lat},${lon}&z=${zoom}&output=embed`);
+  }
+  const parts = [direccion, ciudad, pais].filter(Boolean);
+  if (!parts.length) return null;
+  return toHttps(
+    `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&z=${zoom}&output=embed`
+  );
+}
+
 function buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud) {
-  const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
-  const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
-  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+  const lat = parseSedeCoord(latitud);
+  const lon = parseSedeCoord(longitud);
+  if (lat != null && lon != null) {
     return `https://maps.google.com/?q=${lat},${lon}`;
   }
   return buildMapsSearchHref(direccion, ciudad, pais);
@@ -725,18 +747,10 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, primerInstructor, l
 
 function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
   const openMapsHref = toHttps(buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud));
-  const embedSrc = useMemo(() => {
-    const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
-    const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      return toHttps(`https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`);
-    }
-    const parts = [direccion, ciudad, pais].filter(Boolean);
-    if (!parts.length) return null;
-    return toHttps(
-      `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&output=embed`
-    );
-  }, [direccion, ciudad, pais, latitud, longitud]);
+  const embedSrc = useMemo(
+    () => buildMapsEmbedSrc({ latitud, longitud, direccion, ciudad, pais }),
+    [direccion, ciudad, pais, latitud, longitud]
+  );
 
   if (!embedSrc && !openMapsHref) return null;
 
@@ -887,18 +901,10 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
     () => toHttps(buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud)),
     [direccion, ciudad, pais, latitud, longitud]
   );
-  const embedSrc = useMemo(() => {
-    const lat = latitud != null && latitud !== '' ? Number(latitud) : NaN;
-    const lon = longitud != null && longitud !== '' ? Number(longitud) : NaN;
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      return toHttps(`https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed`);
-    }
-    const parts = [direccion, ciudad, pais].filter(Boolean);
-    if (!parts.length) return null;
-    return toHttps(
-      `https://maps.google.com/maps?q=${encodeURIComponent(parts.join(', '))}&output=embed`
-    );
-  }, [direccion, ciudad, pais, latitud, longitud]);
+  const embedSrc = useMemo(
+    () => buildMapsEmbedSrc({ latitud, longitud, direccion, ciudad, pais }),
+    [direccion, ciudad, pais, latitud, longitud]
+  );
 
   if (!embedSrc && !openMapsHref) return null;
 
