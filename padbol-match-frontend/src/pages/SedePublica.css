@@ -488,61 +488,140 @@
   object-fit: cover;
 }
 
-.sede-publica-info-club__instructor {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
+/* Instructores — fila horizontal de tarjetas */
+.sede-publica-instructores {
+  padding: 12px 14px;
+}
+
+.sede-publica-instructores__title {
+  margin: 0 0 10px;
+  padding: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--accent);
+  display: inline-block;
+  width: auto;
   max-width: 100%;
 }
 
-.sede-publica-info-club__instructor-photo {
-  width: 32px;
-  height: 32px;
+.sede-publica-instructores__track {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.sede-publica-instructores__track::-webkit-scrollbar {
+  display: none;
+}
+
+.sede-publica-instructores__track--single {
+  overflow-x: visible;
+}
+
+.sede-publica-instructores__card {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 200px;
+  max-width: 260px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-sizing: border-box;
+}
+
+.sede-publica-instructores__track--single .sede-publica-instructores__card {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.sede-publica-instructores__photo {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   background: var(--bg-input);
 }
 
-.sede-publica-info-club__instructor-name {
+.sede-publica-instructores__photo--initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.sede-publica-instructores__body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sede-publica-instructores__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.25;
-  text-align: right;
   word-break: break-word;
 }
 
-.sede-publica-info-club__instructor-meta {
-  display: inline-flex;
+.sede-publica-instructores__deportes {
+  display: flex;
   flex-wrap: wrap;
+  gap: 4px;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  min-width: 0;
 }
 
-.sede-publica-info-club__instructor-badge {
+.sede-publica-instructores__deporte-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--text-secondary) 10%, transparent);
+  line-height: 1.2;
+}
+
+.sede-publica-instructores__badge {
+  align-self: flex-start;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.3;
   border-radius: 20px;
   padding: 2px 8px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-.sede-publica-info-club__instructor-badge--fipa {
+.sede-publica-instructores__badge--fipa {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
   color: var(--accent);
   border: 1px solid var(--accent);
 }
 
-.sede-publica-info-club__instructor-badge--padbol {
-  background: color-mix(in srgb, var(--text-secondary) 15%, transparent);
+.sede-publica-instructores__badge--muted {
+  background: color-mix(in srgb, var(--text-secondary) 12%, transparent);
   color: var(--text-secondary);
-  border: 1px solid var(--text-secondary);
+  border: 1px solid color-mix(in srgb, var(--text-secondary) 35%, transparent);
 }
 
 .sede-publica-info-club__social {

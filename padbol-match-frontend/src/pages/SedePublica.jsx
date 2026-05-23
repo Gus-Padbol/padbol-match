@@ -273,15 +273,6 @@ function IconBrandWhatsapp() {
   );
 }
 
-function IconUser() {
-  return (
-    <SedeInfoTablerIcon>
-      <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-      <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-    </SedeInfoTablerIcon>
-  );
-}
-
 function IconBrandInstagram() {
   return (
     <SedeInfoTablerIcon size={24}>
@@ -591,7 +582,111 @@ function SedeInfoRow({ icon, label, value }) {
   );
 }
 
-function SedeInformacionClub({ sede, horario, proximoTorneo, primerInstructor, lang, t }) {
+function instructorDisplayInitials(nombre) {
+  const parts = String(nombre || '').trim().match(/\S+/g) || [];
+  if (parts.length >= 2) {
+    return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase().slice(0, 2);
+  }
+  return String(parts[0] || '?').slice(0, 2).toUpperCase();
+}
+
+function instructorDeportesList(deportes) {
+  const list = Array.isArray(deportes) ? deportes : [];
+  return list.map((d) => String(d || '').trim().toLowerCase()).filter(Boolean);
+}
+
+function instructorDeporteLabel(key) {
+  const k = String(key || '').trim().toLowerCase();
+  const opt = DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === k);
+  return opt?.label || k;
+}
+
+function instructorIncluyePadbol(deportes) {
+  return instructorDeportesList(deportes).some((d) => d === 'padbol' || d.startsWith('padbol'));
+}
+
+function SedeInstructorCard({ instructor, t }) {
+  const nombre = String(instructor?.nombre || '').trim();
+  if (!nombre) return null;
+  const foto = instructor?.foto_url ? toHttps(String(instructor.foto_url).trim()) : null;
+  const deportes = instructorDeportesList(instructor.deportes);
+  const certificadoFipa = Boolean(instructor.certificado_fipa);
+  const badgeFipa = certificadoFipa && instructorIncluyePadbol(deportes);
+  const badgeCert = certificadoFipa && !badgeFipa;
+
+  return (
+    <article className="sede-publica-instructores__card">
+      {foto ? (
+        <img
+          src={foto}
+          alt=""
+          className="sede-publica-instructores__photo"
+          width={48}
+          height={48}
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <span className="sede-publica-instructores__photo sede-publica-instructores__photo--initials" aria-hidden>
+          {instructorDisplayInitials(nombre)}
+        </span>
+      )}
+      <div className="sede-publica-instructores__body">
+        <p className="sede-publica-instructores__name">{nombre}</p>
+        {deportes.length > 0 ? (
+          <div className="sede-publica-instructores__deportes">
+            {deportes.map((dep) => (
+              <span key={`${instructor.id}-${dep}`} className="sede-publica-instructores__deporte-chip">
+                <DeporteIcono deporte={dep} size={14} />
+                <span>{instructorDeporteLabel(dep)}</span>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {badgeFipa ? (
+          <span className="sede-publica-instructores__badge sede-publica-instructores__badge--fipa">
+            {t('sedes.publica.instructorCertFipa', { defaultValue: 'Cert. FIPA' })}
+          </span>
+        ) : null}
+        {badgeCert ? (
+          <span className="sede-publica-instructores__badge sede-publica-instructores__badge--muted">
+            {t('sedes.publica.instructorCertificadoBadge', { defaultValue: 'Certificado' })}
+          </span>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function SedeInstructoresSection({ instructores, t }) {
+  const list = (Array.isArray(instructores) ? instructores : []).filter(
+    (row) => row && String(row.nombre || '').trim(),
+  );
+  if (!list.length) return null;
+
+  const trackClass =
+    list.length === 1
+      ? 'sede-publica-instructores__track sede-publica-instructores__track--single'
+      : 'sede-publica-instructores__track';
+
+  return (
+    <section
+      className="sede-publica-section sede-publica-instructores"
+      aria-labelledby="sede-instructores-title"
+    >
+      <h2 id="sede-instructores-title" className="sede-publica-instructores__title">
+        {t('sedes.publica.instructores', { defaultValue: 'Instructores' })}
+      </h2>
+      <div className={trackClass}>
+        {list.map((inst) => (
+          <SedeInstructorCard key={String(inst.id)} instructor={inst} t={t} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SedeInformacionClub({ sede, horario, proximoTorneo, lang, t }) {
   const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
   const canchasCount = canchas.length;
   const ubicacion = [sede?.direccion, sede?.ciudad, sede?.pais].filter(Boolean).join(', ');
@@ -606,12 +701,6 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, primerInstructor, l
       ? `${proximoTorneoNombre} · ${proximoTorneoFecha}`
       : proximoTorneoNombre || proximoTorneoFecha || null;
   const proximoTorneoBanner = torneoImagenPublicaUrl(proximoTorneo);
-
-  const instructorNombre = primerInstructor ? String(primerInstructor.nombre || '').trim() : '';
-  const instructorFoto = primerInstructor?.foto_url
-    ? toHttps(String(primerInstructor.foto_url).trim())
-    : null;
-  const instructorEsFipa = Boolean(primerInstructor?.certificado_fipa);
 
   const socialItems = SEDE_INFO_SOCIAL_META.filter((m) => {
     const v = sede?.[m.key];
@@ -662,43 +751,6 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, primerInstructor, l
               />
             ) : null}
           </div>
-        ) : null}
-        {instructorNombre ? (
-          <SedeInfoRow
-            icon={<IconUser />}
-            label={t('sedes.publica.instructorCertificado', {
-              defaultValue: 'Instructor certificado',
-            })}
-            value={
-              <span className="sede-publica-info-club__instructor">
-                {instructorFoto ? (
-                  <img
-                    src={instructorFoto}
-                    alt=""
-                    className="sede-publica-info-club__instructor-photo"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : null}
-                <span className="sede-publica-info-club__instructor-meta">
-                  <span className="sede-publica-info-club__instructor-name">{instructorNombre}</span>
-                  <span
-                    className={
-                      instructorEsFipa
-                        ? 'sede-publica-info-club__instructor-badge sede-publica-info-club__instructor-badge--fipa'
-                        : 'sede-publica-info-club__instructor-badge sede-publica-info-club__instructor-badge--padbol'
-                    }
-                  >
-                    {instructorEsFipa
-                      ? t('sedes.publica.instructorBadgeFipa', { defaultValue: 'Instructor FIPA' })
-                      : t('sedes.publica.instructorBadgePadbol', {
-                          defaultValue: 'Instructor Padbol',
-                        })}
-                  </span>
-                </span>
-              </span>
-            }
-          />
         ) : null}
         <SedeInfoRow
           icon={<IconMapPin />}
@@ -2271,7 +2323,7 @@ export default function SedePublica() {
   const [fotosGalleryOpen, setFotosGalleryOpen] = useState(false);
   const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
   const [torneosSedeLista, setTorneosSedeLista] = useState([]);
-  const [primerInstructor, setPrimerInstructor] = useState(null);
+  const [instructoresAprobados, setInstructoresAprobados] = useState([]);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
   const [duracionesOferta, setDuracionesOferta] = useState([]);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
@@ -2377,31 +2429,29 @@ export default function SedePublica() {
 
   useEffect(() => {
     if (!sedeId) {
-      setPrimerInstructor(null);
-      return;
+      setInstructoresAprobados([]);
+      return undefined;
     }
     const id = parseInt(String(sedeId), 10);
     if (!Number.isFinite(id)) {
-      setPrimerInstructor(null);
-      return;
+      setInstructoresAprobados([]);
+      return undefined;
     }
     let cancelled = false;
     const ac = new AbortController();
     fetchProfesores({ sedeId: id, signal: ac.signal })
       .then((list) => {
         if (cancelled) return;
-        const arr = Array.isArray(list) ? list : [];
-        const first =
-          arr.find((p) => p && String(p.nombre || '').trim()) || arr[0] || null;
-        if (!first) {
-          setPrimerInstructor(null);
-          return;
-        }
-        const foto = first.foto_url ? toHttps(String(first.foto_url).trim()) : null;
-        setPrimerInstructor({ ...first, foto_url: foto });
+        const arr = (Array.isArray(list) ? list : [])
+          .filter((p) => p && String(p.nombre || '').trim())
+          .map((p) => ({
+            ...p,
+            foto_url: p.foto_url ? toHttps(String(p.foto_url).trim()) : null,
+          }));
+        setInstructoresAprobados(arr);
       })
       .catch(() => {
-        if (!cancelled) setPrimerInstructor(null);
+        if (!cancelled) setInstructoresAprobados([]);
       });
     return () => {
       cancelled = true;
@@ -2677,10 +2727,11 @@ export default function SedePublica() {
               sede={sede}
               horario={horario}
               proximoTorneo={proximoTorneoInfo}
-              primerInstructor={primerInstructor}
               lang={padbolLang}
               t={t}
             />
+
+            <SedeInstructoresSection instructores={instructoresAprobados} t={t} />
 
             {sedeTickerSponsorsHttps?.length > 0 ? (
               <div className="sede-publica-sponsors">
