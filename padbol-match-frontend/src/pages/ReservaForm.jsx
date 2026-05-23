@@ -331,6 +331,15 @@ function formatMoneyMain(amountMain, currencyCode) {
   }
 }
 
+/** Tasa de fee de plataforma solo para desglose en resumen (3% club; 6% Padbol Point). */
+function reservaPlatformFeeRateForSede(sede) {
+  const raw = String(sede?.tipo || sede?.tipo_licencia || sede?.tipo_interes || '')
+    .trim()
+    .toLowerCase();
+  if (raw === 'padbol_point') return 0.06;
+  return 0.03;
+}
+
 const STRIPE_PUBLISHABLE_KEY =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
     ? String(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).trim()
@@ -1178,6 +1187,20 @@ export default function ReservaForm() {
   const reservaTotalPagarConCargoYExtras = useMemo(
     () => precioReservaTurnoBase + reservaExtrasSubtotal + reservaCargoPlataforma,
     [precioReservaTurnoBase, reservaExtrasSubtotal, reservaCargoPlataforma],
+  );
+
+  const reservaFeeRateDisplay = useMemo(
+    () => reservaPlatformFeeRateForSede(sedeSeleccionada),
+    [sedeSeleccionada],
+  );
+  const reservaFeePctDisplay = Math.round(reservaFeeRateDisplay * 100);
+  const reservaCargoPlataformaDisplay = useMemo(
+    () => Math.round(precioReservaTurnoBase * reservaFeeRateDisplay),
+    [precioReservaTurnoBase, reservaFeeRateDisplay],
+  );
+  const reservaTotalDisplay = useMemo(
+    () => precioReservaTurnoBase + reservaExtrasSubtotal + reservaCargoPlataformaDisplay,
+    [precioReservaTurnoBase, reservaExtrasSubtotal, reservaCargoPlataformaDisplay],
   );
 
   const reservaExtrasPayload = useMemo(
@@ -2832,8 +2855,6 @@ export default function ReservaForm() {
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const creditoAplicado = 0;
     const precioTurnoResumen = precioReservaTurnoBase;
-    const totalMercadoPagoSinStripe =
-      reservaExtrasPayload.length > 0 ? reservaTotalPagarConCargoYExtras : precioTurnoResumen;
     const stripeMontoMainConExtras = Math.max(0, precioTurnoResumen + reservaExtrasSubtotal - creditoAplicado);
     const metodoPagoStripe = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'stripe';
     const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
@@ -2841,16 +2862,6 @@ export default function ReservaForm() {
     const montoBaseMinor = amountMainToStripeMinor(stripeMontoMainConExtras, moneda);
     const cargoServicioMinor = Math.round(montoBaseMinor * 0.03);
     const totalMinor = montoBaseMinor + cargoServicioMinor;
-    const reservaSubtotalP4 = Math.max(0, precioTurnoResumen + reservaExtrasSubtotal - creditoAplicado);
-    const reservaMuestraDesgloseP4 = metodoPagoStripe || reservaExtrasSubtotal > 0;
-    const reservaCargoP4 = metodoPagoStripe
-      ? stripeMinorToMain(cargoServicioMinor, moneda)
-      : reservaCargoPlataforma;
-    const reservaTotalP4 = metodoPagoStripe
-      ? stripeMinorToMain(totalMinor, moneda)
-      : reservaExtrasSubtotal > 0
-        ? reservaTotalPagarConCargoYExtras
-        : precioTurnoResumen;
     const precioPayloadStripe = Number(stripeMinorToMain(totalMinor, moneda));
     const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
     const muestraInputWhatsappResumen =
@@ -2944,7 +2955,19 @@ export default function ReservaForm() {
               <strong>{t('reservas.labelEmail')}</strong> {currentCliente?.email || '—'}
             </p>
             {precioTurnoResumen > 0 ? (
-              metodoPagoStripe ? (
+              metodoPagoEfectivo ? (
+                <p
+                  style={{
+                    margin: '12px 0 0',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {t('reservas.noServiceFeeVenue')}
+                </p>
+              ) : (
                 <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
                   <p style={{ margin: '0 0 4px' }}>
                     <strong>{t('reservas.labelSlot')}</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
@@ -2954,48 +2977,26 @@ export default function ReservaForm() {
                       <strong>{t('reservas.labelExtras')}</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
                     </p>
                   ) : null}
-                  <p style={{ margin: '0 0 4px' }}>
-                    <strong>{t('reservas.subtotal')}</strong> {formatMoneyMain(reservaSubtotalP4, moneda)}
-                  </p>
-                  <p style={{ margin: '0 0 4px' }}>
-                    <strong>{t('reservas.cargoServicio')}</strong> {formatMoneyMain(reservaCargoP4, moneda)}
+                  <p
+                    style={{
+                      margin: '0 0 4px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <strong>
+                      {t('reservas.platformFee', {
+                        pct: reservaFeePctDisplay,
+                        defaultValue: `Fee de plataforma (${reservaFeePctDisplay}%):`,
+                      })}
+                    </strong>{' '}
+                    {formatMoneyMain(reservaCargoPlataformaDisplay, moneda)}
                   </p>
                   <p style={{ margin: '8px 0 0', fontWeight: 800, fontSize: 16, lineHeight: 1.3 }}>
-                    <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalP4, moneda)}
+                    <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalDisplay, moneda)}
                   </p>
-                </div>
-              ) : (
-                <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
-                  <p style={{ margin: '0 0 4px' }}>
-                    <strong>{t('reservas.labelSlot')}</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
-                  </p>
-                  {reservaExtrasSubtotal > 0 ? (
-                    <>
-                      <p style={{ margin: '0 0 4px' }}>
-                        <strong>{t('reservas.labelExtras')}</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
-                      </p>
-                      <p style={{ margin: '0 0 4px' }}>
-                        <strong>{t('reservas.subtotal')}</strong> {formatMoneyMain(reservaSubtotalP4, moneda)}
-                      </p>
-                      <p style={{ margin: '0 0 4px' }}>
-                        <strong>{t('reservas.cargoServicio')}</strong> {formatMoneyMain(reservaCargoP4, moneda)}
-                      </p>
-                      <p style={{ margin: '8px 0 0', fontWeight: 800, fontSize: 16, lineHeight: 1.3 }}>
-                        <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalP4, moneda)}
-                      </p>
-                    </>
-                  ) : metodoPagoEfectivo ? (
-                    <p
-                      style={{
-                        margin: '8px 0 0',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      {t('reservas.noServiceFeeVenue')}
-                    </p>
-                  ) : null}
                 </div>
               )
             ) : null}
@@ -3102,20 +3103,6 @@ export default function ReservaForm() {
                 })}
               </div>
             </div>
-          ) : null}
-
-          {precioTurnoResumen > 0 && !reservaMuestraDesgloseP4 ? (
-            <p
-              style={{
-                margin: '0 0 16px',
-                fontSize: 18,
-                fontWeight: 800,
-                color: 'var(--accent)',
-                lineHeight: 1.3,
-              }}
-            >
-              <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(totalMercadoPagoSinStripe, moneda)}
-            </p>
           ) : null}
 
           {metodoPagoStripe && !stripeCuentaOk ? (

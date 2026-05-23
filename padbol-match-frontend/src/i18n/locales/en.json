@@ -167,6 +167,7 @@
     "serviceFee": "Padbol Match service fee (3%):",
     "subtotal": "Subtotal:",
     "cargoServicio": "Service fee (3%):",
+    "platformFee": "Platform fee ({{pct}}%):",
     "totalPagar": "Total to pay:",
     "noServiceFeeVenue": "No Padbol Match 3% fee (pay at venue).",
     "whatsappConfirm": "WhatsApp for confirmation *",

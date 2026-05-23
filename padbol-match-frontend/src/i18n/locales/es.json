@@ -167,6 +167,7 @@
     "serviceFee": "Cargo de servicio Padbol Match (3%):",
     "subtotal": "Subtotal:",
     "cargoServicio": "Cargo de servicio (3%):",
+    "platformFee": "Fee de plataforma ({{pct}}%):",
     "totalPagar": "Total a pagar:",
     "noServiceFeeVenue": "Sin cargo del 3% de Padbol Match (cobro en sede).",
     "whatsappConfirm": "WhatsApp para confirmación *",
