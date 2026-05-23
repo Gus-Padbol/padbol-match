@@ -8,10 +8,12 @@ import { sponsorRowMatchesTickerFormato } from '../utils/sponsorDisplayFormato';
 function normalizeSponsorTickerItems(sponsors) {
   const raw = Array.isArray(sponsors) ? sponsors : [];
   return raw
+    .filter((row) => row && typeof row === 'object' && !Array.isArray(row))
     .filter(sponsorRowMatchesTickerFormato)
     .map((row) => {
       const nombre = String(row?.nombre ?? '').trim();
       const logo_url = String(row?.logo_url ?? row?.logoUrl ?? row?.imagen_url ?? '').trim();
+      const imagen_url = logo_url;
       const banner_url = String(row?.banner_url ?? '').trim();
       const video_url = String(row?.video_url ?? '').trim();
       const tipo_media = String(row?.tipo_media ?? 'imagen').trim();
