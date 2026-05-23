@@ -86,6 +86,7 @@ html {
   --bg-input: #ffffff;
   --input-bg: var(--bg-input);
   --pm-radius-card: 12px;
+  --border-radius-lg: 12px;
   --pm-radius-button: 8px;
   --pm-radius-input: 8px;
   --pm-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);

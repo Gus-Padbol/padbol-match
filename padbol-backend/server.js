@@ -24,6 +24,7 @@ import {
 } from './lib/adminInviteMagicLink.js';
 import { DateTime } from 'luxon';
 import { registerModuloClasesRoutes } from './lib/moduloClases.js';
+import { registerModuloSponsorsRoutes } from './lib/moduloSponsors.js';
 import {
   isMercadoPagoTestAccessToken,
   mercadoPagoGlobalAccessToken,
@@ -15250,6 +15251,13 @@ registerModuloClasesRoutes(app, {
   assertSuperAdminReq,
   canchasConNumeroReserva,
   assertReservaSinSolapeBackend,
+});
+
+registerModuloSponsorsRoutes(app, {
+  supabaseAdmin,
+  adminListScopeFromRequest,
+  assertEsEditorContenidoOSuperAdmin,
+  assertUsuarioPuedeAdministrarSede,
 });
 
 cron.schedule('*/10 * * * *', async () => {

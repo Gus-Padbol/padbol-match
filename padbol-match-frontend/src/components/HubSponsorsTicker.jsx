@@ -11,12 +11,13 @@ function normalizeSponsorTickerItems(sponsors) {
     .filter(sponsorRowMatchesTickerFormato)
     .map((row) => {
       const nombre = String(row?.nombre ?? '').trim();
-      const imagen_url = String(row?.imagen_url ?? row?.logo_url ?? row?.logoUrl ?? '').trim();
       const logo_url = String(row?.logo_url ?? row?.logoUrl ?? row?.imagen_url ?? '').trim();
       const banner_url = String(row?.banner_url ?? '').trim();
+      const video_url = String(row?.video_url ?? '').trim();
+      const tipo_media = String(row?.tipo_media ?? 'imagen').trim();
       const url_destino = String(row?.url_destino ?? '').trim();
       const tagline = String(row?.descripcion ?? row?.texto_boton ?? row?.tagline ?? '').trim();
-      return { nombre, imagen_url, logo_url, banner_url, url_destino, descripcion: tagline, tagline };
+      return { nombre, imagen_url, logo_url, banner_url, video_url, tipo_media, url_destino, descripcion: tagline, tagline };
     })
     .filter((it) => it.nombre || it.imagen_url || it.logo_url || it.banner_url);
 }

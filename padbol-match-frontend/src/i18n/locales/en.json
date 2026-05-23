@@ -485,6 +485,11 @@
       "resenas": "★ {{rating}} ({{count}} reviews)"
     }
   },
+  "sponsors": {
+    "publicidad": "Advertisement",
+    "tipoMedia": "Media type",
+    "videoUrl": "Video URL (MP4)"
+  },
   "campanita": {
     "sinAlertas": "No pending alerts",
     "marcarLeido": "Mark all as read",

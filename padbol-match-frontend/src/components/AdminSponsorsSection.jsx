@@ -17,7 +17,12 @@ import {
 
 const PADBOL_RED = '#E11B22';
 const ERROR_TEXT = '#E11B22';
-const ERROR_BG = 'rgba(225,27,34,0.08)';
+const ERROR_BG = 'rgba(225, 27, 34, 0.08)';
+
+const API_BASE =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
 
 const errorBannerStyle = {
   margin: '0 0 12px',
@@ -100,6 +105,8 @@ export default function AdminSponsorsSection({
       nombre: '',
       logo_url: '',
       banner_url: '',
+      video_url: '',
+      tipo_media: 'imagen',
       url_destino: '',
       texto_boton: t('admin.sponsors.seeOffer'),
       descripcion: '',
@@ -223,6 +230,8 @@ export default function AdminSponsorsSection({
       nombre: String(r.nombre || ''),
       logo_url: String(r.logo_url || ''),
       banner_url: String(r.banner_url || ''),
+      video_url: String(r.video_url || ''),
+      tipo_media: String(r.tipo_media || 'imagen').toLowerCase() === 'video' ? 'video' : 'imagen',
       url_destino: String(r.url_destino || ''),
       texto_boton: String(r.texto_boton || t('admin.sponsors.seeOffer')),
       descripcion: String(r.descripcion || ''),
@@ -394,6 +403,8 @@ export default function AdminSponsorsSection({
       nombre,
       logo_url: String(form.logo_url || '').trim() || null,
       banner_url: String(form.banner_url || '').trim() || null,
+      video_url: String(form.video_url || '').trim() || null,
+      tipo_media: String(form.tipo_media || 'imagen').toLowerCase() === 'video' ? 'video' : 'imagen',
       url_destino: String(form.url_destino || '').trim() || null,
       texto_boton: String(form.texto_boton || '').trim() || t('admin.sponsors.seeOffer'),
       descripcion: String(form.descripcion || '').trim() || null,
@@ -445,8 +456,18 @@ export default function AdminSponsorsSection({
     setMsg('');
     try {
       if (form.id != null && form.id !== '') {
-        const { error } = await supabase.from('sponsors').update(payload).eq('id', form.id);
-        if (error) throw error;
+        const token = session?.access_token;
+        if (!token) throw new Error(t('admin.formularios.loginSuperAdminSave'));
+        const res = await fetch(`${API_BASE}/api/admin/sponsors/${encodeURIComponent(String(form.id))}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || 'No se pudo actualizar el sponsor');
         setFieldErrors({});
         setMsg(t('admin.sponsors.sponsorUpdated'));
       } else {
@@ -687,6 +708,47 @@ export default function AdminSponsorsSection({
           ) : null}
         </div>
 
+        <label style={labelStyle}>{t('sponsors.tipoMedia', { defaultValue: 'Tipo de media' })}</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+          {[
+            { value: 'imagen', label: 'Imagen' },
+            { value: 'video', label: 'Video' },
+          ].map((opt) => (
+            <label
+              key={opt.value}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="radio"
+                name="sponsor-tipo-media"
+                checked={String(form.tipo_media || 'imagen') === opt.value}
+                onChange={() => setForm((p) => ({ ...p, tipo_media: opt.value }))}
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+
+        {String(form.tipo_media || 'imagen') === 'video' ? (
+          <>
+            <label style={labelStyle}>{t('sponsors.videoUrl', { defaultValue: 'URL del video (MP4)' })}</label>
+            <input
+              style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
+              value={form.video_url}
+              onChange={(e) => setForm((p) => ({ ...p, video_url: e.target.value }))}
+              placeholder="https://…/video.mp4"
+            />
+          </>
+        ) : (
+          <>
         <label style={labelStyle}>Logo (bucket sponsors)</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12 }}>
           <input type="file" accept="image/*" disabled={uploading || saving} onChange={(e) => void onLogoFile(e)} />
@@ -726,6 +788,8 @@ export default function AdminSponsorsSection({
           onChange={(e) => setForm((p) => ({ ...p, banner_url: e.target.value }))}
           placeholder="https://… (bucket sponsors/banners/)"
         />
+          </>
+        )}
 
         <label style={labelStyle}>URL destino (opcional)</label>
         <input

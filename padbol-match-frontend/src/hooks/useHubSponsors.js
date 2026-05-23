@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { hubTickerSponsors, pickHubCardSponsor, pickTercerTiempoSedeSponsor } from '../utils/hubSponsorsFilter';
+import { hubTickerSponsors, hubSponsorsEligibles, pickHubCardSponsor, pickTercerTiempoSedeSponsor } from '../utils/hubSponsorsFilter';
 import { fetchPublicSponsorsList, normalizeSponsorDeporteQueryParam } from '../utils/sponsorDeportePublic';
+import { pickBannerSponsors } from '../utils/sponsorMedia';
 
 /**
  * Sponsors del hub: card 3er tiempo (sede) + lista para banda rotativa.
@@ -57,6 +58,11 @@ export function useHubSponsors(ctx) {
     [rows, sedeKey, paisKey],
   );
 
+  const bannerSponsors = useMemo(
+    () => pickBannerSponsors(hubSponsorsEligibles(rows, { sedeId: sedeKey, pais: paisKey })),
+    [rows, sedeKey, paisKey],
+  );
+
   return useMemo(
     () => ({
       loading,
@@ -65,7 +71,8 @@ export function useHubSponsors(ctx) {
       tercerTiempoSponsor: tercerTiempo,
       tickerSponsors: tickerList,
       cardSponsor,
+      bannerSponsors,
     }),
-    [loading, error, load, tercerTiempo, tickerList, cardSponsor],
+    [loading, error, load, tercerTiempo, tickerList, cardSponsor, bannerSponsors],
   );
 }

@@ -3,6 +3,10 @@ import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import { sponsorRowApproved } from '../utils/hubSponsorsFilter';
 import { fetchPublicSponsorsList } from '../utils/sponsorDeportePublic';
 import { sponsorRowsMatchingContext } from '../utils/sponsorPick';
+import { normalizeSponsorTipoMedia, sponsorRowHasBannerMedia } from '../utils/sponsorMedia';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import SponsorMedia from './SponsorMedia';
+import './SponsorMedia.css';
 import './SponsorBannerFade.css';
 
 const ROTATE_MS = 4000;
@@ -20,17 +24,31 @@ function normalizeBannerRow(row) {
   const nombre = String(row.nombre ?? '').trim();
   const logo_url = String(row.logo_url ?? row.imagen_url ?? '').trim();
   const banner_url = String(row.banner_url ?? '').trim();
+  const video_url = String(row.video_url ?? '').trim();
+  const tipo_media = normalizeSponsorTipoMedia(row.tipo_media);
   const url_destino = String(row.url_destino ?? '').trim();
-  if (!nombre && !logo_url && !banner_url) return null;
-  return { id: row.id, nombre: nombre || 'Sponsor', logo_url, banner_url, url_destino };
+  const normalized = {
+    id: row.id,
+    nombre: nombre || 'Sponsor',
+    logo_url,
+    banner_url,
+    video_url,
+    tipo_media,
+    url_destino,
+  };
+  if (sponsorRowHasBannerMedia(normalized)) return normalized;
+  if (!nombre && !logo_url) return null;
+  return normalized;
 }
 
 function wrapLink(url, className, ariaLabel, children) {
-  const isHttp = /^https?:\/\//i.test(String(url || '').trim());
-  if (isHttp) {
+  const href = String(url || '').trim();
+  if (href) {
+    const isHttp = /^https?:\/\//i.test(href);
+    const finalHref = isHttp ? href : href.startsWith('/') ? href : `/${href}`;
     return (
       <a
-        href={url}
+        href={finalHref}
         target="_blank"
         rel="noopener noreferrer"
         className={className}
@@ -52,6 +70,7 @@ function wrapLink(url, className, ariaLabel, children) {
  * @param {{ sedeId?: number|null, torneoId?: number|null }} props
  */
 export default function SponsorBannerFade({ sedeId = null, torneoId = null }) {
+  const { t } = useTranslation();
   const sid = sedeId != null && Number.isFinite(Number(sedeId)) ? Number(sedeId) : null;
   const tid = torneoId != null && Number.isFinite(Number(torneoId)) ? Number(torneoId) : null;
 
@@ -109,43 +128,29 @@ export default function SponsorBannerFade({ sedeId = null, torneoId = null }) {
   if (!current) return null;
 
   const fadeKey = String(current.id ?? index);
+  const label = t('sponsors.publicidad', { defaultValue: 'Publicidad' });
 
-  if (current.banner_url) {
-    const imageBanner = (
+  if (sponsorRowHasBannerMedia(current)) {
+    const mediaBanner = (
       <>
-        <span className="sponsor-banner-fade__label">Publicidad</span>
-        <div className="sponsor-banner-fade__fade-wrap" key={fadeKey}>
-          <img
-            src={current.banner_url}
-            alt=""
-            className="sponsor-banner-fade__img"
-            loading="lazy"
-            decoding="async"
-          />
+        <span className="sponsor-banner-fade__label">{label}</span>
+        <div className="sponsor-banner-fade__fade-wrap sponsor-banner-fade__media-wrap" key={fadeKey}>
+          <SponsorMedia sponsor={current} />
         </div>
       </>
     );
-    return wrapLink(current.url_destino, 'sponsor-banner-fade', current.nombre, imageBanner);
+    return wrapLink(current.url_destino, 'sponsor-banner-fade', current.nombre, mediaBanner);
   }
 
   const logoFallback = (
     <>
-      <span className="sponsor-banner-fade__label sponsor-banner-fade__label--logo">Publicidad</span>
+      <span className="sponsor-banner-fade__label sponsor-banner-fade__label--logo">{label}</span>
       <div className="sponsor-banner-fade__inner sponsor-banner-fade__fade-wrap" key={fadeKey}>
         {current.logo_url ? (
           <img src={current.logo_url} alt="" className="sponsor-banner-fade__logo" loading="lazy" decoding="async" />
         ) : (
           <span
-            className="sponsor-banner-fade__logo"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#64748b',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 700,
-            }}
+            className="sponsor-banner-fade__logo sponsor-banner-fade__logo--placeholder"
             aria-hidden
           >
             {sponsorInitials(current.nombre)}

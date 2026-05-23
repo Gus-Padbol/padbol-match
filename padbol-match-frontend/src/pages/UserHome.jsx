@@ -16,6 +16,7 @@ import { isPwaStandalone } from '../utils/isPwaStandalone';
 import useUserRole from '../hooks/useUserRole';
 import { useHubSponsors } from '../hooks/useHubSponsors';
 import HubTercerTiempoSponsor from '../components/HubTercerTiempoSponsor';
+import SponsorBannerSlot from '../components/SponsorBannerSlot';
 import HubDeporteSelect from '../components/HubDeporteSelect';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
@@ -319,7 +320,7 @@ export default function UserHome() {
     const d = String(deporteElegido || '').trim().toLowerCase();
     return d && DEPORTES_CANCHA_SEDE_KEYS.includes(d) ? d : null;
   }, [deporteElegido]);
-  const { tercerTiempoSponsor } = useHubSponsors({
+  const { tercerTiempoSponsor, bannerSponsors } = useHubSponsors({
     sedeId: hubSedeId != null && Number.isFinite(Number(hubSedeId)) ? Number(hubSedeId) : null,
     pais: paisParaSponsors,
     deporte: deporteTickerUserHome,
@@ -913,6 +914,10 @@ export default function UserHome() {
             })
               : null}
             <HubTercerTiempoSponsor sponsor={tercerTiempoSponsor} />
+
+            {bannerSponsors.length > 0 ? (
+              <SponsorBannerSlot sponsors={bannerSponsors} margin={false} />
+            ) : null}
 
             {!isPwaStandalone() ? (
               <div

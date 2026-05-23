@@ -10,6 +10,10 @@ import AppHeader from '../components/AppHeader';
 import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import BottomNav from '../components/BottomNav';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
+import SponsorBannerSlot from '../components/SponsorBannerSlot';
+import { hubSponsorsEligibles } from '../utils/hubSponsorsFilter';
+import { fetchPublicSponsorsList } from '../utils/sponsorDeportePublic';
+import { pickBannerSponsors } from '../utils/sponsorMedia';
 import {
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
@@ -2245,6 +2249,7 @@ export default function SedePublica() {
       if (next.logo_url != null) next.logo_url = toHttps(String(next.logo_url).trim());
       if (next.logoUrl != null) next.logoUrl = toHttps(String(next.logoUrl).trim());
       if (next.url_destino != null) next.url_destino = toHttps(String(next.url_destino).trim());
+      if (next.video_url != null) next.video_url = toHttps(String(next.video_url).trim());
       return next;
     });
   }, [sedeTickerSponsors]);
@@ -2263,6 +2268,7 @@ export default function SedePublica() {
   const [fotosGalleryIndex, setFotosGalleryIndex] = useState(0);
   const [torneosSedeLista, setTorneosSedeLista] = useState([]);
   const [primerInstructor, setPrimerInstructor] = useState(null);
+  const [sedeBannerSponsors, setSedeBannerSponsors] = useState([]);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
   const [duracionesOferta, setDuracionesOferta] = useState([]);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
@@ -2365,6 +2371,27 @@ export default function SedePublica() {
       cancelled = true;
     };
   }, [sedeId]);
+
+  useEffect(() => {
+    if (!sedeIdNumTicker) {
+      setSedeBannerSponsors([]);
+      return undefined;
+    }
+    let cancelled = false;
+    const pais = String(sede?.pais || '').trim();
+    fetchPublicSponsorsList()
+      .then((rows) => {
+        if (cancelled) return;
+        const elig = hubSponsorsEligibles(rows, { sedeId: sedeIdNumTicker, pais });
+        setSedeBannerSponsors(pickBannerSponsors(elig));
+      })
+      .catch(() => {
+        if (!cancelled) setSedeBannerSponsors([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sedeIdNumTicker, sede?.pais]);
 
   useEffect(() => {
     if (!sedeId) {
@@ -2672,6 +2699,10 @@ export default function SedePublica() {
               lang={padbolLang}
               t={t}
             />
+
+            {sedeBannerSponsors.length > 0 ? (
+              <SponsorBannerSlot sponsors={sedeBannerSponsors} />
+            ) : null}
 
             {sedeTickerSponsorsHttps?.length > 0 ? (
               <div className="sede-publica-sponsors">

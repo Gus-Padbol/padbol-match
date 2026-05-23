@@ -509,6 +509,11 @@
       "resenas": "★ {{rating}} ({{count}} reseñas)"
     }
   },
+  "sponsors": {
+    "publicidad": "Publicidad",
+    "tipoMedia": "Tipo de media",
+    "videoUrl": "URL del video (MP4)"
+  },
   "campanita": {
     "sinAlertas": "No hay alertas pendientes",
     "marcarLeido": "Marcar todo como leído",
