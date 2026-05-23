@@ -1291,10 +1291,21 @@ export default function ReservaForm() {
     [filtros, location, navigate, reservaExtrasCantidad, reservaDeporteUrl]
   );
 
-  /** Al elegir cancha / ir a resumen: invitados pueden ver resumen; login solo al pagar. */
+  /** Al elegir cancha / ir a resumen: login obligatorio antes de pantalla 4. */
   const avanzarAResumenReserva = useCallback(
     (patch = {}) => {
       if (authLoading) return false;
+      const merged = {
+        ...formData,
+        ...patch,
+        ...(patch.cancha != null && String(patch.cancha).trim() !== ''
+          ? { cancha: String(patch.cancha) }
+          : {}),
+      };
+      if (!session?.user) {
+        redirectGuestAntesResumen(merged);
+        return false;
+      }
       if (Object.keys(patch).length > 0) {
         setFormData((prev) => ({
           ...prev,
@@ -1308,19 +1319,15 @@ export default function ReservaForm() {
       setError('');
       return true;
     },
-    [authLoading],
+    [authLoading, session?.user, formData, redirectGuestAntesResumen],
   );
 
-  /** Invitado → /acceso; sesión sin WhatsApp/género → completar perfil. Solo al tocar pagar. */
+  /** Sesión sin WhatsApp/género → completar perfil. Solo al tocar pagar (ya autenticado). */
   const gateReservaAntesDePagar = useCallback(() => {
     const snap = {
       ...formData,
       numeroTel: whatsapp || formData.numeroTel,
     };
-    if (!session?.user) {
-      redirectGuestAntesResumen(snap);
-      return false;
-    }
     if (authLoading) return false;
     if (!perfilJugadorDatosMinimosCompletos(userProfile)) {
       saveReservaPendiente({
@@ -1347,27 +1354,33 @@ export default function ReservaForm() {
     session?.user,
     userProfile,
     filtros,
-    redirectGuestAntesResumen,
     navigate,
     reservaExtrasCantidad,
     reservaDeporteUrl,
   ]);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (pantalla === 4 && !session?.user) {
+      setPantalla(2);
+    }
+  }, [pantalla, session?.user, authLoading]);
+
+  useEffect(() => {
     if (pantalla !== 4) return;
     setWhatsapp(formData.numeroTel || '');
   }, [pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-select + auto-advance cuando solo hay una cancha libre (tras elegir horario)
+  // Auto-select + auto-advance cuando solo hay una cancha libre (usuarios autenticados)
   useEffect(() => {
     if (reservaOmitirAutoCanchaUnicaRef.current) return;
     if (pantalla !== 2 || !formData.hora || !canchasDisponibles.length) return;
-    if (authLoading) return;
+    if (authLoading || !session?.user) return;
     const libres = canchasDisponibles.filter((c) => c.libre);
     if (libres.length === 1) {
       avanzarAResumenReserva({ cancha: String(libres[0].num) });
     }
-  }, [canchasDisponibles, pantalla, formData, authLoading, avanzarAResumenReserva]);
+  }, [canchasDisponibles, pantalla, formData, authLoading, session?.user, avanzarAResumenReserva]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2794,9 +2807,9 @@ export default function ReservaForm() {
     );
   }
 
-  // PANTALLA 4: Resumen + pago (invitados ven resumen; login al confirmar pago)
+  // PANTALLA 4: Resumen + pago (solo usuarios autenticados; login al elegir cancha / reservar)
   if (pantalla === 4) {
-    if (authLoading) {
+    if (authLoading || !session?.user) {
       return (
         <div
           className="reserva-container"
