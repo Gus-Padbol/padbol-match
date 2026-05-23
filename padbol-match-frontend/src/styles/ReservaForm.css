@@ -983,7 +983,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 16px 0 0;
+  margin: 16px 0 12px;
   padding: 10px 14px;
   font-size: 14px;
   font-weight: 700;

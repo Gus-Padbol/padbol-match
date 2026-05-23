@@ -2395,10 +2395,10 @@ export default function ReservaForm() {
 
           {filtros.pais ? (
             <p className="reserva-sede-deporte-activo" role="status">
+              {t('reservas.reservandoPara', { deporte: etiquetaDeporteReserva(t, reservaDeporteUrl) })}
               <span className="reserva-sede-deporte-activo-emoji" aria-hidden>
                 <DeporteIcono deporte={reservaDeporteUrl} size={20} />
               </span>
-              {t('reservas.reservandoPara', { deporte: etiquetaDeporteReserva(t, reservaDeporteUrl) })}
             </p>
           ) : null}
 
