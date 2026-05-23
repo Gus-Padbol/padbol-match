@@ -17,8 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
-import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
-import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
+import './ChatbotIA.css';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
 function TablerMicrophoneIcon({ size = 22 }) {
@@ -669,19 +668,20 @@ function QuickSuggestionBar({ items, disabled, onPick, isDark }) {
   );
 }
 
-function ChiviFabAvatar({ src, size = 44 }) {
+function ChiviFabAvatar({ size = 44 }) {
+  const [src] = useState(() => `/chivi.png?v=${Date.now()}`);
   return (
     <img
-      src={String(src || CHIVI_AVATAR_DEFAULT_SRC).trim() || CHIVI_AVATAR_DEFAULT_SRC}
+      src={src}
       alt="Chivi"
-      style={{ width: size, height: size, objectFit: 'cover', borderRadius: '50%' }}
+      className="chatbot-fab-chivi-avatar"
+      style={{ width: size, height: size }}
     />
   );
 }
 
 export default function ChatbotIA() {
   const { t } = useTranslation();
-  const { avatarUrl: chiviAvatarUrl } = useHubChiviAvatar();
   const location = useLocation();
   const navigate = useNavigate();
   const { navDock } = useHubNavLayout();
@@ -1408,22 +1408,7 @@ export default function ChatbotIA() {
         >
           {fabCollapsed ? (
             <>
-              <span
-                aria-hidden
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: '50%',
-                  background: 'var(--accent)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                  flexShrink: 0,
-                }}
-              >
-                <ChiviFabAvatar src={chiviAvatarUrl} size={44} />
-              </span>
+              <ChiviFabAvatar size={44} />
               <span
                 style={{
                   color: '#fff',
@@ -1441,21 +1426,7 @@ export default function ChatbotIA() {
             </>
           ) : (
             <>
-              <span
-                aria-hidden
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: '#fff',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ChiviFabAvatar src={chiviAvatarUrl} size={44} />
-              </span>
+              <ChiviFabAvatar size={36} />
               <span
                 style={{
                   display: 'flex',
