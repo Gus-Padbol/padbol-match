@@ -1,34 +1,40 @@
 import React, { useMemo } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { pickBannerSponsors } from '../utils/sponsorMedia';
+import { pickBannerSponsors, sponsorHasDisplayableMedia } from '../utils/sponsorMedia';
 import SponsorMedia from './SponsorMedia';
+import SponsorBannerSlotErrorBoundary from './SponsorBannerSlotErrorBoundary';
 import './SponsorMedia.css';
 
 function sponsorLinkHref(url) {
-  const u = String(url || '').trim();
+  const u = String(url ?? '').trim();
   if (!u) return '';
   if (/^https?:\/\//i.test(u)) return u;
   return u.startsWith('/') ? u : `/${u}`;
 }
 
-/**
- * Banner publicitario (imagen o video) para sede / hub.
- * @param {{ sponsors?: unknown[], className?: string, margin?: boolean }} props
- */
-export default function SponsorBannerSlot({ sponsors, className = '', margin = true }) {
+function SponsorBannerSlotInner({ sponsors, className = '', margin = true }) {
   const { t } = useTranslation();
+
   const banner = useMemo(() => {
-    const list = pickBannerSponsors(sponsors);
-    return list[0] ?? null;
+    try {
+      const list = pickBannerSponsors(sponsors);
+      const first = list[0] ?? null;
+      return sponsorHasDisplayableMedia(first) ? first : null;
+    } catch (err) {
+      console.warn('[SponsorBannerSlot] pick banner:', err);
+      return null;
+    }
   }, [sponsors]);
 
   if (!banner) return null;
 
   const href = sponsorLinkHref(banner.url_destino);
   const label = t('sponsors.publicidad', { defaultValue: 'Publicidad' });
+  const ariaLabel = String(banner.nombre ?? label).trim() || label;
+
   const rootClass = [
     'sponsor-banner-slot',
-    margin ? '' : 'sponsor-banner-slot--flush',
+    margin ? '' : 'sede-publica-sponsor-banner--flush',
     className,
   ]
     .filter(Boolean)
@@ -49,15 +55,29 @@ export default function SponsorBannerSlot({ sponsors, className = '', margin = t
           target="_blank"
           rel="noopener noreferrer"
           className="sponsor-banner-slot__frame"
-          aria-label={String(banner.nombre || label).trim()}
+          aria-label={ariaLabel}
         >
           {media}
         </a>
       ) : (
-        <div className="sponsor-banner-slot__frame" role="group" aria-label={String(banner.nombre || label).trim()}>
+        <div className="sponsor-banner-slot__frame" role="group" aria-label={ariaLabel}>
           {media}
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Banner publicitario (imagen o video) para sede / hub.
+ * @param {{ sponsors?: unknown[], className?: string, margin?: boolean }} props
+ */
+export default function SponsorBannerSlot(props) {
+  const sponsors = Array.isArray(props?.sponsors) ? props.sponsors : [];
+
+  return (
+    <SponsorBannerSlotErrorBoundary>
+      <SponsorBannerSlotInner {...props} sponsors={sponsors} />
+    </SponsorBannerSlotErrorBoundary>
   );
 }

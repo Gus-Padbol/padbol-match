@@ -21,6 +21,7 @@ export function hubSponsorsEligibles(rows, ctx, ymd = sponsorDateYmdLocal()) {
   const pCtx = normPais(ctx.pais);
   const list = Array.isArray(rows) ? rows : [];
   return list.filter((r) => {
+    if (!r || typeof r !== 'object' || Array.isArray(r)) return false;
     if (r.activo === false) return false;
     if (!sponsorVigenteEnFecha(r, ymd)) return false;
     if (!sponsorRowApproved(r)) return false;
@@ -44,6 +45,7 @@ export function pickTercerTiempoSedeSponsor(rows, sedeId, ymd = sponsorDateYmdLo
   if (sid == null) return null;
   const list = Array.isArray(rows) ? rows : [];
   const matches = list.filter((r) => {
+    if (!r || typeof r !== 'object' || Array.isArray(r)) return false;
     if (r.activo === false) return false;
     if (!sponsorVigenteEnFecha(r, ymd)) return false;
     if (!sponsorRowApproved(r)) return false;

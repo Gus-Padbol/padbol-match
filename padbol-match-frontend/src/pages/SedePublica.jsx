@@ -2242,16 +2242,18 @@ export default function SedePublica() {
   });
   const sedeTickerSponsorsHttps = useMemo(() => {
     const list = Array.isArray(sedeTickerSponsors) ? sedeTickerSponsors : [];
-    return list.map((row) => {
-      if (!row || typeof row !== 'object') return row;
-      const next = { ...row };
-      if (next.imagen_url != null) next.imagen_url = toHttps(String(next.imagen_url).trim());
-      if (next.logo_url != null) next.logo_url = toHttps(String(next.logo_url).trim());
-      if (next.logoUrl != null) next.logoUrl = toHttps(String(next.logoUrl).trim());
-      if (next.url_destino != null) next.url_destino = toHttps(String(next.url_destino).trim());
-      if (next.video_url != null) next.video_url = toHttps(String(next.video_url).trim());
-      return next;
-    });
+    return list
+      .filter((row) => row && typeof row === 'object' && !Array.isArray(row))
+      .map((row) => {
+        const next = { ...row };
+        if (next.imagen_url != null) next.imagen_url = toHttps(String(next.imagen_url).trim());
+        if (next.logo_url != null) next.logo_url = toHttps(String(next.logo_url).trim());
+        if (next.logoUrl != null) next.logoUrl = toHttps(String(next.logoUrl).trim());
+        if (next.url_destino != null) next.url_destino = toHttps(String(next.url_destino).trim());
+        if (next.video_url != null) next.video_url = toHttps(String(next.video_url).trim());
+        if (next.banner_url != null) next.banner_url = toHttps(String(next.banner_url).trim());
+        return next;
+      });
   }, [sedeTickerSponsors]);
   /** Hueco bajo AppHeader + BottomNav fijos + buffer (hero y resto del scroll). Safe-area en `--pm-app-header-stack-height`. */
   const sedeScrollPaddingTopCss = useMemo(
@@ -2382,8 +2384,16 @@ export default function SedePublica() {
     fetchPublicSponsorsList()
       .then((rows) => {
         if (cancelled) return;
-        const elig = hubSponsorsEligibles(rows, { sedeId: sedeIdNumTicker, pais });
-        setSedeBannerSponsors(pickBannerSponsors(elig));
+        try {
+          const safeRows = Array.isArray(rows)
+            ? rows.filter((r) => r && typeof r === 'object' && !Array.isArray(r))
+            : [];
+          const elig = hubSponsorsEligibles(safeRows, { sedeId: sedeIdNumTicker, pais });
+          setSedeBannerSponsors(pickBannerSponsors(elig));
+        } catch (err) {
+          console.warn('[SedePublica] sponsors banner:', err);
+          setSedeBannerSponsors([]);
+        }
       })
       .catch(() => {
         if (!cancelled) setSedeBannerSponsors([]);
@@ -2700,8 +2710,8 @@ export default function SedePublica() {
               t={t}
             />
 
-            {sedeBannerSponsors.length > 0 ? (
-              <SponsorBannerSlot sponsors={sedeBannerSponsors} />
+            {Array.isArray(sedeBannerSponsors) && sedeBannerSponsors.length > 0 ? (
+              <SponsorBannerSlot sponsors={sedeBannerSponsors} className="sede-publica-sponsor-banner" margin={false} />
             ) : null}
 
             {sedeTickerSponsorsHttps?.length > 0 ? (
