@@ -1285,22 +1285,10 @@ export default function ReservaForm() {
     [filtros, location, navigate]
   );
 
-  /** Al elegir cancha / ir a resumen: invitado → /acceso (estado en sessionStorage). */
+  /** Al elegir cancha / ir a resumen: invitados pueden ver resumen; login solo al pagar. */
   const avanzarAResumenReserva = useCallback(
     (patch = {}) => {
       if (authLoading) return false;
-      const snap = {
-        ...formData,
-        ...patch,
-        numeroTel: whatsapp || formData.numeroTel,
-      };
-      if (patch.cancha != null && String(patch.cancha).trim() !== '') {
-        snap.cancha = String(patch.cancha);
-      }
-      if (!session?.user) {
-        redirectGuestAntesResumen(snap);
-        return false;
-      }
       if (Object.keys(patch).length > 0) {
         setFormData((prev) => ({
           ...prev,
@@ -1314,7 +1302,7 @@ export default function ReservaForm() {
       setError('');
       return true;
     },
-    [authLoading, formData, whatsapp, session?.user, redirectGuestAntesResumen],
+    [authLoading],
   );
 
   /** Invitado → /acceso; sesión sin WhatsApp/género → completar perfil. Solo al tocar pagar. */
@@ -1355,22 +1343,6 @@ export default function ReservaForm() {
     if (pantalla !== 4) return;
     setWhatsapp(formData.numeroTel || '');
   }, [pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /** Red de seguridad: resumen solo con sesión (p. ej. restore o setPantalla(4) residual). */
-  useEffect(() => {
-    if (pantalla !== 4 || authLoading || session?.user) return;
-    redirectGuestAntesResumen({
-      ...formData,
-      numeroTel: whatsapp || formData.numeroTel,
-    });
-  }, [
-    pantalla,
-    authLoading,
-    session?.user,
-    formData,
-    whatsapp,
-    redirectGuestAntesResumen,
-  ]);
 
   // Auto-select + auto-advance cuando solo hay una cancha libre (tras elegir horario)
   useEffect(() => {
@@ -1627,17 +1599,6 @@ export default function ReservaForm() {
       if (full) {
         clearKey();
         mergeFiltrosForm(filt, fd, sedeObj);
-        if (!session?.user) {
-          redirectGuestAntesResumen({
-            ...fd,
-            fecha,
-            hora,
-            cancha,
-            codigoPais: fd.codigoPais ?? '+54',
-            numeroTel: fd.numeroTel ?? '',
-          });
-          return;
-        }
         setPantalla(4);
         navigate(
           {
@@ -1694,16 +1655,6 @@ export default function ReservaForm() {
     if (fecha && hora && cancha) {
       clearKey();
       mergeFiltrosForm(filt, fdLegacy, sedeObj);
-      if (!session?.user) {
-        redirectGuestAntesResumen({
-          fecha,
-          hora,
-          cancha,
-          codigoPais: '+54',
-          numeroTel: '',
-        });
-        return;
-      }
       setPantalla(4);
       navigate(
         {
@@ -2802,9 +2753,9 @@ export default function ReservaForm() {
     );
   }
 
-  // PANTALLA 4: Resumen + pago (solo usuarios logueados; invitado redirige en avanzarAResumenReserva)
+  // PANTALLA 4: Resumen + pago (invitados ven resumen; login al confirmar pago)
   if (pantalla === 4) {
-    if (authLoading || !session?.user) {
+    if (authLoading) {
       return (
         <div
           className="reserva-container"
