@@ -17,7 +17,7 @@ import {
   readReservaPendienteArmar,
   saveReservaPendienteArmar,
 } from '../utils/armarPartidoReservaPendiente';
-import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
+import { handleCrearPreferenciaResponse } from '../utils/mercadopagoCheckout';
 import { usePerfilJugadorMinimoEnRuta } from '../hooks/usePerfilJugadorMinimoEnRuta';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
@@ -879,7 +879,10 @@ export default function ArmarPartido() {
       const data = await res.json();
       if (res.ok && data.init_point) {
         clearReservaPendienteArmar();
-        redirectMercadoPagoCheckout(data.init_point);
+        handleCrearPreferenciaResponse(res, data, {
+          sedeId: sedeActual.id,
+          fromSede: sedeActual,
+        });
         return;
       }
       if (res.ok && (data.manual_payment || data.efectivo_payment)) {

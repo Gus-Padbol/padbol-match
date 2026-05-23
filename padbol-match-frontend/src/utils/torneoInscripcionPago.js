@@ -1,4 +1,4 @@
-import { redirectMercadoPagoCheckout } from './mercadopagoCheckout';
+import { handleCrearPreferenciaResponse } from './mercadopagoCheckout';
 
 function defaultApiBackendBase() {
   if (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL) {
@@ -133,7 +133,7 @@ export async function iniciarPagoInscripcionTorneo({
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.init_point) {
-      redirectMercadoPagoCheckout(data.init_point);
+      handleCrearPreferenciaResponse(res, data, { sedeId });
       return { ok: true };
     }
     if (res.ok && data.efectivo_payment) {

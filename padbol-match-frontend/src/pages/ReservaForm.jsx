@@ -59,7 +59,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
-import { redirectMercadoPagoCheckout } from '../utils/mercadopagoCheckout';
+import { handleCrearPreferenciaResponse } from '../utils/mercadopagoCheckout';
 import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
@@ -2226,7 +2226,10 @@ export default function ReservaForm() {
           sedeId: sedeSeleccionada.id,
           duracion: duracionReservaMin,
         });
-        redirectMercadoPagoCheckout(data.init_point);
+        handleCrearPreferenciaResponse(res, data, {
+          sedeId: sedeSeleccionada.id,
+          fromSede: sedeSeleccionada,
+        });
       } else if (res.ok && data.efectivo_payment) {
         alert(t('reservas.payAtVenueAlert'));
         setPantalla(1);

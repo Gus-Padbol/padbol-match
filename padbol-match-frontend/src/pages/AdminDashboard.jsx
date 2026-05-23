@@ -350,6 +350,7 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     metodo_pago: sedeData.metodo_pago || 'mercadopago',
     stripe_account_id: sedeData.stripe_account_id || '',
     mp_access_token: sedeData.mp_access_token || '',
+    mp_public_key: sedeData.mp_public_key || '',
     pago_manual_instrucciones: sedeData.pago_manual_instrucciones || '',
     latitud: sedeData.latitud != null ? String(sedeData.latitud) : '',
     longitud: sedeData.longitud != null ? String(sedeData.longitud) : '',
@@ -378,6 +379,7 @@ function miSedeFormToApiPatchBody(form) {
   const latOk = form.latitud !== '' && form.latitud != null && Number.isFinite(parseFloat(form.latitud));
   const lngOk = form.longitud !== '' && form.longitud != null && Number.isFinite(parseFloat(form.longitud));
   const mpTrim = String(form.mp_access_token ?? '').trim();
+  const mpPublicTrim = String(form.mp_public_key ?? '').trim();
   const stripeTrim = String(form.stripe_account_id ?? '').trim();
   const out = {
     nombre: form.nombre,
@@ -418,6 +420,7 @@ function miSedeFormToApiPatchBody(form) {
     color_borde_hero: normalizeHexSedeAdmin(form.color_borde_hero) || '#6D28D9',
   };
   if (mpTrim) out.mp_access_token = mpTrim;
+  if (mpPublicTrim) out.mp_public_key = mpPublicTrim;
   if (stripeTrim) out.stripe_account_id = stripeTrim;
   return out;
 }
@@ -4939,6 +4942,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   });
   const [miSedeMsg,     setMiSedeMsg]     = useState('');
   const [pagosMpPanelAbierto, setPagosMpPanelAbierto] = useState(false);
+  const [pagosMpAccessTokenVisible, setPagosMpAccessTokenVisible] = useState(false);
+  const [pagosMpPublicKeyVisible, setPagosMpPublicKeyVisible] = useState(false);
   const [pagosStripePanelAbierto, setPagosStripePanelAbierto] = useState(false);
   const [pagosParcialSaving, setPagosParcialSaving] = useState(false);
   const [editarSedeModalOpen, setEditarSedeModalOpen] = useState(false);
@@ -12478,31 +12483,104 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                       Access Token de Mercado Pago
                     </label>
-                    <input
-                      type="password"
-                      className="admin-mi-sede-theme-input"
-                      autoComplete="off"
-                      value={miSedeForm.mp_access_token || ''}
-                      placeholder={Boolean(String(miSede?.mp_access_token || '').trim()) ? t('admin.sedes.mpTokenReplacePh') : t('admin.sedes.mpTokenPh')}
-                      onChange={(e) => setMiSedeForm((p) => ({ ...p, mp_access_token: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        boxSizing: 'border-box',
-                        fontFamily: 'monospace',
-                        marginBottom: '10px',
-                      }}
-                    />
+                    <div style={{ position: 'relative', marginBottom: '14px' }}>
+                      <input
+                        type={pagosMpAccessTokenVisible ? 'text' : 'password'}
+                        className="admin-mi-sede-theme-input"
+                        autoComplete="off"
+                        value={miSedeForm.mp_access_token || ''}
+                        placeholder={Boolean(String(miSede?.mp_access_token || '').trim()) ? t('admin.sedes.mpTokenReplacePh') : t('admin.sedes.mpTokenPh')}
+                        onChange={(e) => setMiSedeForm((p) => ({ ...p, mp_access_token: e.target.value }))}
+                        style={{
+                          width: '100%',
+                          padding: '8px 40px 8px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                          fontFamily: 'monospace',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPagosMpAccessTokenVisible((v) => !v)}
+                        aria-label={pagosMpAccessTokenVisible ? t('auth.hidePassword') : t('auth.showPassword')}
+                        style={{
+                          position: 'absolute',
+                          right: '6px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          border: 'none',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '4px 6px',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        {pagosMpAccessTokenVisible ? t('auth.hidePassword') : t('auth.showPassword')}
+                      </button>
+                    </div>
+                    <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                      {t('admin.sedes.mpPublicKeyLabel', { defaultValue: 'Public Key de Mercado Pago' })}
+                    </label>
+                    <div style={{ position: 'relative', marginBottom: '10px' }}>
+                      <input
+                        type={pagosMpPublicKeyVisible ? 'text' : 'password'}
+                        className="admin-mi-sede-theme-input"
+                        autoComplete="off"
+                        value={miSedeForm.mp_public_key || ''}
+                        placeholder={
+                          Boolean(String(miSede?.mp_public_key || '').trim())
+                            ? t('admin.sedes.mpPublicKeyReplacePh', { defaultValue: 'Public Key guardada — ingresa una nueva para reemplazar' })
+                            : t('admin.sedes.mpPublicKeyPh', { defaultValue: 'APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' })
+                        }
+                        onChange={(e) => setMiSedeForm((p) => ({ ...p, mp_public_key: e.target.value }))}
+                        style={{
+                          width: '100%',
+                          padding: '8px 40px 8px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                          fontFamily: 'monospace',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPagosMpPublicKeyVisible((v) => !v)}
+                        aria-label={pagosMpPublicKeyVisible ? t('auth.hidePassword') : t('auth.showPassword')}
+                        style={{
+                          position: 'absolute',
+                          right: '6px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          border: 'none',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '4px 6px',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        {pagosMpPublicKeyVisible ? t('auth.hidePassword') : t('auth.showPassword')}
+                      </button>
+                    </div>
                     <button
                       type="button"
                       disabled={pagosParcialSaving || !String(miSedeForm.mp_access_token || '').trim()}
                       onClick={() =>
                         void guardarSedeCamposPagosParcial({
                           mp_access_token: String(miSedeForm.mp_access_token || '').trim(),
+                          mp_public_key: String(miSedeForm.mp_public_key || '').trim(),
                         }).then((ok) => {
-                          if (ok) setPagosMpPanelAbierto(false);
+                          if (ok) {
+                            setPagosMpPanelAbierto(false);
+                            setPagosMpAccessTokenVisible(false);
+                            setPagosMpPublicKeyVisible(false);
+                          }
                         })
                       }
                       style={{
@@ -12517,7 +12595,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         cursor: pagosParcialSaving || !String(miSedeForm.mp_access_token || '').trim() ? 'not-allowed' : 'pointer',
                       }}
                     >
-                      {pagosParcialSaving ? t('admin.metricas.saving') : 'Guardar token Mercado Pago'}
+                      {pagosParcialSaving ? t('admin.metricas.saving') : t('admin.sedes.saveMpCredentials', { defaultValue: 'Guardar credenciales Mercado Pago' })}
                     </button>
                   </div>
                 ) : null}

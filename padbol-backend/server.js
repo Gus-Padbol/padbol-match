@@ -448,7 +448,7 @@ async function sedePaymentConfigBySedeId(sedeId) {
   if (!Number.isFinite(sid)) return null;
   const { data, error } = await supabase
     .from('sedes')
-    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, pago_manual_instrucciones')
+    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
     .eq('id', sid)
     .maybeSingle();
   if (error) throw error;
@@ -464,7 +464,7 @@ async function sedePaymentConfigByNombre(sedeNombre) {
   if (!n) return null;
   const { data, error } = await supabase
     .from('sedes')
-    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, pago_manual_instrucciones')
+    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
     .eq('nombre', n)
     .maybeSingle();
   if (error) throw error;
@@ -2156,6 +2156,7 @@ app.post('/api/sedes', async (req, res) => {
       metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
       stripe_account_id: String(b.stripe_account_id || '').trim() || null,
       mp_access_token: String(b.mp_access_token || '').trim() || null,
+      mp_public_key: String(b.mp_public_key || '').trim() || null,
       pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
       latitud: Number.isFinite(latitud) ? latitud : null,
       longitud: Number.isFinite(longitud) ? longitud : null,
@@ -2764,6 +2765,7 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (hop('metodo_pago')) patch.metodo_pago = normalizeMetodoPago(b.metodo_pago);
     if (hop('stripe_account_id')) patch.stripe_account_id = String(b.stripe_account_id || '').trim() || null;
     if (hop('mp_access_token')) patch.mp_access_token = String(b.mp_access_token || '').trim() || null;
+    if (hop('mp_public_key')) patch.mp_public_key = String(b.mp_public_key || '').trim() || null;
     if (hop('pago_manual_instrucciones')) {
       patch.pago_manual_instrucciones = String(b.pago_manual_instrucciones || '').trim() || null;
     }
@@ -11017,7 +11019,12 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
     console.log(
       `✓ MP preferencia ${response.id} | init_point→ ${initPoint.slice(0, 48)}… | sede: ${sedeNombre || '—'}`,
     );
-    res.json({ init_point: initPoint, preference_id: response.id });
+    const mpPublicKey = String(sedeCfg?.mp_public_key || '').trim();
+    res.json({
+      init_point: initPoint,
+      preference_id: response.id,
+      mp_public_key: mpPublicKey || null,
+    });
   } catch (err) {
     console.error('❌ Error POST /api/crear-preferencia:', err.message);
     res.status(500).json({ error: err.message });
@@ -12388,6 +12395,7 @@ app.post('/api/invitacion/:token/completar', async (req, res) => {
       metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
       stripe_account_id: String(b.stripe_account_id || '').trim() || null,
       mp_access_token: String(b.mp_access_token || '').trim() || null,
+      mp_public_key: String(b.mp_public_key || '').trim() || null,
       pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
       latitud: Number.isFinite(latitud) ? latitud : null,
       longitud: Number.isFinite(longitud) ? longitud : null,
@@ -12483,6 +12491,7 @@ function mapPendingRowToSedeInsert(row) {
     metodo_pago: normalizeMetodoPago(row.metodo_pago || 'mercadopago'),
     stripe_account_id: row.stripe_account_id || null,
     mp_access_token: row.mp_access_token || null,
+    mp_public_key: row.mp_public_key || null,
     pago_manual_instrucciones: row.pago_manual_instrucciones || null,
     telefono: row.whatsapp || null,
     email_contacto: row.email_contacto || null,
@@ -12532,6 +12541,7 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
       metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
       stripe_account_id: String(b.stripe_account_id || '').trim() || null,
       mp_access_token: String(b.mp_access_token || '').trim() || null,
+      mp_public_key: String(b.mp_public_key || '').trim() || null,
       pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
       numero_licencia: b.numero_licencia || null,
       fecha_contrato: b.fecha_inicio_contrato || b.fecha_contrato || null,
@@ -12614,6 +12624,7 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
       metodo_pago: normalizeMetodoPago(b.metodo_pago || 'mercadopago'),
       stripe_account_id: String(b.stripe_account_id || '').trim() || null,
       mp_access_token: String(b.mp_access_token || '').trim() || null,
+      mp_public_key: String(b.mp_public_key || '').trim() || null,
       pago_manual_instrucciones: String(b.pago_manual_instrucciones || '').trim() || null,
       telefono: b.whatsapp || null,
       email_contacto: b.email_contacto || null,
