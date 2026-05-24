@@ -30,6 +30,12 @@ import {
   mercadoPagoGlobalAccessToken,
   resolveMercadoPagoInitPoint,
 } from './lib/mercadopagoInitPoint.js';
+import {
+  MP_CSP_CONNECT_SRC,
+  MP_CSP_FORM_ACTION,
+  MP_CSP_FRAME_SRC,
+  MP_CSP_SCRIPT_SRC,
+} from './lib/mercadopagoCsp.js';
 
 dotenv.config();
 
@@ -85,15 +91,17 @@ app.use(
   })
 );
 
-// CSP en respuestas del API (Checkout Pro MP = redirección; dominios MP en whitelist por si se sirve HTML embebido).
+// CSP en respuestas del API (Checkout Pro MP). Sin nonce/strict-dynamic: MP SDK usa inline scripts.
 app.use(
   helmet({
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", 'https://sdk.mercadopago.com', 'https://*.mercadopago.com'],
-        frameSrc: ["'self'", 'https://*.mercadopago.com'],
+        scriptSrc: MP_CSP_SCRIPT_SRC,
+        frameSrc: MP_CSP_FRAME_SRC,
+        connectSrc: MP_CSP_CONNECT_SRC,
+        formAction: MP_CSP_FORM_ACTION,
       },
     },
     crossOriginEmbedderPolicy: false,
