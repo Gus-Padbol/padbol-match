@@ -34,7 +34,7 @@ import {
   MP_CSP_CONNECT_SRC,
   MP_CSP_FORM_ACTION,
   MP_CSP_FRAME_SRC,
-  MP_CSP_SCRIPT_SRC,
+  buildMpCspScriptSrcDirectives,
 } from './lib/mercadopagoCsp.js';
 
 dotenv.config();
@@ -91,14 +91,19 @@ app.use(
   })
 );
 
-// CSP en respuestas del API (Checkout Pro MP). Sin nonce/strict-dynamic: MP SDK usa inline scripts.
+// CSP: strict-dynamic + nonce por request (MP SDK carga scripts hijos sin unsafe-inline).
+app.use((req, res, next) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: MP_CSP_SCRIPT_SRC,
+        scriptSrc: buildMpCspScriptSrcDirectives((req, res) => res.locals.cspNonce),
         frameSrc: MP_CSP_FRAME_SRC,
         connectSrc: MP_CSP_CONNECT_SRC,
         formAction: MP_CSP_FORM_ACTION,
