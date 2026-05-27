@@ -2722,6 +2722,77 @@ app.get('/api/sedes/:id', async (req, res) => {
   }
 });
 
+/** Perfil público de sede (sin auth). Misma forma que la app nativa GET /api/sedes/:id/perfil */
+app.get('/api/sedes/:id/perfil', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    const { data: sede, error } = await supabase.from('sedes').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    if (!sede) return res.status(404).json({ error: 'Sede no encontrada' });
+
+    let out = sede;
+    try {
+      const cr = await fetchCanchasRowsForSede(id);
+      if (cr.length) out = sedeResponseConCanchasActivas(sede, cr);
+    } catch (e) {
+      console.warn('GET /api/sedes/:id/perfil canchas_activas:', e?.message || e);
+    }
+    try {
+      const depMap = await fetchDeportesPorSedeIdsDesdeCanchas(supabase, [id]);
+      const enrichedList = enrichSedesListConDeportesDisponibles([out], depMap);
+      out = enrichedList[0] || out;
+    } catch (e) {
+      console.warn('GET /api/sedes/:id/perfil deportes_disponibles:', e?.message || e);
+    }
+
+    const activas = Array.isArray(out.canchas_activas) ? out.canchas_activas : [];
+    const canchasCount =
+      activas.length > 0
+        ? activas.length
+        : Number(out.cantidad_canchas) > 0
+          ? Number(out.cantidad_canchas)
+          : null;
+
+    const apertura = out.horario_apertura ? String(out.horario_apertura).slice(0, 5) : null;
+    const cierre = out.horario_cierre ? String(out.horario_cierre).slice(0, 5) : null;
+    let horariosLabel = null;
+    if (apertura && cierre) horariosLabel = `${apertura} – ${cierre}`;
+    else if (apertura) horariosLabel = `Desde ${apertura}`;
+    else if (cierre) horariosLabel = `Hasta ${cierre}`;
+
+    const latRaw = Number(out.latitud);
+    const lonRaw = Number(out.longitud);
+    const lat = Number.isFinite(latRaw) ? latRaw : null;
+    const lon = Number.isFinite(lonRaw) ? lonRaw : null;
+    const coords =
+      lat != null && lon != null ? { latitude: lat, longitude: lon } : null;
+
+    const amenities = normalizeSedeAmenities(out.amenities ?? []);
+    const tagline = out.slogan ?? out.descripcion ?? null;
+    const historia = out.historia ?? out.descripcion_larga ?? out.descripcion ?? null;
+
+    res.json({
+      sede: out,
+      fotos: Array.isArray(out.fotos_urls) ? out.fotos_urls : [],
+      slogan: tagline,
+      logo_url: out.logo_url ?? null,
+      descripcion: historia,
+      historia,
+      amenities,
+      horarios: { apertura, cierre, label: horariosLabel },
+      canchas_count: canchasCount,
+      deportes_disponibles: Array.isArray(out.deportes_disponibles) ? out.deportes_disponibles : [],
+      coords,
+    });
+  } catch (err) {
+    console.error('❌ Error GET /api/sedes/:id/perfil:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** Partidos abiertos próximos de una sede (vista pública /sede/:id). */
 app.get('/api/sedes/:id/partidos', async (req, res) => {
   try {
@@ -10492,7 +10563,7 @@ async function crearReservaYPartidoAbiertoDesdePayload(payload) {
   return { ...pub, reserva: reservaRow || null };
 }
 
-app.get('/api/partidos-abiertos', async (req, res) => {
+async function handleListPartidosAbiertosPublic(req, res) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const { data, error } = await supabase
@@ -10506,10 +10577,13 @@ app.get('/api/partidos-abiertos', async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (err) {
-    console.error('❌ GET /api/partidos-abiertos:', err.message);
+    console.error('❌ GET partidos abiertos (lista):', err.message);
     res.status(500).json({ error: err.message });
   }
-});
+}
+
+app.get('/api/partidos-abiertos', handleListPartidosAbiertosPublic);
+app.get('/api/partidos/abiertos', handleListPartidosAbiertosPublic);
 
 app.post('/api/partidos-abiertos/confirmar-pago', async (req, res) => {
   try {

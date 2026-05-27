@@ -1161,7 +1161,7 @@ async function fetchPartidosSedePublica(sedeIdNum, headers = {}) {
     console.warn('[SedePublica] partidos primary fetch failed, fallback', { url: primaryUrl, error: e });
   }
 
-  const fallbackUrl = apiUrlResenas('/api/partidos-abiertos');
+  const fallbackUrl = apiUrlResenas('/api/partidos/abiertos');
   console.log('[SedePublica] partidos URL (fallback)', {
     url: fallbackUrl,
     apiBase: API_BASE_RESENAS,
