@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import SportIcon from './common/SportIcon';
 import { useAuth } from '../context/AuthContext';
 import './PartidoAbiertoCard.css';
@@ -19,30 +20,52 @@ export function partidoCapitanFotoUrl(partido) {
   return u != null && String(u).trim() ? String(u).trim() : '';
 }
 
+export function normalizePartidoUserId(id) {
+  return id != null && String(id).trim() !== '' ? String(id).trim().toLowerCase() : '';
+}
+
+/** ID del capitán/organizador (API: `capitan_user_id`). */
 export function partidoCapitanUserId(partido) {
   const id =
+    partido?.capitan_user_id ??
     partido?.capitan_id ??
-    partido?.capitan?.id ??
-    partido?.capitan?.user_id ??
     partido?.organizador_id ??
-    partido?.organizador?.id ??
-    partido?.organizador?.user_id;
-  return id != null && String(id).trim() !== '' ? String(id).trim() : '';
+    partido?.capitan?.user_id ??
+    partido?.capitan?.id ??
+    partido?.organizador?.user_id ??
+    partido?.organizador?.id;
+  return normalizePartidoUserId(id);
+}
+
+export function partidoSedeId(partido) {
+  const n = parseInt(String(partido?.sede_id ?? ''), 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 export function partidoJugadorUserId(jugador) {
   const id = jugador?.user_id ?? jugador?.id ?? jugador?.jugador_id;
-  return id != null && String(id).trim() !== '' ? String(id).trim() : '';
+  return normalizePartidoUserId(id);
 }
 
-/** Usuario logueado es capitán u otro jugador confirmado del partido. */
-export function usuarioYaEnPartido(partido, userId) {
-  const uid = userId != null ? String(userId).trim() : '';
-  if (!uid) return false;
+/** Usuario logueado es capitán u otro jugador confirmado (datos del listado; sin fetch extra). */
+export function usuarioYaEnPartido(partido, userId, userEmail) {
+  const uid = normalizePartidoUserId(userId);
+  const email = String(userEmail || '').trim().toLowerCase();
+  if (!uid && !email) return false;
+
   const capId = partidoCapitanUserId(partido);
-  if (capId && capId === uid) return true;
+  if (uid && capId && capId === uid) return true;
+
+  const capEmail = String(partido?.capitan_email || '').trim().toLowerCase();
+  if (email && capEmail && email === capEmail) return true;
+
   const confirmados = Array.isArray(partido?.jugadores_confirmados) ? partido.jugadores_confirmados : [];
-  return confirmados.some((j) => partidoJugadorUserId(j) === uid);
+  return confirmados.some((j) => {
+    const jid = partidoJugadorUserId(j);
+    if (uid && jid && jid === uid) return true;
+    const jEmail = String(j?.email || '').trim().toLowerCase();
+    return Boolean(email && jEmail && jEmail === email);
+  });
 }
 
 export const DEPORTE_LABEL_PARTIDO_ABIERTO = {
@@ -173,6 +196,7 @@ export default function PartidoAbiertoCard({
 }) {
   const { session } = useAuth();
   const currentUserId = session?.user?.id ?? '';
+  const currentUserEmail = session?.user?.email ?? '';
   const confirmados = Array.isArray(partido?.jugadores_confirmados) ? partido.jugadores_confirmados : [];
   const requeridos = Math.max(2, parseInt(String(partido?.jugadores_requeridos || '4'), 10) || 4);
   const faltan = Math.max(0, requeridos - confirmados.length);
@@ -180,7 +204,8 @@ export default function PartidoAbiertoCard({
   const capitanId = partidoCapitanUserId(partido);
   const capitanNombre =
     String(partido?.capitan_nombre || partido?.organizador_nombre || '').trim() || 'Organizador';
-  const yaEnPartido = usuarioYaEnPartido(partido, currentUserId);
+  const yaEnPartido = usuarioYaEnPartido(partido, currentUserId, currentUserEmail);
+  const sedeId = partidoSedeId(partido);
   const dep = String(partido?.deporte || 'padbol').toLowerCase();
   const depLabel = DEPORTE_LABEL_PARTIDO_ABIERTO[dep] || partido?.deporte || 'Partido';
   const sedeNombre = String(partido?.sede_nombre || 'Sede').trim() || 'Sede';
@@ -301,6 +326,16 @@ export default function PartidoAbiertoCard({
             requeridos={requeridos}
           />
         </div>
+      ) : null}
+
+      {!isSede && sedeId ? (
+        <Link
+          to={`/sede/${encodeURIComponent(String(sedeId))}`}
+          className="partido-abierto-card__ver-sede"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Ver sede →
+        </Link>
       ) : null}
 
       {isSede ? (

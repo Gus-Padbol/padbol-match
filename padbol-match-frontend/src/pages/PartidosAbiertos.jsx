@@ -21,6 +21,7 @@ import {
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { savePartidosBuscarReturnUrl } from '../utils/reservaReturnUrl';
+import { parseFetchJsonSafe } from '../utils/fetchJsonSafe';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -89,9 +90,12 @@ export default function PartidosAbiertos() {
     setLoading(true);
     setMsg('');
     fetch(`${API_BASE}/api/partidos-abiertos`)
-      .then((r) => r.json().then((d) => ({ ok: r.ok, data: d })))
-      .then(({ ok, data }) => {
-        if (!ok) throw new Error(data?.error || 'No se pudieron cargar los partidos');
+      .then(async (r) => {
+        const { ok, data, isJson } = await parseFetchJsonSafe(r);
+        if (!ok || !isJson) throw new Error('No se pudieron cargar los partidos');
+        return data;
+      })
+      .then((data) => {
         setPartidos(Array.isArray(data) ? data : []);
       })
       .catch((err) => setMsg(err.message || 'Error de red'))
@@ -113,8 +117,9 @@ export default function PartidosAbiertos() {
       const res = await fetch(`${API_BASE}/api/partidos-abiertos/mis-solicitudes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      if (res.ok) setSolicitudes(Array.isArray(data) ? data : []);
+      const { ok, data, isJson } = await parseFetchJsonSafe(res);
+      if (ok && isJson && Array.isArray(data)) setSolicitudes(data);
+      else setSolicitudes([]);
     } catch {
       setSolicitudes([]);
     }
@@ -153,7 +158,7 @@ export default function PartidosAbiertos() {
       navigate(`/login?redirect=${encodeURIComponent(returnPath)}`);
       return;
     }
-    if (usuarioYaEnPartido(partido, session.user.id)) return;
+    if (usuarioYaEnPartido(partido, session.user.id, session.user.email)) return;
     setJoiningId(partido.id);
     setMsg('');
     setJoinSuccess(false);
@@ -165,8 +170,9 @@ export default function PartidosAbiertos() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({}),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'No se pudo enviar la solicitud');
+      const { ok, data, isJson } = await parseFetchJsonSafe(res);
+      if (!ok || !isJson) throw new Error((data && data.error) || 'No se pudo enviar la solicitud');
+      if (data?.error) throw new Error(data.error);
       setJoinSuccess(true);
       setMsg('');
     } catch (err) {
@@ -187,8 +193,9 @@ export default function PartidosAbiertos() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ estado }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'No se pudo actualizar la solicitud');
+      const { ok, data, isJson } = await parseFetchJsonSafe(res);
+      if (!ok || !isJson) throw new Error('No se pudo actualizar la solicitud');
+      if (data?.error) throw new Error(data.error);
       setMsg(estado === 'aceptada' ? 'Jugador aceptado. El partido fue actualizado.' : 'Solicitud rechazada.');
       cargar();
       await cargarSolicitudes();
