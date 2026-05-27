@@ -53,8 +53,7 @@ export function DeporteIcono({
       width={size}
       height={size}
       className={className}
-      style={{ display: 'block', flexShrink: 0, color, ...style }}
-      fill="currentColor"
+      style={{ display: 'block', flexShrink: 0, color, width: size, height: size, ...style }}
       role={title ? 'img' : 'presentation'}
       aria-hidden={title ? undefined : true}
       aria-label={title}
