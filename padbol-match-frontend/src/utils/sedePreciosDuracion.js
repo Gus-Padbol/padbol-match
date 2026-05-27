@@ -123,15 +123,51 @@ export function precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFr
     : Number(sede.precio_tarde ?? base);
 }
 
-/** Body parcial PATCH sedes: precios por duración + precio_turno alineado a 90 min. */
+/** Claves que acepta PATCH /api/sedes/:id en el backend (columnas `sedes`). */
+export const SEDE_PRECIO_DURACION_API_FIELDS = [
+  'precio_60min',
+  'precio_90min',
+  'precio_120min',
+  'precio_turno',
+];
+
+function readPrecioFormField(form, canonicalKey) {
+  if (!form || typeof form !== 'object') return '';
+  if (form[canonicalKey] !== undefined && form[canonicalKey] !== null) {
+    return form[canonicalKey];
+  }
+  const short = canonicalKey.replace(/min$/, '');
+  if (form[short] !== undefined && form[short] !== null) return form[short];
+  return '';
+}
+
+/**
+ * Body parcial PATCH /api/sedes/:id — siempre incluye las 4 claves reconocidas por el API.
+ * Vacío en el formulario → null (no ofrecer esa duración).
+ */
 export function preciosDuracionToApiPatch(form) {
-  const p60 = parsePrecioDuracionField(form.precio_60min);
-  const p90 = parsePrecioDuracionField(form.precio_90min);
-  const p120 = parsePrecioDuracionField(form.precio_120min);
+  const p60 = parsePrecioDuracionField(readPrecioFormField(form, 'precio_60min'));
+  const p90 = parsePrecioDuracionField(readPrecioFormField(form, 'precio_90min'));
+  const p120 = parsePrecioDuracionField(readPrecioFormField(form, 'precio_120min'));
   return {
     precio_60min: p60,
     precio_90min: p90,
     precio_120min: p120,
     precio_turno: p90,
+  };
+}
+
+/** Estado de inputs Mi Sede tras guardar (mantiene dígitos visibles en los campos). */
+export function miSedeFormPreciosFromSedeRow(sedeRow) {
+  if (!sedeRow) return {};
+  const toDigits = (v) => {
+    const n = parsePrecioDuracionField(v);
+    return n != null ? String(n) : '';
+  };
+  return {
+    precio_60min: toDigits(sedeRow.precio_60min),
+    precio_90min: toDigits(sedeRow.precio_90min ?? sedeRow.precio_turno),
+    precio_120min: toDigits(sedeRow.precio_120min),
+    precio_turno: toDigits(sedeRow.precio_turno ?? sedeRow.precio_90min),
   };
 }

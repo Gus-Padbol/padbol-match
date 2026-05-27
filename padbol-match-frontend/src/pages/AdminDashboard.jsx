@@ -96,7 +96,11 @@ import TorneoCrear from './TorneoCrear';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { fetchAdminCampanitaAlertas } from '../utils/adminCampanitaApi';
 import { getCroppedImgBlob } from '../utils/cropImage';
-import { preciosDuracionToApiPatch, parsePrecioDuracionField } from '../utils/sedePreciosDuracion';
+import {
+  preciosDuracionToApiPatch,
+  parsePrecioDuracionField,
+  miSedeFormPreciosFromSedeRow,
+} from '../utils/sedePreciosDuracion';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -5403,17 +5407,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (!res.ok) {
         errorMsg = data.error || res.statusText || t('admin.metricas.saveError');
       } else {
-        updated = data.sede;
+        updated = data.sede ?? data;
       }
     } catch (e) {
       errorMsg = e?.message || String(e);
     }
     setMiSedePreciosSaving(false);
-    setMiSedePreciosMsg(errorMsg ? `⚠️ ${errorMsg}` : t('admin.sedes.pricesSaved'));
-    setTimeout(() => setMiSedePreciosMsg(''), errorMsg ? 5000 : 3000);
-    if (!errorMsg && updated) {
+    if (errorMsg) {
+      setMiSedePreciosMsg(`⚠️ ${errorMsg}`);
+      setTimeout(() => setMiSedePreciosMsg(''), 5000);
+      return;
+    }
+    const successMsg = t('admin.sedes.pricesSaved').startsWith('✅')
+      ? t('admin.sedes.pricesSaved')
+      : `✅ ${t('admin.sedes.pricesSaved')}`;
+    setMiSedePreciosMsg(successMsg);
+    if (updated && (updated.id != null || updated.nombre != null)) {
       setMiSede(updated);
-      setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+      const preciosForm = miSedeFormPreciosFromSedeRow(updated);
+      setMiSedeForm((f) => ({ ...f, ...preciosForm }));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
       if (session?.access_token) {
         fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones`, {
