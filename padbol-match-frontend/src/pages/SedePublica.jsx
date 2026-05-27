@@ -481,7 +481,69 @@ const EMPTY_SEDE_RESENAS_PAYLOAD = {
   total: 0,
   ya_reseño: false,
   puede_reseñar: false,
+  distribution: null,
 };
+
+const RESENAS_MODAL_PAGE_SIZE = 20;
+
+function normalizeResenasDistribution(dist, totalHint = 0) {
+  const rows = [5, 4, 3, 2, 1].map((stars) => {
+    let count = 0;
+    if (dist && typeof dist === 'object') {
+      count = Number(dist[stars] ?? dist[String(stars)] ?? 0) || 0;
+    }
+    return { stars, count };
+  });
+  const sumCounts = rows.reduce((s, r) => s + r.count, 0);
+  const total = totalHint > 0 ? totalHint : sumCounts;
+  return rows.map((row) => ({
+    ...row,
+    pct: total > 0 ? Math.round((row.count / total) * 100) : 0,
+  }));
+}
+
+function computeDistributionFromResenas(resenas, totalHint = 0) {
+  const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const r of resenas ?? []) {
+    const star = Math.round(Number(r?.estrellas));
+    if (star >= 1 && star <= 5) dist[star] += 1;
+  }
+  return normalizeResenasDistribution(dist, totalHint);
+}
+
+function ResenasDistribucionBarras({ distribution, promedio, total }) {
+  const promedioTxt =
+    promedio != null && Number.isFinite(Number(promedio)) ? Number(promedio).toFixed(1) : '—';
+  const estrellasPromedio = Number.isFinite(Number(promedio)) ? Math.round(Number(promedio)) : 0;
+  const totalNum = Number(total) || 0;
+  return (
+    <div className="sede-resenas-dist">
+      <div className="sede-resenas-dist__summary">
+        <span className="sede-resenas-dist__avg">{promedioTxt}</span>
+        <EstrellasSoloLectura value={estrellasPromedio} />
+        <span className="sede-resenas-dist__total">
+          {totalNum > 0
+            ? `${totalNum} reseña${totalNum === 1 ? '' : 's'}`
+            : 'Sin reseñas'}
+        </span>
+      </div>
+      <div className="sede-resenas-dist__bars">
+        {(distribution || []).map(({ stars, count, pct }) => (
+          <div key={stars} className="sede-resenas-dist__row">
+            <span className="sede-resenas-dist__label">{stars}</span>
+            <span className="sede-resenas-dist__star-icon" aria-hidden>
+              ★
+            </span>
+            <div className="sede-resenas-dist__track">
+              <div className="sede-resenas-dist__fill" style={{ width: `${pct}%` }} />
+            </div>
+            <span className="sede-resenas-dist__count">{count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /**
  * URLs del carrusel: `fotos_destacadas` en orden (máx. 4), solo si existen en `fotos_urls`;
@@ -1444,6 +1506,11 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
   const [verTodasOpen, setVerTodasOpen] = useState(false);
   const [todasRows, setTodasRows] = useState([]);
   const [todasLoading, setTodasLoading] = useState(false);
+  const [todasPage, setTodasPage] = useState(1);
+  const [todasTotal, setTodasTotal] = useState(0);
+  const [todasHasMore, setTodasHasMore] = useState(false);
+  const [todasDistribution, setTodasDistribution] = useState([]);
+  const [todasPromedioModal, setTodasPromedioModal] = useState(null);
   const [deletingResenaId, setDeletingResenaId] = useState(null);
   /** 0 = aún no eligió estrellas (no se envía hasta que elija al menos 1). */
   const [estrellasForm, setEstrellasForm] = useState(0);
@@ -1471,13 +1538,18 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
         setPayload({ ...EMPTY_SEDE_RESENAS_PAYLOAD });
         return;
       }
+      const total = body.total ?? body.total_count ?? 0;
+      const distribution = body.distribution
+        ? normalizeResenasDistribution(body.distribution, total)
+        : null;
       setPayload({
         ...EMPTY_SEDE_RESENAS_PAYLOAD,
         ...body,
         resenas: Array.isArray(body.resenas) ? body.resenas : [],
-        total: body.total ?? body.total_count ?? 0,
-        ya_reseño: Boolean(body.ya_reseño),
-        puede_reseñar: Boolean(body.puede_reseñar),
+        total,
+        distribution,
+        ya_reseño: Boolean(body.ya_reseño ?? body.user_has_reviewed),
+        puede_reseñar: Boolean(body.puede_reseñar ?? body.user_is_eligible),
       });
     } catch (e) {
       console.error('[SedePublica] GET /api/sedes/:id/resenas fetch failed', {
@@ -1504,6 +1576,66 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [formModalOpen]);
 
+  useEffect(() => {
+    if (!verTodasOpen) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setVerTodasOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [verTodasOpen]);
+
+  const loadTodasResenasPage = useCallback(
+    async (page) => {
+      if (!Number.isFinite(idNum)) return;
+      setTodasLoading(true);
+      const headers = {};
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+      const limit = RESENAS_MODAL_PAGE_SIZE;
+      const offset = (page - 1) * limit;
+      const url = apiUrlResenas(
+        `/api/sedes/${idNum}/resenas?limit=${limit}&offset=${offset}&page=${page}`,
+      );
+      try {
+        const r = await fetch(url, { headers });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          const raw = String(body.error || '');
+          const friendly =
+            body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
+              ? raw
+              : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
+                ? 'Las reseñas no están disponibles (tabla public.resenas).'
+                : raw || `Error ${r.status}`;
+          throw new Error(friendly);
+        }
+        const resenas = Array.isArray(body.resenas) ? body.resenas : [];
+        const total = body.total ?? body.total_count ?? resenas.length;
+        const hasMore = Boolean(
+          body.has_more ?? offset + resenas.length < total,
+        );
+        const dist = body.distribution
+          ? normalizeResenasDistribution(body.distribution, total)
+          : computeDistributionFromResenas(resenas, total);
+        setTodasRows(resenas);
+        setTodasTotal(total);
+        setTodasHasMore(hasMore);
+        setTodasPage(page);
+        setTodasDistribution(dist);
+        setTodasPromedioModal(body.promedio ?? payload?.promedio ?? null);
+      } catch {
+        setTodasRows([]);
+        setTodasTotal(0);
+        setTodasHasMore(false);
+        setTodasDistribution([]);
+        setTodasPromedioModal(null);
+      } finally {
+        setTodasLoading(false);
+      }
+    },
+    [idNum, accessToken, payload?.promedio],
+  );
+
   const openFormResena = useCallback(() => {
     setFormMsg('');
     setEstrellasForm(0);
@@ -1511,32 +1643,11 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
     setFormModalOpen(true);
   }, []);
 
-  const openVerTodas = useCallback(async () => {
+  const openVerTodas = useCallback(() => {
     if (!Number.isFinite(idNum)) return;
     setVerTodasOpen(true);
-    setTodasLoading(true);
-    const headers = {};
-    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-    try {
-      const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas?limit=100&offset=0`), { headers });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        const raw = String(body.error || '');
-        const friendly =
-          body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
-            ? raw
-            : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
-              ? 'Las reseñas no están disponibles (tabla public.resenas).'
-              : raw || `Error ${r.status}`;
-        throw new Error(friendly);
-      }
-      setTodasRows(Array.isArray(body.resenas) ? body.resenas : []);
-    } catch {
-      setTodasRows([]);
-    } finally {
-      setTodasLoading(false);
-    }
-  }, [idNum, accessToken]);
+    void loadTodasResenasPage(1);
+  }, [idNum, loadTodasResenasPage]);
 
   const submitResena = async (e) => {
     e.preventDefault();
@@ -1738,25 +1849,13 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
             </div>
           )}
 
-          {(payload?.total ?? 0) > 5 ? (
+          {(payload?.total ?? 0) > 0 ? (
             <button
               type="button"
-              onClick={() => void openVerTodas()}
-              style={{
-                marginTop: '12px',
-                width: '100%',
-                padding: '11px',
-                borderRadius: '12px',
-                border: `1px solid ${SEDE_DS.cardBorder}`,
-                background: '#F8F8F8',
-                color: SEDE_DS.title,
-                fontWeight: 700,
-                fontSize: '13px',
-                cursor: 'pointer',
-                boxSizing: 'border-box',
-              }}
+              className="sede-publica-resenas-ver-todas"
+              onClick={openVerTodas}
             >
-              Ver todas
+              Ver todas las reseñas →
             </button>
           ) : null}
         </>
@@ -1837,32 +1936,56 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 WebkitOverflowScrolling: 'touch',
               }}
             >
-              {todasLoading ? (
+              {todasLoading && todasRows.length === 0 ? (
                 <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '14px' }}>Cargando…</p>
               ) : (
-                todasRows.map((row, idx) => (
-                  <ListaResenaCard
-                    key={row.id}
-                    r={row}
-                    isLast={idx === todasRows.length - 1}
-                    isSuperAdmin={Boolean(isSuperAdmin)}
-                    onDeleteResena={eliminarResenaAdmin}
-                    deletingId={deletingResenaId}
+                <>
+                  <ResenasDistribucionBarras
+                    distribution={
+                      todasDistribution.length > 0
+                        ? todasDistribution
+                        : payload?.distribution ||
+                          computeDistributionFromResenas(todasRows, todasTotal || payload?.total)
+                    }
+                    promedio={todasPromedioModal ?? payload?.promedio}
+                    total={todasTotal || payload?.total || 0}
                   />
-                ))
+                  {todasRows.map((row, idx) => (
+                    <ListaResenaCard
+                      key={row.id}
+                      r={row}
+                      isLast={idx === todasRows.length - 1}
+                      isSuperAdmin={Boolean(isSuperAdmin)}
+                      onDeleteResena={eliminarResenaAdmin}
+                      deletingId={deletingResenaId}
+                    />
+                  ))}
+                  {todasTotal > RESENAS_MODAL_PAGE_SIZE || todasPage > 1 || todasHasMore ? (
+                    <div className="sede-resenas-modal-pager">
+                      <button
+                        type="button"
+                        className="sede-resenas-modal-pager__btn"
+                        disabled={todasLoading || todasPage <= 1}
+                        onClick={() => void loadTodasResenasPage(todasPage - 1)}
+                      >
+                        Anterior
+                      </button>
+                      <span className="sede-resenas-modal-pager__info">
+                        Página {todasPage}
+                        {todasTotal > 0 ? ` · ${todasTotal} reseñas` : ''}
+                      </span>
+                      <button
+                        type="button"
+                        className="sede-resenas-modal-pager__btn"
+                        disabled={todasLoading || !todasHasMore}
+                        onClick={() => void loadTodasResenasPage(todasPage + 1)}
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  ) : null}
+                </>
               )}
-              {(payload?.total ?? 0) > 100 ? (
-                <p
-                  style={{
-                    margin: '10px 0 0',
-                    fontSize: '11px',
-                    color: SEDE_DS.subtitle,
-                    textAlign: 'center',
-                  }}
-                >
-                  Mostrando las 100 reseñas más recientes.
-                </p>
-              ) : null}
             </div>
           </div>
         </div>
@@ -2593,22 +2716,16 @@ export default function SedePublica() {
               </button>
             </div>
 
-            <section className="sede-publica-section sede-publica-partidos">
-              <h2 className="sede-publica-section__title">Partidos abiertos</h2>
-              {partidosSedeLoading ? (
-                <p className="sede-publica-section__muted">Cargando partidos…</p>
-              ) : partidosSedeError ? (
-                <p className="sede-publica-section__muted">Error cargando partidos</p>
-              ) : partidosSede.length > 0 ? (
+            {!partidosSedeLoading && partidosSede.length > 0 ? (
+              <section className="sede-publica-section sede-publica-partidos">
+                <h2 className="sede-publica-section__title">Partidos abiertos</h2>
                 <div className="sede-publica-partidos__list">
                   {partidosSede.map((p) => (
                     <PartidoAbiertoSedeRow key={p.id} partido={p} onJoin={() => navigate('/jugar/buscar')} />
                   ))}
                 </div>
-              ) : (
-                <p className="sede-publica-section__muted">Sin partidos abiertos hoy</p>
-              )}
-            </section>
+              </section>
+            ) : null}
 
             {torneosProximosSede.length > 0 ? (
               <section className="sede-publica-section sede-publica-torneos-list">

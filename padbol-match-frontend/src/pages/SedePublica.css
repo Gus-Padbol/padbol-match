@@ -809,6 +809,138 @@
   flex-wrap: wrap;
 }
 
+.sede-publica-resenas-ver-todas {
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sede-publica-resenas-ver-todas:hover {
+  text-decoration: underline;
+}
+
+.sede-resenas-dist {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sede-resenas-dist__summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 72px;
+}
+
+.sede-resenas-dist__avg {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fbbf24;
+}
+
+.sede-resenas-dist__total {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.sede-resenas-dist__bars {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sede-resenas-dist__row {
+  display: grid;
+  grid-template-columns: 14px 14px 1fr 28px;
+  align-items: center;
+  gap: 6px;
+}
+
+.sede-resenas-dist__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.sede-resenas-dist__star-icon {
+  font-size: 11px;
+  color: #fbbf24;
+  line-height: 1;
+}
+
+.sede-resenas-dist__track {
+  height: 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--text-secondary) 12%, var(--bg-card));
+  overflow: hidden;
+}
+
+.sede-resenas-dist__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #fbbf24;
+  min-width: 0;
+  transition: width 0.2s ease;
+}
+
+.sede-resenas-dist__count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.sede-resenas-modal-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.sede-resenas-modal-pager__btn {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sede-resenas-modal-pager__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sede-resenas-modal-pager__info {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  flex: 1;
+}
+
 .sede-publica-partidos__list {
   display: grid;
   gap: 8px;
