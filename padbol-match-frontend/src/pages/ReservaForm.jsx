@@ -620,6 +620,15 @@ function deportesActivosSedeKeys(sede) {
 }
 
 /** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
+function slotsReservaCantidadFallback(sedeData) {
+  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
+  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
+  return Array.from({ length: n }, (_, i) => ({
+    numero: i + 1,
+    nombre: `Cancha ${i + 1}`,
+  }));
+}
+
 function slotsReservaDesdeSede(sedeData, deporteCanon) {
   const active = sedeData?.canchas_activas;
   if (Array.isArray(active) && active.length > 0) {
@@ -630,20 +639,14 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
         return d === deporteCanon;
       });
     }
-    return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
-      numero: Number(x.numero),
-      nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
-    }));
+    if (sorted.length > 0) {
+      return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
+        numero: Number(x.numero),
+        nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
+      }));
+    }
   }
-  if (deporteCanon) {
-    return [];
-  }
-  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
-  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
-  return Array.from({ length: n }, (_, i) => ({
-    numero: i + 1,
-    nombre: `Cancha ${i + 1}`,
-  }));
+  return slotsReservaCantidadFallback(sedeData);
 }
 
 export default function ReservaForm() {
