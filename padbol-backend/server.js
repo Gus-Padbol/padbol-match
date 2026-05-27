@@ -208,7 +208,7 @@ function reservaWallStartUtcMs(fechaYmd, horaStr, zone) {
 async function assertReservaHorarioNoPasadoParaSede(sedeNombre, fecha, hora) {
   const nombre = String(sedeNombre || '').trim();
   if (!nombre) return;
-  const { data: row, error } = await supabase
+  const { data: row, error } = await supabaseAdmin
     .from('sedes')
     .select('timezone, ciudad, pais')
     .eq('nombre', nombre)
@@ -696,7 +696,7 @@ function canchasConNumeroReserva(rows) {
 async function fetchCanchasRowsForSede(sedeId) {
   const sid = Number(sedeId);
   if (!Number.isFinite(sid)) return [];
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('canchas')
     .select('*')
     .eq('sede_id', sid)
@@ -723,7 +723,7 @@ async function assertCanchaPermitidaParaReservaPorNombreSede(sedeNombre, canchaN
     e.status = 400;
     throw e;
   }
-  const { data: sedeRow, error } = await supabase
+  const { data: sedeRow, error } = await supabaseAdmin
     .from('sedes')
     .select('id, cantidad_canchas')
     .eq('nombre', nombre)
@@ -10542,7 +10542,7 @@ function buildJugadorConfirmadoPartido(payload) {
 
 async function publicarPartidoAbiertoDesdePayload(payload, reservaRow = null) {
   const shareToken = String(payload.share_token || '').trim() || crypto.randomBytes(12).toString('hex');
-  const { data: existente, error: exErr } = await supabase
+  const { data: existente, error: exErr } = await supabaseAdmin
     .from('partidos_abiertos')
     .select('*')
     .eq('share_token', shareToken)
@@ -10587,7 +10587,7 @@ async function publicarPartidoAbiertoDesdePayload(payload, reservaRow = null) {
     e.status = 400;
     throw e;
   }
-  const { data, error } = await supabase.from('partidos_abiertos').insert([row]).select('*').single();
+  const { data, error } = await supabaseAdmin.from('partidos_abiertos').insert([row]).select('*').single();
   if (error) throw error;
   return { ok: true, partido: data };
 }
@@ -11071,7 +11071,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       if (!eid || !tid) {
         return res.status(400).json({ error: 'torneo_inscripcion requiere equipo_id y torneo_id' });
       }
-      const { data: torneoRow, error: tErr } = await supabase
+      const { data: torneoRow, error: tErr } = await supabaseAdmin
         .from('torneos')
         .select('fecha_inicio, sede_id')
         .eq('id', tid)
