@@ -226,9 +226,37 @@ function pickTorneosProximosSede(torneos, max = 3) {
 const SEDE_INFO_CHIP_ICON_SIZE = 20;
 const SEDE_INFO_CHIP_ICON_COLOR = '#ffffff';
 
-function SedeInfoChip({ icon, label }) {
+/** Etiqueta corta para el chip de ubicación (ciudad + país; dirección completa en title). */
+function formatSedeDireccionChipLabel(sede) {
+  const ciudad = String(sede?.ciudad || '').trim();
+  const pais = String(sede?.pais || '').trim();
+  if (ciudad) return pais ? `${ciudad}, ${pais}` : ciudad;
+  return [sede?.direccion, ciudad, pais].filter(Boolean).join(', ');
+}
+
+function SedeInfoChipHorarioIcon({ size = SEDE_INFO_CHIP_ICON_SIZE }) {
   return (
-    <span className="sede-publica-info-chip">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={SEDE_INFO_CHIP_ICON_COLOR}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+function SedeInfoChip({ icon, label, title }) {
+  return (
+    <span className="sede-publica-info-chip" title={title || undefined}>
       <span className="sede-publica-info-chip__icon" aria-hidden>
         {icon}
       </span>
@@ -262,15 +290,29 @@ function buildSedeCanchasInfoChip(deportesActivos, canchasCount, sede) {
   const iconProps = { size: SEDE_INFO_CHIP_ICON_SIZE, color: SEDE_INFO_CHIP_ICON_COLOR };
   const deportes = deportesParaChipCanchas(deportesActivos, sede);
 
+  const sportIconStyle = { color: SEDE_INFO_CHIP_ICON_COLOR };
   if (deportes.length === 1) {
     const { key, label: depLabel } = deportes[0];
     return {
-      icon: <SportIcon deporte={key} {...iconProps} />,
+      icon: (
+        <SportIcon
+          deporte={key}
+          size={SEDE_INFO_CHIP_ICON_SIZE}
+          color={SEDE_INFO_CHIP_ICON_COLOR}
+          style={sportIconStyle}
+        />
+      ),
       label: `${n} ${unit} de ${depLabel}`,
     };
   }
   return {
-    icon: <SportIcon {...iconProps} />,
+    icon: (
+      <SportIcon
+        size={SEDE_INFO_CHIP_ICON_SIZE}
+        color={SEDE_INFO_CHIP_ICON_COLOR}
+        style={sportIconStyle}
+      />
+    ),
     label: `${n} ${unit}`,
   };
 }
@@ -2696,6 +2738,7 @@ export default function SedePublica() {
           ? sedePhotoUrlWithCacheBust(heroImgRaw, sedeHeroCacheBustToken(sede))
           : null;
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
+        const direccionChipLabel = formatSedeDireccionChipLabel(sede);
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
         const heroSubtitulo =
           String(sede.slogan || '').trim() || String(sede.descripcion || '').trim();
@@ -2793,22 +2836,12 @@ export default function SedePublica() {
               {direccionLinea ? (
                 <SedeInfoChip
                   icon={<IconGeroUbicacion size={SEDE_INFO_CHIP_ICON_SIZE} color={SEDE_INFO_CHIP_ICON_COLOR} />}
-                  label={direccionLinea}
+                  label={direccionChipLabel || direccionLinea}
+                  title={direccionLinea}
                 />
               ) : null}
               {horario ? (
-                <SedeInfoChip
-                  icon={
-                    <span
-                      className="sede-publica-info-chip__horario-icon"
-                      style={{ fontSize: SEDE_INFO_CHIP_ICON_SIZE, lineHeight: 1 }}
-                      aria-hidden
-                    >
-                      🕐
-                    </span>
-                  }
-                  label={horario}
-                />
+                <SedeInfoChip icon={<SedeInfoChipHorarioIcon />} label={horario} />
               ) : null}
               {canchasInfoChip ? (
                 <SedeInfoChip icon={canchasInfoChip.icon} label={canchasInfoChip.label} />
