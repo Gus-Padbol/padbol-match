@@ -287,7 +287,6 @@ function buildSedeCanchasInfoChip(deportesActivos, canchasCount, sede) {
   const n = Number(canchasCount) || 0;
   if (n <= 0) return null;
   const unit = n === 1 ? 'cancha' : 'canchas';
-  const iconProps = { size: SEDE_INFO_CHIP_ICON_SIZE, color: SEDE_INFO_CHIP_ICON_COLOR };
   const deportes = deportesParaChipCanchas(deportesActivos, sede);
 
   const sportIconStyle = { color: SEDE_INFO_CHIP_ICON_COLOR };
