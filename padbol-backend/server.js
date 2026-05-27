@@ -529,7 +529,7 @@ function normalizeMetodoPago(raw) {
 async function sedePaymentConfigBySedeId(sedeId) {
   const sid = Number(sedeId);
   if (!Number.isFinite(sid)) return null;
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('sedes')
     .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
     .eq('id', sid)
@@ -545,7 +545,7 @@ async function sedePaymentConfigBySedeId(sedeId) {
 async function sedePaymentConfigByNombre(sedeNombre) {
   const n = String(sedeNombre || '').trim();
   if (!n) return null;
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('sedes')
     .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
     .eq('nombre', n)
@@ -4121,12 +4121,12 @@ app.delete('/api/sedes/:id/duraciones/:rowId', async (req, res) => {
   }
 });
 
-/** Extras públicos (checkout): activos y aprobados por super admin. */
+/** Extras públicos (checkout): activos y aprobados por super admin (sin JWT). */
 app.get('/api/sedes/:id/extras', async (req, res) => {
   try {
     const sid = parseInt(String(req.params.id || '').trim(), 10);
     if (!Number.isFinite(sid) || sid <= 0) return res.status(400).json({ error: 'sede_id inválido' });
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('sede_extras')
       .select('id,nombre,descripcion,precio,precio_moneda,imagen_url,stock')
       .eq('sede_id', sid)
@@ -4146,7 +4146,13 @@ app.get('/api/sedes/:id/extras', async (req, res) => {
       }));
     res.json({ extras });
   } catch (e) {
-    console.error('❌ GET /api/sedes/:id/extras:', e?.message || e);
+    console.error('❌ GET /api/sedes/:id/extras:', {
+      sedeId: req.params.id,
+      message: e?.message || String(e),
+      code: e?.code,
+      details: e?.details,
+      stack: e?.stack,
+    });
     res.status(500).json({ error: e.message || String(e) });
   }
 });
@@ -11017,7 +11023,25 @@ app.post('/api/pagos/webhook', async (req, res) => {
 });
 
 // POST /api/crear-preferencia | /api/pagos/crear-preferencia — Mercado Pago Checkout Pro (redirect init_point)
+function logCrearPreferenciaError(phase, err, ctx = {}) {
+  console.error('❌ POST /api/crear-preferencia', {
+    phase,
+    message: err?.message || String(err),
+    code: err?.code,
+    status: err?.status,
+    cause: err?.cause,
+    details: err?.details,
+    stack: err?.stack,
+    ...ctx,
+  });
+}
+
 const postCrearPreferenciaMercadoPago = async (req, res) => {
+  const ctx = {
+    sedeId: req.body?.sedeId ?? req.body?.reservaData?.sede_id ?? null,
+    titulo: req.body?.titulo ?? null,
+    tipo: req.body?.tipo ?? req.body?.reservaData?.tipo ?? null,
+  };
   try {
     const b = req.body || {};
     const {
@@ -11082,7 +11106,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       const durR = parseInt(String(rd.duracion ?? ''), 10);
       let extrasSum = 0;
       try {
-        const ex = await resolveExtrasLinesParaSede(supabase, sidR, rd.extras ?? b.extras);
+        const ex = await resolveExtrasLinesParaSede(supabaseAdmin, sidR, rd.extras ?? b.extras);
         extrasSum = ex.sum;
         if (ex.lines.length) rd.extras = ex.lines;
         else delete rd.extras;
@@ -11091,7 +11115,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         throw e;
       }
       if (Number.isFinite(sidR) && sidR > 0 && Number.isFinite(durR) && durR > 0) {
-        const baseDb = await precioBaseReservaSedeDuracion(supabase, sidR, durR);
+        const baseDb = await precioBaseReservaSedeDuracion(supabaseAdmin, sidR, durR);
         if (baseDb != null) {
           const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
           if (Number.isFinite(totalSrv) && totalSrv >= 0) {
@@ -11114,7 +11138,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       if (hasExtras && Number.isFinite(sidR) && sidR > 0) {
         let extrasSum = 0;
         try {
-          const ex = await resolveExtrasLinesParaSede(supabase, sidR, extrasRaw);
+          const ex = await resolveExtrasLinesParaSede(supabaseAdmin, sidR, extrasRaw);
           extrasSum = ex.sum;
           if (ex.lines.length) rd.extras = ex.lines;
           else delete rd.extras;
@@ -11123,7 +11147,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
           throw e;
         }
         if (Number.isFinite(durR) && durR > 0) {
-          const baseDb = await precioBaseReservaSedeDuracion(supabase, sidR, durR);
+          const baseDb = await precioBaseReservaSedeDuracion(supabaseAdmin, sidR, durR);
           if (baseDb != null) {
             const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
             if (Number.isFinite(totalSrv) && totalSrv >= 0) {
@@ -11307,8 +11331,8 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       mp_public_key: mpPublicKey || null,
     });
   } catch (err) {
-    console.error('❌ Error POST /api/crear-preferencia:', err.message);
-    res.status(500).json({ error: err.message });
+    logCrearPreferenciaError('handler', err, ctx);
+    res.status(500).json({ error: err.message || String(err) });
   }
 };
 app.post('/api/crear-preferencia', postCrearPreferenciaMercadoPago);
