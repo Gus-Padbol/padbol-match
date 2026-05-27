@@ -64,7 +64,7 @@ import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { DeporteIcono } from '../utils/deporteIcono';
+import SportIcon from '../components/common/SportIcon';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -2385,7 +2385,7 @@ export default function ReservaForm() {
                       }}
                     >
                       <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                        <DeporteIcono deporte={opt.key} size={20} />
+                        <SportIcon deporte={opt.key} size={20} />
                       </span>
                       <span className="reserva-sede-deporte-chip-btn-label">
                         {etiquetaDeporteReserva(t, opt.key)}
@@ -2428,7 +2428,7 @@ export default function ReservaForm() {
                         }}
                       >
                         <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                          <DeporteIcono deporte="futbol" size={20} />
+                          <SportIcon deporte="futbol" size={20} />
                         </span>
                         <span className="reserva-sede-deporte-chip-btn-label">
                           {t('reservas.sportFutbolGroup')}
@@ -2476,7 +2476,7 @@ export default function ReservaForm() {
             <p className="reserva-sede-deporte-activo" role="status">
               {t('reservas.reservandoPara', { deporte: '' })}
               <span className="reserva-sede-deporte-activo-emoji" aria-hidden>
-                <DeporteIcono deporte={reservaDeporteUrl} size={20} />
+                <SportIcon deporte={reservaDeporteUrl} size={20} />
               </span>
               {etiquetaDeporteReserva(t, reservaDeporteUrl)}
             </p>
@@ -2527,7 +2527,7 @@ export default function ReservaForm() {
                             <img src={foto} alt="" className="reserva-sede-card-photo" loading="lazy" />
                           ) : (
                             <div className="reserva-sede-card-photo-placeholder" aria-hidden>
-                              <DeporteIcono deporte={reservaDeporteUrl} size={40} color="var(--text-secondary)" />
+                              <SportIcon deporte={reservaDeporteUrl} size={40} color="var(--text-secondary)" />
                             </div>
                           )}
                         </div>
@@ -2543,7 +2543,7 @@ export default function ReservaForm() {
                                     </span>
                                   ) : null}
                                   <span className="reserva-sede-card-deporte-chip">
-                                    <DeporteIcono deporte={depKey} size={14} />
+                                    <SportIcon deporte={depKey} size={14} />
                                     {etiquetaDeporteReserva(t, depKey)}
                                   </span>
                                 </React.Fragment>

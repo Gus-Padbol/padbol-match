@@ -28,7 +28,7 @@ import { getDisplayName } from '../utils/displayName';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { DeporteIcono } from '../utils/deporteIcono';
+import SportIcon from '../components/common/SportIcon';
 import {
   esInscripcionAbiertaTorneo,
   esEstadoEnCursoTorneo,
@@ -650,7 +650,7 @@ function SedeDeportesChipsHero({ deportes, t }) {
     <div className="sede-publica-hero-immersive__deportes" role="list" aria-label={aria}>
       {deportes.map((d) => (
         <span key={d.key} className="sede-publica-hero-immersive__deporte-chip" role="listitem">
-          <DeporteIcono deporte={d.key} size={14} color="#fff" className="sede-publica-hero-immersive__deporte-icon" />
+          <SportIcon deporte={d.key} size={14} color="#fff" className="sede-publica-hero-immersive__deporte-icon" />
           {d.label}
         </span>
       ))}
@@ -801,7 +801,7 @@ function SedeInstructorCard({ instructor, t }) {
           <div className="sede-publica-instructores__deportes">
             {deportes.map((dep) => (
               <span key={`${instructor.id}-${dep}`} className="sede-publica-instructores__deporte-chip">
-                <DeporteIcono deporte={dep} size={14} />
+                <SportIcon deporte={dep} size={14} />
                 <span>{instructorDeporteLabel(dep)}</span>
               </span>
             ))}

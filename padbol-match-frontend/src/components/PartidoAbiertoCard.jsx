@@ -1,5 +1,5 @@
 import React from 'react';
-import { DeporteIcono } from '../utils/deporteIcono';
+import SportIcon from './common/SportIcon';
 import './PartidoAbiertoCard.css';
 
 export function partidoJugadorFotoUrl(jugador) {
@@ -147,7 +147,7 @@ export default function PartidoAbiertoCard({
     >
       <div className="partido-abierto-card__row partido-abierto-card__row--head">
         <div className="partido-abierto-card__head-main">
-          <DeporteIcono deporte={dep} size={18} color="var(--accent)" />
+          <SportIcon deporte={dep} size={18} color="var(--accent)" />
           <span className="partido-abierto-card__title">
             {depLabel} · {sedeNombre}
           </span>

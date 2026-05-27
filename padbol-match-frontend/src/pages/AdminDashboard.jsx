@@ -16,7 +16,7 @@ import {
 } from '../constants/hubLayout';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
-import { DeporteIcono } from '../utils/deporteIcono';
+import SportIcon from '../components/common/SportIcon';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -13018,7 +13018,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         <td style={{ padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)' }}>{c.nombre}</td>
                         <td style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                            <DeporteIcono deporte={c.deporte} size={18} color="var(--text-secondary)" />
+                            <SportIcon deporte={c.deporte} size={18} color="var(--text-secondary)" />
                             {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
                           </span>
                         </td>
@@ -13106,7 +13106,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               justifyContent: 'flex-end',
                             }}
                           >
-                            <DeporteIcono deporte={c.deporte} size={18} color="var(--text-primary)" />
+                            <SportIcon deporte={c.deporte} size={18} color="var(--text-primary)" />
                             {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
                           </span>
                         </div>

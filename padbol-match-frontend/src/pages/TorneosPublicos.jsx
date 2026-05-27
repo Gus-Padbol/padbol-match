@@ -32,7 +32,7 @@ import { getDistanceKm } from '../utils/sedeCardUi';
 import { IconGeroFiltros, IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
-import { DeporteIcono } from '../utils/deporteIcono';
+import SportIcon from '../components/common/SportIcon';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
@@ -601,7 +601,7 @@ export default function TorneosPublicos() {
                           border: '1px solid var(--border)',
                         }}
                       >
-                        <DeporteIcono deporte={torneo.deporte} size={16} color="var(--text-primary)" />
+                        <SportIcon deporte={torneo.deporte} size={16} color="var(--text-primary)" />
                         {etiquetaDeporteTorneo(torneo.deporte)}
                       </span>
                     </div>
@@ -643,7 +643,7 @@ export default function TorneosPublicos() {
                 />
                 <Row icon="📅" label={formatFecha(torneo.fecha_inicio, padbolLang)} />
                 <Row
-                  icon={<DeporteIcono deporte={torneo.deporte} size={16} color="var(--text-secondary)" />}
+                  icon={<SportIcon deporte={torneo.deporte} size={16} color="var(--text-secondary)" />}
                   label={formatoEquipoLineaTorneoPublico(torneo)}
                 />
                 <Row

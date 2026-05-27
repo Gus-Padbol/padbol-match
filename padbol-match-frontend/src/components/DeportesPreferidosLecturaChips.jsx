@@ -1,6 +1,6 @@
 import React from 'react';
 import { DEPORTES_PREFERIDOS_OPCIONES, normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
-import { DeporteIcono } from '../utils/deporteIcono';
+import SportIcon from './common/SportIcon';
 
 /** Chips solo lectura para `deportes_preferidos` en perfiles. */
 export default function DeportesPreferidosLecturaChips({ keys }) {
@@ -26,7 +26,7 @@ export default function DeportesPreferidosLecturaChips({ keys }) {
               fontSize: 13,
             }}
           >
-            <DeporteIcono deporte={key} size={18} color="#312e81" />
+            <SportIcon deporte={key} size={18} color="#312e81" />
             {lab}
           </span>
         );
