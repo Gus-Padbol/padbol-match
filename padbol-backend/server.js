@@ -37,6 +37,11 @@ import {
   buildMpCspScriptSrcDirectives,
 } from './lib/mercadopagoCsp.js';
 import { normalizeSedeAmenities } from './utils/sedeAmenities.js';
+import {
+  generarSlotsHorarioReserva,
+  turnoCabeEnVentanasReserva,
+  ventanasHorarioReserva,
+} from './lib/reservaSlotsHorarios.js';
 
 dotenv.config();
 
@@ -411,26 +416,25 @@ async function fetchUserRoleRow(email) {
 /** Rol del usuario autenticado (service role; no depende de RLS en el cliente). */
 async function fetchUserRoleRowForAuthUser(user) {
   if (!user?.email) return null;
-  let row = await fetchUserRoleRow(user.email);
-  if (row) return row;
   const uid = user.id ? String(user.id).trim() : '';
-  if (!uid) return null;
-  let q = await supabase
-    .from('user_roles')
-    .select(
-      'role, alcance, sede_id, nombre, pais, provincia, ciudad, email, torneos_oficiales_habilitados',
-    )
-    .eq('user_id', uid)
-    .maybeSingle();
-  if (q.error && /colum|column/i.test(String(q.error.message || ''))) {
-    q = await supabase
+  if (uid) {
+    let q = await supabase
       .from('user_roles')
-      .select('role, sede_id, nombre, pais, email')
+      .select(
+        'role, alcance, sede_id, nombre, pais, provincia, ciudad, email, torneos_oficiales_habilitados',
+      )
       .eq('user_id', uid)
       .maybeSingle();
+    if (q.error && /colum|column/i.test(String(q.error.message || ''))) {
+      q = await supabase
+        .from('user_roles')
+        .select('role, sede_id, nombre, pais, email')
+        .eq('user_id', uid)
+        .maybeSingle();
+    }
+    if (!q.error && q.data) return q.data;
   }
-  if (q.error) return null;
-  return q.data;
+  return fetchUserRoleRow(user.email);
 }
 
 function buildMiRolJsonPayload(email, row) {
@@ -3913,6 +3917,13 @@ app.get('/api/reservas/disponibilidad', async (req, res) => {
     if (!sedeFull) return res.status(404).json({ error: 'Sede no encontrada' });
     const nombreSede = String(sedeFull.nombre || '').trim();
     if (!nombreSede) return res.status(500).json({ error: 'Sede sin nombre' });
+
+    const ventanas = ventanasHorarioReserva(sedeFull, fecha);
+    if (!turnoCabeEnVentanasReserva(inicioMin, duracion, ventanas)) {
+      return res.status(400).json({
+        error: 'hora_inicio fuera del horario de atención de la sede',
+      });
+    }
 
     let numsSlots = chatIaSlotsReservaDesdeSede(sedeFull);
     if (deporteCanon) {
@@ -13611,24 +13622,6 @@ async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, durac
   if (error) return { slots: [], error: error.message };
 
   const lista = Array.isArray(reservadas) ? reservadas : [];
-  let horaApertura = 10;
-  let horaCierre = 23;
-  try {
-    if (sedeRow.horario_apertura) {
-      const a = parseInt(String(sedeRow.horario_apertura).split(':')[0], 10);
-      if (Number.isFinite(a)) horaApertura = a;
-    }
-  } catch {
-    /* keep default */
-  }
-  try {
-    if (sedeRow.horario_cierre) {
-      const c = parseInt(String(sedeRow.horario_cierre).split(':')[0], 10);
-      if (Number.isFinite(c)) horaCierre = c;
-    }
-  } catch {
-    /* keep default */
-  }
 
   let numsSlots = chatIaSlotsReservaDesdeSede(sedeRow);
   if (deporteCanon) {
@@ -13643,16 +13636,12 @@ async function computeChatIaSlotsReales(supabaseClient, sedeRow, fechaYmd, durac
   const tz = normalizeSedeTimezone(sedeRow?.timezone || inferTimezoneFromCiudadPais(sedeRow?.ciudad, sedeRow?.pais));
   const hoySede = ymdTodayInSedeTimezone(tz);
   const filtrarPasadosHoy = Boolean(hoySede && fecha === hoySede);
-  const aperturaMin = horaApertura * 60;
-  const cierreMin = horaCierre * 60;
 
   const canchasMeta = Array.isArray(sedeRow?.canchas_activas) ? sedeRow.canchas_activas : [];
+  const candidatos = generarSlotsHorarioReserva(sedeRow, fecha, duracion, CHAT_IA_SLOT_STEP_MIN);
   const slots = [];
-  for (let startMin = aperturaMin; startMin + duracion <= cierreMin; startMin += CHAT_IA_SLOT_STEP_MIN) {
-    const endMin = startMin + duracion;
-    if (endMin > cierreMin) break;
-    const horaInicio = chatIaHoraDesdeMinutosReserva(startMin);
-    const horaFin = chatIaHoraDesdeMinutosReserva(endMin);
+  for (const slot of candidatos) {
+    const { startMin, endMin, horaInicio, horaFin, horario } = slot;
 
     const ocupadasNums = lista
       .filter(
@@ -13698,7 +13687,7 @@ async function chatIaFetchSedeFullForTool(supabaseClient, sedeId) {
   const { data: sede, error } = await supabaseClient
     .from('sedes')
     .select(
-      'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,cantidad_canchas,timezone,ciudad,pais',
+      'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,cantidad_canchas,timezone,ciudad,pais,franjas_horarias,precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva',
     )
     .eq('id', sid)
     .maybeSingle();

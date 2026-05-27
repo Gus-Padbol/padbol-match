@@ -53,6 +53,7 @@ import {
   precioReservaTurno,
   RESERVA_DURACIONES_MIN,
 } from '../utils/sedePreciosDuracion';
+import { generarSlotsHorarioReserva } from '../utils/reservaSlotsHorarios';
 import { precioBaseReservaConDeporte } from '../utils/sedePreciosDeporte';
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
@@ -1929,78 +1930,43 @@ export default function ReservaForm() {
       }
 
       const sedeData = sedeSeleccionada;
-
-      // Parse opening/closing times with defensive checks
-      let horaApertura = 10; // default: 10 AM
-      let horaCierre = 23;   // default: 11 PM
-
-      try {
-        if (sedeData.horario_apertura) {
-          const apertura = parseInt(sedeData.horario_apertura.split(':')[0], 10);
-          if (!isNaN(apertura)) horaApertura = apertura;
-        }
-      } catch (e) {
-        /* ignore parse errors */
-      }
-
-      try {
-        if (sedeData.horario_cierre) {
-          const cierre = parseInt(sedeData.horario_cierre.split(':')[0], 10);
-          if (!isNaN(cierre)) horaCierre = cierre;
-        }
-      } catch (e) {
-        /* ignore parse errors */
-      }
-
       const duracion = duracionSeleccionadaMin;
       const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl);
       const numsSlots = slotsOferta.map((s) => s.numero);
       const hoyCalendarioNegocio = ymdHoyParaReservaSede(sedeData);
       const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
-      const aperturaMin = horaApertura * 60;
-      const cierreMin = horaCierre * 60;
 
+      const candidatos = generarSlotsHorarioReserva(sedeData, fecha, duracion, SLOT_STEP_MIN);
       const todosLosHorarios = [];
 
-      // Generate all possible time slots based on club schedule
-      for (let startMin = aperturaMin; startMin + duracion <= cierreMin; startMin += SLOT_STEP_MIN) {
-          // Check if slot fits within business hours
-          const endMin = startMin + duracion;
+      for (const slot of candidatos) {
+        const { startMin, endMin, horaInicio, horaFin, horario } = slot;
+        const ocupadasNums = Array.isArray(reservadas)
+          ? reservadas
+            .filter((r) => (
+              reservaBloqueaDisponibilidad(r) &&
+              numsSlots.includes(parseInt(String(r.cancha), 10)) &&
+              reservaSolapaIntervalo(r, startMin, endMin)
+            ))
+            .map((r) => parseInt(String(r.cancha), 10))
+          : [];
+        const ocupadas = new Set(ocupadasNums).size;
+        const libres = numsSlots.length - ocupadas;
 
-          // Only add if slot ends by closing time
-          if (endMin <= cierreMin) {
-            const horaInicio = horaDesdeMinutosReserva(startMin);
-            const horaFin = horaDesdeMinutosReserva(endMin);
-
-            // Solo slots ofertados (activos): si ninguno libre, no listar el horario
-            const ocupadasNums = Array.isArray(reservadas)
-              ? reservadas
-                .filter((r) => (
-                  reservaBloqueaDisponibilidad(r) &&
-                  numsSlots.includes(parseInt(String(r.cancha), 10)) &&
-                  reservaSolapaIntervalo(r, startMin, endMin)
-                ))
-                .map((r) => parseInt(String(r.cancha), 10))
-              : [];
-            const ocupadas = new Set(ocupadasNums).size;
-            const libres = numsSlots.length - ocupadas;
-
-            // Add slot only if al menos un slot ofertado está libre
-            if (libres > 0) {
-              if (filtrarSlotsPasadosHoy) {
-                const slotStartMs = slotStartMsParaReservaSede(fecha, horaInicio, sedeData);
-                if (slotStartMs != null && slotStartMs <= Date.now()) {
-                  continue;
-                }
-              }
-              todosLosHorarios.push({
-                horario: `${horaInicio} - ${horaFin}`,
-                hora: horaInicio,
-                libres,
-                ocupadas,
-              });
+        if (libres > 0) {
+          if (filtrarSlotsPasadosHoy) {
+            const slotStartMs = slotStartMsParaReservaSede(fecha, horaInicio, sedeData);
+            if (slotStartMs != null && slotStartMs <= Date.now()) {
+              continue;
             }
           }
+          todosLosHorarios.push({
+            horario,
+            hora: horaInicio,
+            libres,
+            ocupadas,
+          });
+        }
       }
 
       setHorariosDisponibles(todosLosHorarios);

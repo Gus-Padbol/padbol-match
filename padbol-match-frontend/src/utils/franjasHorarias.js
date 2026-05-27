@@ -19,7 +19,7 @@ function diaFranjaDesdeFecha(fechaISO) {
   return DIAS_SEMANA_FRANJA[d.getDay()] || null;
 }
 
-function franjaAplicaAFecha(f, fechaISO) {
+export function franjaAplicaAFecha(f, fechaISO) {
   const tipo = String(f?.tipo || '').trim();
   if (tipo === 'fecha_especial') {
     return Boolean(fechaISO) && String(f?.fecha || '').slice(0, 10) === String(fechaISO || '').slice(0, 10);

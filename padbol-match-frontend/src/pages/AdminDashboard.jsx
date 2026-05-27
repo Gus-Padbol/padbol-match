@@ -101,6 +101,7 @@ import {
   parsePrecioDuracionField,
   miSedeFormPreciosFromSedeRow,
 } from '../utils/sedePreciosDuracion';
+import { generarIniciosMinutosSlotReserva, minutosAHoraReserva } from '../utils/reservaSlotsHorarios';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -1311,8 +1312,6 @@ function slotsReservaManualDisponiblesAdminDash({ sedeRow, reservas, fecha, canc
   const canchaNum = parseInt(String(cancha), 10);
   if (!Number.isFinite(canchaNum)) return [];
 
-  const apertura = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_apertura, 10) * 60;
-  const cierre = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_cierre, 23) * 60;
   const sedeNombre = String(sedeRow?.nombre || '').trim().toLowerCase();
   const fechaISO = String(fecha || '').trim().slice(0, 10);
   const ocupadas = (Array.isArray(reservas) ? reservas : []).filter((r) => {
@@ -1323,12 +1322,13 @@ function slotsReservaManualDisponiblesAdminDash({ sedeRow, reservas, fecha, canc
   });
 
   const filtraPasadosHoy = ctx?.hoyISO && fechaISO === ctx.hoyISO;
+  const inicios = generarIniciosMinutosSlotReserva(sedeRow, fechaISO, duracionMin, 30);
   const out = [];
-  for (let start = apertura; start + duracionMin <= cierre; start += 30) {
+  for (const start of inicios) {
     if (filtraPasadosHoy && start < ctx.minutesNow) continue;
     const end = start + duracionMin;
     const solapada = ocupadas.some((r) => reservaSolapaSlotAdminDash(r, start, end));
-    if (!solapada) out.push(horaDesdeMinutosAdminDash(start));
+    if (!solapada) out.push(minutosAHoraReserva(start));
   }
   return out;
 }
