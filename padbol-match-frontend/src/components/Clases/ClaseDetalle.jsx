@@ -202,7 +202,7 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <strong>Deporte:</strong>
-          <SportIcon deporte={clase.deporte} size={18} />
+          <SportIcon deporte={clase.deporte} size={18} color="var(--text-primary)" />
           {labelDeporte(clase.deporte)}
         </div>
         <div><strong>Tipo:</strong> {labelTipo(clase.tipo)}</div>

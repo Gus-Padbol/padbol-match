@@ -219,13 +219,45 @@ function pickTorneosProximosSede(torneos, max = 3) {
     .slice(0, max);
 }
 
-function SedeInfoChip({ emoji, label }) {
+const SEDE_INFO_CHIP_ICON_SIZE = 20;
+const SEDE_INFO_CHIP_ICON_COLOR = '#ffffff';
+
+function SedeInfoChip({ icon, label }) {
   return (
     <span className="sede-publica-info-chip">
-      <span className="sede-publica-info-chip__emoji" aria-hidden>{emoji}</span>
+      <span className="sede-publica-info-chip__icon" aria-hidden>
+        {icon}
+      </span>
       <span className="sede-publica-info-chip__text">{label}</span>
     </span>
   );
+}
+
+/** Etiqueta e icono del chip de canchas según deportes activos de la sede. */
+function buildSedeCanchasInfoChip(deportesActivos, canchasCount) {
+  const n = Number(canchasCount) || 0;
+  if (n <= 0) return null;
+  const unit = n === 1 ? 'cancha' : 'canchas';
+  const iconProps = { size: SEDE_INFO_CHIP_ICON_SIZE, color: SEDE_INFO_CHIP_ICON_COLOR };
+
+  if (deportesActivos.length === 1) {
+    const { key, label: depLabel } = deportesActivos[0];
+    return {
+      icon: <SportIcon deporte={key} {...iconProps} />,
+      label: `${n} ${unit} de ${depLabel}`,
+    };
+  }
+  if (deportesActivos.length > 1) {
+    return {
+      icon: <SportIcon {...iconProps} />,
+      label: `${n} ${unit}`,
+    };
+  }
+  const fallback = deportesActivos[0];
+  return {
+    icon: <SportIcon deporte={fallback?.key || 'padbol'} {...iconProps} />,
+    label: `${n} ${unit}`,
+  };
 }
 
 function SedeInfoTablerIcon({ children, size = 20 }) {
@@ -650,7 +682,7 @@ function SedeDeportesChipsHero({ deportes, t }) {
     <div className="sede-publica-hero-immersive__deportes" role="list" aria-label={aria}>
       {deportes.map((d) => (
         <span key={d.key} className="sede-publica-hero-immersive__deporte-chip" role="listitem">
-          <SportIcon deporte={d.key} size={14} color="#fff" className="sede-publica-hero-immersive__deporte-icon" />
+          <SportIcon deporte={d.key} size={14} className="sede-publica-hero-immersive__deporte-icon" />
           {d.label}
         </span>
       ))}
@@ -801,7 +833,7 @@ function SedeInstructorCard({ instructor, t }) {
           <div className="sede-publica-instructores__deportes">
             {deportes.map((dep) => (
               <span key={`${instructor.id}-${dep}`} className="sede-publica-instructores__deporte-chip">
-                <SportIcon deporte={dep} size={14} />
+                <SportIcon deporte={dep} size={14} color="var(--text-secondary)" />
                 <span>{instructorDeporteLabel(dep)}</span>
               </span>
             ))}
@@ -2636,6 +2668,7 @@ export default function SedePublica() {
           String(sede.slogan || '').trim() || String(sede.descripcion || '').trim();
         const amenityChips = resolveSedeAmenityChips(sede.amenities);
         const canchasCount = resolveSedeCanchasCount(sede, sedePerfilCanchasCount);
+        const canchasInfoChip = buildSedeCanchasInfoChip(deportesChips, canchasCount);
         return (
           <>
           <div
@@ -2724,13 +2757,28 @@ export default function SedePublica() {
 
             <article className="sede-publica-page">
             <div className="sede-publica-info-chips-row" aria-label="Información rápida">
-              {direccionLinea ? <SedeInfoChip emoji="📍" label={direccionLinea} /> : null}
-              {horario ? <SedeInfoChip emoji="🕐" label={horario} /> : null}
-              {canchasCount > 0 ? (
+              {direccionLinea ? (
                 <SedeInfoChip
-                  emoji="🎾"
-                  label={`${canchasCount} cancha${canchasCount === 1 ? '' : 's'}`}
+                  icon={<IconGeroUbicacion size={SEDE_INFO_CHIP_ICON_SIZE} color={SEDE_INFO_CHIP_ICON_COLOR} />}
+                  label={direccionLinea}
                 />
+              ) : null}
+              {horario ? (
+                <SedeInfoChip
+                  icon={
+                    <span
+                      className="sede-publica-info-chip__horario-icon"
+                      style={{ fontSize: SEDE_INFO_CHIP_ICON_SIZE, lineHeight: 1 }}
+                      aria-hidden
+                    >
+                      🕐
+                    </span>
+                  }
+                  label={horario}
+                />
+              ) : null}
+              {canchasInfoChip ? (
+                <SedeInfoChip icon={canchasInfoChip.icon} label={canchasInfoChip.label} />
               ) : null}
             </div>
 

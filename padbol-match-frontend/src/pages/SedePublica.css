@@ -739,10 +739,21 @@
   max-width: 100%;
 }
 
-.sede-publica-info-chip__emoji {
+.sede-publica-info-chip__icon {
   flex-shrink: 0;
-  font-size: 14px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #ffffff;
+}
+
+.sede-publica-info-chip__horario-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: grayscale(1) brightness(2);
 }
 
 .sede-publica-info-chip__text {

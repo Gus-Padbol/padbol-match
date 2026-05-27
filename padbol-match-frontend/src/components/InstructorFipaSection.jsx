@@ -383,7 +383,7 @@ function InstructorFipaSolicitudModal({
                   className={`instructor-fipa-deporte-chip${form.deportes.includes(d.key) ? ' instructor-fipa-deporte-chip--on' : ''}`}
                   onClick={() => toggleDeporte(d.key)}
                 >
-                  <SportIcon deporte={d.key} size={16} />
+                  <SportIcon deporte={d.key} size={16} color="var(--text-secondary)" />
                   {d.label}
                 </button>
               ))}

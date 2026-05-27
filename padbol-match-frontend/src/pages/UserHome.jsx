@@ -790,7 +790,7 @@ export default function UserHome() {
                             gap: 8,
                           }}
                         >
-                          <SportIcon deporte={tile.deporte} size={20} color="#fff" />
+                          <SportIcon deporte={tile.deporte} size={20} />
                           {tile.label}
                         </span>
                       </div>

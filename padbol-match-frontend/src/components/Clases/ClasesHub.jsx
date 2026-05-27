@@ -64,7 +64,7 @@ function ClaseMiniCard({ clase, onClick }) {
     }}>
       <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-primary)', marginBottom: 4 }}>{clase.titulo}</div>
       <div style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <SportIcon deporte={clase.deporte} size={16} />
+        <SportIcon deporte={clase.deporte} size={16} color="var(--text-primary)" />
         <span>
           {labelDeporte(clase.deporte)} · {tipo}
         </span>

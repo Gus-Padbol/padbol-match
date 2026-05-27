@@ -2385,7 +2385,7 @@ export default function ReservaForm() {
                       }}
                     >
                       <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                        <SportIcon deporte={opt.key} size={20} />
+                        <SportIcon deporte={opt.key} size={20} color="var(--text-primary)" />
                       </span>
                       <span className="reserva-sede-deporte-chip-btn-label">
                         {etiquetaDeporteReserva(t, opt.key)}
@@ -2428,7 +2428,7 @@ export default function ReservaForm() {
                         }}
                       >
                         <span className="reserva-sede-deporte-chip-btn-emoji" aria-hidden>
-                          <SportIcon deporte="futbol" size={20} />
+                          <SportIcon deporte="futbol" size={20} color="var(--text-primary)" />
                         </span>
                         <span className="reserva-sede-deporte-chip-btn-label">
                           {t('reservas.sportFutbolGroup')}
@@ -2476,7 +2476,7 @@ export default function ReservaForm() {
             <p className="reserva-sede-deporte-activo" role="status">
               {t('reservas.reservandoPara', { deporte: '' })}
               <span className="reserva-sede-deporte-activo-emoji" aria-hidden>
-                <SportIcon deporte={reservaDeporteUrl} size={20} />
+                <SportIcon deporte={reservaDeporteUrl} size={20} color="var(--text-primary)" />
               </span>
               {etiquetaDeporteReserva(t, reservaDeporteUrl)}
             </p>
@@ -2543,7 +2543,7 @@ export default function ReservaForm() {
                                     </span>
                                   ) : null}
                                   <span className="reserva-sede-card-deporte-chip">
-                                    <SportIcon deporte={depKey} size={14} />
+                                    <SportIcon deporte={depKey} size={14} color="var(--text-secondary)" />
                                     {etiquetaDeporteReserva(t, depKey)}
                                   </span>
                                 </React.Fragment>

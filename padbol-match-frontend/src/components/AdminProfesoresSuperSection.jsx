@@ -269,7 +269,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
                   onClick={() => toggleDeporte(d.key)}
                   disabled={saving}
                 >
-                  <SportIcon deporte={d.key} size={16} />
+                  <SportIcon deporte={d.key} size={16} color="var(--text-secondary)" />
                   {d.label}
                 </button>
               ))}

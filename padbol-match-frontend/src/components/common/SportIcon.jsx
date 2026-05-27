@@ -42,12 +42,12 @@ export function resolveSportIconComponent(deporte) {
  * Ícono de deporte (SVG Gero en `assets/icons/`).
  * @param {string} deporte
  * @param {number} [size=24]
- * @param {string} [color='currentColor']
+ * @param {string} [color='#ffffff']
  */
 export default function SportIcon({
   deporte,
   size = 24,
-  color = 'currentColor',
+  color = '#ffffff',
   className,
   style,
   title,
