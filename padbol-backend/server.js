@@ -2449,9 +2449,37 @@ async function computeEstadisticasPublicasSede(sedeIdNum, nombreSedeRaw) {
     jugadores_reservaron_total = keys.size;
   }
 
+  let reservas_realizadas_total = 0;
+  if (nombreSede) {
+    const { count, error: resCountErr } = await supabaseAdmin
+      .from('reservas')
+      .select('id', { count: 'exact', head: true })
+      .eq('sede', nombreSede)
+      .neq('estado', 'cancelada');
+    if (!resCountErr && count != null) reservas_realizadas_total = count;
+  }
+
+  let promedio_resenas = null;
+  try {
+    const { data: allStars, error: starsErr } = await supabase
+      .from(PUBLIC_RESENAS_TABLE)
+      .select('estrellas')
+      .eq('sede_id', sid);
+    if (!starsErr && allStars?.length) {
+      promedio_resenas =
+        Math.round(
+          (allStars.reduce((s, r) => s + Number(r.estrellas), 0) / allStars.length) * 10,
+        ) / 10;
+    }
+  } catch (e) {
+    console.warn('computeEstadisticasPublicasSede promedio_resenas:', e?.message || e);
+  }
+
   return {
     torneos_realizados_total,
     jugadores_reservaron_total,
+    reservas_realizadas_total,
+    promedio_resenas,
     deporte_mas_jugado,
   };
 }
@@ -2690,6 +2718,37 @@ app.get('/api/sedes/:id', async (req, res) => {
     res.json({ ...out, estadisticas_publicas, duraciones_oferta });
   } catch (err) {
     console.error('❌ Error GET /api/sedes/:id:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** Partidos abiertos próximos de una sede (vista pública /sede/:id). */
+app.get('/api/sedes/:id/partidos', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'ID de sede inválido' });
+    }
+    const upcoming = String(req.query.upcoming ?? '').toLowerCase() === 'true';
+    if (!upcoming) {
+      return res.status(400).json({ error: 'Usá upcoming=true para listar partidos próximos' });
+    }
+    const limitRaw = parseInt(String(req.query.limit ?? '3'), 10);
+    const limit = Number.isFinite(limitRaw) ? Math.min(20, Math.max(1, limitRaw)) : 3;
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await supabase
+      .from('partidos_abiertos')
+      .select('*')
+      .eq('sede_id', id)
+      .in('estado', ['abierto', 'completo'])
+      .gte('fecha', today)
+      .order('fecha', { ascending: true })
+      .order('hora', { ascending: true })
+      .limit(limit);
+    if (error) throw error;
+    res.json({ partidos: data || [] });
+  } catch (err) {
+    console.error('❌ GET /api/sedes/:id/partidos:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

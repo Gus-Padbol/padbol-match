@@ -421,21 +421,44 @@ function buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud) {
   return buildMapsSearchHref(direccion, ciudad, pais);
 }
 
-function parseAnioFundacionSedePublica(raw) {
-  const y = parseInt(String(raw ?? '').trim(), 10);
-  if (!Number.isFinite(y) || y < 1800 || y > 2100) return null;
-  return y;
+function sedeStatCountVisible(raw) {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0;
 }
 
-/** Al menos un dato útil para la sección «En números». */
-function sedeTieneSeccionEnNumeros(stats, sedeRow) {
-  if (parseAnioFundacionSedePublica(sedeRow?.anio_fundacion) != null) return true;
-  if (!stats || typeof stats !== 'object') return false;
-  if ((Number(stats.torneos_realizados_total) || 0) > 0) return true;
-  if ((Number(stats.jugadores_reservaron_total) || 0) > 0) return true;
-  const d = stats.deporte_mas_jugado;
-  if (d && ((Number(d.torneos) || 0) > 0 || (Number(d.canchas_cantidad) || 0) > 0)) return true;
-  return false;
+/** Ítems visibles para «En números» (oculta ceros y null). */
+function buildSedeEnNumerosItems(stats) {
+  if (!stats || typeof stats !== 'object') return [];
+  const items = [];
+  const pushCount = (key, label, raw) => {
+    if (!sedeStatCountVisible(raw)) return;
+    items.push({
+      key,
+      label,
+      value: Number(raw).toLocaleString('es-AR'),
+    });
+  };
+  pushCount(
+    'reservas',
+    'Total reservas realizadas',
+    stats.reservas_realizadas_total ?? stats.reservas_total,
+  );
+  pushCount('torneos', 'Total torneos jugados', stats.torneos_realizados_total);
+  pushCount(
+    'jugadores',
+    'Total jugadores registrados en la sede',
+    stats.jugadores_registrados_total ?? stats.jugadores_reservaron_total,
+  );
+  const promRaw = stats.promedio_resenas ?? stats.promedio;
+  const prom = Number(promRaw);
+  if (Number.isFinite(prom) && prom > 0) {
+    items.push({ key: 'promedio', label: 'Promedio de reseñas', promedio: prom });
+  }
+  return items;
+}
+
+function sedeTieneSeccionEnNumeros(stats) {
+  return buildSedeEnNumerosItems(stats).length > 0;
 }
 
 /**
@@ -1067,447 +1090,6 @@ function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
   );
 }
 
-/** Icono en fila de contacto: caja neutra sobre fondo claro. */
-function iconWrapSedeContacto(icon) {
-  const isStr = typeof icon === 'string';
-  return (
-    <span
-      style={{
-        flexShrink: 0,
-        width: '24px',
-        height: '24px',
-        borderRadius: '8px',
-        background: '#F5F5F5',
-        border: `1px solid ${SEDE_DS.cardBorder}`,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: isStr ? '12px' : undefined,
-        lineHeight: 1,
-        color: isStr ? undefined : '#64748b',
-      }}
-    >
-      {icon}
-    </span>
-  );
-}
-
-/** Logo oficial WhatsApp (marca), color #25D366. */
-function WhatsAppLogoSvg({ size = 20 }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      aria-hidden
-    >
-      <path
-        fill="#25D366"
-        d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"
-      />
-    </svg>
-  );
-}
-
-const SEDE_SOCIAL_CHIPS_META = [
-  {
-    key: 'instagram',
-    name: 'Instagram',
-    iconBg: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-    iconColor: '#fff',
-    iconLabel: 'IG',
-    iconFontSize: '8px',
-  },
-  {
-    key: 'facebook',
-    name: 'Facebook',
-    iconBg: '#1877f2',
-    iconColor: '#fff',
-    iconLabel: 'f',
-    iconFontSize: '12px',
-    iconFontWeight: 800,
-    iconFontFamily: 'system-ui, "Helvetica Neue", Arial, sans-serif',
-  },
-  {
-    key: 'tiktok',
-    name: 'TikTok',
-    iconBg: '#010101',
-    iconColor: '#fff',
-    iconLabel: '♪',
-    iconFontSize: '11px',
-  },
-  {
-    key: 'twitter',
-    name: 'X',
-    iconBg: '#000',
-    iconColor: '#fff',
-    iconLabel: 'X',
-    iconFontSize: '10px',
-    iconFontWeight: 800,
-  },
-  {
-    key: 'youtube',
-    name: 'YouTube',
-    iconBg: '#ff0000',
-    iconColor: '#fff',
-    iconLabel: '▶',
-    iconFontSize: '9px',
-  },
-  {
-    key: 'linkedin',
-    name: 'LinkedIn',
-    iconBg: '#0a66c2',
-    iconColor: '#fff',
-    iconLabel: 'in',
-    iconFontSize: '9px',
-    iconFontWeight: 800,
-    iconFontFamily: 'system-ui, sans-serif',
-  },
-  {
-    key: 'whatsapp',
-    name: 'WhatsApp',
-    iconBg: '#25d366',
-    iconColor: '#fff',
-    iconLabel: 'W',
-    iconFontSize: '10px',
-    iconFontWeight: 800,
-  },
-  {
-    key: 'website',
-    name: 'Web',
-    iconBg: '#475569',
-    iconColor: '#fff',
-    iconLabel: '🔗',
-    iconFontSize: '10px',
-  },
-];
-
-/** Chips de redes debajo de contacto; solo si hay al menos una URL. */
-function SedeSocialChips({ sede }) {
-  const items = SEDE_SOCIAL_CHIPS_META.filter((m) => {
-    const v = sede[m.key];
-    return v != null && String(v).trim() !== '';
-  });
-  if (!items.length) return null;
-
-  return (
-    <div style={{ marginBottom: '12px' }}>
-      <div
-        style={{
-          fontSize: '11px',
-          fontWeight: 700,
-          color: SEDE_DS.subtitle,
-          marginBottom: '6px',
-        }}
-      >
-        Seguinos
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '6px',
-          alignItems: 'center',
-        }}
-      >
-        {items.map((m) => (
-          <a
-            key={m.key}
-            href={toHttps(String(sede[m.key]).trim())}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '5px 10px 5px 5px',
-              borderRadius: '999px',
-              background: 'var(--bg-card)',
-              border: '1px solid #e2e8f0',
-              textDecoration: 'none',
-              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.06)',
-              boxSizing: 'border-box',
-            }}
-          >
-            <span
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '6px',
-                background: m.iconBg,
-                color: m.iconColor,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: m.iconFontSize,
-                fontWeight: m.iconFontWeight ?? 700,
-                fontFamily: m.iconFontFamily ?? 'inherit',
-                lineHeight: 1,
-                flexShrink: 0,
-              }}
-              aria-hidden
-            >
-              {m.iconLabel}
-            </span>
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: '#334155',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {m.name}
-            </span>
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Contacto: iconos + texto, mismo lenguaje visual que el bloque «Sobre el club». */
-function etiquetaDeportePublicoSede(t, key) {
-  const k = String(key || '').trim().toLowerCase();
-  if (!k) return '';
-  const i18nKey = `torneos.deporte.${k}`;
-  const translated = t(i18nKey);
-  return translated !== i18nKey ? translated : k;
-}
-
-function SedeInstalacionesBloque({ sede, duracionesOferta, t }) {
-  const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
-  const deps = Array.isArray(sede?.deportes_disponibles) ? sede.deportes_disponibles : [];
-  const duraciones = Array.isArray(duracionesOferta) ? duracionesOferta : [];
-  const moneda = String(sede?.moneda || 'ARS').trim() || 'ARS';
-  const precioTurno = Number(sede?.precio_turno);
-  const tienePrecioBase = Number.isFinite(precioTurno) && precioTurno > 0;
-
-  if (!canchas.length && !deps.length && !duraciones.length && !tienePrecioBase) return null;
-
-  const cardStyle = {
-    marginTop: '6px',
-    marginBottom: '18px',
-    padding: '16px 14px',
-    borderRadius: SEDE_DS.cardRadius,
-    background: SEDE_DS.cardBg,
-    border: `1px solid ${SEDE_DS.cardBorder}`,
-    boxSizing: 'border-box',
-  };
-
-  return (
-    <div style={cardStyle}>
-      <h2 style={{ margin: '0 0 10px', fontSize: '17px', fontWeight: 800, color: SEDE_DS.title }}>
-        {t('reservas.courtsAvailableTitle')}
-      </h2>
-      {deps.length > 0 ? (
-        <p style={{ margin: '0 0 10px', fontSize: '14px', lineHeight: 1.45, color: SEDE_DS.subtitle }}>
-          {deps.map((d) => etiquetaDeportePublicoSede(t, d)).join(' · ')}
-        </p>
-      ) : null}
-      {canchas.length > 0 ? (
-        <ul
-          style={{
-            listStyle: 'none',
-            margin: '0 0 12px',
-            padding: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px',
-          }}
-        >
-          {canchas.map((c) => {
-            const dep = c.deporte || c.tipo;
-            const depLabel = dep ? etiquetaDeportePublicoSede(t, dep) : '';
-            return (
-              <li
-                key={`${c.numero}-${c.nombre}`}
-                style={{ fontSize: '14px', color: SEDE_DS.title, lineHeight: 1.4 }}
-              >
-                <strong>{String(c.nombre || `Cancha ${c.numero}`).trim()}</strong>
-                {depLabel ? (
-                  <span style={{ color: SEDE_DS.subtitle, fontWeight: 600 }}> · {depLabel}</span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-      {(duraciones.length > 0 || tienePrecioBase) && (
-        <>
-          <h3
-            style={{
-              margin: '0 0 8px',
-              fontSize: '14px',
-              fontWeight: 800,
-              color: SEDE_DS.title,
-              letterSpacing: '0.02em',
-            }}
-          >
-            {t('reservas.duration')}
-          </h3>
-          {duraciones.length > 0 ? (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {duraciones.map((d) => {
-                const min = Number(d?.duracion_minutos);
-                const precio = d?.precio != null ? Number(d.precio) : NaN;
-                const precioTxt =
-                  Number.isFinite(precio) && precio > 0
-                    ? `${moneda} ${precio.toLocaleString('es-AR')}`
-                    : '—';
-                return (
-                  <li key={min} style={{ fontSize: '14px', color: SEDE_DS.subtitle, lineHeight: 1.4 }}>
-                    <strong style={{ color: SEDE_DS.title }}>{min} min</strong>
-                    {' — '}
-                    {precioTxt}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p style={{ margin: 0, fontSize: '14px', color: SEDE_DS.subtitle }}>
-              {t('reservas.priceFrom')}{' '}
-              <strong style={{ color: SEDE_DS.title }}>
-                {precioTurno.toLocaleString('es-AR')} {moneda}
-              </strong>{' '}
-              {t('reservas.perSlot')}
-            </p>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-function CompactContactCard({ sede, horario, hasAddress }) {
-  const waNumber = sede.telefono
-    ? (() => {
-        const digits = String(sede.telefono).replace(/\D/g, '');
-        return digits.startsWith('0') ? `54${digits.slice(1)}` : digits;
-      })()
-    : '';
-
-  const rowTextStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    minHeight: '24px',
-    fontSize: '13px',
-    color: SEDE_DS.subtitle,
-    lineHeight: 1.45,
-  };
-
-  const line = (icon, content) => (
-    <div style={rowTextStyle}>
-      {iconWrapSedeContacto(icon)}
-      <span style={{ flex: 1, minWidth: 0 }}>{content}</span>
-    </div>
-  );
-
-  const rows = [];
-  if (hasAddress) {
-    rows.push(
-      line(<IconGeroUbicacion size={14} />, [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', '))
-    );
-  }
-  if (horario) rows.push(line('⏰', `Abierto ${horario}`));
-  if (waNumber) {
-    rows.push(
-      <div key="wa-contact" style={rowTextStyle}>
-        <span
-          style={{
-            flexShrink: 0,
-            width: '24px',
-            height: '24px',
-            borderRadius: '8px',
-            background: '#F5F5F5',
-            border: `1px solid ${SEDE_DS.cardBorder}`,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            lineHeight: 1,
-          }}
-          aria-hidden
-        >
-          <WhatsAppLogoSvg size={18} />
-        </span>
-        <span style={{ flex: 1, minWidth: 0 }}>
-          <a
-            href={`https://wa.me/${waNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#15803d', fontWeight: 700, textDecoration: 'none' }}
-          >
-            Escríbenos por WhatsApp
-          </a>
-        </span>
-      </div>
-    );
-  }
-  if (sede.email_contacto) {
-    rows.push(
-      line(
-        '✉️',
-        <a
-          href={`mailto:${sede.email_contacto}`}
-          style={{ color: SEDE_DS.brand, fontWeight: 600, textDecoration: 'none', wordBreak: 'break-all' }}
-        >
-          {sede.email_contacto}
-        </a>
-      )
-    );
-  }
-
-  if (!rows.length) {
-    return (
-      <div
-        style={{
-          marginBottom: '14px',
-          padding: '14px 12px',
-          borderRadius: SEDE_DS.cardRadius,
-          background: SEDE_DS.cardBg,
-          border: `1px solid ${SEDE_DS.cardBorder}`,
-          boxSizing: 'border-box',
-          fontSize: '13px',
-          color: SEDE_DS.subtitle,
-          fontStyle: 'italic',
-        }}
-      >
-        Sin información de contacto cargada.
-      </div>
-    );
-  }
-
-  return (
-    <div
-      style={{
-        marginBottom: '14px',
-        padding: '16px 14px',
-        borderRadius: SEDE_DS.cardRadius,
-        background: SEDE_DS.cardBg,
-        border: `1px solid ${SEDE_DS.cardBorder}`,
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-      }}
-    >
-      <h3
-        style={{
-          margin: '0 0 2px',
-          fontSize: '14px',
-          fontWeight: 800,
-          color: SEDE_DS.title,
-          letterSpacing: '0.02em',
-        }}
-      >
-        Contacto y ubicación
-      </h3>
-      {rows}
-    </div>
-  );
-}
 
 const API_BASE_RESENAS = toHttps(
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -1549,6 +1131,42 @@ function EstrellasSoloLectura({ value }) {
         </span>
       ))}
     </span>
+  );
+}
+
+function SedeEnNumerosBloque({ stats }) {
+  const items = buildSedeEnNumerosItems(stats);
+  if (!items.length) return null;
+
+  return (
+    <section
+      className="sede-publica-section sede-publica-en-numeros"
+      aria-labelledby="sede-en-numeros-title"
+    >
+      <h2 id="sede-en-numeros-title" className="sede-publica-section__title">
+        En números
+      </h2>
+      <div className="sede-publica-en-numeros__grid">
+        {items.map((item) => (
+          <div key={item.key} className="sede-publica-en-numeros__item">
+            {item.promedio != null ? (
+              <>
+                <div className="sede-publica-en-numeros__promedio-row">
+                  <EstrellasSoloLectura value={item.promedio} />
+                  <span className="sede-publica-en-numeros__value">{item.promedio.toFixed(1)}</span>
+                </div>
+                <span className="sede-publica-en-numeros__label">{item.label}</span>
+              </>
+            ) : (
+              <>
+                <span className="sede-publica-en-numeros__value">{item.value}</span>
+                <span className="sede-publica-en-numeros__label">{item.label}</span>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -2448,16 +2066,22 @@ export default function SedePublica() {
     }
     let cancelled = false;
     setPartidosSedeLoading(true);
-    fetch(`${API_BASE_SEDE}/api/partidos-abiertos`)
+    const headers = {};
+    const token = session?.access_token;
+    if (token) headers.Authorization = `Bearer ${token}`;
+    fetch(
+      `${API_BASE_SEDE}/api/sedes/${sedeIdNumLoad}/partidos?upcoming=true&limit=3`,
+      { headers },
+    )
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        const list = Array.isArray(data) ? data : [];
-        setPartidosSede(
-          list
-            .filter((p) => Number(p?.sede_id) === sedeIdNumLoad)
-            .slice(0, 3)
-        );
+        const list = Array.isArray(data?.partidos)
+          ? data.partidos
+          : Array.isArray(data)
+            ? data
+            : [];
+        setPartidosSede(list);
       })
       .catch(() => {
         if (!cancelled) setPartidosSede([]);
@@ -2468,7 +2092,7 @@ export default function SedePublica() {
     return () => {
       cancelled = true;
     };
-  }, [sedeIdNumLoad]);
+  }, [sedeIdNumLoad, session?.access_token]);
 
   useEffect(() => {
     if (!sedeId) {
@@ -2853,7 +2477,7 @@ export default function SedePublica() {
                       key={tor.id}
                       type="button"
                       className="sede-publica-torneo-row"
-                      onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+                      onClick={() => navigate(`/torneo/${encodeURIComponent(String(tor.id))}`)}
                     >
                       <span className="sede-publica-torneo-row__name">{tor.nombre || 'Torneo'}</span>
                       <span className="sede-publica-torneo-row__date">
@@ -2884,6 +2508,10 @@ export default function SedePublica() {
                   ))}
                 </div>
               </section>
+            ) : null}
+
+            {sedeTieneSeccionEnNumeros(estadisticasPublicas) ? (
+              <SedeEnNumerosBloque stats={estadisticasPublicas} />
             ) : null}
 
             <SedeInformacionClub
