@@ -1208,29 +1208,25 @@ export default function ReservaForm() {
     preciosDeporteRows,
   ]);
 
-  const reservaCargoPlataforma = useMemo(
-    () => Math.round((precioReservaTurnoBase + reservaExtrasSubtotal) * 0.03),
-    [precioReservaTurnoBase, reservaExtrasSubtotal],
-  );
-
-  const reservaTotalPagarConCargoYExtras = useMemo(
-    () => precioReservaTurnoBase + reservaExtrasSubtotal + reservaCargoPlataforma,
-    [precioReservaTurnoBase, reservaExtrasSubtotal, reservaCargoPlataforma],
-  );
-
   const reservaFeeRateDisplay = useMemo(
     () => reservaPlatformFeeRateForSede(sedeSeleccionada),
     [sedeSeleccionada],
   );
   const reservaFeePctDisplay = Math.round(reservaFeeRateDisplay * 100);
-  const reservaCargoPlataformaDisplay = useMemo(
-    () => Math.round(precioReservaTurnoBase * reservaFeeRateDisplay),
-    [precioReservaTurnoBase, reservaFeeRateDisplay],
+  const reservaSubtotalTurnoExtras = useMemo(
+    () => precioReservaTurnoBase + reservaExtrasSubtotal,
+    [precioReservaTurnoBase, reservaExtrasSubtotal],
   );
-  const reservaTotalDisplay = useMemo(
-    () => precioReservaTurnoBase + reservaExtrasSubtotal + reservaCargoPlataformaDisplay,
-    [precioReservaTurnoBase, reservaExtrasSubtotal, reservaCargoPlataformaDisplay],
+  const reservaCargoPlataforma = useMemo(
+    () => Math.round(reservaSubtotalTurnoExtras * reservaFeeRateDisplay),
+    [reservaSubtotalTurnoExtras, reservaFeeRateDisplay],
   );
+  const reservaTotalPagarConCargoYExtras = useMemo(
+    () => reservaSubtotalTurnoExtras + reservaCargoPlataforma,
+    [reservaSubtotalTurnoExtras, reservaCargoPlataforma],
+  );
+  const reservaCargoPlataformaDisplay = reservaCargoPlataforma;
+  const reservaTotalDisplay = reservaTotalPagarConCargoYExtras;
 
   const reservaExtrasPayload = useMemo(
     () => buildReservaExtrasPayload(reservaExtrasDisponibles, reservaExtrasCantidad),
@@ -2174,19 +2170,7 @@ export default function ReservaForm() {
 
     const creditoAplicado = 0;
     const extrasPayload = reservaExtrasPayload;
-    const precioTurno = getPrecio(
-      sedeSeleccionada,
-      formData.hora,
-      formData.fecha,
-      duracionSeleccionadaMin,
-      reservaDeporteUrl,
-      preciosDeporteRows,
-    );
-    const precioTurnoNum = Number.isFinite(Number(precioTurno)) ? Number(precioTurno) : 0;
-    const precioFinal = Math.max(
-      0,
-      (extrasPayload.length > 0 ? reservaTotalPagarConCargoYExtras : precioTurnoNum) - creditoAplicado,
-    );
+    const precioFinal = Math.max(0, reservaTotalPagarConCargoYExtras - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
       sede_id: sedeSeleccionada.id,
@@ -2864,12 +2848,12 @@ export default function ReservaForm() {
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const creditoAplicado = 0;
     const precioTurnoResumen = precioReservaTurnoBase;
-    const stripeMontoMainConExtras = Math.max(0, precioTurnoResumen + reservaExtrasSubtotal - creditoAplicado);
+    const stripeMontoMainConExtras = Math.max(0, reservaSubtotalTurnoExtras - creditoAplicado);
     const metodoPagoStripe = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'stripe';
     const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
     const stripeCuentaOk = String(sedeSeleccionada?.stripe_account_id || '').trim().startsWith('acct_');
     const montoBaseMinor = amountMainToStripeMinor(stripeMontoMainConExtras, moneda);
-    const cargoServicioMinor = Math.round(montoBaseMinor * 0.03);
+    const cargoServicioMinor = Math.round(montoBaseMinor * reservaFeeRateDisplay);
     const totalMinor = montoBaseMinor + cargoServicioMinor;
     const precioPayloadStripe = Number(stripeMinorToMain(totalMinor, moneda));
     const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
