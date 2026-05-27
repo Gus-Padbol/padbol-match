@@ -39,6 +39,11 @@ import {
 } from '../utils/sponsorQuotaShared';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
+  SEDE_AMENITY_DEFINITIONS,
+  amenitiesArrayToSelectionSet,
+  normalizeSedeAmenities,
+} from '../constants/sedeAmenities.js';
+import {
   getFiltrosEstadoTorneoPills,
   esEstadoCanceladoTorneo,
   esEstadoFinalizadoTorneo,
@@ -363,6 +368,7 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     color_hero_primario: normalizeHexSedeAdmin(sedeData.color_hero_primario) || '#4C1D95',
     color_hero_secundario: normalizeHexSedeAdmin(sedeData.color_hero_secundario) || '#7C3AED',
     color_borde_hero: normalizeHexSedeAdmin(sedeData.color_borde_hero) || '#6D28D9',
+    amenities: normalizeSedeAmenities(sedeData.amenities),
   };
 }
 
@@ -418,6 +424,7 @@ function miSedeFormToApiPatchBody(form) {
     color_hero_primario: normalizeHexSedeAdmin(form.color_hero_primario) || '#4C1D95',
     color_hero_secundario: normalizeHexSedeAdmin(form.color_hero_secundario) || '#7C3AED',
     color_borde_hero: normalizeHexSedeAdmin(form.color_borde_hero) || '#6D28D9',
+    amenities: normalizeSedeAmenities(form.amenities),
   };
   if (mpTrim) out.mp_access_token = mpTrim;
   if (mpPublicTrim) out.mp_public_key = mpPublicTrim;
@@ -11853,6 +11860,59 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div style={{ textAlign: 'right', fontSize: '12px', color: (miSedeForm.descripcion || '').length >= 280 ? '#dc2626' : '#9ca3af', marginTop: '3px' }}>
                     {(miSedeForm.descripcion || '').length}/300
                   </div>
+                </div>
+              </div>
+              <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>
+                  Instalaciones
+                </label>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                      gap: '8px',
+                    }}
+                  >
+                    {SEDE_AMENITY_DEFINITIONS.map((amenity) => {
+                      const selected = amenitiesArrayToSelectionSet(miSedeForm.amenities).has(amenity.key);
+                      return (
+                        <label
+                          key={amenity.key}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            border: `1px solid ${selected ? 'var(--primary, #e33030)' : 'var(--border, #2a2a2a)'}`,
+                            background: selected ? 'rgba(227, 48, 48, 0.08)' : 'transparent',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              const current = amenitiesArrayToSelectionSet(miSedeForm.amenities);
+                              if (e.target.checked) current.add(amenity.key);
+                              else current.delete(amenity.key);
+                              setMiSedeForm((p) => ({
+                                ...p,
+                                amenities: [...current],
+                              }));
+                            }}
+                          />
+                          <span aria-hidden>{amenity.icon}</span>
+                          <span>{amenity.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="admin-mi-sede-theme-muted" style={{ margin: '8px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
+                    Se muestran en el perfil público de la sede en la app (sección Instalaciones).
+                  </p>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>

@@ -36,6 +36,7 @@ import {
   MP_CSP_FRAME_SRC,
   buildMpCspScriptSrcDirectives,
 } from './lib/mercadopagoCsp.js';
+import { normalizeSedeAmenities } from './utils/sedeAmenities.js';
 
 dotenv.config();
 
@@ -2759,6 +2760,9 @@ app.patch('/api/sedes/:id', async (req, res) => {
     if (hop('descripcion')) {
       const d = String(b.descripcion ?? '').trim();
       patch.descripcion = d ? d.slice(0, 300) : null;
+    }
+    if (hop('amenities')) {
+      patch.amenities = normalizeSedeAmenities(b.amenities);
     }
     if (hop('historia')) {
       const h = String(b.historia ?? '').trim();
