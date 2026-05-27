@@ -2,6 +2,19 @@ import React from 'react';
 import { DeporteIcono } from '../utils/deporteIcono';
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 
+export function partidoJugadorFotoUrl(jugador) {
+  const u = jugador?.foto_url ?? jugador?.avatar_url;
+  return u != null && String(u).trim() ? String(u).trim() : '';
+}
+
+export function partidoCapitanFotoUrl(partido) {
+  const u =
+    partido?.capitan_foto_url ??
+    partido?.capitan?.foto_url ??
+    partido?.capitan?.avatar_url;
+  return u != null && String(u).trim() ? String(u).trim() : '';
+}
+
 export const DEPORTE_LABEL_PARTIDO_ABIERTO = {
   padbol: 'Padbol',
   padel: 'Pádel',
@@ -39,7 +52,7 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
   const confirmados = Array.isArray(partido?.jugadores_confirmados) ? partido.jugadores_confirmados : [];
   const requeridos = Math.max(2, parseInt(String(partido?.jugadores_requeridos || '4'), 10) || 4);
   const faltan = Math.max(0, requeridos - confirmados.length);
-  const capitanFoto = String(partido?.capitan_foto_url || '').trim();
+  const capitanFoto = partidoCapitanFotoUrl(partido);
   const capitanNombre = String(partido?.capitan_nombre || '').trim() || 'Organizador';
   const dep = String(partido?.deporte || 'padbol').toLowerCase();
   const hero = DEPORTE_HERO[dep] || DEPORTE_HERO.padbol;
@@ -154,7 +167,7 @@ export default function PartidoAbiertoCard({ partido, onJoin, joining = false, c
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: onJoin ? 14 : 0 }}>
           {Array.from({ length: requeridos }, (_, idx) => {
             const jugador = confirmados[idx];
-            const foto = String(jugador?.foto_url || '').trim();
+            const foto = partidoJugadorFotoUrl(jugador);
             const nombre = String(jugador?.nombre || '').trim() || 'Jugador';
             return foto ? (
               <img

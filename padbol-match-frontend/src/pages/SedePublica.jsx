@@ -37,7 +37,7 @@ import {
 import { torneoFechaInicioYmd, ymdTodayTorneoTz } from '../utils/torneoFechaInicioArt';
 import { fetchProfesores } from '../utils/clasesApi';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
-import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
+import PartidoAbiertoSedeRow from '../components/PartidoAbiertoSedeRow';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import './SedePublica.css';
 
@@ -1187,7 +1187,7 @@ async function fetchPartidosSedePublica(sedeIdNum, headers = {}) {
       total: all.length,
       filtered: list.length,
     });
-    return { list, error: false, source: 'partidos-abiertos' };
+    return { list, error: false, source: 'partidos/abiertos' };
   } catch (e2) {
     console.error('[SedePublica] partidos fallback fetch failed', { url: fallbackUrl, error: e2 });
     return { list: [], error: true, source: null };
@@ -1291,12 +1291,19 @@ function EstrellasInteractivas({ value, onChange, disabled }) {
   );
 }
 
+function resenaAutorFields(r) {
+  const nombrePartes = [r?.autor?.nombre, r?.autor?.apellido].filter(Boolean).join(' ').trim();
+  const displayName = String(r?.display_name || nombrePartes || r?.nombre || '').trim() || 'Jugador';
+  const fotoRaw = r?.foto_url ?? r?.autor?.foto_url ?? r?.avatar_url ?? r?.autor?.avatar_url;
+  const foto = fotoRaw ? toHttps(String(fotoRaw).trim()) : '';
+  const usernameRaw = String(r?.username || r?.autor?.username || r?.autor?.alias || '').trim();
+  const username = usernameRaw ? (usernameRaw.startsWith('@') ? usernameRaw : `@${usernameRaw}`) : '';
+  return { displayName, foto, username };
+}
+
 function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }) {
-  const nombre = r?.autor?.nombre || 'Jugador';
-  const apodo = String(r?.autor?.apodo || '').trim();
-  const foto = toHttps(r?.autor?.foto_url);
-  const ini = nombre ? nombre.charAt(0).toUpperCase() : '?';
-  const showApodoSub = apodo && nombre && apodo.toLowerCase() !== nombre.toLowerCase();
+  const { displayName, foto, username } = resenaAutorFields(r);
+  const ini = displayName ? displayName.charAt(0).toUpperCase() : '?';
   return (
     <div
       style={{
@@ -1358,15 +1365,15 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
                 gap: '6px 10px',
               }}
             >
-              <span style={{ fontWeight: 700, fontSize: '14px', color: SEDE_DS.title }}>{nombre}</span>
+              <span style={{ fontWeight: 700, fontSize: '14px', color: SEDE_DS.title }}>{displayName}</span>
               <EstrellasSoloLectura value={r.estrellas} />
               <span style={{ fontSize: '12px', color: SEDE_DS.subtitle }}>
                 {formatFechaResenaPublica(r.created_at)}
               </span>
             </div>
-            {showApodoSub ? (
-              <div style={{ marginTop: '4px', fontSize: '12px', color: SEDE_DS.subtitle, fontWeight: 600 }}>
-                {apodo}
+            {username ? (
+              <div style={{ marginTop: '4px', fontSize: '12px', color: SEDE_DS.subtitle, fontWeight: 500 }}>
+                {username}
               </div>
             ) : null}
           </div>
@@ -2595,7 +2602,7 @@ export default function SedePublica() {
               ) : partidosSede.length > 0 ? (
                 <div className="sede-publica-partidos__list">
                   {partidosSede.map((p) => (
-                    <PartidoAbiertoCard key={p.id} partido={p} compact onJoin={() => navigate('/jugar/buscar')} />
+                    <PartidoAbiertoSedeRow key={p.id} partido={p} onJoin={() => navigate('/jugar/buscar')} />
                   ))}
                 </div>
               ) : (
