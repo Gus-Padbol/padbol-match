@@ -1099,6 +1099,8 @@ export default function ReservaForm() {
   const [reservaExtrasDisponibles, setReservaExtrasDisponibles] = useState([]);
   const [reservaExtrasLoading, setReservaExtrasLoading] = useState(false);
   const [reservaExtrasCantidad, setReservaExtrasCantidad] = useState({});
+  const reservaExtrasSedeIdRef = useRef(null);
+  const reservaExtrasFetchDoneRef = useRef(null);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
 
   useEffect(() => {
@@ -1121,17 +1123,30 @@ export default function ReservaForm() {
     };
   }, [filtros.sede_id]);
 
+  /** Precarga extras en pantalla 2 para que el resumen (4) ya los tenga listos antes del botón de pago. */
   useEffect(() => {
-    if (pantalla !== 4 || !sedeSeleccionada?.id) {
-      if (pantalla !== 4) {
-        setReservaExtrasDisponibles([]);
-        setReservaExtrasLoading(false);
-      }
-      return;
+    const sid = Number(sedeSeleccionada?.id);
+    if (!Number.isFinite(sid) || sid <= 0) {
+      reservaExtrasSedeIdRef.current = null;
+      reservaExtrasFetchDoneRef.current = null;
+      setReservaExtrasDisponibles([]);
+      setReservaExtrasLoading(false);
+      return undefined;
     }
+    if (pantalla !== 2 && pantalla !== 4) return undefined;
+
+    if (reservaExtrasSedeIdRef.current !== sid) {
+      reservaExtrasSedeIdRef.current = sid;
+      reservaExtrasFetchDoneRef.current = null;
+      setReservaExtrasDisponibles([]);
+      setReservaExtrasCantidad({});
+    }
+
+    if (reservaExtrasFetchDoneRef.current === sid) return undefined;
+
     let cancelled = false;
     setReservaExtrasLoading(true);
-    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(sedeSeleccionada.id))}/extras`))
+    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(sid))}/extras`))
       .then((r) => r.json())
       .then((d) => {
         if (cancelled) return;
@@ -1152,7 +1167,10 @@ export default function ReservaForm() {
         if (!cancelled) setReservaExtrasDisponibles([]);
       })
       .finally(() => {
-        if (!cancelled) setReservaExtrasLoading(false);
+        if (!cancelled) {
+          reservaExtrasFetchDoneRef.current = sid;
+          setReservaExtrasLoading(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -2993,6 +3011,61 @@ export default function ReservaForm() {
             ) : null}
           </div>
 
+          {(reservaExtrasLoading || reservaExtrasDisponibles.length > 0) && (
+            <div style={{ marginBottom: 20, maxWidth: 390, width: '100%' }}>
+              <h2
+                style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  margin: '0 0 6px',
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.3,
+                }}
+              >
+                {t('reservas.extrasTitle')}
+              </h2>
+              <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                {t('reservas.extrasSubtitle')}
+              </p>
+              {reservaExtrasLoading ? (
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
+                  {t('reservas.loadingExtras')}
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 390, width: '100%' }}>
+                  {reservaExtrasDisponibles.map((ex) => {
+                    const id = Number(ex.id);
+                    const qty = Math.min(10, Math.max(0, parseInt(String(reservaExtrasCantidad[id] ?? 0), 10) || 0));
+                    const mon = ex.precio_moneda || sedeSeleccionada?.moneda || 'ARS';
+                    const unit = Math.round(Number(ex.precio));
+                    return (
+                      <SedeExtraProductCard
+                        key={ex.id}
+                        nombre={ex.nombre}
+                        descripcion={ex.descripcion}
+                        imagenUrl={ex.imagen_url}
+                        priceLabel={`${formatMoneyMain(unit, mon)} c/u`}
+                        qty={qty}
+                        onDecrement={() =>
+                          setReservaExtrasCantidad((prev) => ({
+                            ...prev,
+                            [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
+                          }))
+                        }
+                        onIncrement={() =>
+                          setReservaExtrasCantidad((prev) => ({
+                            ...prev,
+                            [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
+                          }))
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {muestraInputWhatsappResumen && (
             <div className="form-group" style={{ marginBottom: '20px' }}>
               <label>{t('reservas.whatsappConfirm')}</label>
@@ -3044,55 +3117,6 @@ export default function ReservaForm() {
               <strong>{t('reservas.payAtVenueTitle')}</strong>
               <br />
               {t('reservas.payAtVenueBody')}
-            </div>
-          ) : null}
-
-          {!reservaExtrasLoading && reservaExtrasDisponibles.length > 0 ? (
-            <div style={{ marginBottom: 16, maxWidth: 390, width: '100%' }}>
-              <h2
-                style={{
-                  fontSize: 16,
-                  fontWeight: 800,
-                  margin: '0 0 6px',
-                  color: 'var(--text-primary)',
-                  lineHeight: 1.3,
-                }}
-              >
-                {t('reservas.extrasTitle')}
-              </h2>
-              <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                {t('reservas.extrasSubtitle')}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 390, width: '100%' }}>
-                {reservaExtrasDisponibles.map((ex) => {
-                  const id = Number(ex.id);
-                  const qty = Math.min(10, Math.max(0, parseInt(String(reservaExtrasCantidad[id] ?? 0), 10) || 0));
-                  const mon = ex.precio_moneda || sedeSeleccionada?.moneda || 'ARS';
-                  const unit = Math.round(Number(ex.precio));
-                  return (
-                    <SedeExtraProductCard
-                      key={ex.id}
-                      nombre={ex.nombre}
-                      descripcion={ex.descripcion}
-                      imagenUrl={ex.imagen_url}
-                      priceLabel={`${formatMoneyMain(unit, mon)} c/u`}
-                      qty={qty}
-                      onDecrement={() =>
-                        setReservaExtrasCantidad((prev) => ({
-                          ...prev,
-                          [id]: Math.max(0, (parseInt(String(prev[id]), 10) || 0) - 1),
-                        }))
-                      }
-                      onIncrement={() =>
-                        setReservaExtrasCantidad((prev) => ({
-                          ...prev,
-                          [id]: Math.min(10, (parseInt(String(prev[id]), 10) || 0) + 1),
-                        }))
-                      }
-                    />
-                  );
-                })}
-              </div>
             </div>
           ) : null}
 
