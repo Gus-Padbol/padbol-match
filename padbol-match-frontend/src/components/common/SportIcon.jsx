@@ -6,14 +6,20 @@ import { ReactComponent as TenisIcon } from '../../assets/icons/TENIS.svg';
 import { ReactComponent as FutbolIcon } from '../../assets/icons/FÚTBOL.svg';
 import { ReactComponent as SquashIcon } from '../../assets/deportes/squash.svg';
 
+/** Iconos Gero (`src/assets/icons/`), `fill="currentColor"` en los SVG. */
 const SPORT_ICON_BY_KEY = {
   padbol: PadbolIcon,
   padel: PadelIcon,
   pickleball: PickleballIcon,
   tenis: TenisIcon,
   futbol: FutbolIcon,
+  futbol_5: FutbolIcon,
+  futbol_7: FutbolIcon,
   squash: SquashIcon,
 };
+
+/** Color por defecto en fondos oscuros (hub, hero, chips sede, partido). */
+export const SPORT_ICON_COLOR_ON_DARK = '#ffffff';
 
 /** Normaliza alias de deporte → clave de icono Gero. */
 export function normalizeSportDeporte(deporte) {
@@ -47,13 +53,13 @@ export function resolveSportIconComponent(deporte) {
 export default function SportIcon({
   deporte,
   size = 24,
-  color = '#ffffff',
+  color = SPORT_ICON_COLOR_ON_DARK,
   className,
   style,
   title,
   ...rest
 }) {
-  const resolvedColor = color ?? '#ffffff';
+  const resolvedColor = color ?? SPORT_ICON_COLOR_ON_DARK;
   const wrapperStyle = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -95,6 +101,8 @@ export default function SportIcon({
       <Icon
         width={size}
         height={size}
+        fill={resolvedColor}
+        className="sport-icon__svg"
         style={{
           display: 'block',
           width: size,

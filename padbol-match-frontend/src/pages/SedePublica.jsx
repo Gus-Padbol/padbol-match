@@ -746,7 +746,12 @@ function SedeDeportesChipsHero({ deportes, t }) {
     <div className="sede-publica-hero-immersive__deportes" role="list" aria-label={aria}>
       {deportes.map((d) => (
         <span key={d.key} className="sede-publica-hero-immersive__deporte-chip" role="listitem">
-          <SportIcon deporte={d.key} size={14} className="sede-publica-hero-immersive__deporte-icon" />
+          <SportIcon
+            deporte={d.key}
+            size={14}
+            color="#ffffff"
+            className="sede-publica-hero-immersive__deporte-icon"
+          />
           {d.label}
         </span>
       ))}

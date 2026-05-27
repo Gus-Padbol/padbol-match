@@ -36,6 +36,15 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
+.hub-surface-card__sport-icon {
+  color: #ffffff;
+}
+
+.hub-surface-card__sport-icon .sport-icon__svg,
+.hub-surface-card__sport-icon svg {
+  color: #ffffff;
+}
+
 .hub-surface-card__sub {
   display: block;
   margin-top: 4px;

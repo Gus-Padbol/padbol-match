@@ -863,6 +863,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: center;
   line-height: 0;
   flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn-emoji svg,
+.reserva-sede-seleccion .reserva-sede-deporte-chip-btn-emoji .sport-icon__svg {
+  color: var(--text-primary);
 }
 
 .reserva-sede-seleccion .reserva-sede-deporte-chip-btn-label {
