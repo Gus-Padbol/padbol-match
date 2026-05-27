@@ -433,6 +433,68 @@ async function fetchUserRoleRowForAuthUser(user) {
   return q.data;
 }
 
+function buildMiRolJsonPayload(email, row) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!row) {
+    return {
+      email: em,
+      rol: null,
+      role: null,
+      sede_id: null,
+      sedeId: null,
+      nombre: null,
+      pais: null,
+      torneosOficialesHabilitados: false,
+    };
+  }
+  const sedeIdRaw = row.sede_id;
+  const sedeIdNum =
+    sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
+  const rol = String(row.role || '')
+    .trim()
+    .toLowerCase() || null;
+  return {
+    email: String(row.email || em).trim().toLowerCase(),
+    rol,
+    role: rol,
+    sede_id: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
+    sedeId: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
+    nombre: row.nombre ?? null,
+    pais: row.pais ?? null,
+    torneosOficialesHabilitados: Boolean(row.torneos_oficiales_habilitados),
+  };
+}
+
+/** GET /api/auth/mi-rol y GET /api/usuarios/mi-rol — JWT; `user_roles` por email o user_id. */
+async function handleGetMiRol(req, res) {
+  try {
+    const authUser = await authUserFromBearer(req);
+    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
+    const email = String(authUser.email).trim().toLowerCase();
+    const row = await fetchUserRoleRowForAuthUser(authUser);
+    if (!row && LEGACY_SUPER_ADMIN_EMAILS_API.includes(email)) {
+      return res.json({
+        email,
+        rol: 'super_admin',
+        role: 'super_admin',
+        sede_id: null,
+        sedeId: null,
+        nombre: null,
+        pais: null,
+        torneosOficialesHabilitados: true,
+        legacy: true,
+      });
+    }
+    return res.json(buildMiRolJsonPayload(email, row));
+  } catch (err) {
+    console.error('❌ GET mi-rol:', err.message);
+    return res.status(500).json({ error: err.message || 'Error al obtener rol' });
+  }
+}
+
+app.get('/api/auth/mi-rol', handleGetMiRol);
+app.get('/api/usuarios/mi-rol', handleGetMiRol);
+
 function isSuperAdminApi(userEmail, role) {
   const em = String(userEmail || '').trim().toLowerCase();
   if (LEGACY_SUPER_ADMIN_EMAILS_API.includes(em)) return true;
@@ -1294,51 +1356,6 @@ async function crearNotificacionesEquipoTorneo(equipoRow, { tipo, titulo, mensaj
   const destinatarios = await getDestinatariosEquipoNotificaciones(equipoRow);
   await Promise.all(destinatarios.map((d) => crearNotificacionJugador({ ...d, tipo, titulo, mensaje, link })));
 }
-
-/** GET /api/auth/mi-rol — JWT del cliente; lectura de `user_roles` con service role (bypass RLS). */
-app.get('/api/auth/mi-rol', async (req, res) => {
-  try {
-    const authUser = await authUserFromBearer(req);
-    if (!authUser?.email) return res.status(401).json({ error: 'No autorizado' });
-    const email = String(authUser.email).trim().toLowerCase();
-    const row = await fetchUserRoleRowForAuthUser(authUser);
-    if (!row && LEGACY_SUPER_ADMIN_EMAILS_API.includes(email)) {
-      return res.json({
-        email,
-        rol: 'super_admin',
-        nombre: null,
-        pais: null,
-        sedeId: null,
-        torneosOficialesHabilitados: true,
-        legacy: true,
-      });
-    }
-    if (!row) {
-      return res.json({
-        email,
-        rol: null,
-        nombre: null,
-        pais: null,
-        sedeId: null,
-        torneosOficialesHabilitados: false,
-      });
-    }
-    const sedeIdRaw = row.sede_id;
-    const sedeIdNum =
-      sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
-    return res.json({
-      email: String(row.email || email).trim().toLowerCase(),
-      rol: row.role ?? null,
-      nombre: row.nombre ?? null,
-      pais: row.pais ?? null,
-      sedeId: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
-      torneosOficialesHabilitados: Boolean(row.torneos_oficiales_habilitados),
-    });
-  } catch (err) {
-    console.error('❌ GET /api/auth/mi-rol:', err.message);
-    return res.status(500).json({ error: err.message || 'Error al obtener rol' });
-  }
-});
 
 app.get('/api/notificaciones', async (req, res) => {
   try {
@@ -3242,6 +3259,11 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
     const { data: allStars, error: e1 } = await supabase.from(PUBLIC_RESENAS_TABLE).select('estrellas').eq('sede_id', id);
     if (e1) throw e1;
     const total = allStars?.length ?? 0;
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const row of allStars ?? []) {
+      const star = Math.round(Number(row.estrellas));
+      if (star >= 1 && star <= 5) distribution[star] += 1;
+    }
     const promedio =
       total > 0
         ? Math.round((allStars.reduce((s, r) => s + Number(r.estrellas), 0) / total) * 10) / 10
@@ -3268,9 +3290,17 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
       }
     }
 
+    const pageNum = Math.floor(offset / limit) + 1;
+    const has_more = offset + resenas.length < total;
+
     res.json({
       promedio,
       total,
+      total_count: total,
+      page: pageNum,
+      limit,
+      has_more,
+      distribution,
       resenas,
       ya_reseño: Boolean(ya_reseño),
       puede_reseñar: Boolean(user?.id && puede_reseñar),
@@ -15560,6 +15590,7 @@ cron.schedule(
   }
   app.listen(PORT, () => {
     console.log(`🚀 Padbol Match API running on port ${PORT}`);
+    console.log('✅ Rutas rol: GET /api/auth/mi-rol, GET /api/usuarios/mi-rol');
     console.log(`📊 Supabase: ${SUPABASE_URL}`);
     console.log(`💬 Twilio WhatsApp: whatsapp:+14155238886`);
     const subPrice = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();

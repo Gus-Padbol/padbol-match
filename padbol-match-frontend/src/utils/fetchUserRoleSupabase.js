@@ -21,41 +21,42 @@ function mapUserRoleRow(row, fallbackEmail) {
   };
 }
 
+function rowFromSupabaseResult(data, error, fallbackEmail) {
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    console.warn('fetchUserRoleFromSupabase:', error.message || error);
+    return null;
+  }
+  return mapUserRoleRow(data, fallbackEmail);
+}
+
 /**
  * Respaldo directo a `user_roles` (RLS: fila con `user_id` = auth.uid()).
- * Si la API `/api/auth/mi-rol` falla o devuelve rol null, intenta leer el rol aquí.
  * @param {{ id?: string, email?: string }|null} authUser — `session.user`
  */
 export async function fetchUserRoleFromSupabase(authUser) {
-  const uid = authUser?.id ? String(authUser.id).trim() : '';
-  const email = String(authUser?.email || '').trim().toLowerCase();
-  if (!uid && !email) return null;
+  const userId = authUser?.id ? String(authUser.id).trim() : '';
+  const userEmail = String(authUser?.email || '').trim().toLowerCase();
+  if (!userId && !userEmail) return null;
 
-  const selectFull =
-    'role, sede_id, nombre, pais, email, torneos_oficiales_habilitados, user_id';
-  const selectMin = 'role, sede_id, nombre, pais, email';
-
-  async function runSelect(cols, filter) {
-    let q = await supabase.from('user_roles').select(cols);
-    q = filter(q);
-    if (q.error && /colum|column/i.test(String(q.error.message || ''))) {
-      let q2 = await supabase.from('user_roles').select(selectMin);
-      q2 = filter(q2);
-      return q2;
-    }
-    return q;
+  if (userId) {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role, sede_id, nombre, pais, email, torneos_oficiales_habilitados')
+      .eq('user_id', userId)
+      .maybeSingle();
+    const byUserId = rowFromSupabaseResult(data, error, userEmail);
+    if (byUserId) return byUserId;
   }
 
-  if (uid) {
-    const byUid = await runSelect(selectFull, (q) => q.eq('user_id', uid).maybeSingle());
-    const mapped = mapUserRoleRow(byUid.data, email);
-    if (mapped) return mapped;
-  }
-
-  if (email) {
-    const byEmail = await runSelect(selectFull, (q) => q.eq('email', email).maybeSingle());
-    const mapped = mapUserRoleRow(byEmail.data, email);
-    if (mapped) return mapped;
+  if (userEmail) {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role, sede_id, nombre, pais, email, torneos_oficiales_habilitados')
+      .eq('email', userEmail)
+      .maybeSingle();
+    const byEmail = rowFromSupabaseResult(data, error, userEmail);
+    if (byEmail) return byEmail;
   }
 
   return null;
