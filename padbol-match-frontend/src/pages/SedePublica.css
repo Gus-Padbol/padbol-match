@@ -728,24 +728,33 @@
 .sede-publica-info-chips-row {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 12px 14px 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .sede-publica-info-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex: 0 1 auto;
-  min-width: min(120px, 100%);
-  max-width: 100%;
-  padding: 8px 12px;
+  gap: 5px;
+  flex: 0 0 auto;
+  padding: 6px 10px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-sizing: border-box;
+  max-width: 100%;
+}
+
+.sede-publica-info-chip--direccion {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sede-publica-info-chip__icon {

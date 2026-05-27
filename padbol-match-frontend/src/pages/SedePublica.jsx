@@ -226,12 +226,29 @@ function pickTorneosProximosSede(torneos, max = 3) {
 const SEDE_INFO_CHIP_ICON_SIZE = 20;
 const SEDE_INFO_CHIP_ICON_COLOR = '#ffffff';
 
-/** Etiqueta corta para el chip de ubicación (ciudad + país; dirección completa en title). */
-function formatSedeDireccionChipLabel(sede) {
+/** Etiqueta corta para el chip de ubicación (dirección completa en `title`). */
+function formatSedeDireccionChipLabel(sede, cityOnly = false) {
   const ciudad = String(sede?.ciudad || '').trim();
   const pais = String(sede?.pais || '').trim();
+  if (ciudad && cityOnly) return ciudad;
   if (ciudad) return pais ? `${ciudad}, ${pais}` : ciudad;
   return [sede?.direccion, ciudad, pais].filter(Boolean).join(', ');
+}
+
+/** En viewport ≤390px el chip de dirección muestra solo la ciudad. */
+function useInfoChipsCityOnlyLabel() {
+  const [cityOnly, setCityOnly] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 390px)').matches;
+  });
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 390px)');
+    const onChange = () => setCityOnly(mq.matches);
+    onChange();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return cityOnly;
 }
 
 function SedeInfoChipHorarioIcon({ size = SEDE_INFO_CHIP_ICON_SIZE }) {
@@ -2312,6 +2329,7 @@ export default function SedePublica() {
 
   const { rol: userRol } = useUserRole(currentCliente);
   const isSuperAdmin = userRol === 'super_admin';
+  const infoChipsCityOnly = useInfoChipsCityOnlyLabel();
 
   const sedeIdNumTicker = useMemo(() => {
     const n = parseInt(String(sedeId), 10);
@@ -2737,7 +2755,7 @@ export default function SedePublica() {
           ? sedePhotoUrlWithCacheBust(heroImgRaw, sedeHeroCacheBustToken(sede))
           : null;
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
-        const direccionChipLabel = formatSedeDireccionChipLabel(sede);
+        const direccionChipLabel = formatSedeDireccionChipLabel(sede, infoChipsCityOnly);
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
         const heroSubtitulo =
           String(sede.slogan || '').trim() || String(sede.descripcion || '').trim();
@@ -2834,6 +2852,7 @@ export default function SedePublica() {
             <div className="sede-publica-info-chips-row" aria-label="Información rápida">
               {direccionLinea ? (
                 <SedeInfoChip
+                  className="sede-publica-info-chip--direccion"
                   icon={<IconGeroUbicacion size={SEDE_INFO_CHIP_ICON_SIZE} color={SEDE_INFO_CHIP_ICON_COLOR} />}
                   label={direccionChipLabel || direccionLinea}
                   title={direccionLinea}
