@@ -41,16 +41,23 @@ export function userCanAccessAdminPanel(rol) {
  * Rol efectivo: API (`/api/auth/mi-rol`) → caché local → JWT metadata.
  * @param {{ rolFromApi?: string|null, session?: object|null }} params
  */
-export function resolveEffectiveUserRole({ rolFromApi, session }) {
-  const fromApi = normalizeUserRole(rolFromApi);
-  if (fromApi && ADMIN_PANEL_ROLES.includes(fromApi)) return fromApi;
-  if (fromApi) return fromApi;
+export function resolveEffectiveUserRole({ rolFromApi, session, rolFallback }) {
+  const fromHook = normalizeUserRole(rolFromApi);
+  const fromExtra = normalizeUserRole(rolFallback);
+  if (fromHook && ADMIN_PANEL_ROLES.includes(fromHook)) return fromHook;
+  if (fromExtra && ADMIN_PANEL_ROLES.includes(fromExtra)) return fromExtra;
+  if (fromHook) return fromHook;
+  if (fromExtra) return fromExtra;
 
-  const cached = normalizeUserRole(readCachedUserRoleData()?.rol);
-  if (cached) return cached;
+  const sessionEmail = String(session?.user?.email || '').trim().toLowerCase();
+  const rawCache = readCachedUserRoleData();
+  const cacheEmail = String(rawCache?.email || '').trim().toLowerCase();
+  const cacheOk = !sessionEmail || !cacheEmail || cacheEmail === sessionEmail;
+  const cached = cacheOk ? normalizeUserRole(rawCache?.rol) : null;
+  if (cached && ADMIN_PANEL_ROLES.includes(cached)) return cached;
 
   const jwt = normalizeUserRole(
     session?.user?.app_metadata?.role ?? session?.user?.user_metadata?.role
   );
-  return ADMIN_PANEL_ROLES.includes(jwt) ? jwt : fromApi || cached || jwt || null;
+  return ADMIN_PANEL_ROLES.includes(jwt) ? jwt : fromHook || fromExtra || cached || jwt || null;
 }

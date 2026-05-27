@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -62,7 +62,13 @@ import { useAuth } from './context/AuthContext';
 import { HubNavLayoutProvider } from './context/HubNavLayoutContext';
 import { getDisplayName } from './utils/displayName';
 import { scheduleHubEntryScrollReset } from './utils/hubEntryScrollReset';
-import { resolveEffectiveUserRole, userCanAccessAdminPanel } from './utils/adminPanelRoles';
+import {
+  ADMIN_PANEL_ROLES,
+  resolveEffectiveUserRole,
+  userCanAccessAdminPanel,
+  normalizeUserRole,
+} from './utils/adminPanelRoles';
+import { fetchUserRoleFromSupabase } from './utils/fetchUserRoleSupabase';
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -204,6 +210,8 @@ function WildcardFallback() {
 function AdminDashboardGate() {
   const navigate = useNavigate();
   const { session, userProfile } = useAuth();
+  const [gateSupabaseRol, setGateSupabaseRol] = useState(null);
+  const [gateSupabaseLoading, setGateSupabaseLoading] = useState(false);
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -219,11 +227,77 @@ function AdminDashboardGate() {
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
 
   const rolEffectiveAdmin = useMemo(
-    () => resolveEffectiveUserRole({ rolFromApi: rol, session }),
-    [rol, session]
+    () =>
+      resolveEffectiveUserRole({
+        rolFromApi: rol,
+        rolFallback: gateSupabaseRol,
+        session,
+      }),
+    [rol, gateSupabaseRol, session]
   );
 
   const canAccessAdmin = userCanAccessAdminPanel(rolEffectiveAdmin);
+
+  /** Si el hook terminó sin rol de panel, un intento más vía Supabase antes de denegar. */
+  useEffect(() => {
+    if (roleLoading || !session?.user?.id) {
+      setGateSupabaseLoading(false);
+      setGateSupabaseRol(null);
+      return undefined;
+    }
+    const rolFromCache = resolveEffectiveUserRole({ rolFromApi: rol, session });
+    if (userCanAccessAdminPanel(rol) || userCanAccessAdminPanel(rolFromCache)) {
+      setGateSupabaseLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setGateSupabaseLoading(true);
+    (async () => {
+      try {
+        const row = await fetchUserRoleFromSupabase(session.user);
+        if (!cancelled) {
+          setGateSupabaseRol(row?.rol ?? null);
+        }
+      } catch (err) {
+        console.warn('[AdminDashboardGate] Supabase user_roles fallback:', err?.message || err);
+        if (!cancelled) setGateSupabaseRol(null);
+      } finally {
+        if (!cancelled) setGateSupabaseLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roleLoading, session, rol]);
+
+  useEffect(() => {
+    if (roleLoading || gateSupabaseLoading) return;
+    const email = String(session?.user?.email || '').trim().toLowerCase();
+    console.log('[AdminDashboardGate] rol detectado', {
+      email,
+      rolHook: rol,
+      rolSupabaseFallback: gateSupabaseRol,
+      rolEffective: rolEffectiveAdmin,
+      rolNormalized: normalizeUserRole(rolEffectiveAdmin),
+      canAccessAdmin,
+      allowedRoles: ADMIN_PANEL_ROLES,
+      adminClubAllowed: ADMIN_PANEL_ROLES.includes('admin_club'),
+      roleLoading,
+      gateSupabaseLoading,
+    });
+  }, [
+    roleLoading,
+    gateSupabaseLoading,
+    session?.user?.email,
+    rol,
+    gateSupabaseRol,
+    rolEffectiveAdmin,
+    canAccessAdmin,
+  ]);
+
+  const stillResolvingRole = roleLoading || gateSupabaseLoading;
 
   const spinner = (
     <div
@@ -258,16 +332,20 @@ function AdminDashboardGate() {
     </div>
   );
 
-  /* Mientras useUserRole carga: nunca denegar (rol puede ser null un instante). */
-  if (roleLoading) {
+  /* Mientras carga API + respaldo Supabase: nunca mostrar «sin permisos». */
+  if (stillResolvingRole) {
     return spinner;
   }
 
-  if (canAccessAdmin) {
-    return <AdminDashboard rol={rolEffectiveAdmin || rol} sedeId={sedeId} />;
+  const canAccessFinal =
+    canAccessAdmin || userCanAccessAdminPanel(gateSupabaseRol) || userCanAccessAdminPanel(rol);
+
+  if (canAccessFinal) {
+    const rolPanel = rolEffectiveAdmin || normalizeUserRole(gateSupabaseRol) || normalizeUserRole(rol);
+    return <AdminDashboard rol={rolPanel} sedeId={sedeId} />;
   }
 
-  /* roleLoading === false: rol ya resuelto; sin rol de panel → denegar. */
+  /* Rol resuelto (API + Supabase + caché) sin permiso de panel → denegar. */
   return (
     <div
       style={{
