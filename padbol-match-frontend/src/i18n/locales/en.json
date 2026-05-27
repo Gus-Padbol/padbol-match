@@ -1641,7 +1641,7 @@
   },
   "partidosAbiertos": {
     "emptyTitle": "No open matches available. Start one!",
-    "emptyFilterHint": "Try another sport or clear the filter.",
+    "emptyFilterHint": "Try another sport in the selector above.",
     "emptyNoFilterHint": "Post the first match and fill players in minutes.",
     "armarPartido": "Create a match"
   },

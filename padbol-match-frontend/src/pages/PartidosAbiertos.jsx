@@ -361,9 +361,7 @@ export default function PartidosAbiertos() {
               {t('partidosAbiertos.emptyTitle')}
             </h2>
             <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400 }}>
-              {deporteFiltro
-                ? t('partidosAbiertos.emptyFilterHint')
-                : t('partidosAbiertos.emptyNoFilterHint')}
+              {t('partidosAbiertos.emptyFilterHint')}
             </p>
             <button
               type="button"

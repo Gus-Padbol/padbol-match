@@ -279,7 +279,7 @@
   },
   "partidosAbiertos": {
     "emptyTitle": "No hay partidos disponibles. ¡Inicia uno!",
-    "emptyFilterHint": "Prueba con otro deporte o sin filtro.",
+    "emptyFilterHint": "Prueba con otro deporte en el selector de arriba.",
     "emptyNoFilterHint": "Publica el primero y completa jugadores en minutos.",
     "armarPartido": "Armar partido"
   },
