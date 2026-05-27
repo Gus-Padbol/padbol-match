@@ -38,6 +38,34 @@ export function horaPartidoLabel(hora) {
   return m ? `${String(parseInt(m[1], 10)).padStart(2, '0')}:${m[2]}` : h || '--:--';
 }
 
+function horaPartidoSortKey(hora) {
+  const h = String(hora || '').trim();
+  const m = /^(\d{1,2}):(\d{2})/.exec(h);
+  return m ? `${String(parseInt(m[1], 10)).padStart(2, '0')}:${m[2]}` : h;
+}
+
+/** Orden: fecha ASC, luego hora ASC. */
+export function sortPartidosAbiertosPorFechaHora(list) {
+  return [...(Array.isArray(list) ? list : [])].sort((a, b) => {
+    const fa = String(a?.fecha || '').slice(0, 10);
+    const fb = String(b?.fecha || '').slice(0, 10);
+    if (fa !== fb) return fa.localeCompare(fb);
+    return horaPartidoSortKey(a?.hora).localeCompare(horaPartidoSortKey(b?.hora));
+  });
+}
+
+export const PARTIDOS_ABIERTOS_PREVIEW_LIMIT = 3;
+
+/** "Cancha 1" tal cual; "1" → "Cancha 1"; vacío → null (no mostrar). */
+export function partidoCanchaLabel(partido) {
+  const raw = String(partido?.cancha_nombre ?? partido?.cancha ?? '').trim();
+  if (!raw) return null;
+  if (/^cancha\s/i.test(raw)) return raw;
+  return `Cancha ${raw}`;
+}
+
+const SPORT_ICON_WHITE = '#ffffff';
+
 const MAX_SLOT_CIRCLES = 4;
 
 function PartidoSlots({ confirmados, requeridos }) {
@@ -102,7 +130,7 @@ export default function PartidoAbiertoCard({
   const depLabel = DEPORTE_LABEL_PARTIDO_ABIERTO[dep] || partido?.deporte || 'Partido';
   const sedeNombre = String(partido?.sede_nombre || 'Sede').trim() || 'Sede';
   const nivel = String(partido?.nivel || 'Principiante').trim() || 'Principiante';
-  const cancha = String(partido?.cancha_nombre || partido?.cancha || '—').trim() || '—';
+  const canchaLabel = partidoCanchaLabel(partido);
   const duracion = Number(partido?.duracion_minutos) > 0 ? Number(partido.duracion_minutos) : 90;
   const isSede = variant === 'sede';
   const lugaresLabel = faltan > 0 ? 'LUGARES DISPONIBLES' : 'SIN LUGAR';
@@ -147,7 +175,17 @@ export default function PartidoAbiertoCard({
     >
       <div className="partido-abierto-card__row partido-abierto-card__row--head">
         <div className="partido-abierto-card__head-main">
-          <SportIcon deporte={dep} size={18} color="var(--accent)" />
+          <span
+            className="partido-abierto-card__sport-icon-wrap"
+            style={{ color: SPORT_ICON_WHITE, display: 'inline-flex', flexShrink: 0 }}
+          >
+            <SportIcon
+              deporte={dep}
+              size={20}
+              color={SPORT_ICON_WHITE}
+              style={{ color: SPORT_ICON_WHITE }}
+            />
+          </span>
           <span className="partido-abierto-card__title">
             {depLabel} · {sedeNombre}
           </span>
@@ -173,7 +211,9 @@ export default function PartidoAbiertoCard({
         </span>
         <span className="partido-abierto-card__meta-item">{horaPartidoLabel(partido?.hora)}</span>
         <span className="partido-abierto-card__chip">{nivel}</span>
-        <span className="partido-abierto-card__meta-item">{cancha}</span>
+        {canchaLabel ? (
+          <span className="partido-abierto-card__meta-item">{canchaLabel}</span>
+        ) : null}
         <span className="partido-abierto-card__meta-item">{duracion} min</span>
       </div>
 
@@ -214,7 +254,7 @@ export default function PartidoAbiertoCard({
           {onJoin ? (
             <button
               type="button"
-              className="partido-abierto-card__cta partido-abierto-card__cta--solid"
+              className="partido-abierto-card__cta"
               onClick={() => onJoin(partido)}
               disabled={joining || faltan <= 0}
             >
@@ -227,12 +267,7 @@ export default function PartidoAbiertoCard({
       {onJoin && !isSede ? (
         <button
           type="button"
-          className={[
-            'partido-abierto-card__cta',
-            joining || faltan <= 0 ? '' : 'partido-abierto-card__cta--solid',
-          ]
-            .filter(Boolean)
-            .join(' ')}
+          className="partido-abierto-card__cta"
           onClick={() => onJoin(partido)}
           disabled={joining || faltan <= 0}
         >

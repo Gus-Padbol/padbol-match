@@ -4,7 +4,10 @@ import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import HubDeporteSelect from '../components/HubDeporteSelect';
 import { IconGeroCheck } from '../components/icons/GeroIcons';
-import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
+import PartidoAbiertoCard, {
+  PARTIDOS_ABIERTOS_PREVIEW_LIMIT,
+  sortPartidosAbiertosPorFechaHora,
+} from '../components/PartidoAbiertoCard';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { DEPORTES_CANCHA_SEDE_KEYS } from '../constants/deportesCanchaSede';
@@ -44,6 +47,7 @@ export default function PartidosAbiertos() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [updatingSolicitudId, setUpdatingSolicitudId] = useState(null);
   const [joinSuccess, setJoinSuccess] = useState(false);
+  const [partidosVerTodos, setPartidosVerTodos] = useState(false);
   const hubDeporteHydratedRef = useRef(false);
 
   const deporteFiltro = canonDeportePartidosAbiertos(searchParams.get('deporte'));
@@ -122,6 +126,23 @@ export default function PartidosAbiertos() {
     () => partidos.filter((p) => String(p?.deporte || '').toLowerCase() === deporteFiltro),
     [partidos, deporteFiltro]
   );
+
+  const partidosFiltradosOrdenados = useMemo(
+    () => sortPartidosAbiertosPorFechaHora(partidosFiltrados),
+    [partidosFiltrados]
+  );
+
+  const partidosVisibles = useMemo(
+    () =>
+      partidosVerTodos
+        ? partidosFiltradosOrdenados
+        : partidosFiltradosOrdenados.slice(0, PARTIDOS_ABIERTOS_PREVIEW_LIMIT),
+    [partidosFiltradosOrdenados, partidosVerTodos]
+  );
+
+  useEffect(() => {
+    setPartidosVerTodos(false);
+  }, [deporteFiltro]);
 
   const pedirUnirse = async (partido) => {
     if (!session?.user) {
@@ -345,7 +366,7 @@ export default function PartidosAbiertos() {
 
         {loading ? (
           <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 30, fontWeight: 400 }}>Cargando partidos...</p>
-        ) : partidosFiltrados.length === 0 ? (
+        ) : partidosFiltradosOrdenados.length === 0 ? (
           <section
             style={{
               background: 'var(--bg-card)',
@@ -382,9 +403,18 @@ export default function PartidosAbiertos() {
           </section>
         ) : (
           <div style={{ display: 'grid', gap: 14 }}>
-            {partidosFiltrados.map((p) => (
+            {partidosVisibles.map((p) => (
               <PartidoAbiertoCard key={p.id} partido={p} onJoin={pedirUnirse} joining={joiningId === p.id} />
             ))}
+            {partidosFiltradosOrdenados.length > PARTIDOS_ABIERTOS_PREVIEW_LIMIT && !partidosVerTodos ? (
+              <button
+                type="button"
+                className="partidos-abiertos-ver-mas"
+                onClick={() => setPartidosVerTodos(true)}
+              >
+                Ver más partidos →
+              </button>
+            ) : null}
           </div>
         )}
         </div>

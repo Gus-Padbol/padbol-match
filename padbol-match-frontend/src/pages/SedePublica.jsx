@@ -38,6 +38,10 @@ import { torneoFechaInicioYmd, ymdTodayTorneoTz } from '../utils/torneoFechaInic
 import { fetchProfesores } from '../utils/clasesApi';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
 import PartidoAbiertoSedeRow from '../components/PartidoAbiertoSedeRow';
+import {
+  PARTIDOS_ABIERTOS_PREVIEW_LIMIT,
+  sortPartidosAbiertosPorFechaHora,
+} from '../components/PartidoAbiertoCard';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import './SedePublica.css';
 
@@ -1268,7 +1272,7 @@ function parsePartidosSedeResponse(data) {
 /** Primario: GET /api/sedes/:id/partidos; fallback: /api/partidos-abiertos filtrado por sede. */
 async function fetchPartidosSedePublica(sedeIdNum, headers = {}) {
   const primaryUrl = apiUrlResenas(
-    `/api/sedes/${sedeIdNum}/partidos?upcoming=true&limit=3`,
+    `/api/sedes/${sedeIdNum}/partidos?upcoming=true`,
   );
   console.log('[SedePublica] partidos URL (primary)', {
     url: primaryUrl,
@@ -1314,7 +1318,7 @@ async function fetchPartidosSedePublica(sedeIdNum, headers = {}) {
       return { list: [], error: true, source: null };
     }
     const all = parsePartidosSedeResponse(data2);
-    const list = all.filter((p) => Number(p?.sede_id) === sedeIdNum).slice(0, 3);
+    const list = all.filter((p) => Number(p?.sede_id) === sedeIdNum);
     console.log('[SedePublica] partidos fallback ok', {
       url: fallbackUrl,
       total: all.length,
@@ -2311,6 +2315,7 @@ export default function SedePublica() {
   const [partidosSede, setPartidosSede] = useState([]);
   const [partidosSedeLoading, setPartidosSedeLoading] = useState(false);
   const [partidosSedeError, setPartidosSedeError] = useState(false);
+  const [partidosSedeVerTodos, setPartidosSedeVerTodos] = useState(false);
   const [sedePerfilCanchasCount, setSedePerfilCanchasCount] = useState(null);
 
   const handleSedePublicaBack = useCallback(() => {
@@ -2376,6 +2381,23 @@ export default function SedePublica() {
     const n = parseInt(String(sedeId), 10);
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [sedeId]);
+
+  const partidosSedeOrdenados = useMemo(
+    () => sortPartidosAbiertosPorFechaHora(partidosSede),
+    [partidosSede]
+  );
+
+  const partidosSedeVisibles = useMemo(
+    () =>
+      partidosSedeVerTodos
+        ? partidosSedeOrdenados
+        : partidosSedeOrdenados.slice(0, PARTIDOS_ABIERTOS_PREVIEW_LIMIT),
+    [partidosSedeOrdenados, partidosSedeVerTodos]
+  );
+
+  useEffect(() => {
+    setPartidosSedeVerTodos(false);
+  }, [sedeIdNumLoad]);
 
   useEffect(() => {
     if (!sedeIdNumLoad) {
@@ -2818,14 +2840,23 @@ export default function SedePublica() {
               </button>
             </div>
 
-            {!partidosSedeLoading && partidosSede.length > 0 ? (
+            {!partidosSedeLoading && partidosSedeOrdenados.length > 0 ? (
               <section className="sede-publica-section sede-publica-partidos">
                 <h2 className="sede-publica-section__title">Partidos abiertos</h2>
                 <div className="sede-publica-partidos__list">
-                  {partidosSede.map((p) => (
+                  {partidosSedeVisibles.map((p) => (
                     <PartidoAbiertoSedeRow key={p.id} partido={p} onJoin={() => navigate('/jugar/buscar')} />
                   ))}
                 </div>
+                {partidosSedeOrdenados.length > PARTIDOS_ABIERTOS_PREVIEW_LIMIT && !partidosSedeVerTodos ? (
+                  <button
+                    type="button"
+                    className="partidos-abiertos-ver-mas"
+                    onClick={() => setPartidosSedeVerTodos(true)}
+                  >
+                    Ver más partidos →
+                  </button>
+                ) : null}
               </section>
             ) : null}
 
