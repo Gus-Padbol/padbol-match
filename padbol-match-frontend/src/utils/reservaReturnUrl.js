@@ -38,6 +38,9 @@ export function clearReservaLoginGateMessage() {
 /** Clave localStorage: vuelta al flujo de reserva tras login (pathname + search + hash). */
 export const RESERVA_RETURN_STORAGE_KEY = 'padbol_reserva_return';
 
+/** sessionStorage: vuelta a Buscar partido (`/jugar/buscar` o `/partidos-abiertos`) tras login. */
+export const PARTIDOS_BUSCAR_RETURN_KEY = 'padbol_partidos_buscar_return';
+
 /** Clave sessionStorage: estado de la reserva antes del login (`v: 2` = pantalla + filtros + formData). */
 export const RESERVA_FORM_RESTORE_KEY = 'padbol_reserva_form_restore_v1';
 
@@ -181,6 +184,71 @@ export function safeReservaPathFromLoginRedirect(loginSearch) {
   }
 }
 
+function decodeLoginRedirectParam(loginSearch) {
+  if (loginSearch == null) return null;
+  const q = String(loginSearch);
+  try {
+    const sp = new URLSearchParams(q.startsWith('?') ? q.slice(1) : q);
+    const raw = sp.get('redirect');
+    if (raw == null || raw === '') return null;
+    try {
+      const path = decodeURIComponent(String(raw).trim());
+      if (!path.startsWith('/') || path.startsWith('//')) return null;
+      return path.split('#')[0];
+    } catch {
+      const path = String(raw).trim();
+      if (!path.startsWith('/') || path.startsWith('//')) return null;
+      return path.split('#')[0];
+    }
+  } catch {
+    return null;
+  }
+}
+
+function isPartidosBuscarPath(path) {
+  const pathOnly = String(path || '').split('?')[0].split('#')[0];
+  return pathOnly === '/jugar/buscar' || pathOnly === '/partidos-abiertos';
+}
+
+/** `?redirect=` seguro hacia buscar partido (evita open redirect). */
+export function safePartidosBuscarPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  if (!path || !isPartidosBuscarPath(path)) return null;
+  return path;
+}
+
+export function savePartidosBuscarReturnUrl(pathnameAndSearch) {
+  try {
+    if (typeof window === 'undefined') return;
+    const raw = String(pathnameAndSearch || '').trim();
+    if (!raw.startsWith('/') || raw.startsWith('//')) return;
+    if (!isPartidosBuscarPath(raw)) return;
+    sessionStorage.setItem(PARTIDOS_BUSCAR_RETURN_KEY, raw.split('#')[0]);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function peekPartidosBuscarReturnUrl() {
+  try {
+    if (typeof window === 'undefined') return null;
+    const u = sessionStorage.getItem(PARTIDOS_BUSCAR_RETURN_KEY)?.trim();
+    if (!u || !isPartidosBuscarPath(u)) return null;
+    return u;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPartidosBuscarReturnUrl() {
+  try {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem(PARTIDOS_BUSCAR_RETURN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Destino tras login: prioriza sessionStorage v2 / localStorage de reserva; si no hay datos, usa `?redirect=` solo si es `/reservar…`.
  */
@@ -188,6 +256,16 @@ export function resolvePostLoginNavigatePath(loginSearch) {
   if (peekReservaPendienteArmar()) {
     console.log('[PM ArmarPartido restore] post-login → /armar-partido (reserva_pendiente)');
     return '/armar-partido';
+  }
+  const fromPartidosRedirect = safePartidosBuscarPathFromLoginRedirect(loginSearch);
+  if (fromPartidosRedirect) {
+    clearPartidosBuscarReturnUrl();
+    return fromPartidosRedirect;
+  }
+  const fromPartidosStored = peekPartidosBuscarReturnUrl();
+  if (fromPartidosStored) {
+    clearPartidosBuscarReturnUrl();
+    return fromPartidosStored;
   }
   const fromStored = getPostLoginReservaPath();
   if (fromStored.startsWith('/reservar')) return fromStored;

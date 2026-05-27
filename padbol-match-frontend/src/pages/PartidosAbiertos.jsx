@@ -7,6 +7,7 @@ import { IconGeroCheck } from '../components/icons/GeroIcons';
 import PartidoAbiertoCard, {
   PARTIDOS_ABIERTOS_PREVIEW_LIMIT,
   sortPartidosAbiertosPorFechaHora,
+  usuarioYaEnPartido,
 } from '../components/PartidoAbiertoCard';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -19,6 +20,7 @@ import {
 } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { savePartidosBuscarReturnUrl } from '../utils/reservaReturnUrl';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -146,9 +148,12 @@ export default function PartidosAbiertos() {
 
   const pedirUnirse = async (partido) => {
     if (!session?.user) {
-      navigate('/login?redirect=/partidos-abiertos');
+      const returnPath = `${location.pathname}${location.search || ''}`;
+      savePartidosBuscarReturnUrl(returnPath);
+      navigate(`/login?redirect=${encodeURIComponent(returnPath)}`);
       return;
     }
+    if (usuarioYaEnPartido(partido, session.user.id)) return;
     setJoiningId(partido.id);
     setMsg('');
     setJoinSuccess(false);

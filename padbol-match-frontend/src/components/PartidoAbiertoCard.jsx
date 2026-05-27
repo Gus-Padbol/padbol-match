@@ -1,5 +1,6 @@
 import React from 'react';
 import SportIcon from './common/SportIcon';
+import { useAuth } from '../context/AuthContext';
 import './PartidoAbiertoCard.css';
 
 export function partidoJugadorFotoUrl(jugador) {
@@ -11,8 +12,37 @@ export function partidoCapitanFotoUrl(partido) {
   const u =
     partido?.capitan_foto_url ??
     partido?.capitan?.foto_url ??
-    partido?.capitan?.avatar_url;
+    partido?.capitan?.avatar_url ??
+    partido?.organizador_foto_url ??
+    partido?.organizador?.foto_url ??
+    partido?.organizador?.avatar_url;
   return u != null && String(u).trim() ? String(u).trim() : '';
+}
+
+export function partidoCapitanUserId(partido) {
+  const id =
+    partido?.capitan_id ??
+    partido?.capitan?.id ??
+    partido?.capitan?.user_id ??
+    partido?.organizador_id ??
+    partido?.organizador?.id ??
+    partido?.organizador?.user_id;
+  return id != null && String(id).trim() !== '' ? String(id).trim() : '';
+}
+
+export function partidoJugadorUserId(jugador) {
+  const id = jugador?.user_id ?? jugador?.id ?? jugador?.jugador_id;
+  return id != null && String(id).trim() !== '' ? String(id).trim() : '';
+}
+
+/** Usuario logueado es capitán u otro jugador confirmado del partido. */
+export function usuarioYaEnPartido(partido, userId) {
+  const uid = userId != null ? String(userId).trim() : '';
+  if (!uid) return false;
+  const capId = partidoCapitanUserId(partido);
+  if (capId && capId === uid) return true;
+  const confirmados = Array.isArray(partido?.jugadores_confirmados) ? partido.jugadores_confirmados : [];
+  return confirmados.some((j) => partidoJugadorUserId(j) === uid);
 }
 
 export const DEPORTE_LABEL_PARTIDO_ABIERTO = {
@@ -68,42 +98,62 @@ const SPORT_ICON_WHITE = '#ffffff';
 
 const MAX_SLOT_CIRCLES = 4;
 
-function PartidoSlots({ confirmados, requeridos }) {
+function renderSlotJugador(jugador, key) {
+  const foto = partidoJugadorFotoUrl(jugador);
+  const nombre = String(jugador?.nombre || '').trim() || 'Jugador';
+  if (foto) {
+    return (
+      <img key={key} src={foto} alt={nombre} title={nombre} className="partido-abierto-card__slot" />
+    );
+  }
+  if (jugador) {
+    return (
+      <span key={key} title={nombre} className="partido-abierto-card__slot-fallback" aria-hidden>
+        {nombre.charAt(0).toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    <span key={key} title="Libre" className="partido-abierto-card__slot-empty" aria-hidden>
+      +
+    </span>
+  );
+}
+
+function PartidoSlots({ capitanNombre, capitanFoto, capitanId, confirmados, requeridos }) {
   const slotCount = Math.min(Math.max(2, requeridos), MAX_SLOT_CIRCLES);
+  const otrosConfirmados = (Array.isArray(confirmados) ? confirmados : []).filter((j) => {
+    const jid = partidoJugadorUserId(j);
+    return !capitanId || !jid || jid !== capitanId;
+  });
+
   return (
     <div className="partido-abierto-card__slots" aria-label="Jugadores confirmados">
       {Array.from({ length: slotCount }, (_, idx) => {
-        const jugador = confirmados[idx];
-        const foto = partidoJugadorFotoUrl(jugador);
-        const nombre = String(jugador?.nombre || '').trim() || 'Jugador';
-        if (foto) {
-          return (
-            <img
-              key={idx}
-              src={foto}
-              alt={nombre}
-              title={nombre}
-              className="partido-abierto-card__slot"
-            />
-          );
-        }
-        if (jugador) {
+        if (idx === 0) {
+          if (capitanFoto) {
+            return (
+              <img
+                key={idx}
+                src={capitanFoto}
+                alt={capitanNombre}
+                title={`${capitanNombre} · Organizador`}
+                className="partido-abierto-card__slot"
+              />
+            );
+          }
           return (
             <span
               key={idx}
-              title={nombre}
+              title={`${capitanNombre} · Organizador`}
               className="partido-abierto-card__slot-fallback"
               aria-hidden
             >
-              {nombre.charAt(0).toUpperCase()}
+              {capitanNombre.charAt(0).toUpperCase()}
             </span>
           );
         }
-        return (
-          <span key={idx} title="Libre" className="partido-abierto-card__slot-empty" aria-hidden>
-            +
-          </span>
-        );
+        return renderSlotJugador(otrosConfirmados[idx - 1], idx);
       })}
     </div>
   );
@@ -121,11 +171,16 @@ export default function PartidoAbiertoCard({
   /** @deprecated Siempre compacto; se ignora */
   compact: _compact = false,
 }) {
+  const { session } = useAuth();
+  const currentUserId = session?.user?.id ?? '';
   const confirmados = Array.isArray(partido?.jugadores_confirmados) ? partido.jugadores_confirmados : [];
   const requeridos = Math.max(2, parseInt(String(partido?.jugadores_requeridos || '4'), 10) || 4);
   const faltan = Math.max(0, requeridos - confirmados.length);
   const capitanFoto = partidoCapitanFotoUrl(partido);
-  const capitanNombre = String(partido?.capitan_nombre || '').trim() || 'Organizador';
+  const capitanId = partidoCapitanUserId(partido);
+  const capitanNombre =
+    String(partido?.capitan_nombre || partido?.organizador_nombre || '').trim() || 'Organizador';
+  const yaEnPartido = usuarioYaEnPartido(partido, currentUserId);
   const dep = String(partido?.deporte || 'padbol').toLowerCase();
   const depLabel = DEPORTE_LABEL_PARTIDO_ABIERTO[dep] || partido?.deporte || 'Partido';
   const sedeNombre = String(partido?.sede_nombre || 'Sede').trim() || 'Sede';
@@ -142,13 +197,16 @@ export default function PartidoAbiertoCard({
       }
     : undefined;
 
+  const ctaDisabled = joining || faltan <= 0 || yaEnPartido;
   const ctaLabel = joining
     ? isSede
       ? '…'
       : 'Enviando...'
-    : faltan <= 0
-      ? 'Partido completo'
-      : 'Quiero jugar';
+    : yaEnPartido
+      ? 'Ya estás en este partido'
+      : faltan <= 0
+        ? 'Partido completo'
+        : 'Quiero jugar';
 
   return (
     <article
@@ -235,7 +293,13 @@ export default function PartidoAbiertoCard({
               {capitanNombre} <span>· Organizador</span>
             </span>
           </div>
-          <PartidoSlots confirmados={confirmados} requeridos={requeridos} />
+          <PartidoSlots
+            capitanNombre={capitanNombre}
+            capitanFoto={capitanFoto}
+            capitanId={capitanId}
+            confirmados={confirmados}
+            requeridos={requeridos}
+          />
         </div>
       ) : null}
 
@@ -254,9 +318,14 @@ export default function PartidoAbiertoCard({
           {onJoin ? (
             <button
               type="button"
-              className="partido-abierto-card__cta"
+              className={[
+                'partido-abierto-card__cta',
+                yaEnPartido ? 'partido-abierto-card__cta--member' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               onClick={() => onJoin(partido)}
-              disabled={joining || faltan <= 0}
+              disabled={ctaDisabled}
             >
               {ctaLabel}
             </button>
@@ -267,9 +336,14 @@ export default function PartidoAbiertoCard({
       {onJoin && !isSede ? (
         <button
           type="button"
-          className="partido-abierto-card__cta"
+          className={[
+            'partido-abierto-card__cta',
+            yaEnPartido ? 'partido-abierto-card__cta--member' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           onClick={() => onJoin(partido)}
-          disabled={joining || faltan <= 0}
+          disabled={ctaDisabled}
         >
           {ctaLabel}
         </button>
