@@ -749,6 +749,10 @@
   color: #ffffff;
 }
 
+.sede-publica-info-chip__icon svg {
+  color: #ffffff;
+}
+
 .sede-publica-info-chip__horario-icon {
   display: inline-flex;
   align-items: center;

@@ -233,29 +233,40 @@ function SedeInfoChip({ icon, label }) {
   );
 }
 
-/** Etiqueta e icono del chip de canchas según deportes activos de la sede. */
-function buildSedeCanchasInfoChip(deportesActivos, canchasCount) {
+/** Deportes únicos para el chip de canchas (activos o inferidos de la sede). */
+function deportesParaChipCanchas(deportesActivos, sede) {
+  if (deportesActivos?.length) return deportesActivos;
+  const keys = new Set();
+  for (const d of Array.isArray(sede?.deportes_disponibles) ? sede.deportes_disponibles : []) {
+    const k = String(d).trim().toLowerCase();
+    if (k) keys.add(k);
+  }
+  for (const c of Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : []) {
+    if (String(c?.estado || 'activa').toLowerCase() === 'inactiva') continue;
+    const k = String(c.deporte || 'padbol').trim().toLowerCase();
+    if (k) keys.add(k);
+  }
+  const fromSede = DEPORTES_CANCHA_SEDE_OPTIONS.filter((o) => keys.has(o.key));
+  return fromSede.length ? fromSede : [{ key: 'padbol', label: 'Padbol' }];
+}
+
+/** Etiqueta e icono del chip de canchas según deportes de la sede. */
+function buildSedeCanchasInfoChip(deportesActivos, canchasCount, sede) {
   const n = Number(canchasCount) || 0;
   if (n <= 0) return null;
   const unit = n === 1 ? 'cancha' : 'canchas';
   const iconProps = { size: SEDE_INFO_CHIP_ICON_SIZE, color: SEDE_INFO_CHIP_ICON_COLOR };
+  const deportes = deportesParaChipCanchas(deportesActivos, sede);
 
-  if (deportesActivos.length === 1) {
-    const { key, label: depLabel } = deportesActivos[0];
+  if (deportes.length === 1) {
+    const { key, label: depLabel } = deportes[0];
     return {
       icon: <SportIcon deporte={key} {...iconProps} />,
       label: `${n} ${unit} de ${depLabel}`,
     };
   }
-  if (deportesActivos.length > 1) {
-    return {
-      icon: <SportIcon {...iconProps} />,
-      label: `${n} ${unit}`,
-    };
-  }
-  const fallback = deportesActivos[0];
   return {
-    icon: <SportIcon deporte={fallback?.key || 'padbol'} {...iconProps} />,
+    icon: <SportIcon {...iconProps} />,
     label: `${n} ${unit}`,
   };
 }
@@ -2668,7 +2679,7 @@ export default function SedePublica() {
           String(sede.slogan || '').trim() || String(sede.descripcion || '').trim();
         const amenityChips = resolveSedeAmenityChips(sede.amenities);
         const canchasCount = resolveSedeCanchasCount(sede, sedePerfilCanchasCount);
-        const canchasInfoChip = buildSedeCanchasInfoChip(deportesChips, canchasCount);
+        const canchasInfoChip = buildSedeCanchasInfoChip(deportesChips, canchasCount, sede);
         return (
           <>
           <div

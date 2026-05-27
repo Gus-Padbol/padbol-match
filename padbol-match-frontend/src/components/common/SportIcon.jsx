@@ -53,22 +53,28 @@ export default function SportIcon({
   title,
   ...rest
 }) {
+  const resolvedColor = color ?? '#ffffff';
+  const wrapperStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: size,
+    height: size,
+    flexShrink: 0,
+    color: resolvedColor,
+    lineHeight: 0,
+    ...style,
+  };
+
   const Icon = resolveSportIconComponent(deporte);
   if (!Icon) {
     return (
       <span
         className={className}
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: size,
-          height: size,
+          ...wrapperStyle,
           fontSize: Math.round(size * 0.72),
           lineHeight: 1,
-          flexShrink: 0,
-          color,
-          ...style,
         }}
         aria-hidden={title ? undefined : true}
         title={title}
@@ -79,22 +85,26 @@ export default function SportIcon({
     );
   }
   return (
-    <Icon
-      width={size}
-      height={size}
+    <span
       className={className}
-      style={{
-        display: 'block',
-        flexShrink: 0,
-        color,
-        width: size,
-        height: size,
-        ...style,
-      }}
-      role={title ? 'img' : 'presentation'}
+      style={wrapperStyle}
+      title={title}
       aria-hidden={title ? undefined : true}
-      aria-label={title}
       {...rest}
-    />
+    >
+      <Icon
+        width={size}
+        height={size}
+        style={{
+          display: 'block',
+          width: size,
+          height: size,
+          color: resolvedColor,
+        }}
+        role={title ? 'img' : 'presentation'}
+        aria-hidden
+        aria-label={title}
+      />
+    </span>
   );
 }
