@@ -54,7 +54,7 @@ export function sortPartidosAbiertosPorFechaHora(list) {
   });
 }
 
-export const PARTIDOS_ABIERTOS_PREVIEW_LIMIT = 3;
+export const PARTIDOS_ABIERTOS_PREVIEW_LIMIT = 2;
 
 /** "Cancha 1" tal cual; "1" → "Cancha 1"; vacío → null (no mostrar). */
 export function partidoCanchaLabel(partido) {
