@@ -41,11 +41,6 @@ import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import './SedePublica.css';
 
-const API_BASE_SEDE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
-
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 
@@ -1131,6 +1126,74 @@ function apiUrlResenas(path) {
   return toHttps(`${API_BASE_RESENAS}${p}`);
 }
 
+function parsePartidosSedeResponse(data) {
+  if (Array.isArray(data?.partidos)) return data.partidos;
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
+/** Primario: GET /api/sedes/:id/partidos; fallback: /api/partidos-abiertos filtrado por sede. */
+async function fetchPartidosSedePublica(sedeIdNum, headers = {}) {
+  const primaryUrl = apiUrlResenas(
+    `/api/sedes/${sedeIdNum}/partidos?upcoming=true&limit=3`,
+  );
+  console.log('[SedePublica] partidos URL (primary)', {
+    url: primaryUrl,
+    apiBase: API_BASE_RESENAS,
+    sedeId: sedeIdNum,
+    hasAuth: Boolean(headers.Authorization),
+  });
+
+  try {
+    const r = await fetch(primaryUrl, { headers });
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) {
+      const list = parsePartidosSedeResponse(data);
+      console.log('[SedePublica] partidos primary ok', { url: primaryUrl, count: list.length });
+      return { list, error: false, source: 'sedes/:id/partidos' };
+    }
+    console.warn('[SedePublica] partidos primary HTTP error, fallback', {
+      url: primaryUrl,
+      status: r.status,
+      body: data,
+    });
+  } catch (e) {
+    console.warn('[SedePublica] partidos primary fetch failed, fallback', { url: primaryUrl, error: e });
+  }
+
+  const fallbackUrl = apiUrlResenas('/api/partidos-abiertos');
+  console.log('[SedePublica] partidos URL (fallback)', {
+    url: fallbackUrl,
+    apiBase: API_BASE_RESENAS,
+    sedeId: sedeIdNum,
+    hasAuth: Boolean(headers.Authorization),
+  });
+
+  try {
+    const r2 = await fetch(fallbackUrl, { headers });
+    const data2 = await r2.json().catch(() => ({}));
+    if (!r2.ok) {
+      console.error('[SedePublica] partidos fallback HTTP error', {
+        url: fallbackUrl,
+        status: r2.status,
+        body: data2,
+      });
+      return { list: [], error: true, source: null };
+    }
+    const all = parsePartidosSedeResponse(data2);
+    const list = all.filter((p) => Number(p?.sede_id) === sedeIdNum).slice(0, 3);
+    console.log('[SedePublica] partidos fallback ok', {
+      url: fallbackUrl,
+      total: all.length,
+      filtered: list.length,
+    });
+    return { list, error: false, source: 'partidos-abiertos' };
+  } catch (e2) {
+    console.error('[SedePublica] partidos fallback fetch failed', { url: fallbackUrl, error: e2 });
+    return { list: [], error: true, source: null };
+  }
+}
+
 const RESENA_MAX_CHARS = 200;
 
 function formatFechaResenaPublica(iso) {
@@ -2110,40 +2173,21 @@ export default function SedePublica() {
     const headers = {};
     const token = session?.access_token;
     if (token) headers.Authorization = `Bearer ${token}`;
-    const partidosUrl = `${API_BASE_SEDE}/api/sedes/${sedeIdNumLoad}/partidos?upcoming=true&limit=3`;
-    console.log('[SedePublica] partidos fetch start', { sedeId: sedeIdNumLoad, url: partidosUrl, hasToken: Boolean(token) });
-    fetch(partidosUrl, { headers })
-      .then(async (r) => {
-        const data = await r.json().catch(() => ({}));
+
+    fetchPartidosSedePublica(sedeIdNumLoad, headers)
+      .then(({ list, error, source }) => {
         if (cancelled) return;
-        if (!r.ok) {
-          console.warn('[SedePublica] partidos fetch HTTP error', {
-            sedeId: sedeIdNumLoad,
-            status: r.status,
-            data,
-          });
-          setPartidosSede([]);
-          setPartidosSedeError(true);
-          return;
-        }
-        const list = Array.isArray(data?.partidos)
-          ? data.partidos
-          : Array.isArray(data)
-            ? data
-            : [];
-        console.log('[SedePublica] partidos fetch ok', {
+        console.log('[SedePublica] partidos result', {
           sedeId: sedeIdNumLoad,
+          source,
           count: list.length,
-          sectionVisible: list.length > 0,
-          partidos: list,
+          error,
         });
         setPartidosSede(list);
-        if (list.length === 0) {
-          console.log('[SedePublica] partidos section hidden (empty list)', { sedeId: sedeIdNumLoad });
-        }
+        setPartidosSedeError(error);
       })
       .catch((e) => {
-        console.error('[SedePublica] partidos fetch failed', { sedeId: sedeIdNumLoad, url: partidosUrl, error: e });
+        console.error('[SedePublica] partidos load unexpected error', { sedeId: sedeIdNumLoad, error: e });
         if (!cancelled) {
           setPartidosSede([]);
           setPartidosSedeError(true);

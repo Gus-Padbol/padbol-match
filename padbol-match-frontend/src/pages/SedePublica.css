@@ -716,6 +716,7 @@
   font-style: italic;
   line-height: 1.4;
   color: rgba(200, 200, 200, 0.88);
+  text-align: center;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
   word-break: break-word;
 }
