@@ -824,6 +824,11 @@ export default function ReservaForm() {
           return;
         }
         if (!sedeFresh || typeof sedeFresh !== 'object') return;
+        console.log('[ReservaForm] sede from API', {
+          horario_apertura: sedeFresh.horario_apertura,
+          horario_cierre: sedeFresh.horario_cierre,
+          sede: sedeFresh,
+        });
         setSedes((prev) => {
           if (!Array.isArray(prev)) return prev;
           const nid = Number(rawId);
@@ -838,7 +843,9 @@ export default function ReservaForm() {
           return [...prev, merged];
         });
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('[ReservaForm] sede fetch error', err);
+      });
     return () => {
       cancelled = true;
     };
@@ -1930,6 +1937,11 @@ export default function ReservaForm() {
       }
 
       const sedeData = sedeSeleccionada;
+      console.log('[ReservaForm] sede for slot generation', {
+        horario_apertura: sedeData?.horario_apertura,
+        horario_cierre: sedeData?.horario_cierre,
+        sede: sedeData,
+      });
       const duracion = duracionSeleccionadaMin;
       const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl);
       const numsSlots = slotsOferta.map((s) => s.numero);
@@ -1937,6 +1949,12 @@ export default function ReservaForm() {
       const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
 
       const candidatos = generarSlotsHorarioReserva(sedeData, fecha, duracion, SLOT_STEP_MIN);
+      console.log('[ReservaForm] generarSlotsHorarioReserva result', {
+        fecha,
+        duracion,
+        candidatos,
+        candidatosCount: candidatos.length,
+      });
       const todosLosHorarios = [];
 
       for (const slot of candidatos) {
@@ -1971,7 +1989,8 @@ export default function ReservaForm() {
 
       setHorariosDisponibles(todosLosHorarios);
       setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
-    } catch {
+    } catch (err) {
+      console.error('[ReservaForm] disponibilidad fetch error', err);
       setHorariosDisponibles([]);
       setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
     } finally {
