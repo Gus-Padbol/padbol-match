@@ -21,6 +21,8 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import {
   ADMIN_PANEL_ROLES,
+  normalizeUserRole,
+  readCachedUserRoleData,
   resolveEffectiveUserRole,
   userCanAccessAdminPanel,
 } from '../utils/adminPanelRoles';
@@ -73,20 +75,14 @@ function readCachedRolHeader() {
   }
 }
 
-/** Destino del chip en hub: admins → panel; jugadores → perfil. Mientras carga el rol, usa caché local si existe. */
-function hubChipNavigatePath(rolActual, roleLoading) {
-  if (rolActual === 'editor_contenido') return '/admin?tab=personalizar_hub';
-  if (ADMIN_ROLES_CHIP.includes(rolActual || '')) return '/admin';
-  if (roleLoading) {
-    try {
-      const raw = localStorage.getItem('user_role_data');
-      const d = raw ? JSON.parse(raw) : null;
-      if (d?.rol === 'editor_contenido') return '/admin?tab=personalizar_hub';
-      if (ADMIN_ROLES_CHIP.includes(d?.rol || '')) return '/admin';
-    } catch {
-      /* ignore */
-    }
-  }
+/** Destino del chip: panel admin (incl. admin_club) o perfil. Usa API, caché `user_roles` o estado sticky del hub. */
+function hubChipNavigatePath(rolActual, roleLoading, hubAdminSticky) {
+  const rolNorm =
+    normalizeUserRole(rolActual) ||
+    normalizeUserRole(readCachedUserRoleData()?.rol);
+  if (rolNorm === 'editor_contenido') return '/admin?tab=personalizar_hub';
+  if (userCanAccessAdminPanel(rolNorm) || hubAdminSticky) return '/admin';
+  if (roleLoading && userCanAccessAdminPanel(readCachedUserRoleData()?.rol)) return '/admin';
   return '/mi-perfil';
 }
 
@@ -152,7 +148,11 @@ export default function AppHeader({
     () => resolveEffectiveUserRole({ rolFromApi: rol, session }),
     [rol, session]
   );
-  const isPanelAdminUser = userCanAccessAdminPanel(rolEffectiveHeader);
+  const isPanelAdminUser =
+    userCanAccessAdminPanel(rolEffectiveHeader) ||
+    hubAdminRolEver ||
+    normalizeUserRole(rol) === 'admin_club' ||
+    ADMIN_ROLES_CHIP.includes(normalizeUserRole(rol) || '');
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
 
   useEffect(() => {
@@ -202,23 +202,6 @@ export default function AppHeader({
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState({ jugadores: [], torneos: [], sedes: [] });
   const searchWrapRef = useRef(null);
-  const hubChipMenuRef = useRef(null);
-  const [hubChipMenuOpen, setHubChipMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setHubChipMenuOpen(false);
-  }, [pathOnly, session?.user?.id]);
-
-  useEffect(() => {
-    if (!hubChipMenuOpen) return undefined;
-    const onDoc = (e) => {
-      if (hubChipMenuRef.current && !hubChipMenuRef.current.contains(e.target)) {
-        setHubChipMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [hubChipMenuOpen]);
 
   /** /torneo/:id/equipos sin venir del panel: mismo ancho hub, título corto "Equipos". */
   const headerTitleDisplay = useMemo(() => {
@@ -244,6 +227,14 @@ export default function AppHeader({
     if (pathOnly.startsWith('/equipo/')) return true;
     return false;
   }, [session?.user, isPanelAdminUser, pathOnly, location.state]);
+
+  const handleHubChipClick = () => {
+    if (adminFlowSurface) {
+      navigate('/admin');
+      return;
+    }
+    navigate(hubChipNavigatePath(rolEffectiveHeader, roleLoading, hubAdminRolEver));
+  };
 
   const hubLightBar =
     (jugadorHubShellPath || isSedeProfilePathname(pathOnly)) && !adminFlowSurface && !adminPanelMinimalHeader;
@@ -287,8 +278,8 @@ export default function AppHeader({
 
   /** Destino del chip: admins (rol en DB/caché/JWT) → /admin; jugadores → /mi-perfil; también en shell Ranking/Reservar/Torneos/Perfil. */
   const hubChipNavPath = useMemo(
-    () => hubChipNavigatePath(rolEffectiveHeader, roleLoading),
-    [rolEffectiveHeader, roleLoading]
+    () => hubChipNavigatePath(rolEffectiveHeader, roleLoading, hubAdminRolEver),
+    [rolEffectiveHeader, roleLoading, hubAdminRolEver]
   );
 
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
@@ -1213,38 +1204,24 @@ export default function AppHeader({
             ) : null}
             {!reservaCheckoutMinimal && jugadorChipEnHeaderGrid ? (
               <div
-                ref={hubChipMenuRef}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 4,
                   position: 'relative',
+                  zIndex: 2,
                 }}
               >
                 <button
                   type="button"
-                  onClick={() => {
-                    if (adminFlowSurface) {
-                      navigate('/admin');
-                      return;
-                    }
-                    if (isPanelAdminUser) {
-                      setHubChipMenuOpen((open) => !open);
-                      return;
-                    }
-                    navigate(hubChipNavPath);
-                  }}
-                  aria-expanded={isPanelAdminUser && !adminFlowSurface ? hubChipMenuOpen : undefined}
-                  aria-haspopup={isPanelAdminUser && !adminFlowSurface ? 'menu' : undefined}
+                  onClick={handleHubChipClick}
                   aria-label={
-                    adminFlowSurface
-                      ? 'Ir al panel de administración'
-                      : isPanelAdminUser
-                        ? 'Menú de cuenta'
-                        : t('hub.goToProfile')
+                    adminFlowSurface || isPanelAdminUser
+                      ? t('hub.goToAdmin')
+                      : t('hub.goToProfile')
                   }
                   title={
-                    adminFlowSurface ? 'Panel admin' : isPanelAdminUser ? 'Menú de cuenta' : 'Mi perfil'
+                    adminFlowSurface || isPanelAdminUser ? t('hub.goToAdmin') : t('hub.goToProfile')
                   }
                   style={{
                     display: 'inline-flex',
@@ -1267,6 +1244,7 @@ export default function AppHeader({
                     cursor: 'pointer',
                     flexShrink: 1,
                     minWidth: 0,
+                    pointerEvents: 'auto',
                   }}
                 >
                   {hubFotoUrl && !adminFlowSurface ? (
@@ -1315,76 +1293,6 @@ export default function AppHeader({
                     {hubChipLabel}
                   </span>
                 </button>
-                {hubChipMenuOpen && isPanelAdminUser && !adminFlowSurface ? (
-                  <div
-                    role="menu"
-                    className="hub-header-chip-menu"
-                    style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 6px)',
-                      right: 0,
-                      zIndex: 13000,
-                      minWidth: 168,
-                      padding: 6,
-                      borderRadius: 10,
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                      boxShadow: '0 10px 28px rgba(0,0,0,0.22)',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="hub-header-chip-menu__item"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: 'none',
-                        borderRadius: 8,
-                        background: 'transparent',
-                        color: 'var(--accent)',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                      onClick={() => {
-                        setHubChipMenuOpen(false);
-                        navigate('/admin');
-                      }}
-                    >
-                      {t('hub.goToAdmin')}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="hub-header-chip-menu__item"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: 'none',
-                        borderRadius: 8,
-                        background: 'transparent',
-                        color: 'var(--text-primary)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                      onClick={() => {
-                        setHubChipMenuOpen(false);
-                        navigate('/mi-perfil');
-                      }}
-                    >
-                      {t('hub.goToProfile')}
-                    </button>
-                  </div>
-                ) : null}
               </div>
             ) : null}
             {!reservaCheckoutMinimal && showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}

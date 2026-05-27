@@ -481,7 +481,17 @@ export default function UserHome() {
             {session?.user ? (
               <button
                 type="button"
-                onClick={() => navigate('/mi-perfil')}
+                onClick={() => {
+                  if (esRolAdminHub) {
+                    navigate(
+                      rolEffective === 'editor_contenido'
+                        ? '/admin?tab=personalizar_hub'
+                        : '/admin'
+                    );
+                    return;
+                  }
+                  navigate('/mi-perfil');
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -495,7 +505,7 @@ export default function UserHome() {
                   textAlign: 'left',
                   fontFamily: 'inherit',
                 }}
-                aria-label={t('hub.goToProfile')}
+                aria-label={esRolAdminHub ? t('hub.goToAdmin') : t('hub.goToProfile')}
               >
                 {hubFotoUrl ? (
                   <img
