@@ -1,4 +1,3 @@
-import { parsePrecioDuracionField } from './sedePreciosDuracion';
 import { precioSedeParaDuracionMin } from './sedePreciosDuracion';
 
 /** Fila API precios_por_deporte */
@@ -39,8 +38,4 @@ export function precioSedeParaDuracionConDeporte(sede, duracionMin, deporteCanon
 export function precioBaseReservaConDeporte(sede, duracionMin, deporteCanon, preciosDeporteRows) {
   const v = precioSedeParaDuracionConDeporte(sede, duracionMin, deporteCanon, preciosDeporteRows);
   return v != null ? v : null;
-}
-
-export function parsePrecioDeporteInput(raw) {
-  return parsePrecioDuracionField(raw);
 }
