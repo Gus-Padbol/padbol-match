@@ -1257,14 +1257,6 @@ function getCanchaDeporteAdminOptions(tr) {
   }));
 }
 
-function parseHorarioHoraEnteraAdminDash(raw, defaultH) {
-  const s = String(raw || '').trim();
-  const m = /^(\d{1,2})/.exec(s);
-  if (!m) return defaultH;
-  const h = parseInt(m[1], 10);
-  return Number.isFinite(h) ? Math.min(23, Math.max(0, h)) : defaultH;
-}
-
 /** Inicio "HH:MM" desde `hora` tipo "10:00 - 11:30". */
 function normalizeHoraInicioReservaAdminDash(horaRaw) {
   const t = String(horaRaw || '').split(' - ')[0].trim();
@@ -1332,26 +1324,13 @@ function slotsReservaManualDisponiblesAdminDash({ sedeRow, reservas, fecha, canc
   return out;
 }
 
-/** Inicios de turno posibles desde ahora hasta el cierre (ART), misma grilla que ReservaForm. */
+/** Inicios de turno posibles hoy (ART): franjas_horarias o fallback horario_apertura / horario_cierre. */
 function futureSlotStartsArtAdminDash(sedeRow, ctx) {
-  const horaApertura = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_apertura, 10);
-  const horaCierre = parseHorarioHoraEnteraAdminDash(sedeRow?.horario_cierre, 23);
+  if (!sedeRow || !ctx?.hoyISO) return [];
   const duracion = parseInt(sedeRow?.duracion_reserva_minutos, 10) || 90;
+  const inicios = generarIniciosMinutosSlotReserva(sedeRow, ctx.hoyISO, duracion, 30);
   const { minutesNow } = ctx;
-  const out = [];
-  for (let h = horaApertura; h < horaCierre; h += 1) {
-    for (let m = 0; m < 60; m += duracion) {
-      const slotEndMinutes = m + duracion;
-      const slotEndHours = h + Math.floor(slotEndMinutes / 60);
-      const slotEndMins = slotEndMinutes % 60;
-      if (slotEndHours < horaCierre || (slotEndHours === horaCierre && slotEndMins === 0)) {
-        const horaInicio = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        const startMin = h * 60 + m;
-        if (startMin >= minutesNow) out.push(horaInicio);
-      }
-    }
-  }
-  return out;
+  return inicios.filter((start) => start >= minutesNow).map((m) => minutosAHoraReserva(m));
 }
 
 function torneoProximoSinEmpezar(t) {
@@ -4502,7 +4481,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           const { data: sedesRows, error: sedesErr } = await supabase
             .from(t('admin.metricas.venuesCount'))
             .select(
-              'id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia, horario_apertura, horario_cierre, duracion_reserva_minutos, cantidad_canchas'
+              'id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia, horario_apertura, horario_cierre, franjas_horarias, duracion_reserva_minutos, cantidad_canchas'
             );
           if (!sedesErr) {
             allSedesRows = sedesRows || [];

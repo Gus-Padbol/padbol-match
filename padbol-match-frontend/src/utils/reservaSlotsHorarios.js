@@ -6,6 +6,14 @@ const MINUTOS_DIA = 24 * 60;
 const DEFAULT_APERTURA = '10:00';
 const DEFAULT_CIERRE = '23:00';
 
+/** Columnas `sedes`: horario_apertura / horario_cierre (no hora_apertura / hora_cierre). */
+export function horarioAperturaCierreSede(sede) {
+  return {
+    horario_apertura: sede?.horario_apertura,
+    horario_cierre: sede?.horario_cierre,
+  };
+}
+
 export function minutosAHoraReserva(totalMin) {
   const t = ((Number(totalMin) % MINUTOS_DIA) + MINUTOS_DIA) % MINUTOS_DIA;
   const h = Math.floor(t / 60);
@@ -56,8 +64,9 @@ export function ventanasHorarioReserva(sede, fechaISO) {
     if (ventanas.length) return ventanas;
   }
 
-  const startMin = horaAMinutos(sede?.horario_apertura) ?? horaAMinutos(DEFAULT_APERTURA);
-  let endMin = horaAMinutos(sede?.horario_cierre) ?? horaAMinutos(DEFAULT_CIERRE);
+  const { horario_apertura, horario_cierre } = horarioAperturaCierreSede(sede);
+  const startMin = horaAMinutos(horario_apertura) ?? horaAMinutos(DEFAULT_APERTURA);
+  let endMin = horaAMinutos(horario_cierre) ?? horaAMinutos(DEFAULT_CIERRE);
   if (startMin == null || endMin == null) {
     return [{ startMin: 10 * 60, endMin: 23 * 60, cruzaMedianoche: false }];
   }
