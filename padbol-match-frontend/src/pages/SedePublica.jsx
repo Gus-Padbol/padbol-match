@@ -461,6 +461,33 @@ function sedeTieneSeccionEnNumeros(stats) {
   return buildSedeEnNumerosItems(stats).length > 0;
 }
 
+/** Misma prioridad que la app nativa: perfil → campos sede → canchas activas → deportes. */
+function resolveSedeCanchasCount(sede, perfilCanchasCount = null) {
+  const nPerfil = Number(perfilCanchasCount);
+  if (Number.isFinite(nPerfil) && nPerfil > 0) return nPerfil;
+  if (!sede || typeof sede !== 'object') return 0;
+  const fromMeta = Number(sede.canchas_count ?? sede.canchas_activas_count ?? sede.num_canchas);
+  if (Number.isFinite(fromMeta) && fromMeta > 0) return fromMeta;
+  const cant = Number(sede.cantidad_canchas);
+  if (Number.isFinite(cant) && cant > 0) return cant;
+  const activas = Array.isArray(sede.canchas_activas) ? sede.canchas_activas : [];
+  if (activas.length > 0) return activas.length;
+  const deps = Array.isArray(sede.deportes_disponibles) ? sede.deportes_disponibles : [];
+  if (deps.length > 0 && typeof deps[0] === 'object' && deps[0] != null) {
+    const sum = deps.reduce((acc, row) => acc + (Number(row?.canchas_count) || 0), 0);
+    if (sum > 0) return sum;
+  }
+  return 0;
+}
+
+const EMPTY_SEDE_RESENAS_PAYLOAD = {
+  resenas: [],
+  promedio: null,
+  total: 0,
+  ya_reseño: false,
+  puede_reseñar: false,
+};
+
 /**
  * URLs del carrusel: `fotos_destacadas` en orden (máx. 4), solo si existen en `fotos_urls`;
  * si no, primeras 4 de la galería.
@@ -738,9 +765,11 @@ function SedeInstructoresSection({ instructores, t }) {
   );
 }
 
-function SedeInformacionClub({ sede, horario, proximoTorneo, lang, t }) {
-  const canchas = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas : [];
-  const canchasCount = canchas.length;
+function SedeInformacionClub({ sede, horario, proximoTorneo, lang, t, canchasCount: canchasCountProp }) {
+  const canchasCount =
+    Number.isFinite(Number(canchasCountProp)) && Number(canchasCountProp) > 0
+      ? Number(canchasCountProp)
+      : resolveSedeCanchasCount(sede);
   const ubicacion = [sede?.direccion, sede?.ciudad, sede?.pais].filter(Boolean).join(', ');
   const waHref = whatsappHrefSede(sede);
 
@@ -1342,7 +1371,6 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
   const idNum = useMemo(() => parseInt(String(sedeId), 10), [sedeId]);
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState('');
   const [verTodasOpen, setVerTodasOpen] = useState(false);
   const [todasRows, setTodasRows] = useState([]);
   const [todasLoading, setTodasLoading] = useState(false);
@@ -1357,26 +1385,37 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
   const loadResenas = useCallback(async () => {
     if (!Number.isFinite(idNum)) return;
     setLoading(true);
-    setErr('');
     const headers = {};
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const url = apiUrlResenas(`/api/sedes/${idNum}/resenas?limit=5&offset=0`);
     try {
-      const r = await fetch(apiUrlResenas(`/api/sedes/${idNum}/resenas?limit=5&offset=0`), { headers });
+      const r = await fetch(url, { headers });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) {
-        const raw = String(body.error || '');
-        const friendly =
-          body.code === 'RESENAS_TABLE_MISSING' || body.code === 'SEDE_RESENAS_TABLE_MISSING'
-            ? raw
-            : /schema cache|public\.resenas|\bresenas\b/i.test(raw)
-              ? 'Las reseñas no están disponibles: en Supabase debe existir y exponerse la tabla public.resenas. Ejecuta padbol-backend/sql/resenas_sedes.sql.'
-              : raw || `Error ${r.status}`;
-        throw new Error(friendly);
+        console.error('[SedePublica] GET /api/sedes/:id/resenas HTTP error', {
+          sedeId: idNum,
+          url,
+          status: r.status,
+          body,
+        });
+        setPayload({ ...EMPTY_SEDE_RESENAS_PAYLOAD });
+        return;
       }
-      setPayload(body);
+      setPayload({
+        ...EMPTY_SEDE_RESENAS_PAYLOAD,
+        ...body,
+        resenas: Array.isArray(body.resenas) ? body.resenas : [],
+        total: body.total ?? body.total_count ?? 0,
+        ya_reseño: Boolean(body.ya_reseño),
+        puede_reseñar: Boolean(body.puede_reseñar),
+      });
     } catch (e) {
-      setErr(e.message || 'Error');
-      setPayload(null);
+      console.error('[SedePublica] GET /api/sedes/:id/resenas fetch failed', {
+        sedeId: idNum,
+        url,
+        error: e,
+      });
+      setPayload({ ...EMPTY_SEDE_RESENAS_PAYLOAD });
     } finally {
       setLoading(false);
     }
@@ -1530,8 +1569,6 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
       </h2>
       {loading ? (
         <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '13px' }}>Cargando reseñas…</p>
-      ) : err ? (
-        <p style={{ margin: 0, color: '#b91c1c', fontSize: '13px' }}>{err}</p>
       ) : (
         <>
           <div
@@ -1614,7 +1651,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 fontStyle: 'italic',
               }}
             >
-              Sé el primero en contar tu experiencia.
+              Aún no hay reseñas
             </p>
           ) : (
             <div>
@@ -1994,6 +2031,7 @@ export default function SedePublica() {
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
   const [partidosSede, setPartidosSede] = useState([]);
   const [partidosSedeLoading, setPartidosSedeLoading] = useState(false);
+  const [sedePerfilCanchasCount, setSedePerfilCanchasCount] = useState(null);
 
   const handleSedePublicaBack = useCallback(() => {
     const dest = resolveSedePublicaBackToPath(location.state);
@@ -2069,21 +2107,39 @@ export default function SedePublica() {
     const headers = {};
     const token = session?.access_token;
     if (token) headers.Authorization = `Bearer ${token}`;
-    fetch(
-      `${API_BASE_SEDE}/api/sedes/${sedeIdNumLoad}/partidos?upcoming=true&limit=3`,
-      { headers },
-    )
-      .then((r) => r.json())
-      .then((data) => {
+    const partidosUrl = `${API_BASE_SEDE}/api/sedes/${sedeIdNumLoad}/partidos?upcoming=true&limit=3`;
+    console.log('[SedePublica] partidos fetch start', { sedeId: sedeIdNumLoad, url: partidosUrl, hasToken: Boolean(token) });
+    fetch(partidosUrl, { headers })
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
         if (cancelled) return;
+        if (!r.ok) {
+          console.warn('[SedePublica] partidos fetch HTTP error', {
+            sedeId: sedeIdNumLoad,
+            status: r.status,
+            data,
+          });
+          setPartidosSede([]);
+          return;
+        }
         const list = Array.isArray(data?.partidos)
           ? data.partidos
           : Array.isArray(data)
             ? data
             : [];
+        console.log('[SedePublica] partidos fetch ok', {
+          sedeId: sedeIdNumLoad,
+          count: list.length,
+          sectionVisible: list.length > 0,
+          partidos: list,
+        });
         setPartidosSede(list);
+        if (list.length === 0) {
+          console.log('[SedePublica] partidos section hidden (empty list)', { sedeId: sedeIdNumLoad });
+        }
       })
-      .catch(() => {
+      .catch((e) => {
+        console.error('[SedePublica] partidos fetch failed', { sedeId: sedeIdNumLoad, url: partidosUrl, error: e });
         if (!cancelled) setPartidosSede([]);
       })
       .finally(() => {
@@ -2187,6 +2243,7 @@ export default function SedePublica() {
     setLoading(true);
     setError('');
     setEstadisticasPublicas(null);
+    setSedePerfilCanchasCount(null);
 
     (async () => {
       let sedeLoaded = false;
@@ -2238,6 +2295,31 @@ export default function SedePublica() {
       } catch {
         if (!cancelled) setPreciosDeporteRows([]);
       }
+      const tokenPerfil = session?.access_token;
+      if (!cancelled && tokenPerfil) {
+        try {
+          const perfilUrl = apiUrlResenas(`/api/sedes/${idNum}/perfil`);
+          const perfilRes = await fetch(perfilUrl, {
+            headers: { Authorization: `Bearer ${tokenPerfil}` },
+          });
+          const perfilBody = await perfilRes.json().catch(() => ({}));
+          if (perfilRes.ok && perfilBody?.canchas_count != null) {
+            const cc = Number(perfilBody.canchas_count);
+            if (Number.isFinite(cc) && cc > 0) {
+              setSedePerfilCanchasCount(cc);
+              console.log('[SedePublica] perfil canchas_count', { sedeId: idNum, canchas_count: cc });
+            }
+          } else if (!perfilRes.ok) {
+            console.warn('[SedePublica] GET /api/sedes/:id/perfil', {
+              sedeId: idNum,
+              status: perfilRes.status,
+              body: perfilBody,
+            });
+          }
+        } catch (perfilErr) {
+          console.warn('[SedePublica] GET /api/sedes/:id/perfil failed', { sedeId: idNum, error: perfilErr });
+        }
+      }
     })().finally(() => {
       if (!cancelled) setLoading(false);
     });
@@ -2245,7 +2327,7 @@ export default function SedePublica() {
     return () => {
       cancelled = true;
     };
-  }, [sedeId]);
+  }, [sedeId, session?.access_token]);
 
   const sedeViewReady = !loading && !error && sede;
 
@@ -2329,7 +2411,7 @@ export default function SedePublica() {
         const sloganLinea = String(sede.slogan || '').trim();
         const descripcionLinea = String(sede.descripcion || sede.historia || '').trim();
         const amenityChips = resolveSedeAmenityChips(sede.amenities);
-        const canchasCount = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas.length : 0;
+        const canchasCount = resolveSedeCanchasCount(sede, sedePerfilCanchasCount);
         return (
           <>
           <div
@@ -2520,6 +2602,7 @@ export default function SedePublica() {
               proximoTorneo={proximoTorneoInfo}
               lang={padbolLang}
               t={t}
+              canchasCount={canchasCount}
             />
 
             <SedeInstructoresSection instructores={instructoresAprobados} t={t} />
