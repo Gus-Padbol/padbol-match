@@ -68,6 +68,68 @@ const wrap = {
   paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
 };
 
+function estrellasJugadorLabel(n) {
+  const v = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
+  return '★'.repeat(v) + '☆'.repeat(5 - v);
+}
+
+function formatResenaJugadorFecha(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function JugadorResenaCard({ row }) {
+  const nombre = row?.autor?.nombre || 'Jugador';
+  const foto = String(row?.autor?.foto_url || '').trim();
+  const ini = nombre ? nombre.charAt(0).toUpperCase() : '?';
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: '10px',
+        padding: '12px 0',
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          flexShrink: 0,
+          background: '#e2e8f0',
+          border: '1px solid var(--border)',
+        }}
+      >
+        {foto ? (
+          <img src={foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'var(--text-secondary)' }}>
+            {ini}
+          </div>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 10px' }}>
+          <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>{nombre}</span>
+          <span style={{ color: '#fbbf24', fontSize: '13px', letterSpacing: '0.04em' }} aria-hidden>
+            {estrellasJugadorLabel(row.estrellas)}
+          </span>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{formatResenaJugadorFecha(row.created_at)}</span>
+        </div>
+        {String(row.comentario || '').trim() ? (
+          <p style={{ margin: '6px 0 0', fontSize: '13px', lineHeight: 1.45, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+            {row.comentario}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function PerfilPublico() {
   const { alias: aliasParam } = useParams();
   const navigate = useNavigate();
@@ -82,6 +144,10 @@ export default function PerfilPublico() {
   /** Respuesta GET /api/jugador/:alias/estadisticas o null mientras carga / sin datos */
   const [estadisticas, setEstadisticas] = useState(null);
   const [estadisticasDeporteTab, setEstadisticasDeporteTab] = useState(null);
+  const [resenasJugador, setResenasJugador] = useState(null);
+  const [resenasJugadorLoading, setResenasJugadorLoading] = useState(false);
+  const [verTodasResenasJugador, setVerTodasResenasJugador] = useState(false);
+  const [resenasJugadorTodas, setResenasJugadorTodas] = useState([]);
 
   const hubSedePerfil = useMemo(() => {
     if (!perfil?.sede_id) return null;
@@ -122,6 +188,9 @@ export default function PerfilPublico() {
     setTorneosConPuntos([]);
     setEstadisticas(null);
     setEstadisticasDeporteTab(null);
+    setResenasJugador(null);
+    setVerTodasResenasJugador(false);
+    setResenasJugadorTodas([]);
 
     const { data: rows, error } = await supabase.from('jugadores_perfil').select('*').ilike('alias', a).limit(8);
 
@@ -232,6 +301,41 @@ export default function PerfilPublico() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!aliasDecoded) {
+      setResenasJugador(null);
+      return undefined;
+    }
+    let cancelled = false;
+    setResenasJugadorLoading(true);
+    fetch(`${API_BASE_PERFIL}/api/jugador/${encodeURIComponent(aliasDecoded)}/resenas?limit=3`)
+      .then((r) => (r.ok ? r.json() : { promedio: null, total: 0, resenas: [] }))
+      .then((body) => {
+        if (!cancelled) setResenasJugador(body);
+      })
+      .catch(() => {
+        if (!cancelled) setResenasJugador({ promedio: null, total: 0, resenas: [] });
+      })
+      .finally(() => {
+        if (!cancelled) setResenasJugadorLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [aliasDecoded]);
+
+  const cargarTodasResenasJugador = useCallback(async () => {
+    if (!aliasDecoded) return;
+    setVerTodasResenasJugador(true);
+    try {
+      const r = await fetch(`${API_BASE_PERFIL}/api/jugador/${encodeURIComponent(aliasDecoded)}/resenas?limit=100`);
+      const body = r.ok ? await r.json() : { resenas: [] };
+      setResenasJugadorTodas(Array.isArray(body.resenas) ? body.resenas : []);
+    } catch {
+      setResenasJugadorTodas([]);
+    }
+  }, [aliasDecoded]);
 
   useEffect(() => {
     setMostrarTodosTorneosPublico(false);
@@ -827,6 +931,69 @@ export default function PerfilPublico() {
           </div>
         </div>
 
+        {(resenasJugadorLoading || (resenasJugador?.total ?? 0) > 0 || (resenasJugador?.resenas?.length ?? 0) > 0) ? (
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              padding: '18px 20px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+              marginBottom: '14px',
+            }}
+          >
+            <h2 style={{ margin: '0 0 10px', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
+              Reseñas
+            </h2>
+            {resenasJugadorLoading ? (
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>Cargando reseñas…</p>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  {resenasJugador?.promedio != null ? (
+                    <>
+                      <span style={{ fontSize: '24px', fontWeight: 800, color: '#fbbf24' }}>
+                        {Number(resenasJugador.promedio).toFixed(1)}
+                      </span>
+                      <span style={{ color: '#fbbf24', fontSize: '14px' }} aria-hidden>
+                        {estrellasJugadorLabel(Math.round(Number(resenasJugador.promedio)))}
+                      </span>
+                    </>
+                  ) : null}
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    {(resenasJugador?.total ?? 0) > 0
+                      ? `${resenasJugador.total} reseña${resenasJugador.total === 1 ? '' : 's'}`
+                      : 'Sin reseñas aún'}
+                  </span>
+                </div>
+                {(resenasJugador?.resenas || []).map((row, idx, arr) => (
+                  <div key={row.id || idx} style={{ borderBottom: idx === arr.length - 1 ? 'none' : undefined }}>
+                    <JugadorResenaCard row={row} />
+                  </div>
+                ))}
+                {(resenasJugador?.total ?? 0) > 3 ? (
+                  <button
+                    type="button"
+                    onClick={() => void cargarTodasResenasJugador()}
+                    style={{
+                      marginTop: '8px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--accent)',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    Ver todas
+                  </button>
+                ) : null}
+              </>
+            )}
+          </div>
+        ) : null}
+
         {hasDeportesPreferidosCargados(perfil?.deportes_preferidos) ? (
           <div
             style={{
@@ -1205,6 +1372,48 @@ export default function PerfilPublico() {
           </div>
         ) : null}
       </div>
+
+      {verTodasResenasJugador ? (
+        <div
+          role="presentation"
+          onClick={() => setVerTodasResenasJugador(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.5)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            padding: '12px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              background: 'var(--bg-card)',
+              borderRadius: '16px',
+              padding: '18px',
+              boxShadow: '0 -8px 32px rgba(0,0,0,0.18)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800 }}>Todas las reseñas</h3>
+              <button type="button" onClick={() => setVerTodasResenasJugador(false)} style={{ border: 'none', background: 'transparent', fontSize: '20px', cursor: 'pointer' }} aria-label="Cerrar">×</button>
+            </div>
+            {(resenasJugadorTodas.length ? resenasJugadorTodas : resenasJugador?.resenas || []).map((row, idx) => (
+              <JugadorResenaCard key={row.id || idx} row={row} />
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <JugadorPreviewModal
         open={Boolean(jugadorPreviewCompaneroPublico)}

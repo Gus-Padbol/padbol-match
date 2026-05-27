@@ -347,6 +347,7 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     precio_turno: sedeData.precio_turno ?? sedeData.precio_90min ?? '',
     moneda: sedeData.moneda || 'ARS',
     descripcion: sedeData.descripcion || '',
+    slogan: sedeData.slogan != null ? String(sedeData.slogan) : '',
     historia: sedeData.historia != null ? String(sedeData.historia) : '',
     anio_fundacion:
       sedeData.anio_fundacion != null && String(sedeData.anio_fundacion).trim() !== ''
@@ -401,6 +402,10 @@ function miSedeFormToApiPatchBody(form) {
     ...duracionPrecios,
     moneda: form.moneda || 'ARS',
     descripcion: form.descripcion || null,
+    slogan:
+      form.slogan != null && String(form.slogan).trim() !== ''
+        ? String(form.slogan).trim().slice(0, 80)
+        : null,
     historia:
       form.historia != null && String(form.historia).trim() !== ''
         ? String(form.historia).trim().slice(0, 500)
@@ -4928,6 +4933,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [miSedeLoading, setMiSedeLoading] = useState(false);
   const [miSedeForm,    setMiSedeForm]    = useState({});
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
+  const [miSedeInstalacionesSaving, setMiSedeInstalacionesSaving] = useState(false);
+  const [miSedeInstalacionesMsg, setMiSedeInstalacionesMsg] = useState('');
   const [miSedePreciosSaving, setMiSedePreciosSaving] = useState(false);
   const [miSedePreciosMsg, setMiSedePreciosMsg] = useState('');
   const [miSedeDuraciones, setMiSedeDuraciones] = useState([]);
@@ -5327,6 +5334,47 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setMiSede(updated);
       setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+    }
+  };
+
+
+  const guardarInstalacionesMiSede = async (amenitiesOverride) => {
+    if (!sedeId || !session?.access_token) {
+      setMiSedeInstalacionesMsg('⚠️ Inicia sesión de nuevo');
+      setTimeout(() => setMiSedeInstalacionesMsg(''), 4000);
+      return;
+    }
+    setMiSedeInstalacionesSaving(true);
+    setMiSedeInstalacionesMsg('');
+    const amenities = normalizeSedeAmenities(
+      amenitiesOverride != null ? amenitiesOverride : miSedeForm.amenities
+    );
+    let errorMsg = null;
+    let updated = null;
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ amenities }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errorMsg = data.error || res.statusText || t('admin.metricas.saveError');
+      } else {
+        updated = data.sede;
+      }
+    } catch (e) {
+      errorMsg = e?.message || String(e);
+    }
+    setMiSedeInstalacionesSaving(false);
+    setMiSedeInstalacionesMsg(errorMsg ? `⚠️ ${errorMsg}` : '✅ Instalaciones guardadas');
+    setTimeout(() => setMiSedeInstalacionesMsg(''), errorMsg ? 5000 : 3000);
+    if (!errorMsg && updated) {
+      setMiSede(updated);
+      setMiSedeForm((f) => ({ ...f, amenities: normalizeSedeAmenities(updated.amenities) }));
     }
   };
 
@@ -11846,13 +11894,37 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </div>
               ))}
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>{t('admin.sedes.clubDescriptionLabel')}</label>
+                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>
+                  Slogan
+                </label>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                  <input
+                    type="text"
+                    maxLength={80}
+                    value={miSedeForm.slogan || ''}
+                    placeholder="Ej: El mejor padbol de la zona"
+                    onChange={(e) => setMiSedeForm((p) => ({ ...p, slogan: e.target.value.slice(0, 80) }))}
+                    className="admin-mi-sede-theme-input"
+                    style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  />
+                  <div style={{ textAlign: 'right', fontSize: '12px', color: (miSedeForm.slogan || '').length >= 72 ? '#dc2626' : '#9ca3af', marginTop: '3px' }}>
+                    {(miSedeForm.slogan || '').length}/80
+                  </div>
+                  <p className="admin-mi-sede-theme-muted" style={{ margin: '4px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
+                    Tagline corta debajo del nombre en <strong>/sede/…</strong>.
+                  </p>
+                </div>
+              </div>
+              <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+                <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>
+                  Descripción
+                </label>
                 <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <textarea
-                    rows={6}
+                    rows={4}
                     maxLength={300}
                     value={miSedeForm.descripcion || ''}
-                    placeholder={t('admin.sedes.taglinePlaceholder')}
+                    placeholder="Contá en pocas líneas qué ofrece tu club…"
                     onChange={e => setMiSedeForm(p => ({ ...p, descripcion: e.target.value }))}
                     className="admin-mi-sede-theme-input"
                     style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
@@ -11860,6 +11932,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   <div style={{ textAlign: 'right', fontSize: '12px', color: (miSedeForm.descripcion || '').length >= 280 ? '#dc2626' : '#9ca3af', marginTop: '3px' }}>
                     {(miSedeForm.descripcion || '').length}/300
                   </div>
+                  <p className="admin-mi-sede-theme-muted" style={{ margin: '4px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
+                    Texto sobre el club en el perfil público (sección Descripción).
+                  </p>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
@@ -11898,10 +11973,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               const current = amenitiesArrayToSelectionSet(miSedeForm.amenities);
                               if (e.target.checked) current.add(amenity.key);
                               else current.delete(amenity.key);
+                              const nextAmenities = [...current];
                               setMiSedeForm((p) => ({
                                 ...p,
-                                amenities: [...current],
+                                amenities: nextAmenities,
                               }));
+                              void guardarInstalacionesMiSede(nextAmenities);
                             }}
                           />
                           <span aria-hidden>{amenity.icon}</span>
@@ -11911,8 +11988,32 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     })}
                   </div>
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '8px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
-                    Se muestran en el perfil público de la sede en la app (sección Instalaciones).
+                    Se guardan al marcar/desmarcar y se muestran en el perfil público (sección Instalaciones).
                   </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => void guardarInstalacionesMiSede()}
+                      disabled={miSedeInstalacionesSaving}
+                      style={{
+                        padding: '8px 16px',
+                        background: miSedeInstalacionesSaving ? '#fecaca' : 'var(--bg-card)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                        cursor: miSedeInstalacionesSaving ? 'not-allowed' : 'pointer',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                      }}
+                    >
+                      {miSedeInstalacionesSaving ? 'Guardando…' : 'Guardar instalaciones'}
+                    </button>
+                    {miSedeInstalacionesMsg ? (
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: miSedeInstalacionesMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>
+                        {miSedeInstalacionesMsg}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
@@ -11951,7 +12052,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     {(miSedeForm.historia || '').length}/500
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                    Visible debajo de las fotos en <strong>/sede/…</strong>. La descripción corta de arriba sigue siendo la frase del hero.
+                    Texto largo opcional en <strong>/sede/…</strong> (complementa la descripción corta).
                   </p>
                 </div>
               </div>

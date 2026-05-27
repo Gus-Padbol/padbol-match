@@ -254,8 +254,10 @@ function torneoFechaInicioEsAnteriorAHoyArt(fechaInicioStr) {
  */
 const PUBLIC_RESENAS_TABLE = 'resenas';
 
-const RESENAS_SELECT_ROW = 'id, estrellas, comentario, user_id, created_at, nombre';
-const RESENAS_SELECT_ROW_FALLBACK = 'id, estrellas, comentario, user_id, created_at';
+const RESENAS_SELECT_ROW =
+  'id, estrellas, comentario, user_id, created_at, nombre, respuesta_admin, fecha_respuesta';
+const RESENAS_SELECT_ROW_FALLBACK = 'id, estrellas, comentario, user_id, created_at, nombre';
+const RESENAS_JUGADOR_SELECT_ROW = 'id, estrellas, comentario, autor_user_id, created_at';
 
 function isResenasPublicTableConfigError(err) {
   const msg = String(err?.message || err || '').toLowerCase();
@@ -2761,6 +2763,10 @@ app.patch('/api/sedes/:id', async (req, res) => {
       const d = String(b.descripcion ?? '').trim();
       patch.descripcion = d ? d.slice(0, 300) : null;
     }
+    if (hop('slogan')) {
+      const s = String(b.slogan ?? '').trim();
+      patch.slogan = s ? s.slice(0, 80) : null;
+    }
     if (hop('amenities')) {
       patch.amenities = normalizeSedeAmenities(b.amenities);
     }
@@ -3034,6 +3040,40 @@ async function enrichSedeResenasConPerfil(reviews) {
     const nombreGuardado = String(r.nombre ?? '').trim();
     const apodo = p?.apodo != null && String(p.apodo).trim() ? String(p.apodo).trim() : null;
     const nombreVis = nombreVisibleAutorResenaListado(p, nombreGuardado);
+    return {
+      id: r.id,
+      estrellas: r.estrellas,
+      comentario: r.comentario,
+      created_at: r.created_at,
+      respuesta_admin: r.respuesta_admin ? String(r.respuesta_admin).trim() || null : null,
+      fecha_respuesta: r.fecha_respuesta || null,
+      autor: {
+        nombre: nombreVis,
+        apodo: apodo || null,
+        foto_url: p?.foto_url ? String(p.foto_url).trim() || null : null,
+      },
+    };
+  });
+}
+
+async function enrichJugadorResenasConPerfil(reviews) {
+  const rows = Array.isArray(reviews) ? reviews : [];
+  const uids = [...new Set(rows.map((r) => r.autor_user_id).filter(Boolean))];
+  let map = {};
+  if (uids.length) {
+    const { data: perfiles, error } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, foto_url, nombre, apellido, alias, apodo')
+      .in('user_id', uids);
+    if (error) console.warn('enrichJugadorResenasConPerfil jugadores_perfil:', error.message);
+    (perfiles || []).forEach((p) => {
+      if (p?.user_id) map[p.user_id] = p;
+    });
+  }
+  return rows.map((r) => {
+    const p = map[r.autor_user_id];
+    const nombreVis = nombreVisibleAutorResenaListado(p, '');
+    const apodo = p?.apodo != null && String(p.apodo).trim() ? String(p.apodo).trim() : null;
     return {
       id: r.id,
       estrellas: r.estrellas,
@@ -9387,6 +9427,55 @@ async function computeEstadisticasJugadorPublico(perfil) {
     sede_mas_frecuentada_reservas,
   };
 }
+
+/** GET /api/jugador/:alias/resenas — reseñas públicas sobre el jugador (promedio + últimas). */
+app.get('/api/jugador/:alias/resenas', async (req, res) => {
+  try {
+    let raw = String(req.params.alias || '').trim();
+    if (!raw) return res.status(400).json({ error: 'Alias requerido' });
+    try {
+      raw = decodeURIComponent(raw);
+    } catch {
+      /* keep */
+    }
+    const perfil = await fetchJugadoresPerfilByAliasSlug(raw);
+    if (!perfil?.user_id) return res.status(404).json({ error: 'Jugador no encontrado' });
+
+    const jugadorUserId = perfil.user_id;
+    const limitRaw = parseInt(String(req.query.limit ?? '3'), 10);
+    const limit = Number.isFinite(limitRaw) ? Math.min(100, Math.max(1, limitRaw)) : 3;
+
+    const { data: allStars, error: e1 } = await supabase
+      .from('resenas_jugadores')
+      .select('estrellas')
+      .eq('jugador_user_id', jugadorUserId);
+    if (e1) {
+      if (/relation.*resenas_jugadores|schema cache/i.test(String(e1.message || ''))) {
+        return res.json({ promedio: null, total: 0, resenas: [] });
+      }
+      throw e1;
+    }
+    const total = allStars?.length ?? 0;
+    const promedio =
+      total > 0
+        ? Math.round((allStars.reduce((s, r) => s + Number(r.estrellas), 0) / total) * 10) / 10
+        : null;
+
+    const { data: pageRows, error: e2 } = await supabase
+      .from('resenas_jugadores')
+      .select(RESENAS_JUGADOR_SELECT_ROW)
+      .eq('jugador_user_id', jugadorUserId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (e2) throw e2;
+
+    const resenas = await enrichJugadorResenasConPerfil(pageRows || []);
+    res.json({ promedio, total, resenas });
+  } catch (err) {
+    console.error('❌ GET /api/jugador/:alias/resenas:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
 
 /** GET /api/jugador/:alias/estadisticas — stats públicas (torneos finalizados). Debe ir después de rutas fijas como /api/jugador/mis-pagos. */
 app.get('/api/jugador/:alias/estadisticas', async (req, res) => {

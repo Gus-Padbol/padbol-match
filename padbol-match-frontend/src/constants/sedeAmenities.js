@@ -34,3 +34,9 @@ export function normalizeSedeAmenities(raw) {
 export function amenitiesArrayToSelectionSet(amenities) {
   return new Set(normalizeSedeAmenities(amenities));
 }
+
+/** Pills ordenadas para perfil público según keys guardadas en sedes.amenities. */
+export function resolveSedeAmenityChips(amenities) {
+  const set = amenitiesArrayToSelectionSet(amenities);
+  return SEDE_AMENITY_DEFINITIONS.filter((item) => set.has(item.key));
+}

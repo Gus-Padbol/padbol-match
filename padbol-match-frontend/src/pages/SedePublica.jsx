@@ -37,7 +37,14 @@ import {
 import { torneoFechaInicioYmd, ymdTodayTorneoTz } from '../utils/torneoFechaInicioArt';
 import { fetchProfesores } from '../utils/clasesApi';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
+import PartidoAbiertoCard from '../components/PartidoAbiertoCard';
+import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import './SedePublica.css';
+
+const API_BASE_SEDE =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
 
 const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
@@ -202,6 +209,28 @@ function pickProximoTorneoInfoClub(torneos) {
     String(a?.fecha_inicio || '').localeCompare(String(b?.fecha_inicio || ''))
   );
   return candidatos[0] ?? null;
+}
+
+function pickTorneosProximosSede(torneos, max = 3) {
+  const hoy = ymdTodayTorneoTz();
+  if (!hoy || !Array.isArray(torneos)) return [];
+  return torneos
+    .filter((t) => {
+      if (String(t?.estado || '').toLowerCase() === 'finalizado') return false;
+      const ymd = torneoFechaInicioYmd(t?.fecha_inicio);
+      return ymd && ymd >= hoy;
+    })
+    .sort((a, b) => String(a?.fecha_inicio || '').localeCompare(String(b?.fecha_inicio || '')))
+    .slice(0, max);
+}
+
+function SedeInfoChip({ emoji, label }) {
+  return (
+    <span className="sede-publica-info-chip">
+      <span className="sede-publica-info-chip__emoji" aria-hidden>{emoji}</span>
+      <span className="sede-publica-info-chip__text">{label}</span>
+    </span>
+  );
 }
 
 function SedeInfoTablerIcon({ children, size = 20 }) {
@@ -1668,6 +1697,24 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
             {r.comentario}
           </p>
         ) : null}
+        {String(r.respuesta_admin || '').trim() ? (
+          <div
+            style={{
+              marginTop: '10px',
+              padding: '10px 12px',
+              borderRadius: '10px',
+              background: 'rgba(225, 27, 34, 0.06)',
+              border: `1px solid ${SEDE_DS.cardBorder}`,
+            }}
+          >
+            <div style={{ fontSize: '11px', fontWeight: 800, color: SEDE_DS.brand, marginBottom: '4px' }}>
+              Respuesta del club
+            </div>
+            <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.45, color: SEDE_DS.subtitle, whiteSpace: 'pre-wrap' }}>
+              {r.respuesta_admin}
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -2327,6 +2374,8 @@ export default function SedePublica() {
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
   const [duracionesOferta, setDuracionesOferta] = useState([]);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
+  const [partidosSede, setPartidosSede] = useState([]);
+  const [partidosSedeLoading, setPartidosSedeLoading] = useState(false);
 
   const handleSedePublicaBack = useCallback(() => {
     const dest = resolveSedePublicaBackToPath(location.state);
@@ -2381,6 +2430,45 @@ export default function SedePublica() {
     () => pickProximoTorneoInfoClub(torneosSedeLista),
     [torneosSedeLista]
   );
+
+  const torneosProximosSede = useMemo(
+    () => pickTorneosProximosSede(torneosSedeLista, 3),
+    [torneosSedeLista]
+  );
+
+  const sedeIdNumLoad = useMemo(() => {
+    const n = parseInt(String(sedeId), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [sedeId]);
+
+  useEffect(() => {
+    if (!sedeIdNumLoad) {
+      setPartidosSede([]);
+      return undefined;
+    }
+    let cancelled = false;
+    setPartidosSedeLoading(true);
+    fetch(`${API_BASE_SEDE}/api/partidos-abiertos`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : [];
+        setPartidosSede(
+          list
+            .filter((p) => Number(p?.sede_id) === sedeIdNumLoad)
+            .slice(0, 3)
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setPartidosSede([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPartidosSedeLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sedeIdNumLoad]);
 
   useEffect(() => {
     if (!sedeId) {
@@ -2614,6 +2702,10 @@ export default function SedePublica() {
           : null;
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
+        const sloganLinea = String(sede.slogan || '').trim();
+        const descripcionLinea = String(sede.descripcion || sede.historia || '').trim();
+        const amenityChips = resolveSedeAmenityChips(sede.amenities);
+        const canchasCount = Array.isArray(sede?.canchas_activas) ? sede.canchas_activas.length : 0;
         return (
           <>
           <div
@@ -2681,6 +2773,9 @@ export default function SedePublica() {
                     )}
                   </div>
                   <h1 className="sede-publica-hero-immersive__nombre">{sede.nombre || '(sin nombre)'}</h1>
+                  {sloganLinea ? (
+                    <p className="sede-publica-hero-immersive__slogan">{sloganLinea}</p>
+                  ) : null}
                   {direccionLinea ? (
                     <p className="sede-publica-hero-immersive__direccion">
                       <IconGeroUbicacion size={14} aria-hidden />
@@ -2698,6 +2793,17 @@ export default function SedePublica() {
             </section>
 
             <article className="sede-publica-page">
+            <div className="sede-publica-info-chips-row" aria-label="Información rápida">
+              {direccionLinea ? <SedeInfoChip emoji="📍" label={direccionLinea} /> : null}
+              {horario ? <SedeInfoChip emoji="🕐" label={horario} /> : null}
+              {canchasCount > 0 ? (
+                <SedeInfoChip
+                  emoji="🎾"
+                  label={`${canchasCount} cancha${canchasCount === 1 ? '' : 's'}`}
+                />
+              ) : null}
+            </div>
+
             <SedeGaleriaHorizontal
               fotos={fotos}
               onOpenAtIndex={(i) => {
@@ -2712,7 +2818,7 @@ export default function SedePublica() {
                 className="sede-publica-btn sede-publica-btn--primary"
                 onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
               >
-                {t('sedes.publica.reservarTurno', { defaultValue: 'Reservar turno' })}
+                {t('sedes.publica.reservarCancha', { defaultValue: 'Reservar cancha' })}
               </button>
               <button
                 type="button"
@@ -2722,6 +2828,63 @@ export default function SedePublica() {
                 {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
               </button>
             </div>
+
+            {partidosSedeLoading || partidosSede.length > 0 ? (
+              <section className="sede-publica-section sede-publica-partidos">
+                <h2 className="sede-publica-section__title">Partidos abiertos</h2>
+                {partidosSedeLoading ? (
+                  <p className="sede-publica-section__muted">Cargando partidos…</p>
+                ) : (
+                  <div className="sede-publica-partidos__list">
+                    {partidosSede.map((p) => (
+                      <PartidoAbiertoCard key={p.id} partido={p} compact onJoin={() => navigate('/jugar/buscar')} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {torneosProximosSede.length > 0 ? (
+              <section className="sede-publica-section sede-publica-torneos-list">
+                <h2 className="sede-publica-section__title">Próximos torneos</h2>
+                <div className="sede-publica-torneos-list__items">
+                  {torneosProximosSede.map((tor) => (
+                    <button
+                      key={tor.id}
+                      type="button"
+                      className="sede-publica-torneo-row"
+                      onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+                    >
+                      <span className="sede-publica-torneo-row__name">{tor.nombre || 'Torneo'}</span>
+                      <span className="sede-publica-torneo-row__date">
+                        {formatFechaDiaMesPublica(tor.fecha_inicio, padbolLang) || '—'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {descripcionLinea ? (
+              <section className="sede-publica-section sede-publica-descripcion">
+                <h2 className="sede-publica-section__title">Descripción</h2>
+                <p className="sede-publica-descripcion__text">{descripcionLinea}</p>
+              </section>
+            ) : null}
+
+            {amenityChips.length > 0 ? (
+              <section className="sede-publica-section sede-publica-instalaciones">
+                <h2 className="sede-publica-section__title">Instalaciones</h2>
+                <div className="sede-publica-instalaciones__pills">
+                  {amenityChips.map((item) => (
+                    <span key={item.key} className="sede-publica-instalaciones__pill">
+                      <span aria-hidden>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <SedeInformacionClub
               sede={sede}
