@@ -710,7 +710,11 @@
 
 .sede-publica-hero-immersive__subtitulo {
   margin: 6px 0 0;
+  align-self: stretch;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 16px;
   font-size: 13px;
   font-weight: 400;
   font-style: italic;
