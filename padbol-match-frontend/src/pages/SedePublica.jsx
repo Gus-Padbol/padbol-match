@@ -2031,6 +2031,7 @@ export default function SedePublica() {
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
   const [partidosSede, setPartidosSede] = useState([]);
   const [partidosSedeLoading, setPartidosSedeLoading] = useState(false);
+  const [partidosSedeError, setPartidosSedeError] = useState(false);
   const [sedePerfilCanchasCount, setSedePerfilCanchasCount] = useState(null);
 
   const handleSedePublicaBack = useCallback(() => {
@@ -2100,10 +2101,12 @@ export default function SedePublica() {
   useEffect(() => {
     if (!sedeIdNumLoad) {
       setPartidosSede([]);
+      setPartidosSedeError(false);
       return undefined;
     }
     let cancelled = false;
     setPartidosSedeLoading(true);
+    setPartidosSedeError(false);
     const headers = {};
     const token = session?.access_token;
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -2120,6 +2123,7 @@ export default function SedePublica() {
             data,
           });
           setPartidosSede([]);
+          setPartidosSedeError(true);
           return;
         }
         const list = Array.isArray(data?.partidos)
@@ -2140,7 +2144,10 @@ export default function SedePublica() {
       })
       .catch((e) => {
         console.error('[SedePublica] partidos fetch failed', { sedeId: sedeIdNumLoad, url: partidosUrl, error: e });
-        if (!cancelled) setPartidosSede([]);
+        if (!cancelled) {
+          setPartidosSede([]);
+          setPartidosSedeError(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setPartidosSedeLoading(false);
@@ -2408,8 +2415,8 @@ export default function SedePublica() {
           : null;
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
-        const sloganLinea = String(sede.slogan || '').trim();
-        const descripcionLinea = String(sede.descripcion || sede.historia || '').trim();
+        const heroSubtitulo =
+          String(sede.slogan || '').trim() || String(sede.descripcion || '').trim();
         const amenityChips = resolveSedeAmenityChips(sede.amenities);
         const canchasCount = resolveSedeCanchasCount(sede, sedePerfilCanchasCount);
         return (
@@ -2479,8 +2486,8 @@ export default function SedePublica() {
                     )}
                   </div>
                   <h1 className="sede-publica-hero-immersive__nombre">{sede.nombre || '(sin nombre)'}</h1>
-                  {sloganLinea ? (
-                    <p className="sede-publica-hero-immersive__slogan">{sloganLinea}</p>
+                  {heroSubtitulo ? (
+                    <p className="sede-publica-hero-immersive__subtitulo">{heroSubtitulo}</p>
                   ) : null}
                   {direccionLinea ? (
                     <p className="sede-publica-hero-immersive__direccion">
@@ -2535,20 +2542,22 @@ export default function SedePublica() {
               </button>
             </div>
 
-            {partidosSedeLoading || partidosSede.length > 0 ? (
-              <section className="sede-publica-section sede-publica-partidos">
-                <h2 className="sede-publica-section__title">Partidos abiertos</h2>
-                {partidosSedeLoading ? (
-                  <p className="sede-publica-section__muted">Cargando partidos…</p>
-                ) : (
-                  <div className="sede-publica-partidos__list">
-                    {partidosSede.map((p) => (
-                      <PartidoAbiertoCard key={p.id} partido={p} compact onJoin={() => navigate('/jugar/buscar')} />
-                    ))}
-                  </div>
-                )}
-              </section>
-            ) : null}
+            <section className="sede-publica-section sede-publica-partidos">
+              <h2 className="sede-publica-section__title">Partidos abiertos</h2>
+              {partidosSedeLoading ? (
+                <p className="sede-publica-section__muted">Cargando partidos…</p>
+              ) : partidosSedeError ? (
+                <p className="sede-publica-section__muted">Error cargando partidos</p>
+              ) : partidosSede.length > 0 ? (
+                <div className="sede-publica-partidos__list">
+                  {partidosSede.map((p) => (
+                    <PartidoAbiertoCard key={p.id} partido={p} compact onJoin={() => navigate('/jugar/buscar')} />
+                  ))}
+                </div>
+              ) : (
+                <p className="sede-publica-section__muted">Sin partidos abiertos hoy</p>
+              )}
+            </section>
 
             {torneosProximosSede.length > 0 ? (
               <section className="sede-publica-section sede-publica-torneos-list">
@@ -2568,13 +2577,6 @@ export default function SedePublica() {
                     </button>
                   ))}
                 </div>
-              </section>
-            ) : null}
-
-            {descripcionLinea ? (
-              <section className="sede-publica-section sede-publica-descripcion">
-                <h2 className="sede-publica-section__title">Descripción</h2>
-                <p className="sede-publica-descripcion__text">{descripcionLinea}</p>
               </section>
             ) : null}
 

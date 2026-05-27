@@ -708,13 +708,16 @@
   box-sizing: border-box;
 }
 
-.sede-publica-hero-immersive__slogan {
-  margin: 4px 0 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
-  line-height: 1.35;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+.sede-publica-hero-immersive__subtitulo {
+  margin: 6px 0 0;
+  max-width: 100%;
+  font-size: 13px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.4;
+  color: rgba(200, 200, 200, 0.88);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+  word-break: break-word;
 }
 
 .sede-publica-info-chips-row {
