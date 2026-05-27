@@ -49,9 +49,10 @@ const PORT = 3001;
 const allowedOrigins = [
   'https://padbolmatch.com',
   'https://www.padbolmatch.com',
+  'http://localhost:3000',
+  'http://localhost:3001',
   'https://padbol-match.netlify.app',
   'https://padbol-match-9abn.vercel.app',
-  'http://localhost:3000',
 ];
 
 function buildCorsAllowedOrigins() {
