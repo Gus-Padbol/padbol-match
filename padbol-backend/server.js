@@ -3453,8 +3453,8 @@ function parsePrecioMonedaBackend(raw) {
 }
 
 /** Cliente para leer sedes_duraciones (service role evita RLS mal configurado en producción). */
-function supabaseClientParaSedesDuraciones(supabaseClient) {
-  return supabaseAdmin || supabaseClient;
+function supabaseClientParaSedesDuraciones(_supabaseClient) {
+  return supabaseAdmin;
 }
 
 async function fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas = false } = {}) {
@@ -11042,7 +11042,15 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
     titulo: req.body?.titulo ?? null,
     tipo: req.body?.tipo ?? req.body?.reservaData?.tipo ?? null,
   };
+  /** Todas las lecturas/escrituras Supabase del checkout usan service role (evita PA_UNAUTHORIZED). */
+  const db = supabaseAdmin;
   try {
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      logCrearPreferenciaError('config', new Error('SUPABASE_SERVICE_ROLE_KEY no configurada'), ctx);
+      return res.status(503).json({
+        error: 'Configuración del servidor incompleta (SUPABASE_SERVICE_ROLE_KEY). Contactá soporte.',
+      });
+    }
     const b = req.body || {};
     const {
       titulo,
@@ -11071,7 +11079,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       if (!eid || !tid) {
         return res.status(400).json({ error: 'torneo_inscripcion requiere equipo_id y torneo_id' });
       }
-      const { data: torneoRow, error: tErr } = await supabaseAdmin
+      const { data: torneoRow, error: tErr } = await db
         .from('torneos')
         .select('fecha_inicio, sede_id')
         .eq('id', tid)
@@ -11106,7 +11114,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       const durR = parseInt(String(rd.duracion ?? ''), 10);
       let extrasSum = 0;
       try {
-        const ex = await resolveExtrasLinesParaSede(supabaseAdmin, sidR, rd.extras ?? b.extras);
+        const ex = await resolveExtrasLinesParaSede(db, sidR, rd.extras ?? b.extras);
         extrasSum = ex.sum;
         if (ex.lines.length) rd.extras = ex.lines;
         else delete rd.extras;
@@ -11115,7 +11123,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         throw e;
       }
       if (Number.isFinite(sidR) && sidR > 0 && Number.isFinite(durR) && durR > 0) {
-        const baseDb = await precioBaseReservaSedeDuracion(supabaseAdmin, sidR, durR);
+        const baseDb = await precioBaseReservaSedeDuracion(db, sidR, durR);
         if (baseDb != null) {
           const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
           if (Number.isFinite(totalSrv) && totalSrv >= 0) {
@@ -11138,7 +11146,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       if (hasExtras && Number.isFinite(sidR) && sidR > 0) {
         let extrasSum = 0;
         try {
-          const ex = await resolveExtrasLinesParaSede(supabaseAdmin, sidR, extrasRaw);
+          const ex = await resolveExtrasLinesParaSede(db, sidR, extrasRaw);
           extrasSum = ex.sum;
           if (ex.lines.length) rd.extras = ex.lines;
           else delete rd.extras;
@@ -11147,7 +11155,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
           throw e;
         }
         if (Number.isFinite(durR) && durR > 0) {
-          const baseDb = await precioBaseReservaSedeDuracion(supabaseAdmin, sidR, durR);
+          const baseDb = await precioBaseReservaSedeDuracion(db, sidR, durR);
           if (baseDb != null) {
             const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
             if (Number.isFinite(totalSrv) && totalSrv >= 0) {
@@ -11221,7 +11229,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         const st = e.status || 400;
         return res.status(st).json({ error: e.message || String(e) });
       }
-      const { data: reservaCreada, error: resErr } = await supabaseAdmin.from('reservas').insert([payloadReserva]).select().single();
+      const { data: reservaCreada, error: resErr } = await db.from('reservas').insert([payloadReserva]).select().single();
       if (resErr) throw resErr;
       let partidoCreado = null;
       if (String(r.tipo || '').trim().toLowerCase() === 'partido_abierto') {
@@ -11232,7 +11240,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         }
       }
       if (reservaCreada?.id != null) {
-        await insertReservaHistorialEstado(supabaseAdmin, {
+        await insertReservaHistorialEstado(db, {
           reserva_id: reservaCreada.id,
           estado_anterior: null,
           estado_nuevo: String(payloadReserva.estado || '').trim() || estadoPresencial,
