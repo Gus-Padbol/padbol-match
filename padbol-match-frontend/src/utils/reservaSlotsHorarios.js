@@ -1,12 +1,13 @@
-import { horaAMinutos, franjaAplicaAFecha } from './franjasHorarias';
+import { horaAMinutos } from './franjasHorarias';
 import { parsePrecioDuracionField } from './sedePreciosDuracion';
 
 export const RESERVA_SLOT_STEP_MIN = 30;
+export const RESERVA_DURACION_SLOT_DEFAULT_MIN = 90;
 const MINUTOS_DIA = 24 * 60;
 const DEFAULT_APERTURA = '10:00';
 const DEFAULT_CIERRE = '23:00';
 
-/** Columnas `sedes`: horario_apertura / horario_cierre (no hora_apertura / hora_cierre). */
+/** Columnas `sedes`: horario_apertura / horario_cierre. */
 export function horarioAperturaCierreSede(sede) {
   return {
     horario_apertura: sede?.horario_apertura,
@@ -21,49 +22,10 @@ export function minutosAHoraReserva(totalMin) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-/** True si la sede tiene al menos una franja con horario y precio válidos. */
-export function sedeUsaFranjasHorarias(sede) {
-  const franjas = sede?.franjas_horarias;
-  if (!Array.isArray(franjas) || franjas.length === 0) return false;
-  return franjas.some((f) => {
-    const i = horaAMinutos(f?.hora_inicio);
-    const fi = horaAMinutos(f?.hora_fin);
-    const p = Number(f?.precio);
-    return i != null && fi != null && Number.isFinite(p) && p >= 0;
-  });
-}
-
-function ventanaDesdeFranja(f) {
-  const startMin = horaAMinutos(f?.hora_inicio);
-  const endMin = horaAMinutos(f?.hora_fin);
-  if (startMin == null || endMin == null) return null;
-  return {
-    startMin,
-    endMin,
-    cruzaMedianoche: endMin <= startMin,
-  };
-}
-
 /**
- * Ventanas { startMin, endMin, cruzaMedianoche } para generar turnos en una fecha.
- * Con franjas → unión de franjas que aplican; sin franjas → horario_apertura / horario_cierre.
+ * Ventana de turnos desde horario_apertura / horario_cierre de la sede.
  */
-export function ventanasHorarioReserva(sede, fechaISO) {
-  if (sedeUsaFranjasHorarias(sede)) {
-    const franjas = sede.franjas_horarias;
-    const ordenadas = [
-      ...franjas.filter((f) => String(f?.tipo || '') === 'fecha_especial'),
-      ...franjas.filter((f) => String(f?.tipo || '') !== 'fecha_especial'),
-    ];
-    const ventanas = [];
-    for (const f of ordenadas) {
-      if (!franjaAplicaAFecha(f, fechaISO)) continue;
-      const v = ventanaDesdeFranja(f);
-      if (v) ventanas.push(v);
-    }
-    if (ventanas.length) return ventanas;
-  }
-
+export function ventanasHorarioReserva(sede) {
   const { horario_apertura, horario_cierre } = horarioAperturaCierreSede(sede);
   const startMin = horaAMinutos(horario_apertura) ?? horaAMinutos(DEFAULT_APERTURA);
   let endMin = horaAMinutos(horario_cierre) ?? horaAMinutos(DEFAULT_CIERRE);
@@ -89,13 +51,19 @@ function agregarIniciosEnVentana(out, ventana, duracionMin, stepMin) {
   pushRango(0, endMin);
 }
 
-/**
- * Minutos de inicio de turno (0–1439) que caben en las ventanas para la duración dada.
- */
-export function generarIniciosMinutosSlotReserva(sede, fechaISO, duracionMin, stepMin = RESERVA_SLOT_STEP_MIN) {
+function duracionSlotReservaMin(duracionMin) {
   const dur = parseInt(String(duracionMin), 10);
-  if (!Number.isFinite(dur) || dur < 15) return [];
-  const ventanas = ventanasHorarioReserva(sede, fechaISO);
+  if (!Number.isFinite(dur) || dur < 15) return RESERVA_DURACION_SLOT_DEFAULT_MIN;
+  return dur;
+}
+
+/**
+ * Minutos de inicio de turno (0–1439) entre apertura y cierre de la sede.
+ * @param {string} [_fechaISO] reservado; no afecta la grilla (solo horario sede).
+ */
+export function generarIniciosMinutosSlotReserva(sede, _fechaISO, duracionMin, stepMin = RESERVA_SLOT_STEP_MIN) {
+  const dur = duracionSlotReservaMin(duracionMin);
+  const ventanas = ventanasHorarioReserva(sede);
   const inicios = new Set();
   for (const v of ventanas) {
     agregarIniciosEnVentana(inicios, v, dur, stepMin);
@@ -103,11 +71,11 @@ export function generarIniciosMinutosSlotReserva(sede, fechaISO, duracionMin, st
   return [...inicios].sort((a, b) => a - b);
 }
 
-/** Un turno [inicioMin, inicioMin+duracion) cae dentro de alguna ventana. */
+/** Un turno [inicioMin, inicioMin+duracion) cae dentro del horario de la sede. */
 export function turnoCabeEnVentanasReserva(inicioMin, duracionMin, ventanas) {
   const start = Number(inicioMin);
-  const dur = Number(duracionMin);
-  if (!Number.isFinite(start) || !Number.isFinite(dur)) return false;
+  const dur = duracionSlotReservaMin(duracionMin);
+  if (!Number.isFinite(start)) return false;
   const end = start + dur;
   return (ventanas || []).some(({ startMin, endMin, cruzaMedianoche }) => {
     if (!cruzaMedianoche) {
@@ -118,9 +86,9 @@ export function turnoCabeEnVentanasReserva(inicioMin, duracionMin, ventanas) {
   });
 }
 
-/** Precio cuando no hay franjas: precio por duración en columnas sede o precio_turno / precio_por_reserva. */
+/** Precio por duración en columnas sede o precio_turno / precio_por_reserva. */
 export function precioReservaFallbackSinFranjas(sede, duracionMin) {
-  const d = parseInt(String(duracionMin), 10);
+  const d = duracionSlotReservaMin(duracionMin);
   const col =
     d === 60 ? 'precio_60min' : d === 90 ? 'precio_90min' : d === 120 ? 'precio_120min' : null;
   if (col) {
@@ -142,7 +110,7 @@ export function precioReservaFallbackSinFranjas(sede, duracionMin) {
  * Filas de UI / API: { horaInicio, horaFin, horario, startMin, endMin }.
  */
 export function generarSlotsHorarioReserva(sede, fechaISO, duracionMin, stepMin = RESERVA_SLOT_STEP_MIN) {
-  const dur = parseInt(String(duracionMin), 10);
+  const dur = duracionSlotReservaMin(duracionMin);
   const inicios = generarIniciosMinutosSlotReserva(sede, fechaISO, dur, stepMin);
   return inicios.map((startMin) => {
     const endMin = startMin + dur;

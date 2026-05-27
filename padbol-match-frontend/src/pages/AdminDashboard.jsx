@@ -1324,7 +1324,7 @@ function slotsReservaManualDisponiblesAdminDash({ sedeRow, reservas, fecha, canc
   return out;
 }
 
-/** Inicios de turno posibles hoy (ART): franjas_horarias o fallback horario_apertura / horario_cierre. */
+/** Inicios de turno posibles hoy (ART) según horario_apertura / horario_cierre de la sede. */
 function futureSlotStartsArtAdminDash(sedeRow, ctx) {
   if (!sedeRow || !ctx?.hoyISO) return [];
   const duracion = parseInt(sedeRow?.duracion_reserva_minutos, 10) || 90;
@@ -4481,7 +4481,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           const { data: sedesRows, error: sedesErr } = await supabase
             .from(t('admin.metricas.venuesCount'))
             .select(
-              'id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia, horario_apertura, horario_cierre, franjas_horarias, duracion_reserva_minutos, cantidad_canchas'
+              'id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia, horario_apertura, horario_cierre, duracion_reserva_minutos, cantidad_canchas'
             );
           if (!sedesErr) {
             allSedesRows = sedesRows || [];

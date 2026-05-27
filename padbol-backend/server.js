@@ -3918,7 +3918,7 @@ app.get('/api/reservas/disponibilidad', async (req, res) => {
     const nombreSede = String(sedeFull.nombre || '').trim();
     if (!nombreSede) return res.status(500).json({ error: 'Sede sin nombre' });
 
-    const ventanas = ventanasHorarioReserva(sedeFull, fecha);
+    const ventanas = ventanasHorarioReserva(sedeFull);
     if (!turnoCabeEnVentanasReserva(inicioMin, duracion, ventanas)) {
       return res.status(400).json({
         error: 'hora_inicio fuera del horario de atención de la sede',
@@ -13687,7 +13687,7 @@ async function chatIaFetchSedeFullForTool(supabaseClient, sedeId) {
   const { data: sede, error } = await supabaseClient
     .from('sedes')
     .select(
-      'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,cantidad_canchas,timezone,ciudad,pais,franjas_horarias,precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva',
+      'id,nombre,horario_apertura,horario_cierre,duracion_reserva_minutos,cantidad_canchas,timezone,ciudad,pais,precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva',
     )
     .eq('id', sid)
     .maybeSingle();
