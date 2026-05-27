@@ -276,12 +276,6 @@ export default function AppHeader({
     adminFlowSurface,
   ]);
 
-  /** Destino del chip: admins (rol en DB/caché/JWT) → /admin; jugadores → /mi-perfil; también en shell Ranking/Reservar/Torneos/Perfil. */
-  const hubChipNavPath = useMemo(
-    () => hubChipNavigatePath(rolEffectiveHeader, roleLoading, hubAdminRolEver),
-    [rolEffectiveHeader, roleLoading, hubAdminRolEver]
-  );
-
   const hubFotoUrl = String(userProfile?.foto_url || userProfile?.foto || '').trim();
   const hubInicial = String(hubNombreCorto || '?')
     .charAt(0)
