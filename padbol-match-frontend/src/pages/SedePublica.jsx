@@ -487,19 +487,40 @@ const EMPTY_SEDE_RESENAS_PAYLOAD = {
 const RESENAS_MODAL_PAGE_SIZE = 20;
 
 function normalizeResenasDistribution(dist, totalHint = 0) {
+  if (!dist || typeof dist !== 'object') {
+    return [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0, pct: 0 }));
+  }
   const rows = [5, 4, 3, 2, 1].map((stars) => {
-    let count = 0;
-    if (dist && typeof dist === 'object') {
-      count = Number(dist[stars] ?? dist[String(stars)] ?? 0) || 0;
-    }
+    const count = Number(dist[stars] ?? dist[String(stars)] ?? 0) || 0;
     return { stars, count };
   });
   const sumCounts = rows.reduce((s, r) => s + r.count, 0);
-  const total = totalHint > 0 ? totalHint : sumCounts;
+  const total = Number(totalHint) > 0 ? Number(totalHint) : sumCounts;
   return rows.map((row) => ({
     ...row,
     pct: total > 0 ? Math.round((row.count / total) * 100) : 0,
   }));
+}
+
+/** Siempre devuelve un array de barras listo para render (nunca un objeto crudo de API). */
+function resolveResenasDistributionBars(todasDistribution, payloadDistribution, resenas, totalHint = 0) {
+  const total = Number(totalHint) || 0;
+  if (Array.isArray(todasDistribution) && todasDistribution.length > 0) {
+    return normalizeResenasDistribution(
+      Object.fromEntries(todasDistribution.map((r) => [r.stars, r.count])),
+      total || undefined,
+    );
+  }
+  if (Array.isArray(payloadDistribution) && payloadDistribution.length > 0) {
+    return normalizeResenasDistribution(
+      Object.fromEntries(payloadDistribution.map((r) => [r.stars, r.count])),
+      total || undefined,
+    );
+  }
+  if (payloadDistribution && typeof payloadDistribution === 'object') {
+    return normalizeResenasDistribution(payloadDistribution, total);
+  }
+  return computeDistributionFromResenas(resenas, total);
 }
 
 function computeDistributionFromResenas(resenas, totalHint = 0) {
@@ -512,6 +533,7 @@ function computeDistributionFromResenas(resenas, totalHint = 0) {
 }
 
 function ResenasDistribucionBarras({ distribution, promedio, total }) {
+  const rows = Array.isArray(distribution) ? distribution : [];
   const promedioTxt =
     promedio != null && Number.isFinite(Number(promedio)) ? Number(promedio).toFixed(1) : '—';
   const estrellasPromedio = Number.isFinite(Number(promedio)) ? Math.round(Number(promedio)) : 0;
@@ -528,18 +550,24 @@ function ResenasDistribucionBarras({ distribution, promedio, total }) {
         </span>
       </div>
       <div className="sede-resenas-dist__bars">
-        {(distribution || []).map(({ stars, count, pct }) => (
-          <div key={stars} className="sede-resenas-dist__row">
-            <span className="sede-resenas-dist__label">{stars}</span>
-            <span className="sede-resenas-dist__star-icon" aria-hidden>
-              ★
-            </span>
-            <div className="sede-resenas-dist__track">
-              <div className="sede-resenas-dist__fill" style={{ width: `${pct}%` }} />
+        {rows.map((row) => {
+          const stars = Number(row?.stars) || 0;
+          const count = Number(row?.count) || 0;
+          const pctRaw = Number(row?.pct);
+          const pct = Number.isFinite(pctRaw) ? Math.max(0, Math.min(100, pctRaw)) : 0;
+          return (
+            <div key={stars} className="sede-resenas-dist__row">
+              <span className="sede-resenas-dist__label">{stars}</span>
+              <span className="sede-resenas-dist__star-icon" aria-hidden>
+                ★
+              </span>
+              <div className="sede-resenas-dist__track">
+                <div className="sede-resenas-dist__fill" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="sede-resenas-dist__count">{count}</span>
             </div>
-            <span className="sede-resenas-dist__count">{count}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -1364,6 +1392,7 @@ function resenaAutorFields(r) {
 }
 
 function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }) {
+  if (!r || typeof r !== 'object') return null;
   const { displayName, foto, username } = resenaAutorFields(r);
   const ini = displayName ? displayName.charAt(0).toUpperCase() : '?';
   return (
@@ -1500,6 +1529,7 @@ function ListaResenaCard({ r, isLast, isSuperAdmin, onDeleteResena, deletingId }
 }
 
 function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
+  const { t } = useTranslation();
   const idNum = useMemo(() => parseInt(String(sedeId), 10), [sedeId]);
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1542,11 +1572,12 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
       const distribution = body.distribution
         ? normalizeResenasDistribution(body.distribution, total)
         : null;
+      const { distribution: _rawDist, resenas: _rawResenas, total: _rawTotal, ...bodyRest } = body;
       setPayload({
         ...EMPTY_SEDE_RESENAS_PAYLOAD,
-        ...body,
+        ...bodyRest,
         resenas: Array.isArray(body.resenas) ? body.resenas : [],
-        total,
+        total: Number(total) || 0,
         distribution,
         ya_reseño: Boolean(body.ya_reseño ?? body.user_has_reviewed),
         puede_reseñar: Boolean(body.puede_reseñar ?? body.user_is_eligible),
@@ -1728,7 +1759,18 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
     boxSizing: 'border-box',
   };
 
-  const lista = payload?.resenas || [];
+  const lista = Array.isArray(payload?.resenas) ? payload.resenas : [];
+  const modalDistribution = resolveResenasDistributionBars(
+    todasDistribution,
+    payload?.distribution,
+    todasRows,
+    todasTotal || payload?.total || 0,
+  );
+  const modalResenas = Array.isArray(todasRows) ? todasRows : [];
+  const modalTotal = Number(todasTotal) || Number(payload?.total) || 0;
+  const modalPage = Number(todasPage) > 0 ? Number(todasPage) : 1;
+  const showModalPager =
+    modalTotal > RESENAS_MODAL_PAGE_SIZE || modalPage > 1 || Boolean(todasHasMore);
   const promedioTxt =
     payload?.promedio != null && Number.isFinite(Number(payload.promedio))
       ? Number(payload.promedio).toFixed(1)
@@ -1838,7 +1880,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
             <div>
               {lista.map((row, idx) => (
                 <ListaResenaCard
-                  key={row.id}
+                  key={row?.id ?? `preview-resena-${idx}`}
                   r={row}
                   isLast={idx === lista.length - 1}
                   isSuperAdmin={Boolean(isSuperAdmin)}
@@ -1924,7 +1966,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                   fontSize: '20px',
                   lineHeight: 1,
                 }}
-                aria-label={t('general.close')}
+                aria-label={t('general.close', { defaultValue: 'Cerrar' })}
               >
                 ×
               </button>
@@ -1936,49 +1978,50 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                 WebkitOverflowScrolling: 'touch',
               }}
             >
-              {todasLoading && todasRows.length === 0 ? (
+              {todasLoading && modalResenas.length === 0 ? (
                 <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '14px' }}>Cargando…</p>
               ) : (
                 <>
                   <ResenasDistribucionBarras
-                    distribution={
-                      todasDistribution.length > 0
-                        ? todasDistribution
-                        : payload?.distribution ||
-                          computeDistributionFromResenas(todasRows, todasTotal || payload?.total)
-                    }
-                    promedio={todasPromedioModal ?? payload?.promedio}
-                    total={todasTotal || payload?.total || 0}
+                    distribution={modalDistribution}
+                    promedio={todasPromedioModal ?? payload?.promedio ?? null}
+                    total={modalTotal}
                   />
-                  {todasRows.map((row, idx) => (
-                    <ListaResenaCard
-                      key={row.id}
-                      r={row}
-                      isLast={idx === todasRows.length - 1}
-                      isSuperAdmin={Boolean(isSuperAdmin)}
-                      onDeleteResena={eliminarResenaAdmin}
-                      deletingId={deletingResenaId}
-                    />
-                  ))}
-                  {todasTotal > RESENAS_MODAL_PAGE_SIZE || todasPage > 1 || todasHasMore ? (
+                  {modalResenas.length === 0 ? (
+                    <p style={{ margin: 0, color: SEDE_DS.subtitle, fontSize: '13px' }}>
+                      No hay reseñas para mostrar.
+                    </p>
+                  ) : (
+                    modalResenas.map((row, idx) => (
+                      <ListaResenaCard
+                        key={row?.id ?? `modal-resena-${modalPage}-${idx}`}
+                        r={row}
+                        isLast={idx === modalResenas.length - 1}
+                        isSuperAdmin={Boolean(isSuperAdmin)}
+                        onDeleteResena={eliminarResenaAdmin}
+                        deletingId={deletingResenaId}
+                      />
+                    ))
+                  )}
+                  {showModalPager ? (
                     <div className="sede-resenas-modal-pager">
                       <button
                         type="button"
                         className="sede-resenas-modal-pager__btn"
-                        disabled={todasLoading || todasPage <= 1}
-                        onClick={() => void loadTodasResenasPage(todasPage - 1)}
+                        disabled={todasLoading || modalPage <= 1}
+                        onClick={() => void loadTodasResenasPage(modalPage - 1)}
                       >
                         Anterior
                       </button>
                       <span className="sede-resenas-modal-pager__info">
-                        Página {todasPage}
-                        {todasTotal > 0 ? ` · ${todasTotal} reseñas` : ''}
+                        Página {modalPage}
+                        {modalTotal > 0 ? ` · ${modalTotal} reseñas` : ''}
                       </span>
                       <button
                         type="button"
                         className="sede-resenas-modal-pager__btn"
                         disabled={todasLoading || !todasHasMore}
-                        onClick={() => void loadTodasResenasPage(todasPage + 1)}
+                        onClick={() => void loadTodasResenasPage(modalPage + 1)}
                       >
                         Siguiente
                       </button>
@@ -2052,7 +2095,7 @@ function SedeResenasSeccion({ sedeId, accessToken, navigate, isSuperAdmin }) {
                   lineHeight: 1,
                   flexShrink: 0,
                 }}
-                aria-label={t('general.close')}
+                aria-label={t('general.close', { defaultValue: 'Cerrar' })}
               >
                 ×
               </button>
