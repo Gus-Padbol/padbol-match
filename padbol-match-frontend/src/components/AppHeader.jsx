@@ -19,6 +19,11 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { useTheme } from '../context/ThemeContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
+import {
+  ADMIN_PANEL_ROLES,
+  resolveEffectiveUserRole,
+  userCanAccessAdminPanel,
+} from '../utils/adminPanelRoles';
 
 const btnVolver = {
   background: 'rgba(255,255,255,0.12)',
@@ -35,7 +40,7 @@ const btnVolver = {
 
 const LOGOUT_BTN_SIZE = 34;
 
-const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'empleado', 'editor_contenido'];
+const ADMIN_ROLES_CHIP = ADMIN_PANEL_ROLES;
 
 const PADBOL_SUPER_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
 
@@ -142,16 +147,12 @@ export default function AppHeader({
       setHubAdminRolEver((prev) => prev || true);
     }
   }, [session?.user, rol, session?.user?.email]);
-  /** Rol desde DB/caché; si aún no hay fila `user_roles` (p. ej. otro proyecto/host), usar rol en JWT de Supabase Auth. */
-  const rolEffectiveHeader = useMemo(() => {
-    const cached = readCachedRolHeader();
-    const r = String(session?.user?.app_metadata?.role ?? session?.user?.user_metadata?.role ?? '')
-      .trim()
-      .toLowerCase();
-    const fromJwt = ADMIN_ROLES_CHIP.includes(r) ? r : null;
-    return rol || cached || fromJwt;
-  }, [rol, session?.user?.app_metadata?.role, session?.user?.user_metadata?.role]);
-  const isPanelAdminUser = ADMIN_ROLES_CHIP.includes(rolEffectiveHeader || '');
+  /** Rol desde `user_roles` (API), caché local o JWT. */
+  const rolEffectiveHeader = useMemo(
+    () => resolveEffectiveUserRole({ rolFromApi: rol, session }),
+    [rol, session]
+  );
+  const isPanelAdminUser = userCanAccessAdminPanel(rolEffectiveHeader);
   const [adminSedeNombre, setAdminSedeNombre] = useState('');
 
   useEffect(() => {
@@ -201,6 +202,23 @@ export default function AppHeader({
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState({ jugadores: [], torneos: [], sedes: [] });
   const searchWrapRef = useRef(null);
+  const hubChipMenuRef = useRef(null);
+  const [hubChipMenuOpen, setHubChipMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setHubChipMenuOpen(false);
+  }, [pathOnly, session?.user?.id]);
+
+  useEffect(() => {
+    if (!hubChipMenuOpen) return undefined;
+    const onDoc = (e) => {
+      if (hubChipMenuRef.current && !hubChipMenuRef.current.contains(e.target)) {
+        setHubChipMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [hubChipMenuOpen]);
 
   /** /torneo/:id/equipos sin venir del panel: mismo ancho hub, título corto "Equipos". */
   const headerTitleDisplay = useMemo(() => {
@@ -297,10 +315,7 @@ export default function AppHeader({
   /** Hub inicio con sesión: super admin → [⚙ Admin] sin chip; resto → chip (logout en Mi Perfil). */
   const hubHomeCompactHeader =
     hubDirectLogin && hubInicioPath && Boolean(session?.user);
-  const muestraChipUsuarioHubDerecha =
-    hubDirectLogin &&
-    Boolean(session?.user) &&
-    !(hubHomeCompactHeader && esRolAdminHub);
+  const muestraChipUsuarioHubDerecha = hubDirectLogin && Boolean(session?.user);
   const hubHeaderControlCount =
     (showAdminShortcutHub ? 1 : 0) + (muestraChipUsuarioHubDerecha ? 1 : 0);
   const hideHubCenterTitle = hubHomeCompactHeader && hubHeaderControlCount > 2;
@@ -1198,6 +1213,7 @@ export default function AppHeader({
             ) : null}
             {!reservaCheckoutMinimal && jugadorChipEnHeaderGrid ? (
               <div
+                ref={hubChipMenuRef}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -1208,17 +1224,27 @@ export default function AppHeader({
                 <button
                   type="button"
                   onClick={() => {
-                    navigate(adminFlowSurface ? '/admin' : hubChipNavPath);
+                    if (adminFlowSurface) {
+                      navigate('/admin');
+                      return;
+                    }
+                    if (isPanelAdminUser) {
+                      setHubChipMenuOpen((open) => !open);
+                      return;
+                    }
+                    navigate(hubChipNavPath);
                   }}
+                  aria-expanded={isPanelAdminUser && !adminFlowSurface ? hubChipMenuOpen : undefined}
+                  aria-haspopup={isPanelAdminUser && !adminFlowSurface ? 'menu' : undefined}
                   aria-label={
                     adminFlowSurface
                       ? 'Ir al panel de administración'
-                      : hubChipNavPath === '/admin'
-                        ? 'Ir al panel de administración'
+                      : isPanelAdminUser
+                        ? 'Menú de cuenta'
                         : t('hub.goToProfile')
                   }
                   title={
-                    adminFlowSurface ? 'Panel admin' : hubChipNavPath === '/admin' ? 'Panel admin' : 'Mi perfil'
+                    adminFlowSurface ? 'Panel admin' : isPanelAdminUser ? 'Menú de cuenta' : 'Mi perfil'
                   }
                   style={{
                     display: 'inline-flex',
@@ -1289,6 +1315,76 @@ export default function AppHeader({
                     {hubChipLabel}
                   </span>
                 </button>
+                {hubChipMenuOpen && isPanelAdminUser && !adminFlowSurface ? (
+                  <div
+                    role="menu"
+                    className="hub-header-chip-menu"
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      right: 0,
+                      zIndex: 13000,
+                      minWidth: 168,
+                      padding: 6,
+                      borderRadius: 10,
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      boxShadow: '0 10px 28px rgba(0,0,0,0.22)',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="hub-header-chip-menu__item"
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: 'none',
+                        borderRadius: 8,
+                        background: 'transparent',
+                        color: 'var(--accent)',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                      onClick={() => {
+                        setHubChipMenuOpen(false);
+                        navigate('/admin');
+                      }}
+                    >
+                      {t('hub.goToAdmin')}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="hub-header-chip-menu__item"
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: 'none',
+                        borderRadius: 8,
+                        background: 'transparent',
+                        color: 'var(--text-primary)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                      onClick={() => {
+                        setHubChipMenuOpen(false);
+                        navigate('/mi-perfil');
+                      }}
+                    >
+                      {t('hub.goToProfile')}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             ) : null}
             {!reservaCheckoutMinimal && showAdminShortcutHub && !botonAdminIzquierdaEnHub ? adminShortcutButton : null}

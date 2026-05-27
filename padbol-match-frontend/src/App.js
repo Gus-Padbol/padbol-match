@@ -62,6 +62,7 @@ import { useAuth } from './context/AuthContext';
 import { HubNavLayoutProvider } from './context/HubNavLayoutContext';
 import { getDisplayName } from './utils/displayName';
 import { scheduleHubEntryScrollReset } from './utils/hubEntryScrollReset';
+import { resolveEffectiveUserRole, userCanAccessAdminPanel } from './utils/adminPanelRoles';
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -217,12 +218,12 @@ function AdminDashboardGate() {
 
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
 
-  /** Solo roles definidos en `user_roles` (sin fallback por email a super_admin). */
-  const canAccessAdmin = () =>
-    ['super_admin', 'admin_nacional', 'admin_club', 'empleado', 'editor_contenido'].includes(rol);
+  const rolEffectiveAdmin = useMemo(
+    () => resolveEffectiveUserRole({ rolFromApi: rol, session }),
+    [rol, session]
+  );
 
-  const email = currentCliente?.email ?? null;
-  console.log('GATE:', { roleLoading, rol, sedeId, email, canAccess: canAccessAdmin() });
+  const canAccessAdmin = userCanAccessAdminPanel(rolEffectiveAdmin);
 
   const spinner = (
     <div
@@ -262,8 +263,8 @@ function AdminDashboardGate() {
     return spinner;
   }
 
-  if (canAccessAdmin()) {
-    return <AdminDashboard rol={rol} sedeId={sedeId} />;
+  if (canAccessAdmin) {
+    return <AdminDashboard rol={rolEffectiveAdmin || rol} sedeId={sedeId} />;
   }
 
   /* roleLoading === false: rol ya resuelto; sin rol de panel → denegar. */

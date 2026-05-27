@@ -1,8 +1,13 @@
 import { useState, useEffect, useLayoutEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { fetchMiRol } from '../utils/fetchMiRol';
+import {
+  USER_ROLE_STORAGE_KEY,
+  normalizeUserRole,
+  readCachedUserRoleData,
+} from '../utils/adminPanelRoles';
 
-const STORAGE_KEY = 'user_role_data';
+const STORAGE_KEY = USER_ROLE_STORAGE_KEY;
 
 export default function useUserRole(currentCliente) {
   const email = currentCliente?.email ? String(currentCliente.email).trim() : null;
@@ -46,7 +51,7 @@ export default function useUserRole(currentCliente) {
         const result = data
           ? {
               email: data.email || email,
-              rol: data.rol,
+              rol: normalizeUserRole(data.rol),
               nombre: data.nombre,
               pais: data.pais,
               sedeId: data.sedeId,

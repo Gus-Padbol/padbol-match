@@ -1,4 +1,5 @@
 import { getPublicApiBaseUrl } from './apiPublicBaseUrl';
+import { normalizeUserRole } from './adminPanelRoles';
 
 const API_BASE =
   getPublicApiBaseUrl() ||
@@ -19,16 +20,22 @@ export async function fetchMiRol(accessToken) {
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  const contentType = String(res.headers.get('content-type') || '').toLowerCase();
   let data = {};
-  try {
-    data = await res.json();
-  } catch {
-    data = {};
+  if (contentType.includes('application/json')) {
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
   }
 
   if (res.status === 401) return null;
-  if (!res.ok) {
-    throw new Error(data?.error || `No se pudo obtener el rol (${res.status})`);
+  if (!res.ok || !contentType.includes('application/json')) {
+    if (!res.ok) {
+      throw new Error(data?.error || `No se pudo obtener el rol (${res.status})`);
+    }
+    return null;
   }
 
   const email = String(data.email || '').trim();
@@ -39,7 +46,7 @@ export async function fetchMiRol(accessToken) {
 
   return {
     email,
-    rol: data.rol ?? null,
+    rol: normalizeUserRole(data.rol),
     nombre: data.nombre ?? null,
     pais: data.pais ?? null,
     sedeId: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
