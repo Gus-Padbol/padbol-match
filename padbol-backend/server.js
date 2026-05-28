@@ -211,7 +211,15 @@ async function fetchSedeMpCredentialsPg(sedeId) {
       'SELECT mp_access_token, mp_public_key FROM sedes WHERE id = $1',
       [sid],
     );
-    return rows[0] ?? null;
+    const row = rows[0] ?? null;
+    if (crearPreferenciaSupabaseLogActive) {
+      console.log('[POST /api/crear-preferencia] pg query OK', {
+        sedeId: sid,
+        hasRow: Boolean(row),
+        hasMpToken: Boolean(String(row?.mp_access_token || '').trim()),
+      });
+    }
+    return row;
   } catch (err) {
     console.error('[POST /api/crear-preferencia] pg query error:', {
       message: err?.message,
@@ -225,6 +233,7 @@ async function fetchSedeMpCredentialsPg(sedeId) {
 
 /** Activo solo durante POST /api/crear-preferencia — traza queries Supabase (PA_UNAUTHORIZED). */
 let crearPreferenciaSupabaseLogActive = false;
+let crearPreferenciaSupabaseLogSeq = 0;
 
 function supabaseClientLabelForLog(client) {
   if (client === supabaseAdmin) return 'supabaseAdmin';
@@ -234,7 +243,9 @@ function supabaseClientLabelForLog(client) {
 
 function logCrearPreferenciaSupabaseQuery(client, table, operation, params = {}) {
   if (!crearPreferenciaSupabaseLogActive) return;
+  crearPreferenciaSupabaseLogSeq += 1;
   console.log('[POST /api/crear-preferencia] Supabase query', {
+    seq: crearPreferenciaSupabaseLogSeq,
     table,
     operation,
     client: supabaseClientLabelForLog(client),
@@ -3628,6 +3639,15 @@ async function fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas 
   }
   if (error) {
     console.warn('[sedes_duraciones] lectura:', error.message || String(error), { sede_id: sid, code: error.code });
+    if (crearPreferenciaSupabaseLogActive) {
+      console.error('[POST /api/crear-preferencia] Supabase query failed', {
+        seq: crearPreferenciaSupabaseLogSeq,
+        table: 'sedes_duraciones',
+        operation: 'select',
+        client: supabaseClientLabelForLog(db),
+        error: { message: error.message, code: error.code, details: error.details },
+      });
+    }
     return [];
   }
   return Array.isArray(data) ? data : [];
@@ -3750,7 +3770,19 @@ async function precioBaseReservaSedeDuracion(supabaseClient, sedeId, duracionMin
       .select('precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva')
       .eq('id', sid)
       .maybeSingle();
-    if (error) console.warn('[precioBaseReservaSedeDuracion] sedes', error.message);
+    if (error) {
+      if (crearPreferenciaSupabaseLogActive) {
+        console.error('[POST /api/crear-preferencia] Supabase query failed', {
+          seq: crearPreferenciaSupabaseLogSeq,
+          table: 'sedes',
+          operation: 'select.maybeSingle',
+          client: supabaseClientLabelForLog(supabaseClient),
+          error: { message: error.message, code: error.code, details: error.details },
+        });
+        throw error;
+      }
+      console.warn('[precioBaseReservaSedeDuracion] sedes', error.message);
+    }
     sede = data;
   }
   if (!sede) return null;
@@ -11248,6 +11280,7 @@ function logCrearPreferenciaError(phase, err, ctx = {}) {
 
 const postCrearPreferenciaMercadoPago = async (req, res) => {
   crearPreferenciaSupabaseLogActive = true;
+  crearPreferenciaSupabaseLogSeq = 0;
   const ctx = {
     sedeId: req.body?.sedeId ?? req.body?.reservaData?.sede_id ?? null,
     titulo: req.body?.titulo ?? null,
@@ -11320,8 +11353,22 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
     const sidNum = Number(sedeId);
     const effectiveSedeId =
       Number.isFinite(sidNum) && sidNum > 0 ? sidNum : torneoSedeIdForCfg != null ? torneoSedeIdForCfg : null;
-    let sedeCfg = effectiveSedeId ? await sedePaymentConfigBySedeId(effectiveSedeId, { mpViaPg: true }) : null;
+    let sedeCfg = null;
+    if (effectiveSedeId) {
+      logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
+        phase: 'sedePaymentConfigBySedeId',
+        after: 'pg mp_access_token',
+        columns: 'id, nombre, metodo_pago, stripe_account_id, pago_manual_instrucciones',
+        eq: { id: effectiveSedeId },
+      });
+      sedeCfg = await sedePaymentConfigBySedeId(effectiveSedeId, { mpViaPg: true });
+    }
     if (!sedeCfg && reservaData && typeof reservaData === 'object' && reservaData.sede) {
+      logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
+        phase: 'sedePaymentConfigByNombre',
+        columns: 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones',
+        eq: { nombre: String(reservaData.sede).trim() },
+      });
       sedeCfg = await sedePaymentConfigByNombre(String(reservaData.sede).trim());
     }
     if (tipoEff === 'partido_abierto' && reservaData && typeof reservaData === 'object') {
@@ -11330,6 +11377,10 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       const durR = parseInt(String(rd.duracion ?? ''), 10);
       let extrasSum = 0;
       try {
+        logCrearPreferenciaSupabaseQuery(db, 'sede_extras', 'select', {
+          phase: 'resolveExtrasLinesParaSede',
+          eq: { sede_id: sidR },
+        });
         const ex = await resolveExtrasLinesParaSede(db, sidR, rd.extras ?? b.extras);
         extrasSum = ex.sum;
         if (ex.lines.length) rd.extras = ex.lines;
@@ -11339,6 +11390,15 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         throw e;
       }
       if (Number.isFinite(sidR) && sidR > 0 && Number.isFinite(durR) && durR > 0) {
+        logCrearPreferenciaSupabaseQuery(db, 'sedes_duraciones', 'select', {
+          phase: 'precioBaseReservaSedeDuracion',
+          eq: { sede_id: sidR, duracion_minutos: durR },
+        });
+        logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
+          phase: 'precioBaseReservaSedeDuracion',
+          note: 'fallback precios legacy si no hay fila en sedes_duraciones',
+          eq: { id: sidR },
+        });
         const baseDb = await precioBaseReservaSedeDuracion(db, sidR, durR);
         if (baseDb != null) {
           const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
@@ -11362,6 +11422,10 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       if (hasExtras && Number.isFinite(sidR) && sidR > 0) {
         let extrasSum = 0;
         try {
+          logCrearPreferenciaSupabaseQuery(db, 'sede_extras', 'select', {
+            phase: 'resolveExtrasLinesParaSede',
+            eq: { sede_id: sidR },
+          });
           const ex = await resolveExtrasLinesParaSede(db, sidR, extrasRaw);
           extrasSum = ex.sum;
           if (ex.lines.length) rd.extras = ex.lines;
@@ -11371,6 +11435,15 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
           throw e;
         }
         if (Number.isFinite(durR) && durR > 0) {
+          logCrearPreferenciaSupabaseQuery(db, 'sedes_duraciones', 'select', {
+            phase: 'precioBaseReservaSedeDuracion',
+            eq: { sede_id: sidR, duracion_minutos: durR },
+          });
+          logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
+            phase: 'precioBaseReservaSedeDuracion',
+            note: 'fallback precios legacy si no hay fila en sedes_duraciones',
+            eq: { id: sidR },
+          });
           const baseDb = await precioBaseReservaSedeDuracion(db, sidR, durR);
           if (baseDb != null) {
             const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
@@ -11421,10 +11494,23 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         duracion: r.duracion,
       };
       try {
+        logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
+          phase: 'assertCanchaPermitidaParaReservaPorNombreSede',
+          eq: { nombre: String(payloadReserva.sede || '').trim() },
+        });
+        logCrearPreferenciaSupabaseQuery(db, 'canchas', 'select', {
+          phase: 'assertCanchaPermitidaParaReservaPorNombreSede',
+          note: 'fetchCanchasRowsForSede tras lookup sede',
+        });
         await assertCanchaPermitidaParaReservaPorNombreSede(
           String(payloadReserva.sede || '').trim(),
           payloadReserva.cancha
         );
+        logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
+          phase: 'assertReservaHorarioNoPasadoParaSede',
+          columns: 'timezone, ciudad, pais',
+          eq: { nombre: String(payloadReserva.sede || '').trim() },
+        });
         await assertReservaHorarioNoPasadoParaSede(
           String(payloadReserva.sede || '').trim(),
           String(payloadReserva.fecha || '').trim(),
@@ -11434,6 +11520,14 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         if (!Number.isFinite(duracionMinManual) || duracionMinManual <= 0) duracionMinManual = 90;
         payloadReserva.duracion = duracionMinManual;
         payloadReserva.duracion_minutos = duracionMinManual;
+        logCrearPreferenciaSupabaseQuery(db, 'reservas', 'select', {
+          phase: 'assertReservaSinSolapeBackend',
+          eq: {
+            sede: String(payloadReserva.sede || '').trim(),
+            fecha: String(payloadReserva.fecha || '').trim(),
+            cancha: payloadReserva.cancha,
+          },
+        });
         await assertReservaSinSolapeBackend({
           sede: String(payloadReserva.sede || '').trim(),
           fecha: String(payloadReserva.fecha || '').trim(),
@@ -11454,11 +11548,22 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       if (String(r.tipo || '').trim().toLowerCase() === 'partido_abierto') {
         const publicar = payloadQuierePublicarPartidoAbierto(r);
         if (publicar) {
+          logCrearPreferenciaSupabaseQuery(db, 'partidos_abiertos', 'select.maybeSingle', {
+            phase: 'publicarPartidoAbiertoDesdePayload',
+            note: 'lookup share_token',
+          });
+          logCrearPreferenciaSupabaseQuery(db, 'partidos_abiertos', 'insert.select.single', {
+            phase: 'publicarPartidoAbiertoDesdePayload',
+          });
           const pub = await publicarPartidoAbiertoDesdePayload(r, reservaCreada);
           partidoCreado = pub.partido || null;
         }
       }
       if (reservaCreada?.id != null) {
+        logCrearPreferenciaSupabaseQuery(db, 'reservas_historial', 'insert', {
+          phase: 'insertReservaHistorialEstado',
+          reserva_id: reservaCreada.id,
+        });
         await insertReservaHistorialEstado(db, {
           reserva_id: reservaCreada.id,
           estado_anterior: null,
@@ -11506,6 +11611,14 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       const rdCancha = reservaData.cancha;
       if (rdSede && rdCancha != null) {
         try {
+          logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
+            phase: 'assertCanchaPermitidaParaReservaPorNombreSede',
+            eq: { nombre: String(rdSede).trim() },
+          });
+          logCrearPreferenciaSupabaseQuery(db, 'canchas', 'select', {
+            phase: 'assertCanchaPermitidaParaReservaPorNombreSede',
+            note: 'fetchCanchasRowsForSede tras lookup sede',
+          });
           await assertCanchaPermitidaParaReservaPorNombreSede(String(rdSede).trim(), rdCancha);
         } catch (e) {
           const st = e.status || 400;
