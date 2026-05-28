@@ -141,17 +141,17 @@ let crearPreferenciaSupabaseLogActive = false;
 
 function supabaseClientLabelForLog(client) {
   if (client === supabaseAdmin) return 'supabaseAdmin';
-  if (client === supabase) return 'supabase';
+  if (client === supabase) return 'supabase (anon)';
   return 'unknown';
 }
 
 function logCrearPreferenciaSupabaseQuery(client, table, operation, params = {}) {
   if (!crearPreferenciaSupabaseLogActive) return;
-  console.error('[crear-preferencia] Supabase query', {
-    client: supabaseClientLabelForLog(client),
+  console.log('[POST /api/crear-preferencia] Supabase query', {
     table,
     operation,
-    params,
+    client: supabaseClientLabelForLog(client),
+    ...(Object.keys(params).length ? { params } : {}),
   });
 }
 
