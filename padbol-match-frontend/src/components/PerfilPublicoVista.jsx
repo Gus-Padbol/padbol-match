@@ -51,7 +51,7 @@ export default function PerfilPublicoVista({
 
   if (!data) return null;
 
-  const avatarUrl = String(data.avatar_url || '').trim();
+  const avatarUrl = String(data.avatar_url || data.foto_url || '').trim();
   const displayName = String(data.display_name || '').trim() || t('perfilPublico.playerFallback');
   const username = String(data.username || '').trim();
   const nivel = String(data.nivel || '').trim();
@@ -59,7 +59,11 @@ export default function PerfilPublicoVista({
   const categoriaColor = CATEGORIA_COLOR[nivel] || '#64748b';
   const stats = data.estadisticas || {};
   const deportes = Array.isArray(data.deportes) ? data.deportes : [];
-  const torneos = Array.isArray(data.torneos_recientes) ? data.torneos_recientes : [];
+  const torneos = Array.isArray(data.torneos_recientes)
+    ? data.torneos_recientes
+    : Array.isArray(data.historial_torneos)
+      ? data.historial_torneos
+      : [];
   const ini = displayName.charAt(0).toUpperCase() || '?';
 
   return (

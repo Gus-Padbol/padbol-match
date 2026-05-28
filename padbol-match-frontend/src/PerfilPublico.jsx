@@ -15,7 +15,7 @@ import { IconGeroUbicacion } from './components/icons/GeroIcons';
 import HubSponsorsTicker from './components/HubSponsorsTicker';
 import { useHubSponsors } from './hooks/useHubSponsors';
 import { useSafeTranslation as useTranslation } from './i18n/tSafe';
-import { buildPerfilPublicoFetchUrl } from './utils/perfilPublicoApi';
+import { buildPerfilPublicoFetchUrl, normalizePerfilPublicoApiResponse } from './utils/perfilPublicoApi';
 
 const API_BASE_PERFIL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -170,30 +170,47 @@ export default function PerfilPublico() {
 
     try {
       const apiUrl = buildPerfilPublicoFetchUrl(a, API_BASE_PERFIL);
+      console.log('[PERFIL] URL llamada:', apiUrl);
       if (!apiUrl) {
+        console.log('[PERFIL] error:', 'URL inválida para slug', a);
         setPerfil(null);
         setPerfilPublicoApi(null);
         setLoading(false);
         return;
       }
       const res = await fetch(apiUrl);
-      if (!res.ok) {
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.log('[PERFIL] error:', parseErr);
         setPerfil(null);
         setPerfilPublicoApi(null);
         setLoading(false);
         return;
       }
-      const data = await res.json();
-      const match = data?.perfil || null;
-      if (!match) {
+      console.log('[PERFIL] respuesta:', data);
+      if (!res.ok) {
+        console.log('[PERFIL] error:', { status: res.status, statusText: res.statusText, body: data });
         setPerfil(null);
         setPerfilPublicoApi(null);
         setLoading(false);
         return;
       }
 
-      setPerfilPublicoApi(data);
-      setPerfil(match);
+      const normalized = normalizePerfilPublicoApiResponse(data);
+      if (!normalized?.perfil || !normalized?.api) {
+        console.log('[PERFIL] error:', 'respuesta sin perfil reconocible', data);
+        setPerfil(null);
+        setPerfilPublicoApi(null);
+        setLoading(false);
+        return;
+      }
+
+      setPerfilPublicoApi(normalized.api);
+      setPerfil(normalized.perfil);
+
+      const match = normalized.perfil;
 
       const cid = match.companero_id != null ? String(match.companero_id).trim() : '';
       const uid = match.ultimo_companero_id != null ? String(match.ultimo_companero_id).trim() : '';
@@ -215,6 +232,7 @@ export default function PerfilPublico() {
         setCompaneroDisplay(null);
       }
     } catch (e) {
+      console.log('[PERFIL] error:', e);
       console.error('[PerfilPublico]', e);
       setPerfil(null);
       setPerfilPublicoApi(null);
