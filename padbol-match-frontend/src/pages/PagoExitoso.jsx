@@ -35,12 +35,11 @@ export default function PagoExitoso() {
   const { navDock } = useHubNavLayout();
   const [params] = useSearchParams();
 
-  const paymentId = params.get('payment_id');
-  const extRef = params.get('external_reference');
+  const paymentId = params.get('payment_id') || params.get('collection_id');
 
   const [saving, setSaving] = useState(true);
   const [reserva, setReserva] = useState(null);
-  const [saveError, setSaveError] = useState('');
+  const [confirmError, setConfirmError] = useState(false);
   /** null | 'reserva' | 'torneo' | 'partido' */
   const [pagoKind, setPagoKind] = useState(null);
   const [torneoInscripcion, setTorneoInscripcion] = useState(null);
@@ -64,10 +63,10 @@ export default function PagoExitoso() {
   }, [reserva]);
 
   const sponsorReservaEnabled =
-    !saving && !saveError && pagoKind === 'reserva' && Boolean(reserva);
+    !saving && !confirmError && pagoKind === 'reserva' && Boolean(reserva);
 
   const sedeTickerPagoEnabled =
-    !saving && !saveError && pagoKind === 'reserva' && Boolean(reservaSedeId);
+    !saving && !confirmError && pagoKind === 'reserva' && Boolean(reservaSedeId);
 
   const { sponsors: sedeTickerPago } = useSedeTickerSponsors(reservaSedeId, {
     enabled: sedeTickerPagoEnabled,
@@ -84,119 +83,54 @@ export default function PagoExitoso() {
   useEffect(() => {
     if (savedRef.current) return;
 
-    if (!extRef) {
+    if (!paymentId) {
       savedRef.current = true;
+      setConfirmError(true);
       setSaving(false);
-      return;
-    }
-
-    let rawRef = extRef;
-    try {
-      rawRef = decodeURIComponent(extRef);
-    } catch {
-      rawRef = extRef;
-    }
-
-    let payload;
-    try {
-      payload = JSON.parse(rawRef);
-    } catch {
-      savedRef.current = true;
-      setSaveError('No se pudo leer los datos del pago.');
-      setSaving(false);
-      return;
-    }
-
-    if (payload?.tipo === 'torneo_inscripcion') {
-      savedRef.current = true;
-      fetch(`${API_BASE}/api/torneos/confirmar-inscripcion`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          equipo_id: payload.equipo_id,
-          torneo_id: payload.torneo_id,
-          email: payload.email,
-        }),
-      })
-        .then((r) => r.json().then((d) => ({ ok: r.ok, status: r.status, data: d })))
-        .then(({ ok, data }) => {
-          if (ok) {
-            setPagoKind('torneo');
-            setTorneoInscripcion({
-              torneo_id: payload.torneo_id,
-              equipo_id: payload.equipo_id,
-            });
-          } else {
-            setSaveError(data?.error || 'No se pudo confirmar la inscripción.');
-          }
-        })
-        .catch((err) => setSaveError(err.message || 'Error de red'))
-        .finally(() => setSaving(false));
-      return;
-    }
-
-    if (payload?.tipo === 'partido_abierto') {
-      savedRef.current = true;
-      supabase.auth
-        .getSession()
-        .then(({ data }) => {
-          const token = data?.session?.access_token || '';
-          return fetch(`${API_BASE}/api/partidos-abiertos/confirmar-pago`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify(payload),
-          });
-        })
-        .then((r) => r.json().then((d) => ({ ok: r.ok, status: r.status, data: d })))
-        .then(({ ok, data }) => {
-          if (ok) {
-            clearMpReservaPendingSlot();
-            if (data?.partido) {
-              setPagoKind('partido');
-            } else {
-              setReserva(data?.reserva || null);
-              setPagoKind('reserva');
-            }
-          } else {
-            setSaveError(data?.error || 'No se pudo publicar el partido.');
-          }
-        })
-        .catch((err) => setSaveError('Error al publicar el partido: ' + err.message))
-        .finally(() => setSaving(false));
       return;
     }
 
     savedRef.current = true;
-    fetch(`${API_BASE}/api/reservas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-      .then((r) => r.json().then((d) => ({ ok: r.ok, status: r.status, data: d })))
-      .then(({ ok, status: httpStatus, data }) => {
-        if (ok) {
-          clearMpReservaPendingSlot();
-          const created = Array.isArray(data) ? data[0] : data;
-          setReserva({ ...payload, id: created?.id });
-          setPagoKind('reserva');
-        } else if (httpStatus === 409) {
-          clearMpReservaPendingSlot();
-          setReserva(payload);
-          setPagoKind('reserva');
-        } else {
-          setSaveError(data?.error || 'No se pudo guardar la reserva.');
+    const url = `${API_BASE}/api/pago-exitoso?payment_id=${encodeURIComponent(paymentId)}`;
+
+    fetch(url)
+      .then((r) => r.json().then((d) => ({ ok: r.ok, data: d })))
+      .then(({ ok, data }) => {
+        if (!ok || data?.ok === false) {
+          setConfirmError(true);
+          return;
         }
+
+        clearMpReservaPendingSlot();
+        const tipo = String(data.tipo || 'reserva').toLowerCase();
+
+        if (tipo === 'torneo') {
+          setPagoKind('torneo');
+          setTorneoInscripcion({
+            torneo_id: data.torneo_id,
+            equipo_id: data.equipo_id,
+          });
+          return;
+        }
+
+        if (tipo === 'partido') {
+          setPagoKind('partido');
+          if (data.reserva) setReserva(data.reserva);
+          return;
+        }
+
+        setPagoKind('reserva');
+        setReserva(data.reserva || data.reservation || null);
       })
-      .catch((err) => setSaveError('Error al guardar la reserva: ' + err.message))
+      .catch(() => {
+        setConfirmError(true);
+      })
       .finally(() => setSaving(false));
-  }, [extRef]);
+  }, [paymentId]);
 
   useEffect(() => {
     const rid = reserva?.id;
-    if (!rid || pagoKind !== 'reserva' || saving || saveError) {
+    if (!rid || pagoKind !== 'reserva' || saving || confirmError) {
       setQrToken(null);
       setQrError('');
       return undefined;
@@ -232,7 +166,7 @@ export default function PagoExitoso() {
     return () => {
       cancelled = true;
     };
-  }, [reserva?.id, pagoKind, saving, saveError]);
+  }, [reserva?.id, pagoKind, saving, confirmError]);
 
   const descargarQrPago = () => {
     const canvas = qrCanvasWrapRef.current?.querySelector('canvas');
@@ -278,7 +212,7 @@ export default function PagoExitoso() {
               Registrando tu operación, un momento.
             </p>
           </>
-        ) : saveError ? (
+        ) : confirmError ? (
           <>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
             <h1
@@ -303,20 +237,6 @@ export default function PagoExitoso() {
               {paymentId ? ` (#${paymentId})` : ''}, pero no pudimos completar el registro automáticamente.
               Por favor contacta a la sede con el número de pago.
             </p>
-            <div
-              style={{
-                background: '#fef3c7',
-                border: '1px solid #fcd34d',
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '20px',
-                textAlign: 'left',
-                fontSize: '13px',
-                color: '#92400e',
-              }}
-            >
-              <strong>Error:</strong> {saveError}
-            </div>
             <button
               type="button"
               onClick={() => navigate('/')}

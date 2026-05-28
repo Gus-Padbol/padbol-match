@@ -10719,8 +10719,186 @@ function parseMercadoPagoExternalReference(raw) {
     const o = JSON.parse(s);
     return o && typeof o === 'object' ? o : null;
   } catch {
+    if (/^\d+$/.test(s)) {
+      return { tipo: 'reserva_id', reserva_id: parseInt(s, 10) };
+    }
     return null;
   }
+}
+
+async function findReservaConfirmadaPorMpPaymentId(mpPaymentId) {
+  const pid = String(mpPaymentId || '').trim();
+  if (!pid) return null;
+  const { data, error } = await supabaseAdmin
+    .from('reservas')
+    .select('*')
+    .eq('mp_payment_id', pid)
+    .maybeSingle();
+  if (error && !/mp_payment_id|colum|column/i.test(String(error.message || ''))) throw error;
+  return data || null;
+}
+
+async function findReservaPorExternalReferenceMp(payment) {
+  const ext = parseMercadoPagoExternalReference(payment?.external_reference);
+  if (!ext) return null;
+  const tipo = String(ext.tipo || '').toLowerCase();
+  if (tipo === 'reserva_id' || ext.reserva_id != null) {
+    const rid = parseInt(String(ext.reserva_id), 10);
+    if (!Number.isFinite(rid)) return null;
+    const { data, error } = await supabaseAdmin.from('reservas').select('*').eq('id', rid).maybeSingle();
+    if (error) throw error;
+    return data || null;
+  }
+  const sede = String(ext.sede || '').trim();
+  const fecha = String(ext.fecha || '').trim();
+  const hora = String(ext.hora || '').trim();
+  const cancha = parseInt(String(ext.cancha), 10);
+  if (!sede || !fecha || !hora || !Number.isFinite(cancha)) return null;
+  const { data, error } = await supabaseAdmin
+    .from('reservas')
+    .select('*')
+    .eq('sede', sede)
+    .eq('fecha', fecha)
+    .eq('hora', hora)
+    .eq('cancha', cancha)
+    .neq('estado', 'cancelada')
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function confirmarReservaExistentePorIdMp(reservaId, mpPaymentId) {
+  const rid = parseInt(String(reservaId), 10);
+  if (!Number.isFinite(rid)) throw new Error('ID de reserva inválido');
+  const { data: row, error } = await supabaseAdmin.from('reservas').select('*').eq('id', rid).maybeSingle();
+  if (error) throw error;
+  if (!row) throw new Error('Reserva no encontrada');
+  const estado = String(row.estado || '').trim().toLowerCase();
+  const pid = mpPaymentId ? String(mpPaymentId).trim() : null;
+  if (estado === 'confirmada') {
+    if (pid && !row.mp_payment_id) {
+      await supabaseAdmin.from('reservas').update({ mp_payment_id: pid }).eq('id', rid);
+    }
+    return { ...row, mp_payment_id: row.mp_payment_id || pid };
+  }
+  const patch = { estado: 'confirmada', ...(pid ? { mp_payment_id: pid } : {}) };
+  const { data: updated, error: uErr } = await supabaseAdmin
+    .from('reservas')
+    .update(patch)
+    .eq('id', rid)
+    .select()
+    .single();
+  if (uErr) throw uErr;
+  await insertReservaHistorialEstado(supabaseAdmin, {
+    reserva_id: rid,
+    estado_anterior: row.estado || null,
+    estado_nuevo: 'confirmada',
+    changed_by: 'sistema',
+  });
+  sendReservaConfirmadaWhatsAppTwilio({
+    email: row.email,
+    nombreFallback: row.nombre,
+    fecha: row.fecha,
+    hora: row.hora,
+    duracionMinutos: row.duracion_minutos ?? row.duracion,
+    nombreSede: row.sede,
+  }).catch((errW) => console.warn('⚠️ WhatsApp confirmación reserva (pago-exitoso):', errW.message));
+  return updated;
+}
+
+async function marcarMpPaymentProcesadoIdempotencia(mpPaymentId, eventType = 'pago-exitoso') {
+  const pid = String(mpPaymentId || '').trim();
+  if (!pid) return;
+  if (await mpPaymentApprovedAlreadyProcessed(pid)) return;
+  const logId = await insertWebhookLog({
+    source: 'mercadopago',
+    event_type: eventType,
+    payload: { via: eventType },
+    mp_payment_id: pid,
+  });
+  await markWebhookLogDone(logId, { mp_payment_id: pid });
+}
+
+async function procesarPagoMercadoPagoApproved(paymentId) {
+  const payment = await fetchMercadoPagoPaymentById(paymentId);
+  const pid = String(payment?.id ?? paymentId);
+  const status = String(payment?.status || '').toLowerCase();
+  if (status !== 'approved') {
+    const e = new Error('El pago aún no está aprobado');
+    e.status = 400;
+    throw e;
+  }
+
+  let reservaExistente = await findReservaConfirmadaPorMpPaymentId(pid);
+  if (!reservaExistente) {
+    const candidata = await findReservaPorExternalReferenceMp(payment);
+    if (candidata && String(candidata.estado || '').trim().toLowerCase() === 'confirmada') {
+      reservaExistente = candidata;
+    }
+  }
+  if (reservaExistente && String(reservaExistente.estado || '').trim().toLowerCase() === 'confirmada') {
+    await marcarMpPaymentProcesadoIdempotencia(pid);
+    return { ok: true, tipo: 'reserva', payment_id: pid, reserva: reservaExistente, already: true };
+  }
+
+  if (await mpPaymentApprovedAlreadyProcessed(pid)) {
+    const retry = (await findReservaConfirmadaPorMpPaymentId(pid)) || (await findReservaPorExternalReferenceMp(payment));
+    if (retry) {
+      return { ok: true, tipo: 'reserva', payment_id: pid, reserva: retry, already: true };
+    }
+  }
+
+  const ext = parseMercadoPagoExternalReference(payment.external_reference);
+  if (!ext) {
+    const e = new Error('No se encontraron datos de la reserva en el pago');
+    e.status = 422;
+    throw e;
+  }
+
+  const tipo = String(ext.tipo || '').toLowerCase();
+  if (tipo === 'torneo_inscripcion') {
+    await confirmarTorneoInscripcionDesdePayloadMp(ext);
+    await marcarMpPaymentProcesadoIdempotencia(pid);
+    return {
+      ok: true,
+      tipo: 'torneo',
+      payment_id: pid,
+      torneo_id: ext.torneo_id,
+      equipo_id: ext.equipo_id,
+    };
+  }
+
+  if (tipo === 'partido_abierto') {
+    const out = await crearReservaYPartidoAbiertoDesdePayload(ext);
+    const reservaRow = out?.reserva || (Array.isArray(out?.data) ? out.data[0] : null);
+    if (reservaRow?.id && pid) {
+      await supabaseAdmin.from('reservas').update({ mp_payment_id: pid }).eq('id', reservaRow.id);
+    }
+    await marcarMpPaymentProcesadoIdempotencia(pid);
+    return {
+      ok: true,
+      tipo: out?.partido ? 'partido' : 'reserva',
+      payment_id: pid,
+      reserva: reservaRow,
+      partido: out?.partido || null,
+    };
+  }
+
+  if (tipo === 'reserva_id' || ext.reserva_id != null) {
+    const reserva = await confirmarReservaExistentePorIdMp(ext.reserva_id, pid);
+    await marcarMpPaymentProcesadoIdempotencia(pid);
+    return { ok: true, tipo: 'reserva', payment_id: pid, reserva };
+  }
+
+  const reservaRes = await crearReservaConfirmadaDesdePayloadMp(ext);
+  const reservaRow = Array.isArray(reservaRes?.data) ? reservaRes.data[0] : reservaRes?.data?.[0] || null;
+  if (reservaRow?.id && pid) {
+    await supabaseAdmin.from('reservas').update({ mp_payment_id: pid }).eq('id', reservaRow.id);
+  }
+  await marcarMpPaymentProcesadoIdempotencia(pid);
+  return { ok: true, tipo: 'reserva', payment_id: pid, reserva: reservaRow };
 }
 
 async function crearReservaConfirmadaDesdePayloadMp(payload) {
@@ -11272,6 +11450,8 @@ async function procesarPagoMercadoPagoWebhook(logId, paymentId) {
       await confirmarTorneoInscripcionDesdePayloadMp(ext);
     } else if (tipo === 'partido_abierto') {
       await crearReservaYPartidoAbiertoDesdePayload(ext);
+    } else if (tipo === 'reserva_id' || ext.reserva_id != null) {
+      await confirmarReservaExistentePorIdMp(ext.reserva_id, pid);
     } else {
       await crearReservaConfirmadaDesdePayloadMp(ext);
     }
@@ -11344,6 +11524,25 @@ app.post('/api/pagos/webhook', async (req, res) => {
       }
     })();
   });
+});
+
+/** GET /api/pago-exitoso?payment_id= — confirma reserva/torneo tras redirect MP (back_url). */
+app.get('/api/pago-exitoso', async (req, res) => {
+  try {
+    const paymentId = String(req.query.payment_id || req.query.collection_id || '').trim();
+    if (!paymentId) {
+      return res.status(400).json({ error: 'Falta payment_id' });
+    }
+    const result = await procesarPagoMercadoPagoApproved(paymentId);
+    res.json(result);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) {
+      return res.status(st).json({ error: err.message || String(err) });
+    }
+    console.error('❌ GET /api/pago-exitoso:', err.message);
+    res.status(500).json({ error: err.message || 'No se pudo confirmar el pago' });
+  }
 });
 
 // POST /api/crear-preferencia | /api/pagos/crear-preferencia — Mercado Pago Checkout Pro (redirect init_point)
