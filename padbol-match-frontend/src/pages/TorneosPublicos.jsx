@@ -33,6 +33,7 @@ import { IconGeroFiltros, IconGeroUbicacion } from '../components/icons/GeroIcon
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 import SportIcon from '../components/common/SportIcon';
+import TorneoFinalizadoCard, { TorneosVistaTabs } from '../components/TorneoFinalizadoCard';
 import {
   etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
@@ -40,6 +41,11 @@ import {
   TORNEO_DEPORTE_OPTIONS,
   etiquetaFormatoEquipoResuelto,
 } from '../utils/torneoDeporteFormato';
+
+const API_BASE_TORNEOS =
+  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
+    : 'https://padbol-backend.onrender.com';
 
 function formatoEquipoLineaTorneoPublico(t) {
   return etiquetaFormatoEquipoResuelto(t);
@@ -199,6 +205,9 @@ export default function TorneosPublicos() {
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
   const torneoSearchInputRef = useRef(null);
   const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('todos');
+  const [vistaTorneosTab, setVistaTorneosTab] = useState('activos');
+  const [torneosFinalizados, setTorneosFinalizados] = useState([]);
+  const [loadingFinalizados, setLoadingFinalizados] = useState(false);
   const setDeporteFiltroEnUrl = useCallback(
     (id) => {
       setSearchParams(
@@ -364,6 +373,35 @@ export default function TorneosPublicos() {
     return { focusSedeId: sid, contextLine: line, filterActive: Boolean(sid) };
   }, [nearMode, geoStatus, userPos, sedesList, sedesMap, t]);
 
+  const loadFinalizados = useCallback(async () => {
+    setLoadingFinalizados(true);
+    try {
+      const params = new URLSearchParams();
+      if (filtroDeporteTorneo !== 'todos') params.set('deporte', filtroDeporteTorneo);
+      if (sedeFiltroId != null) params.set('sede_id', String(sedeFiltroId));
+      else if (nearMode && focusSedeId != null) params.set('sede_id', String(focusSedeId));
+      const qs = params.toString();
+      const res = await fetch(`${API_BASE_TORNEOS}/api/torneos/finalizados${qs ? `?${qs}` : ''}`);
+      if (!res.ok) {
+        setTorneosFinalizados([]);
+        return;
+      }
+      const body = await res.json();
+      setTorneosFinalizados(Array.isArray(body) ? body : []);
+    } catch (e) {
+      console.error('[TorneosPublicos] finalizados', e);
+      setTorneosFinalizados([]);
+    } finally {
+      setLoadingFinalizados(false);
+    }
+  }, [filtroDeporteTorneo, sedeFiltroId, nearMode, focusSedeId]);
+
+  useEffect(() => {
+    if (vistaTorneosTab !== 'finalizados') return undefined;
+    void loadFinalizados();
+    return undefined;
+  }, [vistaTorneosTab, loadFinalizados]);
+
   const displayedTorneos = useMemo(() => {
     if (sedeFiltroId != null) {
       return torneos.filter((t) => Number(t.sede_id) === Number(sedeFiltroId));
@@ -382,17 +420,37 @@ export default function TorneosPublicos() {
     [torneosTrasFiltroDeporte, filtroEstadoTorneo]
   );
 
+  const torneosTrasFiltroEstadoActivos = useMemo(
+    () =>
+      torneosTrasFiltroEstado.filter(
+        (t) => !esEstadoFinalizadoTorneo(t.estado) && String(t.estado || '').toLowerCase() !== 'cancelado'
+      ),
+    [torneosTrasFiltroEstado]
+  );
+
   const torneosPorBusqueda = useMemo(() => {
     const q = normalizeSearchText(torneoSearchQuery);
-    if (!q) return torneosTrasFiltroEstado;
-    return torneosTrasFiltroEstado.filter((t) => {
+    const base = vistaTorneosTab === 'activos' ? torneosTrasFiltroEstadoActivos : torneosTrasFiltroEstado;
+    if (!q) return base;
+    return base.filter((t) => {
       const sede = sedesMap[String(t.sede_id)];
       const blob = normalizeSearchText(
         [t.nombre, sede?.nombre, sede?.ciudad, sede?.pais].filter(Boolean).join(' ')
       );
       return blob.includes(q);
     });
-  }, [torneosTrasFiltroEstado, torneoSearchQuery, sedesMap]);
+  }, [torneosTrasFiltroEstado, torneosTrasFiltroEstadoActivos, torneoSearchQuery, sedesMap, vistaTorneosTab]);
+
+  const torneosFinalizadosFiltrados = useMemo(() => {
+    const q = normalizeSearchText(torneoSearchQuery);
+    if (!q) return torneosFinalizados;
+    return torneosFinalizados.filter((t) => {
+      const blob = normalizeSearchText(
+        [t.nombre, t.sede, t.sede_ciudad, t.sede_pais, t.deporte_label, t.deporte].filter(Boolean).join(' ')
+      );
+      return blob.includes(q);
+    });
+  }, [torneosFinalizados, torneoSearchQuery]);
 
   const sedeFiltroNombre = useMemo(() => {
     if (sedeFiltroId == null) return null;
@@ -491,7 +549,7 @@ export default function TorneosPublicos() {
         </div>
       );
     }
-    if (torneosTrasFiltroDeporte.length > 0 && torneosTrasFiltroEstado.length === 0) {
+    if (torneosTrasFiltroDeporte.length > 0 && torneosTrasFiltroEstadoActivos.length === 0) {
       return (
         <div
           style={{
@@ -716,7 +774,7 @@ export default function TorneosPublicos() {
     torneos.length,
     displayedTorneos.length,
     torneosTrasFiltroDeporte.length,
-    torneosTrasFiltroEstado.length,
+    torneosTrasFiltroEstadoActivos.length,
     torneosPorBusqueda.length,
     torneosOrdenados,
     nearMode,
@@ -730,6 +788,56 @@ export default function TorneosPublicos() {
     padbolLang,
     badgeEstadoTorneoListado,
     setDeporteFiltroEnUrl,
+  ]);
+
+  const listaFinalizados = useMemo(() => {
+    if (loadingFinalizados) {
+      return <p style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>{t('general.loadingEllipsis')}</p>;
+    }
+    if (!torneosFinalizadosFiltrados.length) {
+      return (
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            borderRadius: '16px',
+            padding: '18px',
+            color: 'var(--text-secondary)',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+          }}
+        >
+          {torneoSearchQuery.trim() ? t('torneos.listado.emptySearch') : t('torneos.listado.emptyFinalizados')}
+        </div>
+      );
+    }
+    return (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: '14px',
+        }}
+      >
+        {torneosFinalizadosFiltrados.map((torneo) => (
+          <TorneoFinalizadoCard
+            key={torneo.torneo_id}
+            torneo={torneo}
+            onOpen={(id) => navigate(`/torneo/${id}`)}
+            t={t}
+            formatDate={(s) => formatFecha(s, padbolLang)}
+            deporteLabel={t(`torneos.deporte.${torneo.deporte}`, { defaultValue: torneo.deporte_label })}
+          />
+        ))}
+      </div>
+    );
+  }, [
+    loadingFinalizados,
+    torneosFinalizadosFiltrados,
+    torneoSearchQuery,
+    isMobile,
+    navigate,
+    t,
+    padbolLang,
   ]);
 
   return (
@@ -830,7 +938,9 @@ export default function TorneosPublicos() {
           ) : null}
         </div>
 
-        {!loading && torneos.length > 0 ? (
+        <TorneosVistaTabs active={vistaTorneosTab} onChange={setVistaTorneosTab} t={t} />
+
+        {(!loading && torneos.length > 0) || vistaTorneosTab === 'finalizados' ? (
           <div style={{ marginBottom: '14px' }}>
             <div style={{ marginBottom: '12px' }}>
               <div
@@ -887,6 +997,7 @@ export default function TorneosPublicos() {
                 })}
               </div>
             </div>
+            {vistaTorneosTab === 'activos' ? (
             <div style={{ marginBottom: '10px' }}>
               <div
                 style={{
@@ -942,6 +1053,7 @@ export default function TorneosPublicos() {
                 })}
               </div>
             </div>
+            ) : null}
             <div
               style={{
                 position: 'relative',
@@ -1029,7 +1141,7 @@ export default function TorneosPublicos() {
           </div>
         ) : null}
 
-        {listaTorneos}
+        {vistaTorneosTab === 'finalizados' ? listaFinalizados : listaTorneos}
       </div>
       <BottomNav />
     </div>

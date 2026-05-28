@@ -323,7 +323,14 @@
       "cupos": "{{count}} spots available",
       "verTorneo": "View tournament",
       "geoFailed": "We couldn't locate you or read a saved venue. Showing all tournaments.",
-      "lastVenueLine": "Last venue: {{tail}}"
+      "lastVenueLine": "Last venue: {{tail}}",
+      "tabActivos": "Upcoming / Active",
+      "tabFinalizados": "Finished",
+      "vistaTabsAria": "Tournament view",
+      "participants": "{{count}} participants",
+      "participants_one": "{{count}} participant",
+      "emptyFinalizados": "No finished tournaments yet.",
+      "datesRange": "{{start}} – {{end}}"
     },
     "deporte": {
       "padbol": "Padbol",

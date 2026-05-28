@@ -6590,6 +6590,211 @@ app.get('/api/torneos', async (req, res) => {
   }
 });
 
+function formatFechaTorneoListadoPublico(fin, ini) {
+  const raw = String(fin || ini || '').trim();
+  if (!raw) return '';
+  const d = new Date(`${raw}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function jugadorJsonDesdeEquipoRow(j) {
+  if (!j || typeof j !== 'object') return null;
+  const nombre = String(j.nombre || j.name || '').trim();
+  const apellido = String(j.apellido || '').trim();
+  const alias = String(j.alias || '').trim();
+  const email = String(j.email || '').trim() || null;
+  const userId = String(j.user_id || j.id || '').trim() || null;
+  const avatarUrl = String(j.foto_url || j.foto || '').trim() || null;
+  const displayName = nombre
+    ? [nombre, apellido].filter(Boolean).join(' ').trim()
+    : alias || email || 'Jugador';
+  return { nombre, apellido, alias, email, user_id: userId, avatar_url: avatarUrl, display_name: displayName };
+}
+
+async function enrichJugadoresPodioConPerfilMaps(jugadoresRaw, perfilByEmail, perfilByUserId) {
+  const base = (Array.isArray(jugadoresRaw) ? jugadoresRaw : [])
+    .map(jugadorJsonDesdeEquipoRow)
+    .filter(Boolean);
+  if (!base.length) return [];
+
+  return base.map((j) => {
+    const perfil =
+      (j.email ? perfilByEmail.get(String(j.email).trim().toLowerCase()) : null) ||
+      (j.user_id ? perfilByUserId.get(String(j.user_id).trim()) : null);
+    if (!perfil) return j;
+    const nombre = String(perfil.nombre || j.nombre || '').trim();
+    const apellido = String(perfil.apellido || j.apellido || '').trim();
+    const alias = String(perfil.alias || j.alias || '').trim();
+    const displayName = displayNameFromPerfilPublico(perfil) || j.display_name;
+    return {
+      ...j,
+      nombre,
+      apellido,
+      alias,
+      user_id: perfil.user_id || j.user_id,
+      avatar_url: String(perfil.foto_url || j.avatar_url || '').trim() || null,
+      display_name: displayName,
+    };
+  });
+}
+
+async function buildPerfilMapsForJugadoresEquipo(equiposRows, puntosRows) {
+  const equipoById = new Map();
+  for (const eq of equiposRows || []) {
+    equipoById.set(eq.id, eq);
+  }
+  const emails = new Set();
+  const userIds = new Set();
+  for (const pr of puntosRows || []) {
+    if (Number(pr.posicion) < 1 || Number(pr.posicion) > 3) continue;
+    const eq = equipoById.get(pr.equipo_id);
+    for (const j of Array.isArray(eq?.jugadores) ? eq.jugadores : []) {
+      const parsed = jugadorJsonDesdeEquipoRow(j);
+      if (!parsed) continue;
+      if (parsed.email) emails.add(String(parsed.email).trim().toLowerCase());
+      if (parsed.user_id) userIds.add(String(parsed.user_id).trim());
+    }
+  }
+  const perfilByEmail = new Map();
+  const perfilByUserId = new Map();
+  const emailList = [...emails];
+  const uidList = [...userIds];
+  if (emailList.length) {
+    const { data: rowsEmail } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, email, nombre, apellido, alias, foto_url')
+      .in('email', emailList);
+    for (const p of rowsEmail || []) {
+      if (p?.email) perfilByEmail.set(String(p.email).trim().toLowerCase(), p);
+    }
+  }
+  if (uidList.length) {
+    const { data: rowsUid } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, email, nombre, apellido, alias, foto_url')
+      .in('user_id', uidList);
+    for (const p of rowsUid || []) {
+      if (p?.user_id) perfilByUserId.set(String(p.user_id).trim(), p);
+    }
+  }
+  return { perfilByEmail, perfilByUserId, equipoById };
+}
+
+/** GET /api/torneos/finalizados — listado público con podio y participantes. */
+app.get('/api/torneos/finalizados', async (req, res) => {
+  try {
+    const { deporte: deporteQ, sede_id: sedeIdQ, limit: limitQ } = req.query;
+    const lim = Math.min(100, Math.max(1, parseInt(String(limitQ || '50'), 10) || 50));
+    const deporteFiltro = deporteQ != null && String(deporteQ).trim() !== '' && String(deporteQ).trim().toLowerCase() !== 'todos'
+      ? normalizeTorneoDeporteForDb(deporteQ)
+      : null;
+    const sedeIdRaw = sedeIdQ != null && String(sedeIdQ).trim() !== '' ? parseInt(String(sedeIdQ), 10) : NaN;
+
+    let torneosQuery = supabase
+      .from('torneos')
+      .select('id, nombre, deporte, sede_id, fecha_inicio, fecha_fin, estado, nivel_torneo')
+      .eq('estado', 'finalizado')
+      .order('fecha_fin', { ascending: false, nullsFirst: false })
+      .order('fecha_inicio', { ascending: false })
+      .limit(lim);
+
+    if (deporteFiltro) torneosQuery = torneosQuery.eq('deporte', deporteFiltro);
+    if (Number.isFinite(sedeIdRaw)) torneosQuery = torneosQuery.eq('sede_id', sedeIdRaw);
+
+    const { data: torneosRows, error: errT } = await torneosQuery;
+    if (errT) throw errT;
+    const torneos = torneosRows || [];
+    if (!torneos.length) return res.json([]);
+
+    const torneoIds = torneos.map((t) => t.id).filter((x) => x != null);
+    const sedeIds = [...new Set(torneos.map((t) => t.sede_id).filter((x) => x != null))];
+
+    const [{ data: sedesRows }, { data: puntosRows }, { data: equiposRows }] = await Promise.all([
+      sedeIds.length
+        ? supabase.from('sedes').select('id, nombre, ciudad, pais').in('id', sedeIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from('tabla_puntos').select('torneo_id, equipo_id, posicion, puntos, deporte').in('torneo_id', torneoIds),
+      supabase.from('equipos').select('id, torneo_id, nombre, jugadores, inscripcion_estado').in('torneo_id', torneoIds),
+    ]);
+
+    const sedeById = new Map();
+    for (const s of sedesRows || []) {
+      if (s?.id != null) sedeById.set(s.id, s);
+    }
+
+    const equiposByTorneo = new Map();
+    for (const eq of equiposRows || []) {
+      const tid = eq.torneo_id;
+      if (!equiposByTorneo.has(tid)) equiposByTorneo.set(tid, []);
+      equiposByTorneo.get(tid).push(eq);
+    }
+
+    const puntosByTorneo = new Map();
+    for (const pr of puntosRows || []) {
+      const tid = pr.torneo_id;
+      if (!puntosByTorneo.has(tid)) puntosByTorneo.set(tid, []);
+      puntosByTorneo.get(tid).push(pr);
+    }
+
+    const { perfilByEmail, perfilByUserId, equipoById } = await buildPerfilMapsForJugadoresEquipo(
+      equiposRows,
+      puntosRows,
+    );
+
+    const payload = [];
+    for (const t of torneos) {
+      const sede = sedeById.get(t.sede_id);
+      const eqs = equiposByTorneo.get(t.id) || [];
+      const confirmados = eqs.filter((e) => String(e.inscripcion_estado || '').toLowerCase() === 'confirmado');
+      const total_participantes = confirmados.length || eqs.length;
+
+      const puntosTorneo = (puntosByTorneo.get(t.id) || [])
+        .filter((p) => Number(p.posicion) >= 1 && Number(p.posicion) <= 3)
+        .sort((a, b) => Number(a.posicion) - Number(b.posicion));
+
+      const podio = [];
+      for (const pr of puntosTorneo) {
+        const eq = equipoById.get(pr.equipo_id);
+        const jugadores = await enrichJugadoresPodioConPerfilMaps(
+          eq?.jugadores,
+          perfilByEmail,
+          perfilByUserId,
+        );
+        podio.push({
+          posicion: Number(pr.posicion),
+          equipo_id: pr.equipo_id,
+          equipo_nombre: String(eq?.nombre || '').trim() || `Equipo #${pr.equipo_id}`,
+          puntos: Number(pr.puntos) || 0,
+          jugadores,
+        });
+      }
+
+      const depKey = normalizeTorneoDeporteForDb(t.deporte);
+      payload.push({
+        torneo_id: t.id,
+        nombre: String(t.nombre || '').trim() || `Torneo #${t.id}`,
+        deporte: depKey,
+        deporte_label: formatDeporteEstadisticaSlug(depKey) || depKey,
+        sede: String(sede?.nombre || '').trim(),
+        sede_ciudad: String(sede?.ciudad || '').trim(),
+        sede_pais: String(sede?.pais || '').trim(),
+        sede_id: t.sede_id,
+        fecha_inicio: t.fecha_inicio,
+        fecha_fin: t.fecha_fin,
+        fecha_display: formatFechaTorneoListadoPublico(t.fecha_fin, t.fecha_inicio),
+        total_participantes,
+        podio,
+      });
+    }
+
+    res.json(payload);
+  } catch (err) {
+    console.error('❌ GET /api/torneos/finalizados:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 app.get('/api/torneos/:id', async (req, res) => {
   try {
     const { id } = req.params;

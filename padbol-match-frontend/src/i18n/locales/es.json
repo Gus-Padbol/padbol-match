@@ -347,7 +347,14 @@
       "cupos": "{{count}} cupos disponibles",
       "verTorneo": "Ver torneo",
       "geoFailed": "No pudimos situarte ni leer una sede guardada. Mostrando todos los torneos.",
-      "lastVenueLine": "Última sede: {{tail}}"
+      "lastVenueLine": "Última sede: {{tail}}",
+      "tabActivos": "Próximos / Activos",
+      "tabFinalizados": "Finalizados",
+      "vistaTabsAria": "Vista de torneos",
+      "participants": "{{count}} participantes",
+      "participants_one": "{{count}} participante",
+      "emptyFinalizados": "Aún no hay torneos finalizados.",
+      "datesRange": "{{start}} – {{end}}"
     },
     "deporte": {
       "padbol": "Padbol",
