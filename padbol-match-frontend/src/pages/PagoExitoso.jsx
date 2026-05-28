@@ -21,12 +21,21 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { QRCodeCanvas } from 'qrcode.react';
+import './PagoExitoso.css';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );
+
+function PagoExitosoHeroCheck() {
+  return (
+    <div className="pago-exitoso__success-glow">
+      <SuccessPaymentHeroCheck />
+    </div>
+  );
+}
 
 export default function PagoExitoso() {
   const { t } = useTranslation();
@@ -178,176 +187,81 @@ export default function PagoExitoso() {
     a.click();
   };
 
+  const pagePadding = {
+    padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 24px ${hubMainPaddingBottomCss(location.pathname, navDock)}`,
+  };
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 24px ${hubMainPaddingBottomCss(location.pathname, navDock)}`,
-        boxSizing: 'border-box',
-      }}
-    >
+    <div className="pago-exitoso" style={pagePadding}>
       <AppHeader title={t('pago.titulo')} />
-      <div
-        style={{
-          background: 'var(--bg-card)',
-          borderRadius: '20px',
-          padding: '48px 36px',
-          maxWidth: '460px',
-          width: '100%',
-          textAlign: 'center',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
-        }}
-      >
+      <div className="pago-exitoso__panel">
         {saving ? (
           <>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#065f46' }}>
-              Confirmando pago...
-            </h1>
-            <p style={{ color: '#6b7280', fontSize: '14px' }}>
-              Registrando tu operación, un momento.
-            </p>
+            <div className="pago-exitoso__emoji" aria-hidden>
+              ⏳
+            </div>
+            <h1 className="pago-exitoso__title pago-exitoso__title--loading">Confirmando pago...</h1>
+            <p className="pago-exitoso__muted">Registrando tu operación, un momento.</p>
           </>
         ) : confirmError ? (
           <>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
-            <h1
-              style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: '#92400e',
-                marginBottom: '8px',
-              }}
-            >
-              Pago exitoso, pero hubo un problema
-            </h1>
-            <p
-              style={{
-                color: '#374151',
-                fontSize: '14px',
-                lineHeight: 1.6,
-                marginBottom: '20px',
-              }}
-            >
+            <div className="pago-exitoso__emoji" aria-hidden>
+              ⚠️
+            </div>
+            <h1 className="pago-exitoso__title pago-exitoso__title--warn">Pago exitoso, pero hubo un problema</h1>
+            <p className="pago-exitoso__lead" style={{ marginBottom: 20 }}>
               Tu pago fue procesado correctamente
               {paymentId ? ` (#${paymentId})` : ''}, pero no pudimos completar el registro automáticamente.
               Por favor contacta a la sede con el número de pago.
             </p>
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              style={{
-                padding: '11px 24px',
-                background: '#065f46',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
+            <button type="button" className="pago-exitoso__btn pago-exitoso__btn--primary" onClick={() => navigate('/')}>
               Continuar
             </button>
           </>
         ) : pagoKind === 'partido' ? (
           <>
-            <SuccessPaymentHeroCheck />
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#065f46', marginBottom: '8px' }}>
-              ¡Partido publicado!
-            </h1>
-            <p style={{ color: '#374151', fontSize: '15px', lineHeight: 1.6, marginBottom: '20px' }}>
+            <PagoExitosoHeroCheck />
+            <h1 className="pago-exitoso__title">¡Partido publicado!</h1>
+            <p className="pago-exitoso__lead">
               Tu reserva fue confirmada: el partido ya está publicado para que otros se sumen.
             </p>
-            <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
+            <div className="pago-exitoso__slot-wrap">
               <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
             </div>
             <a
+              className="pago-exitoso__btn--whatsapp"
               href={`https://wa.me/?text=${encodeURIComponent(`Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`)}`}
               target="_blank"
               rel="noreferrer"
-              style={{
-                display: 'block',
-                padding: '12px 18px',
-                background: '#22c55e',
-                color: 'white',
-                borderRadius: '10px',
-                fontSize: '14px',
-                fontWeight: 800,
-                textDecoration: 'none',
-                marginBottom: '10px',
-              }}
             >
               Compartir por WhatsApp
             </a>
             <button
               type="button"
+              className="pago-exitoso__btn pago-exitoso__btn--primary"
               onClick={() => navigate('/partidos-abiertos')}
-              style={{
-                padding: '11px 24px',
-                background: '#065f46',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
             >
               Ver cupos para unirte
             </button>
           </>
         ) : pagoKind === 'torneo' && torneoInscripcion ? (
           <>
-            <SuccessPaymentHeroCheck />
-            <h1
-              style={{
-                fontSize: '1.6rem',
-                fontWeight: 900,
-                color: '#065f46',
-                marginBottom: '8px',
-              }}
-            >
-              ¡Inscripción confirmada!
-            </h1>
-            <p
-              style={{
-                color: '#374151',
-                fontSize: '15px',
-                lineHeight: 1.6,
-                marginBottom: '24px',
-              }}
-            >
-              El pago se registró y tu equipo quedó confirmado en el torneo.
-            </p>
-            <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
+            <PagoExitosoHeroCheck />
+            <h1 className="pago-exitoso__title">¡Inscripción confirmada!</h1>
+            <p className="pago-exitoso__lead">El pago se registró y tu equipo quedó confirmado en el torneo.</p>
+            <div className="pago-exitoso__slot-wrap">
               <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
             </div>
-            {paymentId && (
-              <p style={{ margin: '0 0 20px', fontSize: '12px', color: '#6b7280' }}>
-                <strong>Pago #:</strong> {paymentId}
+            {paymentId ? (
+              <p className="pago-exitoso__muted" style={{ marginBottom: 20 }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Pago #:</strong> {paymentId}
               </p>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            ) : null}
+            <div className="pago-exitoso__actions">
               <button
                 type="button"
-                onClick={() =>
-                  navigate(`/torneo/${torneoInscripcion.torneo_id}/equipos`)
-                }
-                style={{
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
+                className="pago-exitoso__btn pago-exitoso__btn--primary"
+                onClick={() => navigate(`/torneo/${torneoInscripcion.torneo_id}/equipos`)}
               >
                 Volver al torneo
               </button>
@@ -355,128 +269,103 @@ export default function PagoExitoso() {
           </>
         ) : (
           <>
-            <SuccessPaymentHeroCheck />
-            <h1
-              style={{
-                fontSize: '1.6rem',
-                fontWeight: 900,
-                color: '#065f46',
-                marginBottom: '8px',
-              }}
-            >
-              ¡Pago exitoso!
-            </h1>
-            <p
-              style={{
-                color: '#374151',
-                fontSize: '15px',
-                lineHeight: 1.6,
-                marginBottom: '24px',
-              }}
-            >
+            <PagoExitosoHeroCheck />
+            <h1 className="pago-exitoso__title">¡Pago exitoso!</h1>
+            <p className="pago-exitoso__lead">
               Tu reserva está confirmada. Recibirás la confirmación por WhatsApp.
             </p>
-            <div style={{ width: '100%', maxWidth: 390, margin: '0 auto 16px' }}>
+            <div className="pago-exitoso__slot-wrap">
               <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
             </div>
 
-            {reserva && (
-              <div
-                style={{
-                  background: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '12px',
-                  padding: '16px 18px',
-                  marginBottom: '24px',
-                  textAlign: 'left',
-                }}
-              >
-                {reserva.sede && (
-                  <p
-                    style={{
-                      margin: '0 0 6px',
-                      fontSize: '13px',
-                      color: '#166534',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 8,
-                    }}
-                  >
-                    <span style={{ flexShrink: 0, display: 'inline-flex', marginTop: 1, color: '#166534' }}>
+            {reserva ? (
+              <div className="pago-exitoso__details">
+                {reserva.sede ? (
+                  <p className="pago-exitoso__details-row">
+                    <span className="pago-exitoso__details-icon">
                       <IconGeroUbicacion size={16} />
                     </span>
                     <span>
                       <strong>Sede:</strong> {reserva.sede}
                     </span>
                   </p>
-                )}
-                {reserva.fecha && (
-                  <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#166534' }}>
-                    <strong>📅 Fecha:</strong> {reserva.fecha}
+                ) : null}
+                {reserva.fecha ? (
+                  <p className="pago-exitoso__details-row">
+                    <span className="pago-exitoso__details-icon" aria-hidden>
+                      📅
+                    </span>
+                    <span>
+                      <strong>Fecha:</strong> {reserva.fecha}
+                    </span>
                   </p>
-                )}
-                {reserva.hora && (
-                  <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#166534' }}>
-                    <strong>🕐 Hora:</strong> {reserva.hora}
+                ) : null}
+                {reserva.hora ? (
+                  <p className="pago-exitoso__details-row">
+                    <span className="pago-exitoso__details-icon" aria-hidden>
+                      🕐
+                    </span>
+                    <span>
+                      <strong>Hora:</strong> {reserva.hora}
+                    </span>
                   </p>
-                )}
-                {reserva.cancha && (
-                  <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#166534' }}>
-                    <strong>🏟️ Cancha:</strong> {reserva.cancha}
+                ) : null}
+                {reserva.cancha ? (
+                  <p className="pago-exitoso__details-row">
+                    <span className="pago-exitoso__details-icon" aria-hidden>
+                      🏟️
+                    </span>
+                    <span>
+                      <strong>Cancha:</strong> {reserva.cancha}
+                    </span>
                   </p>
-                )}
-                {reserva.nombre && (
-                  <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#166534' }}>
-                    <strong>👤 Jugador:</strong> {reserva.nombre}
+                ) : null}
+                {reserva.nombre ? (
+                  <p className="pago-exitoso__details-row">
+                    <span className="pago-exitoso__details-icon" aria-hidden>
+                      👤
+                    </span>
+                    <span>
+                      <strong>Jugador:</strong> {reserva.nombre}
+                    </span>
                   </p>
-                )}
-                {paymentId && (
-                  <p style={{ margin: '0', fontSize: '12px', color: '#4ade80' }}>
+                ) : null}
+                {paymentId ? (
+                  <p className="pago-exitoso__details-payment">
                     <strong>Pago #:</strong> {paymentId}
                   </p>
-                )}
+                ) : null}
               </div>
-            )}
+            ) : null}
 
             {(qrLoading || qrToken || qrError) && reserva?.id ? (
-              <div
-                style={{
-                  background: '#fff',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  marginBottom: '20px',
-                  textAlign: 'center',
-                }}
-              >
-                <p style={{ margin: '0 0 12px', fontWeight: 800, color: '#065f46', fontSize: '15px' }}>
-                  {t('checkin.tuQr')}
-                </p>
+              <div className="pago-exitoso__qr">
+                <p className="pago-exitoso__qr-title">{t('checkin.tuQr')}</p>
                 {qrLoading ? (
-                  <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>{t('general.loading')}</p>
+                  <p className="pago-exitoso__muted">{t('general.loading')}</p>
                 ) : qrError ? (
-                  <p style={{ margin: 0, color: '#b45309', fontSize: '13px' }}>{qrError}</p>
+                  <p className="pago-exitoso__muted" style={{ color: 'var(--pm-color-warning, #d97706)' }}>
+                    {qrError}
+                  </p>
                 ) : qrToken ? (
                   <>
-                    <div ref={qrCanvasWrapRef} style={{ display: 'inline-block', padding: '8px', background: '#fff' }}>
+                    <div
+                      ref={qrCanvasWrapRef}
+                      style={{
+                        display: 'inline-block',
+                        padding: 8,
+                        background: '#fff',
+                        borderRadius: 8,
+                        border: '1px solid var(--border)',
+                      }}
+                    >
                       <QRCodeCanvas value={qrToken} size={200} level="M" includeMargin />
                     </div>
                     <button
                       type="button"
+                      className="pago-exitoso__btn pago-exitoso__btn--primary"
+                      style={{ marginTop: 12 }}
                       onClick={descargarQrPago}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        marginTop: '12px',
-                        padding: '10px',
-                        background: '#065f46',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: 700,
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                      }}
                     >
                       {t('checkin.descargar')}
                     </button>
@@ -489,20 +378,11 @@ export default function PagoExitoso() {
 
             <HubSponsorsTicker sponsors={sedeTickerPago} deporte={deporteReservaPago} />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="pago-exitoso__actions">
               <button
                 type="button"
+                className="pago-exitoso__btn pago-exitoso__btn--primary"
                 onClick={() => navigate('/reservar')}
-                style={{
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
               >
                 ⚽ Hacer otra reserva
               </button>
