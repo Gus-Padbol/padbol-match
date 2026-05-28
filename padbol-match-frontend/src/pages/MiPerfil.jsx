@@ -10,6 +10,7 @@ import SedeBusquedaInput from '../components/SedeBusquedaInput';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
+import ReservaQrModal from '../components/ReservaQrModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
@@ -338,6 +339,7 @@ export default function MiPerfil() {
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
   const [reservaCancelModal, setReservaCancelModal] = useState(null);
+  const [reservaQrModal, setReservaQrModal] = useState(null);
   const [jugadorPreviewMiCompanero, setJugadorPreviewMiCompanero] = useState(null);
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
@@ -911,7 +913,7 @@ export default function MiPerfil() {
       const todayYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const { data, error } = await supabase
         .from('reservas')
-        .select('id, sede, fecha, hora, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url')
+        .select('id, sede, fecha, hora, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url, qr_token')
         .eq('user_id', uid)
         .gte('fecha', todayYmd)
         .order('fecha', { ascending: true })
@@ -4127,6 +4129,7 @@ export default function MiPerfil() {
               const mon = String(r.moneda || 'ARS').trim().toUpperCase();
               const montoNum = r.monto_pagado != null && r.monto_pagado !== '' ? Number(r.monto_pagado) : Number(r.precio) || 0;
               const mpId = String(r.mp_payment_id || '').trim();
+              const esConfirmada = String(r.estado || '').trim().toLowerCase() === 'confirmada';
               return (
                 <div key={r.id} style={{ background: 'var(--bg-page)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
@@ -4177,6 +4180,29 @@ export default function MiPerfil() {
                       >
                         Ver comprobante
                       </a>
+                    ) : null}
+                    {esConfirmada ? (
+                      <button
+                        type="button"
+                        onClick={() => setReservaQrModal(r)}
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <span aria-hidden>▦</span>
+                        {t('checkin.verQr')}
+                      </button>
                     ) : null}
                     {canCancel ? (
                       <button
@@ -4294,6 +4320,21 @@ export default function MiPerfil() {
           const r = reservaCancelModal;
           setReservaCancelModal(null);
           if (r) void handleCancelar(r);
+        }}
+      />
+
+      <ReservaQrModal
+        open={Boolean(reservaQrModal)}
+        reserva={reservaQrModal}
+        accessToken={session?.access_token ?? null}
+        apiBaseUrl={API_BASE_URL}
+        onClose={() => setReservaQrModal(null)}
+        onTokenResolved={(reservaId, token) => {
+          setReservas((prev) =>
+            (Array.isArray(prev) ? prev : []).map((row) =>
+              row.id === reservaId ? { ...row, qr_token: token } : row,
+            ),
+          );
         }}
       />
 

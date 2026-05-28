@@ -1713,6 +1713,8 @@
     "noEsHoy": "La reserva no es para hoy",
     "reiniciar": "Escanear otro QR",
     "tuQr": "Tu código QR para el check-in",
-    "descargar": "Descargar QR"
+    "descargar": "Descargar QR",
+    "verQr": "Ver QR",
+    "qrError": "No se pudo cargar el QR"
   }
 }

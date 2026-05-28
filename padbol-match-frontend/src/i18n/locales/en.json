@@ -1710,6 +1710,8 @@
     "noEsHoy": "This booking is not for today",
     "reiniciar": "Scan another QR",
     "tuQr": "Your check-in QR code",
-    "descargar": "Download QR"
+    "descargar": "Download QR",
+    "verQr": "View QR",
+    "qrError": "Could not load QR"
   }
 }

@@ -1,0 +1,86 @@
+.reserva-qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(0, 0, 0, 0.72);
+  box-sizing: border-box;
+}
+
+.reserva-qr-modal__panel {
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  text-align: center;
+  color: var(--text-primary);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.reserva-qr-modal__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.reserva-qr-modal__meta {
+  margin: 0 0 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.reserva-qr-modal__meta-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reserva-qr-modal__qr-wrap {
+  display: inline-flex;
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin: 0 auto 16px;
+}
+
+.reserva-qr-modal__error {
+  margin: 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pm-color-warning, #d97706);
+}
+
+.reserva-qr-modal__loading {
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.reserva-qr-modal__close {
+  margin-top: 4px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.reserva-qr-modal__close:hover {
+  border-color: var(--accent);
+}
