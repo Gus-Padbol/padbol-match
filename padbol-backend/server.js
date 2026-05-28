@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
+import pg from 'pg';
 import twilio from 'twilio';
 import dotenv from 'dotenv';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
@@ -157,6 +158,37 @@ if (!SUPABASE_SERVICE_ROLE_KEY) {
 function supabaseKeyPrefixForLog(key) {
   const s = String(key ?? '').trim();
   return s ? s.slice(0, 20) : '(not set)';
+}
+
+const DATABASE_URL = String(process.env.DATABASE_URL || '').trim();
+const pgPool = DATABASE_URL
+  ? new pg.Pool({
+      connectionString: DATABASE_URL,
+      ssl: DATABASE_URL.includes('sslmode=disable') ? false : { rejectUnauthorized: false },
+    })
+  : null;
+
+/** Lee credenciales MP de sedes vía Postgres (evita PolicyAgent/RLS de Supabase REST). */
+async function fetchSedeMpCredentialsPg(sedeId) {
+  const sid = parseInt(String(sedeId), 10);
+  if (!Number.isFinite(sid) || sid <= 0) return null;
+  if (!pgPool) {
+    const err = new Error('DATABASE_URL no configurada');
+    err.status = 503;
+    throw err;
+  }
+  console.log('[POST /api/crear-preferencia] pg query', {
+    table: 'sedes',
+    operation: 'select',
+    client: 'pgPool',
+    sql: 'SELECT mp_access_token, mp_public_key FROM sedes WHERE id = $1',
+    params: { id: sid },
+  });
+  const { rows } = await pgPool.query(
+    'SELECT mp_access_token, mp_public_key FROM sedes WHERE id = $1',
+    [sid],
+  );
+  return rows[0] ?? null;
 }
 
 /** Activo solo durante POST /api/crear-preferencia — traza queries Supabase (PA_UNAUTHORIZED). */
@@ -574,23 +606,37 @@ function normalizeMetodoPago(raw) {
   return 'mercadopago';
 }
 
-async function sedePaymentConfigBySedeId(sedeId) {
+async function sedePaymentConfigBySedeId(sedeId, { mpViaPg = false } = {}) {
   const sid = Number(sedeId);
   if (!Number.isFinite(sid)) return null;
+
+  let mpPg = null;
+  if (mpViaPg) {
+    mpPg = await fetchSedeMpCredentialsPg(sid);
+  }
+
+  const columns =
+    mpViaPg && pgPool
+      ? 'id, nombre, metodo_pago, stripe_account_id, pago_manual_instrucciones'
+      : 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones';
+
   logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
-    columns: 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones',
+    columns,
     eq: { id: sid },
+    context: mpViaPg ? { mpViaPg: true } : undefined,
   });
   const { data, error } = await supabaseAdmin
     .from('sedes')
-    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
+    .select(columns)
     .eq('id', sid)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
+  if (!data && !mpPg) return null;
   return {
-    ...data,
-    metodo_pago: normalizeMetodoPago(data.metodo_pago),
+    ...(data || {}),
+    mp_access_token: mpPg?.mp_access_token ?? data?.mp_access_token ?? null,
+    mp_public_key: mpPg?.mp_public_key ?? data?.mp_public_key ?? null,
+    metodo_pago: normalizeMetodoPago(data?.metodo_pago),
   };
 }
 
@@ -11242,7 +11288,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
     const sidNum = Number(sedeId);
     const effectiveSedeId =
       Number.isFinite(sidNum) && sidNum > 0 ? sidNum : torneoSedeIdForCfg != null ? torneoSedeIdForCfg : null;
-    let sedeCfg = effectiveSedeId ? await sedePaymentConfigBySedeId(effectiveSedeId) : null;
+    let sedeCfg = effectiveSedeId ? await sedePaymentConfigBySedeId(effectiveSedeId, { mpViaPg: true }) : null;
     if (!sedeCfg && reservaData && typeof reservaData === 'object' && reservaData.sede) {
       sedeCfg = await sedePaymentConfigByNombre(String(reservaData.sede).trim());
     }
@@ -15764,6 +15810,7 @@ cron.schedule(
       SUPABASE_KEY: supabaseKeyPrefixForLog(SUPABASE_KEY),
       SUPABASE_SERVICE_ROLE_KEY: supabaseKeyPrefixForLog(SUPABASE_SERVICE_ROLE_KEY),
     });
+    console.log(`🐘 PostgreSQL: ${pgPool ? 'pgPool listo (DATABASE_URL)' : 'DATABASE_URL no configurada'}`);
     console.log(`💬 Twilio WhatsApp: whatsapp:+14155238886`);
     const subPrice = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();
     if (subPrice.startsWith('price_')) {
