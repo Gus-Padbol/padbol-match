@@ -173,13 +173,30 @@ const pgPool = DATABASE_URL
     })
   : null;
 
+async function verifyPgPoolConnection() {
+  if (!pgPool) {
+    console.log('🐘 PostgreSQL: DATABASE_URL no configurada — pgPool no disponible');
+    return false;
+  }
+  try {
+    await pgPool.query('SELECT 1 AS ok');
+    console.log('🐘 PostgreSQL: pgPool conectado OK (DATABASE_URL)');
+    return true;
+  } catch (err) {
+    console.error('🐘 PostgreSQL: pgPool falló al conectar:', err?.message || err);
+    if (err?.code) console.error('🐘 PostgreSQL: código:', err.code);
+    return false;
+  }
+}
+
 /** Lee credenciales MP de sedes vía Postgres (evita PolicyAgent/RLS de Supabase REST). */
 async function fetchSedeMpCredentialsPg(sedeId) {
   const sid = parseInt(String(sedeId), 10);
   if (!Number.isFinite(sid) || sid <= 0) return null;
   if (!pgPool) {
-    const err = new Error('DATABASE_URL no configurada');
+    const err = new Error('DATABASE_URL no configurada — pgPool no disponible para leer mp_access_token');
     err.status = 503;
+    console.error('[POST /api/crear-preferencia] pg query abortado:', err.message);
     throw err;
   }
   console.log('[POST /api/crear-preferencia] pg query', {
@@ -189,11 +206,21 @@ async function fetchSedeMpCredentialsPg(sedeId) {
     sql: 'SELECT mp_access_token, mp_public_key FROM sedes WHERE id = $1',
     params: { id: sid },
   });
-  const { rows } = await pgPool.query(
-    'SELECT mp_access_token, mp_public_key FROM sedes WHERE id = $1',
-    [sid],
-  );
-  return rows[0] ?? null;
+  try {
+    const { rows } = await pgPool.query(
+      'SELECT mp_access_token, mp_public_key FROM sedes WHERE id = $1',
+      [sid],
+    );
+    return rows[0] ?? null;
+  } catch (err) {
+    console.error('[POST /api/crear-preferencia] pg query error:', {
+      message: err?.message,
+      code: err?.code,
+      detail: err?.detail,
+      sedeId: sid,
+    });
+    throw err;
+  }
 }
 
 /** Activo solo durante POST /api/crear-preferencia — traza queries Supabase (PA_UNAUTHORIZED). */
@@ -621,14 +648,14 @@ async function sedePaymentConfigBySedeId(sedeId, { mpViaPg = false } = {}) {
   }
 
   const columns =
-    mpViaPg && pgPool
+    mpViaPg
       ? 'id, nombre, metodo_pago, stripe_account_id, pago_manual_instrucciones'
       : 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones';
 
   logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
     columns,
     eq: { id: sid },
-    context: mpViaPg ? { mpViaPg: true } : undefined,
+    context: mpViaPg ? { mpViaPg: true, mpFromPgOnly: true } : undefined,
   });
   const { data, error } = await supabaseAdmin
     .from('sedes')
@@ -639,8 +666,8 @@ async function sedePaymentConfigBySedeId(sedeId, { mpViaPg = false } = {}) {
   if (!data && !mpPg) return null;
   return {
     ...(data || {}),
-    mp_access_token: mpPg?.mp_access_token ?? data?.mp_access_token ?? null,
-    mp_public_key: mpPg?.mp_public_key ?? data?.mp_public_key ?? null,
+    mp_access_token: mpViaPg ? (mpPg?.mp_access_token ?? null) : (data?.mp_access_token ?? null),
+    mp_public_key: mpViaPg ? (mpPg?.mp_public_key ?? null) : (data?.mp_public_key ?? null),
     metodo_pago: normalizeMetodoPago(data?.metodo_pago),
   };
 }
@@ -15807,6 +15834,7 @@ cron.schedule(
   } catch (e) {
     console.error('❌ Inicialización precio suscripción Stripe:', e?.message || e);
   }
+  await verifyPgPoolConnection();
   app.listen(PORT, () => {
     console.log(`🚀 Padbol Match API running on port ${PORT}`);
     console.log('✅ Rutas rol: GET /api/auth/mi-rol, GET /api/usuarios/mi-rol');
@@ -15815,7 +15843,6 @@ cron.schedule(
       SUPABASE_KEY: supabaseKeyPrefixForLog(SUPABASE_KEY),
       SUPABASE_SERVICE_ROLE_KEY: supabaseKeyPrefixForLog(SUPABASE_SERVICE_ROLE_KEY),
     });
-    console.log(`🐘 PostgreSQL: ${pgPool ? 'pgPool listo (DATABASE_URL)' : 'DATABASE_URL no configurada'}`);
     console.log(`💬 Twilio WhatsApp: whatsapp:+14155238886`);
     const subPrice = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();
     if (subPrice.startsWith('price_')) {
