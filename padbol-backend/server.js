@@ -138,6 +138,11 @@ if (!SUPABASE_SERVICE_ROLE_KEY) {
   );
 }
 
+function supabaseKeyPrefixForLog(key) {
+  const s = String(key ?? '').trim();
+  return s ? s.slice(0, 20) : '(not set)';
+}
+
 /** Activo solo durante POST /api/crear-preferencia — traza queries Supabase (PA_UNAUTHORIZED). */
 let crearPreferenciaSupabaseLogActive = false;
 
@@ -15739,6 +15744,10 @@ cron.schedule(
     console.log(`🚀 Padbol Match API running on port ${PORT}`);
     console.log('✅ Rutas rol: GET /api/auth/mi-rol, GET /api/usuarios/mi-rol');
     console.log(`📊 Supabase: ${SUPABASE_URL}`);
+    console.log('🔑 Supabase keys (first 20 chars):', {
+      SUPABASE_KEY: supabaseKeyPrefixForLog(SUPABASE_KEY),
+      SUPABASE_SERVICE_ROLE_KEY: supabaseKeyPrefixForLog(SUPABASE_SERVICE_ROLE_KEY),
+    });
     console.log(`💬 Twilio WhatsApp: whatsapp:+14155238886`);
     const subPrice = String(process.env.STRIPE_SUBSCRIPTION_PRICE_ID || '').trim();
     if (subPrice.startsWith('price_')) {
